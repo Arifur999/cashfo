@@ -563,3 +563,88 @@ export interface FullAdminUser {
   lastLoginAt: string | null;
   createdAt: string;
 }
+
+export type BackupRecordType = "MANUAL" | "SCHEDULED";
+export type BackupRecordStatus = "IN_PROGRESS" | "SUCCESS" | "FAILED";
+
+export interface BackupRecordRow {
+  id: string;
+  triggeredBy: string;
+  type: BackupRecordType;
+  status: BackupRecordStatus;
+  sizeMb: number | null;
+  fileLocation: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  errorMessage: string | null;
+}
+
+export interface BackupStatusSummary {
+  lastSuccessfulBackupAt: string | null;
+  daysSinceLastBackup: number | null;
+  successRate30d: number | null;
+}
+
+export interface FeatureFlagRow {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  isEnabled: boolean;
+  rolloutPercent: number;
+  targetPlanIds: string[];
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+export type ErrorLogSource = "BACKEND_API" | "ADMIN_FRONTEND" | "BACKGROUND_JOB";
+
+export interface ErrorLogRow {
+  id: string;
+  source: ErrorLogSource;
+  message: string;
+  stackTrace: string | null;
+  severity: Severity;
+  metadata: unknown;
+  resolved: boolean;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+}
+
+export interface ListErrorLogsResponse {
+  data: ErrorLogRow[];
+  meta: ListMeta;
+}
+
+export interface ApiRateLimitLogRow {
+  id: string;
+  endpoint: string;
+  windowStart: string;
+  requestCount: number;
+  limitExceeded: boolean;
+  identifierType: string;
+  identifier: string;
+}
+
+export interface ListRateLimitLogsResponse {
+  data: ApiRateLimitLogRow[];
+  meta: ListMeta;
+}
+
+export interface TopEndpointEntry {
+  endpoint: string;
+  requestCount: number;
+}
+
+export interface TopOffenderEntry {
+  identifier: string;
+  identifierType: string;
+  count: number;
+}
+
+export interface RateLimitSummary {
+  topEndpoints: TopEndpointEntry[];
+  exceededToday: number;
+  topOffenders: TopOffenderEntry[];
+}

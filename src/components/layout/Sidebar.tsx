@@ -21,8 +21,9 @@ interface NavItem {
 
 // Dashboard (Prompt 1), User Management (Prompt 2), Subscriptions
 // (Prompt 3), Payments (Prompt 4), Content (Prompt 5), Support (Prompt 6),
-// Analytics (Prompt 7), and Security (Prompt 8) are wired up -- the rest are
-// styled placeholders (their own prompts build out the real pages).
+// Analytics (Prompt 7), Security (Prompt 8), and System (Prompt 9) are wired
+// up -- the rest are styled placeholders (their own prompts build out the
+// real pages).
 const NAV_ITEMS: NavItem[] = [
   { label: t("Dashboard"), href: "/admin/dashboard" },
   { label: t("User Management"), href: "/admin/users" },
@@ -32,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: t("Support"), href: "/admin/support", activeMatch: ["/admin/support", "/admin/feature-requests"] },
   { label: t("Analytics"), href: "/admin/analytics" },
   { label: t("Security"), href: "/admin/security", activeMatch: ["/admin/security"], roles: ["SUPER_ADMIN"] },
+  { label: t("System"), href: "/admin/system", activeMatch: ["/admin/system"], roles: ["SUPER_ADMIN"] },
   { label: t("Settings"), href: null },
 ];
 
