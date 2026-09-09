@@ -476,3 +476,90 @@ export interface DeviceBreakdownEntry {
   count: number;
   percentage: number;
 }
+
+export interface AuditLogAdminRef {
+  id: string;
+  name: string;
+}
+
+export interface AuditLogEntryRow {
+  id: string;
+  adminUserId: string;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  oldValue: unknown;
+  newValue: unknown;
+  ipAddress: string | null;
+  createdAt: string;
+  adminUser: AuditLogAdminRef;
+}
+
+export interface ListAuditLogsResponse {
+  data: AuditLogEntryRow[];
+  meta: ListMeta;
+}
+
+export interface LoginAttemptRow {
+  id: string;
+  email: string;
+  ipAddress: string;
+  userAgent: string | null;
+  success: boolean;
+  failureReason: string | null;
+  createdAt: string;
+}
+
+export interface ListLoginAttemptsResponse {
+  data: LoginAttemptRow[];
+  meta: ListMeta;
+}
+
+export interface TopIpEntry {
+  ipAddress: string;
+  count: number;
+}
+
+export interface LoginAttemptsSummary {
+  failedLast24h: number;
+  failedLast7d: number;
+  topIps: TopIpEntry[];
+  lockedOutAccounts: number;
+}
+
+export type SuspiciousActivityType = "MULTIPLE_FAILED_LOGINS" | "UNUSUAL_LOGIN_LOCATION" | "MASS_DATA_ACCESS" | "IMPERSONATION_SPIKE" | "OTHER";
+export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type FlagStatus = "OPEN" | "REVIEWING" | "RESOLVED" | "FALSE_POSITIVE";
+
+export interface SuspiciousActivityFlagRow {
+  id: string;
+  type: SuspiciousActivityType;
+  description: string;
+  relatedAdminId: string | null;
+  relatedIp: string | null;
+  severity: Severity;
+  status: FlagStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  relatedAdmin: AuditLogAdminRef | null;
+  reviewer: AuditLogAdminRef | null;
+}
+
+export interface RunDetectionResult {
+  scanned: number;
+  ipsOverThreshold: number;
+  flagsCreated: number;
+}
+
+export type AdminStatus = "ACTIVE" | "SUSPENDED";
+
+export interface FullAdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: AdminRole;
+  status: AdminStatus;
+  lastLoginAt: string | null;
+  createdAt: string;
+}

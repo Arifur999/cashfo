@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { AdminRole } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n/t";
 
@@ -12,12 +13,16 @@ interface NavItem {
   // with more than one page, like Subscriptions covering both /plans and
   // /coupons). Defaults to just [href].
   activeMatch?: string[];
+  // Omit to show to every role. Security is SUPER_ADMIN only -- the backend
+  // already 403s every route under it (see security.module.ts), this just
+  // keeps the link from being visible bait for roles that can't use it.
+  roles?: AdminRole[];
 }
 
 // Dashboard (Prompt 1), User Management (Prompt 2), Subscriptions
 // (Prompt 3), Payments (Prompt 4), Content (Prompt 5), Support (Prompt 6),
-// and Analytics (Prompt 7) are wired up -- the rest are styled placeholders
-// (their own prompts build out the real pages).
+// Analytics (Prompt 7), and Security (Prompt 8) are wired up -- the rest are
+// styled placeholders (their own prompts build out the real pages).
 const NAV_ITEMS: NavItem[] = [
   { label: t("Dashboard"), href: "/admin/dashboard" },
   { label: t("User Management"), href: "/admin/users" },
@@ -26,18 +31,23 @@ const NAV_ITEMS: NavItem[] = [
   { label: t("Content"), href: "/admin/content" },
   { label: t("Support"), href: "/admin/support", activeMatch: ["/admin/support", "/admin/feature-requests"] },
   { label: t("Analytics"), href: "/admin/analytics" },
-  { label: t("Security"), href: null },
+  { label: t("Security"), href: "/admin/security", activeMatch: ["/admin/security"], roles: ["SUPER_ADMIN"] },
   { label: t("Settings"), href: null },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  role: AdminRole;
+}
+
+export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
+  const visibleNavItems = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));
 
   return (
     <aside className="flex w-64 shrink-0 flex-col bg-brand-dark text-white">
       <div className="flex h-16 items-center px-6 text-lg font-semibold tracking-wide">{t("Admin Panel")}</div>
       <nav className="flex-1 space-y-0.5 px-2 py-2">
-        {NAV_ITEMS.map((item) => {
+        {visibleNavItems.map((item) => {
           if (!item.href) {
             return (
               <div

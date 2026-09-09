@@ -12,7 +12,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/admin"
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+      <Sidebar role={admin.role} />
       <div className="flex flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-black/5 bg-white px-6">
           <span className="text-sm text-neutral-500">

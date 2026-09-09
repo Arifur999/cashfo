@@ -43,7 +43,10 @@ export async function getTicketStats(): Promise<TicketStats> {
 }
 
 export async function getAdminOptions(): Promise<AdminOption[]> {
-  const response = await axios.get<AdminOption[]>(`${API_BASE_URL}/admin/admins`, {
+  // /admin/admins itself is SUPER_ADMIN only as of Prompt 8 (full admin
+  // account management) -- this dropdown-only endpoint stays open to any
+  // authenticated admin, since SUPPORT_ADMIN needs it for ticket assignment.
+  const response = await axios.get<AdminOption[]>(`${API_BASE_URL}/admin/admins/assignable`, {
     headers: await authHeaders(),
   });
   return response.data;
