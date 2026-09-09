@@ -648,3 +648,69 @@ export interface RateLimitSummary {
   exceededToday: number;
   topOffenders: TopOffenderEntry[];
 }
+
+export type NotificationChannel = "EMAIL" | "SMS" | "IN_APP_PUSH";
+
+export interface NotificationTemplateRow {
+  id: string;
+  key: string;
+  channel: NotificationChannel;
+  subjectEn: string | null;
+  subjectBn: string | null;
+  bodyEn: string;
+  bodyBn: string;
+  variables: string[];
+  isActive: boolean;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+export type NotificationLogStatus = "QUEUED" | "SENT" | "FAILED";
+
+export interface NotificationLogRow {
+  id: string;
+  platformUserId: string;
+  templateKey: string;
+  channel: NotificationChannel;
+  status: NotificationLogStatus;
+  sentAt: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  platformUser: { id: string; name: string; email: string } | null;
+}
+
+export interface ListNotificationLogsResponse {
+  data: NotificationLogRow[];
+  meta: ListMeta;
+}
+
+export type CampaignStatus = "DRAFT" | "SCHEDULED" | "SENDING" | "SENT" | "CANCELLED";
+
+export interface CampaignTargetFilter {
+  planId?: string;
+  status?: PlatformUserStatus;
+}
+
+export interface BulkNotificationCampaignRow {
+  id: string;
+  title: string;
+  templateKey: string;
+  targetFilter: CampaignTargetFilter;
+  channel: NotificationChannel;
+  status: CampaignStatus;
+  scheduledFor: string | null;
+  sentCount: number;
+  failedCount: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface DashboardSummary {
+  totalUsers: number;
+  newUsersLast30d: number;
+  openTickets: number;
+  mrr: number | null;
+  pendingFlags: number | null;
+  lastBackup: { completedAt: string | null; sizeMb: number | null } | null;
+  recentAuditLogs: { id: string; action: string; entityType: string; adminName: string; createdAt: string }[] | null;
+}
