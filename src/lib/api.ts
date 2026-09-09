@@ -433,3 +433,46 @@ export interface UserSearchResult {
   name: string;
   email: string;
 }
+
+export interface FeatureUsageEntry {
+  eventType: string;
+  count: number;
+}
+
+export interface EngagementPoint {
+  date: string;
+  dau: number;
+  wau: number;
+}
+
+export interface CohortRow {
+  cohortMonth: string;
+  cohortSize: number;
+  monthsSinceSignup: (number | null)[];
+}
+
+export interface GeographyCountryEntry {
+  country: string;
+  eventCount: number;
+  userCount: number;
+}
+
+export interface GeographyCityEntry {
+  city: string;
+  country: string;
+  eventCount: number;
+  userCount: number;
+}
+
+export interface GeographyResponse {
+  countries: GeographyCountryEntry[];
+  cities: GeographyCityEntry[];
+}
+
+export type DeviceType = "MOBILE" | "DESKTOP" | "TABLET";
+
+export interface DeviceBreakdownEntry {
+  deviceType: DeviceType;
+  count: number;
+  percentage: number;
+}
