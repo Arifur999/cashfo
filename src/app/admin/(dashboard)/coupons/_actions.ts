@@ -36,6 +36,7 @@ export interface CouponFormInput {
   validFrom: string;
   validUntil: string;
   applicablePlans: string[];
+  isActive?: boolean;
 }
 
 export async function createCouponAction(input: CouponFormInput): Promise<ActionResult<Coupon>> {
@@ -45,10 +46,23 @@ export async function createCouponAction(input: CouponFormInput): Promise<Action
   }, "Failed to create coupon");
 }
 
+export async function updateCouponAction(id: string, input: Partial<CouponFormInput>): Promise<ActionResult<Coupon>> {
+  return callApi(async () => {
+    const res = await axios.patch<Coupon>(`${API_BASE_URL}/admin/coupons/${id}`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to update coupon");
+}
+
 export async function toggleCouponActiveAction(id: string, isActive: boolean): Promise<ActionResult> {
   return callApi(async () => {
     await axios.patch(`${API_BASE_URL}/admin/coupons/${id}`, { isActive }, { headers: await authHeaders() });
   }, "Failed to update coupon");
+}
+
+export async function deleteCouponAction(id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await axios.delete(`${API_BASE_URL}/admin/coupons/${id}`, { headers: await authHeaders() });
+  }, "Failed to delete coupon");
 }
 
 export async function getCouponRedemptionsAction(id: string): Promise<CouponRedemption[]> {

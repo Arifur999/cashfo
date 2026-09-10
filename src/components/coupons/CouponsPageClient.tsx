@@ -1,10 +1,15 @@
 "use client";
 
-import { Eye, Plus } from "lucide-react";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createCouponAction, type CouponFormInput } from "@/app/admin/(dashboard)/coupons/_actions";
+import {
+  createCouponAction,
+  deleteCouponAction,
+  updateCouponAction,
+  type CouponFormInput,
+} from "@/app/admin/(dashboard)/coupons/_actions";
 import type { Coupon, SubscriptionPlanOption } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 import { CouponFormModal } from "./CouponFormModal";
@@ -20,18 +25,51 @@ interface CouponsPageClientProps {
 export function CouponsPageClient({ coupons, plans, canManage }: CouponsPageClientProps) {
   const router = useRouter();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [redemptionsCoupon, setRedemptionsCoupon] = useState<Coupon | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function handleCreate(values: CouponFormInput) {
+  function openCreate() {
+    setEditingCoupon(null);
+    setIsFormOpen(true);
+  }
+
+  function openEdit(coupon: Coupon) {
+    setEditingCoupon(coupon);
+    setIsFormOpen(true);
+  }
+
+  function closeForm() {
+    setIsFormOpen(false);
+    setEditingCoupon(null);
+  }
+
+  function handleSubmit(values: CouponFormInput) {
     startTransition(async () => {
-      const result = await createCouponAction(values);
+      const result = editingCoupon
+        ? await updateCouponAction(editingCoupon.id, values)
+        : await createCouponAction(values);
       if (result.success) {
-        toast.success(t("Coupon created"));
-        setIsFormOpen(false);
+        toast.success(editingCoupon ? t("Coupon updated") : t("Coupon created"));
+        closeForm();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to create coupon"));
+        toast.error(result.message ?? (editingCoupon ? t("Failed to update coupon") : t("Failed to create coupon")));
+      }
+    });
+  }
+
+  function handleDelete(coupon: Coupon) {
+    if (!window.confirm(t(`Permanently delete "${coupon.code}"? This cannot be undone.`))) {
+      return;
+    }
+    startTransition(async () => {
+      const result = await deleteCouponAction(coupon.id);
+      if (result.success) {
+        toast.success(t("Coupon deleted"));
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to delete coupon"));
       }
     });
   }
@@ -46,7 +84,7 @@ export function CouponsPageClient({ coupons, plans, canManage }: CouponsPageClie
         {canManage && (
           <button
             type="button"
-            onClick={() => setIsFormOpen(true)}
+            onClick={openCreate}
             className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
           >
             <Plus className="h-4 w-4" /> {t("Create Coupon")}
@@ -81,13 +119,34 @@ export function CouponsPageClient({ coupons, plans, canManage }: CouponsPageClie
                   <CouponStatusBadge status={coupon.status} />
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button
-                    type="button"
-                    onClick={() => setRedemptionsCoupon(coupon)}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-neutral-500 hover:bg-neutral-100"
-                  >
-                    <Eye className="h-3.5 w-3.5" /> {t("View redemptions")}
-                  </button>
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setRedemptionsCoupon(coupon)}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-neutral-500 hover:bg-neutral-100"
+                    >
+                      <Eye className="h-3.5 w-3.5" /> {t("View redemptions")}
+                    </button>
+                    {canManage && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(coupon)}
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-neutral-500 hover:bg-neutral-100"
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> {t("Edit")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(coupon)}
+                          title={t("Only allowed if this coupon has never been redeemed")}
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-brand-danger hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> {t("Delete")}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -104,10 +163,11 @@ export function CouponsPageClient({ coupons, plans, canManage }: CouponsPageClie
 
       <CouponFormModal
         open={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={closeForm}
         plans={plans}
+        editingCoupon={editingCoupon}
         isSubmitting={isPending}
-        onSubmit={handleCreate}
+        onSubmit={handleSubmit}
       />
       <CouponRedemptionsModal
         open={redemptionsCoupon !== null}
