@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { resolveActiveBusinessId } from "@/lib/activeBusiness";
@@ -10,6 +11,9 @@ import { getCurrentUser } from "@/lib/auth";
 // what actually fetches the user data AuthProvider needs). Every future
 // page in this route group is automatically protected and gets useAuth()
 // for free just by living under (dashboard) -- no per-page boilerplate.
+//
+// Sidebar (left nav) + TopBar (utility bar) composition mirrors
+// admin-frontend's own (dashboard)/layout.tsx exactly.
 export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   const user = await getCurrentUser();
   if (!user) {
@@ -20,8 +24,13 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
 
   return (
     <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId}>
-      <TopBar />
-      {children}
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex flex-1 flex-col">
+          <TopBar />
+          <main className="flex-1">{children}</main>
+        </div>
+      </div>
     </AuthProvider>
   );
 }

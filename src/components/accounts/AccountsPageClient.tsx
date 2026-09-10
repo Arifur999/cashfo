@@ -118,7 +118,7 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
   }
 
   return (
-    <div className="min-h-[calc(100vh-57px)] bg-brand-content px-6 py-8">
+    <div className="h-full bg-brand-content px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">Chart of Accounts</h1>

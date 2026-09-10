@@ -8,7 +8,7 @@ export default function DashboardPage() {
   const { user, activeBusiness } = useAuth();
 
   return (
-    <div className="min-h-[calc(100vh-57px)] bg-brand-content px-6 py-8">
+    <div className="h-full bg-brand-content px-6 py-8">
       <h1 className="text-xl font-semibold text-neutral-900">Dashboard — {activeBusiness?.name ?? "..."}</h1>
       <p className="mt-1 text-sm text-neutral-500">
         Welcome, {user.name} ({user.email})
