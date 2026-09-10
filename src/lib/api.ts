@@ -56,6 +56,32 @@ export interface BusinessDetail {
   updatedAt: string;
 }
 
+export type AccountType = "ASSET" | "LIABILITY" | "EQUITY" | "INCOME" | "EXPENSE";
+export type AccountStatus = "ACTIVE" | "ARCHIVED";
+
+export interface Account {
+  id: string;
+  businessId: string;
+  parentId: string | null;
+  name: string;
+  nameBn: string | null;
+  accountType: AccountType;
+  accountSubtype: string | null;
+  // Decimal columns arrive as strings over JSON, not numbers -- same
+  // convention as the admin panel (see its CLAUDE.md domain notes).
+  openingBalance: string;
+  currentBalance: string;
+  isSystemAccount: boolean;
+  status: AccountStatus;
+  displayOrder: number;
+  children: Account[];
+}
+
+export interface AccountGroup {
+  accountType: AccountType;
+  accounts: Account[];
+}
+
 interface NestErrorBody {
   statusCode: number;
   message: string | string[];
