@@ -714,3 +714,12 @@ export interface DashboardSummary {
   lastBackup: { completedAt: string | null; sizeMb: number | null } | null;
   recentAuditLogs: { id: string; action: string; entityType: string; adminName: string; createdAt: string }[] | null;
 }
+
+export interface PlatformSettings {
+  platformName: string;
+  supportEmail: string;
+  defaultCurrency: string;
+  defaultTimezone: string;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+}

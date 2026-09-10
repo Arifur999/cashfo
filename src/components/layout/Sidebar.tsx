@@ -24,9 +24,10 @@ interface NavItem {
 
 // Dashboard (Prompt 1), User Management (Prompt 2), Subscriptions
 // (Prompt 3), Payments (Prompt 4), Content (Prompt 5), Support (Prompt 6),
-// Analytics (Prompt 7), Security (Prompt 8), System (Prompt 9), and
-// Notifications (Prompt 10) are wired up -- the rest are styled placeholders
-// (their own prompts build out the real pages).
+// Analytics (Prompt 7), Security (Prompt 8), System (Prompt 9),
+// Notifications (Prompt 10), and Settings (general platform settings, added
+// after Prompt 10 -- the one sidebar item none of the 10 prompts specified)
+// are all wired up now.
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard" },
   { label: "User Management", href: "/admin/users" },
@@ -38,7 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Security", href: "/admin/security", activeMatch: ["/admin/security"], roles: ["SUPER_ADMIN"] },
   { label: "System", href: "/admin/system", activeMatch: ["/admin/system"], roles: ["SUPER_ADMIN"] },
   { label: "Notifications", href: "/admin/notifications" },
-  { label: "Settings", href: null },
+  { label: "Settings", href: "/admin/settings" },
 ];
 
 interface SidebarProps {
