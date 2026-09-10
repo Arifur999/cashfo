@@ -82,6 +82,62 @@ export interface AccountGroup {
   accounts: Account[];
 }
 
+export type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER" | "JOURNAL" | "SALE" | "PURCHASE" | "PAYMENT";
+export type TransactionStatus = "POSTED" | "VOIDED";
+export type EntryType = "DEBIT" | "CREDIT";
+
+export interface TransactionEntry {
+  id: string;
+  transactionId: string;
+  accountId: string;
+  entryType: EntryType;
+  amount: string;
+  categoryId: string | null;
+  note: string | null;
+  account?: { id: string; name: string; accountType: AccountType };
+}
+
+export interface Transaction {
+  id: string;
+  businessId: string;
+  transactionType: TransactionType;
+  transactionDate: string;
+  referenceNo: string | null;
+  description: string | null;
+  status: TransactionStatus;
+  createdBy: string;
+  createdAt: string;
+  voidedAt: string | null;
+  voidedReason: string | null;
+  reversalOfId: string | null;
+  entries: TransactionEntry[];
+}
+
+export interface TransactionListResponse {
+  data: Transaction[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface LedgerRow {
+  entryId: string;
+  transactionId: string;
+  date: string;
+  description: string | null;
+  referenceNo: string | null;
+  entryType: EntryType;
+  amount: string;
+  transactionStatus: TransactionStatus;
+  runningBalance: string;
+}
+
+export interface AccountLedger {
+  accountId: string;
+  accountName: string;
+  openingBalance: string;
+  entries: LedgerRow[];
+  closingBalance: string;
+}
+
 interface NestErrorBody {
   statusCode: number;
   message: string | string[];

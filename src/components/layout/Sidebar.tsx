@@ -1,16 +1,18 @@
 "use client";
 
-import { BookOpen, LayoutDashboard } from "lucide-react";
+import { ArrowLeftRight, BookOpen, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// Only pages that actually exist get a nav item -- Dashboard (Prompt 2) and
-// Accounts (Prompt 4) so far. Future prompts add more here as their pages
-// land (Transactions, Contacts, Reports, etc.), same convention as
-// admin-frontend's own Sidebar.tsx.
+// Only pages that actually exist get a nav item -- Dashboard (Prompt 2),
+// Accounts (Prompt 4), Transactions (Prompt 5, bare-bones raw journal entry
+// UI -- Prompt 6 replaces it with friendly Income/Expense/Transfer screens
+// but keeps this nav slot). Future prompts add more as their pages land,
+// same convention as admin-frontend's own Sidebar.tsx.
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Accounts", href: "/accounts", icon: BookOpen },
+  { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
 ];
 
 export function Sidebar() {
