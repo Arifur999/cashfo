@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { TopBar } from "@/components/layout/TopBar";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { resolveActiveBusinessId } from "@/lib/activeBusiness";
 import { getCurrentUser } from "@/lib/auth";
 
 // The ONE place that gates every page under (dashboard) -- proxy.ts already
@@ -14,5 +16,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
     redirect("/login");
   }
 
-  return <AuthProvider initialUser={user}>{children}</AuthProvider>;
+  const activeBusinessId = await resolveActiveBusinessId(user.businesses);
+
+  return (
+    <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId}>
+      <TopBar />
+      {children}
+    </AuthProvider>
+  );
 }

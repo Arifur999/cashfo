@@ -39,6 +39,23 @@ export interface CurrentUser {
   businesses: UserBusiness[];
 }
 
+export interface BusinessLimits {
+  maxBusinessWorkspaces: number;
+  currentCount: number;
+  atLimit: boolean;
+}
+
+export interface BusinessDetail {
+  id: string;
+  name: string;
+  type: WorkspaceType;
+  currency: string;
+  isDefault: boolean;
+  planId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface NestErrorBody {
   statusCode: number;
   message: string | string[];
