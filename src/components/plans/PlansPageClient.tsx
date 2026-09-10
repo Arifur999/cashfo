@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { PlanAnalytics, SubscriptionPlan } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { archivePlanAction, createPlanAction, updatePlanAction } from "@/app/admin/(dashboard)/plans/_actions";
+import { archivePlanAction, createPlanAction, deletePlanAction, updatePlanAction } from "@/app/admin/(dashboard)/plans/_actions";
 import { PlanCard } from "./PlanCard";
 import { PlanFormModal, type PlanFormValues } from "./PlanFormModal";
 import { PlansUsageChart } from "./PlansUsageChart";
@@ -61,6 +61,21 @@ export function PlansPageClient({ plans, analytics, canManage }: PlansPageClient
     });
   }
 
+  function handleDelete(plan: SubscriptionPlan) {
+    if (!window.confirm(t(`Permanently delete "${plan.name}"? This cannot be undone.`))) {
+      return;
+    }
+    startTransition(async () => {
+      const result = await deletePlanAction(plan.id);
+      if (result.success) {
+        toast.success(t("Plan deleted"));
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to delete plan"));
+      }
+    });
+  }
+
   const analyticsByPlanId = new Map(analytics?.perPlan.map((p) => [p.planId, p]) ?? []);
 
   return (
@@ -92,6 +107,7 @@ export function PlansPageClient({ plans, analytics, canManage }: PlansPageClient
             canManage={canManage}
             onEdit={() => openEdit(plan)}
             onArchive={() => handleArchive(plan)}
+            onDelete={() => handleDelete(plan)}
           />
         ))}
       </div>

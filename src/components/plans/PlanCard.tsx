@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Check, Pencil, X } from "lucide-react";
+import { Archive, Check, Pencil, Trash2, X } from "lucide-react";
 import type { PlanAnalyticsEntry, SubscriptionPlan } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n/t";
@@ -22,9 +22,10 @@ interface PlanCardProps {
   canManage: boolean;
   onEdit: () => void;
   onArchive: () => void;
+  onDelete: () => void;
 }
 
-export function PlanCard({ plan, analytics, canManage, onEdit, onArchive }: PlanCardProps) {
+export function PlanCard({ plan, analytics, canManage, onEdit, onArchive, onDelete }: PlanCardProps) {
   return (
     <div className={cn("flex flex-col rounded-2xl bg-white p-5 shadow-sm shadow-black/5", !plan.isActive && "opacity-60")}>
       <div className="flex items-start justify-between">
@@ -70,7 +71,7 @@ export function PlanCard({ plan, analytics, canManage, onEdit, onArchive }: Plan
       </div>
 
       {canManage && (
-        <div className="mt-5 flex gap-2 border-t border-neutral-100 pt-4">
+        <div className="mt-5 flex flex-wrap gap-2 border-t border-neutral-100 pt-4">
           <button
             type="button"
             onClick={onEdit}
@@ -87,6 +88,14 @@ export function PlanCard({ plan, analytics, canManage, onEdit, onArchive }: Plan
               <Archive className="h-3.5 w-3.5" /> {t("Archive")}
             </button>
           )}
+          <button
+            type="button"
+            onClick={onDelete}
+            title={t("Only allowed if no users are on this plan")}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-brand-danger/30 px-3 py-2 text-sm font-medium text-brand-danger hover:bg-red-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> {t("Delete")}
+          </button>
         </div>
       )}
     </div>
