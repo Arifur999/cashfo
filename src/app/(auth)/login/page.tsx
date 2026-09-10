@@ -1,5 +1,9 @@
-import { PlaceholderCard } from "@/components/PlaceholderCard";
+import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function LoginPage() {
-  return <PlaceholderCard title="Welcome back" description="Sign in to continue" />;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-brand-content px-4">
+      <LoginForm />
+    </div>
+  );
 }

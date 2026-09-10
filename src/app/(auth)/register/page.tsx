@@ -1,5 +1,9 @@
-import { PlaceholderCard } from "@/components/PlaceholderCard";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 
 export default function RegisterPage() {
-  return <PlaceholderCard title="Create your account" description="Start managing your money in minutes" />;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-brand-content px-4">
+      <RegisterForm />
+    </div>
+  );
 }
