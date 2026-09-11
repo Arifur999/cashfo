@@ -1,7 +1,7 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type Transaction, type TransactionListResponse, type TransactionType } from "./api";
+import { API_BASE_URL, type ContactCategory, type Transaction, type TransactionListResponse, type TransactionType } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 export interface TransactionFilters {
@@ -9,6 +9,7 @@ export interface TransactionFilters {
   dateTo?: string;
   transactionType?: TransactionType;
   accountId?: string;
+  contactCategory?: ContactCategory;
   search?: string;
   limit?: number;
 }

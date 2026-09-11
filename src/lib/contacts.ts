@@ -1,11 +1,12 @@
 // Server-only helpers, same shape as lib/accounts.ts.
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type Contact, type ContactListResponse, type ContactStatus, type ContactType } from "./api";
+import { API_BASE_URL, type Contact, type ContactCategory, type ContactListResponse, type ContactStatus, type ContactType } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 export interface ContactFilters {
   type?: ContactType;
+  category?: ContactCategory;
   status?: ContactStatus;
   search?: string;
   page?: number;

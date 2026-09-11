@@ -210,6 +210,10 @@ export interface TransactionListResponse {
 
 export type ContactType = "CUSTOMER" | "SUPPLIER" | "BOTH";
 export type ContactStatus = "ACTIVE" | "ARCHIVED";
+// BUSINESS (customer/supplier trade relationships, shown in Dena-Pawna) vs
+// LOAN (bank/person lending relationships, shown in Loan Management). Both
+// reuse the exact same type/openingBalance/Receivable-Payable engine.
+export type ContactCategory = "BUSINESS" | "LOAN";
 
 // Sign convention (set by the backend, Prompt 8): positive currentBalance
 // means the business is OWED money by this contact; negative means the
@@ -222,6 +226,7 @@ export interface Contact {
   businessId: string;
   name: string;
   type: ContactType;
+  category: ContactCategory;
   phone: string | null;
   email: string | null;
   address: string | null;
@@ -295,6 +300,29 @@ export interface OverdueRow {
   remainingAmount: string;
   dueDate: string;
   daysOverdue: number;
+}
+
+export type LoanBalanceDirection = "DENA" | "PAWNA" | "SETTLED";
+
+export interface LoanDashboardRow {
+  contactId: string;
+  contactName: string;
+  contactPhone: string | null;
+  openingBalance: string;
+  totalReceive: string;
+  totalPayment: string;
+  currentBalance: string;
+  direction: LoanBalanceDirection;
+}
+
+export interface LoanDashboard {
+  totalDena: string;
+  totalPawna: string;
+  totalPaid: string;
+  totalReceived: string;
+  netBalance: string;
+  activeAccounts: number;
+  rows: LoanDashboardRow[];
 }
 
 interface NestErrorBody {

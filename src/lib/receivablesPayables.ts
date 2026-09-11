@@ -1,7 +1,7 @@
 // Server-only helpers, same shape as lib/accounts.ts.
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type AgingReport, type ContactBalanceDetail, type OverdueRow } from "./api";
+import { API_BASE_URL, type AgingReport, type ContactBalanceDetail, type LoanDashboard, type OverdueRow } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 const EMPTY_DIRECTION = { totalInvoiced: "0.00", totalPaid: "0.00", remaining: "0.00", transactions: [] };
@@ -82,5 +82,29 @@ export const getPayablesOverdue = cache(async (businessId: string): Promise<Over
     return response.data;
   } catch {
     return [];
+  }
+});
+
+const EMPTY_LOAN_DASHBOARD: LoanDashboard = {
+  totalDena: "0.00",
+  totalPawna: "0.00",
+  totalPaid: "0.00",
+  totalReceived: "0.00",
+  netBalance: "0.00",
+  activeAccounts: 0,
+  rows: [],
+};
+
+export const getLoanDashboard = cache(async (businessId: string): Promise<LoanDashboard> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return EMPTY_LOAN_DASHBOARD;
+
+  try {
+    const response = await axios.get<LoanDashboard>(`${API_BASE_URL}/api/businesses/${businessId}/loan-management/dashboard`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data;
+  } catch {
+    return EMPTY_LOAN_DASHBOARD;
   }
 });

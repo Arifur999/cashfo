@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, ChevronDown, ChevronRight, FileText, HandCoins, Landmark, LayoutDashboard, Users } from "lucide-react";
+import { ArrowLeftRight, Banknote, ChevronDown, ChevronRight, FileText, HandCoins, Landmark, LayoutDashboard, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -33,6 +33,20 @@ const BALANCE_ITEMS = [
   { label: "Balance Transfer", href: "/balance/transfer" },
   { label: "Account Ledger", href: "/reports/general-ledger" },
   { label: "Wallet", href: "/balance/wallet" },
+];
+
+// Dashboard/Transactions/Bank-Person-List are dedicated pages sharing the
+// exact same Contact + Receivable/Payable engine as Dena-Pawna, scoped to
+// category: LOAN contacts (banks/persons you lend to or borrow from)
+// instead of BUSINESS ones (customers/suppliers) -- see
+// ReceivablesPayablesService.getLoanDashboard()'s comment. Ledger reuses
+// the existing General Ledger page, same simplification as Balance's
+// Account Ledger.
+const LOAN_MANAGEMENT_ITEMS = [
+  { label: "Dashboard", href: "/loan-management/dashboard" },
+  { label: "Transactions", href: "/loan-management/transactions" },
+  { label: "Ledger", href: "/reports/general-ledger" },
+  { label: "Bank / Person List", href: "/loan-management/bank-person-list" },
 ];
 
 // Was a disabled placeholder since Prompt 1 -- General Ledger and Trial
@@ -115,6 +129,7 @@ function NavLink({ item, isActive }: { item: { label: string; href: string; icon
 export function Sidebar() {
   const pathname = usePathname();
   const isBalanceActive = pathname.startsWith("/balance") || pathname.startsWith("/accounts");
+  const isLoanManagementActive = pathname.startsWith("/loan-management");
   const isReportsActive = pathname.startsWith("/reports");
 
   return (
@@ -126,6 +141,7 @@ export function Sidebar() {
         ))}
 
         <NavGroup icon={Landmark} label="Balance" items={BALANCE_ITEMS} isActive={isBalanceActive} />
+        <NavGroup icon={Banknote} label="Loan Management" items={LOAN_MANAGEMENT_ITEMS} isActive={isLoanManagementActive} />
 
         {REST_NAV_ITEMS.map((item) => (
           <NavLink key={item.href} item={item} isActive={pathname.startsWith(item.href)} />

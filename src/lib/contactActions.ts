@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Contact, type ContactType } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Contact, type ContactCategory, type ContactType } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 export interface ActionResult<T = void> {
@@ -31,6 +31,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 export interface ContactFormInput {
   name: string;
   type: ContactType;
+  category?: ContactCategory;
   phone?: string;
   email?: string;
   address?: string;
