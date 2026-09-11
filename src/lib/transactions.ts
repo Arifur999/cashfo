@@ -10,6 +10,7 @@ export interface TransactionFilters {
   transactionType?: TransactionType;
   accountId?: string;
   search?: string;
+  limit?: number;
 }
 
 // Thin pass-through to the backend's own filters (Prompt 5) -- the friendly
