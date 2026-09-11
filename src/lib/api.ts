@@ -25,6 +25,7 @@ export interface UserBusiness {
   id: string;
   name: string;
   type: WorkspaceType;
+  currency: string;
   role: MemberRole;
   isDefault: boolean;
 }
@@ -82,6 +83,72 @@ export interface AccountGroup {
   accounts: Account[];
 }
 
+export interface LedgerRow {
+  entryId: string;
+  transactionId: string;
+  date: string;
+  description: string | null;
+  referenceNo: string | null;
+  entryType: EntryType;
+  amount: string;
+  transactionStatus: TransactionStatus;
+  runningBalance: string;
+}
+
+export interface AccountLedger {
+  accountId: string;
+  accountName: string;
+  openingBalance: string;
+  balanceBroughtForward: string;
+  entries: LedgerRow[];
+  closingBalance: string;
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface AccountSummary {
+  currentBalance: string;
+  totalIn: string;
+  totalOut: string;
+  transactionCount: number;
+}
+
+export interface GeneralLedgerAccount {
+  id: string;
+  name: string;
+  nameBn: string | null;
+  accountSubtype: string | null;
+  currentBalance: string;
+  isSystemAccount: boolean;
+  status: AccountStatus;
+}
+
+export interface GeneralLedgerGroup {
+  accountType: AccountType;
+  accounts: GeneralLedgerAccount[];
+}
+
+export interface GeneralLedgerResponse {
+  groups: GeneralLedgerGroup[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface TrialBalanceRow {
+  accountId: string;
+  name: string;
+  nameBn: string | null;
+  accountType: AccountType;
+  status: AccountStatus;
+  debit: string;
+  credit: string;
+}
+
+export interface TrialBalanceResponse {
+  rows: TrialBalanceRow[];
+  totalDebit: string;
+  totalCredit: string;
+  isBalanced: boolean;
+}
+
 export type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER" | "JOURNAL" | "SALE" | "PURCHASE" | "PAYMENT";
 export type TransactionStatus = "POSTED" | "VOIDED";
 export type EntryType = "DEBIT" | "CREDIT";
@@ -116,26 +183,6 @@ export interface Transaction {
 export interface TransactionListResponse {
   data: Transaction[];
   meta: { page: number; limit: number; total: number; totalPages: number };
-}
-
-export interface LedgerRow {
-  entryId: string;
-  transactionId: string;
-  date: string;
-  description: string | null;
-  referenceNo: string | null;
-  entryType: EntryType;
-  amount: string;
-  transactionStatus: TransactionStatus;
-  runningBalance: string;
-}
-
-export interface AccountLedger {
-  accountId: string;
-  accountName: string;
-  openingBalance: string;
-  entries: LedgerRow[];
-  closingBalance: string;
 }
 
 interface NestErrorBody {

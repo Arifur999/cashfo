@@ -6,7 +6,8 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { archiveAccountAction } from "@/lib/accountActions";
 import type { Account, AccountGroup, LanguagePreference } from "@/lib/api";
-import { ACCOUNT_TYPE_LABELS, accountDisplayName, formatBalance } from "@/lib/accountDisplay";
+import { ACCOUNT_TYPE_LABELS, accountDisplayName } from "@/lib/accountDisplay";
+import { formatCurrency } from "@/lib/currency";
 import { AccountFormModal } from "./AccountFormModal";
 
 interface AccountsPageClientProps {
@@ -14,6 +15,7 @@ interface AccountsPageClientProps {
   initialGroups: AccountGroup[];
   canManage: boolean;
   preferredLanguage: LanguagePreference;
+  currency: string;
 }
 
 function flatten(groups: AccountGroup[]): Account[] {
@@ -28,7 +30,7 @@ function flatten(groups: AccountGroup[]): Account[] {
   return result;
 }
 
-export function AccountsPageClient({ businessId, initialGroups, canManage, preferredLanguage }: AccountsPageClientProps) {
+export function AccountsPageClient({ businessId, initialGroups, canManage, preferredLanguage, currency }: AccountsPageClientProps) {
   const router = useRouter();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(initialGroups.map((g) => g.accountType)));
   const [formOpen, setFormOpen] = useState(false);
@@ -74,7 +76,11 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
     return (
       <div key={account.id}>
         <div
-          className="flex items-center justify-between border-b border-neutral-50 py-2.5 last:border-0"
+          role="button"
+          tabIndex={0}
+          onClick={() => router.push(`/accounts/${account.id}`)}
+          onKeyDown={(e) => e.key === "Enter" && router.push(`/accounts/${account.id}`)}
+          className="flex cursor-pointer items-center justify-between border-b border-neutral-50 py-2.5 last:border-0 hover:bg-neutral-50/60"
           style={{ paddingLeft: `${depth * 1.5}rem` }}
         >
           <div className="flex items-center gap-2">
@@ -93,16 +99,27 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
             )}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium tabular-nums text-neutral-700">{formatBalance(account.currentBalance)}</span>
+            <span className="text-sm font-medium tabular-nums text-neutral-700">{formatCurrency(account.currentBalance, currency)}</span>
             {canManage && !isArchived && (
               <div className="flex items-center gap-1">
-                <button type="button" onClick={() => openEdit(account)} title="Edit" className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEdit(account);
+                  }}
+                  title="Edit"
+                  className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
                   type="button"
                   disabled={isPending}
-                  onClick={() => handleArchive(account)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleArchive(account);
+                  }}
                   title="Archive"
                   className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                 >

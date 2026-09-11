@@ -1,13 +1,10 @@
 import type { Account, LanguagePreference } from "./api";
 
-export function accountDisplayName(account: Account, lang: LanguagePreference): string {
+// Accepts anything with name/nameBn (not just the full Account shape) so
+// the same helper works for the lighter GeneralLedgerAccount rows too.
+export function accountDisplayName(account: { name: string; nameBn: string | null }, lang: LanguagePreference): string {
   if (lang === "BN" && account.nameBn) return account.nameBn;
   return account.name;
-}
-
-export function formatBalance(value: string): string {
-  const n = Number(value);
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export const ACCOUNT_TYPE_LABELS: Record<Account["accountType"], string> = {

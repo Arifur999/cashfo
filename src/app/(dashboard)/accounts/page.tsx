@@ -25,6 +25,7 @@ export default async function AccountsPage() {
       initialGroups={groups}
       canManage={canManage}
       preferredLanguage={user.preferredLanguage}
+      currency={activeBusiness?.currency ?? "BDT"}
     />
   );
 }
