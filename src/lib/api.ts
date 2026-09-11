@@ -329,6 +329,32 @@ export interface LoanDashboard {
   rows: LoanDashboardRow[];
 }
 
+// The Loan Management "Ledger" -- one contact, one date range, running
+// balance carried forward (see ReceivablesPayablesService.getLoanStatement()).
+// debit/credit are mutually exclusive per row (only one is non-null) --
+// DEBIT means cash was Paid out, CREDIT means cash was Received, same
+// convention as the Loan Transactions page's directionFor().
+export interface LoanStatementRow {
+  transactionId: string;
+  date: string;
+  referenceNo: string | null;
+  description: string | null;
+  category: string;
+  debit: string | null;
+  credit: string | null;
+  runningPrincipal: string;
+  status: TransactionStatus;
+}
+
+export interface LoanStatement {
+  contactId: string;
+  contactName: string;
+  openingBalance: string;
+  balanceBroughtForward: string;
+  rows: LoanStatementRow[];
+  closingBalance: string;
+}
+
 interface NestErrorBody {
   statusCode: number;
   message: string | string[];

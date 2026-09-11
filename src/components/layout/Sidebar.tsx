@@ -35,17 +35,18 @@ const BALANCE_ITEMS = [
   { label: "Wallet", href: "/balance/wallet" },
 ];
 
-// Dashboard/Transactions/Bank-Person-List are dedicated pages sharing the
-// exact same Contact + Receivable/Payable engine as Dena-Pawna, scoped to
-// category: LOAN contacts (banks/persons you lend to or borrow from)
-// instead of BUSINESS ones (customers/suppliers) -- see
-// ReceivablesPayablesService.getLoanDashboard()'s comment. Ledger reuses
-// the existing General Ledger page, same simplification as Balance's
-// Account Ledger.
+// Dashboard/Transactions/Ledger/Bank-Person-List are dedicated pages
+// sharing the exact same Contact + Receivable/Payable engine as Dena-Pawna,
+// scoped to category: LOAN contacts (banks/persons you lend to or borrow
+// from) instead of BUSINESS ones (customers/suppliers) -- see
+// ReceivablesPayablesService.getLoanDashboard()'s comment. Ledger is a
+// dedicated "Loan Statement" (one contact, one date range, running balance
+// carried forward) -- see getLoanStatement() -- unlike Balance's own
+// Account Ledger item, which just reuses the General Ledger page.
 const LOAN_MANAGEMENT_ITEMS = [
   { label: "Dashboard", href: "/loan-management/dashboard" },
   { label: "Transactions", href: "/loan-management/transactions" },
-  { label: "Ledger", href: "/reports/general-ledger" },
+  { label: "Ledger", href: "/loan-management/ledger" },
   { label: "Bank / Person List", href: "/loan-management/bank-person-list" },
 ];
 

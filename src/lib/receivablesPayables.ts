@@ -1,7 +1,7 @@
 // Server-only helpers, same shape as lib/accounts.ts.
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type AgingReport, type ContactBalanceDetail, type LoanDashboard, type OverdueRow } from "./api";
+import { API_BASE_URL, type AgingReport, type ContactBalanceDetail, type LoanDashboard, type LoanStatement, type OverdueRow } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 const EMPTY_DIRECTION = { totalInvoiced: "0.00", totalPaid: "0.00", remaining: "0.00", transactions: [] };
@@ -108,3 +108,32 @@ export const getLoanDashboard = cache(async (businessId: string): Promise<LoanDa
     return EMPTY_LOAN_DASHBOARD;
   }
 });
+
+const EMPTY_LOAN_STATEMENT: LoanStatement = {
+  contactId: "",
+  contactName: "",
+  openingBalance: "0.00",
+  balanceBroughtForward: "0.00",
+  rows: [],
+  closingBalance: "0.00",
+};
+
+// For the Loan Management "Ledger" page -- only called once a Bank/Person
+// has actually been picked (the page's own "Generate" step), not on every
+// visit like other list pages' filters.
+export const getLoanStatement = cache(
+  async (businessId: string, contactId: string, filters: { dateFrom?: string; dateTo?: string } = {}): Promise<LoanStatement> => {
+    const accessToken = await getAccessToken();
+    if (!accessToken) return EMPTY_LOAN_STATEMENT;
+
+    try {
+      const response = await axios.get<LoanStatement>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/loan-statement`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: filters,
+      });
+      return response.data;
+    } catch {
+      return EMPTY_LOAN_STATEMENT;
+    }
+  },
+);
