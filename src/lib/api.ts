@@ -171,6 +171,8 @@ export interface Transaction {
   transactionDate: string;
   referenceNo: string | null;
   description: string | null;
+  // Real FK since Prompt 8 (was a plain unconstrained field in Prompt 5).
+  contactId: string | null;
   status: TransactionStatus;
   createdBy: string;
   createdAt: string;
@@ -182,6 +184,37 @@ export interface Transaction {
 
 export interface TransactionListResponse {
   data: Transaction[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export type ContactType = "CUSTOMER" | "SUPPLIER" | "BOTH";
+export type ContactStatus = "ACTIVE" | "ARCHIVED";
+
+// Sign convention (set by the backend, Prompt 8): positive currentBalance
+// means the business is OWED money by this contact; negative means the
+// business OWES this contact money. Zero means settled. This holds
+// regardless of `type` -- e.g. an overpaid CUSTOMER can carry a negative
+// balance (a refund is owed to them). Color-coding and Prompt 9's
+// receivable/payable math both key off this sign, not off `type`.
+export interface Contact {
+  id: string;
+  businessId: string;
+  name: string;
+  type: ContactType;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  photoUrl: string | null;
+  openingBalance: string;
+  currentBalance: string;
+  status: ContactStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactListResponse {
+  data: Contact[];
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 

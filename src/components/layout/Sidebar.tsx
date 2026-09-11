@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, BookOpen, ChevronDown, ChevronRight, FileText, LayoutDashboard } from "lucide-react";
+import { ArrowLeftRight, BookOpen, ChevronDown, ChevronRight, FileText, LayoutDashboard, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -8,12 +8,14 @@ import { useState } from "react";
 // Only pages that actually exist get a nav item -- Dashboard (Prompt 2),
 // Accounts (Prompt 4), Transactions (Prompt 5, bare-bones raw journal entry
 // UI -- Prompt 6 replaces it with friendly Income/Expense/Transfer screens
-// but keeps this nav slot). Future prompts add more as their pages land,
-// same convention as admin-frontend's own Sidebar.tsx.
+// but keeps this nav slot), Contacts (Prompt 8, foundation for Prompt 9's
+// Receivable/Payable). Future prompts add more as their pages land, same
+// convention as admin-frontend's own Sidebar.tsx.
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Accounts", href: "/accounts", icon: BookOpen },
   { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
+  { label: "Contacts", href: "/contacts", icon: Users },
 ];
 
 // Was a disabled placeholder since Prompt 1 -- General Ledger and Trial
