@@ -128,6 +128,7 @@ export function ContactDetailPageClient({ businessId, contact, balanceDetail, ca
         <ReceivablePayableSection
           businessId={businessId}
           contactId={contact.id}
+          contactCategory={contact.category}
           direction="RECEIVABLE"
           breakdown={balanceDetail.receivable}
           currency={currency}
@@ -138,6 +139,7 @@ export function ContactDetailPageClient({ businessId, contact, balanceDetail, ca
         <ReceivablePayableSection
           businessId={businessId}
           contactId={contact.id}
+          contactCategory={contact.category}
           direction="PAYABLE"
           breakdown={balanceDetail.payable}
           currency={currency}

@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import { LoanTransactionsPageClient } from "@/components/loan-management/LoanTransactionsPageClient";
 import { resolveActiveBusinessId } from "@/lib/activeBusiness";
+import { getContacts } from "@/lib/contacts";
 import { getCurrentUser } from "@/lib/auth";
+import { resolveDateRange, type DateRangePreset } from "@/lib/dateRangePresets";
 import { getTransactions } from "@/lib/transactions";
 
-export default async function LoanTransactionsPage() {
+export default async function LoanTransactionsPage({ searchParams }: PageProps<"/loan-management/transactions">) {
+  const params = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -12,7 +15,30 @@ export default async function LoanTransactionsPage() {
   if (!activeBusinessId) redirect("/dashboard");
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
-  const { data: transactions } = await getTransactions(activeBusinessId, { contactCategory: "LOAN", limit: 100 });
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  return <LoanTransactionsPageClient transactions={transactions} currency={activeBusiness?.currency ?? "BDT"} />;
+  const range = (typeof params.range === "string" ? params.range : "all") as DateRangePreset;
+  const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
+  const { dateFrom, dateTo } = resolveDateRange(range);
+
+  const { data: loanContacts } = await getContacts(activeBusinessId, { category: "LOAN" });
+  const { data: transactions } = await getTransactions(activeBusinessId, {
+    contactCategory: "LOAN",
+    contactId: selectedContactId || undefined,
+    dateFrom,
+    dateTo,
+    limit: 100,
+  });
+
+  return (
+    <LoanTransactionsPageClient
+      businessId={activeBusinessId}
+      transactions={transactions}
+      loanContacts={loanContacts}
+      canManage={canManage}
+      currency={activeBusiness?.currency ?? "BDT"}
+      range={range}
+      selectedContactId={selectedContactId}
+    />
+  );
 }

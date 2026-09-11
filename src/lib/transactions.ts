@@ -9,6 +9,7 @@ export interface TransactionFilters {
   dateTo?: string;
   transactionType?: TransactionType;
   accountId?: string;
+  contactId?: string;
   contactCategory?: ContactCategory;
   search?: string;
   limit?: number;

@@ -2,9 +2,11 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
+import type { Account, ContactCategory } from "@/lib/api";
+import { getMoneyAccountsAction } from "@/lib/quickEntryActions";
 import { recordPurchaseAction, recordSaleAction } from "@/lib/receivablesPayablesActions";
 
 interface RecordInvoiceModalProps {
@@ -12,16 +14,28 @@ interface RecordInvoiceModalProps {
   onClose: () => void;
   businessId: string;
   contactId: string;
+  contactCategory: ContactCategory;
   direction: "RECEIVABLE" | "PAYABLE";
 }
 
-export function RecordInvoiceModal({ open, onClose, businessId, contactId, direction }: RecordInvoiceModalProps) {
+// For a BUSINESS contact this records a credit sale/purchase -- revenue/
+// expense recognized now, cash moves later (via Record Payment). For a
+// LOAN contact this gives/takes an actual loan -- real cash moves through
+// a money account right now (see
+// ReceivablesPayablesService.recordSale()'s comment on the backend), so
+// this form needs to ask which account that was.
+export function RecordInvoiceModal({ open, onClose, businessId, contactId, contactCategory, direction }: RecordInvoiceModalProps) {
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
+  const [moneyAccountId, setMoneyAccountId] = useState("");
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [isPending, startTransition] = useTransition();
+
+  const isLoan = contactCategory === "LOAN";
 
   // Render-time state-adjustment pattern, same convention used throughout
   // this app's modals.
@@ -33,11 +47,29 @@ export function RecordInvoiceModal({ open, onClose, businessId, contactId, direc
       setDate(new Date().toISOString().slice(0, 10));
       setDueDate("");
       setDescription("");
+      setMoneyAccountId("");
+      setLoadingAccounts(isLoan);
     }
   }
 
-  const title = direction === "RECEIVABLE" ? "Record Sale on Credit" : "Record Purchase on Credit";
+  useEffect(() => {
+    if (!open || !isLoan) return;
+    getMoneyAccountsAction(businessId).then((data) => {
+      setAccounts(data);
+      setMoneyAccountId((current) => current || data[0]?.id || "");
+      setLoadingAccounts(false);
+    });
+  }, [open, isLoan, businessId]);
+
+  const title = isLoan
+    ? direction === "RECEIVABLE"
+      ? "Give a Loan"
+      : "Take a Loan"
+    : direction === "RECEIVABLE"
+      ? "Record Sale on Credit"
+      : "Record Purchase on Credit";
   const amountLabel = direction === "RECEIVABLE" ? "Amount they owe you" : "Amount you owe them";
+  const accountLabel = direction === "RECEIVABLE" ? "Which account did the money leave from?" : "Which account did the money land in?";
 
   function handleSubmit() {
     startTransition(async () => {
@@ -47,11 +79,12 @@ export function RecordInvoiceModal({ open, onClose, businessId, contactId, direc
         date,
         dueDate: dueDate || undefined,
         description: description || undefined,
+        moneyAccountId: isLoan ? moneyAccountId : undefined,
       };
       const result = direction === "RECEIVABLE" ? await recordSaleAction(businessId, input) : await recordPurchaseAction(businessId, input);
 
       if (result.success) {
-        toast.success(direction === "RECEIVABLE" ? "Credit sale recorded" : "Credit purchase recorded");
+        toast.success(isLoan ? "Loan recorded" : direction === "RECEIVABLE" ? "Credit sale recorded" : "Credit purchase recorded");
         onClose();
         router.refresh();
       } else {
@@ -60,7 +93,7 @@ export function RecordInvoiceModal({ open, onClose, businessId, contactId, direc
     });
   }
 
-  const isValid = Number(amount) > 0;
+  const isValid = Number(amount) > 0 && (!isLoan || moneyAccountId.length > 0);
 
   return (
     <Modal open={open} onClose={onClose} title={title}>
@@ -77,6 +110,24 @@ export function RecordInvoiceModal({ open, onClose, businessId, contactId, direc
             className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-2xl font-semibold tabular-nums text-neutral-900 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
+
+        {isLoan && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{accountLabel}</label>
+            <select
+              value={moneyAccountId}
+              onChange={(e) => setMoneyAccountId(e.target.value)}
+              disabled={loadingAccounts}
+              className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
+            >
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div>

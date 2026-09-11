@@ -34,6 +34,10 @@ export interface RecordInvoiceInput {
   date: string;
   dueDate?: string;
   description?: string;
+  // Required when the contact's category is LOAN (giving/taking a loan
+  // moves real cash), ignored for a BUSINESS contact's credit sale/
+  // purchase (revenue/expense recognized now, cash moves later).
+  moneyAccountId?: string;
 }
 
 export async function recordSaleAction(businessId: string, input: RecordInvoiceInput): Promise<ActionResult<Transaction>> {

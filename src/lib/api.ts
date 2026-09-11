@@ -182,7 +182,7 @@ export interface TransactionEntry {
   amount: string;
   categoryId: string | null;
   note: string | null;
-  account?: { id: string; name: string; accountType: AccountType };
+  account?: { id: string; name: string; accountType: AccountType; accountSubtype: string | null };
 }
 
 export interface Transaction {
@@ -194,6 +194,10 @@ export interface Transaction {
   description: string | null;
   // Real FK since Prompt 8 (was a plain unconstrained field in Prompt 5).
   contactId: string | null;
+  // Populated by listTransactions() alongside contactId, for list-level UI
+  // (e.g. the Loan Management Transactions page) that needs the contact's
+  // name per row without a second fetch.
+  contact?: { id: string; name: string } | null;
   status: TransactionStatus;
   createdBy: string;
   createdAt: string;

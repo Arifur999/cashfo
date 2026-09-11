@@ -2,7 +2,7 @@
 
 import { AlertTriangle, Plus } from "lucide-react";
 import { useState } from "react";
-import type { DirectionBreakdown } from "@/lib/api";
+import type { ContactCategory, DirectionBreakdown } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { RecordInvoiceModal } from "./RecordInvoiceModal";
 import { RecordPaymentModal } from "./RecordPaymentModal";
@@ -10,19 +10,35 @@ import { RecordPaymentModal } from "./RecordPaymentModal";
 interface ReceivablePayableSectionProps {
   businessId: string;
   contactId: string;
+  contactCategory: ContactCategory;
   direction: "RECEIVABLE" | "PAYABLE";
   breakdown: DirectionBreakdown;
   currency: string;
   canManage: boolean;
 }
 
-export function ReceivablePayableSection({ businessId, contactId, direction, breakdown, currency, canManage }: ReceivablePayableSectionProps) {
+export function ReceivablePayableSection({
+  businessId,
+  contactId,
+  contactCategory,
+  direction,
+  breakdown,
+  currency,
+  canManage,
+}: ReceivablePayableSectionProps) {
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const isLoan = contactCategory === "LOAN";
 
   const heading = direction === "RECEIVABLE" ? "Receivable — টাকা পাবো" : "Payable — টাকা দেব";
   const remainingColor = direction === "RECEIVABLE" ? "text-brand-primary" : "text-brand-danger";
-  const invoiceButtonLabel = direction === "RECEIVABLE" ? "Record Sale on Credit" : "Record Purchase on Credit";
+  const invoiceButtonLabel = isLoan
+    ? direction === "RECEIVABLE"
+      ? "Give a Loan"
+      : "Take a Loan"
+    : direction === "RECEIVABLE"
+      ? "Record Sale on Credit"
+      : "Record Purchase on Credit";
 
   return (
     <div className="mt-6">
@@ -106,6 +122,7 @@ export function ReceivablePayableSection({ businessId, contactId, direction, bre
         onClose={() => setInvoiceModalOpen(false)}
         businessId={businessId}
         contactId={contactId}
+        contactCategory={contactCategory}
         direction={direction}
       />
       <RecordPaymentModal
