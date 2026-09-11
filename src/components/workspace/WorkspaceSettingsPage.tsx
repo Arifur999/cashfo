@@ -37,7 +37,7 @@ export function WorkspaceSettingsPage() {
 
       <div className="mt-6 space-y-3">
         {user.businesses.map((b) => (
-          <div key={b.id} className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm shadow-black/5">
+          <div key={b.id} className="flex items-center justify-between rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
             <div>
               <p className="font-medium text-neutral-900">
                 {b.name} {b.isDefault && <span className="ml-2 rounded-full bg-brand-primary/10 px-2 py-0.5 text-xs font-medium text-brand-primary">Default</span>}

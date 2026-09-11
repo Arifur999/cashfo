@@ -16,7 +16,7 @@ export function LanguageToggle({ value, onChange }: LanguageToggleProps) {
           type="button"
           onClick={() => onChange(lang)}
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-            value === lang ? "bg-white text-brand-primary shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+            value === lang ? "bg-surface text-brand-primary shadow-sm" : "text-neutral-500 hover:text-neutral-700"
           }`}
         >
           {lang === "EN" ? "English" : "বাংলা"}

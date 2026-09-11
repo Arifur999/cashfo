@@ -1,13 +1,63 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (not just prefers-color-scheme) so a manual toggle
+   (see components/providers/ThemeProvider.tsx) can override the system
+   setting. Matches an element carrying .dark, or any descendant of one. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f9fafb;
   --foreground: #171717;
+  --surface: #ffffff;
+  --content-bg: #f9fafb;
+
+  /* Tailwind's neutral scale, restated explicitly so the .dark block below
+     has the same variables to override. Values match Tailwind's built-in
+     neutral palette. */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #0a0a0a;
+}
+
+/* Dark mode: the neutral ramp is inverted (same trick either direction --
+   every existing bg-neutral-50/text-neutral-800/border-neutral-100 style
+   usage across the app automatically becomes "dark background, light
+   text" with no per-component changes, since Tailwind v4 utilities read
+   these as CSS variables at runtime, not values baked in at build time).
+   brand-primary/brand-danger/brand-dark are untouched -- green and red
+   read fine on both light and dark backgrounds, and the sidebar keeps its
+   own fixed dark-green brand color regardless of theme. */
+.dark {
+  --background: #101113;
+  --foreground: #f5f5f5;
+  --surface: #1b1c1f;
+  --content-bg: #101113;
+
+  --color-neutral-50: #0a0a0a;
+  --color-neutral-100: #171717;
+  --color-neutral-200: #262626;
+  --color-neutral-300: #404040;
+  --color-neutral-400: #8a8a8a;
+  --color-neutral-500: #a3a3a3;
+  --color-neutral-600: #d4d4d4;
+  --color-neutral-700: #e5e5e5;
+  --color-neutral-800: #f5f5f5;
+  --color-neutral-900: #fafafa;
+  --color-neutral-950: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
   --font-sans: var(--font-inter);
   --font-bn: var(--font-hind-siliguri); /* switched to per-user in a later prompt */
   --font-mono: var(--font-geist-mono);
@@ -21,7 +71,7 @@
   --color-brand-primary-hover: #16a34a;
   --color-brand-danger: #ef4444;
   --color-brand-danger-hover: #dc2626;
-  --color-brand-content: #f9fafb;
+  --color-brand-content: var(--content-bg);
 }
 
 body {

@@ -75,13 +75,13 @@ export function TransactionsPageClient({ transactions, accounts }: TransactionsP
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search description..."
-            className="w-56 rounded-xl border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
+            className="w-56 rounded-xl border border-neutral-200 bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
           />
         </form>
         <select
           value={searchParams.get("type") ?? ""}
           onChange={(e) => updateParam("type", e.target.value)}
-          className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary"
+          className="rounded-xl border border-neutral-200 bg-surface px-3 py-2 text-sm outline-none focus:border-brand-primary"
         >
           {TYPE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -92,7 +92,7 @@ export function TransactionsPageClient({ transactions, accounts }: TransactionsP
         <select
           value={searchParams.get("accountId") ?? ""}
           onChange={(e) => updateParam("accountId", e.target.value)}
-          className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary"
+          className="rounded-xl border border-neutral-200 bg-surface px-3 py-2 text-sm outline-none focus:border-brand-primary"
         >
           <option value="">All accounts</option>
           {accounts.map((a) => (
@@ -106,18 +106,18 @@ export function TransactionsPageClient({ transactions, accounts }: TransactionsP
           value={searchParams.get("dateFrom") ?? ""}
           onChange={(e) => updateParam("dateFrom", e.target.value)}
           title="From date"
-          className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary"
+          className="rounded-xl border border-neutral-200 bg-surface px-3 py-2 text-sm outline-none focus:border-brand-primary"
         />
         <input
           type="date"
           value={searchParams.get("dateTo") ?? ""}
           onChange={(e) => updateParam("dateTo", e.target.value)}
           title="To date"
-          className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary"
+          className="rounded-xl border border-neutral-200 bg-surface px-3 py-2 text-sm outline-none focus:border-brand-primary"
         />
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         {transactions.length === 0 && <p className="px-4 py-10 text-center text-sm text-neutral-400">Nothing here yet -- tap &quot;Add&quot; to get started.</p>}
         <div className="divide-y divide-neutral-50">
           {transactions.map((t) => {

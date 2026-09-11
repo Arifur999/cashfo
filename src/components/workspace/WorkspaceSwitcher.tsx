@@ -35,7 +35,7 @@ export function WorkspaceSwitcher() {
       {open && (
         <>
           <button type="button" aria-label="Close" className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-64 rounded-2xl bg-white p-2 shadow-lg shadow-black/10">
+          <div className="absolute right-0 z-20 mt-2 w-64 rounded-2xl bg-surface p-2 shadow-lg shadow-black/10">
             {personal && (
               <div className="mb-1">
                 <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wide text-neutral-400">Personal</p>

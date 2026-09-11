@@ -156,7 +156,7 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
         {initialGroups.map((group) => {
           const isOpen = openSections.has(group.accountType);
           return (
-            <div key={group.accountType} className="rounded-2xl bg-white shadow-sm shadow-black/5">
+            <div key={group.accountType} className="rounded-2xl bg-surface shadow-sm shadow-black/5">
               <button
                 type="button"
                 onClick={() => toggleSection(group.accountType)}

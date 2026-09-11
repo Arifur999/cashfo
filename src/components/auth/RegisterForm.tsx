@@ -58,7 +58,7 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg shadow-black/5">
+    <div className="w-full max-w-sm rounded-2xl bg-surface p-8 shadow-lg shadow-black/5">
       <LanguageToggle value={lang} onChange={setLang} />
 
       <h1 className="mb-1 text-xl font-semibold text-neutral-900">{t.registerTitle}</h1>

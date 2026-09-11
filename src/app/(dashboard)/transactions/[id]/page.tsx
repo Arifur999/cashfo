@@ -37,7 +37,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-2xl bg-white shadow-sm shadow-black/5">
+      <div className="overflow-x-auto rounded-2xl bg-surface shadow-sm shadow-black/5">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
             <tr>

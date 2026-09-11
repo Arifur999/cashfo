@@ -30,7 +30,7 @@ export function TrialBalancePageClient({ data, preferredLanguage, currency }: Tr
         </div>
       )}
 
-      <div className="mt-6 overflow-x-auto rounded-2xl bg-white shadow-sm shadow-black/5">
+      <div className="mt-6 overflow-x-auto rounded-2xl bg-surface shadow-sm shadow-black/5">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
             <tr>

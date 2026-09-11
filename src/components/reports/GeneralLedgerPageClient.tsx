@@ -38,7 +38,7 @@ export function GeneralLedgerPageClient({ groups, preferredLanguage, currency }:
         {groups.map((group) => {
           const isOpen = openSections.has(group.accountType);
           return (
-            <div key={group.accountType} className="rounded-2xl bg-white shadow-sm shadow-black/5">
+            <div key={group.accountType} className="rounded-2xl bg-surface shadow-sm shadow-black/5">
               <button type="button" onClick={() => toggleSection(group.accountType)} className="flex w-full items-center justify-between px-4 py-3">
                 <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
                   {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}

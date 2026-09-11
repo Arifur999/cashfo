@@ -28,7 +28,7 @@ export function AgingReportPageClient({ title, report, currency, accentColor }: 
         {BUCKETS.map((bucket) => {
           const rows = report.contacts.filter((c) => Number(c[bucket.key]) > 0);
           return (
-            <div key={bucket.key} className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
+            <div key={bucket.key} className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
               <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
                 <span className="text-sm font-semibold text-neutral-900">{bucket.label}</span>
                 <span className={`text-sm font-bold tabular-nums ${accentColor}`}>{formatCurrency(report.buckets[bucket.key], currency)}</span>

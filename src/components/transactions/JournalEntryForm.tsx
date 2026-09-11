@@ -69,7 +69,7 @@ export function JournalEntryForm({ businessId, accounts }: JournalEntryFormProps
   }
 
   return (
-    <div className="space-y-5 rounded-2xl bg-white p-6 shadow-sm shadow-black/5">
+    <div className="space-y-5 rounded-2xl bg-surface p-6 shadow-sm shadow-black/5">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">Transaction Type</label>

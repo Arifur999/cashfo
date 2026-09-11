@@ -85,15 +85,15 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl bg-white p-4 shadow-sm shadow-black/5">
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Total In</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-brand-primary">{formatCurrency(summary.totalIn, currency)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-4 shadow-sm shadow-black/5">
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Total Out</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-brand-danger">{formatCurrency(summary.totalOut, currency)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-4 shadow-sm shadow-black/5">
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Transactions</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-neutral-800">{summary.transactionCount}</p>
         </div>
@@ -106,7 +106,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
             type="button"
             onClick={() => setRange(opt.value)}
             className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              preset === opt.value ? "bg-brand-primary text-white" : "bg-white text-neutral-600 hover:bg-neutral-100"
+              preset === opt.value ? "bg-brand-primary text-white" : "bg-surface text-neutral-600 hover:bg-neutral-100"
             }`}
           >
             {opt.label}
@@ -118,20 +118,20 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
               type="date"
               value={customFrom ?? ""}
               onChange={(e) => setCustomDate("dateFrom", e.target.value)}
-              className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
+              className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
             />
             <span className="text-sm text-neutral-400">to</span>
             <input
               type="date"
               value={customTo ?? ""}
               onChange={(e) => setCustomDate("dateTo", e.target.value)}
-              className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
+              className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
             />
           </>
         )}
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
+      <div className="mt-6 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         {isFiltered && (
           <div className="flex items-center justify-between border-b border-neutral-100 bg-neutral-50/60 px-4 py-2.5 text-sm">
             <span className="text-neutral-500">Balance brought forward</span>

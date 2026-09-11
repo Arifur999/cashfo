@@ -96,7 +96,7 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
               type="button"
               onClick={() => updateParam("type", pill.value)}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                activeType === pill.value ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+                activeType === pill.value ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
               }`}
             >
               {pill.label}
@@ -109,12 +109,12 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search name, phone, email..."
-            className="w-64 rounded-xl border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
+            className="w-64 rounded-xl border border-neutral-200 bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
           />
         </form>
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         {contacts.length === 0 && <p className="px-4 py-10 text-center text-sm text-neutral-400">No contacts yet.</p>}
         <div className="divide-y divide-neutral-50">
           {contacts.map((contact) => {

@@ -62,7 +62,7 @@ export function ReceivablePayableSection({ businessId, contactId, direction, bre
         </div>
       )}
 
-      <div className="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
+      <div className="mt-4 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         {breakdown.transactions.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-neutral-400">Nothing recorded yet.</p>
         ) : (

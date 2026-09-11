@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Hind_Siliguri, Inter } from "next/font/google";
 import { Toaster } from "sonner";
+import { THEME_INIT_SCRIPT, ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,14 +29,27 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${hindSiliguri.variable} h-full antialiased`}>
+    // suppressHydrationWarning here too -- the beforeInteractive script
+    // below adds/removes the "dark" class on this element before React
+    // hydrates, based on localStorage/prefers-color-scheme (neither of
+    // which the server can see), so its className can legitimately differ
+    // from what the server rendered. See ThemeProvider.tsx for the full
+    // explanation.
+    <html lang="en" className={`${inter.variable} ${hindSiliguri.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+      </head>
       {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla) inject
           attributes like cz-shortcut-listen onto <body> after the server HTML
           is sent, which otherwise trips React's hydration mismatch check even
           though nothing is actually wrong. */}
       <body className="min-h-full flex flex-col bg-brand-content" suppressHydrationWarning>
-        {children}
-        <Toaster richColors position="top-right" />
+        <ThemeProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

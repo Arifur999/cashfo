@@ -56,15 +56,15 @@ export function DenaPawnaPageClient({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl bg-white p-4 shadow-sm shadow-black/5">
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs uppercase tracking-wide text-neutral-400">Total Receivable</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-brand-primary">{formatCurrency(totalReceivable, currency)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-4 shadow-sm shadow-black/5">
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs uppercase tracking-wide text-neutral-400">Total Payable</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-brand-danger">{formatCurrency(totalPayable, currency)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-4 shadow-sm shadow-black/5">
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs uppercase tracking-wide text-neutral-400">Overdue</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-neutral-800">{totalOverdueCount}</p>
         </div>
@@ -76,7 +76,7 @@ export function DenaPawnaPageClient({
             type="button"
             onClick={() => setTab("RECEIVABLE")}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "RECEIVABLE" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+              tab === "RECEIVABLE" ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
             Receivable — টাকা পাবো
@@ -85,7 +85,7 @@ export function DenaPawnaPageClient({
             type="button"
             onClick={() => setTab("PAYABLE")}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "PAYABLE" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+              tab === "PAYABLE" ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
             Payable — টাকা দেব
@@ -98,7 +98,7 @@ export function DenaPawnaPageClient({
         </label>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
+      <div className="mt-4 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         {rows.length === 0 ? (
           <p className="px-4 py-10 text-center text-sm text-neutral-400">
             {overdueOnly ? "Nothing overdue." : "Nothing outstanding right now."}

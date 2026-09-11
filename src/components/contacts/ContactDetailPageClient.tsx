@@ -44,7 +44,7 @@ export function ContactDetailPageClient({ businessId, contact, balanceDetail, ca
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
-      <div className="rounded-2xl bg-white p-6 shadow-sm shadow-black/5">
+      <div className="rounded-2xl bg-surface p-6 shadow-sm shadow-black/5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-lg font-semibold text-neutral-500">

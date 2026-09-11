@@ -2,6 +2,7 @@ import { Settings2 } from "lucide-react";
 import Link from "next/link";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import { QuickAddButton } from "@/components/quick-entry/QuickAddButton";
+import { ThemeToggle } from "./ThemeToggle";
 import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 
 // Page navigation (Dashboard, Accounts, ...) lives in Sidebar.tsx now --
@@ -12,8 +13,9 @@ import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 // regardless of where in the tree it's mounted) -- one mount covers both.
 export function TopBar() {
   return (
-    <header className="flex h-16 items-center justify-end gap-3 border-b border-neutral-100 bg-white px-6">
+    <header className="flex h-16 items-center justify-end gap-3 border-b border-neutral-100 bg-surface px-6">
       <QuickAddButton />
+      <ThemeToggle />
       <Link
         href="/settings/workspaces"
         title="Manage workspaces"

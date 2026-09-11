@@ -31,7 +31,7 @@ export function QuickAddButton() {
   const menu = open && (
     <>
       <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
-      <div className="absolute bottom-full right-0 z-50 mb-2 w-56 space-y-1 rounded-2xl bg-white p-2 shadow-lg shadow-black/10 md:bottom-auto md:top-full md:mb-0 md:mt-2">
+      <div className="absolute bottom-full right-0 z-50 mb-2 w-56 space-y-1 rounded-2xl bg-surface p-2 shadow-lg shadow-black/10 md:bottom-auto md:top-full md:mb-0 md:mt-2">
         <button
           type="button"
           onClick={() => openModal("income")}
