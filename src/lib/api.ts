@@ -66,6 +66,7 @@ export interface Account {
   parentId: string | null;
   name: string;
   nameBn: string | null;
+  accountNumber: string | null;
   accountType: AccountType;
   accountSubtype: string | null;
   // Decimal columns arrive as strings over JSON, not numbers -- same

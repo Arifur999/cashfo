@@ -31,9 +31,13 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 export interface AccountFormInput {
   name: string;
   nameBn?: string;
+  accountNumber?: string;
   accountType: AccountType;
   accountSubtype?: string;
   parentId?: string;
+  // Create-only, same convention as Contact.openingBalance -- see
+  // UpdateAccountDto on the backend for why it's excluded from edits.
+  openingBalance?: string;
 }
 
 export async function createAccountAction(businessId: string, input: AccountFormInput): Promise<ActionResult<Account>> {

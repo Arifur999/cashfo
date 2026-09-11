@@ -18,6 +18,25 @@ export const getAccounts = cache(async (businessId: string): Promise<AccountGrou
   }
 });
 
+// For the Wallet management page -- money accounts of every status
+// (archived ones stay visible, struck through), unlike
+// quickEntryActions.ts's getMoneyAccountsAction which is ACTIVE-only
+// (correct for a "pick an account for a new transaction" dropdown, wrong
+// for a management list).
+export const getWallets = cache(async (businessId: string): Promise<Account[]> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const response = await axios.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/wallets`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data;
+  } catch {
+    return [];
+  }
+});
+
 export const getAccount = cache(async (businessId: string, accountId: string): Promise<Account | null> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return null;

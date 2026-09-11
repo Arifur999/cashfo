@@ -22,15 +22,17 @@ const REST_NAV_ITEMS = [
   { label: "Dena-Pawna", href: "/dena-pawna", icon: HandCoins },
 ];
 
-// Overview/Balance Transfer are new lightweight pages built specifically
-// for this group; Account Ledger and Wallet just link to pages that
-// already existed (General Ledger from Prompt 7, the Chart of Accounts
-// from Prompt 4) under new labels matching the reference layout.
+// Overview/Balance Transfer/Wallet are dedicated pages built specifically
+// for this group; Account Ledger just links to the existing General
+// Ledger page (Prompt 7). Wallet manages money accounts (cash/bank/mfs)
+// with a simplified name/account-number/opening-balance form -- distinct
+// from the full Chart of Accounts at /accounts (still reachable, just not
+// linked directly from this sidebar; see WalletPageClient's row links).
 const BALANCE_ITEMS = [
   { label: "Overview", href: "/balance/overview" },
   { label: "Balance Transfer", href: "/balance/transfer" },
   { label: "Account Ledger", href: "/reports/general-ledger" },
-  { label: "Wallet", href: "/accounts" },
+  { label: "Wallet", href: "/balance/wallet" },
 ];
 
 // Was a disabled placeholder since Prompt 1 -- General Ledger and Trial
