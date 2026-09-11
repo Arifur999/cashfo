@@ -15,6 +15,8 @@ interface BankPersonFormModalProps {
   editingContact: Contact | null;
 }
 
+type OpeningBalanceKind = "PAWNA" | "DENA" | "ZERO";
+
 // A bank/loan contact defaults to type "BOTH" -- unlike Dena-Pawna's
 // Customer/Supplier split, a person or bank you have a loan relationship
 // with can naturally both receive loans from you AND give you loans over
@@ -26,8 +28,10 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
   const router = useRouter();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [balanceKind, setBalanceKind] = useState<OpeningBalanceKind>("ZERO");
   const [openingBalance, setOpeningBalance] = useState("");
+  const [notes, setNotes] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState<string>("closed");
@@ -38,12 +42,15 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
       if (editingContact) {
         setName(editingContact.name);
         setPhone(editingContact.phone ?? "");
-        setEmail(editingContact.email ?? "");
+        setAddress(editingContact.address ?? "");
+        setNotes(editingContact.notes ?? "");
       } else {
         setName("");
         setPhone("");
-        setEmail("");
+        setAddress("");
+        setBalanceKind("ZERO");
         setOpeningBalance("");
+        setNotes("");
       }
     }
   }
@@ -54,15 +61,22 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
         ? await updateContactAction(businessId, editingContact.id, {
             name,
             phone: phone || undefined,
-            email: email || undefined,
+            address: address || undefined,
+            notes: notes || undefined,
           })
         : await createContactAction(businessId, {
             name,
             type: "BOTH",
             category: "LOAN",
             phone: phone || undefined,
-            email: email || undefined,
-            openingBalance: openingBalance || undefined,
+            address: address || undefined,
+            notes: notes || undefined,
+            // Pawna ("they owe us") is positive, Dena ("we owe them") is
+            // negative -- same sign convention as everywhere else in this
+            // app (Contact.currentBalance, the Loan Dashboard's Total
+            // Dena/Pawna split). Zero Balance skips asking for an amount.
+            openingBalance:
+              balanceKind === "ZERO" ? undefined : balanceKind === "DENA" ? String(-Math.abs(Number(openingBalance || 0))) : openingBalance || undefined,
           });
 
       if (result.success) {
@@ -75,13 +89,15 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
     });
   }
 
-  const isValid = name.trim().length > 0 && (phone.trim().length > 0 || email.trim().length > 0);
+  const isValid = name.trim().length > 0 && phone.trim().length > 0;
 
   return (
     <Modal open={open} onClose={onClose} title={editingContact ? "Edit Bank / Person" : "Add Bank / Person"}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            Name <span className="text-brand-danger">*</span>
+          </label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -91,48 +107,96 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Phone</label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="01XXXXXXXXX"
-              className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Email</label>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
-              className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-            />
-          </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            Phone <span className="text-brand-danger">*</span>
+          </label>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="01XXXXXXXXX"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
         </div>
-        {phone.trim().length === 0 && email.trim().length === 0 && (
-          <p className="text-xs text-neutral-400">Provide at least a phone number or an email.</p>
-        )}
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            Address <span className="text-neutral-400">(optional)</span>
+          </label>
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
+        </div>
 
         {!editingContact && (
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Opening Balance <span className="text-neutral-400">(optional)</span>
-            </label>
-            <input
-              value={openingBalance}
-              onChange={(e) => setOpeningBalance(e.target.value)}
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-            />
-            <p className="mt-1 text-xs text-neutral-400">
-              Positive if they already owe you (Pawna); negative if you already owe them (Dena).
-            </p>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">Opening Balance</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setBalanceKind("PAWNA")}
+                className={`rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
+                  balanceKind === "PAWNA" ? "border-brand-primary bg-brand-primary/10" : "border-neutral-200 hover:bg-neutral-50"
+                }`}
+              >
+                <span className="flex items-center gap-1.5 font-medium text-neutral-800">
+                  <span className="h-2 w-2 rounded-full bg-brand-primary" /> Pawna
+                </span>
+                <span className="text-xs text-neutral-400">They owe us</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setBalanceKind("DENA")}
+                className={`rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
+                  balanceKind === "DENA" ? "border-brand-danger bg-brand-danger/10" : "border-neutral-200 hover:bg-neutral-50"
+                }`}
+              >
+                <span className="flex items-center gap-1.5 font-medium text-neutral-800">
+                  <span className="h-2 w-2 rounded-full bg-brand-danger" /> Dena
+                </span>
+                <span className="text-xs text-neutral-400">We owe them</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setBalanceKind("ZERO")}
+                className={`rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
+                  balanceKind === "ZERO" ? "border-neutral-400 bg-neutral-100" : "border-neutral-200 hover:bg-neutral-50"
+                }`}
+              >
+                <span className="flex items-center gap-1.5 font-medium text-neutral-800">
+                  <span className="h-2 w-2 rounded-full bg-neutral-300" /> Zero Balance
+                </span>
+                <span className="text-xs text-neutral-400">Nothing outstanding</span>
+              </button>
+            </div>
+            {balanceKind !== "ZERO" && (
+              <input
+                value={openingBalance}
+                onChange={(e) => setOpeningBalance(e.target.value)}
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                autoFocus
+                className="mt-2 w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+              />
+            )}
           </div>
         )}
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            Notes <span className="text-neutral-400">(optional)</span>
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
+        </div>
       </div>
 
       <div className="mt-5 flex justify-end gap-3">
@@ -146,7 +210,7 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingContact ? "Save Changes" : "Create"}
+          {editingContact ? "Save Changes" : "Save"}
         </button>
       </div>
     </Modal>
