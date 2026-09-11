@@ -1,45 +1,33 @@
 "use client";
 
-import { ArrowDownCircle, ArrowUpCircle, Archive, Circle, Mail, MapPin, Pencil, Phone } from "lucide-react";
-import Link from "next/link";
+import { Archive, Mail, MapPin, Pencil, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { archiveContactAction } from "@/lib/contactActions";
-import type { Contact, Transaction, TransactionType } from "@/lib/api";
+import type { Contact, ContactBalanceDetail } from "@/lib/api";
 import { BALANCE_DIRECTION_COLOR, BALANCE_DIRECTION_LABEL, balanceDirection, CONTACT_TYPE_LABELS, contactInitials } from "@/lib/contactDisplay";
 import { formatCurrency } from "@/lib/currency";
+import { ReceivablePayableSection } from "@/components/receivables-payables/ReceivablePayableSection";
 import { ContactFormModal } from "./ContactFormModal";
 
 interface ContactDetailPageClientProps {
   businessId: string;
   contact: Contact;
-  transactions: Transaction[];
+  balanceDetail: ContactBalanceDetail;
   canManage: boolean;
   currency: string;
 }
 
-function typeVisual(type: TransactionType) {
-  switch (type) {
-    case "INCOME":
-    case "SALE":
-    case "PAYMENT":
-      return { Icon: ArrowUpCircle, color: "text-brand-primary" };
-    case "EXPENSE":
-    case "PURCHASE":
-      return { Icon: ArrowDownCircle, color: "text-brand-danger" };
-    default:
-      return { Icon: Circle, color: "text-neutral-400" };
-  }
-}
-
-export function ContactDetailPageClient({ businessId, contact, transactions, canManage, currency }: ContactDetailPageClientProps) {
+export function ContactDetailPageClient({ businessId, contact, balanceDetail, canManage, currency }: ContactDetailPageClientProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const direction = balanceDirection(contact.currentBalance);
   const isArchived = contact.status === "ARCHIVED";
+  const showReceivable = contact.type === "CUSTOMER" || contact.type === "BOTH";
+  const showPayable = contact.type === "SUPPLIER" || contact.type === "BOTH";
 
   function handleArchive() {
     if (!window.confirm(`Archive "${contact.name}"?`)) return;
@@ -136,41 +124,26 @@ export function ContactDetailPageClient({ businessId, contact, transactions, can
         )}
       </div>
 
-      <div className="mt-6">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-900">Activity</h2>
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
-          {transactions.length === 0 ? (
-            <p className="px-4 py-10 text-center text-sm text-neutral-400">
-              No transactions with this contact yet.
-            </p>
-          ) : (
-            <div className="divide-y divide-neutral-50">
-              {transactions.map((t) => {
-                const { Icon, color } = typeVisual(t.transactionType);
-                const isVoided = t.status === "VOIDED";
-                return (
-                  <Link
-                    key={t.id}
-                    href={`/transactions/${t.id}`}
-                    className={`flex items-center gap-3 px-4 py-3 hover:bg-neutral-50/60 ${isVoided ? "opacity-50" : ""}`}
-                  >
-                    <Icon className={`h-6 w-6 shrink-0 ${color}`} />
-                    <div className="min-w-0 flex-1">
-                      <p className={`truncate text-sm font-medium text-neutral-800 ${isVoided ? "line-through" : ""}`}>
-                        {t.description ?? t.transactionType}
-                      </p>
-                      <p className="text-xs text-neutral-400">
-                        {new Date(t.transactionDate).toLocaleDateString()}
-                        {isVoided && <span className="text-brand-danger"> · Voided</span>}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+      {showReceivable && (
+        <ReceivablePayableSection
+          businessId={businessId}
+          contactId={contact.id}
+          direction="RECEIVABLE"
+          breakdown={balanceDetail.receivable}
+          currency={currency}
+          canManage={canManage}
+        />
+      )}
+      {showPayable && (
+        <ReceivablePayableSection
+          businessId={businessId}
+          contactId={contact.id}
+          direction="PAYABLE"
+          breakdown={balanceDetail.payable}
+          currency={currency}
+          canManage={canManage}
+        />
+      )}
 
       <ContactFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingContact={contact} />
     </div>

@@ -1,7 +1,7 @@
 // Server-only helpers, same shape as lib/accounts.ts.
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type Contact, type ContactListResponse, type ContactStatus, type ContactType, type TransactionListResponse } from "./api";
+import { API_BASE_URL, type Contact, type ContactListResponse, type ContactStatus, type ContactType } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 export interface ContactFilters {
@@ -40,21 +40,5 @@ export const getContact = cache(async (businessId: string, contactId: string): P
     return response.data;
   } catch {
     return null;
-  }
-});
-
-const EMPTY_TRANSACTIONS: TransactionListResponse = { data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } };
-
-export const getContactTransactions = cache(async (businessId: string, contactId: string): Promise<TransactionListResponse> => {
-  const accessToken = await getAccessToken();
-  if (!accessToken) return EMPTY_TRANSACTIONS;
-
-  try {
-    const response = await axios.get<TransactionListResponse>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/transactions`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    return response.data;
-  } catch {
-    return EMPTY_TRANSACTIONS;
   }
 });

@@ -218,6 +218,64 @@ export interface ContactListResponse {
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
+// Prompt 9: Receivable/Payable. FIFO allocation (see
+// ReceivablesPayablesService.computeDirection() on the backend) is entirely
+// a read-time computation -- this breakdown is derived fresh on every
+// request, never stored.
+export interface InvoiceBreakdown {
+  transactionId: string;
+  date: string;
+  description: string | null;
+  originalAmount: string;
+  amountPaid: string;
+  remainingAmount: string;
+  dueDate: string | null;
+  isOverdue: boolean;
+}
+
+export interface DirectionBreakdown {
+  totalInvoiced: string;
+  totalPaid: string;
+  remaining: string;
+  transactions: InvoiceBreakdown[];
+}
+
+export interface ContactBalanceDetail {
+  contactId: string;
+  openingBalance: string;
+  currentBalance: string;
+  receivable: DirectionBreakdown;
+  payable: DirectionBreakdown;
+}
+
+export interface AgingBucketRow {
+  contactId: string;
+  contactName: string;
+  current: string;
+  days1to30: string;
+  days31to60: string;
+  over60: string;
+  total: string;
+  totalInvoiced: string;
+  totalPaid: string;
+}
+
+export interface AgingReport {
+  buckets: { current: string; days1to30: string; days31to60: string; over60: string };
+  contacts: AgingBucketRow[];
+}
+
+export interface OverdueRow {
+  contactId: string;
+  contactName: string;
+  transactionId: string;
+  description: string | null;
+  originalAmount: string;
+  remainingAmount: string;
+  dueDate: string;
+  daysOverdue: number;
+}
+
 interface NestErrorBody {
   statusCode: number;
   message: string | string[];
