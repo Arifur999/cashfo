@@ -1,7 +1,7 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type Account, type AccountGroup, type AccountLedger, type AccountSummary } from "./api";
+import { API_BASE_URL, type Account, type AccountGroup, type AccountLedger, type AccountSummary, type WalletsOverview } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 export const getAccounts = cache(async (businessId: string): Promise<AccountGroup[]> => {
@@ -34,6 +34,24 @@ export const getWallets = cache(async (businessId: string): Promise<Account[]> =
     return response.data;
   } catch {
     return [];
+  }
+});
+
+const EMPTY_WALLETS_OVERVIEW: WalletsOverview = { totalAccounts: 0, totalBalance: "0.00", inactiveAmount: "0.00", availableBalance: "0.00", accounts: [] };
+
+// For the Balance Overview page -- per-wallet opening/in/out/current
+// figures plus workspace-wide totals.
+export const getWalletsOverview = cache(async (businessId: string): Promise<WalletsOverview> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return EMPTY_WALLETS_OVERVIEW;
+
+  try {
+    const response = await axios.get<WalletsOverview>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/wallets-overview`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data;
+  } catch {
+    return EMPTY_WALLETS_OVERVIEW;
   }
 });
 

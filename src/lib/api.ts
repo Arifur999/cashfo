@@ -84,6 +84,26 @@ export interface AccountGroup {
   accounts: Account[];
 }
 
+export interface WalletOverviewRow {
+  id: string;
+  name: string;
+  nameBn: string | null;
+  accountNumber: string | null;
+  status: AccountStatus;
+  openingBalance: string;
+  totalIn: string;
+  totalOut: string;
+  currentBalance: string;
+}
+
+export interface WalletsOverview {
+  totalAccounts: number;
+  totalBalance: string;
+  inactiveAmount: string;
+  availableBalance: string;
+  accounts: WalletOverviewRow[];
+}
+
 export interface LedgerRow {
   entryId: string;
   transactionId: string;
