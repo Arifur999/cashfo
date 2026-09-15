@@ -1,8 +1,8 @@
 import { Settings2 } from "lucide-react";
 import Link from "next/link";
-import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import { QuickAddButton } from "@/components/quick-entry/QuickAddButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { UserMenu } from "./UserMenu";
 import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 
 // Page navigation (Dashboard, Accounts, ...) lives in Sidebar.tsx now --
@@ -11,6 +11,9 @@ import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 // QuickAddButton renders both the desktop inline "+ Add" trigger (shown
 // here) AND the mobile floating one (fixed-positioned, so it's visible
 // regardless of where in the tree it's mounted) -- one mount covers both.
+// UserMenu (avatar + dropdown) replaced the old standalone "Sign Out"
+// button -- logout now lives inside that dropdown, alongside Profile/
+// Settings links, matching the reference layout.
 export function TopBar() {
   return (
     <header className="flex h-16 items-center justify-end gap-3 border-b border-neutral-100 bg-surface px-6">
@@ -24,7 +27,7 @@ export function TopBar() {
         <Settings2 className="h-4 w-4" />
       </Link>
       <WorkspaceSwitcher />
-      <LogoutButton />
+      <UserMenu />
     </header>
   );
 }

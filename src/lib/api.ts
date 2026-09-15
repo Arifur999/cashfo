@@ -35,9 +35,33 @@ export interface CurrentUser {
   name: string;
   email: string;
   phone: string | null;
+  avatarUrl: string | null;
   preferredLanguage: LanguagePreference;
   emailVerifiedAt: string | null;
   businesses: UserBusiness[];
+}
+
+// Settings > Security > Device Management. isCurrent is a best-effort
+// match on this request's ip+userAgent (see backend UserAuthService.
+// listSessions()'s comment) -- not a cryptographic guarantee.
+export interface UserSessionSummary {
+  id: string;
+  deviceLabel: string;
+  ipAddress: string;
+  createdAt: string;
+  lastUsedAt: string;
+  isCurrent: boolean;
+}
+
+// Settings > Security's "History" list -- every login attempt (success and
+// failure) against this account's email.
+export interface LoginHistoryEntry {
+  id: string;
+  ipAddress: string;
+  deviceLabel: string;
+  success: boolean;
+  failureReason: string | null;
+  createdAt: string;
 }
 
 export interface BusinessLimits {
@@ -458,9 +482,15 @@ export interface IncomeGoalSummary extends IncomeGoal {
 // /savings-goals/wallet, same CRUD as Balance's own Wallet page).
 // currentAmount/progressPercent/monthlyTarget are computed on read, never
 // stored.
-export type SavingsGoalStatus = "ACTIVE" | "PAUSED" | "COMPLETED";
+export type SavingsGoalStatus = "ACTIVE" | "PAUSED" | "COMPLETED" | "WITHDRAWN";
 export type SavingsReminderChannel = "EMAIL" | "PHONE";
-export type SavingsEntryType = "CONTRIBUTION" | "TRANSFER_OUT" | "TRANSFER_IN";
+export type SavingsEntryType = "CONTRIBUTION" | "TRANSFER_OUT" | "TRANSFER_IN" | "WITHDRAWAL";
+// Only ever set for an ACTIVE goal -- null for Paused/Completed/Withdrawn,
+// where "are you saving fast enough" no longer applies. See
+// SavingsGoalsService.computePaceStatus()/computeTrend()'s comments for
+// exactly how each is derived.
+export type SavingsGoalPaceStatus = "ON_TRACK" | "BEHIND" | "WARNING" | null;
+export type SavingsGoalTrend = "INCREASING" | "DECREASING" | "STABLE" | null;
 
 export interface SavingsGoal {
   id: string;
@@ -476,8 +506,14 @@ export interface SavingsGoal {
   createdAt: string;
   updatedAt: string;
   currentAmount: string;
+  // Only ever non-zero once withdraw() has run (always the goal's full
+  // saved amount at that moment) -- currentAmount itself is back to 0 by
+  // then, so this is what a WITHDRAWN card shows instead.
+  withdrawnAmount: string;
   progressPercent: number;
   monthlyTarget: string;
+  paceStatus: SavingsGoalPaceStatus;
+  trend: SavingsGoalTrend;
 }
 
 export interface SavingsGoalEntry {
@@ -507,12 +543,16 @@ export interface SavingsOverview {
 }
 
 // Savings Overview page (/savings-goals/overview) -- same shape as
-// WalletsOverview (Balance's own Overview page), except each row is a
-// SavingsGoal rather than a real Account.
+// WalletsOverview (Balance's own Overview page): each row is a real
+// Savings Wallet Account (accountSubtype "savings"), including the one
+// hidden pooled system account every business still has from before this
+// feature's per-wallet redesign (see backend SavingsGoalsService.
+// getAccountOverview()'s comment) -- name arrives pre-labelled
+// "... (Legacy Pool)" for that one row, nothing to special-case here.
 export interface SavingsAccountOverviewRow {
   id: string;
   name: string;
-  status: SavingsGoalStatus;
+  status: AccountStatus;
   openingBalance: string;
   totalIn: string;
   totalOut: string;

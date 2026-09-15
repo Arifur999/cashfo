@@ -1,11 +1,11 @@
 "use client";
 
-import { PiggyBank, Plus } from "lucide-react";
+import { Minus, PiggyBank, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import type { SavingsGoal, SavingsGoalStatus, SavingsOverview } from "@/lib/api";
+import type { SavingsGoal, SavingsGoalPaceStatus, SavingsGoalStatus, SavingsGoalTrend, SavingsOverview } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { deleteSavingsGoalAction, updateSavingsGoalStatusAction } from "@/lib/savingsGoalActions";
 import { AddContributionModal } from "./AddContributionModal";
@@ -13,6 +13,7 @@ import { GoalActionsMenu } from "./GoalActionsMenu";
 import { ProgressRing } from "./ProgressRing";
 import { SavingsGoalDetailModal } from "./SavingsGoalDetailModal";
 import { SavingsGoalFormModal } from "./SavingsGoalFormModal";
+import { SavingsWithdrawModal } from "./SavingsWithdrawModal";
 
 interface SavingsGoalsDashboardPageClientProps {
   businessId: string;
@@ -27,7 +28,42 @@ const FILTER_PILLS: { value: SavingsGoalStatus | ""; label: string }[] = [
   { value: "ACTIVE", label: "Active" },
   { value: "PAUSED", label: "Paused" },
   { value: "COMPLETED", label: "Completed" },
+  { value: "WITHDRAWN", label: "Withdrawn" },
 ];
+
+// "Are you saving fast enough for the target date" -- only ever set for an
+// ACTIVE goal, see SavingsGoalsService.computePaceStatus()'s comment for how
+// each tier is derived. No "ahead of pace" badge exists deliberately --
+// saving faster than planned is folded into ON_TRACK, never flagged.
+const PACE_LABEL: Record<NonNullable<SavingsGoalPaceStatus>, string> = {
+  ON_TRACK: "On Track",
+  BEHIND: "Behind Schedule",
+  WARNING: "Warning",
+};
+const PACE_BADGE_CLASSES: Record<NonNullable<SavingsGoalPaceStatus>, string> = {
+  ON_TRACK: "bg-brand-primary/10 text-brand-primary",
+  BEHIND: "bg-amber-100 text-amber-700",
+  WARNING: "bg-brand-danger/10 text-brand-danger",
+};
+
+// This month's contribution total vs last month's -- a separate signal from
+// paceStatus (a goal can be behind overall but trending the right
+// direction, or vice versa), see SavingsGoalsService.computeTrend().
+const TREND_LABEL: Record<NonNullable<SavingsGoalTrend>, string> = {
+  INCREASING: "Increasing",
+  DECREASING: "Decreasing",
+  STABLE: "Stable",
+};
+const TREND_ICON: Record<NonNullable<SavingsGoalTrend>, typeof TrendingUp> = {
+  INCREASING: TrendingUp,
+  DECREASING: TrendingDown,
+  STABLE: Minus,
+};
+const TREND_COLOR: Record<NonNullable<SavingsGoalTrend>, string> = {
+  INCREASING: "text-brand-primary",
+  DECREASING: "text-brand-danger",
+  STABLE: "text-neutral-400",
+};
 
 export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, currency, canManage }: SavingsGoalsDashboardPageClientProps) {
   const router = useRouter();
@@ -35,6 +71,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
   const [formOpen, setFormOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   const [contributionGoal, setContributionGoal] = useState<SavingsGoal | null>(null);
+  const [withdrawGoal, setWithdrawGoal] = useState<SavingsGoal | null>(null);
   const [detailGoalId, setDetailGoalId] = useState<string | null>(null);
   const [deletingGoal, setDeletingGoal] = useState<SavingsGoal | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -167,7 +204,10 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
           ) : (
             <div className="divide-y divide-neutral-50">
               {filteredGoals.map((goal) => (
-                <div key={goal.id} className="py-4 first:pt-0 last:pb-0">
+                <div
+                  key={goal.id}
+                  className={`py-4 first:pt-0 last:pb-0 ${goal.status === "WITHDRAWN" ? "-mx-3 rounded-xl bg-neutral-50 px-3" : ""}`}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary">
@@ -177,28 +217,53 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                         <p className="font-medium text-neutral-900">
                           {goal.name}
                           {goal.status !== "ACTIVE" && (
-                            <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500">
+                            <span
+                              className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                                goal.status === "WITHDRAWN" ? "bg-brand-primary/10 text-brand-primary" : "bg-neutral-100 text-neutral-500"
+                              }`}
+                            >
                               {goal.status}
+                            </span>
+                          )}
+                          {goal.paceStatus && (
+                            <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${PACE_BADGE_CLASSES[goal.paceStatus]}`}>
+                              {PACE_LABEL[goal.paceStatus]}
                             </span>
                           )}
                         </p>
                         <p className="text-xs text-neutral-400">Target: {new Date(goal.targetDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}</p>
+                        {goal.status === "WITHDRAWN" && (
+                          <p className="text-xs font-medium text-brand-primary">Withdrawn: {formatCurrency(goal.withdrawnAmount, currency)}</p>
+                        )}
+                        {goal.trend &&
+                          (() => {
+                            const TrendIcon = TREND_ICON[goal.trend];
+                            return (
+                              <p className={`mt-0.5 flex items-center gap-1 text-xs ${TREND_COLOR[goal.trend]}`}>
+                                <TrendIcon className="h-3 w-3" /> {TREND_LABEL[goal.trend]}
+                              </p>
+                            );
+                          })()}
                       </div>
                     </div>
                     {canManage && (
                       <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setContributionGoal(goal)}
-                          className="rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-                        >
-                          Add Funds
-                        </button>
+                        {goal.status !== "WITHDRAWN" && (
+                          <button
+                            type="button"
+                            onClick={() => setContributionGoal(goal)}
+                            className="rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+                          >
+                            Add Funds
+                          </button>
+                        )}
                         <GoalActionsMenu
                           status={goal.status}
+                          canWithdraw={goal.status !== "WITHDRAWN" && Number(goal.currentAmount) > 0}
                           onViewDetails={() => setDetailGoalId(goal.id)}
                           onEdit={() => openEdit(goal)}
                           onTogglePause={() => togglePause(goal)}
+                          onWithdraw={() => setWithdrawGoal(goal)}
                           onDelete={() => setDeletingGoal(goal)}
                         />
                       </div>
@@ -223,6 +288,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
 
       <SavingsGoalFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingGoal={editingGoal} />
       <AddContributionModal open={!!contributionGoal} onClose={() => setContributionGoal(null)} businessId={businessId} goal={contributionGoal} />
+      <SavingsWithdrawModal open={!!withdrawGoal} onClose={() => setWithdrawGoal(null)} businessId={businessId} goal={withdrawGoal} currency={currency} />
       <SavingsGoalDetailModal open={!!detailGoalId} onClose={() => setDetailGoalId(null)} businessId={businessId} goalId={detailGoalId} currency={currency} />
       <ConfirmModal
         open={!!deletingGoal}

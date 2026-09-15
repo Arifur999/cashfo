@@ -3,6 +3,7 @@
 import axios from "axios";
 import { redirect } from "next/navigation";
 import { API_BASE_URL, getApiErrorMessage, type AuthResponse } from "@/lib/api";
+import { clientRequestHeaders } from "@/lib/clientContext";
 import { setAuthCookies } from "@/lib/tokenCookies";
 
 export interface LoginActionResult {
@@ -12,7 +13,7 @@ export interface LoginActionResult {
 
 export async function loginAction(email: string, password: string): Promise<LoginActionResult | void> {
   try {
-    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/api/auth/login`, { email, password });
+    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/api/auth/login`, { email, password }, { headers: await clientRequestHeaders() });
     await setAuthCookies(response.data.accessToken, response.data.refreshToken);
   } catch (error) {
     if (axios.isAxiosError(error)) {

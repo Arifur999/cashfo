@@ -6,15 +6,17 @@ import type { SavingsGoalStatus } from "@/lib/api";
 
 interface GoalActionsMenuProps {
   status: SavingsGoalStatus;
+  canWithdraw: boolean;
   onViewDetails: () => void;
   onEdit: () => void;
   onTogglePause: () => void;
+  onWithdraw: () => void;
   onDelete: () => void;
 }
 
 // Small self-contained dropdown ("..." button) -- same outside-click-to-
 // close pattern as Combobox, scoped to just this one menu instance.
-export function GoalActionsMenu({ status, onViewDetails, onEdit, onTogglePause, onDelete }: GoalActionsMenuProps) {
+export function GoalActionsMenu({ status, canWithdraw, onViewDetails, onEdit, onTogglePause, onWithdraw, onDelete }: GoalActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -49,14 +51,21 @@ export function GoalActionsMenu({ status, onViewDetails, onEdit, onTogglePause, 
           <button type="button" onClick={() => run(onEdit)} className="block w-full px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50">
             Edit Goal
           </button>
-          {status !== "COMPLETED" && (
+          {status !== "COMPLETED" && status !== "WITHDRAWN" && (
             <button type="button" onClick={() => run(onTogglePause)} className="block w-full px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50">
               {status === "PAUSED" ? "Resume Goal" : "Pause Goal"}
             </button>
           )}
-          <button type="button" onClick={() => run(onDelete)} className="block w-full px-3.5 py-2 text-left text-sm text-brand-danger hover:bg-neutral-50">
-            Delete Goal
-          </button>
+          {canWithdraw && (
+            <button type="button" onClick={() => run(onWithdraw)} className="block w-full px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50">
+              Withdraw Savings
+            </button>
+          )}
+          {status !== "WITHDRAWN" && (
+            <button type="button" onClick={() => run(onDelete)} className="block w-full px-3.5 py-2 text-left text-sm text-brand-danger hover:bg-neutral-50">
+              Delete Goal
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@
 import axios from "axios";
 import { redirect } from "next/navigation";
 import { API_BASE_URL, getApiErrorMessage, type AuthResponse, type LanguagePreference } from "@/lib/api";
+import { clientRequestHeaders } from "@/lib/clientContext";
 import { setAuthCookies } from "@/lib/tokenCookies";
 
 export interface RegisterActionResult {
@@ -20,7 +21,7 @@ export interface RegisterInput {
 
 export async function registerAction(input: RegisterInput): Promise<RegisterActionResult | void> {
   try {
-    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/api/auth/register`, input);
+    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/api/auth/register`, input, { headers: await clientRequestHeaders() });
     await setAuthCookies(response.data.accessToken, response.data.refreshToken);
   } catch (error) {
     if (axios.isAxiosError(error)) {

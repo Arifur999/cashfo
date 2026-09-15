@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Banknote, ChevronDown, ChevronRight, FileText, Landmark, LayoutDashboard, PiggyBank } from "lucide-react";
+import { ArrowLeftRight, Banknote, ChevronDown, ChevronRight, FileText, Landmark, LayoutDashboard, PiggyBank, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +15,13 @@ import { useState } from "react";
 // reference layout the user asked for -- it's the same /accounts page,
 // just reachable from a different nav spot now.
 const TOP_NAV_ITEMS = [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }];
+
+// Reached from the TopBar avatar dropdown's "Profile"/"Settings" links
+// (/settings) -- placed last, below every feature group, matching where the
+// user asked for it. Also covers /settings/workspaces (already reachable
+// via the TopBar's own gear icon) since that's a sub-page of this same
+// Settings area.
+const BOTTOM_NAV_ITEMS = [{ label: "Settings", href: "/settings", icon: Settings }];
 
 // The standalone "Dena-Pawna" nav item was removed at the user's request --
 // Loan Management's own Dashboard/Transactions/Ledger already cover the
@@ -205,6 +212,10 @@ export function Sidebar() {
         <NavGroup icon={Banknote} label="Loan Management" items={LOAN_MANAGEMENT_ITEMS} isActive={isLoanManagementActive} />
         <NavGroup icon={ArrowLeftRight} label="Income & Expense" items={INCOME_EXPENSE_ITEMS} isActive={isIncomeExpenseActive} />
         <NavGroup icon={FileText} label="Reports" items={REPORTS_ITEMS} isActive={isReportsActive} />
+
+        {BOTTOM_NAV_ITEMS.map((item) => (
+          <NavLink key={item.href} item={item} isActive={pathname.startsWith(item.href)} />
+        ))}
       </nav>
     </aside>
   );

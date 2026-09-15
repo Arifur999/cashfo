@@ -19,7 +19,12 @@ const ENTRY_LABEL: Record<string, string> = {
   CONTRIBUTION: "Contribution",
   TRANSFER_IN: "Transfer In",
   TRANSFER_OUT: "Transfer Out",
+  WITHDRAWAL: "Withdrawal",
 };
+
+// TRANSFER_OUT and WITHDRAWAL both reduce a goal's saved amount -- shown as
+// a "-" outflow; everything else (CONTRIBUTION, TRANSFER_IN) is a "+" inflow.
+const OUTFLOW_TYPES = new Set(["TRANSFER_OUT", "WITHDRAWAL"]);
 
 export function SavingsGoalDetailModal({ open, onClose, businessId, goalId, currency }: SavingsGoalDetailModalProps) {
   const [detail, setDetail] = useState<SavingsGoalDetail | null>(null);
@@ -87,12 +92,12 @@ export function SavingsGoalDetailModal({ open, onClose, businessId, goalId, curr
                       <p className="text-xs text-neutral-400">
                         {new Date(entry.date).toLocaleDateString()}
                         {entry.moneyAccountName && ` · from ${entry.moneyAccountName}`}
-                        {entry.savingsAccountName && ` → ${entry.savingsAccountName}`}
+                        {entry.savingsAccountName && (entry.type === "WITHDRAWAL" ? ` · from ${entry.savingsAccountName}` : ` → ${entry.savingsAccountName}`)}
                         {entry.relatedGoalName && ` · ${entry.type === "TRANSFER_OUT" ? "to" : "from"} ${entry.relatedGoalName}`}
                       </p>
                     </div>
-                    <span className={`font-semibold tabular-nums ${entry.type === "TRANSFER_OUT" ? "text-brand-danger" : "text-brand-primary"}`}>
-                      {entry.type === "TRANSFER_OUT" ? "-" : "+"}
+                    <span className={`font-semibold tabular-nums ${OUTFLOW_TYPES.has(entry.type) ? "text-brand-danger" : "text-brand-primary"}`}>
+                      {OUTFLOW_TYPES.has(entry.type) ? "-" : "+"}
                       {formatCurrency(entry.amount, currency)}
                     </span>
                   </div>

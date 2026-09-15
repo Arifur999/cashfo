@@ -83,50 +83,40 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-50">
-              {wallets.map((wallet) => {
-                const isArchived = wallet.status === "ARCHIVED";
-                return (
-                  <tr key={wallet.id} className={isArchived ? "opacity-60" : ""}>
+              {wallets.map((wallet) => (
+                <tr key={wallet.id}>
+                  <td className="px-4 py-3">
+                    <Link href={`/accounts/${wallet.id}`} className="font-medium text-neutral-800 hover:underline">
+                      {wallet.name}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-neutral-500">{wallet.accountNumber ?? "--"}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(wallet.openingBalance, currency)}</td>
+                  {canManage && (
                     <td className="px-4 py-3">
-                      <Link href={`/accounts/${wallet.id}`} className={`font-medium text-neutral-800 hover:underline ${isArchived ? "line-through" : ""}`}>
-                        {wallet.name}
-                      </Link>
-                      {isArchived && (
-                        <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-                          Archived
-                        </span>
-                      )}
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(wallet)}
+                          title="Edit"
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => handleArchive(wallet)}
+                          title="Archive"
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                        >
+                          <Archive className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-neutral-500">{wallet.accountNumber ?? "--"}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(wallet.openingBalance, currency)}</td>
-                    {canManage && (
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => openEdit(wallet)}
-                            title="Edit"
-                            className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          {!isArchived && (
-                            <button
-                              type="button"
-                              disabled={isPending}
-                              onClick={() => handleArchive(wallet)}
-                              title="Archive"
-                              className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
-                            >
-                              <Archive className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
+                  )}
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
