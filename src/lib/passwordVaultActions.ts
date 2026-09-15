@@ -26,6 +26,14 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
     return { success: true, data };
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      // NestJS's ThrottlerException carries the literal string
+      // "ThrottlerException: Too Many Requests" as its message -- surfacing
+      // that raw to a user reads as a crash, not a rate limit, so it gets
+      // its own friendly copy instead of falling through to
+      // getApiErrorMessage() below.
+      if (error.response?.status === 429) {
+        return { success: false, message: "Too many attempts -- please wait a few minutes and try again." };
+      }
       return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage) };
     }
     return { success: false, message: fallbackMessage };
