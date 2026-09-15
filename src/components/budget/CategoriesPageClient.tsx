@@ -96,7 +96,7 @@ export function CategoriesPageClient({ businessId, incomeOverview, expenseOvervi
     <div className="h-full bg-brand-content px-6 py-8 pb-24 md:pb-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Categories</h1>
+          <h1 className="text-xl font-semibold text-neutral-900">Budget Planning</h1>
           <p className="mt-1 text-sm text-neutral-500">Organize your income sources and set spending limits, side by side.</p>
         </div>
 

@@ -98,9 +98,10 @@ const LOAN_MANAGEMENT_ITEMS = [
 // overall income goal -- per the user's explicit placement request, in this
 // order. "Income Category" and "Expense Category" used to be two separate
 // pages (/income-planning, /budget-planning); they're now one two-column
-// page at /categories (CategoriesPageClient), since the two page.tsx files
-// they used to route to were identical except for which BudgetCategoryType
-// they fetched. They're still NOT symmetric within that merged page: every
+// page at /categories (CategoriesPageClient, labeled "Budget Planning" in
+// the UI per the user's rename request), since the two page.tsx files they
+// used to route to were identical except for which BudgetCategoryType they
+// fetched. They're still NOT symmetric within that merged page: every
 // Expense category carries its own spending limit, but Income categories
 // have no per-category goal at all -- that's the single "Monthly income
 // goal" item instead (its own page, /income-goal). The old routes redirect
@@ -108,7 +109,7 @@ const LOAN_MANAGEMENT_ITEMS = [
 // back-button history don't 404.
 const INCOME_EXPENSE_ITEMS = [
   { label: "Transaction", href: "/transactions" },
-  { label: "Categories", href: "/categories" },
+  { label: "Budget Planning", href: "/categories" },
   { label: "Monthly income goal", href: "/income-goal" },
 ];
 

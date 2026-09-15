@@ -184,7 +184,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
               <p className="mt-1 text-xs text-neutral-400">
                 No categories yet --{" "}
                 <Link href={`/categories?addType=${kind}`} className="font-medium text-brand-primary hover:underline">
-                  add one under {kind === "INCOME" ? "Income" : "Expense"} Categories
+                  add one under Budget Planning
                 </Link>
                 .
               </p>
