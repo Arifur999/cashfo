@@ -33,10 +33,10 @@ export interface ContactFormInput {
   type: ContactType;
   category?: ContactCategory;
   phone?: string;
-  email?: string;
   address?: string;
   openingBalance?: string;
   notes?: string;
+  photoUrl?: string;
 }
 
 export async function createContactAction(businessId: string, input: ContactFormInput): Promise<ActionResult<Contact>> {
@@ -57,8 +57,48 @@ export async function updateContactAction(
   }, "Failed to update contact");
 }
 
+// Uses fetch(), not axios, specifically for this call -- axios's Node
+// adapter doesn't reliably set the multipart boundary header for a native
+// (web-standard) FormData body the way fetch does automatically. The
+// FormData itself is built client-side (a File the user picked) and
+// arrives here intact -- Server Actions support FormData as an argument.
+export async function uploadContactPhotoAction(businessId: string, formData: FormData): Promise<ActionResult<{ url: string }>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/businesses/${businessId}/contacts/upload-photo`, {
+      method: "POST",
+      headers: await authHeaders(),
+      body: formData,
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      return { success: false, message: getApiErrorMessage(body, "Failed to upload photo") };
+    }
+    return { success: true, data: await response.json() };
+  } catch {
+    return { success: false, message: "Failed to upload photo" };
+  }
+}
+
 export async function archiveContactAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}/archive`, {}, { headers: await authHeaders() });
   }, "Failed to archive contact");
+}
+
+export interface DeleteContactResult {
+  id: string;
+  // Real permanent delete when this contact has zero transactions;
+  // otherwise the backend falls back to archiving it instead (see
+  // ContactsService.delete()) -- the caller shows a different toast
+  // depending on which one actually happened.
+  action: "deleted" | "archived";
+}
+
+export async function deleteContactAction(businessId: string, id: string): Promise<ActionResult<DeleteContactResult>> {
+  return callApi(async () => {
+    const res = await axios.delete<DeleteContactResult>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}`, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to remove contact");
 }

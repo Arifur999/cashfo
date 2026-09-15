@@ -1,13 +1,14 @@
 "use client";
 
-import { Archive, Pencil, Plus, Search } from "lucide-react";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { archiveContactAction } from "@/lib/contactActions";
+import { deleteContactAction } from "@/lib/contactActions";
 import type { Contact, ContactType } from "@/lib/api";
 import { BALANCE_DIRECTION_COLOR, balanceDirection, CONTACT_TYPE_LABELS, contactInitials } from "@/lib/contactDisplay";
 import { formatCurrency } from "@/lib/currency";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ContactFormModal } from "./ContactFormModal";
 
 interface ContactsPageClientProps {
@@ -21,6 +22,8 @@ const FILTER_PILLS: { value: ContactType | ""; label: string }[] = [
   { value: "", label: "All" },
   { value: "CUSTOMER", label: "Customers" },
   { value: "SUPPLIER", label: "Suppliers" },
+  { value: "RELATIVE", label: "Relatives" },
+  { value: "OTHER", label: "Others" },
 ];
 
 export function ContactsPageClient({ businessId, contacts, canManage, currency }: ContactsPageClientProps) {
@@ -29,6 +32,7 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
   const [searchInput, setSearchInput] = useState(searchParams.get("search") ?? "");
   const [formOpen, setFormOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const activeType = (searchParams.get("type") as ContactType | null) ?? "";
@@ -56,16 +60,27 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
     setFormOpen(true);
   }
 
-  function handleArchive(e: React.MouseEvent, contact: Contact) {
+  // One button covering both real cases: permanently deletes if this
+  // contact has no transaction history, otherwise falls back to archiving
+  // it (see ContactsService.delete()) -- so there's a single confirm flow
+  // instead of two separate actions for what the user experiences as one
+  // "remove this contact" intent.
+  function confirmDelete(e: React.MouseEvent, contact: Contact) {
     e.stopPropagation();
-    if (!window.confirm(`Archive "${contact.name}"?`)) return;
+    setDeleteTarget(contact);
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    const contact = deleteTarget;
     startTransition(async () => {
-      const result = await archiveContactAction(businessId, contact.id);
+      const result = await deleteContactAction(businessId, contact.id);
       if (result.success) {
-        toast.success("Contact archived");
+        toast.success(result.data?.action === "archived" ? "This contact has transaction history, so it was archived instead" : "Contact deleted");
+        setDeleteTarget(null);
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to archive contact");
+        toast.error(result.message ?? "Failed to remove contact");
       }
     });
   }
@@ -166,12 +181,11 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
                     </button>
                     <button
                       type="button"
-                      disabled={isPending}
-                      onClick={(e) => handleArchive(e, contact)}
-                      title="Archive"
+                      onClick={(e) => confirmDelete(e, contact)}
+                      title="Delete"
                       className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                     >
-                      <Archive className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 )}
@@ -182,6 +196,20 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
       </div>
 
       <ContactFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingContact={editingContact} />
+
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title="Remove Contact"
+        message={
+          deleteTarget
+            ? `Remove "${deleteTarget.name}"? If this contact has no transaction history, it will be permanently deleted; otherwise it will be archived instead.`
+            : ""
+        }
+        confirmLabel="Remove"
+      />
     </div>
   );
 }

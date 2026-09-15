@@ -4,6 +4,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import type { Account } from "@/lib/api";
 import { createTransferAction, getMoneyAccountsAction } from "@/lib/quickEntryActions";
@@ -74,16 +75,8 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
     <Modal open={open} onClose={onClose} title="Move Money">
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Amount</label>
-          <input
-            type="number"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            autoFocus
-            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-2xl font-semibold tabular-nums text-neutral-800 outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200"
-          />
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <DatePicker value={date} onChange={setDate} />
         </div>
 
         <div className="flex items-center gap-2">
@@ -122,12 +115,14 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
         {sameAccount && <p className="text-sm text-brand-danger">From and To must be different accounts</p>}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Amount</label>
           <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-neutral-400"
+            type="number"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-2xl font-semibold tabular-nums text-neutral-800 outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200"
           />
         </div>
 

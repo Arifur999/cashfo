@@ -25,10 +25,23 @@ export default async function BalanceOverviewPage() {
       opening: sum.opening + Number(a.openingBalance),
       in: sum.in + Number(a.totalIn),
       out: sum.out + Number(a.totalOut),
+      savings: sum.savings + Number(a.savings),
+      adjustment: sum.adjustment + Number(a.adjustment),
       current: sum.current + Number(a.currentBalance),
     }),
-    { opening: 0, in: 0, out: 0, current: 0 },
+    { opening: 0, in: 0, out: 0, savings: 0, adjustment: 0, current: 0 },
   );
+
+  // Signed "+"/"-" prefix on the absolute value, rather than relying on
+  // formatCurrency's own negative-number formatting (which would put the
+  // minus sign after the currency symbol, e.g. "৳-500.00") -- same
+  // "show direction as an explicit sign/label, not a raw negative" instinct
+  // as the Loan Dashboard's Dena/Pawna split.
+  function formatSigned(value: string) {
+    const n = Number(value);
+    const prefix = n > 0 ? "+" : n < 0 ? "-" : "";
+    return `${prefix}${formatCurrency(Math.abs(n), currency)}`;
+  }
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
@@ -71,12 +84,16 @@ export default async function BalanceOverviewPage() {
                   <th className="px-4 py-3 font-medium text-right">Opening</th>
                   <th className="px-4 py-3 font-medium text-right">Total In</th>
                   <th className="px-4 py-3 font-medium text-right">Total Out</th>
+                  <th className="px-4 py-3 font-medium text-right">Savings</th>
+                  <th className="px-4 py-3 font-medium text-right">Adjustment</th>
                   <th className="px-4 py-3 font-medium text-right">Current Balance</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-50">
                 {overview.accounts.map((a, index) => {
                   const isInactive = a.status === "ARCHIVED";
+                  const adjustmentNum = Number(a.adjustment);
+                  const adjustmentColor = adjustmentNum > 0 ? "text-brand-primary" : adjustmentNum < 0 ? "text-brand-danger" : "text-neutral-400";
                   return (
                     <tr key={a.id} className={isInactive ? "bg-brand-danger/5" : ""}>
                       <td className="px-4 py-2.5 text-neutral-400">{index + 1}</td>
@@ -93,6 +110,10 @@ export default async function BalanceOverviewPage() {
                       <td className="px-4 py-2.5 text-right tabular-nums text-neutral-600">{formatCurrency(a.openingBalance, currency)}</td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-brand-primary">{formatCurrency(a.totalIn, currency)}</td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-brand-danger">{formatCurrency(a.totalOut, currency)}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-neutral-600">
+                        {Number(a.savings) > 0 ? formatCurrency(a.savings, currency) : <span className="text-neutral-300">—</span>}
+                      </td>
+                      <td className={`px-4 py-2.5 text-right tabular-nums ${adjustmentColor}`}>{formatSigned(a.adjustment)}</td>
                       <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-neutral-900">{formatCurrency(a.currentBalance, currency)}</td>
                     </tr>
                   );
@@ -106,6 +127,12 @@ export default async function BalanceOverviewPage() {
                   <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.opening, currency)}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(totals.in, currency)}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(totals.out, currency)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(totals.savings, currency)}</td>
+                  <td
+                    className={`px-4 py-3 text-right tabular-nums ${totals.adjustment > 0 ? "text-brand-primary" : totals.adjustment < 0 ? "text-brand-danger" : "text-neutral-400"}`}
+                  >
+                    {formatSigned(totals.adjustment.toFixed(2))}
+                  </td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.current, currency)}</td>
                 </tr>
               </tfoot>

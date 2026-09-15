@@ -21,9 +21,11 @@ export default async function LoanTransactionsPage({ searchParams }: PageProps<"
   const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
   const { dateFrom, dateTo } = resolveDateRange(range);
 
-  const { data: loanContacts } = await getContacts(activeBusinessId, { category: "LOAN" });
+  // Not filtered by category -- Loan Management and Dena-Pawna share one
+  // contact list and one transaction history now (see
+  // ReceivablesPayablesService.getLoanDashboard()'s comment).
+  const { data: loanContacts } = await getContacts(activeBusinessId, {});
   const { data: transactions } = await getTransactions(activeBusinessId, {
-    contactCategory: "LOAN",
     contactId: selectedContactId || undefined,
     dateFrom,
     dateTo,

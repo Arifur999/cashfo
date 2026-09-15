@@ -84,7 +84,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Total In</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-brand-primary">{formatCurrency(summary.totalIn, currency)}</p>
@@ -92,6 +92,15 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Total Out</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-brand-danger">{formatCurrency(summary.totalOut, currency)}</p>
+        </div>
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Adjustment</p>
+          <p
+            className={`mt-1 text-xl font-semibold tabular-nums ${Number(summary.adjustment) > 0 ? "text-brand-primary" : Number(summary.adjustment) < 0 ? "text-brand-danger" : "text-neutral-400"}`}
+          >
+            {Number(summary.adjustment) > 0 ? "+" : Number(summary.adjustment) < 0 ? "-" : ""}
+            {formatCurrency(Math.abs(Number(summary.adjustment)), currency)}
+          </p>
         </div>
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Transactions</p>

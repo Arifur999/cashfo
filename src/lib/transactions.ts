@@ -8,10 +8,15 @@ export interface TransactionFilters {
   dateFrom?: string;
   dateTo?: string;
   transactionType?: TransactionType;
+  // "Any of these types" rather than an exact match -- see the backend
+  // DTO's comment. Ignored by the backend if transactionType is also set.
+  transactionTypes?: TransactionType[];
   accountId?: string;
+  categoryId?: string;
   contactId?: string;
   contactCategory?: ContactCategory;
   search?: string;
+  page?: number;
   limit?: number;
 }
 
@@ -23,9 +28,14 @@ export const getTransactions = cache(async (businessId: string, filters: Transac
   if (!accessToken) return { data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } };
 
   try {
+    // Joined into one comma-separated string explicitly, rather than
+    // relying on axios's default array param serialization (repeated
+    // keys) -- the backend DTO expects (and its own comment documents)
+    // a single comma-separated value.
+    const { transactionTypes, ...rest } = filters;
     const response = await axios.get<TransactionListResponse>(`${API_BASE_URL}/api/businesses/${businessId}/transactions`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-      params: filters,
+      params: { ...rest, transactionTypes: transactionTypes?.join(",") },
     });
     return response.data;
   } catch {

@@ -93,6 +93,17 @@ export interface WalletOverviewRow {
   openingBalance: string;
   totalIn: string;
   totalOut: string;
+  // Money moved from this account into a Savings Goal contribution --
+  // always an outflow (no withdraw-from-goal flow exists yet), so shown as
+  // a plain magnitude rather than signed. Split out of "adjustment" (see
+  // below) rather than lumped in with it.
+  savings: string;
+  // Signed net effect of an actual Balance Transfer between two money
+  // accounts only (+ when money arrived, - when it left) -- kept separate
+  // from totalIn/totalOut, which cover real income/expense-shaped movement,
+  // AND from savings (above), which is a different kind of internal
+  // transfer.
+  adjustment: string;
   currentBalance: string;
 }
 
@@ -107,6 +118,7 @@ export interface WalletsOverview {
 export interface LedgerRow {
   entryId: string;
   transactionId: string;
+  transactionType: TransactionType;
   date: string;
   description: string | null;
   referenceNo: string | null;
@@ -130,6 +142,10 @@ export interface AccountSummary {
   currentBalance: string;
   totalIn: string;
   totalOut: string;
+  // Signed net effect of Balance Transfer transactions only -- see
+  // WalletOverviewRow.adjustment's comment. Effectively always "0.00" for a
+  // non-money account (Income/Expense/Equity never has TRANSFER entries).
+  adjustment: string;
   transactionCount: number;
 }
 
@@ -168,6 +184,31 @@ export interface TrialBalanceResponse {
   totalDebit: string;
   totalCredit: string;
   isBalanced: boolean;
+}
+
+// Financial Reports page (/reports/overview) -- Income/Expense by Category
+// donut cards. "total" is the true total across every category in range;
+// "categories" is capped at the top 10 by amount, so its percents don't
+// necessarily sum to 100 when a workspace has more than 10.
+export interface CategoryBreakdownRow {
+  name: string;
+  amount: string;
+  percent: number;
+  color: string;
+}
+
+export interface CategoryBreakdown {
+  type: "INCOME" | "EXPENSE";
+  total: string;
+  categories: CategoryBreakdownRow[];
+}
+
+// Financial Reports page's "Income vs Savings" trend chart -- one point
+// per calendar month, oldest first.
+export interface IncomeVsSavingsPoint {
+  month: string;
+  income: string;
+  savings: string;
 }
 
 export type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER" | "JOURNAL" | "SALE" | "PURCHASE" | "PAYMENT";
@@ -212,7 +253,7 @@ export interface TransactionListResponse {
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
-export type ContactType = "CUSTOMER" | "SUPPLIER" | "BOTH";
+export type ContactType = "CUSTOMER" | "SUPPLIER" | "BOTH" | "RELATIVE" | "OTHER";
 export type ContactStatus = "ACTIVE" | "ARCHIVED";
 // BUSINESS (customer/supplier trade relationships, shown in Dena-Pawna) vs
 // LOAN (bank/person lending relationships, shown in Loan Management). Both
@@ -353,6 +394,148 @@ export interface LoanStatement {
   balanceBroughtForward: string;
   rows: LoanStatementRow[];
   closingBalance: string;
+}
+
+export type BudgetCategoryType = "EXPENSE" | "INCOME";
+
+// Icon/color are plain keys validated against a fixed backend allow-list
+// (see backend/src/budgets/budget-category-visuals.ts) -- budgetCategoryVisuals.ts
+// maps them to actual lucide icons/Tailwind classes. type distinguishes
+// Expense Category from Income Category -- same shape, two different pages.
+// monthlyLimit is null for INCOME -- there's no per-category income goal at
+// all; see IncomeGoal below for the real (month-specific, table-based)
+// income goal concept. EXPENSE categories always have a real limit.
+export interface BudgetCategory {
+  id: string;
+  businessId: string;
+  type: BudgetCategoryType;
+  name: string;
+  // Optional -- a category saved without ever clicking an icon in the
+  // picker (e.g. searching for one that doesn't match anything, then
+  // saving anyway) has no icon at all, shown as a plain colored circle.
+  icon: string | null;
+  color: string;
+  monthlyLimit: string | null;
+  displayOrder: number;
+}
+
+export interface BudgetCategorySummary extends BudgetCategory {
+  spent: string;
+  percent: number;
+}
+
+export interface BudgetOverview {
+  month: number;
+  year: number;
+  type: BudgetCategoryType;
+  totalBudget: string | null;
+  allocated: string;
+  categories: BudgetCategorySummary[];
+}
+
+// Monthly Income Goal (/income-goal page): a HISTORY of goals, one row per
+// month/year, each with an optional note -- not a single standing value.
+// "earned" is computed live server-side across ALL Income transactions for
+// that month/year, regardless of Income Category.
+export interface IncomeGoal {
+  id: string;
+  businessId: string;
+  month: number;
+  year: number;
+  amount: string;
+  notes: string | null;
+}
+
+export interface IncomeGoalSummary extends IncomeGoal {
+  earned: string;
+  percent: number;
+}
+
+// Savings Goals (/savings-goals/*): a named target funded by real
+// contributions from a money account, landing in one of the business's own
+// Savings Wallets (an Account, accountSubtype "savings" -- see
+// AccountsService.listSavingsWallets()'s comment; managed at
+// /savings-goals/wallet, same CRUD as Balance's own Wallet page).
+// currentAmount/progressPercent/monthlyTarget are computed on read, never
+// stored.
+export type SavingsGoalStatus = "ACTIVE" | "PAUSED" | "COMPLETED";
+export type SavingsReminderChannel = "EMAIL" | "PHONE";
+export type SavingsEntryType = "CONTRIBUTION" | "TRANSFER_OUT" | "TRANSFER_IN";
+
+export interface SavingsGoal {
+  id: string;
+  businessId: string;
+  name: string;
+  targetAmount: string;
+  targetDate: string;
+  durationMonths: number;
+  reminderDate: string | null;
+  reminderChannel: SavingsReminderChannel | null;
+  description: string | null;
+  status: SavingsGoalStatus;
+  createdAt: string;
+  updatedAt: string;
+  currentAmount: string;
+  progressPercent: number;
+  monthlyTarget: string;
+}
+
+export interface SavingsGoalEntry {
+  id: string;
+  type: SavingsEntryType;
+  amount: string;
+  date: string;
+  moneyAccountName: string | null;
+  savingsAccountName: string | null;
+  relatedGoalName: string | null;
+  notes: string | null;
+}
+
+export interface SavingsGoalDetail extends SavingsGoal {
+  entries: SavingsGoalEntry[];
+}
+
+export interface SavingsOverview {
+  totalSaved: string;
+  totalGoals: string;
+  remaining: string;
+  progressPercent: number;
+  monthlyTarget: string;
+  savedThisMonth: string;
+  monthlyProgressPercent: number;
+  savingsRatePercent: number;
+}
+
+// Savings Overview page (/savings-goals/overview) -- same shape as
+// WalletsOverview (Balance's own Overview page), except each row is a
+// SavingsGoal rather than a real Account.
+export interface SavingsAccountOverviewRow {
+  id: string;
+  name: string;
+  status: SavingsGoalStatus;
+  openingBalance: string;
+  totalIn: string;
+  totalOut: string;
+  currentBalance: string;
+}
+
+export interface SavingsAccountOverview {
+  totalAccounts: number;
+  totalBalance: string;
+  inactiveAmount: string;
+  availableBalance: string;
+  accounts: SavingsAccountOverviewRow[];
+}
+
+export interface SavingsTransferRow {
+  id: string;
+  date: string;
+  amount: string;
+  fromGoalId: string;
+  fromGoalName: string;
+  toGoalId: string | null;
+  toGoalName: string;
+  notes: string | null;
 }
 
 interface NestErrorBody {

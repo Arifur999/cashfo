@@ -67,8 +67,8 @@
      theme tweak only touches this block. */
   --color-brand-dark: #123d2b;
   --color-brand-dark-hover: #1a4d36;
-  --color-brand-primary: #22c55e;
-  --color-brand-primary-hover: #16a34a;
+  --color-brand-primary: #2c8655;
+  --color-brand-primary-hover: #257248;
   --color-brand-danger: #ef4444;
   --color-brand-danger-hover: #dc2626;
   --color-brand-content: var(--content-bg);

@@ -4,6 +4,8 @@ export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
   CUSTOMER: "Customer",
   SUPPLIER: "Supplier",
   BOTH: "Customer & Supplier",
+  RELATIVE: "Relative",
+  OTHER: "Other",
 };
 
 export function contactInitials(name: string): string {

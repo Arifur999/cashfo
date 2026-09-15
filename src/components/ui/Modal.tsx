@@ -8,9 +8,19 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  // "md" (default) fits every existing single-column form. "lg" is for a
+  // form with a side-by-side field row (e.g. AddTransactionModal's Amount +
+  // Date) whose narrower half-width column would otherwise be too tight
+  // for DatePicker's popover to open without overflowing the modal.
+  size?: "md" | "lg";
 }
 
-export function Modal({ open, onClose, title, children }: ModalProps) {
+const SIZE_CLASSES: Record<NonNullable<ModalProps["size"]>, string> = {
+  md: "max-w-md",
+  lg: "max-w-xl",
+};
+
+export function Modal({ open, onClose, title, children, size = "md" }: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -24,7 +34,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+      <div className={`w-full rounded-2xl bg-surface p-6 shadow-xl ${SIZE_CLASSES[size]}`}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
           <button

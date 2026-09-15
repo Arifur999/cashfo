@@ -24,11 +24,14 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
 
   return (
     <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId}>
-      <div className="flex min-h-screen">
+      <div className="flex h-screen overflow-hidden">
         <Sidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden">
           <TopBar />
-          <main className="flex-1">{children}</main>
+          {/* The only scrollable region -- Sidebar and TopBar stay fixed in
+              place while a page's own content (a long table, a tall form,
+              etc.) scrolls internally instead of the whole window. */}
+          <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
       </div>
     </AuthProvider>

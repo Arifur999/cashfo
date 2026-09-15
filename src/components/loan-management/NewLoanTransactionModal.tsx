@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Combobox } from "@/components/ui/Combobox";
 import { Modal } from "@/components/ui/Modal";
 import type { Account, Contact } from "@/lib/api";
 import { getMoneyAccountsAction } from "@/lib/quickEntryActions";
@@ -13,6 +14,8 @@ interface NewLoanTransactionModalProps {
   open: boolean;
   onClose: () => void;
   businessId: string;
+  // Named for this page's context, but it's every contact in the business,
+  // not just category: LOAN ones -- see the page's data-fetching comment.
   loanContacts: Contact[];
 }
 
@@ -44,6 +47,11 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [isPending, startTransition] = useTransition();
+  // Bumped every time the modal reopens -- keys the Contact Combobox below
+  // so it fully remounts (fresh internal typed-text state) the same moment
+  // contactId is reset here, instead of needing a value-sync effect inside
+  // Combobox (see that component's doc comment).
+  const [resetCount, setResetCount] = useState(0);
 
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
@@ -56,6 +64,7 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
       setMoneyAccountId("");
       setDescription("");
       setLoadingAccounts(true);
+      setResetCount((n) => n + 1);
     }
   }
 
@@ -96,19 +105,15 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
     <Modal open={open} onClose={onClose} title="New Transaction">
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Bank / Person</label>
-          <select
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Contact</label>
+          <Combobox
+            key={resetCount}
             value={contactId}
-            onChange={(e) => setContactId(e.target.value)}
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
-          >
-            {loanContacts.length === 0 && <option value="">No banks or people added yet</option>}
-            {loanContacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={setContactId}
+            options={loanContacts.map((c) => ({ value: c.id, label: c.name }))}
+            placeholder="Search contacts by name"
+            emptyMessage="No contacts added yet"
+          />
         </div>
 
         <div>

@@ -65,6 +65,7 @@ export interface AddIncomeInput {
   date: string;
   description?: string;
   categoryId?: string;
+  note?: string;
 }
 
 export async function createIncomeAction(businessId: string, input: AddIncomeInput): Promise<ActionResult<Transaction>> {
@@ -81,6 +82,7 @@ export interface AddExpenseInput {
   date: string;
   description?: string;
   categoryId?: string;
+  note?: string;
 }
 
 export async function createExpenseAction(businessId: string, input: AddExpenseInput): Promise<ActionResult<Transaction>> {

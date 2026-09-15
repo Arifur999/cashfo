@@ -55,6 +55,25 @@ export const getWalletsOverview = cache(async (businessId: string): Promise<Wall
   }
 });
 
+// Savings Goals' own Wallet management page -- same shape as getWallets()
+// above, filtered to accountSubtype "savings" instead of the regular
+// money-account subtypes. See AccountsService.listSavingsWallets()'s
+// comment for why these are a separate, deliberately-excluded-from-
+// MONEY_ACCOUNT_SUBTYPES kind of Account.
+export const getSavingsWallets = cache(async (businessId: string): Promise<Account[]> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const response = await axios.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/savings-wallets`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data;
+  } catch {
+    return [];
+  }
+});
+
 export const getAccount = cache(async (businessId: string, accountId: string): Promise<Account | null> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
@@ -101,7 +120,7 @@ export const getLedger = cache(async (businessId: string, accountId: string, fil
   }
 });
 
-const EMPTY_SUMMARY: AccountSummary = { currentBalance: "0", totalIn: "0", totalOut: "0", transactionCount: 0 };
+const EMPTY_SUMMARY: AccountSummary = { currentBalance: "0", totalIn: "0", totalOut: "0", adjustment: "0.00", transactionCount: 0 };
 
 export const getAccountSummary = cache(
   async (businessId: string, accountId: string, filters: { dateFrom?: string; dateTo?: string } = {}): Promise<AccountSummary> => {

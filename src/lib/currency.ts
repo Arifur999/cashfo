@@ -10,7 +10,13 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 export function formatCurrency(amount: number | string, currencyCode: string): string {
-  const symbol = CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
+  const symbol = currencySymbol(currencyCode);
   const n = Number(amount);
   return `${symbol}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+// Just the symbol, e.g. for an inline prefix inside an amount input --
+// callers that need the formatted number too should use formatCurrency().
+export function currencySymbol(currencyCode: string): string {
+  return CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
 }
