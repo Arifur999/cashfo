@@ -64,6 +64,26 @@ export interface LoginHistoryEntry {
   createdAt: string;
 }
 
+// "Password Manager" menu -- a personal credential vault (client's own
+// Facebook/bank/etc. logins), gated by its own vault password (separate
+// from the account password) plus a short-lived unlock token. See
+// passwordVaultActions.ts and backend/src/password-vault/.
+export type VaultEntryCategory = "SOCIAL" | "BANK" | "EMAIL" | "SHOPPING" | "WORK" | "OTHER";
+
+// Never carries the actual password -- GET /api/vault/entries omits it on
+// purpose (see PasswordVaultService.list()'s comment); revealVaultEntryAction
+// fetches one password at a time, on demand, per entry.
+export interface VaultEntrySummary {
+  id: string;
+  title: string;
+  category: VaultEntryCategory;
+  websiteUrl: string | null;
+  usernameOrEmail: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BusinessLimits {
   maxBusinessWorkspaces: number;
   currentCount: number;

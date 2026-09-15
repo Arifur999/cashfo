@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Banknote, ChevronDown, ChevronRight, FileText, Landmark, LayoutDashboard, PiggyBank, Settings } from "lucide-react";
+import { ArrowLeftRight, Banknote, ChevronDown, ChevronRight, FileText, KeyRound, Landmark, LayoutDashboard, PiggyBank, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -20,8 +20,15 @@ const TOP_NAV_ITEMS = [{ label: "Dashboard", href: "/dashboard", icon: LayoutDas
 // (/settings) -- placed last, below every feature group, matching where the
 // user asked for it. Also covers /settings/workspaces (already reachable
 // via the TopBar's own gear icon) since that's a sub-page of this same
-// Settings area.
-const BOTTOM_NAV_ITEMS = [{ label: "Settings", href: "/settings", icon: Settings }];
+// Settings area. "Password Manager" is a standalone credential vault
+// (client's own Facebook/bank/etc. logins, unrelated to this app's own
+// accounting data) -- sits just above Settings, its own top-level item
+// rather than a group, since it's a single page, not a Dashboard/Wallet/
+// Transfer-style submenu.
+const BOTTOM_NAV_ITEMS = [
+  { label: "Password Manager", href: "/password-manager", icon: KeyRound },
+  { label: "Settings", href: "/settings", icon: Settings },
+];
 
 // The standalone "Dena-Pawna" nav item was removed at the user's request --
 // Loan Management's own Dashboard/Transactions/Ledger already cover the

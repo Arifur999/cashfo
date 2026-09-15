@@ -1,0 +1,153 @@
+"use client";
+
+import { Loader2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { Modal } from "@/components/ui/Modal";
+import { PasswordInput } from "@/components/ui/PasswordInput";
+import type { VaultEntryCategory, VaultEntrySummary } from "@/lib/api";
+import { createVaultEntryAction, updateVaultEntryAction } from "@/lib/passwordVaultActions";
+import { VAULT_CATEGORY_LABELS } from "./vaultCategoryDisplay";
+
+interface VaultEntryModalProps {
+  open: boolean;
+  onClose: () => void;
+  vaultToken: string;
+  editingEntry: VaultEntrySummary | null;
+  onSaved: () => void;
+}
+
+// Create/edit form for one vault entry. Editing never prefills the actual
+// password (the list response never carries it, see VaultEntrySummary's
+// comment) -- leaving the Password field blank on an edit keeps the stored
+// one unchanged; typing a new value replaces it.
+export function VaultEntryModal({ open, onClose, vaultToken, editingEntry, onSaved }: VaultEntryModalProps) {
+  const [prevEntryId, setPrevEntryId] = useState(editingEntry?.id ?? null);
+  const [title, setTitle] = useState(editingEntry?.title ?? "");
+  const [category, setCategory] = useState<VaultEntryCategory>(editingEntry?.category ?? "OTHER");
+  const [websiteUrl, setWebsiteUrl] = useState(editingEntry?.websiteUrl ?? "");
+  const [usernameOrEmail, setUsernameOrEmail] = useState(editingEntry?.usernameOrEmail ?? "");
+  const [password, setPassword] = useState("");
+  const [notes, setNotes] = useState(editingEntry?.notes ?? "");
+  const [isPending, startTransition] = useTransition();
+
+  const currentEntryId = editingEntry?.id ?? null;
+  if (currentEntryId !== prevEntryId) {
+    setPrevEntryId(currentEntryId);
+    setTitle(editingEntry?.title ?? "");
+    setCategory(editingEntry?.category ?? "OTHER");
+    setWebsiteUrl(editingEntry?.websiteUrl ?? "");
+    setUsernameOrEmail(editingEntry?.usernameOrEmail ?? "");
+    setPassword("");
+    setNotes(editingEntry?.notes ?? "");
+  }
+
+  function handleSave() {
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    if (!editingEntry && !password) {
+      toast.error("Password is required");
+      return;
+    }
+    startTransition(async () => {
+      const input = {
+        title: title.trim(),
+        category,
+        websiteUrl: websiteUrl.trim() || undefined,
+        usernameOrEmail: usernameOrEmail.trim() || undefined,
+        notes: notes.trim() || undefined,
+        ...(password ? { password } : {}),
+      };
+      const result = editingEntry ? await updateVaultEntryAction(vaultToken, editingEntry.id, input) : await createVaultEntryAction(vaultToken, input);
+      if (result.success) {
+        toast.success(editingEntry ? "Entry updated" : "Entry saved");
+        onSaved();
+        onClose();
+      } else {
+        toast.error(result.message ?? "Failed to save entry");
+      }
+    });
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title={editingEntry ? "Edit Entry" : "Add Entry"}>
+      <div className="space-y-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Title</label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Facebook, Dutch Bangla Bank"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as VaultEntryCategory)}
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          >
+            {(Object.keys(VAULT_CATEGORY_LABELS) as VaultEntryCategory[]).map((key) => (
+              <option key={key} value={key}>
+                {VAULT_CATEGORY_LABELS[key]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Username / Email</label>
+          <input
+            value={usernameOrEmail}
+            onChange={(e) => setUsernameOrEmail(e.target.value)}
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            Password {editingEntry && <span className="font-normal text-neutral-400">(leave blank to keep unchanged)</span>}
+          </label>
+          <PasswordInput value={password} onChange={setPassword} />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Website URL</label>
+          <input
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            placeholder="https://..."
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Notes</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
+        </div>
+      </div>
+      <div className="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={handleSave}
+          className="flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
+        >
+          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          Save
+        </button>
+      </div>
+    </Modal>
+  );
+}
