@@ -76,6 +76,7 @@ export interface VaultEntryInput {
   title: string;
   category: VaultEntryCategory;
   websiteUrl?: string;
+  holderName?: string;
   usernameOrEmail?: string;
   password?: string;
   notes?: string;

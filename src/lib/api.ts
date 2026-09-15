@@ -78,6 +78,9 @@ export interface VaultEntrySummary {
   title: string;
   category: VaultEntryCategory;
   websiteUrl: string | null;
+  // The account HOLDER's real name (e.g. a bank account's registered name)
+  // -- distinct from usernameOrEmail below, which is the login credential.
+  holderName: string | null;
   usernameOrEmail: string | null;
   notes: string | null;
   createdAt: string;

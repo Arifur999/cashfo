@@ -26,6 +26,7 @@ export function VaultEntryModal({ open, onClose, vaultToken, editingEntry, onSav
   const [title, setTitle] = useState(editingEntry?.title ?? "");
   const [category, setCategory] = useState<VaultEntryCategory>(editingEntry?.category ?? "OTHER");
   const [websiteUrl, setWebsiteUrl] = useState(editingEntry?.websiteUrl ?? "");
+  const [holderName, setHolderName] = useState(editingEntry?.holderName ?? "");
   const [usernameOrEmail, setUsernameOrEmail] = useState(editingEntry?.usernameOrEmail ?? "");
   const [password, setPassword] = useState("");
   const [notes, setNotes] = useState(editingEntry?.notes ?? "");
@@ -37,6 +38,7 @@ export function VaultEntryModal({ open, onClose, vaultToken, editingEntry, onSav
     setTitle(editingEntry?.title ?? "");
     setCategory(editingEntry?.category ?? "OTHER");
     setWebsiteUrl(editingEntry?.websiteUrl ?? "");
+    setHolderName(editingEntry?.holderName ?? "");
     setUsernameOrEmail(editingEntry?.usernameOrEmail ?? "");
     setPassword("");
     setNotes(editingEntry?.notes ?? "");
@@ -56,6 +58,7 @@ export function VaultEntryModal({ open, onClose, vaultToken, editingEntry, onSav
         title: title.trim(),
         category,
         websiteUrl: websiteUrl.trim() || undefined,
+        holderName: holderName.trim() || undefined,
         usernameOrEmail: usernameOrEmail.trim() || undefined,
         notes: notes.trim() || undefined,
         ...(password ? { password } : {}),
@@ -96,6 +99,17 @@ export function VaultEntryModal({ open, onClose, vaultToken, editingEntry, onSav
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Name</label>
+          <input
+            value={holderName}
+            onChange={(e) => setHolderName(e.target.value)}
+            placeholder="Account holder's name"
+            name="vault-entry-holder-name"
+            autoComplete="off"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">Username / Email</label>

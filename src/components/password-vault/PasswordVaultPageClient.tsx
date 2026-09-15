@@ -86,7 +86,7 @@ function EntryRow({
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-neutral-900">{entry.title}</p>
-          <p className="truncate text-xs text-neutral-400">{entry.usernameOrEmail || VAULT_CATEGORY_LABELS[entry.category]}</p>
+          <p className="truncate text-xs text-neutral-400">{entry.usernameOrEmail || entry.holderName || VAULT_CATEGORY_LABELS[entry.category]}</p>
         </div>
       </div>
 
