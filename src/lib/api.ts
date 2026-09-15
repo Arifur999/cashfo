@@ -601,6 +601,43 @@ export interface SavingsTransferRow {
   notes: string | null;
 }
 
+// Assets Management -- long-lived, non-cash things a business owns (a car,
+// land, a plot, jewellery, gadgets, an investment, ...), tracked separately
+// from ordinary money Accounts. See assetActions.ts and
+// backend/src/assets/.
+export type AssetCategory = "VEHICLE" | "LAND" | "PROPERTY" | "JEWELLERY" | "ELECTRONICS" | "INVESTMENT" | "OTHER";
+export type AssetStatus = "ACTIVE" | "SOLD";
+
+// One point-in-time value the asset was recorded at after purchase (e.g. a
+// yearly revaluation) -- GET .../assets returns these embedded on the
+// Asset, newest first; there's no standalone list endpoint for them.
+export interface AssetValueHistoryEntry {
+  id: string;
+  value: string;
+  recordedAt: string;
+  note: string | null;
+}
+
+export interface Asset {
+  id: string;
+  name: string;
+  category: AssetCategory;
+  purchaseDate: string;
+  purchasePrice: string;
+  currentValue: string;
+  purchaseAccountId: string;
+  status: AssetStatus;
+  // Only set once sellAssetAction() has run -- an ACTIVE asset carries all
+  // three as null.
+  soldAt: string | null;
+  soldPrice: string | null;
+  soldAccountId: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  valueHistory: AssetValueHistoryEntry[];
+}
+
 interface NestErrorBody {
   statusCode: number;
   message: string | string[];
