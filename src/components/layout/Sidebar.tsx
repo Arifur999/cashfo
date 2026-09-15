@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Banknote, ChevronDown, ChevronRight, FileText, KeyRound, Landmark, LayoutDashboard, PiggyBank, Settings } from "lucide-react";
+import { ArrowLeftRight, Banknote, Boxes, ChevronDown, ChevronRight, FileText, KeyRound, Landmark, LayoutDashboard, PiggyBank, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +15,15 @@ import { useState } from "react";
 // reference layout the user asked for -- it's the same /accounts page,
 // just reachable from a different nav spot now.
 const TOP_NAV_ITEMS = [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }];
+
+// Placeholder menu at the user's explicit request -- sits between Balance
+// and Savings Goals (matching where they pointed it out), links to a plain
+// "Coming soon" page for now. Not a submenu/group since there's only one
+// page; once the user decides what it should track (assets, vehicles,
+// jewellery, investments, etc.) this becomes a real feature with its own
+// backend model, same as every other "Coming soon" placeholder in this app
+// (see Settings' App/Help/Resources tabs, SecurityTab's 2FA toggle).
+const ASSETS_MANAGEMENT_ITEM = { label: "Assets Management", href: "/assets-management", icon: Boxes };
 
 // Reached from the TopBar avatar dropdown's "Profile"/"Settings" links
 // (/settings) -- placed last, below every feature group, matching where the
@@ -216,6 +225,7 @@ export function Sidebar() {
         ))}
 
         <NavGroup icon={Landmark} label="Balance" items={BALANCE_ITEMS} isActive={isBalanceActive} />
+        <NavLink item={ASSETS_MANAGEMENT_ITEM} isActive={pathname.startsWith(ASSETS_MANAGEMENT_ITEM.href)} />
         <NavGroup icon={PiggyBank} label="Savings Goals" items={SAVINGS_GOALS_ITEMS} isActive={isSavingsGoalsActive} />
         <NavGroup icon={Banknote} label="Loan Management" items={LOAN_MANAGEMENT_ITEMS} isActive={isLoanManagementActive} />
         <NavGroup icon={ArrowLeftRight} label="Income & Expense" items={INCOME_EXPENSE_ITEMS} isActive={isIncomeExpenseActive} />
