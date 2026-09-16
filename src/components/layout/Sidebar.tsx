@@ -16,14 +16,21 @@ import { useState } from "react";
 // just reachable from a different nav spot now.
 const TOP_NAV_ITEMS = [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }];
 
-// Placeholder menu at the user's explicit request -- sits between Balance
-// and Savings Goals (matching where they pointed it out), links to a plain
-// "Coming soon" page for now. Not a submenu/group since there's only one
-// page; once the user decides what it should track (assets, vehicles,
-// jewellery, investments, etc.) this becomes a real feature with its own
-// backend model, same as every other "Coming soon" placeholder in this app
-// (see Settings' App/Help/Resources tabs, SecurityTab's 2FA toggle).
-const ASSETS_MANAGEMENT_ITEM = { label: "Assets Management", href: "/assets-management", icon: Boxes };
+// Sits between Balance and Savings Goals (matching where the user first
+// pointed it out). Four sub-pages per the user's explicit spec, each with
+// ONE distinct job so there's no overlap between them: Dashboard is a pure
+// overview (total value + every asset, active and sold); Current Asset
+// list is a plain read-only table of what's owned right now; Purchase &
+// Sell Asset is the only place to buy a new one or sell an owned one;
+// Asset update is the only place to revalue one (appreciation/
+// depreciation). Same Dashboard/[...]/submenu shape as Balance/Savings
+// Goals above.
+const ASSETS_MANAGEMENT_ITEMS = [
+  { label: "Dashboard", href: "/assets-management/dashboard" },
+  { label: "Current Asset list", href: "/assets-management/current" },
+  { label: "Purchase & Sell Asset", href: "/assets-management/purchase-sell" },
+  { label: "Asset update", href: "/assets-management/update" },
+];
 
 // Reached from the TopBar avatar dropdown's "Profile"/"Settings" links
 // (/settings) -- placed last, below every feature group, matching where the
@@ -206,6 +213,7 @@ function NavLink({ item, isActive }: { item: { label: string; href: string; icon
 export function Sidebar() {
   const pathname = usePathname();
   const isBalanceActive = pathname.startsWith("/balance") || pathname.startsWith("/accounts");
+  const isAssetsManagementActive = pathname.startsWith("/assets-management");
   const isSavingsGoalsActive = pathname.startsWith("/savings-goals");
   const isLoanManagementActive = pathname.startsWith("/loan-management") || pathname.startsWith("/contacts");
   const isIncomeExpenseActive =
@@ -225,7 +233,7 @@ export function Sidebar() {
         ))}
 
         <NavGroup icon={Landmark} label="Balance" items={BALANCE_ITEMS} isActive={isBalanceActive} />
-        <NavLink item={ASSETS_MANAGEMENT_ITEM} isActive={pathname.startsWith(ASSETS_MANAGEMENT_ITEM.href)} />
+        <NavGroup icon={Boxes} label="Assets Management" items={ASSETS_MANAGEMENT_ITEMS} isActive={isAssetsManagementActive} />
         <NavGroup icon={PiggyBank} label="Savings Goals" items={SAVINGS_GOALS_ITEMS} isActive={isSavingsGoalsActive} />
         <NavGroup icon={Banknote} label="Loan Management" items={LOAN_MANAGEMENT_ITEMS} isActive={isLoanManagementActive} />
         <NavGroup icon={ArrowLeftRight} label="Income & Expense" items={INCOME_EXPENSE_ITEMS} isActive={isIncomeExpenseActive} />

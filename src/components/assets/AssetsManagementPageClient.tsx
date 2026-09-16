@@ -1,19 +1,13 @@
 "use client";
 
-import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { Asset, AssetCategory } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { ASSET_CATEGORY_ICONS, ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
-import { PurchaseAssetModal } from "./PurchaseAssetModal";
-import { SellAssetModal } from "./SellAssetModal";
-import { UpdateAssetValueModal } from "./UpdateAssetValueModal";
 
 interface AssetsManagementPageClientProps {
-  businessId: string;
   assets: Asset[];
   currency: string;
-  canManage: boolean;
 }
 
 const FILTER_PILLS: { value: AssetCategory | ""; label: string }[] = [
@@ -27,38 +21,22 @@ const FILTER_PILLS: { value: AssetCategory | ""; label: string }[] = [
   { value: "OTHER", label: ASSET_CATEGORY_LABELS.OTHER },
 ];
 
-// No local `assets` state -- the list always renders straight off the
-// server-fetched prop, and every mutating modal below just calls
-// router.refresh() on success so the page re-fetches it. Same tradeoff as
-// SavingsGoalsDashboardPageClient, just without any client-only overview
-// math to keep in sync.
-export function AssetsManagementPageClient({ businessId, assets, currency, canManage }: AssetsManagementPageClientProps) {
+// The landing page of the Assets Management group -- a pure overview (total
+// value + every asset, ACTIVE and SOLD alike, filterable by category).
+// Deliberately no Purchase/Sell/Update Value actions here anymore -- those
+// each moved to their own dedicated sub-page (Purchase & Sell Asset, Asset
+// update) once the menu split into four items, so this page doesn't offer
+// three different ways to do the same thing.
+export function AssetsManagementPageClient({ assets, currency }: AssetsManagementPageClientProps) {
   const [activeCategory, setActiveCategory] = useState<AssetCategory | "">("");
-  const [purchaseOpen, setPurchaseOpen] = useState(false);
-  const [sellTarget, setSellTarget] = useState<Asset | null>(null);
-  const [valueTarget, setValueTarget] = useState<Asset | null>(null);
 
   const filteredAssets = activeCategory ? assets.filter((a) => a.category === activeCategory) : assets;
   const totalActiveValue = assets.filter((a) => a.status === "ACTIVE").reduce((sum, a) => sum + Number(a.currentValue), 0);
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Assets Management</h1>
-          <p className="mt-1 text-sm text-neutral-500">Track and manage your physical and financial assets.</p>
-        </div>
-        {canManage && (
-          <button
-            type="button"
-            onClick={() => setPurchaseOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
-          >
-            <Plus className="h-4 w-4" />
-            Purchase Asset
-          </button>
-        )}
-      </div>
+      <h1 className="text-xl font-semibold text-neutral-900">Assets Management</h1>
+      <p className="mt-1 text-sm text-neutral-500">Track and manage your physical and financial assets.</p>
 
       <div className="mt-6 rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
         <p className="text-sm text-neutral-500">Total Asset Value</p>
@@ -83,7 +61,7 @@ export function AssetsManagementPageClient({ businessId, assets, currency, canMa
       <div className="mt-4 rounded-2xl bg-surface shadow-sm shadow-black/5">
         {filteredAssets.length === 0 ? (
           <p className="py-10 text-center text-sm text-neutral-400">
-            {assets.length === 0 ? 'No assets yet -- click "Purchase Asset" to add your first one.' : "No assets in this category."}
+            {assets.length === 0 ? 'No assets yet -- add one under "Purchase & Sell Asset".' : "No assets in this category."}
           </p>
         ) : (
           <div className="divide-y divide-neutral-50">
@@ -127,29 +105,7 @@ export function AssetsManagementPageClient({ businessId, assets, currency, canMa
                         </p>
                       </div>
                     ) : (
-                      <>
-                        <p className="text-sm font-bold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</p>
-                        {canManage && (
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => setValueTarget(asset)}
-                              aria-label="Update Value"
-                              title="Update Value"
-                              className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSellTarget(asset)}
-                              className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-                            >
-                              Sell
-                            </button>
-                          </div>
-                        )}
-                      </>
+                      <p className="text-sm font-bold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</p>
                     )}
                   </div>
                 </div>
@@ -158,10 +114,6 @@ export function AssetsManagementPageClient({ businessId, assets, currency, canMa
           </div>
         )}
       </div>
-
-      <PurchaseAssetModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} businessId={businessId} currency={currency} />
-      <SellAssetModal open={!!sellTarget} onClose={() => setSellTarget(null)} businessId={businessId} asset={sellTarget} currency={currency} />
-      <UpdateAssetValueModal open={!!valueTarget} onClose={() => setValueTarget(null)} businessId={businessId} asset={valueTarget} currency={currency} />
     </div>
   );
 }
