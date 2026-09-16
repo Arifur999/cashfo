@@ -28,7 +28,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Assets Management</h1>
+          <h1 className="text-xl font-semibold text-neutral-900">Current Asset List</h1>
           <p className="mt-1 text-sm text-neutral-500">Everything you currently own, at a glance.</p>
         </div>
         {canManage && (
