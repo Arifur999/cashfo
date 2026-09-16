@@ -14,21 +14,27 @@ interface PasswordInputProps {
   // password has nothing to do with account login.
   autoComplete?: string;
   name?: string;
+  id?: string;
+  placeholder?: string;
+  required?: boolean;
 }
 
 // Show/hide toggle (eye icon) shared by every password field in the app --
 // starts hidden, same default every password manager/browser assumes.
-export function PasswordInput({ value, onChange, className, autoComplete, name }: PasswordInputProps) {
+export function PasswordInput({ value, onChange, className, autoComplete, name, id, placeholder, required }: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div className="relative">
       <input
+        id={id}
         type={visible ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
         name={name}
+        placeholder={placeholder}
+        required={required}
         className={
           className ??
           "w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 pr-10 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
