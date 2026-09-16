@@ -65,12 +65,12 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
 
   function handleSubmit() {
     if (!name.trim()) {
-      toast.error("Name is required");
+      toast.error("Asset name is required");
       return;
     }
     const priceValue = Number(purchasePrice);
     if (!purchasePrice || priceValue <= 0) {
-      toast.error("Purchase price must be greater than zero");
+      toast.error("Value must be greater than zero");
       return;
     }
     if (!purchaseAccountId) {
@@ -100,7 +100,12 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
     <Modal open={open} onClose={onClose} title="Purchase Asset">
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <DatePicker value={purchaseDate} onChange={setPurchaseDate} />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Asset Name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -125,12 +130,7 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Purchase Date</label>
-          <DatePicker value={purchaseDate} onChange={setPurchaseDate} />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Purchase Price{currencySuffix}</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Value{currencySuffix}</label>
           <input
             type="number"
             min="0.01"
@@ -194,7 +194,7 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Purchase Asset
+        Save Asset
       </button>
     </Modal>
   );
