@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createBusinessAction, getBusinessLimitsAction } from "@/lib/businessActions";
-import type { BusinessLimits } from "@/lib/api";
+import type { BusinessLimits, WorkspaceListItem } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
 
 const CURRENCIES = ["BDT", "USD"];
@@ -13,12 +13,21 @@ const CURRENCIES = ["BDT", "USD"];
 interface CreateWorkspaceModalProps {
   open: boolean;
   onClose: () => void;
+  // Optional -- fires with the newly-created workspace right after the
+  // success toast, IN ADDITION TO (not instead of) the router.refresh()
+  // below. Callers that don't need it (the default WorkspaceSwitcher flow)
+  // just omit it; ChooseWorkspaceClient uses it to navigate straight into
+  // the new workspace instead of refreshing the current page.
+  onCreated?: (business: WorkspaceListItem) => void;
 }
 
-export function CreateWorkspaceModal({ open, onClose }: CreateWorkspaceModalProps) {
+export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspaceModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("BDT");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [pin, setPin] = useState("");
   const [limits, setLimits] = useState<BusinessLimits | null>(null);
   const [limitsLoading, setLimitsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -32,6 +41,9 @@ export function CreateWorkspaceModal({ open, onClose }: CreateWorkspaceModalProp
     if (open) {
       setName("");
       setCurrency("BDT");
+      setPhone("");
+      setEmail("");
+      setPin("");
       setLimitsLoading(true);
     }
   }
@@ -49,11 +61,18 @@ export function CreateWorkspaceModal({ open, onClose }: CreateWorkspaceModalProp
 
   function handleSubmit() {
     startTransition(async () => {
-      const result = await createBusinessAction({ name, currency });
+      const result = await createBusinessAction({
+        name,
+        currency,
+        phone: phone || undefined,
+        email: email || undefined,
+        pin: pin || undefined,
+      });
       if (result.success) {
         toast.success("Workspace created");
         onClose();
         router.refresh();
+        if (result.data) onCreated?.(result.data);
       } else {
         toast.error(result.message ?? "Failed to create workspace");
       }
@@ -61,7 +80,8 @@ export function CreateWorkspaceModal({ open, onClose }: CreateWorkspaceModalProp
   }
 
   const atLimit = limits?.atLimit ?? false;
-  const isValid = name.trim().length > 0 && !atLimit;
+  const pinValid = pin.length === 0 || /^\d{4,6}$/.test(pin);
+  const isValid = name.trim().length > 0 && !atLimit && pinValid;
 
   return (
     <Modal open={open} onClose={onClose} title="New Business Workspace">
@@ -99,6 +119,45 @@ export function CreateWorkspaceModal({ open, onClose }: CreateWorkspaceModalProp
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Phone</label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            disabled={atLimit}
+            placeholder="e.g. 01XXXXXXXXX"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={atLimit}
+            placeholder="e.g. name@example.com"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">PIN</label>
+          <p className="mb-1 text-xs text-neutral-500">Optional -- set a PIN to require it when switching into this workspace.</p>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ""))}
+            disabled={atLimit}
+            placeholder="4-6 digits"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
+          />
         </div>
       </div>
 

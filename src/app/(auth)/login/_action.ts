@@ -29,6 +29,8 @@ export async function loginAction(email: string, password: string): Promise<Logi
   }
 
   // Outside the try/catch -- redirect() throws internally and must not be
-  // swallowed by the catch block above.
-  redirect("/dashboard");
+  // swallowed by the catch block above. /choose-workspace itself decides
+  // whether to bounce a single-workspace user straight through to
+  // /dashboard -- keep this action simple, no new fetch/logic here.
+  redirect("/choose-workspace");
 }

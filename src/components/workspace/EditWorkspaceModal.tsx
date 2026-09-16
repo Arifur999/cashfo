@@ -19,6 +19,9 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
   const router = useRouter();
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("BDT");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
@@ -30,17 +33,25 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
     setPrevBusinessId(business?.id ?? null);
     if (business) {
       setName(business.name);
+      // Never prefilled -- the backend never returns the actual PIN, only
+      // hasPinLock. Leaving this blank, combined with sending `pin: undefined`
+      // for an untouched field below, is what gives "leave blank to keep the
+      // current PIN unchanged" its meaning.
+      setPin("");
       setLoading(true);
     }
   }
 
-  // The currency isn't in `business` (UserBusiness, from /api/auth/me, omits
-  // it) -- fetching it IS a legitimate effect (an external system call).
+  // currency/phone/email aren't in `business` (UserBusiness, from
+  // /api/auth/me, omits them) -- fetching them IS a legitimate effect (an
+  // external system call).
   useEffect(() => {
     if (!business) return;
     getBusinessDetailAction(business.id).then((result) => {
       if (result.success && result.data) {
         setCurrency(result.data.currency);
+        setPhone(result.data.phone ?? "");
+        setEmail(result.data.email ?? "");
       }
       setLoading(false);
     });
@@ -49,7 +60,13 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
   function handleSubmit() {
     if (!business) return;
     startTransition(async () => {
-      const result = await updateBusinessAction(business.id, { name, currency });
+      const result = await updateBusinessAction(business.id, {
+        name,
+        currency,
+        phone: phone || undefined,
+        email: email || undefined,
+        pin: pin || undefined,
+      });
       if (result.success) {
         toast.success("Workspace updated");
         onClose();
@@ -60,7 +77,8 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
     });
   }
 
-  const isValid = name.trim().length > 0;
+  const pinValid = pin.length === 0 || /^\d{4,6}$/.test(pin);
+  const isValid = name.trim().length > 0 && pinValid;
 
   return (
     <Modal open={business !== null} onClose={onClose} title="Edit Workspace">
@@ -88,6 +106,45 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Phone</label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            disabled={loading}
+            placeholder="e.g. 01XXXXXXXXX"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+            placeholder="e.g. name@example.com"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Change PIN</label>
+          <p className="mb-1 text-xs text-neutral-500">Leave blank to keep the current PIN unchanged.</p>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ""))}
+            disabled={loading}
+            placeholder="4-6 digits"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50"
+          />
         </div>
       </div>
 
