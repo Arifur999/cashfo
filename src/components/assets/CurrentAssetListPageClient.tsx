@@ -48,6 +48,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+                <th className="px-4 py-3">#</th>
                 <th className="px-4 py-3">Asset</th>
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Purchase Date</th>
@@ -58,7 +59,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
             {assets.length === 0 ? (
               <tbody>
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-sm text-neutral-400">
+                  <td colSpan={6} className="py-10 text-center text-sm text-neutral-400">
                     No assets currently owned.
                   </td>
                 </tr>
@@ -66,10 +67,11 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
             ) : (
               <>
                 <tbody className="divide-y divide-neutral-50">
-                  {assets.map((asset) => {
+                  {assets.map((asset, index) => {
                     const Icon = ASSET_CATEGORY_ICONS[asset.category];
                     return (
                       <tr key={asset.id}>
+                        <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
@@ -90,7 +92,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-neutral-100">
-                    <td colSpan={4} className="px-4 py-3 text-right font-medium text-neutral-500">
+                    <td colSpan={5} className="px-4 py-3 text-right font-medium text-neutral-500">
                       Total
                     </td>
                     <td className="px-4 py-3 text-right text-base font-bold text-neutral-900">{formatCurrency(total, currency)}</td>
