@@ -715,6 +715,29 @@ export interface DashboardSummary {
   recentAuditLogs: { id: string; action: string; entityType: string; adminName: string; createdAt: string }[] | null;
 }
 
+// Real, authenticatable `User` rows (not the `PlatformUser` read-model above)
+// that own more than one workspace (`Business`), plus the estimated 50%-of-
+// plan-price monthly add-on fee each extra workspace represents. A computed/
+// ledger figure only -- no real payment is charged for it yet.
+export interface WorkspaceOverviewItem {
+  userId: string;
+  name: string;
+  email: string;
+  planName: string | null;
+  planPrice: string | null;
+  totalWorkspaces: number;
+  additionalWorkspaces: number;
+  estimatedMonthlyAddOnRevenue: string;
+}
+
+export interface WorkspaceOverviewResponse {
+  summary: { totalUsers: number; totalAdditionalWorkspaces: number; totalEstimatedMonthlyAddOnRevenue: string };
+  items: WorkspaceOverviewItem[];
+  page: number;
+  limit: number;
+  totalCount: number;
+}
+
 export interface PlatformSettings {
   platformName: string;
   supportEmail: string;

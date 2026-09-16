@@ -31,6 +31,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard" },
   { label: "User Management", href: "/admin/users" },
+  { label: "Workspaces", href: "/admin/workspaces" },
   { label: "Subscriptions", href: "/admin/plans", activeMatch: ["/admin/plans", "/admin/coupons"] },
   { label: "Payments", href: "/admin/payments", activeMatch: ["/admin/payments", "/admin/invoices"] },
   { label: "Content", href: "/admin/content" },

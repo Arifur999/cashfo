@@ -15,6 +15,7 @@ export const bnDictionary: Record<string, string> = {
   "Admin Panel": "অ্যাডমিন প্যানেল",
   Dashboard: "ড্যাশবোর্ড",
   "User Management": "ইউজার ম্যানেজমেন্ট",
+  Workspaces: "ওয়ার্কস্পেস",
   Subscriptions: "সাবস্ক্রিপশন",
   Payments: "পেমেন্ট",
   Content: "কন্টেন্ট",
