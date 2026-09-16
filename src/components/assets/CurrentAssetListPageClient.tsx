@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useState } from "react";
 import type { Asset } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
@@ -19,9 +19,15 @@ interface CurrentAssetListPageClientProps {
 // plus an "Add Assets" shortcut (AddCurrentAssetModal -- a simpler,
 // Account-less entry form, see its own comment) so an empty/short list
 // isn't a dead end. Selling and revaluing still only happen on their own
-// dedicated pages (Purchase & Sell Asset / Asset update).
+// dedicated pages (Purchase & Sell Asset / Asset update). Total Asset
+// Value sits at the top (not just a bottom table row) and search is a
+// plain client-side name filter -- this list is never paginated/large
+// enough to need a server round-trip.
 export function CurrentAssetListPageClient({ businessId, assets, currency, canManage }: CurrentAssetListPageClientProps) {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredAssets = search.trim() ? assets.filter((a) => a.name.toLowerCase().includes(search.trim().toLowerCase())) : assets;
   const total = assets.reduce((sum, a) => sum + Number(a.currentValue), 0);
 
   return (
@@ -31,19 +37,35 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
           <h1 className="text-xl font-semibold text-neutral-900">Current Asset List</h1>
           <p className="mt-1 text-sm text-neutral-500">Everything you currently own, at a glance.</p>
         </div>
-        {canManage && (
-          <button
-            type="button"
-            onClick={() => setPurchaseOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
-          >
-            <Plus className="h-4 w-4" />
-            Add Assets
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search asset name..."
+              className="w-64 rounded-xl border border-neutral-200 bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
+            />
+          </div>
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => setPurchaseOpen(true)}
+              className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
+            >
+              <Plus className="h-4 w-4" />
+              Add Assets
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="mt-6 rounded-2xl bg-surface shadow-sm shadow-black/5">
+      <div className="mt-6 rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
+        <p className="text-sm text-neutral-500">Total Asset Value</p>
+        <p className="mt-1 text-2xl font-bold text-neutral-900">{formatCurrency(total, currency)}</p>
+      </div>
+
+      <div className="mt-4 rounded-2xl bg-surface shadow-sm shadow-black/5">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -57,50 +79,40 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
                 <th className="px-4 py-3 text-right">Current Value</th>
               </tr>
             </thead>
-            {assets.length === 0 ? (
+            {filteredAssets.length === 0 ? (
               <tbody>
                 <tr>
                   <td colSpan={7} className="py-10 text-center text-sm text-neutral-400">
-                    No assets currently owned.
+                    {assets.length === 0 ? "No assets currently owned." : "No assets match your search."}
                   </td>
                 </tr>
               </tbody>
             ) : (
-              <>
-                <tbody className="divide-y divide-neutral-50">
-                  {assets.map((asset, index) => {
-                    const Icon = ASSET_CATEGORY_ICONS[asset.category];
-                    return (
-                      <tr key={asset.id}>
-                        <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
-                              <Icon className="h-3.5 w-3.5" />
-                            </span>
-                            <span className="font-medium text-neutral-900">{asset.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-neutral-500">{ASSET_CATEGORY_LABELS[asset.category]}</td>
-                        <td className="px-4 py-3 text-neutral-500">
-                          {new Date(asset.purchaseDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
-                        </td>
-                        <td className="px-4 py-3 text-neutral-500">{formatCurrency(asset.purchasePrice, currency)}</td>
-                        <td className="max-w-[16rem] truncate px-4 py-3 text-neutral-500">{asset.notes || <span className="text-neutral-300">--</span>}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-neutral-100">
-                    <td colSpan={6} className="px-4 py-3 text-right font-medium text-neutral-500">
-                      Total
-                    </td>
-                    <td className="px-4 py-3 text-right text-base font-bold text-neutral-900">{formatCurrency(total, currency)}</td>
-                  </tr>
-                </tfoot>
-              </>
+              <tbody className="divide-y divide-neutral-50">
+                {filteredAssets.map((asset, index) => {
+                  const Icon = ASSET_CATEGORY_ICONS[asset.category];
+                  return (
+                    <tr key={asset.id}>
+                      <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
+                            <Icon className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="font-medium text-neutral-900">{asset.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-neutral-500">{ASSET_CATEGORY_LABELS[asset.category]}</td>
+                      <td className="px-4 py-3 text-neutral-500">
+                        {new Date(asset.purchaseDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                      </td>
+                      <td className="px-4 py-3 text-neutral-500">{formatCurrency(asset.purchasePrice, currency)}</td>
+                      <td className="max-w-[16rem] truncate px-4 py-3 text-neutral-500">{asset.notes || <span className="text-neutral-300">--</span>}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
             )}
           </table>
         </div>
