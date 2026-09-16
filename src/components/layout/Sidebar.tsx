@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Banknote, Boxes, ChevronDown, ChevronRight, FileText, KeyRound, Landmark, LayoutDashboard, PiggyBank, Settings } from "lucide-react";
+import { ArrowLeftRight, Banknote, Boxes, ChevronDown, ChevronRight, FileText, Gift, KeyRound, Landmark, LayoutDashboard, PiggyBank, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -43,8 +43,13 @@ const ASSETS_MANAGEMENT_ITEMS = [
 // (client's own Facebook/bank/etc. logins, unrelated to this app's own
 // accounting data) -- sits just above Settings, its own top-level item
 // rather than a group, since it's a single page, not a Dashboard/Wallet/
-// Transfer-style submenu.
+// Transfer-style submenu. "Referrals" is the same kind of personal/
+// account-level feature (invite friends, earn reward credit tied to the
+// USER, not any one workspace) rather than a workspace-accounting one --
+// same reasoning as Password Manager's own comment -- so it sits just
+// above it, its own top-level item too.
 const BOTTOM_NAV_ITEMS = [
+  { label: "Referrals", href: "/referrals", icon: Gift },
   { label: "Password Manager", href: "/password-manager", icon: KeyRound },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { registerAction } from "@/app/(auth)/register/_action";
 import { authDictionary, type AuthLang } from "@/lib/authI18n";
@@ -13,6 +14,9 @@ const PASSWORD_LETTER_NUMBER_REGEX = /(?=.*[A-Za-z])(?=.*\d)/;
 export function RegisterForm() {
   const [lang, setLang] = useState<AuthLang>("EN");
   const t = authDictionary[lang];
+
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get("ref") ?? undefined;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -50,6 +54,7 @@ export function RegisterForm() {
         password,
         phone: phone.trim() || undefined,
         preferredLanguage: lang,
+        referralCode,
       });
       if (result && !result.success) {
         setError(result.message);

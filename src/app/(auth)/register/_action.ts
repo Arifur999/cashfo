@@ -17,6 +17,7 @@ export interface RegisterInput {
   password: string;
   phone?: string;
   preferredLanguage: LanguagePreference;
+  referralCode?: string;
 }
 
 export async function registerAction(input: RegisterInput): Promise<RegisterActionResult | void> {
