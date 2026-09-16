@@ -2,13 +2,12 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
-import type { AssetCategory } from "@/lib/api";
-import { purchaseAssetAction } from "@/lib/assetActions";
-import { ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
+import type { AssetCategoryOption } from "@/lib/api";
+import { getAssetCategoriesAction, purchaseAssetAction } from "@/lib/assetActions";
 
 interface AddCurrentAssetModalProps {
   open: boolean;
@@ -26,9 +25,10 @@ export function AddCurrentAssetModal({ open, onClose, businessId, currency }: Ad
   const router = useRouter();
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<AssetCategory>("OTHER");
+  const [category, setCategory] = useState("");
   const [value, setValue] = useState("");
   const [notes, setNotes] = useState("");
+  const [categories, setCategories] = useState<AssetCategoryOption[]>([]);
   const [isPending, startTransition] = useTransition();
 
   const [prevOpen, setPrevOpen] = useState(open);
@@ -37,11 +37,20 @@ export function AddCurrentAssetModal({ open, onClose, businessId, currency }: Ad
     if (open) {
       setDate(new Date().toISOString().slice(0, 10));
       setName("");
-      setCategory("OTHER");
+      setCategory("");
       setValue("");
       setNotes("");
     }
   }
+
+  useEffect(() => {
+    if (!open) return;
+    getAssetCategoriesAction(businessId).then((result) => {
+      const fetchedCategories = result.data ?? [];
+      setCategories(fetchedCategories);
+      setCategory((current) => current || fetchedCategories.find((c) => c.name === "Other")?.name || fetchedCategories[0]?.name || "");
+    });
+  }, [open, businessId]);
 
   const currencySuffix = currency ? ` (${currency})` : "";
 
@@ -95,12 +104,13 @@ export function AddCurrentAssetModal({ open, onClose, businessId, currency }: Ad
           <label className="mb-1 block text-sm font-medium text-neutral-700">Category</label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as AssetCategory)}
+            onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {(Object.keys(ASSET_CATEGORY_LABELS) as AssetCategory[]).map((key) => (
-              <option key={key} value={key}>
-                {ASSET_CATEGORY_LABELS[key]}
+            {categories.length === 0 && <option value="">No categories yet</option>}
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
               </option>
             ))}
           </select>

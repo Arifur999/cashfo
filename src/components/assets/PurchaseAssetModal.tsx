@@ -6,11 +6,10 @@ import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
-import type { Account, AssetCategory } from "@/lib/api";
-import { purchaseAssetAction } from "@/lib/assetActions";
+import type { Account, AssetCategoryOption } from "@/lib/api";
+import { getAssetCategoriesAction, purchaseAssetAction } from "@/lib/assetActions";
 import { getMoneyAccountsAction } from "@/lib/quickEntryActions";
 import { getActiveSavingsWalletsAction } from "@/lib/savingsGoalActions";
-import { ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
 
 interface PurchaseAssetModalProps {
   open: boolean;
@@ -27,13 +26,14 @@ interface PurchaseAssetModalProps {
 export function PurchaseAssetModal({ open, onClose, businessId, currency }: PurchaseAssetModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<AssetCategory>("OTHER");
+  const [category, setCategory] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().slice(0, 10));
   const [purchasePrice, setPurchasePrice] = useState("");
   const [purchaseAccountId, setPurchaseAccountId] = useState("");
   const [notes, setNotes] = useState("");
   const [moneyAccounts, setMoneyAccounts] = useState<Account[]>([]);
   const [savingsWallets, setSavingsWallets] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<AssetCategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
@@ -42,7 +42,7 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
     setPrevOpen(open);
     if (open) {
       setName("");
-      setCategory("OTHER");
+      setCategory("");
       setPurchaseDate(new Date().toISOString().slice(0, 10));
       setPurchasePrice("");
       setPurchaseAccountId("");
@@ -53,12 +53,17 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
 
   useEffect(() => {
     if (!open) return;
-    Promise.all([getMoneyAccountsAction(businessId), getActiveSavingsWalletsAction(businessId)]).then(([accounts, wallets]) => {
-      setMoneyAccounts(accounts);
-      setSavingsWallets(wallets);
-      setPurchaseAccountId((current) => current || accounts[0]?.id || wallets[0]?.id || "");
-      setLoading(false);
-    });
+    Promise.all([getMoneyAccountsAction(businessId), getActiveSavingsWalletsAction(businessId), getAssetCategoriesAction(businessId)]).then(
+      ([accounts, wallets, categoriesResult]) => {
+        setMoneyAccounts(accounts);
+        setSavingsWallets(wallets);
+        setPurchaseAccountId((current) => current || accounts[0]?.id || wallets[0]?.id || "");
+        const fetchedCategories = categoriesResult.data ?? [];
+        setCategories(fetchedCategories);
+        setCategory((current) => current || fetchedCategories.find((c) => c.name === "Other")?.name || fetchedCategories[0]?.name || "");
+        setLoading(false);
+      },
+    );
   }, [open, businessId]);
 
   const currencySuffix = currency ? ` (${currency})` : "";
@@ -118,12 +123,13 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
           <label className="mb-1 block text-sm font-medium text-neutral-700">Category</label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as AssetCategory)}
+            onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {(Object.keys(ASSET_CATEGORY_LABELS) as AssetCategory[]).map((key) => (
-              <option key={key} value={key}>
-                {ASSET_CATEGORY_LABELS[key]}
+            {categories.length === 0 && <option value="">No categories yet</option>}
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
               </option>
             ))}
           </select>

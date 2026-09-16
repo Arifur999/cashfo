@@ -2,15 +2,16 @@
 
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import type { Asset } from "@/lib/api";
+import type { Asset, AssetCategoryOption } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
-import { ASSET_CATEGORY_ICONS, ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
+import { assetCategoryIconFor } from "./assetCategoryDisplay";
 import { PurchaseAssetModal } from "./PurchaseAssetModal";
 import { SellAssetModal } from "./SellAssetModal";
 
 interface PurchaseSellAssetPageClientProps {
   businessId: string;
   assets: Asset[];
+  categories: AssetCategoryOption[];
   currency: string;
   canManage: boolean;
 }
@@ -19,7 +20,7 @@ interface PurchaseSellAssetPageClientProps {
 // selling an owned one), without the Dashboard's stats/filters or the Asset
 // update page's revaluation focus -- deliberately no "Update Value" button
 // here, that lives on its own page.
-export function PurchaseSellAssetPageClient({ businessId, assets, currency, canManage }: PurchaseSellAssetPageClientProps) {
+export function PurchaseSellAssetPageClient({ businessId, assets, categories, currency, canManage }: PurchaseSellAssetPageClientProps) {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [sellTarget, setSellTarget] = useState<Asset | null>(null);
 
@@ -49,7 +50,7 @@ export function PurchaseSellAssetPageClient({ businessId, assets, currency, canM
         ) : (
           <div className="divide-y divide-neutral-50">
             {assets.map((asset) => {
-              const Icon = ASSET_CATEGORY_ICONS[asset.category];
+              const Icon = assetCategoryIconFor(categories, asset.category);
               return (
                 <div key={asset.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="flex min-w-0 items-center gap-3">
@@ -58,7 +59,7 @@ export function PurchaseSellAssetPageClient({ businessId, assets, currency, canM
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-neutral-900">{asset.name}</p>
-                      <p className="truncate text-xs text-neutral-400">{ASSET_CATEGORY_LABELS[asset.category]}</p>
+                      <p className="truncate text-xs text-neutral-400">{asset.category}</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">

@@ -1,9 +1,10 @@
-import type { Asset } from "@/lib/api";
+import type { Asset, AssetCategoryOption } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
-import { ASSET_CATEGORY_ICONS, ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
+import { assetCategoryIconFor } from "./assetCategoryDisplay";
 
 interface AssetListRowsProps {
   assets: Asset[];
+  categories: AssetCategoryOption[];
   currency: string;
   emptyMessage: string;
 }
@@ -12,7 +13,7 @@ interface AssetListRowsProps {
 // date, value or sold-price) -- used by both the Dashboard (all assets, no
 // filter) and the Category page (filtered by the selected pill) so the two
 // don't drift apart visually.
-export function AssetListRows({ assets, currency, emptyMessage }: AssetListRowsProps) {
+export function AssetListRows({ assets, categories, currency, emptyMessage }: AssetListRowsProps) {
   if (assets.length === 0) {
     return <p className="py-10 text-center text-sm text-neutral-400">{emptyMessage}</p>;
   }
@@ -20,7 +21,7 @@ export function AssetListRows({ assets, currency, emptyMessage }: AssetListRowsP
   return (
     <div className="divide-y divide-neutral-50">
       {assets.map((asset) => {
-        const Icon = ASSET_CATEGORY_ICONS[asset.category];
+        const Icon = assetCategoryIconFor(categories, asset.category);
         const isSold = asset.status === "SOLD";
         return (
           <div key={asset.id} className={`flex items-center justify-between gap-3 px-4 py-3 ${isSold ? "bg-neutral-50/70" : ""}`}>
@@ -45,7 +46,7 @@ export function AssetListRows({ assets, currency, emptyMessage }: AssetListRowsP
                 </p>
                 <p className="truncate text-xs text-neutral-400">
                   {new Date(asset.purchaseDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} &middot;{" "}
-                  {ASSET_CATEGORY_LABELS[asset.category]}
+                  {asset.category}
                 </p>
               </div>
             </div>

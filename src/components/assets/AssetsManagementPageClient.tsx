@@ -1,9 +1,10 @@
-import type { Asset } from "@/lib/api";
+import type { Asset, AssetCategoryOption } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { AssetListRows } from "./AssetListRows";
 
 interface AssetsManagementPageClientProps {
   assets: Asset[];
+  categories: AssetCategoryOption[];
   currency: string;
 }
 
@@ -14,7 +15,7 @@ interface AssetsManagementPageClientProps {
 // Update Value actions here either -- those live on their own dedicated
 // sub-pages, so this page doesn't offer three different ways to do the
 // same thing.
-export function AssetsManagementPageClient({ assets, currency }: AssetsManagementPageClientProps) {
+export function AssetsManagementPageClient({ assets, categories, currency }: AssetsManagementPageClientProps) {
   const totalActiveValue = assets.filter((a) => a.status === "ACTIVE").reduce((sum, a) => sum + Number(a.currentValue), 0);
 
   return (
@@ -28,7 +29,7 @@ export function AssetsManagementPageClient({ assets, currency }: AssetsManagemen
       </div>
 
       <div className="mt-6 rounded-2xl bg-surface shadow-sm shadow-black/5">
-        <AssetListRows assets={assets} currency={currency} emptyMessage='No assets yet -- add one under "Purchase & Sell Asset".' />
+        <AssetListRows assets={assets} categories={categories} currency={currency} emptyMessage='No assets yet -- add one under "Purchase & Sell Asset".' />
       </div>
     </div>
   );

@@ -2,14 +2,15 @@
 
 import { Pencil, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import type { Asset } from "@/lib/api";
+import type { Asset, AssetCategoryOption } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
-import { ASSET_CATEGORY_ICONS, ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
+import { assetCategoryIconFor } from "./assetCategoryDisplay";
 import { UpdateAssetValueModal } from "./UpdateAssetValueModal";
 
 interface AssetUpdatePageClientProps {
   businessId: string;
   assets: Asset[];
+  categories: AssetCategoryOption[];
   currency: string;
   canManage: boolean;
 }
@@ -18,7 +19,7 @@ interface AssetUpdatePageClientProps {
 // current tracked value (a rising plot, a depreciating car -- see the
 // product spec's own examples) and an "Update Value" action -- deliberately
 // no Sell button here, that lives on the Purchase & Sell page.
-export function AssetUpdatePageClient({ businessId, assets, currency, canManage }: AssetUpdatePageClientProps) {
+export function AssetUpdatePageClient({ businessId, assets, categories, currency, canManage }: AssetUpdatePageClientProps) {
   const [valueTarget, setValueTarget] = useState<Asset | null>(null);
 
   return (
@@ -32,7 +33,7 @@ export function AssetUpdatePageClient({ businessId, assets, currency, canManage 
         ) : (
           <div className="divide-y divide-neutral-50">
             {assets.map((asset) => {
-              const Icon = ASSET_CATEGORY_ICONS[asset.category];
+              const Icon = assetCategoryIconFor(categories, asset.category);
               const change = Number(asset.currentValue) - Number(asset.purchasePrice);
               const changePercent = Number(asset.purchasePrice) > 0 ? (change / Number(asset.purchasePrice)) * 100 : 0;
               return (
@@ -44,7 +45,7 @@ export function AssetUpdatePageClient({ businessId, assets, currency, canManage 
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-neutral-900">{asset.name}</p>
                       <p className="truncate text-xs text-neutral-400">
-                        {ASSET_CATEGORY_LABELS[asset.category]} &middot; Purchased at {formatCurrency(asset.purchasePrice, currency)}
+                        {asset.category} &middot; Purchased at {formatCurrency(asset.purchasePrice, currency)}
                       </p>
                     </div>
                   </div>

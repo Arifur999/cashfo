@@ -2,14 +2,15 @@
 
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
-import type { Asset } from "@/lib/api";
+import type { Asset, AssetCategoryOption } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { AddCurrentAssetModal } from "./AddCurrentAssetModal";
-import { ASSET_CATEGORY_ICONS, ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
+import { assetCategoryIconFor } from "./assetCategoryDisplay";
 
 interface CurrentAssetListPageClientProps {
   businessId: string;
   assets: Asset[];
+  categories: AssetCategoryOption[];
   currency: string;
   canManage: boolean;
 }
@@ -23,7 +24,7 @@ interface CurrentAssetListPageClientProps {
 // Value sits at the top (not just a bottom table row) and search is a
 // plain client-side name filter -- this list is never paginated/large
 // enough to need a server round-trip.
-export function CurrentAssetListPageClient({ businessId, assets, currency, canManage }: CurrentAssetListPageClientProps) {
+export function CurrentAssetListPageClient({ businessId, assets, categories, currency, canManage }: CurrentAssetListPageClientProps) {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -90,7 +91,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
             ) : (
               <tbody className="divide-y divide-neutral-50">
                 {filteredAssets.map((asset, index) => {
-                  const Icon = ASSET_CATEGORY_ICONS[asset.category];
+                  const Icon = assetCategoryIconFor(categories, asset.category);
                   return (
                     <tr key={asset.id}>
                       <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
@@ -102,7 +103,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
                           <span className="font-medium text-neutral-900">{asset.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-neutral-500">{ASSET_CATEGORY_LABELS[asset.category]}</td>
+                      <td className="px-4 py-3 text-neutral-500">{asset.category}</td>
                       <td className="px-4 py-3 text-neutral-500">
                         {new Date(asset.purchaseDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                       </td>

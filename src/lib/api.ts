@@ -605,8 +605,20 @@ export interface SavingsTransferRow {
 // land, a plot, jewellery, gadgets, an investment, ...), tracked separately
 // from ordinary money Accounts. See assetActions.ts and
 // backend/src/assets/.
-export type AssetCategory = "VEHICLE" | "LAND" | "PROPERTY" | "JEWELLERY" | "ELECTRONICS" | "INVESTMENT" | "OTHER";
 export type AssetStatus = "ACTIVE" | "SOLD";
+
+// A per-business, user-manageable Asset category (replaces the old fixed
+// 7-value enum) -- Asset.category above is just this option's `name`
+// string, same loose-reference convention as BudgetCategory/
+// TransactionEntry.categoryId (deleting a category here doesn't touch
+// existing Asset rows that reference its name).
+export interface AssetCategoryOption {
+  id: string;
+  name: string;
+  icon: string | null;
+  color: string;
+  displayOrder: number;
+}
 
 // One point-in-time value the asset was recorded at after purchase (e.g. a
 // yearly revaluation) -- GET .../assets returns these embedded on the
@@ -621,7 +633,7 @@ export interface AssetValueHistoryEntry {
 export interface Asset {
   id: string;
   name: string;
-  category: AssetCategory;
+  category: string;
   purchaseDate: string;
   purchasePrice: string;
   currentValue: string;
