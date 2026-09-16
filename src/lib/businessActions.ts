@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type BusinessDetail, type BusinessLimits, type UserBusiness } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type BusinessDetail, type BusinessLimits, type WorkspaceListItem } from "./api";
 import { getAccessToken } from "./tokenCookies";
 import { setActiveBusinessCookie } from "./activeBusiness";
 import { getBusinessLimits } from "./businesses";
@@ -39,13 +39,16 @@ export async function switchWorkspaceAction(businessId: string): Promise<void> {
 export interface CreateBusinessInput {
   name: string;
   currency: string;
+  phone?: string;
+  email?: string;
+  pin?: string;
 }
 
-export async function createBusinessAction(input: CreateBusinessInput): Promise<ActionResult<UserBusiness>> {
+export async function createBusinessAction(input: CreateBusinessInput): Promise<ActionResult<WorkspaceListItem>> {
   return callApi(async () => {
-    const res = await axios.post<UserBusiness>(
+    const res = await axios.post<WorkspaceListItem>(
       `${API_BASE_URL}/api/businesses`,
-      { name: input.name, type: "BUSINESS", currency: input.currency },
+      { name: input.name, type: "BUSINESS", currency: input.currency, phone: input.phone, email: input.email, pin: input.pin },
       { headers: await authHeaders() },
     );
     return res.data;
@@ -71,6 +74,27 @@ export async function deleteBusinessAction(id: string): Promise<ActionResult> {
   return callApi(async () => {
     await axios.delete(`${API_BASE_URL}/api/businesses/${id}`, { headers: await authHeaders() });
   }, "Failed to delete workspace");
+}
+
+// Settings > Workspaces list page -- the richer list-item shape (phone,
+// email, hasPinLock, trialEndsAt, monthlyFee) that /api/auth/me's embedded
+// businesses array doesn't carry.
+export async function listBusinessesAction(): Promise<ActionResult<WorkspaceListItem[]>> {
+  return callApi(async () => {
+    const res = await axios.get<WorkspaceListItem[]>(`${API_BASE_URL}/api/businesses`, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to load workspaces");
+}
+
+export async function verifyBusinessPinAction(businessId: string, pin: string): Promise<ActionResult<{ valid: boolean }>> {
+  return callApi(async () => {
+    const res = await axios.post<{ valid: boolean }>(
+      `${API_BASE_URL}/api/businesses/${businessId}/verify-pin`,
+      { pin },
+      { headers: await authHeaders() },
+    );
+    return res.data;
+  }, "Failed to verify PIN");
 }
 
 // A Server Action wrapper around lib/businesses.ts's cached fetcher -- Client

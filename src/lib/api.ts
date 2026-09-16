@@ -28,6 +28,8 @@ export interface UserBusiness {
   currency: string;
   role: MemberRole;
   isDefault: boolean;
+  hasPinLock: boolean;
+  trialEndsAt: string | null;
 }
 
 export interface CurrentUser {
@@ -99,9 +101,34 @@ export interface BusinessDetail {
   type: WorkspaceType;
   currency: string;
   isDefault: boolean;
+  phone: string | null;
+  email: string | null;
+  hasPinLock: boolean;
+  trialEndsAt: string | null;
+  monthlyFee: string | null;
   planId: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// Settings > Workspaces list page -- fetches GET /api/businesses (the LIST
+// endpoint), distinct from the single-workspace BusinessDetail above (GET
+// /api/businesses/:id). Same new fields as BusinessDetail, minus
+// planId/createdAt/updatedAt (list doesn't return those), plus `role` (which
+// list -- like UserBusiness -- returns per-membership and BusinessDetail
+// doesn't).
+export interface WorkspaceListItem {
+  id: string;
+  name: string;
+  type: WorkspaceType;
+  currency: string;
+  isDefault: boolean;
+  role: MemberRole;
+  phone: string | null;
+  email: string | null;
+  hasPinLock: boolean;
+  trialEndsAt: string | null;
+  monthlyFee: string | null;
 }
 
 export type AccountType = "ASSET" | "LIABILITY" | "EQUITY" | "INCOME" | "EXPENSE";
