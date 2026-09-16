@@ -13,6 +13,14 @@ export default async function CurrentAssetListPage() {
 
   const result = await getAssetsAction(activeBusinessId);
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  return <CurrentAssetListPageClient assets={(result.data ?? []).filter((a) => a.status === "ACTIVE")} currency={activeBusiness?.currency ?? "BDT"} />;
+  return (
+    <CurrentAssetListPageClient
+      businessId={activeBusinessId}
+      assets={(result.data ?? []).filter((a) => a.status === "ACTIVE")}
+      currency={activeBusiness?.currency ?? "BDT"}
+      canManage={canManage}
+    />
+  );
 }

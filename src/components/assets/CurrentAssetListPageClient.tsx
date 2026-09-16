@@ -1,24 +1,47 @@
+"use client";
+
+import { Plus } from "lucide-react";
+import { useState } from "react";
 import type { Asset } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { ASSET_CATEGORY_ICONS, ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
+import { PurchaseAssetModal } from "./PurchaseAssetModal";
 
 interface CurrentAssetListPageClientProps {
+  businessId: string;
   assets: Asset[];
   currency: string;
+  canManage: boolean;
 }
 
-// A plain read-only reference table of everything currently owned (ACTIVE
-// only -- a sold asset belongs on the Dashboard's full history view, not
-// here). No action buttons, no modals -- just "what do I currently have and
-// what's it worth", for a quick glance without the Dashboard's extra stats
-// or the Purchase & Sell/Asset update pages' management chrome.
-export function CurrentAssetListPageClient({ assets, currency }: CurrentAssetListPageClientProps) {
+// A read-only reference table of everything currently owned (ACTIVE only --
+// a sold asset belongs on the Dashboard's full history view, not here),
+// plus a "+ Purchase Asset" shortcut so an empty/short list isn't a dead
+// end -- selling and revaluing still only happen on their own dedicated
+// pages (Purchase & Sell Asset / Asset update), this is just a convenience
+// for adding the first/next one from wherever you're already looking.
+export function CurrentAssetListPageClient({ businessId, assets, currency, canManage }: CurrentAssetListPageClientProps) {
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
   const total = assets.reduce((sum, a) => sum + Number(a.currentValue), 0);
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">Assets Management</h1>
-      <p className="mt-1 text-sm text-neutral-500">Everything you currently own, at a glance.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-neutral-900">Assets Management</h1>
+          <p className="mt-1 text-sm text-neutral-500">Everything you currently own, at a glance.</p>
+        </div>
+        {canManage && (
+          <button
+            type="button"
+            onClick={() => setPurchaseOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
+          >
+            <Plus className="h-4 w-4" />
+            Purchase Asset
+          </button>
+        )}
+      </div>
 
       <div className="mt-6 rounded-2xl bg-surface shadow-sm shadow-black/5">
         {assets.length === 0 ? (
@@ -70,6 +93,8 @@ export function CurrentAssetListPageClient({ assets, currency }: CurrentAssetLis
           </div>
         )}
       </div>
+
+      <PurchaseAssetModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} businessId={businessId} currency={currency} />
     </div>
   );
 }
