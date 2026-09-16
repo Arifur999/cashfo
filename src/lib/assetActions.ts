@@ -35,7 +35,9 @@ export interface PurchaseAssetInput {
   category: AssetCategory;
   purchaseDate: string;
   purchasePrice: number;
-  purchaseAccountId: string;
+  // Omitted by "Current Asset list"'s simpler Add Assets flow (AddCurrentAssetModal)
+  // -- see backend AssetsService.purchase()'s comment for what that skips.
+  purchaseAccountId?: string;
   notes?: string;
 }
 

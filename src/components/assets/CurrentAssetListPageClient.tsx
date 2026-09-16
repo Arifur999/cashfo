@@ -4,8 +4,8 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import type { Asset } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { AddCurrentAssetModal } from "./AddCurrentAssetModal";
 import { ASSET_CATEGORY_ICONS, ASSET_CATEGORY_LABELS } from "./assetCategoryDisplay";
-import { PurchaseAssetModal } from "./PurchaseAssetModal";
 
 interface CurrentAssetListPageClientProps {
   businessId: string;
@@ -16,10 +16,10 @@ interface CurrentAssetListPageClientProps {
 
 // A read-only reference table of everything currently owned (ACTIVE only --
 // a sold asset belongs on the Dashboard's full history view, not here),
-// plus a "+ Purchase Asset" shortcut so an empty/short list isn't a dead
-// end -- selling and revaluing still only happen on their own dedicated
-// pages (Purchase & Sell Asset / Asset update), this is just a convenience
-// for adding the first/next one from wherever you're already looking.
+// plus an "Add Assets" shortcut (AddCurrentAssetModal -- a simpler,
+// Account-less entry form, see its own comment) so an empty/short list
+// isn't a dead end. Selling and revaluing still only happen on their own
+// dedicated pages (Purchase & Sell Asset / Asset update).
 export function CurrentAssetListPageClient({ businessId, assets, currency, canManage }: CurrentAssetListPageClientProps) {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const total = assets.reduce((sum, a) => sum + Number(a.currentValue), 0);
@@ -94,7 +94,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
         )}
       </div>
 
-      <PurchaseAssetModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} businessId={businessId} currency={currency} />
+      <AddCurrentAssetModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} businessId={businessId} currency={currency} />
     </div>
   );
 }
