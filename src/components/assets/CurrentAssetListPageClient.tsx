@@ -53,13 +53,14 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Purchase Date</th>
                 <th className="px-4 py-3">Purchase Price</th>
+                <th className="px-4 py-3">Notes</th>
                 <th className="px-4 py-3 text-right">Current Value</th>
               </tr>
             </thead>
             {assets.length === 0 ? (
               <tbody>
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-sm text-neutral-400">
+                  <td colSpan={7} className="py-10 text-center text-sm text-neutral-400">
                     No assets currently owned.
                   </td>
                 </tr>
@@ -85,6 +86,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
                           {new Date(asset.purchaseDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                         </td>
                         <td className="px-4 py-3 text-neutral-500">{formatCurrency(asset.purchasePrice, currency)}</td>
+                        <td className="max-w-[16rem] truncate px-4 py-3 text-neutral-500">{asset.notes || <span className="text-neutral-300">--</span>}</td>
                         <td className="px-4 py-3 text-right font-semibold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</td>
                       </tr>
                     );
@@ -92,7 +94,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-neutral-100">
-                    <td colSpan={5} className="px-4 py-3 text-right font-medium text-neutral-500">
+                    <td colSpan={6} className="px-4 py-3 text-right font-medium text-neutral-500">
                       Total
                     </td>
                     <td className="px-4 py-3 text-right text-base font-bold text-neutral-900">{formatCurrency(total, currency)}</td>
