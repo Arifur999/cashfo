@@ -4,7 +4,9 @@ import { Pencil, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import type { Asset, AssetCategoryOption } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { AssetActionsMenu } from "./AssetActionsMenu";
 import { assetCategoryIconFor } from "./assetCategoryDisplay";
+import { AssetValueHistoryModal } from "./AssetValueHistoryModal";
 import { UpdateAssetValueModal } from "./UpdateAssetValueModal";
 
 interface AssetUpdatePageClientProps {
@@ -21,6 +23,7 @@ interface AssetUpdatePageClientProps {
 // no Sell button here, that lives on the Purchase & Sell page.
 export function AssetUpdatePageClient({ businessId, assets, categories, currency, canManage }: AssetUpdatePageClientProps) {
   const [valueTarget, setValueTarget] = useState<Asset | null>(null);
+  const [detailsTarget, setDetailsTarget] = useState<Asset | null>(null);
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
@@ -70,6 +73,7 @@ export function AssetUpdatePageClient({ businessId, assets, categories, currency
                         Update Value
                       </button>
                     )}
+                    <AssetActionsMenu onViewDetails={() => setDetailsTarget(asset)} />
                   </div>
                 </div>
               );
@@ -79,6 +83,7 @@ export function AssetUpdatePageClient({ businessId, assets, categories, currency
       </div>
 
       <UpdateAssetValueModal open={!!valueTarget} onClose={() => setValueTarget(null)} businessId={businessId} asset={valueTarget} currency={currency} />
+      <AssetValueHistoryModal open={!!detailsTarget} onClose={() => setDetailsTarget(null)} asset={detailsTarget} currency={currency} />
     </div>
   );
 }

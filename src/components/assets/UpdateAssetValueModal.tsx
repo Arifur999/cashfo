@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import type { Asset } from "@/lib/api";
 import { updateAssetValueAction } from "@/lib/assetActions";
@@ -25,6 +26,7 @@ interface UpdateAssetValueModalProps {
 export function UpdateAssetValueModal({ open, onClose, businessId, asset, currency }: UpdateAssetValueModalProps) {
   const router = useRouter();
   const [prevKey, setPrevKey] = useState(open ? asset?.id ?? null : null);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [newValue, setNewValue] = useState(asset?.currentValue ?? "");
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -33,6 +35,7 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
   if (currentKey !== prevKey) {
     setPrevKey(currentKey);
     if (open) {
+      setDate(new Date().toISOString().slice(0, 10));
       setNewValue(asset?.currentValue ?? "");
       setNote("");
     }
@@ -46,6 +49,7 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
     startTransition(async () => {
       const result = await updateAssetValueAction(businessId, asset.id, {
         value: parsedValue,
+        date,
         note: note.trim() || undefined,
       });
       if (result.success) {
@@ -68,6 +72,11 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
             Current value: <span className="font-semibold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</span>
           </p>
         )}
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <DatePicker value={date} onChange={setDate} />
+        </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">New Value</label>

@@ -64,6 +64,7 @@ export async function sellAssetAction(businessId: string, id: string, input: Sel
 
 export interface UpdateAssetValueInput {
   value: number;
+  date: string;
   note?: string;
 }
 
