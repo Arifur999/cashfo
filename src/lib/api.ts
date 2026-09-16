@@ -722,4 +722,5 @@ export interface PlatformSettings {
   defaultTimezone: string;
   maintenanceMode: boolean;
   maintenanceMessage: string;
+  referralRewardAmount: number;
 }

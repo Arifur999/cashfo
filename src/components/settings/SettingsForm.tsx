@@ -21,8 +21,14 @@ export function SettingsForm({ initial, canManage }: SettingsFormProps) {
   const [defaultTimezone, setDefaultTimezone] = useState(initial.defaultTimezone);
   const [maintenanceMode, setMaintenanceMode] = useState(initial.maintenanceMode);
   const [maintenanceMessage, setMaintenanceMessage] = useState(initial.maintenanceMessage);
+  const [referralRewardAmount, setReferralRewardAmount] = useState(String(initial.referralRewardAmount));
 
-  const isValid = platformName.trim().length > 0 && /\S+@\S+\.\S+/.test(supportEmail) && defaultCurrency.trim().length > 0 && defaultTimezone.trim().length > 0;
+  const isValid =
+    platformName.trim().length > 0 &&
+    /\S+@\S+\.\S+/.test(supportEmail) &&
+    defaultCurrency.trim().length > 0 &&
+    defaultTimezone.trim().length > 0 &&
+    Number(referralRewardAmount) > 0;
 
   function handleSave() {
     startTransition(async () => {
@@ -33,6 +39,7 @@ export function SettingsForm({ initial, canManage }: SettingsFormProps) {
         defaultTimezone: defaultTimezone.trim(),
         maintenanceMode,
         maintenanceMessage: maintenanceMessage.trim(),
+        referralRewardAmount: Number(referralRewardAmount),
       });
       if (result.success) {
         toast.success(t("Settings saved."));
@@ -116,6 +123,25 @@ export function SettingsForm({ initial, canManage }: SettingsFormProps) {
             />
           </div>
         )}
+      </div>
+
+      <div className="rounded-2xl bg-white p-6 shadow-sm shadow-black/5">
+        <h2 className="mb-4 text-sm font-semibold text-neutral-900">{t("Referral Program")}</h2>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-neutral-700">{t("Reward Per Referral (BDT)")}</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={referralRewardAmount}
+            disabled={!canManage}
+            onChange={(e) => setReferralRewardAmount(e.target.value)}
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
+          />
+          <p className="mt-1.5 text-sm text-neutral-500">
+            {t("Credited to a user's Referral Program balance for each friend who signs up using their link.")}
+          </p>
+        </div>
       </div>
 
       {canManage && (
