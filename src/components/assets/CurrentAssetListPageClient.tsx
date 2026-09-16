@@ -38,7 +38,7 @@ export function CurrentAssetListPageClient({ businessId, assets, currency, canMa
             className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
           >
             <Plus className="h-4 w-4" />
-            Purchase Asset
+            Add Assets
           </button>
         )}
       </div>
