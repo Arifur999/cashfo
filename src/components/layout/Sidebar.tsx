@@ -17,19 +17,22 @@ import { useState } from "react";
 const TOP_NAV_ITEMS = [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }];
 
 // Sits between Balance and Savings Goals (matching where the user first
-// pointed it out). Four sub-pages per the user's explicit spec, each with
+// pointed it out). Five sub-pages per the user's explicit spec, each with
 // ONE distinct job so there's no overlap between them: Dashboard is a pure
-// overview (total value + every asset, active and sold); Current Asset
+// overview (total value + every asset, active and sold, no category
+// filter -- that moved to its own Category page below); Current Asset
 // list is a plain read-only table of what's owned right now; Purchase &
 // Sell Asset is the only place to buy a new one or sell an owned one;
 // Asset update is the only place to revalue one (appreciation/
-// depreciation). Same Dashboard/[...]/submenu shape as Balance/Savings
-// Goals above.
+// depreciation); Category is the only place to filter/browse assets by
+// category. Same Dashboard/[...]/submenu shape as Balance/Savings Goals
+// above.
 const ASSETS_MANAGEMENT_ITEMS = [
   { label: "Dashboard", href: "/assets-management/dashboard" },
   { label: "Current Asset list", href: "/assets-management/current" },
   { label: "Purchase & Sell Asset", href: "/assets-management/purchase-sell" },
   { label: "Asset update", href: "/assets-management/update" },
+  { label: "Category", href: "/assets-management/category" },
 ];
 
 // Reached from the TopBar avatar dropdown's "Profile"/"Settings" links
