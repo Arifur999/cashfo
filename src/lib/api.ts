@@ -738,6 +738,29 @@ export interface WorkspaceOverviewResponse {
   totalCount: number;
 }
 
+// Real `User` rows (not the `PlatformUser` read-model above), shown on the
+// "Manage Owners" page. daysUsing/status are real (User.createdAt/status) --
+// deliberately no "Days Left"/"Expired" column, since this app has no real
+// trial/subscription-expiry tracking on User/Business to back one.
+export interface OwnerOverviewItem {
+  userId: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  businessId: string | null;
+  businessName: string | null;
+  planName: string | null;
+  daysUsing: number;
+  status: "ACTIVE" | "SUSPENDED" | "DELETED";
+}
+
+export interface OwnerOverviewResponse {
+  items: OwnerOverviewItem[];
+  page: number;
+  limit: number;
+  totalCount: number;
+}
+
 export interface PlatformSettings {
   platformName: string;
   supportEmail: string;
