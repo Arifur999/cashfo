@@ -63,17 +63,6 @@ export async function createCampaignAction(input: CreateCampaignInput): Promise<
   }, "Failed to create campaign");
 }
 
-export async function sendCampaignAction(id: string): Promise<ActionResult<BulkNotificationCampaignRow>> {
-  return callApi(async () => {
-    const response = await axios.post<BulkNotificationCampaignRow>(
-      `${API_BASE_URL}/admin/notifications/campaigns/${id}/send`,
-      {},
-      { headers: await authHeaders() },
-    );
-    return response.data;
-  }, "Failed to send campaign");
-}
-
 export async function cancelCampaignAction(id: string): Promise<ActionResult<BulkNotificationCampaignRow>> {
   return callApi(async () => {
     const response = await axios.patch<BulkNotificationCampaignRow>(

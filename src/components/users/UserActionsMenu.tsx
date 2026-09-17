@@ -4,33 +4,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Ban, Eye, KeyRound, MoreVertical, ShieldOff, UserCheck, UserX } from "lucide-react";
-import {
-  activateUserAction,
-  banUserAction,
-  impersonateUserAction,
-  resetPasswordAction,
-  suspendUserAction,
-} from "@/app/admin/(dashboard)/users/_actions";
-import type { PlatformUser } from "@/lib/api";
+import { Eye, MoreVertical, ShieldOff, UserCheck } from "lucide-react";
+import { activateOwnerAction, suspendOwnerAction } from "@/app/admin/(dashboard)/users/_actions";
+import type { OwnerOverviewItem } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { ReasonModal } from "./ReasonModal";
-import { ResetPasswordModal } from "./ResetPasswordModal";
 
 interface UserActionsMenuProps {
-  user: Pick<PlatformUser, "id" | "status">;
-  isSuperAdmin: boolean;
+  owner: Pick<OwnerOverviewItem, "userId" | "status">;
   variant?: "dropdown" | "buttons";
 }
 
-type ActiveModal = "suspend" | "ban" | "reset-password" | null;
-
-export function UserActionsMenu({ user, isSuperAdmin, variant = "dropdown" }: UserActionsMenuProps) {
+export function UserActionsMenu({ owner, variant = "dropdown" }: UserActionsMenuProps) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -38,62 +27,25 @@ export function UserActionsMenu({ user, isSuperAdmin, variant = "dropdown" }: Us
 
   function handleSuspend(reason: string) {
     startTransition(async () => {
-      const result = await suspendUserAction(user.id, reason);
+      const result = await suspendOwnerAction(owner.userId, reason);
       if (result.success) {
-        toast.success(t("User suspended"));
-        setActiveModal(null);
+        toast.success(t("Owner suspended"));
+        setIsSuspendModalOpen(false);
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to suspend user"));
+        toast.error(result.message ?? t("Failed to suspend owner"));
       }
     });
   }
 
   function handleActivate() {
     startTransition(async () => {
-      const result = await activateUserAction(user.id);
+      const result = await activateOwnerAction(owner.userId);
       if (result.success) {
-        toast.success(t("User activated"));
+        toast.success(t("Owner activated"));
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to activate user"));
-      }
-    });
-  }
-
-  function handleBan(reason: string) {
-    startTransition(async () => {
-      const result = await banUserAction(user.id, reason);
-      if (result.success) {
-        toast.success(t("User banned"));
-        setActiveModal(null);
-        router.refresh();
-      } else {
-        toast.error(result.message ?? t("Failed to ban user"));
-      }
-    });
-  }
-
-  function handleResetPassword() {
-    startTransition(async () => {
-      const result = await resetPasswordAction(user.id);
-      if (result.success && result.data) {
-        setTempPassword(result.data.tempPassword);
-        setActiveModal("reset-password");
-        toast.success(t("Temporary password generated"));
-      } else {
-        toast.error(result.message ?? t("Failed to reset password"));
-      }
-    });
-  }
-
-  function handleImpersonate() {
-    startTransition(async () => {
-      const result = await impersonateUserAction(user.id);
-      if (result.success) {
-        toast.success(t("Impersonation token generated (logged in Activity Log)"));
-      } else {
-        toast.error(result.message ?? t("Failed to start impersonation"));
+        toast.error(result.message ?? t("Failed to activate owner"));
       }
     });
   }
@@ -101,12 +53,12 @@ export function UserActionsMenu({ user, isSuperAdmin, variant = "dropdown" }: Us
   const actions = (
     <>
       <Link
-        href={`/admin/users/${user.id}`}
+        href={`/admin/users/${owner.userId}`}
         className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
       >
         <Eye className="h-4 w-4" /> {t("View")}
       </Link>
-      {user.status === "SUSPENDED" ? (
+      {owner.status === "SUSPENDED" ? (
         <button
           type="button"
           disabled={isPending}
@@ -123,45 +75,11 @@ export function UserActionsMenu({ user, isSuperAdmin, variant = "dropdown" }: Us
           type="button"
           onClick={() => {
             setIsMenuOpen(false);
-            setActiveModal("suspend");
+            setIsSuspendModalOpen(true);
           }}
           className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
         >
           <ShieldOff className="h-4 w-4" /> {t("Suspend")}
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={() => {
-          setIsMenuOpen(false);
-          setActiveModal("ban");
-        }}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-brand-danger hover:bg-red-50"
-      >
-        <Ban className="h-4 w-4" /> {t("Ban")}
-      </button>
-      <button
-        type="button"
-        disabled={isPending}
-        onClick={() => {
-          setIsMenuOpen(false);
-          handleResetPassword();
-        }}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
-      >
-        <KeyRound className="h-4 w-4" /> {t("Reset Password")}
-      </button>
-      {isSuperAdmin && (
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={() => {
-            setIsMenuOpen(false);
-            handleImpersonate();
-          }}
-          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
-        >
-          <UserX className="h-4 w-4" /> {t("Impersonate")}
         </button>
       )}
     </>
@@ -187,7 +105,7 @@ export function UserActionsMenu({ user, isSuperAdmin, variant = "dropdown" }: Us
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {user.status === "SUSPENDED" ? (
+          {owner.status === "SUSPENDED" ? (
             <button
               type="button"
               disabled={isPending}
@@ -199,65 +117,23 @@ export function UserActionsMenu({ user, isSuperAdmin, variant = "dropdown" }: Us
           ) : (
             <button
               type="button"
-              onClick={() => setActiveModal("suspend")}
+              onClick={() => setIsSuspendModalOpen(true)}
               className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
             >
               <ShieldOff className="h-4 w-4" /> {t("Suspend")}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setActiveModal("ban")}
-            className="flex items-center gap-2 rounded-xl bg-brand-danger px-4 py-2 text-sm font-medium text-white hover:bg-brand-danger-hover"
-          >
-            <Ban className="h-4 w-4" /> {t("Ban")}
-          </button>
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={handleResetPassword}
-            className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
-          >
-            <KeyRound className="h-4 w-4" /> {t("Reset Password")}
-          </button>
-          {isSuperAdmin && (
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={handleImpersonate}
-              className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
-            >
-              <UserX className="h-4 w-4" /> {t("Impersonate")}
             </button>
           )}
         </div>
       )}
 
       <ReasonModal
-        open={activeModal === "suspend"}
-        onClose={() => setActiveModal(null)}
-        title={t("Suspend User")}
-        warning={t("This will immediately block the user from accessing their account until reactivated.")}
+        open={isSuspendModalOpen}
+        onClose={() => setIsSuspendModalOpen(false)}
+        title={t("Suspend Owner")}
+        warning={t("This immediately blocks the owner from logging in or using their account until reactivated.")}
         confirmLabel={t("Suspend")}
         isSubmitting={isPending}
         onConfirm={handleSuspend}
-      />
-      <ReasonModal
-        open={activeModal === "ban"}
-        onClose={() => setActiveModal(null)}
-        title={t("Ban User")}
-        warning={t("Banning is more severe than suspending and implies a permanent block.")}
-        confirmLabel={t("Ban")}
-        isSubmitting={isPending}
-        onConfirm={handleBan}
-      />
-      <ResetPasswordModal
-        open={activeModal === "reset-password"}
-        onClose={() => {
-          setActiveModal(null);
-          setTempPassword(null);
-        }}
-        tempPassword={tempPassword}
       />
     </>
   );

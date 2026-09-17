@@ -1,12 +1,12 @@
 "use client";
 
-import { Loader2, Plus, Send, X } from "lucide-react";
+import { AlertTriangle, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { BulkNotificationCampaignRow, NotificationTemplateRow, SubscriptionPlanOption } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { cancelCampaignAction, sendCampaignAction } from "@/app/admin/(dashboard)/notifications/_actions";
+import { cancelCampaignAction } from "@/app/admin/(dashboard)/notifications/_actions";
 import { CampaignStatusBadge } from "./CampaignStatusBadge";
 import { NotificationChannelBadge } from "./NotificationChannelBadge";
 import { NewCampaignModal } from "./NewCampaignModal";
@@ -36,18 +36,6 @@ export function CampaignsClient({ campaigns, templates, planOptions, canManage }
   const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
   const [actioningId, setActioningId] = useState<string | null>(null);
 
-  async function handleSend(id: string) {
-    setActioningId(id);
-    const result = await sendCampaignAction(id);
-    setActioningId(null);
-    if (result.success && result.data) {
-      toast.success(t("Campaign sent.") + ` ${result.data.sentCount} ${t("sent")}, ${result.data.failedCount} ${t("failed")}.`);
-      startTransition(() => router.refresh());
-    } else {
-      toast.error(result.message ?? t("Failed to send campaign"));
-    }
-  }
-
   async function handleCancel(id: string) {
     setActioningId(id);
     const result = await cancelCampaignAction(id);
@@ -74,6 +62,11 @@ export function CampaignsClient({ campaigns, templates, planOptions, canManage }
           </button>
         </div>
       )}
+
+      <div className="flex items-center gap-2 text-sm text-neutral-400">
+        <AlertTriangle className="h-4 w-4" />
+        {t("Real delivery isn't wired up yet -- no email/SMS/push provider is integrated, so campaigns can be drafted and cancelled but not sent.")}
+      </div>
 
       <div className={`overflow-x-auto rounded-2xl bg-white shadow-sm shadow-black/5 ${isPending ? "opacity-60" : ""}`}>
         <table className="w-full text-left text-sm">
@@ -108,15 +101,6 @@ export function CampaignsClient({ campaigns, templates, planOptions, canManage }
                   <td className="px-4 py-3 text-right">
                     {SENDABLE.has(campaign.status) && (
                       <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          disabled={actioningId === campaign.id}
-                          onClick={() => handleSend(campaign.id)}
-                          className="flex items-center gap-1 rounded-lg bg-brand-primary px-2.5 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-                        >
-                          {actioningId === campaign.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                          {t("Send Now")}
-                        </button>
                         <button
                           type="button"
                           disabled={actioningId === campaign.id}

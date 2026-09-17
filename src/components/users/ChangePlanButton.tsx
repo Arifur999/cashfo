@@ -5,36 +5,36 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
-import { changePlanAction } from "@/app/admin/(dashboard)/users/_actions";
-import type { PlatformUser, SubscriptionPlanOption } from "@/lib/api";
+import { changeOwnerPlanAction } from "@/app/admin/(dashboard)/users/_actions";
+import type { OwnerOverviewItem, SubscriptionPlanOption } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 
 const MIN_REASON_LENGTH = 5;
 
 interface ChangePlanButtonProps {
-  user: Pick<PlatformUser, "id" | "planId" | "plan">;
+  owner: Pick<OwnerOverviewItem, "userId" | "planId" | "planName">;
   plans: SubscriptionPlanOption[];
 }
 
-export function ChangePlanButton({ user, plans }: ChangePlanButtonProps) {
+export function ChangePlanButton({ owner, plans }: ChangePlanButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [newPlanId, setNewPlanId] = useState(user.planId ?? "");
+  const [newPlanId, setNewPlanId] = useState(owner.planId ?? "");
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const isValid = newPlanId && newPlanId !== user.planId && reason.trim().length >= MIN_REASON_LENGTH;
+  const isValid = newPlanId && newPlanId !== owner.planId && reason.trim().length >= MIN_REASON_LENGTH;
 
   function handleClose() {
     setOpen(false);
-    setNewPlanId(user.planId ?? "");
+    setNewPlanId(owner.planId ?? "");
     setReason("");
   }
 
   function handleConfirm() {
     if (!isValid) return;
     startTransition(async () => {
-      const result = await changePlanAction(user.id, newPlanId, reason.trim());
+      const result = await changeOwnerPlanAction(owner.userId, newPlanId, reason.trim());
       if (result.success) {
         toast.success(t("Plan changed"));
         handleClose();
@@ -57,7 +57,7 @@ export function ChangePlanButton({ user, plans }: ChangePlanButtonProps) {
 
       <Modal open={open} onClose={handleClose} title={t("Change Plan")}>
         <p className="mb-4 text-sm text-neutral-500">
-          {t("Current plan")}: <span className="font-medium text-neutral-800">{user.plan?.name ?? t("None")}</span>
+          {t("Current plan")}: <span className="font-medium text-neutral-800">{owner.planName ?? t("None")}</span>
         </p>
 
         <label className="mb-1.5 block text-sm font-medium text-neutral-700">{t("New Plan")}</label>

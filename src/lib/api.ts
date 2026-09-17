@@ -742,6 +742,8 @@ export interface WorkspaceOverviewResponse {
 // "Manage Owners" page. daysUsing/status are real (User.createdAt/status) --
 // deliberately no "Days Left"/"Expired" column, since this app has no real
 // trial/subscription-expiry tracking on User/Business to back one.
+export type OwnerStatus = "ACTIVE" | "SUSPENDED" | "DELETED";
+
 export interface OwnerOverviewItem {
   userId: string;
   name: string;
@@ -749,9 +751,12 @@ export interface OwnerOverviewItem {
   phone: string | null;
   businessId: string | null;
   businessName: string | null;
+  planId: string | null;
   planName: string | null;
+  workspaceCount: number;
+  lastLoginAt: string | null;
   daysUsing: number;
-  status: "ACTIVE" | "SUSPENDED" | "DELETED";
+  status: OwnerStatus;
 }
 
 export interface OwnerOverviewResponse {
@@ -759,6 +764,32 @@ export interface OwnerOverviewResponse {
   page: number;
   limit: number;
   totalCount: number;
+}
+
+export interface OwnerActivityLogEntry {
+  id: string;
+  action: string;
+  entityType: string;
+  adminName: string;
+  createdAt: string;
+}
+
+export interface OwnerDetail {
+  userId: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  status: OwnerStatus;
+  createdAt: string;
+  lastLoginAt: string | null;
+  businessId: string | null;
+  businessName: string | null;
+  planId: string | null;
+  planName: string | null;
+  workspaceCount: number;
+  suspendedReason: string | null;
+  suspendedAt: string | null;
+  activityLog: OwnerActivityLogEntry[];
 }
 
 export interface PlatformSettings {

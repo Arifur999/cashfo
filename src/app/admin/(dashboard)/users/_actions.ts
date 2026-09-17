@@ -28,50 +28,22 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
   }
 }
 
-export async function suspendUserAction(userId: string, reason: string): Promise<ActionResult> {
+export async function suspendOwnerAction(userId: string, reason: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.patch(`${API_BASE_URL}/admin/users/${userId}/suspend`, { reason }, { headers: await authHeaders() });
-  }, "Failed to suspend user");
+    await axios.patch(`${API_BASE_URL}/admin/owners/${userId}/suspend`, { reason }, { headers: await authHeaders() });
+  }, "Failed to suspend owner");
 }
 
-export async function activateUserAction(userId: string): Promise<ActionResult> {
+export async function activateOwnerAction(userId: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.patch(`${API_BASE_URL}/admin/users/${userId}/activate`, {}, { headers: await authHeaders() });
-  }, "Failed to activate user");
+    await axios.patch(`${API_BASE_URL}/admin/owners/${userId}/activate`, {}, { headers: await authHeaders() });
+  }, "Failed to activate owner");
 }
 
-export async function banUserAction(userId: string, reason: string): Promise<ActionResult> {
-  return callApi(async () => {
-    await axios.patch(`${API_BASE_URL}/admin/users/${userId}/ban`, { reason }, { headers: await authHeaders() });
-  }, "Failed to ban user");
-}
-
-export async function resetPasswordAction(userId: string): Promise<ActionResult<{ tempPassword: string }>> {
-  return callApi(async () => {
-    const res = await axios.post<{ tempPassword: string }>(
-      `${API_BASE_URL}/admin/users/${userId}/reset-password`,
-      {},
-      { headers: await authHeaders() },
-    );
-    return res.data;
-  }, "Failed to reset password");
-}
-
-export async function impersonateUserAction(userId: string): Promise<ActionResult<{ token: string }>> {
-  return callApi(async () => {
-    const res = await axios.post<{ token: string }>(
-      `${API_BASE_URL}/admin/users/${userId}/impersonate`,
-      {},
-      { headers: await authHeaders() },
-    );
-    return res.data;
-  }, "Failed to start impersonation");
-}
-
-export async function changePlanAction(userId: string, newPlanId: string, reason: string): Promise<ActionResult> {
+export async function changeOwnerPlanAction(userId: string, newPlanId: string, reason: string): Promise<ActionResult> {
   return callApi(async () => {
     await axios.patch(
-      `${API_BASE_URL}/admin/users/${userId}/change-plan`,
+      `${API_BASE_URL}/admin/owners/${userId}/change-plan`,
       { newPlanId, reason },
       { headers: await authHeaders() },
     );

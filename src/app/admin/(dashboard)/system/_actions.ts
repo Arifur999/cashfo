@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage } from "@/lib/api";
-import type { BackupRecordRow, ErrorLogRow, FeatureFlagRow } from "@/lib/api";
+import type { ErrorLogRow, FeatureFlagRow } from "@/lib/api";
 import { getAccessToken } from "@/lib/tokenCookies";
 
 export interface ActionResult<T = void> {
@@ -27,17 +27,6 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
     }
     return { success: false, message: fallbackMessage };
   }
-}
-
-export async function triggerBackupAction(): Promise<ActionResult<BackupRecordRow>> {
-  return callApi(async () => {
-    const response = await axios.post<BackupRecordRow>(
-      `${API_BASE_URL}/admin/system/backups/trigger`,
-      {},
-      { headers: await authHeaders() },
-    );
-    return response.data;
-  }, "Failed to trigger backup");
 }
 
 export interface UpdateFeatureFlagInput {

@@ -1,14 +1,10 @@
 "use client";
 
-import { AlertTriangle, CheckCircle, Clock, Loader2, RefreshCw } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { SummaryCard } from "@/components/payments/SummaryCard";
 import type { BackupRecordRow, BackupStatusSummary } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n/t";
-import { triggerBackupAction } from "@/app/admin/(dashboard)/system/_actions";
 import { BackupStatusBadge } from "./BackupStatusBadge";
 
 interface BackupsClientProps {
@@ -17,33 +13,9 @@ interface BackupsClientProps {
 }
 
 export function BackupsClient({ backups, summary }: BackupsClientProps) {
-  const router = useRouter();
-  const [isTriggering, setIsTriggering] = useState(false);
-  const [optimisticBackup, setOptimisticBackup] = useState<BackupRecordRow | null>(null);
-  const [isPending, startTransition] = useTransition();
-
   const isStale = summary.daysSinceLastBackup !== null && summary.daysSinceLastBackup > 2;
 
-  async function handleTrigger() {
-    setIsTriggering(true);
-    const result = await triggerBackupAction();
-    setIsTriggering(false);
-    if (result.success && result.data) {
-      setOptimisticBackup(result.data);
-      toast.success(t("Backup started."));
-      // The backend simulates the job completing ~3s later (see
-      // BackupsService.trigger) -- refresh shortly after so the
-      // IN_PROGRESS -> SUCCESS transition shows up without a manual reload.
-      setTimeout(() => {
-        setOptimisticBackup(null);
-        startTransition(() => router.refresh());
-      }, 3500);
-    } else {
-      toast.error(result.message ?? t("Failed to trigger backup"));
-    }
-  }
-
-  const displayedBackups = optimisticBackup ? [optimisticBackup, ...backups] : backups;
+  const displayedBackups = backups;
 
   return (
     <div className="space-y-6">
@@ -69,19 +41,12 @@ export function BackupsClient({ backups, summary }: BackupsClientProps) {
         />
       </div>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          disabled={isTriggering || Boolean(optimisticBackup)}
-          onClick={handleTrigger}
-          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
-        >
-          {isTriggering || optimisticBackup ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          {t("Trigger Backup Now")}
-        </button>
+      <div className="flex items-center justify-end gap-2 text-sm text-neutral-400">
+        <AlertTriangle className="h-4 w-4" />
+        {t("Real backup automation isn't wired up yet -- no pg_dump/storage upload runs anywhere in this app.")}
       </div>
 
-      <div className={`overflow-x-auto rounded-2xl bg-white shadow-sm shadow-black/5 ${isPending ? "opacity-60" : ""}`}>
+      <div className="overflow-x-auto rounded-2xl bg-white shadow-sm shadow-black/5">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
             <tr>

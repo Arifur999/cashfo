@@ -3,25 +3,27 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Search } from "lucide-react";
-import type { ListMeta, PlatformUser, PlatformUserStatus, SubscriptionPlanOption } from "@/lib/api";
+import type { OwnerOverviewItem, OwnerStatus, SubscriptionPlanOption } from "@/lib/api";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { t } from "@/lib/i18n/t";
 import { StatusBadge } from "./StatusBadge";
 import { UserActionsMenu } from "./UserActionsMenu";
 
-const STATUS_OPTIONS: PlatformUserStatus[] = ["ACTIVE", "SUSPENDED", "BANNED", "PENDING_DELETION"];
+const STATUS_OPTIONS: OwnerStatus[] = ["ACTIVE", "SUSPENDED", "DELETED"];
 
 interface UsersListClientProps {
-  users: PlatformUser[];
-  meta: ListMeta;
+  owners: OwnerOverviewItem[];
+  page: number;
+  limit: number;
+  totalCount: number;
   plans: SubscriptionPlanOption[];
-  isSuperAdmin: boolean;
 }
 
-export function UsersListClient({ users, meta, plans, isSuperAdmin }: UsersListClientProps) {
+export function UsersListClient({ owners, page, limit, totalCount, plans }: UsersListClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
 
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const debouncedSearch = useDebouncedValue(search, 400);
@@ -54,7 +56,7 @@ export function UsersListClient({ users, meta, plans, isSuperAdmin }: UsersListC
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("Search by name or email...")}
+            placeholder={t("Search by name, business, email, or phone...")}
             className="w-full rounded-xl border border-neutral-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
@@ -100,24 +102,24 @@ export function UsersListClient({ users, meta, plans, isSuperAdmin }: UsersListC
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-50">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-neutral-50/60">
-                <td className="px-4 py-3 font-medium text-neutral-900">{user.name}</td>
-                <td className="px-4 py-3 text-neutral-500">{user.email}</td>
+            {owners.map((owner) => (
+              <tr key={owner.userId} className="hover:bg-neutral-50/60">
+                <td className="px-4 py-3 font-medium text-neutral-900">{owner.name}</td>
+                <td className="px-4 py-3 text-neutral-500">{owner.email}</td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={user.status} />
+                  <StatusBadge status={owner.status} />
                 </td>
-                <td className="px-4 py-3 text-neutral-500">{user.plan?.name ?? t("None")}</td>
-                <td className="px-4 py-3 text-neutral-500">{user.workspaceCount}</td>
+                <td className="px-4 py-3 text-neutral-500">{owner.planName ?? t("None")}</td>
+                <td className="px-4 py-3 text-neutral-500">{owner.workspaceCount}</td>
                 <td className="px-4 py-3 text-neutral-500">
-                  {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : "—"}
+                  {owner.lastLoginAt ? new Date(owner.lastLoginAt).toLocaleDateString() : "—"}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <UserActionsMenu user={user} isSuperAdmin={isSuperAdmin} />
+                  <UserActionsMenu owner={owner} />
                 </td>
               </tr>
             ))}
-            {users.length === 0 && (
+            {owners.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-neutral-400">
                   {t("No users match these filters.")}
@@ -130,21 +132,21 @@ export function UsersListClient({ users, meta, plans, isSuperAdmin }: UsersListC
 
       <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm shadow-sm shadow-black/5">
         <span className="text-neutral-500">
-          {t("Page")} {meta.page} {t("of")} {Math.max(meta.totalPage, 1)} &middot; {meta.total} {t("total")}
+          {t("Page")} {page} {t("of")} {totalPages} &middot; {totalCount} {t("total")}
         </span>
         <div className="flex gap-2">
           <button
             type="button"
-            disabled={meta.page <= 1}
-            onClick={() => updateParams({ page: meta.page - 1 })}
+            disabled={page <= 1}
+            onClick={() => updateParams({ page: page - 1 })}
             className="rounded-lg border border-neutral-200 px-3 py-1.5 text-neutral-600 disabled:opacity-40"
           >
             {t("Previous")}
           </button>
           <button
             type="button"
-            disabled={meta.page >= meta.totalPage}
-            onClick={() => updateParams({ page: meta.page + 1 })}
+            disabled={page >= totalPages}
+            onClick={() => updateParams({ page: page + 1 })}
             className="rounded-lg border border-neutral-200 px-3 py-1.5 text-neutral-600 disabled:opacity-40"
           >
             {t("Next")}
