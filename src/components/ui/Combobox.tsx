@@ -2,6 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface ComboboxOption {
   value: string;
@@ -36,6 +37,7 @@ interface ComboboxProps {
 // (which would either fight the user's in-progress typing or need
 // SSR-unsafe `document` access to tell the two cases apart).
 export function Combobox({ value, onChange, options, placeholder, emptyMessage = "No matches", disabled }: ComboboxProps) {
+  const { t } = useLocale();
   const normalized = useMemo<ComboboxOption[]>(() => options.map((o) => (typeof o === "string" ? { value: o, label: o } : o)), [options]);
   const labelFor = (v: string) => normalized.find((o) => o.value === v)?.label ?? v;
 
@@ -128,7 +130,7 @@ export function Combobox({ value, onChange, options, placeholder, emptyMessage =
       {open && !disabled && (
         <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-neutral-100 bg-surface py-1 shadow-xl shadow-black/10">
           {filtered.length === 0 ? (
-            <p className="px-3.5 py-2 text-sm text-neutral-400">{emptyMessage}</p>
+            <p className="px-3.5 py-2 text-sm text-neutral-400">{t(emptyMessage)}</p>
           ) : (
             filtered.map((option, i) => (
               <button

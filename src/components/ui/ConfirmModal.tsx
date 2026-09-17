@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Modal } from "./Modal";
 
 interface ConfirmModalProps {
@@ -18,6 +19,7 @@ interface ConfirmModalProps {
 // other dialog in this app, so a destructive action doesn't suddenly drop
 // into the browser's own unstyled alert box.
 export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmLabel = "Confirm", isPending, danger = true }: ConfirmModalProps) {
+  const { t } = useLocale();
   return (
     <Modal open={open} onClose={onClose} title={title}>
       <p className="text-sm text-neutral-600">{message}</p>
@@ -27,7 +29,7 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, confirm
           onClick={onClose}
           className="rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
         >
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -38,7 +40,7 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, confirm
           }`}
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {confirmLabel}
+          {t(confirmLabel)}
         </button>
       </div>
     </Modal>

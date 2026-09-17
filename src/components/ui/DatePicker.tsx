@@ -2,6 +2,7 @@
 
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface DatePickerProps {
   value: string; // "YYYY-MM-DD", same convention as a native <input type="date">; "" means no date picked yet
@@ -66,6 +67,7 @@ function buildMonthGrid(year: number, month: number): { date: Date; inMonth: boo
 }
 
 export function DatePicker({ value, onChange, placeholder = "Select a date" }: DatePickerProps) {
+  const { t } = useLocale();
   // "" (no date picked -- e.g. an optional Reminder Date left blank) must
   // NOT fall through to parseValue()'s Number("") === 0 -- that silently
   // resolves to year 1900, showing a nonsensical default instead of a
@@ -129,10 +131,10 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
         <Calendar className="h-4 w-4 shrink-0 text-neutral-400" />
         {selected ? (
           <span>
-            {MONTH_NAMES[selected.getMonth()]} {ordinal(selected.getDate())}, {selected.getFullYear()}
+            {t(MONTH_NAMES[selected.getMonth()])} {ordinal(selected.getDate())}, {selected.getFullYear()}
           </span>
         ) : (
-          <span className="text-neutral-400">{placeholder}</span>
+          <span className="text-neutral-400">{t(placeholder)}</span>
         )}
       </button>
 
@@ -148,7 +150,7 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="text-sm font-semibold text-neutral-900">
-              {MONTH_NAMES[viewMonth]} {viewYear}
+              {t(MONTH_NAMES[viewMonth])} {viewYear}
             </span>
             <button
               type="button"
@@ -163,7 +165,7 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
           <div className="grid grid-cols-7 gap-y-1 text-center text-xs font-medium text-neutral-400">
             {WEEKDAY_LABELS.map((d) => (
               <span key={d} className="py-1">
-                {d}
+                {t(d)}
               </span>
             ))}
           </div>
