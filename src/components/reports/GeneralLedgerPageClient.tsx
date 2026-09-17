@@ -6,6 +6,7 @@ import { useState } from "react";
 import { accountDisplayName, ACCOUNT_TYPE_LABELS } from "@/lib/accountDisplay";
 import type { GeneralLedgerGroup, LanguagePreference } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface GeneralLedgerPageClientProps {
   groups: GeneralLedgerGroup[];
@@ -18,6 +19,7 @@ interface GeneralLedgerPageClientProps {
 // comment on the backend for why (keeps this page's response light
 // regardless of how much activity any one account has).
 export function GeneralLedgerPageClient({ groups, preferredLanguage, currency }: GeneralLedgerPageClientProps) {
+  const { t } = useLocale();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(groups.map((g) => g.accountType)));
 
   function toggleSection(accountType: string) {
@@ -31,8 +33,10 @@ export function GeneralLedgerPageClient({ groups, preferredLanguage, currency }:
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">General Ledger</h1>
-      <p className="mt-1 text-sm text-neutral-500">Every account in this workspace, grouped by type. Click one for its full statement.</p>
+      <h1 className="text-xl font-semibold text-neutral-900">{t("General Ledger")}</h1>
+      <p className="mt-1 text-sm text-neutral-500">
+        {t("Every account in this workspace, grouped by type. Click one for its full statement.")}
+      </p>
 
       <div className="mt-6 space-y-4">
         {groups.map((group) => {
@@ -42,14 +46,16 @@ export function GeneralLedgerPageClient({ groups, preferredLanguage, currency }:
               <button type="button" onClick={() => toggleSection(group.accountType)} className="flex w-full items-center justify-between px-4 py-3">
                 <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
                   {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  {ACCOUNT_TYPE_LABELS[group.accountType]}
+                  {t(ACCOUNT_TYPE_LABELS[group.accountType])}
                 </span>
-                <span className="text-xs text-neutral-400">{group.accounts.length} account(s)</span>
+                <span className="text-xs text-neutral-400">
+                  {group.accounts.length} {t("account(s)")}
+                </span>
               </button>
               {isOpen && (
                 <div className="border-t border-neutral-50">
                   {group.accounts.length === 0 ? (
-                    <p className="px-4 py-4 text-sm text-neutral-400">No accounts.</p>
+                    <p className="px-4 py-4 text-sm text-neutral-400">{t("No accounts.")}</p>
                   ) : (
                     group.accounts.map((a) => (
                       <Link

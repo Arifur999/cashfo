@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createBusinessAction, getBusinessLimitsAction } from "@/lib/businessActions";
 import type { BusinessLimits, WorkspaceListItem } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface CreateWorkspaceModalProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface CreateWorkspaceModalProps {
 
 export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspaceModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -65,12 +67,12 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
         pin: pin || undefined,
       });
       if (result.success) {
-        toast.success("Workspace created");
+        toast.success(t("Workspace created"));
         onClose();
         router.refresh();
         if (result.data) onCreated?.(result.data);
       } else {
-        toast.error(result.message ?? "Failed to create workspace");
+        toast.error(result.message ?? t("Failed to create workspace"));
       }
     });
   }
@@ -80,29 +82,29 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
   const isValid = name.trim().length > 0 && !atLimit && pinValid;
 
   return (
-    <Modal open={open} onClose={onClose} title="New Business Workspace">
+    <Modal open={open} onClose={onClose} title={t("New Business Workspace")}>
       <div className="space-y-4">
         {!limitsLoading && atLimit && (
           <p className="rounded-xl bg-brand-danger/10 px-3.5 py-2.5 text-sm text-brand-danger">
             {limits && limits.maxBusinessWorkspaces === 0
-              ? "Your current plan does not include business workspaces. Upgrade to add one."
-              : `Your plan allows up to ${limits?.maxBusinessWorkspaces} business workspace(s). Upgrade to add more.`}
+              ? t("Your current plan does not include business workspaces. Upgrade to add one.")
+              : `${t("Your plan allows up to")} ${limits?.maxBusinessWorkspaces} ${t("business workspace(s). Upgrade to add more.")}`}
           </p>
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Name")}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={atLimit}
-            placeholder="e.g. My Shop"
+            placeholder={t("e.g. My Shop")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Phone</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Phone")}</label>
           <input
             type="tel"
             value={phone}
@@ -114,7 +116,7 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Email</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Email")}</label>
           <input
             type="email"
             value={email}
@@ -126,8 +128,8 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">PIN</label>
-          <p className="mb-1 text-xs text-neutral-500">Optional -- set a PIN to require it when switching into this workspace.</p>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("PIN")}</label>
+          <p className="mb-1 text-xs text-neutral-500">{t("Optional -- set a PIN to require it when switching into this workspace.")}</p>
           <input
             type="text"
             inputMode="numeric"
@@ -135,7 +137,7 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ""))}
             disabled={atLimit}
-            placeholder="4-6 digits"
+            placeholder={t("4-6 digits")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
           />
         </div>
@@ -143,7 +145,7 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
 
       <div className="mt-5 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -152,7 +154,7 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Create
+          {t("Create")}
         </button>
       </div>
     </Modal>

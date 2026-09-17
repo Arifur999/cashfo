@@ -1,4 +1,7 @@
+"use client";
+
 import type { Asset, AssetCategoryOption } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatCurrency } from "@/lib/currency";
 import { assetCategoryIconFor } from "./assetCategoryDisplay";
 
@@ -14,6 +17,8 @@ interface AssetListRowsProps {
 // filter) and the Category page (filtered by the selected pill) so the two
 // don't drift apart visually.
 export function AssetListRows({ assets, categories, currency, emptyMessage }: AssetListRowsProps) {
+  const { t } = useLocale();
+
   if (assets.length === 0) {
     return <p className="py-10 text-center text-sm text-neutral-400">{emptyMessage}</p>;
   }
@@ -41,7 +46,7 @@ export function AssetListRows({ assets, categories, currency, emptyMessage }: As
                       isSold ? "bg-neutral-200 text-neutral-500" : "bg-brand-primary/10 text-brand-primary"
                     }`}
                   >
-                    {isSold ? "Sold" : "Active"}
+                    {isSold ? t("Sold") : t("Active")}
                   </span>
                 </p>
                 <p className="truncate text-xs text-neutral-400">
@@ -56,7 +61,7 @@ export function AssetListRows({ assets, categories, currency, emptyMessage }: As
                 <div className="text-right">
                   <p className="text-sm font-semibold text-neutral-500">{formatCurrency(asset.soldPrice ?? "0", currency)}</p>
                   <p className="text-xs text-neutral-400">
-                    Sold {asset.soldAt ? new Date(asset.soldAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : ""}
+                    {t("Sold")} {asset.soldAt ? new Date(asset.soldAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : ""}
                   </p>
                 </div>
               ) : (

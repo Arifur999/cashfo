@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import type { Account, SavingsGoal } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getMoneyAccountsAction } from "@/lib/quickEntryActions";
 import { addContributionAction, getActiveSavingsWalletsAction } from "@/lib/savingsGoalActions";
 
@@ -19,6 +20,7 @@ interface AddContributionModalProps {
 }
 
 export function AddContributionModal({ open, onClose, businessId, goal }: AddContributionModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [moneyAccountId, setMoneyAccountId] = useState("");
@@ -65,11 +67,11 @@ export function AddContributionModal({ open, onClose, businessId, goal }: AddCon
         notes: notes || undefined,
       });
       if (result.success) {
-        toast.success("Contribution added");
+        toast.success(t("Contribution added"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to add contribution");
+        toast.error(result.message ?? t("Failed to add contribution"));
       }
     });
   }
@@ -77,24 +79,28 @@ export function AddContributionModal({ open, onClose, businessId, goal }: AddCon
   const isValid = moneyAccountId.length > 0 && toAccountId.length > 0 && Number(amount) > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title="Add Contribution">
+    <Modal open={open} onClose={onClose} title={t("Add Contribution")}>
       <div className="space-y-4">
-        {goal && <p className="text-sm text-neutral-500">Adding funds to &quot;{goal.name}&quot;</p>}
+        {goal && (
+          <p className="text-sm text-neutral-500">
+            {t("Adding funds to")} &quot;{goal.name}&quot;
+          </p>
+        )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <DatePicker value={date} onChange={setDate} />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">From Account</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("From Account")}</label>
           <select
             value={moneyAccountId}
             onChange={(e) => setMoneyAccountId(e.target.value)}
             disabled={loadingAccounts}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {accounts.length === 0 && <option value="">No money accounts yet</option>}
+            {accounts.length === 0 && <option value="">{t("No money accounts yet")}</option>}
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
@@ -104,14 +110,14 @@ export function AddContributionModal({ open, onClose, businessId, goal }: AddCon
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">To Wallet</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("To Wallet")}</label>
           <select
             value={toAccountId}
             onChange={(e) => setToAccountId(e.target.value)}
             disabled={loadingAccounts}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {savingsWallets.length === 0 && <option value="">No Savings Wallets yet</option>}
+            {savingsWallets.length === 0 && <option value="">{t("No Savings Wallets yet")}</option>}
             {savingsWallets.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
@@ -120,17 +126,17 @@ export function AddContributionModal({ open, onClose, businessId, goal }: AddCon
           </select>
           {!loadingAccounts && savingsWallets.length === 0 && (
             <p className="mt-1 text-xs text-brand-danger">
-              No Savings Wallets yet --{" "}
+              {t("No Savings Wallets yet --")}{" "}
               <Link href="/savings-goals/wallet" className="font-medium underline">
-                add one
+                {t("add one")}
               </Link>{" "}
-              first.
+              {t("first.")}
             </p>
           )}
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Amount</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -144,7 +150,7 @@ export function AddContributionModal({ open, onClose, businessId, goal }: AddCon
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <input
             value={notes}
@@ -161,7 +167,7 @@ export function AddContributionModal({ open, onClose, businessId, goal }: AddCon
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Save
+        {t("Save")}
       </button>
     </Modal>
   );

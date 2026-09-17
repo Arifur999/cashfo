@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import type { Asset } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { updateAssetValueAction } from "@/lib/assetActions";
 import { formatCurrency } from "@/lib/currency";
 
@@ -24,6 +25,7 @@ interface UpdateAssetValueModalProps {
 // how a value got to where it is. Same "reset on open/id change" render-time
 // pattern as SavingsWithdrawModal/VaultEntryModal.
 export function UpdateAssetValueModal({ open, onClose, businessId, asset, currency }: UpdateAssetValueModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [prevKey, setPrevKey] = useState(open ? asset?.id ?? null : null);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -53,11 +55,11 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
         note: note.trim() || undefined,
       });
       if (result.success) {
-        toast.success("Value updated");
+        toast.success(t("Value updated"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to update value");
+        toast.error(result.message ?? t("Failed to update value"));
       }
     });
   }
@@ -65,21 +67,21 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
   const history = asset?.valueHistory.slice(0, 5) ?? [];
 
   return (
-    <Modal open={open} onClose={onClose} title="Update Value">
+    <Modal open={open} onClose={onClose} title={t("Update Value")}>
       <div className="space-y-4">
         {asset && (
           <p className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
-            Current value: <span className="font-semibold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</span>
+            {t("Current value:")} <span className="font-semibold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</span>
           </p>
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <DatePicker value={date} onChange={setDate} />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">New Value</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("New Value")}</label>
           <input
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
@@ -93,19 +95,19 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Note <span className="text-neutral-400">(optional)</span>
+            {t("Note")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="e.g. Market rate increased"
+            placeholder={t("e.g. Market rate increased")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
 
         {history.length > 0 && (
           <div>
-            <p className="mb-1 text-sm font-medium text-neutral-700">Value History</p>
+            <p className="mb-1 text-sm font-medium text-neutral-700">{t("Value History")}</p>
             <div className="divide-y divide-neutral-50 rounded-xl border border-neutral-100">
               {history.map((entry) => (
                 <div key={entry.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
@@ -128,7 +130,7 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Update Value
+        {t("Update Value")}
       </button>
     </Modal>
   );

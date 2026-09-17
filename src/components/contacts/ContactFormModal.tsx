@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/contactActions";
 import type { Contact, ContactCategory, ContactType } from "@/lib/api";
 import { contactInitials } from "@/lib/contactDisplay";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Modal } from "@/components/ui/Modal";
 
 // "Both" is deliberately not offered here anymore -- new/edited contacts
@@ -33,6 +34,7 @@ interface ContactFormModalProps {
 
 export function ContactFormModal({ open, onClose, businessId, editingContact }: ContactFormModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [name, setName] = useState("");
   const [type, setType] = useState<ContactType>("CUSTOMER");
   const [category, setCategory] = useState<ContactCategory>("BUSINESS");
@@ -86,7 +88,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
     if (result.success && result.data) {
       setPhotoUrl(result.data.url);
     } else {
-      toast.error(result.message ?? "Failed to upload photo");
+      toast.error(result.message ?? t("Failed to upload photo"));
     }
     setUploadingPhoto(false);
   }
@@ -109,11 +111,11 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
           photoUrl,
         });
         if (result.success) {
-          toast.success("Contact updated");
+          toast.success(t("Contact updated"));
           onClose();
           router.refresh();
         } else {
-          toast.error(result.message ?? "Failed to update contact");
+          toast.error(result.message ?? t("Failed to update contact"));
         }
         return;
       }
@@ -137,11 +139,11 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
         photoUrl: photoUrl || undefined,
       });
       if (result.success) {
-        toast.success("Contact created");
+        toast.success(t("Contact created"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to create contact");
+        toast.error(result.message ?? t("Failed to create contact"));
       }
     });
   }
@@ -149,11 +151,11 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
   const isValid = name.trim().length > 0 && phone.trim().length > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title={editingContact ? "Edit Contact" : "Add Contact"}>
+    <Modal open={open} onClose={onClose} title={editingContact ? t("Edit Contact") : t("Add Contact")}>
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Photo <span className="text-neutral-400">(optional)</span>
+            {t("Photo")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-sm font-semibold text-neutral-500">
@@ -169,14 +171,14 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
               className="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-200 px-3.5 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
             >
               {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-              {photoUrl ? "Change Photo" : "Upload Photo"}
+              {photoUrl ? t("Change Photo") : t("Upload Photo")}
             </label>
             <input id="contact-photo-input" type="file" accept="image/*" onChange={handlePhotoChange} disabled={uploadingPhoto} className="hidden" />
             {photoUrl && (
               <button
                 type="button"
                 onClick={() => setPhotoUrl("")}
-                title="Remove photo"
+                title={t("Remove photo")}
                 className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
               >
                 <X className="h-4 w-4" />
@@ -186,34 +188,34 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Name")}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Karim Traders"
+            placeholder={t("e.g. Karim Traders")}
             autoFocus
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Type</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Type")}</label>
           <select
             value={type}
             onChange={(e) => setType(e.target.value as ContactType)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
           >
-            {editingContact?.type === "BOTH" && <option value="BOTH">Both</option>}
+            {editingContact?.type === "BOTH" && <option value="BOTH">{t("Both")}</option>}
             {TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.label)}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Relationship</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Relationship")}</label>
           <div className="flex gap-2 rounded-xl bg-neutral-50 p-1">
             <button
               type="button"
@@ -222,7 +224,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
                 category === "BUSINESS" ? "bg-surface text-brand-primary shadow-sm ring-2 ring-brand-primary" : "text-neutral-500 hover:text-neutral-700"
               }`}
             >
-              Trade (Sale/Purchase)
+              {t("Trade (Sale/Purchase)")}
             </button>
             <button
               type="button"
@@ -231,17 +233,18 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
                 category === "LOAN" ? "bg-surface text-brand-primary shadow-sm ring-2 ring-brand-primary" : "text-neutral-500 hover:text-neutral-700"
               }`}
             >
-              Loan
+              {t("Loan")}
             </button>
           </div>
           <p className="mt-1 text-xs text-neutral-400">
-            This contact shows up in every dashboard and report either way — it only changes the wording used on their page (e.g. &quot;Give a Loan&quot; vs
-            &quot;Record Sale on Credit&quot;).
+            {t(
+              'This contact shows up in every dashboard and report either way — it only changes the wording used on their page (e.g. "Give a Loan" vs "Record Sale on Credit").',
+            )}
           </p>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Phone</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Phone")}</label>
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -251,7 +254,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Address</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Address")}</label>
           <input
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -262,7 +265,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
         {!editingContact && (
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Opening Balance <span className="text-neutral-400">(optional)</span>
+              {t("Opening Balance")} <span className="text-neutral-400">{t("(optional)")}</span>
             </label>
             <div className="mb-2 flex gap-2 rounded-xl bg-neutral-50 p-1">
               <button
@@ -272,7 +275,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
                   direction === "THEY_OWE_ME" ? "bg-surface text-brand-primary shadow-sm ring-2 ring-brand-primary" : "text-neutral-500 hover:text-neutral-700"
                 }`}
               >
-                They owe me
+                {t("They owe me")}
               </button>
               <button
                 type="button"
@@ -281,7 +284,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
                   direction === "I_OWE_THEM" ? "bg-surface text-brand-danger shadow-sm ring-2 ring-brand-danger" : "text-neutral-500 hover:text-neutral-700"
                 }`}
               >
-                I owe them
+                {t("I owe them")}
               </button>
             </div>
             <input
@@ -293,13 +296,13 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
               placeholder="0.00"
               className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             />
-            <p className="mt-1 text-xs text-neutral-400">If there&apos;s an existing balance, enter the amount and pick who owes whom.</p>
+            <p className="mt-1 text-xs text-neutral-400">{t("If there's an existing balance, enter the amount and pick who owes whom.")}</p>
           </div>
         )}
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <textarea
             value={notes}
@@ -312,7 +315,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
 
       <div className="mt-5 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -321,7 +324,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingContact ? "Save Changes" : "Create"}
+          {editingContact ? t("Save Changes") : t("Create")}
         </button>
       </div>
     </Modal>

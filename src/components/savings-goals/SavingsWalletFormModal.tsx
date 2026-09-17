@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import type { Account } from "@/lib/api";
 import { createAccountAction, updateAccountAction } from "@/lib/accountActions";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface SavingsWalletFormModalProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface SavingsWalletFormModalProps {
 // Wallet is a regular money-holding place, just kept out of the ordinary
 // Income/Expense/Transfer pickers (see AccountsService.listSavingsWallets()).
 export function SavingsWalletFormModal({ open, onClose, businessId, editingWallet }: SavingsWalletFormModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -58,11 +60,11 @@ export function SavingsWalletFormModal({ open, onClose, businessId, editingWalle
           });
 
       if (result.success) {
-        toast.success(editingWallet ? "Savings Wallet updated" : "Savings Wallet created");
+        toast.success(editingWallet ? t("Savings Wallet updated") : t("Savings Wallet created"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? (editingWallet ? "Failed to update Savings Wallet" : "Failed to create Savings Wallet"));
+        toast.error(result.message ?? (editingWallet ? t("Failed to update Savings Wallet") : t("Failed to create Savings Wallet")));
       }
     });
   }
@@ -70,14 +72,14 @@ export function SavingsWalletFormModal({ open, onClose, businessId, editingWalle
   const isValid = name.trim().length > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title={editingWallet ? "Edit Savings Wallet" : "Add Savings Wallet"}>
+    <Modal open={open} onClose={onClose} title={editingWallet ? t("Edit Savings Wallet") : t("Add Savings Wallet")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Wallet Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Wallet Name")}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Islami Bank DPS"
+            placeholder={t("e.g. Islami Bank DPS")}
             autoFocus
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
@@ -85,12 +87,12 @@ export function SavingsWalletFormModal({ open, onClose, businessId, editingWalle
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Account Number <span className="text-neutral-400">(optional)</span>
+            {t("Account Number")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <input
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value)}
-            placeholder="e.g. 01711223344"
+            placeholder={t("e.g. 01711223344")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
@@ -98,7 +100,7 @@ export function SavingsWalletFormModal({ open, onClose, businessId, editingWalle
         {!editingWallet && (
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Opening Balance <span className="text-neutral-400">(optional)</span>
+              {t("Opening Balance")} <span className="text-neutral-400">({t("Optional")})</span>
             </label>
             <input
               value={openingBalance}
@@ -115,7 +117,7 @@ export function SavingsWalletFormModal({ open, onClose, businessId, editingWalle
 
       <div className="mt-5 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -124,7 +126,7 @@ export function SavingsWalletFormModal({ open, onClose, businessId, editingWalle
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingWallet ? "Save Changes" : "Create"}
+          {editingWallet ? t("Save Changes") : t("Create")}
         </button>
       </div>
     </Modal>

@@ -9,6 +9,7 @@ import type { BudgetCategorySummary, BudgetOverview } from "@/lib/api";
 import { deleteBudgetCategoryAction } from "@/lib/budgetActions";
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface IncomeCategoryColumnProps {
   businessId: string;
@@ -27,20 +28,22 @@ interface IncomeCategoryColumnProps {
 // no per-category goal at all: just a name/icon/color and how much came in
 // this month.
 export function IncomeCategoryColumn({ businessId, overview, currency, canManage, dateFrom, dateTo, onEdit }: IncomeCategoryColumnProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
 
   function handleDelete(category: BudgetCategorySummary) {
-    if (!window.confirm(`Delete the "${category.name}" category? This won't affect past transactions.`)) return;
+    const confirmMessage = t('Delete the "{name}" category? This won\'t affect past transactions.').replace("{name}", category.name);
+    if (!window.confirm(confirmMessage)) return;
     setDeletingId(category.id);
     startDeleteTransition(async () => {
       const result = await deleteBudgetCategoryAction(businessId, category.id);
       if (result.success) {
-        toast.success("Category deleted");
+        toast.success(t("Category deleted"));
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to delete category");
+        toast.error(result.message ?? t("Failed to delete category"));
       }
       setDeletingId(null);
     });
@@ -50,15 +53,15 @@ export function IncomeCategoryColumn({ businessId, overview, currency, canManage
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Income Categories</h2>
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">{t("Income Categories")}</h2>
 
       <div className="mb-4 rounded-2xl bg-surface px-4 py-3 text-sm text-neutral-600 shadow-sm shadow-black/5">
-        Total earned this month: <span className="font-semibold text-neutral-900">{formatCurrency(totalEarned, currency)}</span>
+        {t("Total earned this month:")} <span className="font-semibold text-neutral-900">{formatCurrency(totalEarned, currency)}</span>
       </div>
 
       {overview.categories.length === 0 ? (
         <div className="rounded-2xl bg-surface px-4 py-10 text-center text-sm text-neutral-400 shadow-sm shadow-black/5">
-          No categories yet -- tap &quot;Add Category&quot; to get started.
+          {t('No categories yet -- tap "Add Category" to get started.')}
         </div>
       ) : (
         <div className="space-y-3">
@@ -76,7 +79,7 @@ export function IncomeCategoryColumn({ businessId, overview, currency, canManage
                       href={`/transactions?type=INCOME&categoryId=${encodeURIComponent(category.name)}&dateFrom=${dateFrom}&dateTo=${dateTo}`}
                       className="text-sm text-brand-primary hover:underline"
                     >
-                      View Transactions
+                      {t("View Transactions")}
                     </Link>
                   </div>
                 </div>
@@ -87,7 +90,7 @@ export function IncomeCategoryColumn({ businessId, overview, currency, canManage
                       <button
                         type="button"
                         onClick={() => onEdit(category)}
-                        title="Edit"
+                        title={t("Edit")}
                         className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -96,7 +99,7 @@ export function IncomeCategoryColumn({ businessId, overview, currency, canManage
                         type="button"
                         disabled={deletingId === category.id && isDeleting}
                         onClick={() => handleDelete(category)}
-                        title="Delete"
+                        title={t("Delete")}
                         className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

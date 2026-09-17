@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import type { Asset, AssetCategoryOption } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatCurrency } from "@/lib/currency";
 import { assetCategoryIconFor } from "./assetCategoryDisplay";
 import { PurchaseAssetModal } from "./PurchaseAssetModal";
@@ -21,6 +22,7 @@ interface PurchaseSellAssetPageClientProps {
 // update page's revaluation focus -- deliberately no "Update Value" button
 // here, that lives on its own page.
 export function PurchaseSellAssetPageClient({ businessId, assets, categories, currency, canManage }: PurchaseSellAssetPageClientProps) {
+  const { t } = useLocale();
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [sellTarget, setSellTarget] = useState<Asset | null>(null);
 
@@ -28,8 +30,8 @@ export function PurchaseSellAssetPageClient({ businessId, assets, categories, cu
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Assets Management</h1>
-          <p className="mt-1 text-sm text-neutral-500">Purchase a new asset, or sell one you currently own.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Assets Management")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Purchase a new asset, or sell one you currently own.")}</p>
         </div>
         {canManage && (
           <button
@@ -38,15 +40,15 @@ export function PurchaseSellAssetPageClient({ businessId, assets, categories, cu
             className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
           >
             <Plus className="h-4 w-4" />
-            Purchase Asset
+            {t("Purchase Asset")}
           </button>
         )}
       </div>
 
       <div className="mt-6 rounded-2xl bg-surface shadow-sm shadow-black/5">
-        <div className="border-b border-neutral-100 px-4 py-3 text-sm font-semibold text-neutral-700">Sell an Asset</div>
+        <div className="border-b border-neutral-100 px-4 py-3 text-sm font-semibold text-neutral-700">{t("Sell an Asset")}</div>
         {assets.length === 0 ? (
-          <p className="py-10 text-center text-sm text-neutral-400">No assets to sell yet -- purchase one first.</p>
+          <p className="py-10 text-center text-sm text-neutral-400">{t("No assets to sell yet -- purchase one first.")}</p>
         ) : (
           <div className="divide-y divide-neutral-50">
             {assets.map((asset) => {
@@ -70,7 +72,7 @@ export function PurchaseSellAssetPageClient({ businessId, assets, categories, cu
                         onClick={() => setSellTarget(asset)}
                         className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
                       >
-                        Sell
+                        {t("Sell")}
                       </button>
                     )}
                   </div>

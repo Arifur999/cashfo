@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { uploadAvatarAction } from "@/lib/authActions";
 
 interface ChangeAvatarModalProps {
@@ -30,6 +31,7 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 // gave no chance to back out of the wrong file.
 export function ChangeAvatarModal({ open, onClose, currentAvatarUrl, name }: ChangeAvatarModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -60,11 +62,11 @@ export function ChangeAvatarModal({ open, onClose, currentAvatarUrl, name }: Cha
     if (!file) return;
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Only JPG, PNG, WEBP, or GIF images are allowed");
+      toast.error(t("Only JPG, PNG, WEBP, or GIF images are allowed"));
       return;
     }
     if (file.size > MAX_SIZE_BYTES) {
-      toast.error("Image must be 5MB or smaller");
+      toast.error(t("Image must be 5MB or smaller"));
       return;
     }
 
@@ -82,18 +84,18 @@ export function ChangeAvatarModal({ open, onClose, currentAvatarUrl, name }: Cha
     startTransition(async () => {
       const result = await uploadAvatarAction(formData);
       if (result.success) {
-        toast.success("Avatar updated");
+        toast.success(t("Avatar updated"));
         router.refresh();
         onClose();
       } else {
-        toast.error(result.message ?? "Failed to upload avatar");
+        toast.error(result.message ?? t("Failed to upload avatar"));
       }
     });
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Change Profile Picture">
-      <p className="-mt-2 mb-5 text-sm text-neutral-500">Upload a new profile picture. Recommended size: 400x400px</p>
+    <Modal open={open} onClose={onClose} title={t("Change Profile Picture")}>
+      <p className="-mt-2 mb-5 text-sm text-neutral-500">{t("Upload a new profile picture. Recommended size: 400x400px")}</p>
 
       <div className="flex flex-col items-center gap-3">
         {previewUrl || currentAvatarUrl ? (
@@ -111,9 +113,9 @@ export function ChangeAvatarModal({ open, onClose, currentAvatarUrl, name }: Cha
           onClick={handleChoose}
           className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
         >
-          <Upload className="h-3.5 w-3.5" /> Choose Image
+          <Upload className="h-3.5 w-3.5" /> {t("Choose Image")}
         </button>
-        <p className="text-xs text-neutral-400">JPG, PNG or GIF (max 5MB)</p>
+        <p className="text-xs text-neutral-400">{t("JPG, PNG or GIF (max 5MB)")}</p>
       </div>
 
       <div className="mt-6 flex justify-end gap-2">
@@ -122,7 +124,7 @@ export function ChangeAvatarModal({ open, onClose, currentAvatarUrl, name }: Cha
           onClick={onClose}
           className="rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
         >
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -131,7 +133,7 @@ export function ChangeAvatarModal({ open, onClose, currentAvatarUrl, name }: Cha
           className="flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Upload Avatar
+          {t("Upload Avatar")}
         </button>
       </div>
     </Modal>

@@ -3,6 +3,7 @@
 import { Pencil, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import type { Asset, AssetCategoryOption } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatCurrency } from "@/lib/currency";
 import { AssetActionsMenu } from "./AssetActionsMenu";
 import { assetCategoryIconFor } from "./assetCategoryDisplay";
@@ -22,17 +23,18 @@ interface AssetUpdatePageClientProps {
 // product spec's own examples) and an "Update Value" action -- deliberately
 // no Sell button here, that lives on the Purchase & Sell page.
 export function AssetUpdatePageClient({ businessId, assets, categories, currency, canManage }: AssetUpdatePageClientProps) {
+  const { t } = useLocale();
   const [valueTarget, setValueTarget] = useState<Asset | null>(null);
   const [detailsTarget, setDetailsTarget] = useState<Asset | null>(null);
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">Assets Management</h1>
-      <p className="mt-1 text-sm text-neutral-500">Update each asset&apos;s current market value as it appreciates or depreciates.</p>
+      <h1 className="text-xl font-semibold text-neutral-900">{t("Assets Management")}</h1>
+      <p className="mt-1 text-sm text-neutral-500">{t("Update each asset's current market value as it appreciates or depreciates.")}</p>
 
       <div className="mt-6 rounded-2xl bg-surface shadow-sm shadow-black/5">
         {assets.length === 0 ? (
-          <p className="py-10 text-center text-sm text-neutral-400">No assets yet -- purchase one first under Purchase &amp; Sell Asset.</p>
+          <p className="py-10 text-center text-sm text-neutral-400">{t("No assets yet -- purchase one first under Purchase & Sell Asset.")}</p>
         ) : (
           <div className="divide-y divide-neutral-50">
             {assets.map((asset) => {
@@ -48,7 +50,7 @@ export function AssetUpdatePageClient({ businessId, assets, categories, currency
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-neutral-900">{asset.name}</p>
                       <p className="truncate text-xs text-neutral-400">
-                        {asset.category} &middot; Purchased at {formatCurrency(asset.purchasePrice, currency)}
+                        {asset.category} &middot; {t("Purchased at")} {formatCurrency(asset.purchasePrice, currency)}
                       </p>
                     </div>
                   </div>
@@ -70,7 +72,7 @@ export function AssetUpdatePageClient({ businessId, assets, categories, currency
                         className="flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                        Update Value
+                        {t("Update Value")}
                       </button>
                     )}
                     <AssetActionsMenu onViewDetails={() => setDetailsTarget(asset)} />

@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import type { BudgetCategorySummary, BudgetCategoryType } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createBudgetCategoryAction, updateBudgetCategoryAction } from "@/lib/budgetActions";
 import {
   budgetCategoryColorClass,
@@ -35,6 +36,7 @@ const SLIDER_RANGE: Record<BudgetCategoryType, { min: number; max: number; step:
 };
 
 export function BudgetCategoryModal({ open, onClose, businessId, type, editingCategory, currency }: BudgetCategoryModalProps) {
+  const { t } = useLocale();
   const isIncome = type === "INCOME";
   const { min: sliderMin, max: sliderMax, step: sliderStep } = SLIDER_RANGE[type];
   const router = useRouter();
@@ -97,14 +99,14 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
   function handleSubmit() {
     const limit = Number(monthlyLimit);
     if (!name.trim()) {
-      toast.error("Give this category a name");
+      toast.error(t("Give this category a name"));
       return;
     }
     // Income categories have no per-category goal at all -- see
     // BudgetCategory.monthlyLimit's schema comment -- so this validation
     // (and sending the field at all) only applies to Expense.
     if (!isIncome && !(limit > 0)) {
-      toast.error("Enter a limit greater than zero");
+      toast.error(t("Enter a limit greater than zero"));
       return;
     }
 
@@ -114,11 +116,11 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
         : await createBudgetCategoryAction(businessId, { type, name: name.trim(), icon, color, ...(!isIncome && { monthlyLimit: limit }) });
 
       if (result.success) {
-        toast.success(editingCategory ? "Category updated" : "Category added");
+        toast.success(editingCategory ? t("Category updated") : t("Category added"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to save category");
+        toast.error(result.message ?? t("Failed to save category"));
       }
     });
   }
@@ -140,40 +142,48 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
     <Modal
       open={open}
       onClose={onClose}
-      title={editingCategory ? `Edit ${isIncome ? "Income" : "Expense"} Category` : `Add ${isIncome ? "Income" : "Expense"} Category`}
+      title={
+        editingCategory
+          ? isIncome
+            ? t("Edit Income Category")
+            : t("Edit Expense Category")
+          : isIncome
+            ? t("Add Income Category")
+            : t("Add Expense Category")
+      }
     >
       <p className="-mt-2 mb-4 text-sm text-neutral-500">
         {isIncome
-          ? "Create a category to organize your income -- the overall Monthly income goal is set separately"
-          : "Create a category with its own monthly spending limit"}
+          ? t("Create a category to organize your income -- the overall Monthly income goal is set separately")
+          : t("Create a category with its own monthly spending limit")}
       </p>
 
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Category Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Category Name")}</label>
           <input
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
-            placeholder={isIncome ? "e.g., Salary, Commission, Rental Income" : "e.g., Groceries, Gas, Subscriptions"}
+            placeholder={isIncome ? t("e.g., Salary, Commission, Rental Income") : t("e.g., Groceries, Gas, Subscriptions")}
             autoFocus
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-neutral-700">Choose an Icon</label>
+          <label className="mb-2 block text-sm font-medium text-neutral-700">{t("Choose an Icon")}</label>
           <div className="relative mb-2">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <input
               value={iconSearch}
               onChange={(e) => setIconSearch(e.target.value)}
-              placeholder="Search icons..."
+              placeholder={t("Search icons...")}
               className="w-full rounded-xl border border-neutral-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             />
           </div>
           <div className="grid max-h-56 grid-cols-6 gap-2 overflow-y-auto pr-1">
             {filteredIcons.length === 0 ? (
-              <p className="col-span-6 py-4 text-center text-sm text-neutral-400">No matching icon</p>
+              <p className="col-span-6 py-4 text-center text-sm text-neutral-400">{t("No matching icon")}</p>
             ) : (
               filteredIcons.map((key) => {
                 const Icon = budgetCategoryIcon(key);
@@ -199,7 +209,7 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-neutral-700">Choose a Color</label>
+          <label className="mb-2 block text-sm font-medium text-neutral-700">{t("Choose a Color")}</label>
           <div className="grid grid-cols-4 gap-2">
             {BUDGET_CATEGORY_COLORS.map((key) => {
               const selected = color === key;
@@ -222,7 +232,7 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
         {!isIncome && (
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <label className="text-sm font-medium text-neutral-700">Monthly Budget Limit</label>
+              <label className="text-sm font-medium text-neutral-700">{t("Monthly Budget Limit")}</label>
               <span className="text-sm font-semibold text-neutral-900">
                 {currencySymbol(currency)}
                 {monthlyLimit || "0"}
@@ -264,7 +274,7 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
           onClick={onClose}
           className="rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
         >
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -273,7 +283,7 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
           className="flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingCategory ? "Save Changes" : "Add Category"}
+          {editingCategory ? t("Save Changes") : t("Add Category")}
         </button>
       </div>
     </Modal>

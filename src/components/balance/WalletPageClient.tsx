@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { archiveAccountAction } from "@/lib/accountActions";
 import type { Account } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { WalletFormModal } from "./WalletFormModal";
 
 interface WalletPageClientProps {
@@ -19,6 +20,7 @@ interface WalletPageClientProps {
 
 export function WalletPageClient({ businessId, wallets, canManage, currency }: WalletPageClientProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [formOpen, setFormOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<Account | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -34,14 +36,14 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
   }
 
   function handleArchive(wallet: Account) {
-    if (!window.confirm(`Archive "${wallet.name}"?`)) return;
+    if (!window.confirm(`${t("Archive")} "${wallet.name}"?`)) return;
     startTransition(async () => {
       const result = await archiveAccountAction(businessId, wallet.id);
       if (result.success) {
-        toast.success("Wallet archived");
+        toast.success(t("Wallet archived"));
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to archive wallet");
+        toast.error(result.message ?? t("Failed to archive wallet"));
       }
     });
   }
@@ -50,8 +52,8 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Wallet</h1>
-          <p className="mt-1 text-sm text-neutral-500">Accounts</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Wallet")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Accounts")}</p>
         </div>
         {canManage && (
           <button
@@ -59,22 +61,22 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
             onClick={openCreate}
             className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
           >
-            <Plus className="h-4 w-4" /> Add
+            <Plus className="h-4 w-4" /> {t("Add")}
           </button>
         )}
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         {wallets.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">No wallets yet.</p>
+          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No wallets yet.")}</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Account Number</th>
-                <th className="px-4 py-3 font-medium text-right">Opening Balance</th>
-                {canManage && <th className="px-4 py-3 font-medium text-right">Actions</th>}
+                <th className="px-4 py-3 font-medium">{t("Name")}</th>
+                <th className="px-4 py-3 font-medium">{t("Account Number")}</th>
+                <th className="px-4 py-3 font-medium text-right">{t("Opening Balance")}</th>
+                {canManage && <th className="px-4 py-3 font-medium text-right">{t("Actions")}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-50">
@@ -88,7 +90,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
                       </Link>
                       {isArchived && (
                         <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-                          Archived
+                          {t("Archived")}
                         </span>
                       )}
                     </td>
@@ -100,7 +102,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
                           <button
                             type="button"
                             onClick={() => openEdit(wallet)}
-                            title="Edit"
+                            title={t("Edit")}
                             className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -110,7 +112,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
                               type="button"
                               disabled={isPending}
                               onClick={() => handleArchive(wallet)}
-                              title="Archive"
+                              title={t("Archive")}
                               className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                             >
                               <Archive className="h-3.5 w-3.5" />

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import type { SavingsGoal, SavingsGoalPaceStatus, SavingsGoalStatus, SavingsGoalTrend, SavingsOverview } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { deleteSavingsGoalAction, updateSavingsGoalStatusAction } from "@/lib/savingsGoalActions";
 import { AddContributionModal } from "./AddContributionModal";
 import { GoalActionsMenu } from "./GoalActionsMenu";
@@ -66,6 +67,7 @@ const TREND_COLOR: Record<NonNullable<SavingsGoalTrend>, string> = {
 };
 
 export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, currency, canManage }: SavingsGoalsDashboardPageClientProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [filter, setFilter] = useState<SavingsGoalStatus | "">("");
   const [formOpen, setFormOpen] = useState(false);
@@ -92,10 +94,10 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
     startTransition(async () => {
       const result = await updateSavingsGoalStatusAction(businessId, goal.id, goal.status === "PAUSED" ? "ACTIVE" : "PAUSED");
       if (result.success) {
-        toast.success(goal.status === "PAUSED" ? "Goal resumed" : "Goal paused");
+        toast.success(goal.status === "PAUSED" ? t("Goal resumed") : t("Goal paused"));
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to update goal");
+        toast.error(result.message ?? t("Failed to update goal"));
       }
     });
   }
@@ -105,11 +107,11 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
     startTransition(async () => {
       const result = await deleteSavingsGoalAction(businessId, deletingGoal.id);
       if (result.success) {
-        toast.success("Goal deleted");
+        toast.success(t("Goal deleted"));
         setDeletingGoal(null);
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to delete goal");
+        toast.error(result.message ?? t("Failed to delete goal"));
       }
     });
   }
@@ -117,52 +119,52 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
   return (
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">Saving Goals</h1>
+        <h1 className="text-xl font-semibold text-neutral-900">{t("Saving Goals")}</h1>
         {canManage && (
           <button
             type="button"
             onClick={openCreate}
             className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
           >
-            <Plus className="h-4 w-4" /> Add New Goal
+            <Plus className="h-4 w-4" /> {t("Add New Goal")}
           </button>
         )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,320px)_1fr]">
         <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <h2 className="mb-4 text-sm font-semibold text-neutral-900">Savings Overview</h2>
+          <h2 className="mb-4 text-sm font-semibold text-neutral-900">{t("Savings Overview")}</h2>
           <div className="flex justify-center">
-            <ProgressRing percent={overview.progressPercent} label="Progress" />
+            <ProgressRing percent={overview.progressPercent} label={t("Progress")} />
           </div>
 
           <div className="mt-5 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-neutral-500">Total Saved</span>
+              <span className="text-neutral-500">{t("Total Saved")}</span>
               <span className="font-semibold tabular-nums text-neutral-900">{formatCurrency(overview.totalSaved, currency)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral-500">Total Goals</span>
+              <span className="text-neutral-500">{t("Total Goals")}</span>
               <span className="font-semibold tabular-nums text-neutral-900">{formatCurrency(overview.totalGoals, currency)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral-500">Remaining</span>
+              <span className="text-neutral-500">{t("Remaining")}</span>
               <span className="font-semibold tabular-nums text-neutral-900">{formatCurrency(overview.remaining, currency)}</span>
             </div>
           </div>
 
           <div className="mt-4 border-t border-neutral-100 pt-4">
-            <p className="text-sm font-semibold text-neutral-900">Monthly Savings</p>
+            <p className="text-sm font-semibold text-neutral-900">{t("Monthly Savings")}</p>
             <div className="mt-2 flex justify-between text-sm">
-              <span className="text-neutral-500">Target</span>
+              <span className="text-neutral-500">{t("Target")}</span>
               <span className="font-semibold tabular-nums text-neutral-900">{formatCurrency(overview.monthlyTarget, currency)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-neutral-500">Saved This Month</span>
+              <span className="text-neutral-500">{t("Saved This Month")}</span>
               <span className="font-semibold tabular-nums text-neutral-900">{formatCurrency(overview.savedThisMonth, currency)}</span>
             </div>
             <div className="mt-2 flex justify-between text-sm">
-              <span className="text-neutral-500">Progress</span>
+              <span className="text-neutral-500">{t("Progress")}</span>
               <span className="font-medium text-neutral-700">{overview.monthlyProgressPercent}%</span>
             </div>
             <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-neutral-100">
@@ -174,15 +176,15 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
           </div>
 
           <div className="mt-4 rounded-xl bg-neutral-50 p-4 text-center">
-            <p className="text-sm text-neutral-500">Savings Rate</p>
+            <p className="text-sm text-neutral-500">{t("Savings Rate")}</p>
             <p className="mt-1 text-2xl font-bold text-neutral-900">{overview.savingsRatePercent}%</p>
-            <p className="text-xs text-neutral-400">of monthly income</p>
+            <p className="text-xs text-neutral-400">{t("of monthly income")}</p>
           </div>
         </div>
 
         <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-neutral-900">Saving Goals</h2>
+            <h2 className="text-sm font-semibold text-neutral-900">{t("Saving Goals")}</h2>
             <div className="flex gap-1 rounded-xl bg-neutral-100 p-1">
               {FILTER_PILLS.map((pill) => (
                 <button
@@ -193,14 +195,14 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                     filter === pill.value ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
                   }`}
                 >
-                  {pill.label}
+                  {t(pill.label)}
                 </button>
               ))}
             </div>
           </div>
 
           {filteredGoals.length === 0 ? (
-            <p className="px-2 py-10 text-center text-sm text-neutral-400">No savings goals yet.</p>
+            <p className="px-2 py-10 text-center text-sm text-neutral-400">{t("No savings goals yet.")}</p>
           ) : (
             <div className="divide-y divide-neutral-50">
               {filteredGoals.map((goal) => (
@@ -227,20 +229,24 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                           )}
                           {goal.paceStatus && (
                             <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${PACE_BADGE_CLASSES[goal.paceStatus]}`}>
-                              {PACE_LABEL[goal.paceStatus]}
+                              {t(PACE_LABEL[goal.paceStatus])}
                             </span>
                           )}
                         </p>
-                        <p className="text-xs text-neutral-400">Target: {new Date(goal.targetDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}</p>
+                        <p className="text-xs text-neutral-400">
+                          {t("Target:")} {new Date(goal.targetDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+                        </p>
                         {goal.status === "WITHDRAWN" && (
-                          <p className="text-xs font-medium text-brand-primary">Withdrawn: {formatCurrency(goal.withdrawnAmount, currency)}</p>
+                          <p className="text-xs font-medium text-brand-primary">
+                            {t("Withdrawn:")} {formatCurrency(goal.withdrawnAmount, currency)}
+                          </p>
                         )}
                         {goal.trend &&
                           (() => {
                             const TrendIcon = TREND_ICON[goal.trend];
                             return (
                               <p className={`mt-0.5 flex items-center gap-1 text-xs ${TREND_COLOR[goal.trend]}`}>
-                                <TrendIcon className="h-3 w-3" /> {TREND_LABEL[goal.trend]}
+                                <TrendIcon className="h-3 w-3" /> {t(TREND_LABEL[goal.trend])}
                               </p>
                             );
                           })()}
@@ -254,7 +260,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                             onClick={() => setContributionGoal(goal)}
                             className="rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
                           >
-                            Add Funds
+                            {t("Add Funds")}
                           </button>
                         )}
                         <GoalActionsMenu
@@ -272,7 +278,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
 
                   <div className="mt-3 flex items-center justify-between text-sm">
                     <span className="text-neutral-500">
-                      {formatCurrency(goal.currentAmount, currency)} of {formatCurrency(goal.targetAmount, currency)}
+                      {formatCurrency(goal.currentAmount, currency)} {t("of")} {formatCurrency(goal.targetAmount, currency)}
                     </span>
                     <span className="font-medium text-neutral-700">{goal.progressPercent}%</span>
                   </div>
@@ -294,9 +300,9 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
         open={!!deletingGoal}
         onClose={() => setDeletingGoal(null)}
         onConfirm={confirmDelete}
-        title="Delete Goal"
-        message={`Delete "${deletingGoal?.name}"? This can't be undone. Goals with contributions or transfers must be paused instead.`}
-        confirmLabel="Delete"
+        title={t("Delete Goal")}
+        message={`${t("Delete")} "${deletingGoal?.name}"? ${t("This can't be undone. Goals with contributions or transfers must be paused instead.")}`}
+        confirmLabel={t("Delete")}
         isPending={isPending}
       />
     </div>

@@ -1,6 +1,9 @@
+"use client";
+
 import type { CategoryBreakdown } from "@/lib/api";
 import { budgetCategoryColorClass, budgetCategoryHex } from "@/lib/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface CategoryDonutCardProps {
   title: string;
@@ -17,6 +20,7 @@ interface CategoryDonutCardProps {
 // "Other" wedge (uncategorized + everything past the top 10) rather than
 // silently stopping short.
 export function CategoryDonutCard({ title, breakdown, currency, totalLabel }: CategoryDonutCardProps) {
+  const { t } = useLocale();
   const OTHER_COLOR = "#d4d4d4";
   let cumulative = 0;
   const stops = breakdown.categories.map((c) => {
@@ -29,20 +33,20 @@ export function CategoryDonutCard({ title, breakdown, currency, totalLabel }: Ca
 
   return (
     <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-      <h2 className="mb-4 text-sm font-semibold text-neutral-900">{title}</h2>
+      <h2 className="mb-4 text-sm font-semibold text-neutral-900">{t(title)}</h2>
 
       <div className="flex justify-center">
         <div className="relative flex h-40 w-40 items-center justify-center rounded-full" style={{ background: gradient }}>
           <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-surface text-center">
             <span className="text-xl font-bold tabular-nums text-neutral-900">{formatCurrency(breakdown.total, currency)}</span>
-            <span className="text-xs text-neutral-400">{totalLabel}</span>
+            <span className="text-xs text-neutral-400">{t(totalLabel)}</span>
           </div>
         </div>
       </div>
 
       <div className="mt-4 space-y-2">
         {breakdown.categories.length === 0 ? (
-          <p className="py-4 text-center text-sm text-neutral-400">No activity in this range.</p>
+          <p className="py-4 text-center text-sm text-neutral-400">{t("No activity in this range.")}</p>
         ) : (
           breakdown.categories.map((c) => (
             <div key={c.name} className="flex items-center justify-between text-sm">

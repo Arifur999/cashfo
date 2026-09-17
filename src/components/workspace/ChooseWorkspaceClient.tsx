@@ -7,6 +7,7 @@ import { CreateWorkspaceModal } from "@/components/workspace/CreateWorkspaceModa
 import { PinPromptModal } from "@/components/workspace/PinPromptModal";
 import type { CurrentUser, UserBusiness, WorkspaceListItem } from "@/lib/api";
 import { switchWorkspaceAction } from "@/lib/businessActions";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface ChooseWorkspaceClientProps {
   user: CurrentUser;
@@ -14,10 +15,14 @@ interface ChooseWorkspaceClientProps {
 
 // null means no trial at all (trialEndsAt was null, caller never invokes
 // this). A non-null trialEndsAt in the past renders as "Trial expired"
-// rather than a negative day count.
-function trialLabel(trialEndsAt: string): string {
+// rather than a negative day count. Takes `t` as a param since this is a
+// plain function outside the component body, where the useLocale() hook
+// isn't callable.
+function trialLabel(trialEndsAt: string, t: (key: string) => string): { text: string; expired: boolean } {
   const daysLeft = Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86_400_000);
-  return daysLeft > 0 ? `Trial — ${daysLeft} day${daysLeft === 1 ? "" : "s"} left` : "Trial expired";
+  if (daysLeft <= 0) return { text: t("Trial expired"), expired: true };
+  const unit = daysLeft === 1 ? t("day") : t("days");
+  return { text: `${t("Trial")} — ${daysLeft} ${unit} ${t("left")}`, expired: false };
 }
 
 // Full-page "Choose your Workspace" screen (modeled on the Hishabee
@@ -28,6 +33,7 @@ function trialLabel(trialEndsAt: string): string {
 // Server Component parent already fetched.
 export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [isPending, startTransition] = useTransition();
   // Which card's button should show its own spinner -- useTransition only
   // gives one shared isPending flag, so this narrows it to the one card the
@@ -58,16 +64,16 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
       <div className="w-full max-w-4xl">
         <div className="mb-8 text-center">
           <div className="text-lg font-semibold tracking-wide text-brand-dark">Money Tracker</div>
-          <h1 className="mt-4 text-2xl font-semibold text-neutral-900">Choose your Workspace</h1>
-          <p className="mt-1 text-sm text-neutral-500">Select which workspace to open, or add a new one</p>
+          <h1 className="mt-4 text-2xl font-semibold text-neutral-900">{t("Choose your Workspace")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Select which workspace to open, or add a new one")}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {user.businesses.map((business) => {
             const Icon = business.type === "BUSINESS" ? Briefcase : User;
             const displayName = business.isDefault ? user.name : business.name;
-            const subtitle = business.type === "BUSINESS" ? "Business Workspace" : "Personal Workspace";
-            const trial = business.trialEndsAt ? trialLabel(business.trialEndsAt) : null;
+            const subtitle = business.type === "BUSINESS" ? t("Business Workspace") : t("Personal Workspace");
+            const trial = business.trialEndsAt ? trialLabel(business.trialEndsAt, t) : null;
             const isSelecting = isPending && selectingId === business.id;
 
             return (
@@ -83,10 +89,10 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
                 {trial && (
                   <span
                     className={`mt-2 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      trial === "Trial expired" ? "bg-brand-danger/10 text-brand-danger" : "bg-brand-primary/10 text-brand-primary"
+                      trial.expired ? "bg-brand-danger/10 text-brand-danger" : "bg-brand-primary/10 text-brand-primary"
                     }`}
                   >
-                    {trial}
+                    {trial.text}
                   </span>
                 )}
                 <button
@@ -96,7 +102,7 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
                   className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-primary-hover disabled:opacity-60"
                 >
                   {isSelecting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Select
+                  {t("Select")}
                 </button>
               </div>
             );
@@ -109,7 +115,7 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
             className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-300 p-6 text-center text-neutral-500 transition-colors hover:border-brand-primary hover:text-brand-primary disabled:opacity-60"
           >
             <Plus className="h-6 w-6" />
-            <p className="mt-2 text-sm font-medium">Add New Workspace</p>
+            <p className="mt-2 text-sm font-medium">{t("Add New Workspace")}</p>
           </button>
         </div>
       </div>

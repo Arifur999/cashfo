@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import type { Account, SavingsGoal } from "@/lib/api";
 import { getBudgetCategoryNamesAction } from "@/lib/budgetActions";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getExpenseAccountsAction } from "@/lib/quickEntryActions";
 import { getActiveSavingsWalletsAction, withdrawSavingsGoalAction } from "@/lib/savingsGoalActions";
 
@@ -30,6 +31,7 @@ interface SavingsWithdrawModalProps {
 // chosen category the same fuzzy way AddTransactionModal already does for
 // regular expenses -- no separate "which ledger account" field to fill in.
 export function SavingsWithdrawModal({ open, onClose, businessId, goal, currency }: SavingsWithdrawModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [savingsAccountId, setSavingsAccountId] = useState("");
@@ -81,39 +83,41 @@ export function SavingsWithdrawModal({ open, onClose, businessId, goal, currency
         notes: notes || undefined,
       });
       if (result.success) {
-        toast.success("Goal withdrawn and recorded as an expense");
+        toast.success(t("Goal withdrawn and recorded as an expense"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to withdraw savings");
+        toast.error(result.message ?? t("Failed to withdraw savings"));
       }
     });
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Withdraw Savings">
+    <Modal open={open} onClose={onClose} title={t("Withdraw Savings")}>
       <div className="space-y-4">
         {goal && (
           <p className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
-            Withdrawing the full <span className="font-semibold text-neutral-900">{formatCurrency(goal.currentAmount, currency)}</span> saved for &quot;
-            {goal.name}&quot;. The goal will be marked <span className="font-semibold text-neutral-900">Withdrawn</span> and this can&apos;t be undone.
+            {t("Withdrawing the full")} <span className="font-semibold text-neutral-900">{formatCurrency(goal.currentAmount, currency)}</span>{" "}
+            {t("saved for")} &quot;
+            {goal.name}&quot;. {t("The goal will be marked")} <span className="font-semibold text-neutral-900">{t("Withdrawn")}</span>{" "}
+            {t("and this can't be undone.")}
           </p>
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <DatePicker value={date} onChange={setDate} />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">From Savings Wallet</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("From Savings Wallet")}</label>
           <select
             value={savingsAccountId}
             onChange={(e) => setSavingsAccountId(e.target.value)}
             disabled={loading}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {savingsWallets.length === 0 && <option value="">No Savings Wallets yet</option>}
+            {savingsWallets.length === 0 && <option value="">{t("No Savings Wallets yet")}</option>}
             {savingsWallets.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
@@ -122,24 +126,24 @@ export function SavingsWithdrawModal({ open, onClose, businessId, goal, currency
           </select>
           {!loading && savingsWallets.length === 0 && (
             <p className="mt-1 text-xs text-brand-danger">
-              No Savings Wallets yet --{" "}
+              {t("No Savings Wallets yet --")}{" "}
               <Link href="/savings-goals/wallet" className="font-medium underline">
-                add one
+                {t("add one")}
               </Link>{" "}
-              first.
+              {t("first.")}
             </p>
           )}
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Spend As (Expense Category)</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Spend As (Expense Category)")}</label>
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             disabled={loading}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {categories.length === 0 && <option value="">No expense categories yet</option>}
+            {categories.length === 0 && <option value="">{t("No expense categories yet")}</option>}
             {categories.map((c) => (
               <option key={c.name} value={c.name}>
                 {c.name}
@@ -147,13 +151,13 @@ export function SavingsWithdrawModal({ open, onClose, businessId, goal, currency
             ))}
           </select>
           {!loading && expenseAccounts.length === 0 && (
-            <p className="mt-1 text-xs text-brand-danger">No expense account exists in this workspace yet -- add one in Chart of Accounts first.</p>
+            <p className="mt-1 text-xs text-brand-danger">{t("No expense account exists in this workspace yet -- add one in Chart of Accounts first.")}</p>
           )}
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <input
             value={notes}
@@ -170,7 +174,7 @@ export function SavingsWithdrawModal({ open, onClose, businessId, goal, currency
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-danger px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Withdraw
+        {t("Withdraw")}
       </button>
     </Modal>
   );

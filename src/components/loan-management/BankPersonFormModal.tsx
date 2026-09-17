@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createContactAction, updateContactAction } from "@/lib/contactActions";
 import type { Contact } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface BankPersonFormModalProps {
   open: boolean;
@@ -26,6 +27,7 @@ type OpeningBalanceKind = "PAWNA" | "DENA" | "ZERO";
 // out of the Dena-Pawna business views entirely.
 export function BankPersonFormModal({ open, onClose, businessId, editingContact }: BankPersonFormModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -80,11 +82,11 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
           });
 
       if (result.success) {
-        toast.success(editingContact ? "Updated" : "Added");
+        toast.success(editingContact ? t("Updated") : t("Added"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to save");
+        toast.error(result.message ?? t("Failed to save"));
       }
     });
   }
@@ -92,16 +94,16 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
   const isValid = name.trim().length > 0 && phone.trim().length > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title={editingContact ? "Edit Bank / Person" : "Add Bank / Person"}>
+    <Modal open={open} onClose={onClose} title={editingContact ? t("Edit Bank / Person") : t("Add Bank / Person")}>
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Name <span className="text-brand-danger">*</span>
+            {t("Name")} <span className="text-brand-danger">*</span>
           </label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Arif, or Islami Bank"
+            placeholder={t("e.g. Arif, or Islami Bank")}
             autoFocus
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
@@ -109,7 +111,7 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Phone <span className="text-brand-danger">*</span>
+            {t("Phone")} <span className="text-brand-danger">*</span>
           </label>
           <input
             value={phone}
@@ -121,7 +123,7 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Address <span className="text-neutral-400">(optional)</span>
+            {t("Address")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <input
             value={address}
@@ -132,7 +134,7 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
 
         {!editingContact && (
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Opening Balance</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Opening Balance")}</label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
@@ -142,9 +144,9 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
                 }`}
               >
                 <span className="flex items-center gap-1.5 font-medium text-neutral-800">
-                  <span className="h-2 w-2 rounded-full bg-brand-primary" /> Pawna
+                  <span className="h-2 w-2 rounded-full bg-brand-primary" /> {t("Pawna")}
                 </span>
-                <span className="text-xs text-neutral-400">They owe us</span>
+                <span className="text-xs text-neutral-400">{t("They owe us")}</span>
               </button>
               <button
                 type="button"
@@ -154,9 +156,9 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
                 }`}
               >
                 <span className="flex items-center gap-1.5 font-medium text-neutral-800">
-                  <span className="h-2 w-2 rounded-full bg-brand-danger" /> Dena
+                  <span className="h-2 w-2 rounded-full bg-brand-danger" /> {t("Dena")}
                 </span>
-                <span className="text-xs text-neutral-400">We owe them</span>
+                <span className="text-xs text-neutral-400">{t("We owe them")}</span>
               </button>
               <button
                 type="button"
@@ -166,9 +168,9 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
                 }`}
               >
                 <span className="flex items-center gap-1.5 font-medium text-neutral-800">
-                  <span className="h-2 w-2 rounded-full bg-neutral-300" /> Zero Balance
+                  <span className="h-2 w-2 rounded-full bg-neutral-300" /> {t("Zero Balance")}
                 </span>
-                <span className="text-xs text-neutral-400">Nothing outstanding</span>
+                <span className="text-xs text-neutral-400">{t("Nothing outstanding")}</span>
               </button>
             </div>
             {balanceKind !== "ZERO" && (
@@ -188,7 +190,7 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <textarea
             value={notes}
@@ -201,7 +203,7 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
 
       <div className="mt-5 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -210,7 +212,7 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingContact ? "Save Changes" : "Save"}
+          {editingContact ? t("Save Changes") : t("Save")}
         </button>
       </div>
     </Modal>

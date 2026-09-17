@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import type { IncomeGoalSummary } from "@/lib/api";
 import { createIncomeGoalAction, updateIncomeGoalAction } from "@/lib/budgetActions";
 import { currencySymbol } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface IncomeGoalModalProps {
   open: boolean;
@@ -43,6 +44,7 @@ function yearOptions(): number[] {
 }
 
 export function IncomeGoalModal({ open, onClose, businessId, editingGoal, currency }: IncomeGoalModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -76,7 +78,7 @@ export function IncomeGoalModal({ open, onClose, businessId, editingGoal, curren
   function handleSubmit() {
     const parsedAmount = Number(amount);
     if (!(parsedAmount > 0)) {
-      toast.error("Enter a goal amount greater than zero");
+      toast.error(t("Enter a goal amount greater than zero"));
       return;
     }
 
@@ -85,21 +87,21 @@ export function IncomeGoalModal({ open, onClose, businessId, editingGoal, curren
       const result = editingGoal ? await updateIncomeGoalAction(businessId, editingGoal.id, input) : await createIncomeGoalAction(businessId, input);
 
       if (result.success) {
-        toast.success(editingGoal ? "Income goal updated" : "Income goal added");
+        toast.success(editingGoal ? t("Income goal updated") : t("Income goal added"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to save the income goal");
+        toast.error(result.message ?? t("Failed to save the income goal"));
       }
     });
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={editingGoal ? "Edit Income Goal" : "Add Income Goal"}>
+    <Modal open={open} onClose={onClose} title={editingGoal ? t("Edit Income Goal") : t("Add Income Goal")}>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Month</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Month")}</label>
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
@@ -107,13 +109,13 @@ export function IncomeGoalModal({ open, onClose, businessId, editingGoal, curren
             >
               {MONTH_NAMES.map((name, i) => (
                 <option key={name} value={i + 1}>
-                  {name}
+                  {t(name)}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Year</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Year")}</label>
             <select
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
@@ -129,7 +131,7 @@ export function IncomeGoalModal({ open, onClose, businessId, editingGoal, curren
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Income Goal Amount</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Income Goal Amount")}</label>
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-neutral-400">
               {currencySymbol(currency)}
@@ -148,13 +150,13 @@ export function IncomeGoalModal({ open, onClose, businessId, editingGoal, curren
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="Add any additional details..."
+            placeholder={t("Add any additional details...")}
             className="w-full resize-none rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
@@ -166,7 +168,7 @@ export function IncomeGoalModal({ open, onClose, businessId, editingGoal, curren
           onClick={onClose}
           className="rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
         >
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -175,7 +177,7 @@ export function IncomeGoalModal({ open, onClose, businessId, editingGoal, curren
           className="flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingGoal ? "Save Changes" : "Add Goal"}
+          {editingGoal ? t("Save Changes") : t("Add Goal")}
         </button>
       </div>
     </Modal>

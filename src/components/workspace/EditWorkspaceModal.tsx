@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getBusinessDetailAction, updateBusinessAction } from "@/lib/businessActions";
 import type { UserBusiness } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface EditWorkspaceModalProps {
   business: UserBusiness | null;
@@ -15,6 +16,7 @@ interface EditWorkspaceModalProps {
 
 export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -62,11 +64,11 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
         pin: pin || undefined,
       });
       if (result.success) {
-        toast.success("Workspace updated");
+        toast.success(t("Workspace updated"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to update workspace");
+        toast.error(result.message ?? t("Failed to update workspace"));
       }
     });
   }
@@ -75,10 +77,10 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
   const isValid = name.trim().length > 0 && pinValid;
 
   return (
-    <Modal open={business !== null} onClose={onClose} title="Edit Workspace">
+    <Modal open={business !== null} onClose={onClose} title={t("Edit Workspace")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Name")}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -87,7 +89,7 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Phone</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Phone")}</label>
           <input
             type="tel"
             value={phone}
@@ -99,7 +101,7 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Email</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Email")}</label>
           <input
             type="email"
             value={email}
@@ -111,8 +113,8 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Change PIN</label>
-          <p className="mb-1 text-xs text-neutral-500">Leave blank to keep the current PIN unchanged.</p>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Change PIN")}</label>
+          <p className="mb-1 text-xs text-neutral-500">{t("Leave blank to keep the current PIN unchanged.")}</p>
           <input
             type="text"
             inputMode="numeric"
@@ -120,7 +122,7 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ""))}
             disabled={loading}
-            placeholder="4-6 digits"
+            placeholder={t("4-6 digits")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50"
           />
         </div>
@@ -128,7 +130,7 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
 
       <div className="mt-5 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -137,7 +139,7 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save Changes
+          {t("Save Changes")}
         </button>
       </div>
     </Modal>

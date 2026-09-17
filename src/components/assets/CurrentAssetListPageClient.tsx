@@ -3,6 +3,7 @@
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
 import type { Asset, AssetCategoryOption } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatCurrency } from "@/lib/currency";
 import { AddCurrentAssetModal } from "./AddCurrentAssetModal";
 import { assetCategoryIconFor } from "./assetCategoryDisplay";
@@ -25,6 +26,7 @@ interface CurrentAssetListPageClientProps {
 // plain client-side name filter -- this list is never paginated/large
 // enough to need a server round-trip.
 export function CurrentAssetListPageClient({ businessId, assets, categories, currency, canManage }: CurrentAssetListPageClientProps) {
+  const { t } = useLocale();
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -35,8 +37,8 @@ export function CurrentAssetListPageClient({ businessId, assets, categories, cur
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Current Asset List</h1>
-          <p className="mt-1 text-sm text-neutral-500">Everything you currently own, at a glance.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Current Asset List")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Everything you currently own, at a glance.")}</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -44,7 +46,7 @@ export function CurrentAssetListPageClient({ businessId, assets, categories, cur
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search asset name..."
+              placeholder={t("Search asset name...")}
               className="w-64 rounded-xl border border-neutral-200 bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
             />
           </div>
@@ -55,14 +57,14 @@ export function CurrentAssetListPageClient({ businessId, assets, categories, cur
               className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
             >
               <Plus className="h-4 w-4" />
-              Add Assets
+              {t("Add Assets")}
             </button>
           )}
         </div>
       </div>
 
       <div className="mt-6 rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-        <p className="text-sm text-neutral-500">Total Asset Value</p>
+        <p className="text-sm text-neutral-500">{t("Total Asset Value")}</p>
         <p className="mt-1 text-2xl font-bold text-neutral-900">{formatCurrency(total, currency)}</p>
       </div>
 
@@ -72,19 +74,19 @@ export function CurrentAssetListPageClient({ businessId, assets, categories, cur
             <thead>
               <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
                 <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">Asset</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Purchase Date</th>
-                <th className="px-4 py-3">Purchase Price</th>
-                <th className="px-4 py-3">Notes</th>
-                <th className="px-4 py-3 text-right">Current Value</th>
+                <th className="px-4 py-3">{t("Asset")}</th>
+                <th className="px-4 py-3">{t("Category")}</th>
+                <th className="px-4 py-3">{t("Purchase Date")}</th>
+                <th className="px-4 py-3">{t("Purchase Price")}</th>
+                <th className="px-4 py-3">{t("Notes")}</th>
+                <th className="px-4 py-3 text-right">{t("Current Value")}</th>
               </tr>
             </thead>
             {filteredAssets.length === 0 ? (
               <tbody>
                 <tr>
                   <td colSpan={7} className="py-10 text-center text-sm text-neutral-400">
-                    {assets.length === 0 ? "No assets currently owned." : "No assets match your search."}
+                    {assets.length === 0 ? t("No assets currently owned.") : t("No assets match your search.")}
                   </td>
                 </tr>
               </tbody>

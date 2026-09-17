@@ -7,6 +7,7 @@ import { AddTransactionModal } from "@/components/quick-entry/AddTransactionModa
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { Account, Transaction, TransactionEntry, TransactionType } from "@/lib/api";
 
 interface TransactionsPageClientProps {
@@ -31,6 +32,8 @@ const TYPE_OPTIONS: { value: TransactionType | ""; label: string }[] = [
   { value: "INCOME", label: "Income" },
   { value: "EXPENSE", label: "Expense" },
 ];
+// TYPE_OPTIONS' `label`s are passed through t() at render time (see the
+// <select> below), not translated here in the plain data array.
 
 function amountFor(transaction: Transaction): number {
   return Number(transaction.entries[0]?.amount ?? 0);
@@ -92,10 +95,17 @@ function pageNumbers(current: number, total: number): (number | "...")[] {
 }
 
 export function TransactionsPageClient({ businessId, transactions, accounts, categories, meta, currency }: TransactionsPageClientProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get("search") ?? "");
   const [addOpen, setAddOpen] = useState(false);
+
+  // Precomputed here, outside the transactions.map() below -- that loop's
+  // own item variable is also named `t` (a pre-existing convention in this
+  // file, one transaction row per iteration), which shadows this `t` (the
+  // translate function) within that callback's scope.
+  const voidedLabel = t("Voided");
 
   const categoryByName = new Map(categories.map((c) => [c.name, c]));
 
@@ -119,15 +129,15 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
     <div className="h-full bg-brand-content px-6 py-8 pb-24 md:pb-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Transactions</h1>
-          <p className="mt-1 text-sm text-neutral-500">Every income, expense and transfer you&apos;ve added, newest first.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Transactions")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Every income, expense and transfer you've added, newest first.")}</p>
         </div>
         <button
           type="button"
           onClick={() => setAddOpen(true)}
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
         >
-          <Plus className="h-4 w-4" /> Add Transaction
+          <Plus className="h-4 w-4" /> {t("Add Transaction")}
         </button>
       </div>
 
@@ -137,7 +147,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search description..."
+            placeholder={t("Search description...")}
             className="w-56 rounded-xl border border-neutral-200 bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
           />
         </form>
@@ -148,7 +158,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         >
           {TYPE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
-              {opt.label}
+              {t(opt.label)}
             </option>
           ))}
         </select>
@@ -157,7 +167,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           onChange={(e) => updateParam("accountId", e.target.value)}
           className="rounded-xl border border-neutral-200 bg-surface px-3 py-2 text-sm outline-none focus:border-brand-primary"
         >
-          <option value="">All accounts</option>
+          <option value="">{t("All accounts")}</option>
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
@@ -168,14 +178,14 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           type="date"
           value={searchParams.get("dateFrom") ?? ""}
           onChange={(e) => updateParam("dateFrom", e.target.value)}
-          title="From date"
+          title={t("From date")}
           className="rounded-xl border border-neutral-200 bg-surface px-3 py-2 text-sm outline-none focus:border-brand-primary"
         />
         <input
           type="date"
           value={searchParams.get("dateTo") ?? ""}
           onChange={(e) => updateParam("dateTo", e.target.value)}
-          title="To date"
+          title={t("To date")}
           className="rounded-xl border border-neutral-200 bg-surface px-3 py-2 text-sm outline-none focus:border-brand-primary"
         />
       </div>
@@ -185,19 +195,19 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
             <tr>
               <th className="px-4 py-3 font-medium">#</th>
-              <th className="px-4 py-3 font-medium">Icon</th>
-              <th className="px-4 py-3 font-medium">Date</th>
-              <th className="px-4 py-3 font-medium">Category</th>
-              <th className="px-4 py-3 font-medium">Account</th>
-              <th className="px-4 py-3 font-medium">Note</th>
-              <th className="px-4 py-3 text-right font-medium">Amount</th>
+              <th className="px-4 py-3 font-medium">{t("Icon")}</th>
+              <th className="px-4 py-3 font-medium">{t("Date")}</th>
+              <th className="px-4 py-3 font-medium">{t("Category")}</th>
+              <th className="px-4 py-3 font-medium">{t("Account")}</th>
+              <th className="px-4 py-3 font-medium">{t("Note")}</th>
+              <th className="px-4 py-3 text-right font-medium">{t("Amount")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-50">
             {transactions.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-sm text-neutral-400">
-                  Nothing here yet -- tap &quot;Add&quot; to get started.
+                  {t('Nothing here yet -- tap "Add" to get started.')}
                 </td>
               </tr>
             )}
@@ -234,7 +244,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
                       >
                         {CategoryIcon && <CategoryIcon className="h-3.5 w-3.5 text-white" />}
                       </div>
-                      {isVoided && <span className="text-xs font-normal text-brand-danger">Voided</span>}
+                      {isVoided && <span className="text-xs font-normal text-brand-danger">{voidedLabel}</span>}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-neutral-600">{formatDate(t.transactionDate)}</td>
@@ -255,7 +265,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       {meta.total > 0 && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-neutral-500">
-            Showing {rangeStart}-{rangeEnd} of {meta.total}
+            {t("Showing")} {rangeStart}-{rangeEnd} {t("of")} {meta.total}
           </p>
           <div className="flex items-center gap-1">
             <button

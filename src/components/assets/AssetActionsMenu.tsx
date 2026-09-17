@@ -2,6 +2,7 @@
 
 import { MoreHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface AssetActionsMenuProps {
   onViewDetails: () => void;
@@ -13,6 +14,7 @@ interface AssetActionsMenuProps {
 // than a second plain button so more asset-level actions can land here
 // later without reshuffling the row layout again.
 export function AssetActionsMenu({ onViewDetails }: AssetActionsMenuProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -43,7 +45,7 @@ export function AssetActionsMenu({ onViewDetails }: AssetActionsMenuProps) {
       {open && (
         <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-neutral-100 bg-surface py-1 shadow-xl shadow-black/10">
           <button type="button" onClick={() => run(onViewDetails)} className="block w-full px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50">
-            View Details
+            {t("View Details")}
           </button>
         </div>
       )}

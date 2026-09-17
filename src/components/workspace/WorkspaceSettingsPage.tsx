@@ -7,12 +7,14 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { deleteBusinessAction, listBusinessesAction } from "@/lib/businessActions";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { EditWorkspaceModal } from "./EditWorkspaceModal";
 import type { WorkspaceListItem } from "@/lib/api";
 
 export function WorkspaceSettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useLocale();
   const [businesses, setBusinesses] = useState<WorkspaceListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<WorkspaceListItem | null>(null);
@@ -41,25 +43,25 @@ export function WorkspaceSettingsPage() {
   }, [loadBusinesses]);
 
   function handleDelete(business: WorkspaceListItem) {
-    if (!window.confirm(`Delete "${displayName(business)}"? This cannot be undone.`)) {
+    if (!window.confirm(`${t("Delete")} "${displayName(business)}"? ${t("This cannot be undone.")}`)) {
       return;
     }
     startTransition(async () => {
       const result = await deleteBusinessAction(business.id);
       if (result.success) {
-        toast.success("Workspace deleted");
+        toast.success(t("Workspace deleted"));
         loadBusinesses();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to delete workspace");
+        toast.error(result.message ?? t("Failed to delete workspace"));
       }
     });
   }
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">Workspaces</h1>
-      <p className="mt-1 text-sm text-neutral-500">Manage your Personal and Business workspaces.</p>
+      <h1 className="text-xl font-semibold text-neutral-900">{t("Workspaces")}</h1>
+      <p className="mt-1 text-sm text-neutral-500">{t("Manage your Personal and Business workspaces.")}</p>
 
       <div className="mt-6 space-y-3">
         {!loading &&
@@ -72,7 +74,7 @@ export function WorkspaceSettingsPage() {
                   <p className="flex flex-wrap items-center gap-2 font-medium text-neutral-900">
                     {displayName(b)}
                     {b.isDefault && (
-                      <span className="rounded-full bg-brand-primary/10 px-2 py-0.5 text-xs font-medium text-brand-primary">Default</span>
+                      <span className="rounded-full bg-brand-primary/10 px-2 py-0.5 text-xs font-medium text-brand-primary">{t("Default")}</span>
                     )}
                     {b.trialEndsAt && (
                       <span
@@ -80,7 +82,7 @@ export function WorkspaceSettingsPage() {
                           trialActive ? "bg-amber-100 text-amber-700" : "bg-brand-danger/10 text-brand-danger"
                         }`}
                       >
-                        {trialActive ? "Trial" : "Trial expired"}
+                        {trialActive ? t("Trial") : t("Trial expired")}
                       </span>
                     )}
                   </p>
@@ -89,7 +91,9 @@ export function WorkspaceSettingsPage() {
                   </p>
                   {contactLine && <p className="text-sm text-neutral-500">{contactLine}</p>}
                   {b.monthlyFee !== null && (
-                    <p className="text-sm text-neutral-500">Monthly fee: {formatCurrency(b.monthlyFee, b.currency)} (50% of your plan)</p>
+                    <p className="text-sm text-neutral-500">
+                      {t("Monthly fee:")} {formatCurrency(b.monthlyFee, b.currency)} {t("(50% of your plan)")}
+                    </p>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
@@ -99,12 +103,12 @@ export function WorkspaceSettingsPage() {
                       onClick={() => setEditing(b)}
                       className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-neutral-500 hover:bg-neutral-100"
                     >
-                      <Pencil className="h-3.5 w-3.5" /> Edit
+                      <Pencil className="h-3.5 w-3.5" /> {t("Edit")}
                     </button>
                   )}
                   {b.isDefault ? (
                     <span
-                      title="Your default Personal workspace can't be deleted -- every account must always have one."
+                      title={t("Your default Personal workspace can't be deleted -- every account must always have one.")}
                       className="cursor-not-allowed px-2 py-1 text-xs font-medium text-neutral-300"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -117,7 +121,7 @@ export function WorkspaceSettingsPage() {
                         onClick={() => handleDelete(b)}
                         className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-brand-danger hover:bg-red-50"
                       >
-                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                        <Trash2 className="h-3.5 w-3.5" /> {t("Delete")}
                       </button>
                     )
                   )}

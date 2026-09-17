@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import type { Account, AssetCategoryOption } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getAssetCategoriesAction, purchaseAssetAction } from "@/lib/assetActions";
 import { getMoneyAccountsAction } from "@/lib/quickEntryActions";
 import { getActiveSavingsWalletsAction } from "@/lib/savingsGoalActions";
@@ -24,6 +25,7 @@ interface PurchaseAssetModalProps {
 // a regular expense/withdrawal can be paid from, since buying an asset is
 // really just money leaving one of them.
 export function PurchaseAssetModal({ open, onClose, businessId, currency }: PurchaseAssetModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -70,16 +72,16 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
 
   function handleSubmit() {
     if (!name.trim()) {
-      toast.error("Asset name is required");
+      toast.error(t("Asset name is required"));
       return;
     }
     const priceValue = Number(purchasePrice);
     if (!purchasePrice || priceValue <= 0) {
-      toast.error("Value must be greater than zero");
+      toast.error(t("Value must be greater than zero"));
       return;
     }
     if (!purchaseAccountId) {
-      toast.error("Select an account to pay from");
+      toast.error(t("Select an account to pay from"));
       return;
     }
     startTransition(async () => {
@@ -92,41 +94,41 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
         notes: notes.trim() || undefined,
       });
       if (result.success) {
-        toast.success("Asset purchased");
+        toast.success(t("Asset purchased"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to record purchase");
+        toast.error(result.message ?? t("Failed to record purchase"));
       }
     });
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Purchase Asset">
+    <Modal open={open} onClose={onClose} title={t("Purchase Asset")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <DatePicker value={purchaseDate} onChange={setPurchaseDate} />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Asset Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Asset Name")}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Toyota Corolla, Family Land"
+            placeholder={t("e.g. Toyota Corolla, Family Land")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Category</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Category")}</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {categories.length === 0 && <option value="">No categories yet</option>}
+            {categories.length === 0 && <option value="">{t("No categories yet")}</option>}
             {categories.map((c) => (
               <option key={c.id} value={c.name}>
                 {c.name}
@@ -136,7 +138,10 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Value{currencySuffix}</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            {t("Value")}
+            {currencySuffix}
+          </label>
           <input
             type="number"
             min="0.01"
@@ -149,16 +154,16 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Account</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Account")}</label>
           <select
             value={purchaseAccountId}
             onChange={(e) => setPurchaseAccountId(e.target.value)}
             disabled={loading}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {moneyAccounts.length === 0 && savingsWallets.length === 0 && <option value="">No accounts yet</option>}
+            {moneyAccounts.length === 0 && savingsWallets.length === 0 && <option value="">{t("No accounts yet")}</option>}
             {moneyAccounts.length > 0 && (
-              <optgroup label="General Accounts">
+              <optgroup label={t("General Accounts")}>
                 {moneyAccounts.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
@@ -167,7 +172,7 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
               </optgroup>
             )}
             {savingsWallets.length > 0 && (
-              <optgroup label="Savings Accounts">
+              <optgroup label={t("Savings Accounts")}>
                 {savingsWallets.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
@@ -177,13 +182,13 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
             )}
           </select>
           {!loading && moneyAccounts.length === 0 && savingsWallets.length === 0 && (
-            <p className="mt-1 text-xs text-brand-danger">No accounts exist in this workspace yet -- add one in Chart of Accounts first.</p>
+            <p className="mt-1 text-xs text-brand-danger">{t("No accounts exist in this workspace yet -- add one in Chart of Accounts first.")}</p>
           )}
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <input
             value={notes}
@@ -200,7 +205,7 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Save Asset
+        {t("Save Asset")}
       </button>
     </Modal>
   );

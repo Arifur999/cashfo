@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import type { CategoryBreakdown, IncomeVsSavingsPoint } from "@/lib/api";
 import type { DateRangePreset } from "@/lib/dateRangePresets";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { CategoryDonutCard } from "./CategoryDonutCard";
 import { IncomeVsSavingsChart } from "./IncomeVsSavingsChart";
 
@@ -28,6 +29,7 @@ const RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
 ];
 
 export function ReportsOverviewPageClient({ income, expense, trend, currency, range, customFrom, customTo }: ReportsOverviewPageClientProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -49,8 +51,8 @@ export function ReportsOverviewPageClient({ income, expense, trend, currency, ra
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Financial Reports</h1>
-          <p className="mt-1 text-sm text-neutral-500">Analyze your financial data and trends.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Financial Reports")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Analyze your financial data and trends.")}</p>
         </div>
         <div>
           <select
@@ -60,7 +62,7 @@ export function ReportsOverviewPageClient({ income, expense, trend, currency, ra
           >
             {RANGE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.label)}
               </option>
             ))}
           </select>
@@ -72,7 +74,7 @@ export function ReportsOverviewPageClient({ income, expense, trend, currency, ra
                 onChange={(e) => updateParams({ dateFrom: e.target.value })}
                 className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
               />
-              <span className="text-sm text-neutral-400">to</span>
+              <span className="text-sm text-neutral-400">{t("to")}</span>
               <input
                 type="date"
                 value={customTo ?? ""}

@@ -9,6 +9,7 @@ import type { BudgetCategorySummary, BudgetOverview } from "@/lib/api";
 import { deleteBudgetCategoryAction, updateBudgetTargetAction } from "@/lib/budgetActions";
 import { budgetCategoryColorClass, budgetCategoryIcon, budgetProgressColorClass } from "@/lib/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface ExpenseCategoryColumnProps {
   businessId: string;
@@ -26,6 +27,7 @@ interface ExpenseCategoryColumnProps {
 // carries its own spending limit, tracked here with a progress bar, plus the
 // one overall "Manage Budget" total target editor.
 export function ExpenseCategoryColumn({ businessId, overview, currency, canManage, dateFrom, dateTo, onEdit }: ExpenseCategoryColumnProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [targetInput, setTargetInput] = useState(overview.totalBudget ?? "");
   const [savingTarget, startTargetTransition] = useTransition();
@@ -35,30 +37,31 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
   function handleUpdateTarget() {
     const amount = Number(targetInput);
     if (!(amount > 0)) {
-      toast.error("Enter a total budget greater than zero");
+      toast.error(t("Enter a total budget greater than zero"));
       return;
     }
     startTargetTransition(async () => {
       const result = await updateBudgetTargetAction(businessId, amount);
       if (result.success) {
-        toast.success("Total budget updated");
+        toast.success(t("Total budget updated"));
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to update total budget");
+        toast.error(result.message ?? t("Failed to update total budget"));
       }
     });
   }
 
   function handleDelete(category: BudgetCategorySummary) {
-    if (!window.confirm(`Delete the "${category.name}" category? This won't affect past transactions.`)) return;
+    const confirmMessage = t('Delete the "{name}" category? This won\'t affect past transactions.').replace("{name}", category.name);
+    if (!window.confirm(confirmMessage)) return;
     setDeletingId(category.id);
     startDeleteTransition(async () => {
       const result = await deleteBudgetCategoryAction(businessId, category.id);
       if (result.success) {
-        toast.success("Category deleted");
+        toast.success(t("Category deleted"));
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to delete category");
+        toast.error(result.message ?? t("Failed to delete category"));
       }
       setDeletingId(null);
     });
@@ -66,19 +69,19 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Expense Categories</h2>
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">{t("Expense Categories")}</h2>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3 shadow-sm shadow-black/5">
         <p className="text-sm text-neutral-600">
-          Total budget:{" "}
-          <span className="font-semibold text-neutral-900">{overview.totalBudget ? formatCurrency(overview.totalBudget, currency) : "Not set"}</span>
+          {t("Total budget:")}{" "}
+          <span className="font-semibold text-neutral-900">{overview.totalBudget ? formatCurrency(overview.totalBudget, currency) : t("Not set")}</span>
           <span className="mx-2 text-neutral-300">|</span>
-          Allocated: <span className="font-semibold text-neutral-900">{formatCurrency(overview.allocated, currency)}</span>
+          {t("Allocated:")} <span className="font-semibold text-neutral-900">{formatCurrency(overview.allocated, currency)}</span>
         </p>
         {canManage && (
           <div className="flex items-center gap-2">
             <label className="text-sm text-neutral-500" htmlFor="budget-target">
-              Manage Budget:
+              {t("Manage Budget:")}
             </label>
             <input
               id="budget-target"
@@ -95,7 +98,7 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
               className="flex items-center gap-1.5 rounded-lg bg-brand-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-primary-hover disabled:opacity-50"
             >
               {savingTarget && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              Update
+              {t("Update")}
             </button>
           </div>
         )}
@@ -103,7 +106,7 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
 
       {overview.categories.length === 0 ? (
         <div className="rounded-2xl bg-surface px-4 py-10 text-center text-sm text-neutral-400 shadow-sm shadow-black/5">
-          No categories yet -- tap &quot;Add Category&quot; to get started.
+          {t('No categories yet -- tap "Add Category" to get started.')}
         </div>
       ) : (
         <div className="space-y-4">
@@ -127,7 +130,7 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
                         <button
                           type="button"
                           onClick={() => onEdit(category)}
-                          title="Edit"
+                          title={t("Edit")}
                           className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -136,7 +139,7 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
                           type="button"
                           disabled={deletingId === category.id && isDeleting}
                           onClick={() => handleDelete(category)}
-                          title="Delete"
+                          title={t("Delete")}
                           className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -160,7 +163,7 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
                   href={`/transactions?type=EXPENSE&categoryId=${encodeURIComponent(category.name)}&dateFrom=${dateFrom}&dateTo=${dateTo}`}
                   className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-primary hover:underline"
                 >
-                  View Transactions
+                  {t("View Transactions")}
                 </Link>
               </div>
             );

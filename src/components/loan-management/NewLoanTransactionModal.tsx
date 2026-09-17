@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Combobox } from "@/components/ui/Combobox";
 import { Modal } from "@/components/ui/Modal";
 import type { Account, Contact } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getMoneyAccountsAction } from "@/lib/quickEntryActions";
 import { payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/receivablesPayablesActions";
 
@@ -38,6 +39,7 @@ const KIND_OPTIONS: { value: TxnKind; label: string }[] = [
 // payments always have too.
 export function NewLoanTransactionModal({ open, onClose, businessId, loanContacts }: NewLoanTransactionModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [contactId, setContactId] = useState("");
   const [kind, setKind] = useState<TxnKind>("GIVE_LOAN");
   const [amount, setAmount] = useState("");
@@ -90,11 +92,11 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
               : await payPaymentAction(businessId, { ...base, moneyAccountId });
 
       if (result.success) {
-        toast.success("Transaction recorded");
+        toast.success(t("Transaction recorded"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to record transaction");
+        toast.error(result.message ?? t("Failed to record transaction"));
       }
     });
   }
@@ -102,22 +104,22 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
   const isValid = contactId.length > 0 && Number(amount) > 0 && moneyAccountId.length > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title="New Transaction">
+    <Modal open={open} onClose={onClose} title={t("New Transaction")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Contact</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Contact")}</label>
           <Combobox
             key={resetCount}
             value={contactId}
             onChange={setContactId}
             options={loanContacts.map((c) => ({ value: c.id, label: c.name }))}
-            placeholder="Search contacts by name"
-            emptyMessage="No contacts added yet"
+            placeholder={t("Search contacts by name")}
+            emptyMessage={t("No contacts added yet")}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Type</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Type")}</label>
           <div className="grid grid-cols-2 gap-2">
             {KIND_OPTIONS.map((opt) => (
               <button
@@ -128,14 +130,14 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
                   kind === opt.value ? "border-brand-primary bg-brand-primary/10 text-brand-primary" : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
                 }`}
               >
-                {opt.label}
+                {t(opt.label)}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Amount</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <input
             type="number"
             step="0.01"
@@ -147,7 +149,7 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Account</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Account")}</label>
           <select
             value={moneyAccountId}
             onChange={(e) => setMoneyAccountId(e.target.value)}
@@ -163,7 +165,7 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <input
             type="date"
             value={date}
@@ -174,7 +176,7 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <input
             value={description}
@@ -191,7 +193,7 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Save
+        {t("Save")}
       </button>
     </Modal>
   );

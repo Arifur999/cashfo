@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { changePasswordAction, updateProfileAction } from "@/lib/authActions";
 import { ChangeAvatarModal } from "./ChangeAvatarModal";
@@ -28,6 +29,7 @@ function initials(name: string): string {
 export function ProfileTab() {
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useLocale();
 
   const [prevUserId, setPrevUserId] = useState(user.id);
   const initialSplit = splitName(user.name);
@@ -52,39 +54,39 @@ export function ProfileTab() {
 
   function handleSaveProfile() {
     if (!firstName.trim()) {
-      toast.error("First name can't be empty");
+      toast.error(t("First name can't be empty"));
       return;
     }
     startProfileTransition(async () => {
       const name = `${firstName.trim()} ${lastName.trim()}`.trim();
       const result = await updateProfileAction({ name, phone: phone.trim() });
       if (result.success) {
-        toast.success("Profile updated");
+        toast.success(t("Profile updated"));
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to update profile");
+        toast.error(result.message ?? t("Failed to update profile"));
       }
     });
   }
 
   function handleUpdatePassword() {
     if (!currentPassword || !newPassword) {
-      toast.error("Fill in your current and new password");
+      toast.error(t("Fill in your current and new password"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("New password and confirmation don't match");
+      toast.error(t("New password and confirmation don't match"));
       return;
     }
     startPasswordTransition(async () => {
       const result = await changePasswordAction({ currentPassword, newPassword });
       if (result.success) {
-        toast.success("Password updated");
+        toast.success(t("Password updated"));
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        toast.error(result.message ?? "Failed to update password");
+        toast.error(result.message ?? t("Failed to update password"));
       }
     });
   }
@@ -92,8 +94,8 @@ export function ProfileTab() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-        <h2 className="text-sm font-semibold text-neutral-900">Profile Information</h2>
-        <p className="mt-1 text-sm text-neutral-500">Update your personal information</p>
+        <h2 className="text-sm font-semibold text-neutral-900">{t("Profile Information")}</h2>
+        <p className="mt-1 text-sm text-neutral-500">{t("Update your personal information")}</p>
 
         <div className="mt-5 flex flex-col items-center gap-3">
           {user.avatarUrl ? (
@@ -109,13 +111,13 @@ export function ProfileTab() {
             onClick={() => setAvatarModalOpen(true)}
             className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
           >
-            Change Avatar
+            {t("Change Avatar")}
           </button>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">First Name</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("First Name")}</label>
             <input
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
@@ -123,7 +125,7 @@ export function ProfileTab() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Last Name</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Last Name")}</label>
             <input
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
@@ -133,17 +135,17 @@ export function ProfileTab() {
         </div>
 
         <div className="mt-4">
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Email</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Email")}</label>
           <input
             value={user.email}
             disabled
-            title="Contact support to change your email"
+            title={t("Contact support to change your email")}
             className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3.5 py-2.5 text-sm text-neutral-500 outline-none"
           />
         </div>
 
         <div className="mt-4">
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Phone Number</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Phone Number")}</label>
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -159,25 +161,25 @@ export function ProfileTab() {
           className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isSavingProfile && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save Changes
+          {t("Save Changes")}
         </button>
       </div>
 
       <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-        <h2 className="text-sm font-semibold text-neutral-900">Password</h2>
-        <p className="mt-1 text-sm text-neutral-500">Update your password</p>
+        <h2 className="text-sm font-semibold text-neutral-900">{t("Password")}</h2>
+        <p className="mt-1 text-sm text-neutral-500">{t("Update your password")}</p>
 
         <div className="mt-5 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Current Password</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Current Password")}</label>
             <PasswordInput value={currentPassword} onChange={setCurrentPassword} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">New Password</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("New Password")}</label>
             <PasswordInput value={newPassword} onChange={setNewPassword} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Confirm New Password</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Confirm New Password")}</label>
             <PasswordInput value={confirmPassword} onChange={setConfirmPassword} />
           </div>
         </div>
@@ -189,7 +191,7 @@ export function ProfileTab() {
           className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isSavingPassword && <Loader2 className="h-4 w-4 animate-spin" />}
-          Update Password
+          {t("Update Password")}
         </button>
       </div>
 

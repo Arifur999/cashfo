@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import type { BudgetCategorySummary, BudgetCategoryType, BudgetOverview } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { AddCategoryButton } from "./AddCategoryButton";
 import { BudgetCategoryModal } from "./BudgetCategoryModal";
 import { ExpenseCategoryColumn } from "./ExpenseCategoryColumn";
@@ -60,6 +61,7 @@ type CategoryModalState = "closed" | { mode: "create"; type: BudgetCategoryType 
 // has per-category limits + a progress bar + a total-budget target editor;
 // Income has neither -- see BudgetCategory.monthlyLimit's schema comment).
 export function CategoriesPageClient({ businessId, incomeOverview, expenseOverview, currency, canManage, initialAddType }: CategoriesPageClientProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [categoryModal, setCategoryModal] = useState<CategoryModalState>("closed");
@@ -96,8 +98,8 @@ export function CategoriesPageClient({ businessId, incomeOverview, expenseOvervi
     <div className="h-full bg-brand-content px-6 py-8 pb-24 md:pb-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Budget Planning</h1>
-          <p className="mt-1 text-sm text-neutral-500">Organize your income sources and set spending limits, side by side.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Budget Planning")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Organize your income sources and set spending limits, side by side.")}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -111,7 +113,7 @@ export function CategoriesPageClient({ businessId, incomeOverview, expenseOvervi
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="px-1 text-sm font-medium text-neutral-700">
-              {MONTH_NAMES[incomeOverview.month - 1]} {incomeOverview.year}
+              {t(MONTH_NAMES[incomeOverview.month - 1])} {incomeOverview.year}
             </span>
             <button
               type="button"

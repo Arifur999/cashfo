@@ -8,6 +8,7 @@ import { deleteContactAction } from "@/lib/contactActions";
 import type { Contact, ContactType } from "@/lib/api";
 import { BALANCE_DIRECTION_COLOR, balanceDirection, CONTACT_TYPE_LABELS, contactInitials } from "@/lib/contactDisplay";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ContactFormModal } from "./ContactFormModal";
 
@@ -29,6 +30,7 @@ const FILTER_PILLS: { value: ContactType | ""; label: string }[] = [
 export function ContactsPageClient({ businessId, contacts, canManage, currency }: ContactsPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
   const [searchInput, setSearchInput] = useState(searchParams.get("search") ?? "");
   const [formOpen, setFormOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -76,11 +78,13 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
     startTransition(async () => {
       const result = await deleteContactAction(businessId, contact.id);
       if (result.success) {
-        toast.success(result.data?.action === "archived" ? "This contact has transaction history, so it was archived instead" : "Contact deleted");
+        toast.success(
+          result.data?.action === "archived" ? t("This contact has transaction history, so it was archived instead") : t("Contact deleted"),
+        );
         setDeleteTarget(null);
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to remove contact");
+        toast.error(result.message ?? t("Failed to remove contact"));
       }
     });
   }
@@ -89,8 +93,8 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
     <div className="h-full bg-brand-content px-6 py-8 pb-24 md:pb-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Contacts</h1>
-          <p className="mt-1 text-sm text-neutral-500">Customers and suppliers you do business with.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Contacts")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Customers and suppliers you do business with.")}</p>
         </div>
         {canManage && (
           <button
@@ -98,7 +102,7 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
             onClick={openCreate}
             className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
           >
-            <Plus className="h-4 w-4" /> Add Contact
+            <Plus className="h-4 w-4" /> {t("Add Contact")}
           </button>
         )}
       </div>
@@ -114,7 +118,7 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
                 activeType === pill.value ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
               }`}
             >
-              {pill.label}
+              {t(pill.label)}
             </button>
           ))}
         </div>
@@ -123,14 +127,14 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search name, phone, email..."
+            placeholder={t("Search name, phone, email...")}
             className="w-64 rounded-xl border border-neutral-200 bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
           />
         </form>
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        {contacts.length === 0 && <p className="px-4 py-10 text-center text-sm text-neutral-400">No contacts yet.</p>}
+        {contacts.length === 0 && <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No contacts yet.")}</p>}
         <div className="divide-y divide-neutral-50">
           {contacts.map((contact) => {
             const direction = balanceDirection(contact.currentBalance);
@@ -155,13 +159,13 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
                 <div className="min-w-0 flex-1">
                   <p className={`truncate text-sm font-medium text-neutral-800 ${isArchived ? "line-through" : ""}`}>{contact.name}</p>
                   <p className="text-xs text-neutral-400">
-                    {contact.phone ?? contact.email ?? "No contact info"}
+                    {contact.phone ?? contact.email ?? t("No contact info")}
                     <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500">
-                      {CONTACT_TYPE_LABELS[contact.type]}
+                      {t(CONTACT_TYPE_LABELS[contact.type])}
                     </span>
                     {isArchived && (
                       <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-                        Archived
+                        {t("Archived")}
                       </span>
                     )}
                   </p>
@@ -174,7 +178,7 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
                     <button
                       type="button"
                       onClick={(e) => openEdit(e, contact)}
-                      title="Edit"
+                      title={t("Edit")}
                       className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -182,7 +186,7 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
                     <button
                       type="button"
                       onClick={(e) => confirmDelete(e, contact)}
-                      title="Delete"
+                      title={t("Delete")}
                       className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -202,13 +206,13 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         isPending={isPending}
-        title="Remove Contact"
+        title={t("Remove Contact")}
         message={
           deleteTarget
-            ? `Remove "${deleteTarget.name}"? If this contact has no transaction history, it will be permanently deleted; otherwise it will be archived instead.`
+            ? `${t("Remove")} "${deleteTarget.name}"? ${t("If this contact has no transaction history, it will be permanently deleted; otherwise it will be archived instead.")}`
             : ""
         }
-        confirmLabel="Remove"
+        confirmLabel={t("Remove")}
       />
     </div>
   );

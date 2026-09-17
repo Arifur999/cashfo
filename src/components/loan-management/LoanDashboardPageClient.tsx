@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import type { LoanDashboard } from "@/lib/api";
 import { contactInitials } from "@/lib/contactDisplay";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface LoanDashboardPageClientProps {
   dashboard: LoanDashboard;
@@ -16,6 +17,7 @@ type SortOrder = "high-low" | "low-high";
 
 export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPageClientProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOrder>("high-low");
 
@@ -33,32 +35,32 @@ export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPa
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">Loan Management Dashboard</h1>
-      <p className="mt-1 text-sm text-neutral-500">Manage loans, track outstanding and transactions.</p>
+      <h1 className="text-xl font-semibold text-neutral-900">{t("Loan Management Dashboard")}</h1>
+      <p className="mt-1 text-sm text-neutral-500">{t("Manage loans, track outstanding and transactions.")}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <SummaryCard icon={ArrowUpCircle} label="Total Dena" value={formatCurrency(dashboard.totalDena, currency)} sub="Negative balances" color="text-brand-danger" />
-        <SummaryCard icon={ArrowDownCircle} label="Total Pawna" value={formatCurrency(dashboard.totalPawna, currency)} sub="Positive balances" color="text-brand-primary" />
-        <SummaryCard icon={Wallet} label="Total Paid" value={formatCurrency(dashboard.totalPaid, currency)} sub="Payment made" color="text-neutral-900" />
-        <SummaryCard icon={Wallet} label="Total Received" value={formatCurrency(dashboard.totalReceived, currency)} sub="Cash received" color="text-neutral-900" />
+        <SummaryCard icon={ArrowUpCircle} label={t("Total Dena")} value={formatCurrency(dashboard.totalDena, currency)} sub={t("Negative balances")} color="text-brand-danger" />
+        <SummaryCard icon={ArrowDownCircle} label={t("Total Pawna")} value={formatCurrency(dashboard.totalPawna, currency)} sub={t("Positive balances")} color="text-brand-primary" />
+        <SummaryCard icon={Wallet} label={t("Total Paid")} value={formatCurrency(dashboard.totalPaid, currency)} sub={t("Payment made")} color="text-neutral-900" />
+        <SummaryCard icon={Wallet} label={t("Total Received")} value={formatCurrency(dashboard.totalReceived, currency)} sub={t("Cash received")} color="text-neutral-900" />
         <SummaryCard
           icon={Activity}
-          label="Net Balance"
+          label={t("Net Balance")}
           value={formatCurrency(Math.abs(Number(dashboard.netBalance)), currency)}
-          sub={Number(dashboard.netBalance) >= 0 ? "Pawna (+)" : "Dena (-)"}
+          sub={Number(dashboard.netBalance) >= 0 ? t("Pawna (+)") : t("Dena (-)")}
           color={Number(dashboard.netBalance) >= 0 ? "text-brand-primary" : "text-brand-danger"}
         />
-        <SummaryCard icon={Users} label="Active Accounts" value={String(dashboard.activeAccounts)} sub="Total Active" color="text-neutral-900" />
+        <SummaryCard icon={Users} label={t("Active Accounts")} value={String(dashboard.activeAccounts)} sub={t("Total Active")} color="text-neutral-900" />
       </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-neutral-900">Loan / Outstanding by Bank / Person</h2>
+          <h2 className="text-sm font-semibold text-neutral-900">{t("Loan / Outstanding by Bank / Person")}</h2>
           <div className="flex items-center gap-2">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or phone..."
+              placeholder={t("Search by name or phone...")}
               className="w-56 rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
             />
             <select
@@ -66,25 +68,25 @@ export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPa
               onChange={(e) => setSort(e.target.value as SortOrder)}
               className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
             >
-              <option value="high-low">Balance (high-low)</option>
-              <option value="low-high">Balance (low-high)</option>
+              <option value="high-low">{t("Balance (high-low)")}</option>
+              <option value="low-high">{t("Balance (low-high)")}</option>
             </select>
           </div>
         </div>
 
         {rows.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">Nothing outstanding right now.</p>
+          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("Nothing outstanding right now.")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
                 <tr>
                   <th className="px-4 py-3 font-medium">#</th>
-                  <th className="px-4 py-3 font-medium">Bank / Person</th>
-                  <th className="px-4 py-3 font-medium text-right">Opening Balance</th>
-                  <th className="px-4 py-3 font-medium text-right">Receive</th>
-                  <th className="px-4 py-3 font-medium text-right">Payment</th>
-                  <th className="px-4 py-3 font-medium text-right">Current Dena/Pawna</th>
+                  <th className="px-4 py-3 font-medium">{t("Bank / Person")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{t("Opening Balance")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{t("Receive")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{t("Payment")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{t("Current Dena/Pawna")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-50">
@@ -109,13 +111,13 @@ export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPa
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-neutral-500">
-                      {Number(row.openingBalance) === 0 ? <span className="text-neutral-300">Tk 0 (Balanced)</span> : formatCurrency(row.openingBalance, currency)}
+                      {Number(row.openingBalance) === 0 ? <span className="text-neutral-300">{t("Tk 0 (Balanced)")}</span> : formatCurrency(row.openingBalance, currency)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(row.totalReceive, currency)}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(row.totalPayment, currency)}</td>
                     <td className={`px-4 py-3 text-right font-semibold tabular-nums ${row.direction === "PAWNA" ? "text-brand-primary" : row.direction === "DENA" ? "text-brand-danger" : "text-neutral-400"}`}>
                       {formatCurrency(Math.abs(Number(row.currentBalance)), currency)}
-                      {row.direction !== "SETTLED" && <span className="ml-1 text-xs font-normal">({row.direction === "PAWNA" ? "Pawna" : "Dena"})</span>}
+                      {row.direction !== "SETTLED" && <span className="ml-1 text-xs font-normal">({row.direction === "PAWNA" ? t("Pawna") : t("Dena")})</span>}
                     </td>
                   </tr>
                 ))}
@@ -123,7 +125,7 @@ export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPa
               <tfoot>
                 <tr className="border-t-2 border-neutral-200 text-sm font-bold text-neutral-900">
                   <td className="px-4 py-3" colSpan={2}>
-                    Total
+                    {t("Total")}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
                     {formatCurrency(
@@ -145,10 +147,10 @@ export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPa
 
       <div className="mt-3 flex items-center gap-4 text-xs text-neutral-500">
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-brand-primary" /> Pawna (You Receive)
+          <span className="h-2 w-2 rounded-full bg-brand-primary" /> {t("Pawna (You Receive)")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-brand-danger" /> Dena (You Pay)
+          <span className="h-2 w-2 rounded-full bg-brand-danger" /> {t("Dena (You Pay)")}
         </span>
       </div>
     </div>

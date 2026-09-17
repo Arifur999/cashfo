@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createAccountAction, updateAccountAction } from "@/lib/accountActions";
 import type { Account } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface WalletFormModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface WalletFormModalProps {
 // needs Income/Expense/Equity accounts or the type/parent hierarchy.
 export function WalletFormModal({ open, onClose, businessId, editingWallet }: WalletFormModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [name, setName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [openingBalance, setOpeningBalance] = useState("");
@@ -60,11 +62,11 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
           });
 
       if (result.success) {
-        toast.success(editingWallet ? "Wallet updated" : "Wallet created");
+        toast.success(editingWallet ? t("Wallet updated") : t("Wallet created"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? (editingWallet ? "Failed to update wallet" : "Failed to create wallet"));
+        toast.error(result.message ?? (editingWallet ? t("Failed to update wallet") : t("Failed to create wallet")));
       }
     });
   }
@@ -72,14 +74,14 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
   const isValid = name.trim().length > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title={editingWallet ? "Edit Wallet" : "Add Wallet"}>
+    <Modal open={open} onClose={onClose} title={editingWallet ? t("Edit Wallet") : t("Add Wallet")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Wallet Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Wallet Name")}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Islami Bank"
+            placeholder={t("e.g. Islami Bank")}
             autoFocus
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
@@ -87,12 +89,12 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Account Number <span className="text-neutral-400">(optional)</span>
+            {t("Account Number")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <input
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value)}
-            placeholder="e.g. 01711223344"
+            placeholder={t("e.g. 01711223344")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
@@ -100,7 +102,7 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
         {!editingWallet && (
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Opening Balance <span className="text-neutral-400">(optional)</span>
+              {t("Opening Balance")} <span className="text-neutral-400">{t("(optional)")}</span>
             </label>
             <input
               value={openingBalance}
@@ -117,7 +119,7 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
 
       <div className="mt-5 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -126,7 +128,7 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingWallet ? "Save Changes" : "Create"}
+          {editingWallet ? t("Save Changes") : t("Create")}
         </button>
       </div>
     </Modal>

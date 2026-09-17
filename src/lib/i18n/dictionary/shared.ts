@@ -64,6 +64,12 @@ export const sharedDictionary: Record<string, string> = {
   No: "না",
   Total: "মোট",
   Balance: "ব্যালেন্স",
+  // Used generically across Balance Overview, Savings Goals, and Referrals
+  // -- moved here (was duplicated in dictionary/savings-goals.ts and
+  // dictionary/personal.ts with two different Bangla wordings) so every
+  // area gets the same translation instead of whichever file's spread
+  // order happened to win.
+  "Available Balance": "উপলব্ধ ব্যালেন্স",
   Account: "হিসাব",
   Currency: "মুদ্রা",
   Active: "সক্রিয়",

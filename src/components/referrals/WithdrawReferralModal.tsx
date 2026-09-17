@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import type { Account } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getMoneyAccountsAction } from "@/lib/quickEntryActions";
 import { withdrawReferralEarningsAction } from "@/lib/referralActions";
 import { getActiveSavingsWalletsAction } from "@/lib/savingsGoalActions";
@@ -26,6 +27,7 @@ interface WithdrawReferralModalProps {
 // PurchaseAssetModal's Account field, since both are really just "which of
 // my existing accounts does this money land in".
 export function WithdrawReferralModal({ open, onClose, businessId, availableBalance, currency }: WithdrawReferralModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [accountId, setAccountId] = useState("");
   const [moneyAccounts, setMoneyAccounts] = useState<Account[]>([]);
@@ -54,39 +56,39 @@ export function WithdrawReferralModal({ open, onClose, businessId, availableBala
 
   function handleSubmit() {
     if (!accountId) {
-      toast.error("Select an account to withdraw to");
+      toast.error(t("Select an account to withdraw to"));
       return;
     }
     startTransition(async () => {
       const result = await withdrawReferralEarningsAction(businessId, accountId);
       if (result.success && result.data) {
-        toast.success(`Withdrew ${formatCurrency(result.data.withdrawnAmount, currency)}`);
+        toast.success(`${t("Withdrew")} ${formatCurrency(result.data.withdrawnAmount, currency)}`);
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to withdraw earnings");
+        toast.error(result.message ?? t("Failed to withdraw earnings"));
       }
     });
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Withdraw Referral Earnings">
+    <Modal open={open} onClose={onClose} title={t("Withdraw Referral Earnings")}>
       <div className="space-y-4">
         <p className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
-          Withdraw <span className="font-semibold text-neutral-900">{formatCurrency(availableBalance, currency)}</span> to:
+          {t("Withdraw")} <span className="font-semibold text-neutral-900">{formatCurrency(availableBalance, currency)}</span> {t("to:")}
         </p>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Account</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Account")}</label>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             disabled={loading}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {moneyAccounts.length === 0 && savingsWallets.length === 0 && <option value="">No accounts yet</option>}
+            {moneyAccounts.length === 0 && savingsWallets.length === 0 && <option value="">{t("No accounts yet")}</option>}
             {moneyAccounts.length > 0 && (
-              <optgroup label="General Accounts">
+              <optgroup label={t("General Accounts")}>
                 {moneyAccounts.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
@@ -95,7 +97,7 @@ export function WithdrawReferralModal({ open, onClose, businessId, availableBala
               </optgroup>
             )}
             {savingsWallets.length > 0 && (
-              <optgroup label="Savings Accounts">
+              <optgroup label={t("Savings Accounts")}>
                 {savingsWallets.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
@@ -105,7 +107,7 @@ export function WithdrawReferralModal({ open, onClose, businessId, availableBala
             )}
           </select>
           {!loading && moneyAccounts.length === 0 && savingsWallets.length === 0 && (
-            <p className="mt-1 text-xs text-brand-danger">No accounts exist in this workspace yet -- add one in Chart of Accounts first.</p>
+            <p className="mt-1 text-xs text-brand-danger">{t("No accounts exist in this workspace yet -- add one in Chart of Accounts first.")}</p>
           )}
         </div>
       </div>
@@ -117,7 +119,7 @@ export function WithdrawReferralModal({ open, onClose, businessId, availableBala
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Withdraw Funds
+        {t("Withdraw Funds")}
       </button>
     </Modal>
   );

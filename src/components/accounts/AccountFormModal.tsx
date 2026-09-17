@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createAccountAction, updateAccountAction } from "@/lib/accountActions";
 import type { Account, AccountType, LanguagePreference } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const ACCOUNT_TYPES: AccountType[] = ["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"];
 
@@ -21,6 +22,7 @@ interface AccountFormModalProps {
 
 export function AccountFormModal({ open, onClose, businessId, editingAccount, allAccounts }: AccountFormModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [name, setName] = useState("");
   const [nameBn, setNameBn] = useState("");
   const [accountType, setAccountType] = useState<AccountType>("ASSET");
@@ -67,11 +69,11 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
         : await createAccountAction(businessId, input);
 
       if (result.success) {
-        toast.success(editingAccount ? "Account updated" : "Account created");
+        toast.success(editingAccount ? t("Account updated") : t("Account created"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? (editingAccount ? "Failed to update account" : "Failed to create account"));
+        toast.error(result.message ?? (editingAccount ? t("Failed to update account") : t("Failed to create account")));
       }
     });
   }
@@ -79,21 +81,21 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
   const isValid = name.trim().length > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title={editingAccount ? "Edit Account" : "Add Account"}>
+    <Modal open={open} onClose={onClose} title={editingAccount ? t("Edit Account") : t("Add Account")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Name")}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Petty Cash"
+            placeholder={t("e.g. Petty Cash")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Bangla Name <span className="text-neutral-400">(optional)</span>
+            {t("Bangla Name")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <input
             value={nameBn}
@@ -105,7 +107,7 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Account Type</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Account Type")}</label>
             <select
               value={accountType}
               onChange={(e) => {
@@ -113,22 +115,27 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
                 setParentId("");
               }}
               disabled={!!editingAccount}
-              title={editingAccount ? "Account type can't be changed after creation" : undefined}
+              title={editingAccount ? t("Account type can't be changed after creation") : undefined}
               className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50 disabled:text-neutral-400"
             >
-              {ACCOUNT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              {/* Renders the raw enum code itself (e.g. "ASSET"), not a
+                  translated label -- intentionally left untranslated (see
+                  translation guidelines: a literal enum/status CODE value
+                  stays as-is). Loop variable named `at` (Account Type), not
+                  `t`, so it can never shadow the translate function above. */}
+              {ACCOUNT_TYPES.map((at) => (
+                <option key={at} value={at}>
+                  {at}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Subtype</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Subtype")}</label>
             <input
               value={accountSubtype}
               onChange={(e) => setAccountSubtype(e.target.value)}
-              placeholder="e.g. bank"
+              placeholder={t("e.g. bank")}
               className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             />
           </div>
@@ -136,14 +143,14 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Parent Account <span className="text-neutral-400">(optional)</span>
+            {t("Parent Account")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <select
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
           >
-            <option value="">None (top-level)</option>
+            <option value="">{t("None (top-level)")}</option>
             {parentOptions.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
@@ -155,7 +162,7 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
 
       <div className="mt-5 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -164,7 +171,7 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingAccount ? "Save Changes" : "Create"}
+          {editingAccount ? t("Save Changes") : t("Create")}
         </button>
       </div>
     </Modal>

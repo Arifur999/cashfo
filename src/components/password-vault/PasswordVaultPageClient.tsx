@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import type { VaultEntryCategory, VaultEntrySummary } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { deleteVaultEntryAction, listVaultEntriesAction, revealVaultEntryAction } from "@/lib/passwordVaultActions";
 import { VAULT_CATEGORY_ICONS, VAULT_CATEGORY_LABELS } from "./vaultCategoryDisplay";
 import { VaultEntryModal } from "./VaultEntryModal";
@@ -39,6 +40,7 @@ function EntryRow({
   onEdit: () => void;
   onDeleted: () => void;
 }) {
+  const { t } = useLocale();
   const [revealed, setRevealed] = useState<string | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -58,7 +60,7 @@ function EntryRow({
       } else if (isLockedMessage(result.message)) {
         onLocked();
       } else {
-        toast.error(result.message ?? "Failed to reveal password");
+        toast.error(result.message ?? t("Failed to reveal password"));
       }
     });
   }
@@ -67,13 +69,13 @@ function EntryRow({
     startDeleteTransition(async () => {
       const result = await deleteVaultEntryAction(vaultToken, entry.id);
       if (result.success) {
-        toast.success("Entry deleted");
+        toast.success(t("Entry deleted"));
         setDeleteOpen(false);
         onDeleted();
       } else if (isLockedMessage(result.message)) {
         onLocked();
       } else {
-        toast.error(result.message ?? "Failed to delete entry");
+        toast.error(result.message ?? t("Failed to delete entry"));
       }
     });
   }
@@ -86,7 +88,7 @@ function EntryRow({
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-neutral-900">{entry.title}</p>
-          <p className="truncate text-xs text-neutral-400">{entry.usernameOrEmail || entry.holderName || VAULT_CATEGORY_LABELS[entry.category]}</p>
+          <p className="truncate text-xs text-neutral-400">{entry.usernameOrEmail || entry.holderName || t(VAULT_CATEGORY_LABELS[entry.category])}</p>
         </div>
       </div>
 
@@ -120,8 +122,8 @@ function EntryRow({
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
-        title="Delete this entry?"
-        message={`"${entry.title}" will be permanently removed from your vault.`}
+        title={t("Delete this entry?")}
+        message={`"${entry.title}" ${t("will be permanently removed from your vault.")}`}
         confirmLabel="Delete"
         isPending={isDeleting}
       />
@@ -130,6 +132,7 @@ function EntryRow({
 }
 
 export function PasswordVaultPageClient() {
+  const { t } = useLocale();
   const [vaultToken, setVaultToken] = useState<string | null>(null);
   const [entries, setEntries] = useState<VaultEntrySummary[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(false);
@@ -151,7 +154,7 @@ export function PasswordVaultPageClient() {
       } else if (isLockedMessage(result.message)) {
         lock();
       } else {
-        toast.error(result.message ?? "Failed to load vault entries");
+        toast.error(result.message ?? t("Failed to load vault entries"));
       }
     });
   }
@@ -177,8 +180,8 @@ export function PasswordVaultPageClient() {
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Password Manager</h1>
-          <p className="mt-1 text-sm text-neutral-500">Securely store logins for your other accounts -- Facebook, bank, email and more</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Password Manager")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Securely store logins for your other accounts -- Facebook, bank, email and more")}</p>
         </div>
         {vaultToken && (
           <div className="flex items-center gap-2">
@@ -188,7 +191,7 @@ export function PasswordVaultPageClient() {
               className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
             >
               <Plus className="h-4 w-4" />
-              Add Entry
+              {t("Add Entry")}
             </button>
             <button
               type="button"
@@ -196,7 +199,7 @@ export function PasswordVaultPageClient() {
               className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
             >
               <Lock className="h-4 w-4" />
-              Lock
+              {t("Lock")}
             </button>
           </div>
         )}
@@ -216,7 +219,7 @@ export function PasswordVaultPageClient() {
                   activeCategory === pill.value ? "bg-brand-primary text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                 }`}
               >
-                {pill.label}
+                {t(pill.label)}
               </button>
             ))}
           </div>
@@ -228,7 +231,9 @@ export function PasswordVaultPageClient() {
               </div>
             ) : visibleEntries.length === 0 ? (
               <p className="py-10 text-center text-sm text-neutral-400">
-                {entries.length === 0 ? "No entries saved yet -- click “Add Entry” to get started." : "No entries in this category."}
+                {entries.length === 0
+                  ? t("No entries saved yet -- click “Add Entry” to get started.")
+                  : t("No entries in this category.")}
               </p>
             ) : (
               <div className="divide-y divide-neutral-50">

@@ -6,6 +6,7 @@ import type { Account, AccountLedger, AccountSummary, LanguagePreference } from 
 import { ACCOUNT_TYPE_LABELS, accountDisplayName } from "@/lib/accountDisplay";
 import { formatCurrency } from "@/lib/currency";
 import type { DateRangePreset } from "@/lib/dateRangePresets";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface AccountDetailPageClientProps {
   account: Account;
@@ -36,6 +37,7 @@ function isDebitPositive(accountType: Account["accountType"]): boolean {
 export function AccountDetailPageClient({ account, ledger, summary, preferredLanguage, currency, preset, customFrom, customTo }: AccountDetailPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
   const debitPositive = isDebitPositive(account.accountType);
 
   function setRange(value: DateRangePreset) {
@@ -69,7 +71,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
   return (
     <div className="h-full bg-brand-content px-6 py-8">
       <Link href="/accounts" className="text-sm text-neutral-400 hover:text-neutral-600 hover:underline">
-        ← Back to Chart of Accounts
+        ← {t("Back to Chart of Accounts")}
       </Link>
 
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
@@ -77,7 +79,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold text-neutral-900">{accountDisplayName(account, preferredLanguage)}</h1>
             <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-500">
-              {ACCOUNT_TYPE_LABELS[account.accountType]}
+              {t(ACCOUNT_TYPE_LABELS[account.accountType])}
             </span>
           </div>
           <p className="mt-2 text-3xl font-bold tabular-nums text-neutral-900">{formatCurrency(summary.currentBalance, currency)}</p>
@@ -86,15 +88,15 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Total In</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Total In")}</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-brand-primary">{formatCurrency(summary.totalIn, currency)}</p>
         </div>
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Total Out</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Total Out")}</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-brand-danger">{formatCurrency(summary.totalOut, currency)}</p>
         </div>
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Adjustment</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Adjustment")}</p>
           <p
             className={`mt-1 text-xl font-semibold tabular-nums ${Number(summary.adjustment) > 0 ? "text-brand-primary" : Number(summary.adjustment) < 0 ? "text-brand-danger" : "text-neutral-400"}`}
           >
@@ -103,7 +105,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
           </p>
         </div>
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Transactions</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Transactions")}</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-neutral-800">{summary.transactionCount}</p>
         </div>
       </div>
@@ -118,7 +120,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
               preset === opt.value ? "bg-brand-primary text-white" : "bg-surface text-neutral-600 hover:bg-neutral-100"
             }`}
           >
-            {opt.label}
+            {t(opt.label)}
           </button>
         ))}
         {preset === "custom" && (
@@ -129,7 +131,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
               onChange={(e) => setCustomDate("dateFrom", e.target.value)}
               className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
             />
-            <span className="text-sm text-neutral-400">to</span>
+            <span className="text-sm text-neutral-400">{t("to")}</span>
             <input
               type="date"
               value={customTo ?? ""}
@@ -143,18 +145,18 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
       <div className="mt-6 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         {isFiltered && (
           <div className="flex items-center justify-between border-b border-neutral-100 bg-neutral-50/60 px-4 py-2.5 text-sm">
-            <span className="text-neutral-500">Balance brought forward</span>
+            <span className="text-neutral-500">{t("Balance brought forward")}</span>
             <span className="font-medium tabular-nums text-neutral-700">{formatCurrency(ledger.balanceBroughtForward, currency)}</span>
           </div>
         )}
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
             <tr>
-              <th className="px-4 py-3 font-medium">Date</th>
-              <th className="px-4 py-3 font-medium">Description</th>
-              <th className="px-4 py-3 font-medium text-right">Money In</th>
-              <th className="px-4 py-3 font-medium text-right">Money Out</th>
-              <th className="px-4 py-3 font-medium text-right">Balance</th>
+              <th className="px-4 py-3 font-medium">{t("Date")}</th>
+              <th className="px-4 py-3 font-medium">{t("Description")}</th>
+              <th className="px-4 py-3 font-medium text-right">{t("Money In")}</th>
+              <th className="px-4 py-3 font-medium text-right">{t("Money Out")}</th>
+              <th className="px-4 py-3 font-medium text-right">{t("Balance")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-50">
@@ -170,7 +172,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
                   <td className="px-4 py-3 text-neutral-500">{new Date(row.date).toLocaleDateString()}</td>
                   <td className={`px-4 py-3 text-neutral-700 ${isVoided ? "line-through" : ""}`}>
                     {row.description ?? "-"}
-                    {isVoided && <span className="ml-2 text-xs text-brand-danger">Voided</span>}
+                    {isVoided && <span className="ml-2 text-xs text-brand-danger">{t("Voided")}</span>}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{isIn ? formatCurrency(row.amount, currency) : ""}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{!isIn ? formatCurrency(row.amount, currency) : ""}</td>
@@ -181,7 +183,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
             {ledger.entries.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-neutral-400">
-                  No activity in this range.
+                  {t("No activity in this range.")}
                 </td>
               </tr>
             )}
@@ -196,10 +198,10 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
               onClick={() => goToPage(ledger.meta.page - 1)}
               className="rounded-lg px-3 py-1.5 text-neutral-600 hover:bg-neutral-100 disabled:opacity-30"
             >
-              Previous
+              {t("Previous")}
             </button>
             <span className="text-neutral-400">
-              Page {ledger.meta.page} of {ledger.meta.totalPages}
+              {t("Page")} {ledger.meta.page} {t("of")} {ledger.meta.totalPages}
             </span>
             <button
               type="button"
@@ -207,7 +209,7 @@ export function AccountDetailPageClient({ account, ledger, summary, preferredLan
               onClick={() => goToPage(ledger.meta.page + 1)}
               className="rounded-lg px-3 py-1.5 text-neutral-600 hover:bg-neutral-100 disabled:opacity-30"
             >
-              Next
+              {t("Next")}
             </button>
           </div>
         )}

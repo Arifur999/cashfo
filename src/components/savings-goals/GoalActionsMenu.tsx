@@ -3,6 +3,7 @@
 import { MoreHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { SavingsGoalStatus } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface GoalActionsMenuProps {
   status: SavingsGoalStatus;
@@ -17,6 +18,7 @@ interface GoalActionsMenuProps {
 // Small self-contained dropdown ("..." button) -- same outside-click-to-
 // close pattern as Combobox, scoped to just this one menu instance.
 export function GoalActionsMenu({ status, canWithdraw, onViewDetails, onEdit, onTogglePause, onWithdraw, onDelete }: GoalActionsMenuProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -46,24 +48,24 @@ export function GoalActionsMenu({ status, canWithdraw, onViewDetails, onEdit, on
       {open && (
         <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-neutral-100 bg-surface py-1 shadow-xl shadow-black/10">
           <button type="button" onClick={() => run(onViewDetails)} className="block w-full px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50">
-            View Details
+            {t("View Details")}
           </button>
           <button type="button" onClick={() => run(onEdit)} className="block w-full px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50">
-            Edit Goal
+            {t("Edit Goal")}
           </button>
           {status !== "COMPLETED" && status !== "WITHDRAWN" && (
             <button type="button" onClick={() => run(onTogglePause)} className="block w-full px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50">
-              {status === "PAUSED" ? "Resume Goal" : "Pause Goal"}
+              {status === "PAUSED" ? t("Resume Goal") : t("Pause Goal")}
             </button>
           )}
           {canWithdraw && (
             <button type="button" onClick={() => run(onWithdraw)} className="block w-full px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50">
-              Withdraw Savings
+              {t("Withdraw Savings")}
             </button>
           )}
           {status !== "WITHDRAWN" && (
             <button type="button" onClick={() => run(onDelete)} className="block w-full px-3.5 py-2 text-left text-sm text-brand-danger hover:bg-neutral-50">
-              Delete Goal
+              {t("Delete Goal")}
             </button>
           )}
         </div>

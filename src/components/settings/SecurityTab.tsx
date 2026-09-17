@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { LoginHistoryEntry, UserSessionSummary } from "@/lib/api";
 import { getLoginHistoryAction, getSessionsAction, revokeSessionAction } from "@/lib/authActions";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -27,6 +28,7 @@ function DeviceIcon({ label, className }: { label: string; className?: string })
 // (see UserAuthService.issueTokens()) and login-history is the existing
 // LoginAttempt table -- both already had the data, this just surfaces it.
 export function SecurityTab() {
+  const { t } = useLocale();
   const [subTab, setSubTab] = useState<"devices" | "history">("devices");
 
   const [sessions, setSessions] = useState<UserSessionSummary[]>([]);
@@ -58,16 +60,16 @@ export function SecurityTab() {
   }, []);
 
   function handleRevoke(session: UserSessionSummary) {
-    if (!window.confirm(`Sign out "${session.deviceLabel}"? That device will need to log in again.`)) return;
+    if (!window.confirm(`${t("Sign out")} "${session.deviceLabel}"? ${t("That device will need to log in again.")}`)) return;
     setRevokingId(session.id);
     startTransition(async () => {
       const result = await revokeSessionAction(session.id);
       if (result.success) {
-        toast.success("Device signed out");
+        toast.success(t("Device signed out"));
         setLoadingSessions(true);
         fetchSessions();
       } else {
-        toast.error(result.message ?? "Failed to sign out that device");
+        toast.error(result.message ?? t("Failed to sign out that device"));
       }
       setRevokingId(null);
     });
@@ -78,24 +80,24 @@ export function SecurityTab() {
       <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-brand-primary" />
-          <h2 className="text-sm font-semibold text-neutral-900">Two-Factor Authentication</h2>
+          <h2 className="text-sm font-semibold text-neutral-900">{t("Two-Factor Authentication")}</h2>
         </div>
-        <p className="mt-1 text-sm text-neutral-500">Add an extra layer of security to your account</p>
+        <p className="mt-1 text-sm text-neutral-500">{t("Add an extra layer of security to your account")}</p>
 
         <div className="mt-4 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-700">Enable 2FA</p>
-            <p className="text-sm text-neutral-500">Send a code to your phone or email when logging in.</p>
+            <p className="text-sm font-medium text-neutral-700">{t("Enable 2FA")}</p>
+            <p className="text-sm text-neutral-500">{t("Send a code to your phone or email when logging in.")}</p>
           </div>
-          <span title="Coming soon -- no SMS/email provider is configured yet" className="inline-flex h-6 w-11 shrink-0 cursor-not-allowed items-center rounded-full bg-neutral-200 px-0.5 opacity-60">
+          <span title={t("Coming soon -- no SMS/email provider is configured yet")} className="inline-flex h-6 w-11 shrink-0 cursor-not-allowed items-center rounded-full bg-neutral-200 px-0.5 opacity-60">
             <span className="h-5 w-5 rounded-full bg-white shadow" />
           </span>
         </div>
       </div>
 
       <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-        <h2 className="text-sm font-semibold text-neutral-900">Device Management</h2>
-        <p className="mt-1 text-sm text-neutral-500">See where you&apos;re signed in</p>
+        <h2 className="text-sm font-semibold text-neutral-900">{t("Device Management")}</h2>
+        <p className="mt-1 text-sm text-neutral-500">{t("See where you're signed in")}</p>
 
         <div className="mt-4 flex gap-1 rounded-xl bg-neutral-100 p-1" style={{ width: "fit-content" }}>
           <button
@@ -105,7 +107,7 @@ export function SecurityTab() {
               subTab === "devices" ? "bg-brand-primary text-white shadow-sm" : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
-            Devices
+            {t("Devices")}
           </button>
           <button
             type="button"
@@ -114,7 +116,7 @@ export function SecurityTab() {
               subTab === "history" ? "bg-brand-primary text-white shadow-sm" : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
-            History
+            {t("History")}
           </button>
         </div>
 
@@ -125,7 +127,7 @@ export function SecurityTab() {
                 <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
               </div>
             ) : sessions.length === 0 ? (
-              <p className="py-6 text-center text-sm text-neutral-400">No active sessions found.</p>
+              <p className="py-6 text-center text-sm text-neutral-400">{t("No active sessions found.")}</p>
             ) : (
               <div className="divide-y divide-neutral-50 rounded-xl border border-neutral-100">
                 {sessions.map((s) => (
@@ -139,12 +141,12 @@ export function SecurityTab() {
                           {s.deviceLabel}
                           {s.isCurrent && (
                             <span className="rounded-full bg-brand-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-primary">
-                              Current
+                              {t("Current")}
                             </span>
                           )}
                         </p>
                         <p className="text-xs text-neutral-400">
-                          {s.isCurrent ? "Active now" : `Last active ${formatDateTime(s.lastUsedAt)}`} · {s.ipAddress}
+                          {s.isCurrent ? t("Active now") : `${t("Last active")} ${formatDateTime(s.lastUsedAt)}`} · {s.ipAddress}
                         </p>
                       </div>
                     </div>
@@ -155,7 +157,7 @@ export function SecurityTab() {
                         onClick={() => handleRevoke(s)}
                         className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
                       >
-                        {isPending && revokingId === s.id ? "Signing out..." : "Sign out"}
+                        {isPending && revokingId === s.id ? t("Signing out...") : t("Sign out")}
                       </button>
                     )}
                   </div>
@@ -167,7 +169,7 @@ export function SecurityTab() {
               <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
             </div>
           ) : history.length === 0 ? (
-            <p className="py-6 text-center text-sm text-neutral-400">No login history yet.</p>
+            <p className="py-6 text-center text-sm text-neutral-400">{t("No login history yet.")}</p>
           ) : (
             <div className="max-h-80 divide-y divide-neutral-50 overflow-y-auto rounded-xl border border-neutral-100">
               {history.map((h) => (
@@ -183,7 +185,7 @@ export function SecurityTab() {
                       h.success ? "bg-brand-primary/10 text-brand-primary" : "bg-brand-danger/10 text-brand-danger"
                     }`}
                   >
-                    {h.success ? "Success" : "Failed"}
+                    {h.success ? t("Success") : t("Failed")}
                   </span>
                 </div>
               ))}
@@ -193,8 +195,8 @@ export function SecurityTab() {
       </div>
 
       <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-        <h2 className="text-sm font-semibold text-neutral-900">Additional Security</h2>
-        <p className="mt-1 text-sm text-neutral-500">Configure extra protections</p>
+        <h2 className="text-sm font-semibold text-neutral-900">{t("Additional Security")}</h2>
+        <p className="mt-1 text-sm text-neutral-500">{t("Configure extra protections")}</p>
 
         <div className="mt-4 space-y-4">
           {[
@@ -204,11 +206,11 @@ export function SecurityTab() {
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-neutral-700">{item.label}</p>
-                <p className="text-sm text-neutral-500">{item.description}</p>
+                <p className="text-sm font-medium text-neutral-700">{t(item.label)}</p>
+                <p className="text-sm text-neutral-500">{t(item.description)}</p>
               </div>
               <span
-                title="Coming soon -- no email provider is configured yet"
+                title={t("Coming soon -- no email provider is configured yet")}
                 className="inline-flex h-6 w-11 shrink-0 cursor-not-allowed items-center rounded-full bg-neutral-200 px-0.5 opacity-60"
               >
                 <span className="h-5 w-5 rounded-full bg-white shadow" />

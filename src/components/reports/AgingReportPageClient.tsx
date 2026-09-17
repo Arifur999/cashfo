@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { AgingReport } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface AgingReportPageClientProps {
   title: string;
@@ -19,10 +20,11 @@ const BUCKETS: { key: keyof AgingReport["buckets"]; label: string }[] = [
 ];
 
 export function AgingReportPageClient({ title, report, currency, accentColor }: AgingReportPageClientProps) {
+  const { t } = useLocale();
   return (
     <div className="h-full bg-brand-content px-6 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">{title}</h1>
-      <p className="mt-1 text-sm text-neutral-500">Outstanding balances grouped by how overdue they are.</p>
+      <h1 className="text-xl font-semibold text-neutral-900">{t(title)}</h1>
+      <p className="mt-1 text-sm text-neutral-500">{t("Outstanding balances grouped by how overdue they are.")}</p>
 
       <div className="mt-6 space-y-4">
         {BUCKETS.map((bucket) => {
@@ -30,11 +32,11 @@ export function AgingReportPageClient({ title, report, currency, accentColor }: 
           return (
             <div key={bucket.key} className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
               <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
-                <span className="text-sm font-semibold text-neutral-900">{bucket.label}</span>
+                <span className="text-sm font-semibold text-neutral-900">{t(bucket.label)}</span>
                 <span className={`text-sm font-bold tabular-nums ${accentColor}`}>{formatCurrency(report.buckets[bucket.key], currency)}</span>
               </div>
               {rows.length === 0 ? (
-                <p className="px-4 py-4 text-sm text-neutral-400">Nothing in this bucket.</p>
+                <p className="px-4 py-4 text-sm text-neutral-400">{t("Nothing in this bucket.")}</p>
               ) : (
                 <div className="divide-y divide-neutral-50">
                   {rows.map((row) => (

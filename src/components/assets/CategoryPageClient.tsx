@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { AssetCategoryOption } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { deleteAssetCategoryAction } from "@/lib/assetActions";
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { AssetCategoryModal } from "./AssetCategoryModal";
@@ -29,6 +30,7 @@ function isCreateState(state: CategoryModalState): state is { mode: "create" } {
 // precedent this mirrors, minus the "spent"/"View Transactions" line (asset
 // categories carry no per-category spending figure).
 export function CategoryPageClient({ businessId, categories, canManage }: CategoryPageClientProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [categoryModal, setCategoryModal] = useState<CategoryModalState>("closed");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -39,7 +41,10 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
   function handleDelete(category: AssetCategoryOption) {
     if (
       !window.confirm(
-        `Delete the "${category.name}" category? Existing assets keep showing this name, but it won't be pickable for new ones.`,
+        t('Delete the "{name}" category? Existing assets keep showing this name, but it won\'t be pickable for new ones.').replace(
+          "{name}",
+          category.name,
+        ),
       )
     )
       return;
@@ -47,10 +52,10 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
     startDeleteTransition(async () => {
       const result = await deleteAssetCategoryAction(businessId, category.id);
       if (result.success) {
-        toast.success("Category deleted");
+        toast.success(t("Category deleted"));
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to delete category");
+        toast.error(result.message ?? t("Failed to delete category"));
       }
       setDeletingId(null);
     });
@@ -60,8 +65,8 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Category</h1>
-          <p className="mt-1 text-sm text-neutral-500">Manage the categories your assets are organized into.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Category")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Manage the categories your assets are organized into.")}</p>
         </div>
         {canManage && (
           <button
@@ -70,7 +75,7 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
             className="flex items-center gap-1.5 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
           >
             <Plus className="h-4 w-4" />
-            Add Category
+            {t("Add Category")}
           </button>
         )}
       </div>
@@ -78,7 +83,7 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
       <div className="mt-6">
         {categories.length === 0 ? (
           <div className="rounded-2xl bg-surface px-4 py-10 text-center text-sm text-neutral-400 shadow-sm shadow-black/5">
-            No categories yet -- click &quot;Add Category&quot; to get started.
+            {t('No categories yet -- click "Add Category" to get started.')}
           </div>
         ) : (
           <div className="space-y-3">
@@ -97,7 +102,7 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
                       <button
                         type="button"
                         onClick={() => setCategoryModal(category)}
-                        title="Edit"
+                        title={t("Edit")}
                         className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -106,7 +111,7 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
                         type="button"
                         disabled={deletingId === category.id && isDeleting}
                         onClick={() => handleDelete(category)}
-                        title="Delete"
+                        title={t("Delete")}
                         className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

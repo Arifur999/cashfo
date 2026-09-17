@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import type { Account, Asset } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { sellAssetAction } from "@/lib/assetActions";
 import { formatCurrency } from "@/lib/currency";
 import { getMoneyAccountsAction } from "@/lib/quickEntryActions";
@@ -26,6 +27,7 @@ interface SellAssetModalProps {
 // Price with the asset's current tracked value -- a sensible default, still
 // editable in case the actual sale price differs.
 export function SellAssetModal({ open, onClose, businessId, asset, currency }: SellAssetModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [soldPrice, setSoldPrice] = useState("");
   const [soldAccountId, setSoldAccountId] = useState("");
@@ -72,27 +74,28 @@ export function SellAssetModal({ open, onClose, businessId, asset, currency }: S
         notes: notes.trim() || undefined,
       });
       if (result.success) {
-        toast.success("Asset sold -- recorded as income");
+        toast.success(t("Asset sold -- recorded as income"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to record sale");
+        toast.error(result.message ?? t("Failed to record sale"));
       }
     });
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Sell Asset">
+    <Modal open={open} onClose={onClose} title={t("Sell Asset")}>
       <div className="space-y-4">
         {asset && (
           <p className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
-            Selling &quot;<span className="font-semibold text-neutral-900">{asset.name}</span>&quot; (current value:{" "}
-            <span className="font-semibold text-neutral-900">{formatCurrency(asset.currentValue, currency)}</span>).
+            {t('Selling "')}
+            <span className="font-semibold text-neutral-900">{asset.name}</span>
+            {t('" (current value: {value}).').replace("{value}", formatCurrency(asset.currentValue, currency))}
           </p>
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Sold Price</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Sold Price")}</label>
           <input
             type="number"
             min="0"
@@ -104,16 +107,16 @@ export function SellAssetModal({ open, onClose, businessId, asset, currency }: S
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Deposit To</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Deposit To")}</label>
           <select
             value={soldAccountId}
             onChange={(e) => setSoldAccountId(e.target.value)}
             disabled={loading}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            {moneyAccounts.length === 0 && savingsWallets.length === 0 && <option value="">No accounts yet</option>}
+            {moneyAccounts.length === 0 && savingsWallets.length === 0 && <option value="">{t("No accounts yet")}</option>}
             {moneyAccounts.length > 0 && (
-              <optgroup label="General Accounts">
+              <optgroup label={t("General Accounts")}>
                 {moneyAccounts.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
@@ -122,7 +125,7 @@ export function SellAssetModal({ open, onClose, businessId, asset, currency }: S
               </optgroup>
             )}
             {savingsWallets.length > 0 && (
-              <optgroup label="Savings Accounts">
+              <optgroup label={t("Savings Accounts")}>
                 {savingsWallets.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
@@ -134,13 +137,13 @@ export function SellAssetModal({ open, onClose, businessId, asset, currency }: S
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <DatePicker value={date} onChange={setDate} />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <input
             value={notes}
@@ -157,7 +160,7 @@ export function SellAssetModal({ open, onClose, businessId, asset, currency }: S
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Sell Asset
+        {t("Sell Asset")}
       </button>
     </Modal>
   );

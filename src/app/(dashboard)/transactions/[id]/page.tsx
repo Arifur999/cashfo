@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { VoidTransactionButton } from "@/components/transactions/VoidTransactionButton";
 import { resolveActiveBusinessId } from "@/lib/activeBusiness";
 import { getCurrentUser } from "@/lib/auth";
+import { getLocale } from "@/lib/i18n/locale";
+import { translate } from "@/lib/i18n/translate";
 import { getTransaction } from "@/lib/transactions";
 
 export default async function TransactionDetailPage({ params }: PageProps<"/transactions/[id]">) {
@@ -11,6 +13,9 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
 
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
+
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
 
   const transaction = await getTransaction(activeBusinessId, id);
   if (!transaction) notFound();
@@ -24,13 +29,21 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">{transaction.description ?? "Journal Entry"}</h1>
+          <h1 className="text-xl font-semibold text-neutral-900">{transaction.description ?? t("Journal Entry")}</h1>
           <p className="mt-1 text-sm text-neutral-500">
             {new Date(transaction.transactionDate).toLocaleDateString()} · {transaction.transactionType} ·{" "}
             <span className={transaction.status === "VOIDED" ? "text-neutral-400 line-through" : "text-brand-primary"}>{transaction.status}</span>
           </p>
-          {transaction.reversalOfId && <p className="mt-1 text-xs text-neutral-400">Reversal of transaction {transaction.reversalOfId}</p>}
-          {transaction.voidedReason && <p className="mt-1 text-xs text-neutral-400">Voided: {transaction.voidedReason}</p>}
+          {transaction.reversalOfId && (
+            <p className="mt-1 text-xs text-neutral-400">
+              {t("Reversal of transaction")} {transaction.reversalOfId}
+            </p>
+          )}
+          {transaction.voidedReason && (
+            <p className="mt-1 text-xs text-neutral-400">
+              {t("Voided:")} {transaction.voidedReason}
+            </p>
+          )}
         </div>
         {canManage && transaction.status === "POSTED" && !transaction.reversalOfId && (
           <VoidTransactionButton businessId={activeBusinessId} transactionId={transaction.id} />
@@ -41,10 +54,10 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
             <tr>
-              <th className="px-4 py-3 font-medium">Account</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium text-right">Debit</th>
-              <th className="px-4 py-3 font-medium text-right">Credit</th>
+              <th className="px-4 py-3 font-medium">{t("Account")}</th>
+              <th className="px-4 py-3 font-medium">{t("Type")}</th>
+              <th className="px-4 py-3 font-medium text-right">{t("Debit")}</th>
+              <th className="px-4 py-3 font-medium text-right">{t("Credit")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-50">
@@ -60,7 +73,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
           <tfoot>
             <tr className="border-t border-neutral-100 font-medium">
               <td className="px-4 py-3" colSpan={2}>
-                Total
+                {t("Total")}
               </td>
               <td className="px-4 py-3 text-right tabular-nums">{debitTotal.toFixed(2)}</td>
               <td className="px-4 py-3 text-right tabular-nums">{debitTotal.toFixed(2)}</td>

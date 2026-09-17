@@ -7,6 +7,7 @@ import type { Account, AccountLedger, AccountSummary, LanguagePreference, Transa
 import { accountDisplayName } from "@/lib/accountDisplay";
 import { formatCurrency } from "@/lib/currency";
 import type { DateRangePreset } from "@/lib/dateRangePresets";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface AccountLedgerPageClientProps {
   accounts: Account[];
@@ -60,6 +61,7 @@ export function AccountLedgerPageClient({
 }: AccountLedgerPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
 
   function updateParams(next: Record<string, string | undefined>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -95,22 +97,22 @@ export function AccountLedgerPageClient({
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Account Ledger</h1>
-          <p className="mt-1 text-sm text-neutral-500">One account, every movement through it, with the balance carried forward.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Account Ledger")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("One account, every movement through it, with the balance carried forward.")}</p>
         </div>
         <button
           type="button"
           onClick={() => window.print()}
           className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
         >
-          <Printer className="h-3.5 w-3.5" /> Print / PDF
+          <Printer className="h-3.5 w-3.5" /> {t("Print / PDF")}
         </button>
       </div>
 
       <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto]">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Account</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Account")}</label>
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <Combobox
@@ -118,15 +120,15 @@ export function AccountLedgerPageClient({
                   value={accountId}
                   onChange={selectAccount}
                   options={accounts.map((a) => ({ value: a.id, label: accountDisplayName(a, preferredLanguage) }))}
-                  placeholder="Select an account"
-                  emptyMessage="No accounts yet"
+                  placeholder={t("Select an account")}
+                  emptyMessage={t("No accounts yet")}
                 />
               </div>
               {accountId && (
                 <button
                   type="button"
                   onClick={() => selectAccount("")}
-                  title="Clear"
+                  title={t("Clear")}
                   className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                 >
                   <X className="h-4 w-4" />
@@ -135,7 +137,7 @@ export function AccountLedgerPageClient({
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Period</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Period")}</label>
             <select
               value={range}
               onChange={(e) => setRange(e.target.value as DateRangePreset)}
@@ -143,7 +145,7 @@ export function AccountLedgerPageClient({
             >
               {RANGE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(opt.label)}
                 </option>
               ))}
             </select>
@@ -157,7 +159,7 @@ export function AccountLedgerPageClient({
               onChange={(e) => updateParams({ dateFrom: e.target.value })}
               className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
             />
-            <span className="text-sm text-neutral-400">to</span>
+            <span className="text-sm text-neutral-400">{t("to")}</span>
             <input
               type="date"
               value={customTo ?? ""}
@@ -170,25 +172,25 @@ export function AccountLedgerPageClient({
 
       {!account || !ledger || !summary ? (
         <div className="mt-6 rounded-2xl bg-surface p-10 text-center text-sm text-neutral-400 shadow-sm shadow-black/5">
-          Choose an account to see its ledger.
+          {t("Choose an account to see its ledger.")}
         </div>
       ) : (
         <>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Opening Balance</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Opening Balance")}</p>
               <p className="mt-1 text-xl font-semibold tabular-nums text-neutral-800">{formatCurrency(ledger.balanceBroughtForward, currency)}</p>
             </div>
             <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Total In</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Total In")}</p>
               <p className="mt-1 text-xl font-semibold tabular-nums text-brand-primary">{formatCurrency(summary.totalIn, currency)}</p>
             </div>
             <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Total Out</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Total Out")}</p>
               <p className="mt-1 text-xl font-semibold tabular-nums text-brand-danger">{formatCurrency(summary.totalOut, currency)}</p>
             </div>
             <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Adjustment</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Adjustment")}</p>
               <p
                 className={`mt-1 text-xl font-semibold tabular-nums ${Number(summary.adjustment) > 0 ? "text-brand-primary" : Number(summary.adjustment) < 0 ? "text-brand-danger" : "text-neutral-400"}`}
               >
@@ -197,7 +199,7 @@ export function AccountLedgerPageClient({
               </p>
             </div>
             <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Closing Balance</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Closing Balance")}</p>
               <p className="mt-1 text-xl font-semibold tabular-nums text-neutral-900">{formatCurrency(ledger.closingBalance, currency)}</p>
             </div>
           </div>
@@ -208,19 +210,19 @@ export function AccountLedgerPageClient({
                 <thead className="border-b border-neutral-100 bg-brand-dark text-xs uppercase text-white">
                   <tr>
                     <th className="px-4 py-3 font-medium">#</th>
-                    <th className="px-4 py-3 font-medium">Date</th>
-                    <th className="px-4 py-3 font-medium">Type</th>
-                    <th className="px-4 py-3 font-medium">Reference</th>
-                    <th className="px-4 py-3 font-medium">Description</th>
-                    <th className="px-4 py-3 font-medium text-right">In</th>
-                    <th className="px-4 py-3 font-medium text-right">Out</th>
-                    <th className="px-4 py-3 font-medium text-right">Balance</th>
+                    <th className="px-4 py-3 font-medium">{t("Date")}</th>
+                    <th className="px-4 py-3 font-medium">{t("Type")}</th>
+                    <th className="px-4 py-3 font-medium">{t("Reference")}</th>
+                    <th className="px-4 py-3 font-medium">{t("Description")}</th>
+                    <th className="px-4 py-3 font-medium text-right">{t("In")}</th>
+                    <th className="px-4 py-3 font-medium text-right">{t("Out")}</th>
+                    <th className="px-4 py-3 font-medium text-right">{t("Balance")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-50">
                   <tr className="bg-neutral-50/60">
                     <td className="px-4 py-2.5" colSpan={7}>
-                      <span className="font-medium text-neutral-700">Opening Balance</span>
+                      <span className="font-medium text-neutral-700">{t("Opening Balance")}</span>
                     </td>
                     <td className="px-4 py-2.5 text-right font-medium tabular-nums text-neutral-700">
                       {formatCurrency(ledger.balanceBroughtForward, currency)}
@@ -237,11 +239,11 @@ export function AccountLedgerPageClient({
                       >
                         <td className="px-4 py-2.5 text-neutral-400">{index + 1 + (ledger.meta.page - 1) * ledger.meta.limit}</td>
                         <td className="px-4 py-2.5 text-neutral-600">{new Date(row.date).toLocaleDateString()}</td>
-                        <td className="px-4 py-2.5 text-neutral-600">{TYPE_LABELS[row.transactionType]}</td>
+                        <td className="px-4 py-2.5 text-neutral-600">{t(TYPE_LABELS[row.transactionType])}</td>
                         <td className="px-4 py-2.5 text-neutral-500">{row.referenceNo ?? "-"}</td>
                         <td className={`px-4 py-2.5 text-neutral-700 ${isVoided ? "line-through" : ""}`}>
                           {row.description ?? "-"}
-                          {isVoided && <span className="ml-2 text-xs text-brand-danger">Voided</span>}
+                          {isVoided && <span className="ml-2 text-xs text-brand-danger">{t("Voided")}</span>}
                         </td>
                         <td className="px-4 py-2.5 text-right tabular-nums text-brand-primary">{isIn ? formatCurrency(row.amount, currency) : ""}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums text-brand-danger">{!isIn ? formatCurrency(row.amount, currency) : ""}</td>
@@ -252,7 +254,7 @@ export function AccountLedgerPageClient({
                   {ledger.entries.length === 0 && (
                     <tr>
                       <td colSpan={8} className="px-4 py-10 text-center text-neutral-400">
-                        No activity in this range.
+                        {t("No activity in this range.")}
                       </td>
                     </tr>
                   )}
@@ -268,10 +270,10 @@ export function AccountLedgerPageClient({
                   onClick={() => goToPage(ledger.meta.page - 1)}
                   className="rounded-lg px-3 py-1.5 text-neutral-600 hover:bg-neutral-100 disabled:opacity-30"
                 >
-                  Previous
+                  {t("Previous")}
                 </button>
                 <span className="text-neutral-400">
-                  Page {ledger.meta.page} of {ledger.meta.totalPages}
+                  {t("Page")} {ledger.meta.page} {t("of")} {ledger.meta.totalPages}
                 </span>
                 <button
                   type="button"
@@ -279,7 +281,7 @@ export function AccountLedgerPageClient({
                   onClick={() => goToPage(ledger.meta.page + 1)}
                   className="rounded-lg px-3 py-1.5 text-neutral-600 hover:bg-neutral-100 disabled:opacity-30"
                 >
-                  Next
+                  {t("Next")}
                 </button>
               </div>
             )}

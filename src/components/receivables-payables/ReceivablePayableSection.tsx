@@ -4,6 +4,7 @@ import { AlertTriangle, Plus } from "lucide-react";
 import { useState } from "react";
 import type { ContactCategory, DirectionBreakdown } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { RecordInvoiceModal } from "./RecordInvoiceModal";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 
@@ -26,19 +27,24 @@ export function ReceivablePayableSection({
   currency,
   canManage,
 }: ReceivablePayableSectionProps) {
+  const { t } = useLocale();
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const isLoan = contactCategory === "LOAN";
 
+  // This heading is an intentionally bilingual label (always shows the
+  // Bangla gloss inline, in both locales) -- mirrors the identical
+  // hardcoded text in DenaPawnaPageClient.tsx, so it's left untranslated
+  // here too rather than run through t().
   const heading = direction === "RECEIVABLE" ? "Receivable — টাকা পাবো" : "Payable — টাকা দেব";
   const remainingColor = direction === "RECEIVABLE" ? "text-brand-primary" : "text-brand-danger";
   const invoiceButtonLabel = isLoan
     ? direction === "RECEIVABLE"
-      ? "Give a Loan"
-      : "Take a Loan"
+      ? t("Give a Loan")
+      : t("Take a Loan")
     : direction === "RECEIVABLE"
-      ? "Record Sale on Credit"
-      : "Record Purchase on Credit";
+      ? t("Record Sale on Credit")
+      : t("Record Purchase on Credit");
 
   return (
     <div className="mt-6">
@@ -46,15 +52,15 @@ export function ReceivablePayableSection({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-xl bg-neutral-50 px-4 py-3">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">Total Owed</p>
+          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Total Owed")}</p>
           <p className="mt-1 text-lg font-semibold tabular-nums text-neutral-800">{formatCurrency(breakdown.totalInvoiced, currency)}</p>
         </div>
         <div className="rounded-xl bg-neutral-50 px-4 py-3">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">Total Paid</p>
+          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Total Paid")}</p>
           <p className="mt-1 text-lg font-semibold tabular-nums text-neutral-800">{formatCurrency(breakdown.totalPaid, currency)}</p>
         </div>
         <div className="rounded-xl bg-neutral-50 px-4 py-3">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">Remaining</p>
+          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Remaining")}</p>
           <p className={`mt-1 text-lg font-bold tabular-nums ${remainingColor}`}>{formatCurrency(breakdown.remaining, currency)}</p>
         </div>
       </div>
@@ -73,41 +79,48 @@ export function ReceivablePayableSection({
             onClick={() => setPaymentModalOpen(true)}
             className="flex items-center gap-1.5 rounded-xl bg-brand-primary px-3 py-2 text-sm font-medium text-white hover:bg-brand-primary-hover"
           >
-            <Plus className="h-3.5 w-3.5" /> Record Payment
+            <Plus className="h-3.5 w-3.5" /> {t("Record Payment")}
           </button>
         </div>
       )}
 
       <div className="mt-4 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
         {breakdown.transactions.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-neutral-400">Nothing recorded yet.</p>
+          <p className="px-4 py-8 text-center text-sm text-neutral-400">{t("Nothing recorded yet.")}</p>
         ) : (
           <div className="divide-y divide-neutral-50">
-            {breakdown.transactions.map((t) => {
-              const original = Number(t.originalAmount);
-              const paid = Number(t.amountPaid);
+            {breakdown.transactions.map((entry) => {
+              const original = Number(entry.originalAmount);
+              const paid = Number(entry.amountPaid);
               const percent = original > 0 ? Math.min(100, (paid / original) * 100) : 0;
               return (
-                <div key={t.transactionId} className="px-4 py-3">
+                <div key={entry.transactionId} className="px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-neutral-800">{t.description ?? "Untitled"}</p>
+                      <p className="truncate text-sm font-medium text-neutral-800">{entry.description ?? t("Untitled")}</p>
                       <p className="text-xs text-neutral-400">
-                        {new Date(t.date).toLocaleDateString()}
-                        {t.dueDate && <span> · Due {new Date(t.dueDate).toLocaleDateString()}</span>}
+                        {new Date(entry.date).toLocaleDateString()}
+                        {entry.dueDate && (
+                          <span>
+                            {" "}
+                            · {t("Due")} {new Date(entry.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold tabular-nums text-neutral-800">{formatCurrency(t.remainingAmount, currency)}</p>
-                      <p className="text-xs text-neutral-400">of {formatCurrency(t.originalAmount, currency)}</p>
+                      <p className="text-sm font-semibold tabular-nums text-neutral-800">{formatCurrency(entry.remainingAmount, currency)}</p>
+                      <p className="text-xs text-neutral-400">
+                        {t("of")} {formatCurrency(entry.originalAmount, currency)}
+                      </p>
                     </div>
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
                     <div className="h-full rounded-full bg-brand-primary" style={{ width: `${percent}%` }} />
                   </div>
-                  {t.isOverdue && (
+                  {entry.isOverdue && (
                     <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-danger">
-                      <AlertTriangle className="h-3 w-3" /> Overdue
+                      <AlertTriangle className="h-3 w-3" /> {t("Overdue")}
                     </span>
                   )}
                 </div>

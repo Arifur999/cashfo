@@ -8,6 +8,7 @@ import { archiveAccountAction } from "@/lib/accountActions";
 import type { Account, AccountGroup, LanguagePreference } from "@/lib/api";
 import { ACCOUNT_TYPE_LABELS, accountDisplayName } from "@/lib/accountDisplay";
 import { formatCurrency } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { AccountFormModal } from "./AccountFormModal";
 
 interface AccountsPageClientProps {
@@ -32,6 +33,7 @@ function flatten(groups: AccountGroup[]): Account[] {
 
 export function AccountsPageClient({ businessId, initialGroups, canManage, preferredLanguage, currency }: AccountsPageClientProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(initialGroups.map((g) => g.accountType)));
   const [formOpen, setFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -59,14 +61,14 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
   }
 
   function handleArchive(account: Account) {
-    if (!window.confirm(`Archive "${accountDisplayName(account, preferredLanguage)}"?`)) return;
+    if (!window.confirm(`${t("Archive")} "${accountDisplayName(account, preferredLanguage)}"?`)) return;
     startTransition(async () => {
       const result = await archiveAccountAction(businessId, account.id);
       if (result.success) {
-        toast.success("Account archived");
+        toast.success(t("Account archived"));
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to archive account");
+        toast.error(result.message ?? t("Failed to archive account"));
       }
     });
   }
@@ -89,12 +91,12 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
             </span>
             {account.isSystemAccount && (
               <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-                Default
+                {t("Default")}
               </span>
             )}
             {isArchived && (
               <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-                Archived
+                {t("Archived")}
               </span>
             )}
           </div>
@@ -108,7 +110,7 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
                     e.stopPropagation();
                     openEdit(account);
                   }}
-                  title="Edit"
+                  title={t("Edit")}
                   className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                 >
                   <Pencil className="h-3.5 w-3.5" />
@@ -120,7 +122,7 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
                     e.stopPropagation();
                     handleArchive(account);
                   }}
-                  title="Archive"
+                  title={t("Archive")}
                   className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                 >
                   <Archive className="h-3.5 w-3.5" />
@@ -138,8 +140,8 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Chart of Accounts</h1>
-          <p className="mt-1 text-sm text-neutral-500">All accounts for this workspace, grouped by type.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Chart of Accounts")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("All accounts for this workspace, grouped by type.")}</p>
         </div>
         {canManage && (
           <button
@@ -147,7 +149,7 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
             onClick={openCreate}
             className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
           >
-            <Plus className="h-4 w-4" /> Add Account
+            <Plus className="h-4 w-4" /> {t("Add Account")}
           </button>
         )}
       </div>
@@ -164,14 +166,16 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
               >
                 <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
                   {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  {ACCOUNT_TYPE_LABELS[group.accountType]}
+                  {t(ACCOUNT_TYPE_LABELS[group.accountType])}
                 </span>
-                <span className="text-xs text-neutral-400">{group.accounts.length} account(s)</span>
+                <span className="text-xs text-neutral-400">
+                  {group.accounts.length} {t("account(s)")}
+                </span>
               </button>
               {isOpen && (
                 <div className="border-t border-neutral-50 px-4 pb-2">
                   {group.accounts.length === 0 ? (
-                    <p className="py-4 text-sm text-neutral-400">No accounts yet.</p>
+                    <p className="py-4 text-sm text-neutral-400">{t("No accounts yet.")}</p>
                   ) : (
                     group.accounts.map((a) => renderAccount(a, 0))
                   )}

@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import type { Account } from "@/lib/api";
 import { getBudgetCategoryNamesAction } from "@/lib/budgetActions";
 import { currencySymbol } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createExpenseAction, createIncomeAction, getExpenseAccountsAction, getMoneyAccountsAction } from "@/lib/quickEntryActions";
 
 interface AddTransactionModalProps {
@@ -28,6 +29,7 @@ type EntryKind = "EXPENSE" | "INCOME";
 // which account-picker label apply, rather than mounting two separate forms,
 // so the amount/date/notes the user already typed survive a tab switch.
 export function AddTransactionModal({ open, onClose, businessId, currency }: AddTransactionModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [kind, setKind] = useState<EntryKind>("EXPENSE");
   const [amount, setAmount] = useState("");
@@ -130,17 +132,17 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
             });
 
       if (result.success) {
-        toast.success(kind === "INCOME" ? "Income added" : "Expense added");
+        toast.success(kind === "INCOME" ? t("Income added") : t("Expense added"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to save transaction");
+        toast.error(result.message ?? t("Failed to save transaction"));
       }
     });
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Add Transaction" size="lg">
+    <Modal open={open} onClose={onClose} title={t("Add Transaction")} size="lg">
       <div className="space-y-4">
         <div className="flex gap-2 rounded-xl bg-neutral-50 p-1">
           <button
@@ -150,7 +152,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
               kind === "INCOME" ? "bg-surface text-brand-primary shadow-sm ring-2 ring-brand-primary" : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
-            Income
+            {t("Income")}
           </button>
           <button
             type="button"
@@ -159,43 +161,43 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
               kind === "EXPENSE" ? "bg-surface text-brand-danger shadow-sm ring-2 ring-brand-danger" : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
-            Expense
+            {t("Expense")}
           </button>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <DatePicker value={date} onChange={setDate} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Category</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Category")}</label>
             <Combobox
               key={`${kind}-${resetCount}`}
               value={category}
               onChange={setCategory}
               options={categories}
-              placeholder="Select a category"
-              emptyMessage="No matching category"
+              placeholder={t("Select a category")}
+              emptyMessage={t("No matching category")}
               disabled={loading}
             />
             {!loading && categories.length === 0 && (
               <p className="mt-1 text-xs text-neutral-400">
-                No categories yet --{" "}
+                {t("No categories yet --")}{" "}
                 <Link href={`/categories?addType=${kind}`} className="font-medium text-brand-primary hover:underline">
-                  add one under Budget Planning
+                  {t("add one under Budget Planning")}
                 </Link>
                 .
               </p>
             )}
             {!loading && kind === "EXPENSE" && expenseAccounts.length === 0 && (
-              <p className="mt-1 text-xs text-brand-danger">No expense account exists in this workspace yet -- add one in Chart of Accounts first.</p>
+              <p className="mt-1 text-xs text-brand-danger">{t("No expense account exists in this workspace yet -- add one in Chart of Accounts first.")}</p>
             )}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-700">
-              {kind === "INCOME" ? "Deposit to" : "Pay from"}
+              {kind === "INCOME" ? t("Deposit to") : t("Pay from")}
             </label>
             <select
               value={accountId}
@@ -204,7 +206,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
               className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
             >
               <option value="" disabled>
-                Select an account
+                {t("Select an account")}
               </option>
               {moneyAccounts.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -216,7 +218,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Amount</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-neutral-400">
               {currencySymbol(currency)}
@@ -238,13 +240,13 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Notes <span className="text-neutral-400">(optional)</span>
+            {t("Notes")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="Add any additional details..."
+            placeholder={t("Add any additional details...")}
             className="w-full resize-none rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
@@ -256,7 +258,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
           onClick={onClose}
           className="rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
         >
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -265,7 +267,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
           className="flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save Transaction
+          {t("Save Transaction")}
         </button>
       </div>
     </Modal>

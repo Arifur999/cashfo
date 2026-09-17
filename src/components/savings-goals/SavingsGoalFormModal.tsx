@@ -8,6 +8,7 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import type { SavingsGoal, SavingsReminderChannel } from "@/lib/api";
 import { formatDurationUntil, monthsBetween } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createSavingsGoalAction, updateSavingsGoalAction } from "@/lib/savingsGoalActions";
 
 interface SavingsGoalFormModalProps {
@@ -23,6 +24,7 @@ const CHANNEL_OPTIONS: { value: SavingsReminderChannel; label: string }[] = [
 ];
 
 export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }: SavingsGoalFormModalProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
@@ -76,11 +78,11 @@ export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }:
         : await createSavingsGoalAction(businessId, input);
 
       if (result.success) {
-        toast.success(editingGoal ? "Goal updated" : "Goal created");
+        toast.success(editingGoal ? t("Goal updated") : t("Goal created"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to save goal");
+        toast.error(result.message ?? t("Failed to save goal"));
       }
     });
   }
@@ -89,21 +91,21 @@ export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }:
   const durationPreview = targetDate ? formatDurationUntil(new Date(targetDate)) : "";
 
   return (
-    <Modal open={open} onClose={onClose} title={editingGoal ? "Edit Goal" : "Add Savings Goal"}>
+    <Modal open={open} onClose={onClose} title={editingGoal ? t("Edit Goal") : t("Add Savings Goal")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Goal Name</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Goal Name")}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Vacation Fund, Emergency Fund"
+            placeholder={t("e.g., Vacation Fund, Emergency Fund")}
             autoFocus
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Target Amount</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Target Amount")}</label>
           <input
             value={targetAmount}
             onChange={(e) => setTargetAmount(e.target.value)}
@@ -116,16 +118,24 @@ export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }:
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Target End Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Target End Date")}</label>
           <DatePicker value={targetDate} onChange={setTargetDate} />
           {durationPreview && (
-            <p className="mt-1 text-xs text-neutral-400">{durationPreview.startsWith("today") ? durationPreview : `${durationPreview} away`}</p>
+            <p className="mt-1 text-xs text-neutral-400">
+              {durationPreview.startsWith("today") ? (
+                durationPreview
+              ) : (
+                <>
+                  {durationPreview} {t("away")}
+                </>
+              )}
+            </p>
           )}
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Reminder Date <span className="text-neutral-400">(optional)</span>
+            {t("Reminder Date")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <DatePicker value={reminderDate} onChange={setReminderDate} />
           {reminderDate && (
@@ -141,25 +151,25 @@ export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }:
                       : "text-neutral-500 hover:text-neutral-700"
                   }`}
                 >
-                  {opt.label}
+                  {t(opt.label)}
                 </button>
               ))}
             </div>
           )}
           <p className="mt-1 text-xs text-neutral-400">
-            Saved for later -- this app doesn&apos;t send real email/SMS reminders yet.
+            {t("Saved for later -- this app doesn't send real email/SMS reminders yet.")}
           </p>
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Description <span className="text-neutral-400">(optional)</span>
+            {t("Description")} <span className="text-neutral-400">({t("Optional")})</span>
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            placeholder="Add details about your savings goal..."
+            placeholder={t("Add details about your savings goal...")}
             className="w-full resize-none rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
         </div>
@@ -167,7 +177,7 @@ export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }:
 
       <div className="mt-5 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -176,7 +186,7 @@ export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }:
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editingGoal ? "Save Changes" : "Save"}
+          {editingGoal ? t("Save Changes") : t("Save")}
         </button>
       </div>
     </Modal>

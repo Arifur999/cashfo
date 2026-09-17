@@ -4,6 +4,8 @@ import { JournalEntryForm } from "@/components/transactions/JournalEntryForm";
 import { resolveActiveBusinessId } from "@/lib/activeBusiness";
 import { getAccounts } from "@/lib/accounts";
 import { getCurrentUser } from "@/lib/auth";
+import { getLocale } from "@/lib/i18n/locale";
+import { translate } from "@/lib/i18n/translate";
 import type { Account } from "@/lib/api";
 
 function flatten(groups: { accounts: Account[] }[]): Account[] {
@@ -29,17 +31,22 @@ export default async function AdvancedJournalEntryPage() {
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
 
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
+
   const groups = await getAccounts(activeBusinessId);
   const accounts = flatten(groups).filter((a) => a.status === "ACTIVE");
 
   return (
     <div className="h-full bg-brand-content px-6 py-8">
       <Link href="/transactions" className="text-sm text-neutral-400 hover:text-neutral-600 hover:underline">
-        ← Back to Activity
+        ← {t("Back to Activity")}
       </Link>
-      <h1 className="mt-2 text-xl font-semibold text-neutral-900">Advanced: Raw Journal Entry</h1>
+      <h1 className="mt-2 text-xl font-semibold text-neutral-900">{t("Advanced: Raw Journal Entry")}</h1>
       <p className="mt-1 text-sm text-neutral-500">
-        Direct double-entry posting -- uses Debit/Credit terminology on purpose, for power users and cases the friendly Income/Expense/Transfer forms don&apos;t cover.
+        {t(
+          "Direct double-entry posting -- uses Debit/Credit terminology on purpose, for power users and cases the friendly Income/Expense/Transfer forms don't cover.",
+        )}
       </p>
 
       <div className="mt-6 max-w-3xl">
