@@ -8,7 +8,7 @@ import { getBusinessDetailAction, updateBusinessAction } from "@/lib/businessAct
 import type { UserBusiness } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
 
-const CURRENCIES = ["BDT", "USD"];
+const CURRENCIES = ["BDT"];
 
 interface EditWorkspaceModalProps {
   business: UserBusiness | null;

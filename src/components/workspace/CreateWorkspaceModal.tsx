@@ -8,7 +8,7 @@ import { createBusinessAction, getBusinessLimitsAction } from "@/lib/businessAct
 import type { BusinessLimits, WorkspaceListItem } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
 
-const CURRENCIES = ["BDT", "USD"];
+const CURRENCIES = ["BDT"];
 
 interface CreateWorkspaceModalProps {
   open: boolean;
