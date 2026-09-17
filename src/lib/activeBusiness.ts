@@ -13,12 +13,12 @@ import type { UserBusiness } from "./api";
 const ACTIVE_BUSINESS_COOKIE = "activeBusinessId";
 const ACTIVE_BUSINESS_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
 
+// Multi-workspace switching was removed by product decision -- every
+// account is single-workspace now, so this always resolves to the one
+// default workspace, ignoring any stored cookie from before that change
+// (an account that had switched away to a since-hidden business workspace
+// must not get stranded there).
 export async function resolveActiveBusinessId(businesses: UserBusiness[]): Promise<string | null> {
-  const cookieStore = await cookies();
-  const stored = cookieStore.get(ACTIVE_BUSINESS_COOKIE)?.value;
-  if (stored && businesses.some((b) => b.id === stored)) {
-    return stored;
-  }
   return businesses.find((b) => b.isDefault)?.id ?? businesses[0]?.id ?? null;
 }
 

@@ -1,9 +1,6 @@
-import { Settings2 } from "lucide-react";
-import Link from "next/link";
 import { QuickAddButton } from "@/components/quick-entry/QuickAddButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
-import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 
 // Page navigation (Dashboard, Accounts, ...) lives in Sidebar.tsx now --
 // this bar is just cross-cutting utilities that make sense next to the
@@ -14,19 +11,18 @@ import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 // UserMenu (avatar + dropdown) replaced the old standalone "Sign Out"
 // button -- logout now lives inside that dropdown, alongside Profile/
 // Settings links, matching the reference layout.
+//
+// The multi-workspace switcher (and its "Manage workspaces" gear icon) was
+// removed by product decision -- every account is single-workspace now, so
+// there's nothing to switch between or manage from here. See
+// activeBusiness.ts's resolveActiveBusinessId(), which now always resolves
+// to the account's one default workspace regardless of any stored
+// selection from before this change.
 export function TopBar() {
   return (
     <header className="flex h-16 items-center justify-end gap-3 border-b border-neutral-100 bg-surface px-6">
       <QuickAddButton />
       <ThemeToggle />
-      <Link
-        href="/settings/workspaces"
-        title="Manage workspaces"
-        className="rounded-xl p-2 text-neutral-500 hover:bg-neutral-100"
-      >
-        <Settings2 className="h-4 w-4" />
-      </Link>
-      <WorkspaceSwitcher />
       <UserMenu />
     </header>
   );
