@@ -1,60 +1,51 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { bnDictionary } from "./dictionary";
+import { useRouter } from "next/navigation";
+import { createContext, useContext, useState } from "react";
+import { translate, type Locale } from "./translate";
 
-export type Locale = "en" | "bn";
-
-const STORAGE_KEY = "user-app-locale";
+// Duplicated from locale.ts's own LOCALE_COOKIE constant rather than
+// imported -- that file pulls in next/headers (server-only) and must never
+// be imported from a Client Component like this one.
+const LOCALE_COOKIE = "locale";
+const COOKIE_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
 
 interface LocaleContextValue {
   locale: Locale;
   toggleLocale: () => void;
-  // Named `t`, not `translate`, matching this app's existing t()-wrapper
-  // convention (see e.g. SettingsForm.tsx) rather than admin-frontend's own
-  // `translate` name -- same mechanism (the English string doubles as the
-  // dictionary key), different name to match user-frontend's own style.
   t: (key: string) => string;
 }
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-// Mirrors admin-frontend's own LocaleProvider (src/lib/i18n/LocaleProvider.tsx)
-// -- same "always render en on the server and first client paint, swap to
-// the stored preference right after mount" tradeoff to avoid a hydration
-// mismatch, same localStorage-only persistence (not tied to
-// User.preferredLanguage -- that field exists and is admin/self-editable via
-// Settings, but wiring THIS toggle to it is future work, not part of this
-// pass).
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>("en");
+interface LocaleProviderProps {
+  // Resolved server-side (see locale.ts's getLocale(), read in
+  // (dashboard)/layout.tsx from the same cookie this provider writes) so
+  // the client's first render already matches whatever Server Component
+  // pages rendered -- no post-mount flash/hydration mismatch, same
+  // "resolve on the server, seed the client from it" pattern
+  // activeBusinessId already uses via AuthProvider.
+  initialLocale: Locale;
+  children: React.ReactNode;
+}
 
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-time sync with a browser-only API (localStorage), not derivable during SSR/first paint.
-      if (stored === "en" || stored === "bn") setLocale(stored);
-    } catch {
-      // localStorage can throw in some private-browsing contexts -- fall
-      // back to English rather than crashing the whole dashboard.
-    }
-  }, []);
+export function LocaleProvider({ initialLocale, children }: LocaleProviderProps) {
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const router = useRouter();
 
   function toggleLocale() {
-    setLocale((prev) => {
-      const next = prev === "en" ? "bn" : "en";
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // best-effort persistence only
-      }
-      return next;
-    });
+    const next: Locale = locale === "en" ? "bn" : "en";
+    setLocale(next);
+    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}`;
+    // Server Component pages (most of this app's pages.tsx files) resolve
+    // their own copy of the locale straight from the cookie via
+    // getLocale() -- router.refresh() is what makes them re-render with it
+    // right away instead of only on the next real navigation.
+    router.refresh();
   }
 
   function t(key: string): string {
-    if (locale === "en") return key;
-    return bnDictionary[key] ?? key;
+    return translate(locale, key);
   }
 
   return (
@@ -64,7 +55,8 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
           first thing that actually switches to it, everywhere else in the
           app still only uses --font-sans (Inter). Applied on a wrapper div
           rather than <html>/<body> so it composes with the rest of the tree
-          without touching the root layout. */}
+          without touching the root layout. display:contents keeps this
+          wrapper from affecting the flex layout it sits inside. */}
       <div className={locale === "bn" ? "font-bn contents" : "contents"}>{children}</div>
     </LocaleContext.Provider>
   );
