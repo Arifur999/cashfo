@@ -10,6 +10,8 @@
   --foreground: #171717;
   --surface: #ffffff;
   --content-bg: #f9fafb;
+  --brand-dark: #123d2b;
+  --brand-dark-hover: #1a4d36;
 
   /* Tailwind's neutral scale, restated explicitly so the .dark block below
      has the same variables to override. Values match Tailwind's built-in
@@ -32,14 +34,20 @@
    usage across the app automatically becomes "dark background, light
    text" with no per-component changes, since Tailwind v4 utilities read
    these as CSS variables at runtime, not values baked in at build time).
-   brand-primary/brand-danger/brand-dark are untouched -- green and red
-   read fine on both light and dark backgrounds, and the sidebar keeps its
-   own fixed dark-green brand color regardless of theme. */
+   brand-primary/brand-danger are untouched -- green and red read fine on
+   both light and dark backgrounds as ACCENT colors. brand-dark/
+   brand-dark-hover (the sidebar's own background) DO switch here -- a
+   full-panel background needs to actually go dark in dark mode, unlike an
+   accent color, so the sidebar isn't the one part of the UI that never
+   responds to the toggle. Same near-black level as --background/--surface
+   above, with a faint green undertone to keep the brand identity. */
 .dark {
   --background: #101113;
   --foreground: #f5f5f5;
   --surface: #1b1c1f;
   --content-bg: #101113;
+  --brand-dark: #0d1512;
+  --brand-dark-hover: #182420;
 
   --color-neutral-50: #0a0a0a;
   --color-neutral-100: #171717;
@@ -64,9 +72,11 @@
 
   /* Same brand palette as admin-frontend, for visual consistency across the
      product. Keep using these tokens rather than raw hex values so a future
-     theme tweak only touches this block. */
-  --color-brand-dark: #123d2b;
-  --color-brand-dark-hover: #1a4d36;
+     theme tweak only touches this block. brand-dark/brand-dark-hover read
+     from the :root/.dark-overridden variables above (unlike the accent
+     colors below, which stay fixed hex values in both themes). */
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-dark-hover: var(--brand-dark-hover);
   --color-brand-primary: #2c8655;
   --color-brand-primary-hover: #257248;
   --color-brand-danger: #ef4444;
