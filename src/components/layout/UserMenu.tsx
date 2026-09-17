@@ -4,6 +4,7 @@ import { LogOut, Settings, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -20,6 +21,7 @@ function initials(name: string): string {
 // doesn't require touching this menu.
 export function UserMenu() {
   const { user, logout } = useAuth();
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -56,14 +58,14 @@ export function UserMenu() {
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 px-3.5 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
           >
-            <UserIcon className="h-3.5 w-3.5" /> Profile
+            <UserIcon className="h-3.5 w-3.5" /> {t("Profile")}
           </Link>
           <Link
             href="/settings"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 px-3.5 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
           >
-            <Settings className="h-3.5 w-3.5" /> Settings
+            <Settings className="h-3.5 w-3.5" /> {t("Settings")}
           </Link>
           <button
             type="button"
@@ -73,7 +75,7 @@ export function UserMenu() {
             }}
             className="flex w-full items-center gap-2 border-t border-neutral-100 px-3.5 py-2 text-left text-sm text-brand-danger hover:bg-neutral-50"
           >
-            <LogOut className="h-3.5 w-3.5" /> Log out
+            <LogOut className="h-3.5 w-3.5" /> {t("Log out")}
           </button>
         </div>
       )}

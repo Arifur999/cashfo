@@ -4,6 +4,7 @@ import { ArrowLeftRight, Banknote, Boxes, ChevronDown, ChevronRight, FileText, G
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Only pages that actually exist get a nav item -- Dashboard (Prompt 2),
 // Transactions (Prompt 5, bare-bones raw journal entry UI -- Prompt 6
@@ -165,6 +166,7 @@ interface NavGroupProps {
 function NavGroup({ icon: Icon, label, items, isActive }: NavGroupProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(isActive);
+  const { t } = useLocale();
 
   return (
     <>
@@ -176,7 +178,7 @@ function NavGroup({ icon: Icon, label, items, isActive }: NavGroupProps) {
         }`}
       >
         <Icon className="h-4 w-4" />
-        {label}
+        {t(label)}
         {open ? <ChevronDown className="ml-auto h-3.5 w-3.5" /> : <ChevronRight className="ml-auto h-3.5 w-3.5" />}
       </button>
       {open && (
@@ -191,7 +193,7 @@ function NavGroup({ icon: Icon, label, items, isActive }: NavGroupProps) {
                   itemActive ? "bg-brand-dark-hover font-medium text-white" : "text-white/60 hover:bg-brand-dark-hover hover:text-white"
                 }`}
               >
-                {item.label}
+                {t(item.label)}
               </Link>
             );
           })}
@@ -203,6 +205,7 @@ function NavGroup({ icon: Icon, label, items, isActive }: NavGroupProps) {
 
 function NavLink({ item, isActive }: { item: { label: string; href: string; icon: React.ComponentType<{ className?: string }> }; isActive: boolean }) {
   const Icon = item.icon;
+  const { t } = useLocale();
   return (
     <Link
       href={item.href}
@@ -213,7 +216,7 @@ function NavLink({ item, isActive }: { item: { label: string; href: string; icon
       }`}
     >
       <Icon className="h-4 w-4" />
-      {item.label}
+      {t(item.label)}
     </Link>
   );
 }
