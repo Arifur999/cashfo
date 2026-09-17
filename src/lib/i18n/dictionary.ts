@@ -12,6 +12,7 @@ import { loanManagementDictionary } from "./dictionary/loan-management";
 import { incomeExpenseDictionary } from "./dictionary/income-expense";
 import { reportsDictionary } from "./dictionary/reports";
 import { personalDictionary } from "./dictionary/personal";
+import { settingsWorkspaceDictionary } from "./dictionary/settings-workspace";
 
 export const bnDictionary: Record<string, string> = {
   ...chromeDictionary,
@@ -22,6 +23,7 @@ export const bnDictionary: Record<string, string> = {
   ...incomeExpenseDictionary,
   ...reportsDictionary,
   ...personalDictionary,
+  ...settingsWorkspaceDictionary,
   // Spread last so a shared word (see that file's own comment) always wins
   // over an area accidentally redefining it with different wording.
   ...sharedDictionary,
