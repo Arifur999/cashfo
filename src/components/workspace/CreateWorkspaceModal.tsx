@@ -8,8 +8,6 @@ import { createBusinessAction, getBusinessLimitsAction } from "@/lib/businessAct
 import type { BusinessLimits, WorkspaceListItem } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
 
-const CURRENCIES = ["BDT"];
-
 interface CreateWorkspaceModalProps {
   open: boolean;
   onClose: () => void;
@@ -24,7 +22,6 @@ interface CreateWorkspaceModalProps {
 export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspaceModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [currency, setCurrency] = useState("BDT");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
@@ -40,7 +37,6 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
     setPrevOpen(open);
     if (open) {
       setName("");
-      setCurrency("BDT");
       setPhone("");
       setEmail("");
       setPin("");
@@ -63,7 +59,7 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
     startTransition(async () => {
       const result = await createBusinessAction({
         name,
-        currency,
+        currency: "BDT",
         phone: phone || undefined,
         email: email || undefined,
         pin: pin || undefined,
@@ -103,22 +99,6 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
             placeholder="e.g. My Shop"
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
           />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Currency</label>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            disabled={atLimit}
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50 disabled:text-neutral-400"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div>

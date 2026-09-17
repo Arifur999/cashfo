@@ -8,8 +8,6 @@ import { getBusinessDetailAction, updateBusinessAction } from "@/lib/businessAct
 import type { UserBusiness } from "@/lib/api";
 import { Modal } from "@/components/ui/Modal";
 
-const CURRENCIES = ["BDT"];
-
 interface EditWorkspaceModalProps {
   business: UserBusiness | null;
   onClose: () => void;
@@ -18,7 +16,6 @@ interface EditWorkspaceModalProps {
 export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [currency, setCurrency] = useState("BDT");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
@@ -42,14 +39,12 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
     }
   }
 
-  // currency/phone/email aren't in `business` (UserBusiness, from
-  // /api/auth/me, omits them) -- fetching them IS a legitimate effect (an
-  // external system call).
+  // phone/email aren't in `business` (UserBusiness, from /api/auth/me, omits
+  // them) -- fetching them IS a legitimate effect (an external system call).
   useEffect(() => {
     if (!business) return;
     getBusinessDetailAction(business.id).then((result) => {
       if (result.success && result.data) {
-        setCurrency(result.data.currency);
         setPhone(result.data.phone ?? "");
         setEmail(result.data.email ?? "");
       }
@@ -62,7 +57,6 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
     startTransition(async () => {
       const result = await updateBusinessAction(business.id, {
         name,
-        currency,
         phone: phone || undefined,
         email: email || undefined,
         pin: pin || undefined,
@@ -90,22 +84,6 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Currency</label>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            disabled={loading}
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div>
