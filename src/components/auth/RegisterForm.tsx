@@ -9,7 +9,10 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { authDictionary, type AuthLang } from "@/lib/authI18n";
 import { LanguageToggle } from "./LanguageToggle";
 
-const BD_PHONE_REGEX = /^(?:\+8801[3-9]\d{8}|01[3-9]\d{8})$/;
+// Permissive international phone check -- optional leading "+", digits,
+// spaces, and hyphens, 6-20 characters total. Not restricted to Bangladeshi
+// numbers so a signup from any country can use their own local format.
+const PHONE_REGEX = /^\+?[0-9\s-]{6,20}$/;
 const PASSWORD_LETTER_NUMBER_REGEX = /(?=.*[A-Za-z])(?=.*\d)/;
 
 export function RegisterForm() {
@@ -43,8 +46,8 @@ export function RegisterForm() {
       setError(t.passwordsDontMatch);
       return;
     }
-    if (phone.trim() && !BD_PHONE_REGEX.test(phone.trim())) {
-      setError(lang === "EN" ? "Phone must be a valid Bangladeshi number (e.g. 01XXXXXXXXX)" : "ফোন নম্বরটি সঠিক বাংলাদেশি ফরম্যাটে হতে হবে (যেমন 01XXXXXXXXX)");
+    if (phone.trim() && !PHONE_REGEX.test(phone.trim())) {
+      setError(lang === "EN" ? "Enter a valid phone number" : "সঠিক ফোন নম্বর দিন");
       return;
     }
 
