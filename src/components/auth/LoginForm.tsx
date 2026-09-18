@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { loginAction } from "@/app/(auth)/login/_action";
 import { authDictionary, type AuthLang } from "@/lib/authI18n";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { LanguageToggle } from "./LanguageToggle";
 
 export function LoginForm() {
@@ -61,15 +62,13 @@ export function LoginForm() {
               {t.forgotPassword}
             </Link>
           </div>
-          <input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             required
             autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+            onChange={setPassword}
             placeholder="********"
           />
         </div>
