@@ -244,10 +244,10 @@ export function Sidebar() {
         ))}
 
         <NavGroup icon={Landmark} label="Balance" items={BALANCE_ITEMS} isActive={isBalanceActive} />
+        <NavGroup icon={ArrowLeftRight} label="Income & Expense" items={INCOME_EXPENSE_ITEMS} isActive={isIncomeExpenseActive} />
         <NavGroup icon={Boxes} label="Assets Management" items={ASSETS_MANAGEMENT_ITEMS} isActive={isAssetsManagementActive} />
         <NavGroup icon={PiggyBank} label="Savings Goals" items={SAVINGS_GOALS_ITEMS} isActive={isSavingsGoalsActive} />
         <NavGroup icon={Banknote} label="Loan Management" items={LOAN_MANAGEMENT_ITEMS} isActive={isLoanManagementActive} />
-        <NavGroup icon={ArrowLeftRight} label="Income & Expense" items={INCOME_EXPENSE_ITEMS} isActive={isIncomeExpenseActive} />
         <NavGroup icon={FileText} label="Reports" items={REPORTS_ITEMS} isActive={isReportsActive} />
 
         {BOTTOM_NAV_ITEMS.map((item) => (
