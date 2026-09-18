@@ -5,6 +5,7 @@
 // entries for that area's pages/components.
 import { sharedDictionary } from "./dictionary/shared";
 import { chromeDictionary } from "./dictionary/chrome";
+import { dashboardDictionary } from "./dictionary/dashboard";
 import { balanceDictionary } from "./dictionary/balance";
 import { assetsDictionary } from "./dictionary/assets";
 import { savingsGoalsDictionary } from "./dictionary/savings-goals";
@@ -16,6 +17,7 @@ import { settingsWorkspaceDictionary } from "./dictionary/settings-workspace";
 
 export const bnDictionary: Record<string, string> = {
   ...chromeDictionary,
+  ...dashboardDictionary,
   ...balanceDictionary,
   ...assetsDictionary,
   ...savingsGoalsDictionary,
