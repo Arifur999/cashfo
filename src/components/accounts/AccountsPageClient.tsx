@@ -1,10 +1,10 @@
 "use client";
 
-import { Archive, ChevronDown, ChevronRight, Pencil, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { archiveAccountAction } from "@/lib/accountActions";
+import { removeAccountAction } from "@/lib/accountActions";
 import type { Account, AccountGroup, LanguagePreference } from "@/lib/api";
 import { ACCOUNT_TYPE_LABELS, accountDisplayName } from "@/lib/accountDisplay";
 import { formatCurrency } from "@/lib/currency";
@@ -60,15 +60,15 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
     setFormOpen(true);
   }
 
-  function handleArchive(account: Account) {
-    if (!window.confirm(`${t("Archive")} "${accountDisplayName(account, preferredLanguage)}"?`)) return;
+  function handleRemove(account: Account) {
+    if (!window.confirm(`${t("Remove")} "${accountDisplayName(account, preferredLanguage)}"?`)) return;
     startTransition(async () => {
-      const result = await archiveAccountAction(businessId, account.id);
+      const result = await removeAccountAction(businessId, account.id);
       if (result.success) {
-        toast.success(t("Account archived"));
+        toast.success(result.data?.deleted ? t("Account deleted") : t("Account archived"));
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to archive account"));
+        toast.error(result.message ?? t("Failed to remove account"));
       }
     });
   }
@@ -102,30 +102,32 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium tabular-nums text-neutral-700">{formatCurrency(account.currentBalance, currency)}</span>
-            {canManage && !isArchived && (
+            {canManage && (
               <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openEdit(account);
-                  }}
-                  title={t("Edit")}
-                  className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
+                {!isArchived && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEdit(account);
+                    }}
+                    title={t("Edit")}
+                    className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={isPending}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleArchive(account);
+                    handleRemove(account);
                   }}
-                  title={t("Archive")}
+                  title={t("Remove")}
                   className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                 >
-                  <Archive className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}

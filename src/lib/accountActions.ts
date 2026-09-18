@@ -59,3 +59,16 @@ export async function archiveAccountAction(businessId: string, id: string): Prom
     await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}/archive`, {}, { headers: await authHeaders() });
   }, "Failed to archive account");
 }
+
+// Permanently deletes the account if it has no real transaction history, or
+// falls back to archiving it if it has any -- see the backend's
+// AccountsService.removeOrArchive() for the exact rule. `data.deleted`
+// tells the caller which one actually happened, for the right toast text.
+export async function removeAccountAction(businessId: string, id: string): Promise<ActionResult<{ deleted: boolean }>> {
+  return callApi(async () => {
+    const response = await axios.delete<{ deleted: boolean }>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}`, {
+      headers: await authHeaders(),
+    });
+    return response.data;
+  }, "Failed to remove account");
+}

@@ -140,6 +140,9 @@ export const savingsGoalsDictionary: Record<string, string> = {
   Archive: "আর্কাইভ",
   "Savings Wallet archived": "সঞ্চয় ওয়ালেট আর্কাইভ করা হয়েছে",
   "Failed to archive Savings Wallet": "সঞ্চয় ওয়ালেট আর্কাইভ করা যায়নি",
+  // "Remove" reuses loan-management.ts's key.
+  "Savings Wallet deleted": "সঞ্চয় ওয়ালেট মুছে ফেলা হয়েছে",
+  "Failed to remove Savings Wallet": "সঞ্চয় ওয়ালেট সরানো যায়নি",
 
   // src/components/savings-goals/SavingsWithdrawModal.tsx
   "Goal withdrawn and recorded as an expense": "লক্ষ্য উত্তোলিত হয়েছে এবং ব্যয় হিসেবে রেকর্ড করা হয়েছে",

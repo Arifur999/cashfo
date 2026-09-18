@@ -1,11 +1,11 @@
 "use client";
 
-import { Archive, Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { archiveAccountAction } from "@/lib/accountActions";
+import { removeAccountAction } from "@/lib/accountActions";
 import type { Account } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -40,15 +40,15 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
     setFormOpen(true);
   }
 
-  function handleArchive(wallet: Account) {
-    if (!window.confirm(`${t("Archive")} "${wallet.name}"?`)) return;
+  function handleRemove(wallet: Account) {
+    if (!window.confirm(`${t("Remove")} "${wallet.name}"?`)) return;
     startTransition(async () => {
-      const result = await archiveAccountAction(businessId, wallet.id);
+      const result = await removeAccountAction(businessId, wallet.id);
       if (result.success) {
-        toast.success(t("Savings Wallet archived"));
+        toast.success(result.data?.deleted ? t("Savings Wallet deleted") : t("Savings Wallet archived"));
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to archive Savings Wallet"));
+        toast.error(result.message ?? t("Failed to remove Savings Wallet"));
       }
     });
   }
@@ -108,11 +108,11 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
                         <button
                           type="button"
                           disabled={isPending}
-                          onClick={() => handleArchive(wallet)}
-                          title={t("Archive")}
+                          onClick={() => handleRemove(wallet)}
+                          title={t("Remove")}
                           className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
                         >
-                          <Archive className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </td>

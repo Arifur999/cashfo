@@ -71,6 +71,10 @@ export const balanceDictionary: Record<string, string> = {
   "No wallets yet.": "এখনো কোনো ওয়ালেট নেই।",
   "Wallet archived": "ওয়ালেট আর্কাইভ করা হয়েছে",
   "Failed to archive wallet": "ওয়ালেট আর্কাইভ করতে ব্যর্থ",
+  // "Remove" (the action button, replacing Archive) reuses
+  // loan-management.ts's key -- only its own outcome/error text is new here.
+  "Wallet deleted": "ওয়ালেট মুছে ফেলা হয়েছে",
+  "Failed to remove wallet": "ওয়ালেট সরাতে ব্যর্থ",
 
   // src/components/accounts/AccountDetailPageClient.tsx --
   // ACCOUNT_TYPE_LABELS (Assets/Liabilities/Equity/Expenses) reuse
@@ -113,4 +117,6 @@ export const balanceDictionary: Record<string, string> = {
   "No accounts yet.": "এখনো কোনো হিসাব নেই।",
   "Account archived": "হিসাব আর্কাইভ করা হয়েছে",
   "Failed to archive account": "হিসাব আর্কাইভ করতে ব্যর্থ",
+  "Account deleted": "হিসাব মুছে ফেলা হয়েছে",
+  "Failed to remove account": "হিসাব সরাতে ব্যর্থ",
 };
