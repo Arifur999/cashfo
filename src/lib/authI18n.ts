@@ -22,7 +22,7 @@ export const authDictionary = {
     createAccount: "Create Account",
     creatingAccount: "Creating account...",
     noAccount: "Don't have an account?",
-    createOne: "Create one",
+    createOne: "Registration",
     haveAccount: "Already have an account?",
     signInInstead: "Sign in",
     namePlaceholder: "Your name",
