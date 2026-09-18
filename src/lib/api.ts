@@ -507,24 +507,6 @@ export interface BudgetOverview {
   categories: BudgetCategorySummary[];
 }
 
-// Monthly Income Goal (/income-goal page): a HISTORY of goals, one row per
-// month/year, each with an optional note -- not a single standing value.
-// "earned" is computed live server-side across ALL Income transactions for
-// that month/year, regardless of Income Category.
-export interface IncomeGoal {
-  id: string;
-  businessId: string;
-  month: number;
-  year: number;
-  amount: string;
-  notes: string | null;
-}
-
-export interface IncomeGoalSummary extends IncomeGoal {
-  earned: string;
-  percent: number;
-}
-
 // Savings Goals (/savings-goals/*): a named target funded by real
 // contributions from a money account, landing in one of the business's own
 // Savings Wallets (an Account, accountSubtype "savings" -- see

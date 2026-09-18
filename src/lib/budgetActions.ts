@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type BudgetCategory, type BudgetCategoryType, type IncomeGoal } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type BudgetCategory, type BudgetCategoryType } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 // Client components (e.g. AddTransactionModal, which needs this to offer a
@@ -62,41 +62,6 @@ export async function updateBudgetTargetAction(businessId: string, monthlyBudget
   return callApi(async () => {
     await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/budget`, { monthlyBudgetTarget }, { headers: await authHeaders() });
   }, "Failed to update total budget");
-}
-
-export interface IncomeGoalFormInput {
-  month: number;
-  year: number;
-  amount: number;
-  notes?: string;
-}
-
-export async function createIncomeGoalAction(businessId: string, input: IncomeGoalFormInput): Promise<ActionResult<IncomeGoal>> {
-  return callApi(async () => {
-    const res = await axios.post<IncomeGoal>(`${API_BASE_URL}/api/businesses/${businessId}/budget/income-goals`, input, {
-      headers: await authHeaders(),
-    });
-    return res.data;
-  }, "Failed to save the income goal");
-}
-
-export async function updateIncomeGoalAction(
-  businessId: string,
-  id: string,
-  input: Partial<IncomeGoalFormInput>,
-): Promise<ActionResult<IncomeGoal>> {
-  return callApi(async () => {
-    const res = await axios.patch<IncomeGoal>(`${API_BASE_URL}/api/businesses/${businessId}/budget/income-goals/${id}`, input, {
-      headers: await authHeaders(),
-    });
-    return res.data;
-  }, "Failed to update the income goal");
-}
-
-export async function deleteIncomeGoalAction(businessId: string, id: string): Promise<ActionResult> {
-  return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/budget/income-goals/${id}`, { headers: await authHeaders() });
-  }, "Failed to delete the income goal");
 }
 
 export async function createBudgetCategoryAction(businessId: string, input: BudgetCategoryFormInput): Promise<ActionResult<BudgetCategory>> {

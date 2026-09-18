@@ -135,7 +135,6 @@ const LOAN_MANAGEMENT_ITEMS = [
 const INCOME_EXPENSE_ITEMS = [
   { label: "Transaction", href: "/transactions" },
   { label: "Budget Planning", href: "/categories" },
-  { label: "Monthly income goal", href: "/income-goal" },
 ];
 
 // Was a disabled placeholder since Prompt 1 -- General Ledger and Trial
@@ -231,8 +230,7 @@ export function Sidebar() {
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/categories") ||
     pathname.startsWith("/income-planning") ||
-    pathname.startsWith("/budget-planning") ||
-    pathname.startsWith("/income-goal");
+    pathname.startsWith("/budget-planning");
   const isReportsActive = pathname.startsWith("/reports");
 
   return (

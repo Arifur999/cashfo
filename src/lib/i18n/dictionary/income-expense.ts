@@ -90,8 +90,7 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Add Income Category": "আয়ের ক্যাটাগরি যোগ করুন",
   "Edit Expense Category": "ব্যয়ের ক্যাটাগরি সম্পাদনা করুন",
   "Add Expense Category": "ব্যয়ের ক্যাটাগরি যোগ করুন",
-  "Create a category to organize your income -- the overall Monthly income goal is set separately":
-    "আয় গোছাতে একটি ক্যাটাগরি তৈরি করুন -- সামগ্রিক মাসিক আয়ের লক্ষ্য আলাদাভাবে নির্ধারণ করা হয়",
+  "Create a category to organize your income": "আয় গোছাতে একটি ক্যাটাগরি তৈরি করুন",
   "Create a category with its own monthly spending limit": "নিজস্ব মাসিক ব্যয়ের সীমাসহ একটি ক্যাটাগরি তৈরি করুন",
   "Category Name": "ক্যাটাগরির নাম",
   "e.g., Salary, Commission, Rental Income": "যেমন, বেতন, কমিশন, ভাড়া থেকে আয়",
@@ -128,27 +127,4 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Failed to delete category": "ক্যাটাগরি মুছে ফেলা যায়নি",
   'Delete the "{name}" category? This won\'t affect past transactions.': '"{name}" ক্যাটাগরিটি মুছে ফেলবেন? এটি অতীতের লেনদেনগুলোকে প্রভাবিত করবে না।',
 
-  // src/components/budget/IncomeGoalModal.tsx
-  "Edit Income Goal": "আয়ের লক্ষ্য সম্পাদনা করুন",
-  "Add Income Goal": "আয়ের লক্ষ্য যোগ করুন",
-  Month: "মাস",
-  Year: "বছর",
-  "Income Goal Amount": "আয়ের লক্ষ্যমাত্রা",
-  "Add Goal": "লক্ষ্য যোগ করুন",
-  "Enter a goal amount greater than zero": "শূন্যের চেয়ে বড় একটি লক্ষ্যমাত্রা লিখুন",
-  "Income goal updated": "আয়ের লক্ষ্য আপডেট হয়েছে",
-  "Income goal added": "আয়ের লক্ষ্য যোগ করা হয়েছে",
-  "Failed to save the income goal": "আয়ের লক্ষ্য সংরক্ষণ করা যায়নি",
-
-  // src/components/budget/MonthlyIncomeGoalPageClient.tsx
-  "Monthly Income Goal": "মাসিক আয়ের লক্ষ্য",
-  "Set an income target for any month and track how it's tracking against real income.":
-    "যেকোনো মাসের জন্য একটি আয়ের লক্ষ্যমাত্রা নির্ধারণ করুন এবং প্রকৃত আয়ের বিপরীতে এর অগ্রগতি দেখুন।",
-  Goal: "লক্ষ্য",
-  Earned: "অর্জিত",
-  Progress: "অগ্রগতি",
-  'No goals set yet -- tap "Add Goal" to get started.': 'এখনো কোনো লক্ষ্য নির্ধারণ করা হয়নি -- শুরু করতে "লক্ষ্য যোগ করুন" এ ট্যাপ করুন।',
-  "Income goal deleted": "আয়ের লক্ষ্য মুছে ফেলা হয়েছে",
-  "Failed to delete the income goal": "আয়ের লক্ষ্য মুছে ফেলা যায়নি",
-  "Delete the goal for {month} {year}?": "{month} {year} এর লক্ষ্যটি মুছে ফেলবেন?",
 };

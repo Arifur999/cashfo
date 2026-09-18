@@ -154,7 +154,7 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
     >
       <p className="-mt-2 mb-4 text-sm text-neutral-500">
         {isIncome
-          ? t("Create a category to organize your income -- the overall Monthly income goal is set separately")
+          ? t("Create a category to organize your income")
           : t("Create a category with its own monthly spending limit")}
       </p>
 

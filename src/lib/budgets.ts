@@ -1,7 +1,7 @@
 // Server-only helpers, same shape as lib/transactions.ts's getTransactions().
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type BudgetCategoryType, type BudgetOverview, type IncomeGoalSummary } from "./api";
+import { API_BASE_URL, type BudgetCategoryType, type BudgetOverview } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 export const getBudgetOverview = cache(
@@ -21,17 +21,3 @@ export const getBudgetOverview = cache(
     }
   },
 );
-
-export const getIncomeGoals = cache(async (businessId: string): Promise<IncomeGoalSummary[]> => {
-  const accessToken = await getAccessToken();
-  if (!accessToken) return [];
-
-  try {
-    const response = await axios.get<IncomeGoalSummary[]>(`${API_BASE_URL}/api/businesses/${businessId}/budget/income-goals`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    return response.data;
-  } catch {
-    return [];
-  }
-});
