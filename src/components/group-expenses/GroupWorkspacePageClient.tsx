@@ -134,7 +134,6 @@ export function GroupWorkspacePageClient({
         <DashboardSection
           businessId={businessId}
           members={members}
-          contributions={contributions}
           expenses={expenses}
           expenseCategories={expenseCategories}
           settlement={dashboardSettlement}
@@ -169,7 +168,6 @@ const DASHBOARD_RANGE_OPTIONS: { value: string; label: string }[] = [
 function DashboardSection({
   businessId,
   members,
-  contributions,
   expenses,
   expenseCategories,
   settlement,
@@ -177,7 +175,6 @@ function DashboardSection({
 }: {
   businessId: string;
   members: GroupMember[];
-  contributions: GroupContribution[];
   expenses: GroupExpense[];
   expenseCategories: GroupExpenseCategoryOption[];
   settlement: GroupSettlementResult;
@@ -243,14 +240,10 @@ function DashboardSection({
           const actualExpense = expenses
             .filter((e) => e.date.startsWith(monthKey))
             .reduce((sum, e) => sum + Number(e.amount), 0);
-          const contributed = contributions
-            .filter((c) => c.date.startsWith(monthKey))
-            .reduce((sum, c) => sum + Number(c.amount), 0);
           return {
             month,
             budget: budgetEntry ? Number(budgetEntry.budgetAmount) : 0,
             actualExpense,
-            contributed,
           };
         })
       : [];
@@ -347,7 +340,6 @@ interface MonthlyBreakdownPoint {
   month: number;
   budget: number;
   actualExpense: number;
-  contributed: number;
 }
 
 const MONTHLY_CHART_MAX_HEIGHT = 160;
@@ -416,21 +408,24 @@ function MonthlyBreakdownTable({ points }: { points: MonthlyBreakdownPoint[] }) 
               <th className="px-5 py-2.5 font-medium">{t("Month")}</th>
               <th className="px-5 py-2.5 font-medium">{t("Budget")}</th>
               <th className="px-5 py-2.5 font-medium">{t("Actual Expense")}</th>
-              <th className="px-5 py-2.5 font-medium">{t("Contributed")}</th>
-              <th className="px-5 py-2.5 font-medium">{t("Balance")}</th>
+              <th className="px-5 py-2.5 font-medium">%</th>
             </tr>
           </thead>
           <tbody>
-            {points.map((p) => {
-              const balance = p.budget - p.actualExpense;
+            {points.map((p, i) => {
+              // % change in Actual Expense vs the previous month in this
+              // same list -- "--" for January (no prior month in the
+              // year) and for any month whose previous month had zero
+              // expense (a percentage change from zero is undefined).
+              const prev = i > 0 ? points[i - 1] : null;
+              const pctChange = prev && prev.actualExpense > 0 ? ((p.actualExpense - prev.actualExpense) / prev.actualExpense) * 100 : null;
               return (
                 <tr key={p.month} className="border-b border-neutral-50 last:border-0">
                   <td className="px-5 py-2.5 text-neutral-800">{t(MONTH_LABELS[p.month - 1])}</td>
                   <td className="px-5 py-2.5 text-neutral-600">{p.budget > 0 ? formatCurrency(p.budget, "BDT") : "--"}</td>
                   <td className="px-5 py-2.5 text-brand-danger">{formatCurrency(p.actualExpense, "BDT")}</td>
-                  <td className="px-5 py-2.5 text-brand-primary">{formatCurrency(p.contributed, "BDT")}</td>
-                  <td className={`px-5 py-2.5 font-medium ${p.budget === 0 ? "text-neutral-400" : balance >= 0 ? "text-emerald-600" : "text-brand-danger"}`}>
-                    {p.budget > 0 ? formatCurrency(balance, "BDT") : "--"}
+                  <td className={`px-5 py-2.5 font-medium ${pctChange === null ? "text-neutral-400" : pctChange > 0 ? "text-brand-danger" : pctChange < 0 ? "text-emerald-600" : "text-neutral-500"}`}>
+                    {pctChange === null ? "--" : `${pctChange > 0 ? "+" : ""}${pctChange.toFixed(1)}%`}
                   </td>
                 </tr>
               );
