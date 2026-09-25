@@ -208,21 +208,25 @@ function MembersSection({ businessId, members }: { businessId: string; members: 
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        {visibleMembers.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No members yet.")}</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
-                <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">{t("Member")}</th>
-                <th className="px-4 py-3">{t("Phone")}</th>
-                <th className="px-4 py-3">{t("Status")}</th>
-                <th className="px-4 py-3 text-right">{t("Actions")}</th>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t("Member")}</th>
+              <th className="px-4 py-3">{t("Phone")}</th>
+              <th className="px-4 py-3">{t("Status")}</th>
+              <th className="px-4 py-3 text-right">{t("Actions")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {visibleMembers.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-neutral-400">
+                  {t("No members yet.")}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-50">
-              {visibleMembers.map((member, index) => {
+            )}
+            {visibleMembers.map((member, index) => {
                 const isArchived = member.status === "ARCHIVED";
                 return (
                   <tr key={member.id}>
@@ -280,9 +284,8 @@ function MembersSection({ businessId, members }: { businessId: string; members: 
                   </tr>
                 );
               })}
-            </tbody>
-          </table>
-        )}
+          </tbody>
+        </table>
       </div>
 
       <GroupMemberFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingMember={editingMember} />
@@ -420,22 +423,26 @@ function ContributionsSection({ businessId, members, contributions }: { business
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        {contributions.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No contributions yet.")}</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
-                <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">{t("Date")}</th>
-                <th className="px-4 py-3">{t("Member")}</th>
-                <th className="px-4 py-3 text-right">{t("Amount")}</th>
-                <th className="px-4 py-3">{t("Note")}</th>
-                <th className="px-4 py-3 text-right">{t("Actions")}</th>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t("Date")}</th>
+              <th className="px-4 py-3">{t("Member")}</th>
+              <th className="px-4 py-3 text-right">{t("Amount")}</th>
+              <th className="px-4 py-3">{t("Note")}</th>
+              <th className="px-4 py-3 text-right">{t("Actions")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {contributions.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-10 text-center text-sm text-neutral-400">
+                  {t("No contributions yet.")}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-50">
-              {contributions.map((c, index) => (
+            )}
+            {contributions.map((c, index) => (
                 <tr key={c.id}>
                   <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
                   <td className="px-4 py-3 text-neutral-500">{fmtDate(c.date)}</td>
@@ -463,10 +470,9 @@ function ContributionsSection({ businessId, members, contributions }: { business
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <AddContributionModal
@@ -616,23 +622,27 @@ function ExpensesSection({
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        {expenses.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No expenses yet.")}</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
-                <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">{t("Date")}</th>
-                <th className="px-4 py-3">{t("Category")}</th>
-                <th className="px-4 py-3">{t("Description")}</th>
-                <th className="px-4 py-3">{t("Paid by")}</th>
-                <th className="px-4 py-3 text-right">{t("Amount")}</th>
-                <th className="px-4 py-3 text-right">{t("Actions")}</th>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t("Date")}</th>
+              <th className="px-4 py-3">{t("Category")}</th>
+              <th className="px-4 py-3">{t("Description")}</th>
+              <th className="px-4 py-3">{t("Paid by")}</th>
+              <th className="px-4 py-3 text-right">{t("Amount")}</th>
+              <th className="px-4 py-3 text-right">{t("Actions")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {expenses.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-neutral-400">
+                  {t("No expenses yet.")}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-50">
-              {expenses.map((e, index) => {
+            )}
+            {expenses.map((e, index) => {
                 // Matched by name (see GroupExpense.category's own schema
                 // comment on why it's a loose string, not a categoryId FK) --
                 // a category renamed/deleted since this expense was created
@@ -675,9 +685,8 @@ function ExpensesSection({
                 </tr>
                 );
               })}
-            </tbody>
-          </table>
-        )}
+          </tbody>
+        </table>
       </div>
 
       <AddExpenseModal
