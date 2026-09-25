@@ -15,7 +15,7 @@ import type {
   GroupSettlementRecord,
   GroupSettlementResult,
 } from "@/lib/api";
-import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
+import { BUDGET_CATEGORY_COLORS, budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/currency";
 import {
   closeGroupSettlementAction,
@@ -223,6 +223,27 @@ function DashboardSection({
       .sort((a, b) => Number(b.amount) - Number(a.amount)),
   };
 
+  // Members Balance donut -- each active member's share of the total pool
+  // contributed this period. Reuses CategoryDonutCard (same component as
+  // the Expense by Category donut above) with a member assigned a color
+  // cycling through BUDGET_CATEGORY_COLORS since, unlike expense
+  // categories, members have no color of their own. A member with zero or
+  // negative net contribution (fully refunded, or over-refunded) is left
+  // out of the ring -- a pie slice can't represent a non-positive amount.
+  const membersBreakdown: CategoryBreakdown = {
+    type: "INCOME",
+    total: totalContributed.toFixed(2),
+    categories: settlement.members
+      .filter((m) => Number(m.contributed) > 0)
+      .map((m, i) => ({
+        name: m.name,
+        amount: Number(m.contributed).toFixed(2),
+        percent: totalContributed > 0 ? Math.round((Number(m.contributed) / totalContributed) * 100) : 0,
+        color: BUDGET_CATEGORY_COLORS[i % BUDGET_CATEGORY_COLORS.length],
+      }))
+      .sort((a, b) => Number(b.amount) - Number(a.amount)),
+  };
+
   // Per-month Budget vs Actual Expense breakdown -- only computed (and only
   // shown) for "This Year" since "All"/"This Month" have no meaningful
   // month-by-month axis. Always the CURRENT calendar year, matching how
@@ -285,34 +306,7 @@ function DashboardSection({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <CategoryDonutCard title="Expense by Category" breakdown={expenseBreakdown} currency="BDT" totalLabel="Total Expense" />
-
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <h2 className="mb-4 text-sm font-semibold text-neutral-900">{t("Members Balance")}</h2>
-          {settlement.members.length === 0 ? (
-            <p className="py-4 text-center text-sm text-neutral-400">{t("No active members for this period.")}</p>
-          ) : (
-            <div className="space-y-3">
-              {settlement.members.map((m) => {
-                const balance = Number(m.balance);
-                return (
-                  <div key={m.groupMemberId} className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-neutral-800">{m.name}</p>
-                      <p className="text-xs text-neutral-400">
-                        {t("Contributed")}: {formatCurrency(m.contributed, "BDT")}
-                      </p>
-                    </div>
-                    <span className={`shrink-0 text-right text-sm font-semibold tabular-nums ${balance >= 0 ? "text-emerald-600" : "text-brand-danger"}`}>
-                      {balance >= 0 ? t("Extra") : t("Owes")}
-                      <br />
-                      {formatCurrency(Math.abs(balance), "BDT")}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <CategoryDonutCard title="Members Balance" breakdown={membersBreakdown} currency="BDT" totalLabel="Total Contributed" />
       </div>
 
       {dashRange === "year" && (
