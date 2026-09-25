@@ -401,7 +401,7 @@ function MonthlyBreakdownTable({ points }: { points: MonthlyBreakdownPoint[] }) 
   return (
     <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
       <h2 className="p-4 pb-0 text-sm font-semibold text-neutral-900">{t("Monthly Breakdown")}</h2>
-      <div className="max-h-[248px] overflow-y-auto overflow-x-auto">
+      <div className="overflow-x-auto">
         <table className="mt-3 w-full text-left text-xs">
           <thead>
             <tr className="border-b border-neutral-100 text-[11px] text-neutral-500">
