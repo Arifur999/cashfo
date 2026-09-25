@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
@@ -63,19 +63,32 @@ const ASSETS_MANAGEMENT_ITEMS = [
 // USER, not any one workspace) rather than a workspace-accounting one --
 // same reasoning as Password Manager's own comment -- so it sits just
 // above it, its own top-level item too.
-// "Group Expense" (মেস/যৌথ হিসাব) is deliberately its own top-level item,
-// NOT wired into the Balance/Loan Management-style active-workspace groups
-// above -- it isn't scoped to whichever Personal/Business workspace is
-// currently active at all (see lib/activeBusiness.ts's comment on why
-// multi-workspace switching was removed). Each Group workspace lives at its
-// own /group-expenses/[businessId] URL instead, so this link always just
-// goes to the list of the user's Group workspaces, same "not tied to the
-// active workspace" reasoning as Referrals/Password Manager below.
+// "Group Expense" (মেস/যৌথ হিসাব) is deliberately NOT wired into the
+// Balance/Loan Management-style active-workspace groups below -- it isn't
+// scoped to whichever Personal/Business workspace is currently active at all
+// (see lib/activeBusiness.ts's comment on why multi-workspace switching was
+// removed). It gets its own special-cased render (GroupExpenseNavItem,
+// below) instead of a plain entry in this array: its sub-items are the
+// Members/Contributions/Expenses/Settlement tabs of whichever ONE Group
+// workspace the user is currently inside (a query-string ?tab=, not a
+// separate route each), which only makes sense to show once a specific
+// /group-expenses/[businessId] is on screen -- see that component.
+// "Referrals"/"Password Manager" are the same kind of personal/account-level
+// feature (not tied to any one workspace) as Group Expense, just without a
+// sub-menu of their own.
 const BOTTOM_NAV_ITEMS = [
-  { label: "Group Expense", href: "/group-expenses", icon: Users },
   { label: "Referrals", href: "/referrals", icon: Gift },
   { label: "Password Manager", href: "/password-manager", icon: KeyRound },
   { label: "Settings", href: "/settings", icon: Settings },
+];
+
+// Sub-items are ?tab= query values on the SAME /group-expenses/[businessId]
+// route, not separate pages -- see GroupWorkspacePageClient.tsx's tab shell.
+const GROUP_EXPENSE_TABS: { label: string; tab: string }[] = [
+  { label: "Members", tab: "members" },
+  { label: "Contributions", tab: "contributions" },
+  { label: "Expenses", tab: "expenses" },
+  { label: "Settlement", tab: "settlement" },
 ];
 
 // The standalone "Dena-Pawna" nav item was removed at the user's request --
@@ -243,6 +256,61 @@ function NavLink({ item, isActive }: { item: { label: string; href: string; icon
   );
 }
 
+// Same collapsible visual shape as NavGroup, but its sub-items are ?tab=
+// query values on ONE specific /group-expenses/[businessId] (extracted from
+// the pathname) rather than separate static routes -- so unlike NavGroup,
+// this can't render any sub-items at all until a specific Group workspace is
+// actually open. On /group-expenses itself (the list of workspaces) or
+// anywhere else, it falls back to a plain link to that list.
+function GroupExpenseNavItem() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { t } = useLocale();
+  const businessId = pathname.match(/^\/group-expenses\/([^/]+)/)?.[1];
+  const isActive = pathname.startsWith("/group-expenses");
+  const [open, setOpen] = useState(isActive);
+
+  if (!businessId) {
+    return <NavLink item={{ label: "Group Expense", href: "/group-expenses", icon: Users }} isActive={isActive} />;
+  }
+
+  const currentTab = searchParams.get("tab") ?? "members";
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`flex w-full items-center gap-3 rounded-lg border-l-4 px-4 py-2.5 text-sm transition-colors ${
+          isActive ? "border-brand-primary bg-brand-dark-hover font-medium text-white" : "border-transparent text-white/70 hover:bg-brand-dark-hover hover:text-white"
+        }`}
+      >
+        <Users className="h-4 w-4" />
+        {t("Group Expense")}
+        {open ? <ChevronDown className="ml-auto h-3.5 w-3.5" /> : <ChevronRight className="ml-auto h-3.5 w-3.5" />}
+      </button>
+      {open && (
+        <div className="space-y-0.5 py-0.5 pl-8">
+          {GROUP_EXPENSE_TABS.map((item) => {
+            const itemActive = currentTab === item.tab;
+            return (
+              <Link
+                key={item.tab}
+                href={`/group-expenses/${businessId}?tab=${item.tab}`}
+                className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+                  itemActive ? "bg-brand-dark-hover font-medium text-white" : "text-white/60 hover:bg-brand-dark-hover hover:text-white"
+                }`}
+              >
+                {t(item.label)}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const isBalanceActive = pathname.startsWith("/balance") || pathname.startsWith("/accounts");
@@ -270,6 +338,7 @@ export function Sidebar() {
         <NavGroup icon={PiggyBank} label="Savings Goals" items={SAVINGS_GOALS_ITEMS} isActive={isSavingsGoalsActive} />
         <NavGroup icon={Banknote} label="Loan Management" items={LOAN_MANAGEMENT_ITEMS} isActive={isLoanManagementActive} />
         <NavGroup icon={FileText} label="Reports" items={REPORTS_ITEMS} isActive={isReportsActive} />
+        <GroupExpenseNavItem />
 
         {BOTTOM_NAV_ITEMS.map((item) => (
           <NavLink key={item.href} item={item} isActive={pathname.startsWith(item.href)} />
