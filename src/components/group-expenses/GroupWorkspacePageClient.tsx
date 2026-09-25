@@ -129,14 +129,7 @@ export function GroupWorkspacePageClient({
           already renders these same tabs as a submenu once a specific
           workspace is open, so a second copy here would be redundant. */}
       {tab === "dashboard" && (
-        <DashboardSection
-          businessId={businessId}
-          members={members}
-          contributions={contributions}
-          expenses={expenses}
-          expenseCategories={expenseCategories}
-          settlement={settlement}
-        />
+        <DashboardSection members={members} expenses={expenses} expenseCategories={expenseCategories} settlement={settlement} />
       )}
       {tab === "members" && <MembersSection businessId={businessId} members={members} />}
       {tab === "contributions" && <ContributionsSection businessId={businessId} members={members} contributions={contributions} />}
@@ -158,32 +151,19 @@ export function GroupWorkspacePageClient({
 // regardless of whatever date filter a different tab's own view happens to
 // have applied via the URL.
 function DashboardSection({
-  businessId,
   members,
-  contributions,
   expenses,
   expenseCategories,
   settlement,
 }: {
-  businessId: string;
   members: GroupMember[];
-  contributions: GroupContribution[];
   expenses: GroupExpense[];
   expenseCategories: GroupExpenseCategoryOption[];
   settlement: GroupSettlementResult;
 }) {
-  const router = useRouter();
   const { t } = useLocale();
   const activeMemberCount = members.filter((m) => m.status === "ACTIVE").length;
   const totalContributed = settlement.members.reduce((sum, m) => sum + Number(m.contributed), 0);
-
-  type ActivityItem = { kind: "contribution" | "expense"; id: string; date: string; createdAt: string; amount: string; label: string };
-  const recentActivity: ActivityItem[] = [
-    ...contributions.map((c) => ({ kind: "contribution" as const, id: c.id, date: c.date, createdAt: c.createdAt, amount: c.amount, label: c.groupMember.name })),
-    ...expenses.map((e) => ({ kind: "expense" as const, id: e.id, date: e.date, createdAt: e.createdAt, amount: e.amount, label: e.category })),
-  ]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 6);
 
   // Expense-by-category donut -- scoped to the same current-month period as
   // `settlement` (not all-time) so its total matches the "Total Expense"
@@ -264,63 +244,6 @@ function DashboardSection({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={() => router.push(`/group-expenses/${businessId}?tab=contributions`)}
-          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
-        >
-          <Plus className="h-4 w-4" /> {t("Add Contribution")}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push(`/group-expenses/${businessId}?tab=expenses`)}
-          className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-        >
-          <Plus className="h-4 w-4" /> {t("Add Expense")}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push(`/group-expenses/${businessId}?tab=members`)}
-          className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-        >
-          <Plus className="h-4 w-4" /> {t("Add Member")}
-        </button>
-      </div>
-
-      <div>
-        <h2 className="mb-2 text-sm font-semibold text-neutral-700">{t("Recent Activity")}</h2>
-        <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-          {recentActivity.length === 0 ? (
-            <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No activity yet.")}</p>
-          ) : (
-            <div className="divide-y divide-neutral-50">
-              {recentActivity.map((item) => (
-                <div key={`${item.kind}-${item.id}`} className="flex items-center gap-3 px-4 py-3">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
-                      item.kind === "contribution" ? "bg-brand-primary/10 text-brand-primary" : "bg-brand-danger/10 text-brand-danger"
-                    }`}
-                  >
-                    {item.kind === "contribution" ? t("Contribution") : t("Expense")}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-neutral-800">{item.label}</p>
-                    <p className="text-xs text-neutral-400">{fmtDate(item.date)}</p>
-                  </div>
-                  <span
-                    className={`shrink-0 text-sm font-semibold tabular-nums ${
-                      item.kind === "contribution" ? "text-brand-primary" : "text-brand-danger"
-                    }`}
-                  >
-                    {formatCurrency(item.amount, "BDT")}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
