@@ -100,18 +100,6 @@ export function AddExpenseModal({ open, onClose, businessId, members, categories
     <Modal open={open} onClose={onClose} title={editingExpense ? t("Edit Expense") : t("Add Expense")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            type="number"
-            step="0.01"
-            min={0}
-            placeholder="0.00"
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-          />
-        </div>
-        <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <DatePicker value={date} onChange={setDate} />
         </div>
@@ -133,6 +121,18 @@ export function AddExpenseModal({ open, onClose, businessId, members, categories
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            type="number"
+            step="0.01"
+            min={0}
+            placeholder="0.00"
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+          />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">

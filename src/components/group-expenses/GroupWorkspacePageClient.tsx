@@ -628,9 +628,9 @@ function ExpensesSection({
               <th className="px-4 py-3">#</th>
               <th className="px-4 py-3">{t("Date")}</th>
               <th className="px-4 py-3">{t("Category")}</th>
-              <th className="px-4 py-3">{t("Description")}</th>
-              <th className="px-4 py-3">{t("Paid by")}</th>
               <th className="px-4 py-3 text-right">{t("Amount")}</th>
+              <th className="px-4 py-3">{t("Paid by")}</th>
+              <th className="px-4 py-3">{t("Description")}</th>
               <th className="px-4 py-3 text-right">{t("Actions")}</th>
             </tr>
           </thead>
@@ -659,9 +659,9 @@ function ExpensesSection({
                       {e.category}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-500">{e.description ?? "--"}</td>
-                  <td className="px-4 py-3 text-neutral-500">{e.paidByMember?.name ?? "--"}</td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums text-brand-danger">{formatCurrency(e.amount, "BDT")}</td>
+                  <td className="px-4 py-3 text-neutral-500">{e.paidByMember?.name ?? "--"}</td>
+                  <td className="px-4 py-3 text-neutral-500">{e.description ?? "--"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
