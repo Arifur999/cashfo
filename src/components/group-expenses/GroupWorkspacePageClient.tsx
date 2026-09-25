@@ -131,20 +131,18 @@ function MembersSection({ businessId, members }: { businessId: string; members: 
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div className="flex items-end gap-3 rounded-2xl bg-surface p-3 shadow-sm shadow-black/5">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Status")}</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as "" | GroupMemberStatus)}
-              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
-            >
-              <option value="">{t("All")}</option>
-              <option value="ACTIVE">{t("Active")}</option>
-              <option value="ARCHIVED">{t("Archived")}</option>
-            </select>
-          </div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-500">{t("Status")}</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "" | GroupMemberStatus)}
+            className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+          >
+            <option value="">{t("All")}</option>
+            <option value="ACTIVE">{t("Active")}</option>
+            <option value="ARCHIVED">{t("Archived")}</option>
+          </select>
         </div>
         <button
           type="button"
@@ -297,7 +295,7 @@ function ContributionsSection({ businessId, members, contributions }: { business
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-surface p-3 shadow-sm shadow-black/5">
+        <div className="flex flex-wrap items-end gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Member")}</label>
             <select
@@ -456,7 +454,7 @@ function ExpensesSection({ businessId, members, expenses }: { businessId: string
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-surface p-3 shadow-sm shadow-black/5">
+        <div className="flex flex-wrap items-end gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Category")}</label>
             <select
