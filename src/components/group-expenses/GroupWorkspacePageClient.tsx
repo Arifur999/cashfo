@@ -46,6 +46,55 @@ const CATEGORY_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
+// Shared by Contributions/Expenses' filter bars -- a single compact preset
+// dropdown instead of always showing two DatePicker fields; "Custom Range"
+// is the only preset that reveals them.
+type DateRangePreset = "all" | "today" | "yesterday" | "this_month" | "this_year" | "custom";
+
+function toDateValue(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function computePresetRange(preset: DateRangePreset): { from: string; to: string } {
+  const now = new Date();
+  switch (preset) {
+    case "today": {
+      const v = toDateValue(now);
+      return { from: v, to: v };
+    }
+    case "yesterday": {
+      const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      const v = toDateValue(yesterday);
+      return { from: v, to: v };
+    }
+    case "this_month":
+      return { from: toDateValue(new Date(now.getFullYear(), now.getMonth(), 1)), to: toDateValue(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
+    case "this_year":
+      return { from: toDateValue(new Date(now.getFullYear(), 0, 1)), to: toDateValue(new Date(now.getFullYear(), 11, 31)) };
+    default:
+      return { from: "", to: "" };
+  }
+}
+
+// A stored from/to only ever came from either "no filter" or "Custom Range"
+// here (the other presets are recomputed fresh every time, never persisted
+// as their own preset value) -- so on load there's no way to distinguish
+// "the user picked Custom Range with these exact dates" from "these happen
+// to equal what This Month would compute to", and there's no need to: both
+// render identically as an explicit from/to, just re-labeled "Custom Range".
+function inferPreset(from: string, to: string): DateRangePreset {
+  return !from && !to ? "all" : "custom";
+}
+
+const DATE_RANGE_PRESET_OPTIONS: { value: DateRangePreset; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "this_month", label: "This Month" },
+  { value: "this_year", label: "This Year" },
+  { value: "custom", label: "Custom Range" },
+];
+
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
@@ -264,6 +313,15 @@ function ContributionsSection({ businessId, members, contributions }: { business
   const [memberId, setMemberId] = useState(searchParams.get("memberId") ?? "");
   const [from, setFrom] = useState(searchParams.get("from") ?? "");
   const [to, setTo] = useState(searchParams.get("to") ?? "");
+  const [datePreset, setDatePreset] = useState<DateRangePreset>(inferPreset(from, to));
+
+  function handlePresetChange(preset: DateRangePreset) {
+    setDatePreset(preset);
+    if (preset === "custom") return; // wait for the user to pick actual dates
+    const range = computePresetRange(preset);
+    setFrom(range.from);
+    setTo(range.to);
+  }
 
   function applyFilters() {
     const params = new URLSearchParams({ tab: "contributions" });
@@ -317,13 +375,31 @@ function ContributionsSection({ businessId, members, contributions }: { business
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("From")}</label>
-            <DatePicker value={from} onChange={setFrom} />
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Date Range")}</label>
+            <select
+              value={datePreset}
+              onChange={(e) => handlePresetChange(e.target.value as DateRangePreset)}
+              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+            >
+              {DATE_RANGE_PRESET_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.label)}
+                </option>
+              ))}
+            </select>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("To")}</label>
-            <DatePicker value={to} onChange={setTo} />
-          </div>
+          {datePreset === "custom" && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">{t("From")}</label>
+                <DatePicker value={from} onChange={setFrom} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">{t("To")}</label>
+                <DatePicker value={to} onChange={setTo} />
+              </div>
+            </>
+          )}
           <button
             type="button"
             onClick={applyFilters}
@@ -423,6 +499,15 @@ function ExpensesSection({ businessId, members, expenses }: { businessId: string
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [from, setFrom] = useState(searchParams.get("from") ?? "");
   const [to, setTo] = useState(searchParams.get("to") ?? "");
+  const [datePreset, setDatePreset] = useState<DateRangePreset>(inferPreset(from, to));
+
+  function handlePresetChange(preset: DateRangePreset) {
+    setDatePreset(preset);
+    if (preset === "custom") return; // wait for the user to pick actual dates
+    const range = computePresetRange(preset);
+    setFrom(range.from);
+    setTo(range.to);
+  }
 
   function applyFilters() {
     const params = new URLSearchParams({ tab: "expenses" });
@@ -476,13 +561,31 @@ function ExpensesSection({ businessId, members, expenses }: { businessId: string
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("From")}</label>
-            <DatePicker value={from} onChange={setFrom} />
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Date Range")}</label>
+            <select
+              value={datePreset}
+              onChange={(e) => handlePresetChange(e.target.value as DateRangePreset)}
+              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+            >
+              {DATE_RANGE_PRESET_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.label)}
+                </option>
+              ))}
+            </select>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("To")}</label>
-            <DatePicker value={to} onChange={setTo} />
-          </div>
+          {datePreset === "custom" && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">{t("From")}</label>
+                <DatePicker value={from} onChange={setFrom} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">{t("To")}</label>
+                <DatePicker value={to} onChange={setTo} />
+              </div>
+            </>
+          )}
           <button
             type="button"
             onClick={applyFilters}
