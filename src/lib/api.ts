@@ -707,7 +707,23 @@ export interface ReferralInfo {
 // AND any number of Group workspaces (this year's mess, a joint family
 // ledger, ...) all reachable side by side.
 export type GroupMemberStatus = "ACTIVE" | "ARCHIVED";
-export type GroupExpenseCategory = "GROCERY" | "RENT" | "UTILITY" | "OTHER";
+// Free text now, not a fixed union -- each business has its own editable
+// list of category names (GroupExpenseCategoryOption below), and
+// GroupExpense.category just stores whichever name was picked at creation
+// time (decoupled from that list, same "loose string" convention as
+// AssetCategoryOption -- see the backend schema comment for why).
+export type GroupExpenseCategory = string;
+
+export interface GroupExpenseCategoryOption {
+  id: string;
+  businessId: string;
+  name: string;
+  icon: string | null;
+  color: string;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface GroupMember {
   id: string;

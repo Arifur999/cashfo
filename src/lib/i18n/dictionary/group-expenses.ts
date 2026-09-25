@@ -117,6 +117,27 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Expense updated": "খরচ আপডেট হয়েছে",
   "Failed to update expense": "খরচ আপডেট করতে ব্যর্থ হয়েছে",
 
+  // Category tab (CategorySection, GroupExpenseCategoryModal)
+  "Manage the categories your expenses are organized into.": "আপনার খরচগুলো যে ক্যাটাগরিতে সাজানো হবে তা পরিচালনা করুন।",
+  "Give this category a name": "এই ক্যাটাগরিটির একটি নাম দিন",
+  "Category updated": "ক্যাটাগরি আপডেট হয়েছে",
+  "Category added": "ক্যাটাগরি যোগ হয়েছে",
+  "Failed to save category": "ক্যাটাগরি সংরক্ষণ করতে ব্যর্থ হয়েছে",
+  "Edit Category": "ক্যাটাগরি সম্পাদনা করুন",
+  "Add Category": "ক্যাটাগরি যোগ করুন",
+  "Category Name": "ক্যাটাগরির নাম",
+  "e.g., Gas Bill, Wifi Bill, Maid": "যেমন: গ্যাস বিল, ওয়াইফাই বিল, কাজের বুয়া",
+  "Choose an Icon": "একটি আইকন বাছাই করুন",
+  "Search icons...": "আইকন খুঁজুন...",
+  "No matching icon": "কোনো মিলযুক্ত আইকন পাওয়া যায়নি",
+  "Choose a Color": "একটি রঙ বাছাই করুন",
+  "Category deleted": "ক্যাটাগরি মুছে ফেলা হয়েছে",
+  "Failed to delete category": "ক্যাটাগরি মুছতে ব্যর্থ হয়েছে",
+  'No categories yet -- click "Add Category" to get started.': 'এখনো কোনো ক্যাটাগরি নেই -- শুরু করতে "ক্যাটাগরি যোগ করুন" ক্লিক করুন।',
+  "Delete Category": "ক্যাটাগরি মুছুন",
+  "Existing expenses keep showing this name, but it won't be pickable for new ones.":
+    "বিদ্যমান খরচগুলোতে এই নামই দেখাতে থাকবে, তবে নতুন খরচের জন্য এটি আর বাছাই করা যাবে না।",
+
   // Settlement tab
   From: "থেকে",
   To: "পর্যন্ত",

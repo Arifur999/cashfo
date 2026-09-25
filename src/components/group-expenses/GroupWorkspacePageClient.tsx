@@ -7,16 +7,19 @@ import { toast } from "sonner";
 import type {
   GroupContribution,
   GroupExpense,
+  GroupExpenseCategoryOption,
   GroupMember,
   GroupMemberStatus,
   GroupSettlementRecord,
   GroupSettlementResult,
 } from "@/lib/api";
+import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/currency";
 import {
   closeGroupSettlementAction,
   deleteGroupContributionAction,
   deleteGroupExpenseAction,
+  deleteGroupExpenseCategoryAction,
   deleteGroupMemberAction,
   updateGroupMemberAction,
 } from "@/lib/groupExpensesActions";
@@ -25,6 +28,7 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { AddContributionModal } from "./AddContributionModal";
 import { AddExpenseModal } from "./AddExpenseModal";
+import { GroupExpenseCategoryModal } from "./GroupExpenseCategoryModal";
 import { GroupMemberFormModal } from "./GroupMemberFormModal";
 
 interface GroupWorkspacePageClientProps {
@@ -33,18 +37,12 @@ interface GroupWorkspacePageClientProps {
   members: GroupMember[];
   contributions: GroupContribution[];
   expenses: GroupExpense[];
+  expenseCategories: GroupExpenseCategoryOption[];
   settlement: GroupSettlementResult;
   settlementHistory: GroupSettlementRecord[];
 }
 
-type Tab = "members" | "contributions" | "expenses" | "settlement";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  GROCERY: "Grocery / Bazar",
-  RENT: "Rent",
-  UTILITY: "Utility",
-  OTHER: "Other",
-};
+type Tab = "members" | "contributions" | "expenses" | "category" | "settlement";
 
 // Shared by Contributions/Expenses' filter bars -- a single compact preset
 // dropdown instead of always showing two DatePicker fields; "Custom Range"
@@ -105,6 +103,7 @@ export function GroupWorkspacePageClient({
   members,
   contributions,
   expenses,
+  expenseCategories,
   settlement,
   settlementHistory,
 }: GroupWorkspacePageClientProps) {
@@ -120,11 +119,14 @@ export function GroupWorkspacePageClient({
       </div>
 
       {/* No in-page tab bar here -- Sidebar.tsx's GroupExpenseNavItem
-          already renders these same four tabs as a submenu once a specific
+          already renders these same tabs as a submenu once a specific
           workspace is open, so a second copy here would be redundant. */}
       {tab === "members" && <MembersSection businessId={businessId} members={members} />}
       {tab === "contributions" && <ContributionsSection businessId={businessId} members={members} contributions={contributions} />}
-      {tab === "expenses" && <ExpensesSection businessId={businessId} members={members} expenses={expenses} />}
+      {tab === "expenses" && (
+        <ExpensesSection businessId={businessId} members={members} expenses={expenses} categories={expenseCategories} />
+      )}
+      {tab === "category" && <CategorySection businessId={businessId} categories={expenseCategories} />}
       {tab === "settlement" && <SettlementSection businessId={businessId} settlement={settlement} settlementHistory={settlementHistory} />}
     </div>
   );
@@ -487,7 +489,17 @@ function ContributionsSection({ businessId, members, contributions }: { business
   );
 }
 
-function ExpensesSection({ businessId, members, expenses }: { businessId: string; members: GroupMember[]; expenses: GroupExpense[] }) {
+function ExpensesSection({
+  businessId,
+  members,
+  expenses,
+  categories,
+}: {
+  businessId: string;
+  members: GroupMember[];
+  expenses: GroupExpense[];
+  categories: GroupExpenseCategoryOption[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
@@ -553,9 +565,9 @@ function ExpensesSection({ businessId, members, expenses }: { businessId: string
               className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
             >
               <option value="">{t("All Categories")}</option>
-              {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {t(label)}
+              {categories.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -620,13 +632,21 @@ function ExpensesSection({ businessId, members, expenses }: { businessId: string
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-50">
-              {expenses.map((e, index) => (
+              {expenses.map((e, index) => {
+                // Matched by name (see GroupExpense.category's own schema
+                // comment on why it's a loose string, not a categoryId FK) --
+                // a category renamed/deleted since this expense was created
+                // just falls back to a plain gray badge with its own text.
+                const categoryOption = categories.find((c) => c.name === e.category);
+                return (
                 <tr key={e.id}>
                   <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
                   <td className="px-4 py-3 text-neutral-500">{fmtDate(e.date)}</td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500">
-                      {t(CATEGORY_LABELS[e.category] ?? e.category)}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium text-white ${categoryOption ? budgetCategoryColorClass(categoryOption.color) : "bg-neutral-400"}`}
+                    >
+                      {e.category}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-neutral-500">{e.description ?? "--"}</td>
@@ -653,13 +673,21 @@ function ExpensesSection({ businessId, members, expenses }: { businessId: string
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
       </div>
 
-      <AddExpenseModal open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} members={members} editingExpense={editingExpense} />
+      <AddExpenseModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        businessId={businessId}
+        members={members}
+        categories={categories}
+        editingExpense={editingExpense}
+      />
       <ConfirmModal
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
@@ -818,6 +846,109 @@ function SettlementSection({
         title={t("Close This Period")}
         message={t("This locks in the current numbers for this period as a permanent settlement record. Later edits to contributions/expenses in this range won't change it.")}
         confirmLabel={t("Close")}
+      />
+    </div>
+  );
+}
+
+// Manages the editable category list behind Expenses' own category picker
+// (see GroupExpense.category's schema comment) -- same shape as Assets
+// Management's own CategoryPageClient: add/edit/delete the categories
+// themselves, never displays any expenses here.
+function CategorySection({ businessId, categories }: { businessId: string; categories: GroupExpenseCategoryOption[] }) {
+  const router = useRouter();
+  const { t } = useLocale();
+  const [categoryModal, setCategoryModal] = useState<"closed" | { mode: "create" } | GroupExpenseCategoryOption>("closed");
+  const [deleteTarget, setDeleteTarget] = useState<GroupExpenseCategoryOption | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const editingCategory = categoryModal === "closed" || (typeof categoryModal === "object" && "mode" in categoryModal) ? null : categoryModal;
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    startTransition(async () => {
+      const result = await deleteGroupExpenseCategoryAction(businessId, deleteTarget.id);
+      if (result.success) {
+        toast.success(t("Category deleted"));
+        setDeleteTarget(null);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to delete category"));
+      }
+    });
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-neutral-500">{t("Manage the categories your expenses are organized into.")}</p>
+        <button
+          type="button"
+          onClick={() => setCategoryModal({ mode: "create" })}
+          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+        >
+          <Plus className="h-4 w-4" /> {t("Add Category")}
+        </button>
+      </div>
+
+      {categories.length === 0 ? (
+        <div className="rounded-2xl bg-surface px-4 py-10 text-center text-sm text-neutral-400 shadow-sm shadow-black/5">
+          {t('No categories yet -- click "Add Category" to get started.')}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {categories.map((category) => {
+            const Icon = category.icon ? budgetCategoryIcon(category.icon) : null;
+            return (
+              <div key={category.id} className="flex items-center justify-between gap-3 rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white ${budgetCategoryColorClass(category.color)}`}>
+                    {Icon && <Icon className="h-5 w-5" />}
+                  </span>
+                  <p className="min-w-0 font-medium text-neutral-900">{category.name}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCategoryModal(category)}
+                    title={t("Edit")}
+                    className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(category)}
+                    title={t("Delete")}
+                    className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <GroupExpenseCategoryModal
+        open={categoryModal !== "closed"}
+        onClose={() => setCategoryModal("closed")}
+        businessId={businessId}
+        editingCategory={editingCategory}
+      />
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title={t("Delete Category")}
+        message={
+          deleteTarget
+            ? `${t("Delete")} "${deleteTarget.name}"? ${t("Existing expenses keep showing this name, but it won't be pickable for new ones.")}`
+            : ""
+        }
+        confirmLabel={t("Delete")}
       />
     </div>
   );

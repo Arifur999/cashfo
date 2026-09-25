@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createGroupExpenseAction, updateGroupExpenseAction } from "@/lib/groupExpensesActions";
-import type { GroupExpense, GroupExpenseCategory, GroupMember } from "@/lib/api";
+import type { GroupExpense, GroupExpenseCategoryOption, GroupMember } from "@/lib/api";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -15,22 +15,16 @@ interface AddExpenseModalProps {
   onClose: () => void;
   businessId: string;
   members: GroupMember[];
+  categories: GroupExpenseCategoryOption[];
   editingExpense?: GroupExpense | null;
 }
-
-const CATEGORY_OPTIONS: { value: GroupExpenseCategory; label: string }[] = [
-  { value: "GROCERY", label: "Grocery / Bazar" },
-  { value: "RENT", label: "Rent" },
-  { value: "UTILITY", label: "Utility" },
-  { value: "OTHER", label: "Other" },
-];
 
 function today(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function AddExpenseModal({ open, onClose, businessId, members, editingExpense = null }: AddExpenseModalProps) {
+export function AddExpenseModal({ open, onClose, businessId, members, categories, editingExpense = null }: AddExpenseModalProps) {
   const router = useRouter();
   const { t } = useLocale();
   const activeMembers = members.filter((m) => m.status === "ACTIVE");
@@ -40,10 +34,14 @@ export function AddExpenseModal({ open, onClose, businessId, members, editingExp
     editingExpense?.paidByMember && !activeMembers.some((m) => m.id === editingExpense.paidByMember!.id)
       ? [editingExpense.paidByMember, ...activeMembers]
       : activeMembers;
+  // Category is free text (see GroupExpense.category's schema comment) --
+  // this is only "keep the current value selectable" for an expense whose
+  // category was since renamed/deleted, same reasoning as paidByOptions above.
+  const categoryOptions = editingExpense && !categories.some((c) => c.name === editingExpense.category) ? [editingExpense.category] : [];
 
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today());
-  const [category, setCategory] = useState<GroupExpenseCategory>("GROCERY");
+  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [paidByMemberId, setPaidByMemberId] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -62,7 +60,7 @@ export function AddExpenseModal({ open, onClose, businessId, members, editingExp
       } else {
         setAmount("");
         setDate(today());
-        setCategory("GROCERY");
+        setCategory(categories[0]?.name ?? "Other");
         setDescription("");
         setPaidByMemberId("");
       }
@@ -121,12 +119,17 @@ export function AddExpenseModal({ open, onClose, businessId, members, editingExp
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Category")}</label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as GroupExpenseCategory)}
+            onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
           >
-            {CATEGORY_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {t(opt.label)}
+            {categoryOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
               </option>
             ))}
           </select>

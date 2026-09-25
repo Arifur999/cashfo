@@ -3,7 +3,14 @@ import { GroupWorkspacePageClient } from "@/components/group-expenses/GroupWorks
 import type { GroupExpenseCategory } from "@/lib/api";
 import { getBusinessDetailAction } from "@/lib/businessActions";
 import { getCurrentUser } from "@/lib/auth";
-import { getGroupContributions, getGroupExpenses, getGroupMembers, getGroupSettlement, getGroupSettlementHistory } from "@/lib/groupExpenses";
+import {
+  getGroupContributions,
+  getGroupExpenseCategories,
+  getGroupExpenses,
+  getGroupMembers,
+  getGroupSettlement,
+  getGroupSettlementHistory,
+} from "@/lib/groupExpenses";
 
 // businessId comes straight from the URL, not the "active workspace" cookie
 // -- see Sidebar.tsx's comment on /group-expenses for why. Sequential
@@ -33,6 +40,7 @@ export default async function GroupWorkspacePage({
   const members = await getGroupMembers(businessId);
   const contributions = await getGroupContributions(businessId, { groupMemberId, from, to });
   const expenses = await getGroupExpenses(businessId, { category, from, to });
+  const expenseCategories = await getGroupExpenseCategories(businessId);
   const settlement = await getGroupSettlement(businessId, from, to);
   const settlementHistory = await getGroupSettlementHistory(businessId);
 
@@ -43,6 +51,7 @@ export default async function GroupWorkspacePage({
       members={members}
       contributions={contributions}
       expenses={expenses}
+      expenseCategories={expenseCategories}
       settlement={settlement}
       settlementHistory={settlementHistory}
     />

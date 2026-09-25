@@ -6,6 +6,7 @@ import {
   type GroupContribution,
   type GroupExpense,
   type GroupExpenseCategory,
+  type GroupExpenseCategoryOption,
   type GroupMember,
   type GroupSettlementRecord,
   type GroupSettlementResult,
@@ -63,6 +64,17 @@ export const getGroupExpenses = cache(async (businessId: string, filters: Expens
       headers,
       params: filters,
     });
+    return res.data;
+  } catch {
+    return [];
+  }
+});
+
+export const getGroupExpenseCategories = cache(async (businessId: string): Promise<GroupExpenseCategoryOption[]> => {
+  const headers = await authHeaders();
+  if (!headers) return [];
+  try {
+    const res = await axios.get<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, { headers });
     return res.data;
   } catch {
     return [];

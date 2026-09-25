@@ -88,6 +88,7 @@ const GROUP_EXPENSE_TABS: { label: string; tab: string }[] = [
   { label: "Members", tab: "members" },
   { label: "Contributions", tab: "contributions" },
   { label: "Expenses", tab: "expenses" },
+  { label: "Category", tab: "category" },
   { label: "Settlement", tab: "settlement" },
 ];
 

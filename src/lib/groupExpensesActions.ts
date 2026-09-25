@@ -7,6 +7,7 @@ import {
   type GroupContribution,
   type GroupExpense,
   type GroupExpenseCategory,
+  type GroupExpenseCategoryOption,
   type GroupMember,
   type GroupMemberStatus,
   type GroupSettlementRecord,
@@ -122,6 +123,54 @@ export async function deleteGroupContributionAction(businessId: string, id: stri
   return callApi(async () => {
     await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions/${id}`, { headers: await authHeaders() });
   }, "Failed to remove contribution");
+}
+
+// ---- Expense categories ----
+
+export async function getGroupExpenseCategoriesAction(businessId: string): Promise<ActionResult<GroupExpenseCategoryOption[]>> {
+  return callApi(async () => {
+    const res = await axios.get<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to load categories");
+}
+
+export interface GroupExpenseCategoryInput {
+  name: string;
+  icon?: string | null;
+  color: string;
+}
+
+export async function createGroupExpenseCategoryAction(
+  businessId: string,
+  input: GroupExpenseCategoryInput,
+): Promise<ActionResult<GroupExpenseCategoryOption>> {
+  return callApi(async () => {
+    const res = await axios.post<GroupExpenseCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to create category");
+}
+
+export async function updateGroupExpenseCategoryAction(
+  businessId: string,
+  id: string,
+  input: Partial<GroupExpenseCategoryInput>,
+): Promise<ActionResult<GroupExpenseCategoryOption>> {
+  return callApi(async () => {
+    const res = await axios.patch<GroupExpenseCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/${id}`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to update category");
+}
+
+export async function deleteGroupExpenseCategoryAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/${id}`, { headers: await authHeaders() });
+  }, "Failed to delete category");
 }
 
 // ---- Expenses ----
