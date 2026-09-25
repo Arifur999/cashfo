@@ -804,3 +804,16 @@ export interface GroupSettlementRecord {
   closedAt: string;
   members: GroupSettlementRecordMember[];
 }
+
+// "Month List" nav item -- every calendar month with any expense/
+// contribution activity, newest first, so a user can jump straight into a
+// past month's Settlement instead of hand-picking a date range there.
+export interface GroupMonthSummary {
+  key: string; // "YYYY-MM"
+  periodStart: string;
+  periodEnd: string;
+  totalExpense: string;
+  totalContributed: string;
+  status: "OPEN" | "CLOSED";
+  closedAt: string | null;
+}

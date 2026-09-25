@@ -10,6 +10,7 @@ import type {
   GroupExpenseCategoryOption,
   GroupMember,
   GroupMemberStatus,
+  GroupMonthSummary,
   GroupSettlementRecord,
   GroupSettlementResult,
 } from "@/lib/api";
@@ -40,9 +41,10 @@ interface GroupWorkspacePageClientProps {
   expenseCategories: GroupExpenseCategoryOption[];
   settlement: GroupSettlementResult;
   settlementHistory: GroupSettlementRecord[];
+  months: GroupMonthSummary[];
 }
 
-type Tab = "members" | "contributions" | "expenses" | "category" | "settlement";
+type Tab = "members" | "contributions" | "expenses" | "category" | "settlement" | "months";
 
 // Shared by Contributions/Expenses' filter bars -- a single compact preset
 // dropdown instead of always showing two DatePicker fields; "Custom Range"
@@ -106,6 +108,7 @@ export function GroupWorkspacePageClient({
   expenseCategories,
   settlement,
   settlementHistory,
+  months,
 }: GroupWorkspacePageClientProps) {
   const searchParams = useSearchParams();
   const { t } = useLocale();
@@ -128,6 +131,7 @@ export function GroupWorkspacePageClient({
       )}
       {tab === "category" && <CategorySection businessId={businessId} categories={expenseCategories} />}
       {tab === "settlement" && <SettlementSection businessId={businessId} settlement={settlement} settlementHistory={settlementHistory} />}
+      {tab === "months" && <MonthListSection businessId={businessId} months={months} />}
     </div>
   );
 }
@@ -984,6 +988,73 @@ function CategorySection({ businessId, categories }: { businessId: string; categ
         }
         confirmLabel={t("Delete")}
       />
+    </div>
+  );
+}
+
+function fmtMonth(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", timeZone: "UTC" });
+}
+
+// "Month List" nav item -- every calendar month with activity, newest
+// first, with a quick total + Open/Closed status. Clicking a row jumps
+// straight into Settlement pre-filtered to that month's date range instead
+// of making the user hand-pick it there.
+function MonthListSection({ businessId, months }: { businessId: string; months: GroupMonthSummary[] }) {
+  const router = useRouter();
+  const { t } = useLocale();
+
+  return (
+    <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+            <th className="px-4 py-3">#</th>
+            <th className="px-4 py-3">{t("Month")}</th>
+            <th className="px-4 py-3 text-right">{t("Total Expense")}</th>
+            <th className="px-4 py-3 text-right">{t("Total Contributed")}</th>
+            <th className="px-4 py-3">{t("Status")}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-neutral-50">
+          {months.length === 0 && (
+            <tr>
+              <td colSpan={5} className="px-4 py-10 text-center text-sm text-neutral-400">
+                {t("No activity yet.")}
+              </td>
+            </tr>
+          )}
+          {months.map((m, index) => {
+            const isClosed = m.status === "CLOSED";
+            const from = m.periodStart.slice(0, 10);
+            const to = m.periodEnd.slice(0, 10);
+            return (
+              <tr
+                key={m.key}
+                role="button"
+                tabIndex={0}
+                onClick={() => router.push(`/group-expenses/${businessId}?tab=settlement&from=${from}&to=${to}`)}
+                onKeyDown={(e) => e.key === "Enter" && router.push(`/group-expenses/${businessId}?tab=settlement&from=${from}&to=${to}`)}
+                className="cursor-pointer hover:bg-neutral-50/60"
+              >
+                <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
+                <td className="px-4 py-3 font-medium text-neutral-800">{fmtMonth(m.periodStart)}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(m.totalExpense, "BDT")}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(m.totalContributed, "BDT")}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide ${
+                      isClosed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {isClosed ? t("Closed") : t("Open")}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

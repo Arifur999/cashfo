@@ -16,6 +16,7 @@ export const groupExpensesDictionary: Record<string, string> = {
 
   // Sidebar.tsx
   "Group Expense": "গ্রুপ/মেস হিসাব",
+  "Month List": "মাসের তালিকা",
 
   // GroupWorkspaceListPageClient.tsx
   "Mess or joint-family shared expenses, split equally at month end.": "মেস বা যৌথ পরিবারের শেয়ার্ড খরচ, মাস শেষে সমান ভাগে ভাগ হবে।",
@@ -164,4 +165,11 @@ export const groupExpensesDictionary: Record<string, string> = {
   "This locks in the current numbers for this period as a permanent settlement record. Later edits to contributions/expenses in this range won't change it.":
     "এটি এই সময়কালের বর্তমান হিসাবকে স্থায়ী সেটেলমেন্ট রেকর্ড হিসেবে লক করে দেবে। পরে এই সময়সীমার মধ্যে জমা/খরচ পরিবর্তন করলেও এটি বদলাবে না।",
   Close: "ক্লোজ করুন",
+
+  // Month List tab
+  Month: "মাস",
+  "Total Contributed": "মোট জমা",
+  "No activity yet.": "এখনো কোনো কার্যক্রম নেই।",
+  Open: "খোলা",
+  Closed: "ক্লোজ করা",
 };

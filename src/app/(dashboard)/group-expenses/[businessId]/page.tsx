@@ -8,6 +8,7 @@ import {
   getGroupExpenseCategories,
   getGroupExpenses,
   getGroupMembers,
+  getGroupMonths,
   getGroupSettlement,
   getGroupSettlementHistory,
 } from "@/lib/groupExpenses";
@@ -43,6 +44,7 @@ export default async function GroupWorkspacePage({
   const expenseCategories = await getGroupExpenseCategories(businessId);
   const settlement = await getGroupSettlement(businessId, from, to);
   const settlementHistory = await getGroupSettlementHistory(businessId);
+  const months = await getGroupMonths(businessId);
 
   return (
     <GroupWorkspacePageClient
@@ -54,6 +56,7 @@ export default async function GroupWorkspacePage({
       expenseCategories={expenseCategories}
       settlement={settlement}
       settlementHistory={settlementHistory}
+      months={months}
     />
   );
 }

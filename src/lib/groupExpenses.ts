@@ -8,6 +8,7 @@ import {
   type GroupExpenseCategory,
   type GroupExpenseCategoryOption,
   type GroupMember,
+  type GroupMonthSummary,
   type GroupSettlementRecord,
   type GroupSettlementResult,
 } from "./api";
@@ -109,6 +110,17 @@ export const getGroupSettlementHistory = cache(async (businessId: string): Promi
   if (!headers) return [];
   try {
     const res = await axios.get<GroupSettlementRecord[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/history`, { headers });
+    return res.data;
+  } catch {
+    return [];
+  }
+});
+
+export const getGroupMonths = cache(async (businessId: string): Promise<GroupMonthSummary[]> => {
+  const headers = await authHeaders();
+  if (!headers) return [];
+  try {
+    const res = await axios.get<GroupMonthSummary[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/months`, { headers });
     return res.data;
   } catch {
     return [];
