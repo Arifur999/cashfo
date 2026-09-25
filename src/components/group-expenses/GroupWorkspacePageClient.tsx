@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import type {
+  CategoryBreakdown,
   GroupContribution,
   GroupExpense,
   GroupExpenseCategoryOption,
@@ -28,6 +29,7 @@ import {
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { CategoryDonutCard } from "@/components/reports/CategoryDonutCard";
 import { AddContributionModal } from "./AddContributionModal";
 import { AddExpenseModal } from "./AddExpenseModal";
 import { AddMonthBudgetModal } from "./AddMonthBudgetModal";
@@ -127,7 +129,14 @@ export function GroupWorkspacePageClient({
           already renders these same tabs as a submenu once a specific
           workspace is open, so a second copy here would be redundant. */}
       {tab === "dashboard" && (
-        <DashboardSection businessId={businessId} members={members} contributions={contributions} expenses={expenses} settlement={settlement} />
+        <DashboardSection
+          businessId={businessId}
+          members={members}
+          contributions={contributions}
+          expenses={expenses}
+          expenseCategories={expenseCategories}
+          settlement={settlement}
+        />
       )}
       {tab === "members" && <MembersSection businessId={businessId} members={members} />}
       {tab === "contributions" && <ContributionsSection businessId={businessId} members={members} contributions={contributions} />}
@@ -153,12 +162,14 @@ function DashboardSection({
   members,
   contributions,
   expenses,
+  expenseCategories,
   settlement,
 }: {
   businessId: string;
   members: GroupMember[];
   contributions: GroupContribution[];
   expenses: GroupExpense[];
+  expenseCategories: GroupExpenseCategoryOption[];
   settlement: GroupSettlementResult;
 }) {
   const router = useRouter();
@@ -173,6 +184,32 @@ function DashboardSection({
   ]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 6);
+
+  // Expense-by-category donut -- scoped to the same current-month period as
+  // `settlement` (not all-time) so its total matches the "Total Expense"
+  // stat card above. Computed client-side from data already fetched for
+  // other tabs rather than a new backend endpoint; colors come from
+  // expenseCategories' own list (a deleted/renamed category just falls back
+  // to a neutral color, same "loose string" reasoning as elsewhere).
+  const colorByCategory = new Map(expenseCategories.map((c) => [c.name, c.color]));
+  const totalsByCategory = new Map<string, number>();
+  for (const e of expenses) {
+    if (e.date < settlement.periodStart || e.date > settlement.periodEnd) continue;
+    totalsByCategory.set(e.category, (totalsByCategory.get(e.category) ?? 0) + Number(e.amount));
+  }
+  const monthExpenseTotal = Number(settlement.totalExpense);
+  const expenseBreakdown: CategoryBreakdown = {
+    type: "EXPENSE",
+    total: settlement.totalExpense,
+    categories: Array.from(totalsByCategory.entries())
+      .map(([name, amount]) => ({
+        name,
+        amount: amount.toFixed(2),
+        percent: monthExpenseTotal > 0 ? Math.round((amount / monthExpenseTotal) * 100) : 0,
+        color: colorByCategory.get(name) ?? "indigo",
+      }))
+      .sort((a, b) => Number(b.amount) - Number(a.amount)),
+  };
 
   return (
     <div className="space-y-6">
@@ -192,6 +229,38 @@ function DashboardSection({
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs text-neutral-500">{t("Per-Member Share")}</p>
           <p className="mt-1 text-lg font-semibold text-neutral-900">{formatCurrency(settlement.perMemberShare, "BDT")}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <CategoryDonutCard title="Expense by Category" breakdown={expenseBreakdown} currency="BDT" totalLabel="Total Expense" />
+
+        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
+          <h2 className="mb-4 text-sm font-semibold text-neutral-900">{t("Members Balance")}</h2>
+          {settlement.members.length === 0 ? (
+            <p className="py-4 text-center text-sm text-neutral-400">{t("No active members for this period.")}</p>
+          ) : (
+            <div className="space-y-3">
+              {settlement.members.map((m) => {
+                const balance = Number(m.balance);
+                return (
+                  <div key={m.groupMemberId} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-neutral-800">{m.name}</p>
+                      <p className="text-xs text-neutral-400">
+                        {t("Contributed")}: {formatCurrency(m.contributed, "BDT")}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 text-right text-sm font-semibold tabular-nums ${balance >= 0 ? "text-emerald-600" : "text-brand-danger"}`}>
+                      {balance >= 0 ? t("Extra") : t("Owes")}
+                      <br />
+                      {formatCurrency(Math.abs(balance), "BDT")}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
