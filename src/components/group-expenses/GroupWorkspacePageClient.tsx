@@ -32,13 +32,6 @@ interface GroupWorkspacePageClientProps {
 
 type Tab = "members" | "contributions" | "expenses" | "settlement";
 
-const TABS: { value: Tab; label: string }[] = [
-  { value: "members", label: "Members" },
-  { value: "contributions", label: "Contributions" },
-  { value: "expenses", label: "Expenses" },
-  { value: "settlement", label: "Settlement" },
-];
-
 const CATEGORY_LABELS: Record<string, string> = {
   GROCERY: "Grocery / Bazar",
   RENT: "Rent",
@@ -59,14 +52,9 @@ export function GroupWorkspacePageClient({
   settlement,
   settlementHistory,
 }: GroupWorkspacePageClientProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
   const tab = (searchParams.get("tab") as Tab | null) ?? "members";
-
-  function setTab(next: Tab) {
-    router.push(`/group-expenses/${businessId}?tab=${next}`);
-  }
 
   return (
     <div className="h-full bg-brand-content px-6 py-8 pb-24 md:pb-8">
@@ -75,21 +63,9 @@ export function GroupWorkspacePageClient({
         <p className="mt-1 text-sm text-neutral-500">{t("Group / Mess Workspace")}</p>
       </div>
 
-      <div className="mb-6 flex w-fit gap-1 rounded-xl bg-neutral-100 p-1">
-        {TABS.map((tabDef) => (
-          <button
-            key={tabDef.value}
-            type="button"
-            onClick={() => setTab(tabDef.value)}
-            className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              tab === tabDef.value ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
-            }`}
-          >
-            {t(tabDef.label)}
-          </button>
-        ))}
-      </div>
-
+      {/* No in-page tab bar here -- Sidebar.tsx's GroupExpenseNavItem
+          already renders these same four tabs as a submenu once a specific
+          workspace is open, so a second copy here would be redundant. */}
       {tab === "members" && <MembersSection businessId={businessId} members={members} />}
       {tab === "contributions" && <ContributionsSection businessId={businessId} members={members} contributions={contributions} />}
       {tab === "expenses" && <ExpensesSection businessId={businessId} members={members} expenses={expenses} />}
