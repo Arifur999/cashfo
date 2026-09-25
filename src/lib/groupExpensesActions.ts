@@ -39,17 +39,40 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 
 // ---- Members ----
 
-export async function createGroupMemberAction(businessId: string, input: { name: string; phone?: string }): Promise<ActionResult<GroupMember>> {
+export async function createGroupMemberAction(
+  businessId: string,
+  input: { name: string; phone?: string; photoUrl?: string },
+): Promise<ActionResult<GroupMember>> {
   return callApi(async () => {
     const res = await axios.post<GroupMember>(`${API_BASE_URL}/api/businesses/${businessId}/group/members`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add member");
 }
 
+// Same "upload before the record exists" shape as contactActions.ts's
+// uploadContactPhotoAction -- uses fetch (not axios) so FormData's own
+// browser-set multipart Content-Type boundary isn't overridden.
+export async function uploadGroupMemberPhotoAction(businessId: string, formData: FormData): Promise<ActionResult<{ url: string }>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/businesses/${businessId}/group/members/upload-photo`, {
+      method: "POST",
+      headers: await authHeaders(),
+      body: formData,
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      return { success: false, message: getApiErrorMessage(body, "Failed to upload photo") };
+    }
+    return { success: true, data: await response.json() };
+  } catch {
+    return { success: false, message: "Failed to upload photo" };
+  }
+}
+
 export async function updateGroupMemberAction(
   businessId: string,
   memberId: string,
-  input: { name?: string; phone?: string; status?: GroupMemberStatus },
+  input: { name?: string; phone?: string; photoUrl?: string; status?: GroupMemberStatus },
 ): Promise<ActionResult<GroupMember>> {
   return callApi(async () => {
     const res = await axios.patch<GroupMember>(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}`, input, {

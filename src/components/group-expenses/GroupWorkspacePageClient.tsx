@@ -178,8 +178,13 @@ function MembersSection({ businessId, members }: { businessId: string; members: 
                     <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-400">
-                          <CircleUserRound className="h-5 w-5" />
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-neutral-400">
+                          {member.photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={member.photoUrl} alt={member.name} className="h-8 w-8 object-cover" />
+                          ) : (
+                            <CircleUserRound className="h-5 w-5" />
+                          )}
                         </div>
                         <span className={`font-medium text-neutral-800 ${isArchived ? "line-through opacity-60" : ""}`}>{member.name}</span>
                       </div>

@@ -60,6 +60,11 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Member added": "সদস্য যোগ হয়েছে",
   "Failed to save member": "সদস্য সংরক্ষণ করতে ব্যর্থ হয়েছে",
   "e.g. Rahim": "যেমন: রহিম",
+  Photo: "ছবি",
+  "Upload Photo": "ছবি আপলোড করুন",
+  "Change Photo": "ছবি পরিবর্তন করুন",
+  "Remove photo": "ছবি সরান",
+  "Failed to upload photo": "ছবি আপলোড করতে ব্যর্থ হয়েছে",
 
   // Contributions tab
   "Add Contribution": "জমা যোগ করুন",

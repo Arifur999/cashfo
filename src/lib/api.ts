@@ -714,6 +714,7 @@ export interface GroupMember {
   businessId: string;
   name: string;
   phone: string | null;
+  photoUrl: string | null;
   status: GroupMemberStatus;
   createdAt: string;
   updatedAt: string;
