@@ -427,10 +427,10 @@ function ContributionsSection({ businessId, members, contributions }: { business
             <thead>
               <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
                 <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">{t("Member")}</th>
                 <th className="px-4 py-3">{t("Date")}</th>
-                <th className="px-4 py-3">{t("Note")}</th>
+                <th className="px-4 py-3">{t("Member")}</th>
                 <th className="px-4 py-3 text-right">{t("Amount")}</th>
+                <th className="px-4 py-3">{t("Note")}</th>
                 <th className="px-4 py-3 text-right">{t("Actions")}</th>
               </tr>
             </thead>
@@ -438,10 +438,10 @@ function ContributionsSection({ businessId, members, contributions }: { business
               {contributions.map((c, index) => (
                 <tr key={c.id}>
                   <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
-                  <td className="px-4 py-3 font-medium text-neutral-800">{c.groupMember.name}</td>
                   <td className="px-4 py-3 text-neutral-500">{fmtDate(c.date)}</td>
-                  <td className="px-4 py-3 text-neutral-500">{c.note ?? "--"}</td>
+                  <td className="px-4 py-3 font-medium text-neutral-800">{c.groupMember.name}</td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums text-brand-primary">{formatCurrency(c.amount, "BDT")}</td>
+                  <td className="px-4 py-3 text-neutral-500">{c.note ?? "--"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
