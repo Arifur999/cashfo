@@ -81,6 +81,10 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
     <Modal open={open} onClose={onClose} title={editingContribution ? t("Edit Contribution") : t("Add Contribution")}>
       <div className="space-y-4">
         <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
+          <DatePicker value={date} onChange={setDate} />
+        </div>
+        <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Member")}</label>
           <select
             value={groupMemberId}
@@ -106,10 +110,6 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
             placeholder="0.00"
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
-          <DatePicker value={date} onChange={setDate} />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
