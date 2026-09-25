@@ -340,23 +340,23 @@ interface MonthlyBreakdownPoint {
   actualExpense: number;
 }
 
-const MONTHLY_CHART_MAX_HEIGHT = 110;
+const MONTHLY_CHART_MAX_HEIGHT = 220;
 
 // Hand-rolled grouped bar chart, same "no charting library" convention as
 // IncomeVsSavingsChart.tsx -- two bars per month (Actual Expense, Budget),
 // scaled against the single largest value across all 12 months so bars
-// stay comparable month to month. Sized to sit side by side with
-// MonthlyBreakdownTable in a 2-column grid, so it's deliberately more
-// compact than IncomeVsSavingsChart's own full-width version.
+// stay comparable month to month. Sits side by side with
+// MonthlyBreakdownTable in a 2-column grid, but sized larger/taller than
+// that table for readability -- the grid row just stretches to fit it.
 function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
   const { t } = useLocale();
   const maxValue = Math.max(1, ...points.flatMap((p) => [p.actualExpense, p.budget]));
 
   return (
-    <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-neutral-900">{t("Monthly Budget vs Expense")}</h2>
-        <div className="flex items-center gap-3 text-xs text-neutral-500">
+        <div className="flex items-center gap-4 text-xs text-neutral-500">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-brand-danger" /> {t("Actual Expense")}
           </span>
@@ -367,25 +367,25 @@ function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="flex min-w-[420px] items-end gap-1.5" style={{ height: MONTHLY_CHART_MAX_HEIGHT + 28 }}>
+        <div className="flex min-w-[560px] items-end gap-3" style={{ height: MONTHLY_CHART_MAX_HEIGHT + 32 }}>
           {points.map((p) => {
             const expenseHeight = Math.round((p.actualExpense / maxValue) * MONTHLY_CHART_MAX_HEIGHT);
             const budgetHeight = Math.round((p.budget / maxValue) * MONTHLY_CHART_MAX_HEIGHT);
             return (
-              <div key={p.month} className="flex flex-1 flex-col items-center justify-end gap-1">
-                <div className="flex items-end gap-0.5" style={{ height: MONTHLY_CHART_MAX_HEIGHT }}>
+              <div key={p.month} className="flex flex-1 flex-col items-center justify-end gap-1.5">
+                <div className="flex items-end gap-1" style={{ height: MONTHLY_CHART_MAX_HEIGHT }}>
                   <div
                     title={`${t("Actual Expense")}: ${formatCurrency(p.actualExpense, "BDT")}`}
-                    className="w-2 rounded-t-sm bg-brand-danger sm:w-3"
+                    className="w-3 rounded-t-sm bg-brand-danger sm:w-5"
                     style={{ height: Math.max(2, expenseHeight) }}
                   />
                   <div
                     title={`${t("Budget")}: ${formatCurrency(p.budget, "BDT")}`}
-                    className="w-2 rounded-t-sm bg-brand-primary/50 sm:w-3"
+                    className="w-3 rounded-t-sm bg-brand-primary/50 sm:w-5"
                     style={{ height: Math.max(2, budgetHeight) }}
                   />
                 </div>
-                <span className="whitespace-nowrap text-[10px] text-neutral-400">{t(MONTH_LABELS[p.month - 1])}</span>
+                <span className="whitespace-nowrap text-xs text-neutral-400">{t(MONTH_LABELS[p.month - 1])}</span>
               </div>
             );
           })}
