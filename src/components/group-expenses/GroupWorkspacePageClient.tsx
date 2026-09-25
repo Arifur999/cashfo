@@ -315,8 +315,12 @@ function DashboardSection({
         </div>
       </div>
 
-      {dashRange === "year" && <MonthlyBudgetChart points={monthlyBreakdown} />}
-      {dashRange === "year" && <MonthlyBreakdownTable points={monthlyBreakdown} />}
+      {dashRange === "year" && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <MonthlyBudgetChart points={monthlyBreakdown} />
+          <MonthlyBreakdownTable points={monthlyBreakdown} />
+        </div>
+      )}
     </div>
   );
 }
@@ -342,21 +346,23 @@ interface MonthlyBreakdownPoint {
   actualExpense: number;
 }
 
-const MONTHLY_CHART_MAX_HEIGHT = 160;
+const MONTHLY_CHART_MAX_HEIGHT = 110;
 
 // Hand-rolled grouped bar chart, same "no charting library" convention as
 // IncomeVsSavingsChart.tsx -- two bars per month (Actual Expense, Budget),
 // scaled against the single largest value across all 12 months so bars
-// stay comparable month to month.
+// stay comparable month to month. Sized to sit side by side with
+// MonthlyBreakdownTable in a 2-column grid, so it's deliberately more
+// compact than IncomeVsSavingsChart's own full-width version.
 function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
   const { t } = useLocale();
   const maxValue = Math.max(1, ...points.flatMap((p) => [p.actualExpense, p.budget]));
 
   return (
-    <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+      <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-neutral-900">{t("Monthly Budget vs Expense")}</h2>
-        <div className="flex items-center gap-4 text-xs text-neutral-500">
+        <div className="flex items-center gap-3 text-xs text-neutral-500">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-brand-danger" /> {t("Actual Expense")}
           </span>
@@ -367,25 +373,25 @@ function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="flex min-w-[640px] items-end gap-3" style={{ height: MONTHLY_CHART_MAX_HEIGHT + 32 }}>
+        <div className="flex min-w-[420px] items-end gap-1.5" style={{ height: MONTHLY_CHART_MAX_HEIGHT + 28 }}>
           {points.map((p) => {
             const expenseHeight = Math.round((p.actualExpense / maxValue) * MONTHLY_CHART_MAX_HEIGHT);
             const budgetHeight = Math.round((p.budget / maxValue) * MONTHLY_CHART_MAX_HEIGHT);
             return (
-              <div key={p.month} className="flex flex-1 flex-col items-center justify-end gap-1.5">
-                <div className="flex items-end gap-1" style={{ height: MONTHLY_CHART_MAX_HEIGHT }}>
+              <div key={p.month} className="flex flex-1 flex-col items-center justify-end gap-1">
+                <div className="flex items-end gap-0.5" style={{ height: MONTHLY_CHART_MAX_HEIGHT }}>
                   <div
                     title={`${t("Actual Expense")}: ${formatCurrency(p.actualExpense, "BDT")}`}
-                    className="w-3 rounded-t-sm bg-brand-danger sm:w-5"
+                    className="w-2 rounded-t-sm bg-brand-danger sm:w-3"
                     style={{ height: Math.max(2, expenseHeight) }}
                   />
                   <div
                     title={`${t("Budget")}: ${formatCurrency(p.budget, "BDT")}`}
-                    className="w-3 rounded-t-sm bg-brand-primary/50 sm:w-5"
+                    className="w-2 rounded-t-sm bg-brand-primary/50 sm:w-3"
                     style={{ height: Math.max(2, budgetHeight) }}
                   />
                 </div>
-                <span className="whitespace-nowrap text-xs text-neutral-400">{t(MONTH_LABELS[p.month - 1])}</span>
+                <span className="whitespace-nowrap text-[10px] text-neutral-400">{t(MONTH_LABELS[p.month - 1])}</span>
               </div>
             );
           })}
@@ -400,15 +406,15 @@ function MonthlyBreakdownTable({ points }: { points: MonthlyBreakdownPoint[] }) 
 
   return (
     <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-      <h2 className="p-5 pb-0 text-sm font-semibold text-neutral-900">{t("Monthly Breakdown")}</h2>
-      <div className="overflow-x-auto">
-        <table className="mt-4 w-full text-left text-sm">
+      <h2 className="p-4 pb-0 text-sm font-semibold text-neutral-900">{t("Monthly Breakdown")}</h2>
+      <div className="max-h-[248px] overflow-y-auto overflow-x-auto">
+        <table className="mt-3 w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-neutral-100 text-xs text-neutral-500">
-              <th className="px-5 py-2.5 font-medium">{t("Month")}</th>
-              <th className="px-5 py-2.5 font-medium">{t("Budget")}</th>
-              <th className="px-5 py-2.5 font-medium">{t("Actual Expense")}</th>
-              <th className="px-5 py-2.5 font-medium">%</th>
+            <tr className="border-b border-neutral-100 text-[11px] text-neutral-500">
+              <th className="px-3 py-2 font-medium">{t("Month")}</th>
+              <th className="px-3 py-2 font-medium">{t("Budget")}</th>
+              <th className="px-3 py-2 font-medium">{t("Actual Expense")}</th>
+              <th className="px-3 py-2 font-medium">%</th>
             </tr>
           </thead>
           <tbody>
@@ -421,10 +427,10 @@ function MonthlyBreakdownTable({ points }: { points: MonthlyBreakdownPoint[] }) 
               const pctChange = prev && prev.actualExpense > 0 ? ((p.actualExpense - prev.actualExpense) / prev.actualExpense) * 100 : null;
               return (
                 <tr key={p.month} className="border-b border-neutral-50 last:border-0">
-                  <td className="px-5 py-2.5 text-neutral-800">{t(MONTH_LABELS[p.month - 1])}</td>
-                  <td className="px-5 py-2.5 text-neutral-600">{p.budget > 0 ? formatCurrency(p.budget, "BDT") : "--"}</td>
-                  <td className="px-5 py-2.5 text-brand-danger">{formatCurrency(p.actualExpense, "BDT")}</td>
-                  <td className={`px-5 py-2.5 font-medium ${pctChange === null ? "text-neutral-400" : pctChange > 0 ? "text-brand-danger" : pctChange < 0 ? "text-emerald-600" : "text-neutral-500"}`}>
+                  <td className="px-3 py-2 text-neutral-800">{t(MONTH_LABELS[p.month - 1])}</td>
+                  <td className="px-3 py-2 text-neutral-600">{p.budget > 0 ? formatCurrency(p.budget, "BDT") : "--"}</td>
+                  <td className="px-3 py-2 text-brand-danger">{formatCurrency(p.actualExpense, "BDT")}</td>
+                  <td className={`px-3 py-2 font-medium ${pctChange === null ? "text-neutral-400" : pctChange > 0 ? "text-brand-danger" : pctChange < 0 ? "text-emerald-600" : "text-neutral-500"}`}>
                     {pctChange === null ? "--" : `${pctChange > 0 ? "+" : ""}${pctChange.toFixed(1)}%`}
                   </td>
                 </tr>
