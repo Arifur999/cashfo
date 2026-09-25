@@ -8,11 +8,18 @@ import type {
   GroupContribution,
   GroupExpense,
   GroupMember,
+  GroupMemberStatus,
   GroupSettlementRecord,
   GroupSettlementResult,
 } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
-import { closeGroupSettlementAction, deleteGroupContributionAction, deleteGroupExpenseAction, deleteGroupMemberAction } from "@/lib/groupExpensesActions";
+import {
+  closeGroupSettlementAction,
+  deleteGroupContributionAction,
+  deleteGroupExpenseAction,
+  deleteGroupMemberAction,
+  updateGroupMemberAction,
+} from "@/lib/groupExpensesActions";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -80,7 +87,15 @@ function MembersSection({ businessId, members }: { businessId: string; members: 
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<GroupMember | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<GroupMember | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"" | GroupMemberStatus>("");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // Filtered client-side, not via a URL param like Contributions/Expenses --
+  // `members` here is the SAME full list the Contribution/Expense modals
+  // need for their member pickers, so filtering it upstream in page.tsx
+  // would wrongly hide archived members from those too.
+  const visibleMembers = statusFilter ? members.filter((m) => m.status === statusFilter) : members;
 
   function handleDelete() {
     if (!deleteTarget) return;
@@ -97,9 +112,40 @@ function MembersSection({ businessId, members }: { businessId: string; members: 
     });
   }
 
+  // One-click toggle, separate from the Edit modal -- Active <-> Archived is
+  // the one field a user needs to flip often (e.g. a roommate moves out mid-
+  // month, or comes back), unlike name/phone which rarely change.
+  function toggleStatus(member: GroupMember) {
+    const nextStatus: GroupMemberStatus = member.status === "ACTIVE" ? "ARCHIVED" : "ACTIVE";
+    setTogglingId(member.id);
+    startTransition(async () => {
+      const result = await updateGroupMemberAction(businessId, member.id, { status: nextStatus });
+      if (result.success) {
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to update member"));
+      }
+      setTogglingId(null);
+    });
+  }
+
   return (
     <div>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="flex items-end gap-3 rounded-2xl bg-surface p-3 shadow-sm shadow-black/5">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Status")}</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as "" | GroupMemberStatus)}
+              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+            >
+              <option value="">{t("All")}</option>
+              <option value="ACTIVE">{t("Active")}</option>
+              <option value="ARCHIVED">{t("Archived")}</option>
+            </select>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => {
@@ -113,53 +159,76 @@ function MembersSection({ businessId, members }: { businessId: string; members: 
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        {members.length === 0 && <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No members yet.")}</p>}
-        <div className="divide-y divide-neutral-50">
-          {members.map((member) => {
-            const isArchived = member.status === "ARCHIVED";
-            return (
-              <div key={member.id} className={`flex items-center gap-3 px-4 py-3 ${isArchived ? "opacity-60" : ""}`}>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-400">
-                  <CircleUserRound className="h-6 w-6" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`truncate text-sm font-medium text-neutral-800 ${isArchived ? "line-through" : ""}`}>{member.name}</p>
-                  <p className="text-xs text-neutral-400">
-                    {member.phone ?? t("No phone number")}
-                    {isArchived && (
-                      <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-                        {t("Archived")}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                {!isArchived && (
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingMember(member);
-                        setFormOpen(true);
-                      }}
-                      title={t("Edit")}
-                      className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(member)}
-                      title={t("Remove")}
-                      className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {visibleMembers.length === 0 ? (
+          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No members yet.")}</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+                <th className="px-4 py-3">#</th>
+                <th className="px-4 py-3">{t("Member")}</th>
+                <th className="px-4 py-3">{t("Phone")}</th>
+                <th className="px-4 py-3">{t("Status")}</th>
+                <th className="px-4 py-3 text-right">{t("Actions")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-50">
+              {visibleMembers.map((member, index) => {
+                const isArchived = member.status === "ARCHIVED";
+                return (
+                  <tr key={member.id}>
+                    <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-400">
+                          <CircleUserRound className="h-5 w-5" />
+                        </div>
+                        <span className={`font-medium text-neutral-800 ${isArchived ? "line-through opacity-60" : ""}`}>{member.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-neutral-500">{member.phone ?? t("No phone number")}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(member)}
+                        disabled={togglingId === member.id}
+                        title={t("Click to toggle")}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                          isArchived ? "bg-neutral-100 text-neutral-500 hover:bg-neutral-200" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                        }`}
+                      >
+                        {isArchived ? t("Archived") : t("Active")}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingMember(member);
+                            setFormOpen(true);
+                          }}
+                          title={t("Edit")}
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(member)}
+                          title={t("Remove")}
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <GroupMemberFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingMember={editingMember} />
