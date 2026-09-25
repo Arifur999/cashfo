@@ -85,6 +85,7 @@ const BOTTOM_NAV_ITEMS = [
 // Sub-items are ?tab= query values on the SAME /group-expenses/[businessId]
 // route, not separate pages -- see GroupWorkspacePageClient.tsx's tab shell.
 const GROUP_EXPENSE_TABS: { label: string; tab: string }[] = [
+  { label: "Dashboard", tab: "dashboard" },
   { label: "Members", tab: "members" },
   { label: "Contributions", tab: "contributions" },
   { label: "Expenses", tab: "expenses" },
@@ -276,7 +277,7 @@ function GroupExpenseNavItem() {
     return <NavLink item={{ label: "Group Expense", href: "/group-expenses", icon: Users }} isActive={isActive} />;
   }
 
-  const currentTab = searchParams.get("tab") ?? "members";
+  const currentTab = searchParams.get("tab") ?? "dashboard";
 
   return (
     <>
