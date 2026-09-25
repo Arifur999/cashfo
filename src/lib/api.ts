@@ -4,7 +4,7 @@
 export const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:5000";
 
 export type LanguagePreference = "EN" | "BN";
-export type WorkspaceType = "PERSONAL" | "BUSINESS";
+export type WorkspaceType = "PERSONAL" | "BUSINESS" | "GROUP";
 export type MemberRole = "OWNER" | "ACCOUNTANT" | "STAFF";
 
 export interface AuthUser {
@@ -696,4 +696,88 @@ export interface ReferralInfo {
   referralCount: number;
   rewardAmountPerReferral: string;
   recentReferrals: ReferralEntry[];
+}
+
+// "Group Expense" (মেস/যৌথ হিসাব) -- a GROUP-type workspace for a mess or
+// joint family splitting shared costs equally. Deliberately NOT wired into
+// the "active workspace" switcher (see lib/activeBusiness.ts's comment on
+// why multi-workspace switching was removed): every page under
+// /group-expenses/[businessId] takes the businessId straight from the URL
+// instead, so a user can have their one normal Personal/Business workspace
+// AND any number of Group workspaces (this year's mess, a joint family
+// ledger, ...) all reachable side by side.
+export type GroupMemberStatus = "ACTIVE" | "ARCHIVED";
+export type GroupExpenseCategory = "GROCERY" | "RENT" | "UTILITY" | "OTHER";
+
+export interface GroupMember {
+  id: string;
+  businessId: string;
+  name: string;
+  phone: string | null;
+  status: GroupMemberStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GroupContribution {
+  id: string;
+  businessId: string;
+  groupMemberId: string;
+  amount: string;
+  date: string;
+  note: string | null;
+  createdAt: string;
+  groupMember: GroupMember;
+}
+
+export interface GroupExpense {
+  id: string;
+  businessId: string;
+  amount: string;
+  date: string;
+  category: GroupExpenseCategory;
+  description: string | null;
+  paidByMemberId: string | null;
+  paidByMember: GroupMember | null;
+  createdAt: string;
+}
+
+export interface GroupSettlementMemberRow {
+  groupMemberId: string;
+  name: string;
+  contributed: string;
+  share: string;
+  balance: string;
+}
+
+export interface GroupSettlementResult {
+  periodStart: string;
+  periodEnd: string;
+  totalExpense: string;
+  memberCount: number;
+  perMemberShare: string;
+  members: GroupSettlementMemberRow[];
+}
+
+export interface GroupSettlementRecordMember {
+  id: string;
+  settlementId: string;
+  groupMemberId: string;
+  contributed: string;
+  share: string;
+  balance: string;
+  groupMember: GroupMember;
+}
+
+export interface GroupSettlementRecord {
+  id: string;
+  businessId: string;
+  periodStart: string;
+  periodEnd: string;
+  totalExpense: string;
+  memberCount: number;
+  perMemberShare: string;
+  closedBy: string;
+  closedAt: string;
+  members: GroupSettlementRecordMember[];
 }

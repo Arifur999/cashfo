@@ -1,0 +1,114 @@
+// Bangla translations for: /group-expenses, /group-expenses/[businessId],
+// and their components under src/components/group-expenses/.
+export const groupExpensesDictionary: Record<string, string> = {
+  // Common labels reused across every modal/list in this feature area --
+  // not in dictionary/shared.ts, so defined here scoped to this area only.
+  Add: "যোগ করুন",
+  Cancel: "বাতিল",
+  Delete: "মুছুন",
+  Edit: "সম্পাদনা",
+  Remove: "সরান",
+  Name: "নাম",
+  Phone: "ফোন",
+  "(optional)": "(ঐচ্ছিক)",
+  Archived: "আর্কাইভ করা",
+  "This cannot be undone.": "এটি পূর্বাবস্থায় ফেরানো যাবে না।",
+
+  // Sidebar.tsx
+  "Group Expense": "গ্রুপ/মেস হিসাব",
+
+  // GroupWorkspaceListPageClient.tsx
+  "Mess or joint-family shared expenses, split equally at month end.": "মেস বা যৌথ পরিবারের শেয়ার্ড খরচ, মাস শেষে সমান ভাগে ভাগ হবে।",
+  "New Group / Mess": "নতুন গ্রুপ/মেস",
+  "No group/mess workspaces yet.": "এখনো কোনো গ্রুপ/মেস ওয়ার্কস্পেস নেই।",
+  "Group / Mess Workspace": "গ্রুপ/মেস ওয়ার্কস্পেস",
+  "Group workspace deleted": "গ্রুপ ওয়ার্কস্পেস মুছে ফেলা হয়েছে",
+  "Failed to delete group workspace": "গ্রুপ ওয়ার্কস্পেস মুছতে ব্যর্থ হয়েছে",
+  "Delete Group Workspace": "গ্রুপ ওয়ার্কস্পেস মুছুন",
+
+  // CreateGroupWorkspaceModal.tsx
+  "New Group / Mess Workspace": "নতুন গ্রুপ/মেস ওয়ার্কস্পেস",
+  "e.g. আমাদের মেস, বাসা ৩২": "যেমন: আমাদের মেস, বাসা ৩২",
+  "Members you add here don't need their own login -- you record contributions and expenses on their behalf.":
+    "এখানে যোগ করা সদস্যদের নিজস্ব লগইনের প্রয়োজন নেই -- আপনি তাদের পক্ষে জমা ও খরচ রেকর্ড করবেন।",
+  "Group workspace created": "গ্রুপ ওয়ার্কস্পেস তৈরি হয়েছে",
+  "Failed to create group workspace": "গ্রুপ ওয়ার্কস্পেস তৈরি করতে ব্যর্থ হয়েছে",
+
+  // GroupWorkspacePageClient.tsx -- tabs
+  Members: "সদস্যরা",
+  Contributions: "জমা",
+  Expenses: "খরচ",
+  Settlement: "সেটেলমেন্ট",
+
+  // Members tab
+  "Add Member": "সদস্য যোগ করুন",
+  "No members yet.": "এখনো কোনো সদস্য নেই।",
+  "No phone number": "ফোন নম্বর নেই",
+  "This member has history, so they were archived instead": "এই সদস্যের হিস্টরি আছে, তাই তাকে আর্কাইভ করা হয়েছে",
+  "Member removed": "সদস্য সরানো হয়েছে",
+  "Failed to remove member": "সদস্য সরাতে ব্যর্থ হয়েছে",
+  "Remove Member": "সদস্য সরান",
+  "If they have no contribution/expense history, they'll be permanently deleted; otherwise archived instead.":
+    "যদি তার কোনো জমা/খরচের হিস্টরি না থাকে, তাকে স্থায়ীভাবে মুছে ফেলা হবে; নাহলে আর্কাইভ করা হবে।",
+  "Edit Member": "সদস্য সম্পাদনা করুন",
+  "Member updated": "সদস্য আপডেট হয়েছে",
+  "Member added": "সদস্য যোগ হয়েছে",
+  "Failed to save member": "সদস্য সংরক্ষণ করতে ব্যর্থ হয়েছে",
+  "e.g. Rahim": "যেমন: রহিম",
+
+  // Contributions tab
+  "Add Contribution": "জমা যোগ করুন",
+  "No contributions yet.": "এখনো কোনো জমা নেই।",
+  "Contribution removed": "জমা সরানো হয়েছে",
+  "Failed to remove contribution": "জমা সরাতে ব্যর্থ হয়েছে",
+  "Remove Contribution": "জমা সরান",
+  "This will permanently remove this contribution entry.": "এটি এই জমার এন্ট্রি স্থায়ীভাবে মুছে ফেলবে।",
+  Member: "সদস্য",
+  "Add a member first": "প্রথমে একজন সদস্য যোগ করুন",
+  Amount: "পরিমাণ",
+  Date: "তারিখ",
+  Note: "নোট",
+  "Contribution added": "জমা যোগ হয়েছে",
+  "Failed to add contribution": "জমা যোগ করতে ব্যর্থ হয়েছে",
+
+  // Expenses tab
+  "Add Expense": "খরচ যোগ করুন",
+  "No expenses yet.": "এখনো কোনো খরচ নেই।",
+  "Expense removed": "খরচ সরানো হয়েছে",
+  "Failed to remove expense": "খরচ সরাতে ব্যর্থ হয়েছে",
+  "Remove Expense": "খরচ সরান",
+  "This will permanently remove this expense entry.": "এটি এই খরচের এন্ট্রি স্থায়ীভাবে মুছে ফেলবে।",
+  Category: "খাত",
+  "Grocery / Bazar": "বাজার/মুদি",
+  Rent: "ভাড়া",
+  Utility: "বিল",
+  Other: "অন্যান্য",
+  "Paid by": "পরিশোধ করেছেন",
+  "Not tracked": "রেকর্ড করা হয়নি",
+  "Informational only -- the expense is still split equally among all members.":
+    "শুধু তথ্যের জন্য -- খরচটি সব সদস্যের মধ্যে সমানভাবেই ভাগ হবে।",
+  Description: "বিবরণ",
+  "e.g. Weekly bazar": "যেমন: সাপ্তাহিক বাজার",
+  "Expense added": "খরচ যোগ হয়েছে",
+  "Failed to add expense": "খরচ যোগ করতে ব্যর্থ হয়েছে",
+
+  // Settlement tab
+  From: "থেকে",
+  To: "পর্যন্ত",
+  Apply: "প্রয়োগ করুন",
+  "Close This Period": "এই সময়কাল ক্লোজ করুন",
+  "Total Expense": "মোট খরচ",
+  "Per-Member Share": "মাথাপিছু ভাগ",
+  Contributed: "জমা দিয়েছেন",
+  Share: "ভাগ",
+  Balance: "ব্যালেন্স",
+  "No active members for this period.": "এই সময়কালের জন্য কোনো সক্রিয় সদস্য নেই।",
+  "Closed Settlement History": "ক্লোজ করা সেটেলমেন্টের ইতিহাস",
+  members: "জন সদস্য",
+  closed: "ক্লোজ করা হয়েছে",
+  "Settlement closed": "সেটেলমেন্ট ক্লোজ করা হয়েছে",
+  "Failed to close settlement": "সেটেলমেন্ট ক্লোজ করতে ব্যর্থ হয়েছে",
+  "This locks in the current numbers for this period as a permanent settlement record. Later edits to contributions/expenses in this range won't change it.":
+    "এটি এই সময়কালের বর্তমান হিসাবকে স্থায়ী সেটেলমেন্ট রেকর্ড হিসেবে লক করে দেবে। পরে এই সময়সীমার মধ্যে জমা/খরচ পরিবর্তন করলেও এটি বদলাবে না।",
+  Close: "ক্লোজ করুন",
+};

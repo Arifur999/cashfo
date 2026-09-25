@@ -42,13 +42,18 @@ export interface CreateBusinessInput {
   phone?: string;
   email?: string;
   pin?: string;
+  // Defaults to "BUSINESS" (every existing caller creates a second
+  // Business-type workspace) -- Group Expense's own create flow passes
+  // "GROUP" explicitly. See BusinessesService.create() -- PERSONAL can
+  // never be created here either way.
+  type?: "BUSINESS" | "GROUP";
 }
 
 export async function createBusinessAction(input: CreateBusinessInput): Promise<ActionResult<WorkspaceListItem>> {
   return callApi(async () => {
     const res = await axios.post<WorkspaceListItem>(
       `${API_BASE_URL}/api/businesses`,
-      { name: input.name, type: "BUSINESS", currency: input.currency, phone: input.phone, email: input.email, pin: input.pin },
+      { name: input.name, type: input.type ?? "BUSINESS", currency: input.currency, phone: input.phone, email: input.email, pin: input.pin },
       { headers: await authHeaders() },
     );
     return res.data;

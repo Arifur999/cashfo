@@ -69,7 +69,13 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {user.businesses.map((business) => {
+          {/* GROUP workspaces are deliberately excluded here -- they aren't
+              part of the "active workspace" concept this screen picks
+              (see lib/activeBusiness.ts), and live at their own
+              /group-expenses/[businessId] URL instead (Sidebar.tsx). */}
+          {user.businesses
+            .filter((business) => business.type !== "GROUP")
+            .map((business) => {
             const Icon = business.type === "BUSINESS" ? Briefcase : User;
             const displayName = business.isDefault ? user.name : business.name;
             const subtitle = business.type === "BUSINESS" ? t("Business Workspace") : t("Personal Workspace");

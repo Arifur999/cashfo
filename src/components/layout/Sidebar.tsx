@@ -1,6 +1,20 @@
 "use client";
 
-import { ArrowLeftRight, Banknote, Boxes, ChevronDown, ChevronRight, FileText, Gift, KeyRound, Landmark, LayoutDashboard, PiggyBank, Settings } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Banknote,
+  Boxes,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Gift,
+  KeyRound,
+  Landmark,
+  LayoutDashboard,
+  PiggyBank,
+  Settings,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -49,7 +63,16 @@ const ASSETS_MANAGEMENT_ITEMS = [
 // USER, not any one workspace) rather than a workspace-accounting one --
 // same reasoning as Password Manager's own comment -- so it sits just
 // above it, its own top-level item too.
+// "Group Expense" (মেস/যৌথ হিসাব) is deliberately its own top-level item,
+// NOT wired into the Balance/Loan Management-style active-workspace groups
+// above -- it isn't scoped to whichever Personal/Business workspace is
+// currently active at all (see lib/activeBusiness.ts's comment on why
+// multi-workspace switching was removed). Each Group workspace lives at its
+// own /group-expenses/[businessId] URL instead, so this link always just
+// goes to the list of the user's Group workspaces, same "not tied to the
+// active workspace" reasoning as Referrals/Password Manager below.
 const BOTTOM_NAV_ITEMS = [
+  { label: "Group Expense", href: "/group-expenses", icon: Users },
   { label: "Referrals", href: "/referrals", icon: Gift },
   { label: "Password Manager", href: "/password-manager", icon: KeyRound },
   { label: "Settings", href: "/settings", icon: Settings },
