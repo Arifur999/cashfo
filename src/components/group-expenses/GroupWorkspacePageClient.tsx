@@ -807,8 +807,11 @@ function SettlementSection({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
               <th className="px-4 py-3">{t("Member")}</th>
               <th className="px-4 py-3 text-right">{t("Contributed")}</th>
+              <th className="px-4 py-3 text-right">{t("Return")}</th>
+              <th className="px-4 py-3 text-right">{t("Actual Contributed")}</th>
               <th className="px-4 py-3 text-right">{t("Share")}</th>
               <th className="px-4 py-3 text-right">{t("Balance")}</th>
             </tr>
@@ -816,17 +819,23 @@ function SettlementSection({
           <tbody className="divide-y divide-neutral-50">
             {settlement.members.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-neutral-400">
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-neutral-400">
                   {t("No active members for this period.")}
                 </td>
               </tr>
             )}
-            {settlement.members.map((m) => {
+            {settlement.members.map((m, index) => {
               const balance = Number(m.balance);
+              const returned = Number(m.returned);
               return (
                 <tr key={m.groupMemberId}>
+                  <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
                   <td className="px-4 py-3 font-medium text-neutral-800">{m.name}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{formatCurrency(m.contributed, "BDT")}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{formatCurrency(m.grossDeposited, "BDT")}</td>
+                  <td className={`px-4 py-3 text-right tabular-nums ${returned > 0 ? "text-brand-danger" : "text-neutral-400"}`}>
+                    {returned > 0 ? `-${formatCurrency(m.returned, "BDT")}` : formatCurrency(0, "BDT")}
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium tabular-nums text-neutral-800">{formatCurrency(m.contributed, "BDT")}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{formatCurrency(m.share, "BDT")}</td>
                   <td className={`px-4 py-3 text-right font-semibold tabular-nums ${balance >= 0 ? "text-emerald-600" : "text-brand-danger"}`}>
                     {balance >= 0 ? "+" : ""}

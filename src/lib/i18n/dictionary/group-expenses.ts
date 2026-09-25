@@ -151,6 +151,8 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Total Expense": "মোট খরচ",
   "Per-Member Share": "মাথাপিছু ভাগ",
   Contributed: "জমা দিয়েছেন",
+  Return: "ফেরত",
+  "Actual Contributed": "প্রকৃত জমা",
   Share: "ভাগ",
   Balance: "ব্যালেন্স",
   "No active members for this period.": "এই সময়কালের জন্য কোনো সক্রিয় সদস্য নেই।",

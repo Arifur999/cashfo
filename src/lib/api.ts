@@ -762,6 +762,12 @@ export interface GroupExpense {
 export interface GroupSettlementMemberRow {
   groupMemberId: string;
   name: string;
+  // Gross deposits only (excludes returns) -- contributed stays the NET
+  // figure (deposits - returned), same one closeSettlement() persists onto
+  // GroupSettlementRecordMember and balance is computed from; these two are
+  // for the live breakdown display only.
+  grossDeposited: string;
+  returned: string;
   contributed: string;
   share: string;
   balance: string;
