@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createGroupExpenseAction, updateGroupExpenseAction } from "@/lib/groupExpensesActions";
 import type { GroupExpense, GroupExpenseCategoryOption, GroupMember } from "@/lib/api";
+import { Combobox } from "@/components/ui/Combobox";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -35,9 +36,17 @@ export function AddExpenseModal({ open, onClose, businessId, members, categories
       ? [editingExpense.paidByMember, ...activeMembers]
       : activeMembers;
   // Category is free text (see GroupExpense.category's schema comment) --
-  // this is only "keep the current value selectable" for an expense whose
-  // category was since renamed/deleted, same reasoning as paidByOptions above.
-  const categoryOptions = editingExpense && !categories.some((c) => c.name === editingExpense.category) ? [editingExpense.category] : [];
+  // the Combobox below lets typing filter/search this list instead of
+  // scrolling a native <select>. New categories are still created on the
+  // dedicated Category tab, not typed fresh here: Combobox only commits an
+  // explicit pick, reverting unmatched typed text on blur (see that
+  // component's own comment). Same "keep a legacy value selectable while
+  // editing" pattern as paidByOptions above, for a category since renamed/
+  // deleted.
+  const categoryOptions =
+    editingExpense && !categories.some((c) => c.name === editingExpense.category)
+      ? [editingExpense.category, ...categories.map((c) => c.name)]
+      : categories.map((c) => c.name);
 
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today());
@@ -105,22 +114,7 @@ export function AddExpenseModal({ open, onClose, businessId, members, categories
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Category")}</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
-          >
-            {categoryOptions.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-            {categories.map((c) => (
-              <option key={c.id} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <Combobox key={key} value={category} onChange={setCategory} options={categoryOptions} placeholder={t("Select a category")} emptyMessage={t("No matching category")} />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
