@@ -4,8 +4,8 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createGroupContributionAction } from "@/lib/groupExpensesActions";
-import type { GroupMember } from "@/lib/api";
+import { createGroupContributionAction, updateGroupContributionAction } from "@/lib/groupExpensesActions";
+import type { GroupContribution, GroupMember } from "@/lib/api";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -15,6 +15,7 @@ interface AddContributionModalProps {
   onClose: () => void;
   businessId: string;
   members: GroupMember[];
+  editingContribution?: GroupContribution | null;
 }
 
 function today(): string {
@@ -22,36 +23,54 @@ function today(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function AddContributionModal({ open, onClose, businessId, members }: AddContributionModalProps) {
+export function AddContributionModal({ open, onClose, businessId, members, editingContribution = null }: AddContributionModalProps) {
   const router = useRouter();
   const { t } = useLocale();
   const activeMembers = members.filter((m) => m.status === "ACTIVE");
+  // If editing a contribution whose member has since been archived, that
+  // member still needs to appear as a selectable option (same "legacy value
+  // stays selectable while editing" pattern as ContactFormModal's BOTH type).
+  const memberOptions =
+    editingContribution && !activeMembers.some((m) => m.id === editingContribution.groupMemberId)
+      ? [editingContribution.groupMember, ...activeMembers]
+      : activeMembers;
+
   const [groupMemberId, setGroupMemberId] = useState(activeMembers[0]?.id ?? "");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today());
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const [prevOpen, setPrevOpen] = useState(open);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
+  const [prevKey, setPrevKey] = useState<string>("closed");
+  const key = open ? (editingContribution?.id ?? "create") : "closed";
+  if (key !== prevKey) {
+    setPrevKey(key);
     if (open) {
-      setGroupMemberId(activeMembers[0]?.id ?? "");
-      setAmount("");
-      setDate(today());
-      setNote("");
+      if (editingContribution) {
+        setGroupMemberId(editingContribution.groupMemberId);
+        setAmount(editingContribution.amount);
+        setDate(editingContribution.date.slice(0, 10));
+        setNote(editingContribution.note ?? "");
+      } else {
+        setGroupMemberId(activeMembers[0]?.id ?? "");
+        setAmount("");
+        setDate(today());
+        setNote("");
+      }
     }
   }
 
   function handleSubmit() {
     startTransition(async () => {
-      const result = await createGroupContributionAction(businessId, { groupMemberId, amount, date, note: note || undefined });
+      const result = editingContribution
+        ? await updateGroupContributionAction(businessId, editingContribution.id, { groupMemberId, amount, date, note: note || undefined })
+        : await createGroupContributionAction(businessId, { groupMemberId, amount, date, note: note || undefined });
       if (result.success) {
-        toast.success(t("Contribution added"));
+        toast.success(editingContribution ? t("Contribution updated") : t("Contribution added"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to add contribution"));
+        toast.error(result.message ?? (editingContribution ? t("Failed to update contribution") : t("Failed to add contribution")));
       }
     });
   }
@@ -59,7 +78,7 @@ export function AddContributionModal({ open, onClose, businessId, members }: Add
   const isValid = groupMemberId.length > 0 && Number(amount) > 0 && date.length > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title={t("Add Contribution")}>
+    <Modal open={open} onClose={onClose} title={editingContribution ? t("Edit Contribution") : t("Add Contribution")}>
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Member")}</label>
@@ -68,8 +87,8 @@ export function AddContributionModal({ open, onClose, businessId, members }: Add
             onChange={(e) => setGroupMemberId(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
           >
-            {activeMembers.length === 0 && <option value="">{t("Add a member first")}</option>}
-            {activeMembers.map((m) => (
+            {memberOptions.length === 0 && <option value="">{t("Add a member first")}</option>}
+            {memberOptions.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
               </option>
@@ -115,7 +134,7 @@ export function AddContributionModal({ open, onClose, businessId, members }: Add
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {t("Add")}
+          {editingContribution ? t("Save Changes") : t("Add")}
         </button>
       </div>
     </Modal>

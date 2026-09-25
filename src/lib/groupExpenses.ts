@@ -29,24 +29,39 @@ export const getGroupMembers = cache(async (businessId: string): Promise<GroupMe
   }
 });
 
-export const getGroupContributions = cache(async (businessId: string): Promise<GroupContribution[]> => {
+export interface ContributionFilters {
+  groupMemberId?: string;
+  from?: string;
+  to?: string;
+}
+
+export const getGroupContributions = cache(async (businessId: string, filters: ContributionFilters = {}): Promise<GroupContribution[]> => {
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<GroupContribution[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions`, { headers });
+    const res = await axios.get<GroupContribution[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions`, {
+      headers,
+      params: filters,
+    });
     return res.data;
   } catch {
     return [];
   }
 });
 
-export const getGroupExpenses = cache(async (businessId: string, category?: GroupExpenseCategory): Promise<GroupExpense[]> => {
+export interface ExpenseFilters {
+  category?: GroupExpenseCategory;
+  from?: string;
+  to?: string;
+}
+
+export const getGroupExpenses = cache(async (businessId: string, filters: ExpenseFilters = {}): Promise<GroupExpense[]> => {
   const headers = await authHeaders();
   if (!headers) return [];
   try {
     const res = await axios.get<GroupExpense[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses`, {
       headers,
-      params: category ? { category } : undefined,
+      params: filters,
     });
     return res.data;
   } catch {

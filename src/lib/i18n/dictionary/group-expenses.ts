@@ -64,12 +64,17 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Remove Contribution": "জমা সরান",
   "This will permanently remove this contribution entry.": "এটি এই জমার এন্ট্রি স্থায়ীভাবে মুছে ফেলবে।",
   Member: "সদস্য",
+  "All Members": "সব সদস্য",
   "Add a member first": "প্রথমে একজন সদস্য যোগ করুন",
   Amount: "পরিমাণ",
   Date: "তারিখ",
   Note: "নোট",
+  Actions: "কার্যক্রম",
   "Contribution added": "জমা যোগ হয়েছে",
   "Failed to add contribution": "জমা যোগ করতে ব্যর্থ হয়েছে",
+  "Edit Contribution": "জমা সম্পাদনা করুন",
+  "Contribution updated": "জমা আপডেট হয়েছে",
+  "Failed to update contribution": "জমা আপডেট করতে ব্যর্থ হয়েছে",
 
   // Expenses tab
   "Add Expense": "খরচ যোগ করুন",
@@ -79,6 +84,7 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Remove Expense": "খরচ সরান",
   "This will permanently remove this expense entry.": "এটি এই খরচের এন্ট্রি স্থায়ীভাবে মুছে ফেলবে।",
   Category: "খাত",
+  "All Categories": "সব খাত",
   "Grocery / Bazar": "বাজার/মুদি",
   Rent: "ভাড়া",
   Utility: "বিল",
@@ -91,6 +97,9 @@ export const groupExpensesDictionary: Record<string, string> = {
   "e.g. Weekly bazar": "যেমন: সাপ্তাহিক বাজার",
   "Expense added": "খরচ যোগ হয়েছে",
   "Failed to add expense": "খরচ যোগ করতে ব্যর্থ হয়েছে",
+  "Edit Expense": "খরচ সম্পাদনা করুন",
+  "Expense updated": "খরচ আপডেট হয়েছে",
+  "Failed to update expense": "খরচ আপডেট করতে ব্যর্থ হয়েছে",
 
   // Settlement tab
   From: "থেকে",

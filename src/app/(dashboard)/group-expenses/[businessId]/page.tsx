@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { GroupWorkspacePageClient } from "@/components/group-expenses/GroupWorkspacePageClient";
+import type { GroupExpenseCategory } from "@/lib/api";
 import { getBusinessDetailAction } from "@/lib/businessActions";
 import { getCurrentUser } from "@/lib/auth";
 import { getGroupContributions, getGroupExpenses, getGroupMembers, getGroupSettlement, getGroupSettlementHistory } from "@/lib/groupExpenses";
@@ -26,10 +27,12 @@ export default async function GroupWorkspacePage({
 
   const from = typeof sp.from === "string" ? sp.from : undefined;
   const to = typeof sp.to === "string" ? sp.to : undefined;
+  const groupMemberId = typeof sp.memberId === "string" ? sp.memberId : undefined;
+  const category = typeof sp.category === "string" ? (sp.category as GroupExpenseCategory) : undefined;
 
   const members = await getGroupMembers(businessId);
-  const contributions = await getGroupContributions(businessId);
-  const expenses = await getGroupExpenses(businessId);
+  const contributions = await getGroupContributions(businessId, { groupMemberId, from, to });
+  const expenses = await getGroupExpenses(businessId, { category, from, to });
   const settlement = await getGroupSettlement(businessId, from, to);
   const settlementHistory = await getGroupSettlementHistory(businessId);
 

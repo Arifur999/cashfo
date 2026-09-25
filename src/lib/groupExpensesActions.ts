@@ -82,6 +82,19 @@ export async function createGroupContributionAction(
   }, "Failed to add contribution");
 }
 
+export async function updateGroupContributionAction(
+  businessId: string,
+  id: string,
+  input: { groupMemberId?: string; amount?: string; date?: string; note?: string },
+): Promise<ActionResult<GroupContribution>> {
+  return callApi(async () => {
+    const res = await axios.patch<GroupContribution>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions/${id}`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to update contribution");
+}
+
 export async function deleteGroupContributionAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions/${id}`, { headers: await authHeaders() });
@@ -98,6 +111,19 @@ export async function createGroupExpenseAction(
     const res = await axios.post<GroupExpense>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add expense");
+}
+
+export async function updateGroupExpenseAction(
+  businessId: string,
+  id: string,
+  input: { amount?: string; date?: string; category?: GroupExpenseCategory; description?: string; paidByMemberId?: string },
+): Promise<ActionResult<GroupExpense>> {
+  return callApi(async () => {
+    const res = await axios.patch<GroupExpense>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/${id}`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to update expense");
 }
 
 export async function deleteGroupExpenseAction(businessId: string, id: string): Promise<ActionResult> {

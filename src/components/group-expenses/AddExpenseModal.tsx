@@ -4,8 +4,8 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createGroupExpenseAction } from "@/lib/groupExpensesActions";
-import type { GroupExpenseCategory, GroupMember } from "@/lib/api";
+import { createGroupExpenseAction, updateGroupExpenseAction } from "@/lib/groupExpensesActions";
+import type { GroupExpense, GroupExpenseCategory, GroupMember } from "@/lib/api";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Modal } from "@/components/ui/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -15,6 +15,7 @@ interface AddExpenseModalProps {
   onClose: () => void;
   businessId: string;
   members: GroupMember[];
+  editingExpense?: GroupExpense | null;
 }
 
 const CATEGORY_OPTIONS: { value: GroupExpenseCategory; label: string }[] = [
@@ -29,10 +30,17 @@ function today(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function AddExpenseModal({ open, onClose, businessId, members }: AddExpenseModalProps) {
+export function AddExpenseModal({ open, onClose, businessId, members, editingExpense = null }: AddExpenseModalProps) {
   const router = useRouter();
   const { t } = useLocale();
   const activeMembers = members.filter((m) => m.status === "ACTIVE");
+  // Same "keep a legacy value selectable while editing" pattern as
+  // AddContributionModal's member dropdown.
+  const paidByOptions =
+    editingExpense?.paidByMember && !activeMembers.some((m) => m.id === editingExpense.paidByMember!.id)
+      ? [editingExpense.paidByMember, ...activeMembers]
+      : activeMembers;
+
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today());
   const [category, setCategory] = useState<GroupExpenseCategory>("GROCERY");
@@ -40,33 +48,50 @@ export function AddExpenseModal({ open, onClose, businessId, members }: AddExpen
   const [paidByMemberId, setPaidByMemberId] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const [prevOpen, setPrevOpen] = useState(open);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
+  const [prevKey, setPrevKey] = useState<string>("closed");
+  const key = open ? (editingExpense?.id ?? "create") : "closed";
+  if (key !== prevKey) {
+    setPrevKey(key);
     if (open) {
-      setAmount("");
-      setDate(today());
-      setCategory("GROCERY");
-      setDescription("");
-      setPaidByMemberId("");
+      if (editingExpense) {
+        setAmount(editingExpense.amount);
+        setDate(editingExpense.date.slice(0, 10));
+        setCategory(editingExpense.category);
+        setDescription(editingExpense.description ?? "");
+        setPaidByMemberId(editingExpense.paidByMemberId ?? "");
+      } else {
+        setAmount("");
+        setDate(today());
+        setCategory("GROCERY");
+        setDescription("");
+        setPaidByMemberId("");
+      }
     }
   }
 
   function handleSubmit() {
     startTransition(async () => {
-      const result = await createGroupExpenseAction(businessId, {
-        amount,
-        date,
-        category,
-        description: description || undefined,
-        paidByMemberId: paidByMemberId || undefined,
-      });
+      const result = editingExpense
+        ? await updateGroupExpenseAction(businessId, editingExpense.id, {
+            amount,
+            date,
+            category,
+            description: description || undefined,
+            paidByMemberId,
+          })
+        : await createGroupExpenseAction(businessId, {
+            amount,
+            date,
+            category,
+            description: description || undefined,
+            paidByMemberId: paidByMemberId || undefined,
+          });
       if (result.success) {
-        toast.success(t("Expense added"));
+        toast.success(editingExpense ? t("Expense updated") : t("Expense added"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to add expense"));
+        toast.error(result.message ?? (editingExpense ? t("Failed to update expense") : t("Failed to add expense")));
       }
     });
   }
@@ -74,7 +99,7 @@ export function AddExpenseModal({ open, onClose, businessId, members }: AddExpen
   const isValid = Number(amount) > 0 && date.length > 0;
 
   return (
-    <Modal open={open} onClose={onClose} title={t("Add Expense")}>
+    <Modal open={open} onClose={onClose} title={editingExpense ? t("Edit Expense") : t("Add Expense")}>
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
@@ -116,7 +141,7 @@ export function AddExpenseModal({ open, onClose, businessId, members }: AddExpen
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
           >
             <option value="">{t("Not tracked")}</option>
-            {activeMembers.map((m) => (
+            {paidByOptions.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
               </option>
@@ -148,7 +173,7 @@ export function AddExpenseModal({ open, onClose, businessId, members }: AddExpen
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {t("Add")}
+          {editingExpense ? t("Save Changes") : t("Add")}
         </button>
       </div>
     </Modal>
