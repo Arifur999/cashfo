@@ -44,6 +44,7 @@ interface GroupWorkspacePageClientProps {
   expenses: GroupExpense[];
   expenseCategories: GroupExpenseCategoryOption[];
   settlement: GroupSettlementResult;
+  dashboardSettlement: GroupSettlementResult;
   settlementHistory: GroupSettlementRecord[];
   monthBudgets: GroupMonthlyBudget[];
 }
@@ -111,6 +112,7 @@ export function GroupWorkspacePageClient({
   expenses,
   expenseCategories,
   settlement,
+  dashboardSettlement,
   settlementHistory,
   monthBudgets,
 }: GroupWorkspacePageClientProps) {
@@ -129,7 +131,15 @@ export function GroupWorkspacePageClient({
           already renders these same tabs as a submenu once a specific
           workspace is open, so a second copy here would be redundant. */}
       {tab === "dashboard" && (
-        <DashboardSection members={members} expenses={expenses} expenseCategories={expenseCategories} settlement={settlement} />
+        <DashboardSection
+          businessId={businessId}
+          members={members}
+          contributions={contributions}
+          expenses={expenses}
+          expenseCategories={expenseCategories}
+          settlement={dashboardSettlement}
+          monthBudgets={monthBudgets}
+        />
       )}
       {tab === "members" && <MembersSection businessId={businessId} members={members} />}
       {tab === "contributions" && <ContributionsSection businessId={businessId} members={members} contributions={contributions} />}
@@ -150,27 +160,52 @@ export function GroupWorkspacePageClient({
 // endpoint -- settlement is always the live current-month figures
 // regardless of whatever date filter a different tab's own view happens to
 // have applied via the URL.
+const DASHBOARD_RANGE_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "month", label: "This Month" },
+  { value: "year", label: "This Year" },
+];
+
 function DashboardSection({
+  businessId,
   members,
+  contributions,
   expenses,
   expenseCategories,
   settlement,
+  monthBudgets,
 }: {
+  businessId: string;
   members: GroupMember[];
+  contributions: GroupContribution[];
   expenses: GroupExpense[];
   expenseCategories: GroupExpenseCategoryOption[];
   settlement: GroupSettlementResult;
+  monthBudgets: GroupMonthlyBudget[];
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLocale();
+  const dashRange = searchParams.get("dashRange") ?? "month";
+
+  function handleRangeChange(next: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "dashboard");
+    params.set("dashRange", next);
+    router.push(`/group-expenses/${businessId}?${params.toString()}`);
+  }
+
   const activeMemberCount = members.filter((m) => m.status === "ACTIVE").length;
   const totalContributed = settlement.members.reduce((sum, m) => sum + Number(m.contributed), 0);
 
-  // Expense-by-category donut -- scoped to the same current-month period as
-  // `settlement` (not all-time) so its total matches the "Total Expense"
-  // stat card above. Computed client-side from data already fetched for
-  // other tabs rather than a new backend endpoint; colors come from
-  // expenseCategories' own list (a deleted/renamed category just falls back
-  // to a neutral color, same "loose string" reasoning as elsewhere).
+  // Expense-by-category donut -- scoped to the SAME period as `settlement`
+  // (the Dashboard's own dashRange filter, not the Contributions/Expenses/
+  // Settlement tabs' shared from/to) so its total matches the "Total
+  // Expense" stat card above. Computed client-side from data already
+  // fetched for other tabs rather than a new backend endpoint; colors come
+  // from expenseCategories' own list (a deleted/renamed category just
+  // falls back to a neutral color, same "loose string" reasoning as
+  // elsewhere).
   const colorByCategory = new Map(expenseCategories.map((c) => [c.name, c.color]));
   const totalsByCategory = new Map<string, number>();
   for (const e of expenses) {
@@ -191,8 +226,51 @@ function DashboardSection({
       .sort((a, b) => Number(b.amount) - Number(a.amount)),
   };
 
+  // Per-month Budget vs Actual Expense breakdown -- only computed (and only
+  // shown) for "This Year" since "All"/"This Month" have no meaningful
+  // month-by-month axis. Always the CURRENT calendar year, matching how
+  // page.tsx builds dashboardPeriod for dashRange="year". Compared as
+  // string prefixes ("YYYY-MM"), not parsed Dates, so this can't drift a
+  // day across timezones -- same convention as the periodStart/periodEnd
+  // check above.
+  const selectedYear = new Date().getFullYear();
+  const monthlyBreakdown =
+    dashRange === "year"
+      ? Array.from({ length: 12 }, (_, i) => {
+          const month = i + 1;
+          const monthKey = `${selectedYear}-${String(month).padStart(2, "0")}`;
+          const budgetEntry = monthBudgets.find((b) => b.year === selectedYear && b.month === month);
+          const actualExpense = expenses
+            .filter((e) => e.date.startsWith(monthKey))
+            .reduce((sum, e) => sum + Number(e.amount), 0);
+          const contributed = contributions
+            .filter((c) => c.date.startsWith(monthKey))
+            .reduce((sum, c) => sum + Number(c.amount), 0);
+          return {
+            month,
+            budget: budgetEntry ? Number(budgetEntry.budgetAmount) : 0,
+            actualExpense,
+            contributed,
+          };
+        })
+      : [];
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <select
+          value={dashRange}
+          onChange={(e) => handleRangeChange(e.target.value)}
+          className="rounded-xl border border-neutral-200 bg-surface px-3.5 py-2 text-sm outline-none focus:border-brand-primary"
+        >
+          {DASHBOARD_RANGE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {t(opt.label)}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
           <p className="text-xs text-neutral-500">{t("Members")}</p>
@@ -244,6 +322,122 @@ function DashboardSection({
         </div>
       </div>
 
+      {dashRange === "year" && <MonthlyBudgetChart points={monthlyBreakdown} />}
+      {dashRange === "year" && <MonthlyBreakdownTable points={monthlyBreakdown} />}
+    </div>
+  );
+}
+
+const MONTH_LABELS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+interface MonthlyBreakdownPoint {
+  month: number;
+  budget: number;
+  actualExpense: number;
+  contributed: number;
+}
+
+const MONTHLY_CHART_MAX_HEIGHT = 160;
+
+// Hand-rolled grouped bar chart, same "no charting library" convention as
+// IncomeVsSavingsChart.tsx -- two bars per month (Actual Expense, Budget),
+// scaled against the single largest value across all 12 months so bars
+// stay comparable month to month.
+function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
+  const { t } = useLocale();
+  const maxValue = Math.max(1, ...points.flatMap((p) => [p.actualExpense, p.budget]));
+
+  return (
+    <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-neutral-900">{t("Monthly Budget vs Expense")}</h2>
+        <div className="flex items-center gap-4 text-xs text-neutral-500">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-brand-danger" /> {t("Actual Expense")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-brand-primary/50" /> {t("Budget")}
+          </span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <div className="flex min-w-[640px] items-end gap-3" style={{ height: MONTHLY_CHART_MAX_HEIGHT + 32 }}>
+          {points.map((p) => {
+            const expenseHeight = Math.round((p.actualExpense / maxValue) * MONTHLY_CHART_MAX_HEIGHT);
+            const budgetHeight = Math.round((p.budget / maxValue) * MONTHLY_CHART_MAX_HEIGHT);
+            return (
+              <div key={p.month} className="flex flex-1 flex-col items-center justify-end gap-1.5">
+                <div className="flex items-end gap-1" style={{ height: MONTHLY_CHART_MAX_HEIGHT }}>
+                  <div
+                    title={`${t("Actual Expense")}: ${formatCurrency(p.actualExpense, "BDT")}`}
+                    className="w-3 rounded-t-sm bg-brand-danger sm:w-5"
+                    style={{ height: Math.max(2, expenseHeight) }}
+                  />
+                  <div
+                    title={`${t("Budget")}: ${formatCurrency(p.budget, "BDT")}`}
+                    className="w-3 rounded-t-sm bg-brand-primary/50 sm:w-5"
+                    style={{ height: Math.max(2, budgetHeight) }}
+                  />
+                </div>
+                <span className="whitespace-nowrap text-xs text-neutral-400">{t(MONTH_LABELS[p.month - 1])}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MonthlyBreakdownTable({ points }: { points: MonthlyBreakdownPoint[] }) {
+  const { t } = useLocale();
+
+  return (
+    <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+      <h2 className="p-5 pb-0 text-sm font-semibold text-neutral-900">{t("Monthly Breakdown")}</h2>
+      <div className="overflow-x-auto">
+        <table className="mt-4 w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-xs text-neutral-500">
+              <th className="px-5 py-2.5 font-medium">{t("Month")}</th>
+              <th className="px-5 py-2.5 font-medium">{t("Budget")}</th>
+              <th className="px-5 py-2.5 font-medium">{t("Actual Expense")}</th>
+              <th className="px-5 py-2.5 font-medium">{t("Contributed")}</th>
+              <th className="px-5 py-2.5 font-medium">{t("Balance")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {points.map((p) => {
+              const balance = p.budget - p.actualExpense;
+              return (
+                <tr key={p.month} className="border-b border-neutral-50 last:border-0">
+                  <td className="px-5 py-2.5 text-neutral-800">{t(MONTH_LABELS[p.month - 1])}</td>
+                  <td className="px-5 py-2.5 text-neutral-600">{p.budget > 0 ? formatCurrency(p.budget, "BDT") : "--"}</td>
+                  <td className="px-5 py-2.5 text-brand-danger">{formatCurrency(p.actualExpense, "BDT")}</td>
+                  <td className="px-5 py-2.5 text-brand-primary">{formatCurrency(p.contributed, "BDT")}</td>
+                  <td className={`px-5 py-2.5 font-medium ${p.budget === 0 ? "text-neutral-400" : balance >= 0 ? "text-emerald-600" : "text-brand-danger"}`}>
+                    {p.budget > 0 ? formatCurrency(balance, "BDT") : "--"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

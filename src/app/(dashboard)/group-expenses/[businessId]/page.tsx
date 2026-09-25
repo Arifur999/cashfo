@@ -38,11 +38,23 @@ export default async function GroupWorkspacePage({
   const groupMemberId = typeof sp.memberId === "string" ? sp.memberId : undefined;
   const category = typeof sp.category === "string" ? (sp.category as GroupExpenseCategory) : undefined;
 
+  // Dashboard's own period filter (All/This Month/This Year) -- separate
+  // from `from`/`to` above (Contributions/Expenses/Settlement's own shared
+  // filter param) so switching one never affects the other.
+  const dashRange = typeof sp.dashRange === "string" ? sp.dashRange : "month";
+  const dashboardPeriod =
+    dashRange === "all"
+      ? { from: "2000-01-01", to: "2100-12-31" }
+      : dashRange === "year"
+        ? { from: `${new Date().getFullYear()}-01-01`, to: `${new Date().getFullYear()}-12-31` }
+        : {}; // "month" -- omit from/to, backend defaults to the current calendar month
+
   const members = await getGroupMembers(businessId);
   const contributions = await getGroupContributions(businessId, { groupMemberId, from, to });
   const expenses = await getGroupExpenses(businessId, { category, from, to });
   const expenseCategories = await getGroupExpenseCategories(businessId);
   const settlement = await getGroupSettlement(businessId, from, to);
+  const dashboardSettlement = await getGroupSettlement(businessId, dashboardPeriod.from, dashboardPeriod.to);
   const settlementHistory = await getGroupSettlementHistory(businessId);
   const monthBudgets = await getGroupMonthBudgets(businessId);
 
@@ -55,6 +67,7 @@ export default async function GroupWorkspacePage({
       expenses={expenses}
       expenseCategories={expenseCategories}
       settlement={settlement}
+      dashboardSettlement={dashboardSettlement}
       settlementHistory={settlementHistory}
       monthBudgets={monthBudgets}
     />

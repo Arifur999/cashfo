@@ -185,4 +185,11 @@ export const groupExpensesDictionary: Record<string, string> = {
   "No month budgets yet.": "এখনো কোনো মাসিক বাজেট নেই।",
   "Remove Month Budget": "মাসিক বাজেট সরান",
   "Remove the budget for": "এই বাজেট সরান:",
+
+  // Dashboard tab -- yearly chart + monthly breakdown, shown when the
+  // period dropdown is set to "This Year"
+  "Monthly Budget vs Expense": "মাসিক বাজেট বনাম খরচ",
+  Budget: "বাজেট",
+  "Actual Expense": "প্রকৃত খরচ",
+  "Monthly Breakdown": "মাসিক বিবরণ",
 };
