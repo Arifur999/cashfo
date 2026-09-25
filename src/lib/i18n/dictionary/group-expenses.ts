@@ -75,6 +75,11 @@ export const groupExpensesDictionary: Record<string, string> = {
   "This will permanently remove this contribution entry.": "এটি এই জমার এন্ট্রি স্থায়ীভাবে মুছে ফেলবে।",
   Member: "সদস্য",
   "All Members": "সব সদস্য",
+  Deposit: "জমা",
+  "Return Money": "টাকা ফেরত",
+  "Use this when a member overpaid and gets the extra back out of the pool.":
+    "কোনো সদস্য বেশি জমা দিলে এবং সেই বাড়তি টাকা পুল থেকে তাকে ফেরত দিলে এটি ব্যবহার করুন।",
+  Returned: "ফেরত দেওয়া হয়েছে",
   "Date Range": "তারিখের পরিসর",
   Today: "আজ",
   Yesterday: "গতকাল",

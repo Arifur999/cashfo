@@ -36,6 +36,15 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
       : activeMembers;
 
   const [groupMemberId, setGroupMemberId] = useState(activeMembers[0]?.id ?? "");
+  // "Return" is money handed back OUT of the pool to a member who
+  // overpaid relative to their share (e.g. Khaled contributed 7000 but his
+  // share is only 2775 -- settling up means giving him the 4225 difference
+  // back). Stored as a negative GroupContribution.amount, same pool ledger
+  // as a deposit, just the opposite direction -- see
+  // GroupExpensesService.computeSettlement(), which already nets these in
+  // without any special-casing. The amount field itself always takes a
+  // plain positive number; this toggle decides the sign on submit.
+  const [type, setType] = useState<"DEPOSIT" | "RETURN">("DEPOSIT");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today());
   const [note, setNote] = useState("");
@@ -47,12 +56,15 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
     setPrevKey(key);
     if (open) {
       if (editingContribution) {
+        const signedAmount = Number(editingContribution.amount);
         setGroupMemberId(editingContribution.groupMemberId);
-        setAmount(editingContribution.amount);
+        setType(signedAmount < 0 ? "RETURN" : "DEPOSIT");
+        setAmount(String(Math.abs(signedAmount)));
         setDate(editingContribution.date.slice(0, 10));
         setNote(editingContribution.note ?? "");
       } else {
         setGroupMemberId(activeMembers[0]?.id ?? "");
+        setType("DEPOSIT");
         setAmount("");
         setDate(today());
         setNote("");
@@ -61,10 +73,11 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
   }
 
   function handleSubmit() {
+    const signedAmount = String(type === "RETURN" ? -Math.abs(Number(amount)) : Math.abs(Number(amount)));
     startTransition(async () => {
       const result = editingContribution
-        ? await updateGroupContributionAction(businessId, editingContribution.id, { groupMemberId, amount, date, note: note || undefined })
-        : await createGroupContributionAction(businessId, { groupMemberId, amount, date, note: note || undefined });
+        ? await updateGroupContributionAction(businessId, editingContribution.id, { groupMemberId, amount: signedAmount, date, note: note || undefined })
+        : await createGroupContributionAction(businessId, { groupMemberId, amount: signedAmount, date, note: note || undefined });
       if (result.success) {
         toast.success(editingContribution ? t("Contribution updated") : t("Contribution added"));
         onClose();
@@ -98,6 +111,32 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Type")}</label>
+          <div className="flex gap-2 rounded-xl bg-neutral-50 p-1">
+            <button
+              type="button"
+              onClick={() => setType("DEPOSIT")}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+                type === "DEPOSIT" ? "bg-surface text-brand-primary shadow-sm ring-2 ring-brand-primary" : "text-neutral-500 hover:text-neutral-700"
+              }`}
+            >
+              {t("Deposit")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setType("RETURN")}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+                type === "RETURN" ? "bg-surface text-brand-danger shadow-sm ring-2 ring-brand-danger" : "text-neutral-500 hover:text-neutral-700"
+              }`}
+            >
+              {t("Return Money")}
+            </button>
+          </div>
+          {type === "RETURN" && (
+            <p className="mt-1 text-xs text-neutral-400">{t("Use this when a member overpaid and gets the extra back out of the pool.")}</p>
+          )}
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>

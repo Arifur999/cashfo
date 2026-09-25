@@ -442,12 +442,27 @@ function ContributionsSection({ businessId, members, contributions }: { business
                 </td>
               </tr>
             )}
-            {contributions.map((c, index) => (
+            {contributions.map((c, index) => {
+                // Negative amount = a "Return Money" entry (see
+                // AddContributionModal's Deposit/Return toggle) -- money
+                // handed back OUT of the pool, not a deposit into it.
+                const isReturn = Number(c.amount) < 0;
+                return (
                 <tr key={c.id}>
                   <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
                   <td className="px-4 py-3 text-neutral-500">{fmtDate(c.date)}</td>
-                  <td className="px-4 py-3 font-medium text-neutral-800">{c.groupMember.name}</td>
-                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-brand-primary">{formatCurrency(c.amount, "BDT")}</td>
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-neutral-800">{c.groupMember.name}</span>
+                    {isReturn && (
+                      <span className="ml-2 rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-danger">
+                        {t("Returned")}
+                      </span>
+                    )}
+                  </td>
+                  <td className={`px-4 py-3 text-right font-semibold tabular-nums ${isReturn ? "text-brand-danger" : "text-brand-primary"}`}>
+                    {isReturn ? "-" : ""}
+                    {formatCurrency(Math.abs(Number(c.amount)), "BDT")}
+                  </td>
                   <td className="px-4 py-3 text-neutral-500">{c.note ?? "--"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
@@ -470,7 +485,8 @@ function ContributionsSection({ businessId, members, contributions }: { business
                     </div>
                   </td>
                 </tr>
-            ))}
+                );
+              })}
           </tbody>
         </table>
       </div>
