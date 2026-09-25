@@ -805,15 +805,15 @@ export interface GroupSettlementRecord {
   members: GroupSettlementRecordMember[];
 }
 
-// "Month List" nav item -- every calendar month with any expense/
-// contribution activity, newest first, so a user can jump straight into a
-// past month's Settlement instead of hand-picking a date range there.
-export interface GroupMonthSummary {
-  key: string; // "YYYY-MM"
-  periodStart: string;
-  periodEnd: string;
-  totalExpense: string;
-  totalContributed: string;
-  status: "OPEN" | "CLOSED";
-  closedAt: string | null;
+// "Month List" nav item -- a manually-entered budget record (Month + Year +
+// amount, typed in via the "Add Month" form), not computed from real
+// expense/contribution data. One row per (businessId, month, year).
+export interface GroupMonthlyBudget {
+  id: string;
+  businessId: string;
+  month: number; // 1-12
+  year: number;
+  budgetAmount: string;
+  createdAt: string;
+  updatedAt: string;
 }

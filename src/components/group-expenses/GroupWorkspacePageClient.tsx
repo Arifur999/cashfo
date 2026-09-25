@@ -10,7 +10,7 @@ import type {
   GroupExpenseCategoryOption,
   GroupMember,
   GroupMemberStatus,
-  GroupMonthSummary,
+  GroupMonthlyBudget,
   GroupSettlementRecord,
   GroupSettlementResult,
 } from "@/lib/api";
@@ -22,6 +22,7 @@ import {
   deleteGroupExpenseAction,
   deleteGroupExpenseCategoryAction,
   deleteGroupMemberAction,
+  deleteGroupMonthBudgetAction,
   updateGroupMemberAction,
 } from "@/lib/groupExpensesActions";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -29,6 +30,7 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { AddContributionModal } from "./AddContributionModal";
 import { AddExpenseModal } from "./AddExpenseModal";
+import { AddMonthBudgetModal } from "./AddMonthBudgetModal";
 import { GroupExpenseCategoryModal } from "./GroupExpenseCategoryModal";
 import { GroupMemberFormModal } from "./GroupMemberFormModal";
 
@@ -41,7 +43,7 @@ interface GroupWorkspacePageClientProps {
   expenseCategories: GroupExpenseCategoryOption[];
   settlement: GroupSettlementResult;
   settlementHistory: GroupSettlementRecord[];
-  months: GroupMonthSummary[];
+  monthBudgets: GroupMonthlyBudget[];
 }
 
 type Tab = "members" | "contributions" | "expenses" | "category" | "settlement" | "months";
@@ -108,7 +110,7 @@ export function GroupWorkspacePageClient({
   expenseCategories,
   settlement,
   settlementHistory,
-  months,
+  monthBudgets,
 }: GroupWorkspacePageClientProps) {
   const searchParams = useSearchParams();
   const { t } = useLocale();
@@ -131,7 +133,7 @@ export function GroupWorkspacePageClient({
       )}
       {tab === "category" && <CategorySection businessId={businessId} categories={expenseCategories} />}
       {tab === "settlement" && <SettlementSection businessId={businessId} settlement={settlement} settlementHistory={settlementHistory} />}
-      {tab === "months" && <MonthListSection businessId={businessId} months={months} />}
+      {tab === "months" && <MonthListSection businessId={businessId} budgets={monthBudgets} />}
     </div>
   );
 }
@@ -992,69 +994,132 @@ function CategorySection({ businessId, categories }: { businessId: string; categ
   );
 }
 
-function fmtMonth(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", timeZone: "UTC" });
-}
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
-// "Month List" nav item -- every calendar month with activity, newest
-// first, with a quick total + Open/Closed status. Clicking a row jumps
-// straight into Settlement pre-filtered to that month's date range instead
-// of making the user hand-pick it there.
-function MonthListSection({ businessId, months }: { businessId: string; months: GroupMonthSummary[] }) {
+// "Month List" nav item -- a manually-maintained list of monthly budget
+// targets (Month + Year + amount, added one at a time via "Add Month"), NOT
+// computed from real expense/contribution data. Just a record for now, no
+// budget-vs-actual comparison.
+function MonthListSection({ businessId, budgets }: { businessId: string; budgets: GroupMonthlyBudget[] }) {
   const router = useRouter();
   const { t } = useLocale();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<GroupMonthlyBudget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GroupMonthlyBudget | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function openCreate() {
+    setEditingBudget(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(b: GroupMonthlyBudget) {
+    setEditingBudget(b);
+    setFormOpen(true);
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    startTransition(async () => {
+      const result = await deleteGroupMonthBudgetAction(businessId, deleteTarget.id);
+      if (result.success) {
+        toast.success(t("Month budget removed"));
+        setDeleteTarget(null);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to remove month budget"));
+      }
+    });
+  }
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
-            <th className="px-4 py-3">#</th>
-            <th className="px-4 py-3">{t("Month")}</th>
-            <th className="px-4 py-3 text-right">{t("Total Expense")}</th>
-            <th className="px-4 py-3 text-right">{t("Total Contributed")}</th>
-            <th className="px-4 py-3">{t("Status")}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-neutral-50">
-          {months.length === 0 && (
-            <tr>
-              <td colSpan={5} className="px-4 py-10 text-center text-sm text-neutral-400">
-                {t("No activity yet.")}
-              </td>
+    <div>
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={openCreate}
+          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+        >
+          <Plus className="h-4 w-4" /> {t("Add Month")}
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t("Month")}</th>
+              <th className="px-4 py-3">{t("Year")}</th>
+              <th className="px-4 py-3 text-right">{t("Monthly Budget")}</th>
+              <th className="px-4 py-3 text-right">{t("Actions")}</th>
             </tr>
-          )}
-          {months.map((m, index) => {
-            const isClosed = m.status === "CLOSED";
-            const from = m.periodStart.slice(0, 10);
-            const to = m.periodEnd.slice(0, 10);
-            return (
-              <tr
-                key={m.key}
-                role="button"
-                tabIndex={0}
-                onClick={() => router.push(`/group-expenses/${businessId}?tab=settlement&from=${from}&to=${to}`)}
-                onKeyDown={(e) => e.key === "Enter" && router.push(`/group-expenses/${businessId}?tab=settlement&from=${from}&to=${to}`)}
-                className="cursor-pointer hover:bg-neutral-50/60"
-              >
-                <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
-                <td className="px-4 py-3 font-medium text-neutral-800">{fmtMonth(m.periodStart)}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(m.totalExpense, "BDT")}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(m.totalContributed, "BDT")}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide ${
-                      isClosed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
-                    {isClosed ? t("Closed") : t("Open")}
-                  </span>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {budgets.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-neutral-400">
+                  {t("No month budgets yet.")}
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            )}
+            {budgets.map((b, index) => (
+              <tr key={b.id}>
+                <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
+                <td className="px-4 py-3 font-medium text-neutral-800">{t(MONTH_NAMES[b.month - 1])}</td>
+                <td className="px-4 py-3 text-neutral-500">{b.year}</td>
+                <td className="px-4 py-3 text-right font-semibold tabular-nums text-brand-primary">{formatCurrency(b.budgetAmount, "BDT")}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(b)}
+                      title={t("Edit")}
+                      className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(b)}
+                      title={t("Delete")}
+                      className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <AddMonthBudgetModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingBudget={editingBudget} />
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title={t("Remove Month Budget")}
+        message={
+          deleteTarget ? `${t("Remove the budget for")} ${t(MONTH_NAMES[deleteTarget.month - 1])} ${deleteTarget.year}?` : ""
+        }
+        confirmLabel={t("Remove")}
+      />
     </div>
   );
 }

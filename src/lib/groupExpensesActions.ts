@@ -10,6 +10,7 @@ import {
   type GroupExpenseCategoryOption,
   type GroupMember,
   type GroupMemberStatus,
+  type GroupMonthlyBudget,
   type GroupSettlementRecord,
 } from "./api";
 import { getAccessToken } from "./tokenCookies";
@@ -202,6 +203,42 @@ export async function deleteGroupExpenseAction(businessId: string, id: string): 
   return callApi(async () => {
     await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/${id}`, { headers: await authHeaders() });
   }, "Failed to remove expense");
+}
+
+// ---- Month budgets ----
+
+export interface GroupMonthBudgetInput {
+  month: number;
+  year: number;
+  budgetAmount: string;
+}
+
+export async function createGroupMonthBudgetAction(businessId: string, input: GroupMonthBudgetInput): Promise<ActionResult<GroupMonthlyBudget>> {
+  return callApi(async () => {
+    const res = await axios.post<GroupMonthlyBudget>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to add month budget");
+}
+
+export async function updateGroupMonthBudgetAction(
+  businessId: string,
+  id: string,
+  input: Partial<GroupMonthBudgetInput>,
+): Promise<ActionResult<GroupMonthlyBudget>> {
+  return callApi(async () => {
+    const res = await axios.patch<GroupMonthlyBudget>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets/${id}`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to update month budget");
+}
+
+export async function deleteGroupMonthBudgetAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets/${id}`, { headers: await authHeaders() });
+  }, "Failed to remove month budget");
 }
 
 // ---- Settlement ----

@@ -168,8 +168,17 @@ export const groupExpensesDictionary: Record<string, string> = {
 
   // Month List tab
   Month: "মাস",
-  "Total Contributed": "মোট জমা",
-  "No activity yet.": "এখনো কোনো কার্যক্রম নেই।",
-  Open: "খোলা",
-  Closed: "ক্লোজ করা",
+  Year: "বছর",
+  "Monthly Budget": "মাসিক বাজেট",
+  "Add Month": "মাস যোগ করুন",
+  "Edit Month Budget": "মাসিক বাজেট সম্পাদনা করুন",
+  "Month budget added": "মাসিক বাজেট যোগ হয়েছে",
+  "Month budget updated": "মাসিক বাজেট আপডেট হয়েছে",
+  "Failed to add month budget": "মাসিক বাজেট যোগ করতে ব্যর্থ হয়েছে",
+  "Failed to update month budget": "মাসিক বাজেট আপডেট করতে ব্যর্থ হয়েছে",
+  "Month budget removed": "মাসিক বাজেট সরানো হয়েছে",
+  "Failed to remove month budget": "মাসিক বাজেট সরাতে ব্যর্থ হয়েছে",
+  "No month budgets yet.": "এখনো কোনো মাসিক বাজেট নেই।",
+  "Remove Month Budget": "মাসিক বাজেট সরান",
+  "Remove the budget for": "এই বাজেট সরান:",
 };
