@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Loader2, Plus, Star, X } from "lucide-react";
+import { Loader2, MoonStar, Plus, Star, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -9,8 +9,10 @@ import type { HabitMonthTracker } from "@/lib/api";
 import { addTrackerItemAction, removeTrackerItemAction, setHabitTrackerCheckAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { withCheck } from "../trackerChecks";
-import { RAMADAN_GOLD_BUTTON, RamadanHero } from "./RamadanHero";
-import { RamadanSummary } from "./RamadanSummary";
+import { RAMADAN_THEME } from "../tracker/theme";
+import { TrackerGrid, type GridColumn } from "../tracker/TrackerGrid";
+import { TrackerHero } from "../tracker/TrackerHero";
+import { TrackerSummary } from "../tracker/TrackerSummary";
 
 const SUGGESTIONS = ["Quran", "Hadis", "Dua", "Taraweeh", "Zikr", "Sadaqah", "Tahajjud"];
 
@@ -23,7 +25,6 @@ const ODD_NIGHTS = new Set([21, 23, 25, 27, 29]);
 const TINT_RAHMAH = "bg-[image:linear-gradient(rgb(16_185_129/0.08),rgb(16_185_129/0.08))]";
 const TINT_MAGHFIRAH = "bg-[image:linear-gradient(rgb(245_158_11/0.09),rgb(245_158_11/0.09))]";
 const TINT_NIJAT = "bg-[image:linear-gradient(rgb(99_102_241/0.09),rgb(99_102_241/0.09))]";
-const TINT_WEEK = "bg-[image:linear-gradient(rgb(16_185_129/0.14),rgb(16_185_129/0.14))]";
 
 function ashraTint(day: number): string {
   if (day <= 10) return TINT_RAHMAH;
@@ -54,7 +55,12 @@ export function RamadanSheetPageClient({ tracker }: { tracker: HabitMonthTracker
   const ticked = new Set(sheet.checks.map((c) => `${c.day}:${c.item}`));
   const cells = totalDays * items.length;
   const overallPct = cells > 0 ? Math.round((sheet.checks.length / cells) * 100) : 0;
-  const weekSpans = Array.from({ length: Math.ceil(totalDays / 7) }, (_, i) => Math.min(7, totalDays - 7 * i));
+  const columns: GridColumn[] = days.map((day) => ({
+    day,
+    tint: ashraTint(day),
+    title: ODD_NIGHTS.has(day) ? t("Odd night of the last ten -- Laylat al-Qadr is sought in these") : undefined,
+    badge: ODD_NIGHTS.has(day) ? <Star className="absolute right-0.5 top-0.5 h-2 w-2 fill-amber-400 text-amber-400" /> : undefined,
+  }));
   const suggestions = SUGGESTIONS.filter((s) => !items.some((item) => item.toLowerCase() === s.toLowerCase()));
 
   function toggleCell(day: number, item: string, checked: boolean) {
@@ -111,16 +117,19 @@ export function RamadanSheetPageClient({ tracker }: { tracker: HabitMonthTracker
 
   return (
     <div className="space-y-5 px-6 py-8 pb-24 md:pb-8">
-      <RamadanHero
+      <TrackerHero
+        theme={RAMADAN_THEME}
+        arabic="رمضان كريم"
+        watermark={MoonStar}
         title={`${t("Ramadan")} ${tracker.year}`}
         subtitle={`${totalDays} ${t("days")} · ${items.length} ${t(items.length === 1 ? "habit" : "habits")}`}
         back={{ href: "/habit-tracker/habits?category=Ramadan", label: t("All Ramadans") }}
       >
         <div className="rounded-2xl bg-white/10 px-5 py-2.5 text-center backdrop-blur-sm">
-          <p className="text-[11px] font-medium text-emerald-100/80">{t("Progress")}</p>
+          <p className={`text-[11px] font-medium ${RAMADAN_THEME.heroText}`}>{t("Progress")}</p>
           <p className="text-2xl font-semibold tabular-nums">{overallPct}%</p>
         </div>
-      </RamadanHero>
+      </TrackerHero>
 
       <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-neutral-500">
         <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1">
@@ -144,135 +153,40 @@ export function RamadanSheetPageClient({ tracker }: { tracker: HabitMonthTracker
           {/* Left column: the sheet and, right under it, the add-habit box -- so it is the
               same height as the summary beside it instead of leaving a gap. */}
           <div className="flex w-fit max-w-full min-w-0 flex-col gap-5">
-            <div className="min-w-0 overflow-clip rounded-2xl bg-surface shadow-sm shadow-black/5">
-              <div className="max-h-[calc(100dvh-16rem)] overflow-auto [--day-w:2.25rem] [--habit-w:9.5rem] sm:[--habit-w:13rem]">
-                <table className="table-fixed border-separate border-spacing-0 text-sm" style={{ width: `calc(var(--habit-w) + ${totalDays} * var(--day-w))` }}>
-                  <colgroup>
-                    <col style={{ width: "var(--habit-w)" }} />
-                    {days.map((day) => (
-                      <col key={day} style={{ width: "var(--day-w)" }} />
-                    ))}
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th rowSpan={3} className="sticky left-0 top-0 z-30 bg-surface p-0 align-top shadow-[1px_0_0_0_rgb(0_0_0/0.06)]">
-                        {/* 9.75rem = the three header rows (chart 6 + week band 1.75 + day numbers 2). */}
-                        <div className="flex h-[9.75rem] flex-col justify-between px-3 py-3">
-                          <span className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">{t("Daily progress")}</span>
-                          <span className="text-xs font-semibold text-neutral-500">{t("Habits")}</span>
-                        </div>
-                      </th>
-                      {days.map((day) => {
-                        const done = items.filter((item) => ticked.has(`${day}:${item}`)).length;
-                        const pct = items.length > 0 ? Math.round((done / items.length) * 100) : 0;
-                        return (
-                          <th key={day} className={`sticky top-0 z-20 h-24 bg-surface p-0 font-normal ${ashraTint(day)}`}>
-                            <div className="flex h-24 flex-col px-1 pb-1 pt-1.5">
-                              <span className="h-3 text-center text-[9px] leading-3 tabular-nums text-neutral-400">{pct > 0 ? pct : ""}</span>
-                              <div className="flex flex-1 items-end justify-center">
-                                <div
-                                  className="w-4 rounded-t-sm bg-gradient-to-t from-amber-500 to-amber-300 transition-all duration-300"
-                                  style={{ height: `${pct}%`, minHeight: pct > 0 ? 2 : 0 }}
-                                />
-                              </div>
-                            </div>
-                          </th>
-                        );
-                      })}
-                    </tr>
-                    <tr>
-                      {weekSpans.map((span, i) => (
-                        <th
-                          key={i}
-                          colSpan={span}
-                          className={`sticky top-24 z-20 h-7 bg-surface p-0 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 ${TINT_WEEK}`}
-                        >
-                          {span >= 3 ? `${t("Week")} ${i + 1}` : i + 1}
-                        </th>
-                      ))}
-                    </tr>
-                    <tr>
-                      {days.map((day) => (
-                        <th
-                          key={day}
-                          title={ODD_NIGHTS.has(day) ? t("Odd night of the last ten -- Laylat al-Qadr is sought in these") : undefined}
-                          className={`sticky top-[7.75rem] z-20 h-8 bg-surface p-0 text-xs font-medium text-neutral-600 ${ashraTint(day)}`}
-                        >
-                          <div className="relative flex h-8 items-center justify-center">
-                            {day}
-                            {ODD_NIGHTS.has(day) && <Star className="absolute right-0.5 top-0.5 h-2 w-2 fill-amber-400 text-amber-400" />}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.length === 0 && (
-                      <tr>
-                        <td colSpan={totalDays + 1} className="p-0">
-                          {/* sticky, left-aligned: a centered message would sit far to the right of a
-                              narrow scroll box, out of sight */}
-                          <div className="sticky left-0 inline-block px-4 py-10 text-sm text-neutral-400">{t("No habits yet -- add one below.")}</div>
-                        </td>
-                      </tr>
-                    )}
-                    {items.map((item, index) => {
-                      const done = days.filter((day) => ticked.has(`${day}:${item}`)).length;
-                      const pct = totalDays > 0 ? Math.round((done / totalDays) * 100) : 0;
-                      return (
-                        <tr key={item}>
-                          <td className="sticky left-0 z-10 border-b border-neutral-100 bg-surface px-3 py-2 shadow-[1px_0_0_0_rgb(0_0_0/0.06)]">
-                            <div className="flex items-start gap-2">
-                              <span className="w-4 shrink-0 pt-0.5 text-xs tabular-nums text-neutral-400">{index + 1}</span>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-neutral-800" title={item}>
-                                  {t(item)}
-                                </p>
-                                <p className="text-[11px] tabular-nums text-neutral-400">
-                                  {done}/{totalDays} · {pct}%
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setRemoveTarget(item)}
-                                aria-label={`${t("Remove habit")}: ${item}`}
-                                title={t("Remove habit")}
-                                className="shrink-0 rounded-md p-1 text-neutral-300 transition-colors hover:bg-neutral-100 hover:text-brand-danger"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                          {days.map((day) => {
-                            const checked = ticked.has(`${day}:${item}`);
-                            return (
-                              <td key={day} className={`border-b border-neutral-100 p-0 ${ashraTint(day)}`}>
-                                <button
-                                  type="button"
-                                  role="checkbox"
-                                  aria-checked={checked}
-                                  aria-label={`${t(item)} ${day}`}
-                                  onClick={() => toggleCell(day, item, !checked)}
-                                  className="flex h-11 w-full items-center justify-center"
-                                >
-                                  <span
-                                    className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
-                                      checked ? "border-emerald-600 bg-emerald-600 text-white" : "border-neutral-300 bg-surface hover:border-emerald-500"
-                                    }`}
-                                  >
-                                    {checked && <Check className="h-3.5 w-3.5" />}
-                                  </span>
-                                </button>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <TrackerGrid
+              theme={RAMADAN_THEME}
+              variant="compact"
+              items={items}
+              columns={columns}
+              ticked={ticked}
+              onToggle={toggleCell}
+              chartLabel="Daily progress"
+              cornerLabel="Habits"
+              emptyMessage={t("No habits yet -- add one below.")}
+              habitWidth="[--habit-w:9.5rem] sm:[--habit-w:13rem]"
+              rowHead={({ item, index, done, pct }) => (
+                <div className="flex items-start gap-2">
+                  <span className="w-4 shrink-0 pt-0.5 text-xs tabular-nums text-neutral-400">{index + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-neutral-800" title={item}>
+                      {t(item)}
+                    </p>
+                    <p className="text-[11px] tabular-nums text-neutral-400">
+                      {done}/{totalDays} · {pct}%
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRemoveTarget(item)}
+                    aria-label={`${t("Remove habit")}: ${item}`}
+                    title={t("Remove habit")}
+                    className="shrink-0 rounded-md p-1 text-neutral-300 transition-colors hover:bg-neutral-100 hover:text-brand-danger"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+            />
             <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
               <form
                 onSubmit={(e) => {
@@ -288,7 +202,7 @@ export function RamadanSheetPageClient({ tracker }: { tracker: HabitMonthTracker
                   placeholder={t("Add a habit (e.g. Quran)")}
                   className="min-w-[14rem] flex-1 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
                 />
-                <button type="submit" disabled={!newName.trim() || isPending} className={RAMADAN_GOLD_BUTTON}>
+                <button type="submit" disabled={!newName.trim() || isPending} className={RAMADAN_THEME.cta}>
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} {t("Add")}
                 </button>
               </form>
@@ -311,7 +225,7 @@ export function RamadanSheetPageClient({ tracker }: { tracker: HabitMonthTracker
             </div>
           </div>
           <div className="w-full max-w-2xl min-w-0 @min-[1600px]:max-w-none @min-[1600px]:flex-1">
-            <RamadanSummary items={items} totalDays={totalDays} checks={sheet.checks} />
+            <TrackerSummary theme={RAMADAN_THEME} title="Ramadan Summary" icon={MoonStar} perfectTitle="Days when every habit was ticked" items={items} totalDays={totalDays} checks={sheet.checks} />
           </div>
         </div>
       </div>

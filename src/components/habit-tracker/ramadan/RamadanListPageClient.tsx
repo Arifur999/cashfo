@@ -10,7 +10,8 @@ import type { HabitMonthTracker } from "@/lib/api";
 import { deleteHabitTrackerAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { CreateRamadanModal } from "./CreateRamadanModal";
-import { RAMADAN_GOLD_BUTTON, RamadanHero } from "./RamadanHero";
+import { RAMADAN_THEME } from "../tracker/theme";
+import { TrackerHero } from "../tracker/TrackerHero";
 
 // Habits -> Ramadan: a themed banner with "Create Ramadan", then one card per
 // created Ramadan ("Ramadan 2026"). A card opens that year's sheet on its
@@ -40,15 +41,15 @@ export function RamadanListPageClient({ trackers }: { trackers: HabitMonthTracke
 
   return (
     <div className="space-y-6 px-6 py-8 pb-24 md:pb-8">
-      <RamadanHero title={t("Ramadan")} subtitle={t("Track your Ramadan, day by day.")}>
-        <button type="button" onClick={() => setFormOpen(true)} className={RAMADAN_GOLD_BUTTON}>
+      <TrackerHero theme={RAMADAN_THEME} arabic="رمضان كريم" watermark={MoonStar} title={t("Ramadan")} subtitle={t("Track your Ramadan, day by day.")}>
+        <button type="button" onClick={() => setFormOpen(true)} className={RAMADAN_THEME.cta}>
           <Plus className="h-4 w-4" /> {t("Create Ramadan")}
         </button>
-      </RamadanHero>
+      </TrackerHero>
 
       {trackers.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl bg-surface px-6 py-14 text-center shadow-sm shadow-black/5">
-          <MoonStar className="mb-3 h-10 w-10 text-amber-400" />
+          <MoonStar className={`mb-3 h-10 w-10 ${RAMADAN_THEME.emptyIcon}`} />
           <p className="text-sm text-neutral-400">{t('No Ramadan yet -- click "Create Ramadan" to start.')}</p>
         </div>
       ) : (
@@ -62,11 +63,11 @@ export function RamadanListPageClient({ trackers }: { trackers: HabitMonthTracke
               <div key={tracker.id} className="relative">
                 <Link
                   href={`/habit-tracker/habits/ramadan/${tracker.id}`}
-                  className="block overflow-hidden rounded-2xl border border-amber-200/50 bg-surface shadow-sm shadow-black/5 transition hover:-translate-y-0.5 hover:shadow-md"
+                  className={`block overflow-hidden rounded-2xl border ${RAMADAN_THEME.cardBorder} bg-surface shadow-sm shadow-black/5 transition hover:-translate-y-0.5 hover:shadow-md`}
                 >
-                  <div className="relative bg-gradient-to-r from-emerald-900 to-indigo-950 px-5 py-4 text-white">
-                    <MoonStar aria-hidden className="pointer-events-none absolute -right-2 -top-3 h-20 w-20 text-amber-200/15" />
-                    <p className="text-xs font-medium text-amber-200/90">
+                  <div className={`relative bg-gradient-to-r ${RAMADAN_THEME.cardHeader} px-5 py-4 text-white`}>
+                    <MoonStar aria-hidden className={`pointer-events-none absolute -right-2 -top-3 h-20 w-20 ${RAMADAN_THEME.heroWatermark}`} />
+                    <p className={`text-xs font-medium ${RAMADAN_THEME.cardSub}`}>
                       {tracker.totalDays} {t("days")}
                     </p>
                     <h2 className="text-lg font-semibold">
@@ -81,7 +82,7 @@ export function RamadanListPageClient({ trackers }: { trackers: HabitMonthTracke
                       <span className="font-semibold tabular-nums text-neutral-700">{pct}%</span>
                     </div>
                     <div className="h-2.5 overflow-hidden rounded-full bg-neutral-100">
-                      <div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+                      <div className={`h-full rounded-full bg-gradient-to-r ${RAMADAN_THEME.bar} transition-all duration-500`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 </Link>
