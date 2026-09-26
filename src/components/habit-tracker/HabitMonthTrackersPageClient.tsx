@@ -27,10 +27,84 @@ function countTickCross(tracker: HabitMonthTracker): { tick: number; cross: numb
   return { tick, cross };
 }
 
+// Per-prayer summary shown beside the sheet: for each prayer, how many days
+// have fully passed so far (Total Days), on how many of those it was ticked
+// (Complete) and on how many it wasn't (Missing) -- a stacked bar plus the
+// three numbers. Same "past days only" rule as the list's Cross column, so
+// the Missing figures add up to it; today's tick shows as a small marker and
+// joins the totals once the day is over.
+function PrayerSummary({ tracker, ticked }: { tracker: HabitMonthTracker; ticked: Set<string> }) {
+  const { t } = useLocale();
+  const total = tracker.elapsedDays;
+
+  return (
+    <div className="rounded-xl border border-neutral-100 bg-surface p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-neutral-900">{t("Prayer Summary")}</h3>
+          <p className="text-xs text-neutral-400">{t("Up to today")}</p>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-neutral-500">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-brand-primary" /> {t("Complete")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-brand-danger" /> {t("Missing")}
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {tracker.items.map((item) => {
+          const complete = tracker.checks.filter((c) => c.item === item && c.day <= total).length;
+          const missing = Math.max(0, total - complete);
+          const pct = total > 0 ? Math.round((complete / total) * 100) : 0;
+          const todayDone = tracker.todayDay !== null && ticked.has(`${tracker.todayDay}:${item}`);
+          return (
+            <div key={item}>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-sm font-medium text-neutral-800">
+                  {t(item)}
+                  {todayDone && (
+                    <span className="flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                      <Check className="h-3 w-3" /> {t("Today")}
+                    </span>
+                  )}
+                </span>
+                <span className="text-xs tabular-nums text-neutral-500">{pct}%</span>
+              </div>
+              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-neutral-100">
+                {complete > 0 && <div className="h-full bg-brand-primary" style={{ width: `${(complete / total) * 100}%` }} />}
+                {missing > 0 && <div className="h-full bg-brand-danger" style={{ width: `${(missing / total) * 100}%` }} />}
+              </div>
+              <div className="mt-1.5 grid grid-cols-3 gap-2 text-xs text-neutral-500">
+                <span>
+                  {t("Total Days")} <b className="tabular-nums text-neutral-800">{total}</b>
+                </span>
+                <span>
+                  {t("Complete")} <b className="tabular-nums text-brand-primary">{complete}</b>
+                </span>
+                <span>
+                  {t("Missing")} <b className="tabular-nums text-brand-danger">{missing}</b>
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {tracker.todayDay !== null && <p className="mt-4 text-[11px] text-neutral-400">{t("Today counts once the day has passed.")}</p>}
+    </div>
+  );
+}
+
 // The vertical month sheet: one row per day, one checkbox column per item
 // (the five prayers), plus that day's progress bar -- the reference's
 // horizontal habits-by-days grid, turned on its side. Rows are grouped in
 // weeks of 7 starting from day 1, same as the reference's WEEK 1..5 bands.
+// The grid has its own scroll box with a sticky header row, so the column
+// titles (and everything above/beside it) stay put while only the days
+// scroll; PrayerSummary sits beside it and sticks while the page scrolls.
 function TrackerSheet({ tracker, onToggle }: { tracker: HabitMonthTracker; onToggle: (day: number, item: string, checked: boolean) => void }) {
   const { t } = useLocale();
   const ticked = new Set(tracker.checks.map((c) => `${c.day}:${c.item}`));
@@ -40,79 +114,87 @@ function TrackerSheet({ tracker, onToggle }: { tracker: HabitMonthTracker; onTog
 
   return (
     <div className="px-4 pb-4 pt-2">
-      <div className="mb-3 flex max-w-2xl items-center gap-3">
-        <span className="text-xs font-medium text-neutral-500">{t("Progress")}</span>
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
-          <div className="h-full rounded-full bg-brand-primary" style={{ width: `${overallPct}%` }} />
-        </div>
-        <span className="w-10 text-right text-xs tabular-nums text-neutral-500">{overallPct}%</span>
-      </div>
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+        <div className="min-w-0 w-full max-w-2xl xl:flex-none">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="text-xs font-medium text-neutral-500">{t("Progress")}</span>
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
+              <div className="h-full rounded-full bg-brand-primary" style={{ width: `${overallPct}%` }} />
+            </div>
+            <span className="w-10 text-right text-xs tabular-nums text-neutral-500">{overallPct}%</span>
+          </div>
 
-      <div className="max-w-2xl overflow-x-auto rounded-xl border border-neutral-100 bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-neutral-50 text-xs text-neutral-500">
-              <th className="px-3 py-2 text-left font-medium">{t("Day")}</th>
-              {tracker.items.map((item) => (
-                <th key={item} className="px-3 py-2 text-center font-medium">
-                  {t(item)}
-                </th>
-              ))}
-              <th className="px-3 py-2 text-left font-medium">{t("Progress")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {days.map((day) => {
-              const done = tracker.items.filter((item) => ticked.has(`${day}:${item}`)).length;
-              const pct = tracker.items.length > 0 ? Math.round((done / tracker.items.length) * 100) : 0;
-              const weekday = new Date(Date.UTC(tracker.year, tracker.month - 1, day)).getUTCDay();
-              const isToday = tracker.todayDay === day;
-              return (
-                <Fragment key={day}>
-                  {(day - 1) % 7 === 0 && (
-                    <tr className="bg-emerald-50">
-                      <td colSpan={tracker.items.length + 2} className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                        {t("Week")} {Math.floor((day - 1) / 7) + 1}
-                      </td>
-                    </tr>
-                  )}
-                  <tr className={`border-t border-neutral-50 ${isToday ? "bg-amber-50" : ""}`}>
-                    <td className="whitespace-nowrap px-3 py-1.5">
-                      <span className="font-medium text-neutral-800">{day}</span> <span className="text-xs text-neutral-400">{t(WEEKDAY_SHORT[weekday])}</span>
-                    </td>
-                    {tracker.items.map((item) => {
-                      const checked = ticked.has(`${day}:${item}`);
-                      return (
-                        <td key={item} className="px-3 py-1.5">
-                          <button
-                            type="button"
-                            role="checkbox"
-                            aria-checked={checked}
-                            aria-label={`${day} ${t(item)}`}
-                            onClick={() => onToggle(day, item, !checked)}
-                            className={`mx-auto flex h-5 w-5 items-center justify-center rounded border transition-colors ${
-                              checked ? "border-brand-primary bg-brand-primary text-white" : "border-neutral-300 bg-white hover:border-brand-primary"
-                            }`}
-                          >
-                            {checked && <Check className="h-3.5 w-3.5" />}
-                          </button>
+          <div className="max-h-[max(24rem,calc(100vh_-_21rem))] overflow-auto rounded-xl border border-neutral-100 bg-surface">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-neutral-500">
+                  <th className="sticky top-0 z-10 bg-neutral-50 px-3 py-2 text-left font-medium">{t("Day")}</th>
+                  {tracker.items.map((item) => (
+                    <th key={item} className="sticky top-0 z-10 bg-neutral-50 px-3 py-2 text-center font-medium">
+                      {t(item)}
+                    </th>
+                  ))}
+                  <th className="sticky top-0 z-10 bg-neutral-50 px-3 py-2 text-left font-medium">{t("Progress")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {days.map((day) => {
+                  const done = tracker.items.filter((item) => ticked.has(`${day}:${item}`)).length;
+                  const pct = tracker.items.length > 0 ? Math.round((done / tracker.items.length) * 100) : 0;
+                  const weekday = new Date(Date.UTC(tracker.year, tracker.month - 1, day)).getUTCDay();
+                  const isToday = tracker.todayDay === day;
+                  return (
+                    <Fragment key={day}>
+                      {(day - 1) % 7 === 0 && (
+                        <tr className="bg-emerald-50">
+                          <td colSpan={tracker.items.length + 2} className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                            {t("Week")} {Math.floor((day - 1) / 7) + 1}
+                          </td>
+                        </tr>
+                      )}
+                      <tr className={`border-t border-neutral-50 ${isToday ? "bg-amber-50" : ""}`}>
+                        <td className="whitespace-nowrap px-3 py-1.5">
+                          <span className="font-medium text-neutral-800">{day}</span> <span className="text-xs text-neutral-400">{t(WEEKDAY_SHORT[weekday])}</span>
                         </td>
-                      );
-                    })}
-                    <td className="px-3 py-1.5">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-neutral-100">
-                          <div className="h-full rounded-full bg-brand-primary" style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="w-9 text-right text-xs tabular-nums text-neutral-500">{pct}%</span>
-                      </div>
-                    </td>
-                  </tr>
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+                        {tracker.items.map((item) => {
+                          const checked = ticked.has(`${day}:${item}`);
+                          return (
+                            <td key={item} className="px-3 py-1.5">
+                              <button
+                                type="button"
+                                role="checkbox"
+                                aria-checked={checked}
+                                aria-label={`${day} ${t(item)}`}
+                                onClick={() => onToggle(day, item, !checked)}
+                                className={`mx-auto flex h-5 w-5 items-center justify-center rounded border transition-colors ${
+                                  checked ? "border-brand-primary bg-brand-primary text-white" : "border-neutral-300 bg-white hover:border-brand-primary"
+                                }`}
+                              >
+                                {checked && <Check className="h-3.5 w-3.5" />}
+                              </button>
+                            </td>
+                          );
+                        })}
+                        <td className="px-3 py-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-neutral-100">
+                              <div className="h-full rounded-full bg-brand-primary" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="w-9 text-right text-xs tabular-nums text-neutral-500">{pct}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="order-first min-w-0 w-full max-w-md xl:sticky xl:top-16 xl:order-none xl:flex-1">
+          <PrayerSummary tracker={tracker} ticked={ticked} />
+        </div>
       </div>
     </div>
   );
@@ -186,7 +268,9 @@ export function HabitMonthTrackersPageClient({ category, trackers }: { category:
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+      {/* overflow-clip, not -hidden: same rounded-corner clipping, but it does not
+          create a scroll container, so the expanded month row below can stick. */}
+      <div className="overflow-clip rounded-2xl bg-surface shadow-sm shadow-black/5">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
@@ -214,7 +298,10 @@ export function HabitMonthTrackersPageClient({ category, trackers }: { category:
               const expanded = expandedId === tracker.id;
               return (
                 <Fragment key={tracker.id}>
-                  <tr className="cursor-pointer border-t border-neutral-50 hover:bg-neutral-50" onClick={() => setExpandedId(expanded ? null : tracker.id)}>
+                  <tr
+                    className={`cursor-pointer border-t border-neutral-50 hover:bg-neutral-50 ${expanded ? "sticky top-0 z-20 bg-surface shadow-[0_1px_0_0_rgb(0_0_0/0.06)]" : ""}`}
+                    onClick={() => setExpandedId(expanded ? null : tracker.id)}
+                  >
                     <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
                     <td className="px-4 py-3">
                       <button type="button" aria-expanded={expanded} className="flex items-center gap-1.5 font-medium text-neutral-800">
