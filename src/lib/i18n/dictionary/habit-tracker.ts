@@ -16,6 +16,14 @@ export const habitTrackerDictionary: Record<string, string> = {
   Calendar: "ক্যালেন্ডার",
   Stats: "পরিসংখ্যান",
 
+  // Habit categories -- Sidebar's "Habits" submenu, HabitFormModal's
+  // Category select, HabitsListPageClient's Category column. "Others"
+  // reuses loan-management.ts's own key (same meaning, no redefinition).
+  Namaz: "নামাজ",
+  Ramadan: "রমজান",
+  Book: "বই",
+  Course: "কোর্স",
+
   // Weekday short labels -- HabitFormModal's day picker, HabitsListPageClient's
   // frequency column, HabitCalendarPageClient's grid header.
   Sun: "রবি",

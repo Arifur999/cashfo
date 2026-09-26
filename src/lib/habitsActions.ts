@@ -30,6 +30,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 
 export interface HabitInput {
   name: string;
+  category?: string;
   icon?: string;
   color?: string;
   frequencyType?: HabitFrequency;

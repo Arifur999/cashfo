@@ -12,11 +12,11 @@ async function authHeaders() {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-export const getHabits = cache(async (includeArchived = false): Promise<Habit[]> => {
+export const getHabits = cache(async (includeArchived = false, category?: string): Promise<Habit[]> => {
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<Habit[]>(`${API_BASE_URL}/api/habits`, { headers, params: { includeArchived } });
+    const res = await axios.get<Habit[]>(`${API_BASE_URL}/api/habits`, { headers, params: { includeArchived, category } });
     return res.data;
   } catch {
     return [];

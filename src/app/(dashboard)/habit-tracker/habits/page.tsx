@@ -3,11 +3,14 @@ import { HabitsListPageClient } from "@/components/habit-tracker/HabitsListPageC
 import { getCurrentUser } from "@/lib/auth";
 import { getHabits } from "@/lib/habits";
 
-export default async function HabitsPage() {
+export default async function HabitsPage({ searchParams }: PageProps<"/habit-tracker/habits">) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const habits = await getHabits(true);
+  const sp = await searchParams;
+  const category = typeof sp.category === "string" ? sp.category : undefined;
 
-  return <HabitsListPageClient habits={habits} />;
+  const habits = await getHabits(true, category);
+
+  return <HabitsListPageClient habits={habits} category={category} />;
 }

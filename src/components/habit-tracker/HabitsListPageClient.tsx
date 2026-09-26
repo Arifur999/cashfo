@@ -19,7 +19,7 @@ function frequencyLabel(habit: Habit, t: (s: string) => string): string {
   return t("Every day");
 }
 
-export function HabitsListPageClient({ habits }: { habits: Habit[] }) {
+export function HabitsListPageClient({ habits, category }: { habits: Habit[]; category?: string }) {
   const router = useRouter();
   const { t } = useLocale();
   const [formOpen, setFormOpen] = useState(false);
@@ -73,7 +73,10 @@ export function HabitsListPageClient({ habits }: { habits: Habit[] }) {
   return (
     <div className="space-y-6 px-6 py-8 pb-24 md:pb-8">
       <div>
-        <h1 className="text-xl font-semibold text-neutral-900">{t("Habits")}</h1>
+        <h1 className="text-xl font-semibold text-neutral-900">
+          {t("Habits")}
+          {category && <span className="text-neutral-400"> — {t(category)}</span>}
+        </h1>
         <p className="mt-1 text-sm text-neutral-500">{t("Manage the habits you're tracking.")}</p>
       </div>
 
@@ -102,6 +105,7 @@ export function HabitsListPageClient({ habits }: { habits: Habit[] }) {
             <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
               <th className="px-4 py-3">#</th>
               <th className="px-4 py-3">{t("Name")}</th>
+              <th className="px-4 py-3">{t("Category")}</th>
               <th className="px-4 py-3">{t("Frequency")}</th>
               <th className="px-4 py-3">{t("Target")}</th>
               <th className="px-4 py-3">{t("Status")}</th>
@@ -111,7 +115,7 @@ export function HabitsListPageClient({ habits }: { habits: Habit[] }) {
           <tbody className="divide-y divide-neutral-50">
             {visibleHabits.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-sm text-neutral-400">
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-neutral-400">
                   {t("No habits yet.")}
                 </td>
               </tr>
@@ -129,6 +133,7 @@ export function HabitsListPageClient({ habits }: { habits: Habit[] }) {
                       <span className="font-medium text-neutral-800">{habit.name}</span>
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-neutral-600">{t(habit.category)}</td>
                   <td className="px-4 py-3 text-neutral-600">{frequencyLabel(habit, t)}</td>
                   <td className="px-4 py-3 text-neutral-600">{habit.targetValue ? `${habit.targetValue} ${habit.unit ?? ""}`.trim() : "--"}</td>
                   <td className="px-4 py-3">
@@ -171,7 +176,7 @@ export function HabitsListPageClient({ habits }: { habits: Habit[] }) {
         </table>
       </div>
 
-      <HabitFormModal open={formOpen} onClose={() => setFormOpen(false)} editingHabit={editingHabit} />
+      <HabitFormModal open={formOpen} onClose={() => setFormOpen(false)} editingHabit={editingHabit} defaultCategory={category} />
       <ConfirmModal
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}

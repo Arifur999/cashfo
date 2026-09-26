@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
-import type { Habit, HabitFrequency } from "@/lib/api";
+import { HABIT_CATEGORIES, type Habit, type HabitFrequency } from "@/lib/api";
 import {
   BUDGET_CATEGORY_COLORS,
   BUDGET_CATEGORY_ICONS,
@@ -20,6 +20,11 @@ interface HabitFormModalProps {
   open: boolean;
   onClose: () => void;
   editingHabit: Habit | null;
+  // Pre-fills the Category field when adding a NEW habit from inside a
+  // category-filtered Habits view (e.g. the Sidebar's "Namaz" sub-item) --
+  // ignored when editing an existing habit, which always shows its own
+  // real category instead.
+  defaultCategory?: string;
 }
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -28,10 +33,11 @@ const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 // frequency picker specific to habits: DAILY (default) needs no extra
 // input; WEEKLY_DAYS toggles specific weekdays; WEEKLY_COUNT is a plain
 // "N times a week" number, satisfiable on any day.
-export function HabitFormModal({ open, onClose, editingHabit }: HabitFormModalProps) {
+export function HabitFormModal({ open, onClose, editingHabit, defaultCategory }: HabitFormModalProps) {
   const { t } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
+  const [category, setCategory] = useState<string>(defaultCategory ?? "Others");
   const [icon, setIcon] = useState<(typeof BUDGET_CATEGORY_ICONS)[number]>("target");
   const [color, setColor] = useState<(typeof BUDGET_CATEGORY_COLORS)[number]>(BUDGET_CATEGORY_COLORS[0]);
   const [iconSearch, setIconSearch] = useState("");
@@ -49,6 +55,7 @@ export function HabitFormModal({ open, onClose, editingHabit }: HabitFormModalPr
     if (open) {
       if (editingHabit) {
         setName(editingHabit.name);
+        setCategory(editingHabit.category);
         setIcon(editingHabit.icon as (typeof BUDGET_CATEGORY_ICONS)[number]);
         setColor(editingHabit.color as (typeof BUDGET_CATEGORY_COLORS)[number]);
         setFrequencyType(editingHabit.frequencyType);
@@ -58,6 +65,7 @@ export function HabitFormModal({ open, onClose, editingHabit }: HabitFormModalPr
         setUnit(editingHabit.unit ?? "");
       } else {
         setName("");
+        setCategory(defaultCategory ?? "Others");
         setIcon("target");
         setColor(BUDGET_CATEGORY_COLORS[0]);
         setFrequencyType("DAILY");
@@ -86,6 +94,7 @@ export function HabitFormModal({ open, onClose, editingHabit }: HabitFormModalPr
 
     const input = {
       name: name.trim(),
+      category,
       icon,
       color,
       frequencyType,
@@ -124,6 +133,21 @@ export function HabitFormModal({ open, onClose, editingHabit }: HabitFormModalPr
             autoFocus
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Category")}</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
+          >
+            {HABIT_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {t(cat)}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

@@ -823,10 +823,16 @@ export interface GroupMonthlyBudget {
 // backend/src/habits/ and lib/habits.ts/habitsActions.ts.
 export type HabitFrequency = "DAILY" | "WEEKLY_DAYS" | "WEEKLY_COUNT";
 
+// Fixed picker list for now (not a user-editable CRUD list like
+// GroupExpenseCategoryOption) -- see the backend Habit.category schema
+// comment for why the field itself is still a loose string, not an enum.
+export const HABIT_CATEGORIES = ["Namaz", "Ramadan", "Book", "Course", "Others"] as const;
+
 export interface Habit {
   id: string;
   userId: string;
   name: string;
+  category: string;
   icon: string;
   color: string;
   frequencyType: HabitFrequency;

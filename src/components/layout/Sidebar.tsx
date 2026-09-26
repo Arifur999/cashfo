@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { HABIT_CATEGORIES } from "@/lib/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Only pages that actually exist get a nav item -- Dashboard (Prompt 2),
@@ -199,12 +200,62 @@ const REPORTS_ITEMS = [
 // header included) based on the pathname alone, rather than a cookie/
 // provider-backed mode flag -- simpler, and it can't ever drift out of sync
 // with what's actually on screen after a refresh or a shared link.
-const HABIT_TRACKER_ITEMS = [
-  { label: "Dashboard", href: "/habit-tracker", icon: LayoutDashboard },
-  { label: "Habits", href: "/habit-tracker/habits", icon: ListChecks },
+const HABIT_TRACKER_TOP_ITEMS = [{ label: "Dashboard", href: "/habit-tracker", icon: LayoutDashboard }];
+const HABIT_TRACKER_BOTTOM_ITEMS = [
   { label: "Calendar", href: "/habit-tracker/calendar", icon: CalendarDays },
   { label: "Stats", href: "/habit-tracker/stats", icon: BarChart3 },
 ];
+
+// "Habits" sub-items are a fixed category picker (?category= on the SAME
+// /habit-tracker/habits route, not separate pages) -- same "collapsible
+// group whose sub-items are a query param, not a route" shape as
+// GroupExpenseNavItem, just with a static list instead of one keyed off the
+// current URL's :businessId. "All" (no category param) always leads.
+const HABIT_CATEGORY_NAV_ITEMS = ["All", ...HABIT_CATEGORIES];
+
+function HabitsNavItem() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { t } = useLocale();
+  const isActive = pathname.startsWith("/habit-tracker/habits");
+  const [open, setOpen] = useState(isActive);
+  const currentCategory = searchParams.get("category") ?? "All";
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`flex w-full items-center gap-3 rounded-lg border-l-4 px-4 py-2.5 text-sm transition-colors ${
+          isActive ? "border-brand-primary bg-brand-dark-hover font-medium text-white" : "border-transparent text-white/70 hover:bg-brand-dark-hover hover:text-white"
+        }`}
+      >
+        <ListChecks className="h-4 w-4" />
+        {t("Habits")}
+        {open ? <ChevronDown className="ml-auto h-3.5 w-3.5" /> : <ChevronRight className="ml-auto h-3.5 w-3.5" />}
+      </button>
+      {open && (
+        <div className="space-y-0.5 py-0.5 pl-8">
+          {HABIT_CATEGORY_NAV_ITEMS.map((category) => {
+            const itemActive = isActive && currentCategory === category;
+            const href = category === "All" ? "/habit-tracker/habits" : `/habit-tracker/habits?category=${category}`;
+            return (
+              <Link
+                key={category}
+                href={href}
+                className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+                  itemActive ? "bg-brand-dark-hover font-medium text-white" : "text-white/60 hover:bg-brand-dark-hover hover:text-white"
+                }`}
+              >
+                {t(category)}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
 
 interface NavGroupProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -337,10 +388,13 @@ export function Sidebar() {
       <aside className="flex w-64 shrink-0 flex-col overflow-hidden bg-brand-dark text-white">
         <div className="flex h-16 shrink-0 items-center px-6 text-lg font-semibold tracking-wide">Habit Tracker</div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
-          {HABIT_TRACKER_ITEMS.map((item) => {
-            const isActive = item.href === "/habit-tracker" ? pathname === item.href : pathname.startsWith(item.href);
-            return <NavLink key={item.href} item={item} isActive={isActive} />;
-          })}
+          {HABIT_TRACKER_TOP_ITEMS.map((item) => (
+            <NavLink key={item.href} item={item} isActive={pathname === item.href} />
+          ))}
+          <HabitsNavItem />
+          {HABIT_TRACKER_BOTTOM_ITEMS.map((item) => (
+            <NavLink key={item.href} item={item} isActive={pathname.startsWith(item.href)} />
+          ))}
         </nav>
       </aside>
     );
