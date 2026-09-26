@@ -27,6 +27,20 @@ function countTickCross(tracker: HabitMonthTracker): { tick: number; cross: numb
   return { tick, cross };
 }
 
+// The short follow-up message under each prayer's row, by how much of the
+// elapsed days it was ticked: 100% (nothing missed) / 75-99 / 50-74 / 25-49 /
+// below 25 (0% included -- "start with today" fits it too). Nothing to judge
+// yet (no day has passed) means no message.
+function encouragementFor(complete: number, total: number): { text: string; emoji: string; tone: string } | null {
+  if (total === 0) return null;
+  if (complete === total) return { text: "MashaAllah! Keep it up", emoji: "🌟", tone: "text-emerald-700" };
+  const pct = Math.round((complete / total) * 100);
+  if (pct >= 75) return { text: "Almost there, don't miss one", emoji: "💪", tone: "text-emerald-600" };
+  if (pct >= 50) return { text: "Good effort, aim for more", emoji: "🤲", tone: "text-amber-600" };
+  if (pct >= 25) return { text: "Needs attention, try to pray on time", emoji: "⏰", tone: "text-orange-600" };
+  return { text: "Don't give up, start with today", emoji: "🌱", tone: "text-red-500" };
+}
+
 // Per-prayer summary shown beside the sheet: for each prayer, how many days
 // have fully passed so far (Total Days), on how many of those it was ticked
 // (Complete) and on how many it wasn't (Missing) -- one compact tile per
@@ -63,6 +77,7 @@ function PrayerSummary({ tracker, ticked }: { tracker: HabitMonthTracker; ticked
           const completePct = total > 0 ? (complete / total) * 100 : 0;
           const missingPct = total > 0 ? (missing / total) * 100 : 0;
           const todayDone = tracker.todayDay !== null && ticked.has(`${tracker.todayDay}:${item}`);
+          const note = encouragementFor(complete, total);
           return (
             <div key={item} className="rounded-xl bg-neutral-50 px-3.5 py-2.5">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -74,6 +89,11 @@ function PrayerSummary({ tracker, ticked }: { tracker: HabitMonthTracker; ticked
                     </span>
                   )}
                 </span>
+                {note && (
+                  <span className={`min-w-[10rem] flex-1 text-xs font-medium ${note.tone}`}>
+                    {t(note.text)} {note.emoji}
+                  </span>
+                )}
                 <span className="flex items-center gap-3 text-xs text-neutral-500">
                   <span>
                     {t("Total Days")} <b className="tabular-nums text-neutral-800">{total}</b>
