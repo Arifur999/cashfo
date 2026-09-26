@@ -29,64 +29,87 @@ function countTickCross(tracker: HabitMonthTracker): { tick: number; cross: numb
 
 // Per-prayer summary shown beside the sheet: for each prayer, how many days
 // have fully passed so far (Total Days), on how many of those it was ticked
-// (Complete) and on how many it wasn't (Missing) -- a stacked bar plus the
-// three numbers. Same "past days only" rule as the list's Cross column, so
-// the Missing figures add up to it; today's tick shows as a small marker and
-// joins the totals once the day is over.
+// (Complete) and on how many it wasn't (Missing) -- a big stacked bar with the
+// counts printed inside its segments, plus three stat tiles. Same "past days
+// only" rule as the list's Cross column, so the Missing figures add up to it;
+// today's tick shows as a marker and joins the totals once the day is over.
 function PrayerSummary({ tracker, ticked }: { tracker: HabitMonthTracker; ticked: Set<string> }) {
   const { t } = useLocale();
   const total = tracker.elapsedDays;
 
   return (
-    <div className="rounded-xl border border-neutral-100 bg-surface p-4">
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <div className="rounded-2xl border border-neutral-100 bg-surface p-5 shadow-sm shadow-black/5">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-neutral-900">{t("Prayer Summary")}</h3>
+          <h3 className="text-base font-semibold text-neutral-900">{t("Prayer Summary")}</h3>
           <p className="text-xs text-neutral-400">{t("Up to today")}</p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-neutral-500">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-brand-primary" /> {t("Complete")}
+        <div className="flex items-center gap-2 text-xs font-medium">
+          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" /> {t("Complete")}
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-brand-danger" /> {t("Missing")}
+          <span className="flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-red-600">
+            <span className="h-2 w-2 rounded-full bg-red-500" /> {t("Missing")}
           </span>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {tracker.items.map((item) => {
           const complete = tracker.checks.filter((c) => c.item === item && c.day <= total).length;
           const missing = Math.max(0, total - complete);
-          const pct = total > 0 ? Math.round((complete / total) * 100) : 0;
+          const completePct = total > 0 ? (complete / total) * 100 : 0;
+          const missingPct = total > 0 ? (missing / total) * 100 : 0;
           const todayDone = tracker.todayDay !== null && ticked.has(`${tracker.todayDay}:${item}`);
           return (
-            <div key={item}>
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <span className="flex items-center gap-2 text-sm font-medium text-neutral-800">
+            <div key={item} className="rounded-xl bg-neutral-50 p-4">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-sm font-semibold text-neutral-800">
                   {t(item)}
                   {todayDone && (
-                    <span className="flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                    <span className="flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
                       <Check className="h-3 w-3" /> {t("Today")}
                     </span>
                   )}
                 </span>
-                <span className="text-xs tabular-nums text-neutral-500">{pct}%</span>
+                <span className="text-lg font-semibold tabular-nums text-neutral-900">
+                  {Math.round(completePct)}
+                  <span className="text-xs font-medium text-neutral-400">%</span>
+                </span>
               </div>
-              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-neutral-100">
-                {complete > 0 && <div className="h-full bg-brand-primary" style={{ width: `${(complete / total) * 100}%` }} />}
-                {missing > 0 && <div className="h-full bg-brand-danger" style={{ width: `${(missing / total) * 100}%` }} />}
+
+              <div className="flex h-6 w-full overflow-hidden rounded-full bg-neutral-200/70">
+                {complete > 0 && (
+                  <div
+                    className="flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 text-[11px] font-semibold text-white transition-all duration-500"
+                    style={{ width: `${completePct}%` }}
+                  >
+                    {completePct >= 10 ? complete : ""}
+                  </div>
+                )}
+                {missing > 0 && (
+                  <div
+                    className="flex items-center justify-center bg-gradient-to-r from-rose-400 to-red-500 text-[11px] font-semibold text-white transition-all duration-500"
+                    style={{ width: `${missingPct}%` }}
+                  >
+                    {missingPct >= 10 ? missing : ""}
+                  </div>
+                )}
               </div>
-              <div className="mt-1.5 grid grid-cols-3 gap-2 text-xs text-neutral-500">
-                <span>
-                  {t("Total Days")} <b className="tabular-nums text-neutral-800">{total}</b>
-                </span>
-                <span>
-                  {t("Complete")} <b className="tabular-nums text-brand-primary">{complete}</b>
-                </span>
-                <span>
-                  {t("Missing")} <b className="tabular-nums text-brand-danger">{missing}</b>
-                </span>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-surface px-3 py-2 text-center shadow-sm shadow-black/5">
+                  <p className="text-[11px] text-neutral-400">{t("Total Days")}</p>
+                  <p className="text-base font-semibold tabular-nums text-neutral-800">{total}</p>
+                </div>
+                <div className="rounded-lg bg-surface px-3 py-2 text-center shadow-sm shadow-black/5">
+                  <p className="text-[11px] text-neutral-400">{t("Complete")}</p>
+                  <p className="text-base font-semibold tabular-nums text-emerald-600">{complete}</p>
+                </div>
+                <div className="rounded-lg bg-surface px-3 py-2 text-center shadow-sm shadow-black/5">
+                  <p className="text-[11px] text-neutral-400">{t("Missing")}</p>
+                  <p className="text-base font-semibold tabular-nums text-red-500">{missing}</p>
+                </div>
               </div>
             </div>
           );
@@ -117,11 +140,11 @@ function TrackerSheet({ tracker, onToggle }: { tracker: HabitMonthTracker; onTog
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
         <div className="min-w-0 w-full max-w-2xl xl:flex-none">
           <div className="mb-3 flex items-center gap-3">
-            <span className="text-xs font-medium text-neutral-500">{t("Progress")}</span>
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
-              <div className="h-full rounded-full bg-brand-primary" style={{ width: `${overallPct}%` }} />
+            <span className="text-sm font-medium text-neutral-600">{t("Progress")}</span>
+            <div className="h-3.5 flex-1 overflow-hidden rounded-full bg-neutral-100">
+              <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-500" style={{ width: `${overallPct}%` }} />
             </div>
-            <span className="w-10 text-right text-xs tabular-nums text-neutral-500">{overallPct}%</span>
+            <span className="w-12 text-right text-sm font-semibold tabular-nums text-neutral-700">{overallPct}%</span>
           </div>
 
           <div className="max-h-[max(24rem,calc(100vh_-_21rem))] overflow-auto rounded-xl border border-neutral-100 bg-surface">
@@ -166,7 +189,7 @@ function TrackerSheet({ tracker, onToggle }: { tracker: HabitMonthTracker; onTog
                                 aria-checked={checked}
                                 aria-label={`${day} ${t(item)}`}
                                 onClick={() => onToggle(day, item, !checked)}
-                                className={`mx-auto flex h-5 w-5 items-center justify-center rounded border transition-colors ${
+                                className={`mx-auto flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
                                   checked ? "border-brand-primary bg-brand-primary text-white" : "border-neutral-300 bg-white hover:border-brand-primary"
                                 }`}
                               >
@@ -177,10 +200,10 @@ function TrackerSheet({ tracker, onToggle }: { tracker: HabitMonthTracker; onTog
                         })}
                         <td className="px-3 py-1.5">
                           <div className="flex items-center gap-2">
-                            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-neutral-100">
-                              <div className="h-full rounded-full bg-brand-primary" style={{ width: `${pct}%` }} />
+                            <div className="h-2.5 w-28 overflow-hidden rounded-full bg-neutral-100">
+                              <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-300" style={{ width: `${pct}%` }} />
                             </div>
-                            <span className="w-9 text-right text-xs tabular-nums text-neutral-500">{pct}%</span>
+                            <span className="w-10 text-right text-xs font-medium tabular-nums text-neutral-600">{pct}%</span>
                           </div>
                         </td>
                       </tr>
@@ -192,7 +215,7 @@ function TrackerSheet({ tracker, onToggle }: { tracker: HabitMonthTracker; onTog
           </div>
         </div>
 
-        <div className="order-first min-w-0 w-full max-w-md xl:sticky xl:top-16 xl:order-none xl:flex-1">
+        <div className="order-first min-w-0 w-full xl:sticky xl:top-16 xl:order-none xl:flex-1">
           <PrayerSummary tracker={tracker} ticked={ticked} />
         </div>
       </div>
