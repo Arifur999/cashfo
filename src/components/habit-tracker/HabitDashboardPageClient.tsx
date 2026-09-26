@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { checkInHabitAction, removeCheckInAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import type { HabitToday } from "@/lib/api";
+import { HABIT_CATEGORIES, type HabitToday } from "@/lib/api";
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
@@ -82,6 +82,14 @@ export function HabitDashboardPageClient({ habitsToday }: { habitsToday: HabitTo
   const completionPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
   const bestStreak = habitsToday.reduce((max, h) => Math.max(max, h.streak), 0);
 
+  // Grouped by category (Namaz/Ramadan/Book/Course/Others, in that fixed
+  // order) instead of one flat list -- a category with nothing scheduled
+  // today is left out entirely rather than shown as an empty section.
+  const categorizedToday = HABIT_CATEGORIES.map((category) => ({
+    category,
+    habits: habitsToday.filter((h) => h.category === category),
+  })).filter((group) => group.habits.length > 0);
+
   return (
     <div className="space-y-6 px-6 py-8 pb-24 md:pb-8">
       <div className="flex items-center justify-between">
@@ -128,10 +136,25 @@ export function HabitDashboardPageClient({ habitsToday }: { habitsToday: HabitTo
             </Link>
           </div>
         ) : (
-          <div className="space-y-2">
-            {habitsToday.map((habit) => (
-              <HabitRow key={habit.id} habit={habit} Icon={budgetCategoryIcon(habit.icon)} />
-            ))}
+          <div className="space-y-5">
+            {categorizedToday.map((group) => {
+              const doneInGroup = group.habits.filter((h) => h.todayLog?.completed).length;
+              return (
+                <div key={group.category}>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{t(group.category)}</h3>
+                    <span className="text-xs text-neutral-400">
+                      {doneInGroup}/{group.habits.length}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {group.habits.map((habit) => (
+                      <HabitRow key={habit.id} habit={habit} Icon={budgetCategoryIcon(habit.icon)} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
