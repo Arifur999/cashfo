@@ -351,7 +351,13 @@ interface MonthlyBreakdownPoint {
 // the card instead of leaving blank space below the month labels.
 function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
   const { t } = useLocale();
+  const [hover, setHover] = useState<{ month: number; x: number; y: number } | null>(null);
   const maxValue = Math.max(1, ...points.flatMap((p) => [p.actualExpense, p.budget]));
+
+  const hoverIndex = hover ? points.findIndex((p) => p.month === hover.month) : -1;
+  const hoverPoint = hoverIndex >= 0 ? points[hoverIndex] : null;
+  const prevPoint = hoverIndex > 0 ? points[hoverIndex - 1] : null;
+  const hoverPctChange = hoverPoint && prevPoint && prevPoint.actualExpense > 0 ? ((hoverPoint.actualExpense - prevPoint.actualExpense) / prevPoint.actualExpense) * 100 : null;
 
   return (
     <div className="flex flex-col rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
@@ -373,18 +379,16 @@ function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
             const budgetPct = Math.max(1, Math.round((p.budget / maxValue) * 100));
             const expensePct = Math.max(1, Math.round((p.actualExpense / maxValue) * 100));
             return (
-              <div key={p.month} className="flex flex-1 flex-col items-center justify-end gap-1.5">
+              <div
+                key={p.month}
+                className="flex flex-1 cursor-default flex-col items-center justify-end gap-1.5"
+                onMouseEnter={(e) => setHover({ month: p.month, x: e.clientX, y: e.clientY })}
+                onMouseMove={(e) => setHover((h) => (h && h.month === p.month ? { ...h, x: e.clientX, y: e.clientY } : h))}
+                onMouseLeave={() => setHover((h) => (h?.month === p.month ? null : h))}
+              >
                 <div className="flex w-full flex-1 items-end justify-center gap-1">
-                  <div
-                    title={`${t("Budget")}: ${formatCurrency(p.budget, "BDT")}`}
-                    className="w-3 rounded-t-sm bg-brand-primary/50 sm:w-5"
-                    style={{ height: `${budgetPct}%` }}
-                  />
-                  <div
-                    title={`${t("Actual Expense")}: ${formatCurrency(p.actualExpense, "BDT")}`}
-                    className="w-3 rounded-t-sm bg-brand-danger sm:w-5"
-                    style={{ height: `${expensePct}%` }}
-                  />
+                  <div className="w-3 rounded-t-sm bg-brand-primary/50 sm:w-5" style={{ height: `${budgetPct}%` }} />
+                  <div className="w-3 rounded-t-sm bg-brand-danger sm:w-5" style={{ height: `${expensePct}%` }} />
                 </div>
                 <span className="whitespace-nowrap text-xs text-neutral-400">{t(MONTH_LABELS[p.month - 1])}</span>
               </div>
@@ -392,6 +396,46 @@ function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
           })}
         </div>
       </div>
+
+      {/* Custom hover tooltip, fixed-positioned off the cursor rather than
+          absolute-inside-the-scroll-box, so it isn't clipped by this card's
+          own overflow-x-auto chart area (a scrollable ancestor forces
+          overflow-y to "auto" too per the CSS overflow spec, which would
+          otherwise cut off a tooltip meant to float above the bars). */}
+      {hoverPoint && hover && (
+        <div
+          className="pointer-events-none fixed z-50 w-56 -translate-y-full rounded-xl border border-neutral-100 bg-surface p-3 text-xs shadow-lg"
+          style={{ left: hover.x + 14, top: hover.y - 14 }}
+        >
+          <p className="mb-2 text-sm font-semibold text-neutral-900">{t(MONTH_LABELS[hoverPoint.month - 1])}</p>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-neutral-500">
+                <span className="h-2 w-2 shrink-0 rounded-sm bg-brand-primary/50" /> {t("Budget")}
+              </span>
+              <span className="font-medium tabular-nums text-neutral-800">{hoverPoint.budget > 0 ? formatCurrency(hoverPoint.budget, "BDT") : "--"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-neutral-500">
+                <span className="h-2 w-2 shrink-0 rounded-sm bg-brand-danger" /> {t("Actual Expense")}
+              </span>
+              <span className="font-medium tabular-nums text-neutral-800">{formatCurrency(hoverPoint.actualExpense, "BDT")}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-neutral-100 pt-1.5">
+              <span className="text-neutral-500">{t("Balance")}</span>
+              <span className={`font-medium tabular-nums ${hoverPoint.budget === 0 ? "text-neutral-400" : hoverPoint.budget - hoverPoint.actualExpense >= 0 ? "text-emerald-600" : "text-brand-danger"}`}>
+                {hoverPoint.budget > 0 ? formatCurrency(hoverPoint.budget - hoverPoint.actualExpense, "BDT") : "--"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-neutral-500">%</span>
+              <span className={`font-medium tabular-nums ${hoverPctChange === null ? "text-neutral-400" : hoverPctChange > 0 ? "text-brand-danger" : "text-emerald-600"}`}>
+                {hoverPctChange === null ? "--" : `${hoverPctChange > 0 ? "+" : ""}${hoverPctChange.toFixed(1)}%`}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
