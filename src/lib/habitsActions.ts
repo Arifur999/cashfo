@@ -103,3 +103,26 @@ export async function deleteHabitTrackerAction(id: string): Promise<ActionResult
     await axios.delete(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers: await authHeaders() });
   }, "Failed to remove month tracker");
 }
+
+// ---- Ramadan sheets (a month tracker keyed by year, with editable habits) ----
+
+export async function createRamadanTrackerAction(input: { year: number; days: 29 | 30 }): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/ramadan`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to create Ramadan");
+}
+
+export async function addTrackerItemAction(id: string, name: string): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { name }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save habit");
+}
+
+export async function removeTrackerItemAction(id: string, name: string): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await axios.delete<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { headers: await authHeaders(), params: { name } });
+    return res.data;
+  }, "Failed to remove habit");
+}

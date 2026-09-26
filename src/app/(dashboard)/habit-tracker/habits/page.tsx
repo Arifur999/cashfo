@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { HabitMonthTrackersPageClient } from "@/components/habit-tracker/HabitMonthTrackersPageClient";
 import { HabitsListPageClient } from "@/components/habit-tracker/HabitsListPageClient";
+import { RamadanListPageClient } from "@/components/habit-tracker/ramadan/RamadanListPageClient";
 import { MONTH_TRACKER_CATEGORIES } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { getHabitTrackers, getHabits } from "@/lib/habits";
@@ -19,6 +20,12 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
   if (category && (MONTH_TRACKER_CATEGORIES as readonly string[]).includes(category)) {
     const trackers = await getHabitTrackers(category);
     return <HabitMonthTrackersPageClient category={category} trackers={trackers} />;
+  }
+
+  // Ramadan has its own themed list ("Create Ramadan" + one card per year).
+  if (category === "Ramadan") {
+    const trackers = await getHabitTrackers("Ramadan");
+    return <RamadanListPageClient trackers={trackers} />;
   }
 
   const habits = await getHabits(true, category);

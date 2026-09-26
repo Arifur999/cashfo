@@ -219,7 +219,9 @@ function HabitsNavItem() {
   const { t } = useLocale();
   const isActive = pathname.startsWith("/habit-tracker/habits");
   const [open, setOpen] = useState(isActive);
-  const currentCategory = searchParams.get("category") ?? "All";
+  // A Ramadan sheet lives at /habit-tracker/habits/ramadan/[id] (no ?category=),
+  // but it's still "Ramadan" as far as the sub-item highlight goes.
+  const currentCategory = pathname.startsWith("/habit-tracker/habits/ramadan") ? "Ramadan" : (searchParams.get("category") ?? "All");
 
   return (
     <>

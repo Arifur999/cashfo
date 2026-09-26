@@ -69,3 +69,14 @@ export const getHabitTrackers = cache(async (category: string): Promise<HabitMon
     return [];
   }
 });
+
+export const getHabitTracker = cache(async (id: string): Promise<HabitMonthTracker | null> => {
+  const headers = await authHeaders();
+  if (!headers) return null;
+  try {
+    const res = await axios.get<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers });
+    return res.data;
+  } catch {
+    return null;
+  }
+});

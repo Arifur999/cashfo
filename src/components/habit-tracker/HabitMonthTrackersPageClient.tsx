@@ -9,13 +9,9 @@ import type { HabitMonthTracker } from "@/lib/api";
 import { deleteHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { CreateMonthTrackerModal, TRACKER_MONTH_LABELS } from "./CreateMonthTrackerModal";
+import { withCheck } from "./trackerChecks";
 
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function withCheck(tracker: HabitMonthTracker, day: number, item: string, checked: boolean): HabitMonthTracker {
-  const rest = tracker.checks.filter((c) => !(c.day === day && c.item === item));
-  return { ...tracker, checks: checked ? [...rest, { day, item }] : rest };
-}
 
 // Tick = every ticked cell. Cross = unticked cells on days that have already
 // passed (server's elapsedDays) -- an unticked cell today or later isn't a

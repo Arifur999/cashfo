@@ -10,5 +10,9 @@ export type Locale = "en" | "bn";
 
 export function translate(locale: Locale, key: string): string {
   if (locale === "en") return key;
-  return bnDictionary[key] ?? key;
+  // hasOwn, not `bnDictionary[key] ?? key`: user-typed text (custom habit
+  // names) goes through here too, and a name like "constructor" or
+  // "toString" would otherwise resolve to an inherited Object.prototype
+  // function instead of falling back to the key itself.
+  return Object.hasOwn(bnDictionary, key) ? bnDictionary[key] : key;
 }
