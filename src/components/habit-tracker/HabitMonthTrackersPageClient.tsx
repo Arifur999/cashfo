@@ -29,32 +29,34 @@ function countTickCross(tracker: HabitMonthTracker): { tick: number; cross: numb
 
 // Per-prayer summary shown beside the sheet: for each prayer, how many days
 // have fully passed so far (Total Days), on how many of those it was ticked
-// (Complete) and on how many it wasn't (Missing) -- a big stacked bar with the
-// counts printed inside its segments, plus three stat tiles. Same "past days
-// only" rule as the list's Cross column, so the Missing figures add up to it;
-// today's tick shows as a marker and joins the totals once the day is over.
+// (Complete) and on how many it wasn't (Missing) -- one compact tile per
+// prayer (name, the three numbers and the percentage on one line, a thick
+// stacked bar with the counts inside its segments underneath) so all five
+// fit on screen together, beside the grid. Same "past days only" rule as the
+// list's Cross column, so the Missing figures add up to it; today's tick
+// shows as a marker and joins the totals once the day is over.
 function PrayerSummary({ tracker, ticked }: { tracker: HabitMonthTracker; ticked: Set<string> }) {
   const { t } = useLocale();
   const total = tracker.elapsedDays;
 
   return (
-    <div className="rounded-2xl border border-neutral-100 bg-surface p-5 shadow-sm shadow-black/5">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-neutral-900">{t("Prayer Summary")}</h3>
-          <p className="text-xs text-neutral-400">{t("Up to today")}</p>
+    <div className="rounded-2xl border border-neutral-100 bg-surface p-4 shadow-sm shadow-black/5">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-sm font-semibold text-neutral-900">{t("Prayer Summary")}</h3>
+          <span className="text-xs text-neutral-400">{t("Up to today")}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs font-medium">
-          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" /> {t("Complete")}
+        <div className="flex items-center gap-2 text-[11px] font-medium">
+          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> {t("Complete")}
           </span>
-          <span className="flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-red-600">
-            <span className="h-2 w-2 rounded-full bg-red-500" /> {t("Missing")}
+          <span className="flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-0.5 text-red-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> {t("Missing")}
           </span>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {tracker.items.map((item) => {
           const complete = tracker.checks.filter((c) => c.item === item && c.day <= total).length;
           const missing = Math.max(0, total - complete);
@@ -62,23 +64,31 @@ function PrayerSummary({ tracker, ticked }: { tracker: HabitMonthTracker; ticked
           const missingPct = total > 0 ? (missing / total) * 100 : 0;
           const todayDone = tracker.todayDay !== null && ticked.has(`${tracker.todayDay}:${item}`);
           return (
-            <div key={item} className="rounded-xl bg-neutral-50 p-4">
-              <div className="mb-3 flex items-center justify-between gap-2">
+            <div key={item} className="rounded-xl bg-neutral-50 px-3.5 py-2.5">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                 <span className="flex items-center gap-2 text-sm font-semibold text-neutral-800">
                   {t(item)}
                   {todayDone && (
-                    <span className="flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                    <span className="flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
                       <Check className="h-3 w-3" /> {t("Today")}
                     </span>
                   )}
                 </span>
-                <span className="text-lg font-semibold tabular-nums text-neutral-900">
-                  {Math.round(completePct)}
-                  <span className="text-xs font-medium text-neutral-400">%</span>
+                <span className="flex items-center gap-3 text-xs text-neutral-500">
+                  <span>
+                    {t("Total Days")} <b className="tabular-nums text-neutral-800">{total}</b>
+                  </span>
+                  <span>
+                    {t("Complete")} <b className="tabular-nums text-emerald-600">{complete}</b>
+                  </span>
+                  <span>
+                    {t("Missing")} <b className="tabular-nums text-red-500">{missing}</b>
+                  </span>
+                  <span className="w-11 text-right text-sm font-semibold tabular-nums text-neutral-900">{Math.round(completePct)}%</span>
                 </span>
               </div>
 
-              <div className="flex h-6 w-full overflow-hidden rounded-full bg-neutral-200/70">
+              <div className="flex h-5 w-full overflow-hidden rounded-full bg-neutral-200/70">
                 {complete > 0 && (
                   <div
                     className="flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 text-[11px] font-semibold text-white transition-all duration-500"
@@ -96,27 +106,12 @@ function PrayerSummary({ tracker, ticked }: { tracker: HabitMonthTracker; ticked
                   </div>
                 )}
               </div>
-
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <div className="rounded-lg bg-surface px-3 py-2 text-center shadow-sm shadow-black/5">
-                  <p className="text-[11px] text-neutral-400">{t("Total Days")}</p>
-                  <p className="text-base font-semibold tabular-nums text-neutral-800">{total}</p>
-                </div>
-                <div className="rounded-lg bg-surface px-3 py-2 text-center shadow-sm shadow-black/5">
-                  <p className="text-[11px] text-neutral-400">{t("Complete")}</p>
-                  <p className="text-base font-semibold tabular-nums text-emerald-600">{complete}</p>
-                </div>
-                <div className="rounded-lg bg-surface px-3 py-2 text-center shadow-sm shadow-black/5">
-                  <p className="text-[11px] text-neutral-400">{t("Missing")}</p>
-                  <p className="text-base font-semibold tabular-nums text-red-500">{missing}</p>
-                </div>
-              </div>
             </div>
           );
         })}
       </div>
 
-      {tracker.todayDay !== null && <p className="mt-4 text-[11px] text-neutral-400">{t("Today counts once the day has passed.")}</p>}
+      {tracker.todayDay !== null && <p className="mt-3 text-[11px] text-neutral-400">{t("Today counts once the day has passed.")}</p>}
     </div>
   );
 }
