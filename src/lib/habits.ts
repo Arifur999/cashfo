@@ -3,7 +3,7 @@
 // comment on Habit).
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type Habit, type HabitMonthLogs, type HabitStat, type HabitToday } from "./api";
+import { API_BASE_URL, type Habit, type HabitMonthLogs, type HabitMonthTracker, type HabitStat, type HabitToday } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 async function authHeaders() {
@@ -56,5 +56,16 @@ export const getHabitMonthLogs = cache(async (month: string): Promise<HabitMonth
     return res.data;
   } catch {
     return EMPTY_MONTH_LOGS;
+  }
+});
+
+export const getHabitTrackers = cache(async (category: string): Promise<HabitMonthTracker[]> => {
+  const headers = await authHeaders();
+  if (!headers) return [];
+  try {
+    const res = await axios.get<HabitMonthTracker[]>(`${API_BASE_URL}/api/habit-trackers`, { headers, params: { category } });
+    return res.data;
+  } catch {
+    return [];
   }
 });

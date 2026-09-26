@@ -75,6 +75,31 @@ export const habitTrackerDictionary: Record<string, string> = {
   Undo: "পূর্বাবস্থায় ফেরান",
   "Mark done": "সম্পন্ন হিসেবে চিহ্নিত করুন",
 
+  // HabitMonthTrackersPageClient.tsx / CreateMonthTrackerModal.tsx -- the
+  // Namaz "Create Month" sheet. Month/Year/Remove/Cancel/Actions/Delete
+  // reuse existing keys.
+  "Create Month": "মাস তৈরি করুন",
+  "Month created": "মাস তৈরি হয়েছে",
+  "Failed to create month tracker": "মাস তৈরি করতে ব্যর্থ হয়েছে",
+  "Track your five daily prayers, month by month.": "মাসের পর মাস আপনার পাঁচ ওয়াক্ত নামাজের হিসাব রাখুন।",
+  'No months yet -- click "Create Month" to start tracking.': 'এখনো কোনো মাস নেই -- শুরু করতে "মাস তৈরি করুন" ক্লিক করুন।',
+  "Total Days": "মোট দিন",
+  Tick: "টিক",
+  Cross: "ক্রস",
+  "Prayers not ticked on days that have already passed": "যে দিনগুলো পার হয়ে গেছে সেগুলোর টিক না দেওয়া ওয়াক্ত",
+  Day: "দিন",
+  Week: "সপ্তাহ",
+  Fajr: "ফজর",
+  Dhuhr: "যোহর",
+  Asr: "আসর",
+  Maghrib: "মাগরিব",
+  Isha: "এশা",
+  "Failed to update": "আপডেট করতে ব্যর্থ হয়েছে",
+  "Month tracker removed": "মাসের হিসাব সরানো হয়েছে",
+  "Failed to remove month tracker": "মাসের হিসাব সরাতে ব্যর্থ হয়েছে",
+  "Remove Month Tracker": "মাসের হিসাব সরান",
+  "Remove the tracker for": "এই মাসের হিসাব সরান:",
+
   // HabitCalendarPageClient.tsx
   "How many habits you completed each day.": "প্রতিদিন আপনি কতটি অভ্যাস সম্পন্ন করেছেন।",
 

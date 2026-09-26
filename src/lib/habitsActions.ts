@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 export interface ActionResult<T = void> {
@@ -75,4 +75,31 @@ export async function removeCheckInAction(id: string, date: string): Promise<Act
   return callApi(async () => {
     await axios.delete(`${API_BASE_URL}/api/habits/${id}/check-in`, { headers: await authHeaders(), params: { date } });
   }, "Failed to undo check-in");
+}
+
+// ---- Month trackers ("Create Month" sheets) ----
+
+export async function createHabitTrackerAction(input: { category: string; month: number; year: number }): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to create month tracker");
+}
+
+export async function setHabitTrackerCheckAction(
+  id: string,
+  input: { day: number; item: string; checked: boolean },
+): Promise<ActionResult<{ day: number; item: string; checked: boolean }>> {
+  return callApi(async () => {
+    const res = await axios.put<{ day: number; item: string; checked: boolean }>(`${API_BASE_URL}/api/habit-trackers/${id}/check`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to update");
+}
+
+export async function deleteHabitTrackerAction(id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await axios.delete(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers: await authHeaders() });
+  }, "Failed to remove month tracker");
 }
