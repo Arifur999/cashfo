@@ -16,7 +16,6 @@ export const groupExpensesDictionary: Record<string, string> = {
 
   // Sidebar.tsx
   "Group Expense": "গ্রুপ/মেস হিসাব",
-  "Month List": "মাসের তালিকা",
 
   // GroupWorkspaceListPageClient.tsx
   "Mess or joint-family shared expenses, split equally at month end.": "মেস বা যৌথ পরিবারের শেয়ার্ড খরচ, মাস শেষে সমান ভাগে ভাগ হবে।",
@@ -170,7 +169,8 @@ export const groupExpensesDictionary: Record<string, string> = {
     "এটি এই সময়কালের বর্তমান হিসাবকে স্থায়ী সেটেলমেন্ট রেকর্ড হিসেবে লক করে দেবে। পরে এই সময়সীমার মধ্যে জমা/খরচ পরিবর্তন করলেও এটি বদলাবে না।",
   Close: "ক্লোজ করুন",
 
-  // Month List tab
+  // Add/Edit/Delete Month Budget -- now on the Dashboard's Monthly
+  // Breakdown card (the standalone "Month List" page was removed)
   Month: "মাস",
   Year: "বছর",
   "Monthly Budget": "মাসিক বাজেট",
@@ -182,7 +182,6 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Failed to update month budget": "মাসিক বাজেট আপডেট করতে ব্যর্থ হয়েছে",
   "Month budget removed": "মাসিক বাজেট সরানো হয়েছে",
   "Failed to remove month budget": "মাসিক বাজেট সরাতে ব্যর্থ হয়েছে",
-  "No month budgets yet.": "এখনো কোনো মাসিক বাজেট নেই।",
   "Remove Month Budget": "মাসিক বাজেট সরান",
   "Remove the budget for": "এই বাজেট সরান:",
 

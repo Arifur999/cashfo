@@ -91,7 +91,6 @@ const GROUP_EXPENSE_TABS: { label: string; tab: string }[] = [
   { label: "Expenses", tab: "expenses" },
   { label: "Category", tab: "category" },
   { label: "Settlement", tab: "settlement" },
-  { label: "Month List", tab: "months" },
 ];
 
 // The standalone "Dena-Pawna" nav item was removed at the user's request --

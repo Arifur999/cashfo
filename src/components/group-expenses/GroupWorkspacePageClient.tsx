@@ -49,7 +49,7 @@ interface GroupWorkspacePageClientProps {
   monthBudgets: GroupMonthlyBudget[];
 }
 
-type Tab = "dashboard" | "members" | "contributions" | "expenses" | "category" | "settlement" | "months";
+type Tab = "dashboard" | "members" | "contributions" | "expenses" | "category" | "settlement";
 
 // Shared by Contributions/Expenses' filter bars -- a single compact preset
 // dropdown instead of always showing two DatePicker fields; "Custom Range"
@@ -147,7 +147,6 @@ export function GroupWorkspacePageClient({
       )}
       {tab === "category" && <CategorySection businessId={businessId} categories={expenseCategories} />}
       {tab === "settlement" && <SettlementSection businessId={businessId} settlement={settlement} settlementHistory={settlementHistory} />}
-      {tab === "months" && <MonthListSection businessId={businessId} budgets={monthBudgets} />}
     </div>
   );
 }
@@ -265,6 +264,7 @@ function DashboardSection({
             month,
             budget: budgetEntry ? Number(budgetEntry.budgetAmount) : 0,
             actualExpense,
+            budgetRecord: budgetEntry ?? null,
           };
         })
       : [];
@@ -312,7 +312,7 @@ function DashboardSection({
       {dashRange === "year" && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <MonthlyBudgetChart points={monthlyBreakdown} />
-          <MonthlyBreakdownTable points={monthlyBreakdown} />
+          <MonthlyBreakdownTable businessId={businessId} points={monthlyBreakdown} />
         </div>
       )}
     </div>
@@ -338,6 +338,7 @@ interface MonthlyBreakdownPoint {
   month: number;
   budget: number;
   actualExpense: number;
+  budgetRecord: GroupMonthlyBudget | null;
 }
 
 // Hand-rolled grouped bar chart, same "no charting library" convention as
@@ -440,12 +441,49 @@ function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
   );
 }
 
-function MonthlyBreakdownTable({ points }: { points: MonthlyBreakdownPoint[] }) {
+// Owns the Add/Edit/Delete Month Budget flow directly (there's no separate
+// "Month List" page anymore -- it was removed and folded in here so
+// managing budgets and seeing them compared against actual expense live in
+// the same place).
+function MonthlyBreakdownTable({ businessId, points }: { businessId: string; points: MonthlyBreakdownPoint[] }) {
+  const router = useRouter();
   const { t } = useLocale();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<GroupMonthlyBudget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GroupMonthlyBudget | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function openCreate() {
+    setEditingBudget(null);
+    setFormOpen(true);
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    startTransition(async () => {
+      const result = await deleteGroupMonthBudgetAction(businessId, deleteTarget.id);
+      if (result.success) {
+        toast.success(t("Month budget removed"));
+        setDeleteTarget(null);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to remove month budget"));
+      }
+    });
+  }
 
   return (
     <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-      <h2 className="p-4 pb-0 text-sm font-semibold text-neutral-900">{t("Monthly Breakdown")}</h2>
+      <div className="flex items-center justify-between p-4 pb-0">
+        <h2 className="text-sm font-semibold text-neutral-900">{t("Monthly Breakdown")}</h2>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="flex items-center gap-1.5 rounded-lg bg-brand-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+        >
+          <Plus className="h-3.5 w-3.5" /> {t("Add Month")}
+        </button>
+      </div>
       <div className="overflow-x-auto pb-4">
         <table className="mt-3 w-full text-left text-xs">
           <thead>
@@ -454,6 +492,7 @@ function MonthlyBreakdownTable({ points }: { points: MonthlyBreakdownPoint[] }) 
               <th className="px-3 py-2 font-medium">{t("Budget")}</th>
               <th className="px-3 py-2 font-medium">{t("Actual Expense")}</th>
               <th className="px-3 py-2 font-medium">%</th>
+              <th className="px-3 py-2 font-medium text-right">{t("Actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -472,12 +511,48 @@ function MonthlyBreakdownTable({ points }: { points: MonthlyBreakdownPoint[] }) 
                   <td className={`px-3 py-2 font-medium ${pctChange === null ? "text-neutral-400" : pctChange > 0 ? "text-brand-danger" : pctChange < 0 ? "text-emerald-600" : "text-neutral-500"}`}>
                     {pctChange === null ? "--" : `${pctChange > 0 ? "+" : ""}${pctChange.toFixed(1)}%`}
                   </td>
+                  <td className="px-3 py-2">
+                    {p.budgetRecord && (
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingBudget(p.budgetRecord);
+                            setFormOpen(true);
+                          }}
+                          title={t("Edit")}
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(p.budgetRecord)}
+                          title={t("Delete")}
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      <AddMonthBudgetModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingBudget={editingBudget} />
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title={t("Remove Month Budget")}
+        message={deleteTarget ? `${t("Remove the budget for")} ${t(MONTH_LABELS[deleteTarget.month - 1])} ${deleteTarget.year}?` : ""}
+        confirmLabel={t("Remove")}
+      />
     </div>
   );
 }
@@ -1338,132 +1413,3 @@ function CategorySection({ businessId, categories }: { businessId: string; categ
   );
 }
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-// "Month List" nav item -- a manually-maintained list of monthly budget
-// targets (Month + Year + amount, added one at a time via "Add Month"), NOT
-// computed from real expense/contribution data. Just a record for now, no
-// budget-vs-actual comparison.
-function MonthListSection({ businessId, budgets }: { businessId: string; budgets: GroupMonthlyBudget[] }) {
-  const router = useRouter();
-  const { t } = useLocale();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<GroupMonthlyBudget | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<GroupMonthlyBudget | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  function openCreate() {
-    setEditingBudget(null);
-    setFormOpen(true);
-  }
-
-  function openEdit(b: GroupMonthlyBudget) {
-    setEditingBudget(b);
-    setFormOpen(true);
-  }
-
-  function handleDelete() {
-    if (!deleteTarget) return;
-    startTransition(async () => {
-      const result = await deleteGroupMonthBudgetAction(businessId, deleteTarget.id);
-      if (result.success) {
-        toast.success(t("Month budget removed"));
-        setDeleteTarget(null);
-        router.refresh();
-      } else {
-        toast.error(result.message ?? t("Failed to remove month budget"));
-      }
-    });
-  }
-
-  return (
-    <div>
-      <div className="mb-4 flex justify-end">
-        <button
-          type="button"
-          onClick={openCreate}
-          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
-        >
-          <Plus className="h-4 w-4" /> {t("Add Month")}
-        </button>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
-              <th className="px-4 py-3">#</th>
-              <th className="px-4 py-3">{t("Month")}</th>
-              <th className="px-4 py-3">{t("Year")}</th>
-              <th className="px-4 py-3 text-right">{t("Monthly Budget")}</th>
-              <th className="px-4 py-3 text-right">{t("Actions")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-50">
-            {budgets.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-sm text-neutral-400">
-                  {t("No month budgets yet.")}
-                </td>
-              </tr>
-            )}
-            {budgets.map((b, index) => (
-              <tr key={b.id}>
-                <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
-                <td className="px-4 py-3 font-medium text-neutral-800">{t(MONTH_NAMES[b.month - 1])}</td>
-                <td className="px-4 py-3 text-neutral-500">{b.year}</td>
-                <td className="px-4 py-3 text-right font-semibold tabular-nums text-brand-primary">{formatCurrency(b.budgetAmount, "BDT")}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(b)}
-                      title={t("Edit")}
-                      className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(b)}
-                      title={t("Delete")}
-                      className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <AddMonthBudgetModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingBudget={editingBudget} />
-      <ConfirmModal
-        open={deleteTarget !== null}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        isPending={isPending}
-        title={t("Remove Month Budget")}
-        message={
-          deleteTarget ? `${t("Remove the budget for")} ${t(MONTH_NAMES[deleteTarget.month - 1])} ${deleteTarget.year}?` : ""
-        }
-        confirmLabel={t("Remove")}
-      />
-    </div>
-  );
-}
