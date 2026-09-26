@@ -3,7 +3,9 @@
 import {
   ArrowLeftRight,
   Banknote,
+  BarChart3,
   Boxes,
+  CalendarDays,
   ChevronDown,
   ChevronRight,
   FileText,
@@ -11,6 +13,7 @@ import {
   KeyRound,
   Landmark,
   LayoutDashboard,
+  ListChecks,
   PiggyBank,
   Settings,
   Users,
@@ -190,6 +193,19 @@ const REPORTS_ITEMS = [
   { label: "Aging Payable", href: "/reports/aging-payable" },
 ];
 
+// Habit Tracker is a completely separate app-mode, reached via the TopBar's
+// "Switch" button (see TopBar.tsx) -- NOT another item mixed into the Money
+// Tracker groups above. Sidebar() below swaps its ENTIRE contents (brand
+// header included) based on the pathname alone, rather than a cookie/
+// provider-backed mode flag -- simpler, and it can't ever drift out of sync
+// with what's actually on screen after a refresh or a shared link.
+const HABIT_TRACKER_ITEMS = [
+  { label: "Dashboard", href: "/habit-tracker", icon: LayoutDashboard },
+  { label: "Habits", href: "/habit-tracker/habits", icon: ListChecks },
+  { label: "Calendar", href: "/habit-tracker/calendar", icon: CalendarDays },
+  { label: "Stats", href: "/habit-tracker/stats", icon: BarChart3 },
+];
+
 interface NavGroupProps {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -315,6 +331,21 @@ function GroupExpenseNavItem() {
 
 export function Sidebar() {
   const pathname = usePathname();
+
+  if (pathname.startsWith("/habit-tracker")) {
+    return (
+      <aside className="flex w-64 shrink-0 flex-col overflow-hidden bg-brand-dark text-white">
+        <div className="flex h-16 shrink-0 items-center px-6 text-lg font-semibold tracking-wide">Habit Tracker</div>
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+          {HABIT_TRACKER_ITEMS.map((item) => {
+            const isActive = item.href === "/habit-tracker" ? pathname === item.href : pathname.startsWith(item.href);
+            return <NavLink key={item.href} item={item} isActive={isActive} />;
+          })}
+        </nav>
+      </aside>
+    );
+  }
+
   const isBalanceActive = pathname.startsWith("/balance") || pathname.startsWith("/accounts");
   const isAssetsManagementActive = pathname.startsWith("/assets-management");
   const isSavingsGoalsActive = pathname.startsWith("/savings-goals");

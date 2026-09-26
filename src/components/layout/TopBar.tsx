@@ -1,6 +1,7 @@
 "use client";
 
-import { Languages } from "lucide-react";
+import { ArrowRightLeft, Languages } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { QuickAddButton } from "@/components/quick-entry/QuickAddButton";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ThemeToggle } from "./ThemeToggle";
@@ -28,11 +29,14 @@ import { UserMenu } from "./UserMenu";
 // -- this is a Client Component now (it wasn't before) purely because
 // useLocale() needs to run in the browser.
 export function TopBar() {
-  const { locale, toggleLocale } = useLocale();
+  const { locale, toggleLocale, t } = useLocale();
+  const pathname = usePathname();
+  const router = useRouter();
+  const isHabitMode = pathname.startsWith("/habit-tracker");
 
   return (
     <header className="flex h-16 items-center justify-end gap-3 border-b border-neutral-100 bg-surface px-6">
-      <QuickAddButton />
+      {!isHabitMode && <QuickAddButton />}
       <button
         type="button"
         onClick={toggleLocale}
@@ -43,6 +47,19 @@ export function TopBar() {
         {locale === "en" ? "বাংলা" : "English"}
       </button>
       <ThemeToggle />
+      {/* Swaps the whole Sidebar into a separate "Habit Tracker" app-mode --
+          see Sidebar.tsx's own comment on why this is a route-based mode
+          switch (pathname starting with /habit-tracker) rather than a
+          cookie/provider-backed toggle. */}
+      <button
+        type="button"
+        onClick={() => router.push(isHabitMode ? "/dashboard" : "/habit-tracker")}
+        title={isHabitMode ? t("Switch to Money Tracker") : t("Switch to Habit Tracker")}
+        className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
+      >
+        <ArrowRightLeft className="h-4 w-4" />
+        {t("Switch")}
+      </button>
       <UserMenu />
     </header>
   );

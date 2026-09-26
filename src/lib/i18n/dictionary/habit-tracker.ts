@@ -1,0 +1,77 @@
+// Bangla translations for the "Habit Tracker" app-mode -- /habit-tracker and
+// its sub-pages, plus TopBar.tsx's "Switch" button and Sidebar.tsx's own
+// menu for this mode. Common words already covered by shared.ts/other
+// per-area files (Cancel, Delete, Edit, Status, Actions, Name, Active,
+// Archived, All, Dashboard, "(optional)", "Choose an Icon"/"Choose a
+// Color"/icon-search strings, "Click to toggle", "This cannot be undone.")
+// are deliberately NOT redefined here.
+export const habitTrackerDictionary: Record<string, string> = {
+  // TopBar.tsx
+  Switch: "সুইচ",
+  "Switch to Habit Tracker": "হ্যাবিট ট্র্যাকারে যান",
+  "Switch to Money Tracker": "মানি ট্র্যাকারে ফিরে যান",
+
+  // Sidebar.tsx (Habit Tracker mode)
+  Habits: "অভ্যাসসমূহ",
+  Calendar: "ক্যালেন্ডার",
+  Stats: "পরিসংখ্যান",
+
+  // Weekday short labels -- HabitFormModal's day picker, HabitsListPageClient's
+  // frequency column, HabitCalendarPageClient's grid header.
+  Sun: "রবি",
+  Mon: "সোম",
+  Tue: "মঙ্গল",
+  Wed: "বুধ",
+  Thu: "বৃহঃ",
+  Fri: "শুক্র",
+  Sat: "শনি",
+
+  // HabitFormModal.tsx
+  "Add Habit": "অভ্যাস যোগ করুন",
+  "Edit Habit": "অভ্যাস সম্পাদনা করুন",
+  "Habit Name": "অভ্যাসের নাম",
+  "e.g., Drink Water, Read, Exercise": "যেমন: পানি পান করা, বই পড়া, ব্যায়াম",
+  "Give this habit a name": "এই অভ্যাসের একটি নাম দিন",
+  Frequency: "কতবার",
+  "Every day": "প্রতিদিন",
+  "Specific days": "নির্দিষ্ট দিন",
+  "N times a week": "সপ্তাহে N বার",
+  "Pick at least one day": "অন্তত একটি দিন বাছাই করুন",
+  "Times per week": "সপ্তাহে কতবার",
+  Target: "লক্ষ্যমাত্রা",
+  Unit: "একক",
+  glasses: "গ্লাস",
+  "Habit added": "অভ্যাস যোগ হয়েছে",
+  "Habit updated": "অভ্যাস আপডেট হয়েছে",
+  "Failed to save habit": "অভ্যাস সংরক্ষণ করতে ব্যর্থ হয়েছে",
+
+  // HabitsListPageClient.tsx
+  "Manage the habits you're tracking.": "আপনার ট্র্যাক করা অভ্যাসগুলো পরিচালনা করুন।",
+  "x/week": "বার/সপ্তাহ",
+  "No habits yet.": "এখনো কোনো অভ্যাস নেই।",
+  "This habit has history, so it was archived instead": "এই অভ্যাসের হিস্টরি আছে, তাই এটি আর্কাইভ করা হয়েছে",
+  "Habit removed": "অভ্যাস সরানো হয়েছে",
+  "Failed to remove habit": "অভ্যাস সরাতে ব্যর্থ হয়েছে",
+  "Failed to update habit": "অভ্যাস আপডেট করতে ব্যর্থ হয়েছে",
+  "Remove Habit": "অভ্যাস সরান",
+
+  // HabitDashboardPageClient.tsx
+  "Today's Habits": "আজকের অভ্যাস",
+  "Today's Progress": "আজকের অগ্রগতি",
+  "Habits Today": "আজকের অভ্যাসসমূহ",
+  "Best Streak": "সেরা স্ট্রিক",
+  Checklist: "চেকলিস্ট",
+  "No habits scheduled for today.": "আজকের জন্য কোনো অভ্যাস নির্ধারিত নেই।",
+  "Add your first habit": "আপনার প্রথম অভ্যাস যোগ করুন",
+  "day streak": "দিনের স্ট্রিক",
+  Undo: "পূর্বাবস্থায় ফেরান",
+  "Mark done": "সম্পন্ন হিসেবে চিহ্নিত করুন",
+
+  // HabitCalendarPageClient.tsx
+  "How many habits you completed each day.": "প্রতিদিন আপনি কতটি অভ্যাস সম্পন্ন করেছেন।",
+
+  // HabitStatsPageClient.tsx
+  "Streaks and completion rate over the last 30 days.": "গত ৩০ দিনের স্ট্রিক ও সম্পন্নের হার।",
+  days: "দিন",
+  completion: "সম্পন্ন",
+};

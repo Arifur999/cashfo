@@ -805,9 +805,9 @@ export interface GroupSettlementRecord {
   members: GroupSettlementRecordMember[];
 }
 
-// "Month List" nav item -- a manually-entered budget record (Month + Year +
-// amount, typed in via the "Add Month" form), not computed from real
-// expense/contribution data. One row per (businessId, month, year).
+// A manually-entered budget record (Month + Year + amount, typed in via the
+// Dashboard's "Add Month" form on the Monthly Breakdown card), not computed
+// from real expense/contribution data. One row per (businessId, month, year).
 export interface GroupMonthlyBudget {
   id: string;
   businessId: string;
@@ -816,4 +816,61 @@ export interface GroupMonthlyBudget {
   budgetAmount: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// "Habit Tracker" -- a completely separate, personal (User-scoped, not
+// Business-scoped) app-mode reached via the TopBar's "Switch" button. See
+// backend/src/habits/ and lib/habits.ts/habitsActions.ts.
+export type HabitFrequency = "DAILY" | "WEEKLY_DAYS" | "WEEKLY_COUNT";
+
+export interface Habit {
+  id: string;
+  userId: string;
+  name: string;
+  icon: string;
+  color: string;
+  frequencyType: HabitFrequency;
+  // 0=Sunday..6=Saturday -- only meaningful when frequencyType is
+  // WEEKLY_DAYS.
+  weeklyDays: number[];
+  // Only meaningful when frequencyType is WEEKLY_COUNT.
+  weeklyCount: number | null;
+  targetValue: number | null;
+  unit: string | null;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HabitLog {
+  id: string;
+  habitId: string;
+  date: string;
+  completed: boolean;
+  value: number | null;
+  note: string | null;
+  createdAt: string;
+}
+
+// GET /api/habits/today's shape -- a Habit plus whatever's already known
+// about it for today, so the Dashboard checklist doesn't need a second
+// round trip per habit.
+export interface HabitToday extends Habit {
+  todayLog: HabitLog | null;
+  streak: number;
+}
+
+export interface HabitMonthLogs {
+  habits: Habit[];
+  logs: Pick<HabitLog, "habitId" | "date" | "completed" | "value">[];
+}
+
+export interface HabitStat {
+  habitId: string;
+  name: string;
+  icon: string;
+  color: string;
+  currentStreak: number;
+  last30DaysCompleted: number;
+  completionRate: number;
 }
