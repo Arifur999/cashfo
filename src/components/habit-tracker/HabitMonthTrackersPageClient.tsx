@@ -353,14 +353,24 @@ export function HabitMonthTrackersPageClient({ category, trackers }: { category:
                     <td className="px-4 py-3 font-semibold tabular-nums text-brand-danger">{cross}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end">
+                        {/* A month can only be deleted while its Tick is 0 (the
+                            server enforces it too). aria-disabled, not disabled, so
+                            clicking it can still explain why instead of doing nothing. */}
                         <button
                           type="button"
+                          aria-disabled={tick > 0}
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (tick > 0) {
+                              toast.error(t("Can't delete a month that has ticks -- untick them all first"));
+                              return;
+                            }
                             setDeleteTarget(tracker);
                           }}
-                          title={t("Delete")}
-                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                          title={tick > 0 ? t("Can't delete a month that has ticks -- untick them all first") : t("Delete")}
+                          className={`rounded-lg p-1 ${
+                            tick > 0 ? "cursor-not-allowed text-neutral-300" : "text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                          }`}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

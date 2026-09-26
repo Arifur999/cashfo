@@ -92,6 +92,7 @@ export const habitTrackerDictionary: Record<string, string> = {
   "Good effort, aim for more": "ভালো চেষ্টা, আরও ভালো করার লক্ষ্য রাখুন",
   "Needs attention, try to pray on time": "মনোযোগ দরকার, সময়মতো নামাজ পড়ার চেষ্টা করুন",
   "Don't give up, start with today": "হাল ছাড়বেন না, আজ থেকেই শুরু করুন",
+  "Can't delete a month that has ticks -- untick them all first": "টিক দেওয়া আছে এমন মাস মোছা যাবে না -- আগে সব টিক তুলে নিন",
   "Prayer Summary": "ওয়াক্ত অনুযায়ী সারসংক্ষেপ",
   "Up to today": "আজ পর্যন্ত",
   Complete: "সম্পন্ন",
