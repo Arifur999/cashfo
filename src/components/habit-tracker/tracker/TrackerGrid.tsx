@@ -14,6 +14,9 @@ export interface GridColumn {
   weekday?: string; // "weekday" variant only: the label stacked above the day number
   accent?: boolean; // "weekday" variant: highlight the weekday label (e.g. Friday)
   current?: boolean; // "weekday" variant: today's column
+  // A day that hasn't come yet: its empty boxes can't be ticked. A box that is
+  // already ticked stays clickable so it can still be unticked.
+  locked?: boolean;
 }
 
 export interface GridRowContext {
@@ -40,7 +43,7 @@ interface TrackerGridProps {
   onToggle: (day: number, item: string, checked: boolean) => void;
   chartLabel: string; // i18n keys for the corner cell
   cornerLabel: string;
-  emptyMessage: string;
+  emptyMessage?: string; // shown when there are no items (Namaz always has its five)
   // "[--habit-w:9.5rem] sm:[--habit-w:13rem]" -- the width of the sticky left column.
   habitWidth: string;
   rowHead: (row: GridRowContext) => ReactNode;
@@ -50,7 +53,7 @@ interface TrackerGridProps {
 // daily-percentage bar chart on top -- one table, one scroll box, so the
 // sticky item column and header rows and the chart bars all share the same
 // column grid.
-export function TrackerGrid({ theme, variant, items, columns, ticked, onToggle, chartLabel, cornerLabel, emptyMessage, habitWidth, rowHead }: TrackerGridProps) {
+export function TrackerGrid({ theme, variant, items, columns, ticked, onToggle, chartLabel, cornerLabel, emptyMessage = "", habitWidth, rowHead }: TrackerGridProps) {
   const { t } = useLocale();
   const v = VARIANTS[variant];
   const totalDays = columns.length;
@@ -151,17 +154,23 @@ export function TrackerGrid({ theme, variant, items, columns, ticked, onToggle, 
                   <td className="sticky left-0 z-10 border-b border-neutral-100 bg-surface px-3 py-2 shadow-[1px_0_0_0_rgb(0_0_0/0.06)]">{rowHead({ item, index, done, pct })}</td>
                   {columns.map((col) => {
                     const checked = ticked.has(`${col.day}:${item}`);
+                    const blocked = col.locked === true && !checked;
                     return (
-                      <td key={col.day} className={`border-b border-neutral-100 p-0 ${col.tint}`}>
+                      <td key={col.day} title={blocked ? t("This day hasn't come yet") : undefined} className={`border-b border-neutral-100 p-0 ${col.tint}`}>
                         <button
                           type="button"
                           role="checkbox"
                           aria-checked={checked}
                           aria-label={`${t(item)} ${col.day}`}
+                          disabled={blocked}
                           onClick={() => onToggle(col.day, item, !checked)}
-                          className="flex h-11 w-full items-center justify-center"
+                          className={`flex h-11 w-full items-center justify-center${blocked ? " cursor-not-allowed" : ""}`}
                         >
-                          <span className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${checked ? theme.checkOn : theme.checkOff}`}>
+                          <span
+                            className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
+                              blocked ? "border-neutral-200 bg-neutral-100 opacity-60" : checked ? theme.checkOn : theme.checkOff
+                            }`}
+                          >
                             {checked && <Check className="h-3.5 w-3.5" />}
                           </span>
                         </button>

@@ -16,6 +16,9 @@ interface TrackerSummaryProps {
   // One bar per item, highest first. Namaz turns it off -- it has its own
   // per-prayer cards below the sheet.
   showByHabit?: boolean;
+  // Stretch to the height of the row it sits in and centre the content, so it
+  // does not leave a gap under itself beside a taller sheet (Namaz).
+  fill?: boolean;
 }
 
 // The side card next to a tracker grid: an overall progress ring and three
@@ -23,7 +26,7 @@ interface TrackerSummaryProps {
 // optionally one bar per item. Everything is derived from the same
 // (optimistic) checks the grid shows, so it updates the instant a box is
 // ticked.
-export function TrackerSummary({ theme, title, icon: Icon, perfectTitle, items, totalDays, checks, showByHabit = true }: TrackerSummaryProps) {
+export function TrackerSummary({ theme, title, icon: Icon, perfectTitle, items, totalDays, checks, showByHabit = true, fill = false }: TrackerSummaryProps) {
   const { t } = useLocale();
   const { cells, ticks, overallPct, perfectDays, bestDay, bestPct, doneByItem } = trackerStats(items, totalDays, checks);
 
@@ -35,9 +38,9 @@ export function TrackerSummary({ theme, title, icon: Icon, perfectTitle, items, 
     .sort((a, b) => b.done - a.done);
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+    <div className={`overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5${fill ? " flex h-full w-full flex-col" : ""}`}>
       <div className={`h-1 bg-gradient-to-r ${theme.stripColors}`} />
-      <div className="p-5">
+      <div className={fill ? "flex flex-1 flex-col justify-center p-5" : "p-5"}>
         <div className="mb-4 flex items-center gap-2">
           <Icon className={`h-4 w-4 ${theme.summaryIcon}`} />
           <h2 className="text-sm font-semibold text-neutral-900">{t(title)}</h2>

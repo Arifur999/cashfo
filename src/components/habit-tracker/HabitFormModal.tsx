@@ -21,7 +21,7 @@ interface HabitFormModalProps {
   onClose: () => void;
   editingHabit: Habit | null;
   // Pre-fills the Category field when adding a NEW habit from inside a
-  // category-filtered Habits view (e.g. the Sidebar's "Namaz" sub-item) --
+  // category-filtered Habits view (e.g. the Sidebar's "Book" sub-item) --
   // ignored when editing an existing habit, which always shows its own
   // real category instead.
   defaultCategory?: string;

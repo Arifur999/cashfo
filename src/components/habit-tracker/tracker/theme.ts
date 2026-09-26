@@ -10,6 +10,7 @@ export interface TrackerTheme {
   heroShadow: string;
   heroText: string; // subtitle / back link / progress-chip label colour
   heroArabic: string; // the calligraphy title
+  heroArabicAlign: string; // "" = default (RTL end), or a text-align class
   heroWatermark: string; // the big faint icon
   heroSpark: string; // the small sparkle
   cta: string; // primary action button on the banner
@@ -41,6 +42,7 @@ export const RAMADAN_THEME: TrackerTheme = {
   heroShadow: "shadow-emerald-950/25",
   heroText: "text-emerald-100/80",
   heroArabic: "text-amber-200",
+  heroArabicAlign: "",
   heroWatermark: "text-amber-200/15",
   heroSpark: "text-amber-200/40",
   cta: "flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2.5 text-sm font-semibold text-emerald-950 shadow-md shadow-black/20 transition hover:from-amber-100 hover:to-amber-300 disabled:opacity-60",
@@ -69,6 +71,7 @@ export const NAMAZ_THEME: TrackerTheme = {
   heroShadow: "shadow-blue-950/30",
   heroText: "text-sky-100/80",
   heroArabic: "text-sky-100",
+  heroArabicAlign: "text-left",
   heroWatermark: "text-sky-100/15",
   heroSpark: "text-sky-100/40",
   cta: "flex items-center gap-2 rounded-xl bg-gradient-to-b from-sky-100 to-sky-300 px-4 py-2.5 text-sm font-semibold text-blue-950 shadow-md shadow-black/20 transition hover:from-white hover:to-sky-200 disabled:opacity-60",

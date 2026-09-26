@@ -51,7 +51,7 @@ export function TrackerHero({ theme, arabic, watermark: Watermark, title, subtit
               <ChevronLeft className="h-3.5 w-3.5" /> {back.label}
             </Link>
           )}
-          <p lang="ar" dir="rtl" className={`${arefRuqaa.className} text-3xl leading-tight ${theme.heroArabic} sm:text-4xl`}>
+          <p lang="ar" dir="rtl" className={`${arefRuqaa.className} text-3xl leading-tight ${theme.heroArabic} sm:text-4xl${theme.heroArabicAlign ? ` ${theme.heroArabicAlign}` : ""}`}>
             {arabic}
           </p>
           <h1 className="mt-1 text-xl font-semibold sm:text-2xl">{title}</h1>

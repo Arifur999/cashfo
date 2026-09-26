@@ -881,23 +881,22 @@ export interface HabitStat {
   completionRate: number;
 }
 
-// "Create Month" sheet for a habit category (currently only Namaz -- see
-// backend HabitTrackersService). One row per created month; `checks` lists
-// only the TICKED cells. `elapsedDays` (server-computed, UTC) is how many
-// days of that month are fully past -- the Cross total is derived from it
-// client-side, since an unticked cell today or later isn't a miss yet.
-export const MONTH_TRACKER_CATEGORIES = ["Namaz"] as const;
-
+// One month sheet (Namaz) or one Ramadan (see backend HabitTrackersService).
+// `checks` lists only the TICKED cells. `elapsedDays` (server-computed,
+// Asia/Dhaka) is how many days of that month are fully past -- the Cross
+// total is derived from it client-side, since an unticked cell today or later
+// isn't a miss yet. A Ramadan has no calendar dates, so its `elapsedDays` is
+// 0 and `todayDay` null.
 export interface HabitMonthTracker {
   id: string;
   category: string;
-  month: number; // 1-12
+  month: number; // 1-12 (a Ramadan is always 9)
   year: number;
   items: string[];
   totalDays: number;
   elapsedDays: number;
   // Day-of-month that is "today" (Asia/Dhaka, server-side) when this is the
-  // current month, else null -- the sheet highlights that row.
+  // current month, else null -- the sheet highlights that column.
   todayDay: number | null;
   checks: { day: number; item: string }[];
 }

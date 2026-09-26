@@ -75,9 +75,8 @@ export const habitTrackerDictionary: Record<string, string> = {
   Undo: "পূর্বাবস্থায় ফেরান",
   "Mark done": "সম্পন্ন হিসেবে চিহ্নিত করুন",
 
-  // HabitMonthTrackersPageClient.tsx / CreateMonthTrackerModal.tsx -- the
-  // Namaz "Create Month" sheet. Month/Year/Remove/Cancel/Actions/Delete
-  // reuse existing keys.
+  // CreateMonthTrackerModal.tsx and the Namaz list cards -- "Create Month",
+  // Tick / Cross. Month/Year/Remove/Cancel/Delete reuse existing keys.
   "Create Month": "মাস তৈরি করুন",
   "Month created": "মাস তৈরি হয়েছে",
   "Failed to create month tracker": "মাস তৈরি করতে ব্যর্থ হয়েছে",
@@ -110,6 +109,15 @@ export const habitTrackerDictionary: Record<string, string> = {
   "Failed to remove month tracker": "মাসের হিসাব সরাতে ব্যর্থ হয়েছে",
   "Remove Month Tracker": "মাসের হিসাব সরান",
   "Remove the tracker for": "এই মাসের হিসাব সরান:",
+
+  // Namaz pages (components/habit-tracker/namaz/) -- the sheet and the list
+  // reuse most of the keys above and the Ramadan ones below.
+  "All Months": "সব মাস",
+  Prayers: "নামাজ",
+  "Namaz Summary": "নামাজের সারসংক্ষেপ",
+  "Friday (Jumu'ah)": "শুক্রবার (জুমা)",
+  "This day hasn't come yet": "এই দিনটি এখনো আসেনি",
+  "Days when all five prayers were ticked": "যেদিন পাঁচ ওয়াক্তই টিক দেওয়া হয়েছে",
 
   // Ramadan pages (components/habit-tracker/ramadan/). Habit names typed by
   // the user go through t() too and simply fall back to themselves.

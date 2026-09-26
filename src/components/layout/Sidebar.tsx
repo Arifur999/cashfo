@@ -213,15 +213,22 @@ const HABIT_TRACKER_BOTTOM_ITEMS = [
 // current URL's :businessId. "All" (no category param) always leads.
 const HABIT_CATEGORY_NAV_ITEMS = ["All", ...HABIT_CATEGORIES];
 
+const SHEET_ROUTE_CATEGORIES = [
+  ["/habit-tracker/habits/ramadan", "Ramadan"],
+  ["/habit-tracker/habits/namaz", "Namaz"],
+] as const;
+
 function HabitsNavItem() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useLocale();
   const isActive = pathname.startsWith("/habit-tracker/habits");
   const [open, setOpen] = useState(isActive);
-  // A Ramadan sheet lives at /habit-tracker/habits/ramadan/[id] (no ?category=),
-  // but it's still "Ramadan" as far as the sub-item highlight goes.
-  const currentCategory = pathname.startsWith("/habit-tracker/habits/ramadan") ? "Ramadan" : (searchParams.get("category") ?? "All");
+  // A Ramadan / Namaz sheet lives at /habit-tracker/habits/{ramadan,namaz}/[id]
+  // (no ?category=), but it's still that category as far as the sub-item
+  // highlight goes.
+  const sheetCategory = SHEET_ROUTE_CATEGORIES.find(([prefix]) => pathname.startsWith(prefix))?.[1];
+  const currentCategory = sheetCategory ?? searchParams.get("category") ?? "All";
 
   return (
     <>

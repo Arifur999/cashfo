@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import { createHabitTrackerAction } from "@/lib/habitsActions";
@@ -11,9 +11,6 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 interface CreateMonthTrackerModalProps {
   open: boolean;
   onClose: () => void;
-  category: string;
-  // Called with the new sheet's id so the page can open it straight away.
-  onCreated?: (id: string) => void;
 }
 
 export const TRACKER_MONTH_LABELS = [
@@ -31,14 +28,16 @@ export const TRACKER_MONTH_LABELS = [
   "December",
 ];
 
-// Pick a month, type a year, and the whole month's sheet is created (same
-// Month-select + free-typed Year shape as AddMonthBudgetModal).
-export function CreateMonthTrackerModal({ open, onClose, category, onCreated }: CreateMonthTrackerModalProps) {
+// Pick a month, type a year, and that month's Namaz sheet is created and
+// opened (same Month-select + free-typed Year shape as AddMonthBudgetModal).
+export function CreateMonthTrackerModal({ open, onClose }: CreateMonthTrackerModalProps) {
   const router = useRouter();
   const { t } = useLocale();
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [isPending, startTransition] = useTransition();
+  const monthId = useId();
+  const yearId = useId();
 
   const [wasOpen, setWasOpen] = useState(false);
   if (open !== wasOpen) {
@@ -51,14 +50,20 @@ export function CreateMonthTrackerModal({ open, onClose, category, onCreated }: 
 
   const isValid = /^\d{4}$/.test(year) && Number(year) >= 2000 && Number(year) <= 2100;
 
+  // Once a create is in flight it will finish and open the new sheet, so the
+  // dialog can no longer be dismissed (Cancel / Escape / backdrop).
+  function handleClose() {
+    if (!isPending) onClose();
+  }
+
   function handleSubmit() {
     startTransition(async () => {
-      const result = await createHabitTrackerAction({ category, month, year: Number(year) });
+      const result = await createHabitTrackerAction({ category: "Namaz", month, year: Number(year) });
       if (result.success) {
         toast.success(t("Month created"));
-        if (result.data) onCreated?.(result.data.id);
         onClose();
-        router.refresh();
+        if (result.data) router.push(`/habit-tracker/habits/namaz/${result.data.id}`);
+        else router.refresh();
       } else {
         toast.error(result.message ?? t("Failed to create month tracker"));
       }
@@ -66,11 +71,14 @@ export function CreateMonthTrackerModal({ open, onClose, category, onCreated }: 
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={t("Create Month")}>
+    <Modal open={open} onClose={handleClose} title={t("Create Month")}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Month")}</label>
+          <label htmlFor={monthId} className="mb-1 block text-sm font-medium text-neutral-700">
+            {t("Month")}
+          </label>
           <select
+            id={monthId}
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
@@ -83,8 +91,11 @@ export function CreateMonthTrackerModal({ open, onClose, category, onCreated }: 
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Year")}</label>
+          <label htmlFor={yearId} className="mb-1 block text-sm font-medium text-neutral-700">
+            {t("Year")}
+          </label>
           <input
+            id={yearId}
             value={year}
             onChange={(e) => setYear(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))}
             inputMode="numeric"
@@ -95,7 +106,7 @@ export function CreateMonthTrackerModal({ open, onClose, category, onCreated }: 
       </div>
 
       <div className="mt-5 flex justify-end gap-3">
-        <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+        <button type="button" disabled={isPending} onClick={handleClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 disabled:opacity-50">
           {t("Cancel")}
         </button>
         <button
