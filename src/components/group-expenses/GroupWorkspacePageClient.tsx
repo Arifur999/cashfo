@@ -340,49 +340,50 @@ interface MonthlyBreakdownPoint {
   actualExpense: number;
 }
 
-const MONTHLY_CHART_MAX_HEIGHT = 220;
-
 // Hand-rolled grouped bar chart, same "no charting library" convention as
-// IncomeVsSavingsChart.tsx -- two bars per month (Actual Expense, Budget),
+// IncomeVsSavingsChart.tsx -- two bars per month (Budget, Actual Expense),
 // scaled against the single largest value across all 12 months so bars
 // stay comparable month to month. Sits side by side with
-// MonthlyBreakdownTable in a 2-column grid, but sized larger/taller than
-// that table for readability -- the grid row just stretches to fit it.
+// MonthlyBreakdownTable in a 2-column grid; that table (12 fixed rows) is
+// usually the taller of the two, so this card's chart area is `flex-1`
+// with PERCENTAGE bar heights (not fixed pixels) so it fills however tall
+// the grid stretches this card to match -- bars always reach the bottom of
+// the card instead of leaving blank space below the month labels.
 function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
   const { t } = useLocale();
   const maxValue = Math.max(1, ...points.flatMap((p) => [p.actualExpense, p.budget]));
 
   return (
-    <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
+    <div className="flex flex-col rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-neutral-900">{t("Monthly Budget vs Expense")}</h2>
         <div className="flex items-center gap-4 text-xs text-neutral-500">
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-brand-danger" /> {t("Actual Expense")}
+            <span className="h-2.5 w-2.5 rounded-sm bg-brand-primary/50" /> {t("Budget")}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-brand-primary/50" /> {t("Budget")}
+            <span className="h-2.5 w-2.5 rounded-sm bg-brand-danger" /> {t("Actual Expense")}
           </span>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="flex min-w-[560px] items-end gap-3" style={{ height: MONTHLY_CHART_MAX_HEIGHT + 32 }}>
+      <div className="min-h-[220px] flex-1 overflow-x-auto">
+        <div className="flex h-full min-w-[560px] items-stretch gap-3">
           {points.map((p) => {
-            const expenseHeight = Math.round((p.actualExpense / maxValue) * MONTHLY_CHART_MAX_HEIGHT);
-            const budgetHeight = Math.round((p.budget / maxValue) * MONTHLY_CHART_MAX_HEIGHT);
+            const budgetPct = Math.max(1, Math.round((p.budget / maxValue) * 100));
+            const expensePct = Math.max(1, Math.round((p.actualExpense / maxValue) * 100));
             return (
               <div key={p.month} className="flex flex-1 flex-col items-center justify-end gap-1.5">
-                <div className="flex items-end gap-1" style={{ height: MONTHLY_CHART_MAX_HEIGHT }}>
-                  <div
-                    title={`${t("Actual Expense")}: ${formatCurrency(p.actualExpense, "BDT")}`}
-                    className="w-3 rounded-t-sm bg-brand-danger sm:w-5"
-                    style={{ height: Math.max(2, expenseHeight) }}
-                  />
+                <div className="flex w-full flex-1 items-end justify-center gap-1">
                   <div
                     title={`${t("Budget")}: ${formatCurrency(p.budget, "BDT")}`}
                     className="w-3 rounded-t-sm bg-brand-primary/50 sm:w-5"
-                    style={{ height: Math.max(2, budgetHeight) }}
+                    style={{ height: `${budgetPct}%` }}
+                  />
+                  <div
+                    title={`${t("Actual Expense")}: ${formatCurrency(p.actualExpense, "BDT")}`}
+                    className="w-3 rounded-t-sm bg-brand-danger sm:w-5"
+                    style={{ height: `${expensePct}%` }}
                   />
                 </div>
                 <span className="whitespace-nowrap text-xs text-neutral-400">{t(MONTH_LABELS[p.month - 1])}</span>
