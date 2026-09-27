@@ -13,6 +13,7 @@ import { OTHERS_THEME } from "../tracker/theme";
 import { TrackerGrid, type GridColumn } from "../tracker/TrackerGrid";
 import { TrackerHero } from "../tracker/TrackerHero";
 import { TrackerSummary } from "../tracker/TrackerSummary";
+import { challengeDurationLabel } from "./challengeDurations";
 
 // "Read" (not "Reading" -- books.ts already uses that exact key for a
 // currently-reading shelf status, a different meaning).
@@ -45,6 +46,11 @@ export function OthersSheetPageClient({ tracker }: { tracker: HabitMonthTracker 
   const overallPct = cells > 0 ? Math.round((sheet.checks.length / cells) * 100) : 0;
   const columns: GridColumn[] = days.map((day) => ({ day, tint: "" }));
   const suggestions = SUGGESTIONS.filter((s) => !items.some((item) => item.toLowerCase() === s.toLowerCase()));
+  // Newest habit first: addItem() appends server-side, so reversing here (a
+  // display-only order, not stored) puts whatever was just added at the top
+  // of the sheet instead of the bottom.
+  const displayItems = [...items].reverse();
+  const durationLabel = challengeDurationLabel(totalDays);
 
   function toggleCell(day: number, item: string, checked: boolean) {
     startToggleTransition(async () => {
@@ -104,7 +110,7 @@ export function OthersSheetPageClient({ tracker }: { tracker: HabitMonthTracker 
         theme={OTHERS_THEME}
         watermark={Target}
         title={tracker.name ?? t("Others")}
-        subtitle={`${totalDays} ${t("days")} · ${items.length} ${t(items.length === 1 ? "habit" : "habits")}`}
+        subtitle={`${durationLabel ? t(durationLabel) : `${totalDays} ${t("days")}`} · ${items.length} ${t(items.length === 1 ? "habit" : "habits")}`}
         back={{ href: "/habit-tracker/habits?category=Others", label: t("All Challenges") }}
       >
         <div className="rounded-2xl bg-white/10 px-5 py-2.5 text-center backdrop-blur-sm">
@@ -123,7 +129,7 @@ export function OthersSheetPageClient({ tracker }: { tracker: HabitMonthTracker 
             <TrackerGrid
               theme={OTHERS_THEME}
               variant="compact"
-              items={items}
+              items={displayItems}
               columns={columns}
               ticked={ticked}
               onToggle={toggleCell}

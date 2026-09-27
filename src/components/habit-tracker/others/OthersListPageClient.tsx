@@ -11,6 +11,7 @@ import { deleteHabitTrackerAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { OTHERS_THEME } from "../tracker/theme";
 import { TrackerHero } from "../tracker/TrackerHero";
+import { challengeDurationLabel } from "./challengeDurations";
 import { CreateOtherChallengeModal } from "./CreateOtherChallengeModal";
 
 // Habits -> Others: a themed banner with "Create Challenge", then one card per
@@ -60,6 +61,7 @@ export function OthersListPageClient({ trackers }: { trackers: HabitMonthTracker
             const cells = tracker.totalDays * tracker.items.length;
             const pct = cells > 0 ? Math.round((ticks / cells) * 100) : 0;
             const locked = ticks > 0;
+            const durationLabel = challengeDurationLabel(tracker.totalDays);
             return (
               <div key={tracker.id} className="relative">
                 <Link
@@ -69,7 +71,7 @@ export function OthersListPageClient({ trackers }: { trackers: HabitMonthTracker
                   <div className={`relative bg-gradient-to-r ${OTHERS_THEME.cardHeader} px-5 py-4 text-white`}>
                     <Target aria-hidden className={`pointer-events-none absolute -right-2 -top-3 h-20 w-20 ${OTHERS_THEME.heroWatermark}`} />
                     <p className={`text-xs font-medium ${OTHERS_THEME.cardSub}`}>
-                      {tracker.totalDays} {t("days")}
+                      {durationLabel ? t(durationLabel) : `${tracker.totalDays} ${t("days")}`}
                     </p>
                     <h2 className="truncate text-lg font-semibold" title={tracker.name ?? ""}>
                       {tracker.name}

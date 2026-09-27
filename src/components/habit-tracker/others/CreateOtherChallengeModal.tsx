@@ -7,24 +7,12 @@ import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import { createCustomTrackerAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { CHALLENGE_DURATIONS } from "./challengeDurations";
 
 interface CreateOtherChallengeModalProps {
   open: boolean;
   onClose: () => void;
 }
-
-// Duration options in human terms (a challenge is a day-count goal
-// underneath, same as Ramadan's 29/30, but "3 Months" reads better than "90"
-// for an open-ended goal with no fixed calendar length).
-const DURATIONS = [
-  { days: 7, label: "1 Week" },
-  { days: 14, label: "2 Weeks" },
-  { days: 30, label: "1 Month" },
-  { days: 60, label: "2 Months" },
-  { days: 90, label: "3 Months" },
-  { days: 180, label: "6 Months" },
-  { days: 365, label: "1 Year" },
-] as const;
 
 // Type a name and a day-count goal (a duration from the dropdown, or a custom
 // number of days) -- the sheet is created and opened straight away. Unlike
@@ -86,7 +74,7 @@ export function CreateOtherChallengeModal({ open, onClose }: CreateOtherChalleng
             onChange={(e) => setPreset(e.target.value === "custom" ? "custom" : Number(e.target.value))}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary"
           >
-            {DURATIONS.map((option) => (
+            {CHALLENGE_DURATIONS.map((option) => (
               <option key={option.days} value={option.days}>
                 {t(option.label)}
               </option>
