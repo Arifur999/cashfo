@@ -5,10 +5,12 @@ import { HabitsListPageClient } from "@/components/habit-tracker/HabitsListPageC
 import { SkillsLoadError } from "@/components/habit-tracker/skills/SkillsLoadError";
 import { SkillsPageClient } from "@/components/habit-tracker/skills/SkillsPageClient";
 import { NamazListPageClient } from "@/components/habit-tracker/namaz/NamazListPageClient";
+import { OthersPageClient } from "@/components/habit-tracker/others/OthersPageClient";
 import { RamadanListPageClient } from "@/components/habit-tracker/ramadan/RamadanListPageClient";
 import { getCurrentUser } from "@/lib/auth";
 import { dhakaDayNumber, getBooksOverview } from "@/lib/books";
-import { getHabitTrackers, getHabits } from "@/lib/habits";
+import { getHabitMonthLogs, getHabits, getHabitsToday, getHabitStats, getHabitTrackers } from "@/lib/habits";
+import { buildOtherWeek, monthKeys } from "@/lib/otherWeek";
 import { getSkillsOverview } from "@/lib/skills";
 
 export default async function HabitsPage({ searchParams }: PageProps<"/habit-tracker/habits">) {
@@ -43,6 +45,21 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
     const overview = await getSkillsOverview();
     if (!overview) return <SkillsLoadError />;
     return <SkillsPageClient overview={overview} quoteDay={dhakaDayNumber()} />;
+  }
+
+  if (category === "Others") {
+    const now = new Date();
+    const { current, needsPrevious, previous } = monthKeys(now);
+    // One after the other, not Promise.all: the local dev database (`prisma
+    // dev`) drops the connection when concurrent requests query it at once.
+    const habits = await getHabits(true, "Others");
+    const habitsToday = await getHabitsToday("Others");
+    const stats = await getHabitStats("Others");
+    const currentMonth = await getHabitMonthLogs(current, "Others");
+    const previousMonth = needsPrevious ? await getHabitMonthLogs(previous, "Others") : null;
+    const activeHabits = habits.filter((h) => !h.isArchived);
+    const week = buildOtherWeek(activeHabits, currentMonth, previousMonth);
+    return <OthersPageClient habits={habits} habitsToday={habitsToday} stats={stats} week={week} quoteDay={dhakaDayNumber()} />;
   }
 
   const habits = await getHabits(true, category);

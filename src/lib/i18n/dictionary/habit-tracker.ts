@@ -25,6 +25,33 @@ export const habitTrackerDictionary: Record<string, string> = {
   Namaz: "নামাজ",
   Ramadan: "রমজান",
 
+  // Others page (components/habit-tracker/others/) -- the generic habit
+  // tracker's own themed page. Add Habit, Edit, Delete, Active, Archived,
+  // Today, This week, day streak, x/week, Every day and habit names/units
+  // typed by the user reuse existing keys or are shown as-is.
+  "Everyday habits": "প্রাত্যহিক অভ্যাস",
+  "Nothing tracked here yet": "এখনো কিছু ট্র্যাক করা হয়নি",
+  "Add anything you want to build as a daily or weekly habit. It takes ten seconds.": "প্রতিদিন বা সাপ্তাহিক অভ্যাস হিসেবে গড়ে তুলতে চান এমন যেকোনো কিছু যোগ করুন। মাত্র দশ সেকেন্ড লাগে।",
+  "Done today": "আজ সম্পন্ন",
+  "Active habits": "সক্রিয় অভ্যাস",
+  "Best streak": "সেরা ধারাবাহিকতা",
+  done: "সম্পন্ন",
+  "Nothing scheduled for today.": "আজকের জন্য কিছু নির্ধারিত নেই।",
+  "All habits": "সব অভ্যাস",
+  "No habits here yet.": "এখানে এখনো কোনো অভ্যাস নেই।",
+  "You do not rise to the level of your goals. You fall to the level of your systems.": "আপনি আপনার লক্ষ্যের স্তরে পৌঁছান না, নিজের ব্যবস্থার স্তরে নেমে আসেন।",
+  "James Clear": "জেমস ক্লিয়ার",
+  "Chains of habit are too light to be felt until they are too heavy to be broken.": "অভ্যাসের শিকল এত হালকা যে তা টের পাওয়া যায় না, যতক্ষণ না তা ভাঙার মতো ভারী হয়ে ওঠে।",
+  "Warren Buffett": "ওয়ারেন বাফেট",
+  "First we make our habits, then our habits make us.": "প্রথমে আমরা আমাদের অভ্যাস তৈরি করি, তারপর আমাদের অভ্যাসই আমাদের গড়ে তোলে।",
+  "John Dryden": "জন ড্রাইডেন",
+  "Motivation is what gets you started. Habit is what keeps you going.": "অনুপ্রেরণা আপনাকে শুরু করায়, অভ্যাস আপনাকে এগিয়ে নিয়ে যায়।",
+  "Jim Ryun": "জিম রায়ুন",
+  "Success is the sum of small efforts, repeated day in and day out.": "সাফল্য হলো প্রতিদিন বারবার করা ছোট ছোট চেষ্টার যোগফল।",
+  "Robert Collier": "রবার্ট কলিয়ার",
+  "Nothing is stronger than habit.": "অভ্যাসের চেয়ে শক্তিশালী কিছু নেই।",
+  Ovid: "ওভিদ",
+
   // Weekday short labels -- HabitFormModal's day picker, HabitsListPageClient's
   // frequency column, HabitCalendarPageClient's grid header.
   Sun: "রবি",

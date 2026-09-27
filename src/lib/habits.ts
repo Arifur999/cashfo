@@ -23,22 +23,22 @@ export const getHabits = cache(async (includeArchived = false, category?: string
   }
 });
 
-export const getHabitsToday = cache(async (): Promise<HabitToday[]> => {
+export const getHabitsToday = cache(async (category?: string): Promise<HabitToday[]> => {
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<HabitToday[]>(`${API_BASE_URL}/api/habits/today`, { headers });
+    const res = await axios.get<HabitToday[]>(`${API_BASE_URL}/api/habits/today`, { headers, params: { category } });
     return res.data;
   } catch {
     return [];
   }
 });
 
-export const getHabitStats = cache(async (): Promise<HabitStat[]> => {
+export const getHabitStats = cache(async (category?: string): Promise<HabitStat[]> => {
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<HabitStat[]>(`${API_BASE_URL}/api/habits/stats`, { headers });
+    const res = await axios.get<HabitStat[]>(`${API_BASE_URL}/api/habits/stats`, { headers, params: { category } });
     return res.data;
   } catch {
     return [];
@@ -48,11 +48,11 @@ export const getHabitStats = cache(async (): Promise<HabitStat[]> => {
 const EMPTY_MONTH_LOGS: HabitMonthLogs = { habits: [], logs: [] };
 
 // month: "YYYY-MM"
-export const getHabitMonthLogs = cache(async (month: string): Promise<HabitMonthLogs> => {
+export const getHabitMonthLogs = cache(async (month: string, category?: string): Promise<HabitMonthLogs> => {
   const headers = await authHeaders();
   if (!headers) return EMPTY_MONTH_LOGS;
   try {
-    const res = await axios.get<HabitMonthLogs>(`${API_BASE_URL}/api/habits/month`, { headers, params: { month } });
+    const res = await axios.get<HabitMonthLogs>(`${API_BASE_URL}/api/habits/month`, { headers, params: { month, category } });
     return res.data;
   } catch {
     return EMPTY_MONTH_LOGS;
