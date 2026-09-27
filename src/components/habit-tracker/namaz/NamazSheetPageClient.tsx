@@ -48,7 +48,9 @@ export function NamazSheetPageClient({ tracker }: { tracker: HabitMonthTracker }
   const cells = totalDays * items.length;
   const overallPct = cells > 0 ? Math.round((sheet.checks.length / cells) * 100) : 0;
 
-  const firstWeekday = weekdayOf(sheet.year, sheet.month, 1);
+  // Namaz sheets are always a real Gregorian month, so month/year (nullable
+  // only for Others) are never null here.
+  const firstWeekday = weekdayOf(sheet.year as number, sheet.month as number, 1);
   const columns: GridColumn[] = Array.from({ length: totalDays }, (_, i) => {
     const day = i + 1;
     const weekday = (firstWeekday + i) % 7;
@@ -86,7 +88,7 @@ export function NamazSheetPageClient({ tracker }: { tracker: HabitMonthTracker }
         theme={NAMAZ_THEME}
         arabic="الصلاة"
         watermark={Moon}
-        title={`${t(TRACKER_MONTH_LABELS[sheet.month - 1])} ${sheet.year}`}
+        title={`${t(TRACKER_MONTH_LABELS[(sheet.month as number) - 1])} ${sheet.year}`}
         subtitle={`${totalDays} ${t("days")} · ${items.length} ${t("Prayers")}`}
         back={{ href: "/habit-tracker/habits?category=Namaz", label: t("All Months") }}
       >

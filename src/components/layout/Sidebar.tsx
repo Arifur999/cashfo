@@ -210,12 +210,16 @@ const HABIT_TRACKER_BOTTOM_ITEMS = [
 // /habit-tracker/habits route, not separate pages) -- same "collapsible
 // group whose sub-items are a query param, not a route" shape as
 // GroupExpenseNavItem, just with a static list instead of one keyed off the
-// current URL's :businessId. "All" (no category param) always leads.
-const HABIT_CATEGORY_NAV_ITEMS = ["All", ...HABIT_CATEGORIES];
+// current URL's :businessId. There is no "All" item -- every category has
+// its own themed page now, and the generic cross-category table it used to
+// lead to is gone (see habits/page.tsx, which redirects to the dashboard for
+// any other/missing category).
+const HABIT_CATEGORY_NAV_ITEMS = HABIT_CATEGORIES;
 
 const SHEET_ROUTE_CATEGORIES = [
   ["/habit-tracker/habits/ramadan", "Ramadan"],
   ["/habit-tracker/habits/namaz", "Namaz"],
+  ["/habit-tracker/habits/others", "Others"],
 ] as const;
 
 function HabitsNavItem() {
@@ -224,11 +228,11 @@ function HabitsNavItem() {
   const { t } = useLocale();
   const isActive = pathname.startsWith("/habit-tracker/habits");
   const [open, setOpen] = useState(isActive);
-  // A Ramadan / Namaz sheet lives at /habit-tracker/habits/{ramadan,namaz}/[id]
-  // (no ?category=), but it's still that category as far as the sub-item
-  // highlight goes.
+  // A Ramadan / Namaz / Others sheet lives at
+  // /habit-tracker/habits/{ramadan,namaz,others}/[id] (no ?category=), but
+  // it's still that category as far as the sub-item highlight goes.
   const sheetCategory = SHEET_ROUTE_CATEGORIES.find(([prefix]) => pathname.startsWith(prefix))?.[1];
-  const currentCategory = sheetCategory ?? searchParams.get("category") ?? "All";
+  const currentCategory = sheetCategory ?? searchParams.get("category");
 
   return (
     <>
@@ -247,11 +251,10 @@ function HabitsNavItem() {
         <div className="space-y-0.5 py-0.5 pl-8">
           {HABIT_CATEGORY_NAV_ITEMS.map((category) => {
             const itemActive = isActive && currentCategory === category;
-            const href = category === "All" ? "/habit-tracker/habits" : `/habit-tracker/habits?category=${category}`;
             return (
               <Link
                 key={category}
-                href={href}
+                href={`/habit-tracker/habits?category=${category}`}
                 className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
                   itemActive ? "bg-brand-dark-hover font-medium text-white" : "text-white/60 hover:bg-brand-dark-hover hover:text-white"
                 }`}

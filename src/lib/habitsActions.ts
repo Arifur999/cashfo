@@ -113,6 +113,15 @@ export async function createRamadanTrackerAction(input: { year: number; days: 29
   }, "Failed to create Ramadan");
 }
 
+// ---- Others challenges (a named, day-count sheet -- any number can run at once) ----
+
+export async function createCustomTrackerAction(input: { name: string; totalDays: number }): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/custom`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to create challenge");
+}
+
 export async function addTrackerItemAction(id: string, name: string): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
     const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { name }, { headers: await authHeaders() });

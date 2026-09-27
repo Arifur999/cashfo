@@ -24,7 +24,10 @@ function makeStars(accent: string): string {
 
 interface TrackerHeroProps {
   theme: TrackerTheme;
-  arabic: string; // the calligraphy title, e.g. "رمضان كريم"
+  // The calligraphy title, e.g. "رمضان كريم" -- Namaz/Ramadan only. Others has
+  // no religious/domain theme of its own, so it omits this line entirely
+  // rather than force an Arabic title onto a generic challenge.
+  arabic?: string;
   watermark: LucideIcon; // big faint icon top-right
   title: string;
   subtitle?: string;
@@ -33,8 +36,8 @@ interface TrackerHeroProps {
   children?: ReactNode;
 }
 
-// The themed banner at the top of the Ramadan and Namaz pages: stars, a big
-// faint icon, gold/silver Arabic calligraphy, then the page title.
+// The themed banner at the top of the Ramadan, Namaz and Others pages: stars,
+// a big faint icon, optional gold/silver Arabic calligraphy, then the title.
 export function TrackerHero({ theme, arabic, watermark: Watermark, title, subtitle, back, children }: TrackerHeroProps) {
   return (
     <div
@@ -51,10 +54,12 @@ export function TrackerHero({ theme, arabic, watermark: Watermark, title, subtit
               <ChevronLeft className="h-3.5 w-3.5" /> {back.label}
             </Link>
           )}
-          <p lang="ar" dir="rtl" className={`${arefRuqaa.className} text-3xl leading-tight ${theme.heroArabic} sm:text-4xl${theme.heroArabicAlign ? ` ${theme.heroArabicAlign}` : ""}`}>
-            {arabic}
-          </p>
-          <h1 className="mt-1 text-xl font-semibold sm:text-2xl">{title}</h1>
+          {arabic && (
+            <p lang="ar" dir="rtl" className={`${arefRuqaa.className} text-3xl leading-tight ${theme.heroArabic} sm:text-4xl${theme.heroArabicAlign ? ` ${theme.heroArabicAlign}` : ""}`}>
+              {arabic}
+            </p>
+          )}
+          <h1 className={`${arabic ? "mt-1 " : ""}text-xl font-semibold sm:text-2xl`}>{title}</h1>
           {subtitle && <p className={`mt-1 text-sm ${theme.heroText}`}>{subtitle}</p>}
         </div>
         {children && <div className="relative shrink-0">{children}</div>}

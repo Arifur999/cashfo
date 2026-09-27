@@ -954,17 +954,20 @@ export interface SkillsOverview {
   skills: Skill[];
 }
 
-// One month sheet (Namaz) or one Ramadan (see backend HabitTrackersService).
-// `checks` lists only the TICKED cells. `elapsedDays` (server-computed,
-// Asia/Dhaka) is how many days of that month are fully past -- the Cross
-// total is derived from it client-side, since an unticked cell today or later
-// isn't a miss yet. A Ramadan has no calendar dates, so its `elapsedDays` is
-// 0 and `todayDay` null.
+// One month sheet (Namaz), one Ramadan, or one named challenge ("Others" --
+// see backend HabitTrackersService). `checks` lists only the TICKED cells.
+// `elapsedDays` (server-computed, Asia/Dhaka) is how many days of that month
+// are fully past -- the Cross total is derived from it client-side, since an
+// unticked cell today or later isn't a miss yet. A Ramadan or Others
+// challenge has no calendar dates, so its `elapsedDays` is 0, `todayDay`
+// null, and `month`/`year` null (Others also carries a free-form `name`,
+// null for Namaz/Ramadan).
 export interface HabitMonthTracker {
   id: string;
   category: string;
-  month: number; // 1-12 (a Ramadan is always 9)
-  year: number;
+  month: number | null; // 1-12 (a Ramadan is always 9), null for Others
+  year: number | null;
+  name: string | null; // Others only
   items: string[];
   totalDays: number;
   elapsedDays: number;

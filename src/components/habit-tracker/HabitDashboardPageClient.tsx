@@ -1,9 +1,9 @@
 "use client";
 
 import { CheckCircle2, Circle, Flame, Plus, type LucideIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { HabitFormModal } from "@/components/habit-tracker/HabitFormModal";
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { checkInHabitAction, removeCheckInAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -77,6 +77,7 @@ function HabitRow({ habit, Icon }: { habit: HabitToday; Icon: LucideIcon }) {
 
 export function HabitDashboardPageClient({ habitsToday }: { habitsToday: HabitToday[] }) {
   const { t } = useLocale();
+  const [formOpen, setFormOpen] = useState(false);
   const doneCount = habitsToday.filter((h) => h.todayLog?.completed).length;
   const totalCount = habitsToday.length;
   const completionPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
@@ -99,12 +100,13 @@ export function HabitDashboardPageClient({ habitsToday }: { habitsToday: HabitTo
             {new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
-        <Link
-          href="/habit-tracker/habits"
+        <button
+          type="button"
+          onClick={() => setFormOpen(true)}
           className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
         >
           <Plus className="h-4 w-4" /> {t("Add Habit")}
-        </Link>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -131,9 +133,9 @@ export function HabitDashboardPageClient({ habitsToday }: { habitsToday: HabitTo
         {habitsToday.length === 0 ? (
           <div className="py-10 text-center">
             <p className="text-sm text-neutral-400">{t("No habits scheduled for today.")}</p>
-            <Link href="/habit-tracker/habits" className="mt-2 inline-block text-sm font-medium text-brand-primary hover:underline">
+            <button type="button" onClick={() => setFormOpen(true)} className="mt-2 inline-block text-sm font-medium text-brand-primary hover:underline">
               {t("Add your first habit")}
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="space-y-5">
@@ -158,6 +160,8 @@ export function HabitDashboardPageClient({ habitsToday }: { habitsToday: HabitTo
           </div>
         )}
       </div>
+
+      <HabitFormModal open={formOpen} onClose={() => setFormOpen(false)} editingHabit={null} />
     </div>
   );
 }

@@ -9,8 +9,8 @@ export interface TrackerTheme {
   starAccent: string; // "r,g,b" of the tinted stars (the rest are white)
   heroShadow: string;
   heroText: string; // subtitle / back link / progress-chip label colour
-  heroArabic: string; // the calligraphy title
-  heroArabicAlign: string; // "" = default (RTL end), or a text-align class
+  heroArabic?: string; // the calligraphy title's colour -- Namaz/Ramadan only
+  heroArabicAlign?: string; // "" = default (RTL end), or a text-align class
   heroWatermark: string; // the big faint icon
   heroSpark: string; // the small sparkle
   cta: string; // primary action button on the banner
@@ -61,6 +61,37 @@ export const RAMADAN_THEME: TrackerTheme = {
   stripColors: "from-emerald-500 via-amber-400 to-indigo-500",
   summaryIcon: "text-amber-500",
   tileA: "text-emerald-600",
+  tileB: "text-amber-600",
+};
+
+// Slate + amber (the Others "challenge" pages) -- deliberately neutral: Ramadan
+// (emerald/gold), Namaz (sapphire/silver) and the Book/Skills pages each commit
+// to a domain of their own; Others doesn't have one, so it skips the Arabic
+// calligraphy line entirely (see TrackerHero's optional `arabic` prop) rather
+// than force a religious title onto a generic reading/fitness/etc. challenge.
+export const OTHERS_THEME: TrackerTheme = {
+  heroGradient: "linear-gradient(135deg, #1e293b 0%, #334155 46%, #451a03 100%)",
+  starAccent: "252,211,77",
+  heroShadow: "shadow-slate-950/30",
+  heroText: "text-slate-200/80",
+  heroWatermark: "text-amber-300/15",
+  heroSpark: "text-amber-300/40",
+  cta: "flex items-center gap-2 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-black/20 transition hover:from-amber-200 hover:to-amber-400 disabled:opacity-60",
+  cardBorder: "border-amber-300/40",
+  cardHeader: "from-slate-800 to-slate-950",
+  cardSub: "text-amber-200/90",
+  emptyIcon: "text-amber-400",
+  bar: "from-slate-500 to-amber-400",
+  weekLabel: "text-slate-600",
+  weekTint: "bg-[image:linear-gradient(rgb(100_116_139/0.14),rgb(100_116_139/0.14))]",
+  chartBar: "from-amber-500 to-slate-400",
+  todayPill: "bg-amber-500 text-white",
+  checkOn: "border-slate-700 bg-slate-700 text-white",
+  checkOff: "border-neutral-300 bg-surface hover:border-amber-500",
+  ringColor: "#334155",
+  stripColors: "from-slate-600 via-amber-400 to-slate-800",
+  summaryIcon: "text-amber-500",
+  tileA: "text-slate-600",
   tileB: "text-amber-600",
 };
 

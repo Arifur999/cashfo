@@ -60,7 +60,9 @@ export function NamazListPageClient({ trackers }: { trackers: HabitMonthTracker[
             const cells = tracker.totalDays * tracker.items.length;
             const pct = cells > 0 ? Math.round((tick / cells) * 100) : 0;
             const locked = tick > 0;
-            const monthName = t(TRACKER_MONTH_LABELS[tracker.month - 1]);
+            // Namaz trackers are always a real Gregorian month, so month/year
+            // (nullable only for Others) are never null here.
+            const monthName = t(TRACKER_MONTH_LABELS[(tracker.month as number) - 1]);
             return (
               <div key={tracker.id} className="relative">
                 <Link
@@ -126,7 +128,7 @@ export function NamazListPageClient({ trackers }: { trackers: HabitMonthTracker[
         onConfirm={handleDelete}
         isPending={isPending}
         title={t("Remove Month Tracker")}
-        message={deleteTarget ? `${t("Remove the tracker for")} ${t(TRACKER_MONTH_LABELS[deleteTarget.month - 1])} ${deleteTarget.year}?` : ""}
+        message={deleteTarget ? `${t("Remove the tracker for")} ${t(TRACKER_MONTH_LABELS[(deleteTarget.month as number) - 1])} ${deleteTarget.year}?` : ""}
         confirmLabel={t("Remove")}
       />
     </div>
