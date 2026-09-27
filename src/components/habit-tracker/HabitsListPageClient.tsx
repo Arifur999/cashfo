@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { deleteHabitAction, updateHabitAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import type { Habit } from "@/lib/api";
+import { categoryLabel, type Habit } from "@/lib/api";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { HabitFormModal } from "./HabitFormModal";
 
@@ -75,7 +75,7 @@ export function HabitsListPageClient({ habits, category }: { habits: Habit[]; ca
       <div>
         <h1 className="text-xl font-semibold text-neutral-900">
           {t("Habits")}
-          {category && <span className="text-neutral-400"> — {t(category)}</span>}
+          {category && <span className="text-neutral-400"> — {t(categoryLabel(category))}</span>}
         </h1>
         <p className="mt-1 text-sm text-neutral-500">{t("Manage the habits you're tracking.")}</p>
       </div>
@@ -133,7 +133,7 @@ export function HabitsListPageClient({ habits, category }: { habits: Habit[]; ca
                       <span className="font-medium text-neutral-800">{habit.name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-neutral-600">{t(habit.category)}</td>
+                  <td className="px-4 py-3 text-neutral-600">{t(categoryLabel(habit.category))}</td>
                   <td className="px-4 py-3 text-neutral-600">{frequencyLabel(habit, t)}</td>
                   <td className="px-4 py-3 text-neutral-600">{habit.targetValue ? `${habit.targetValue} ${habit.unit ?? ""}`.trim() : "--"}</td>
                   <td className="px-4 py-3">

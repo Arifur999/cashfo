@@ -21,7 +21,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { HABIT_CATEGORIES } from "@/lib/api";
+import { categoryLabel, HABIT_CATEGORIES } from "@/lib/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Only pages that actually exist get a nav item -- Dashboard (Prompt 2),
@@ -213,10 +213,6 @@ const HABIT_TRACKER_BOTTOM_ITEMS = [
 // current URL's :businessId. "All" (no category param) always leads.
 const HABIT_CATEGORY_NAV_ITEMS = ["All", ...HABIT_CATEGORIES];
 
-// The stored category stays "Book" (habits and the ?category= link use it); only
-// the sidebar's label differs.
-const HABIT_CATEGORY_LABELS: Record<string, string> = { Book: "My Library" };
-
 const SHEET_ROUTE_CATEGORIES = [
   ["/habit-tracker/habits/ramadan", "Ramadan"],
   ["/habit-tracker/habits/namaz", "Namaz"],
@@ -260,7 +256,7 @@ function HabitsNavItem() {
                   itemActive ? "bg-brand-dark-hover font-medium text-white" : "text-white/60 hover:bg-brand-dark-hover hover:text-white"
                 }`}
               >
-                {t(HABIT_CATEGORY_LABELS[category] ?? category)}
+                {t(categoryLabel(category))}
               </Link>
             );
           })}

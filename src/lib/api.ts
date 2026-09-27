@@ -828,6 +828,15 @@ export type HabitFrequency = "DAILY" | "WEEKLY_DAYS" | "WEEKLY_COUNT";
 // comment for why the field itself is still a loose string, not an enum.
 export const HABIT_CATEGORIES = ["Namaz", "Ramadan", "Book", "Course", "Others"] as const;
 
+// What a category is CALLED on screen. The stored value (Habit.category and the
+// ?category= link) keeps its original key -- only the label changed -- so
+// habits filed under "Book" / "Course" are untouched.
+const HABIT_CATEGORY_LABELS: Record<string, string> = { Book: "My Library", Course: "Skills" };
+
+export function categoryLabel(category: string): string {
+  return Object.hasOwn(HABIT_CATEGORY_LABELS, category) ? HABIT_CATEGORY_LABELS[category] : category;
+}
+
 export interface Habit {
   id: string;
   userId: string;
@@ -905,6 +914,44 @@ export interface BooksOverview {
   year: number; // the current Asia/Dhaka year
   goalTarget: number | null; // this year's "finish N books" goal
   books: Book[];
+}
+
+// Habit Tracker -> Skills (the "Course" category): something being learned,
+// counted in lessons (a course) or hours (any skill). `target` and `progress`
+// are in the skill's unit -- HOURS are MINUTES (the UI shows hours). `status`
+// is settled server-side from progress (SkillsService.settle).
+export type SkillUnit = "LESSONS" | "HOURS";
+export type SkillStatus = "WANT_TO_LEARN" | "LEARNING" | "COMPLETED";
+
+export interface Skill {
+  id: string;
+  name: string;
+  source: string;
+  unit: SkillUnit;
+  target: number;
+  progress: number;
+  status: SkillStatus;
+  color: string; // key into components/habit-tracker/skills/skillPalette.ts
+  icon: string; // same
+  startedAt: string | null;
+  completedAt: string | null;
+  completedYear: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SkillWeekDay {
+  date: string; // 'YYYY-MM-DD', Asia/Dhaka
+  minutes: number; // learned that day in HOURS skills
+  lessons: number; // learned that day in LESSONS skills
+}
+
+export interface SkillsOverview {
+  year: number; // the current Asia/Dhaka year
+  goalTarget: number | null; // this year's "complete N skills" goal
+  streak: number; // consecutive days with activity, up to today
+  week: SkillWeekDay[]; // the last 7 days, oldest first, ending today
+  skills: Skill[];
 }
 
 // One month sheet (Namaz) or one Ramadan (see backend HabitTrackersService).

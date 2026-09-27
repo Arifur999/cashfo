@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
-import { HABIT_CATEGORIES, type Habit, type HabitFrequency } from "@/lib/api";
+import { categoryLabel, HABIT_CATEGORIES, type Habit, type HabitFrequency } from "@/lib/api";
 import {
   BUDGET_CATEGORY_COLORS,
   BUDGET_CATEGORY_ICONS,
@@ -144,7 +144,7 @@ export function HabitFormModal({ open, onClose, editingHabit, defaultCategory }:
           >
             {HABIT_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
-                {t(cat)}
+                {t(categoryLabel(cat))}
               </option>
             ))}
           </select>

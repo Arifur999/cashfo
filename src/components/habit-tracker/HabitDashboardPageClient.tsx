@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/budgetCategoryVisuals";
 import { checkInHabitAction, removeCheckInAction } from "@/lib/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { HABIT_CATEGORIES, type HabitToday } from "@/lib/api";
+import { categoryLabel, HABIT_CATEGORIES, type HabitToday } from "@/lib/api";
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
@@ -142,7 +142,7 @@ export function HabitDashboardPageClient({ habitsToday }: { habitsToday: HabitTo
               return (
                 <div key={group.category}>
                   <div className="mb-2 flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{t(group.category)}</h3>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{t(categoryLabel(group.category))}</h3>
                     <span className="text-xs text-neutral-400">
                       {doneInGroup}/{group.habits.length}
                     </span>
