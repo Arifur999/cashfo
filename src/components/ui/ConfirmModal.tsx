@@ -22,7 +22,7 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, confirm
   const { t } = useLocale();
   return (
     <Modal open={open} onClose={onClose} title={title}>
-      <p className="text-sm text-neutral-600">{message}</p>
+      <p className="break-words text-sm text-neutral-600">{message}</p>
       <div className="mt-5 flex justify-end gap-2">
         <button
           type="button"

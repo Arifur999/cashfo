@@ -881,6 +881,32 @@ export interface HabitStat {
   completionRate: number;
 }
 
+// Habit Tracker -> Book: a personal reading list, tracked by pages. `status`
+// is settled server-side from pagesRead (BooksService.settle); `finishedYear`
+// is the Asia/Dhaka year of finishedAt, so the client never guesses timezones.
+export type BookStatus = "WANT_TO_READ" | "READING" | "FINISHED";
+
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  totalPages: number;
+  pagesRead: number;
+  status: BookStatus;
+  color: string; // key into components/habit-tracker/books/bookPalette.ts
+  startedAt: string | null;
+  finishedAt: string | null;
+  finishedYear: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BooksOverview {
+  year: number; // the current Asia/Dhaka year
+  goalTarget: number | null; // this year's "finish N books" goal
+  books: Book[];
+}
+
 // One month sheet (Namaz) or one Ramadan (see backend HabitTrackersService).
 // `checks` lists only the TICKED cells. `elapsedDays` (server-computed,
 // Asia/Dhaka) is how many days of that month are fully past -- the Cross
