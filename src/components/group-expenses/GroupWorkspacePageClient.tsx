@@ -1277,6 +1277,10 @@ function SettlementSection({
         <div>
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">{t("Closed Settlement History")}</h2>
           <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+            <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <span>{t("Period")}</span>
+              <span>{t("Total Expense")}</span>
+            </div>
             <div className="divide-y divide-neutral-50">
               {settlementHistory.map((s) => (
                 <div key={s.id} className="flex items-center justify-between px-4 py-3">

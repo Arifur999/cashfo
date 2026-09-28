@@ -225,6 +225,10 @@ export function PasswordVaultPageClient() {
           </div>
 
           <div className="mt-4 rounded-2xl bg-surface shadow-sm shadow-black/5">
+            <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <span>{t("Title")}</span>
+              <span>{t("Password")}</span>
+            </div>
             {loadingEntries ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />

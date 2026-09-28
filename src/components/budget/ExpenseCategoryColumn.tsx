@@ -104,6 +104,11 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
         )}
       </div>
 
+      <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+        <span>{t("Category")}</span>
+        <span>{t("Amount")}</span>
+      </div>
+
       {overview.categories.length === 0 ? (
         <div className="rounded-2xl bg-surface px-4 py-10 text-center text-sm text-neutral-400 shadow-sm shadow-black/5">
           {t('No categories yet -- tap "Add Category" to get started.')}

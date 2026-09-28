@@ -85,6 +85,10 @@ export function ReceivablePayableSection({
       )}
 
       <div className="mt-4 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <span>{t("Description")}</span>
+          <span>{t("Amount")}</span>
+        </div>
         {breakdown.transactions.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-neutral-400">{t("Nothing recorded yet.")}</p>
         ) : (

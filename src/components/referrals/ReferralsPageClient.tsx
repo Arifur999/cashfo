@@ -218,6 +218,10 @@ export function ReferralsPageClient({ businessId, info, currency, canManage }: R
 
           <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
             <h2 className="text-sm font-semibold text-neutral-900">{t("Recent Referrals")}</h2>
+            <div className="mt-3 flex items-center justify-between gap-3 border-b border-neutral-100 pb-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <span>{t("Name")}</span>
+              <span>{t("Amount")}</span>
+            </div>
             {info.recentReferrals.length === 0 ? (
               <p className="mt-3 text-sm text-neutral-400">{t("No referrals yet.")}</p>
             ) : (
