@@ -3,7 +3,7 @@
 // "This cannot be undone." reuse existing keys from elsewhere too.
 export const todosDictionary: Record<string, string> = {
   "To Do List": "টু-ডু লিস্ট",
-  "Plan your day, one date at a time.": "একটি একটি করে দিনের পরিকল্পনা করুন।",
+  "Ride today's momentum -- carry what's left into tomorrow's sunrise.": "আজকের গতি ধরে রাখুন -- যা বাকি থাকে তা আগামীকালের সূর্যোদয়ে নিয়ে যান।",
   "Add List": "লিস্ট যোগ করুন",
   'No lists yet -- click "Add List" to start.': 'এখনো কোনো লিস্ট নেই -- শুরু করতে "লিস্ট যোগ করুন" ক্লিক করুন।',
   "List created": "লিস্ট তৈরি হয়েছে",

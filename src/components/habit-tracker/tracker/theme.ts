@@ -95,6 +95,41 @@ export const OTHERS_THEME: TrackerTheme = {
   tileB: "text-amber-600",
 };
 
+// Teal + coral-orange (the To Do List pages) -- a "sunrise/momentum" theme: a
+// dark teal night sky warming into an ember-orange horizon, echoing the
+// page's own "Move to next day" action (today's leftovers carry into
+// tomorrow's sunrise). Like Others, it has no religious/domain calligraphy
+// line, so heroArabic/heroArabicAlign are omitted. No quote-of-the-day either
+// (unlike Book/Skills, whose quote lives in their OWN bespoke Hero component,
+// not this shared TrackerHero) -- To Do is a fast utility opened many times a
+// day, including from the header-less TodayTasksButton popover, so a
+// rotating quote would show inconsistently and add friction, not value.
+export const TODO_THEME: TrackerTheme = {
+  heroGradient: "linear-gradient(135deg, #042f2e 0%, #0f6b5c 46%, #7c2d12 100%)",
+  starAccent: "253,186,116",
+  heroShadow: "shadow-teal-950/30",
+  heroText: "text-teal-100/80",
+  heroWatermark: "text-orange-200/15",
+  heroSpark: "text-orange-200/40",
+  cta: "flex items-center gap-2 rounded-xl bg-gradient-to-b from-orange-300 to-orange-500 px-4 py-2.5 text-sm font-semibold text-teal-950 shadow-md shadow-black/20 transition hover:from-orange-200 hover:to-orange-400 disabled:opacity-60",
+  cardBorder: "border-orange-200/50",
+  cardHeader: "from-teal-900 to-orange-950",
+  cardSub: "text-orange-200/90",
+  emptyIcon: "text-orange-400",
+  bar: "from-orange-400 to-teal-500",
+  weekLabel: "text-teal-600",
+  weekTint: "bg-[image:linear-gradient(rgb(20_184_166/0.14),rgb(20_184_166/0.14))]",
+  chartBar: "from-teal-500 to-orange-400",
+  todayPill: "bg-orange-500 text-white",
+  checkOn: "border-teal-600 bg-teal-600 text-white",
+  checkOff: "border-neutral-300 bg-surface hover:border-teal-500",
+  ringColor: "#0d9488",
+  stripColors: "from-teal-500 via-orange-400 to-teal-700",
+  summaryIcon: "text-orange-500",
+  tileA: "text-teal-600",
+  tileB: "text-orange-600",
+};
+
 // Sapphire blue + silver (the Namaz pages).
 export const NAMAZ_THEME: TrackerTheme = {
   heroGradient: "linear-gradient(135deg, #0a1f44 0%, #123a7a 46%, #2b2f8f 100%)",

@@ -134,7 +134,7 @@ export function TodayTasksButton() {
         title={t("Today's Tasks")}
         className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
       >
-        <ListTodo className="h-4 w-4" />
+        <ListTodo className="h-4 w-4 text-teal-600" />
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title={t("Today's Tasks")}>
@@ -175,7 +175,12 @@ export function TodayTasksButton() {
             {displayItems.map((item, index) => {
               const itemPending = pendingIds.has(item.id);
               return (
-                <div key={item.id} className="flex items-center gap-3 rounded-xl border border-neutral-100 p-2.5">
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 rounded-xl border bg-surface p-2.5 transition-colors ${
+                    item.completed ? "border-teal-100 bg-[image:linear-gradient(rgb(20_184_166/0.08),rgb(20_184_166/0.08))]" : "border-neutral-100 hover:border-orange-200"
+                  }`}
+                >
                   <span className="w-4 shrink-0 text-xs tabular-nums text-neutral-400">{index + 1}</span>
                   <button
                     type="button"
@@ -183,7 +188,7 @@ export function TodayTasksButton() {
                     disabled={itemPending}
                     aria-label={item.completed ? t("Undo") : t("Mark done")}
                     title={item.completed ? t("Undo") : t("Mark done")}
-                    className={`shrink-0 rounded-full transition-colors disabled:opacity-50 ${item.completed ? "text-emerald-500" : "text-neutral-300 hover:text-neutral-400"}`}
+                    className={`shrink-0 rounded-full transition-colors disabled:opacity-50 ${item.completed ? "text-teal-500" : "text-neutral-300 hover:text-orange-400"}`}
                   >
                     {item.completed ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
                   </button>
@@ -195,7 +200,7 @@ export function TodayTasksButton() {
                       disabled={itemPending}
                       aria-label={`${t("Move to next day")}: ${item.text}`}
                       title={t("Move to next day")}
-                      className="shrink-0 rounded-md p-1 text-neutral-300 transition-colors hover:bg-neutral-100 hover:text-brand-primary disabled:opacity-50"
+                      className="shrink-0 rounded-md p-1 text-neutral-300 transition-colors hover:bg-orange-50 hover:text-orange-600 disabled:opacity-50"
                     >
                       <ArrowRight className="h-4 w-4" />
                     </button>

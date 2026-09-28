@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, ChevronLeft, Circle, Loader2, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { ArrowRight, CheckCircle2, Circle, Loader2, Plus, Sunrise, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -9,6 +8,8 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import type { TodoList } from "@/lib/api";
 import { addTodoItemAction, moveTodoItemToNextDayAction, removeTodoItemAction, updateTodoItemAction } from "@/lib/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { TODO_THEME } from "../tracker/theme";
+import { TrackerHero } from "../tracker/TrackerHero";
 import { formatTodoDate } from "./todoDate";
 
 type OptimisticUpdate = { type: "toggle"; itemId: string; completed: boolean } | { type: "remove"; itemId: string };
@@ -109,15 +110,13 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
 
   return (
     <div className="space-y-5 px-6 py-8 pb-24 md:pb-8">
-      <div>
-        <Link href="/habit-tracker/todos" className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-neutral-700">
-          <ChevronLeft className="h-3.5 w-3.5" /> {t("All Lists")}
-        </Link>
-        <h1 className="text-xl font-semibold text-neutral-900">{formatTodoDate(list.date)}</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {done}/{total} {t("tasks")}
-        </p>
-      </div>
+      <TrackerHero
+        theme={TODO_THEME}
+        watermark={Sunrise}
+        title={formatTodoDate(list.date)}
+        subtitle={`${done}/${total} ${t("tasks")}`}
+        back={{ href: "/habit-tracker/todos", label: t("All Lists") }}
+      />
 
       <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
         <form
@@ -134,11 +133,7 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
             placeholder={t("Add a task")}
             className="min-w-0 flex-1 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />
-          <button
-            type="submit"
-            disabled={!newText.trim() || isPending}
-            className="flex shrink-0 items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
-          >
+          <button type="submit" disabled={!newText.trim() || isPending} className={TODO_THEME.cta}>
             {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} {t("Add")}
           </button>
         </form>
@@ -150,7 +145,12 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
             {displayItems.map((item, index) => {
               const itemPending = pendingIds.has(item.id);
               return (
-                <div key={item.id} className="flex items-center gap-3 rounded-xl border border-neutral-100 p-3">
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 rounded-xl border bg-surface p-3 transition-colors ${
+                    item.completed ? "border-teal-100 bg-[image:linear-gradient(rgb(20_184_166/0.08),rgb(20_184_166/0.08))]" : "border-neutral-100 hover:border-orange-200"
+                  }`}
+                >
                   <span className="w-4 shrink-0 text-xs tabular-nums text-neutral-400">{index + 1}</span>
                   <button
                     type="button"
@@ -158,7 +158,7 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
                     disabled={itemPending}
                     aria-label={item.completed ? t("Undo") : t("Mark done")}
                     title={item.completed ? t("Undo") : t("Mark done")}
-                    className={`shrink-0 rounded-full transition-colors disabled:opacity-50 ${item.completed ? "text-emerald-500" : "text-neutral-300 hover:text-neutral-400"}`}
+                    className={`shrink-0 rounded-full transition-colors disabled:opacity-50 ${item.completed ? "text-teal-500" : "text-neutral-300 hover:text-orange-400"}`}
                   >
                     {item.completed ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
                   </button>
@@ -170,7 +170,7 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
                       disabled={itemPending}
                       aria-label={`${t("Move to next day")}: ${item.text}`}
                       title={t("Move to next day")}
-                      className="shrink-0 rounded-md p-1 text-neutral-300 transition-colors hover:bg-neutral-100 hover:text-brand-primary disabled:opacity-50"
+                      className="shrink-0 rounded-md p-1 text-neutral-300 transition-colors hover:bg-orange-50 hover:text-orange-600 disabled:opacity-50"
                     >
                       <ArrowRight className="h-4 w-4" />
                     </button>
