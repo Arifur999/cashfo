@@ -108,6 +108,16 @@ export const habitTrackerDictionary: Record<string, string> = {
   Undo: "পূর্বাবস্থায় ফেরান",
   "Mark done": "সম্পন্ন হিসেবে চিহ্নিত করুন",
 
+  // HabitDashboardPageClient.tsx's chart section (DashboardBarChart /
+  // DashboardProgressList cards) -- "Daily progress" reuses the Ramadan
+  // summary's own key above (same meaning: per-day percentage).
+  "Progress overview": "অগ্রগতির চিত্র",
+  "Last 7 days": "গত ৭ দিন",
+  Last: "গত",
+  "No active challenges yet": "এখনো কোনো সক্রিয় চ্যালেঞ্জ নেই",
+  "Not reading anything right now": "এই মুহূর্তে কিছু পড়া হচ্ছে না",
+  more: "আরও",
+
   // CreateMonthTrackerModal.tsx and the Namaz list cards -- "Create Month",
   // Tick / Cross. Month/Year/Remove/Cancel/Delete reuse existing keys.
   "Create Month": "মাস তৈরি করুন",
