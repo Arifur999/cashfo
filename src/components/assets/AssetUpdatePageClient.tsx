@@ -33,6 +33,10 @@ export function AssetUpdatePageClient({ businessId, assets, categories, currency
       <p className="mt-1 text-sm text-neutral-500">{t("Update each asset's current market value as it appreciates or depreciates.")}</p>
 
       <div className="mt-6 rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <span>{t("Asset")}</span>
+          <span>{t("Current Value")}</span>
+        </div>
         {assets.length === 0 ? (
           <p className="py-10 text-center text-sm text-neutral-400">{t("No assets yet -- purchase one first under Purchase & Sell Asset.")}</p>
         ) : (

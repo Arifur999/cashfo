@@ -47,6 +47,10 @@ export function PurchaseSellAssetPageClient({ businessId, assets, categories, cu
 
       <div className="mt-6 rounded-2xl bg-surface shadow-sm shadow-black/5">
         <div className="border-b border-neutral-100 px-4 py-3 text-sm font-semibold text-neutral-700">{t("Sell an Asset")}</div>
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <span>{t("Asset")}</span>
+          <span>{t("Value")}</span>
+        </div>
         {assets.length === 0 ? (
           <p className="py-10 text-center text-sm text-neutral-400">{t("No assets to sell yet -- purchase one first.")}</p>
         ) : (
