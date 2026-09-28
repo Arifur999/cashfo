@@ -38,7 +38,7 @@ export function TopBar() {
   return (
     <header className="flex h-16 items-center justify-end gap-3 border-b border-neutral-100 bg-surface px-6">
       {!isHabitMode && <QuickAddButton />}
-      {isHabitMode && <TodayTasksButton />}
+      <TodayTasksButton />
       <button
         type="button"
         onClick={toggleLocale}

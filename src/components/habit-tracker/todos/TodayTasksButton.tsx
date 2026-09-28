@@ -15,12 +15,13 @@ function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// TopBar quick-access to today's to-do list -- Habit Tracker mode only (see
-// TopBar.tsx's own isHabitMode split, same as QuickAddButton being Money
-// Tracker-only). Today's list doesn't have to exist yet: adding the first
-// task here creates it transparently, so this stays a one-click "jot
-// something down" action rather than a two-step "create a list, then add to
-// it" flow.
+// TopBar quick-access to today's to-do list -- shown in BOTH app modes
+// (unlike QuickAddButton, which is Money Tracker-only): a to-do list is a
+// cross-cutting daily-planning tool, not specific to habit tracking, even
+// though its full page lives under /habit-tracker. Today's list doesn't have
+// to exist yet: adding the first task here creates it transparently, so this
+// stays a one-click "jot something down" action rather than a two-step
+// "create a list, then add to it" flow.
 export function TodayTasksButton() {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
