@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removeAccountAction } from "@/lib/accountActions";
+import { archiveAccountAction, removeAccountAction, unarchiveAccountAction } from "@/lib/accountActions";
 import type { Account } from "@/lib/api";
 import { BalanceStatCard } from "./BalanceStatCard";
 import { formatCurrency } from "@/lib/currency";
@@ -49,6 +49,19 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
     });
   }
 
+  function handleToggleStatus(wallet: Account) {
+    const isArchived = wallet.status === "ARCHIVED";
+    startTransition(async () => {
+      const result = isArchived ? await unarchiveAccountAction(businessId, wallet.id) : await archiveAccountAction(businessId, wallet.id);
+      if (result.success) {
+        toast.success(isArchived ? t("Wallet activated") : t("Wallet archived"));
+        router.refresh();
+      } else {
+        toast.error(result.message ?? (isArchived ? t("Failed to activate wallet") : t("Failed to archive wallet")));
+      }
+    });
+  }
+
   const activeCount = wallets.filter((w) => w.status !== "ARCHIVED").length;
   const totalOpening = wallets.reduce((sum, w) => sum + Number(w.openingBalance), 0);
 
@@ -82,6 +95,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
             <tr>
               <th className="px-4 py-3 font-medium">{t("Name")}</th>
               <th className="px-4 py-3 font-medium">{t("Account Number")}</th>
+              <th className="px-4 py-3 font-medium">{t("Status")}</th>
               <th className="px-4 py-3 font-medium text-right">{t("Opening Balance")}</th>
               {canManage && <th className="px-4 py-3 font-medium text-right">{t("Actions")}</th>}
             </tr>
@@ -89,7 +103,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
           <tbody className="divide-y divide-neutral-50">
             {wallets.length === 0 && (
               <tr>
-                <td colSpan={canManage ? 4 : 3} className="px-4 py-10 text-center text-neutral-400">
+                <td colSpan={canManage ? 5 : 4} className="px-4 py-10 text-center text-neutral-400">
                   {t("No wallets yet.")}
                 </td>
               </tr>
@@ -113,14 +127,32 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
                         >
                           {wallet.name}
                         </Link>
-                        {isArchived && (
-                          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-                            {t("Archived")}
-                          </span>
-                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-neutral-500">{wallet.accountNumber ?? "--"}</td>
+                    <td className="px-4 py-3">
+                      {canManage ? (
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => handleToggleStatus(wallet)}
+                          title={isArchived ? t("Mark as active") : t("Mark as inactive")}
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                            isArchived ? "bg-neutral-100 text-neutral-400 hover:bg-neutral-200" : "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20"
+                          }`}
+                        >
+                          {isArchived ? t("Inactive") : t("Active")}
+                        </button>
+                      ) : (
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+                            isArchived ? "bg-neutral-100 text-neutral-400" : "bg-brand-primary/10 text-brand-primary"
+                          }`}
+                        >
+                          {isArchived ? t("Inactive") : t("Active")}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(wallet.openingBalance, currency)}</td>
                     {canManage && (
                       <td className="px-4 py-3">

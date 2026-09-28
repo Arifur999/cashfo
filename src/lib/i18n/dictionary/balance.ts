@@ -79,6 +79,12 @@ export const balanceDictionary: Record<string, string> = {
   "Total Wallets": "মোট ওয়ালেট",
   Active: "সক্রিয়",
   "Total Opening Balance": "মোট প্রারম্ভিক ব্যালেন্স",
+  // Wallet-page Status column (active/inactive toggle button) -- "Status"/
+  // "Inactive" reuse shared.ts's keys.
+  "Mark as active": "সক্রিয় করুন",
+  "Mark as inactive": "নিষ্ক্রিয় করুন",
+  "Wallet activated": "ওয়ালেট সক্রিয় করা হয়েছে",
+  "Failed to activate wallet": "ওয়ালেট সক্রিয় করতে ব্যর্থ",
 
   // src/components/accounts/AccountDetailPageClient.tsx --
   // ACCOUNT_TYPE_LABELS (Assets/Liabilities/Equity/Expenses) reuse

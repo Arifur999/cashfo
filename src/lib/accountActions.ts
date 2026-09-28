@@ -60,6 +60,12 @@ export async function archiveAccountAction(businessId: string, id: string): Prom
   }, "Failed to archive account");
 }
 
+export async function unarchiveAccountAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}/unarchive`, {}, { headers: await authHeaders() });
+  }, "Failed to reactivate account");
+}
+
 // Permanently deletes the account if it has no real transaction history, or
 // falls back to archiving it if it has any -- see the backend's
 // AccountsService.removeOrArchive() for the exact rule. `data.deleted`
