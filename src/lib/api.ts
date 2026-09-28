@@ -223,43 +223,6 @@ export interface AccountSummary {
   transactionCount: number;
 }
 
-export interface GeneralLedgerAccount {
-  id: string;
-  name: string;
-  nameBn: string | null;
-  accountSubtype: string | null;
-  currentBalance: string;
-  isSystemAccount: boolean;
-  status: AccountStatus;
-}
-
-export interface GeneralLedgerGroup {
-  accountType: AccountType;
-  accounts: GeneralLedgerAccount[];
-}
-
-export interface GeneralLedgerResponse {
-  groups: GeneralLedgerGroup[];
-  meta: { page: number; limit: number; total: number; totalPages: number };
-}
-
-export interface TrialBalanceRow {
-  accountId: string;
-  name: string;
-  nameBn: string | null;
-  accountType: AccountType;
-  status: AccountStatus;
-  debit: string;
-  credit: string;
-}
-
-export interface TrialBalanceResponse {
-  rows: TrialBalanceRow[];
-  totalDebit: string;
-  totalCredit: string;
-  isBalanced: boolean;
-}
-
 // Financial Reports page (/reports/overview) -- Income/Expense by Category
 // donut cards. "total" is the true total across every category in range;
 // "categories" is capped at the top 10 by amount, so its percents don't

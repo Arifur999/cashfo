@@ -178,20 +178,11 @@ const INCOME_EXPENSE_ITEMS = [
   { label: "Budget Planning", href: "/categories" },
 ];
 
-// Was a disabled placeholder since Prompt 1 -- General Ledger and Trial
-// Balance are its first two real sub-items (Prompt 7); Aging Receivable/
-// Payable (Prompt 9) followed. More report types (P&L, Balance Sheet, Cash
-// Flow) land in Prompts 12-13. "Overview" (Income/Expense by Category
-// donuts + Income vs Savings trend) sits first, per the user's explicit
-// request -- defaults to "This Month" (see its page.tsx), unlike every
-// other list page in this app.
-const REPORTS_ITEMS = [
-  { label: "Overview", href: "/reports/overview" },
-  { label: "General Ledger", href: "/reports/general-ledger" },
-  { label: "Trial Balance", href: "/reports/trial-balance" },
-  { label: "Aging Receivable", href: "/reports/aging-receivable" },
-  { label: "Aging Payable", href: "/reports/aging-payable" },
-];
+// General Ledger/Trial Balance/Aging Receivable/Aging Payable (Prompts 7 and
+// 9) were removed per the user's explicit request -- "Overview" (Income/
+// Expense by Category donuts + Income vs Savings trend) is now the only
+// sub-item, defaulting to "This Month" (see its page.tsx).
+const REPORTS_ITEMS = [{ label: "Overview", href: "/reports/overview" }];
 
 // Habit Tracker is a completely separate app-mode, reached via the TopBar's
 // "Switch" button (see TopBar.tsx) -- NOT another item mixed into the Money
