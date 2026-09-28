@@ -13,7 +13,6 @@ export const habitTrackerDictionary: Record<string, string> = {
 
   // Sidebar.tsx (Habit Tracker mode)
   Habits: "অভ্যাসসমূহ",
-  Calendar: "ক্যালেন্ডার",
   Stats: "পরিসংখ্যান",
 
   // Habit categories -- Sidebar's "Habits" submenu, HabitFormModal's Category
@@ -196,8 +195,6 @@ export const habitTrackerDictionary: Record<string, string> = {
   Sadaqah: "সদকা",
   Tahajjud: "তাহাজ্জুদ",
 
-  // HabitCalendarPageClient.tsx
-  "How many habits you completed each day.": "প্রতিদিন আপনি কতটি অভ্যাস সম্পন্ন করেছেন।",
 
   // HabitStatsPageClient.tsx
   "Streaks and completion rate over the last 30 days.": "গত ৩০ দিনের স্ট্রিক ও সম্পন্নের হার।",

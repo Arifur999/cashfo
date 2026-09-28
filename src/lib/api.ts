@@ -875,10 +875,6 @@ export interface HabitToday extends Habit {
   streak: number;
 }
 
-export interface HabitMonthLogs {
-  habits: Habit[];
-  logs: Pick<HabitLog, "habitId" | "date" | "completed" | "value">[];
-}
 
 export interface HabitStat {
   habitId: string;
@@ -975,4 +971,19 @@ export interface HabitMonthTracker {
   // current month, else null -- the sheet highlights that column.
   todayDay: number | null;
   checks: { day: number; item: string }[];
+}
+
+// Habit Tracker -> To Do List: one list per calendar date, holding any number
+// of check-off tasks. Unlike the trackers above, a list has no calendar grid
+// and no protected-history delete rule -- see backend TodosService.
+export interface TodoItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface TodoList {
+  id: string;
+  date: string; // "YYYY-MM-DD"
+  items: TodoItem[];
 }

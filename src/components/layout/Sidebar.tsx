@@ -5,7 +5,6 @@ import {
   Banknote,
   BarChart3,
   Boxes,
-  CalendarDays,
   ChevronDown,
   ChevronRight,
   FileText,
@@ -14,6 +13,7 @@ import {
   Landmark,
   LayoutDashboard,
   ListChecks,
+  ListTodo,
   PiggyBank,
   Settings,
   Users,
@@ -202,7 +202,7 @@ const REPORTS_ITEMS = [
 // with what's actually on screen after a refresh or a shared link.
 const HABIT_TRACKER_TOP_ITEMS = [{ label: "Dashboard", href: "/habit-tracker", icon: LayoutDashboard }];
 const HABIT_TRACKER_BOTTOM_ITEMS = [
-  { label: "Calendar", href: "/habit-tracker/calendar", icon: CalendarDays },
+  { label: "To Do List", href: "/habit-tracker/todos", icon: ListTodo },
   { label: "Stats", href: "/habit-tracker/stats", icon: BarChart3 },
 ];
 
