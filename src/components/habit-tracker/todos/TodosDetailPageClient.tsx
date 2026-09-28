@@ -52,6 +52,10 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
 
   const done = optimisticList.items.filter((i) => i.completed).length;
   const total = optimisticList.items.length;
+  // Newest task first: addItem() appends server-side, so reversing here (a
+  // display-only order, not stored) puts whatever was just added at the top
+  // instead of the bottom, same as the Others tracker's habit rows.
+  const displayItems = [...optimisticList.items].reverse();
 
   function toggleItem(itemId: string, completed: boolean) {
     if (pendingIds.has(itemId)) return;
@@ -130,10 +134,11 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
           <p className="py-10 text-center text-sm text-neutral-400">{t("No tasks yet -- add one above.")}</p>
         ) : (
           <div className="space-y-2">
-            {optimisticList.items.map((item) => {
+            {displayItems.map((item, index) => {
               const itemPending = pendingIds.has(item.id);
               return (
                 <div key={item.id} className="flex items-center gap-3 rounded-xl border border-neutral-100 p-3">
+                  <span className="w-4 shrink-0 text-xs tabular-nums text-neutral-400">{index + 1}</span>
                   <button
                     type="button"
                     onClick={() => toggleItem(item.id, !item.completed)}

@@ -99,6 +99,10 @@ export function TodayTasksButton() {
 
   const items = list?.items ?? [];
   const done = items.filter((i) => i.completed).length;
+  // Newest task first, same reasoning as TodosDetailPageClient's own
+  // displayItems: addItem() appends server-side, so this is a display-only
+  // reorder, not a stored one.
+  const displayItems = [...items].reverse();
 
   return (
     <>
@@ -147,10 +151,11 @@ export function TodayTasksButton() {
           <p className="py-8 text-center text-sm text-neutral-400">{t("No tasks yet -- add one above.")}</p>
         ) : (
           <div className="max-h-80 space-y-2 overflow-y-auto">
-            {items.map((item) => {
+            {displayItems.map((item, index) => {
               const itemPending = pendingIds.has(item.id);
               return (
                 <div key={item.id} className="flex items-center gap-3 rounded-xl border border-neutral-100 p-2.5">
+                  <span className="w-4 shrink-0 text-xs tabular-nums text-neutral-400">{index + 1}</span>
                   <button
                     type="button"
                     onClick={() => toggleItem(item.id, !item.completed)}
