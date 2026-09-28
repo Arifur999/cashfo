@@ -75,6 +75,10 @@ export const balanceDictionary: Record<string, string> = {
   // loan-management.ts's key -- only its own outcome/error text is new here.
   "Wallet deleted": "ওয়ালেট মুছে ফেলা হয়েছে",
   "Failed to remove wallet": "ওয়ালেট সরাতে ব্যর্থ",
+  // New Wallet-page stat tiles added during the UI/UX redesign.
+  "Total Wallets": "মোট ওয়ালেট",
+  Active: "সক্রিয়",
+  "Total Opening Balance": "মোট প্রারম্ভিক ব্যালেন্স",
 
   // src/components/accounts/AccountDetailPageClient.tsx --
   // ACCOUNT_TYPE_LABELS (Assets/Liabilities/Equity/Expenses) reuse

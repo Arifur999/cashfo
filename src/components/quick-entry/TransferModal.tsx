@@ -145,7 +145,7 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
         type="button"
         disabled={!isValid || isPending}
         onClick={handleSubmit}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-dark px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-dark-hover disabled:opacity-50"
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
         {t("Move Money")}

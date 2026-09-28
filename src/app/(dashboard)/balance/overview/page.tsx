@@ -1,8 +1,10 @@
+import { Archive, Banknote, Landmark, Wallet } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getWalletsOverview } from "@/lib/accounts";
 import { resolveActiveBusinessId } from "@/lib/activeBusiness";
 import { getCurrentUser } from "@/lib/auth";
 import { accountDisplayName } from "@/lib/accountDisplay";
+import { BalanceStatCard } from "@/components/balance/BalanceStatCard";
 import { formatCurrency } from "@/lib/currency";
 import { getLocale } from "@/lib/i18n/locale";
 import { translate } from "@/lib/i18n/translate";
@@ -54,22 +56,10 @@ export default async function BalanceOverviewPage() {
       <p className="mt-1 text-sm text-neutral-500">{t("Account Balance Overview")}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Total Accounts")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">{overview.totalAccounts}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Total Balance")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-brand-primary">{formatCurrency(overview.totalBalance, currency)}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Inactive Amount")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-brand-danger">{formatCurrency(overview.inactiveAmount, currency)}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Available Balance")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-brand-primary">{formatCurrency(overview.availableBalance, currency)}</p>
-        </div>
+        <BalanceStatCard icon={Landmark} label={t("Total Accounts")} value={String(overview.totalAccounts)} />
+        <BalanceStatCard icon={Wallet} label={t("Total Balance")} value={formatCurrency(overview.totalBalance, currency)} color="text-brand-primary" />
+        <BalanceStatCard icon={Archive} label={t("Inactive Amount")} value={formatCurrency(overview.inactiveAmount, currency)} color="text-brand-danger" />
+        <BalanceStatCard icon={Banknote} label={t("Available Balance")} value={formatCurrency(overview.availableBalance, currency)} color="text-brand-primary" />
       </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
@@ -77,25 +67,29 @@ export default async function BalanceOverviewPage() {
           <h2 className="text-sm font-semibold text-neutral-900">{t("Account Details")}</h2>
         </div>
 
-        {overview.accounts.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No money accounts yet.")}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
+              <tr>
+                <th className="px-4 py-3 font-medium">#</th>
+                <th className="px-4 py-3 font-medium">{t("Account")}</th>
+                <th className="px-4 py-3 font-medium text-right">{t("Opening")}</th>
+                <th className="px-4 py-3 font-medium text-right">{t("Total In")}</th>
+                <th className="px-4 py-3 font-medium text-right">{t("Total Out")}</th>
+                <th className="px-4 py-3 font-medium text-right">{t("Savings")}</th>
+                <th className="px-4 py-3 font-medium text-right">{t("Adjustment")}</th>
+                <th className="px-4 py-3 font-medium text-right">{t("Current Balance")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-50">
+              {overview.accounts.length === 0 && (
                 <tr>
-                  <th className="px-4 py-3 font-medium">#</th>
-                  <th className="px-4 py-3 font-medium">{t("Account")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Opening")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Total In")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Total Out")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Savings")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Adjustment")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Current Balance")}</th>
+                  <td colSpan={8} className="px-4 py-10 text-center text-neutral-400">
+                    {t("No money accounts yet.")}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-50">
-                {overview.accounts.map((a, index) => {
+              )}
+              {overview.accounts.map((a, index) => {
                   const isInactive = a.status === "ARCHIVED";
                   const adjustmentNum = Number(a.adjustment);
                   const adjustmentColor = adjustmentNum > 0 ? "text-brand-primary" : adjustmentNum < 0 ? "text-brand-danger" : "text-neutral-400";
@@ -103,14 +97,23 @@ export default async function BalanceOverviewPage() {
                     <tr key={a.id} className={isInactive ? "bg-brand-danger/5" : ""}>
                       <td className="px-4 py-2.5 text-neutral-400">{index + 1}</td>
                       <td className="px-4 py-2.5">
-                        <span className={`text-neutral-700 ${isInactive ? "line-through" : ""}`}>
-                          {accountDisplayName(a, user.preferredLanguage)}
-                        </span>
-                        {isInactive && (
-                          <span className="ml-2 rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-danger">
-                            {t("Inactive")}
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                              isInactive ? "bg-neutral-100 text-neutral-400" : "bg-brand-primary/10 text-brand-primary"
+                            }`}
+                          >
+                            <Wallet className="h-4 w-4" />
                           </span>
-                        )}
+                          <span className={`min-w-0 flex-1 truncate text-neutral-700 ${isInactive ? "line-through" : ""}`}>
+                            {accountDisplayName(a, user.preferredLanguage)}
+                          </span>
+                          {isInactive && (
+                            <span className="rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-danger">
+                              {t("Inactive")}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-neutral-600">{formatCurrency(a.openingBalance, currency)}</td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-brand-primary">{formatCurrency(a.totalIn, currency)}</td>
@@ -124,27 +127,29 @@ export default async function BalanceOverviewPage() {
                   );
                 })}
               </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-neutral-200 text-sm font-bold text-neutral-900">
-                  <td className="px-4 py-3" colSpan={2}>
-                    {t("Total")}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.opening, currency)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(totals.in, currency)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(totals.out, currency)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(totals.savings, currency)}</td>
-                  <td
-                    className={`px-4 py-3 text-right tabular-nums ${totals.adjustment > 0 ? "text-brand-primary" : totals.adjustment < 0 ? "text-brand-danger" : "text-neutral-400"}`}
-                  >
-                    {formatSigned(totals.adjustment.toFixed(2))}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.current, currency)}</td>
-                </tr>
-              </tfoot>
+              {overview.accounts.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-neutral-200 text-sm font-bold text-neutral-900">
+                    <td className="px-4 py-3" colSpan={2}>
+                      {t("Total")}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.opening, currency)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(totals.in, currency)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(totals.out, currency)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(totals.savings, currency)}</td>
+                    <td
+                      className={`px-4 py-3 text-right tabular-nums ${totals.adjustment > 0 ? "text-brand-primary" : totals.adjustment < 0 ? "text-brand-danger" : "text-neutral-400"}`}
+                    >
+                      {formatSigned(totals.adjustment.toFixed(2))}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.current, currency)}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
-        )}
       </div>
     </div>
   );
 }
+

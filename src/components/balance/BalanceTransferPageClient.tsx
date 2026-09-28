@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowRight, Pencil, Plus, Printer, Trash2 } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Banknote, Info, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { BalanceStatCard } from "./BalanceStatCard";
 import { TransferModal } from "@/components/quick-entry/TransferModal";
 import type { Transaction } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
@@ -101,17 +102,14 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <BalanceStatCard icon={ArrowLeftRight} label={t("Total Transfer")} value={formatCurrency(totalTransfer, currency)} color="text-brand-primary" />
+        <BalanceStatCard icon={Banknote} label={t("Total Transactions")} value={String(activeTransfers.length)} />
         <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Total Transfer")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">{formatCurrency(totalTransfer, currency)}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Total Transactions")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">{activeTransfers.length}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Note")}</p>
-          <p className="mt-1 text-sm text-neutral-600">{t("Total balance remains unchanged on transfer. Only moves between accounts.")}</p>
+          <div className="flex items-center gap-2 text-neutral-400">
+            <Info className="h-4 w-4" />
+            <p className="text-xs uppercase tracking-wide">{t("Note")}</p>
+          </div>
+          <p className="mt-2 text-sm text-neutral-600">{t("Total balance remains unchanged on transfer. Only moves between accounts.")}</p>
         </div>
       </div>
 
@@ -140,10 +138,7 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
           </div>
         </div>
 
-        {transfers.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No transfers yet.")}</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             {/* Precomputed here, not inside the .map((t, ...) => ...) below --
                 that callback's own parameter is also named `t` (the
                 transaction), which shadows this `t` (the translate function)
@@ -168,6 +163,13 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-50">
+                    {transfers.length === 0 && (
+                      <tr>
+                        <td colSpan={canManage ? 8 : 7} className="px-4 py-10 text-center text-neutral-400">
+                          {t("No transfers yet.")}
+                        </td>
+                      </tr>
+                    )}
                     {transfers.map((t, index) => {
                       const { from, to } = partiesFor(t);
                       const isVoided = t.status === "VOIDED";
@@ -175,7 +177,18 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                         <tr key={t.id} className={isVoided ? "opacity-50" : ""}>
                           <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
                           <td className="px-4 py-3 text-neutral-600">{new Date(t.transactionDate).toLocaleDateString()}</td>
-                          <td className={`px-4 py-3 font-medium ${isVoided ? "text-neutral-400 line-through" : "text-brand-danger"}`}>{from}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <span
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                                  isVoided ? "bg-neutral-100 text-neutral-400" : "bg-brand-primary/10 text-brand-primary"
+                                }`}
+                              >
+                                <ArrowLeftRight className="h-3.5 w-3.5" />
+                              </span>
+                              <span className={`font-medium ${isVoided ? "text-neutral-400 line-through" : "text-brand-danger"}`}>{from}</span>
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-neutral-300">
                             <ArrowRight className="h-4 w-4" />
                           </td>
@@ -217,7 +230,6 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
               );
             })()}
           </div>
-        )}
       </div>
 
       <TransferModal open={modalOpen} onClose={() => setModalOpen(false)} businessId={businessId} />

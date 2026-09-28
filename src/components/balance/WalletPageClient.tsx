@@ -1,12 +1,13 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Banknote, Landmark, Pencil, Plus, Trash2, Wallet as WalletIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeAccountAction } from "@/lib/accountActions";
 import type { Account } from "@/lib/api";
+import { BalanceStatCard } from "./BalanceStatCard";
 import { formatCurrency } from "@/lib/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { WalletFormModal } from "./WalletFormModal";
@@ -48,6 +49,9 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
     });
   }
 
+  const activeCount = wallets.filter((w) => w.status !== "ARCHIVED").length;
+  const totalOpening = wallets.reduce((sum, w) => sum + Number(w.openingBalance), 0);
+
   return (
     <div className="h-full bg-brand-content px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -66,33 +70,55 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
         )}
       </div>
 
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <BalanceStatCard icon={WalletIcon} label={t("Total Wallets")} value={String(wallets.length)} />
+        <BalanceStatCard icon={Landmark} label={t("Active")} value={String(activeCount)} color="text-brand-primary" />
+        <BalanceStatCard icon={Banknote} label={t("Total Opening Balance")} value={formatCurrency(totalOpening, currency)} />
+      </div>
+
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        {wallets.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No wallets yet.")}</p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
+            <tr>
+              <th className="px-4 py-3 font-medium">{t("Name")}</th>
+              <th className="px-4 py-3 font-medium">{t("Account Number")}</th>
+              <th className="px-4 py-3 font-medium text-right">{t("Opening Balance")}</th>
+              {canManage && <th className="px-4 py-3 font-medium text-right">{t("Actions")}</th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {wallets.length === 0 && (
               <tr>
-                <th className="px-4 py-3 font-medium">{t("Name")}</th>
-                <th className="px-4 py-3 font-medium">{t("Account Number")}</th>
-                <th className="px-4 py-3 font-medium text-right">{t("Opening Balance")}</th>
-                {canManage && <th className="px-4 py-3 font-medium text-right">{t("Actions")}</th>}
+                <td colSpan={canManage ? 4 : 3} className="px-4 py-10 text-center text-neutral-400">
+                  {t("No wallets yet.")}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-50">
-              {wallets.map((wallet) => {
+            )}
+            {wallets.map((wallet) => {
                 const isArchived = wallet.status === "ARCHIVED";
                 return (
                   <tr key={wallet.id} className={isArchived ? "opacity-60" : ""}>
                     <td className="px-4 py-3">
-                      <Link href={`/accounts/${wallet.id}`} className={`font-medium text-neutral-800 hover:underline ${isArchived ? "line-through" : ""}`}>
-                        {wallet.name}
-                      </Link>
-                      {isArchived && (
-                        <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-                          {t("Archived")}
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                            isArchived ? "bg-neutral-100 text-neutral-400" : "bg-brand-primary/10 text-brand-primary"
+                          }`}
+                        >
+                          <WalletIcon className="h-4 w-4" />
                         </span>
-                      )}
+                        <Link
+                          href={`/accounts/${wallet.id}`}
+                          className={`min-w-0 flex-1 truncate font-medium text-neutral-800 hover:underline ${isArchived ? "line-through" : ""}`}
+                        >
+                          {wallet.name}
+                        </Link>
+                        {isArchived && (
+                          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+                            {t("Archived")}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-neutral-500">{wallet.accountNumber ?? "--"}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(wallet.openingBalance, currency)}</td>
@@ -124,7 +150,6 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
               })}
             </tbody>
           </table>
-        )}
       </div>
 
       <WalletFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingWallet={editingWallet} />

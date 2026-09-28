@@ -1,10 +1,11 @@
 "use client";
 
-import { Printer, X } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Banknote, Printer, Wallet, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Combobox } from "@/components/ui/Combobox";
 import type { Account, AccountLedger, AccountSummary, LanguagePreference, TransactionType } from "@/lib/api";
 import { accountDisplayName } from "@/lib/accountDisplay";
+import { BalanceStatCard } from "./BalanceStatCard";
 import { formatCurrency } from "@/lib/currency";
 import type { DateRangePreset } from "@/lib/dateRangePresets";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -177,37 +178,22 @@ export function AccountLedgerPageClient({
       ) : (
         <>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Opening Balance")}</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-neutral-800">{formatCurrency(ledger.balanceBroughtForward, currency)}</p>
-            </div>
-            <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Total In")}</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-brand-primary">{formatCurrency(summary.totalIn, currency)}</p>
-            </div>
-            <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Total Out")}</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-brand-danger">{formatCurrency(summary.totalOut, currency)}</p>
-            </div>
-            <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Adjustment")}</p>
-              <p
-                className={`mt-1 text-xl font-semibold tabular-nums ${Number(summary.adjustment) > 0 ? "text-brand-primary" : Number(summary.adjustment) < 0 ? "text-brand-danger" : "text-neutral-400"}`}
-              >
-                {Number(summary.adjustment) > 0 ? "+" : Number(summary.adjustment) < 0 ? "-" : ""}
-                {formatCurrency(Math.abs(Number(summary.adjustment)), currency)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{t("Closing Balance")}</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-neutral-900">{formatCurrency(ledger.closingBalance, currency)}</p>
-            </div>
+            <BalanceStatCard icon={Wallet} label={t("Opening Balance")} value={formatCurrency(ledger.balanceBroughtForward, currency)} />
+            <BalanceStatCard icon={ArrowUpCircle} label={t("Total In")} value={formatCurrency(summary.totalIn, currency)} color="text-brand-primary" />
+            <BalanceStatCard icon={ArrowDownCircle} label={t("Total Out")} value={formatCurrency(summary.totalOut, currency)} color="text-brand-danger" />
+            <BalanceStatCard
+              icon={Banknote}
+              label={t("Adjustment")}
+              value={`${Number(summary.adjustment) > 0 ? "+" : Number(summary.adjustment) < 0 ? "-" : ""}${formatCurrency(Math.abs(Number(summary.adjustment)), currency)}`}
+              color={Number(summary.adjustment) > 0 ? "text-brand-primary" : Number(summary.adjustment) < 0 ? "text-brand-danger" : "text-neutral-400"}
+            />
+            <BalanceStatCard icon={Banknote} label={t("Closing Balance")} value={formatCurrency(ledger.closingBalance, currency)} />
           </div>
 
           <div className="mt-4 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[860px] text-left text-sm">
-                <thead className="border-b border-neutral-100 bg-brand-dark text-xs uppercase text-white">
+                <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
                   <tr>
                     <th className="px-4 py-3 font-medium">#</th>
                     <th className="px-4 py-3 font-medium">{t("Date")}</th>
