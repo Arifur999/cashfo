@@ -867,14 +867,6 @@ export interface HabitLog {
   createdAt: string;
 }
 
-// GET /api/habits/today's shape -- a Habit plus whatever's already known
-// about it for today, so the Dashboard checklist doesn't need a second
-// round trip per habit.
-export interface HabitToday extends Habit {
-  todayLog: HabitLog | null;
-  streak: number;
-}
-
 // Habit Tracker -> Book: a personal reading list, tracked by pages. `status`
 // is settled server-side from pagesRead (BooksService.settle); `finishedYear`
 // is the Asia/Dhaka year of finishedAt, so the client never guesses timezones.
