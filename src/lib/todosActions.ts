@@ -74,3 +74,14 @@ export async function removeTodoItemAction(listId: string, itemId: string): Prom
     return res.data;
   }, "Failed to remove task");
 }
+
+// Pushes an unfinished task to a list dated one day after THIS list (not
+// necessarily the real calendar tomorrow -- pushing from an old list moves it
+// to the day right after that one), auto-creating that list if needed.
+// Returns the SOURCE list's updated view (the item is now gone from it).
+export async function moveTodoItemToNextDayAction(listId: string, itemId: string): Promise<ActionResult<TodoList>> {
+  return callApi(async () => {
+    const res = await axios.post<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}/move-to-next-day`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to move task");
+}

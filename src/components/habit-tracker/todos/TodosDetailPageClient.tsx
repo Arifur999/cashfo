@@ -1,13 +1,13 @@
 "use client";
 
-import { CheckCircle2, ChevronLeft, Circle, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronLeft, Circle, Loader2, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import type { TodoList } from "@/lib/api";
-import { addTodoItemAction, removeTodoItemAction, updateTodoItemAction } from "@/lib/todosActions";
+import { addTodoItemAction, moveTodoItemToNextDayAction, removeTodoItemAction, updateTodoItemAction } from "@/lib/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatTodoDate } from "./todoDate";
 
@@ -80,6 +80,19 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
     });
   }
 
+  function moveToNextDay(itemId: string) {
+    if (pendingIds.has(itemId)) return;
+    startTransition(() =>
+      withPending(itemId, async () => {
+        applyOptimistic({ type: "remove", itemId });
+        const result = await moveTodoItemToNextDayAction(list.id, itemId);
+        if (result.success) toast.success(t("Moved to next day"));
+        else toast.error(result.message ?? t("Failed to move task"));
+        router.refresh();
+      }),
+    );
+  }
+
   function handleRemove() {
     if (!removeTarget) return;
     const itemId = removeTarget.id;
@@ -150,6 +163,18 @@ export function TodosDetailPageClient({ list }: { list: TodoList }) {
                     {item.completed ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
                   </button>
                   <p className={`min-w-0 flex-1 truncate text-sm ${item.completed ? "text-neutral-400 line-through" : "text-neutral-800"}`}>{item.text}</p>
+                  {!item.completed && (
+                    <button
+                      type="button"
+                      onClick={() => moveToNextDay(item.id)}
+                      disabled={itemPending}
+                      aria-label={`${t("Move to next day")}: ${item.text}`}
+                      title={t("Move to next day")}
+                      className="shrink-0 rounded-md p-1 text-neutral-300 transition-colors hover:bg-neutral-100 hover:text-brand-primary disabled:opacity-50"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setRemoveTarget({ id: item.id, text: item.text })}

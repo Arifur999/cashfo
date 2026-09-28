@@ -1,13 +1,20 @@
 "use client";
 
-import { CheckCircle2, Circle, ListTodo, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Circle, ListTodo, Loader2, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Modal } from "@/components/ui/Modal";
 import type { TodoList } from "@/lib/api";
-import { addTodoItemAction, createTodoListAction, getTodayTodoListAction, removeTodoItemAction, updateTodoItemAction } from "@/lib/todosActions";
+import {
+  addTodoItemAction,
+  createTodoListAction,
+  getTodayTodoListAction,
+  moveTodoItemToNextDayAction,
+  removeTodoItemAction,
+  updateTodoItemAction,
+} from "@/lib/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatTodoDate } from "./todoDate";
 
@@ -84,6 +91,19 @@ export function TodayTasksButton() {
       const result = await updateTodoItemAction(list.id, itemId, { completed });
       if (result.success && result.data) setList(result.data);
       else toast.error(result.message ?? t("Failed to update task"));
+    });
+  }
+
+  function moveToNextDay(itemId: string) {
+    if (!list || pendingIds.has(itemId)) return;
+    withPending(itemId, async () => {
+      const result = await moveTodoItemToNextDayAction(list.id, itemId);
+      if (result.success && result.data) {
+        setList(result.data);
+        toast.success(t("Moved to next day"));
+      } else {
+        toast.error(result.message ?? t("Failed to move task"));
+      }
     });
   }
 
@@ -168,6 +188,18 @@ export function TodayTasksButton() {
                     {item.completed ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
                   </button>
                   <p className={`min-w-0 flex-1 truncate text-sm ${item.completed ? "text-neutral-400 line-through" : "text-neutral-800"}`}>{item.text}</p>
+                  {!item.completed && (
+                    <button
+                      type="button"
+                      onClick={() => moveToNextDay(item.id)}
+                      disabled={itemPending}
+                      aria-label={`${t("Move to next day")}: ${item.text}`}
+                      title={t("Move to next day")}
+                      className="shrink-0 rounded-md p-1 text-neutral-300 transition-colors hover:bg-neutral-100 hover:text-brand-primary disabled:opacity-50"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setRemoveTarget({ id: item.id, text: item.text })}
