@@ -72,9 +72,6 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        {wallets.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No Savings Wallets yet -- add one to start funding goals.")}</p>
-        ) : (
           <table className="w-full text-left text-sm">
             <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
               <tr>
@@ -85,6 +82,13 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-50">
+              {wallets.length === 0 && (
+                <tr>
+                  <td colSpan={canManage ? 4 : 3} className="px-4 py-10 text-center text-neutral-400">
+                    {t("No Savings Wallets yet -- add one to start funding goals.")}
+                  </td>
+                </tr>
+              )}
               {wallets.map((wallet) => (
                 <tr key={wallet.id}>
                   <td className="px-4 py-3">
@@ -121,7 +125,6 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
               ))}
             </tbody>
           </table>
-        )}
       </div>
 
       <SavingsWalletFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingWallet={editingWallet} />

@@ -123,10 +123,7 @@ export function LoanLedgerPageClient({ loanContacts, currency, range, selectedCo
               </p>
             </div>
 
-            {statement.rows.length === 0 ? (
-              <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No transactions in this period.")}</p>
-            ) : (
-              <div className="overflow-x-auto">
+            <div className="overflow-x-auto">
                 <table className="w-full min-w-[820px] text-left text-sm">
                   <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
                     <tr>
@@ -150,6 +147,13 @@ export function LoanLedgerPageClient({ loanContacts, currency, range, selectedCo
                         {formatCurrency(Math.abs(Number(statement.balanceBroughtForward)), currency)}
                       </td>
                     </tr>
+                    {statement.rows.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-10 text-center text-neutral-400">
+                          {t("No transactions in this period.")}
+                        </td>
+                      </tr>
+                    )}
                     {statement.rows.map((row) => {
                       const isVoided = row.status === "VOIDED";
                       return (
@@ -184,7 +188,6 @@ export function LoanLedgerPageClient({ loanContacts, currency, range, selectedCo
                   </tbody>
                 </table>
               </div>
-            )}
           </>
         )}
       </div>

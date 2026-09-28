@@ -184,10 +184,7 @@ export function LoanTransactionsPageClient({
           </div>
         </div>
 
-        {transactions.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No loan transactions yet.")}</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
                 <tr>
@@ -204,6 +201,13 @@ export function LoanTransactionsPageClient({
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-50">
+                {transactions.length === 0 && (
+                  <tr>
+                    <td colSpan={canManage ? 10 : 9} className="px-4 py-10 text-center text-neutral-400">
+                      {t("No loan transactions yet.")}
+                    </td>
+                  </tr>
+                )}
                 {transactions.map((txn, index) => {
                   const direction = directionFor(txn);
                   const account = moneyEntry(txn)?.account;
@@ -265,7 +269,6 @@ export function LoanTransactionsPageClient({
               </tbody>
             </table>
           </div>
-        )}
       </div>
 
       <NewLoanTransactionModal open={modalOpen} onClose={() => setModalOpen(false)} businessId={businessId} loanContacts={loanContacts} />

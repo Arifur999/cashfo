@@ -47,10 +47,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
           <h2 className="text-sm font-semibold text-neutral-900">{t("Transfer History")}</h2>
         </div>
 
-        {transfers.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No transfers yet.")}</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
                 <tr>
@@ -64,6 +61,13 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-50">
+                {transfers.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-10 text-center text-neutral-400">
+                      {t("No transfers yet.")}
+                    </td>
+                  </tr>
+                )}
                 {transfers.map((transfer, index) => (
                   <tr key={transfer.id}>
                     <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
@@ -80,7 +84,6 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
               </tbody>
             </table>
           </div>
-        )}
       </div>
 
       <SavingsTransferModal open={modalOpen} onClose={() => setModalOpen(false)} businessId={businessId} goals={goals} />

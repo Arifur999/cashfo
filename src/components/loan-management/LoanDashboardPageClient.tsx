@@ -74,10 +74,7 @@ export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPa
           </div>
         </div>
 
-        {rows.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("Nothing outstanding right now.")}</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
                 <tr>
@@ -90,6 +87,13 @@ export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPa
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-50">
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-10 text-center text-neutral-400">
+                      {t("Nothing outstanding right now.")}
+                    </td>
+                  </tr>
+                )}
                 {rows.map((row, index) => (
                   <tr
                     key={row.contactId}
@@ -122,27 +126,28 @@ export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPa
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-neutral-200 text-sm font-bold text-neutral-900">
-                  <td className="px-4 py-3" colSpan={2}>
-                    {t("Total")}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {formatCurrency(
-                      rows.reduce((s, r) => s + Number(r.openingBalance), 0),
-                      currency,
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(dashboard.totalReceived, currency)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(dashboard.totalPaid, currency)}</td>
-                  <td className={`px-4 py-3 text-right tabular-nums ${Number(dashboard.netBalance) >= 0 ? "text-brand-primary" : "text-brand-danger"}`}>
-                    {formatCurrency(Math.abs(Number(dashboard.netBalance)), currency)}
-                  </td>
-                </tr>
-              </tfoot>
+              {rows.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-neutral-200 text-sm font-bold text-neutral-900">
+                    <td className="px-4 py-3" colSpan={2}>
+                      {t("Total")}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {formatCurrency(
+                        rows.reduce((s, r) => s + Number(r.openingBalance), 0),
+                        currency,
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(dashboard.totalReceived, currency)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(dashboard.totalPaid, currency)}</td>
+                    <td className={`px-4 py-3 text-right tabular-nums ${Number(dashboard.netBalance) >= 0 ? "text-brand-primary" : "text-brand-danger"}`}>
+                      {formatCurrency(Math.abs(Number(dashboard.netBalance)), currency)}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
-        )}
       </div>
 
       <div className="mt-3 flex items-center gap-4 text-xs text-neutral-500">

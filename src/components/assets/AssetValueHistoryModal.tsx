@@ -23,10 +23,7 @@ export function AssetValueHistoryModal({ open, onClose, asset, currency }: Asset
 
   return (
     <Modal open={open} onClose={onClose} title={asset ? `${asset.name} -- ${t("Value History")}` : t("Value History")}>
-      {history.length === 0 ? (
-        <p className="py-6 text-center text-sm text-neutral-400">{t("No value history yet.")}</p>
-      ) : (
-        <div className="overflow-hidden rounded-xl border border-neutral-100">
+      <div className="overflow-hidden rounded-xl border border-neutral-100">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 bg-neutral-50 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
@@ -36,6 +33,13 @@ export function AssetValueHistoryModal({ open, onClose, asset, currency }: Asset
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-50">
+              {history.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-3.5 py-6 text-center text-neutral-400">
+                    {t("No value history yet.")}
+                  </td>
+                </tr>
+              )}
               {history.map((entry) => (
                 <tr key={entry.id}>
                   <td className="px-3.5 py-2.5 text-neutral-500">
@@ -48,7 +52,6 @@ export function AssetValueHistoryModal({ open, onClose, asset, currency }: Asset
             </tbody>
           </table>
         </div>
-      )}
     </Modal>
   );
 }

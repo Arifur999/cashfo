@@ -72,10 +72,7 @@ export function BankPersonListPageClient({ businessId, contacts, canManage, curr
           <h2 className="text-sm font-semibold text-neutral-900">{t("Bank / Person List")}</h2>
         </div>
 
-        {contacts.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No banks or people added yet.")}</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
                 <tr>
@@ -88,6 +85,13 @@ export function BankPersonListPageClient({ businessId, contacts, canManage, curr
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-50">
+                {contacts.length === 0 && (
+                  <tr>
+                    <td colSpan={canManage ? 6 : 5} className="px-4 py-10 text-center text-neutral-400">
+                      {t("No banks or people added yet.")}
+                    </td>
+                  </tr>
+                )}
                 {contacts.map((contact, index) => {
                   const isArchived = contact.status === "ARCHIVED";
                   return (
@@ -142,7 +146,6 @@ export function BankPersonListPageClient({ businessId, contacts, canManage, curr
               </tbody>
             </table>
           </div>
-        )}
       </div>
 
       <BankPersonFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingContact={editingContact} />
