@@ -3,6 +3,7 @@
 import { ArrowRightLeft, Languages } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { QuickAddButton } from "@/components/quick-entry/QuickAddButton";
+import { TodayTasksButton } from "@/components/habit-tracker/todos/TodayTasksButton";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
@@ -37,6 +38,7 @@ export function TopBar() {
   return (
     <header className="flex h-16 items-center justify-end gap-3 border-b border-neutral-100 bg-surface px-6">
       {!isHabitMode && <QuickAddButton />}
+      {isHabitMode && <TodayTasksButton />}
       <button
         type="button"
         onClick={toggleLocale}

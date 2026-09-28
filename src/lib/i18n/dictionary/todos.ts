@@ -19,4 +19,8 @@ export const todosDictionary: Record<string, string> = {
   "Failed to add task": "কাজ যোগ করতে ব্যর্থ হয়েছে",
   "Failed to remove task": "কাজ সরাতে ব্যর্থ হয়েছে",
   "Delete Task": "কাজ মুছুন",
+
+  // TodayTasksButton.tsx (TopBar quick-access popover)
+  "Today's Tasks": "আজকের কাজ",
+  "Open full list": "সম্পূর্ণ লিস্ট দেখুন",
 };

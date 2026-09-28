@@ -28,6 +28,17 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
   }
 }
 
+// Today's list, or null if none has been created yet -- for the TopBar's
+// quick-access button (TodayTasksButton), which is a Client Component and so
+// can't call lib/todos.ts's server-only getTodoLists() directly.
+export async function getTodayTodoListAction(): Promise<ActionResult<TodoList | null>> {
+  return callApi(async () => {
+    const res = await axios.get<TodoList[]>(`${API_BASE_URL}/api/todos`, { headers: await authHeaders() });
+    const todayKey = new Date().toISOString().slice(0, 10);
+    return res.data.find((list) => list.date === todayKey) ?? null;
+  }, "Failed to load today's tasks");
+}
+
 // date: "YYYY-MM-DD"
 export async function createTodoListAction(date: string): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
