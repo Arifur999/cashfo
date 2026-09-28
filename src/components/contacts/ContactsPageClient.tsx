@@ -134,6 +134,10 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <span>{t("Contact")}</span>
+          <span>{t("Balance")}</span>
+        </div>
         {contacts.length === 0 && <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No contacts yet.")}</p>}
         <div className="divide-y divide-neutral-50">
           {contacts.map((contact) => {
