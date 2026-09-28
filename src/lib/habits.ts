@@ -3,7 +3,7 @@
 // comment on Habit).
 import axios from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type HabitMonthTracker, type HabitStat, type HabitToday } from "./api";
+import { API_BASE_URL, type HabitMonthTracker, type HabitToday } from "./api";
 import { getAccessToken } from "./tokenCookies";
 
 async function authHeaders() {
@@ -17,17 +17,6 @@ export const getHabitsToday = cache(async (): Promise<HabitToday[]> => {
   if (!headers) return [];
   try {
     const res = await axios.get<HabitToday[]>(`${API_BASE_URL}/api/habits/today`, { headers });
-    return res.data;
-  } catch {
-    return [];
-  }
-});
-
-export const getHabitStats = cache(async (): Promise<HabitStat[]> => {
-  const headers = await authHeaders();
-  if (!headers) return [];
-  try {
-    const res = await axios.get<HabitStat[]>(`${API_BASE_URL}/api/habits/stats`, { headers });
     return res.data;
   } catch {
     return [];

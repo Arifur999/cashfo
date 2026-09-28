@@ -875,17 +875,6 @@ export interface HabitToday extends Habit {
   streak: number;
 }
 
-
-export interface HabitStat {
-  habitId: string;
-  name: string;
-  icon: string;
-  color: string;
-  currentStreak: number;
-  last30DaysCompleted: number;
-  completionRate: number;
-}
-
 // Habit Tracker -> Book: a personal reading list, tracked by pages. `status`
 // is settled server-side from pagesRead (BooksService.settle); `finishedYear`
 // is the Asia/Dhaka year of finishedAt, so the client never guesses timezones.

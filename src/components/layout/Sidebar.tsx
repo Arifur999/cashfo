@@ -3,7 +3,6 @@
 import {
   ArrowLeftRight,
   Banknote,
-  BarChart3,
   Boxes,
   ChevronDown,
   ChevronRight,
@@ -201,10 +200,7 @@ const REPORTS_ITEMS = [
 // provider-backed mode flag -- simpler, and it can't ever drift out of sync
 // with what's actually on screen after a refresh or a shared link.
 const HABIT_TRACKER_TOP_ITEMS = [{ label: "Dashboard", href: "/habit-tracker", icon: LayoutDashboard }];
-const HABIT_TRACKER_BOTTOM_ITEMS = [
-  { label: "To Do List", href: "/habit-tracker/todos", icon: ListTodo },
-  { label: "Stats", href: "/habit-tracker/stats", icon: BarChart3 },
-];
+const HABIT_TRACKER_BOTTOM_ITEMS = [{ label: "To Do List", href: "/habit-tracker/todos", icon: ListTodo }];
 
 // "Habits" sub-items are a fixed category picker (?category= on the SAME
 // /habit-tracker/habits route, not separate pages) -- same "collapsible

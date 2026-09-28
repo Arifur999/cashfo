@@ -13,7 +13,6 @@ export const habitTrackerDictionary: Record<string, string> = {
 
   // Sidebar.tsx (Habit Tracker mode)
   Habits: "অভ্যাসসমূহ",
-  Stats: "পরিসংখ্যান",
 
   // Habit categories -- Sidebar's "Habits" submenu, HabitFormModal's Category
   // select, HabitsListPageClient's Category column. "Others" reuses
@@ -60,8 +59,7 @@ export const habitTrackerDictionary: Record<string, string> = {
   Journaling: "ডায়েরি লেখা",
   Walk: "হাঁটা",
 
-  // Weekday short labels -- HabitFormModal's day picker, HabitsListPageClient's
-  // frequency column, HabitCalendarPageClient's grid header.
+  // Weekday short labels -- HabitFormModal's day picker.
   Sun: "রবি",
   Mon: "সোম",
   Tue: "মঙ্গল",
@@ -89,15 +87,9 @@ export const habitTrackerDictionary: Record<string, string> = {
   "Habit updated": "অভ্যাস আপডেট হয়েছে",
   "Failed to save habit": "অভ্যাস সংরক্ষণ করতে ব্যর্থ হয়েছে",
 
-  // HabitsListPageClient.tsx
-  "Manage the habits you're tracking.": "আপনার ট্র্যাক করা অভ্যাসগুলো পরিচালনা করুন।",
-  "x/week": "বার/সপ্তাহ",
-  "No habits yet.": "এখনো কোনো অভ্যাস নেই।",
-  "This habit has history, so it was archived instead": "এই অভ্যাসের হিস্টরি আছে, তাই এটি আর্কাইভ করা হয়েছে",
+  // Reused by the Ramadan/Others sheets' own remove-habit flow.
   "Habit removed": "অভ্যাস সরানো হয়েছে",
   "Failed to remove habit": "অভ্যাস সরাতে ব্যর্থ হয়েছে",
-  "Failed to update habit": "অভ্যাস আপডেট করতে ব্যর্থ হয়েছে",
-  "Remove Habit": "অভ্যাস সরান",
 
   // HabitDashboardPageClient.tsx
   "Today's Habits": "আজকের অভ্যাস",
@@ -195,9 +187,6 @@ export const habitTrackerDictionary: Record<string, string> = {
   Sadaqah: "সদকা",
   Tahajjud: "তাহাজ্জুদ",
 
-
-  // HabitStatsPageClient.tsx
-  "Streaks and completion rate over the last 30 days.": "গত ৩০ দিনের স্ট্রিক ও সম্পন্নের হার।",
+  // Reused across the family's list/sheet cards (Ramadan/Namaz/Others/To Do List).
   days: "দিন",
-  completion: "সম্পন্ন",
 };
