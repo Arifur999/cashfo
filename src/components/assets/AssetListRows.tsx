@@ -19,13 +19,17 @@ interface AssetListRowsProps {
 export function AssetListRows({ assets, categories, currency, emptyMessage }: AssetListRowsProps) {
   const { t } = useLocale();
 
-  if (assets.length === 0) {
-    return <p className="py-10 text-center text-sm text-neutral-400">{emptyMessage}</p>;
-  }
-
   return (
-    <div className="divide-y divide-neutral-50">
-      {assets.map((asset) => {
+    <div>
+      <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+        <span>{t("Asset")}</span>
+        <span>{t("Value")}</span>
+      </div>
+      {assets.length === 0 ? (
+        <p className="py-10 text-center text-sm text-neutral-400">{emptyMessage}</p>
+      ) : (
+        <div className="divide-y divide-neutral-50">
+          {assets.map((asset) => {
         const Icon = assetCategoryIconFor(categories, asset.category);
         const isSold = asset.status === "SOLD";
         return (
@@ -69,8 +73,10 @@ export function AssetListRows({ assets, categories, currency, emptyMessage }: As
               )}
             </div>
           </div>
-        );
-      })}
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
