@@ -66,7 +66,7 @@ export const skillsDictionary: Record<string, string> = {
   "Total lessons": "মোট পাঠ",
   "Hours done so far": "এ পর্যন্ত ঘণ্টা",
   "Lessons done so far": "এ পর্যন্ত পাঠ",
-  "A smaller target than your progress will mark the skill as completed.": "অগ্রগতির চেয়ে ছোট লক্ষ্য দিলে দক্ষতাটি সম্পন্ন হিসেবে চিহ্নিত হবে।",
+  "Your progress is already more than this target.": "আপনার অগ্রগতি ইতিমধ্যে এই লক্ষ্যের চেয়ে বেশি।",
   "That's more than the target.": "এটা লক্ষ্যের চেয়ে বেশি।",
   "Enter a valid number.": "সঠিক একটা সংখ্যা দিন।",
   Colour: "রং",

@@ -65,7 +65,7 @@ export const booksDictionary: Record<string, string> = {
   "Cover colour": "কভারের রং",
   "Your book title": "বইয়ের নাম",
   "e.g. Atomic Habits": "যেমন: পথের পাঁচালী",
-  "Fewer pages than you've read will mark the book as finished.": "পড়া পৃষ্ঠার চেয়ে কম হলে বইটি শেষ হিসেবে চিহ্নিত হবে।",
+  "You've already read more pages than this.": "আপনি এর চেয়ে বেশি পৃষ্ঠা ইতিমধ্যে পড়ে ফেলেছেন।",
   "That's more than the total pages.": "এটা মোট পৃষ্ঠার চেয়ে বেশি।",
   "Enter a number from 1 to 20000.": "১ থেকে ২০০০০ এর মধ্যে একটা সংখ্যা দিন।",
   "Enter a number from 1 to 1000.": "১ থেকে ১০০০ এর মধ্যে একটা সংখ্যা দিন।",

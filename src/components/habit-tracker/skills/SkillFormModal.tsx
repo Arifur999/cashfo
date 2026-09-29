@@ -76,9 +76,11 @@ function SkillForm({ skill, onClose, isPending, startTransition }: { skill: Skil
   const doneTooHigh = status === "LEARNING" && targetOk && doneUnits !== null && doneUnits > targetUnits;
   const doneBad = status === "LEARNING" && done !== "" && doneUnits === null;
   const nameOk = name.trim().length > 0;
-  const valid = nameOk && targetOk && !doneTooHigh && !doneBad;
-  // Only a skill still in progress completes on a target change (a finished one stays finished).
+  // The server rejects a target below the progress already made (it used to
+  // mark the skill completed, which lost the real progress once the typo was
+  // fixed). A completed skill is exempt: its progress follows the new target.
   const shrinksBelowProgress = skill !== null && skill.status !== "COMPLETED" && targetOk && targetUnits < skill.progress;
+  const valid = nameOk && targetOk && !doneTooHigh && !doneBad && !shrinksBelowProgress;
 
   function submit() {
     if (!valid || targetUnits === null) return;
@@ -166,8 +168,8 @@ function SkillForm({ skill, onClose, isPending, startTransition }: { skill: Skil
             onChange={(e) => setTarget(e.target.value.replace(isHours ? /[^0-9.]/g : /\D/g, "").slice(0, 7))}
             inputMode={isHours ? "decimal" : "numeric"}
             placeholder={isHours ? "40" : "24"}
-            aria-invalid={showTargetError}
-            aria-describedby={showTargetError ? `${ids.target}-error` : undefined}
+            aria-invalid={showTargetError || shrinksBelowProgress}
+            aria-describedby={showTargetError || shrinksBelowProgress ? `${ids.target}-error` : undefined}
             className={INPUT}
           />
           {showTargetError && (
@@ -175,7 +177,11 @@ function SkillForm({ skill, onClose, isPending, startTransition }: { skill: Skil
               {t(targetHint)}
             </p>
           )}
-          {shrinksBelowProgress && <p className="mt-1.5 text-xs text-violet-700 dark:text-violet-300">{t("A smaller target than your progress will mark the skill as completed.")}</p>}
+          {shrinksBelowProgress && !showTargetError && (
+            <p id={`${ids.target}-error`} className="mt-1.5 text-xs text-red-500">
+              {t("Your progress is already more than this target.")}
+            </p>
+          )}
         </div>
 
         {!skill && (

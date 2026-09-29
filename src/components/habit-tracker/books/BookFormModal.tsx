@@ -59,9 +59,11 @@ function BookForm({ book, onClose, isPending, startTransition }: { book: Book | 
   const titleOk = title.trim().length > 0;
   const totalOk = /^\d+$/.test(totalPages) && total >= 1 && total <= 20000;
   const readTooHigh = status === "READING" && totalOk && pagesRead !== "" && Number(pagesRead) > total;
-  const valid = titleOk && totalOk && !readTooHigh;
-  // Only a book still being read finishes on a page-count change (a finished one stays finished).
+  // The server rejects a total below the pages already read (it used to mark
+  // the book finished, which lost the real progress once the typo was fixed).
+  // A finished book is exempt: its pages simply follow the new total.
   const shrinksBelowProgress = book !== null && book.status !== "FINISHED" && totalOk && total < book.pagesRead;
+  const valid = titleOk && totalOk && !readTooHigh && !shrinksBelowProgress;
 
   function submit() {
     if (!valid) return;
@@ -115,8 +117,8 @@ function BookForm({ book, onClose, isPending, startTransition }: { book: Book | 
             onChange={(e) => setTotalPages(e.target.value.replace(/\D/g, "").slice(0, 5))}
             inputMode="numeric"
             placeholder="320"
-            aria-invalid={totalPages !== "" && !totalOk}
-            aria-describedby={totalPages !== "" && !totalOk ? `${ids.pages}-error` : undefined}
+            aria-invalid={(totalPages !== "" && !totalOk) || shrinksBelowProgress}
+            aria-describedby={(totalPages !== "" && !totalOk) || shrinksBelowProgress ? `${ids.pages}-error` : undefined}
             className={INPUT}
           />
           {totalPages !== "" && !totalOk && (
@@ -124,7 +126,11 @@ function BookForm({ book, onClose, isPending, startTransition }: { book: Book | 
               {t("Enter a number from 1 to 20000.")}
             </p>
           )}
-          {shrinksBelowProgress && <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-300">{t("Fewer pages than you've read will mark the book as finished.")}</p>}
+          {shrinksBelowProgress && (
+            <p id={`${ids.pages}-error`} className="mt-1.5 text-xs text-red-500">
+              {t("You've already read more pages than this.")}
+            </p>
+          )}
         </div>
 
         {!book && (
