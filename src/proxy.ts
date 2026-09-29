@@ -27,7 +27,7 @@ const REFRESH_TOKEN_COOKIE = "refreshToken";
 const ACCESS_TOKEN_MAX_AGE_SECONDS = 15 * 60;
 const REFRESH_THRESHOLD_SECONDS = 60;
 
-const PUBLIC_PATHS = new Set(["/login", "/register", "/forgot-password"]);
+const PUBLIC_PATHS = new Set(["/login", "/register", "/forgot-password", "/reset-password"]);
 
 interface DecodedAccessToken {
   sub: string;
