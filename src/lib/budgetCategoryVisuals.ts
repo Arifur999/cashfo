@@ -303,7 +303,28 @@ export const BUDGET_CATEGORY_ICONS = [
   "clock",
   "timer",
   "flag",
+  "business-income",
+  "freelancing",
+  "other-income",
 ] as const;
+
+// The Add/Edit Income Category picker shows ONLY this curated 10-icon set
+// (not the full BUDGET_CATEGORY_ICONS grid above, which stays the shared
+// backing list for icon lookup/labels and is still what Expense categories
+// pick from) -- one icon per well-known income source, in this display
+// order.
+export const INCOME_CATEGORY_ICONS = [
+  "salary",
+  "business-income",
+  "freelancing",
+  "investment",
+  "rental",
+  "commission",
+  "interest",
+  "gift",
+  "bonus",
+  "other-income",
+] as const satisfies readonly (typeof BUDGET_CATEGORY_ICONS)[number][];
 
 // Original 8 plus a few more distinct Tailwind hues.
 export const BUDGET_CATEGORY_COLORS = [
@@ -476,6 +497,9 @@ const ICON_COMPONENTS: Record<(typeof BUDGET_CATEGORY_ICONS)[number], LucideIcon
   clock: Clock,
   timer: Timer,
   flag: Flag,
+  "business-income": Briefcase,
+  freelancing: Laptop,
+  "other-income": Coins,
 };
 
 // Solid background + white icon, matching the reference design's filled
@@ -512,13 +536,13 @@ const ICON_LABELS: Record<(typeof BUDGET_CATEGORY_ICONS)[number], string> = {
   education: "Education",
   clothing: "Clothing",
   salary: "Salary",
-  commission: "Commission",
-  bonus: "Bonus",
+  commission: "Commission Income",
+  bonus: "Bonus Income",
   rental: "Rental Income",
-  interest: "Interest / Profit Income",
+  interest: "Interest Income",
   investment: "Investment Income",
   dividend: "Dividend Income",
-  gift: "Gift",
+  gift: "Gift Income",
   service: "Service Income",
   "shopping-bag": "Shopping Bag",
   "shopping-cart": "Shopping Cart",
@@ -656,6 +680,9 @@ const ICON_LABELS: Record<(typeof BUDGET_CATEGORY_ICONS)[number], string> = {
   clock: "Clock",
   timer: "Timer",
   flag: "Flag",
+  "business-income": "Business Income",
+  freelancing: "Freelancing",
+  "other-income": "Other Income",
 };
 
 export function budgetCategoryIcon(icon: string): LucideIcon {
@@ -711,8 +738,12 @@ export function budgetProgressColorClass(percent: number, type: "EXPENSE" | "INC
 // deliberate pick is never silently overridden.
 const INCOME_ICON_SUGGESTIONS: Record<string, (typeof BUDGET_CATEGORY_ICONS)[number]> = {
   salary: "salary",
+  "business income": "business-income",
+  freelancing: "freelancing",
   commission: "commission",
+  "commission income": "commission",
   bonus: "bonus",
+  "bonus income": "bonus",
   "rental income": "rental",
   "interest/profit income": "interest",
   "interest income": "interest",
@@ -720,7 +751,9 @@ const INCOME_ICON_SUGGESTIONS: Record<string, (typeof BUDGET_CATEGORY_ICONS)[num
   "investment income": "investment",
   "dividend income": "dividend",
   gift: "gift",
+  "gift income": "gift",
   "service income": "service",
+  "other income": "other-income",
 };
 
 export function suggestIconForCategoryName(name: string): (typeof BUDGET_CATEGORY_ICONS)[number] | null {

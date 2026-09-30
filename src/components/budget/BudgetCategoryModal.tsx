@@ -15,6 +15,7 @@ import {
   suggestIconForCategoryName,
   BUDGET_CATEGORY_COLORS,
   BUDGET_CATEGORY_ICONS,
+  INCOME_CATEGORY_ICONS,
 } from "@/lib/budgetCategoryVisuals";
 import { currencySymbol } from "@/lib/currency";
 
@@ -133,10 +134,14 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
   // matching icon" empty state, not a leftover previous selection -- the
   // already-chosen `icon` value itself is untouched either way, it just
   // isn't visible in the grid until the search matches something again.
+  // Income categories pick from a small curated 10-icon set (one per
+  // well-known income source) instead of the full shared grid -- Expense
+  // categories still get the full BUDGET_CATEGORY_ICONS list.
+  const availableIcons = isIncome ? INCOME_CATEGORY_ICONS : BUDGET_CATEGORY_ICONS;
   const query = iconSearch.trim().toLowerCase();
   const filteredIcons = query
-    ? BUDGET_CATEGORY_ICONS.filter((key) => key.includes(query) || budgetCategoryIconLabel(key).toLowerCase().includes(query))
-    : BUDGET_CATEGORY_ICONS;
+    ? availableIcons.filter((key) => key.includes(query) || budgetCategoryIconLabel(key).toLowerCase().includes(query))
+    : availableIcons;
 
   return (
     <Modal
