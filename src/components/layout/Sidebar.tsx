@@ -160,10 +160,11 @@ const LOAN_MANAGEMENT_ITEMS = [
   { label: "Contacts", href: "/contacts" },
 ];
 
-// Groups the transaction ledger with the merged category page and the one
-// overall income goal -- per the user's explicit placement request, in this
-// order. "Income Category" and "Expense Category" used to be two separate
-// pages (/income-planning, /budget-planning); they're now one two-column
+// Groups the transaction ledger with the merged category page, the
+// standalone Income Category shortcut, and the one overall income goal --
+// per the user's explicit placement request, in this order. "Income
+// Category" and "Expense Category" used to be two separate pages
+// (/income-planning, /budget-planning); they were merged into one two-column
 // page at /categories (CategoriesPageClient, labeled "Budget Planning" in
 // the UI per the user's rename request), since the two page.tsx files they
 // used to route to were identical except for which BudgetCategoryType they
@@ -172,10 +173,14 @@ const LOAN_MANAGEMENT_ITEMS = [
 // have no per-category goal at all -- that's the single "Monthly income
 // goal" item instead (its own page, /income-goal). The old routes redirect
 // to /categories rather than being removed outright, so old bookmarks/
-// back-button history don't 404.
+// back-button history don't 404. "Income Category" below (/income-category)
+// is a SEPARATE, later addition -- a dedicated income-only view reusing
+// IncomeCategoryColumn, added back per the user's explicit request even
+// though /categories already covers the same list within "Budget Planning".
 const INCOME_EXPENSE_ITEMS = [
   { label: "Transaction", href: "/transactions" },
   { label: "Budget Planning", href: "/categories" },
+  { label: "Income Category", href: "/income-category" },
 ];
 
 // General Ledger/Trial Balance/Aging Receivable/Aging Payable (Prompts 7 and
@@ -407,7 +412,8 @@ export function Sidebar() {
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/categories") ||
     pathname.startsWith("/income-planning") ||
-    pathname.startsWith("/budget-planning");
+    pathname.startsWith("/budget-planning") ||
+    pathname.startsWith("/income-category");
   const isReportsActive = pathname.startsWith("/reports");
 
   return (

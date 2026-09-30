@@ -110,6 +110,9 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Budget Planning": "বাজেট পরিকল্পনা",
   "Organize your income sources and set spending limits, side by side.": "আপনার আয়ের উৎসগুলো সাজান এবং পাশাপাশি ব্যয়ের সীমা নির্ধারণ করুন।",
 
+  // src/components/budget/IncomeCategoryPageClient.tsx
+  "Organize your income sources.": "আপনার আয়ের উৎসগুলো সাজান।",
+
   // src/components/budget/ExpenseCategoryColumn.tsx and IncomeCategoryColumn.tsx (shared text)
   "Expense Categories": "ব্যয়ের ক্যাটাগরি",
   "Income Categories": "আয়ের ক্যাটাগরি",
