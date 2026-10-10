@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { loginAction } from "@/app/admin/(auth)/login/_action";
+import { loginAction } from "@/app/(auth)/admin/login/_action";
 import { t } from "@/lib/i18n/t";
 
 export function LoginForm() {

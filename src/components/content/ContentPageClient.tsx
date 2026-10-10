@@ -7,7 +7,7 @@ import {
   createAccountTemplateAction,
   deactivateAccountTemplateAction,
   updateAccountTemplateAction,
-} from "@/app/admin/(dashboard)/content/_actions";
+} from "@/app/(dashboardLayout)/admin/content/_actions";
 import type { AccountTemplate, AnnouncementRow, DefaultCategory, LegalDocumentRow, TranslationStringRow } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n/t";

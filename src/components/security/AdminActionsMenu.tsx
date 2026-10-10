@@ -7,7 +7,7 @@ import { KeyRound, MoreVertical, Pencil, ShieldOff } from "lucide-react";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import type { FullAdminUser } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { resetAdminPasswordAction, suspendAdminAction } from "@/app/admin/(dashboard)/security/_actions";
+import { resetAdminPasswordAction, suspendAdminAction } from "@/app/(dashboardLayout)/admin/security/_actions";
 import { ResetPasswordModal } from "@/components/users/ResetPasswordModal";
 import { EditAdminModal } from "./EditAdminModal";
 

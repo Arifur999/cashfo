@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { BulkNotificationCampaignRow, NotificationTemplateRow, SubscriptionPlanOption } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { cancelCampaignAction } from "@/app/admin/(dashboard)/notifications/_actions";
+import { cancelCampaignAction } from "@/app/(dashboardLayout)/admin/notifications/_actions";
 import { CampaignStatusBadge } from "./CampaignStatusBadge";
 import { NotificationChannelBadge } from "./NotificationChannelBadge";
 import { NewCampaignModal } from "./NewCampaignModal";

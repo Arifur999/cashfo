@@ -3,7 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { updateLegalDocumentAction } from "@/app/admin/(dashboard)/content/_actions";
+import { updateLegalDocumentAction } from "@/app/(dashboardLayout)/admin/content/_actions";
 import type { LegalDocumentRow, LegalDocType } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import type { PlatformSettings } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { updateSettingsAction } from "@/app/admin/(dashboard)/settings/_actions";
+import { updateSettingsAction } from "@/app/(dashboardLayout)/admin/settings/_actions";
 
 interface SettingsFormProps {
   initial: PlatformSettings;

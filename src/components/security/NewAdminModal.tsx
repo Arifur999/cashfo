@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import type { AdminRole } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { createAdminAction } from "@/app/admin/(dashboard)/security/_actions";
+import { createAdminAction } from "@/app/(dashboardLayout)/admin/security/_actions";
 import { ResetPasswordModal } from "@/components/users/ResetPasswordModal";
 
 const ROLES: AdminRole[] = ["SUPER_ADMIN", "SUPPORT_ADMIN", "FINANCE_ADMIN", "CONTENT_ADMIN"];

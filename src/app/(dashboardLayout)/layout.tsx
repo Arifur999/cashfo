@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 
-export default async function DashboardLayout({ children }: LayoutProps<"/admin">) {
+export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   const admin = await getCurrentAdmin();
   if (!admin) {
     redirect("/admin/login");

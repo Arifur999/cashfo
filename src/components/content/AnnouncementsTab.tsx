@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createAnnouncementAction } from "@/app/admin/(dashboard)/content/_actions";
+import { createAnnouncementAction } from "@/app/(dashboardLayout)/admin/content/_actions";
 import { Modal } from "@/components/ui/Modal";
 import type { AnnouncementRow, AnnouncementType } from "@/lib/api";
 import { t } from "@/lib/i18n/t";

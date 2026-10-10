@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import type { NotificationChannel, NotificationTemplateRow, PlatformUserStatus, SubscriptionPlanOption } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { createCampaignAction } from "@/app/admin/(dashboard)/notifications/_actions";
+import { createCampaignAction } from "@/app/(dashboardLayout)/admin/notifications/_actions";
 
 const CHANNELS: NotificationChannel[] = ["EMAIL", "SMS", "IN_APP_PUSH"];
 const STATUSES: PlatformUserStatus[] = ["ACTIVE", "SUSPENDED", "BANNED", "PENDING_DELETION"];

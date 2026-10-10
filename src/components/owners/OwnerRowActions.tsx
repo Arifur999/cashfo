@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
-import { resetOwnerDataAction } from "@/app/admin/(dashboard)/manage-owners/_actions";
+import { resetOwnerDataAction } from "@/app/(dashboardLayout)/admin/manage-owners/_actions";
 import { t } from "@/lib/i18n/t";
 import { ResetOwnerDataModal } from "./ResetOwnerDataModal";
 

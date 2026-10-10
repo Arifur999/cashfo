@@ -4,7 +4,7 @@ import { Loader2, RefreshCw, Undo2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { refundPaymentAction, retryPaymentAction } from "@/app/admin/(dashboard)/payments/_actions";
+import { refundPaymentAction, retryPaymentAction } from "@/app/(dashboardLayout)/admin/payments/_actions";
 import type { PaymentDetail } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 import { RefundModal } from "./RefundModal";

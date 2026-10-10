@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { AdminOption, SupportTicketDetail, TicketMessageRow, TicketPriority, TicketStatus } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { addTicketMessageAction, assignTicketAction, updateTicketAction } from "@/app/admin/(dashboard)/support/_actions";
+import { addTicketMessageAction, assignTicketAction, updateTicketAction } from "@/app/(dashboardLayout)/admin/support/_actions";
 import { MessageThread } from "./MessageThread";
 import { TicketPriorityBadge } from "./TicketPriorityBadge";
 import { TicketStatusBadge } from "./TicketStatusBadge";

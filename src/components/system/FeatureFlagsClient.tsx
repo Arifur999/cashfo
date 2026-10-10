@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import type { FeatureFlagRow, SubscriptionPlanOption } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n/t";
-import { updateFeatureFlagAction } from "@/app/admin/(dashboard)/system/_actions";
+import { updateFeatureFlagAction } from "@/app/(dashboardLayout)/admin/system/_actions";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 
 function sameIds(a: string[], b: string[]): boolean {

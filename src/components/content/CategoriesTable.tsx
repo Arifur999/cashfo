@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createCategoryAction } from "@/app/admin/(dashboard)/content/_actions";
+import { createCategoryAction } from "@/app/(dashboardLayout)/admin/content/_actions";
 import type { CategoryDirection, DefaultCategory } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 import { Modal } from "@/components/ui/Modal";

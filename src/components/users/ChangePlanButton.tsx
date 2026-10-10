@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
-import { changeOwnerPlanAction } from "@/app/admin/(dashboard)/users/_actions";
+import { changeOwnerPlanAction } from "@/app/(dashboardLayout)/admin/users/_actions";
 import type { OwnerOverviewItem, SubscriptionPlanOption } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 

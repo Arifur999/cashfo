@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Eye, MoreVertical, ShieldOff, UserCheck } from "lucide-react";
-import { activateOwnerAction, suspendOwnerAction } from "@/app/admin/(dashboard)/users/_actions";
+import { activateOwnerAction, suspendOwnerAction } from "@/app/(dashboardLayout)/admin/users/_actions";
 import type { OwnerOverviewItem } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 import { useClickOutside } from "@/hooks/useClickOutside";
