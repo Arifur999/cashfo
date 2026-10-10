@@ -11,7 +11,9 @@ export interface DataTableFilterOption {
 export type DataTableFilterConfig =
   | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[] }
   | { id: string; type: "multi-select"; label: string; options: DataTableFilterOption[] }
-  | { id: string; type: "date-range"; label: string };
+  // Server-managed date ranges map onto two URL params, dateFrom/dateTo by
+  // default (the convention every list endpoint uses).
+  | { id: string; type: "date-range"; label: string; fromKey?: string; toKey?: string };
 
 export interface DateRangeValue {
   from?: string;
