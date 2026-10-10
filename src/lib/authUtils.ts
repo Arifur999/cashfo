@@ -3,6 +3,12 @@ import type { AdminRole } from "@/types/auth.types";
 export const LOGIN_ROUTE = "/admin/login";
 export const DEFAULT_DASHBOARD_ROUTE = "/admin/dashboard";
 
+// The dashboard layout redirects to `${LOGIN_ROUTE}?reason=session-expired`
+// when the backend rejects a token proxy.ts still considered valid; proxy.ts
+// then clears the stale cookies instead of bouncing back (a redirect loop).
+export const SESSION_EXPIRED_REASON = "session-expired";
+export const SESSION_EXPIRED_LOGIN_ROUTE = `${LOGIN_ROUTE}?reason=${SESSION_EXPIRED_REASON}`;
+
 export const authRoutes = [LOGIN_ROUTE];
 export const isAuthRoute = (pathname: string) => authRoutes.includes(pathname);
 
