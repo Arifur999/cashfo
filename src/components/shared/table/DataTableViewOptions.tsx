@@ -12,11 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const getColumnLabel = <TData,>(column: ReturnType<Table<TData>["getAllColumns"]>[number]) => {
-  const header = column.columnDef.header;
-  return column.columnDef.meta?.label ?? (typeof header === "string" ? header : column.id);
-};
+import { getColumnLabel } from "./columnLabel";
 
 // Column show/hide menu. With a `tableId` on the DataTable the choice is
 // remembered per browser (see usePersistentState).
