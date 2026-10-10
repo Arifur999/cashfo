@@ -3,6 +3,7 @@ import axios from "axios";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/tokenUtils";
 import type { ApiResponse, IPaginatedBody } from "@/types/api.types";
+import { logServiceError } from "./logServiceError";
 
 // No NEXT_PUBLIC_ prefix on purpose: the browser never talks to the backend
 // directly -- it always goes through this Next.js server (Server Components,
@@ -34,65 +35,50 @@ const buildHeaders = async (extra?: Record<string, string>) => {
   };
 };
 
-const axiosInstance = async (headers?: Record<string, string>) =>
-  axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 30000,
-    headers: await buildHeaders(headers),
-  });
-
-// Raw NestJS body -> the app's envelope. `message` stays empty: the backend
-// sends no success message, so callers fall back to their own toast text
-// (`result.message || "Coupon created"`).
-const toApiResponse = <TData>(data: TData): ApiResponse<TData> => ({ success: true, message: "", data });
-
 export interface ApiRequestOptions {
   params?: Record<string, unknown>;
   headers?: Record<string, string>;
 }
 
-const httpGet = async <TData>(endpoint: string, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
-  const instance = await axiosInstance(options?.headers);
-  const response = await instance.get<TData>(endpoint, { params: options?.params });
-  return toApiResponse(response.data);
+type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
+
+// The one request path every method goes through. Failures are logged here,
+// once (method, url, status -- never the headers), and rethrown for the
+// _action.ts layer to turn into values -- so services need no try/catch.
+//
+// The raw NestJS body is wrapped in the app's envelope. `message` stays empty:
+// the backend sends no success message, so callers fall back to their own
+// toast text (`result.message || "Coupon created"`).
+const send = async <TData>(method: HttpMethod, endpoint: string, body?: unknown, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
+  try {
+    const response = await axios.request<TData>({
+      method,
+      baseURL: API_BASE_URL,
+      url: endpoint,
+      timeout: 30000,
+      headers: await buildHeaders(options?.headers),
+      params: options?.params,
+      data: method === "get" || method === "delete" ? undefined : (body ?? {}),
+    });
+    return { success: true, message: "", data: response.data };
+  } catch (error) {
+    logServiceError("API request failed", error);
+    throw error;
+  }
 };
 
 // For `{ data, meta }` list endpoints: lifts meta onto the envelope so a
 // table reads `response.data` (the rows) and `response.meta` side by side.
-const httpGetPaginated = async <TItem>(endpoint: string, options?: ApiRequestOptions): Promise<ApiResponse<TItem[]>> => {
-  const { data: body } = await httpGet<IPaginatedBody<TItem>>(endpoint, options);
+const getPaginated = async <TItem>(endpoint: string, options?: ApiRequestOptions): Promise<ApiResponse<TItem[]>> => {
+  const { data: body } = await send<IPaginatedBody<TItem>>("get", endpoint, undefined, options);
   return { success: true, message: "", data: body.data, meta: body.meta };
 };
 
-const httpPost = async <TData>(endpoint: string, body?: unknown, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
-  const instance = await axiosInstance(options?.headers);
-  const response = await instance.post<TData>(endpoint, body ?? {}, { params: options?.params });
-  return toApiResponse(response.data);
-};
-
-const httpPut = async <TData>(endpoint: string, body?: unknown, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
-  const instance = await axiosInstance(options?.headers);
-  const response = await instance.put<TData>(endpoint, body ?? {}, { params: options?.params });
-  return toApiResponse(response.data);
-};
-
-const httpPatch = async <TData>(endpoint: string, body?: unknown, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
-  const instance = await axiosInstance(options?.headers);
-  const response = await instance.patch<TData>(endpoint, body ?? {}, { params: options?.params });
-  return toApiResponse(response.data);
-};
-
-const httpDelete = async <TData>(endpoint: string, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
-  const instance = await axiosInstance(options?.headers);
-  const response = await instance.delete<TData>(endpoint, { params: options?.params });
-  return toApiResponse(response.data);
-};
-
 export const httpClient = {
-  get: httpGet,
-  getPaginated: httpGetPaginated,
-  post: httpPost,
-  put: httpPut,
-  patch: httpPatch,
-  delete: httpDelete,
+  get: <TData>(endpoint: string, options?: ApiRequestOptions) => send<TData>("get", endpoint, undefined, options),
+  getPaginated,
+  post: <TData>(endpoint: string, body?: unknown, options?: ApiRequestOptions) => send<TData>("post", endpoint, body, options),
+  put: <TData>(endpoint: string, body?: unknown, options?: ApiRequestOptions) => send<TData>("put", endpoint, body, options),
+  patch: <TData>(endpoint: string, body?: unknown, options?: ApiRequestOptions) => send<TData>("patch", endpoint, body, options),
+  delete: <TData>(endpoint: string, options?: ApiRequestOptions) => send<TData>("delete", endpoint, undefined, options),
 };
