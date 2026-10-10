@@ -1,34 +1,33 @@
 "use server";
 
-import axios from "axios";
 import { redirect } from "next/navigation";
-import { API_BASE_URL, getApiErrorMessage, type LoginResponse } from "@/lib/api";
-import { setAuthCookies } from "@/lib/tokenCookies";
+import { toActionError } from "@/lib/actionError";
+import { DEFAULT_DASHBOARD_ROUTE, isValidRedirectForRole } from "@/lib/authUtils";
+import { setAuthCookies } from "@/lib/tokenUtils";
+import { login } from "@/services/auth.services";
+import type { ApiErrorResponse } from "@/types/api.types";
+import { loginServerZodSchema } from "@/zod/auth.validation";
 
-export interface LoginActionResult {
-  success: false;
-  message: string;
-}
-
-export async function loginAction(email: string, password: string): Promise<LoginActionResult | void> {
-  try {
-    const response = await axios.post<LoginResponse>(`${API_BASE_URL}/admin/auth/login`, { email, password });
-    await setAuthCookies(response.data.accessToken, response.data.refreshToken);
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // error.response only exists if the backend actually answered (e.g. a
-      // 401 for bad credentials). No response at all means the request never
-      // reached the backend -- report that distinctly instead of defaulting
-      // to "Invalid email or password", which would be misleading.
-      if (!error.response) {
-        return { success: false, message: "Unable to reach the server. Is the backend running?" };
-      }
-      return { success: false, message: getApiErrorMessage(error.response.data, "Invalid email or password") };
-    }
-    return { success: false, message: "Unable to reach the server" };
+// Resolves only on failure: success sets the cookies and redirects, to the
+// ?redirect= target when it's one this admin's role may open.
+export const loginAction = async (values: unknown, redirectTo?: string): Promise<ApiErrorResponse> => {
+  const parsed = loginServerZodSchema.safeParse(values);
+  if (!parsed.success) {
+    return { success: false, message: parsed.error.issues[0]?.message ?? "Invalid email or password" };
   }
 
-  // Outside the try/catch -- redirect() throws internally and must not be
-  // swallowed by the catch block above.
-  redirect("/admin/dashboard");
-}
+  let destination = DEFAULT_DASHBOARD_ROUTE;
+  try {
+    const { accessToken, refreshToken, adminUser } = await login(parsed.data);
+    await setAuthCookies(accessToken, refreshToken);
+    if (redirectTo && isValidRedirectForRole(redirectTo, adminUser.role)) {
+      destination = redirectTo;
+    }
+  } catch (error) {
+    return toActionError(error, "Invalid email or password");
+  }
+
+  // Outside the try/catch: redirect() throws NEXT_REDIRECT, which the catch
+  // would otherwise swallow and leave the admin on a dead form.
+  redirect(destination);
+};
