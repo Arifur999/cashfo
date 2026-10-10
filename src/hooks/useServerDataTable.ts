@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import type { DataTableFilterConfig, DataTableProps } from "@/components/shared/table/dataTable.types";
-import { buildListQueryString } from "@/lib/queryString";
+import { buildTableQueryString } from "@/lib/queryString";
 import { useServerManagedDataTable } from "./useServerManagedDataTable";
 import { toServerFilterDefinitions, useServerManagedDataTableFilters } from "./useServerManagedDataTableFilters";
 import { useServerManagedDataTableSearch } from "./useServerManagedDataTableSearch";
@@ -24,7 +24,7 @@ const NO_FILTERS: DataTableFilterConfig[] = [];
 // a DataTable needs, plus the query string to fetch with -- so a feature
 // table is just useQuery + <DataTable {...dataTableProps} />.
 export function useServerDataTable<TData>(config: ServerDataTableConfig) {
-  const { queryKeys, filters = NO_FILTERS, search, defaultLimit = 10 } = config;
+  const { filters = NO_FILTERS, search, defaultLimit = 10 } = config;
   const searchParams = useSearchParams();
   const definitions = useMemo(() => toServerFilterDefinitions(filters), [filters]);
 
@@ -40,7 +40,7 @@ export function useServerDataTable<TData>(config: ServerDataTableConfig) {
     updateParams,
   });
 
-  const queryString = buildListQueryString(searchParams, queryKeys, defaultLimit);
+  const queryString = buildTableQueryString(searchParams, config);
 
   const dataTableProps: Pick<DataTableProps<TData>, "pagination" | "search" | "filters" | "initialPageSize"> = {
     initialPageSize: defaultLimit,
