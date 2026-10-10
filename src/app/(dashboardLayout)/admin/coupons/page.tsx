@@ -1,18 +1,33 @@
-import { getCurrentAdmin } from "@/lib/adminAuth";
-import { getCoupons } from "@/lib/coupons";
-import { getSubscriptionPlanOptions } from "@/lib/subscriptionPlans";
-import { CouponsPageClient } from "@/components/coupons/CouponsPageClient";
+import type { Metadata } from "next";
+import CouponsTable from "@/components/modules/Admin/Subscriptions/Coupons/CouponsTable";
+import CreateCouponDialog from "@/components/modules/Admin/Subscriptions/Coupons/CreateCouponDialog";
 import SubscriptionsTabs from "@/components/modules/Admin/Subscriptions/SubscriptionsTabs";
+import PageHeader from "@/components/shared/PageHeader";
+import QueryPrefetch from "@/components/shared/QueryPrefetch";
+import { canManage } from "@/lib/authUtils";
+import { couponsQuery } from "@/queries/coupon.queries";
+import { plansQuery } from "@/queries/plan.queries";
+import { getUserInfo } from "@/services/auth.services";
 
-export default async function CouponsPage() {
-  const [coupons, plans, admin] = await Promise.all([getCoupons(), getSubscriptionPlanOptions(), getCurrentAdmin()]);
+export const metadata: Metadata = { title: "Coupons" };
 
-  const canManage = admin?.role === "SUPER_ADMIN" || admin?.role === "FINANCE_ADMIN";
+const CouponsPage = async () => {
+  const admin = await getUserInfo();
+  const canManageCoupons = canManage(admin?.role, "subscriptions");
 
   return (
     <div className="space-y-6">
       <SubscriptionsTabs />
-      <CouponsPageClient coupons={coupons} plans={plans} canManage={canManage} />
+      <QueryPrefetch prefetch={(client) => Promise.all([client.prefetchQuery(couponsQuery()), client.prefetchQuery(plansQuery())])}>
+        <PageHeader
+          title="Coupons"
+          description="Discount codes for subscription plans."
+          actions={canManageCoupons && <CreateCouponDialog />}
+        />
+        <CouponsTable canManage={canManageCoupons} />
+      </QueryPrefetch>
     </div>
   );
-}
+};
+
+export default CouponsPage;
