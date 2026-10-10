@@ -28,3 +28,22 @@ export const formatDateTime = (value: DateInput, fallback = "—") => formatDate
 // yyyy-MM-dd in the platform timezone, for <input type="date"> values and
 // date-range query params.
 export const toDateInputValue = (value: DateInput) => formatDate(value, "yyyy-MM-dd", "");
+
+const parseDay = (day: string) => {
+  const [year, month, date] = day.split("-").map(Number);
+  return { year, monthIndex: month - 1, date };
+};
+
+// "2026-10-31" -> the first / last instant of that calendar day in the
+// platform timezone, as ISO strings. A coupon "valid until Oct 31" must still
+// work on Oct 31 in Dhaka -- midnight UTC would end it six hours early.
+export const startOfDayIso = (day: string): string => {
+  const { year, monthIndex, date } = parseDay(day);
+  // TZDate#toISOString keeps the zone offset; go through Date for UTC "Z".
+  return new Date(new TZDate(year, monthIndex, date, 0, 0, 0, 0, APP_TIME_ZONE).getTime()).toISOString();
+};
+
+export const endOfDayIso = (day: string): string => {
+  const { year, monthIndex, date } = parseDay(day);
+  return new Date(new TZDate(year, monthIndex, date, 23, 59, 59, 999, APP_TIME_ZONE).getTime()).toISOString();
+};
