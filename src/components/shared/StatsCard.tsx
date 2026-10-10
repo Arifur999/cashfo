@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getIconComponent, type IconName } from "@/lib/iconMapper";
 import { cn } from "@/lib/utils";
 
-interface StatsCardProps {
+export interface StatsCardProps {
   title: string;
   value: React.ReactNode;
   // A name, not a component, so a stats config array stays serializable
