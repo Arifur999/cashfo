@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/text";
 
 interface UserInfoCellProps {
   name: string | null | undefined;
@@ -7,14 +8,6 @@ interface UserInfoCellProps {
   // Extra line under the email (e.g. a phone number).
   meta?: string | null;
 }
-
-const getInitials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 
 const UserInfoCell = ({ name, email, photo, meta }: UserInfoCellProps) => {
   const displayName = name?.trim() || "Unknown user";
