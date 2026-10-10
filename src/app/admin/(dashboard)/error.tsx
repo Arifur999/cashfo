@@ -7,10 +7,10 @@ import { t } from "@/lib/i18n/t";
 
 interface DashboardErrorProps {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }
 
-export default function DashboardError({ error, reset }: DashboardErrorProps) {
+export default function DashboardError({ error, retry }: DashboardErrorProps) {
   useEffect(() => {
     // Best-effort crash report -- see Prompt 9's POST /admin/system/errors
     // (ADMIN_FRONTEND source). Never let a failed report throw again inside
@@ -27,7 +27,7 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
       </p>
       <button
         type="button"
-        onClick={reset}
+        onClick={() => retry()}
         className="mt-5 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
       >
         {t("Try again")}
