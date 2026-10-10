@@ -2,7 +2,7 @@ import { getCurrentAdmin } from "@/lib/adminAuth";
 import { getCoupons } from "@/lib/coupons";
 import { getSubscriptionPlanOptions } from "@/lib/subscriptionPlans";
 import { CouponsPageClient } from "@/components/coupons/CouponsPageClient";
-import { SubscriptionsTabs } from "@/components/plans/SubscriptionsTabs";
+import SubscriptionsTabs from "@/components/modules/Admin/Subscriptions/SubscriptionsTabs";
 
 export default async function CouponsPage() {
   const [coupons, plans, admin] = await Promise.all([getCoupons(), getSubscriptionPlanOptions(), getCurrentAdmin()]);
