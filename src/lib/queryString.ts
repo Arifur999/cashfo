@@ -1,4 +1,5 @@
 import type { ReadonlyURLSearchParams } from "next/navigation";
+import { endOfDayIso, startOfDayIso } from "./date";
 
 // What a page's `searchParams` prop resolves to.
 export type SearchParamsRecord = Record<string, string | string[] | undefined>;
@@ -23,6 +24,15 @@ const toPositiveInt = (raw: string | undefined, fallback: number) => {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 };
 
+// Day-precision URL values ("2026-10-31") are widened to whole days in the
+// platform timezone on the way to the API, whose `lte: new Date(dateTo)`
+// would otherwise stop at midnight UTC and silently drop the last day. The
+// URL itself keeps the readable day.
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_BOUNDS: Record<string, (day: string) => string> = { dateFrom: startOfDayIso, dateTo: endOfDayIso };
+
+const toApiValue = (key: string, value: string) => (DAY_BOUNDS[key] && DAY_PATTERN.test(value) ? DAY_BOUNDS[key](value) : value);
+
 // Copies ONLY the keys an endpoint whitelists. The API validates queries with
 // forbidNonWhitelisted, so one stray URL param (?utm_source=...) would 400 the
 // whole list. Repeated keys are kept as repeated params.
@@ -31,7 +41,7 @@ export const buildQueryString = (source: ParamsSource, keys: readonly string[]):
   for (const key of keys) {
     for (const value of readAll(source, key)) {
       if (value !== "") {
-        params.append(key, value);
+        params.append(key, toApiValue(key, value));
       }
     }
   }
