@@ -1,21 +1,34 @@
-import { getCurrentAdmin } from "@/lib/adminAuth";
-import { getPlanAnalytics, getSubscriptionPlans } from "@/lib/subscriptionPlans";
-import { PlansPageClient } from "@/components/plans/PlansPageClient";
-import { SubscriptionsTabs } from "@/components/plans/SubscriptionsTabs";
+import type { Metadata } from "next";
+import CreatePlanDialog from "@/components/modules/Admin/Subscriptions/Plans/CreatePlanDialog";
+import PlansBoard from "@/components/modules/Admin/Subscriptions/Plans/PlansBoard";
+import SubscriptionsTabs from "@/components/modules/Admin/Subscriptions/SubscriptionsTabs";
+import PageHeader from "@/components/shared/PageHeader";
+import QueryPrefetch from "@/components/shared/QueryPrefetch";
+import { canManage } from "@/lib/authUtils";
+import { planAnalyticsQuery, plansQuery } from "@/queries/plan.queries";
+import { getUserInfo } from "@/services/auth.services";
 
-export default async function PlansPage() {
-  const [plans, analytics, admin] = await Promise.all([
-    getSubscriptionPlans(),
-    getPlanAnalytics(),
-    getCurrentAdmin(),
-  ]);
+export const metadata: Metadata = { title: "Subscription Plans" };
 
-  const canManage = admin?.role === "SUPER_ADMIN" || admin?.role === "FINANCE_ADMIN";
+const PlansPage = async () => {
+  const admin = await getUserInfo();
+  const canManagePlans = canManage(admin?.role, "subscriptions");
 
   return (
     <div className="space-y-6">
       <SubscriptionsTabs />
-      <PlansPageClient plans={plans} analytics={analytics} canManage={canManage} />
+      <PageHeader
+        title="Subscription Plans"
+        description="Manage pricing, feature limits, and availability."
+        actions={canManagePlans && <CreatePlanDialog />}
+      />
+      <QueryPrefetch
+        prefetch={(client) => Promise.all([client.prefetchQuery(plansQuery()), client.prefetchQuery(planAnalyticsQuery())])}
+      >
+        <PlansBoard canManage={canManagePlans} />
+      </QueryPrefetch>
     </div>
   );
-}
+};
+
+export default PlansPage;

@@ -1,7 +1,7 @@
 import { getCurrentAdmin } from "@/lib/adminAuth";
 import { getFeatureRequests } from "@/lib/tickets";
 import { FeatureRequestsClient } from "@/components/support/FeatureRequestsClient";
-import { TabsNav } from "@/components/shared/TabsNav";
+import TabsNav from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface FeatureRequestsPageProps {

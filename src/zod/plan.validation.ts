@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { BILLING_CYCLES, type IPlanPayload } from "@/types/plan.types";
 
-// Mirrors the backend DTOs: price is a whole BDT amount (@IsInt), the
-// workspace limits are >= 0, and only the monthly transaction cap accepts
+// Mirrors the backend DTOs: price is a whole BDT amount (@IsInt), workspaces
+// are >= 0, and the business-workspace and monthly-transaction caps accept
 // -1 for "unlimited".
 const wholeNumberString = (message: string, min = 0) =>
   z
@@ -23,7 +23,7 @@ export const planFormZodSchema = z.object({
   isActive: z.boolean(),
   featureLimits: z.object({
     maxWorkspaces: wholeNumberString("Enter a whole number"),
-    maxBusinessWorkspaces: wholeNumberString("Enter a whole number"),
+    maxBusinessWorkspaces: wholeNumberString("Enter a whole number", -1),
     maxTransactionsPerMonth: wholeNumberString("Enter a whole number", -1),
     advancedReports: z.boolean(),
     pdfExport: z.boolean(),
@@ -44,7 +44,7 @@ export const planServerZodSchema = z.object({
   isActive: z.boolean().optional(),
   featureLimits: z.object({
     maxWorkspaces: z.coerce.number().int().min(0),
-    maxBusinessWorkspaces: z.coerce.number().int().min(0),
+    maxBusinessWorkspaces: z.coerce.number().int().min(-1),
     maxTransactionsPerMonth: z.coerce.number().int().min(-1),
     advancedReports: z.boolean(),
     pdfExport: z.boolean(),

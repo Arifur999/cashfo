@@ -13,28 +13,61 @@ export interface TabDef {
   exact?: boolean;
 }
 
-export function TabsNav({ tabs }: { tabs: TabDef[] }) {
+const parseHref = (href: string) => {
+  const [path, query = ""] = href.split("?");
+  return { path, params: [...new URLSearchParams(query)] };
+};
+
+const hasParams = (params: [string, string][], current: URLSearchParams) =>
+  params.every(([key, value]) => current.get(key) === value);
+
+// Exact tabs ignore unrelated params (?page=2 keeps "All Payments" active):
+// a tab with its own query (?view=failed) is active when the URL carries
+// it; the query-less tab on the same path is active when no sibling's is.
+const isTabActive = (tab: TabDef, tabs: TabDef[], pathname: string, current: URLSearchParams) => {
+  if (!tab.exact) {
+    return pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+  }
+  const { path, params } = parseHref(tab.href);
+  if (pathname !== path) {
+    return false;
+  }
+  if (params.length > 0) {
+    return hasParams(params, current);
+  }
+  return !tabs.some((other) => {
+    if (other === tab || !other.exact) return false;
+    const sibling = parseHref(other.href);
+    return sibling.path === path && sibling.params.length > 0 && hasParams(sibling.params, current);
+  });
+};
+
+// Route-level tabs: each tab is a link to its own page.
+const TabsNav = ({ tabs, label = "Section" }: { tabs: TabDef[]; label?: string }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentFull = `${pathname}?${searchParams.toString()}`;
+  const current = new URLSearchParams(searchParams.toString());
 
   return (
-    <div className="flex gap-1 border-b border-neutral-200">
+    <nav aria-label={label} className="flex gap-1 overflow-x-auto border-b">
       {tabs.map((tab) => {
-        const isActive = tab.exact ? currentFull === tab.href || (tab.href === pathname && searchParams.toString() === "") : pathname.startsWith(tab.href);
+        const isActive = isTabActive(tab, tabs, pathname, current);
         return (
           <Link
             key={tab.href}
             href={tab.href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
-              "border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
-              isActive ? "border-brand-primary text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-700",
+              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
+              isActive ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {tab.label}
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
-}
+};
+
+export default TabsNav;

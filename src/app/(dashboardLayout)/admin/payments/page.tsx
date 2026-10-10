@@ -5,7 +5,7 @@ import { getCurrentAdmin } from "@/lib/adminAuth";
 import { PaymentsTableClient } from "@/components/payments/PaymentsTableClient";
 import { RevenueTrendChart } from "@/components/payments/RevenueTrendChart";
 import { SummaryCard } from "@/components/payments/SummaryCard";
-import { TabsNav } from "@/components/shared/TabsNav";
+import TabsNav from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface PaymentsPageProps {

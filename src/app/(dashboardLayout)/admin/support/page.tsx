@@ -3,7 +3,7 @@ import { getCurrentAdmin } from "@/lib/adminAuth";
 import { getAdminOptions, getTicketStats, getTickets } from "@/lib/tickets";
 import { SummaryCard } from "@/components/payments/SummaryCard";
 import { TicketsTableClient } from "@/components/support/TicketsTableClient";
-import { TabsNav } from "@/components/shared/TabsNav";
+import TabsNav from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface SupportPageProps {

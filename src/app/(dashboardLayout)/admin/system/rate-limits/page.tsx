@@ -3,7 +3,7 @@ import { getRateLimits, getRateLimitsSummary } from "@/lib/system";
 import { requireSuperAdmin } from "@/lib/requireSuperAdmin";
 import { SummaryCard } from "@/components/payments/SummaryCard";
 import { RateLimitsClient } from "@/components/system/RateLimitsClient";
-import { TabsNav } from "@/components/shared/TabsNav";
+import TabsNav from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface RateLimitsPageProps {

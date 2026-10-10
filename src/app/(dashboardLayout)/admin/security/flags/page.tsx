@@ -1,7 +1,7 @@
 import { getFlags } from "@/lib/security";
 import { requireSuperAdmin } from "@/lib/requireSuperAdmin";
 import { FlagsClient } from "@/components/security/FlagsClient";
-import { TabsNav } from "@/components/shared/TabsNav";
+import TabsNav from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface FlagsPageProps {
