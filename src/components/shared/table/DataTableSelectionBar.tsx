@@ -1,0 +1,51 @@
+"use client";
+
+import type { Table } from "@tanstack/react-table";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { DataTableBulkAction } from "./dataTable.types";
+
+interface DataTableSelectionBarProps<TData> {
+  table: Table<TData>;
+  bulkActions?: DataTableBulkAction<TData>[];
+}
+
+// Appears only while rows are selected: the count, any bulk actions, and a
+// way out. Export lives in the toolbar and already honours the selection.
+const DataTableSelectionBar = <TData,>({ table, bulkActions }: DataTableSelectionBarProps<TData>) => {
+  const selectedRows = table.getSelectedRowModel().rows;
+
+  if (selectedRows.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/40 px-3 py-2 text-sm"
+    >
+      <span className="font-medium">
+        {selectedRows.length} row{selectedRows.length === 1 ? "" : "s"} selected
+      </span>
+      {bulkActions?.map(({ label, icon: Icon, onClick, destructive }) => (
+        <Button
+          key={label}
+          size="sm"
+          variant={destructive ? "destructive" : "outline"}
+          className="h-7"
+          onClick={() => onClick(selectedRows.map((row) => row.original))}
+        >
+          {Icon && <Icon aria-hidden="true" />}
+          {label}
+        </Button>
+      ))}
+      <Button variant="ghost" size="sm" className="ml-auto h-7" onClick={() => table.resetRowSelection()}>
+        <X aria-hidden="true" />
+        Clear selection
+      </Button>
+    </div>
+  );
+};
+
+export default DataTableSelectionBar;
