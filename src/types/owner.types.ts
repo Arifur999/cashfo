@@ -54,3 +54,9 @@ export interface IChangeOwnerPlanPayload {
   newPlanId: string;
   reason: string;
 }
+
+// The fields the owner action dialogs need -- satisfied by both the list
+// row and the detail record.
+export type IOwnerRef = Pick<IOwnerOverviewItem, "userId" | "name" | "status" | "planId" | "planName">;
+
+export type OwnerDialog = "suspend" | "activate" | "changePlan";
