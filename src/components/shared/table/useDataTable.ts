@@ -26,6 +26,11 @@ import type { DataTableProps } from "./dataTable.types";
 
 const NO_HIDDEN_COLUMNS: readonly string[] = [];
 
+// One shared empty array: a fresh `[]` per render would look like new data
+// every time, re-triggering TanStack's automatic page reset -- a state update
+// that can fire before the table has even mounted.
+const EMPTY_ROWS: never[] = [];
+
 // Builds the TanStack table instance for DataTable. Every concern is
 // in-memory by default; passing `sorting` / `pagination` / server
 // search+filters flips just that concern to manual (URL-driven) mode.
@@ -71,9 +76,13 @@ export function useDataTable<TData>({
     [columns, actions, enableRowSelection],
   );
 
+  // Narrowing the rows always starts again from page 1 (done here instead of
+  // TanStack's autoResetPageIndex, see below).
+  const resetToFirstPage = () => setLocalPagination((current) => (current.pageIndex === 0 ? current : { ...current, pageIndex: 0 }));
+
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is intentionally used here and React Compiler already skips memoization for this hook.
-  return useReactTable({
-    data,
+  const table = useReactTable({
+    data: data ?? EMPTY_ROWS,
     columns: allColumns,
     getRowId,
     state: {
@@ -92,8 +101,14 @@ export function useDataTable<TData>({
       sorting ? sorting.onSortingChange(functionalUpdate(updater, sorting.state)) : setLocalSorting(updater),
     onPaginationChange: (updater) =>
       pagination ? pagination.onPaginationChange(functionalUpdate(updater, pagination.state)) : setLocalPagination(updater),
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: (updater) => {
+      setColumnFilters(updater);
+      resetToFirstPage();
+    },
+    onGlobalFilterChange: (value: string) => {
+      setGlobalFilter(value);
+      resetToFirstPage();
+    },
     onRowSelectionChange: setRowSelection,
     onColumnVisibilityChange: setColumnVisibility,
     defaultColumn: { filterFn: smartColumnFilterFn as FilterFn<TData> },
@@ -103,6 +118,11 @@ export function useDataTable<TData>({
     // memory would only mislead; such tables simply don't offer sorting.
     enableSorting: !isServerPaginated || isServerSorted,
     manualPagination: isServerPaginated,
+    // Off: TanStack schedules that reset in a microtask during render, which
+    // under StrictMode's double render fires before the table has mounted
+    // ("Can't perform a React state update on a component that hasn't
+    // mounted yet"). Filters reset the page themselves (resetToFirstPage).
+    autoResetPageIndex: false,
     manualSorting: isServerSorted,
     manualFiltering: isServerFiltered,
     pageCount: isServerPaginated ? Math.max(meta?.totalPage ?? 1, 1) : undefined,
@@ -114,4 +134,14 @@ export function useDataTable<TData>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+
+  // When the in-memory rows shrink (a delete, a narrower filter), don't leave
+  // the table parked on a page that no longer exists. Adjusting state during
+  // render is React's pattern for this; it re-renders before painting.
+  const lastPageIndex = Math.max(table.getPageCount() - 1, 0);
+  if (!isServerPaginated && localPagination.pageIndex > lastPageIndex) {
+    setLocalPagination({ ...localPagination, pageIndex: lastPageIndex });
+  }
+
+  return table;
 }

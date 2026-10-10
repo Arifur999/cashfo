@@ -23,7 +23,7 @@ const WorkspacesOverview = () => {
       <DataTable
         {...dataTableProps}
         {...toTableQueryProps(query)}
-        data={overview?.items ?? []}
+        data={overview?.items}
         columns={workspacesColumns}
         getRowId={(row) => row.userId}
         tableId="workspaces"
