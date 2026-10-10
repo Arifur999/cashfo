@@ -6,7 +6,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import type { FeatureRequestRow, FeatureRequestStatus } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { updateFeatureRequestStatusAction } from "@/app/admin/(dashboard)/feature-requests/_actions";
+import { updateFeatureRequestStatusAction } from "@/app/(dashboardLayout)/admin/feature-requests/_actions";
 import { FeatureRequestStatusBadge } from "./FeatureRequestStatusBadge";
 
 const STATUS_OPTIONS: FeatureRequestStatus[] = ["SUBMITTED", "UNDER_REVIEW", "PLANNED", "IN_PROGRESS", "SHIPPED", "DECLINED"];

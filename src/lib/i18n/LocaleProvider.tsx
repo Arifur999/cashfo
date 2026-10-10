@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import { bnDictionary } from "./dictionary";
 
 export type Locale = "en" | "bn";
@@ -13,51 +14,38 @@ interface LocaleContextValue {
   translate: (key: string) => string;
 }
 
+// What a component rendered outside the provider (a test, a portal) gets:
+// readable English instead of a crash.
+const fallbackContext: LocaleContextValue = {
+  locale: "en",
+  toggleLocale: () => {},
+  translate: (key) => key,
+};
+
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  // Always render "en" on the server and on first client paint so
-  // server/client markup matches (no hydration mismatch); swap to the
-  // stored preference right after mount. This means a bn-preferring user
-  // sees a brief flash of English chrome on load -- an acceptable tradeoff
-  // for an internal admin tool versus the complexity of a cookie-based,
-  // server-readable locale.
-  const [locale, setLocale] = useState<Locale>("en");
+  // Renders "en" on the server and the first client paint (so the markup
+  // matches), then switches to the stored preference -- usePersistentState
+  // does that through useSyncExternalStore, no setState-in-effect cascade.
+  // A bn-preferring admin still sees a brief flash of English chrome, an
+  // acceptable tradeoff versus a cookie-based, server-readable locale.
+  const [storedLocale, setStoredLocale] = usePersistentState<Locale>(STORAGE_KEY, "en");
+  const locale: Locale = storedLocale === "bn" ? "bn" : "en";
 
+  // Screen readers pick pronunciation from <html lang>; without this, Bangla
+  // text is read with English phonetics.
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored === "en" || stored === "bn") setLocale(stored);
-    } catch {
-      // localStorage can throw in some private-browsing contexts -- fall
-      // back to English rather than crashing the whole layout.
-    }
-  }, []);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
-  function toggleLocale() {
-    setLocale((prev) => {
-      const next = prev === "en" ? "bn" : "en";
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // best-effort persistence only
-      }
-      return next;
-    });
-  }
+  const toggleLocale = useCallback(() => setStoredLocale(locale === "en" ? "bn" : "en"), [locale, setStoredLocale]);
+  const translate = useCallback((key: string) => (locale === "en" ? key : (bnDictionary[key] ?? key)), [locale]);
+  const value = useMemo(() => ({ locale, toggleLocale, translate }), [locale, toggleLocale, translate]);
 
-  function translate(key: string): string {
-    if (locale === "en") return key;
-    return bnDictionary[key] ?? key;
-  }
-
-  return <LocaleContext.Provider value={{ locale, toggleLocale, translate }}>{children}</LocaleContext.Provider>;
+  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 
 export function useLocale(): LocaleContextValue {
-  const ctx = useContext(LocaleContext);
-  if (!ctx) {
-    throw new Error("useLocale must be used within a LocaleProvider");
-  }
-  return ctx;
+  return useContext(LocaleContext) ?? fallbackContext;
 }

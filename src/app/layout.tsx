@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import QueryProvider from "./providers/QueryProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,13 +10,15 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-// Bangla font (Hind Siliguri) + language switching come later -- this is
-// intentionally just Inter for now. When Bangla support is added, load
-// Hind Siliguri the same way and select between the two font variables
-// based on the active locale.
+// Bangla font (Hind Siliguri) comes with full server-side locale support --
+// when it lands, load it the same way and select between the two font
+// variables based on the active locale.
 
 export const metadata: Metadata = {
-  title: "Admin Panel",
+  title: {
+    default: "Admin Panel",
+    template: "%s | Admin Panel",
+  },
   description: "Super Admin Panel",
 };
 
@@ -25,9 +29,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           attributes like cz-shortcut-listen onto <body> after the server HTML
           is sent, which otherwise trips React's hydration mismatch check even
           though nothing is actually wrong. */}
-      <body className="min-h-full flex flex-col bg-brand-content" suppressHydrationWarning>
-        {children}
-        <Toaster richColors position="top-right" />
+      <body className="flex min-h-full flex-col bg-brand-content" suppressHydrationWarning>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:rounded-xl focus:bg-white focus:p-4"
+        >
+          Skip to main content
+        </a>
+        <QueryProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+          {/* theme="light": there's no ThemeProvider yet, and shadcn's Toaster
+              would otherwise follow the OS and render dark toasts on this
+              light-only panel. */}
+          <Toaster richColors position="top-right" theme="light" />
+        </QueryProvider>
       </body>
     </html>
   );

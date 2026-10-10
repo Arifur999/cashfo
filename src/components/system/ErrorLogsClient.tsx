@@ -5,7 +5,7 @@ import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { ErrorLogRow, ErrorLogSource, ListMeta, Severity } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { resolveErrorAction } from "@/app/admin/(dashboard)/system/_actions";
+import { resolveErrorAction } from "@/app/(dashboardLayout)/admin/system/_actions";
 import { ErrorSourceBadge } from "./ErrorSourceBadge";
 import { SeverityBadge } from "./SeverityBadge";
 

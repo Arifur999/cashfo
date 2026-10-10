@@ -3,7 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
-import { getCouponRedemptionsAction } from "@/app/admin/(dashboard)/coupons/_actions";
+import { getCouponRedemptionsAction } from "@/app/(dashboardLayout)/admin/coupons/_actions";
 import type { CouponRedemption } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 

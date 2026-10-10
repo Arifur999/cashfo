@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { PlanAnalytics, SubscriptionPlan } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { archivePlanAction, createPlanAction, deletePlanAction, updatePlanAction } from "@/app/admin/(dashboard)/plans/_actions";
+import { archivePlanAction, createPlanAction, deletePlanAction, updatePlanAction } from "@/app/(dashboardLayout)/admin/plans/_actions";
 import { PlanCard } from "./PlanCard";
 import { PlanFormModal, type PlanFormValues } from "./PlanFormModal";
 import { PlansUsageChart } from "./PlansUsageChart";

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import type { TicketCategory, TicketPriority, UserSearchResult } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { createTicketAction } from "@/app/admin/(dashboard)/support/_actions";
+import { createTicketAction } from "@/app/(dashboardLayout)/admin/support/_actions";
 import { UserSearchSelect } from "./UserSearchSelect";
 
 const CATEGORIES: TicketCategory[] = ["BILLING", "TECHNICAL", "ACCOUNT", "FEATURE_REQUEST", "BUG_REPORT", "OTHER"];

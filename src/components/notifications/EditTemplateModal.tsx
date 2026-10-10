@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import type { NotificationTemplateRow } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { updateTemplateAction } from "@/app/admin/(dashboard)/notifications/_actions";
+import { updateTemplateAction } from "@/app/(dashboardLayout)/admin/notifications/_actions";
 
 interface EditTemplateModalProps {
   open: boolean;

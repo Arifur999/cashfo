@@ -1,5 +1,5 @@
 import "server-only";
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 import { cache } from "react";
 import { API_BASE_URL } from "@/lib/axios/httpClient";
 import { logServiceError } from "@/lib/axios/logServiceError";
@@ -59,10 +59,15 @@ export const getUserInfo = cache(async (): Promise<IAdminUser | null> => {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    // Covers both "token invalid/expired" and "backend unreachable" -- either
-    // way the admin is treated as signed out rather than surfacing a
-    // low-level error to a page that only wanted a name and a role.
-    return null;
+  } catch (error) {
+    // 401/403: the backend no longer accepts this token (admin deleted,
+    // secret rotated) -- that's a sign-out. Anything else (backend down, 5xx)
+    // is an outage, and must surface as an error page rather than bounce the
+    // admin to a login form they couldn't get past anyway.
+    if (isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
+      return null;
+    }
+    logServiceError("Error fetching the current admin", error);
+    throw error;
   }
 });

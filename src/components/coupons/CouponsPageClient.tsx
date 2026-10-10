@@ -9,7 +9,7 @@ import {
   deleteCouponAction,
   updateCouponAction,
   type CouponFormInput,
-} from "@/app/admin/(dashboard)/coupons/_actions";
+} from "@/app/(dashboardLayout)/admin/coupons/_actions";
 import type { Coupon, SubscriptionPlanOption } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 import { CouponFormModal } from "./CouponFormModal";

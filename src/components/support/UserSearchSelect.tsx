@@ -4,7 +4,7 @@ import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { UserSearchResult } from "@/lib/api";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { searchUsersAction } from "@/app/admin/(dashboard)/support/_actions";
+import { searchUsersAction } from "@/app/(dashboardLayout)/admin/support/_actions";
 import { t } from "@/lib/i18n/t";
 
 interface UserSearchSelectProps {

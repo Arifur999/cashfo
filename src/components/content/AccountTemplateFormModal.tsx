@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import type { AccountTemplate, AccountType, WorkspaceType } from "@/lib/api";
-import type { AccountTemplateFormInput } from "@/app/admin/(dashboard)/content/_actions";
+import type { AccountTemplateFormInput } from "@/app/(dashboardLayout)/admin/content/_actions";
 import { t } from "@/lib/i18n/t";
 
 const ACCOUNT_TYPES: AccountType[] = ["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"];

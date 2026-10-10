@@ -3,7 +3,7 @@
 import { Download, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { exportTranslationsAction, updateTranslationAction } from "@/app/admin/(dashboard)/content/_actions";
+import { exportTranslationsAction, updateTranslationAction } from "@/app/(dashboardLayout)/admin/content/_actions";
 import type { TranslationStringRow } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
 import { EditableCell } from "./EditableCell";

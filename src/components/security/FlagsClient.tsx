@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { FlagStatus, Severity, SuspiciousActivityFlagRow } from "@/lib/api";
 import { t } from "@/lib/i18n/t";
-import { runDetectionAction, updateFlagStatusAction } from "@/app/admin/(dashboard)/security/_actions";
+import { runDetectionAction, updateFlagStatusAction } from "@/app/(dashboardLayout)/admin/security/_actions";
 import { FlagStatusBadge } from "./FlagStatusBadge";
 
 const STATUS_OPTIONS: FlagStatus[] = ["OPEN", "REVIEWING", "RESOLVED", "FALSE_POSITIVE"];
