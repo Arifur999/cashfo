@@ -10,9 +10,13 @@ export interface TrendSeries {
   color: string;
 }
 
-interface TrendChartProps<TPoint extends Record<string, string | number>> {
-  data: TPoint[];
-  xKey: keyof TPoint & string;
+// One row per x value, e.g. { month: "2026-10", amount: 1200 }. A plain record
+// (not a generic) so recharts' typed dataKey resolves.
+export type TrendPoint = Record<string, string | number>;
+
+interface TrendChartProps {
+  data: TrendPoint[];
+  xKey: string;
   series: TrendSeries[];
   // Read aloud instead of the SVG (role="img").
   ariaLabel: string;
@@ -23,7 +27,7 @@ interface TrendChartProps<TPoint extends Record<string, string | number>> {
 }
 
 // Area chart for one or more series over time (revenue by month, DAU/WAU).
-const TrendChart = <TPoint extends Record<string, string | number>>({
+const TrendChart = ({
   data,
   xKey,
   series,
@@ -32,7 +36,7 @@ const TrendChart = <TPoint extends Record<string, string | number>>({
   formatY,
   height = 260,
   emptyMessage = "No data for this period.",
-}: TrendChartProps<TPoint>) => {
+}: TrendChartProps) => {
   // Gradient ids must be unique per instance, or two charts on one page
   // would share (and overwrite) each other's fills.
   const gradientPrefix = useId().replace(/:/g, "");
