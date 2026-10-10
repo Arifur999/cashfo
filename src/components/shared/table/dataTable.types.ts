@@ -70,6 +70,9 @@ export interface DataTableProps<TData> {
   getRowId?: (row: TData) => string;
   // Persists column visibility per table in localStorage when set.
   tableId?: string;
+  // Column ids hidden until the admin turns them on from the View menu
+  // (e.g. a field already shown inside another cell). Keep it module-level.
+  defaultHiddenColumns?: readonly string[];
   actions?: DataTableActions<TData>;
   toolbarAction?: React.ReactNode;
   emptyMessage?: string;

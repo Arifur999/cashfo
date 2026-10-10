@@ -2,9 +2,9 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { AlertCircle, Info } from "lucide-react";
 import { useState } from "react";
 import { loginAction } from "@/app/(auth)/admin/login/_action";
+import Callout from "@/components/shared/Callout";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
@@ -41,10 +41,7 @@ const LoginForm = ({ redirectTo, sessionExpired = false }: LoginFormProps) => {
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
       {sessionExpired && !serverError && (
-        <p className="flex items-start gap-2 rounded-xl bg-muted px-3.5 py-2.5 text-sm text-muted-foreground">
-          <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          Your session has expired. Please sign in again.
-        </p>
+        <Callout role="status">Your session has expired. Please sign in again.</Callout>
       )}
 
       <form.Field name="email" validators={{ onChange: loginFormZodSchema.shape.email }}>
@@ -67,10 +64,9 @@ const LoginForm = ({ redirectTo, sessionExpired = false }: LoginFormProps) => {
       </form.Field>
 
       {serverError && (
-        <p role="alert" className="flex items-start gap-2 rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <Callout variant="danger" role="alert">
           {serverError}
-        </p>
+        </Callout>
       )}
 
       <form.Subscribe selector={(state) => state.isSubmitting}>

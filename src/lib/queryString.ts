@@ -51,3 +51,8 @@ export const buildListQueryString = (source: ParamsSource, keys: readonly string
   );
   return `page=${page}&limit=${limit}${filters ? `&${filters}` : ""}`;
 };
+
+// buildListQueryString driven by a table's config (ServerDataTableConfig),
+// so a page and its client table pass the exact same inputs.
+export const buildTableQueryString = (source: ParamsSource, config: { queryKeys: readonly string[]; defaultLimit?: number }) =>
+  buildListQueryString(source, config.queryKeys, config.defaultLimit);

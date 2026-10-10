@@ -41,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {/* theme="light": there's no ThemeProvider yet, and shadcn's Toaster
               would otherwise follow the OS and render dark toasts on this
               light-only panel. */}
-          <Toaster richColors position="top-right" theme="light" />
+          <Toaster richColors position="top-center" theme="light" />
         </QueryProvider>
       </body>
     </html>

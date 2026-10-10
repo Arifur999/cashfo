@@ -1,20 +1,21 @@
-import { getCurrentAdmin } from "@/lib/adminAuth";
-import { getPlatformSettings } from "@/lib/settings";
-import { SettingsForm } from "@/components/settings/SettingsForm";
-import { t } from "@/lib/i18n/t";
+import type { Metadata } from "next";
+import SettingsForm from "@/components/modules/Admin/Settings/SettingsForm";
+import PageHeader from "@/components/shared/PageHeader";
+import { canManage } from "@/lib/authUtils";
+import { getUserInfo } from "@/services/auth.services";
+import { getPlatformSettings } from "@/services/settings.services";
 
-export default async function SettingsPage() {
-  const [settings, admin] = await Promise.all([getPlatformSettings(), getCurrentAdmin()]);
-  const canManage = admin?.role === "SUPER_ADMIN";
+export const metadata: Metadata = { title: "Settings" };
+
+const SettingsPage = async () => {
+  const [{ data: settings }, admin] = await Promise.all([getPlatformSettings(), getUserInfo()]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900">{t("Settings")}</h1>
-        <p className="mt-1 text-sm text-neutral-500">{t("Platform-wide general settings.")}</p>
-      </div>
-
-      <SettingsForm initial={settings} canManage={canManage} />
+      <PageHeader title="Settings" description="Platform-wide general settings." />
+      <SettingsForm initial={settings} canManage={canManage(admin?.role, "settings")} />
     </div>
   );
-}
+};
+
+export default SettingsPage;

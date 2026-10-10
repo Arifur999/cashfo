@@ -24,7 +24,7 @@ import { ACTIONS_COLUMN_ID, createActionsColumn } from "./columns/createActionsC
 import { createSelectColumn, SELECT_COLUMN_ID } from "./columns/createSelectColumn";
 import type { DataTableProps } from "./dataTable.types";
 
-const DEFAULT_VISIBILITY: VisibilityState = {};
+const NO_HIDDEN_COLUMNS: readonly string[] = [];
 
 // Builds the TanStack table instance for DataTable. Every concern is
 // in-memory by default; passing `sorting` / `pagination` / server
@@ -34,6 +34,7 @@ export function useDataTable<TData>({
   columns,
   getRowId,
   tableId,
+  defaultHiddenColumns = NO_HIDDEN_COLUMNS,
   actions,
   enableRowSelection = false,
   search,
@@ -52,9 +53,13 @@ export function useDataTable<TData>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const defaultVisibility = useMemo<VisibilityState>(
+    () => Object.fromEntries(defaultHiddenColumns.map((columnId) => [columnId, false])),
+    [defaultHiddenColumns],
+  );
   const [columnVisibility, setColumnVisibility] = usePersistentState<VisibilityState>(
     tableId ? `data-table:${tableId}:columns` : undefined,
-    DEFAULT_VISIBILITY,
+    defaultVisibility,
   );
 
   const allColumns = useMemo<ColumnDef<TData>[]>(
