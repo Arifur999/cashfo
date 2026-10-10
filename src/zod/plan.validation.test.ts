@@ -34,8 +34,13 @@ describe("planServerZodSchema", () => {
     expect(planServerZodSchema.safeParse({ ...validPayload, price: "499.5" }).success).toBe(false);
   });
 
-  it("rejects -1 business workspaces (only the transaction cap allows unlimited)", () => {
+  it("accepts -1 (unlimited) business workspaces, as the seeded Business plan uses", () => {
     const featureLimits = { ...validPayload.featureLimits, maxBusinessWorkspaces: "-1" };
+    expect(planServerZodSchema.safeParse({ ...validPayload, featureLimits }).success).toBe(true);
+  });
+
+  it("rejects -1 for the plain workspace limit", () => {
+    const featureLimits = { ...validPayload.featureLimits, maxWorkspaces: "-1" };
     expect(planServerZodSchema.safeParse({ ...validPayload, featureLimits }).success).toBe(false);
   });
 
