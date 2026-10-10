@@ -17,7 +17,7 @@
 // AdminAuthGuard verifies the signature on every real request.
 
 import { NextResponse, type NextRequest } from "next/server";
-import { canAccessRoute, DEFAULT_DASHBOARD_ROUTE, isAuthRoute, LOGIN_ROUTE } from "./lib/authUtils";
+import { canAccessRoute, DEFAULT_DASHBOARD_ROUTE, isAuthRoute, LOGIN_ROUTE, SESSION_EXPIRED_REASON } from "./lib/authUtils";
 import { jwtUtils } from "./lib/jwtUtils";
 import {
   ACCESS_TOKEN_COOKIE,
@@ -30,8 +30,18 @@ import { refreshAccessToken } from "./services/auth.services";
 import type { IAccessTokenPayload } from "./types/auth.types";
 
 export async function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+  const { pathname, search, searchParams } = request.nextUrl;
   const isLoginPage = isAuthRoute(pathname);
+
+  // The backend rejected a token this proxy would still accept (see
+  // SESSION_EXPIRED_REASON): drop the stale cookies and show the login page,
+  // rather than redirecting straight back to the dashboard in a loop.
+  if (isLoginPage && searchParams.get("reason") === SESSION_EXPIRED_REASON) {
+    const response = NextResponse.next();
+    response.cookies.delete(ACCESS_TOKEN_COOKIE);
+    response.cookies.delete(REFRESH_TOKEN_COOKIE);
+    return response;
+  }
 
   let accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
