@@ -1,6 +1,6 @@
 import { getNotificationLogs } from "@/lib/notifications";
 import { LogsClient } from "@/components/notifications/LogsClient";
-import { TabsNav } from "@/components/shared/TabsNav";
+import TabsNav from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface HistoryPageProps {

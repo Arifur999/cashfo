@@ -5,7 +5,7 @@ import { HorizontalBarList } from "@/components/analytics/HorizontalBarList";
 import { SectionCard } from "@/components/analytics/SectionCard";
 import { SummaryCard } from "@/components/payments/SummaryCard";
 import { LoginAttemptsTable } from "@/components/security/LoginAttemptsTable";
-import { TabsNav } from "@/components/shared/TabsNav";
+import TabsNav from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface LoginMonitoringPageProps {

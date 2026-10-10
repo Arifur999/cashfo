@@ -1,7 +1,7 @@
 import { getFullAdminList } from "@/lib/security";
 import { requireSuperAdmin } from "@/lib/requireSuperAdmin";
 import { AdminAccountsClient } from "@/components/security/AdminAccountsClient";
-import { TabsNav } from "@/components/shared/TabsNav";
+import TabsNav from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 export default async function AdminAccountsPage() {
