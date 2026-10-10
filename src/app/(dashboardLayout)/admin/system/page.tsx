@@ -1,7 +1,7 @@
 import { getBackups, getBackupStatusSummary } from "@/lib/system";
 import { requireSuperAdmin } from "@/lib/requireSuperAdmin";
 import { BackupsClient } from "@/components/system/BackupsClient";
-import { TabsNav } from "@/components/ui/TabsNav";
+import { TabsNav } from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 export default async function SystemPage() {

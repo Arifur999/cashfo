@@ -1,7 +1,7 @@
 import { getErrorLogs } from "@/lib/system";
 import { requireSuperAdmin } from "@/lib/requireSuperAdmin";
 import { ErrorLogsClient } from "@/components/system/ErrorLogsClient";
-import { TabsNav } from "@/components/ui/TabsNav";
+import { TabsNav } from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface ErrorLogsPageProps {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Eye } from "lucide-react";
 import { getInvoices } from "@/lib/invoices";
-import { TabsNav } from "@/components/ui/TabsNav";
+import { TabsNav } from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface InvoicesPageProps {

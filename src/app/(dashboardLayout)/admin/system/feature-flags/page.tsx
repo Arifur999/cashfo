@@ -2,7 +2,7 @@ import { getFeatureFlags } from "@/lib/system";
 import { getSubscriptionPlanOptions } from "@/lib/subscriptionPlans";
 import { requireSuperAdmin } from "@/lib/requireSuperAdmin";
 import { FeatureFlagsClient } from "@/components/system/FeatureFlagsClient";
-import { TabsNav } from "@/components/ui/TabsNav";
+import { TabsNav } from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 export default async function FeatureFlagsPage() {

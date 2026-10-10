@@ -2,7 +2,7 @@ import { getCurrentAdmin } from "@/lib/adminAuth";
 import { getNotificationCampaigns, getNotificationTemplates } from "@/lib/notifications";
 import { getSubscriptionPlanOptions } from "@/lib/subscriptionPlans";
 import { CampaignsClient } from "@/components/notifications/CampaignsClient";
-import { TabsNav } from "@/components/ui/TabsNav";
+import { TabsNav } from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 export default async function CampaignsPage() {

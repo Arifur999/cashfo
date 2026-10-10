@@ -1,7 +1,7 @@
 import { getCurrentAdmin } from "@/lib/adminAuth";
 import { getNotificationTemplates } from "@/lib/notifications";
 import { TemplatesClient } from "@/components/notifications/TemplatesClient";
-import { TabsNav } from "@/components/ui/TabsNav";
+import { TabsNav } from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 export default async function NotificationsPage() {

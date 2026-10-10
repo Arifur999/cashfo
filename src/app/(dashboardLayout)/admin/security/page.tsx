@@ -1,7 +1,7 @@
 import { getAuditLogs, getFullAdminList } from "@/lib/security";
 import { requireSuperAdmin } from "@/lib/requireSuperAdmin";
 import { AuditLogTable } from "@/components/security/AuditLogTable";
-import { TabsNav } from "@/components/ui/TabsNav";
+import { TabsNav } from "@/components/shared/TabsNav";
 import { t } from "@/lib/i18n/t";
 
 interface SecurityPageProps {
