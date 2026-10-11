@@ -29,6 +29,11 @@ export const formatDateTime = (value: DateInput, fallback = "—") => formatDate
 // date-range query params.
 export const toDateInputValue = (value: DateInput) => formatDate(value, "yyyy-MM-dd", "");
 
+// Today's calendar date in the platform timezone. Reads the clock, so call it
+// from a server render or an event handler -- never while rendering a client
+// component.
+export const getAppToday = () => toDateInputValue(new Date());
+
 const parseDay = (day: string) => {
   const [year, month, date] = day.split("-").map(Number);
   return { year, monthIndex: month - 1, date };
