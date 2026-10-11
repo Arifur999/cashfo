@@ -8,6 +8,12 @@ import { ELLIPSIS_JUMP, getPageWindow } from "@/lib/table/pageWindow";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
+// A table may start at a size outside the standard list (initialPageSize,
+// a ?limit= in the URL); it still has to be selectable, or the select
+// renders blank.
+const getPageSizeOptions = (pageSize: number) =>
+  PAGE_SIZE_OPTIONS.includes(pageSize) ? PAGE_SIZE_OPTIONS : [...PAGE_SIZE_OPTIONS, pageSize].sort((a, b) => a - b);
+
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   totalRows: number;
@@ -33,7 +39,7 @@ const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationPr
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PAGE_SIZE_OPTIONS.map((size) => (
+              {getPageSizeOptions(pageSize).map((size) => (
                 <SelectItem key={size} value={String(size)}>
                   {size}
                 </SelectItem>
