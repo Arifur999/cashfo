@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { Wallet } from "lucide-react";
+import GoogleSignInButton from "@/components/modules/Auth/GoogleSignInButton";
 import LoginForm from "@/components/modules/Auth/LoginForm";
-import { SESSION_EXPIRED_REASON } from "@/lib/authUtils";
+import OrDivider from "@/components/shared/OrDivider";
+import { getSignInErrorMessage, SESSION_EXPIRED_REASON } from "@/lib/authUtils";
 
 export const metadata: Metadata = {
   title: "Sign in",
 };
 
 const LoginPage = async ({ searchParams }: PageProps<"/admin/login">) => {
-  const { redirect, reason } = await searchParams;
+  const { redirect, reason, error } = await searchParams;
 
   return (
     <main
@@ -31,7 +33,10 @@ const LoginPage = async ({ searchParams }: PageProps<"/admin/login">) => {
           <LoginForm
             redirectTo={typeof redirect === "string" ? redirect : undefined}
             sessionExpired={reason === SESSION_EXPIRED_REASON}
+            signInError={getSignInErrorMessage(typeof error === "string" ? error : undefined)}
           />
+          <OrDivider />
+          <GoogleSignInButton />
         </div>
       </div>
     </main>

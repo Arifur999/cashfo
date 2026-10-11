@@ -16,9 +16,11 @@ const defaultValues: ILoginFormValues = { email: "", password: "" };
 interface LoginFormProps {
   redirectTo?: string;
   sessionExpired?: boolean;
+  // Why the last sign-in attempt (Google) bounced back here, if it did.
+  signInError?: string;
 }
 
-const LoginForm = ({ redirectTo, sessionExpired = false }: LoginFormProps) => {
+const LoginForm = ({ redirectTo, sessionExpired = false, signInError }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -42,6 +44,12 @@ const LoginForm = ({ redirectTo, sessionExpired = false }: LoginFormProps) => {
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
       {sessionExpired && !serverError && (
         <Callout role="status">Your session has expired. Please sign in again.</Callout>
+      )}
+
+      {signInError && !serverError && (
+        <Callout variant="danger" role="alert">
+          {signInError}
+        </Callout>
       )}
 
       <form.Field name="email" validators={{ onChange: loginFormZodSchema.shape.email }}>
