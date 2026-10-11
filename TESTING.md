@@ -21,11 +21,11 @@ Components aren't unit-tested; their behaviour is covered end to end in the brow
 ## Typecheck and lint
 
 ```bash
-npx tsc --noEmit
+npm run typecheck   # next typegen (route types like PageProps), then tsc --noEmit
 npm run lint
 ```
 
-Both should be clean before a commit.
+Both should be clean before a commit, and CI runs both on every pull request. Plain `npx tsc --noEmit` only works once `next dev` or `next build` has generated the route types.
 
 ## End-to-end checks
 

@@ -21,6 +21,7 @@ The backend must be running (default `http://localhost:5000`). Sign in with an a
 | `npm run dev` | Dev server (`next dev --webpack`) |
 | `npm run build` / `npm start` | Production build / serve |
 | `npm run lint` | ESLint (Next, React Compiler and TanStack Query rules) |
+| `npm run typecheck` | Route types (`next typegen`), then `tsc --noEmit` |
 | `npm test` | Unit tests -- see [TESTING.md](TESTING.md) |
 
 ## How the code is organised
