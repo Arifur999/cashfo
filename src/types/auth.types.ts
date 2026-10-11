@@ -21,6 +21,8 @@ export interface ILoginResponse {
 // What the backend signs into the access token (see AdminAuthService).
 export interface IAccessTokenPayload {
   sub: string;
+  // The better-auth session the token is bound to.
+  sid: string;
   role: AdminRole;
   iat?: number;
   exp: number;

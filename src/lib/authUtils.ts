@@ -1,6 +1,9 @@
 import type { AdminRole } from "@/types/auth.types";
 
 export const LOGIN_ROUTE = "/admin/login";
+// Where Google sign-in returns to: trades better-auth's session cookie for
+// the panel's own tokens (app/(auth)/admin/login/google/route.ts).
+export const GOOGLE_SIGN_IN_ROUTE = "/admin/login/google";
 export const DEFAULT_DASHBOARD_ROUTE = "/admin/dashboard";
 
 // The dashboard layout redirects to `${LOGIN_ROUTE}?reason=session-expired`
@@ -9,7 +12,7 @@ export const DEFAULT_DASHBOARD_ROUTE = "/admin/dashboard";
 export const SESSION_EXPIRED_REASON = "session-expired";
 export const SESSION_EXPIRED_LOGIN_ROUTE = `${LOGIN_ROUTE}?reason=${SESSION_EXPIRED_REASON}`;
 
-export const authRoutes = [LOGIN_ROUTE];
+export const authRoutes = [LOGIN_ROUTE, GOOGLE_SIGN_IN_ROUTE];
 export const isAuthRoute = (pathname: string) => authRoutes.includes(pathname);
 
 export type RouteConfig = { exact: string[]; pattern: RegExp[] };
@@ -42,6 +45,18 @@ export const canAccessRoute = (pathname: string, role: AdminRole) => {
   const roles = getRouteRoles(pathname);
   return roles === null || roles.includes(role);
 };
+
+// What the login page says when Google sign-in comes back with ?error= --
+// "not-admin" from the exchange route, the rest from better-auth's callback.
+const SIGN_IN_ERRORS: Record<string, string> = {
+  "not-admin": "That Google account isn't an admin account.",
+  signup_disabled: "No admin account uses that Google address.",
+  account_not_linked: "That address signs in with a password -- use it below.",
+  access_denied: "Google sign-in was cancelled.",
+};
+
+export const getSignInErrorMessage = (code: string | undefined): string | undefined =>
+  code ? (SIGN_IN_ERRORS[code] ?? "Google sign-in didn't finish. Please try again.") : undefined;
 
 // Guards the login page's ?redirect= param, so a crafted link can't bounce an
 // admin off-site (open redirect) or onto a section their role can't open.

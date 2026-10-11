@@ -23,7 +23,7 @@ const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "origin", "referer"
 
 // better-auth's own cookies only -- the app's access/refresh tokens have no
 // business on the auth server.
-const betterAuthCookies = (cookieHeader: string | null) =>
+export const betterAuthCookies = (cookieHeader: string | null) =>
   (cookieHeader ?? "")
     .split(";")
     .map((cookie) => cookie.trim())

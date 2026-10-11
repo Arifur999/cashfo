@@ -3,6 +3,7 @@ import axios, { isAxiosError } from "axios";
 import { cache } from "react";
 import { clientHeaders, getClientHeaders } from "@/lib/axios/clientHeaders";
 import { API_BASE_URL } from "@/lib/axios/httpClient";
+import { betterAuthCookies } from "@/lib/betterAuthProxy";
 import { logServiceError } from "@/lib/axios/logServiceError";
 import { getAccessToken } from "@/lib/tokenUtils";
 import type { IAdminUser, ILoginPayload, ILoginResponse } from "@/types/auth.types";
@@ -23,6 +24,35 @@ export const login = async (payload: ILoginPayload): Promise<ILoginResponse> => 
   } catch (error) {
     logServiceError("Error logging in", error);
     throw error;
+  }
+};
+
+export type SessionExchangeResult = { ok: true; session: ILoginResponse } | { ok: false; reason: "not-admin" | "failed" };
+
+// The second half of Google sign-in: hands the backend the better-auth
+// session cookie its callback just set, and gets the panel's usual token
+// pair back, bound to that same session. Never throws -- the caller only
+// needs to know where to send the browser.
+export const exchangeSession = async (requestHeaders: Pick<Headers, "get">): Promise<SessionExchangeResult> => {
+  const cookie = betterAuthCookies(requestHeaders.get("cookie"));
+  if (!cookie) {
+    return { ok: false, reason: "failed" };
+  }
+
+  try {
+    const response = await axios.post<ILoginResponse>(
+      `${API_BASE_URL}/admin/auth/session/exchange`,
+      {},
+      { headers: { Cookie: cookie, ...clientHeaders(requestHeaders) } },
+    );
+    return { ok: true, session: response.data };
+  } catch (error) {
+    // 403: a real account, just not an admin's.
+    if (isAxiosError(error) && error.response?.status === 403) {
+      return { ok: false, reason: "not-admin" };
+    }
+    logServiceError("Error exchanging a Google sign-in", error);
+    return { ok: false, reason: "failed" };
   }
 };
 
