@@ -1,6 +1,7 @@
 import "server-only";
 import axios, { isAxiosError } from "axios";
 import { cache } from "react";
+import { clientHeaders, getClientHeaders } from "@/lib/axios/clientHeaders";
 import { API_BASE_URL } from "@/lib/axios/httpClient";
 import { logServiceError } from "@/lib/axios/logServiceError";
 import { getAccessToken } from "@/lib/tokenUtils";
@@ -16,7 +17,8 @@ import type { IAdminUser, ILoginPayload, ILoginResponse } from "@/types/auth.typ
 
 export const login = async (payload: ILoginPayload): Promise<ILoginResponse> => {
   try {
-    const response = await axios.post<ILoginResponse>(`${API_BASE_URL}/admin/auth/login`, payload);
+    // The login throttle is per client IP, so this call above all must carry it.
+    const response = await axios.post<ILoginResponse>(`${API_BASE_URL}/admin/auth/login`, payload, { headers: await getClientHeaders() });
     return response.data;
   } catch (error) {
     logServiceError("Error logging in", error);
@@ -25,10 +27,15 @@ export const login = async (payload: ILoginPayload): Promise<ILoginResponse> => 
 };
 
 // Returns null instead of throwing: proxy.ts treats "refresh failed" as
-// "signed out", whatever the reason.
-export const refreshAccessToken = async (refreshToken: string): Promise<string | null> => {
+// "signed out", whatever the reason. proxy.ts passes its own request's
+// headers, since headers() isn't available there.
+export const refreshAccessToken = async (refreshToken: string, requestHeaders: Pick<Headers, "get">): Promise<string | null> => {
   try {
-    const response = await axios.post<{ accessToken: string }>(`${API_BASE_URL}/admin/auth/refresh`, { refreshToken });
+    const response = await axios.post<{ accessToken: string }>(
+      `${API_BASE_URL}/admin/auth/refresh`,
+      { refreshToken },
+      { headers: clientHeaders(requestHeaders) },
+    );
     return response.data.accessToken;
   } catch {
     return null;
@@ -37,7 +44,7 @@ export const refreshAccessToken = async (refreshToken: string): Promise<string |
 
 export const logout = async (refreshToken: string): Promise<void> => {
   try {
-    await axios.post(`${API_BASE_URL}/admin/auth/logout`, { refreshToken });
+    await axios.post(`${API_BASE_URL}/admin/auth/logout`, { refreshToken }, { headers: await getClientHeaders() });
   } catch (error) {
     logServiceError("Error logging out", error);
     throw error;
@@ -56,7 +63,7 @@ export const getUserInfo = cache(async (): Promise<IAdminUser | null> => {
 
   try {
     const response = await axios.get<IAdminUser>(`${API_BASE_URL}/admin/auth/me`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${accessToken}`, ...(await getClientHeaders()) },
     });
     return response.data;
   } catch (error) {

@@ -49,7 +49,7 @@ export async function proxy(request: NextRequest) {
 
   // Rule 0 -- refresh proactively.
   if (refreshToken && (!accessToken || isTokenExpiringSoon(accessToken))) {
-    refreshedAccessToken = await refreshAccessToken(refreshToken);
+    refreshedAccessToken = await refreshAccessToken(refreshToken, request.headers);
     if (refreshedAccessToken) {
       accessToken = refreshedAccessToken;
     }
