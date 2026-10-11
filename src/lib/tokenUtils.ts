@@ -1,5 +1,6 @@
 import "server-only";
-import { deleteCookie, getCookie, setCookie } from "./cookiesUtils";
+import { isBetterAuthCookie } from "./betterAuthCookies";
+import { deleteCookie, deleteCookiesWhere, getCookie, setCookie } from "./cookiesUtils";
 import { jwtUtils } from "./jwtUtils";
 
 // The cookie names are a contract with proxy.ts, which reads them on every
@@ -40,9 +41,12 @@ export const setAuthCookies = async (accessToken: string, refreshToken: string) 
   await setTokenInCookies(REFRESH_TOKEN_COOKIE, refreshToken, REFRESH_TOKEN_MAX_AGE_SECONDS);
 };
 
+// Also better-auth's own cookies from a Google sign-in. Its session ended
+// with the backend logout; this just leaves nothing stale behind.
 export const clearAuthCookies = async () => {
   await deleteCookie(ACCESS_TOKEN_COOKIE);
   await deleteCookie(REFRESH_TOKEN_COOKIE);
+  await deleteCookiesWhere(isBetterAuthCookie);
 };
 
 export const getAccessToken = () => getCookie(ACCESS_TOKEN_COOKIE);
