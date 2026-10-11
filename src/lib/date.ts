@@ -48,6 +48,20 @@ export const endOfDayIso = (day: string): string => {
   return new Date(new TZDate(year, monthIndex, date, 23, 59, 59, 999, APP_TIME_ZONE).getTime()).toISOString();
 };
 
+// <input type="datetime-local"> values ("2026-10-11T09:30") are read and
+// written in the platform timezone, like every date the panel shows -- so a
+// 09:30 announcement starts at 09:30 in Dhaka whatever the admin's machine says.
+export const DATE_TIME_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+export const toDateTimeInputValue = (value: DateInput) => formatDate(value, "yyyy-MM-dd'T'HH:mm", "");
+
+export const dateTimeInputToIso = (value: string): string => {
+  const [day, time] = value.split("T");
+  const { year, monthIndex, date } = parseDay(day);
+  const [hours, minutes] = time.split(":").map(Number);
+  return new Date(new TZDate(year, monthIndex, date, hours, minutes, 0, 0, APP_TIME_ZONE).getTime()).toISOString();
+};
+
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // "2026-10" -> "Oct 2026" (or "Oct" with withYear = false). Month keys are
