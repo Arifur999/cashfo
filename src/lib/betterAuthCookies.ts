@@ -1,5 +1,3 @@
-import "server-only";
-
 // better-auth names its cookies (session, OAuth state) with this prefix --
 // and __Secure- in front of it on HTTPS.
 export const isBetterAuthCookie = (name: string) => name.startsWith("better-auth.") || name.startsWith("__Secure-better-auth.");
