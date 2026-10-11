@@ -5,7 +5,8 @@ import { format } from "date-fns";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { downloadCsv, toCsv } from "@/lib/table/csv";
+import { downloadCsv } from "@/lib/download";
+import { toCsv } from "@/lib/table/csv";
 import { getColumnLabel } from "./columnLabel";
 import { ACTIONS_COLUMN_ID } from "./columns/createActionsColumn";
 import { SELECT_COLUMN_ID } from "./columns/createSelectColumn";
@@ -33,7 +34,7 @@ const DataTableExportButton = <TData,>({ table, fileName }: { table: Table<TData
       }),
     );
 
-    downloadCsv(`${fileName}-${format(new Date(), "yyyy-MM-dd")}`, toCsv(headers, body));
+    downloadCsv(toCsv(headers, body), `${fileName}-${format(new Date(), "yyyy-MM-dd")}`);
   };
 
   return (

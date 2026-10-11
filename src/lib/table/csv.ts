@@ -1,4 +1,5 @@
-// Pure CSV helpers behind the DataTable export button (unit-tested).
+// Pure CSV helpers behind the DataTable export button (unit-tested); the
+// browser download itself is lib/download.ts.
 
 // RFC 4180 quoting, plus CSV-injection protection: a text cell starting with
 // = + - @ (or a tab/CR) is prefixed with ' so a spreadsheet never evaluates
@@ -23,14 +24,3 @@ export const toCsvCell = (value: unknown): string => {
 
 export const toCsv = (headers: string[], rows: unknown[][]): string =>
   [headers, ...rows].map((row) => row.map(toCsvCell).join(",")).join("\r\n");
-
-export const downloadCsv = (fileName: string, csv: string) => {
-  // The BOM makes Excel open the file as UTF-8, so Bangla names survive.
-  const blob = new Blob(["﻿", csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName.endsWith(".csv") ? fileName : `${fileName}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
-};
