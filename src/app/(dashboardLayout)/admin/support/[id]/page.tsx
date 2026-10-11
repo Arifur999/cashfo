@@ -1,21 +1,30 @@
-import { notFound } from "next/navigation";
-import { getCurrentAdmin } from "@/lib/adminAuth";
-import { getAdminOptions, getTicketById } from "@/lib/tickets";
-import { TicketDetailClient } from "@/components/support/TicketDetailClient";
+import type { Metadata } from "next";
+import TicketDetailView from "@/components/modules/Admin/Support/TicketDetail/TicketDetailView";
+import QueryPrefetch from "@/components/shared/QueryPrefetch";
+import { canManage } from "@/lib/authUtils";
+import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
+import { assignableAdminsQuery, ticketDetailQuery } from "@/queries/ticket.queries";
+import { getUserInfo } from "@/services/auth.services";
 
-interface TicketDetailPageProps {
-  params: Promise<{ id: string }>;
-}
+export const metadata: Metadata = { title: "Support Ticket" };
 
-export default async function TicketDetailPage({ params }: TicketDetailPageProps) {
-  const { id } = await params;
-  const [ticket, admins, admin] = await Promise.all([getTicketById(id), getAdminOptions(), getCurrentAdmin()]);
+const TicketDetailPage = async ({ params }: PageProps<"/admin/support/[id]">) => {
+  const [{ id }, admin] = await Promise.all([params, getUserInfo()]);
 
-  if (!ticket) {
-    notFound();
-  }
+  return (
+    <QueryPrefetch
+      prefetch={(client) =>
+        Promise.all([
+          // fetchQuery (unlike prefetchQuery) rejects, so an unknown id
+          // renders the not-found page instead of an empty view.
+          fetchOrNotFound(client.fetchQuery(ticketDetailQuery(id))),
+          client.prefetchQuery(assignableAdminsQuery()),
+        ])
+      }
+    >
+      <TicketDetailView ticketId={id} currentAdminId={admin?.id ?? null} canManage={canManage(admin?.role, "support")} />
+    </QueryPrefetch>
+  );
+};
 
-  const canManage = admin?.role === "SUPER_ADMIN" || admin?.role === "SUPPORT_ADMIN";
-
-  return <TicketDetailClient ticket={ticket} admins={admins} canManage={canManage} />;
-}
+export default TicketDetailPage;
