@@ -34,9 +34,11 @@ const AppSliderField = ({ field, label, min = 0, max = 100, step = 1, formatValu
       {(control) => (
         <Slider
           id={control.id}
-          aria-labelledby={`${field.name}-label`}
-          aria-describedby={control["aria-describedby"]}
-          aria-valuetext={formatValue(value)}
+          thumbProps={{
+            "aria-labelledby": `${field.name}-label`,
+            "aria-describedby": control["aria-describedby"],
+            "aria-valuetext": formatValue(value),
+          }}
           min={min}
           max={max}
           step={step}
