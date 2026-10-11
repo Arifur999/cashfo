@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { ApiResult } from "@/types/api.types";
 
@@ -20,42 +21,53 @@ interface UseActionMutationOptions<TVariables, TData> {
 // place: toast, invalidate the affected queries (which refetches the ones on
 // screen), and router.refresh(). `run` resolves to true on success so the
 // caller can close its dialog and reset its form.
-export function useActionMutation<TVariables, TData = unknown>({
-  action,
-  successMessage,
-  errorMessage = "Something went wrong",
-  invalidateKeys = [],
-  onSuccess,
-  refreshRoute = true,
-}: UseActionMutationOptions<TVariables, TData>) {
+//
+// `run` keeps one identity for the component's lifetime while always using
+// the latest options: it ends up in memoized table columns and row actions,
+// and TanStack renders a column's `cell` function as a component type -- a
+// new function per render would remount every cell (closing open menus,
+// dropping in-place edits).
+export function useActionMutation<TVariables, TData = unknown>(options: UseActionMutationOptions<TVariables, TData>) {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const mutation = useMutation({ mutationFn: action });
+  const optionsRef = useRef(options);
+  useLayoutEffect(() => {
+    optionsRef.current = options;
+  });
 
-  const run = async (variables: TVariables): Promise<boolean> => {
-    let result: ApiResult<TData>;
-    try {
-      result = await mutation.mutateAsync(variables);
-    } catch {
-      // Actions never throw by design; this is the Next.js server itself
-      // being unreachable.
-      toast.error("Unable to reach the server. Please try again.");
-      return false;
-    }
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: (variables: TVariables) => optionsRef.current.action(variables),
+  });
 
-    if (!result.success) {
-      toast.error(result.message || errorMessage);
-      return false;
-    }
+  const run = useCallback(
+    async (variables: TVariables): Promise<boolean> => {
+      const { successMessage, errorMessage = "Something went wrong", invalidateKeys = [], onSuccess, refreshRoute = true } = optionsRef.current;
 
-    toast.success(result.message || (typeof successMessage === "function" ? successMessage(result.data) : successMessage));
-    onSuccess?.(result.data);
-    await Promise.all(invalidateKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
-    if (refreshRoute) {
-      router.refresh();
-    }
-    return true;
-  };
+      let result: ApiResult<TData>;
+      try {
+        result = await mutateAsync(variables);
+      } catch {
+        // Actions never throw by design; this is the Next.js server itself
+        // being unreachable.
+        toast.error("Unable to reach the server. Please try again.");
+        return false;
+      }
 
-  return { run, isPending: mutation.isPending };
+      if (!result.success) {
+        toast.error(result.message || errorMessage);
+        return false;
+      }
+
+      toast.success(result.message || (typeof successMessage === "function" ? successMessage(result.data) : successMessage));
+      onSuccess?.(result.data);
+      await Promise.all(invalidateKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+      if (refreshRoute) {
+        router.refresh();
+      }
+      return true;
+    },
+    [mutateAsync, queryClient, router],
+  );
+
+  return { run, isPending };
 }
