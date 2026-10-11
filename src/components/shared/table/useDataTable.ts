@@ -3,6 +3,7 @@
 import {
   functionalUpdate,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
@@ -11,6 +12,7 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type ExpandedState,
   type FilterFn,
   type PaginationState,
   type RowSelectionState,
@@ -38,6 +40,7 @@ export function useDataTable<TData>({
   data,
   columns,
   getRowId,
+  getSubRows,
   tableId,
   defaultHiddenColumns = NO_HIDDEN_COLUMNS,
   actions,
@@ -58,6 +61,8 @@ export function useDataTable<TData>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  // Tree rows start fully expanded (`true` = every row).
+  const [expanded, setExpanded] = useState<ExpandedState>(true);
   const defaultVisibility = useMemo<VisibilityState>(
     () => Object.fromEntries(defaultHiddenColumns.map((columnId) => [columnId, false])),
     [defaultHiddenColumns],
@@ -85,12 +90,14 @@ export function useDataTable<TData>({
     data: data ?? EMPTY_ROWS,
     columns: allColumns,
     getRowId,
+    getSubRows,
     state: {
       sorting: sorting?.state ?? localSorting,
       pagination: pagination?.state ?? localPagination,
       columnFilters,
       globalFilter,
       rowSelection,
+      expanded,
       columnVisibility,
       columnPinning: {
         left: enableRowSelection ? [SELECT_COLUMN_ID] : [],
@@ -110,6 +117,7 @@ export function useDataTable<TData>({
       resetToFirstPage();
     },
     onRowSelectionChange: setRowSelection,
+    onExpandedChange: setExpanded,
     onColumnVisibilityChange: setColumnVisibility,
     defaultColumn: { filterFn: smartColumnFilterFn as FilterFn<TData> },
     globalFilterFn: "includesString",
@@ -125,12 +133,17 @@ export function useDataTable<TData>({
     autoResetPageIndex: false,
     manualSorting: isServerSorted,
     manualFiltering: isServerFiltered,
+    // Tree data: a parent stays when one of its children matches, and a page
+    // holds top-level rows with their children inline.
+    filterFromLeafRows: Boolean(getSubRows),
+    paginateExpandedRows: false,
     pageCount: isServerPaginated ? Math.max(meta?.totalPage ?? 1, 1) : undefined,
     rowCount: isServerPaginated ? meta?.total : undefined,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });

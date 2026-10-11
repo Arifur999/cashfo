@@ -69,6 +69,10 @@ export interface DataTableProps<TData> {
   data: TData[] | undefined;
   columns: ColumnDef<TData>[];
   getRowId?: (row: TData) => string;
+  // Tree data (e.g. a chart of accounts): a row's children. Rows start
+  // expanded, search/filters keep a parent whose child matches, and pages
+  // count top-level rows only. Render the first column with DataTableTreeCell.
+  getSubRows?: (row: TData) => TData[] | undefined;
   // Persists column visibility per table in localStorage when set.
   tableId?: string;
   // Column ids hidden until the admin turns them on from the View menu
