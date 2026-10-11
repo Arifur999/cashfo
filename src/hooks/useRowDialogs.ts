@@ -3,9 +3,8 @@
 import { useCallback, useState } from "react";
 
 // Tracks which dialog is open and for which table row -- at most one at a
-// time. Feature tables with custom row actions (suspend, change plan, reset
-// password, ...) use this directly; useRowActionModalState builds the
-// standard view/edit/delete trio on top of it.
+// time. Every feature table with row actions (edit, suspend, change plan,
+// reset password, ...) names its dialogs and opens them through this.
 export function useRowDialogs<TData, TDialog extends string = string>() {
   const [active, setActive] = useState<{ dialog: TDialog; row: TData } | null>(null);
 

@@ -29,6 +29,11 @@ export const formatDateTime = (value: DateInput, fallback = "—") => formatDate
 // date-range query params.
 export const toDateInputValue = (value: DateInput) => formatDate(value, "yyyy-MM-dd", "");
 
+// Today's calendar date in the platform timezone. Reads the clock, so call it
+// from a server render or an event handler -- never while rendering a client
+// component.
+export const getAppToday = () => toDateInputValue(new Date());
+
 const parseDay = (day: string) => {
   const [year, month, date] = day.split("-").map(Number);
   return { year, monthIndex: month - 1, date };
@@ -46,6 +51,20 @@ export const startOfDayIso = (day: string): string => {
 export const endOfDayIso = (day: string): string => {
   const { year, monthIndex, date } = parseDay(day);
   return new Date(new TZDate(year, monthIndex, date, 23, 59, 59, 999, APP_TIME_ZONE).getTime()).toISOString();
+};
+
+// <input type="datetime-local"> values ("2026-10-11T09:30") are read and
+// written in the platform timezone, like every date the panel shows -- so a
+// 09:30 announcement starts at 09:30 in Dhaka whatever the admin's machine says.
+export const DATE_TIME_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+export const toDateTimeInputValue = (value: DateInput) => formatDate(value, "yyyy-MM-dd'T'HH:mm", "");
+
+export const dateTimeInputToIso = (value: string): string => {
+  const [day, time] = value.split("T");
+  const { year, monthIndex, date } = parseDay(day);
+  const [hours, minutes] = time.split(":").map(Number);
+  return new Date(new TZDate(year, monthIndex, date, hours, minutes, 0, 0, APP_TIME_ZONE).getTime()).toISOString();
 };
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

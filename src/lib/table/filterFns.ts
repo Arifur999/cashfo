@@ -24,14 +24,20 @@ const isWithinDateRange = (cellValue: unknown, { from, to }: DateRangeValue) => 
 
 // The default filterFn for every in-memory DataTable column, so a columns file
 // never picks one per column. It dispatches on the filter value's shape:
-//   string[]        -> the cell equals any selected option (faceted filters)
+//   string[]        -> the cell equals any selected option (faceted filters);
+//                      a multi-valued cell matches when any value is selected
 //   { from?, to? }  -> the cell's date falls inside the range
 //   string          -> case-insensitive "contains"
 export const smartColumnFilterFn: FilterFn<unknown> = (row, columnId, filterValue) => {
   const cellValue = row.getValue(columnId);
 
   if (Array.isArray(filterValue)) {
-    return filterValue.length === 0 || filterValue.includes(String(cellValue));
+    if (filterValue.length === 0) {
+      return true;
+    }
+    return Array.isArray(cellValue)
+      ? cellValue.some((value) => filterValue.includes(String(value)))
+      : filterValue.includes(String(cellValue));
   }
   if (isDateRange(filterValue)) {
     return isWithinDateRange(cellValue, filterValue);

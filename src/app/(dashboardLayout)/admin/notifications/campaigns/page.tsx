@@ -1,35 +1,30 @@
-import { getCurrentAdmin } from "@/lib/adminAuth";
-import { getNotificationCampaigns, getNotificationTemplates } from "@/lib/notifications";
-import { getSubscriptionPlanOptions } from "@/lib/subscriptionPlans";
-import { CampaignsClient } from "@/components/notifications/CampaignsClient";
-import TabsNav from "@/components/shared/TabsNav";
-import { t } from "@/lib/i18n/t";
+import type { Metadata } from "next";
+import CampaignsTable from "@/components/modules/Admin/Notifications/Campaigns/CampaignsTable";
+import QueryPrefetch from "@/components/shared/QueryPrefetch";
+import { canManage } from "@/lib/authUtils";
+import { campaignsQuery, notificationTemplatesQuery } from "@/queries/notification.queries";
+import { plansQuery } from "@/queries/plan.queries";
+import { getUserInfo } from "@/services/auth.services";
 
-export default async function CampaignsPage() {
-  const [campaigns, templates, planOptions, admin] = await Promise.all([
-    getNotificationCampaigns(),
-    getNotificationTemplates(),
-    getSubscriptionPlanOptions(),
-    getCurrentAdmin(),
-  ]);
-  const canManage = admin?.role === "SUPER_ADMIN" || admin?.role === "SUPPORT_ADMIN";
+export const metadata: Metadata = { title: "Campaigns" };
+
+const CampaignsPage = async () => {
+  const admin = await getUserInfo();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900">{t("Notifications")}</h1>
-        <p className="mt-1 text-sm text-neutral-500">{t("Templates, send history, and bulk campaigns.")}</p>
-      </div>
-
-      <TabsNav
-        tabs={[
-          { label: t("Templates"), href: "/admin/notifications", exact: true },
-          { label: t("Send History"), href: "/admin/notifications/history" },
-          { label: t("Campaigns"), href: "/admin/notifications/campaigns" },
-        ]}
-      />
-
-      <CampaignsClient campaigns={campaigns} templates={templates} planOptions={planOptions} canManage={canManage} />
-    </div>
+    // Templates and plans feed the campaign form and the audience column.
+    <QueryPrefetch
+      prefetch={(client) =>
+        Promise.all([
+          client.prefetchQuery(campaignsQuery()),
+          client.prefetchQuery(notificationTemplatesQuery()),
+          client.prefetchQuery(plansQuery()),
+        ])
+      }
+    >
+      <CampaignsTable canManage={canManage(admin?.role, "notificationCampaigns")} />
+    </QueryPrefetch>
   );
-}
+};
+
+export default CampaignsPage;

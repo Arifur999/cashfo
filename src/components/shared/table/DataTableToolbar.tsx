@@ -3,6 +3,7 @@
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import DataTableExpandToggle from "./DataTableExpandToggle";
 import DataTableExportButton from "./DataTableExportButton";
 import DataTableSearch from "./DataTableSearch";
 import DataTableViewOptions from "./DataTableViewOptions";
@@ -42,6 +43,7 @@ const DataTableToolbar = <TData,>({ table, search, filters, toolbarAction, expor
         )}
       </div>
       <div className="flex items-center gap-2">
+        <DataTableExpandToggle table={table} />
         {exportFileName && <DataTableExportButton table={table} fileName={exportFileName} />}
         <DataTableViewOptions table={table} />
         {toolbarAction}

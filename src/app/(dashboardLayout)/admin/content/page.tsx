@@ -1,27 +1,20 @@
-import { getCurrentAdmin } from "@/lib/adminAuth";
-import { getAccountTemplates, getAnnouncements, getCategories, getLegalDocuments, getTranslations } from "@/lib/content";
-import { ContentPageClient } from "@/components/content/ContentPageClient";
+import type { Metadata } from "next";
+import AccountTemplatesTable from "@/components/modules/Admin/Content/Accounts/AccountTemplatesTable";
+import QueryPrefetch from "@/components/shared/QueryPrefetch";
+import { canManage } from "@/lib/authUtils";
+import { accountTemplatesQuery } from "@/queries/accountTemplate.queries";
+import { getUserInfo } from "@/services/auth.services";
 
-export default async function ContentPage() {
-  const [templates, categories, translations, announcements, legalDocuments, admin] = await Promise.all([
-    getAccountTemplates(),
-    getCategories(),
-    getTranslations(""),
-    getAnnouncements(),
-    getLegalDocuments(),
-    getCurrentAdmin(),
-  ]);
+export const metadata: Metadata = { title: "Chart of Accounts" };
 
-  const canManage = admin?.role === "SUPER_ADMIN" || admin?.role === "CONTENT_ADMIN";
+const ChartOfAccountsPage = async () => {
+  const admin = await getUserInfo();
 
   return (
-    <ContentPageClient
-      templates={templates}
-      categories={categories}
-      translations={translations}
-      announcements={announcements}
-      legalDocuments={legalDocuments}
-      canManage={canManage}
-    />
+    <QueryPrefetch prefetch={(client) => client.prefetchQuery(accountTemplatesQuery())}>
+      <AccountTemplatesTable canManage={canManage(admin?.role, "content")} />
+    </QueryPrefetch>
   );
-}
+};
+
+export default ChartOfAccountsPage;

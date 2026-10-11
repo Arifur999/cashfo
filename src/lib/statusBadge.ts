@@ -58,6 +58,21 @@ const STATUS_TONES: Record<string, BadgeTone> = {
   SUPPORT_ADMIN: "info",
   FINANCE_ADMIN: "success",
   CONTENT_ADMIN: "warning",
+  // ledger: account types and category directions
+  ASSET: "info",
+  LIABILITY: "orange",
+  EQUITY: "accent",
+  INCOME: "success",
+  EXPENSE: "warning",
+  // workspace kinds
+  PERSONAL: "info",
+  BUSINESS: "accent",
+  GROUP: "teal",
+  // announcement types
+  INFO: "info",
+  WARNING: "warning",
+  PROMOTION: "success",
+  MAINTENANCE: "danger",
   // sources / channels
   BACKEND_API: "info",
   ADMIN_FRONTEND: "accent",

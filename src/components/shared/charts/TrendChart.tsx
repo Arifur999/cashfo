@@ -24,6 +24,8 @@ interface TrendChartProps {
   formatY?: (value: number) => string;
   height?: number;
   emptyMessage?: string;
+  // Counts (users, sessions) never get fractional ticks like 0.25.
+  integerValues?: boolean;
 }
 
 // Area chart for one or more series over time (revenue by month, DAU/WAU).
@@ -36,6 +38,7 @@ const TrendChart = ({
   formatY,
   height = 260,
   emptyMessage = "No data for this period.",
+  integerValues = false,
 }: TrendChartProps) => {
   // Gradient ids must be unique per instance, or two charts on one page
   // would share (and overwrite) each other's fills.
@@ -67,7 +70,15 @@ const TrendChart = ({
             stroke="var(--muted-foreground)"
             minTickGap={16}
           />
-          <YAxis tickLine={false} axisLine={false} tickFormatter={formatY} fontSize={12} width={88} stroke="var(--muted-foreground)" />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={formatY}
+            allowDecimals={!integerValues}
+            fontSize={12}
+            width={88}
+            stroke="var(--muted-foreground)"
+          />
           <Tooltip
             formatter={(value) => (formatY ? formatY(Number(value)) : String(value))}
             labelFormatter={(label) => (formatX ? formatX(String(label)) : String(label))}

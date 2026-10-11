@@ -35,4 +35,5 @@ export const queryKeys = {
   notificationTemplates: createDomainKeys("notification-templates"),
   notificationLogs: createDomainKeys("notification-logs"),
   campaigns: createDomainKeys("campaigns"),
+  analytics: createDomainKeys("analytics"),
 } as const;
