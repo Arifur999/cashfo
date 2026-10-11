@@ -42,6 +42,8 @@ const DataTableSearch = ({ value, onDebouncedChange, placeholder = "Search...", 
         // A placeholder alone isn't an accessible name.
         aria-label={placeholder}
         placeholder={placeholder}
+        // Our own clear button replaces the browser's, which would double it.
+        className="[&::-webkit-search-cancel-button]:appearance-none"
         value={inputValue}
         onChange={(event) => {
           setInputValue(event.target.value);
