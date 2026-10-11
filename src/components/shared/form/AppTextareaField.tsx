@@ -13,9 +13,11 @@ interface AppTextareaFieldProps {
   description?: React.ReactNode;
   readOnly?: boolean;
   className?: string;
+  // e.g. Ctrl+Enter to submit a reply box.
+  onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
 }
 
-const AppTextareaField = ({ field, label, placeholder, rows = 4, description, readOnly, className }: AppTextareaFieldProps) => {
+const AppTextareaField = ({ field, label, placeholder, rows = 4, description, readOnly, className, onKeyDown }: AppTextareaFieldProps) => {
   return (
     <FormFieldShell field={field} label={label} description={description}>
       {(control, hasError) => (
@@ -26,6 +28,7 @@ const AppTextareaField = ({ field, label, placeholder, rows = 4, description, re
           value={field.state.value ?? ""}
           onBlur={field.handleBlur}
           onChange={(event) => field.handleChange(event.target.value)}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           readOnly={readOnly}
           className={cn(hasError && "border-destructive focus-visible:ring-destructive/20", className)}

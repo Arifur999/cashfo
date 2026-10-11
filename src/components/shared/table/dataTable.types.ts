@@ -65,7 +65,8 @@ export interface DataTableFiltersConfig {
 }
 
 export interface DataTableProps<TData> {
-  data: TData[];
+  // undefined while loading; the table substitutes a stable empty array.
+  data: TData[] | undefined;
   columns: ColumnDef<TData>[];
   getRowId?: (row: TData) => string;
   // Persists column visibility per table in localStorage when set.

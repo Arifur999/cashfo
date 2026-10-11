@@ -47,3 +47,16 @@ export const endOfDayIso = (day: string): string => {
   const { year, monthIndex, date } = parseDay(day);
   return new Date(new TZDate(year, monthIndex, date, 23, 59, 59, 999, APP_TIME_ZONE).getTime()).toISOString();
 };
+
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// "2026-10" -> "Oct 2026" (or "Oct" with withYear = false). Month keys are
+// already calendar months, so no timezone conversion applies.
+export const formatMonthKey = (key: string, withYear = true): string => {
+  const [year, month] = key.split("-");
+  const label = MONTH_LABELS[Number(month) - 1];
+  if (!label) {
+    return key;
+  }
+  return withYear ? `${label} ${year}` : label;
+};

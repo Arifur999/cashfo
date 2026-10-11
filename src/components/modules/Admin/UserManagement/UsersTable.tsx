@@ -51,7 +51,7 @@ const UsersTable = () => {
       <DataTable
         {...dataTableProps}
         {...toTableQueryProps(query)}
-        data={query.data?.data ?? []}
+        data={query.data?.data}
         columns={usersColumns}
         getRowId={(row) => row.userId}
         tableId="users"

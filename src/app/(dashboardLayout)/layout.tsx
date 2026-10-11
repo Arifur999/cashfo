@@ -20,12 +20,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
 
   return (
     <LocaleProvider>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen overflow-hidden print:block print:h-auto print:overflow-visible">
         <DashboardSidebar />
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
           <DashboardNavbar />
           {/* id + tabIndex give the root layout's skip link a focus target. */}
-          <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-4 outline-none md:p-8">
+          <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-4 outline-none md:p-8 print:overflow-visible print:p-0">
             {children}
           </main>
         </div>

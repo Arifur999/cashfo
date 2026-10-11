@@ -43,7 +43,7 @@ const ManageOwnersTable = ({ canResetData }: { canResetData: boolean }) => {
       <DataTable
         {...dataTableProps}
         {...toTableQueryProps(query)}
-        data={query.data?.data ?? []}
+        data={query.data?.data}
         columns={manageOwnersColumns}
         getRowId={(row) => row.userId}
         tableId="manage-owners"

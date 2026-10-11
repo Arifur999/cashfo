@@ -16,3 +16,17 @@ export const MONEY_PATTERN = /^\d+(\.\d{1,2})?$/;
 
 // Whole numbers only, optionally negative (feature limits use -1 = unlimited).
 export const INTEGER_PATTERN = /^-?\d+$/;
+
+// An absolute http(s) URL. Anything else (javascript:, data:, a relative
+// path) must never be rendered as a clickable link.
+export const isHttpUrl = (value: string | null | undefined): value is string => {
+  if (!value) {
+    return false;
+  }
+  try {
+    const { protocol } = new URL(value);
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+};

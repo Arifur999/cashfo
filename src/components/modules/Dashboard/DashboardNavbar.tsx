@@ -12,7 +12,7 @@ const DashboardNavbar = async () => {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b bg-card/90 px-4 backdrop-blur md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b bg-card/90 px-4 backdrop-blur md:px-6 print:hidden">
       <MobileNav sections={getNavSectionsByRole(admin.role)} />
       <NavbarGreeting name={admin.name} />
       <div className="ml-auto flex items-center gap-2">

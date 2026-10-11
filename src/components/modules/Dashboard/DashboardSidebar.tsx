@@ -12,7 +12,7 @@ const DashboardSidebar = async () => {
   }
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:flex">
+    <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:flex print:hidden">
       <SidebarBrand />
       <SidebarNav sections={getNavSectionsByRole(admin.role)} />
     </aside>
