@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cashfo Admin Panel
 
-## Getting Started
+The internal admin panel for Cashfo: users and workspaces, subscriptions and payments, content, support, notifications, security and system tooling. It talks to the NestJS backend (`cashfo_backend`) over its `/admin/*` API.
 
-First, run the development server:
+## Stack
+
+Next.js 16 (App Router, `proxy.ts`) · React 19 · TypeScript · Tailwind CSS v4 · shadcn/ui (`radix-maia`, lucide icons) · TanStack Query, Form and Table · zod v4 · axios (server-side only) · recharts · sonner · `@date-fns/tz`.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # point API_BASE_URL at the backend
+npm run dev                  # http://localhost:3000/admin/login
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The backend must be running (default `http://localhost:5000`). Sign in with an admin account from the backend seed.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Script | What it does |
+|---|---|
+| `npm run dev` | Dev server (`next dev --webpack`) |
+| `npm run build` / `npm start` | Production build / serve |
+| `npm run lint` | ESLint (Next, React Compiler and TanStack Query rules) |
+| `npm test` | Unit tests -- see [TESTING.md](TESTING.md) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How the code is organised
 
-## Learn More
+```
+src/
+  app/                         routes only: page.tsx, layout.tsx, loading.tsx, _action.ts
+    (auth)/admin/login/
+    (dashboardLayout)/admin/<area>/
+    -actions/                  actions not tied to one route (logout, error reports)
+  components/
+    ui/                        shadcn primitives (generated -- add with `npx shadcn add`)
+    shared/                    app-wide building blocks: DataTable, form fields, dialogs, charts, cells
+    modules/Admin/<Area>/      feature components
+  services/                    "use server" API calls through httpClient
+  queries/                     TanStack Query options (one queryKey per call)
+  types/                       API response and payload types
+  zod/                         form + server schemas (with tests)
+  hooks/                       useServerDataTable, useActionMutation, useRowDialogs, ...
+  lib/                         httpClient, auth/role helpers, formatters, query-string builders
+  proxy.ts                     auth gate, token refresh, role-based route access
+```
 
-To learn more about Next.js, take a look at the following resources:
+### The layering rule
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`component → _action.ts → service → httpClient`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Services** (`services/*.services.ts`, `"use server"`) are thin API calls. They log and rethrow on failure.
+- **Actions** (`_action.ts` beside the page) re-validate input with the server zod schema and **never throw** -- they always return `{ success, message, data }` (see `lib/runAction.ts`). Components never need a try/catch.
+- **Components** never import `httpClient`. Reads go through TanStack Query (`queries/*`); writes through `useActionMutation`, which toasts, invalidates the affected query keys and returns `true` on success.
+- **Pages** are Server Components: they prefetch with `QueryPrefetch` so the client tables render with data on first paint.
 
-## Deploy on Vercel
+### Tables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Every list uses the shared `DataTable` (`components/shared/table`): sorting, faceted and date-range filters, search, column visibility (remembered per browser), CSV export, row selection, row actions, sticky header, skeleton and empty states, and tree rows (`getSubRows`).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Server-paginated** lists use `useServerDataTable(config)`: the URL is the source of truth (`?page=&limit=&search=&status=...`), updated with `history.pushState`, and the same config builds the page's prefetch query string.
+- **Short lists** (plans, coupons, categories, ...) are filtered, sorted and paged in memory.
+
+### Roles
+
+`proxy.ts` redirects to the login page without a session and keeps signed-in admins out of areas their role can't open (Security and System are SUPER_ADMIN only). Inside a page, `canManage(role, area)` (`lib/authUtils.ts`) decides whether edit controls show; the backend enforces the same rules.
+
+### Dates
+
+All dates render and filter in the platform timezone (`NEXT_PUBLIC_APP_TIME_ZONE`, default `Asia/Dhaka`) through `lib/date.ts`, so server and browser always agree and "today" means Bangladesh's today.
+
+## Adding a feature
+
+1. `types/<feature>.types.ts` -- response and payload types.
+2. `zod/<feature>.validation.ts` -- a form schema and a server schema, plus a `.test.ts`.
+3. `services/<feature>.services.ts` -- `"use server"` calls through `httpClient`.
+4. `queries/<feature>.queries.ts` -- `queryOptions` keyed through `lib/queryKeys.ts`.
+5. `app/(dashboardLayout)/admin/<route>/_action.ts` -- one-line actions over `runValidatedAction`.
+6. `components/modules/Admin/<Area>/` -- columns, table, forms, dialogs.
+7. `page.tsx` (prefetch + render) and `loading.tsx`; add the route to `lib/navItem.ts`.
