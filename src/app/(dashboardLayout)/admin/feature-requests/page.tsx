@@ -1,37 +1,28 @@
-import { getCurrentAdmin } from "@/lib/adminAuth";
-import { getFeatureRequests } from "@/lib/tickets";
-import { FeatureRequestsClient } from "@/components/support/FeatureRequestsClient";
-import TabsNav from "@/components/shared/TabsNav";
-import { t } from "@/lib/i18n/t";
+import type { Metadata } from "next";
+import FeatureRequestsTable from "@/components/modules/Admin/Support/FeatureRequests/FeatureRequestsTable";
+import FeatureRequestSummary from "@/components/modules/Admin/Support/FeatureRequests/FeatureRequestSummary";
+import SupportTabs from "@/components/modules/Admin/Support/SupportTabs";
+import PageHeader from "@/components/shared/PageHeader";
+import QueryPrefetch from "@/components/shared/QueryPrefetch";
+import { canManage } from "@/lib/authUtils";
+import { featureRequestsQuery } from "@/queries/featureRequest.queries";
+import { getUserInfo } from "@/services/auth.services";
 
-interface FeatureRequestsPageProps {
-  searchParams: Promise<Record<string, string | undefined>>;
-}
+export const metadata: Metadata = { title: "Feature Requests" };
 
-export default async function FeatureRequestsPage({ searchParams }: FeatureRequestsPageProps) {
-  const params = await searchParams;
-  const queryString = new URLSearchParams(
-    Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][],
-  ).toString();
-
-  const [requests, admin] = await Promise.all([getFeatureRequests(queryString), getCurrentAdmin()]);
-  const canManage = admin?.role === "SUPER_ADMIN" || admin?.role === "SUPPORT_ADMIN";
+const FeatureRequestsPage = async () => {
+  const admin = await getUserInfo();
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900">{t("Support")}</h1>
-        <p className="mt-1 text-sm text-neutral-500">{t("Support tickets and feature requests.")}</p>
-      </div>
-
-      <TabsNav
-        tabs={[
-          { label: t("Tickets"), href: "/admin/support" },
-          { label: t("Feature Requests"), href: "/admin/feature-requests" },
-        ]}
-      />
-
-      <FeatureRequestsClient requests={requests} canManage={canManage} />
+      <PageHeader title="Support" description="Support tickets and feature requests." />
+      <QueryPrefetch prefetch={(client) => client.prefetchQuery(featureRequestsQuery())}>
+        <FeatureRequestSummary />
+        <SupportTabs />
+        <FeatureRequestsTable canManage={canManage(admin?.role, "support")} />
+      </QueryPrefetch>
     </div>
   );
-}
+};
+
+export default FeatureRequestsPage;
