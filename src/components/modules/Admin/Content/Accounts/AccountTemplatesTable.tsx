@@ -24,7 +24,7 @@ const AccountTemplatesTable = ({ canManage }: { canManage: boolean }) => {
   const { data, isLoading, isFetching } = useQuery(accountTemplatesQuery());
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IAccountTemplate, AccountTemplateDialog>();
 
-  const reactivate = useActionMutation({
+  const { run: reactivate } = useActionMutation({
     action: reactivateAccountTemplateAction,
     successMessage: "Account reactivated",
     invalidateKeys: [queryKeys.accountTemplates.all],
@@ -44,7 +44,7 @@ const AccountTemplatesTable = ({ canManage }: { canManage: boolean }) => {
                 // The chart is one level deep.
                 hidden: (row) => row.parentId !== null || !row.isActive,
               },
-              { label: "Reactivate", icon: RotateCcw, onClick: (row) => void reactivate.run(row.id), hidden: (row) => row.isActive },
+              { label: "Reactivate", icon: RotateCcw, onClick: (row) => void reactivate(row.id), hidden: (row) => row.isActive },
               {
                 label: "Deactivate",
                 icon: PowerOff,

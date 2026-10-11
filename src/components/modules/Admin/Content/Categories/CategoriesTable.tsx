@@ -23,7 +23,7 @@ const CategoriesTable = ({ canManage }: { canManage: boolean }) => {
   const { data, isLoading, isFetching } = useQuery(categoriesQuery());
   const { activeRow: category, openDialog, closeDialog, getDialogProps } = useRowDialogs<ICategory, "edit">();
 
-  const setActive = useActionMutation({
+  const { run: setActive } = useActionMutation({
     action: ({ id, isActive }: { id: string; isActive: boolean }) => setCategoryActiveAction(id, isActive),
     successMessage: (updated) => `${updated.name} ${updated.isActive ? "activated" : "deactivated"}`,
     invalidateKeys: [queryKeys.categories.all],
@@ -39,14 +39,14 @@ const CategoriesTable = ({ canManage }: { canManage: boolean }) => {
               {
                 label: "Activate",
                 icon: RotateCcw,
-                onClick: (row) => void setActive.run({ id: row.id, isActive: true }),
+                onClick: (row) => void setActive({ id: row.id, isActive: true }),
                 hidden: (row) => row.isActive,
               },
               {
                 label: "Deactivate",
                 icon: PowerOff,
                 destructive: true,
-                onClick: (row) => void setActive.run({ id: row.id, isActive: false }),
+                onClick: (row) => void setActive({ id: row.id, isActive: false }),
                 hidden: (row) => !row.isActive,
               },
             ],
