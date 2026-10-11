@@ -1,8 +1,8 @@
 import { AlertOctagon, Lock, ShieldAlert } from "lucide-react";
 import { getLoginAttempts, getLoginAttemptsSummary } from "@/lib/security";
 import { requireSuperAdmin } from "@/lib/requireSuperAdmin";
-import { HorizontalBarList } from "@/components/analytics/HorizontalBarList";
-import { SectionCard } from "@/components/analytics/SectionCard";
+import HorizontalBarList from "@/components/shared/charts/HorizontalBarList";
+import SectionCard from "@/components/shared/SectionCard";
 import { SummaryCard } from "@/components/payments/SummaryCard";
 import { LoginAttemptsTable } from "@/components/security/LoginAttemptsTable";
 import TabsNav from "@/components/shared/TabsNav";
