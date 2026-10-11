@@ -3,6 +3,7 @@ import axios from "axios";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/tokenUtils";
 import type { ApiResponse, IPaginatedBody } from "@/types/api.types";
+import { getForwardedForHeader } from "./forwardedFor";
 import { logServiceError } from "./logServiceError";
 
 // No NEXT_PUBLIC_ prefix on purpose: the browser never talks to the backend
@@ -31,6 +32,7 @@ const buildHeaders = async (extra?: Record<string, string>) => {
     "Content-Type": "application/json",
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+    ...(await getForwardedForHeader()),
     ...extra,
   };
 };
