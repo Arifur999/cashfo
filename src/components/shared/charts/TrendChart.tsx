@@ -67,7 +67,7 @@ const TrendChart = ({
             stroke="var(--muted-foreground)"
             minTickGap={16}
           />
-          <YAxis tickLine={false} axisLine={false} tickFormatter={formatY} fontSize={12} width={64} stroke="var(--muted-foreground)" />
+          <YAxis tickLine={false} axisLine={false} tickFormatter={formatY} fontSize={12} width={88} stroke="var(--muted-foreground)" />
           <Tooltip
             formatter={(value) => (formatY ? formatY(Number(value)) : String(value))}
             labelFormatter={(label) => (formatX ? formatX(String(label)) : String(label))}
