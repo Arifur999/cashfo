@@ -60,6 +60,17 @@ Every list uses the shared `DataTable` (`components/shared/table`): sorting, fac
 - **Server-paginated** lists use `useServerDataTable(config)`: the URL is the source of truth (`?page=&limit=&search=&status=...`), updated with `history.pushState`, and the same config builds the page's prefetch query string.
 - **Short lists** (plans, coupons, categories, ...) are filtered, sorted and paged in memory.
 
+### Signing in
+
+The backend runs [better-auth](https://www.better-auth.com); this app never talks to it from the browser except for Google.
+
+- **Email and password** -- the login Server Action calls `POST /admin/auth/login`. better-auth checks the password and opens a session; the backend answers with an access/refresh token pair bound to that session (`sid`), stored here as httpOnly cookies. `proxy.ts` refreshes the access token before it expires. Logging out ends the session on the backend, so both tokens stop working at once.
+- **Continue with Google** -- the button posts to `/api/auth/sign-in/social`, which `app/api/auth/[...all]/route.ts` forwards to the backend (only better-auth's public endpoints pass, see `lib/betterAuthRoutes.ts`). Google returns to `/api/auth/callback/google` on this origin, better-auth sets its session cookie and sends the browser to `/admin/login/google`, which exchanges that session for the same token pair and opens the dashboard. The button never creates accounts: only an existing admin's Google address gets in.
+
+Google needs, on the OAuth client, the redirect URI `<site>/api/auth/callback/google` (locally `http://localhost:3000/api/auth/callback/google`), and on the backend `BETTER_AUTH_URL` set to this site's origin plus `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`.
+
+Every backend call carries the visitor's `X-Forwarded-For` and `User-Agent` (`lib/axios/clientHeaders.ts`), so the login throttle, login history and session records see the real client, not this server.
+
 ### Roles
 
 `proxy.ts` redirects to the login page without a session and keeps signed-in admins out of areas their role can't open (Security and System are SUPER_ADMIN only). Inside a page, `canManage(role, area)` (`lib/authUtils.ts`) decides whether edit controls show; the backend enforces the same rules.
