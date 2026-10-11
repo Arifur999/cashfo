@@ -1,4 +1,5 @@
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
+import DescriptionList from "@/components/shared/DescriptionList";
 import SectionCard from "@/components/shared/SectionCard";
 import { formatCurrency } from "@/lib/currency";
 import { formatDateTime } from "@/lib/date";
@@ -7,20 +8,14 @@ import type { IRefund } from "@/types/payment.types";
 const RefundDetailsCard = ({ refund, currency }: { refund: IRefund; currency: string }) => {
   return (
     <SectionCard title="Refund" action={<StatusBadgeCell status={refund.status} />}>
-      <dl className="grid gap-3 text-sm sm:grid-cols-3">
-        <div>
-          <dt className="text-xs text-muted-foreground uppercase">Amount</dt>
-          <dd className="mt-0.5 font-medium tabular-nums">{formatCurrency(refund.amount, currency)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground uppercase">Date</dt>
-          <dd className="mt-0.5">{formatDateTime(refund.createdAt)}</dd>
-        </div>
-        <div className="sm:col-span-3">
-          <dt className="text-xs text-muted-foreground uppercase">Reason</dt>
-          <dd className="mt-0.5">{refund.reason}</dd>
-        </div>
-      </dl>
+      <DescriptionList
+        layout="stacked"
+        items={[
+          { label: "Amount", value: <span className="font-medium tabular-nums">{formatCurrency(refund.amount, currency)}</span> },
+          { label: "Date", value: formatDateTime(refund.createdAt) },
+          { label: "Reason", value: refund.reason, fullWidth: true },
+        ]}
+      />
     </SectionCard>
   );
 };
