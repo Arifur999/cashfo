@@ -8,12 +8,12 @@ import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSelectField from "@/components/shared/form/AppSelectField";
-import IconPreview from "@/components/shared/IconPreview";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import { accountTemplatesQuery } from "@/queries/accountTemplate.queries";
 import type { ICategory } from "@/types/category.types";
 import { categoryFormZodSchema, type ICategoryFormValues } from "@/zod/category.validation";
+import CategoryIconField from "./CategoryIconField";
 import { buildLinkedAccountOptions, CATEGORY_DIRECTION_OPTIONS } from "./categoryOptions";
 
 const { shape } = categoryFormZodSchema;
@@ -67,15 +67,7 @@ const CategoryForm = ({ defaultValues, category, onDone }: CategoryFormProps) =>
           {(field) => <AppSelectField field={field} label="Type" options={CATEGORY_DIRECTION_OPTIONS} />}
         </form.Field>
         <form.Field name="icon" validators={{ onChange: shape.icon }}>
-          {(field) => (
-            <AppField
-              field={field}
-              label="Icon"
-              placeholder="e.g. shopping-cart"
-              prepend={<IconPreview name={field.state.value} />}
-              description="A lucide icon name; the preview shows how it looks."
-            />
-          )}
+          {(field) => <CategoryIconField field={field} label="Icon" />}
         </form.Field>
       </div>
       <form.Field name="linkedAccountTemplateId" validators={{ onChange: shape.linkedAccountTemplateId }}>
