@@ -1,19 +1,22 @@
-import Link from "next/link";
 import { SearchX } from "lucide-react";
-import { t } from "@/lib/i18n/t";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { DEFAULT_DASHBOARD_ROUTE } from "@/lib/authUtils";
 
+// An unknown URL, or a detail page whose record doesn't exist (see
+// fetchOrNotFound). Rendered inside the dashboard shell.
 export default function DashboardNotFound() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-16 text-center shadow-sm shadow-black/5">
-      <SearchX className="h-10 w-10 text-neutral-300" />
-      <h1 className="mt-4 text-lg font-semibold text-neutral-900">{t("Not found")}</h1>
-      <p className="mt-1 text-sm text-neutral-500">{t("The page or record you're looking for doesn't exist.")}</p>
-      <Link
-        href="/admin/dashboard"
-        className="mt-5 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
-      >
-        {t("Back to Dashboard")}
-      </Link>
-    </div>
+    <Card className="shadow-sm shadow-black/5">
+      <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+        <SearchX className="size-10 text-muted-foreground" aria-hidden="true" />
+        <h1 className="text-lg font-semibold text-foreground">Not found</h1>
+        <p className="max-w-md text-sm text-muted-foreground">The page or record you&apos;re looking for doesn&apos;t exist, or was removed.</p>
+        <Button asChild className="mt-2">
+          <Link href={DEFAULT_DASHBOARD_ROUTE}>Back to dashboard</Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
