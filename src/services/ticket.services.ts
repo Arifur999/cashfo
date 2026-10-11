@@ -4,6 +4,7 @@ import { httpClient } from "@/lib/axios/httpClient";
 import type { IPaginatedBody } from "@/types/api.types";
 import type {
   IAdminOption,
+  ICreatedTicket,
   ICreateTicketPayload,
   ISupportTicket,
   ISupportTicketDetail,
@@ -19,7 +20,7 @@ export const getTicketStats = async () => httpClient.get<ITicketStats>("/admin/t
 
 export const getTicketById = async (id: string) => httpClient.get<ISupportTicketDetail>(`/admin/tickets/${id}`);
 
-export const createTicket = async (payload: ICreateTicketPayload) => httpClient.post<ISupportTicketDetail>("/admin/tickets", payload);
+export const createTicket = async (payload: ICreateTicketPayload) => httpClient.post<ICreatedTicket>("/admin/tickets", payload);
 
 export const updateTicket = async (id: string, payload: IUpdateTicketPayload) => httpClient.patch<void>(`/admin/tickets/${id}`, payload);
 

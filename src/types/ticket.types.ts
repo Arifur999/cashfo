@@ -47,6 +47,10 @@ export interface ISupportTicketDetail extends Omit<ISupportTicket, "platformUser
   platformUser: (ITicketUser & { plan: { id: string; name: string } | null }) | null;
 }
 
+// POST /admin/tickets answers with the bare ticket and its first message --
+// no user or assignee attached.
+export type ICreatedTicket = Omit<ISupportTicketDetail, "platformUser" | "assignedAdmin">;
+
 export interface ITicketStats {
   openCount: number;
   inProgressCount: number;
