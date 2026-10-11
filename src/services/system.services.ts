@@ -13,6 +13,11 @@ export const getErrorLogs = async (queryString: string) => httpClient.getPaginat
 
 export const resolveErrorLog = async (id: string) => httpClient.patch<IErrorLog>(`/admin/system/errors/${id}/resolve`);
 
+// The one write any signed-in admin may make here: the dashboard's error
+// boundary logging a crash.
+export const reportFrontendError = async (report: { message: string; stackTrace?: string }) =>
+  httpClient.post<IErrorLog>("/admin/system/errors", { source: "ADMIN_FRONTEND", severity: "MEDIUM", ...report });
+
 export const getRateLimitLogs = async (queryString: string) => httpClient.getPaginated<IRateLimitLog>(`/admin/system/rate-limits?${queryString}`);
 
 export const getRateLimitSummary = async () => httpClient.get<IRateLimitSummary>("/admin/system/rate-limits/summary");
