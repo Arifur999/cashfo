@@ -15,7 +15,6 @@ const ACTION_LABELS: Record<string, string> = {
   USER_PLAN_CHANGED: "Changed a user's plan",
   BUSINESS_PLAN_CHANGED: "Changed a workspace's plan",
   OWNER_DATA_RESET: "Reset an owner's workspace data",
-  PASSWORD_RESET: "Reset a password",
   PASSWORD_RESET_BY_ADMIN: "Reset a password",
   PLAN_UPDATED: "Updated a subscription plan",
   PLAN_ARCHIVED: "Archived a subscription plan",
@@ -38,3 +37,9 @@ const ACTION_LABELS: Record<string, string> = {
 export function auditActionLabel(action: string): string {
   return ACTION_LABELS[action] ?? humanizeEnum(action);
 }
+
+// The audit log's action filter, alphabetical by wording. Only actions the
+// API actually records are listed above, so every option can match.
+export const AUDIT_ACTION_OPTIONS = Object.entries(ACTION_LABELS)
+  .map(([value, label]) => ({ value, label }))
+  .sort((a, b) => a.label.localeCompare(b.label));
