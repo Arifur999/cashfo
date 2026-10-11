@@ -1,5 +1,6 @@
 import "server-only";
 import { API_BASE_URL } from "@/lib/axios/httpClient";
+import { betterAuthCookies } from "@/lib/betterAuthCookies";
 
 // better-auth runs on the backend; the browser reaches it through this
 // origin's /api/auth, so its cookies (OAuth state, the session) are
@@ -20,15 +21,6 @@ export const isExposedAuthPath = (pathname: string): boolean => {
 };
 
 const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "origin", "referer", "user-agent", "x-forwarded-for", "authorization"];
-
-// better-auth's own cookies only -- the app's access/refresh tokens have no
-// business on the auth server.
-export const betterAuthCookies = (cookieHeader: string | null) =>
-  (cookieHeader ?? "")
-    .split(";")
-    .map((cookie) => cookie.trim())
-    .filter((cookie) => cookie.startsWith("better-auth.") || cookie.startsWith("__Secure-better-auth."))
-    .join("; ");
 
 // fetch() has already decoded the body and framed it, so these would lie.
 const DROPPED_RESPONSE_HEADERS = new Set(["content-encoding", "content-length", "transfer-encoding", "connection", "keep-alive", "set-cookie"]);

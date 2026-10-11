@@ -3,7 +3,7 @@ import axios, { isAxiosError } from "axios";
 import { cache } from "react";
 import { clientHeaders, getClientHeaders } from "@/lib/axios/clientHeaders";
 import { API_BASE_URL } from "@/lib/axios/httpClient";
-import { betterAuthCookies } from "@/lib/betterAuthProxy";
+import { betterAuthCookies } from "@/lib/betterAuthCookies";
 import { logServiceError } from "@/lib/axios/logServiceError";
 import { getAccessToken } from "@/lib/tokenUtils";
 import type { IAdminUser, ILoginPayload, ILoginResponse } from "@/types/auth.types";
