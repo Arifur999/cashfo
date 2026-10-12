@@ -1,17 +1,19 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
-import { usePersistentState } from "@/hooks/usePersistentState";
-import { bnDictionary } from "./dictionary";
+import { useRouter } from "next/navigation";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE_SECONDS } from "./localeCookie";
+import { translate as translateTo, type Locale } from "./translate";
 
-export type Locale = "en" | "bn";
-
-const STORAGE_KEY = "admin-panel-locale";
+export type { Locale };
 
 interface LocaleContextValue {
   locale: Locale;
   toggleLocale: () => void;
+  // One function, two names: the admin panel calls it translate(), the
+  // customer app t().
   translate: (key: string) => string;
+  t: (key: string) => string;
 }
 
 // What a component rendered outside the provider (a test, a portal) gets:
@@ -20,18 +22,22 @@ const fallbackContext: LocaleContextValue = {
   locale: "en",
   toggleLocale: () => {},
   translate: (key) => key,
+  t: (key) => key,
 };
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  // Renders "en" on the server and the first client paint (so the markup
-  // matches), then switches to the stored preference -- usePersistentState
-  // does that through useSyncExternalStore, no setState-in-effect cascade.
-  // A bn-preferring admin still sees a brief flash of English chrome, an
-  // acceptable tradeoff versus a cookie-based, server-readable locale.
-  const [storedLocale, setStoredLocale] = usePersistentState<Locale>(STORAGE_KEY, "en");
-  const locale: Locale = storedLocale === "bn" ? "bn" : "en";
+interface LocaleProviderProps {
+  // Read from the cookie by the layout (getLocale() in locale.ts), so the
+  // first render already matches what Server Components rendered -- no
+  // flash of English for a Bangla reader.
+  initialLocale?: Locale;
+  children: React.ReactNode;
+}
+
+export function LocaleProvider({ initialLocale = "en", children }: LocaleProviderProps) {
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const router = useRouter();
 
   // Screen readers pick pronunciation from <html lang>; without this, Bangla
   // text is read with English phonetics.
@@ -39,11 +45,25 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  const toggleLocale = useCallback(() => setStoredLocale(locale === "en" ? "bn" : "en"), [locale, setStoredLocale]);
-  const translate = useCallback((key: string) => (locale === "en" ? key : (bnDictionary[key] ?? key)), [locale]);
-  const value = useMemo(() => ({ locale, toggleLocale, translate }), [locale, toggleLocale, translate]);
+  const toggleLocale = useCallback(() => {
+    const next: Locale = locale === "en" ? "bn" : "en";
+    setLocale(next);
+    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE_SECONDS}; samesite=lax`;
+    // Server Components read the cookie themselves; a refresh re-renders
+    // them in the new language now rather than on the next navigation.
+    router.refresh();
+  }, [locale, router]);
 
-  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
+  const translate = useCallback((key: string) => translateTo(locale, key), [locale]);
+  const value = useMemo(() => ({ locale, toggleLocale, translate, t: translate }), [locale, toggleLocale, translate]);
+
+  return (
+    <LocaleContext.Provider value={value}>
+      {/* Bangla reads in Hind Siliguri (loaded by the root layout); the
+          wrapper is display:contents so it doesn't touch the layout. */}
+      <div className={locale === "bn" ? "contents font-bn" : "contents"}>{children}</div>
+    </LocaleContext.Provider>
+  );
 }
 
 export function useLocale(): LocaleContextValue {
