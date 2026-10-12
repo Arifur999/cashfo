@@ -1,21 +1,29 @@
-// English is the source language everywhere else in the app (the existing
-// t() in ./t.ts is an identity passthrough) -- this dictionary only needs to
-// carry the Bangla side. Keys are the exact English strings used as lookup
-// keys by useLocale()'s translate(), so no call site elsewhere needs to
-// change.
-//
-// Scope note: only the persistent chrome (sidebar nav, top bar, the toggle
-// itself) is wired up to actually re-render on locale change, since those
-// are the only pieces rendered by Client Components. Page titles and
-// per-feature buttons (Save/Cancel/Edit/Delete, etc.) live in Server
-// Component pages throughout the other ~9 modules and stay English for now
-// -- making those reactive would need a cookie-based locale read server-side
-// rather than this client-only Context, which is future work. The auth
-// pages are Client Components throughout, so they translate in full.
+// Bangla for the whole site, keyed by the exact English string passed to
+// translate()/t() -- English is the source language, so only the Bangla side
+// is listed. Split by area (the admin panel here, the sign-in pages in
+// authDictionary.ts, the customer app in dictionary/*.ts) so translating one
+// area never touches another. It is one flat namespace: a key defined twice
+// takes the value spread last below.
 import { bnAuthDictionary } from "./authDictionary";
-import { bnCustomerDictionary } from "./customerDictionary";
+import { assetsDictionary } from "./dictionary/assets";
+import { balanceDictionary } from "./dictionary/balance";
+import { booksDictionary } from "./dictionary/books";
+import { chromeDictionary } from "./dictionary/chrome";
+import { dashboardDictionary } from "./dictionary/dashboard";
+import { groupExpensesDictionary } from "./dictionary/group-expenses";
+import { habitTrackerDictionary } from "./dictionary/habit-tracker";
+import { incomeExpenseDictionary } from "./dictionary/income-expense";
+import { loanManagementDictionary } from "./dictionary/loan-management";
+import { personalDictionary } from "./dictionary/personal";
+import { reportsDictionary } from "./dictionary/reports";
+import { savingsGoalsDictionary } from "./dictionary/savings-goals";
+import { settingsWorkspaceDictionary } from "./dictionary/settings-workspace";
+import { sharedDictionary } from "./dictionary/shared";
+import { skillsDictionary } from "./dictionary/skills";
+import { todosDictionary } from "./dictionary/todos";
 
-export const bnDictionary: Record<string, string> = {
+// The admin panel's own chrome.
+const bnAdminDictionary: Record<string, string> = {
   "Admin Panel": "অ্যাডমিন প্যানেল",
   Dashboard: "ড্যাশবোর্ড",
   "User Management": "ইউজার ম্যানেজমেন্ট",
@@ -45,6 +53,27 @@ export const bnDictionary: Record<string, string> = {
   Cancel: "বাতিল",
   Edit: "সম্পাদনা",
   Delete: "মুছুন",
+};
+
+export const bnDictionary: Record<string, string> = {
+  ...bnAdminDictionary,
   ...bnAuthDictionary,
-  ...bnCustomerDictionary,
+  ...chromeDictionary,
+  ...dashboardDictionary,
+  ...balanceDictionary,
+  ...assetsDictionary,
+  ...savingsGoalsDictionary,
+  ...loanManagementDictionary,
+  ...incomeExpenseDictionary,
+  ...reportsDictionary,
+  ...personalDictionary,
+  ...settingsWorkspaceDictionary,
+  ...groupExpensesDictionary,
+  ...habitTrackerDictionary,
+  ...booksDictionary,
+  ...skillsDictionary,
+  ...todosDictionary,
+  // Last, so a word every customer page shares (see that file) always wins
+  // over an area that happened to word it differently.
+  ...sharedDictionary,
 };
