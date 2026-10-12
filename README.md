@@ -1,6 +1,6 @@
-# Cashfo Admin Panel
+# Cashfo web
 
-The internal admin panel for Cashfo: users and workspaces, subscriptions and payments, content, support, notifications, security and system tooling. It talks to the NestJS backend (`cashfo_backend`) over its `/admin/*` API.
+One site for everyone who signs in. Admins get the admin panel under `/admin`: users and workspaces, subscriptions and payments, content, support, notifications, security and system tooling. Customers sign up, sign in and reset their password on the same pages, and land in the customer app (its money-management screens are moving in from the `user-frontend` branch). It talks to the NestJS backend (`cashfo_backend`).
 
 ## Stack
 
@@ -11,10 +11,10 @@ Next.js 16 (App Router, `proxy.ts`) · React 19 · TypeScript · Tailwind CSS v4
 ```bash
 npm install
 cp .env.example .env.local   # point API_BASE_URL at the backend
-npm run dev                  # http://localhost:3000/admin/login
+npm run dev                  # http://localhost:3000/login
 ```
 
-The backend must be running (default `http://localhost:5000`). Sign in with an admin account from the backend seed.
+The backend must be running (default `http://localhost:5000`). Sign in with an admin or a customer account from the backend seed, or create a customer at `/register`.
 
 | Script | What it does |
 |---|---|
@@ -29,20 +29,23 @@ The backend must be running (default `http://localhost:5000`). Sign in with an a
 ```
 src/
   app/                         routes only: page.tsx, layout.tsx, loading.tsx, _action.ts
-    (auth)/admin/login/
-    (dashboardLayout)/admin/<area>/
+    (auth)/{login,register,forgot-password,reset-password}/
+    (dashboardLayout)/admin/<area>/   the admin panel
+    (customerLayout)/dashboard/       the customer app
     -actions/                  actions not tied to one route (logout, error reports)
   components/
     ui/                        shadcn primitives (generated -- add with `npx shadcn add`)
     shared/                    app-wide building blocks: DataTable, form fields, dialogs, charts, cells
     modules/Admin/<Area>/      feature components
+    modules/Auth/              the sign-in, sign-up and password-reset pages
+    modules/Customer/          the customer app
   services/                    "use server" API calls through httpClient
   queries/                     TanStack Query options (one queryKey per call)
   types/                       API response and payload types
   zod/                         form + server schemas (with tests)
   hooks/                       useServerDataTable, useActionMutation, useRowDialogs, ...
   lib/                         httpClient, auth/role helpers, formatters, query-string builders
-  proxy.ts                     auth gate, token refresh, role-based route access
+  proxy.ts                     auth gate, token refresh, routing by side and role
 ```
 
 ### The layering rule
@@ -63,10 +66,14 @@ Every list uses the shared `DataTable` (`components/shared/table`): sorting, fac
 
 ### Signing in
 
-The backend runs [better-auth](https://www.better-auth.com); this app never talks to it from the browser except for Google.
+There is one sign-in page, `/login`, for admins and customers alike; the account's role decides where it lands. The backend runs [better-auth](https://www.better-auth.com); this app never talks to it from the browser except for Google.
 
-- **Email and password** -- the login Server Action calls `POST /admin/auth/login`. better-auth checks the password and opens a session; the backend answers with an access/refresh token pair bound to that session (`sid`), stored here as httpOnly cookies. `proxy.ts` refreshes the access token before it expires. Logging out ends the session on the backend, so both tokens stop working at once.
-- **Continue with Google** -- the button posts to `/api/auth/sign-in/social`, which `app/api/auth/[...all]/route.ts` forwards to the backend (only better-auth's public endpoints pass, see `lib/betterAuthRoutes.ts`). Google returns to `/api/auth/callback/google` on this origin, better-auth sets its session cookie and sends the browser to `/admin/login/google`, which exchanges that session for the same token pair and opens the dashboard. The button never creates accounts: only an existing admin's Google address gets in.
+- **Email and password** -- the login Server Action calls `POST /api/auth/sign-in`. better-auth checks the password and opens a session; the backend answers with an access/refresh token pair bound to that session (`sid`) and says which side it is for (`audience`, also in each token as `aud`). The pair is stored as httpOnly cookies and the browser goes to `?redirect=` if that side and role may open it (`isValidRedirect`), otherwise to `/admin/dashboard` or `/dashboard`. `proxy.ts` refreshes the access token on its own side before it expires. Logging out ends the session on the backend, so both tokens stop working at once.
+- **Continue with Google** -- the button posts to `/api/auth/sign-in/social`, which `app/api/auth/[...all]/route.ts` forwards to the backend (only better-auth's public endpoints pass, see `lib/betterAuthRoutes.ts`). Google returns to `/api/auth/callback/google` on this origin, better-auth sets its session cookie and sends the browser to `/login/google`, which exchanges that session (`POST /api/auth/session/sign-in`) for the same token pair. A Google address with no account becomes a customer account (`requestSignUp`); an admin's own address signs them in to the admin panel.
+- **Sign up** (`/register`) creates a customer account, with its first workspace, in the page's language, and signs it straight in. A `?ref=` invite code is passed on.
+- **Forgot password** (`/forgot-password`) mails customers a link to `/reset-password?token=...`; using it signs them in here and out everywhere else. Admin passwords are reset by a super admin.
+
+The old `/admin/login` URLs redirect to `/login` (`next.config.ts`), query string and all.
 
 Google needs, on the OAuth client, the redirect URI `<site>/api/auth/callback/google` (locally `http://localhost:3000/api/auth/callback/google`), and on the backend `BETTER_AUTH_URL` set to this site's origin plus `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`.
 
@@ -74,7 +81,7 @@ Every backend call carries the visitor's `X-Forwarded-For` and `User-Agent` (`li
 
 ### Roles
 
-`proxy.ts` redirects to the login page without a session and keeps signed-in admins out of areas their role can't open (Security and System are SUPER_ADMIN only). Inside a page, `canManage(role, area)` (`lib/authUtils.ts`) decides whether edit controls show; the backend enforces the same rules.
+`proxy.ts` sends visitors without a session to `/login`, keeps admins in `/admin` and customers out of it, and keeps admins out of areas their role can't open (Security and System are SUPER_ADMIN only). Inside a page, `canManage(role, area)` (`lib/authUtils.ts`) decides whether edit controls show; the backend enforces the same rules.
 
 ### Dates
 

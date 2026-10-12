@@ -2,6 +2,7 @@
 
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Label } from "@/components/ui/label";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 const getErrorMessage = (error: unknown): string => {
@@ -14,10 +15,15 @@ const getErrorMessage = (error: unknown): string => {
   return String(error);
 };
 
-// Only report an error once the field has been touched -- validating an
-// untouched empty form would paint it red before anyone typed.
-export const getFieldError = (field: AnyFieldApi): string | null =>
-  field.state.meta.isTouched && field.state.meta.errors.length > 0 ? getErrorMessage(field.state.meta.errors[0]) : null;
+// Report an error once the person has left the field, or tried to submit --
+// not on the first keystroke, which would flag "Enter a valid email" while
+// they are still typing it. Validation itself runs on every change, so the
+// error clears the moment the value is fixed.
+export const getFieldError = (field: AnyFieldApi): string | null => {
+  const { isBlurred, errors } = field.state.meta;
+  const shouldShow = isBlurred || field.form.state.submissionAttempts > 0;
+  return shouldShow && errors.length > 0 ? getErrorMessage(errors[0]) : null;
+};
 
 export interface FieldControlProps {
   id: string;
@@ -37,6 +43,7 @@ interface FormFieldShellProps {
 // The label / description / error wiring every App*Field shares, so each
 // field component only renders its control.
 const FormFieldShell = ({ field, label, description, className, children }: FormFieldShellProps) => {
+  const { translate } = useLocale();
   const error = getFieldError(field);
   const errorId = `${field.name}-error`;
   const descriptionId = `${field.name}-description`;
@@ -61,7 +68,8 @@ const FormFieldShell = ({ field, label, description, className, children }: Form
       )}
       {error && (
         <p role="alert" id={errorId} className="text-sm text-destructive">
-          {error}
+          {/* Validation messages are English keys like every other string. */}
+          {translate(error)}
         </p>
       )}
     </div>
