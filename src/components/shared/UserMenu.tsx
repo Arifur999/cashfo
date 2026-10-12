@@ -17,9 +17,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getInitials } from "@/lib/text";
-import type { IAdminUser } from "@/types/auth.types";
+interface UserMenuProps {
+  name: string;
+  email: string;
+  // Admins see their role under their email; customers have none to show.
+  role?: string;
+}
 
-const UserMenu = ({ admin }: { admin: IAdminUser }) => {
+// The signed-in account in the top bar, with Log out -- for admins and
+// customers alike.
+const UserMenu = ({ name, email, role }: UserMenuProps) => {
   const { translate } = useLocale();
   const [isLoggingOut, startLogout] = useTransition();
 
@@ -28,17 +35,17 @@ const UserMenu = ({ admin }: { admin: IAdminUser }) => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 gap-2 px-2" aria-label={translate("Account menu")}>
           <Avatar className="size-7">
-            <AvatarFallback className="text-xs">{getInitials(admin.name)}</AvatarFallback>
+            <AvatarFallback className="text-xs">{getInitials(name)}</AvatarFallback>
           </Avatar>
-          <span className="hidden max-w-40 truncate text-sm font-medium sm:inline">{admin.name}</span>
+          <span className="hidden max-w-40 truncate text-sm font-medium sm:inline">{name}</span>
           <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="space-y-1.5 font-normal">
-          <p className="truncate font-medium text-foreground">{admin.name}</p>
-          <p className="truncate text-xs text-muted-foreground">{admin.email}</p>
-          <StatusBadgeCell status={admin.role} />
+          <p className="truncate font-medium text-foreground">{name}</p>
+          <p className="truncate text-xs text-muted-foreground">{email}</p>
+          {role && <StatusBadgeCell status={role} />}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem

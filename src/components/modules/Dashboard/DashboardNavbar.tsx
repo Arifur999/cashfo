@@ -3,7 +3,7 @@ import { getUserInfo } from "@/services/auth.services";
 import LocaleToggle from "@/components/shared/LocaleToggle";
 import MobileNav from "./MobileNav";
 import NavbarGreeting from "./NavbarGreeting";
-import UserMenu from "./UserMenu";
+import UserMenu from "@/components/shared/UserMenu";
 
 const DashboardNavbar = async () => {
   const admin = await getUserInfo();
@@ -17,7 +17,7 @@ const DashboardNavbar = async () => {
       <NavbarGreeting name={admin.name} />
       <div className="ml-auto flex items-center gap-2">
         <LocaleToggle />
-        <UserMenu admin={admin} />
+        <UserMenu name={admin.name} email={admin.email} role={admin.role} />
       </div>
     </header>
   );
