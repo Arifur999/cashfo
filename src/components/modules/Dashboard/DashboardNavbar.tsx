@@ -1,6 +1,6 @@
 import { getNavSectionsByRole } from "@/lib/navItem";
 import { getUserInfo } from "@/services/auth.services";
-import LocaleToggle from "./LocaleToggle";
+import LocaleToggle from "@/components/shared/LocaleToggle";
 import MobileNav from "./MobileNav";
 import NavbarGreeting from "./NavbarGreeting";
 import UserMenu from "./UserMenu";
