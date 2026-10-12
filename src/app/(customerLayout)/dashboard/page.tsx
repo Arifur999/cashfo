@@ -1,18 +1,58 @@
-import type { Metadata } from "next";
-import CustomerWelcome from "@/components/modules/Customer/CustomerWelcome";
-import { getCustomerProfile } from "@/services/customer.services";
+import { redirect } from "next/navigation";
+import { getWalletsOverview } from "@/lib/customer/accounts";
+import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
+import { getAssetsAction } from "@/lib/customer/assetActions";
+import { getCurrentUser } from "@/lib/customer/auth";
+import { DashboardPageClient } from "@/components/modules/Customer/Dashboard/DashboardPageClient";
+import { resolveDateRange } from "@/lib/customer/dateRangePresets";
+import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
+import { getCategoryBreakdown, getIncomeVsSavingsTrend } from "@/lib/customer/reports";
+import { getSavingsOverview } from "@/lib/customer/savingsGoals";
+import { getTransactions } from "@/lib/customer/transactions";
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
 
-export default async function CustomerDashboardPage() {
-  // Request-cached: the layout already fetched it, and redirected if it
-  // came back empty.
-  const customer = await getCustomerProfile();
-  if (!customer) {
-    return null;
-  }
+  const activeBusinessId = await resolveActiveBusinessId(user.businesses);
+  if (!activeBusinessId) redirect("/dashboard");
 
-  return <CustomerWelcome name={customer.name} workspaces={customer.businesses} />;
+  const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
+  const currency = activeBusiness?.currency ?? "BDT";
+  const { dateFrom, dateTo } = resolveDateRange("this-month");
+
+  const [walletsOverview, monthIncome, monthExpense, savingsOverview, loanDashboard, recentTransactions, trendPoints, assetsResult] =
+    await Promise.all([
+      getWalletsOverview(activeBusinessId),
+      getCategoryBreakdown(activeBusinessId, "INCOME", dateFrom, dateTo),
+      getCategoryBreakdown(activeBusinessId, "EXPENSE", dateFrom, dateTo),
+      getSavingsOverview(activeBusinessId),
+      getLoanDashboard(activeBusinessId),
+      getTransactions(activeBusinessId, { limit: 5 }),
+      getIncomeVsSavingsTrend(activeBusinessId, 6),
+      getAssetsAction(activeBusinessId),
+    ]);
+
+  const totalAssets = (assetsResult.data ?? [])
+    .filter((a) => a.status === "ACTIVE")
+    .reduce((sum, a) => sum + Number(a.currentValue), 0);
+
+  return (
+    <DashboardPageClient
+      businessId={activeBusinessId}
+      businessName={activeBusiness?.name ?? "..."}
+      userName={user.name}
+      currency={currency}
+      totalBalance={walletsOverview.totalBalance}
+      monthIncome={monthIncome.total}
+      monthExpense={monthExpense.total}
+      totalSaved={savingsOverview.totalSaved}
+      savingsTarget={savingsOverview.totalGoals}
+      savingsProgressPercent={savingsOverview.progressPercent}
+      totalAssets={totalAssets.toFixed(2)}
+      loanDashboard={loanDashboard}
+      recentTransactions={recentTransactions.data}
+      trendPoints={trendPoints}
+    />
+  );
 }
