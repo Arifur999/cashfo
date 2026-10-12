@@ -3,29 +3,27 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { loginAction } from "@/app/(auth)/admin/login/_action";
-import Callout from "@/components/shared/Callout";
+import { signInAction } from "@/app/(auth)/login/_action";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
+import AppPasswordField from "@/components/shared/form/AppPasswordField";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
-import PasswordRevealButton from "@/components/shared/form/PasswordRevealButton";
+import { FORGOT_PASSWORD_ROUTE } from "@/lib/authUtils";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { loginFormZodSchema, type ILoginFormValues } from "@/zod/auth.validation";
+import AuthLink from "./AuthLink";
+import FormErrorCallout from "./FormErrorCallout";
 
 const defaultValues: ILoginFormValues = { email: "", password: "" };
 
-interface LoginFormProps {
-  redirectTo?: string;
-  sessionExpired?: boolean;
-  // Why the last sign-in attempt (Google) bounced back here, if it did.
-  signInError?: string;
-}
-
-const LoginForm = ({ redirectTo, sessionExpired = false, signInError }: LoginFormProps) => {
-  const [showPassword, setShowPassword] = useState(false);
+// Email and password for everyone -- admins and customers alike; the
+// account's role decides where it lands.
+const LoginForm = ({ redirectTo }: { redirectTo?: string }) => {
+  const { translate } = useLocale();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: (values: ILoginFormValues) => loginAction(values, redirectTo),
+    mutationFn: (values: ILoginFormValues) => signInAction(values, redirectTo),
   });
 
   const form = useForm({
@@ -42,45 +40,26 @@ const LoginForm = ({ redirectTo, sessionExpired = false, signInError }: LoginFor
 
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
-      {sessionExpired && !serverError && (
-        <Callout role="status">Your session has expired. Please sign in again.</Callout>
-      )}
-
-      {signInError && !serverError && (
-        <Callout variant="danger" role="alert">
-          {signInError}
-        </Callout>
-      )}
-
       <form.Field name="email" validators={{ onChange: loginFormZodSchema.shape.email }}>
-        {(field) => (
-          <AppField field={field} label="Email" type="email" autoComplete="email" placeholder="admin@example.com" />
-        )}
+        {(field) => <AppField field={field} label={translate("Email")} type="email" autoComplete="email" placeholder="you@example.com" />}
       </form.Field>
 
-      <form.Field name="password" validators={{ onChange: loginFormZodSchema.shape.password }}>
-        {(field) => (
-          <AppField
-            field={field}
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="current-password"
-            placeholder="••••••••"
-            append={<PasswordRevealButton visible={showPassword} onToggle={() => setShowPassword((value) => !value)} />}
-          />
-        )}
-      </form.Field>
+      {/* The link sits on the label's row, outside the <label> itself. */}
+      <div className="relative">
+        <form.Field name="password" validators={{ onChange: loginFormZodSchema.shape.password }}>
+          {(field) => <AppPasswordField field={field} label={translate("Password")} autoComplete="current-password" placeholder="••••••••" />}
+        </form.Field>
+        <AuthLink href={FORGOT_PASSWORD_ROUTE} className="absolute top-0 right-0 text-sm leading-none">
+          {translate("Forgot password?")}
+        </AuthLink>
+      </div>
 
-      {serverError && (
-        <Callout variant="danger" role="alert">
-          {serverError}
-        </Callout>
-      )}
+      <FormErrorCallout message={serverError} />
 
       <form.Subscribe selector={(state) => state.isSubmitting}>
         {(isSubmitting) => (
-          <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel="Signing in...">
-            Sign In
+          <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Signing in...")} className="h-10">
+            {translate("Sign in")}
           </AppSubmitButton>
         )}
       </form.Subscribe>
