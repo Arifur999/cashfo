@@ -1,6 +1,6 @@
 # Cashfo web
 
-One site for everyone who signs in. Admins get the admin panel under `/admin`: users and workspaces, subscriptions and payments, content, support, notifications, security and system tooling. Customers sign up, sign in and reset their password on the same pages, and land in the customer app (its money-management screens are moving in from the `user-frontend` branch). It talks to the NestJS backend (`cashfo_backend`).
+One site for everyone who signs in. Admins get the admin panel under `/admin`: users and workspaces, subscriptions and payments, content, support, notifications, security and system tooling. Customers sign up, sign in and reset their password on the same pages, and land in the customer app: the money tracker (dashboard, wallets and balance, transactions and budgets, contacts and loans, savings goals, assets, reports, group expenses, password manager, referrals, settings) and the habit tracker. It talks to the NestJS backend (`cashfo_backend`).
 
 ## Stack
 
@@ -31,7 +31,7 @@ src/
   app/                         routes only: page.tsx, layout.tsx, loading.tsx, _action.ts
     (auth)/{login,register,forgot-password,reset-password}/
     (dashboardLayout)/admin/<area>/   the admin panel
-    (customerLayout)/dashboard/       the customer app
+    (customerLayout)/<feature>/       the customer app (/dashboard, /transactions, ...)
     -actions/                  actions not tied to one route (logout, error reports)
   components/
     ui/                        shadcn primitives (generated -- add with `npx shadcn add`)
@@ -45,6 +45,8 @@ src/
   zod/                         form + server schemas (with tests)
   hooks/                       useServerDataTable, useActionMutation, useRowDialogs, ...
   lib/                         httpClient, auth/role helpers, formatters, query-string builders
+  lib/customer/                the customer app's API readers (<feature>.ts) and actions (<feature>Actions.ts)
+  lib/i18n/                    the cookie-based language and the Bangla dictionaries
   proxy.ts                     auth gate, token refresh, routing by side and role
 ```
 
@@ -78,6 +80,14 @@ The old `/admin/login` URLs redirect to `/login` (`next.config.ts`), query strin
 Google needs, on the OAuth client, the redirect URI `<site>/api/auth/callback/google` (locally `http://localhost:3000/api/auth/callback/google`), and on the backend `BETTER_AUTH_URL` set to this site's origin plus `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`.
 
 Every backend call carries the visitor's `X-Forwarded-For` and `User-Agent` (`lib/axios/clientHeaders.ts`), so the login throttle, login history and session records see the real client, not this server.
+
+### The customer app
+
+It came over from the `user-frontend` branch and keeps that app's simpler layering for now: a page (Server Component) reads through `lib/customer/<feature>.ts` and hands the data to a `<Feature>PageClient`, which writes through the `"use server"` actions in `lib/customer/<feature>Actions.ts`. `useAuth()` (`modules/Customer/Providers/AuthProvider.tsx`) gives every client component the signed-in customer and their workspace. Moving it onto the admin panel's services/queries layering is planned work.
+
+- **Language** -- `LocaleProvider` keeps English or Bangla in a cookie, so Server Components render in it too (`lib/i18n/locale.ts`); `t()`/`translate()` look the English text up in `lib/i18n/dictionary.ts`.
+- **Dark mode** -- the customer app only (`lib/theme.ts`); the admin panel and the sign-in pages stay light.
+- **Phones** -- below `lg` the sidebar opens as a drawer from the top bar.
 
 ### Roles
 
