@@ -1,6 +1,8 @@
 import { isAxiosError } from "axios";
 import type { ApiErrorResponse } from "@/types/api.types";
 
+export const TOO_MANY_ATTEMPTS_MESSAGE = "Too many attempts. Please wait a few minutes and try again.";
+
 // Turns whatever a service threw into the single message an _action.ts
 // returns as { success: false, message }. Extracted once here instead of a
 // callApi()/getApiErrorMessage() copy in every action file.
@@ -14,6 +16,10 @@ export const getActionErrorMessage = (error: unknown, fallbackMessage: string): 
     // of a misleading "Invalid email or password"-style fallback.
     if (!error.response) {
       return "Unable to reach the server. Is the backend running?";
+    }
+    // The throttler's own body reads "ThrottlerException: Too Many Requests".
+    if (error.response.status === 429) {
+      return TOO_MANY_ATTEMPTS_MESSAGE;
     }
 
     const message = (error.response.data as { message?: unknown } | undefined)?.message;
