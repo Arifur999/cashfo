@@ -1,0 +1,1420 @@
+"use client";
+
+import { CircleUserRound, Pencil, Plus, Trash2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import type {
+  CategoryBreakdown,
+  GroupContribution,
+  GroupExpense,
+  GroupExpenseCategoryOption,
+  GroupMember,
+  GroupMemberStatus,
+  GroupMonthlyBudget,
+  GroupSettlementRecord,
+  GroupSettlementResult,
+} from "@/lib/customer/api";
+import { BUDGET_CATEGORY_COLORS, budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { formatCurrency } from "@/lib/customer/currency";
+import {
+  closeGroupSettlementAction,
+  deleteGroupContributionAction,
+  deleteGroupExpenseAction,
+  deleteGroupExpenseCategoryAction,
+  deleteGroupMemberAction,
+  deleteGroupMonthBudgetAction,
+  updateGroupMemberAction,
+} from "@/lib/customer/groupExpensesActions";
+import { ConfirmModal } from "@/components/modules/Customer/Shared/ConfirmModal";
+import { DatePicker } from "@/components/modules/Customer/Shared/DatePicker";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { CategoryDonutCard } from "@/components/modules/Customer/Reports/CategoryDonutCard";
+import { AddContributionModal } from "./AddContributionModal";
+import { AddExpenseModal } from "./AddExpenseModal";
+import { AddMonthBudgetModal } from "./AddMonthBudgetModal";
+import { GroupExpenseCategoryModal } from "./GroupExpenseCategoryModal";
+import { GroupMemberFormModal } from "./GroupMemberFormModal";
+import { formatDate } from "@/lib/customer/date";
+
+interface GroupWorkspacePageClientProps {
+  businessId: string;
+  businessName: string;
+  members: GroupMember[];
+  contributions: GroupContribution[];
+  expenses: GroupExpense[];
+  expenseCategories: GroupExpenseCategoryOption[];
+  settlement: GroupSettlementResult;
+  dashboardSettlement: GroupSettlementResult;
+  settlementHistory: GroupSettlementRecord[];
+  monthBudgets: GroupMonthlyBudget[];
+}
+
+type Tab = "dashboard" | "members" | "contributions" | "expenses" | "category" | "settlement";
+
+// Shared by Contributions/Expenses' filter bars -- a single compact preset
+// dropdown instead of always showing two DatePicker fields; "Custom Range"
+// is the only preset that reveals them.
+type DateRangePreset = "all" | "today" | "yesterday" | "this_month" | "this_year" | "custom";
+
+function toDateValue(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function computePresetRange(preset: DateRangePreset): { from: string; to: string } {
+  const now = new Date();
+  switch (preset) {
+    case "today": {
+      const v = toDateValue(now);
+      return { from: v, to: v };
+    }
+    case "yesterday": {
+      const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      const v = toDateValue(yesterday);
+      return { from: v, to: v };
+    }
+    case "this_month":
+      return { from: toDateValue(new Date(now.getFullYear(), now.getMonth(), 1)), to: toDateValue(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
+    case "this_year":
+      return { from: toDateValue(new Date(now.getFullYear(), 0, 1)), to: toDateValue(new Date(now.getFullYear(), 11, 31)) };
+    default:
+      return { from: "", to: "" };
+  }
+}
+
+// A stored from/to only ever came from either "no filter" or "Custom Range"
+// here (the other presets are recomputed fresh every time, never persisted
+// as their own preset value) -- so on load there's no way to distinguish
+// "the user picked Custom Range with these exact dates" from "these happen
+// to equal what This Month would compute to", and there's no need to: both
+// render identically as an explicit from/to, just re-labeled "Custom Range".
+function inferPreset(from: string, to: string): DateRangePreset {
+  return !from && !to ? "all" : "custom";
+}
+
+const DATE_RANGE_PRESET_OPTIONS: { value: DateRangePreset; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "this_month", label: "This Month" },
+  { value: "this_year", label: "This Year" },
+  { value: "custom", label: "Custom Range" },
+];
+
+function fmtDate(iso: string): string {
+  return formatDate(iso);
+}
+
+export function GroupWorkspacePageClient({
+  businessId,
+  businessName,
+  members,
+  contributions,
+  expenses,
+  expenseCategories,
+  settlement,
+  dashboardSettlement,
+  settlementHistory,
+  monthBudgets,
+}: GroupWorkspacePageClientProps) {
+  const searchParams = useSearchParams();
+  const { t } = useLocale();
+  const tab = (searchParams.get("tab") as Tab | null) ?? "dashboard";
+
+  return (
+    <div className="h-full bg-brand-content px-6 py-8 pb-24 md:pb-8">
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-neutral-900">{businessName}</h1>
+        <p className="mt-1 text-sm text-neutral-500">{t("Group / Mess Workspace")}</p>
+      </div>
+
+      {/* No in-page tab bar here -- Sidebar.tsx's GroupExpenseNavItem
+          already renders these same tabs as a submenu once a specific
+          workspace is open, so a second copy here would be redundant. */}
+      {tab === "dashboard" && (
+        <DashboardSection
+          businessId={businessId}
+          members={members}
+          expenses={expenses}
+          expenseCategories={expenseCategories}
+          settlement={dashboardSettlement}
+          monthBudgets={monthBudgets}
+        />
+      )}
+      {tab === "members" && <MembersSection businessId={businessId} members={members} />}
+      {tab === "contributions" && <ContributionsSection businessId={businessId} members={members} contributions={contributions} />}
+      {tab === "expenses" && (
+        <ExpensesSection businessId={businessId} members={members} expenses={expenses} categories={expenseCategories} />
+      )}
+      {tab === "category" && <CategorySection businessId={businessId} categories={expenseCategories} />}
+      {tab === "settlement" && <SettlementSection businessId={businessId} settlement={settlement} settlementHistory={settlementHistory} />}
+    </div>
+  );
+}
+
+// "Dashboard" nav item -- a quick overview before diving into Members/
+// Contributions/Expenses individually, same "Dashboard first" convention as
+// Loan Management/Savings Goals/Assets Management's own sidebar groups.
+// Reuses data already fetched for the other tabs rather than a new backend
+// endpoint -- settlement is always the live current-month figures
+// regardless of whatever date filter a different tab's own view happens to
+// have applied via the URL.
+const DASHBOARD_RANGE_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "month", label: "This Month" },
+  { value: "year", label: "This Year" },
+];
+
+function DashboardSection({
+  businessId,
+  members,
+  expenses,
+  expenseCategories,
+  settlement,
+  monthBudgets,
+}: {
+  businessId: string;
+  members: GroupMember[];
+  expenses: GroupExpense[];
+  expenseCategories: GroupExpenseCategoryOption[];
+  settlement: GroupSettlementResult;
+  monthBudgets: GroupMonthlyBudget[];
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { t } = useLocale();
+  const dashRange = searchParams.get("dashRange") ?? "month";
+
+  function handleRangeChange(next: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "dashboard");
+    params.set("dashRange", next);
+    router.push(`/group-expenses/${businessId}?${params.toString()}`);
+  }
+
+  const activeMemberCount = members.filter((m) => m.status === "ACTIVE").length;
+  const totalContributed = settlement.members.reduce((sum, m) => sum + Number(m.contributed), 0);
+
+  // Expense-by-category donut -- scoped to the SAME period as `settlement`
+  // (the Dashboard's own dashRange filter, not the Contributions/Expenses/
+  // Settlement tabs' shared from/to) so its total matches the "Total
+  // Expense" stat card above. Computed client-side from data already
+  // fetched for other tabs rather than a new backend endpoint; colors come
+  // from expenseCategories' own list (a deleted/renamed category just
+  // falls back to a neutral color, same "loose string" reasoning as
+  // elsewhere).
+  const colorByCategory = new Map(expenseCategories.map((c) => [c.name, c.color]));
+  const totalsByCategory = new Map<string, number>();
+  for (const e of expenses) {
+    if (e.date < settlement.periodStart || e.date > settlement.periodEnd) continue;
+    totalsByCategory.set(e.category, (totalsByCategory.get(e.category) ?? 0) + Number(e.amount));
+  }
+  const monthExpenseTotal = Number(settlement.totalExpense);
+  const expenseBreakdown: CategoryBreakdown = {
+    type: "EXPENSE",
+    total: settlement.totalExpense,
+    categories: Array.from(totalsByCategory.entries())
+      .map(([name, amount]) => ({
+        name,
+        amount: amount.toFixed(2),
+        percent: monthExpenseTotal > 0 ? Math.round((amount / monthExpenseTotal) * 100) : 0,
+        color: colorByCategory.get(name) ?? "indigo",
+      }))
+      .sort((a, b) => Number(b.amount) - Number(a.amount)),
+  };
+
+  // Members Balance donut -- each active member's share of the total pool
+  // contributed this period. Reuses CategoryDonutCard (same component as
+  // the Expense by Category donut above) with a member assigned a color
+  // cycling through BUDGET_CATEGORY_COLORS since, unlike expense
+  // categories, members have no color of their own. A member with zero or
+  // negative net contribution (fully refunded, or over-refunded) is left
+  // out of the ring -- a pie slice can't represent a non-positive amount.
+  const membersBreakdown: CategoryBreakdown = {
+    type: "INCOME",
+    total: totalContributed.toFixed(2),
+    categories: settlement.members
+      .filter((m) => Number(m.contributed) > 0)
+      .map((m, i) => ({
+        name: m.name,
+        amount: Number(m.contributed).toFixed(2),
+        percent: totalContributed > 0 ? Math.round((Number(m.contributed) / totalContributed) * 100) : 0,
+        color: BUDGET_CATEGORY_COLORS[i % BUDGET_CATEGORY_COLORS.length],
+      }))
+      .sort((a, b) => Number(b.amount) - Number(a.amount)),
+  };
+
+  // Per-month Budget vs Actual Expense breakdown -- only computed (and only
+  // shown) for "This Year" since "All"/"This Month" have no meaningful
+  // month-by-month axis. Always the CURRENT calendar year, matching how
+  // page.tsx builds dashboardPeriod for dashRange="year". Compared as
+  // string prefixes ("YYYY-MM"), not parsed Dates, so this can't drift a
+  // day across timezones -- same convention as the periodStart/periodEnd
+  // check above.
+  const selectedYear = new Date().getFullYear();
+  const monthlyBreakdown =
+    dashRange === "year"
+      ? Array.from({ length: 12 }, (_, i) => {
+          const month = i + 1;
+          const monthKey = `${selectedYear}-${String(month).padStart(2, "0")}`;
+          const budgetEntry = monthBudgets.find((b) => b.year === selectedYear && b.month === month);
+          const actualExpense = expenses
+            .filter((e) => e.date.startsWith(monthKey))
+            .reduce((sum, e) => sum + Number(e.amount), 0);
+          return {
+            month,
+            budget: budgetEntry ? Number(budgetEntry.budgetAmount) : 0,
+            actualExpense,
+            budgetRecord: budgetEntry ?? null,
+          };
+        })
+      : [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <select
+          value={dashRange}
+          onChange={(e) => handleRangeChange(e.target.value)}
+          className="rounded-xl border border-neutral-200 bg-surface px-3.5 py-2 text-sm outline-none focus:border-brand-primary"
+        >
+          {DASHBOARD_RANGE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {t(opt.label)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+          <p className="text-xs text-neutral-500">{t("Members")}</p>
+          <p className="mt-1 text-lg font-semibold text-neutral-900">{activeMemberCount}</p>
+        </div>
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+          <p className="text-xs text-neutral-500">{t("Total Expense")}</p>
+          <p className="mt-1 text-lg font-semibold text-brand-danger">{formatCurrency(settlement.totalExpense, "BDT")}</p>
+        </div>
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+          <p className="text-xs text-neutral-500">{t("Total Contributed")}</p>
+          <p className="mt-1 text-lg font-semibold text-brand-primary">{formatCurrency(totalContributed, "BDT")}</p>
+        </div>
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+          <p className="text-xs text-neutral-500">{t("Per-Member Share")}</p>
+          <p className="mt-1 text-lg font-semibold text-neutral-900">{formatCurrency(settlement.perMemberShare, "BDT")}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <CategoryDonutCard title="Expense by Category" breakdown={expenseBreakdown} currency="BDT" totalLabel="Total Expense" />
+        <CategoryDonutCard title="Members Balance" breakdown={membersBreakdown} currency="BDT" totalLabel="Total Contributed" />
+      </div>
+
+      {dashRange === "year" && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <MonthlyBudgetChart points={monthlyBreakdown} />
+          <MonthlyBreakdownTable businessId={businessId} points={monthlyBreakdown} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const MONTH_LABELS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+interface MonthlyBreakdownPoint {
+  month: number;
+  budget: number;
+  actualExpense: number;
+  budgetRecord: GroupMonthlyBudget | null;
+}
+
+// Hand-rolled grouped bar chart, same "no charting library" convention as
+// IncomeVsSavingsChart.tsx -- two bars per month (Budget, Actual Expense),
+// scaled against the single largest value across all 12 months so bars
+// stay comparable month to month. Sits side by side with
+// MonthlyBreakdownTable in a 2-column grid; that table (12 fixed rows) is
+// usually the taller of the two, so this card's chart area is `flex-1`
+// with PERCENTAGE bar heights (not fixed pixels) so it fills however tall
+// the grid stretches this card to match -- bars always reach the bottom of
+// the card instead of leaving blank space below the month labels.
+function MonthlyBudgetChart({ points }: { points: MonthlyBreakdownPoint[] }) {
+  const { t } = useLocale();
+  const [hover, setHover] = useState<{ month: number; x: number; y: number } | null>(null);
+  const maxValue = Math.max(1, ...points.flatMap((p) => [p.actualExpense, p.budget]));
+
+  const hoverIndex = hover ? points.findIndex((p) => p.month === hover.month) : -1;
+  const hoverPoint = hoverIndex >= 0 ? points[hoverIndex] : null;
+  const prevPoint = hoverIndex > 0 ? points[hoverIndex - 1] : null;
+  const hoverPctChange = hoverPoint && prevPoint && prevPoint.actualExpense > 0 ? ((hoverPoint.actualExpense - prevPoint.actualExpense) / prevPoint.actualExpense) * 100 : null;
+
+  return (
+    <div className="flex flex-col rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-neutral-900">{t("Monthly Budget vs Expense")}</h2>
+        <div className="flex items-center gap-4 text-xs text-neutral-500">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-brand-primary/50" /> {t("Budget")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-brand-danger" /> {t("Actual Expense")}
+          </span>
+        </div>
+      </div>
+
+      <div className="min-h-[220px] flex-1 overflow-x-auto">
+        <div className="flex h-full min-w-[560px] items-stretch gap-3">
+          {points.map((p) => {
+            const budgetPct = Math.max(1, Math.round((p.budget / maxValue) * 100));
+            const expensePct = Math.max(1, Math.round((p.actualExpense / maxValue) * 100));
+            return (
+              <div
+                key={p.month}
+                className="flex flex-1 cursor-default flex-col items-center justify-end gap-1.5"
+                onMouseEnter={(e) => setHover({ month: p.month, x: e.clientX, y: e.clientY })}
+                onMouseMove={(e) => setHover((h) => (h && h.month === p.month ? { ...h, x: e.clientX, y: e.clientY } : h))}
+                onMouseLeave={() => setHover((h) => (h?.month === p.month ? null : h))}
+              >
+                <div className="flex w-full flex-1 items-end justify-center gap-1">
+                  <div className="w-3 rounded-t-sm bg-brand-primary/50 sm:w-5" style={{ height: `${budgetPct}%` }} />
+                  <div className="w-3 rounded-t-sm bg-brand-danger sm:w-5" style={{ height: `${expensePct}%` }} />
+                </div>
+                <span className="whitespace-nowrap text-xs text-neutral-400">{t(MONTH_LABELS[p.month - 1])}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Custom hover tooltip, fixed-positioned off the cursor rather than
+          absolute-inside-the-scroll-box, so it isn't clipped by this card's
+          own overflow-x-auto chart area (a scrollable ancestor forces
+          overflow-y to "auto" too per the CSS overflow spec, which would
+          otherwise cut off a tooltip meant to float above the bars). */}
+      {hoverPoint && hover && (
+        <div
+          className="pointer-events-none fixed z-50 w-56 -translate-y-full rounded-xl border border-neutral-100 bg-surface p-3 text-xs shadow-lg"
+          style={{ left: hover.x + 14, top: hover.y - 14 }}
+        >
+          <p className="mb-2 text-sm font-semibold text-neutral-900">{t(MONTH_LABELS[hoverPoint.month - 1])}</p>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-neutral-500">
+                <span className="h-2 w-2 shrink-0 rounded-sm bg-brand-primary/50" /> {t("Budget")}
+              </span>
+              <span className="font-medium tabular-nums text-neutral-800">{hoverPoint.budget > 0 ? formatCurrency(hoverPoint.budget, "BDT") : "--"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-neutral-500">
+                <span className="h-2 w-2 shrink-0 rounded-sm bg-brand-danger" /> {t("Actual Expense")}
+              </span>
+              <span className="font-medium tabular-nums text-neutral-800">{formatCurrency(hoverPoint.actualExpense, "BDT")}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-neutral-100 pt-1.5">
+              <span className="text-neutral-500">{t("Balance")}</span>
+              <span className={`font-medium tabular-nums ${hoverPoint.budget === 0 ? "text-neutral-400" : hoverPoint.budget - hoverPoint.actualExpense >= 0 ? "text-emerald-600" : "text-brand-danger"}`}>
+                {hoverPoint.budget > 0 ? formatCurrency(hoverPoint.budget - hoverPoint.actualExpense, "BDT") : "--"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-neutral-500">%</span>
+              <span className={`font-medium tabular-nums ${hoverPctChange === null ? "text-neutral-400" : hoverPctChange > 0 ? "text-brand-danger" : "text-emerald-600"}`}>
+                {hoverPctChange === null ? "--" : `${hoverPctChange > 0 ? "+" : ""}${hoverPctChange.toFixed(1)}%`}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Owns the Add/Edit/Delete Month Budget flow directly (there's no separate
+// "Month List" page anymore -- it was removed and folded in here so
+// managing budgets and seeing them compared against actual expense live in
+// the same place).
+function MonthlyBreakdownTable({ businessId, points }: { businessId: string; points: MonthlyBreakdownPoint[] }) {
+  const router = useRouter();
+  const { t } = useLocale();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<GroupMonthlyBudget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GroupMonthlyBudget | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function openCreate() {
+    setEditingBudget(null);
+    setFormOpen(true);
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    startTransition(async () => {
+      const result = await deleteGroupMonthBudgetAction(businessId, deleteTarget.id);
+      if (result.success) {
+        toast.success(t("Month budget removed"));
+        setDeleteTarget(null);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to remove month budget"));
+      }
+    });
+  }
+
+  return (
+    <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+      <div className="flex items-center justify-between p-4 pb-0">
+        <h2 className="text-sm font-semibold text-neutral-900">{t("Monthly Breakdown")}</h2>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="flex items-center gap-1.5 rounded-lg bg-brand-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+        >
+          <Plus className="h-3.5 w-3.5" /> {t("Add Month")}
+        </button>
+      </div>
+      <div className="overflow-x-auto pb-4">
+        <table className="mt-3 w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-neutral-100 text-[11px] text-neutral-500">
+              <th className="px-3 py-2 font-medium">{t("Month")}</th>
+              <th className="px-3 py-2 font-medium">{t("Budget")}</th>
+              <th className="px-3 py-2 font-medium">{t("Actual Expense")}</th>
+              <th className="px-3 py-2 font-medium">%</th>
+              <th className="px-3 py-2 font-medium text-right">{t("Actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {points.map((p, i) => {
+              // % change in Actual Expense vs the previous month in this
+              // same list -- "--" for January (no prior month in the
+              // year) and for any month whose previous month had zero
+              // expense (a percentage change from zero is undefined).
+              const prev = i > 0 ? points[i - 1] : null;
+              const pctChange = prev && prev.actualExpense > 0 ? ((p.actualExpense - prev.actualExpense) / prev.actualExpense) * 100 : null;
+              return (
+                <tr key={p.month} className="border-b border-neutral-50 last:border-0">
+                  <td className="px-3 py-2 text-neutral-800">{t(MONTH_LABELS[p.month - 1])}</td>
+                  <td className="px-3 py-2 text-neutral-600">{p.budget > 0 ? formatCurrency(p.budget, "BDT") : "--"}</td>
+                  <td className="px-3 py-2 text-brand-danger">{formatCurrency(p.actualExpense, "BDT")}</td>
+                  <td className={`px-3 py-2 font-medium ${pctChange === null ? "text-neutral-400" : pctChange > 0 ? "text-brand-danger" : pctChange < 0 ? "text-emerald-600" : "text-neutral-500"}`}>
+                    {pctChange === null ? "--" : `${pctChange > 0 ? "+" : ""}${pctChange.toFixed(1)}%`}
+                  </td>
+                  <td className="px-3 py-2">
+                    {p.budgetRecord && (
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingBudget(p.budgetRecord);
+                            setFormOpen(true);
+                          }}
+                          title={t("Edit")}
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(p.budgetRecord)}
+                          title={t("Delete")}
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <AddMonthBudgetModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingBudget={editingBudget} />
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title={t("Remove Month Budget")}
+        message={deleteTarget ? `${t("Remove the budget for")} ${t(MONTH_LABELS[deleteTarget.month - 1])} ${deleteTarget.year}?` : ""}
+        confirmLabel={t("Remove")}
+      />
+    </div>
+  );
+}
+
+function MembersSection({ businessId, members }: { businessId: string; members: GroupMember[] }) {
+  const router = useRouter();
+  const { t } = useLocale();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<GroupMember | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GroupMember | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"" | GroupMemberStatus>("");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  // Filtered client-side, not via a URL param like Contributions/Expenses --
+  // `members` here is the SAME full list the Contribution/Expense modals
+  // need for their member pickers, so filtering it upstream in page.tsx
+  // would wrongly hide archived members from those too.
+  const visibleMembers = statusFilter ? members.filter((m) => m.status === statusFilter) : members;
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    startTransition(async () => {
+      const result = await deleteGroupMemberAction(businessId, target.id);
+      if (result.success) {
+        toast.success(result.data?.action === "archived" ? t("This member has history, so they were archived instead") : t("Member removed"));
+        setDeleteTarget(null);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to remove member"));
+      }
+    });
+  }
+
+  // One-click toggle, separate from the Edit modal -- Active <-> Archived is
+  // the one field a user needs to flip often (e.g. a roommate moves out mid-
+  // month, or comes back), unlike name/phone which rarely change.
+  function toggleStatus(member: GroupMember) {
+    const nextStatus: GroupMemberStatus = member.status === "ACTIVE" ? "ARCHIVED" : "ACTIVE";
+    setTogglingId(member.id);
+    startTransition(async () => {
+      const result = await updateGroupMemberAction(businessId, member.id, { status: nextStatus });
+      if (result.success) {
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to update member"));
+      }
+      setTogglingId(null);
+    });
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-500">{t("Status")}</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "" | GroupMemberStatus)}
+            className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+          >
+            <option value="">{t("All")}</option>
+            <option value="ACTIVE">{t("Active")}</option>
+            <option value="ARCHIVED">{t("Archived")}</option>
+          </select>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setEditingMember(null);
+            setFormOpen(true);
+          }}
+          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+        >
+          <Plus className="h-4 w-4" /> {t("Add Member")}
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t("Member")}</th>
+              <th className="px-4 py-3">{t("Phone")}</th>
+              <th className="px-4 py-3">{t("Status")}</th>
+              <th className="px-4 py-3 text-right">{t("Actions")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {visibleMembers.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-neutral-400">
+                  {t("No members yet.")}
+                </td>
+              </tr>
+            )}
+            {visibleMembers.map((member, index) => {
+                const isArchived = member.status === "ARCHIVED";
+                return (
+                  <tr key={member.id}>
+                    <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-neutral-400">
+                          {member.photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={member.photoUrl} alt={member.name} className="h-8 w-8 object-cover" />
+                          ) : (
+                            <CircleUserRound className="h-5 w-5" />
+                          )}
+                        </div>
+                        <span className={`font-medium text-neutral-800 ${isArchived ? "line-through opacity-60" : ""}`}>{member.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-neutral-500">{member.phone ?? t("No phone number")}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(member)}
+                        disabled={togglingId === member.id}
+                        title={t("Click to toggle")}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                          isArchived ? "bg-neutral-100 text-neutral-500 hover:bg-neutral-200" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                        }`}
+                      >
+                        {isArchived ? t("Archived") : t("Active")}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingMember(member);
+                            setFormOpen(true);
+                          }}
+                          title={t("Edit")}
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(member)}
+                          title={t("Remove")}
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
+
+      <GroupMemberFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingMember={editingMember} />
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title={t("Remove Member")}
+        message={
+          deleteTarget
+            ? `${t("Remove")} "${deleteTarget.name}"? ${t("If they have no contribution/expense history, they'll be permanently deleted; otherwise archived instead.")}`
+            : ""
+        }
+        confirmLabel={t("Remove")}
+      />
+    </div>
+  );
+}
+
+function ContributionsSection({ businessId, members, contributions }: { businessId: string; members: GroupMember[]; contributions: GroupContribution[] }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { t } = useLocale();
+  const [addOpen, setAddOpen] = useState(false);
+  const [editingContribution, setEditingContribution] = useState<GroupContribution | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GroupContribution | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const [memberId, setMemberId] = useState(searchParams.get("memberId") ?? "");
+  const [from, setFrom] = useState(searchParams.get("from") ?? "");
+  const [to, setTo] = useState(searchParams.get("to") ?? "");
+  const [datePreset, setDatePreset] = useState<DateRangePreset>(inferPreset(from, to));
+
+  function handlePresetChange(preset: DateRangePreset) {
+    setDatePreset(preset);
+    if (preset === "custom") return; // wait for the user to pick actual dates
+    const range = computePresetRange(preset);
+    setFrom(range.from);
+    setTo(range.to);
+  }
+
+  function applyFilters() {
+    const params = new URLSearchParams({ tab: "contributions" });
+    if (memberId) params.set("memberId", memberId);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    router.push(`/group-expenses/${businessId}?${params.toString()}`);
+  }
+
+  function openCreate() {
+    setEditingContribution(null);
+    setAddOpen(true);
+  }
+
+  function openEdit(c: GroupContribution) {
+    setEditingContribution(c);
+    setAddOpen(true);
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    startTransition(async () => {
+      const result = await deleteGroupContributionAction(businessId, deleteTarget.id);
+      if (result.success) {
+        toast.success(t("Contribution removed"));
+        setDeleteTarget(null);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to remove contribution"));
+      }
+    });
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Member")}</label>
+            <select
+              value={memberId}
+              onChange={(e) => setMemberId(e.target.value)}
+              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+            >
+              <option value="">{t("All Members")}</option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Date Range")}</label>
+            <select
+              value={datePreset}
+              onChange={(e) => handlePresetChange(e.target.value as DateRangePreset)}
+              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+            >
+              {DATE_RANGE_PRESET_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.label)}
+                </option>
+              ))}
+            </select>
+          </div>
+          {datePreset === "custom" && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">{t("From")}</label>
+                <DatePicker value={from} onChange={setFrom} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">{t("To")}</label>
+                <DatePicker value={to} onChange={setTo} />
+              </div>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={applyFilters}
+            className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          >
+            {t("Apply")}
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+        >
+          <Plus className="h-4 w-4" /> {t("Add Contribution")}
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t("Date")}</th>
+              <th className="px-4 py-3">{t("Member")}</th>
+              <th className="px-4 py-3 text-right">{t("Amount")}</th>
+              <th className="px-4 py-3">{t("Note")}</th>
+              <th className="px-4 py-3 text-right">{t("Actions")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {contributions.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-10 text-center text-sm text-neutral-400">
+                  {t("No contributions yet.")}
+                </td>
+              </tr>
+            )}
+            {contributions.map((c, index) => {
+                // Negative amount = a "Return Money" entry (see
+                // AddContributionModal's Deposit/Return toggle) -- money
+                // handed back OUT of the pool, not a deposit into it.
+                const isReturn = Number(c.amount) < 0;
+                return (
+                <tr key={c.id}>
+                  <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
+                  <td className="px-4 py-3 text-neutral-500">{fmtDate(c.date)}</td>
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-neutral-800">{c.groupMember.name}</span>
+                    {isReturn && (
+                      <span className="ml-2 rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-danger">
+                        {t("Returned")}
+                      </span>
+                    )}
+                  </td>
+                  <td className={`px-4 py-3 text-right font-semibold tabular-nums ${isReturn ? "text-brand-danger" : "text-brand-primary"}`}>
+                    {isReturn ? "-" : ""}
+                    {formatCurrency(Math.abs(Number(c.amount)), "BDT")}
+                  </td>
+                  <td className="px-4 py-3 text-neutral-500">{c.note ?? "--"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(c)}
+                        title={t("Edit")}
+                        className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(c)}
+                        title={t("Delete")}
+                        className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
+
+      <AddContributionModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        businessId={businessId}
+        members={members}
+        editingContribution={editingContribution}
+      />
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title={t("Remove Contribution")}
+        message={t("This will permanently remove this contribution entry.")}
+        confirmLabel={t("Remove")}
+      />
+    </div>
+  );
+}
+
+function ExpensesSection({
+  businessId,
+  members,
+  expenses,
+  categories,
+}: {
+  businessId: string;
+  members: GroupMember[];
+  expenses: GroupExpense[];
+  categories: GroupExpenseCategoryOption[];
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { t } = useLocale();
+  const [addOpen, setAddOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<GroupExpense | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GroupExpense | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const [category, setCategory] = useState(searchParams.get("category") ?? "");
+  const [from, setFrom] = useState(searchParams.get("from") ?? "");
+  const [to, setTo] = useState(searchParams.get("to") ?? "");
+  const [datePreset, setDatePreset] = useState<DateRangePreset>(inferPreset(from, to));
+
+  function handlePresetChange(preset: DateRangePreset) {
+    setDatePreset(preset);
+    if (preset === "custom") return; // wait for the user to pick actual dates
+    const range = computePresetRange(preset);
+    setFrom(range.from);
+    setTo(range.to);
+  }
+
+  function applyFilters() {
+    const params = new URLSearchParams({ tab: "expenses" });
+    if (category) params.set("category", category);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    router.push(`/group-expenses/${businessId}?${params.toString()}`);
+  }
+
+  function openCreate() {
+    setEditingExpense(null);
+    setAddOpen(true);
+  }
+
+  function openEdit(e: GroupExpense) {
+    setEditingExpense(e);
+    setAddOpen(true);
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    startTransition(async () => {
+      const result = await deleteGroupExpenseAction(businessId, deleteTarget.id);
+      if (result.success) {
+        toast.success(t("Expense removed"));
+        setDeleteTarget(null);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to remove expense"));
+      }
+    });
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Category")}</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+            >
+              <option value="">{t("All Categories")}</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t("Date Range")}</label>
+            <select
+              value={datePreset}
+              onChange={(e) => handlePresetChange(e.target.value as DateRangePreset)}
+              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
+            >
+              {DATE_RANGE_PRESET_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.label)}
+                </option>
+              ))}
+            </select>
+          </div>
+          {datePreset === "custom" && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">{t("From")}</label>
+                <DatePicker value={from} onChange={setFrom} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-500">{t("To")}</label>
+                <DatePicker value={to} onChange={setTo} />
+              </div>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={applyFilters}
+            className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          >
+            {t("Apply")}
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+        >
+          <Plus className="h-4 w-4" /> {t("Add Expense")}
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t("Date")}</th>
+              <th className="px-4 py-3">{t("Category")}</th>
+              <th className="px-4 py-3 text-right">{t("Amount")}</th>
+              <th className="px-4 py-3">{t("Paid by")}</th>
+              <th className="px-4 py-3">{t("Description")}</th>
+              <th className="px-4 py-3 text-right">{t("Actions")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {expenses.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-neutral-400">
+                  {t("No expenses yet.")}
+                </td>
+              </tr>
+            )}
+            {expenses.map((e, index) => {
+                // Matched by name (see GroupExpense.category's own schema
+                // comment on why it's a loose string, not a categoryId FK) --
+                // a category renamed/deleted since this expense was created
+                // just falls back to a plain gray badge with its own text.
+                const categoryOption = categories.find((c) => c.name === e.category);
+                return (
+                <tr key={e.id}>
+                  <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
+                  <td className="px-4 py-3 text-neutral-500">{fmtDate(e.date)}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium text-white ${categoryOption ? budgetCategoryColorClass(categoryOption.color) : "bg-neutral-400"}`}
+                    >
+                      {e.category}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-brand-danger">{formatCurrency(e.amount, "BDT")}</td>
+                  <td className="px-4 py-3 text-neutral-500">{e.paidByMember?.name ?? "--"}</td>
+                  <td className="px-4 py-3 text-neutral-500">{e.description ?? "--"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(e)}
+                        title={t("Edit")}
+                        className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(e)}
+                        title={t("Delete")}
+                        className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
+
+      <AddExpenseModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        businessId={businessId}
+        members={members}
+        categories={categories}
+        editingExpense={editingExpense}
+      />
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title={t("Remove Expense")}
+        message={t("This will permanently remove this expense entry.")}
+        confirmLabel={t("Remove")}
+      />
+    </div>
+  );
+}
+
+function SettlementSection({
+  businessId,
+  settlement,
+  settlementHistory,
+}: {
+  businessId: string;
+  settlement: GroupSettlementResult;
+  settlementHistory: GroupSettlementRecord[];
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { t } = useLocale();
+  const [from, setFrom] = useState(searchParams.get("from") ?? settlement.periodStart.slice(0, 10));
+  const [to, setTo] = useState(searchParams.get("to") ?? settlement.periodEnd.slice(0, 10));
+  const [closeOpen, setCloseOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function applyRange() {
+    router.push(`/group-expenses/${businessId}?tab=settlement&from=${from}&to=${to}`);
+  }
+
+  function handleClose() {
+    startTransition(async () => {
+      const result = await closeGroupSettlementAction(businessId, { periodStart: from, periodEnd: to });
+      if (result.success) {
+        toast.success(t("Settlement closed"));
+        setCloseOpen(false);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to close settlement"));
+      }
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-neutral-500">{t("From")}</label>
+          <DatePicker value={from} onChange={setFrom} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-neutral-500">{t("To")}</label>
+          <DatePicker value={to} onChange={setTo} />
+        </div>
+        <button
+          type="button"
+          onClick={applyRange}
+          className="rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+        >
+          {t("Apply")}
+        </button>
+        <button
+          type="button"
+          disabled={settlement.memberCount === 0}
+          onClick={() => setCloseOpen(true)}
+          className="ml-auto rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
+        >
+          {t("Close This Period")}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+          <p className="text-xs text-neutral-500">{t("Total Expense")}</p>
+          <p className="mt-1 text-lg font-semibold text-neutral-900">{formatCurrency(settlement.totalExpense, "BDT")}</p>
+        </div>
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+          <p className="text-xs text-neutral-500">{t("Members")}</p>
+          <p className="mt-1 text-lg font-semibold text-neutral-900">{settlement.memberCount}</p>
+        </div>
+        <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+          <p className="text-xs text-neutral-500">{t("Per-Member Share")}</p>
+          <p className="mt-1 text-lg font-semibold text-neutral-900">{formatCurrency(settlement.perMemberShare, "BDT")}</p>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t("Member")}</th>
+              <th className="px-4 py-3 text-right">{t("Contributed")}</th>
+              <th className="px-4 py-3 text-right">{t("Return")}</th>
+              <th className="px-4 py-3 text-right">{t("Actual Contributed")}</th>
+              <th className="px-4 py-3 text-right">{t("Share")}</th>
+              <th className="px-4 py-3 text-right">{t("Balance")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {settlement.members.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-neutral-400">
+                  {t("No active members for this period.")}
+                </td>
+              </tr>
+            )}
+            {settlement.members.map((m, index) => {
+              const balance = Number(m.balance);
+              const returned = Number(m.returned);
+              return (
+                <tr key={m.groupMemberId}>
+                  <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
+                  <td className="px-4 py-3 font-medium text-neutral-800">{m.name}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{formatCurrency(m.grossDeposited, "BDT")}</td>
+                  <td className={`px-4 py-3 text-right tabular-nums ${returned > 0 ? "text-brand-danger" : "text-neutral-400"}`}>
+                    {returned > 0 ? `-${formatCurrency(m.returned, "BDT")}` : formatCurrency(0, "BDT")}
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium tabular-nums text-neutral-800">{formatCurrency(m.contributed, "BDT")}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{formatCurrency(m.share, "BDT")}</td>
+                  <td className={`px-4 py-3 text-right font-semibold tabular-nums ${balance >= 0 ? "text-emerald-600" : "text-brand-danger"}`}>
+                    {balance >= 0 ? "+" : ""}
+                    {formatCurrency(m.balance, "BDT")}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {settlementHistory.length > 0 && (
+        <div>
+          <h2 className="mb-2 text-sm font-semibold text-neutral-700">{t("Closed Settlement History")}</h2>
+          <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+            <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
+              <span>{t("Period")}</span>
+              <span>{t("Total Expense")}</span>
+            </div>
+            <div className="divide-y divide-neutral-50">
+              {settlementHistory.map((s) => (
+                <div key={s.id} className="flex items-center justify-between px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-800">
+                      {fmtDate(s.periodStart)} - {fmtDate(s.periodEnd)}
+                    </p>
+                    <p className="text-xs text-neutral-400">
+                      {s.memberCount} {t("members")} -- {t("closed")} {fmtDate(s.closedAt)}
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums text-neutral-700">{formatCurrency(s.totalExpense, "BDT")}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={closeOpen}
+        onClose={() => setCloseOpen(false)}
+        onConfirm={handleClose}
+        isPending={isPending}
+        danger={false}
+        title={t("Close This Period")}
+        message={t("This locks in the current numbers for this period as a permanent settlement record. Later edits to contributions/expenses in this range won't change it.")}
+        confirmLabel={t("Close")}
+      />
+    </div>
+  );
+}
+
+// Manages the editable category list behind Expenses' own category picker
+// (see GroupExpense.category's schema comment) -- same shape as Assets
+// Management's own CategoryPageClient: add/edit/delete the categories
+// themselves, never displays any expenses here.
+function CategorySection({ businessId, categories }: { businessId: string; categories: GroupExpenseCategoryOption[] }) {
+  const router = useRouter();
+  const { t } = useLocale();
+  const [categoryModal, setCategoryModal] = useState<"closed" | { mode: "create" } | GroupExpenseCategoryOption>("closed");
+  const [deleteTarget, setDeleteTarget] = useState<GroupExpenseCategoryOption | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const editingCategory = categoryModal === "closed" || (typeof categoryModal === "object" && "mode" in categoryModal) ? null : categoryModal;
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    startTransition(async () => {
+      const result = await deleteGroupExpenseCategoryAction(businessId, deleteTarget.id);
+      if (result.success) {
+        toast.success(t("Category deleted"));
+        setDeleteTarget(null);
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to delete category"));
+      }
+    });
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-neutral-500">{t("Manage the categories your expenses are organized into.")}</p>
+        <button
+          type="button"
+          onClick={() => setCategoryModal({ mode: "create" })}
+          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+        >
+          <Plus className="h-4 w-4" /> {t("Add Category")}
+        </button>
+      </div>
+
+      {categories.length === 0 ? (
+        <div className="rounded-2xl bg-surface px-4 py-10 text-center text-sm text-neutral-400 shadow-sm shadow-black/5">
+          {t('No categories yet -- click "Add Category" to get started.')}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {categories.map((category) => {
+            const Icon = category.icon ? budgetCategoryIcon(category.icon) : null;
+            return (
+              <div key={category.id} className="flex items-center justify-between gap-3 rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white ${budgetCategoryColorClass(category.color)}`}>
+                    {Icon && <Icon className="h-5 w-5" />}
+                  </span>
+                  <p className="min-w-0 font-medium text-neutral-900">{category.name}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCategoryModal(category)}
+                    title={t("Edit")}
+                    className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(category)}
+                    title={t("Delete")}
+                    className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <GroupExpenseCategoryModal
+        open={categoryModal !== "closed"}
+        onClose={() => setCategoryModal("closed")}
+        businessId={businessId}
+        editingCategory={editingCategory}
+      />
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        isPending={isPending}
+        title={t("Delete Category")}
+        message={
+          deleteTarget
+            ? `${t("Delete")} "${deleteTarget.name}"? ${t("Existing expenses keep showing this name, but it won't be pickable for new ones.")}`
+            : ""
+        }
+        confirmLabel={t("Delete")}
+      />
+    </div>
+  );
+}
+

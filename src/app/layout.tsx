@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Hind_Siliguri, Inter } from "next/font/google";
+import Script from "next/script";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { BRAND_NAME } from "@/lib/brand";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import QueryProvider from "./providers/QueryProvider";
 import "./globals.css";
 
@@ -10,21 +13,31 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-// Bangla font (Hind Siliguri) comes with full server-side locale support --
-// when it lands, load it the same way and select between the two font
-// variables based on the active locale.
+// Bangla text switches to it (LocaleProvider adds font-bn in Bangla).
+const hindSiliguri = Hind_Siliguri({
+  variable: "--font-hind-siliguri",
+  subsets: ["bengali", "latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: {
-    default: "Admin Panel",
-    template: "%s | Admin Panel",
+    default: BRAND_NAME,
+    template: `%s | ${BRAND_NAME}`,
   },
-  description: "Super Admin Panel",
+  description: "Money management for people and businesses",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    // suppressHydrationWarning: THEME_INIT_SCRIPT may add "dark" to <html>
+    // before React hydrates, which the server couldn't know about.
+    <html lang="en" className={`${inter.variable} ${hindSiliguri.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+      </head>
       {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla) inject
           attributes like cz-shortcut-listen onto <body> after the server HTML
           is sent, which otherwise trips React's hydration mismatch check even
@@ -38,9 +51,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <QueryProvider>
           <TooltipProvider>{children}</TooltipProvider>
-          {/* theme="light": there's no ThemeProvider yet, and shadcn's Toaster
-              would otherwise follow the OS and render dark toasts on this
-              light-only panel. */}
+          {/* theme="light": shadcn's Toaster would otherwise follow the OS
+              and render dark toasts on the light admin panel. */}
           <Toaster richColors position="top-center" theme="light" />
         </QueryProvider>
       </body>
