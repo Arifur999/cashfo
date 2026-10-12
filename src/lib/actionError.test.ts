@@ -27,7 +27,7 @@ describe("getActionErrorMessage", () => {
   });
 
   it("says when the backend never answered", () => {
-    expect(getActionErrorMessage(new AxiosError("connect ECONNREFUSED"), "fallback")).toBe("Unable to reach the server. Is the backend running?");
+    expect(getActionErrorMessage(new AxiosError("connect ECONNREFUSED"), "fallback")).toBe("Unable to reach the server. Please try again.");
   });
 
   it("falls back when there is nothing better", () => {

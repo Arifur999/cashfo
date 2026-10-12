@@ -15,7 +15,7 @@ export const getActionErrorMessage = (error: unknown, fallbackMessage: string): 
     // No response at all means the backend never answered -- say so instead
     // of a misleading "Invalid email or password"-style fallback.
     if (!error.response) {
-      return "Unable to reach the server. Is the backend running?";
+      return "Unable to reach the server. Please try again.";
     }
     // The throttler's own body reads "ThrottlerException: Too Many Requests".
     if (error.response.status === 429) {
