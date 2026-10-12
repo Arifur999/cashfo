@@ -10,7 +10,11 @@
 // per-feature buttons (Save/Cancel/Edit/Delete, etc.) live in Server
 // Component pages throughout the other ~9 modules and stay English for now
 // -- making those reactive would need a cookie-based locale read server-side
-// rather than this client-only Context, which is future work.
+// rather than this client-only Context, which is future work. The auth
+// pages are Client Components throughout, so they translate in full.
+import { bnAuthDictionary } from "./authDictionary";
+import { bnCustomerDictionary } from "./customerDictionary";
+
 export const bnDictionary: Record<string, string> = {
   "Admin Panel": "অ্যাডমিন প্যানেল",
   Dashboard: "ড্যাশবোর্ড",
@@ -41,4 +45,6 @@ export const bnDictionary: Record<string, string> = {
   Cancel: "বাতিল",
   Edit: "সম্পাদনা",
   Delete: "মুছুন",
+  ...bnAuthDictionary,
+  ...bnCustomerDictionary,
 };
