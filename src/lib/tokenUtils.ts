@@ -4,8 +4,9 @@ import { deleteCookie, deleteCookiesWhere, getCookie, setCookie } from "./cookie
 import { jwtUtils } from "./jwtUtils";
 
 // The cookie names are a contract with proxy.ts, which reads them on every
-// /admin request. Keep every cookie/token touchpoint in this file so swapping
-// the session mechanism (e.g. to better-auth) stays a contained change.
+// page request. One pair for the whole site: an admin's and a customer's
+// tokens live in the same cookies, and each token's `aud` says which it is.
+// Keep every cookie/token touchpoint in this file.
 export const ACCESS_TOKEN_COOKIE = "accessToken";
 export const REFRESH_TOKEN_COOKIE = "refreshToken";
 
