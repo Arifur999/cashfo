@@ -1,0 +1,190 @@
+"use client";
+
+import { Banknote, Landmark, Pencil, Plus, Trash2, Wallet as WalletIcon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { archiveAccountAction, removeAccountAction, unarchiveAccountAction } from "@/lib/customer/accountActions";
+import type { Account } from "@/lib/customer/api";
+import { BalanceStatCard } from "./BalanceStatCard";
+import { formatCurrency } from "@/lib/customer/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { WalletFormModal } from "./WalletFormModal";
+
+interface WalletPageClientProps {
+  businessId: string;
+  wallets: Account[];
+  canManage: boolean;
+  currency: string;
+}
+
+export function WalletPageClient({ businessId, wallets, canManage, currency }: WalletPageClientProps) {
+  const router = useRouter();
+  const { t } = useLocale();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingWallet, setEditingWallet] = useState<Account | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function openCreate() {
+    setEditingWallet(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(wallet: Account) {
+    setEditingWallet(wallet);
+    setFormOpen(true);
+  }
+
+  function handleRemove(wallet: Account) {
+    if (!window.confirm(`${t("Remove")} "${wallet.name}"?`)) return;
+    startTransition(async () => {
+      const result = await removeAccountAction(businessId, wallet.id);
+      if (result.success) {
+        toast.success(result.data?.deleted ? t("Wallet deleted") : t("Wallet archived"));
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to remove wallet"));
+      }
+    });
+  }
+
+  function handleToggleStatus(wallet: Account) {
+    const isArchived = wallet.status === "ARCHIVED";
+    startTransition(async () => {
+      const result = isArchived ? await unarchiveAccountAction(businessId, wallet.id) : await archiveAccountAction(businessId, wallet.id);
+      if (result.success) {
+        toast.success(isArchived ? t("Wallet activated") : t("Wallet archived"));
+        router.refresh();
+      } else {
+        toast.error(result.message ?? (isArchived ? t("Failed to activate wallet") : t("Failed to archive wallet")));
+      }
+    });
+  }
+
+  const activeCount = wallets.filter((w) => w.status !== "ARCHIVED").length;
+  const totalOpening = wallets.reduce((sum, w) => sum + Number(w.openingBalance), 0);
+
+  return (
+    <div className="h-full bg-brand-content px-6 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-neutral-900">{t("Wallet")}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{t("Accounts")}</p>
+        </div>
+        {canManage && (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
+          >
+            <Plus className="h-4 w-4" /> {t("Add")}
+          </button>
+        )}
+      </div>
+
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <BalanceStatCard icon={WalletIcon} label={t("Total Wallets")} value={String(wallets.length)} />
+        <BalanceStatCard icon={Landmark} label={t("Active")} value={String(activeCount)} color="text-brand-primary" />
+        <BalanceStatCard icon={Banknote} label={t("Total Opening Balance")} value={formatCurrency(totalOpening, currency)} />
+      </div>
+
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
+            <tr>
+              <th className="px-4 py-3 font-medium">{t("Name")}</th>
+              <th className="px-4 py-3 font-medium">{t("Account Number")}</th>
+              <th className="px-4 py-3 font-medium">{t("Status")}</th>
+              <th className="px-4 py-3 font-medium text-right">{t("Opening Balance")}</th>
+              {canManage && <th className="px-4 py-3 font-medium text-right">{t("Actions")}</th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {wallets.length === 0 && (
+              <tr>
+                <td colSpan={canManage ? 5 : 4} className="px-4 py-10 text-center text-neutral-400">
+                  {t("No wallets yet.")}
+                </td>
+              </tr>
+            )}
+            {wallets.map((wallet) => {
+                const isArchived = wallet.status === "ARCHIVED";
+                return (
+                  <tr key={wallet.id} className={isArchived ? "opacity-60" : ""}>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                            isArchived ? "bg-neutral-100 text-neutral-400" : "bg-brand-primary/10 text-brand-primary"
+                          }`}
+                        >
+                          <WalletIcon className="h-4 w-4" />
+                        </span>
+                        <Link
+                          href={`/accounts/${wallet.id}`}
+                          className={`min-w-0 flex-1 truncate font-medium text-neutral-800 hover:underline ${isArchived ? "line-through" : ""}`}
+                        >
+                          {wallet.name}
+                        </Link>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-neutral-500">{wallet.accountNumber ?? "--"}</td>
+                    <td className="px-4 py-3">
+                      {canManage ? (
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => handleToggleStatus(wallet)}
+                          title={isArchived ? t("Mark as active") : t("Mark as inactive")}
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                            isArchived ? "bg-neutral-100 text-neutral-400 hover:bg-neutral-200" : "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20"
+                          }`}
+                        >
+                          {isArchived ? t("Inactive") : t("Active")}
+                        </button>
+                      ) : (
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+                            isArchived ? "bg-neutral-100 text-neutral-400" : "bg-brand-primary/10 text-brand-primary"
+                          }`}
+                        >
+                          {isArchived ? t("Inactive") : t("Active")}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(wallet.openingBalance, currency)}</td>
+                    {canManage && (
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(wallet)}
+                            title={t("Edit")}
+                            className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isPending}
+                            onClick={() => handleRemove(wallet)}
+                            title={t("Remove")}
+                            className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+      </div>
+
+      <WalletFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingWallet={editingWallet} />
+    </div>
+  );
+}
