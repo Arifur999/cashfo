@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type BusinessLimits } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 export const getBusinessLimits = cache(async (): Promise<BusinessLimits | null> => {
   const accessToken = await getAccessToken();
@@ -13,7 +14,7 @@ export const getBusinessLimits = cache(async (): Promise<BusinessLimits | null> 
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });

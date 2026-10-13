@@ -49,6 +49,11 @@ export const sharedDictionary: Record<string, string> = {
   Close: "বন্ধ করুন",
   Submit: "জমা দিন",
   "Loading...": "লোড হচ্ছে...",
+  // app/(customerLayout)/error.tsx
+  "Something went wrong": "কিছু একটা সমস্যা হয়েছে",
+  "We couldn't load this page. Check your connection and try again.": "পেজটি লোড করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।",
+  "Reference:": "রেফারেন্স:",
+  "Try again": "আবার চেষ্টা করুন",
   Name: "নাম",
   Email: "ইমেইল",
   Phone: "ফোন",

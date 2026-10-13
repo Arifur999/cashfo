@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type BudgetCategoryType, type BudgetOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 export const getBudgetOverview = cache(
   async (businessId: string, month?: number, year?: number, type: BudgetCategoryType = "EXPENSE"): Promise<BudgetOverview> => {
@@ -16,8 +17,8 @@ export const getBudgetOverview = cache(
         params: { month, year, type },
       });
       return response.data;
-    } catch {
-      return empty;
+    } catch (error) {
+      return emptyUnlessOutage(error, empty);
     }
   },
 );

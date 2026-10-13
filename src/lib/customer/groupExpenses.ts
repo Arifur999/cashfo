@@ -13,6 +13,7 @@ import {
   type GroupSettlementResult,
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 async function authHeaders() {
   const accessToken = await getAccessToken();
@@ -26,8 +27,8 @@ export const getGroupMembers = cache(async (businessId: string): Promise<GroupMe
   try {
     const res = await axios.get<GroupMember[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/members`, { headers });
     return res.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -46,8 +47,8 @@ export const getGroupContributions = cache(async (businessId: string, filters: C
       params: filters,
     });
     return res.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -66,8 +67,8 @@ export const getGroupExpenses = cache(async (businessId: string, filters: Expens
       params: filters,
     });
     return res.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -77,8 +78,8 @@ export const getGroupExpenseCategories = cache(async (businessId: string): Promi
   try {
     const res = await axios.get<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, { headers });
     return res.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -100,8 +101,8 @@ export const getGroupSettlement = cache(async (businessId: string, from?: string
       params: from && to ? { from, to } : undefined,
     });
     return res.data;
-  } catch {
-    return EMPTY_SETTLEMENT;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_SETTLEMENT);
   }
 });
 
@@ -111,8 +112,8 @@ export const getGroupSettlementHistory = cache(async (businessId: string): Promi
   try {
     const res = await axios.get<GroupSettlementRecord[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/history`, { headers });
     return res.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -122,7 +123,7 @@ export const getGroupMonthBudgets = cache(async (businessId: string): Promise<Gr
   try {
     const res = await axios.get<GroupMonthlyBudget[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets`, { headers });
     return res.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });

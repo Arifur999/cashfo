@@ -4,6 +4,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type TodoList } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 async function authHeaders() {
   const accessToken = await getAccessToken();
@@ -17,8 +18,8 @@ export const getTodoLists = cache(async (): Promise<TodoList[]> => {
   try {
     const res = await axios.get<TodoList[]>(`${API_BASE_URL}/api/todos`, { headers });
     return res.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -28,7 +29,7 @@ export const getTodoList = cache(async (id: string): Promise<TodoList | null> =>
   try {
     const res = await axios.get<TodoList>(`${API_BASE_URL}/api/todos/${id}`, { headers });
     return res.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });

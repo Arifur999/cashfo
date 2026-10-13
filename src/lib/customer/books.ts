@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type BooksOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 // null (not an empty library) when the request fails, so a hiccup never looks
 // like "all your books are gone".
@@ -12,8 +13,8 @@ export const getBooksOverview = cache(async (): Promise<BooksOverview | null> =>
   try {
     const res = await axios.get<BooksOverview>(`${API_BASE_URL}/api/books`, { headers: { Authorization: `Bearer ${accessToken}` } });
     return res.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });
 
