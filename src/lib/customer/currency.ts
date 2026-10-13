@@ -27,9 +27,12 @@ const groupDigits = (value: number, locale: string) => {
 export function formatCurrency(amount: number | string, currencyCode: string): string {
   const { symbol, locale } = CURRENCIES[currencyCode] ?? { symbol: currencyCode, locale: "en-US" };
   const value = Number(amount);
-  const safeValue = Number.isFinite(value) ? value : 0;
-  // "-৳ 1,500.00", not "৳ -1,500.00": the sign leads, as it is read.
-  return `${safeValue < 0 ? "-" : ""}${symbol} ${groupDigits(Math.abs(safeValue), locale)}`;
+  // Rounded to the paisa before the sign is chosen, so a sum that is
+  // negative only by float noise (-2.8e-17) prints "৳ 0.00", not "-৳ 0.00".
+  const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+  // "-৳ 1,500.00", not "৳ -1,500.00": the sign leads, as it is read. A
+  // no-break space, so a narrow card never leaves "৳" alone on its line.
+  return `${rounded < 0 ? "-" : ""}${symbol}\u00A0${groupDigits(Math.abs(rounded), locale)}`;
 }
 
 // Just the symbol, e.g. for an inline prefix inside an amount input --
