@@ -12,7 +12,7 @@ import type { Account } from "@/lib/customer/api";
 import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { currencySymbol } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { createExpenseAction, createIncomeAction, getExpenseAccountsAction, getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { createExpenseAction, createIncomeAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getAppToday } from "@/lib/date";
 import { NoWalletHint } from "./NoWalletHint";
 
@@ -40,6 +40,8 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
   const [accountId, setAccountId] = useState("");
   const [notes, setNotes] = useState("");
   const [moneyAccounts, setMoneyAccounts] = useState<Account[]>([]);
+  // Set when the wallets couldn't be loaded -- not the same as having none.
+  const [walletsError, setWalletsError] = useState<string | null>(null);
   const [expenseAccounts, setExpenseAccounts] = useState<Account[]>([]);
   const [customExpenseCategories, setCustomExpenseCategories] = useState<string[]>([]);
   const [customIncomeCategories, setCustomIncomeCategories] = useState<string[]>([]);
@@ -64,6 +66,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
       setAccountId("");
       setNotes("");
       setLoading(true);
+      setWalletsError(null);
       setResetCount((c) => c + 1);
     }
   }
@@ -71,12 +74,13 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
   useEffect(() => {
     if (!open) return;
     Promise.all([
-      getMoneyAccountsAction(businessId),
+      listMoneyAccountsAction(businessId),
       getExpenseAccountsAction(businessId),
       getBudgetCategoryNamesAction(businessId, "EXPENSE"),
       getBudgetCategoryNamesAction(businessId, "INCOME"),
     ]).then(([money, expense, budgetCategories, incomeCategories]) => {
-      setMoneyAccounts(money);
+      setMoneyAccounts(money.data ?? []);
+      setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
       setExpenseAccounts(expense);
       setCustomExpenseCategories(budgetCategories.map((c) => c.name));
       setCustomIncomeCategories(incomeCategories.map((c) => c.name));
@@ -187,7 +191,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
             {!loading && categories.length === 0 && (
               <p className="mt-1 text-xs text-neutral-400">
                 {t("No categories yet --")}{" "}
-                <Link href={`/categories?addType=${kind}`} onClick={onClose} className="font-medium text-brand-primary hover:underline">
+                <Link href={`/categories?addType=${kind}`} onNavigate={onClose} className="font-medium text-brand-primary hover:underline">
                   {t("add one under Budget Planning")}
                 </Link>
                 .
@@ -216,7 +220,8 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
                 </option>
               ))}
             </select>
-            {!loading && moneyAccounts.length === 0 && <NoWalletHint message="No wallet yet." onNavigate={onClose} />}
+            {!loading && walletsError && <p role="alert" className="mt-1 text-xs text-brand-danger">{t(walletsError)}</p>}
+            {!loading && !walletsError && moneyAccounts.length === 0 && <NoWalletHint message="No wallet yet." onNavigate={onClose} />}
           </div>
         </div>
 

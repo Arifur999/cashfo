@@ -32,13 +32,20 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 // Fetched fresh each time a modal opens (same pattern as
 // CreateWorkspaceModal's getBusinessLimitsAction) -- these lists rarely
 // change but must never go stale mid-session.
-export async function getMoneyAccountsAction(businessId: string): Promise<Account[]> {
-  try {
-    const res = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/money-accounts`, { headers: await authHeaders() });
+// For a form that says "No wallet yet" when the list is empty: a failed
+// request comes back as success: false, never as an empty list.
+export async function listMoneyAccountsAction(businessId: string): Promise<ActionResult<Account[]>> {
+  return callApi(async () => {
+    const res = await customerApi.get<Account[]>(`/api/businesses/${businessId}/accounts/money-accounts`);
     return res.data;
-  } catch {
-    return [];
-  }
+  }, "Failed to load your wallets");
+}
+
+// The plain list, empty when it could not be loaded -- for pickers that only
+// need something to offer.
+export async function getMoneyAccountsAction(businessId: string): Promise<Account[]> {
+  const result = await listMoneyAccountsAction(businessId);
+  return result.data ?? [];
 }
 
 export async function getIncomeAccountsAction(businessId: string): Promise<Account[]> {
