@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type HabitLog, type HabitMonthTracker } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -27,32 +27,6 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
     }
     return { success: false, message: fallbackMessage };
   }
-}
-
-export interface HabitInput {
-  name: string;
-  category?: string;
-  icon?: string;
-  color?: string;
-  frequencyType?: HabitFrequency;
-  weeklyDays?: number[];
-  weeklyCount?: number;
-  targetValue?: number;
-  unit?: string;
-}
-
-export async function createHabitAction(input: HabitInput): Promise<ActionResult<Habit>> {
-  return callApi(async () => {
-    const res = await customerApi.post<Habit>(`${API_BASE_URL}/api/habits`, input, { headers: await authHeaders() });
-    return res.data;
-  }, "Failed to add habit");
-}
-
-export async function updateHabitAction(id: string, input: Partial<HabitInput> & { isArchived?: boolean }): Promise<ActionResult<Habit>> {
-  return callApi(async () => {
-    const res = await customerApi.patch<Habit>(`${API_BASE_URL}/api/habits/${id}`, input, { headers: await authHeaders() });
-    return res.data;
-  }, "Failed to update habit");
 }
 
 export async function deleteHabitAction(id: string): Promise<ActionResult<{ id: string; action: "deleted" | "archived" }>> {

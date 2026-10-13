@@ -5,8 +5,9 @@ import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
 
-// null (not an empty library) when the request fails, so a hiccup never looks
-// like "all your books are gone".
+// null (not an empty library) when the backend answers that there is
+// nothing here; an outage throws to the error screen (readFallback.ts), so a
+// hiccup never looks like "all your books are gone".
 export const getBooksOverview = cache(async (): Promise<BooksOverview | null> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
