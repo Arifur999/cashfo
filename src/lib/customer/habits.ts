@@ -5,6 +5,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type HabitMonthTracker } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 async function authHeaders() {
   const accessToken = await getAccessToken();
@@ -18,8 +19,8 @@ export const getHabitTrackers = cache(async (category: string): Promise<HabitMon
   try {
     const res = await axios.get<HabitMonthTracker[]>(`${API_BASE_URL}/api/habit-trackers`, { headers, params: { category } });
     return res.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -29,7 +30,7 @@ export const getHabitTracker = cache(async (id: string): Promise<HabitMonthTrack
   try {
     const res = await axios.get<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers });
     return res.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });

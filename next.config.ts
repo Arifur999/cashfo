@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   // image, without the full node_modules -- see Dockerfile.
   output: "standalone",
 
+  // next dev logs every Server Function call with its arguments -- the
+  // sign-in, sign-up and password actions included, so passwords would land
+  // in the terminal.
+  logging: {
+    serverFunctions: false,
+  },
+
   // Query strings carry over, so ?redirect= and ?error= survive.
   async redirects() {
     return [

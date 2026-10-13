@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type Account, type AccountGroup, type AccountLedger, type AccountSummary, type WalletsOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 export const getAccounts = cache(async (businessId: string): Promise<AccountGroup[]> => {
   const accessToken = await getAccessToken();
@@ -13,8 +14,8 @@ export const getAccounts = cache(async (businessId: string): Promise<AccountGrou
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -32,8 +33,8 @@ export const getWallets = cache(async (businessId: string): Promise<Account[]> =
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -50,8 +51,8 @@ export const getWalletsOverview = cache(async (businessId: string): Promise<Wall
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return EMPTY_WALLETS_OVERVIEW;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_WALLETS_OVERVIEW);
   }
 });
 
@@ -69,8 +70,8 @@ export const getSavingsWallets = cache(async (businessId: string): Promise<Accou
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -83,8 +84,8 @@ export const getAccount = cache(async (businessId: string, accountId: string): P
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });
 
@@ -115,8 +116,8 @@ export const getLedger = cache(async (businessId: string, accountId: string, fil
       params: filters,
     });
     return response.data;
-  } catch {
-    return EMPTY_LEDGER;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_LEDGER);
   }
 });
 
@@ -133,8 +134,8 @@ export const getAccountSummary = cache(
         params: filters,
       });
       return response.data;
-    } catch {
-      return EMPTY_SUMMARY;
+    } catch (error) {
+      return emptyUnlessOutage(error, EMPTY_SUMMARY);
     }
   },
 );

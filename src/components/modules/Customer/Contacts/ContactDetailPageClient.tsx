@@ -11,6 +11,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ReceivablePayableSection } from "@/components/modules/Customer/ReceivablesPayables/ReceivablePayableSection";
 import { ContactFormModal } from "./ContactFormModal";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 interface ContactDetailPageClientProps {
   businessId: string;
@@ -23,6 +24,7 @@ interface ContactDetailPageClientProps {
 export function ContactDetailPageClient({ businessId, contact, balanceDetail, canManage, currency }: ContactDetailPageClientProps) {
   const router = useRouter();
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [formOpen, setFormOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -31,8 +33,8 @@ export function ContactDetailPageClient({ businessId, contact, balanceDetail, ca
   const showReceivable = contact.type === "CUSTOMER" || contact.type === "BOTH";
   const showPayable = contact.type === "SUPPLIER" || contact.type === "BOTH";
 
-  function handleArchive() {
-    if (!window.confirm(`${t("Archive")} "${contact.name}"?`)) return;
+  async function handleArchive() {
+    if (!(await confirm({ message: `${t("Archive")} "${contact.name}"?`, confirmLabel: "Archive" }))) return;
     startTransition(async () => {
       const result = await archiveContactAction(businessId, contact.id);
       if (result.success) {
@@ -150,6 +152,7 @@ export function ContactDetailPageClient({ businessId, contact, balanceDetail, ca
       )}
 
       <ContactFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingContact={contact} />
+      {confirmDialog}
     </div>
   );
 }

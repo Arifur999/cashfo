@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type CategoryBreakdown, type IncomeVsSavingsPoint } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 const EMPTY_CATEGORY_BREAKDOWN = (type: "INCOME" | "EXPENSE"): CategoryBreakdown => ({ type, total: "0.00", categories: [] });
 
@@ -17,8 +18,8 @@ export const getCategoryBreakdown = cache(
         params: { type, dateFrom, dateTo },
       });
       return response.data;
-    } catch {
-      return EMPTY_CATEGORY_BREAKDOWN(type);
+    } catch (error) {
+      return emptyUnlessOutage(error, EMPTY_CATEGORY_BREAKDOWN(type));
     }
   },
 );
@@ -33,7 +34,7 @@ export const getIncomeVsSavingsTrend = cache(async (businessId: string, months =
       params: { months },
     });
     return response.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });

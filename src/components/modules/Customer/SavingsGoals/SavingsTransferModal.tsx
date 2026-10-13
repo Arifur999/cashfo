@@ -10,6 +10,7 @@ import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import type { SavingsGoal } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createSavingsTransferAction } from "@/lib/customer/savingsGoalActions";
+import { getAppToday } from "@/lib/date";
 
 interface SavingsTransferModalProps {
   open: boolean;
@@ -24,7 +25,7 @@ export function SavingsTransferModal({ open, onClose, businessId, goals }: Savin
   const [fromGoalId, setFromGoalId] = useState("");
   const [toGoalId, setToGoalId] = useState("");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [notes, setNotes] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -36,7 +37,7 @@ export function SavingsTransferModal({ open, onClose, businessId, goals }: Savin
       setFromGoalId("");
       setToGoalId("");
       setAmount("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setNotes("");
       setResetCount((n) => n + 1);
     }

@@ -39,11 +39,9 @@ export default async function BalanceOverviewPage() {
     { opening: 0, in: 0, out: 0, savings: 0, adjustment: 0, current: 0 },
   );
 
-  // Signed "+"/"-" prefix on the absolute value, rather than relying on
-  // formatCurrency's own negative-number formatting (which would put the
-  // minus sign after the currency symbol, e.g. "৳-500.00") -- same
-  // "show direction as an explicit sign/label, not a raw negative" instinct
-  // as the Loan Dashboard's Dena/Pawna split.
+  // An explicit "+" or "-" on every non-zero figure, gains included (plain
+  // formatCurrency only marks negatives) -- same "show direction as an
+  // explicit sign/label" instinct as the Loan Dashboard's Dena/Pawna split.
   function formatSigned(value: string) {
     const n = Number(value);
     const prefix = n > 0 ? "+" : n < 0 ? "-" : "";

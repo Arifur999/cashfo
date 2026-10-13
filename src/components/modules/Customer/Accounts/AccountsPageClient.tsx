@@ -10,6 +10,7 @@ import { ACCOUNT_TYPE_LABELS, accountDisplayName } from "@/lib/customer/accountD
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { AccountFormModal } from "./AccountFormModal";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 interface AccountsPageClientProps {
   businessId: string;
@@ -34,6 +35,7 @@ function flatten(groups: AccountGroup[]): Account[] {
 export function AccountsPageClient({ businessId, initialGroups, canManage, preferredLanguage, currency }: AccountsPageClientProps) {
   const router = useRouter();
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(initialGroups.map((g) => g.accountType)));
   const [formOpen, setFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -60,8 +62,8 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
     setFormOpen(true);
   }
 
-  function handleRemove(account: Account) {
-    if (!window.confirm(`${t("Remove")} "${accountDisplayName(account, preferredLanguage)}"?`)) return;
+  async function handleRemove(account: Account) {
+    if (!(await confirm({ message: `${t("Remove")} "${accountDisplayName(account, preferredLanguage)}"?`, confirmLabel: "Remove" }))) return;
     startTransition(async () => {
       const result = await removeAccountAction(businessId, account.id);
       if (result.success) {
@@ -196,6 +198,7 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
         allAccounts={allAccounts}
         preferredLanguage={preferredLanguage}
       />
+      {confirmDialog}
     </div>
   );
 }

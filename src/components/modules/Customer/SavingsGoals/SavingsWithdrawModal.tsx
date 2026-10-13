@@ -13,6 +13,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getExpenseAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getActiveSavingsWalletsAction, withdrawSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
+import { getAppToday } from "@/lib/date";
 
 interface SavingsWithdrawModalProps {
   open: boolean;
@@ -33,7 +34,7 @@ interface SavingsWithdrawModalProps {
 export function SavingsWithdrawModal({ open, onClose, businessId, goal, currency }: SavingsWithdrawModalProps) {
   const { t } = useLocale();
   const router = useRouter();
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [savingsAccountId, setSavingsAccountId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [notes, setNotes] = useState("");
@@ -47,7 +48,7 @@ export function SavingsWithdrawModal({ open, onClose, businessId, goal, currency
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setSavingsAccountId("");
       setCategoryId("");
       setNotes("");

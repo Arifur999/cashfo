@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type ContactCategory, type Transaction, type TransactionListResponse, type TransactionType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 export interface TransactionFilters {
   dateFrom?: string;
@@ -38,8 +39,8 @@ export const getTransactions = cache(async (businessId: string, filters: Transac
       params: { ...rest, transactionTypes: transactionTypes?.join(",") },
     });
     return response.data;
-  } catch {
-    return { data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } };
+  } catch (error) {
+    return emptyUnlessOutage(error, { data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
   }
 });
 
@@ -52,7 +53,7 @@ export const getTransaction = cache(async (businessId: string, id: string): Prom
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });

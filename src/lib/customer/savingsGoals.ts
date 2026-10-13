@@ -11,6 +11,7 @@ import {
   type SavingsTransferRow,
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 export const getSavingsGoals = cache(async (businessId: string, status?: SavingsGoalStatus): Promise<SavingsGoal[]> => {
   const accessToken = await getAccessToken();
@@ -22,8 +23,8 @@ export const getSavingsGoals = cache(async (businessId: string, status?: Savings
       params: { status },
     });
     return response.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -47,8 +48,8 @@ export const getSavingsOverview = cache(async (businessId: string): Promise<Savi
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return EMPTY_OVERVIEW;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_OVERVIEW);
   }
 });
 
@@ -63,8 +64,8 @@ export const getSavingsAccountOverview = cache(async (businessId: string): Promi
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return EMPTY_ACCOUNT_OVERVIEW;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_ACCOUNT_OVERVIEW);
   }
 });
 
@@ -77,8 +78,8 @@ export const getSavingsTransfers = cache(async (businessId: string): Promise<Sav
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -91,7 +92,7 @@ export const getSavingsGoal = cache(async (businessId: string, id: string): Prom
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });

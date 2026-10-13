@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type TodoList } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { getAppToday } from "@/lib/date";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -34,7 +35,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 export async function getTodayTodoListAction(): Promise<ActionResult<TodoList | null>> {
   return callApi(async () => {
     const res = await axios.get<TodoList[]>(`${API_BASE_URL}/api/todos`, { headers: await authHeaders() });
-    const todayKey = new Date().toISOString().slice(0, 10);
+    const todayKey = getAppToday();
     return res.data.find((list) => list.date === todayKey) ?? null;
   }, "Failed to load today's tasks");
 }

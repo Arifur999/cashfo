@@ -10,6 +10,7 @@ import type { SavingsGoal, SavingsReminderChannel } from "@/lib/customer/api";
 import { formatDurationUntil, monthsBetween } from "@/lib/customer/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createSavingsGoalAction, updateSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
+import { getAppToday } from "@/lib/date";
 
 interface SavingsGoalFormModalProps {
   open: boolean;
@@ -51,7 +52,7 @@ export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }:
       } else {
         setName("");
         setTargetAmount("");
-        setTargetDate(new Date().toISOString().slice(0, 10));
+        setTargetDate(getAppToday());
         setReminderDate("");
         setReminderChannel("");
         setDescription("");

@@ -10,6 +10,7 @@ import type { Account, Contact } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
+import { getAppToday } from "@/lib/date";
 
 interface NewLoanTransactionModalProps {
   open: boolean;
@@ -43,7 +44,7 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
   const [contactId, setContactId] = useState("");
   const [kind, setKind] = useState<TxnKind>("GIVE_LOAN");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [moneyAccountId, setMoneyAccountId] = useState("");
   const [description, setDescription] = useState("");
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -62,7 +63,7 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
       setContactId(loanContacts[0]?.id ?? "");
       setKind("GIVE_LOAN");
       setAmount("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setMoneyAccountId("");
       setDescription("");
       setLoadingAccounts(true);

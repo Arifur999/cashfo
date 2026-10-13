@@ -9,6 +9,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { deleteAssetCategoryAction } from "@/lib/customer/assetActions";
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { AssetCategoryModal } from "./AssetCategoryModal";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 interface CategoryPageClientProps {
   businessId: string;
@@ -31,6 +32,7 @@ function isCreateState(state: CategoryModalState): state is { mode: "create" } {
 // categories carry no per-category spending figure).
 export function CategoryPageClient({ businessId, categories, canManage }: CategoryPageClientProps) {
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const router = useRouter();
   const [categoryModal, setCategoryModal] = useState<CategoryModalState>("closed");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -38,16 +40,12 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
 
   const editingCategory = categoryModal === "closed" || isCreateState(categoryModal) ? null : categoryModal;
 
-  function handleDelete(category: AssetCategoryOption) {
-    if (
-      !window.confirm(
-        t('Delete the "{name}" category? Existing assets keep showing this name, but it won\'t be pickable for new ones.').replace(
-          "{name}",
-          category.name,
-        ),
-      )
-    )
-      return;
+  async function handleDelete(category: AssetCategoryOption) {
+    const message = t('Delete the "{name}" category? Existing assets keep showing this name, but it won\'t be pickable for new ones.').replace(
+      "{name}",
+      category.name,
+    );
+    if (!(await confirm({ message, confirmLabel: "Delete" }))) return;
     setDeletingId(category.id);
     startDeleteTransition(async () => {
       const result = await deleteAssetCategoryAction(businessId, category.id);
@@ -131,6 +129,7 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
         businessId={businessId}
         editingCategory={editingCategory}
       />
+      {confirmDialog}
     </div>
   );
 }

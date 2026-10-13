@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getContactBalanceDetailAction, payPaymentAction, receivePaymentAction } from "@/lib/customer/receivablesPayablesActions";
 import { formatDate } from "@/lib/customer/date";
+import { getAppToday } from "@/lib/date";
 
 interface RecordPaymentModalProps {
   open: boolean;
@@ -23,7 +24,7 @@ interface RecordPaymentModalProps {
 export function RecordPaymentModal({ open, onClose, businessId, contactId, direction, currency }: RecordPaymentModalProps) {
   const router = useRouter();
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [moneyAccountId, setMoneyAccountId] = useState("");
   const [appliedToTransactionId, setAppliedToTransactionId] = useState("");
   const [description, setDescription] = useState("");
@@ -37,7 +38,7 @@ export function RecordPaymentModal({ open, onClose, businessId, contactId, direc
     setPrevOpen(open);
     if (open) {
       setAmount("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setMoneyAccountId("");
       setAppliedToTransactionId("");
       setDescription("");

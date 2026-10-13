@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type Contact, type ContactCategory, type ContactListResponse, type ContactStatus, type ContactType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 export interface ContactFilters {
   type?: ContactType;
@@ -25,8 +26,8 @@ export const getContacts = cache(async (businessId: string, filters: ContactFilt
       params: filters,
     });
     return response.data;
-  } catch {
-    return EMPTY_LIST;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_LIST);
   }
 });
 
@@ -39,7 +40,7 @@ export const getContact = cache(async (businessId: string, contactId: string): P
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });

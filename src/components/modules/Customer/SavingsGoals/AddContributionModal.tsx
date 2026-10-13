@@ -11,6 +11,7 @@ import type { Account, SavingsGoal } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { addContributionAction, getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
+import { getAppToday } from "@/lib/date";
 
 interface AddContributionModalProps {
   open: boolean;
@@ -22,7 +23,7 @@ interface AddContributionModalProps {
 export function AddContributionModal({ open, onClose, businessId, goal }: AddContributionModalProps) {
   const { t } = useLocale();
   const router = useRouter();
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [moneyAccountId, setMoneyAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
   const [amount, setAmount] = useState("");
@@ -36,7 +37,7 @@ export function AddContributionModal({ open, onClose, businessId, goal }: AddCon
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setMoneyAccountId("");
       setToAccountId("");
       setAmount("");

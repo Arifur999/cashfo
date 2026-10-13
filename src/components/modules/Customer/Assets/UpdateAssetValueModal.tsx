@@ -11,6 +11,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { updateAssetValueAction } from "@/lib/customer/assetActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
+import { getAppToday } from "@/lib/date";
 
 interface UpdateAssetValueModalProps {
   open: boolean;
@@ -29,7 +30,7 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
   const { t } = useLocale();
   const router = useRouter();
   const [prevKey, setPrevKey] = useState(open ? asset?.id ?? null : null);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [newValue, setNewValue] = useState(asset?.currentValue ?? "");
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -38,7 +39,7 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
   if (currentKey !== prevKey) {
     setPrevKey(currentKey);
     if (open) {
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setNewValue(asset?.currentValue ?? "");
       setNote("");
     }

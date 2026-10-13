@@ -9,6 +9,8 @@ import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import type { Account } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createTransferAction, getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { getAppToday } from "@/lib/date";
+import { NoWalletHint } from "./NoWalletHint";
 
 interface TransferModalProps {
   open: boolean;
@@ -22,7 +24,7 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
   const [amount, setAmount] = useState("");
   const [fromAccountId, setFromAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [description, setDescription] = useState("");
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
       setAmount("");
       setFromAccountId("");
       setToAccountId("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setDescription("");
       setLoading(true);
     }
@@ -115,6 +117,7 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
           </div>
         </div>
         {sameAccount && <p className="text-sm text-brand-danger">{t("From and To must be different accounts")}</p>}
+        {!loading && accounts.length < 2 && <NoWalletHint message="A transfer needs two wallets." onNavigate={onClose} />}
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>

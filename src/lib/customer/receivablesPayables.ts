@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type AgingReport, type ContactBalanceDetail, type LoanDashboard, type LoanStatement, type OverdueRow } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 const EMPTY_DIRECTION = { totalInvoiced: "0.00", totalPaid: "0.00", remaining: "0.00", transactions: [] };
 const EMPTY_DETAIL: ContactBalanceDetail = {
@@ -22,8 +23,8 @@ export const getContactBalanceDetail = cache(async (businessId: string, contactI
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return EMPTY_DETAIL;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_DETAIL);
   }
 });
 
@@ -38,8 +39,8 @@ export const getReceivablesAging = cache(async (businessId: string): Promise<Agi
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return EMPTY_AGING;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_AGING);
   }
 });
 
@@ -52,8 +53,8 @@ export const getPayablesAging = cache(async (businessId: string): Promise<AgingR
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return EMPTY_AGING;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_AGING);
   }
 });
 
@@ -66,8 +67,8 @@ export const getReceivablesOverdue = cache(async (businessId: string): Promise<O
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -80,8 +81,8 @@ export const getPayablesOverdue = cache(async (businessId: string): Promise<Over
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return [];
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
   }
 });
 
@@ -104,8 +105,8 @@ export const getLoanDashboard = cache(async (businessId: string): Promise<LoanDa
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
-  } catch {
-    return EMPTY_LOAN_DASHBOARD;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_LOAN_DASHBOARD);
   }
 });
 
@@ -132,8 +133,8 @@ export const getLoanStatement = cache(
         params: filters,
       });
       return response.data;
-    } catch {
-      return EMPTY_LOAN_STATEMENT;
+    } catch (error) {
+      return emptyUnlessOutage(error, EMPTY_LOAN_STATEMENT);
     }
   },
 );

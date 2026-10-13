@@ -17,9 +17,10 @@ import {
 } from "@/lib/customer/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatTodoDate } from "./todoDate";
+import { getAppToday } from "@/lib/date";
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return getAppToday();
 }
 
 // TopBar quick-access to today's to-do list -- shown in BOTH app modes

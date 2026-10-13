@@ -10,6 +10,7 @@ import { deleteBudgetCategoryAction } from "@/lib/customer/budgetActions";
 import { budgetCategoryColorClass, budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 interface IncomeCategoryColumnProps {
   businessId: string;
@@ -29,13 +30,14 @@ interface IncomeCategoryColumnProps {
 // this month.
 export function IncomeCategoryColumn({ businessId, overview, currency, canManage, dateFrom, dateTo, onEdit }: IncomeCategoryColumnProps) {
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
 
-  function handleDelete(category: BudgetCategorySummary) {
+  async function handleDelete(category: BudgetCategorySummary) {
     const confirmMessage = t('Delete the "{name}" category? This won\'t affect past transactions.').replace("{name}", category.name);
-    if (!window.confirm(confirmMessage)) return;
+    if (!(await confirm({ message: confirmMessage, confirmLabel: "Delete" }))) return;
     setDeletingId(category.id);
     startDeleteTransition(async () => {
       const result = await deleteBudgetCategoryAction(businessId, category.id);
@@ -117,6 +119,7 @@ export function IncomeCategoryColumn({ businessId, overview, currency, canManage
           })}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

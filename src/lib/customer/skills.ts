@@ -3,6 +3,7 @@ import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type SkillsOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { emptyUnlessOutage } from "./readFallback";
 
 // null (not an empty list) when the request fails, so a hiccup never looks
 // like "all your skills are gone".
@@ -12,7 +13,7 @@ export const getSkillsOverview = cache(async (): Promise<SkillsOverview | null> 
   try {
     const res = await axios.get<SkillsOverview>(`${API_BASE_URL}/api/skills`, { headers: { Authorization: `Bearer ${accessToken}` } });
     return res.data;
-  } catch {
-    return null;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });
