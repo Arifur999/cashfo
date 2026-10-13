@@ -9,11 +9,7 @@ import { DashboardProgressList } from "./Dashboard/DashboardProgressList";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { WeekChart } from "./Skills/WeekChart";
 import { NAMAZ_THEME, OTHERS_THEME, RAMADAN_THEME, TODO_THEME } from "./Tracker/theme";
-import { getAppToday } from "@/lib/date";
-
-function todayKey(): string {
-  return getAppToday();
-}
+import { shiftDay } from "@/lib/analyticsRange";
 
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_ROWS = 5;
@@ -36,6 +32,9 @@ interface HabitDashboardPageClientProps {
   skillsOverview: SkillsOverview | null;
   othersTrackers: HabitMonthTracker[];
   todoLists: TodoList[];
+  // Today in the platform timezone, read once by the server page -- never
+  // the clock during this render.
+  today: string;
 }
 
 // The Habit Tracker app-mode's landing page: a themed summary card per real
@@ -43,7 +42,7 @@ interface HabitDashboardPageClientProps {
 // to that feature's own page. Replaces the old "Today's Habits" checklist,
 // which read the generic Habit/HabitLog model that none of these features'
 // real flows write to anymore.
-export function HabitDashboardPageClient({ userName, namazTrackers, ramadanTrackers, booksOverview, skillsOverview, othersTrackers, todoLists }: HabitDashboardPageClientProps) {
+export function HabitDashboardPageClient({ userName, namazTrackers, ramadanTrackers, booksOverview, skillsOverview, othersTrackers, todoLists, today }: HabitDashboardPageClientProps) {
   const { t } = useLocale();
 
   // A Namaz tracker's todayDay is non-null only for the ONE sheet (if any)
@@ -64,7 +63,8 @@ export function HabitDashboardPageClient({ userName, namazTrackers, ramadanTrack
 
   const learningCount = skillsOverview?.skills.filter((s) => s.status === "LEARNING").length ?? 0;
 
-  const todayList = todoLists.find((l) => l.date === todayKey()) ?? null;
+  const listsByDate = new Map(todoLists.map((list) => [list.date, list]));
+  const todayList = listsByDate.get(today) ?? null;
   const todoDone = todayList ? todayList.items.filter((i) => i.completed).length : 0;
   const todoTotal = todayList ? todayList.items.length : 0;
 
@@ -107,15 +107,13 @@ export function HabitDashboardPageClient({ userName, namazTrackers, ramadanTrack
 
   // To Do List: the last 7 real calendar days ending today, however many
   // tasks each day's list happened to have (0/0 when no list exists yet).
-  // Counted back from today's date in the platform timezone; stepping a UTC
-  // midnight by whole days is plain calendar arithmetic.
+  // Counted back from today's date in the platform timezone.
   const todoBars = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(`${todayKey()}T00:00:00.000Z`);
-    d.setUTCDate(d.getUTCDate() - (6 - i));
-    const key = d.toISOString().slice(0, 10);
-    const list = todoLists.find((l) => l.date === key);
+    const key = shiftDay(today, i - 6);
+    const list = listsByDate.get(key);
     const done = list ? list.items.filter((it) => it.completed).length : 0;
-    return { label: t(WEEKDAY_SHORT[d.getUTCDay()]), value: done, display: list ? `${done}/${list.items.length}` : "0/0" };
+    const weekday = new Date(`${key}T00:00:00.000Z`).getUTCDay();
+    return { label: t(WEEKDAY_SHORT[weekday]), value: done, display: list ? `${done}/${list.items.length}` : "0/0" };
   });
   const todoMax = Math.max(...todoBars.map((b) => b.value), 1);
 
