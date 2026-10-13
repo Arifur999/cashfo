@@ -6,6 +6,7 @@ import axios, { isAxiosError } from "axios";
 import { cache } from "react";
 import { getClientHeaders } from "@/lib/axios/clientHeaders";
 import { logServiceError } from "@/lib/axios/logServiceError";
+import { toRenderSafeError } from "@/lib/axios/renderSafeError";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { API_BASE_URL, type CurrentUser } from "./api";
 
@@ -29,6 +30,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       return null;
     }
     logServiceError("Error fetching the current customer", error);
-    throw error;
+    // Into the layout's render: never the AxiosError and the token it carries.
+    throw toRenderSafeError(error);
   }
 });

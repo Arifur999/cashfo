@@ -5,6 +5,7 @@ import { clientHeaders, getClientHeaders } from "@/lib/axios/clientHeaders";
 import { API_BASE_URL } from "@/lib/axios/httpClient";
 import { logServiceError } from "@/lib/axios/logServiceError";
 import { betterAuthCookies } from "@/lib/betterAuthCookies";
+import { toRenderSafeError } from "@/lib/axios/renderSafeError";
 import { getTokenAudience } from "@/lib/tokenAudience";
 import { getAccessToken } from "@/lib/tokenUtils";
 import type { IAdminUser, ISignInPayload, ISignInResponse, TokenAudience } from "@/types/auth.types";
@@ -125,6 +126,7 @@ export const getUserInfo = cache(async (): Promise<IAdminUser | null> => {
       return null;
     }
     logServiceError("Error fetching the current admin", error);
-    throw error;
+    // Into the layout's render: never the AxiosError and the token it carries.
+    throw toRenderSafeError(error);
   }
 });
