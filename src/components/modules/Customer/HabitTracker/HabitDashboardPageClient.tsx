@@ -9,9 +9,10 @@ import { DashboardProgressList } from "./Dashboard/DashboardProgressList";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { WeekChart } from "./Skills/WeekChart";
 import { NAMAZ_THEME, OTHERS_THEME, RAMADAN_THEME, TODO_THEME } from "./Tracker/theme";
+import { getAppToday } from "@/lib/date";
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return getAppToday();
 }
 
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -106,8 +107,10 @@ export function HabitDashboardPageClient({ userName, namazTrackers, ramadanTrack
 
   // To Do List: the last 7 real calendar days ending today, however many
   // tasks each day's list happened to have (0/0 when no list exists yet).
+  // Counted back from today's date in the platform timezone; stepping a UTC
+  // midnight by whole days is plain calendar arithmetic.
   const todoBars = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
+    const d = new Date(`${todayKey()}T00:00:00.000Z`);
     d.setUTCDate(d.getUTCDate() - (6 - i));
     const key = d.toISOString().slice(0, 10);
     const list = todoLists.find((l) => l.date === key);

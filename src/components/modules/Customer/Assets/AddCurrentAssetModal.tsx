@@ -9,6 +9,7 @@ import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import type { AssetCategoryOption } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getAssetCategoriesAction, purchaseAssetAction } from "@/lib/customer/assetActions";
+import { getAppToday } from "@/lib/date";
 
 interface AddCurrentAssetModalProps {
   open: boolean;
@@ -25,7 +26,7 @@ interface AddCurrentAssetModalProps {
 export function AddCurrentAssetModal({ open, onClose, businessId, currency }: AddCurrentAssetModalProps) {
   const { t } = useLocale();
   const router = useRouter();
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [value, setValue] = useState("");
@@ -37,7 +38,7 @@ export function AddCurrentAssetModal({ open, onClose, businessId, currency }: Ad
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setName("");
       setCategory("");
       setValue("");

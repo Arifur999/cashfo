@@ -9,6 +9,7 @@ import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import type { Account } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createTransferAction, getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { getAppToday } from "@/lib/date";
 
 interface TransferModalProps {
   open: boolean;
@@ -22,7 +23,7 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
   const [amount, setAmount] = useState("");
   const [fromAccountId, setFromAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [description, setDescription] = useState("");
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +36,7 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
       setAmount("");
       setFromAccountId("");
       setToAccountId("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setDescription("");
       setLoading(true);
     }

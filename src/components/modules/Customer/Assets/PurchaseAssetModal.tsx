@@ -11,6 +11,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getAssetCategoriesAction, purchaseAssetAction } from "@/lib/customer/assetActions";
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
+import { getAppToday } from "@/lib/date";
 
 interface PurchaseAssetModalProps {
   open: boolean;
@@ -29,7 +30,7 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
   const router = useRouter();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
-  const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().slice(0, 10));
+  const [purchaseDate, setPurchaseDate] = useState(getAppToday());
   const [purchasePrice, setPurchasePrice] = useState("");
   const [purchaseAccountId, setPurchaseAccountId] = useState("");
   const [notes, setNotes] = useState("");
@@ -45,7 +46,7 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
     if (open) {
       setName("");
       setCategory("");
-      setPurchaseDate(new Date().toISOString().slice(0, 10));
+      setPurchaseDate(getAppToday());
       setPurchasePrice("");
       setPurchaseAccountId("");
       setNotes("");

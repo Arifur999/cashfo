@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { createTodoListAction } from "@/lib/customer/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { getAppToday } from "@/lib/date";
 
 interface CreateTodoListModalProps {
   open: boolean;
@@ -14,7 +15,7 @@ interface CreateTodoListModalProps {
 }
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return getAppToday();
 }
 
 // Pick a date -- the list is created empty and opened straight away, same as

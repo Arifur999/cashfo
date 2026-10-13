@@ -13,6 +13,7 @@ import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { currencySymbol } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createExpenseAction, createIncomeAction, getExpenseAccountsAction, getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { getAppToday } from "@/lib/date";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -33,7 +34,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
   const router = useRouter();
   const [kind, setKind] = useState<EntryKind>("EXPENSE");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [category, setCategory] = useState("");
   const [accountId, setAccountId] = useState("");
   const [notes, setNotes] = useState("");
@@ -57,7 +58,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
     if (open) {
       setKind("EXPENSE");
       setAmount("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setCategory("");
       setAccountId("");
       setNotes("");

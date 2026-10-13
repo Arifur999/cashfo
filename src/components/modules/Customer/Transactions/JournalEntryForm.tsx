@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { Account, EntryType, TransactionType } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createTransactionAction } from "@/lib/customer/transactionActions";
+import { getAppToday } from "@/lib/date";
 
 const TRANSACTION_TYPES: TransactionType[] = ["JOURNAL", "INCOME", "EXPENSE", "TRANSFER", "SALE", "PURCHASE", "PAYMENT"];
 
@@ -29,7 +30,7 @@ export function JournalEntryForm({ businessId, accounts }: JournalEntryFormProps
   const { t } = useLocale();
   const router = useRouter();
   const [transactionType, setTransactionType] = useState<TransactionType>("JOURNAL");
-  const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
+  const [transactionDate, setTransactionDate] = useState(getAppToday());
   const [description, setDescription] = useState("");
   const [rows, setRows] = useState<EntryRow[]>([emptyRow("DEBIT"), emptyRow("CREDIT")]);
   const [isPending, startTransition] = useTransition();

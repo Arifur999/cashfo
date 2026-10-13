@@ -12,6 +12,7 @@ import { sellAssetAction } from "@/lib/customer/assetActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
+import { getAppToday } from "@/lib/date";
 
 interface SellAssetModalProps {
   open: boolean;
@@ -31,7 +32,7 @@ export function SellAssetModal({ open, onClose, businessId, asset, currency }: S
   const router = useRouter();
   const [soldPrice, setSoldPrice] = useState("");
   const [soldAccountId, setSoldAccountId] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [notes, setNotes] = useState("");
   const [moneyAccounts, setMoneyAccounts] = useState<Account[]>([]);
   const [savingsWallets, setSavingsWallets] = useState<Account[]>([]);
@@ -45,7 +46,7 @@ export function SellAssetModal({ open, onClose, businessId, asset, currency }: S
     if (open) {
       setSoldPrice(asset?.currentValue ?? "");
       setSoldAccountId("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setNotes("");
       setLoading(true);
     }

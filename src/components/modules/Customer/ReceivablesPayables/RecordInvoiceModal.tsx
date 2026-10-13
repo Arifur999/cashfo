@@ -8,6 +8,7 @@ import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import type { Account, ContactCategory } from "@/lib/customer/api";
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
+import { getAppToday } from "@/lib/date";
 
 interface RecordInvoiceModalProps {
   open: boolean;
@@ -27,7 +28,7 @@ interface RecordInvoiceModalProps {
 export function RecordInvoiceModal({ open, onClose, businessId, contactId, contactCategory, direction }: RecordInvoiceModalProps) {
   const router = useRouter();
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getAppToday());
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
   const [moneyAccountId, setMoneyAccountId] = useState("");
@@ -44,7 +45,7 @@ export function RecordInvoiceModal({ open, onClose, businessId, contactId, conta
     setPrevOpen(open);
     if (open) {
       setAmount("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(getAppToday());
       setDueDate("");
       setDescription("");
       setMoneyAccountId("");
