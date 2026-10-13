@@ -1,5 +1,6 @@
 import { isAxiosError } from "axios";
 import { logServiceError } from "@/lib/axios/logServiceError";
+import { toRenderSafeError } from "@/lib/axios/renderSafeError";
 
 // What a reader does when its request fails. A 4xx is the backend answering
 // that there is nothing here for this customer (not found, not a member,
@@ -11,5 +12,6 @@ export function emptyUnlessOutage<T>(error: unknown, empty: T): T {
     return empty;
   }
   logServiceError("Error reading from the API", error);
-  throw error;
+  // Into the page's render: never the AxiosError and the token it carries.
+  throw toRenderSafeError(error);
 }
