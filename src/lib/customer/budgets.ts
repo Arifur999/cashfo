@@ -1,9 +1,9 @@
 // Server-only helpers, same shape as lib/transactions.ts's getTransactions().
-import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type BudgetCategoryType, type BudgetOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 export const getBudgetOverview = cache(
   async (businessId: string, month?: number, year?: number, type: BudgetCategoryType = "EXPENSE"): Promise<BudgetOverview> => {
@@ -12,7 +12,7 @@ export const getBudgetOverview = cache(
     if (!accessToken) return empty;
 
     try {
-      const response = await axios.get<BudgetOverview>(`${API_BASE_URL}/api/businesses/${businessId}/budget`, {
+      const response = await customerApi.get<BudgetOverview>(`${API_BASE_URL}/api/businesses/${businessId}/budget`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: { month, year, type },
       });

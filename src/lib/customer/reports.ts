@@ -1,9 +1,9 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
-import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type CategoryBreakdown, type IncomeVsSavingsPoint } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 const EMPTY_CATEGORY_BREAKDOWN = (type: "INCOME" | "EXPENSE"): CategoryBreakdown => ({ type, total: "0.00", categories: [] });
 
@@ -13,7 +13,7 @@ export const getCategoryBreakdown = cache(
     if (!accessToken) return EMPTY_CATEGORY_BREAKDOWN(type);
 
     try {
-      const response = await axios.get<CategoryBreakdown>(`${API_BASE_URL}/api/businesses/${businessId}/reports/category-breakdown`, {
+      const response = await customerApi.get<CategoryBreakdown>(`${API_BASE_URL}/api/businesses/${businessId}/reports/category-breakdown`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: { type, dateFrom, dateTo },
       });
@@ -29,7 +29,7 @@ export const getIncomeVsSavingsTrend = cache(async (businessId: string, months =
   if (!accessToken) return [];
 
   try {
-    const response = await axios.get<IncomeVsSavingsPoint[]>(`${API_BASE_URL}/api/businesses/${businessId}/reports/income-vs-savings`, {
+    const response = await customerApi.get<IncomeVsSavingsPoint[]>(`${API_BASE_URL}/api/businesses/${businessId}/reports/income-vs-savings`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: { months },
     });

@@ -1,5 +1,4 @@
 // Server-only helpers, same shape as lib/budgets.ts.
-import axios from "axios";
 import { cache } from "react";
 import {
   API_BASE_URL,
@@ -12,13 +11,14 @@ import {
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 export const getSavingsGoals = cache(async (businessId: string, status?: SavingsGoalStatus): Promise<SavingsGoal[]> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return [];
 
   try {
-    const response = await axios.get<SavingsGoal[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals`, {
+    const response = await customerApi.get<SavingsGoal[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: { status },
     });
@@ -44,7 +44,7 @@ export const getSavingsOverview = cache(async (businessId: string): Promise<Savi
   if (!accessToken) return EMPTY_OVERVIEW;
 
   try {
-    const response = await axios.get<SavingsOverview>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/overview`, {
+    const response = await customerApi.get<SavingsOverview>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/overview`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -60,7 +60,7 @@ export const getSavingsAccountOverview = cache(async (businessId: string): Promi
   if (!accessToken) return EMPTY_ACCOUNT_OVERVIEW;
 
   try {
-    const response = await axios.get<SavingsAccountOverview>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/account-overview`, {
+    const response = await customerApi.get<SavingsAccountOverview>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/account-overview`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -74,7 +74,7 @@ export const getSavingsTransfers = cache(async (businessId: string): Promise<Sav
   if (!accessToken) return [];
 
   try {
-    const response = await axios.get<SavingsTransferRow[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/transfers`, {
+    const response = await customerApi.get<SavingsTransferRow[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/transfers`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -88,7 +88,7 @@ export const getSavingsGoal = cache(async (businessId: string, id: string): Prom
   if (!accessToken) return null;
 
   try {
-    const response = await axios.get<SavingsGoalDetail>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, {
+    const response = await customerApi.get<SavingsGoalDetail>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;

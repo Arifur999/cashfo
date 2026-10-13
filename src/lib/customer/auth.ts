@@ -2,13 +2,13 @@
 // "use server" -- it's never invoked directly from a Client Component, only
 // imported by other server-side code (layouts, pages, actions).
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { cache } from "react";
-import { getClientHeaders } from "@/lib/axios/clientHeaders";
 import { logServiceError } from "@/lib/axios/logServiceError";
 import { toRenderSafeError } from "@/lib/axios/renderSafeError";
 import { getAccessToken } from "@/lib/tokenUtils";
-import { API_BASE_URL, type CurrentUser } from "./api";
+import type { CurrentUser } from "./api";
+import { customerApi } from "./apiClient";
 
 // cache() dedupes this within a single request -- the customer layout and a
 // page can both need the current user without each triggering its own round
@@ -18,9 +18,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!accessToken) return null;
 
   try {
-    const response = await axios.get<CurrentUser>(`${API_BASE_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${accessToken}`, ...(await getClientHeaders()) },
-    });
+    // customerApi adds the token, the visitor's headers and a timeout.
+    const response = await customerApi.get<CurrentUser>("/api/auth/me");
     return response.data;
   } catch (error) {
     // 401/403: the backend no longer accepts this token -- a sign-out.

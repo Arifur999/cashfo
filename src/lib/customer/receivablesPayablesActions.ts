@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type ContactBalanceDetail, type Transaction } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -42,14 +43,14 @@ export interface RecordInvoiceInput {
 
 export async function recordSaleAction(businessId: string, input: RecordInvoiceInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
-    const res = await axios.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/receivables`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/receivables`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to record credit sale");
 }
 
 export async function recordPurchaseAction(businessId: string, input: RecordInvoiceInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
-    const res = await axios.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payables`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payables`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to record credit purchase");
 }
@@ -65,14 +66,14 @@ export interface RecordPaymentInput {
 
 export async function receivePaymentAction(businessId: string, input: RecordPaymentInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
-    const res = await axios.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payments/receive`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payments/receive`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to record payment");
 }
 
 export async function payPaymentAction(businessId: string, input: RecordPaymentInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
-    const res = await axios.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payments/pay`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payments/pay`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to record payment");
 }
@@ -83,7 +84,7 @@ export async function payPaymentAction(businessId: string, input: RecordPaymentI
 // pattern as quickEntryActions.ts's getMoneyAccountsAction.
 export async function getContactBalanceDetailAction(businessId: string, contactId: string): Promise<ContactBalanceDetail | null> {
   try {
-    const res = await axios.get<ContactBalanceDetail>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/balance-detail`, {
+    const res = await customerApi.get<ContactBalanceDetail>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/balance-detail`, {
       headers: await authHeaders(),
     });
     return res.data;

@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type ReferralInfo } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import type { ActionResult } from "./authActions";
+import { customerApi } from "./apiClient";
 
 async function authHeaders() {
   const accessToken = await getAccessToken();
@@ -25,14 +26,14 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 
 export async function getReferralInfoAction(): Promise<ActionResult<ReferralInfo>> {
   return callApi(async () => {
-    const res = await axios.get<ReferralInfo>(`${API_BASE_URL}/api/referrals`, { headers: await authHeaders() });
+    const res = await customerApi.get<ReferralInfo>(`${API_BASE_URL}/api/referrals`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to load referral info");
 }
 
 export async function withdrawReferralEarningsAction(businessId: string, accountId: string): Promise<ActionResult<{ withdrawnAmount: string }>> {
   return callApi(async () => {
-    const res = await axios.post<{ withdrawnAmount: string }>(
+    const res = await customerApi.post<{ withdrawnAmount: string }>(
       `${API_BASE_URL}/api/businesses/${businessId}/referrals/withdraw`,
       { accountId },
       { headers: await authHeaders() },

@@ -1,5 +1,4 @@
 // Server-only helpers, same shape as lib/receivablesPayables.ts.
-import axios from "axios";
 import { cache } from "react";
 import {
   API_BASE_URL,
@@ -14,6 +13,7 @@ import {
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 async function authHeaders() {
   const accessToken = await getAccessToken();
@@ -25,7 +25,7 @@ export const getGroupMembers = cache(async (businessId: string): Promise<GroupMe
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<GroupMember[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/members`, { headers });
+    const res = await customerApi.get<GroupMember[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/members`, { headers });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
@@ -42,7 +42,7 @@ export const getGroupContributions = cache(async (businessId: string, filters: C
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<GroupContribution[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions`, {
+    const res = await customerApi.get<GroupContribution[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions`, {
       headers,
       params: filters,
     });
@@ -62,7 +62,7 @@ export const getGroupExpenses = cache(async (businessId: string, filters: Expens
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<GroupExpense[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses`, {
+    const res = await customerApi.get<GroupExpense[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses`, {
       headers,
       params: filters,
     });
@@ -76,7 +76,7 @@ export const getGroupExpenseCategories = cache(async (businessId: string): Promi
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, { headers });
+    const res = await customerApi.get<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, { headers });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
@@ -96,7 +96,7 @@ export const getGroupSettlement = cache(async (businessId: string, from?: string
   const headers = await authHeaders();
   if (!headers) return EMPTY_SETTLEMENT;
   try {
-    const res = await axios.get<GroupSettlementResult>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement`, {
+    const res = await customerApi.get<GroupSettlementResult>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement`, {
       headers,
       params: from && to ? { from, to } : undefined,
     });
@@ -110,7 +110,7 @@ export const getGroupSettlementHistory = cache(async (businessId: string): Promi
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<GroupSettlementRecord[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/history`, { headers });
+    const res = await customerApi.get<GroupSettlementRecord[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/history`, { headers });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
@@ -121,7 +121,7 @@ export const getGroupMonthBudgets = cache(async (businessId: string): Promise<Gr
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<GroupMonthlyBudget[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets`, { headers });
+    const res = await customerApi.get<GroupMonthlyBudget[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets`, { headers });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);

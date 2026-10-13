@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type EntryType, type Transaction, type TransactionType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -48,7 +49,7 @@ export async function createTransactionAction(businessId: string, input: CreateT
     // backend's idempotency short-circuit instead of creating two postings --
     // NOT persisted/reused across separate user-initiated submits.
     const idempotencyKey = crypto.randomUUID();
-    const res = await axios.post<Transaction>(
+    const res = await customerApi.post<Transaction>(
       `${API_BASE_URL}/api/businesses/${businessId}/transactions`,
       { ...input, idempotencyKey },
       { headers: await authHeaders() },
@@ -59,6 +60,6 @@ export async function createTransactionAction(businessId: string, input: CreateT
 
 export async function voidTransactionAction(businessId: string, id: string, reason: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.post(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}/void`, { reason }, { headers: await authHeaders() });
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}/void`, { reason }, { headers: await authHeaders() });
   }, "Failed to void transaction");
 }

@@ -1,11 +1,11 @@
 // Server-only helpers, same shape as lib/groupExpenses.ts -- except every
 // endpoint here is User-scoped (no :businessId at all, see api.ts's own
 // comment on Habit).
-import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type HabitMonthTracker } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 async function authHeaders() {
   const accessToken = await getAccessToken();
@@ -17,7 +17,7 @@ export const getHabitTrackers = cache(async (category: string): Promise<HabitMon
   const headers = await authHeaders();
   if (!headers) return [];
   try {
-    const res = await axios.get<HabitMonthTracker[]>(`${API_BASE_URL}/api/habit-trackers`, { headers, params: { category } });
+    const res = await customerApi.get<HabitMonthTracker[]>(`${API_BASE_URL}/api/habit-trackers`, { headers, params: { category } });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
@@ -28,7 +28,7 @@ export const getHabitTracker = cache(async (id: string): Promise<HabitMonthTrack
   const headers = await authHeaders();
   if (!headers) return null;
   try {
-    const res = await axios.get<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers });
+    const res = await customerApi.get<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, null);

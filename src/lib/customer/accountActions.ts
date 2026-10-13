@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type Account, type AccountType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -42,27 +43,27 @@ export interface AccountFormInput {
 
 export async function createAccountAction(businessId: string, input: AccountFormInput): Promise<ActionResult<Account>> {
   return callApi(async () => {
-    const res = await axios.post<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create account");
 }
 
 export async function updateAccountAction(businessId: string, id: string, input: Partial<AccountFormInput>): Promise<ActionResult<Account>> {
   return callApi(async () => {
-    const res = await axios.patch<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}`, input, { headers: await authHeaders() });
+    const res = await customerApi.patch<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update account");
 }
 
 export async function archiveAccountAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}/archive`, {}, { headers: await authHeaders() });
+    await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}/archive`, {}, { headers: await authHeaders() });
   }, "Failed to archive account");
 }
 
 export async function unarchiveAccountAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}/unarchive`, {}, { headers: await authHeaders() });
+    await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}/unarchive`, {}, { headers: await authHeaders() });
   }, "Failed to reactivate account");
 }
 
@@ -72,7 +73,7 @@ export async function unarchiveAccountAction(businessId: string, id: string): Pr
 // tells the caller which one actually happened, for the right toast text.
 export async function removeAccountAction(businessId: string, id: string): Promise<ActionResult<{ deleted: boolean }>> {
   return callApi(async () => {
-    const response = await axios.delete<{ deleted: boolean }>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}`, {
+    const response = await customerApi.delete<{ deleted: boolean }>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}`, {
       headers: await authHeaders(),
     });
     return response.data;

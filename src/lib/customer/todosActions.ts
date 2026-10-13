@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type TodoList } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { getAppToday } from "@/lib/date";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -34,7 +35,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 // can't call lib/todos.ts's server-only getTodoLists() directly.
 export async function getTodayTodoListAction(): Promise<ActionResult<TodoList | null>> {
   return callApi(async () => {
-    const res = await axios.get<TodoList[]>(`${API_BASE_URL}/api/todos`, { headers: await authHeaders() });
+    const res = await customerApi.get<TodoList[]>(`${API_BASE_URL}/api/todos`, { headers: await authHeaders() });
     const todayKey = getAppToday();
     return res.data.find((list) => list.date === todayKey) ?? null;
   }, "Failed to load today's tasks");
@@ -43,35 +44,35 @@ export async function getTodayTodoListAction(): Promise<ActionResult<TodoList | 
 // date: "YYYY-MM-DD"
 export async function createTodoListAction(date: string): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
-    const res = await axios.post<TodoList>(`${API_BASE_URL}/api/todos`, { date }, { headers: await authHeaders() });
+    const res = await customerApi.post<TodoList>(`${API_BASE_URL}/api/todos`, { date }, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create list");
 }
 
 export async function deleteTodoListAction(id: string): Promise<ActionResult<{ id: string }>> {
   return callApi(async () => {
-    const res = await axios.delete<{ id: string }>(`${API_BASE_URL}/api/todos/${id}`, { headers: await authHeaders() });
+    const res = await customerApi.delete<{ id: string }>(`${API_BASE_URL}/api/todos/${id}`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to remove list");
 }
 
 export async function addTodoItemAction(listId: string, text: string): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
-    const res = await axios.post<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items`, { text }, { headers: await authHeaders() });
+    const res = await customerApi.post<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items`, { text }, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add task");
 }
 
 export async function updateTodoItemAction(listId: string, itemId: string, input: { text?: string; completed?: boolean }): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
-    const res = await axios.patch<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}`, input, { headers: await authHeaders() });
+    const res = await customerApi.patch<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update task");
 }
 
 export async function removeTodoItemAction(listId: string, itemId: string): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
-    const res = await axios.delete<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}`, { headers: await authHeaders() });
+    const res = await customerApi.delete<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to remove task");
 }
@@ -82,7 +83,7 @@ export async function removeTodoItemAction(listId: string, itemId: string): Prom
 // Returns the SOURCE list's updated view (the item is now gone from it).
 export async function moveTodoItemToNextDayAction(listId: string, itemId: string): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
-    const res = await axios.post<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}/move-to-next-day`, {}, { headers: await authHeaders() });
+    const res = await customerApi.post<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}/move-to-next-day`, {}, { headers: await authHeaders() });
     return res.data;
   }, "Failed to move task");
 }

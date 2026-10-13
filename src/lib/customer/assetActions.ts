@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type Asset, type AssetCategoryOption } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import type { ActionResult } from "./authActions";
+import { customerApi } from "./apiClient";
 
 async function authHeaders() {
   const accessToken = await getAccessToken();
@@ -25,7 +26,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 
 export async function getAssetsAction(businessId: string): Promise<ActionResult<Asset[]>> {
   return callApi(async () => {
-    const res = await axios.get<Asset[]>(`${API_BASE_URL}/api/businesses/${businessId}/assets`, { headers: await authHeaders() });
+    const res = await customerApi.get<Asset[]>(`${API_BASE_URL}/api/businesses/${businessId}/assets`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to load assets");
 }
@@ -43,7 +44,7 @@ export interface PurchaseAssetInput {
 
 export async function purchaseAssetAction(businessId: string, input: PurchaseAssetInput): Promise<ActionResult<Asset>> {
   return callApi(async () => {
-    const res = await axios.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to purchase asset");
 }
@@ -57,7 +58,7 @@ export interface SellAssetInput {
 
 export async function sellAssetAction(businessId: string, id: string, input: SellAssetInput): Promise<ActionResult<Asset>> {
   return callApi(async () => {
-    const res = await axios.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/sell`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/sell`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to sell asset");
 }
@@ -70,14 +71,14 @@ export interface UpdateAssetValueInput {
 
 export async function updateAssetValueAction(businessId: string, id: string, input: UpdateAssetValueInput): Promise<ActionResult<Asset>> {
   return callApi(async () => {
-    const res = await axios.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/value`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/value`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update asset value");
 }
 
 export async function getAssetCategoriesAction(businessId: string): Promise<ActionResult<AssetCategoryOption[]>> {
   return callApi(async () => {
-    const res = await axios.get<AssetCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories`, { headers: await authHeaders() });
+    const res = await customerApi.get<AssetCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to load categories");
 }
@@ -90,20 +91,20 @@ export interface AssetCategoryInput {
 
 export async function createAssetCategoryAction(businessId: string, input: AssetCategoryInput): Promise<ActionResult<AssetCategoryOption>> {
   return callApi(async () => {
-    const res = await axios.post<AssetCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<AssetCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create category");
 }
 
 export async function updateAssetCategoryAction(businessId: string, id: string, input: Partial<AssetCategoryInput>): Promise<ActionResult<AssetCategoryOption>> {
   return callApi(async () => {
-    const res = await axios.patch<AssetCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories/${id}`, input, { headers: await authHeaders() });
+    const res = await customerApi.patch<AssetCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories/${id}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update category");
 }
 
 export async function deleteAssetCategoryAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories/${id}`, { headers: await authHeaders() });
   }, "Failed to delete category");
 }

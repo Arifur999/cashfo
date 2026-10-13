@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type Account, type Transaction } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -33,7 +34,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 // change but must never go stale mid-session.
 export async function getMoneyAccountsAction(businessId: string): Promise<Account[]> {
   try {
-    const res = await axios.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/money-accounts`, { headers: await authHeaders() });
+    const res = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/money-accounts`, { headers: await authHeaders() });
     return res.data;
   } catch {
     return [];
@@ -42,7 +43,7 @@ export async function getMoneyAccountsAction(businessId: string): Promise<Accoun
 
 export async function getIncomeAccountsAction(businessId: string): Promise<Account[]> {
   try {
-    const res = await axios.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/income-accounts`, { headers: await authHeaders() });
+    const res = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/income-accounts`, { headers: await authHeaders() });
     return res.data;
   } catch {
     return [];
@@ -51,7 +52,7 @@ export async function getIncomeAccountsAction(businessId: string): Promise<Accou
 
 export async function getExpenseAccountsAction(businessId: string): Promise<Account[]> {
   try {
-    const res = await axios.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/expense-accounts`, { headers: await authHeaders() });
+    const res = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/expense-accounts`, { headers: await authHeaders() });
     return res.data;
   } catch {
     return [];
@@ -70,7 +71,7 @@ export interface AddIncomeInput {
 
 export async function createIncomeAction(businessId: string, input: AddIncomeInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
-    const res = await axios.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/income`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/income`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add income");
 }
@@ -87,7 +88,7 @@ export interface AddExpenseInput {
 
 export async function createExpenseAction(businessId: string, input: AddExpenseInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
-    const res = await axios.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/expense`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/expense`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add expense");
 }
@@ -102,7 +103,7 @@ export interface AddTransferInput {
 
 export async function createTransferAction(businessId: string, input: AddTransferInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
-    const res = await axios.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/transfer`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/transfer`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create transfer");
 }
