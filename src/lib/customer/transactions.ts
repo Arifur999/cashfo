@@ -1,9 +1,9 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
-import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type ContactCategory, type Transaction, type TransactionListResponse, type TransactionType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 export interface TransactionFilters {
   dateFrom?: string;
@@ -34,7 +34,7 @@ export const getTransactions = cache(async (businessId: string, filters: Transac
     // keys) -- the backend DTO expects (and its own comment documents)
     // a single comma-separated value.
     const { transactionTypes, ...rest } = filters;
-    const response = await axios.get<TransactionListResponse>(`${API_BASE_URL}/api/businesses/${businessId}/transactions`, {
+    const response = await customerApi.get<TransactionListResponse>(`${API_BASE_URL}/api/businesses/${businessId}/transactions`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: { ...rest, transactionTypes: transactionTypes?.join(",") },
     });
@@ -49,7 +49,7 @@ export const getTransaction = cache(async (businessId: string, id: string): Prom
   if (!accessToken) return null;
 
   try {
-    const response = await axios.get<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}`, {
+    const response = await customerApi.get<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;

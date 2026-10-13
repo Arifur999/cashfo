@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { GroupWorkspacePageClient } from "@/components/modules/Customer/GroupExpenses/GroupWorkspacePageClient";
 import type { GroupExpenseCategory } from "@/lib/customer/api";
-import { getBusinessDetailAction } from "@/lib/customer/businessActions";
+import { getWorkspace } from "@/lib/customer/businesses";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { appMonthRange, appYearMonth, isIsoDay } from "@/lib/customer/dateRangePresets";
 import {
   getGroupContributions,
   getGroupExpenseCategories,
@@ -27,14 +28,17 @@ export default async function GroupWorkspacePage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const businessResult = await getBusinessDetailAction(businessId);
-  if (!businessResult.success || !businessResult.data || businessResult.data.type !== "GROUP") {
+  // Missing, someone else's, or not a group: back to the list. An outage
+  // throws to the error screen instead.
+  const business = await getWorkspace(businessId);
+  if (!business || business.type !== "GROUP") {
     redirect("/group-expenses");
   }
-  const business = businessResult.data;
 
-  const from = typeof sp.from === "string" ? sp.from : undefined;
-  const to = typeof sp.to === "string" ? sp.to : undefined;
+  // From the URL, which anyone can edit: a malformed date would make the
+  // backend fail on every load, so it is dropped instead.
+  const from = isIsoDay(sp.from) ? sp.from : undefined;
+  const to = isIsoDay(sp.to) ? sp.to : undefined;
   const groupMemberId = typeof sp.memberId === "string" ? sp.memberId : undefined;
   const category = typeof sp.category === "string" ? (sp.category as GroupExpenseCategory) : undefined;
 
@@ -46,8 +50,8 @@ export default async function GroupWorkspacePage({
     dashRange === "all"
       ? { from: "2000-01-01", to: "2100-12-31" }
       : dashRange === "year"
-        ? { from: `${new Date().getFullYear()}-01-01`, to: `${new Date().getFullYear()}-12-31` }
-        : {}; // "month" -- omit from/to, backend defaults to the current calendar month
+        ? { from: `${appYearMonth().year}-01-01`, to: `${appYearMonth().year}-12-31` }
+        : appMonthRange(); // Dhaka's month; the backend's own default follows its UTC clock
 
   const members = await getGroupMembers(businessId);
   const contributions = await getGroupContributions(businessId, { groupMemberId, from, to });

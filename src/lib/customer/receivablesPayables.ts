@@ -1,9 +1,9 @@
 // Server-only helpers, same shape as lib/accounts.ts.
-import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type AgingReport, type ContactBalanceDetail, type LoanDashboard, type LoanStatement, type OverdueRow } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 const EMPTY_DIRECTION = { totalInvoiced: "0.00", totalPaid: "0.00", remaining: "0.00", transactions: [] };
 const EMPTY_DETAIL: ContactBalanceDetail = {
@@ -19,7 +19,7 @@ export const getContactBalanceDetail = cache(async (businessId: string, contactI
   if (!accessToken) return EMPTY_DETAIL;
 
   try {
-    const response = await axios.get<ContactBalanceDetail>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/balance-detail`, {
+    const response = await customerApi.get<ContactBalanceDetail>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/balance-detail`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -35,7 +35,7 @@ export const getReceivablesAging = cache(async (businessId: string): Promise<Agi
   if (!accessToken) return EMPTY_AGING;
 
   try {
-    const response = await axios.get<AgingReport>(`${API_BASE_URL}/api/businesses/${businessId}/receivables/aging`, {
+    const response = await customerApi.get<AgingReport>(`${API_BASE_URL}/api/businesses/${businessId}/receivables/aging`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -49,7 +49,7 @@ export const getPayablesAging = cache(async (businessId: string): Promise<AgingR
   if (!accessToken) return EMPTY_AGING;
 
   try {
-    const response = await axios.get<AgingReport>(`${API_BASE_URL}/api/businesses/${businessId}/payables/aging`, {
+    const response = await customerApi.get<AgingReport>(`${API_BASE_URL}/api/businesses/${businessId}/payables/aging`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -63,7 +63,7 @@ export const getReceivablesOverdue = cache(async (businessId: string): Promise<O
   if (!accessToken) return [];
 
   try {
-    const response = await axios.get<OverdueRow[]>(`${API_BASE_URL}/api/businesses/${businessId}/receivables/overdue`, {
+    const response = await customerApi.get<OverdueRow[]>(`${API_BASE_URL}/api/businesses/${businessId}/receivables/overdue`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -77,7 +77,7 @@ export const getPayablesOverdue = cache(async (businessId: string): Promise<Over
   if (!accessToken) return [];
 
   try {
-    const response = await axios.get<OverdueRow[]>(`${API_BASE_URL}/api/businesses/${businessId}/payables/overdue`, {
+    const response = await customerApi.get<OverdueRow[]>(`${API_BASE_URL}/api/businesses/${businessId}/payables/overdue`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -101,7 +101,7 @@ export const getLoanDashboard = cache(async (businessId: string): Promise<LoanDa
   if (!accessToken) return EMPTY_LOAN_DASHBOARD;
 
   try {
-    const response = await axios.get<LoanDashboard>(`${API_BASE_URL}/api/businesses/${businessId}/loan-management/dashboard`, {
+    const response = await customerApi.get<LoanDashboard>(`${API_BASE_URL}/api/businesses/${businessId}/loan-management/dashboard`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -128,7 +128,7 @@ export const getLoanStatement = cache(
     if (!accessToken) return EMPTY_LOAN_STATEMENT;
 
     try {
-      const response = await axios.get<LoanStatement>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/loan-statement`, {
+      const response = await customerApi.get<LoanStatement>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/loan-statement`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: filters,
       });

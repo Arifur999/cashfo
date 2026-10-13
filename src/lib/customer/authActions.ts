@@ -4,6 +4,7 @@ import axios from "axios";
 import { getClientHeaders } from "@/lib/axios/clientHeaders";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { API_BASE_URL, getApiErrorMessage, type CurrentUser, type LoginHistoryEntry, type UserSessionSummary } from "./api";
+import { customerApi } from "./apiClient";
 
 // Logging out is the site-wide logoutAction (app/-actions/authActions.ts).
 
@@ -40,7 +41,7 @@ export interface UpdateProfileInput {
 // read-only there (see backend UserAuthService.updateProfile()'s comment).
 export async function updateProfileAction(input: UpdateProfileInput): Promise<ActionResult<Pick<CurrentUser, "id" | "name" | "email" | "phone" | "avatarUrl">>> {
   return callApi(async () => {
-    const res = await axios.patch(`${API_BASE_URL}/api/auth/profile`, input, { headers: await authHeaders() });
+    const res = await customerApi.patch(`${API_BASE_URL}/api/auth/profile`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update profile");
 }
@@ -52,7 +53,7 @@ export interface ChangePasswordInput {
 
 export async function changePasswordAction(input: ChangePasswordInput): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.post(`${API_BASE_URL}/api/auth/change-password`, input, { headers: await authHeaders() });
+    await customerApi.post(`${API_BASE_URL}/api/auth/change-password`, input, { headers: await authHeaders() });
   }, "Failed to change password");
 }
 
@@ -81,21 +82,21 @@ export async function uploadAvatarAction(formData: FormData): Promise<ActionResu
 export async function getSessionsAction(): Promise<ActionResult<UserSessionSummary[]>> {
   return callApi(async () => {
     const headers = { ...(await authHeaders()), ...(await getClientHeaders()) };
-    const res = await axios.get<UserSessionSummary[]>(`${API_BASE_URL}/api/auth/sessions`, { headers });
+    const res = await customerApi.get<UserSessionSummary[]>(`${API_BASE_URL}/api/auth/sessions`, { headers });
     return res.data;
   }, "Failed to load devices");
 }
 
 export async function revokeSessionAction(sessionId: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/auth/sessions/${sessionId}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/auth/sessions/${sessionId}`, { headers: await authHeaders() });
   }, "Failed to sign out that device");
 }
 
 // Settings > Security > Device Management's "History" list.
 export async function getLoginHistoryAction(): Promise<ActionResult<LoginHistoryEntry[]>> {
   return callApi(async () => {
-    const res = await axios.get<LoginHistoryEntry[]>(`${API_BASE_URL}/api/auth/login-history`, { headers: await authHeaders() });
+    const res = await customerApi.get<LoginHistoryEntry[]>(`${API_BASE_URL}/api/auth/login-history`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to load login history");
 }

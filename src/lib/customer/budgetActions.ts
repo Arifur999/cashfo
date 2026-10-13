@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type BudgetCategory, type BudgetCategoryType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 // Client components (e.g. AddTransactionModal, which needs this to offer a
 // business's custom categories in its Category dropdown) can't call
@@ -13,7 +14,7 @@ export async function getBudgetCategoryNamesAction(
   type: BudgetCategoryType = "EXPENSE",
 ): Promise<Pick<BudgetCategory, "id" | "name" | "icon" | "color">[]> {
   try {
-    const res = await axios.get<Pick<BudgetCategory, "id" | "name" | "icon" | "color">[]>(
+    const res = await customerApi.get<Pick<BudgetCategory, "id" | "name" | "icon" | "color">[]>(
       `${API_BASE_URL}/api/businesses/${businessId}/budget/categories`,
       { headers: await authHeaders(), params: { type } },
     );
@@ -60,13 +61,13 @@ export interface BudgetCategoryFormInput {
 
 export async function updateBudgetTargetAction(businessId: string, monthlyBudgetTarget: number): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/budget`, { monthlyBudgetTarget }, { headers: await authHeaders() });
+    await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/budget`, { monthlyBudgetTarget }, { headers: await authHeaders() });
   }, "Failed to update total budget");
 }
 
 export async function createBudgetCategoryAction(businessId: string, input: BudgetCategoryFormInput): Promise<ActionResult<BudgetCategory>> {
   return callApi(async () => {
-    const res = await axios.post<BudgetCategory>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories`, input, {
+    const res = await customerApi.post<BudgetCategory>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -79,7 +80,7 @@ export async function updateBudgetCategoryAction(
   input: Partial<Omit<BudgetCategoryFormInput, "type">>,
 ): Promise<ActionResult<BudgetCategory>> {
   return callApi(async () => {
-    const res = await axios.patch<BudgetCategory>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, input, {
+    const res = await customerApi.patch<BudgetCategory>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -88,6 +89,6 @@ export async function updateBudgetCategoryAction(
 
 export async function deleteBudgetCategoryAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, { headers: await authHeaders() });
   }, "Failed to delete category");
 }

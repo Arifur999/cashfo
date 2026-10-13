@@ -5,6 +5,7 @@ import { getBooksOverview } from "@/lib/customer/books";
 import { getHabitTrackers } from "@/lib/customer/habits";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { getTodoLists } from "@/lib/customer/todos";
+import { getAppToday } from "@/lib/date";
 
 // "Habit Tracker" app-mode's landing page, reached via the TopBar's "Switch"
 // button. A summary hub across every real feature (Namaz/Ramadan/My Library/
@@ -33,6 +34,7 @@ export default async function HabitTrackerDashboardPage() {
       skillsOverview={skillsOverview}
       othersTrackers={othersTrackers}
       todoLists={todoLists}
+      today={getAppToday()}
     />
   );
 }

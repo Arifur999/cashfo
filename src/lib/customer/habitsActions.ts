@@ -1,8 +1,9 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type HabitLog, type HabitMonthTracker } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -28,35 +29,9 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
   }
 }
 
-export interface HabitInput {
-  name: string;
-  category?: string;
-  icon?: string;
-  color?: string;
-  frequencyType?: HabitFrequency;
-  weeklyDays?: number[];
-  weeklyCount?: number;
-  targetValue?: number;
-  unit?: string;
-}
-
-export async function createHabitAction(input: HabitInput): Promise<ActionResult<Habit>> {
-  return callApi(async () => {
-    const res = await axios.post<Habit>(`${API_BASE_URL}/api/habits`, input, { headers: await authHeaders() });
-    return res.data;
-  }, "Failed to add habit");
-}
-
-export async function updateHabitAction(id: string, input: Partial<HabitInput> & { isArchived?: boolean }): Promise<ActionResult<Habit>> {
-  return callApi(async () => {
-    const res = await axios.patch<Habit>(`${API_BASE_URL}/api/habits/${id}`, input, { headers: await authHeaders() });
-    return res.data;
-  }, "Failed to update habit");
-}
-
 export async function deleteHabitAction(id: string): Promise<ActionResult<{ id: string; action: "deleted" | "archived" }>> {
   return callApi(async () => {
-    const res = await axios.delete<{ id: string; action: "deleted" | "archived" }>(`${API_BASE_URL}/api/habits/${id}`, { headers: await authHeaders() });
+    const res = await customerApi.delete<{ id: string; action: "deleted" | "archived" }>(`${API_BASE_URL}/api/habits/${id}`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to remove habit");
 }
@@ -66,14 +41,14 @@ export async function checkInHabitAction(
   input: { date: string; completed?: boolean; value?: number; note?: string },
 ): Promise<ActionResult<HabitLog>> {
   return callApi(async () => {
-    const res = await axios.post<HabitLog>(`${API_BASE_URL}/api/habits/${id}/check-in`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<HabitLog>(`${API_BASE_URL}/api/habits/${id}/check-in`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to check in");
 }
 
 export async function removeCheckInAction(id: string, date: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/habits/${id}/check-in`, { headers: await authHeaders(), params: { date } });
+    await customerApi.delete(`${API_BASE_URL}/api/habits/${id}/check-in`, { headers: await authHeaders(), params: { date } });
   }, "Failed to undo check-in");
 }
 
@@ -81,7 +56,7 @@ export async function removeCheckInAction(id: string, date: string): Promise<Act
 
 export async function createHabitTrackerAction(input: { category: string; month: number; year: number }): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
-    const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create month tracker");
 }
@@ -91,7 +66,7 @@ export async function setHabitTrackerCheckAction(
   input: { day: number; item: string; checked: boolean },
 ): Promise<ActionResult<{ day: number; item: string; checked: boolean }>> {
   return callApi(async () => {
-    const res = await axios.put<{ day: number; item: string; checked: boolean }>(`${API_BASE_URL}/api/habit-trackers/${id}/check`, input, {
+    const res = await customerApi.put<{ day: number; item: string; checked: boolean }>(`${API_BASE_URL}/api/habit-trackers/${id}/check`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -100,7 +75,7 @@ export async function setHabitTrackerCheckAction(
 
 export async function deleteHabitTrackerAction(id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers: await authHeaders() });
   }, "Failed to remove month tracker");
 }
 
@@ -108,7 +83,7 @@ export async function deleteHabitTrackerAction(id: string): Promise<ActionResult
 
 export async function createRamadanTrackerAction(input: { year: number; days: 29 | 30 }): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
-    const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/ramadan`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/ramadan`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create Ramadan");
 }
@@ -117,21 +92,21 @@ export async function createRamadanTrackerAction(input: { year: number; days: 29
 
 export async function createCustomTrackerAction(input: { name: string; totalDays: number }): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
-    const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/custom`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/custom`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create challenge");
 }
 
 export async function addTrackerItemAction(id: string, name: string): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
-    const res = await axios.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { name }, { headers: await authHeaders() });
+    const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { name }, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save habit");
 }
 
 export async function removeTrackerItemAction(id: string, name: string): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
-    const res = await axios.delete<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { headers: await authHeaders(), params: { name } });
+    const res = await customerApi.delete<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { headers: await authHeaders(), params: { name } });
     return res.data;
   }, "Failed to remove habit");
 }

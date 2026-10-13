@@ -1,16 +1,16 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
-import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type Account, type AccountGroup, type AccountLedger, type AccountSummary, type WalletsOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 export const getAccounts = cache(async (businessId: string): Promise<AccountGroup[]> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return [];
 
   try {
-    const response = await axios.get<AccountGroup[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts`, {
+    const response = await customerApi.get<AccountGroup[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -29,7 +29,7 @@ export const getWallets = cache(async (businessId: string): Promise<Account[]> =
   if (!accessToken) return [];
 
   try {
-    const response = await axios.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/wallets`, {
+    const response = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/wallets`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -47,7 +47,7 @@ export const getWalletsOverview = cache(async (businessId: string): Promise<Wall
   if (!accessToken) return EMPTY_WALLETS_OVERVIEW;
 
   try {
-    const response = await axios.get<WalletsOverview>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/wallets-overview`, {
+    const response = await customerApi.get<WalletsOverview>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/wallets-overview`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -66,7 +66,7 @@ export const getSavingsWallets = cache(async (businessId: string): Promise<Accou
   if (!accessToken) return [];
 
   try {
-    const response = await axios.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/savings-wallets`, {
+    const response = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/savings-wallets`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -80,7 +80,7 @@ export const getAccount = cache(async (businessId: string, accountId: string): P
   if (!accessToken) return null;
 
   try {
-    const response = await axios.get<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${accountId}`, {
+    const response = await customerApi.get<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${accountId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
@@ -111,7 +111,7 @@ export const getLedger = cache(async (businessId: string, accountId: string, fil
   if (!accessToken) return EMPTY_LEDGER;
 
   try {
-    const response = await axios.get<AccountLedger>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${accountId}/ledger`, {
+    const response = await customerApi.get<AccountLedger>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${accountId}/ledger`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: filters,
     });
@@ -129,7 +129,7 @@ export const getAccountSummary = cache(
     if (!accessToken) return EMPTY_SUMMARY;
 
     try {
-      const response = await axios.get<AccountSummary>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${accountId}/summary`, {
+      const response = await customerApi.get<AccountSummary>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${accountId}/summary`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: filters,
       });
@@ -139,3 +139,13 @@ export const getAccountSummary = cache(
     }
   },
 );
+
+// Active Cash/Bank/MFS accounts, for the Transactions page's account filter.
+export const getMoneyAccounts = cache(async (businessId: string): Promise<Account[]> => {
+  try {
+    const response = await customerApi.get<Account[]>(`/api/businesses/${businessId}/accounts/money-accounts`);
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});

@@ -1,9 +1,9 @@
 // Server-only helpers, same shape as lib/accounts.ts.
-import axios from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type Contact, type ContactCategory, type ContactListResponse, type ContactStatus, type ContactType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
+import { customerApi } from "./apiClient";
 
 export interface ContactFilters {
   type?: ContactType;
@@ -21,7 +21,7 @@ export const getContacts = cache(async (businessId: string, filters: ContactFilt
   if (!accessToken) return EMPTY_LIST;
 
   try {
-    const response = await axios.get<ContactListResponse>(`${API_BASE_URL}/api/businesses/${businessId}/contacts`, {
+    const response = await customerApi.get<ContactListResponse>(`${API_BASE_URL}/api/businesses/${businessId}/contacts`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: filters,
     });
@@ -36,7 +36,7 @@ export const getContact = cache(async (businessId: string, contactId: string): P
   if (!accessToken) return null;
 
   try {
-    const response = await axios.get<Contact>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}`, {
+    const response = await customerApi.get<Contact>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;

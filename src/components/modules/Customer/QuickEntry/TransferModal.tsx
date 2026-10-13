@@ -8,7 +8,7 @@ import { DatePicker } from "@/components/modules/Customer/Shared/DatePicker";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import type { Account } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { createTransferAction, getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { createTransferAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getAppToday } from "@/lib/date";
 import { NoWalletHint } from "./NoWalletHint";
 
@@ -27,6 +27,8 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
   const [date, setDate] = useState(getAppToday());
   const [description, setDescription] = useState("");
   const [accounts, setAccounts] = useState<Account[]>([]);
+  // Set when the wallets couldn't be loaded -- not the same as having none.
+  const [walletsError, setWalletsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
@@ -40,13 +42,16 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
       setDate(getAppToday());
       setDescription("");
       setLoading(true);
+      setWalletsError(null);
     }
   }
 
   useEffect(() => {
     if (!open) return;
-    getMoneyAccountsAction(businessId).then((data) => {
+    listMoneyAccountsAction(businessId).then((result) => {
+      const data = result.data ?? [];
       setAccounts(data);
+      setWalletsError(result.success ? null : (result.message ?? "Failed to load your wallets"));
       setFromAccountId((current) => current || data[0]?.id || "");
       setToAccountId((current) => current || data[1]?.id || data[0]?.id || "");
       setLoading(false);
@@ -117,7 +122,8 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
           </div>
         </div>
         {sameAccount && <p className="text-sm text-brand-danger">{t("From and To must be different accounts")}</p>}
-        {!loading && accounts.length < 2 && <NoWalletHint message="A transfer needs two wallets." onNavigate={onClose} />}
+        {!loading && walletsError && <p role="alert" className="mt-1 text-xs text-brand-danger">{t(walletsError)}</p>}
+        {!loading && !walletsError && accounts.length < 2 && <NoWalletHint message="A transfer needs two wallets." onNavigate={onClose} />}
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>

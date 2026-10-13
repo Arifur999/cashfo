@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { TransactionsPageClient } from "@/components/modules/Customer/Transactions/TransactionsPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
-import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
-import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { getMoneyAccounts } from "@/lib/customer/accounts";
+import { getBudgetCategoryNames } from "@/lib/customer/budgets";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getTransactions } from "@/lib/customer/transactions";
 import type { TransactionType } from "@/lib/customer/api";
@@ -37,9 +37,9 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
 
   const [{ data: transactions, meta }, accounts, expenseCategories, incomeCategories] = await Promise.all([
     getTransactions(activeBusinessId, filters),
-    getMoneyAccountsAction(activeBusinessId),
-    getBudgetCategoryNamesAction(activeBusinessId, "EXPENSE"),
-    getBudgetCategoryNamesAction(activeBusinessId, "INCOME"),
+    getMoneyAccounts(activeBusinessId),
+    getBudgetCategoryNames(activeBusinessId, "EXPENSE"),
+    getBudgetCategoryNames(activeBusinessId, "INCOME"),
   ]);
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
 

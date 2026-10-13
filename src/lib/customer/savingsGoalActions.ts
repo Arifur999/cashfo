@@ -12,6 +12,7 @@ import {
   type SavingsReminderChannel,
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -43,7 +44,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 // as getBudgetCategoryNamesAction().
 export async function getSavingsGoalDetailAction(businessId: string, id: string): Promise<SavingsGoalDetail | null> {
   try {
-    const res = await axios.get<SavingsGoalDetail>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, { headers: await authHeaders() });
+    const res = await customerApi.get<SavingsGoalDetail>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, { headers: await authHeaders() });
     return res.data;
   } catch {
     return null;
@@ -62,7 +63,7 @@ export interface SavingsGoalFormInput {
 
 export async function createSavingsGoalAction(businessId: string, input: SavingsGoalFormInput): Promise<ActionResult<SavingsGoal>> {
   return callApi(async () => {
-    const res = await axios.post<SavingsGoal>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<SavingsGoal>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create savings goal");
 }
@@ -73,7 +74,7 @@ export async function updateSavingsGoalAction(
   input: Partial<SavingsGoalFormInput>,
 ): Promise<ActionResult<SavingsGoal>> {
   return callApi(async () => {
-    const res = await axios.patch<SavingsGoal>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, input, {
+    const res = await customerApi.patch<SavingsGoal>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -82,7 +83,7 @@ export async function updateSavingsGoalAction(
 
 export async function updateSavingsGoalStatusAction(businessId: string, id: string, status: SavingsGoalStatus): Promise<ActionResult<SavingsGoal>> {
   return callApi(async () => {
-    const res = await axios.patch<SavingsGoal>(
+    const res = await customerApi.patch<SavingsGoal>(
       `${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}/status`,
       { status },
       { headers: await authHeaders() },
@@ -93,7 +94,7 @@ export async function updateSavingsGoalStatusAction(businessId: string, id: stri
 
 export async function deleteSavingsGoalAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, { headers: await authHeaders() });
   }, "Failed to delete savings goal");
 }
 
@@ -103,7 +104,7 @@ export async function deleteSavingsGoalAction(businessId: string, id: string): P
 // transaction" convention as getMoneyAccountsAction().
 export async function getActiveSavingsWalletsAction(businessId: string): Promise<Account[]> {
   try {
-    const res = await axios.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/active-savings-wallets`, {
+    const res = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/active-savings-wallets`, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -122,7 +123,7 @@ export interface AddContributionInput {
 
 export async function addContributionAction(businessId: string, goalId: string, input: AddContributionInput): Promise<ActionResult<SavingsGoalEntry>> {
   return callApi(async () => {
-    const res = await axios.post<SavingsGoalEntry>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/contributions`, input, {
+    const res = await customerApi.post<SavingsGoalEntry>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/contributions`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -142,7 +143,7 @@ export interface WithdrawSavingsGoalInput {
 // amount; there's no amount field to send.
 export async function withdrawSavingsGoalAction(businessId: string, goalId: string, input: WithdrawSavingsGoalInput): Promise<ActionResult<SavingsGoalEntry>> {
   return callApi(async () => {
-    const res = await axios.post<SavingsGoalEntry>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/withdraw`, input, {
+    const res = await customerApi.post<SavingsGoalEntry>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/withdraw`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -159,6 +160,6 @@ export interface SavingsTransferInput {
 
 export async function createSavingsTransferAction(businessId: string, input: SavingsTransferInput): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.post(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/transfer`, input, { headers: await authHeaders() });
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/transfer`, input, { headers: await authHeaders() });
   }, "Failed to transfer between goals");
 }

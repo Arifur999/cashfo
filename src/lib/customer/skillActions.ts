@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type Skill, type SkillStatus, type SkillUnit } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -44,7 +45,7 @@ export type SkillUpdateInput = Partial<Omit<SkillCreateInput, "unit">>;
 
 export async function createSkillAction(input: SkillCreateInput): Promise<ActionResult<Skill>> {
   return callApi(async () => {
-    const res = await axios.post<Skill>(`${API_BASE_URL}/api/skills`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Skill>(`${API_BASE_URL}/api/skills`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save skill");
 }
@@ -53,28 +54,28 @@ export async function createSkillAction(input: SkillCreateInput): Promise<Action
 // between shelves (status).
 export async function updateSkillAction(id: string, input: SkillUpdateInput): Promise<ActionResult<Skill>> {
   return callApi(async () => {
-    const res = await axios.patch<Skill>(`${API_BASE_URL}/api/skills/${id}`, input, { headers: await authHeaders() });
+    const res = await customerApi.patch<Skill>(`${API_BASE_URL}/api/skills/${id}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save skill");
 }
 
 export async function deleteSkillAction(id: string): Promise<ActionResult<{ id: string }>> {
   return callApi(async () => {
-    const res = await axios.delete<{ id: string }>(`${API_BASE_URL}/api/skills/${id}`, { headers: await authHeaders() });
+    const res = await customerApi.delete<{ id: string }>(`${API_BASE_URL}/api/skills/${id}`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to remove skill");
 }
 
 export async function setSkillGoalAction(target: number): Promise<ActionResult<{ year: number; goalTarget: number | null }>> {
   return callApi(async () => {
-    const res = await axios.put<{ year: number; goalTarget: number | null }>(`${API_BASE_URL}/api/skills/goal`, { target }, { headers: await authHeaders() });
+    const res = await customerApi.put<{ year: number; goalTarget: number | null }>(`${API_BASE_URL}/api/skills/goal`, { target }, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save goal");
 }
 
 export async function clearSkillGoalAction(): Promise<ActionResult<{ year: number; goalTarget: number | null }>> {
   return callApi(async () => {
-    const res = await axios.delete<{ year: number; goalTarget: number | null }>(`${API_BASE_URL}/api/skills/goal`, { headers: await authHeaders() });
+    const res = await customerApi.delete<{ year: number; goalTarget: number | null }>(`${API_BASE_URL}/api/skills/goal`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save goal");
 }

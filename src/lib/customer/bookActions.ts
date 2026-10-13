@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type Book, type BookStatus } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -39,7 +40,7 @@ export interface BookInput {
 
 export async function createBookAction(input: BookInput): Promise<ActionResult<Book>> {
   return callApi(async () => {
-    const res = await axios.post<Book>(`${API_BASE_URL}/api/books`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Book>(`${API_BASE_URL}/api/books`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save book");
 }
@@ -48,28 +49,28 @@ export async function createBookAction(input: BookInput): Promise<ActionResult<B
 // book between shelves (status).
 export async function updateBookAction(id: string, input: Partial<BookInput>): Promise<ActionResult<Book>> {
   return callApi(async () => {
-    const res = await axios.patch<Book>(`${API_BASE_URL}/api/books/${id}`, input, { headers: await authHeaders() });
+    const res = await customerApi.patch<Book>(`${API_BASE_URL}/api/books/${id}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save book");
 }
 
 export async function deleteBookAction(id: string): Promise<ActionResult<{ id: string }>> {
   return callApi(async () => {
-    const res = await axios.delete<{ id: string }>(`${API_BASE_URL}/api/books/${id}`, { headers: await authHeaders() });
+    const res = await customerApi.delete<{ id: string }>(`${API_BASE_URL}/api/books/${id}`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to remove book");
 }
 
 export async function setBookGoalAction(target: number): Promise<ActionResult<{ year: number; goalTarget: number | null }>> {
   return callApi(async () => {
-    const res = await axios.put<{ year: number; goalTarget: number | null }>(`${API_BASE_URL}/api/books/goal`, { target }, { headers: await authHeaders() });
+    const res = await customerApi.put<{ year: number; goalTarget: number | null }>(`${API_BASE_URL}/api/books/goal`, { target }, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save goal");
 }
 
 export async function clearBookGoalAction(): Promise<ActionResult<{ year: number; goalTarget: number | null }>> {
   return callApi(async () => {
-    const res = await axios.delete<{ year: number; goalTarget: number | null }>(`${API_BASE_URL}/api/books/goal`, { headers: await authHeaders() });
+    const res = await customerApi.delete<{ year: number; goalTarget: number | null }>(`${API_BASE_URL}/api/books/goal`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save goal");
 }

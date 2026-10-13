@@ -5,6 +5,7 @@ import { API_BASE_URL, getApiErrorMessage, type BusinessDetail, type BusinessLim
 import { getAccessToken } from "@/lib/tokenUtils";
 import { setActiveBusinessCookie } from "./activeBusiness";
 import { getBusinessLimits } from "./businesses";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -51,7 +52,7 @@ export interface CreateBusinessInput {
 
 export async function createBusinessAction(input: CreateBusinessInput): Promise<ActionResult<WorkspaceListItem>> {
   return callApi(async () => {
-    const res = await axios.post<WorkspaceListItem>(
+    const res = await customerApi.post<WorkspaceListItem>(
       `${API_BASE_URL}/api/businesses`,
       { name: input.name, type: input.type ?? "BUSINESS", currency: input.currency, phone: input.phone, email: input.email, pin: input.pin },
       { headers: await authHeaders() },
@@ -64,20 +65,20 @@ export async function createBusinessAction(input: CreateBusinessInput): Promise<
 // fetching the single-business detail route is simpler than adding it there.
 export async function getBusinessDetailAction(id: string): Promise<ActionResult<BusinessDetail>> {
   return callApi(async () => {
-    const res = await axios.get<BusinessDetail>(`${API_BASE_URL}/api/businesses/${id}`, { headers: await authHeaders() });
+    const res = await customerApi.get<BusinessDetail>(`${API_BASE_URL}/api/businesses/${id}`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to load workspace");
 }
 
 export async function updateBusinessAction(id: string, input: Partial<CreateBusinessInput>): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.patch(`${API_BASE_URL}/api/businesses/${id}`, input, { headers: await authHeaders() });
+    await customerApi.patch(`${API_BASE_URL}/api/businesses/${id}`, input, { headers: await authHeaders() });
   }, "Failed to update workspace");
 }
 
 export async function deleteBusinessAction(id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${id}`, { headers: await authHeaders() });
   }, "Failed to delete workspace");
 }
 
@@ -86,14 +87,14 @@ export async function deleteBusinessAction(id: string): Promise<ActionResult> {
 // businesses array doesn't carry.
 export async function listBusinessesAction(): Promise<ActionResult<WorkspaceListItem[]>> {
   return callApi(async () => {
-    const res = await axios.get<WorkspaceListItem[]>(`${API_BASE_URL}/api/businesses`, { headers: await authHeaders() });
+    const res = await customerApi.get<WorkspaceListItem[]>(`${API_BASE_URL}/api/businesses`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to load workspaces");
 }
 
 export async function verifyBusinessPinAction(businessId: string, pin: string): Promise<ActionResult<{ valid: boolean }>> {
   return callApi(async () => {
-    const res = await axios.post<{ valid: boolean }>(
+    const res = await customerApi.post<{ valid: boolean }>(
       `${API_BASE_URL}/api/businesses/${businessId}/verify-pin`,
       { pin },
       { headers: await authHeaders() },
@@ -105,7 +106,13 @@ export async function verifyBusinessPinAction(businessId: string, pin: string): 
 // A Server Action wrapper around lib/businesses.ts's cached fetcher -- Client
 // Components (like CreateWorkspaceModal, which needs a fresh count each time
 // it opens) can't call a plain server-only function directly, only a real
-// Server Action.
+// Server Action. Like every action it never throws: the reader throws on an
+// outage (for the error screen), but the modal calling this has nothing to
+// catch it with, so an outage reads as "limits unknown" here.
 export async function getBusinessLimitsAction(): Promise<BusinessLimits | null> {
-  return getBusinessLimits();
+  try {
+    return await getBusinessLimits();
+  } catch {
+    return null;
+  }
 }

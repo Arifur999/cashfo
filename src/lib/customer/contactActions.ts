@@ -3,6 +3,7 @@
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type Contact, type ContactCategory, type ContactType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -41,7 +42,7 @@ export interface ContactFormInput {
 
 export async function createContactAction(businessId: string, input: ContactFormInput): Promise<ActionResult<Contact>> {
   return callApi(async () => {
-    const res = await axios.post<Contact>(`${API_BASE_URL}/api/businesses/${businessId}/contacts`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Contact>(`${API_BASE_URL}/api/businesses/${businessId}/contacts`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to create contact");
 }
@@ -52,7 +53,7 @@ export async function updateContactAction(
   input: Partial<Omit<ContactFormInput, "openingBalance">>,
 ): Promise<ActionResult<Contact>> {
   return callApi(async () => {
-    const res = await axios.patch<Contact>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}`, input, { headers: await authHeaders() });
+    const res = await customerApi.patch<Contact>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update contact");
 }
@@ -81,7 +82,7 @@ export async function uploadContactPhotoAction(businessId: string, formData: For
 
 export async function archiveContactAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}/archive`, {}, { headers: await authHeaders() });
+    await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}/archive`, {}, { headers: await authHeaders() });
   }, "Failed to archive contact");
 }
 
@@ -96,7 +97,7 @@ export interface DeleteContactResult {
 
 export async function deleteContactAction(businessId: string, id: string): Promise<ActionResult<DeleteContactResult>> {
   return callApi(async () => {
-    const res = await axios.delete<DeleteContactResult>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}`, {
+    const res = await customerApi.delete<DeleteContactResult>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}`, {
       headers: await authHeaders(),
     });
     return res.data;

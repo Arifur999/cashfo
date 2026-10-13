@@ -16,12 +16,15 @@ describe("emptyUnlessOutage", () => {
     expect(emptyUnlessOutage(answered(404), [])).toEqual([]);
     expect(emptyUnlessOutage(answered(403), null)).toBeNull();
     expect(emptyUnlessOutage(answered(401), { total: 0 })).toEqual({ total: 0 });
+    expect(emptyUnlessOutage(answered(400), [])).toEqual([]);
   });
 
   it("throws an outage so the page can say so", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     expect(() => emptyUnlessOutage(answered(500), [])).toThrow();
     expect(() => emptyUnlessOutage(answered(503), [])).toThrow();
+    expect(() => emptyUnlessOutage(answered(429), [])).toThrow();
+    expect(() => emptyUnlessOutage(answered(408), [])).toThrow();
     expect(() => emptyUnlessOutage(new AxiosError("connect ECONNREFUSED"), [])).toThrow();
     expect(() => emptyUnlessOutage(new Error("boom"), [])).toThrow("boom");
   });

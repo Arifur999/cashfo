@@ -14,6 +14,7 @@ import {
   type GroupSettlementRecord,
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -46,7 +47,7 @@ export async function createGroupMemberAction(
   input: { name: string; phone?: string; photoUrl?: string },
 ): Promise<ActionResult<GroupMember>> {
   return callApi(async () => {
-    const res = await axios.post<GroupMember>(`${API_BASE_URL}/api/businesses/${businessId}/group/members`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<GroupMember>(`${API_BASE_URL}/api/businesses/${businessId}/group/members`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add member");
 }
@@ -77,7 +78,7 @@ export async function updateGroupMemberAction(
   input: { name?: string; phone?: string; photoUrl?: string; status?: GroupMemberStatus },
 ): Promise<ActionResult<GroupMember>> {
   return callApi(async () => {
-    const res = await axios.patch<GroupMember>(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}`, input, {
+    const res = await customerApi.patch<GroupMember>(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -86,7 +87,7 @@ export async function updateGroupMemberAction(
 
 export async function deleteGroupMemberAction(businessId: string, memberId: string): Promise<ActionResult<{ id: string; action: "deleted" | "archived" }>> {
   return callApi(async () => {
-    const res = await axios.delete<{ id: string; action: "deleted" | "archived" }>(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}`, {
+    const res = await customerApi.delete<{ id: string; action: "deleted" | "archived" }>(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}`, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -100,7 +101,7 @@ export async function createGroupContributionAction(
   input: { groupMemberId: string; amount: string; date: string; note?: string },
 ): Promise<ActionResult<GroupContribution>> {
   return callApi(async () => {
-    const res = await axios.post<GroupContribution>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions`, input, {
+    const res = await customerApi.post<GroupContribution>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -113,7 +114,7 @@ export async function updateGroupContributionAction(
   input: { groupMemberId?: string; amount?: string; date?: string; note?: string },
 ): Promise<ActionResult<GroupContribution>> {
   return callApi(async () => {
-    const res = await axios.patch<GroupContribution>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions/${id}`, input, {
+    const res = await customerApi.patch<GroupContribution>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions/${id}`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -122,7 +123,7 @@ export async function updateGroupContributionAction(
 
 export async function deleteGroupContributionAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions/${id}`, { headers: await authHeaders() });
   }, "Failed to remove contribution");
 }
 
@@ -130,7 +131,7 @@ export async function deleteGroupContributionAction(businessId: string, id: stri
 
 export async function getGroupExpenseCategoriesAction(businessId: string): Promise<ActionResult<GroupExpenseCategoryOption[]>> {
   return callApi(async () => {
-    const res = await axios.get<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, {
+    const res = await customerApi.get<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -148,7 +149,7 @@ export async function createGroupExpenseCategoryAction(
   input: GroupExpenseCategoryInput,
 ): Promise<ActionResult<GroupExpenseCategoryOption>> {
   return callApi(async () => {
-    const res = await axios.post<GroupExpenseCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, input, {
+    const res = await customerApi.post<GroupExpenseCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -161,7 +162,7 @@ export async function updateGroupExpenseCategoryAction(
   input: Partial<GroupExpenseCategoryInput>,
 ): Promise<ActionResult<GroupExpenseCategoryOption>> {
   return callApi(async () => {
-    const res = await axios.patch<GroupExpenseCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/${id}`, input, {
+    const res = await customerApi.patch<GroupExpenseCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/${id}`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -170,7 +171,7 @@ export async function updateGroupExpenseCategoryAction(
 
 export async function deleteGroupExpenseCategoryAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/${id}`, { headers: await authHeaders() });
   }, "Failed to delete category");
 }
 
@@ -181,7 +182,7 @@ export async function createGroupExpenseAction(
   input: { amount: string; date: string; category?: GroupExpenseCategory; description?: string; paidByMemberId?: string },
 ): Promise<ActionResult<GroupExpense>> {
   return callApi(async () => {
-    const res = await axios.post<GroupExpense>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<GroupExpense>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add expense");
 }
@@ -192,7 +193,7 @@ export async function updateGroupExpenseAction(
   input: { amount?: string; date?: string; category?: GroupExpenseCategory; description?: string; paidByMemberId?: string },
 ): Promise<ActionResult<GroupExpense>> {
   return callApi(async () => {
-    const res = await axios.patch<GroupExpense>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/${id}`, input, {
+    const res = await customerApi.patch<GroupExpense>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/${id}`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -201,7 +202,7 @@ export async function updateGroupExpenseAction(
 
 export async function deleteGroupExpenseAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/${id}`, { headers: await authHeaders() });
   }, "Failed to remove expense");
 }
 
@@ -215,7 +216,7 @@ export interface GroupMonthBudgetInput {
 
 export async function createGroupMonthBudgetAction(businessId: string, input: GroupMonthBudgetInput): Promise<ActionResult<GroupMonthlyBudget>> {
   return callApi(async () => {
-    const res = await axios.post<GroupMonthlyBudget>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets`, input, {
+    const res = await customerApi.post<GroupMonthlyBudget>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -228,7 +229,7 @@ export async function updateGroupMonthBudgetAction(
   input: Partial<GroupMonthBudgetInput>,
 ): Promise<ActionResult<GroupMonthlyBudget>> {
   return callApi(async () => {
-    const res = await axios.patch<GroupMonthlyBudget>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets/${id}`, input, {
+    const res = await customerApi.patch<GroupMonthlyBudget>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets/${id}`, input, {
       headers: await authHeaders(),
     });
     return res.data;
@@ -237,7 +238,7 @@ export async function updateGroupMonthBudgetAction(
 
 export async function deleteGroupMonthBudgetAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
-    await axios.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets/${id}`, { headers: await authHeaders() });
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/month-budgets/${id}`, { headers: await authHeaders() });
   }, "Failed to remove month budget");
 }
 
@@ -248,7 +249,7 @@ export async function closeGroupSettlementAction(
   input: { periodStart: string; periodEnd: string },
 ): Promise<ActionResult<GroupSettlementRecord>> {
   return callApi(async () => {
-    const res = await axios.post<GroupSettlementRecord>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/close`, input, {
+    const res = await customerApi.post<GroupSettlementRecord>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/close`, input, {
       headers: await authHeaders(),
     });
     return res.data;

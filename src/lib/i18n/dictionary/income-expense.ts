@@ -63,6 +63,7 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "No wallet yet.": "এখনো কোনো ওয়ালেট নেই।",
   "A transfer needs two wallets.": "ট্রান্সফারের জন্য দুটি ওয়ালেট লাগে।",
   "Add a wallet": "ওয়ালেট যোগ করুন",
+  "Failed to load your wallets": "আপনার ওয়ালেট লোড করা যায়নি",
   "No expense account exists in this workspace yet -- add one in Chart of Accounts first.":
     "এই ওয়ার্কস্পেসে এখনো কোনো ব্যয় হিসাব নেই -- প্রথমে হিসাবের তালিকায় একটি যোগ করুন।",
   "Deposit to": "যেখানে জমা হবে",
