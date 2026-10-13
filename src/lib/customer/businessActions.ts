@@ -106,7 +106,13 @@ export async function verifyBusinessPinAction(businessId: string, pin: string): 
 // A Server Action wrapper around lib/businesses.ts's cached fetcher -- Client
 // Components (like CreateWorkspaceModal, which needs a fresh count each time
 // it opens) can't call a plain server-only function directly, only a real
-// Server Action.
+// Server Action. Like every action it never throws: the reader throws on an
+// outage (for the error screen), but the modal calling this has nothing to
+// catch it with, so an outage reads as "limits unknown" here.
 export async function getBusinessLimitsAction(): Promise<BusinessLimits | null> {
-  return getBusinessLimits();
+  try {
+    return await getBusinessLimits();
+  } catch {
+    return null;
+  }
 }
