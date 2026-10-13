@@ -35,6 +35,9 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, confirm
           type="button"
           disabled={isPending}
           onClick={onConfirm}
+          // Focused when the dialog opens, so Enter confirms -- as it did with
+          // window.confirm.
+          data-autofocus
           className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50 ${
             danger ? "bg-brand-danger hover:bg-brand-danger-hover" : "bg-brand-primary hover:bg-brand-primary-hover"
           }`}

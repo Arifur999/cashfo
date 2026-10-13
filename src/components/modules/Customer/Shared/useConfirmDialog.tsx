@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ConfirmModal } from "./ConfirmModal";
 
@@ -21,24 +21,36 @@ interface ConfirmOptions {
 //   ...render {dialog} once in the component.
 export function useConfirmDialog() {
   const { t } = useLocale();
-  const [request, setRequest] = useState<(ConfirmOptions & { resolve: (confirmed: boolean) => void }) | null>(null);
+  const [options, setOptions] = useState<ConfirmOptions | null>(null);
+  // The caller waiting on the open dialog. A second confirm() while one is
+  // open answers the first "no" rather than leaving it waiting forever.
+  const pending = useRef<((confirmed: boolean) => void) | null>(null);
 
-  const confirm = useCallback((options: ConfirmOptions) => new Promise<boolean>((resolve) => setRequest({ ...options, resolve })), []);
+  const confirm = useCallback(
+    (next: ConfirmOptions) =>
+      new Promise<boolean>((resolve) => {
+        pending.current?.(false);
+        pending.current = resolve;
+        setOptions(next);
+      }),
+    [],
+  );
 
   const settle = (confirmed: boolean) => {
-    request?.resolve(confirmed);
-    setRequest(null);
+    pending.current?.(confirmed);
+    pending.current = null;
+    setOptions(null);
   };
 
   const dialog = (
     <ConfirmModal
-      open={request !== null}
+      open={options !== null}
       onClose={() => settle(false)}
       onConfirm={() => settle(true)}
-      title={t(request?.title ?? "Are you sure?")}
-      message={request?.message ?? ""}
-      confirmLabel={request?.confirmLabel}
-      danger={request?.danger ?? true}
+      title={t(options?.title ?? "Are you sure?")}
+      message={options?.message ?? ""}
+      confirmLabel={options?.confirmLabel}
+      danger={options?.danger ?? true}
     />
   );
 
