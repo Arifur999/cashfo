@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { ReferralsPageClient } from "@/components/modules/Customer/Referrals/ReferralsPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { getReferralInfoAction } from "@/lib/customer/referralActions";
+import { getReferralInfo } from "@/lib/customer/referrals";
 
 export default async function ReferralsPage() {
   const user = await getCurrentUser();
@@ -14,9 +14,9 @@ export default async function ReferralsPage() {
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  const result = await getReferralInfoAction();
+  const info = await getReferralInfo();
 
   return (
-    <ReferralsPageClient businessId={activeBusinessId} info={result.data ?? null} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />
+    <ReferralsPageClient businessId={activeBusinessId} info={info} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />
   );
 }

@@ -1,6 +1,6 @@
 // Server-only helpers, same shape as lib/transactions.ts's getTransactions().
 import { cache } from "react";
-import { API_BASE_URL, type BudgetCategoryType, type BudgetOverview } from "./api";
+import { API_BASE_URL, type BudgetCategory, type BudgetCategoryType, type BudgetOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -22,3 +22,15 @@ export const getBudgetOverview = cache(
     }
   },
 );
+
+export type BudgetCategoryName = Pick<BudgetCategory, "id" | "name" | "icon" | "color">;
+
+// Category names alone, for the Transactions page's category filter.
+export const getBudgetCategoryNames = cache(async (businessId: string, type: BudgetCategoryType): Promise<BudgetCategoryName[]> => {
+  try {
+    const response = await customerApi.get<BudgetCategoryName[]>(`/api/businesses/${businessId}/budget/categories`, { params: { type } });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});

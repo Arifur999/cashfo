@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { GroupWorkspacePageClient } from "@/components/modules/Customer/GroupExpenses/GroupWorkspacePageClient";
 import type { GroupExpenseCategory } from "@/lib/customer/api";
-import { getBusinessDetailAction } from "@/lib/customer/businessActions";
+import { getWorkspace } from "@/lib/customer/businesses";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { appMonthRange, appYearMonth, isIsoDay } from "@/lib/customer/dateRangePresets";
 import {
@@ -28,11 +28,12 @@ export default async function GroupWorkspacePage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const businessResult = await getBusinessDetailAction(businessId);
-  if (!businessResult.success || !businessResult.data || businessResult.data.type !== "GROUP") {
+  // Missing, someone else's, or not a group: back to the list. An outage
+  // throws to the error screen instead.
+  const business = await getWorkspace(businessId);
+  if (!business || business.type !== "GROUP") {
     redirect("/group-expenses");
   }
-  const business = businessResult.data;
 
   // From the URL, which anyone can edit: a malformed date would make the
   // backend fail on every load, so it is dropped instead.

@@ -139,3 +139,13 @@ export const getAccountSummary = cache(
     }
   },
 );
+
+// Active Cash/Bank/MFS accounts, for the Transactions page's account filter.
+export const getMoneyAccounts = cache(async (businessId: string): Promise<Account[]> => {
+  try {
+    const response = await customerApi.get<Account[]>(`/api/businesses/${businessId}/accounts/money-accounts`);
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});

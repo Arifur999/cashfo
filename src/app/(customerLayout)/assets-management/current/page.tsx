@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { CurrentAssetListPageClient } from "@/components/modules/Customer/Assets/CurrentAssetListPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
-import { getAssetCategoriesAction, getAssetsAction } from "@/lib/customer/assetActions";
+import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
 
 export default async function CurrentAssetListPage() {
@@ -11,15 +11,15 @@ export default async function CurrentAssetListPage() {
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
 
-  const [result, categoriesResult] = await Promise.all([getAssetsAction(activeBusinessId), getAssetCategoriesAction(activeBusinessId)]);
+  const [assets, categories] = await Promise.all([getAssets(activeBusinessId), getAssetCategories(activeBusinessId)]);
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
   return (
     <CurrentAssetListPageClient
       businessId={activeBusinessId}
-      assets={(result.data ?? []).filter((a) => a.status === "ACTIVE")}
-      categories={categoriesResult.data ?? []}
+      assets={assets.filter((a) => a.status === "ACTIVE")}
+      categories={categories}
       currency={activeBusiness?.currency ?? "BDT"}
       canManage={canManage}
     />

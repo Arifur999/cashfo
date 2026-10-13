@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
-import { getAssetsAction } from "@/lib/customer/assetActions";
+import { getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { DashboardPageClient } from "@/components/modules/Customer/Dashboard/DashboardPageClient";
 import { resolveDateRange } from "@/lib/customer/dateRangePresets";
@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const currency = activeBusiness?.currency ?? "BDT";
   const { dateFrom, dateTo } = resolveDateRange("this-month");
 
-  const [walletsOverview, monthIncome, monthExpense, savingsOverview, loanDashboard, recentTransactions, trendPoints, assetsResult] =
+  const [walletsOverview, monthIncome, monthExpense, savingsOverview, loanDashboard, recentTransactions, trendPoints, assets] =
     await Promise.all([
       getWalletsOverview(activeBusinessId),
       getCategoryBreakdown(activeBusinessId, "INCOME", dateFrom, dateTo),
@@ -30,10 +30,10 @@ export default async function DashboardPage() {
       getLoanDashboard(activeBusinessId),
       getTransactions(activeBusinessId, { limit: 5 }),
       getIncomeVsSavingsTrend(activeBusinessId, 6),
-      getAssetsAction(activeBusinessId),
+      getAssets(activeBusinessId),
     ]);
 
-  const totalAssets = (assetsResult.data ?? [])
+  const totalAssets = assets
     .filter((a) => a.status === "ACTIVE")
     .reduce((sum, a) => sum + Number(a.currentValue), 0);
 
