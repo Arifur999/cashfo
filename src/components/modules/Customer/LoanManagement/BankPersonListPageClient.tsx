@@ -11,6 +11,7 @@ import { BALANCE_DIRECTION_COLOR, balanceDirection } from "@/lib/customer/contac
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { BankPersonFormModal } from "./BankPersonFormModal";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 interface BankPersonListPageClientProps {
   businessId: string;
@@ -22,6 +23,7 @@ interface BankPersonListPageClientProps {
 export function BankPersonListPageClient({ businessId, contacts, canManage, currency }: BankPersonListPageClientProps) {
   const router = useRouter();
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [formOpen, setFormOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -36,8 +38,8 @@ export function BankPersonListPageClient({ businessId, contacts, canManage, curr
     setFormOpen(true);
   }
 
-  function handleArchive(contact: Contact) {
-    if (!window.confirm(`${t("Archive")} "${contact.name}"?`)) return;
+  async function handleArchive(contact: Contact) {
+    if (!(await confirm({ message: `${t("Archive")} "${contact.name}"?`, confirmLabel: "Archive" }))) return;
     startTransition(async () => {
       const result = await archiveContactAction(businessId, contact.id);
       if (result.success) {
@@ -149,6 +151,7 @@ export function BankPersonListPageClient({ businessId, contacts, canManage, curr
       </div>
 
       <BankPersonFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingContact={editingContact} />
+      {confirmDialog}
     </div>
   );
 }

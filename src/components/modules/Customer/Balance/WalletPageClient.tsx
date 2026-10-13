@@ -11,6 +11,7 @@ import { BalanceStatCard } from "./BalanceStatCard";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { WalletFormModal } from "./WalletFormModal";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 interface WalletPageClientProps {
   businessId: string;
@@ -22,6 +23,7 @@ interface WalletPageClientProps {
 export function WalletPageClient({ businessId, wallets, canManage, currency }: WalletPageClientProps) {
   const router = useRouter();
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [formOpen, setFormOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<Account | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -36,8 +38,8 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
     setFormOpen(true);
   }
 
-  function handleRemove(wallet: Account) {
-    if (!window.confirm(`${t("Remove")} "${wallet.name}"?`)) return;
+  async function handleRemove(wallet: Account) {
+    if (!(await confirm({ message: `${t("Remove")} "${wallet.name}"?`, confirmLabel: "Remove" }))) return;
     startTransition(async () => {
       const result = await removeAccountAction(businessId, wallet.id);
       if (result.success) {
@@ -185,6 +187,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
       </div>
 
       <WalletFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingWallet={editingWallet} />
+      {confirmDialog}
     </div>
   );
 }

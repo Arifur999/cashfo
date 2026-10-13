@@ -10,6 +10,7 @@ import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { SavingsWalletFormModal } from "./SavingsWalletFormModal";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 interface SavingsWalletPageClientProps {
   businessId: string;
@@ -25,6 +26,7 @@ interface SavingsWalletPageClientProps {
 // goal breakdown) and /accounts/[id] (this wallet's own ledger).
 export function SavingsWalletPageClient({ businessId, wallets, canManage, currency }: SavingsWalletPageClientProps) {
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<Account | null>(null);
@@ -40,8 +42,8 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
     setFormOpen(true);
   }
 
-  function handleRemove(wallet: Account) {
-    if (!window.confirm(`${t("Remove")} "${wallet.name}"?`)) return;
+  async function handleRemove(wallet: Account) {
+    if (!(await confirm({ message: `${t("Remove")} "${wallet.name}"?`, confirmLabel: "Remove" }))) return;
     startTransition(async () => {
       const result = await removeAccountAction(businessId, wallet.id);
       if (result.success) {
@@ -128,6 +130,7 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
       </div>
 
       <SavingsWalletFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingWallet={editingWallet} />
+      {confirmDialog}
     </div>
   );
 }

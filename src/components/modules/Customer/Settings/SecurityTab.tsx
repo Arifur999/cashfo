@@ -7,6 +7,7 @@ import type { LoginHistoryEntry, UserSessionSummary } from "@/lib/customer/api";
 import { getLoginHistoryAction, getSessionsAction, revokeSessionAction } from "@/lib/customer/authActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatDateTime } from "@/lib/customer/date";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 
 // Small, obviously-a-phone heuristic on the device label text itself
@@ -27,6 +28,7 @@ function DeviceIcon({ label, className }: { label: string; className?: string })
 // LoginAttempt table -- both already had the data, this just surfaces it.
 export function SecurityTab() {
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [subTab, setSubTab] = useState<"devices" | "history">("devices");
 
   const [sessions, setSessions] = useState<UserSessionSummary[]>([]);
@@ -57,8 +59,8 @@ export function SecurityTab() {
     });
   }, []);
 
-  function handleRevoke(session: UserSessionSummary) {
-    if (!window.confirm(`${t("Sign out")} "${session.deviceLabel}"? ${t("That device will need to log in again.")}`)) return;
+  async function handleRevoke(session: UserSessionSummary) {
+    if (!(await confirm({ message: `${t("Sign out")} "${session.deviceLabel}"? ${t("That device will need to log in again.")}`, confirmLabel: "Sign out" }))) return;
     setRevokingId(session.id);
     startTransition(async () => {
       const result = await revokeSessionAction(session.id);
@@ -217,6 +219,7 @@ export function SecurityTab() {
           ))}
         </div>
       </div>
+      {confirmDialog}
     </div>
   );
 }

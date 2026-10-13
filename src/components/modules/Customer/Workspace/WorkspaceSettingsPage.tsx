@@ -10,11 +10,13 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { EditWorkspaceModal } from "./EditWorkspaceModal";
 import type { WorkspaceListItem } from "@/lib/customer/api";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
 export function WorkspaceSettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { t } = useLocale();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [businesses, setBusinesses] = useState<WorkspaceListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<WorkspaceListItem | null>(null);
@@ -42,8 +44,8 @@ export function WorkspaceSettingsPage() {
     loadBusinesses();
   }, [loadBusinesses]);
 
-  function handleDelete(business: WorkspaceListItem) {
-    if (!window.confirm(`${t("Delete")} "${displayName(business)}"? ${t("This cannot be undone.")}`)) {
+  async function handleDelete(business: WorkspaceListItem) {
+    if (!(await confirm({ message: `${t("Delete")} "${displayName(business)}"? ${t("This cannot be undone.")}`, confirmLabel: "Delete" }))) {
       return;
     }
     startTransition(async () => {
@@ -138,6 +140,7 @@ export function WorkspaceSettingsPage() {
           loadBusinesses();
         }}
       />
+      {confirmDialog}
     </div>
   );
 }
