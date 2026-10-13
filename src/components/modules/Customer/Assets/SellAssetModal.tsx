@@ -91,7 +91,7 @@ export function SellAssetModal({ open, onClose, businessId, asset, currency }: S
           <p className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
             {t('Selling "')}
             <span className="font-semibold text-neutral-900">{asset.name}</span>
-            {t('" (current value: {value}).').replace("{value}", formatCurrency(asset.currentValue, currency))}
+            {t('" (current value: {value}).').replace("{value}", () => formatCurrency(asset.currentValue, currency))}
           </p>
         )}
 

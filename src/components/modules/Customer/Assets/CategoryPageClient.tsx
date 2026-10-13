@@ -43,7 +43,7 @@ export function CategoryPageClient({ businessId, categories, canManage }: Catego
   async function handleDelete(category: AssetCategoryOption) {
     const message = t('Delete the "{name}" category? Existing assets keep showing this name, but it won\'t be pickable for new ones.').replace(
       "{name}",
-      category.name,
+      () => category.name,
     );
     if (!(await confirm({ message, confirmLabel: "Delete" }))) return;
     setDeletingId(category.id);

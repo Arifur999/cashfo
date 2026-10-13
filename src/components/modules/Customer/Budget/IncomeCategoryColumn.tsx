@@ -36,7 +36,7 @@ export function IncomeCategoryColumn({ businessId, overview, currency, canManage
   const [isDeleting, startDeleteTransition] = useTransition();
 
   async function handleDelete(category: BudgetCategorySummary) {
-    const confirmMessage = t('Delete the "{name}" category? This won\'t affect past transactions.').replace("{name}", category.name);
+    const confirmMessage = t('Delete the "{name}" category? This won\'t affect past transactions.').replace("{name}", () => category.name);
     if (!(await confirm({ message: confirmMessage, confirmLabel: "Delete" }))) return;
     setDeletingId(category.id);
     startDeleteTransition(async () => {
