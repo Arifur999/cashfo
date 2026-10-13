@@ -14,6 +14,7 @@ import { currencySymbol } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createExpenseAction, createIncomeAction, getExpenseAccountsAction, getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getAppToday } from "@/lib/date";
+import { NoWalletHint } from "./NoWalletHint";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -186,7 +187,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
             {!loading && categories.length === 0 && (
               <p className="mt-1 text-xs text-neutral-400">
                 {t("No categories yet --")}{" "}
-                <Link href={`/categories?addType=${kind}`} className="font-medium text-brand-primary hover:underline">
+                <Link href={`/categories?addType=${kind}`} onClick={onClose} className="font-medium text-brand-primary hover:underline">
                   {t("add one under Budget Planning")}
                 </Link>
                 .
@@ -215,6 +216,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
                 </option>
               ))}
             </select>
+            {!loading && moneyAccounts.length === 0 && <NoWalletHint message="No wallet yet." onNavigate={onClose} />}
           </div>
         </div>
 

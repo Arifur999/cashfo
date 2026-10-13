@@ -60,6 +60,9 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "No matching category": "কোনো মিলযুক্ত ক্যাটাগরি পাওয়া যায়নি",
   "No categories yet --": "এখনো কোনো ক্যাটাগরি নেই --",
   "add one under Budget Planning": "বাজেট পরিকল্পনায় গিয়ে একটি যোগ করুন",
+  "No wallet yet.": "এখনো কোনো ওয়ালেট নেই।",
+  "A transfer needs two wallets.": "ট্রান্সফারের জন্য দুটি ওয়ালেট লাগে।",
+  "Add a wallet": "ওয়ালেট যোগ করুন",
   "No expense account exists in this workspace yet -- add one in Chart of Accounts first.":
     "এই ওয়ার্কস্পেসে এখনো কোনো ব্যয় হিসাব নেই -- প্রথমে হিসাবের তালিকায় একটি যোগ করুন।",
   "Deposit to": "যেখানে জমা হবে",
