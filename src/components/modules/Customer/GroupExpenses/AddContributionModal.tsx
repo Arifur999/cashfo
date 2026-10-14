@@ -10,6 +10,7 @@ import { DatePicker } from "@/components/modules/Customer/Shared/DatePicker";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { limitMoneyDecimals } from "@/lib/customer/money";
+import { getAppToday } from "@/lib/date";
 
 interface AddContributionModalProps {
   open: boolean;
@@ -19,9 +20,9 @@ interface AddContributionModalProps {
   editingContribution?: GroupContribution | null;
 }
 
+// Today on the app's calendar (Asia/Dhaka), not the browser's.
 function today(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return getAppToday();
 }
 
 export function AddContributionModal({ open, onClose, businessId, members, editingContribution = null }: AddContributionModalProps) {

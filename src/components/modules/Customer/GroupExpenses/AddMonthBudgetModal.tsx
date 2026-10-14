@@ -9,6 +9,7 @@ import type { GroupMonthlyBudget } from "@/lib/customer/api";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { limitMoneyDecimals } from "@/lib/customer/money";
+import { getAppToday } from "@/lib/date";
 
 interface AddMonthBudgetModalProps {
   open: boolean;
@@ -35,8 +36,9 @@ const MONTH_OPTIONS: { value: number; label: string }[] = [
 export function AddMonthBudgetModal({ open, onClose, businessId, editingBudget = null }: AddMonthBudgetModalProps) {
   const router = useRouter();
   const { t } = useLocale();
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(String(new Date().getFullYear()));
+  // This month on the app's calendar (Asia/Dhaka).
+  const [month, setMonth] = useState(() => Number(getAppToday().slice(5, 7)));
+  const [year, setYear] = useState(() => getAppToday().slice(0, 4));
   const [budgetAmount, setBudgetAmount] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -50,8 +52,8 @@ export function AddMonthBudgetModal({ open, onClose, businessId, editingBudget =
         setYear(String(editingBudget.year));
         setBudgetAmount(editingBudget.budgetAmount);
       } else {
-        setMonth(new Date().getMonth() + 1);
-        setYear(String(new Date().getFullYear()));
+        setMonth(Number(getAppToday().slice(5, 7)));
+        setYear(getAppToday().slice(0, 4));
         setBudgetAmount("");
       }
     }

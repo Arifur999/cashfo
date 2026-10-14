@@ -36,6 +36,7 @@ import { AddMonthBudgetModal } from "./AddMonthBudgetModal";
 import { GroupExpenseCategoryModal } from "./GroupExpenseCategoryModal";
 import { GroupMemberFormModal } from "./GroupMemberFormModal";
 import { formatDate } from "@/lib/customer/date";
+import { getAppToday } from "@/lib/date";
 
 interface GroupWorkspacePageClientProps {
   businessId: string;
@@ -57,26 +58,29 @@ type Tab = "dashboard" | "members" | "contributions" | "expenses" | "category" |
 // is the only preset that reveals them.
 type DateRangePreset = "all" | "today" | "yesterday" | "this_month" | "this_year" | "custom";
 
-function toDateValue(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+// 'YYYY-MM-DD' of a calendar day given as UTC year/month(1-12)/day --
+// months and days may run over and are carried, as Date.UTC does.
+function dayKey(year: number, month: number, day: number): string {
+  return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10);
 }
 
+// Presets count from the app's today (Asia/Dhaka), not the browser's clock,
+// so "today" and "this month" match the dates the entries were saved with.
 function computePresetRange(preset: DateRangePreset): { from: string; to: string } {
-  const now = new Date();
+  const [year, month, day] = getAppToday().split("-").map(Number);
   switch (preset) {
     case "today": {
-      const v = toDateValue(now);
+      const v = dayKey(year, month, day);
       return { from: v, to: v };
     }
     case "yesterday": {
-      const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-      const v = toDateValue(yesterday);
+      const v = dayKey(year, month, day - 1);
       return { from: v, to: v };
     }
     case "this_month":
-      return { from: toDateValue(new Date(now.getFullYear(), now.getMonth(), 1)), to: toDateValue(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
+      return { from: dayKey(year, month, 1), to: dayKey(year, month + 1, 0) };
     case "this_year":
-      return { from: toDateValue(new Date(now.getFullYear(), 0, 1)), to: toDateValue(new Date(now.getFullYear(), 11, 31)) };
+      return { from: dayKey(year, 1, 1), to: dayKey(year, 12, 31) };
     default:
       return { from: "", to: "" };
   }
@@ -251,7 +255,7 @@ function DashboardSection({
   // string prefixes ("YYYY-MM"), not parsed Dates, so this can't drift a
   // day across timezones -- same convention as the periodStart/periodEnd
   // check above.
-  const selectedYear = new Date().getFullYear();
+  const selectedYear = Number(getAppToday().slice(0, 4));
   const monthlyBreakdown =
     dashRange === "year"
       ? Array.from({ length: 12 }, (_, i) => {
@@ -1173,9 +1177,15 @@ function SettlementSection({
     router.push(`/group-expenses/${businessId}?tab=settlement&from=${from}&to=${to}`);
   }
 
+  // The period on screen is the applied one; dates typed but not applied
+  // yet aren't what the figures below show, so they can't be closed.
+  const appliedFrom = settlement.periodStart.slice(0, 10);
+  const appliedTo = settlement.periodEnd.slice(0, 10);
+  const hasUnappliedDates = from !== appliedFrom || to !== appliedTo;
+
   function handleClose() {
     startTransition(async () => {
-      const result = await closeGroupSettlementAction(businessId, { periodStart: from, periodEnd: to });
+      const result = await closeGroupSettlementAction(businessId, { periodStart: appliedFrom, periodEnd: appliedTo });
       if (result.success) {
         toast.success(t("Settlement closed"));
         setCloseOpen(false);
@@ -1206,7 +1216,8 @@ function SettlementSection({
         </button>
         <button
           type="button"
-          disabled={settlement.memberCount === 0}
+          disabled={settlement.memberCount === 0 || hasUnappliedDates}
+          title={hasUnappliedDates ? t("Apply the dates first -- the figures below are for the applied period") : undefined}
           onClick={() => setCloseOpen(true)}
           className="ml-auto rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
         >
