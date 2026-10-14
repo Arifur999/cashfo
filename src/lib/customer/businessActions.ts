@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type BusinessDetail, type BusinessLimits, type WorkspaceListItem } from "./api";
-import { getAccessToken } from "@/lib/tokenUtils";
+import { clearWorkspaceUnlock, getAccessToken, setWorkspaceUnlock } from "@/lib/tokenUtils";
 import { setActiveBusinessCookie } from "./activeBusiness";
 import { getBusinessLimits } from "./businesses";
 import { customerApi } from "./apiClient";
@@ -17,6 +17,21 @@ async function authHeaders() {
   const accessToken = await getAccessToken();
   if (!accessToken) throw new Error("Not authenticated");
   return { Authorization: `Bearer ${accessToken}` };
+}
+
+// What the API adds when a PIN is entered or set: the unlock this device's
+// requests to that workspace carry. It goes into its cookie, never to the
+// browser.
+interface WithUnlock {
+  unlock?: { unlockToken: string };
+}
+
+async function keepUnlock<T extends WithUnlock>(businessId: string, data: T): Promise<Omit<T, "unlock">> {
+  const { unlock, ...rest } = data;
+  if (unlock?.unlockToken) {
+    await setWorkspaceUnlock(businessId, unlock.unlockToken);
+  }
+  return rest;
 }
 
 async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
@@ -52,12 +67,12 @@ export interface CreateBusinessInput {
 
 export async function createBusinessAction(input: CreateBusinessInput): Promise<ActionResult<WorkspaceListItem>> {
   return callApi(async () => {
-    const res = await customerApi.post<WorkspaceListItem>(
+    const res = await customerApi.post<WorkspaceListItem & WithUnlock>(
       `${API_BASE_URL}/api/businesses`,
       { name: input.name, type: input.type ?? "BUSINESS", currency: input.currency, phone: input.phone, email: input.email, pin: input.pin },
       { headers: await authHeaders() },
     );
-    return res.data;
+    return keepUnlock(res.data.id, res.data);
   }, "Failed to create workspace");
 }
 
@@ -70,9 +85,12 @@ export async function getBusinessDetailAction(id: string): Promise<ActionResult<
   }, "Failed to load workspace");
 }
 
-export async function updateBusinessAction(id: string, input: Partial<CreateBusinessInput>): Promise<ActionResult> {
+// pin: null removes the lock.
+export async function updateBusinessAction(id: string, input: Partial<Omit<CreateBusinessInput, "pin">> & { pin?: string | null }): Promise<ActionResult> {
   return callApi(async () => {
-    await customerApi.patch(`${API_BASE_URL}/api/businesses/${id}`, input, { headers: await authHeaders() });
+    // A new PIN locks every other device, not the one that set it.
+    const res = await customerApi.patch<WithUnlock>(`${API_BASE_URL}/api/businesses/${id}`, input, { headers: await authHeaders() });
+    await keepUnlock(id, res.data);
   }, "Failed to update workspace");
 }
 
@@ -92,15 +110,29 @@ export async function listBusinessesAction(): Promise<ActionResult<WorkspaceList
   }, "Failed to load workspaces");
 }
 
+// A correct PIN opens the workspace on this device for the next 12 hours.
 export async function verifyBusinessPinAction(businessId: string, pin: string): Promise<ActionResult<{ valid: boolean }>> {
   return callApi(async () => {
-    const res = await customerApi.post<{ valid: boolean }>(
+    const res = await customerApi.post<{ valid: boolean } & WithUnlock>(
       `${API_BASE_URL}/api/businesses/${businessId}/verify-pin`,
       { pin },
       { headers: await authHeaders() },
     );
-    return res.data;
+    return keepUnlock(businessId, res.data);
   }, "Failed to verify PIN");
+}
+
+// "Forgot PIN?": the owner's account password removes the lock.
+export async function resetBusinessPinAction(businessId: string, password: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/reset-pin`, { password }, { headers: await authHeaders() });
+    await clearWorkspaceUnlock(businessId);
+  }, "Failed to remove the PIN");
+}
+
+// "Lock now": forgets this device's unlock, so the PIN is asked again.
+export async function lockWorkspaceAction(businessId: string): Promise<void> {
+  await clearWorkspaceUnlock(businessId);
 }
 
 // A Server Action wrapper around lib/businesses.ts's cached fetcher -- Client

@@ -15,6 +15,10 @@ export const MAINTENANCE_ROUTE = "/maintenance";
 // The admin-maintained legal pages, readable without an account.
 export const LEGAL_ROUTES = ["/terms", "/privacy", "/refund-policy", "/faq"];
 
+// Where a PIN-locked workspace asks for its PIN (app/unlock-workspace).
+export const UNLOCK_WORKSPACE_ROUTE = "/unlock-workspace";
+export const unlockWorkspaceRoute = (businessId: string) => `${UNLOCK_WORKSPACE_ROUTE}?id=${encodeURIComponent(businessId)}`;
+
 export const ADMIN_HOME_ROUTE = "/admin/dashboard";
 export const CUSTOMER_HOME_ROUTE = "/dashboard";
 
