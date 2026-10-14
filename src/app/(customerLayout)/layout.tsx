@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AnnouncementBanner } from "@/components/modules/Customer/Layout/AnnouncementBanner";
+import { OwnerViewBanner } from "@/components/modules/Customer/Layout/OwnerViewBanner";
 import { Sidebar } from "@/components/modules/Customer/Layout/Sidebar";
 import { TopBar } from "@/components/modules/Customer/Layout/TopBar";
 import { AuthProvider } from "@/components/modules/Customer/Providers/AuthProvider";
@@ -37,9 +38,10 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   const [activeBusinessId, locale] = await Promise.all([resolveActiveBusinessId(user.businesses), getLocale()]);
 
   // A PIN-locked workspace asks for its PIN first, on whatever page was
-  // opened, and stays on it once it opens.
+  // opened, and stays on it once it opens. A super admin's read-only view
+  // isn't asked (the API doesn't ask it either).
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
-  if (activeBusiness?.hasPinLock && !(await hasWorkspaceUnlock(activeBusiness.id))) {
+  if (activeBusiness?.hasPinLock && !user.impersonatedBy && !(await hasWorkspaceUnlock(activeBusiness.id))) {
     return (
       <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>
         <LocaleProvider initialLocale={locale}>
@@ -61,6 +63,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
             <div className="flex h-screen overflow-hidden bg-brand-content">
               <Sidebar />
               <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
                 <TopBar />
                 {/* The only scrollable region: the sidebar and top bar stay put.
                     id + tabIndex give the root layout's skip link a target. */}

@@ -118,6 +118,11 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   // src/components/Layout/UserMenu.tsx
   "Lock workspace": "ওয়ার্কস্পেস লক করুন",
 
+  // src/components/Layout/OwnerViewBanner.tsx (an admin's read-only view)
+  "Viewing as": "যার হিসেবে দেখছেন:",
+  "read-only support view by": "শুধু দেখার জন্য সাপোর্ট ভিউ, খুলেছেন",
+  "End view": "ভিউ বন্ধ করুন",
+
   // src/components/workspace/WorkspaceSettingsPage.tsx
   "This cannot be undone.": "এটি পূর্বাবস্থায় ফেরানো যাবে না।",
   "Workspace deleted": "ওয়ার্কস্পেস মুছে ফেলা হয়েছে",
