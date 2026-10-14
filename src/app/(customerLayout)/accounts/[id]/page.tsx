@@ -4,6 +4,8 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAccount, getAccountSummary, getLedger } from "@/lib/customer/accounts";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { getLocale } from "@/lib/i18n/locale";
+import { displayLanguage } from "@/lib/customer/accountDisplay";
 
 export default async function AccountDetailPage({ params, searchParams }: PageProps<"/accounts/[id]">) {
   const { id } = await params;
@@ -35,7 +37,7 @@ export default async function AccountDetailPage({ params, searchParams }: PagePr
       account={account}
       ledger={ledger}
       summary={summary}
-      preferredLanguage={user.preferredLanguage}
+      preferredLanguage={displayLanguage(await getLocale())}
       currency={activeBusiness?.currency ?? "BDT"}
       preset={preset}
       customFrom={customFrom}

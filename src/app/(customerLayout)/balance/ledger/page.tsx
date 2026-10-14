@@ -4,6 +4,8 @@ import { getAccount, getAccountSummary, getLedger, getWallets } from "@/lib/cust
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { getLocale } from "@/lib/i18n/locale";
+import { displayLanguage } from "@/lib/customer/accountDisplay";
 
 export default async function AccountLedgerPage({ searchParams }: PageProps<"/balance/ledger">) {
   const params = await searchParams;
@@ -44,7 +46,7 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
       account={account}
       ledger={ledger}
       summary={summary}
-      preferredLanguage={user.preferredLanguage}
+      preferredLanguage={displayLanguage(await getLocale())}
       currency={currency}
       accountId={accountId}
       range={range}

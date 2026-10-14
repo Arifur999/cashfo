@@ -3,7 +3,7 @@
 import axios from "axios";
 import { getClientHeaders } from "@/lib/axios/clientHeaders";
 import { getAccessToken } from "@/lib/tokenUtils";
-import { API_BASE_URL, getApiErrorMessage, type CurrentUser, type LoginHistoryEntry, type UserSessionSummary } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type CurrentUser, type LanguagePreference, type LoginHistoryEntry, type UserSessionSummary } from "./api";
 import { customerApi } from "./apiClient";
 
 // Logging out is the site-wide logoutAction (app/-actions/authActions.ts).
@@ -44,6 +44,15 @@ export async function updateProfileAction(input: UpdateProfileInput): Promise<Ac
     const res = await customerApi.patch(`${API_BASE_URL}/api/auth/profile`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update profile");
+}
+
+// The top bar's language switch: the screen follows the locale cookie at
+// once; this keeps the account's stored preference (the language of its
+// emails) in step with it.
+export async function saveLanguageAction(preferredLanguage: LanguagePreference): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.patch(`${API_BASE_URL}/api/auth/language`, { preferredLanguage }, { headers: await authHeaders() });
+  }, "Failed to save language");
 }
 
 export interface ChangePasswordInput {

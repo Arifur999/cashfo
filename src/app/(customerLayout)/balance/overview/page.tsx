@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { accountDisplayName } from "@/lib/customer/accountDisplay";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import { BalanceStatCard } from "@/components/modules/Customer/Balance/BalanceStatCard";
 import { formatCurrency } from "@/lib/customer/currency";
 import { getLocale } from "@/lib/i18n/locale";
@@ -104,7 +104,7 @@ export default async function BalanceOverviewPage() {
                             <Wallet className="h-4 w-4" />
                           </span>
                           <span className={`min-w-0 flex-1 truncate text-neutral-700 ${isInactive ? "line-through" : ""}`}>
-                            {accountDisplayName(a, user.preferredLanguage)}
+                            {accountDisplayName(a, displayLanguage(locale))}
                           </span>
                           {isInactive && (
                             <span className="rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-danger">

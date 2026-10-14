@@ -9,6 +9,7 @@ import { MobileSidebar } from "./MobileSidebar";
 import { ThemeToggle } from "./ThemeToggle";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { UserMenu } from "./UserMenu";
+import { saveLanguageAction } from "@/lib/customer/authActions";
 
 // Page navigation (Dashboard, Accounts, ...) lives in Sidebar.tsx now --
 // this bar is just cross-cutting utilities that make sense next to the
@@ -34,6 +35,13 @@ import { UserMenu } from "./UserMenu";
 export function TopBar() {
   // Admin > System > Feature Flags: dark_mode off hides the switch.
   const darkModeOn = useFeature("dark_mode");
+
+  // The screen switches at once (cookie); the account's stored preference --
+  // the language its emails use -- follows in the background.
+  function switchLanguage() {
+    toggleLocale();
+    void saveLanguageAction(locale === "en" ? "BN" : "EN");
+  }
   const { locale, toggleLocale, t } = useLocale();
   const pathname = usePathname();
   const router = useRouter();
@@ -47,7 +55,7 @@ export function TopBar() {
         <TodayTasksButton />
         <button
           type="button"
-          onClick={toggleLocale}
+          onClick={switchLanguage}
           aria-label="Toggle language"
           className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
         >
