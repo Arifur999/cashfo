@@ -28,6 +28,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { cancelledLabel } from "@/lib/customer/transactionDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 
 interface DashboardPageClientProps {
   businessId: string;
@@ -131,6 +132,8 @@ export function DashboardPageClient({
   trendPoints,
 }: DashboardPageClientProps) {
   const { t } = useLocale();
+  // Admin > System > Feature Flags: loan_management off hides its card and link.
+  const loanManagementOn = useFeature("loan_management");
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const netThisMonth = Number(monthIncome) - Number(monthExpense);
@@ -247,23 +250,25 @@ export function DashboardPageClient({
           <p className="mt-1.5 text-right text-xs text-neutral-400">{savingsProgressPercent}%</p>
         </div>
 
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-neutral-900">{t("Loan Management")}</h2>
-            <Link href="/loan-management/dashboard" className="flex items-center gap-1 text-xs font-medium text-brand-primary hover:underline">
-              {t("View All")} <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <Landmark className={`h-5 w-5 ${netBalance >= 0 ? "text-brand-primary" : "text-brand-danger"}`} />
-            <p className={`text-xl font-bold tabular-nums ${netBalance >= 0 ? "text-brand-primary" : "text-brand-danger"}`}>
-              {formatCurrency(Math.abs(netBalance), currency)}
+        {loanManagementOn && (
+          <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-neutral-900">{t("Loan Management")}</h2>
+              <Link href="/loan-management/dashboard" className="flex items-center gap-1 text-xs font-medium text-brand-primary hover:underline">
+                {t("View All")} <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="flex items-center gap-2">
+              <Landmark className={`h-5 w-5 ${netBalance >= 0 ? "text-brand-primary" : "text-brand-danger"}`} />
+              <p className={`text-xl font-bold tabular-nums ${netBalance >= 0 ? "text-brand-primary" : "text-brand-danger"}`}>
+                {formatCurrency(Math.abs(netBalance), currency)}
+              </p>
+            </div>
+            <p className="mt-1 text-xs text-neutral-400">
+              {netBalance > 0 ? t("Pawna (You Receive)") : netBalance < 0 ? t("Dena (You Pay)") : t("Settled")}
             </p>
           </div>
-          <p className="mt-1 text-xs text-neutral-400">
-            {netBalance > 0 ? t("Pawna (You Receive)") : netBalance < 0 ? t("Dena (You Pay)") : t("Settled")}
-          </p>
-        </div>
+        )}
       </div>
 
       <div className="mt-6">
@@ -271,7 +276,7 @@ export function DashboardPageClient({
           <LayoutGrid className="h-4 w-4" /> {t("Explore")}
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {EXPLORE_LINKS.map((link) => (
+          {EXPLORE_LINKS.filter((link) => loanManagementOn || link.href !== "/loan-management/dashboard").map((link) => (
             <Link
               key={link.href}
               href={link.href}

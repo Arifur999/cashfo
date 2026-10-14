@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatDate } from "@/lib/customer/date";
+import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 
 interface LoanLedgerPageClientProps {
   loanContacts: Contact[];
@@ -35,6 +36,8 @@ const RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
 export function LoanLedgerPageClient({ loanContacts, currency, range, selectedContactId, statement }: LoanLedgerPageClientProps) {
   const router = useRouter();
   const { t } = useLocale();
+  // Admin > System > Feature Flags: pdf_export off hides Print / Save as PDF.
+  const pdfExportOn = useFeature("pdf_export");
   const [pendingContactId, setPendingContactId] = useState(selectedContactId);
   const [pendingRange, setPendingRange] = useState<DateRangePreset>(range);
 
@@ -52,14 +55,16 @@ export function LoanLedgerPageClient({ loanContacts, currency, range, selectedCo
           <h1 className="text-xl font-semibold text-neutral-900">{t("Ledger")}</h1>
           <p className="mt-1 text-sm text-neutral-500">{t("One account, one date range, with the balance carried forward")}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          disabled={!statement}
-          className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Printer className="h-4 w-4" /> {t("Print / PDF")}
-        </button>
+        {pdfExportOn && (
+          <button
+            type="button"
+            onClick={() => window.print()}
+            disabled={!statement}
+            className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Printer className="h-4 w-4" /> {t("Print / PDF")}
+          </button>
+        )}
       </div>
 
       <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">

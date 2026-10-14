@@ -13,6 +13,7 @@ import { voidTransactionAction } from "@/lib/customer/transactionActions";
 import { NewLoanTransactionModal } from "./NewLoanTransactionModal";
 import { formatDate } from "@/lib/customer/date";
 import { isCancelled } from "@/lib/customer/transactionDisplay";
+import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 
 interface LoanTransactionsPageClientProps {
   businessId: string;
@@ -69,6 +70,8 @@ export function LoanTransactionsPageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
+  // Admin > System > Feature Flags: pdf_export off hides Print / Save as PDF.
+  const pdfExportOn = useFeature("pdf_export");
   const [modalOpen, setModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -176,13 +179,15 @@ export function LoanTransactionsPageClient({
                 ))}
               </select>
             </div>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="mt-4 flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
-            >
-              <Printer className="h-3.5 w-3.5" /> {t("Print")}
-            </button>
+            {pdfExportOn && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="mt-4 flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+              >
+                <Printer className="h-3.5 w-3.5" /> {t("Print")}
+              </button>
+            )}
           </div>
         </div>
 
