@@ -1,9 +1,11 @@
 "use client";
 
-import { LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Lock, LogOut, Settings, User as UserIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
+import { lockWorkspaceAction } from "@/lib/customer/businessActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 function initials(name: string): string {
@@ -20,8 +22,9 @@ function initials(name: string): string {
 // separate links, matching the reference layout, so adding more tabs later
 // doesn't require touching this menu.
 export function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user, activeBusiness, logout } = useAuth();
   const { t } = useLocale();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -67,6 +70,20 @@ export function UserMenu() {
           >
             <Settings className="h-3.5 w-3.5" /> {t("Settings")}
           </Link>
+          {/* A PIN-locked workspace can be shut again before walking away. */}
+          {activeBusiness?.hasPinLock && (
+            <button
+              type="button"
+              onClick={async () => {
+                setOpen(false);
+                await lockWorkspaceAction(activeBusiness.id);
+                router.refresh();
+              }}
+              className="flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+            >
+              <Lock className="h-3.5 w-3.5" /> {t("Lock workspace")}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {

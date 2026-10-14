@@ -21,6 +21,7 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
+  const [removePin, setRemovePin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
@@ -37,6 +38,7 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
       // for an untouched field below, is what gives "leave blank to keep the
       // current PIN unchanged" its meaning.
       setPin("");
+      setRemovePin(false);
       setLoading(true);
     }
   }
@@ -61,7 +63,8 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
         name,
         phone: phone || undefined,
         email: email || undefined,
-        pin: pin || undefined,
+        // null removes the lock; blank keeps it as it is.
+        pin: removePin ? null : pin || undefined,
       });
       if (result.success) {
         toast.success(t("Workspace updated"));
@@ -73,7 +76,7 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
     });
   }
 
-  const pinValid = pin.length === 0 || /^\d{4,6}$/.test(pin);
+  const pinValid = removePin || pin.length === 0 || /^\d{4,6}$/.test(pin);
   const isValid = name.trim().length > 0 && pinValid;
 
   return (
@@ -113,18 +116,36 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Change PIN")}</label>
-          <p className="mb-1 text-xs text-neutral-500">{t("Leave blank to keep the current PIN unchanged.")}</p>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{business?.hasPinLock ? t("Change PIN") : t("Set a PIN")}</label>
+          <p className="mb-1 text-xs text-neutral-500">
+            {business?.hasPinLock
+              ? t("Leave blank to keep the current PIN unchanged.")
+              : t("Asked before this workspace opens on any device. Leave blank for no PIN.")}
+          </p>
           <input
             type="text"
             inputMode="numeric"
             maxLength={6}
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ""))}
-            disabled={loading}
+            disabled={loading || removePin}
             placeholder={t("4-6 digits")}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50"
           />
+          {business?.hasPinLock && (
+            <label className="mt-2 flex items-center gap-2 text-sm text-neutral-700">
+              <input
+                type="checkbox"
+                checked={removePin}
+                onChange={(e) => {
+                  setRemovePin(e.target.checked);
+                  setPin("");
+                }}
+                className="h-4 w-4 rounded border-neutral-300"
+              />
+              {t("Remove the PIN")}
+            </label>
+          )}
         </div>
       </div>
 
