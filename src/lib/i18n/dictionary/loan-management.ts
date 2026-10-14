@@ -184,4 +184,14 @@ export const loanManagementDictionary: Record<string, string> = {
   Due: "বাকি তারিখ",
   of: "এর মধ্যে",
   Overdue: "মেয়াদোত্তীর্ণ",
+
+  // ReceivablesPayables/RecordPaymentModal.tsx
+  "Record Payment Received": "প্রাপ্ত পেমেন্ট লিখুন",
+  "Record Payment Made": "প্রদত্ত পেমেন্ট লিখুন",
+  "Which account did it land in?": "টাকা কোন হিসাবে জমা হলো?",
+  "Which account did it come from?": "টাকা কোন হিসাব থেকে গেল?",
+  "Payment recorded": "পেমেন্ট লেখা হয়েছে",
+  "Failed to record payment": "পেমেন্ট লেখা যায়নি",
+  "Apply to specific transaction": "নির্দিষ্ট লেনদেনে প্রয়োগ করুন",
+  "General payment (applies to oldest first)": "সাধারণ পেমেন্ট (সবচেয়ে পুরোনোটিতে আগে প্রয়োগ হবে)",
 };

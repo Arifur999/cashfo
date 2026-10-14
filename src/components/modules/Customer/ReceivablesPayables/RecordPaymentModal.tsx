@@ -11,6 +11,8 @@ import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getContactBalanceDetailAction, payPaymentAction, receivePaymentAction } from "@/lib/customer/receivablesPayablesActions";
 import { formatDate } from "@/lib/customer/date";
 import { getAppToday } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface RecordPaymentModalProps {
   open: boolean;
@@ -23,6 +25,7 @@ interface RecordPaymentModalProps {
 
 export function RecordPaymentModal({ open, onClose, businessId, contactId, direction, currency }: RecordPaymentModalProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [moneyAccountId, setMoneyAccountId] = useState("");
@@ -57,8 +60,8 @@ export function RecordPaymentModal({ open, onClose, businessId, contactId, direc
     });
   }, [open, businessId, contactId, direction]);
 
-  const title = direction === "RECEIVABLE" ? "Record Payment Received" : "Record Payment Made";
-  const accountLabel = direction === "RECEIVABLE" ? "Which account did it land in?" : "Which account did it come from?";
+  const title = t(direction === "RECEIVABLE" ? "Record Payment Received" : "Record Payment Made");
+  const accountLabel = t(direction === "RECEIVABLE" ? "Which account did it land in?" : "Which account did it come from?");
 
   function handleSubmit() {
     startTransition(async () => {
@@ -73,27 +76,29 @@ export function RecordPaymentModal({ open, onClose, businessId, contactId, direc
       const result = direction === "RECEIVABLE" ? await receivePaymentAction(businessId, input) : await payPaymentAction(businessId, input);
 
       if (result.success) {
-        toast.success("Payment recorded");
+        toast.success(t("Payment recorded"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? "Failed to record payment");
+        toast.error(result.message ?? t("Failed to record payment"));
       }
     });
   }
 
   const isValid = Number(amount) > 0 && moneyAccountId.length > 0;
+  const translateUntitled = t("Untitled");
+  const leftLabel = t("left");
 
   return (
     <Modal open={open} onClose={onClose} title={title}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Amount</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <input
             type="number"
             step="0.01"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
             placeholder="0.00"
             autoFocus
             className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-2xl font-semibold tabular-nums text-neutral-900 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
@@ -118,7 +123,7 @@ export function RecordPaymentModal({ open, onClose, businessId, contactId, direc
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Apply to specific transaction <span className="text-neutral-400">(optional)</span>
+            {t("Apply to specific transaction")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <select
             value={appliedToTransactionId}
@@ -126,17 +131,17 @@ export function RecordPaymentModal({ open, onClose, businessId, contactId, direc
             disabled={loading}
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
           >
-            <option value="">General payment (applies to oldest first)</option>
+            <option value="">{t("General payment (applies to oldest first)")}</option>
             {outstanding.map((t) => (
               <option key={t.transactionId} value={t.transactionId}>
-                {formatDate(t.date)} · {t.description ?? "Untitled"} · {formatCurrency(t.remainingAmount, currency)} left
+                {formatDate(t.date)} · {t.description ?? translateUntitled} · {formatCurrency(t.remainingAmount, currency)} {leftLabel}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Date")}</label>
           <input
             type="date"
             value={date}
@@ -147,7 +152,7 @@ export function RecordPaymentModal({ open, onClose, businessId, contactId, direc
 
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Description <span className="text-neutral-400">(optional)</span>
+            {t("Description")} <span className="text-neutral-400">{t("(optional)")}</span>
           </label>
           <input
             value={description}
@@ -164,7 +169,7 @@ export function RecordPaymentModal({ open, onClose, businessId, contactId, direc
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Save
+        {t("Save")}
       </button>
     </Modal>
   );
