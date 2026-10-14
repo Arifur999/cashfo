@@ -21,6 +21,9 @@ interface SavingsTransferModalProps {
 }
 
 export function SavingsTransferModal({ open, onClose, businessId, goals }: SavingsTransferModalProps) {
+  // A withdrawn goal was paid out and is closed: it can't take money (the
+  // API refuses it) and has none to give.
+  const openGoals = goals.filter((g) => g.status !== "WITHDRAWN");
   const { t } = useLocale();
   const router = useRouter();
   const [fromGoalId, setFromGoalId] = useState("");
@@ -68,7 +71,7 @@ export function SavingsTransferModal({ open, onClose, businessId, goals }: Savin
             key={`from-${resetCount}`}
             value={fromGoalId}
             onChange={setFromGoalId}
-            options={goals.map((g) => ({ value: g.id, label: g.name }))}
+            options={openGoals.map((g) => ({ value: g.id, label: g.name }))}
             placeholder={t("Search goals")}
             emptyMessage="No goals yet"
           />
@@ -79,7 +82,7 @@ export function SavingsTransferModal({ open, onClose, businessId, goals }: Savin
             key={`to-${resetCount}`}
             value={toGoalId}
             onChange={setToGoalId}
-            options={goals.map((g) => ({ value: g.id, label: g.name }))}
+            options={openGoals.map((g) => ({ value: g.id, label: g.name }))}
             placeholder={t("Search goals")}
             emptyMessage="No goals yet"
           />
