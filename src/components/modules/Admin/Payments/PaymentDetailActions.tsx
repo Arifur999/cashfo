@@ -18,7 +18,7 @@ const PaymentDetailActions = ({ payment }: { payment: IPaymentDetail }) => {
   const close = () => setDialog(null);
   const retry = useActionMutation({
     action: retryPaymentAction,
-    successMessage: "Payment marked for retry",
+    successMessage: "Payment set back to Pending",
     invalidateKeys: [queryKeys.payments.all],
   });
 
@@ -26,7 +26,7 @@ const PaymentDetailActions = ({ payment }: { payment: IPaymentDetail }) => {
     <div className="flex flex-wrap gap-2">
       {payment.status === "FAILED" && (
         <Button variant="outline" onClick={() => setDialog("retry")}>
-          <RefreshCw aria-hidden="true" /> Retry
+          <RefreshCw aria-hidden="true" /> Mark for retry
         </Button>
       )}
       {payment.status === "SUCCESS" && (
@@ -38,10 +38,12 @@ const PaymentDetailActions = ({ payment }: { payment: IPaymentDetail }) => {
       <ConfirmDialog
         open={dialog === "retry"}
         onOpenChange={(open) => !open && close()}
-        title="Retry payment"
-        description={`Attempt to charge ${formatCurrency(payment.amount, payment.currency)} again through ${payment.gateway}?`}
-        confirmLabel="Retry"
-        pendingLabel="Retrying..."
+        title="Mark for retry"
+        // No payment gateway is connected, so nothing is charged here: the
+        // payment only goes back to Pending.
+        description={`Nothing is charged now -- no payment gateway is connected. The ${formatCurrency(payment.amount, payment.currency)} payment goes back to Pending, to be collected again through ${payment.gateway}.`}
+        confirmLabel="Mark for retry"
+        pendingLabel="Saving..."
         isPending={retry.isPending}
         onConfirm={async () => {
           if (await retry.run(payment.id)) close();
