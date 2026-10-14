@@ -85,7 +85,8 @@ export function AddExpenseModal({ open, onClose, businessId, members, categories
             amount,
             date,
             category,
-            description: description || undefined,
+            // "" clears the description; left out it would stay.
+            description,
             paidByMemberId,
           })
         : await createGroupExpenseAction(businessId, {

@@ -72,7 +72,7 @@ export function GroupMemberFormModal({ open, onClose, businessId, editingMember 
   function handleSubmit() {
     startTransition(async () => {
       const result = editingMember
-        ? await updateGroupMemberAction(businessId, editingMember.id, { name, phone: phone || undefined, photoUrl })
+        ? await updateGroupMemberAction(businessId, editingMember.id, { name, phone, photoUrl })
         : await createGroupMemberAction(businessId, { name, phone: phone || undefined, photoUrl: photoUrl || undefined });
 
       if (result.success) {

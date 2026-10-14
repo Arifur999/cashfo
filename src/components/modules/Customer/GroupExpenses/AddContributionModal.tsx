@@ -78,7 +78,7 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
     const signedAmount = String(type === "RETURN" ? -Math.abs(Number(amount)) : Math.abs(Number(amount)));
     startTransition(async () => {
       const result = editingContribution
-        ? await updateGroupContributionAction(businessId, editingContribution.id, { groupMemberId, amount: signedAmount, date, note: note || undefined })
+        ? await updateGroupContributionAction(businessId, editingContribution.id, { groupMemberId, amount: signedAmount, date, note })
         : await createGroupContributionAction(businessId, { groupMemberId, amount: signedAmount, date, note: note || undefined });
       if (result.success) {
         toast.success(editingContribution ? t("Contribution updated") : t("Contribution added"));

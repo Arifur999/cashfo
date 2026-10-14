@@ -116,14 +116,12 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
           name,
           type,
           category,
-          phone: phone || undefined,
-          address: address || undefined,
-          notes: notes || undefined,
-          // Sent as-is (not `|| undefined`) -- the backend treats `undefined`
-          // as "leave unchanged", so clearing the photo (empty string) has to
-          // be sent explicitly rather than omitted, unlike the other optional
-          // fields above where "" and "never touched" are meant to behave
-          // the same way.
+          // Sent as-is, empty included: the API reads a missing field as
+          // "leave unchanged", so leaving out an emptied phone, address,
+          // notes or photo kept the old value.
+          phone,
+          address,
+          notes,
           photoUrl,
         });
         if (result.success) {

@@ -61,12 +61,8 @@ export function BankPersonFormModal({ open, onClose, businessId, editingContact 
   function handleSubmit() {
     startTransition(async () => {
       const result = editingContact
-        ? await updateContactAction(businessId, editingContact.id, {
-            name,
-            phone: phone || undefined,
-            address: address || undefined,
-            notes: notes || undefined,
-          })
+        ? // Empty fields sent as "" so they clear; left out they stay as they were.
+          await updateContactAction(businessId, editingContact.id, { name, phone, address, notes })
         : await createContactAction(businessId, {
             name,
             type: "BOTH",

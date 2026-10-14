@@ -50,10 +50,8 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
   function handleSubmit() {
     startTransition(async () => {
       const result = editingWallet
-        ? await updateAccountAction(businessId, editingWallet.id, {
-            name,
-            accountNumber: accountNumber || undefined,
-          })
+        ? // "" clears the account number; left out it would stay.
+          await updateAccountAction(businessId, editingWallet.id, { name, accountNumber })
         : await createAccountAction(businessId, {
             name,
             accountNumber: accountNumber || undefined,
