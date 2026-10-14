@@ -1,3 +1,4 @@
+import { BUDGET_TONE_BAR, budgetTone } from "@/lib/budgetTone";
 import {
   Activity,
   Anchor,
@@ -719,15 +720,12 @@ export function budgetCategoryHex(color: string): string {
   return COLOR_HEX[color as (typeof BUDGET_CATEGORY_COLORS)[number]] ?? "#a3a3a3";
 }
 
-// EXPENSE: <70% green, 70-99% amber, >=100% red -- matches the reference's
-// Food & Dining (70%, green) vs Housing/Transportation (80%/90%, amber)
-// examples; going over a spending LIMIT is bad. INCOME is the opposite --
-// exceeding an income GOAL is good news, so it never turns red/amber.
+// EXPENSE follows the design's budget colours (lib/budgetTone.ts): going
+// over a spending LIMIT is bad. INCOME is the opposite -- exceeding an income
+// GOAL is good news, so it never turns red/amber.
 export function budgetProgressColorClass(percent: number, type: "EXPENSE" | "INCOME" = "EXPENSE"): string {
-  if (type === "INCOME") return "bg-brand-primary";
-  if (percent >= 100) return "bg-brand-danger";
-  if (percent >= 70) return "bg-amber-500";
-  return "bg-brand-primary";
+  if (type === "INCOME") return "bg-income";
+  return BUDGET_TONE_BAR[budgetTone(percent)];
 }
 
 // Common Income Planning category names -> a fitting icon, so typing one of
