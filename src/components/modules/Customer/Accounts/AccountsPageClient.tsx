@@ -12,6 +12,9 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { AccountFormModal } from "./AccountFormModal";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 
+// System accounts the app finds by subtype -- see renderAccount().
+const PROTECTED_SUBTYPES = ["receivable", "payable"];
+
 interface AccountsPageClientProps {
   businessId: string;
   initialGroups: AccountGroup[];
@@ -77,6 +80,9 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
 
   function renderAccount(account: Account, depth: number) {
     const isArchived = account.status === "ARCHIVED";
+    // Receivables and payables keep every contact's balance; the backend
+    // refuses to remove or archive them, so no button offers it.
+    const isLedgerAccount = account.isSystemAccount && PROTECTED_SUBTYPES.includes(account.accountSubtype ?? "");
     return (
       <div key={account.id}>
         <div
@@ -119,18 +125,20 @@ export function AccountsPageClient({ businessId, initialGroups, canManage, prefe
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                 )}
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemove(account);
-                  }}
-                  title={t("Remove")}
-                  className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                {!isLedgerAccount && (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemove(account);
+                    }}
+                    title={t("Remove")}
+                    className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             )}
           </div>

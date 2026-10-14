@@ -57,16 +57,24 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
 
   function handleSubmit() {
     startTransition(async () => {
-      const input = {
-        name,
-        nameBn: nameBn || undefined,
-        accountType,
-        accountSubtype: accountSubtype || undefined,
-        parentId: parentId || undefined,
-      };
       const result = editingAccount
-        ? await updateAccountAction(businessId, editingAccount.id, input)
-        : await createAccountAction(businessId, input);
+        ? // Edits send only what may change; empty fields clear them, and
+          // "None" clears the parent.
+          await updateAccountAction(businessId, editingAccount.id, {
+            name,
+            nameBn,
+            // A system account's subtype is what the app finds it by (cash,
+            // receivable, ...); the backend refuses to change it.
+            accountSubtype: editingAccount.isSystemAccount ? undefined : accountSubtype,
+            parentId: parentId || null,
+          })
+        : await createAccountAction(businessId, {
+            name,
+            nameBn: nameBn || undefined,
+            accountType,
+            accountSubtype: accountSubtype || undefined,
+            parentId: parentId || undefined,
+          });
 
       if (result.success) {
         toast.success(editingAccount ? t("Account updated") : t("Account created"));
@@ -135,6 +143,7 @@ export function AccountFormModal({ open, onClose, businessId, editingAccount, al
             <input
               value={accountSubtype}
               onChange={(e) => setAccountSubtype(e.target.value)}
+              disabled={!!editingAccount?.isSystemAccount}
               placeholder={t("e.g. bank")}
               className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             />

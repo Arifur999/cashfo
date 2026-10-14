@@ -48,7 +48,18 @@ export async function createAccountAction(businessId: string, input: AccountForm
   }, "Failed to create account");
 }
 
-export async function updateAccountAction(businessId: string, id: string, input: Partial<AccountFormInput>): Promise<ActionResult<Account>> {
+// What an edit may change -- the backend refuses accountType (an account's
+// type is fixed once it has children) and any unknown field, so sending the
+// create shape made every edit fail. parentId null moves it back to the top.
+export interface AccountUpdateInput {
+  name?: string;
+  nameBn?: string;
+  accountNumber?: string;
+  accountSubtype?: string;
+  parentId?: string | null;
+}
+
+export async function updateAccountAction(businessId: string, id: string, input: AccountUpdateInput): Promise<ActionResult<Account>> {
   return callApi(async () => {
     const res = await customerApi.patch<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}`, input, { headers: await authHeaders() });
     return res.data;
