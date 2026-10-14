@@ -141,6 +141,9 @@ export const MANAGE_ROLES = {
   notificationTemplates: ["SUPER_ADMIN", "CONTENT_ADMIN"],
   notificationCampaigns: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
   ownerData: ["SUPER_ADMIN"],
+  // Suspending/activating a customer, and changing their plan.
+  ownerStatus: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
+  ownerPlan: ["SUPER_ADMIN", "FINANCE_ADMIN"],
   settings: ["SUPER_ADMIN"],
   revenue: ["SUPER_ADMIN", "FINANCE_ADMIN"],
 } satisfies Record<string, AdminRole[]>;

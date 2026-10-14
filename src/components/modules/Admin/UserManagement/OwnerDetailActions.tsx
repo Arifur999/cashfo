@@ -10,24 +10,29 @@ import OwnerDialogs from "./OwnerDialogs";
 interface OwnerDetailActionsProps {
   owner: IOwnerRef;
   plans: IPlanOption[];
+  // What this admin's role may do (MANAGE_ROLES ownerStatus / ownerPlan).
+  canChangeStatus: boolean;
+  canChangePlan: boolean;
 }
 
 // The detail page's header buttons; the dialogs are the same ones the users
 // table opens from its row menu.
-const OwnerDetailActions = ({ owner, plans }: OwnerDetailActionsProps) => {
+const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan }: OwnerDetailActionsProps) => {
   const [activeDialog, setActiveDialog] = useState<OwnerDialog | null>(null);
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button variant="outline" onClick={() => setActiveDialog("changePlan")}>
-        <ArrowLeftRight aria-hidden="true" /> Change plan
-      </Button>
-      {owner.status === "SUSPENDED" && (
+      {canChangePlan && (
+        <Button variant="outline" onClick={() => setActiveDialog("changePlan")}>
+          <ArrowLeftRight aria-hidden="true" /> Change plan
+        </Button>
+      )}
+      {canChangeStatus && owner.status === "SUSPENDED" && (
         <Button variant="outline" onClick={() => setActiveDialog("activate")}>
           <UserCheck aria-hidden="true" /> Activate
         </Button>
       )}
-      {owner.status === "ACTIVE" && (
+      {canChangeStatus && owner.status === "ACTIVE" && (
         <Button variant="destructive" onClick={() => setActiveDialog("suspend")}>
           <ShieldOff aria-hidden="true" /> Suspend
         </Button>
