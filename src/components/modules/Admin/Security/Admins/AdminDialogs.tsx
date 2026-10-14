@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { resetAdminPasswordAction, suspendAdminAction } from "@/app/(dashboardLayout)/admin/security/(sections)/admins/_action";
+import { activateAdminAction, resetAdminPasswordAction, suspendAdminAction } from "@/app/(dashboardLayout)/admin/security/(sections)/admins/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import FormDialog from "@/components/shared/dialog/FormDialog";
 import TemporaryPasswordDialog from "@/components/shared/dialog/TemporaryPasswordDialog";
@@ -10,7 +10,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import EditAdminForm from "./EditAdminForm";
 
-export type AdminDialog = "edit" | "resetPassword" | "suspend";
+export type AdminDialog = "edit" | "resetPassword" | "suspend" | "activate";
 
 interface AdminDialogsProps {
   admin: IAdminAccount | null;
@@ -32,6 +32,13 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
   const suspend = useActionMutation({
     action: suspendAdminAction,
     successMessage: (suspended) => `${suspended.name} suspended`,
+    invalidateKeys: [queryKeys.admins.all],
+    refreshRoute: false,
+  });
+
+  const activate = useActionMutation({
+    action: activateAdminAction,
+    successMessage: (activated) => `${activated.name} can sign in again`,
     invalidateKeys: [queryKeys.admins.all],
     refreshRoute: false,
   });
@@ -64,7 +71,7 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
       <ConfirmDialog
         {...dialogProps("suspend")}
         title="Suspend admin"
-        description={`${admin?.name} won't be able to sign in. There's no un-suspend in the panel yet, so be sure.`}
+        description={`${admin?.name} is signed out everywhere and can't sign in until reactivated.`}
         variant="destructive"
         confirmLabel="Suspend"
         pendingLabel="Suspending..."
@@ -72,6 +79,18 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
         isPending={suspend.isPending}
         onConfirm={async () => {
           if (admin && (await suspend.run(admin.id))) onClose();
+        }}
+      />
+
+      <ConfirmDialog
+        {...dialogProps("activate")}
+        title="Reactivate admin"
+        description={`${admin?.name} can sign in again with their current password, with the same role.`}
+        confirmLabel="Reactivate"
+        pendingLabel="Reactivating..."
+        isPending={activate.isPending}
+        onConfirm={async () => {
+          if (admin && (await activate.run(admin.id))) onClose();
         }}
       />
 

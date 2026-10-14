@@ -5,6 +5,7 @@ import { ACCESS_TOKEN_COOKIE } from "@/lib/tokenUtils";
 import type { ApiResponse, IPaginatedBody } from "@/types/api.types";
 import { getClientHeaders } from "./clientHeaders";
 import { logServiceError } from "./logServiceError";
+import { toSafeApiError } from "./safeApiError";
 
 // No NEXT_PUBLIC_ prefix on purpose: the browser never talks to the backend
 // directly -- it always goes through this Next.js server (Server Components,
@@ -20,18 +21,14 @@ const buildHeaders = async (extra?: Record<string, string>) => {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
 
-  // The NestJS admin routes authenticate with a Bearer token today. The whole
-  // cookie jar is forwarded as well, so a cookie-session backend (better-auth)
-  // works later without touching a single service.
-  const cookieHeader = cookieStore
-    .getAll()
-    .map((cookie) => `${cookie.name}=${cookie.value}`)
-    .join("; ");
-
+  // The API authenticates with the Bearer token alone. The visitor's cookie
+  // jar (both tokens, better-auth's session) is not forwarded: nothing on the
+  // API reads it, and it only put more credentials into every request. The
+  // one call that needs a cookie -- the Google session exchange -- sends just
+  // better-auth's own (services/auth.services.ts).
   return {
     "Content-Type": "application/json",
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-    ...(cookieHeader ? { Cookie: cookieHeader } : {}),
     ...(await getClientHeaders()),
     ...extra,
   };
@@ -65,7 +62,7 @@ const send = async <TData>(method: HttpMethod, endpoint: string, body?: unknown,
     return { success: true, message: "", data: response.data };
   } catch (error) {
     logServiceError("API request failed", error);
-    throw error;
+    throw toSafeApiError(error);
   }
 };
 

@@ -13,10 +13,14 @@ import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { voidTransactionAction } from "@/lib/customer/transactionActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatDate } from "@/lib/customer/date";
+import { isCancelled } from "@/lib/customer/transactionDisplay";
+import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 
 interface BalanceTransferPageClientProps {
   businessId: string;
   transfers: Transaction[];
+  // false when there were more than the page reads (see getAllTransactions).
+  complete: boolean;
   currency: string;
   canManage: boolean;
   range: DateRangePreset;
@@ -42,10 +46,12 @@ const RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
   { value: "this-year", label: "This Year" },
 ];
 
-export function BalanceTransferPageClient({ businessId, transfers, currency, canManage, range }: BalanceTransferPageClientProps) {
+export function BalanceTransferPageClient({ businessId, transfers, currency, canManage, range, complete }: BalanceTransferPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
+  // Admin > System > Feature Flags: pdf_export off hides Print / Save as PDF.
+  const pdfExportOn = useFeature("pdf_export");
   const [modalOpen, setModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -90,6 +96,9 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">{t("Balance Transfer")}</h1>
           <p className="mt-1 text-sm text-neutral-500">{t("Account Balance Transfer")}</p>
+          {!complete && (
+            <p className="mt-1 text-xs text-amber-700">{t("Showing and totalling the latest 1,000 only -- pick a shorter range to see the rest.")}</p>
+          )}
         </div>
         {canManage && (
           <button
@@ -129,13 +138,15 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
-            >
-              <Printer className="h-3.5 w-3.5" /> {t("Print")}
-            </button>
+            {pdfExportOn && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+              >
+                <Printer className="h-3.5 w-3.5" /> {t("Print")}
+              </button>
+            )}
           </div>
         </div>
 
@@ -149,6 +160,7 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
               const viewLabel = t("View");
               const voidLabel = t("Void");
               const voidedLabel = t("Voided");
+              const reversalLabel = t("Reversal");
               return (
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
@@ -173,7 +185,8 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                     )}
                     {transfers.map((t, index) => {
                       const { from, to } = partiesFor(t);
-                      const isVoided = t.status === "VOIDED";
+                      const isVoided = isCancelled(t);
+                      const cancelledNote = t.reversalOfId ? reversalLabel : voidedLabel;
                       return (
                         <tr key={t.id} className={isVoided ? "opacity-50" : ""}>
                           <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
@@ -197,7 +210,7 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                           <td className="px-4 py-3 text-right font-semibold tabular-nums text-neutral-900">{formatCurrency(amountFor(t), currency)}</td>
                           <td className="px-4 py-3 text-neutral-400">
                             {t.description ?? ""}
-                            {isVoided && <span className="text-brand-danger"> · {voidedLabel}</span>}
+                            {isVoided && <span className="text-brand-danger"> · {cancelledNote}</span>}
                           </td>
                           {canManage && (
                             <td className="px-4 py-3">
@@ -209,7 +222,7 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                                 >
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Link>
-                                {!isVoided && (
+                                {t.voidable && (
                                   <button
                                     type="button"
                                     disabled={isPending}

@@ -10,6 +10,7 @@ import type { AssetCategoryOption } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getAssetCategoriesAction, purchaseAssetAction } from "@/lib/customer/assetActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface AddCurrentAssetModalProps {
   open: boolean;
@@ -129,7 +130,7 @@ export function AddCurrentAssetModal({ open, onClose, businessId, currency }: Ad
             min="0.01"
             step="0.01"
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => setValue(limitMoneyDecimals(e.target.value))}
             placeholder="0.00"
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />

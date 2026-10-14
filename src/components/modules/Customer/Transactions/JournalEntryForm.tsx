@@ -8,6 +8,7 @@ import type { Account, EntryType, TransactionType } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createTransactionAction } from "@/lib/customer/transactionActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 const TRANSACTION_TYPES: TransactionType[] = ["JOURNAL", "INCOME", "EXPENSE", "TRANSFER", "SALE", "PURCHASE", "PAYMENT"];
 
@@ -34,6 +35,9 @@ export function JournalEntryForm({ businessId, accounts }: JournalEntryFormProps
   const [description, setDescription] = useState("");
   const [rows, setRows] = useState<EntryRow[]>([emptyRow("DEBIT"), emptyRow("CREDIT")]);
   const [isPending, startTransition] = useTransition();
+  // One key for this entry however many times it is submitted; the page
+  // moves on after a success, so the next entry gets a new form and key.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   function addRow() {
     setRows((prev) => [...prev, emptyRow("DEBIT")]);
@@ -61,6 +65,7 @@ export function JournalEntryForm({ businessId, accounts }: JournalEntryFormProps
         transactionDate,
         description: description || undefined,
         entries: rows.map((r) => ({ accountId: r.accountId, entryType: r.entryType, amount: Number(r.amount) })),
+        idempotencyKey,
       });
       if (result.success && result.data) {
         toast.success(t("Transaction posted"));
@@ -137,7 +142,7 @@ export function JournalEntryForm({ businessId, accounts }: JournalEntryFormProps
               type="number"
               step="0.01"
               value={row.amount}
-              onChange={(e) => updateRow(index, { amount: e.target.value })}
+              onChange={(e) => updateRow(index, { amount: limitMoneyDecimals(e.target.value) })}
               placeholder="0.00"
               className="w-32 rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
             />

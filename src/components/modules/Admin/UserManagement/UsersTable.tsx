@@ -18,7 +18,9 @@ import { buildUsersTableConfig } from "./usersTable.config";
 
 const detailHref = (row: IOwnerOverviewItem) => `/admin/users/${row.userId}`;
 
-const UsersTable = () => {
+// Each action only for the roles the API allows it (MANAGE_ROLES) -- the
+// others got a 403 after clicking.
+const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boolean; canChangePlan: boolean }) => {
   const router = useRouter();
   const { data: plansResponse } = useQuery(plansQuery());
   const plans = useMemo(() => plansResponse?.data ?? [], [plansResponse]);
@@ -32,18 +34,18 @@ const UsersTable = () => {
     () => ({
       onView: (row) => router.push(detailHref(row)),
       extra: [
-        { label: "Change plan", icon: ArrowLeftRight, onClick: (row) => openDialog("changePlan", row) },
-        { label: "Activate", icon: UserCheck, onClick: (row) => openDialog("activate", row), hidden: (row) => row.status !== "SUSPENDED" },
+        { label: "Change plan", icon: ArrowLeftRight, onClick: (row) => openDialog("changePlan", row), hidden: () => !canChangePlan },
+        { label: "Activate", icon: UserCheck, onClick: (row) => openDialog("activate", row), hidden: (row) => !canChangeStatus || row.status !== "SUSPENDED" },
         {
           label: "Suspend",
           icon: ShieldOff,
           destructive: true,
           onClick: (row) => openDialog("suspend", row),
-          hidden: (row) => row.status !== "ACTIVE",
+          hidden: (row) => !canChangeStatus || row.status !== "ACTIVE",
         },
       ],
     }),
-    [router, openDialog],
+    [router, openDialog, canChangePlan, canChangeStatus],
   );
 
   return (

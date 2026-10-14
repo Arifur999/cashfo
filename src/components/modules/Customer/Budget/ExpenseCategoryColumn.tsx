@@ -11,6 +11,7 @@ import { budgetCategoryColorClass, budgetCategoryIcon, budgetProgressColorClass 
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface ExpenseCategoryColumnProps {
   businessId: string;
@@ -90,7 +91,7 @@ export function ExpenseCategoryColumn({ businessId, overview, currency, canManag
               type="number"
               step="0.01"
               value={targetInput}
-              onChange={(e) => setTargetInput(e.target.value)}
+              onChange={(e) => setTargetInput(limitMoneyDecimals(e.target.value))}
               className="w-28 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm outline-none focus:border-brand-primary"
             />
             <button

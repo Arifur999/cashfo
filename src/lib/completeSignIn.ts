@@ -1,6 +1,6 @@
 import "server-only";
 import type { ISignInResponse } from "@/types/auth.types";
-import { homeRouteFor, isValidRedirect } from "./authUtils";
+import { homeRouteFor, safeRedirectPath } from "./authUtils";
 import { setAuthCookies } from "./tokenUtils";
 
 // The last step of every sign-in (password or Google): store the tokens and
@@ -11,5 +11,5 @@ export const completeSignIn = async (
   redirectTo?: string | null,
 ): Promise<string> => {
   await setAuthCookies(accessToken, refreshToken);
-  return redirectTo && isValidRedirect(redirectTo, audience, account.role) ? redirectTo : homeRouteFor(audience);
+  return (redirectTo && safeRedirectPath(redirectTo, audience, account.role)) || homeRouteFor(audience);
 };

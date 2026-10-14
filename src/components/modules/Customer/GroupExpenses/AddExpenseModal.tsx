@@ -10,6 +10,8 @@ import { Combobox } from "@/components/modules/Customer/Shared/Combobox";
 import { DatePicker } from "@/components/modules/Customer/Shared/DatePicker";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { limitMoneyDecimals } from "@/lib/customer/money";
+import { getAppToday } from "@/lib/date";
 
 interface AddExpenseModalProps {
   open: boolean;
@@ -20,9 +22,9 @@ interface AddExpenseModalProps {
   editingExpense?: GroupExpense | null;
 }
 
+// Today on the app's calendar (Asia/Dhaka), not the browser's.
 function today(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return getAppToday();
 }
 
 export function AddExpenseModal({ open, onClose, businessId, members, categories, editingExpense = null }: AddExpenseModalProps) {
@@ -83,7 +85,8 @@ export function AddExpenseModal({ open, onClose, businessId, members, categories
             amount,
             date,
             category,
-            description: description || undefined,
+            // "" clears the description; left out it would stay.
+            description,
             paidByMemberId,
           })
         : await createGroupExpenseAction(businessId, {
@@ -120,7 +123,7 @@ export function AddExpenseModal({ open, onClose, businessId, members, categories
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <input
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
             type="number"
             step="0.01"
             min={0}

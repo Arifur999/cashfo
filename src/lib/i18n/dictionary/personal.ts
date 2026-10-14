@@ -125,4 +125,23 @@ export const personalDictionary: Record<string, string> = {
   "Reset Vault Password": "ভল্ট পাসওয়ার্ড রিসেট করুন",
   "Vault password reset -- unlock below to continue": "ভল্ট পাসওয়ার্ড রিসেট হয়েছে -- চালিয়ে যেতে নিচে আনলক করুন",
   "Back to unlock": "আনলকে ফিরে যান",
+
+  // VaultUnlockGate.tsx -- resetting deletes the saved entries (they're
+  // encrypted with the forgotten password), and the "change" mode.
+  "Resetting deletes every saved password: they are locked with your vault password, and without it they can't be recovered.":
+    "রিসেট করলে সংরক্ষিত সব পাসওয়ার্ড মুছে যাবে: সেগুলো আপনার ভল্ট পাসওয়ার্ড দিয়ে লক করা, আর সেটি ছাড়া ফিরিয়ে আনা যায় না।",
+  "I understand that all my saved passwords will be deleted.": "আমি বুঝেছি যে আমার সংরক্ষিত সব পাসওয়ার্ড মুছে যাবে।",
+  "Tick the box to confirm that every saved password will be deleted": "সব সংরক্ষিত পাসওয়ার্ড মুছে যাবে -- নিশ্চিত করতে বক্সে টিক দিন",
+  "Delete Saved Passwords and Reset": "সংরক্ষিত পাসওয়ার্ড মুছে রিসেট করুন",
+  "Vault reset -- saved passwords deleted:": "ভল্ট রিসেট হয়েছে -- মুছে ফেলা পাসওয়ার্ড:",
+  "Failed to reset the vault": "ভল্ট রিসেট করা যায়নি",
+  "Change vault password": "ভল্ট পাসওয়ার্ড পরিবর্তন",
+  "Change your Vault Password": "আপনার ভল্ট পাসওয়ার্ড পরিবর্তন করুন",
+  "Your saved passwords stay; only the password that opens them changes.": "সংরক্ষিত পাসওয়ার্ডগুলো থাকবে; শুধু সেগুলো খোলার পাসওয়ার্ড বদলাবে।",
+  "Current Vault Password": "বর্তমান ভল্ট পাসওয়ার্ড",
+  "Change Vault Password": "ভল্ট পাসওয়ার্ড পরিবর্তন করুন",
+  "Enter your current vault password": "আপনার বর্তমান ভল্ট পাসওয়ার্ড লিখুন",
+  "Vault password must be at most 128 characters": "ভল্ট পাসওয়ার্ড সর্বোচ্চ ১২৮ অক্ষরের হতে পারে",
+  "Vault password must contain at least one letter and one number": "ভল্ট পাসওয়ার্ডে অন্তত একটি অক্ষর ও একটি সংখ্যা থাকতে হবে",
+  "Vault password changed -- unlock below to continue": "ভল্ট পাসওয়ার্ড পরিবর্তন হয়েছে -- চালিয়ে যেতে নিচে আনলক করুন",
 };

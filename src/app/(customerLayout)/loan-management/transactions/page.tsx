@@ -4,7 +4,7 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getContacts } from "@/lib/customer/contacts";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { getTransactions } from "@/lib/customer/transactions";
+import { getAllTransactions } from "@/lib/customer/transactions";
 
 export default async function LoanTransactionsPage({ searchParams }: PageProps<"/loan-management/transactions">) {
   const params = await searchParams;
@@ -21,21 +21,26 @@ export default async function LoanTransactionsPage({ searchParams }: PageProps<"
   const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
   const { dateFrom, dateTo } = resolveDateRange(range);
 
-  // Not filtered by category -- Loan Management and Dena-Pawna share one
-  // contact list and one transaction history now (see
-  // ReceivablesPayablesService.getLoanDashboard()'s comment).
-  const { data: loanContacts } = await getContacts(activeBusinessId, {});
-  const { data: transactions } = await getTransactions(activeBusinessId, {
+  // Loan contacts only: a trade (BUSINESS) contact books a "loan" as a
+  // credit sale or purchase -- revenue or expense, with the wallet ignored --
+  // so the New Transaction form must not offer one. The list shows those
+  // contacts' loans and repayments, not every transaction in the workspace.
+  const { data: loanContacts } = await getContacts(activeBusinessId, { category: "LOAN", limit: 100 });
+  // All of them (read 100 at a time): the Total Receive / Total Payment
+  // cards add them up, and used to see only the first 100.
+  const { data: transactions, complete } = await getAllTransactions(activeBusinessId, {
     contactId: selectedContactId || undefined,
+    contactCategory: "LOAN",
+    transactionTypes: ["SALE", "PURCHASE", "PAYMENT"],
     dateFrom,
     dateTo,
-    limit: 100,
   });
 
   return (
     <LoanTransactionsPageClient
       businessId={activeBusinessId}
       transactions={transactions}
+      complete={complete}
       loanContacts={loanContacts}
       canManage={canManage}
       currency={activeBusiness?.currency ?? "BDT"}

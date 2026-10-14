@@ -13,7 +13,7 @@ export default async function BankPersonListPage() {
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
-  const { data: contacts } = await getContacts(activeBusinessId, { category: "LOAN" });
+  const { data: contacts } = await getContacts(activeBusinessId, { category: "LOAN", limit: 100 });
 
   return (
     <BankPersonListPageClient businessId={activeBusinessId} contacts={contacts} canManage={canManage} currency={activeBusiness?.currency ?? "BDT"} />

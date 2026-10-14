@@ -1,7 +1,8 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import type { IPaginatedBody } from "@/types/api.types";
+import type { IItemsPageBody } from "@/types/api.types";
+import type { IOwnerOverviewItem } from "@/types/owner.types";
 import type {
   IAdminOption,
   ICreatedTicket,
@@ -35,14 +36,15 @@ export const assignTicket = async (id: string, adminId: string | null) =>
 // open to every admin so support staff can assign tickets.
 export const getAssignableAdmins = async () => httpClient.get<IAdminOption[]>("/admin/admins/assignable");
 
-// Platform users (the end-user read model tickets belong to), for the
-// "new ticket" user picker.
-export const searchPlatformUsers = async (search: string) => {
-  const params = new URLSearchParams({ search, limit: "10" });
-  const { data: body } = await httpClient.get<IPaginatedBody<IUserSearchResult>>(`/admin/users?${params.toString()}`);
+// Customers, for the "new ticket" picker -- the same list as Manage Owners.
+// It used to search the legacy PlatformUser table, which nothing fills, so
+// no real customer could be found.
+export const searchCustomers = async (search: string) => {
+  const params = new URLSearchParams({ search, page: "1", limit: "10" });
+  const { data: body } = await httpClient.get<IItemsPageBody<IOwnerOverviewItem>>(`/admin/owners?${params.toString()}`);
   return {
     success: true as const,
     message: "",
-    data: body.data.map(({ id, name, email }) => ({ id, name, email })),
+    data: body.items.map(({ userId, name, email }): IUserSearchResult => ({ id: userId, name, email })),
   };
 };

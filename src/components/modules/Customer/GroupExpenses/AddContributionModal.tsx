@@ -9,6 +9,8 @@ import type { GroupContribution, GroupMember } from "@/lib/customer/api";
 import { DatePicker } from "@/components/modules/Customer/Shared/DatePicker";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { limitMoneyDecimals } from "@/lib/customer/money";
+import { getAppToday } from "@/lib/date";
 
 interface AddContributionModalProps {
   open: boolean;
@@ -18,9 +20,9 @@ interface AddContributionModalProps {
   editingContribution?: GroupContribution | null;
 }
 
+// Today on the app's calendar (Asia/Dhaka), not the browser's.
 function today(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return getAppToday();
 }
 
 export function AddContributionModal({ open, onClose, businessId, members, editingContribution = null }: AddContributionModalProps) {
@@ -76,7 +78,7 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
     const signedAmount = String(type === "RETURN" ? -Math.abs(Number(amount)) : Math.abs(Number(amount)));
     startTransition(async () => {
       const result = editingContribution
-        ? await updateGroupContributionAction(businessId, editingContribution.id, { groupMemberId, amount: signedAmount, date, note: note || undefined })
+        ? await updateGroupContributionAction(businessId, editingContribution.id, { groupMemberId, amount: signedAmount, date, note })
         : await createGroupContributionAction(businessId, { groupMemberId, amount: signedAmount, date, note: note || undefined });
       if (result.success) {
         toast.success(editingContribution ? t("Contribution updated") : t("Contribution added"));
@@ -142,7 +144,7 @@ export function AddContributionModal({ open, onClose, businessId, members, editi
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <input
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
             type="number"
             step="0.01"
             min={0}

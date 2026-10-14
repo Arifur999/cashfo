@@ -5,23 +5,26 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { archiveContactAction } from "@/lib/customer/contactActions";
-import type { Contact, ContactBalanceDetail } from "@/lib/customer/api";
+import type { Contact, ContactBalanceDetail, Transaction } from "@/lib/customer/api";
 import { BALANCE_DIRECTION_COLOR, BALANCE_DIRECTION_LABEL, balanceDirection, CONTACT_TYPE_LABELS, contactInitials } from "@/lib/customer/contactDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ReceivablePayableSection } from "@/components/modules/Customer/ReceivablesPayables/ReceivablePayableSection";
 import { ContactFormModal } from "./ContactFormModal";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
+import { ContactTransactionsCard } from "./ContactTransactionsCard";
 
 interface ContactDetailPageClientProps {
   businessId: string;
   contact: Contact;
   balanceDetail: ContactBalanceDetail;
+  transactions: Transaction[];
+  transactionTotal: number;
   canManage: boolean;
   currency: string;
 }
 
-export function ContactDetailPageClient({ businessId, contact, balanceDetail, canManage, currency }: ContactDetailPageClientProps) {
+export function ContactDetailPageClient({ businessId, contact, balanceDetail, transactions, transactionTotal, canManage, currency }: ContactDetailPageClientProps) {
   const router = useRouter();
   const { t } = useLocale();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -150,6 +153,8 @@ export function ContactDetailPageClient({ businessId, contact, balanceDetail, ca
           canManage={canManage}
         />
       )}
+
+      <ContactTransactionsCard transactions={transactions} total={transactionTotal} currency={currency} />
 
       <ContactFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingContact={contact} />
       {confirmDialog}

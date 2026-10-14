@@ -1,4 +1,6 @@
 import { isAxiosError } from "axios";
+import { redirect } from "next/navigation";
+import { MAINTENANCE_ROUTE } from "@/lib/authUtils";
 import { logServiceError } from "@/lib/axios/logServiceError";
 import { toRenderSafeError } from "@/lib/axios/renderSafeError";
 
@@ -14,6 +16,11 @@ const NOTHING_HERE = new Set([400, 401, 403, 404]);
 export function emptyUnlessOutage<T>(error: unknown, empty: T): T {
   if (isAxiosError(error) && error.response && NOTHING_HERE.has(error.response.status)) {
     return empty;
+  }
+  // Maintenance mode (Admin > Settings) closes the customer API with a 503
+  // that says so: show the maintenance page, not the error screen.
+  if (isAxiosError(error) && error.response?.status === 503 && (error.response.data as { maintenance?: boolean } | undefined)?.maintenance) {
+    redirect(MAINTENANCE_ROUTE);
   }
   logServiceError("Error reading from the API", error);
   // Into the page's render: never the AxiosError and the token it carries.

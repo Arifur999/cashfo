@@ -11,13 +11,14 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface NewLoanTransactionModalProps {
   open: boolean;
   onClose: () => void;
   businessId: string;
-  // Named for this page's context, but it's every contact in the business,
-  // not just category: LOAN ones -- see the page's data-fetching comment.
+  // Bank/person (category LOAN) contacts only -- see the page's
+  // data-fetching comment.
   loanContacts: Contact[];
 }
 
@@ -143,7 +144,7 @@ export function NewLoanTransactionModal({ open, onClose, businessId, loanContact
             type="number"
             step="0.01"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
             placeholder="0.00"
             className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-2xl font-semibold tabular-nums text-neutral-900 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />

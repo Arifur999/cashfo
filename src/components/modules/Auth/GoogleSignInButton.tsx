@@ -10,6 +10,9 @@ import GoogleIcon from "./GoogleIcon";
 interface GoogleSignInButtonProps {
   // Where to go once signed in; GOOGLE_SIGN_IN_ROUTE checks it is allowed.
   redirectTo?: string;
+  // An invite code from the sign-up link (?ref=), credited to whoever
+  // invited them if this creates the account.
+  referralCode?: string;
 }
 
 // Starts Google sign-in on better-auth (through this origin's /api/auth)
@@ -17,7 +20,7 @@ interface GoogleSignInButtonProps {
 // GOOGLE_SIGN_IN_ROUTE, or to the login page with ?error= if it fails.
 // requestSignUp: a Google address with no account yet gets a customer
 // account -- signing in and signing up are the same button.
-const GoogleSignInButton = ({ redirectTo }: GoogleSignInButtonProps) => {
+const GoogleSignInButton = ({ redirectTo, referralCode }: GoogleSignInButtonProps) => {
   const { translate } = useLocale();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +28,11 @@ const GoogleSignInButton = ({ redirectTo }: GoogleSignInButtonProps) => {
   const signIn = async () => {
     setIsPending(true);
     setError(null);
-    const callbackURL = redirectTo ? `${GOOGLE_SIGN_IN_ROUTE}?redirect=${encodeURIComponent(redirectTo)}` : GOOGLE_SIGN_IN_ROUTE;
+    // Both survive the trip through Google as the landing page's query.
+    const landing = new URLSearchParams();
+    if (redirectTo) landing.set("redirect", redirectTo);
+    if (referralCode) landing.set("ref", referralCode);
+    const callbackURL = landing.size > 0 ? `${GOOGLE_SIGN_IN_ROUTE}?${landing.toString()}` : GOOGLE_SIGN_IN_ROUTE;
     try {
       const response = await fetch("/api/auth/sign-in/social", {
         method: "POST",

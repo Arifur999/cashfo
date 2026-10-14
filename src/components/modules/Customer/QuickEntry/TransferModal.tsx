@@ -11,6 +11,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createTransferAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getAppToday } from "@/lib/date";
 import { NoWalletHint } from "./NoWalletHint";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface TransferModalProps {
   open: boolean;
@@ -131,7 +132,7 @@ export function TransferModal({ open, onClose, businessId }: TransferModalProps)
             type="number"
             step="0.01"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
             placeholder="0.00"
             className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-2xl font-semibold tabular-nums text-neutral-800 outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200"
           />

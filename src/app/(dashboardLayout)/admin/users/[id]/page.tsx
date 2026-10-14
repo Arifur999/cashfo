@@ -5,7 +5,9 @@ import OwnerProfileHeader from "@/components/modules/Admin/UserManagement/OwnerP
 import OwnerSummaryStats from "@/components/modules/Admin/UserManagement/OwnerSummaryStats";
 import Callout from "@/components/shared/Callout";
 import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
+import { canManage } from "@/lib/authUtils";
 import { formatDateTime } from "@/lib/date";
+import { getUserInfo } from "@/services/auth.services";
 import { getOwnerById } from "@/services/owner.services";
 import { getPlans } from "@/services/plan.services";
 
@@ -13,17 +15,28 @@ export const metadata: Metadata = { title: "User Details" };
 
 const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
   const { id } = await params;
-  const [owner, plans] = await Promise.all([
+  const [owner, plans, admin] = await Promise.all([
     fetchOrNotFound(getOwnerById(id)),
     // Roles that can't read plans just don't get options to change to.
     getPlans()
       .then((response) => response.data)
       .catch(() => []),
+    getUserInfo(),
   ]);
 
   return (
     <div className="space-y-6">
-      <OwnerProfileHeader owner={owner} actions={<OwnerDetailActions owner={owner} plans={plans} />} />
+      <OwnerProfileHeader
+        owner={owner}
+        actions={
+          <OwnerDetailActions
+            owner={owner}
+            plans={plans}
+            canChangeStatus={canManage(admin?.role, "ownerStatus")}
+            canChangePlan={canManage(admin?.role, "ownerPlan")}
+          />
+        }
+      />
       <OwnerSummaryStats owner={owner} />
       {owner.status === "SUSPENDED" && owner.suspendedReason && (
         <Callout variant="warning">

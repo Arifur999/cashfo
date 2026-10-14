@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { translationServerZodSchema, translationTextServerZodSchema } from "./translation.validation";
+import { translationFormZodSchema, translationServerZodSchema, translationTextServerZodSchema } from "./translation.validation";
 
 const validValues = { key: "dashboard.total_income", en: "Total income", bn: "মোট আয়", context: "dashboard" };
 
@@ -37,5 +37,22 @@ describe("translationTextServerZodSchema", () => {
 
   it("rejects an unknown language", () => {
     expect(translationTextServerZodSchema.safeParse({ language: "fr", value: "Bonjour" }).success).toBe(false);
+  });
+});
+
+describe("translation keys match the API's rule", () => {
+  const keyOf = (key: string) => translationFormZodSchema.safeParse({ key, en: "Text", bn: "", context: "" }).success;
+
+  it("takes dotted lowercase words joined by single underscores", () => {
+    expect(keyOf("dashboard.total_income")).toBe(true);
+    expect(keyOf("auth.login_button")).toBe(true);
+  });
+
+  it("refuses stray, leading, trailing or doubled underscores and reserved segments", () => {
+    expect(keyOf("dashboard._income")).toBe(false);
+    expect(keyOf("dashboard.income_")).toBe(false);
+    expect(keyOf("dashboard.total__income")).toBe(false);
+    expect(keyOf("a.constructor")).toBe(false);
+    expect(keyOf("prototype.x")).toBe(false);
   });
 });

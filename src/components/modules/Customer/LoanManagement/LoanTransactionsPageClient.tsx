@@ -12,10 +12,14 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { voidTransactionAction } from "@/lib/customer/transactionActions";
 import { NewLoanTransactionModal } from "./NewLoanTransactionModal";
 import { formatDate } from "@/lib/customer/date";
+import { isCancelled } from "@/lib/customer/transactionDisplay";
+import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 
 interface LoanTransactionsPageClientProps {
   businessId: string;
   transactions: Transaction[];
+  // false when there were more than the page reads (see getAllTransactions).
+  complete: boolean;
   loanContacts: Contact[];
   canManage: boolean;
   currency: string;
@@ -64,10 +68,13 @@ export function LoanTransactionsPageClient({
   currency,
   range,
   selectedContactId,
+  complete,
 }: LoanTransactionsPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
+  // Admin > System > Feature Flags: pdf_export off hides Print / Save as PDF.
+  const pdfExportOn = useFeature("pdf_export");
   const [modalOpen, setModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -114,6 +121,9 @@ export function LoanTransactionsPageClient({
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">{t("Loan Transactions")}</h1>
           <p className="mt-1 text-sm text-neutral-500">{t("Receive and payment records")}</p>
+          {!complete && (
+            <p className="mt-1 text-xs text-amber-700">{t("Showing and totalling the latest 1,000 only -- pick a shorter range to see the rest.")}</p>
+          )}
         </div>
         {canManage && (
           <button
@@ -175,13 +185,15 @@ export function LoanTransactionsPageClient({
                 ))}
               </select>
             </div>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="mt-4 flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
-            >
-              <Printer className="h-3.5 w-3.5" /> {t("Print")}
-            </button>
+            {pdfExportOn && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="mt-4 flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+              >
+                <Printer className="h-3.5 w-3.5" /> {t("Print")}
+              </button>
+            )}
           </div>
         </div>
 
@@ -213,7 +225,7 @@ export function LoanTransactionsPageClient({
                   const direction = directionFor(txn);
                   const account = moneyEntry(txn)?.account;
                   const amount = amountFor(txn);
-                  const isVoided = txn.status === "VOIDED";
+                  const isVoided = isCancelled(txn);
                   return (
                     <tr key={txn.id} className={isVoided ? "opacity-50" : ""}>
                       <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
@@ -250,7 +262,7 @@ export function LoanTransactionsPageClient({
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Link>
-                            {!isVoided && (
+                            {txn.voidable && (
                               <button
                                 type="button"
                                 disabled={isPending}

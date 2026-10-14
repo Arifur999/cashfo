@@ -129,4 +129,6 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "Personal Workspace": "ব্যক্তিগত ওয়ার্কস্পেস",
   Select: "নির্বাচন করুন",
   "Add New Workspace": "নতুন ওয়ার্কস্পেস যোগ করুন",
+  "Password updated -- your other devices were signed out": "পাসওয়ার্ড আপডেট হয়েছে -- আপনার অন্য ডিভাইসগুলো থেকে সাইন আউট করা হয়েছে",
+  "Use 8 to 128 characters, with at least one letter and one number": "৮ থেকে ১২৮ অক্ষর ব্যবহার করুন, অন্তত একটি অক্ষর ও একটি সংখ্যাসহ",
 };

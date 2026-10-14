@@ -8,6 +8,7 @@ import { createAccountAction, updateAccountAction } from "@/lib/customer/account
 import type { Account } from "@/lib/customer/api";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface WalletFormModalProps {
   open: boolean;
@@ -49,10 +50,8 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
   function handleSubmit() {
     startTransition(async () => {
       const result = editingWallet
-        ? await updateAccountAction(businessId, editingWallet.id, {
-            name,
-            accountNumber: accountNumber || undefined,
-          })
+        ? // "" clears the account number; left out it would stay.
+          await updateAccountAction(businessId, editingWallet.id, { name, accountNumber })
         : await createAccountAction(businessId, {
             name,
             accountNumber: accountNumber || undefined,
@@ -106,7 +105,7 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
             </label>
             <input
               value={openingBalance}
-              onChange={(e) => setOpeningBalance(e.target.value)}
+              onChange={(e) => setOpeningBalance(limitMoneyDecimals(e.target.value))}
               type="number"
               step="0.01"
               min="0"

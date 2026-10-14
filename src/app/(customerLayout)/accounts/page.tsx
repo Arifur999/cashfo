@@ -3,6 +3,8 @@ import { AccountsPageClient } from "@/components/modules/Customer/Accounts/Accou
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAccounts } from "@/lib/customer/accounts";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { getLocale } from "@/lib/i18n/locale";
+import { displayLanguage } from "@/lib/customer/accountDisplay";
 
 export default async function AccountsPage() {
   const user = await getCurrentUser();
@@ -24,7 +26,7 @@ export default async function AccountsPage() {
       businessId={activeBusinessId}
       initialGroups={groups}
       canManage={canManage}
-      preferredLanguage={user.preferredLanguage}
+      preferredLanguage={displayLanguage(await getLocale())}
       currency={activeBusiness?.currency ?? "BDT"}
     />
   );

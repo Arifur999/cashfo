@@ -9,6 +9,10 @@ import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
 import { contactInitials } from "@/lib/customer/contactDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
+import { limitMoneyDecimals } from "@/lib/customer/money";
+
+// The API's own limit for photos.
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 // "Both" is deliberately not offered here anymore -- new/edited contacts
 // pick a single type. It's still a valid stored value though (existing
@@ -81,16 +85,28 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
     e.target.value = ""; // allow picking the same file again later
     if (!file) return;
 
+    if (file.size > MAX_PHOTO_BYTES) {
+      toast.error(t("Image must be 5MB or smaller"));
+      return;
+    }
+
     setUploadingPhoto(true);
     const formData = new FormData();
     formData.append("file", file);
-    const result = await uploadContactPhotoAction(businessId, formData);
-    if (result.success && result.data) {
-      setPhotoUrl(result.data.url);
-    } else {
-      toast.error(result.message ?? t("Failed to upload photo"));
+    try {
+      const result = await uploadContactPhotoAction(businessId, formData);
+      if (result.success && result.data) {
+        setPhotoUrl(result.data.url);
+      } else {
+        toast.error(result.message ?? t("Failed to upload photo"));
+      }
+    } catch {
+      // The request never completed (dropped connection, body refused) --
+      // the spinner must still stop.
+      toast.error(t("Failed to upload photo"));
+    } finally {
+      setUploadingPhoto(false);
     }
-    setUploadingPhoto(false);
   }
 
   function handleSubmit() {
@@ -100,14 +116,12 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
           name,
           type,
           category,
-          phone: phone || undefined,
-          address: address || undefined,
-          notes: notes || undefined,
-          // Sent as-is (not `|| undefined`) -- the backend treats `undefined`
-          // as "leave unchanged", so clearing the photo (empty string) has to
-          // be sent explicitly rather than omitted, unlike the other optional
-          // fields above where "" and "never touched" are meant to behave
-          // the same way.
+          // Sent as-is, empty included: the API reads a missing field as
+          // "leave unchanged", so leaving out an emptied phone, address,
+          // notes or photo kept the old value.
+          phone,
+          address,
+          notes,
           photoUrl,
         });
         if (result.success) {
@@ -289,7 +303,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
             </div>
             <input
               value={openingBalance}
-              onChange={(e) => setOpeningBalance(e.target.value)}
+              onChange={(e) => setOpeningBalance(limitMoneyDecimals(e.target.value))}
               type="number"
               step="0.01"
               min={0}

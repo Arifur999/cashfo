@@ -24,6 +24,7 @@ import { useState } from "react";
 import { BRAND_NAME } from "@/lib/brand";
 import { categoryLabel, HABIT_CATEGORIES } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 
 // Only pages that actually exist get a nav item -- Dashboard (Prompt 2),
 // Transactions (Prompt 5, bare-bones raw journal entry UI -- Prompt 6
@@ -415,6 +416,9 @@ export function Sidebar() {
 
 export function SidebarContent() {
   const pathname = usePathname();
+  // Admin > System > Feature Flags: loan_management off hides the section
+  // (and loan-management/layout.tsx closes its pages).
+  const loanManagementOn = useFeature("loan_management");
 
   if (pathname.startsWith("/habit-tracker")) {
     return (
@@ -457,7 +461,7 @@ export function SidebarContent() {
         <NavGroup icon={ArrowLeftRight} label="Income & Expense" items={INCOME_EXPENSE_ITEMS} isActive={isIncomeExpenseActive} />
         <NavGroup icon={Boxes} label="Assets Management" items={ASSETS_MANAGEMENT_ITEMS} isActive={isAssetsManagementActive} />
         <NavGroup icon={PiggyBank} label="Savings Goals" items={SAVINGS_GOALS_ITEMS} isActive={isSavingsGoalsActive} />
-        <NavGroup icon={Banknote} label="Loan Management" items={LOAN_MANAGEMENT_ITEMS} isActive={isLoanManagementActive} />
+        {loanManagementOn && <NavGroup icon={Banknote} label="Loan Management" items={LOAN_MANAGEMENT_ITEMS} isActive={isLoanManagementActive} />}
         <NavGroup icon={FileText} label="Reports" items={REPORTS_ITEMS} isActive={isReportsActive} />
         <GroupExpenseNavItem />
 

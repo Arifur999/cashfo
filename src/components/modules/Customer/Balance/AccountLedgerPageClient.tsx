@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatDate } from "@/lib/customer/date";
+import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 
 interface AccountLedgerPageClientProps {
   accounts: Account[];
@@ -64,6 +65,8 @@ export function AccountLedgerPageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
+  // Admin > System > Feature Flags: pdf_export off hides Print / Save as PDF.
+  const pdfExportOn = useFeature("pdf_export");
 
   function updateParams(next: Record<string, string | undefined>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -102,13 +105,15 @@ export function AccountLedgerPageClient({
           <h1 className="text-xl font-semibold text-neutral-900">{t("Account Ledger")}</h1>
           <p className="mt-1 text-sm text-neutral-500">{t("One account, every movement through it, with the balance carried forward.")}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
-        >
-          <Printer className="h-3.5 w-3.5" /> {t("Print / PDF")}
-        </button>
+        {pdfExportOn && (
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
+          >
+            <Printer className="h-3.5 w-3.5" /> {t("Print / PDF")}
+          </button>
+        )}
       </div>
 
       <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">

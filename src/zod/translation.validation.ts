@@ -3,8 +3,13 @@ import { type ICreateTranslationPayload, TRANSLATION_LANGUAGES } from "@/types/t
 
 export const TRANSLATION_TEXT_MAX_LENGTH = 1000;
 
-// "dashboard.total_income": lowercase segments joined by dots.
-export const TRANSLATION_KEY_PATTERN = /^[a-z0-9_]+(\.[a-z0-9_]+)*$/;
+// "dashboard.total_income": lowercase segments joined by dots, the words in a
+// segment joined by single underscores -- the same rule as the API's.
+export const TRANSLATION_KEY_PATTERN = /^[a-z0-9]+(?:_[a-z0-9]+)*(?:\.[a-z0-9]+(?:_[a-z0-9]+)*)*$/;
+
+// Keys become nested objects in the exported bundles; these segment names
+// would reach the object prototype, so the API refuses them.
+const RESERVED_KEY_SEGMENTS = new Set(["constructor", "prototype"]);
 
 const textSchema = z.string().trim().max(TRANSLATION_TEXT_MAX_LENGTH, `At most ${TRANSLATION_TEXT_MAX_LENGTH} characters`);
 
@@ -16,7 +21,8 @@ export const translationFormZodSchema = z.object({
     .trim()
     .min(1, "Enter a key")
     .max(150, "At most 150 characters")
-    .regex(TRANSLATION_KEY_PATTERN, "Lowercase words joined by dots, e.g. dashboard.total_income"),
+    .regex(TRANSLATION_KEY_PATTERN, "Lowercase words joined by dots, e.g. dashboard.total_income")
+    .refine((value) => !value.split(".").some((segment) => RESERVED_KEY_SEGMENTS.has(segment)), "constructor and prototype can't be part of a key"),
   en: textSchema.min(1, "Enter the English text"),
   bn: textSchema,
   context: z

@@ -13,8 +13,9 @@ const TicketRequesterCard = ({ user }: { user: ISupportTicketDetail["platformUse
         <div className="space-y-4">
           <UserInfoCell name={user.name} email={user.email} />
           <DescriptionList items={[{ label: "Plan", value: user.plan?.name ?? "No plan" }]} />
-          {/* Tickets point at platform-user ids, while User Management is
-              keyed by account id -- the email is what both share. */}
+          {/* Searching by email finds the customer for new tickets (account
+              ids) and for older ones from the PlatformUser sandbox alike;
+              the email is what both share. */}
           <Button asChild variant="outline" size="sm" className="w-full">
             <Link href={`/admin/users?search=${encodeURIComponent(user.email)}`}>
               <Search aria-hidden="true" /> Find in User Management

@@ -11,6 +11,7 @@ import { formatDurationUntil, monthsBetween } from "@/lib/customer/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createSavingsGoalAction, updateSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface SavingsGoalFormModalProps {
   open: boolean;
@@ -109,7 +110,7 @@ export function SavingsGoalFormModal({ open, onClose, businessId, editingGoal }:
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Target Amount")}</label>
           <input
             value={targetAmount}
-            onChange={(e) => setTargetAmount(e.target.value)}
+            onChange={(e) => setTargetAmount(limitMoneyDecimals(e.target.value))}
             type="number"
             step="0.01"
             min={0}

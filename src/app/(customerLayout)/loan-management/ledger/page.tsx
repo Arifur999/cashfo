@@ -21,7 +21,8 @@ export default async function LoanLedgerPage({ searchParams }: PageProps<"/loan-
   const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
 
   // Not filtered by category -- see loan-management/transactions/page.tsx's comment.
-  const { data: loanContacts } = await getContacts(activeBusinessId, {});
+  // Bank/person contacts, up to the API's 100 (it stopped at the default 20).
+  const { data: loanContacts } = await getContacts(activeBusinessId, { category: "LOAN", limit: 100 });
 
   // The whole point of this page (per the reference layout): nothing is
   // generated until a Bank/Person is actually picked -- no default "all

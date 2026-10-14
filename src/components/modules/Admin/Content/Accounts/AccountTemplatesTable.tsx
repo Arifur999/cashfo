@@ -16,6 +16,8 @@ import { ACCOUNT_TEMPLATE_FILTERS } from "./accountTemplateOptions";
 import { ACCOUNT_TEMPLATES_HIDDEN_COLUMNS, accountTemplatesColumns } from "./accountTemplatesColumns";
 import CreateAccountTemplateDialog from "./CreateAccountTemplateDialog";
 
+const LEDGER_SUBTYPES = ["receivable", "payable"];
+
 const getChildren = (row: IAccountTemplate) => row.children;
 
 // The default chart of accounts as a tree: top-level accounts expand into
@@ -50,7 +52,10 @@ const AccountTemplatesTable = ({ canManage }: { canManage: boolean }) => {
                 icon: PowerOff,
                 destructive: true,
                 onClick: (row) => openDialog("deactivate", row),
-                hidden: (row) => !row.isActive,
+                // New workspaces need their receivable and payable accounts
+                // (every loan and credit sale posts to them); the API only
+                // lets these be renamed.
+                hidden: (row) => !row.isActive || LEDGER_SUBTYPES.includes(row.accountSubtype ?? ""),
               },
             ],
           }

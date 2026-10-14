@@ -7,7 +7,7 @@ import {
 } from "./ticket.validation";
 
 const validTicket = {
-  platformUserId: "11111111-1111-4111-8111-111111111111",
+  userId: "11111111-1111-4111-8111-111111111111",
   subject: "  Can't export my report  ",
   category: "TECHNICAL",
   priority: "HIGH",
@@ -26,7 +26,7 @@ describe("createTicketServerZodSchema", () => {
   });
 
   it("requires a user to be picked", () => {
-    expect(createTicketServerZodSchema.safeParse({ ...validTicket, platformUserId: "" }).success).toBe(false);
+    expect(createTicketServerZodSchema.safeParse({ ...validTicket, userId: "" }).success).toBe(false);
   });
 
   it("rejects a whitespace-only subject", () => {

@@ -15,7 +15,7 @@ import { TICKET_CATEGORY_OPTIONS, TICKET_PRIORITY_OPTIONS } from "../ticketOptio
 import UserSearchField from "./UserSearchField";
 
 const DEFAULT_VALUES: ICreateTicketFormValues = {
-  platformUserId: "",
+  userId: "",
   subject: "",
   category: "TECHNICAL",
   priority: "MEDIUM",
@@ -47,7 +47,7 @@ const CreateTicketForm = ({ onDone }: { onDone: () => void }) => {
 
   return (
     <AppForm onSubmit={form.handleSubmit}>
-      <form.Field name="platformUserId" validators={{ onChange: shape.platformUserId }}>
+      <form.Field name="userId" validators={{ onChange: shape.userId }}>
         {(field) => <UserSearchField field={field} label="User" description="The user this ticket is for." />}
       </form.Field>
       <form.Field name="subject" validators={{ onChange: shape.subject }}>

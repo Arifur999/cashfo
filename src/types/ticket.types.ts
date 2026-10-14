@@ -75,7 +75,8 @@ export interface IUserSearchResult {
 }
 
 export interface ICreateTicketPayload {
-  platformUserId: string;
+  // The customer's User id.
+  userId: string;
   subject: string;
   category: TicketCategory;
   priority?: TicketPriority;

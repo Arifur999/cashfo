@@ -191,4 +191,5 @@ export const groupExpensesDictionary: Record<string, string> = {
   Budget: "বাজেট",
   "Actual Expense": "প্রকৃত খরচ",
   "Monthly Breakdown": "মাসিক বিবরণ",
+  "Apply the dates first -- the figures below are for the applied period": "আগে তারিখগুলো প্রয়োগ করুন -- নিচের হিসাব প্রয়োগ করা সময়কালের",
 };

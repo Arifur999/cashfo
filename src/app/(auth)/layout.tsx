@@ -1,4 +1,5 @@
 import AuthShell from "@/components/modules/Auth/AuthShell";
+import MaintenanceNotice from "@/components/modules/Auth/MaintenanceNotice";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 
@@ -7,7 +8,7 @@ import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 export default async function AuthLayout({ children }: LayoutProps<"/">) {
   return (
     <LocaleProvider initialLocale={await getLocale()}>
-      <AuthShell>{children}</AuthShell>
+      <AuthShell notice={<MaintenanceNotice />}>{children}</AuthShell>
     </LocaleProvider>
   );
 }

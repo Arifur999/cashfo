@@ -15,6 +15,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createExpenseAction, createIncomeAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getAppToday } from "@/lib/date";
 import { NoWalletHint } from "./NoWalletHint";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -235,7 +236,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
               type="number"
               step="0.01"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
               placeholder="0.00"
               className={`w-full rounded-xl border border-neutral-200 py-2.5 pl-8 pr-3 text-sm font-semibold tabular-nums outline-none focus:ring-2 ${
                 kind === "INCOME"

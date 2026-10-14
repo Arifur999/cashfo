@@ -18,6 +18,7 @@ import {
   INCOME_CATEGORY_ICONS,
 } from "@/lib/customer/budgetCategoryVisuals";
 import { currencySymbol } from "@/lib/customer/currency";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface BudgetCategoryModalProps {
   open: boolean;
@@ -261,7 +262,7 @@ export function BudgetCategoryModal({ open, onClose, businessId, type, editingCa
                 type="number"
                 step="0.01"
                 value={monthlyLimit}
-                onChange={(e) => setMonthlyLimit(e.target.value)}
+                onChange={(e) => setMonthlyLimit(limitMoneyDecimals(e.target.value))}
                 className="w-24 rounded-lg border border-neutral-200 px-2 py-1 text-right text-sm text-neutral-700 outline-none focus:border-brand-primary"
               />
               <span>

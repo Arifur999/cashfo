@@ -11,6 +11,7 @@ import type { SavingsGoal } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createSavingsTransferAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface SavingsTransferModalProps {
   open: boolean;
@@ -20,6 +21,9 @@ interface SavingsTransferModalProps {
 }
 
 export function SavingsTransferModal({ open, onClose, businessId, goals }: SavingsTransferModalProps) {
+  // A withdrawn goal was paid out and is closed: it can't take money (the
+  // API refuses it) and has none to give.
+  const openGoals = goals.filter((g) => g.status !== "WITHDRAWN");
   const { t } = useLocale();
   const router = useRouter();
   const [fromGoalId, setFromGoalId] = useState("");
@@ -67,7 +71,7 @@ export function SavingsTransferModal({ open, onClose, businessId, goals }: Savin
             key={`from-${resetCount}`}
             value={fromGoalId}
             onChange={setFromGoalId}
-            options={goals.map((g) => ({ value: g.id, label: g.name }))}
+            options={openGoals.map((g) => ({ value: g.id, label: g.name }))}
             placeholder={t("Search goals")}
             emptyMessage="No goals yet"
           />
@@ -78,7 +82,7 @@ export function SavingsTransferModal({ open, onClose, businessId, goals }: Savin
             key={`to-${resetCount}`}
             value={toGoalId}
             onChange={setToGoalId}
-            options={goals.map((g) => ({ value: g.id, label: g.name }))}
+            options={openGoals.map((g) => ({ value: g.id, label: g.name }))}
             placeholder={t("Search goals")}
             emptyMessage="No goals yet"
           />
@@ -87,7 +91,7 @@ export function SavingsTransferModal({ open, onClose, businessId, goals }: Savin
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <input
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
             type="number"
             step="0.01"
             min={0}

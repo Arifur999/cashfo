@@ -49,6 +49,12 @@ export const balanceDictionary: Record<string, string> = {
   Out: "উত্তোলন",
   Page: "পৃষ্ঠা",
   Journal: "জার্নাল",
+  // lib/customer/transactionDisplay.ts -- type names and the cancelled-row
+  // notes on the transaction lists and detail page.
+  Sale: "বিক্রয়",
+  Purchase: "ক্রয়",
+  Posted: "পোস্টকৃত",
+  Reversal: "বিপরীত এন্ট্রি",
   "Sale (Credit)": "বিক্রয় (বাকিতে)",
   "Purchase (Credit)": "ক্রয় (বাকিতে)",
 

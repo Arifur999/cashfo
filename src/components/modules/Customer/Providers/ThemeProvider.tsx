@@ -50,10 +50,14 @@ const subscribe = (onChange: () => void) => {
   };
 };
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+// allowDark is the dark_mode feature flag (Admin > System > Feature Flags):
+// when it's off the app stays light whatever was chosen before, and the
+// switch in the top bar is hidden.
+export function ThemeProvider({ children, allowDark = true }: { children: ReactNode; allowDark?: boolean }) {
   // The server can't see the choice, so it (and hydration) render "light";
   // the real value follows right after, without a setState in an effect.
-  const theme = useSyncExternalStore<Theme>(subscribe, readTheme, () => "light");
+  const chosen = useSyncExternalStore<Theme>(subscribe, readTheme, () => "light");
+  const theme: Theme = allowDark ? chosen : "light";
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");

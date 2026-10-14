@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { getAssignableAdmins, getTicketById, getTicketStats, getTickets, searchPlatformUsers } from "@/services/ticket.services";
+import { getAssignableAdmins, getTicketById, getTicketStats, getTickets, searchCustomers } from "@/services/ticket.services";
 
 export const ticketsListQuery = (queryString: string) =>
   queryOptions({
@@ -37,7 +37,7 @@ export const USER_SEARCH_MIN_LENGTH = 2;
 export const platformUserSearchQuery = (search: string) =>
   queryOptions({
     queryKey: [...queryKeys.owners.all, "search", search] as const,
-    queryFn: () => searchPlatformUsers(search),
+    queryFn: () => searchCustomers(search),
     enabled: search.length >= USER_SEARCH_MIN_LENGTH,
     staleTime: 30 * 1000,
   });

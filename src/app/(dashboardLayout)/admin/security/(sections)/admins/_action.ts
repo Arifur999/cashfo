@@ -1,7 +1,7 @@
 "use server";
 
 import { requireId, runAction, runValidatedAction } from "@/lib/runAction";
-import { createAdminAccount, resetAdminPassword, suspendAdminAccount, updateAdminAccount } from "@/services/adminAccount.services";
+import { activateAdminAccount, createAdminAccount, resetAdminPassword, suspendAdminAccount, updateAdminAccount } from "@/services/adminAccount.services";
 import { getUserInfo } from "@/services/auth.services";
 import { createAdminServerZodSchema, updateAdminServerZodSchema } from "@/zod/adminAccount.validation";
 
@@ -19,6 +19,9 @@ export const updateAdminAction = async (adminId: string, values: unknown) =>
 
 export const suspendAdminAction = async (adminId: string) =>
   requireId(adminId, "admin") ?? runAction("Failed to suspend the admin", () => suspendAdminAccount(adminId));
+
+export const activateAdminAction = async (adminId: string) =>
+  requireId(adminId, "admin") ?? runAction("Failed to reactivate the admin", () => activateAdminAccount(adminId));
 
 // Answers with the new one-time temporary password.
 export const resetAdminPasswordAction = async (adminId: string) =>

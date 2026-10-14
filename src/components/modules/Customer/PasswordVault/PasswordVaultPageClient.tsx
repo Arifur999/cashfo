@@ -21,10 +21,11 @@ const FILTER_PILLS: { value: VaultEntryCategory | ""; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
-// A vault session expiring mid-use (10 min, see backend VAULT_TOKEN_EXPIRES_IN)
-// or being locked reads the same to the user: back to the unlock gate.
+// A vault session expiring mid-use (10 min, see backend VAULT_TOKEN_EXPIRES_IN),
+// ended by a vault password change or reset ("Vault session expired"), or
+// being locked reads the same to the user: back to the unlock gate.
 function isLockedMessage(message: string | undefined): boolean {
-  return !!message && /unlock|locked/i.test(message);
+  return !!message && /unlock|locked|expired/i.test(message);
 }
 
 function EntryRow({

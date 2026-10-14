@@ -1,6 +1,6 @@
 // Server-only helpers, same shape as lib/accounts.ts.
 import { cache } from "react";
-import { API_BASE_URL, type Contact, type ContactCategory, type ContactListResponse, type ContactStatus, type ContactType } from "./api";
+import { API_BASE_URL, type Contact, type ContactCategory, type ContactListResponse, type ContactStatus, type ContactType, type TransactionListResponse } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -42,5 +42,23 @@ export const getContact = cache(async (businessId: string, contactId: string): P
     return response.data;
   } catch (error) {
     return emptyUnlessOutage(error, null);
+  }
+});
+
+// Everything posted against one contact -- invoices, payments, loans, and
+// any other entry naming them -- newest first (GET .../contacts/:id/transactions).
+export const getContactTransactions = cache(async (businessId: string, contactId: string): Promise<TransactionListResponse> => {
+  const empty: TransactionListResponse = { data: [], meta: { page: 1, limit: 50, total: 0, totalPages: 0 } };
+  const accessToken = await getAccessToken();
+  if (!accessToken) return empty;
+
+  try {
+    const response = await customerApi.get<TransactionListResponse>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${contactId}/transactions`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { limit: 50 },
+    });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, empty);
   }
 });

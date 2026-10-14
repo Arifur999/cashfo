@@ -14,7 +14,7 @@ const MaintenanceSettingsCard = ({ form, disabled }: { form: SettingsFormApi; di
             <AppSwitchField
               field={field}
               label="Enable maintenance mode"
-              description="The end-user app shows the message below instead of normal access."
+              description="Customers are sent to a page with the message below and can't use the app (sign-up closes too); the sign-in page shows it. Admins keep full access. Takes up to a few seconds."
               disabled={disabled}
             />
           )}
