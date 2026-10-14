@@ -24,7 +24,7 @@ const messageSchema = z
 
 // A. Form schemas -- what the fields hold while the admin types.
 export const createTicketFormZodSchema = z.object({
-  platformUserId: z.string().min(1, "Pick the user this ticket is for"),
+  userId: z.string().min(1, "Pick the customer this ticket is for"),
   subject: subjectSchema,
   category: z.enum(TICKET_CATEGORIES, "Choose a category"),
   priority: z.enum(TICKET_PRIORITIES, "Choose a priority"),
