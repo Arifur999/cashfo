@@ -22,12 +22,13 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
 
   return (
     <LocaleProvider initialLocale={locale} overrides={overrides}>
-      <div className="flex h-screen overflow-hidden print:block print:h-auto print:overflow-visible">
+      <div className="flex h-screen overflow-hidden bg-cream print:block print:h-auto print:overflow-visible">
         <DashboardSidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
           <DashboardNavbar />
           {/* id + tabIndex give the root layout's skip link a focus target. */}
-          <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-4 outline-none md:p-8 print:overflow-visible print:p-0">
+          {/* The design's admin frame: 24px above, 32px around. */}
+          <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto px-4 py-4 outline-none md:px-8 md:pt-6 md:pb-8 print:overflow-visible print:p-0">
             {children}
           </main>
         </div>
