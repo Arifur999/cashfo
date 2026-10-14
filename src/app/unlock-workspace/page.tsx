@@ -5,6 +5,7 @@ import { CUSTOMER_HOME_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtil
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { getTranslationOverrides } from "@/lib/i18n/overrides";
 
 export const metadata: Metadata = { title: "Workspace locked" };
 // Reads the session and the workspace's lock; always ask.
@@ -32,7 +33,7 @@ export default async function UnlockWorkspacePage({ searchParams }: PageProps<"/
   }
 
   return (
-    <LocaleProvider initialLocale={await getLocale()}>
+    <LocaleProvider initialLocale={await getLocale()} overrides={await getTranslationOverrides()}>
       <WorkspaceLockScreen
         businessId={business.id}
         businessName={business.isDefault ? user.name : business.name}

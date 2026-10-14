@@ -14,6 +14,7 @@ import { isFeatureOn } from "@/lib/customer/features";
 import { getPlatform } from "@/lib/customer/platform";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { getTranslationOverrides } from "@/lib/i18n/overrides";
 import { hasWorkspaceUnlock } from "@/lib/tokenUtils";
 
 // The shell reads cookies (the session, the language), so it must be
@@ -35,7 +36,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
     redirect(SESSION_EXPIRED_LOGIN_ROUTE);
   }
 
-  const [activeBusinessId, locale] = await Promise.all([resolveActiveBusinessId(user.businesses), getLocale()]);
+  const [activeBusinessId, locale, overrides] = await Promise.all([resolveActiveBusinessId(user.businesses), getLocale(), getTranslationOverrides()]);
 
   // A PIN-locked workspace asks for its PIN first, on whatever page was
   // opened, and stays on it once it opens. A super admin's read-only view
@@ -44,7 +45,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   if (activeBusiness?.hasPinLock && !user.impersonatedBy && !(await hasWorkspaceUnlock(activeBusiness.id))) {
     return (
       <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>
-        <LocaleProvider initialLocale={locale}>
+        <LocaleProvider initialLocale={locale} overrides={overrides}>
           <WorkspaceLockScreen
             businessId={activeBusiness.id}
             businessName={activeBusiness.isDefault ? user.name : activeBusiness.name}
@@ -58,7 +59,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   return (
     <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>
       <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId}>
-        <LocaleProvider initialLocale={locale}>
+        <LocaleProvider initialLocale={locale} overrides={overrides}>
           <PlatformProvider value={{ flags: platform.flags, supportEmail: platform.supportEmail }}>
             <div className="flex h-screen overflow-hidden bg-brand-content">
               <Sidebar />

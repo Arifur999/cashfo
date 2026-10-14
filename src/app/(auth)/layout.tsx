@@ -2,12 +2,14 @@ import AuthShell from "@/components/modules/Auth/AuthShell";
 import MaintenanceNotice from "@/components/modules/Auth/MaintenanceNotice";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { getTranslationOverrides } from "@/lib/i18n/overrides";
 
 // Sign in, sign up and password reset share one frame, in English or
 // Bangla -- before an account exists to keep a language preference on.
 export default async function AuthLayout({ children }: LayoutProps<"/">) {
+  const [locale, overrides] = await Promise.all([getLocale(), getTranslationOverrides()]);
   return (
-    <LocaleProvider initialLocale={await getLocale()}>
+    <LocaleProvider initialLocale={locale} overrides={overrides}>
       <AuthShell notice={<MaintenanceNotice />}>{children}</AuthShell>
     </LocaleProvider>
   );

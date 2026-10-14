@@ -8,8 +8,14 @@ import { bnDictionary } from "./dictionary";
 
 export type Locale = "en" | "bn";
 
-export function translate(locale: Locale, key: string): string {
+// Admin > Content > Translations: the Bangla the admins edited, by the
+// English text it replaces (backend GET /api/platform/translations). It wins
+// over the built-in dictionaries.
+export type TranslationOverrides = Record<string, string>;
+
+export function translate(locale: Locale, key: string, overrides?: TranslationOverrides): string {
   if (locale === "en") return key;
+  if (overrides && Object.hasOwn(overrides, key)) return overrides[key];
   // hasOwn, not `bnDictionary[key] ?? key`: user-typed text (custom habit
   // names) goes through here too, and a name like "constructor" or
   // "toString" would otherwise resolve to an inherited Object.prototype

@@ -4,6 +4,7 @@ import DashboardSidebar from "@/components/modules/Dashboard/DashboardSidebar";
 import { SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { getTranslationOverrides } from "@/lib/i18n/overrides";
 import { getUserInfo } from "@/services/auth.services";
 
 // The shell reads cookies (through getUserInfo), so it must be dynamic --
@@ -14,13 +15,13 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   // proxy.ts already bounced anyone without a session. This catches a token
   // the backend itself no longer accepts; getUserInfo is request-cached, so
   // the sidebar and navbar reuse this same round trip.
-  const [admin, locale] = await Promise.all([getUserInfo(), getLocale()]);
+  const [admin, locale, overrides] = await Promise.all([getUserInfo(), getLocale(), getTranslationOverrides()]);
   if (!admin) {
     redirect(SESSION_EXPIRED_LOGIN_ROUTE);
   }
 
   return (
-    <LocaleProvider initialLocale={locale}>
+    <LocaleProvider initialLocale={locale} overrides={overrides}>
       <div className="flex h-screen overflow-hidden print:block print:h-auto print:overflow-visible">
         <DashboardSidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">

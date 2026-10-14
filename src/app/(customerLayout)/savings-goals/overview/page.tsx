@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { formatCurrency } from "@/lib/customer/currency";
-import { getLocale } from "@/lib/i18n/locale";
-import { translate } from "@/lib/i18n/translate";
+import { getTranslator } from "@/lib/i18n/locale";
 import { getSavingsAccountOverview } from "@/lib/customer/savingsGoals";
 
 // Mirrors Balance's own Overview page (same cards, same table shape) --
@@ -21,8 +20,7 @@ export default async function SavingsOverviewPage() {
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const currency = activeBusiness?.currency ?? "BDT";
   const overview = await getSavingsAccountOverview(activeBusinessId);
-  const locale = await getLocale();
-  const t = (key: string) => translate(locale, key);
+  const { t } = await getTranslator();
 
   const totals = overview.accounts.reduce(
     (sum, a) => ({

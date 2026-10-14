@@ -6,6 +6,7 @@ import PublicShell from "@/components/modules/Legal/PublicShell";
 import { getPublicPlatform } from "@/lib/customer/platform";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { getTranslationOverrides } from "@/lib/i18n/overrides";
 import { translate } from "@/lib/i18n/translate";
 
 export const metadata: Metadata = { title: "Under maintenance" };
@@ -17,14 +18,14 @@ export const dynamic = "force-dynamic";
 // Outside the customer shell on purpose -- a different layout, so landing
 // here always renders it in full. Once maintenance is off, back home.
 export default async function MaintenancePage() {
-  const [platform, locale] = await Promise.all([getPublicPlatform(), getLocale()]);
+  const [platform, locale, overrides] = await Promise.all([getPublicPlatform(), getLocale(), getTranslationOverrides()]);
   if (!platform.maintenance.enabled) {
     redirect("/");
   }
-  const t = (key: string) => translate(locale, key);
+  const t = (key: string) => translate(locale, key, overrides);
 
   return (
-    <LocaleProvider initialLocale={locale}>
+    <LocaleProvider initialLocale={locale} overrides={overrides}>
       <PublicShell>
         <section className="mx-auto flex max-w-md flex-col items-center gap-4 py-10 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">

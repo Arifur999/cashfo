@@ -3,8 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { VoidTransactionButton } from "@/components/modules/Customer/Transactions/VoidTransactionButton";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { getLocale } from "@/lib/i18n/locale";
-import { translate } from "@/lib/i18n/translate";
+import { getTranslator } from "@/lib/i18n/locale";
 import { formatDate } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { getTransaction } from "@/lib/customer/transactions";
@@ -17,8 +16,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
 
-  const locale = await getLocale();
-  const t = (key: string) => translate(locale, key);
+  const { t } = await getTranslator();
 
   const transaction = await getTransaction(activeBusinessId, id);
   if (!transaction) notFound();
