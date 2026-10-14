@@ -1,6 +1,7 @@
 "use client";
 
-import Callout from "@/components/shared/Callout";
+import { Gift } from "lucide-react";
+import Banner from "@/components/smartly/Banner";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Shown on sign-up when it came from someone's ?ref= invite link. A Google
@@ -9,9 +10,9 @@ const InviteCodeNotice = ({ code }: { code: string }) => {
   const { translate } = useLocale();
 
   return (
-    <Callout role="status">
-      {translate("Invite code applied:")} <span className="font-mono font-medium text-foreground">{code}</span>
-    </Callout>
+    <Banner tone="mint" inline icon={<Gift />} className="font-normal">
+      {translate("Invite code applied:")} <span className="font-mono font-medium">{code}</span>
+    </Banner>
   );
 };
 

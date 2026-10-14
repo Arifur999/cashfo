@@ -2,6 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
+import { ArrowRight, Check, Lock, Mail, Phone, User } from "lucide-react";
 import { useState } from "react";
 import { registerAction } from "@/app/(auth)/register/_action";
 import AppField from "@/components/shared/form/AppField";
@@ -46,15 +47,28 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
       <form.Field name="name" validators={{ onChange: schema.name }}>
-        {(field) => <AppField field={field} label={translate("Full name")} autoComplete="name" placeholder={translate("Your name")} />}
+        {(field) => <AppField field={field} label={translate("Full name")} prepend={<User />} autoComplete="name" placeholder={translate("Your name")} />}
       </form.Field>
 
       <form.Field name="email" validators={{ onChange: schema.email }}>
-        {(field) => <AppField field={field} label={translate("Email")} type="email" autoComplete="email" placeholder="you@example.com" />}
+        {(field) => <AppField field={field} label={translate("Email")} type="email" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
       </form.Field>
 
       <form.Field name="phone" validators={{ onChange: schema.phone }}>
-        {(field) => <AppField field={field} label={translate("Phone (optional)")} autoComplete="tel" placeholder="+880 1XXX-XXXXXX" />}
+        {(field) => (
+          <AppField
+            field={field}
+            label={
+              <>
+                {translate("Phone")} <span className="font-normal text-ink-muted">({translate("optional")})</span>
+              </>
+            }
+            type="tel"
+            prepend={<Phone />}
+            autoComplete="tel"
+            placeholder="01XXX-XXXXXX"
+          />
+        )}
       </form.Field>
 
       <form.Field name="password" validators={{ onChange: schema.password }}>
@@ -62,6 +76,7 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
           <AppPasswordField
             field={field}
             label={translate("Password")}
+            prepend={<Lock />}
             autoComplete="new-password"
             description={<PasswordStrengthMeter password={field.state.value} />}
           />
@@ -76,18 +91,34 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
             firstZodError(schema.confirmPassword, value) ?? getPasswordMismatchError(fieldApi.form.getFieldValue("password"), value),
         }}
       >
-        {(field) => <AppPasswordField field={field} label={translate("Confirm password")} autoComplete="new-password" />}
+        {(field) => (
+          <AppPasswordField
+            field={field}
+            label={translate("Confirm password")}
+            prepend={<Lock />}
+            autoComplete="new-password"
+            description={
+              field.state.value && field.state.value === field.form.getFieldValue("password") ? (
+                <span className="flex items-center gap-1 text-brand-ink">
+                  <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+                  {translate("Passwords match")}
+                </span>
+              ) : undefined
+            }
+          />
+        )}
       </form.Field>
 
       {/* The pages themselves are linked at the foot of every sign-in page. */}
-      <p className="text-xs text-muted-foreground">{translate("By creating an account, you agree to our Terms of Service and Privacy Policy.")}</p>
+      <p className="text-caption font-normal text-ink-muted">{translate("By creating an account, you agree to our Terms of Service and Privacy Policy.")}</p>
 
       <FormErrorCallout message={serverError} />
 
       <form.Subscribe selector={(state) => state.isSubmitting}>
         {(isSubmitting) => (
-          <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Creating account...")} className="h-10">
+          <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Creating account...")} size="lg" className="mt-2 text-body-lg">
             {translate("Create account")}
+            <ArrowRight className="size-4" strokeWidth={2.25} aria-hidden="true" />
           </AppSubmitButton>
         )}
       </form.Subscribe>

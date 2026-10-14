@@ -1,7 +1,7 @@
 "use client";
 
 import type { AnyFieldApi } from "@tanstack/react-form";
-import { Label } from "@/components/ui/label";
+import { CircleAlert } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,8 @@ export interface FieldControlProps {
 interface FormFieldShellProps {
   field: AnyFieldApi;
   label: React.ReactNode;
+  // Something on the label's row, at the right ("Forgot password?").
+  aside?: React.ReactNode;
   description?: React.ReactNode;
   className?: string;
   // Receives the a11y props the control must spread, plus the error flag.
@@ -41,18 +43,23 @@ interface FormFieldShellProps {
 }
 
 // The label / description / error wiring every App*Field shares, so each
-// field component only renders its control.
-const FormFieldShell = ({ field, label, description, className, children }: FormFieldShellProps) => {
+// field component only renders its control. Drawn as the design's Field:
+// the 13px semibold label, the hint under the control, the red error with
+// its icon that says how to fix the value.
+const FormFieldShell = ({ field, label, aside, description, className, children }: FormFieldShellProps) => {
   const { translate } = useLocale();
   const error = getFieldError(field);
   const errorId = `${field.name}-error`;
   const descriptionId = `${field.name}-description`;
 
   return (
-    <div className={cn("space-y-1.5", className)}>
-      <Label id={`${field.name}-label`} htmlFor={field.name}>
-        {label}
-      </Label>
+    <div className={cn("flex min-w-0 flex-col gap-2", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <label id={`${field.name}-label`} htmlFor={field.name} className="text-small font-semibold text-ink-2 select-none">
+          {label}
+        </label>
+        {aside}
+      </div>
       {children(
         {
           id: field.name,
@@ -62,12 +69,13 @@ const FormFieldShell = ({ field, label, description, className, children }: Form
         error !== null,
       )}
       {description && !error && (
-        <p id={descriptionId} className="text-xs text-muted-foreground">
+        <div id={descriptionId} className="text-caption font-normal text-ink-muted">
           {description}
-        </p>
+        </div>
       )}
       {error && (
-        <p role="alert" id={errorId} className="text-sm text-destructive">
+        <p role="alert" id={errorId} className="flex items-center gap-2 text-caption text-expense">
+          <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
           {/* Validation messages are English keys like every other string. */}
           {translate(error)}
         </p>

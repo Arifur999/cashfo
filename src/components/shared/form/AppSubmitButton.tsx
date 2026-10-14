@@ -1,7 +1,7 @@
 "use client";
 
 import Loader from "@/components/shared/Loader";
-import { Button } from "@/components/ui/button";
+import Button, { type ButtonProps } from "@/components/smartly/Button";
 import { cn } from "@/lib/utils";
 
 type AppSubmitButtonProps = {
@@ -11,24 +11,25 @@ type AppSubmitButtonProps = {
   className?: string;
   disabled?: boolean;
   variant?: "default" | "destructive";
+  size?: ButtonProps["size"];
 };
 
 // Full width by default (auth forms); modals pass className="w-auto".
-const AppSubmitButton = ({ isPending, children, pendingLabel, className, disabled, variant = "default" }: AppSubmitButtonProps) => {
+const AppSubmitButton = ({ isPending, children, pendingLabel, className, disabled, variant = "default", size = "lg" }: AppSubmitButtonProps) => {
   const label = pendingLabel ?? "Submitting...";
 
   return (
     <Button
       type="submit"
-      variant={variant}
+      variant={variant === "destructive" ? "danger" : "primary"}
+      size={size}
       disabled={disabled || isPending}
       aria-busy={isPending}
       className={cn("w-full", className)}
     >
       {isPending ? (
         <>
-          {/* The light spinner only reads on the solid primary button. */}
-          <Loader size={16} onDark={variant === "default"} label={label} />
+          <Loader size={16} onDark label={label} />
           <span className="animate-pulse">{label}</span>
         </>
       ) : (

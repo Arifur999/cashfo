@@ -2,6 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { signInAction } from "@/app/(auth)/login/_action";
 import AppField from "@/components/shared/form/AppField";
@@ -41,25 +42,33 @@ const LoginForm = ({ redirectTo }: { redirectTo?: string }) => {
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
       <form.Field name="email" validators={{ onChange: loginFormZodSchema.shape.email }}>
-        {(field) => <AppField field={field} label={translate("Email")} type="email" autoComplete="email" placeholder="you@example.com" />}
+        {(field) => <AppField field={field} label={translate("Email")} type="email" size="xl" autoComplete="email" placeholder="you@example.com" />}
       </form.Field>
 
-      {/* The link sits on the label's row, outside the <label> itself. */}
-      <div className="relative">
-        <form.Field name="password" validators={{ onChange: loginFormZodSchema.shape.password }}>
-          {(field) => <AppPasswordField field={field} label={translate("Password")} autoComplete="current-password" placeholder="••••••••" />}
-        </form.Field>
-        <AuthLink href={FORGOT_PASSWORD_ROUTE} className="absolute top-0 right-0 text-sm leading-none">
-          {translate("Forgot password?")}
-        </AuthLink>
-      </div>
+      <form.Field name="password" validators={{ onChange: loginFormZodSchema.shape.password }}>
+        {(field) => (
+          <AppPasswordField
+            field={field}
+            label={translate("Password")}
+            size="xl"
+            autoComplete="current-password"
+            placeholder={translate("Your password")}
+            aside={
+              <AuthLink href={FORGOT_PASSWORD_ROUTE} className="text-small font-semibold">
+                {translate("Forgot password?")}
+              </AuthLink>
+            }
+          />
+        )}
+      </form.Field>
 
       <FormErrorCallout message={serverError} />
 
       <form.Subscribe selector={(state) => state.isSubmitting}>
         {(isSubmitting) => (
-          <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Signing in...")} className="h-10">
+          <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Signing in...")} size="2xl">
             {translate("Sign in")}
+            <ArrowRight strokeWidth={2.25} aria-hidden="true" />
           </AppSubmitButton>
         )}
       </form.Subscribe>

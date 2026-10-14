@@ -5,6 +5,8 @@ const TONES = {
   info: "bg-info-soft text-info",
   mint: "bg-mint-50 text-brand-ink",
   danger: "bg-expense-soft text-expense",
+  // A quiet note (how long a link lasts).
+  cream: "bg-cream text-ink-2",
 } as const;
 
 interface BannerProps extends React.ComponentProps<"div"> {

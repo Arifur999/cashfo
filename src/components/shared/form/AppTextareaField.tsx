@@ -1,8 +1,7 @@
 "use client";
 
 import type { AnyFieldApi } from "@tanstack/react-form";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import Textarea from "@/components/smartly/form/Textarea";
 import FormFieldShell from "./FormFieldShell";
 
 interface AppTextareaFieldProps {
@@ -25,13 +24,14 @@ const AppTextareaField = ({ field, label, placeholder, rows = 4, description, re
           {...control}
           name={field.name}
           rows={rows}
+          invalid={hasError}
           value={field.state.value ?? ""}
           onBlur={field.handleBlur}
           onChange={(event) => field.handleChange(event.target.value)}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           readOnly={readOnly}
-          className={cn(hasError && "border-destructive focus-visible:ring-destructive/20", className)}
+          className={className}
         />
       )}
     </FormFieldShell>

@@ -1,6 +1,7 @@
 "use client";
 
-import Callout from "@/components/shared/Callout";
+import { CircleAlert } from "lucide-react";
+import Banner from "@/components/smartly/Banner";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // The message an action came back with, in the active language when the
@@ -12,9 +13,9 @@ const FormErrorCallout = ({ message }: { message: string | null }) => {
     return null;
   }
   return (
-    <Callout variant="danger" role="alert">
+    <Banner tone="danger" inline role="alert" icon={<CircleAlert />} className="font-medium">
       {translate(message)}
-    </Callout>
+    </Banner>
   );
 };
 
