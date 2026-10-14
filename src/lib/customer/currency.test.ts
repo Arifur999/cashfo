@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { currencySymbol, formatCurrency, formatSignedCurrency } from "./currency";
+import { currencySymbol, formatCompactAmount, formatCurrency, formatSignedCurrency } from "./currency";
 
 // The symbol and the digits are joined by a no-break space.
 const NBSP = " ";
+
+describe("formatCompactAmount", () => {
+  it("shortens the way an axis label does", () => {
+    expect(formatCompactAmount(0)).toBe("0");
+    expect(formatCompactAmount(850)).toBe("850");
+    expect(formatCompactAmount(50000)).toBe("50K");
+    expect(formatCompactAmount(100000)).toBe("1L");
+    expect(formatCompactAmount(150000)).toBe("1.5L");
+    expect(formatCompactAmount(12000000)).toBe("1.2Cr");
+    expect(formatCompactAmount(-2500)).toBe("-3K");
+  });
+});
 
 describe("formatSignedCurrency", () => {
   it("writes the sign in words the design uses", () => {

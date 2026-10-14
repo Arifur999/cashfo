@@ -47,6 +47,17 @@ export function formatSignedCurrency(amount: number | string, currencyCode: stri
   return unsigned;
 }
 
+// "1L", "50K", "1.2Cr": a chart axis label, grouped the Bangladeshi way.
+export function formatCompactAmount(amount: number): string {
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  const short = (value: number, unit: string) => `${sign}${Number.isInteger(value) ? value : value.toFixed(1).replace(/.0$/, "")}${unit}`;
+  if (abs >= 1e7) return short(Math.round((abs / 1e7) * 10) / 10, "Cr");
+  if (abs >= 1e5) return short(Math.round((abs / 1e5) * 10) / 10, "L");
+  if (abs >= 1e3) return short(Math.round(abs / 1e3), "K");
+  return `${sign}${Math.round(abs)}`;
+}
+
 // Just the symbol, e.g. for an inline prefix inside an amount input --
 // callers that need the formatted number too should use formatCurrency().
 export function currencySymbol(currencyCode: string): string {
