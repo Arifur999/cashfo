@@ -1,13 +1,21 @@
 "use client";
 
-import { Briefcase, Loader2, Lock, Plus, User } from "lucide-react";
+import { ArrowRight, Briefcase, Check, Lock, LogOut, Plus, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { logoutAction } from "@/app/-actions/authActions";
 import { CreateWorkspaceModal } from "@/components/modules/Customer/Workspace/CreateWorkspaceModal";
 import { PinPromptModal } from "@/components/modules/Customer/Workspace/PinPromptModal";
+import Loader from "@/components/shared/Loader";
+import Avatar from "@/components/smartly/Avatar";
+import Button from "@/components/smartly/Button";
+import Chip from "@/components/smartly/Chip";
+import IconTile from "@/components/smartly/IconTile";
+import Logo from "@/components/smartly/Logo";
 import type { CurrentUser, UserBusiness, WorkspaceListItem } from "@/lib/customer/api";
 import { switchWorkspaceAction } from "@/lib/customer/businessActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 
 interface ChooseWorkspaceClientProps {
   user: CurrentUser;
@@ -15,9 +23,7 @@ interface ChooseWorkspaceClientProps {
 
 // null means no trial at all (trialEndsAt was null, caller never invokes
 // this). A non-null trialEndsAt in the past renders as "Trial expired"
-// rather than a negative day count. Takes `t` as a param since this is a
-// plain function outside the component body, where the useLocale() hook
-// isn't callable.
+// rather than a negative day count.
 function trialLabel(trialEndsAt: string, t: (key: string) => string): { text: string; expired: boolean } {
   const daysLeft = Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86_400_000);
   if (daysLeft <= 0) return { text: t("Trial expired"), expired: true };
@@ -25,105 +31,144 @@ function trialLabel(trialEndsAt: string, t: (key: string) => string): { text: st
   return { text: `${t("Trial")} — ${daysLeft} ${unit} ${t("left")}`, expired: false };
 }
 
-// Full-page "Choose your Workspace" screen (modeled on the Hishabee
-// reference) -- rendered by app/choose-workspace/page.tsx for any user with
-// more than one workspace, every time they log in. Deliberately does NOT use
-// useAuth()/AuthProvider: this page sits outside the (dashboard) route group
-// that seeds that context, and it only ever needs the plain user prop its
-// Server Component parent already fetched.
+const ROLE_LABEL: Record<UserBusiness["role"], string> = { OWNER: "Owner", ACCOUNTANT: "Accountant", STAFF: "Staff" };
+
+// "Which workspace?" -- rendered by app/choose-workspace/page.tsx for any
+// user with more than one workspace, every time they log in. Pick a card,
+// then Open; a PIN-locked one asks for its PIN first. Deliberately does NOT
+// use useAuth()/AuthProvider: this page sits outside the customer shell.
 export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
   const router = useRouter();
   const { t } = useLocale();
   const [isPending, startTransition] = useTransition();
-  // Which card's button should show its own spinner -- useTransition only
-  // gives one shared isPending flag, so this narrows it to the one card the
-  // user actually clicked (or the newly-created workspace, for the Add New
-  // Workspace flow).
-  const [selectingId, setSelectingId] = useState<string | null>(null);
+  // GROUP workspaces aren't part of the "active workspace" concept (see
+  // lib/activeBusiness.ts); they live at /group-expenses/[businessId].
+  const workspaces = user.businesses.filter((business) => business.type !== "GROUP");
+  const [selectedId, setSelectedId] = useState<string | null>(workspaces.find((b) => b.isDefault)?.id ?? workspaces[0]?.id ?? null);
   const [pinBusiness, setPinBusiness] = useState<UserBusiness | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const selected = workspaces.find((b) => b.id === selectedId);
 
   function proceed(businessId: string) {
-    setSelectingId(businessId);
     startTransition(async () => {
       await switchWorkspaceAction(businessId);
       router.push("/dashboard");
     });
   }
 
-  function handleSelect(business: UserBusiness) {
-    if (business.hasPinLock) {
-      setPinBusiness(business);
+  function open() {
+    if (!selected) return;
+    if (selected.hasPinLock) {
+      setPinBusiness(selected);
       return;
     }
-    proceed(business.id);
+    proceed(selected.id);
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-brand-content px-4 py-12">
-      <div className="w-full max-w-4xl">
-        <div className="mb-8 text-center">
-          <div className="text-lg font-semibold tracking-wide text-brand-dark">Money Tracker</div>
-          <h1 className="mt-4 text-2xl font-semibold text-neutral-900">{t("Choose your Workspace")}</h1>
-          <p className="mt-1 text-sm text-neutral-500">{t("Select which workspace to open, or add a new one")}</p>
-        </div>
+    <div className="flex min-h-screen flex-col items-center bg-fresh px-6 py-6 md:px-12 md:py-8">
+      <div className="flex w-full items-center justify-between gap-4">
+        <Logo height={40} />
+        <span className="flex items-center gap-3 text-body text-ink-2">
+          <Avatar name={user.name} src={user.avatarUrl} size={36} />
+          <span className="hidden flex-col sm:flex">
+            <b>{user.name}</b>
+            <span className="text-caption font-normal text-ink-muted">{user.email}</span>
+          </span>
+          <Button variant="ghost" size="sm" onClick={() => startTransition(() => logoutAction())}>
+            <LogOut />
+            {t("Sign out")}
+          </Button>
+        </span>
+      </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* GROUP workspaces are deliberately excluded here -- they aren't
-              part of the "active workspace" concept this screen picks
-              (see lib/activeBusiness.ts), and live at their own
-              /group-expenses/[businessId] URL instead (Sidebar.tsx). */}
-          {user.businesses
-            .filter((business) => business.type !== "GROUP")
-            .map((business) => {
-            const Icon = business.type === "BUSINESS" ? Briefcase : User;
-            const displayName = business.isDefault ? user.name : business.name;
-            const subtitle = business.type === "BUSINESS" ? t("Business Workspace") : t("Personal Workspace");
-            const trial = business.trialEndsAt ? trialLabel(business.trialEndsAt, t) : null;
-            const isSelecting = isPending && selectingId === business.id;
+      <div className="mt-12 flex flex-col items-center gap-2 text-center md:mt-18">
+        <h1 className="text-h1 text-ink md:text-display">{t("Which workspace?")}</h1>
+        <p className="max-w-2xl text-body-lg text-ink-muted">{t("Each workspace keeps its own money and books. You can come back here any time from your name at the top right.")}</p>
+      </div>
 
-            return (
-              <div key={business.id} className="flex flex-col items-center rounded-2xl bg-surface p-6 text-center shadow-sm shadow-black/5">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
-                  <Icon className="h-6 w-6" />
-                </div>
-                <p className="mt-3 flex items-center gap-1.5 font-medium text-neutral-900">
-                  {displayName}
-                  {business.hasPinLock && <Lock className="h-3.5 w-3.5 text-neutral-400" />}
-                </p>
-                <p className="text-sm text-neutral-500">{subtitle}</p>
-                {trial && (
-                  <span
-                    className={`mt-2 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      trial.expired ? "bg-brand-danger/10 text-brand-danger" : "bg-brand-primary/10 text-brand-primary"
-                    }`}
-                  >
-                    {trial.text}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => handleSelect(business)}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-primary-hover disabled:opacity-60"
-                >
-                  {isSelecting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("Select")}
-                </button>
+      <div className="mt-10 grid w-full max-w-[880px] grid-cols-1 justify-center gap-5 sm:grid-cols-[repeat(auto-fit,280px)]">
+        {workspaces.map((business) => {
+          const isBusiness = business.type === "BUSINESS";
+          const on = business.id === selectedId;
+          const displayName = business.isDefault ? user.name : business.name;
+          const trial = business.trialEndsAt ? trialLabel(business.trialEndsAt, t) : null;
+          return (
+            <button
+              key={business.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setSelectedId(business.id)}
+              onDoubleClick={open}
+              className={cn(
+                "flex flex-col gap-4 rounded-lg bg-surface p-5 text-left text-ink transition-[border-color,box-shadow]",
+                on ? "border-2 border-emerald shadow-[0_0_0_4px_var(--mint-50)]" : "border border-line shadow-card hover:border-line-strong",
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <IconTile tone={isBusiness ? "loans" : "money"} size={44} className="rounded-md">
+                  {isBusiness ? <Briefcase /> : <User />}
+                </IconTile>
+                <span className="flex items-center gap-3">
+                  {business.hasPinLock && (
+                    <span title={t("PIN lock")} className="flex items-center gap-1 text-caption font-semibold text-ink-muted">
+                      <Lock className="size-3.5" aria-hidden="true" />
+                      {t("PIN")}
+                    </span>
+                  )}
+                  {on ? (
+                    <span className="flex size-6 items-center justify-center rounded-full bg-emerald text-white">
+                      <Check className="size-[15px]" strokeWidth={3} aria-hidden="true" />
+                    </span>
+                  ) : (
+                    <span className="size-5.5 rounded-full border-[1.5px] border-line-strong" />
+                  )}
+                </span>
               </div>
-            );
-          })}
+              <div className="flex flex-col gap-1">
+                <span className="flex items-center gap-2">
+                  <b className="text-h3 font-bold">{displayName}</b>
+                  {business.isDefault && (
+                    <Chip tone="mint" className="font-semibold">
+                      {t("Default")}
+                    </Chip>
+                  )}
+                </span>
+                <span className="text-small text-ink-muted">{t(isBusiness ? "Business workspace" : "Personal workspace")}</span>
+              </div>
+              <div className="flex flex-col gap-0.5 border-t border-surface-sunken pt-4">
+                <span className={cn("text-title font-bold", trial?.expired && "text-expense")}>{trial ? trial.text : t(ROLE_LABEL[business.role])}</span>
+                <span className="text-caption font-normal text-ink-muted">{business.currency}</span>
+              </div>
+            </button>
+          );
+        })}
 
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => setCreateOpen(true)}
-            className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-300 p-6 text-center text-neutral-500 transition-colors hover:border-brand-primary hover:text-brand-primary disabled:opacity-60"
-          >
-            <Plus className="h-6 w-6" />
-            <p className="mt-2 text-sm font-medium">{t("Add New Workspace")}</p>
-          </button>
-        </div>
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => setCreateOpen(true)}
+          className="flex flex-col items-center justify-center gap-3 rounded-lg border-[1.5px] border-dashed border-line-strong p-5 text-center text-ink-2 transition-colors hover:border-emerald disabled:opacity-60"
+        >
+          <IconTile tone="money" size={44} className="rounded-md">
+            <Plus />
+          </IconTile>
+          <b className="text-title font-bold text-ink">{t("New workspace")}</b>
+          <span className="text-small text-ink-muted">{t("A personal or business workspace. Each keeps its own books.")}</span>
+        </button>
+      </div>
+
+      <p className="mt-5 text-small text-ink-muted">
+        {t("Mess and family groups open from")} <b className="text-ink-2">{t("Group expenses")}</b> {t("inside any workspace.")}
+      </p>
+
+      <div className="mt-10">
+        <Button size="xl" className="px-5" disabled={!selected || isPending} onClick={open}>
+          {isPending ? <Loader size={18} onDark label={t("Loading...")} /> : null}
+          {t("Open")}
+          <ArrowRight aria-hidden="true" />
+        </Button>
       </div>
 
       {pinBusiness && (
@@ -132,15 +177,12 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
           onClose={() => setPinBusiness(null)}
           businessId={pinBusiness.id}
           businessName={pinBusiness.isDefault ? user.name : pinBusiness.name}
+          isOwner={pinBusiness.role === "OWNER"}
           onVerified={() => proceed(pinBusiness.id)}
         />
       )}
 
-      <CreateWorkspaceModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={(created: WorkspaceListItem) => proceed(created.id)}
-      />
+      <CreateWorkspaceModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={(created: WorkspaceListItem) => proceed(created.id)} />
     </div>
   );
 }
