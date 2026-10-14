@@ -4,168 +4,444 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* =========================================================================
+   Smartly design tokens (Smartly v3, 13 Oct 2026). Every colour, type
+   style, radius and shadow in the app comes from here; components never
+   carry a raw hex. The light values are on :root, the dark ones on .dark
+   (dark mode is the customer app's alone -- see lib/theme.ts).
+   ========================================================================= */
+:root {
+  /* Brand */
+  --forest: #0b3d2e;
+  --forest-hover: #145a43;
+  --emerald: #1f7a5a;
+  --emerald-hover: #17664a;
+  --brand-ink: #17664a;
+  --jade: #14b57a;
+  --mint-50: #e7f5ee;
+  --mint-200: #bfebd7;
+  --mint-300: #7bd3a8;
+  --cream: #f6f1e7;
+  --on-action: #ffffff;
+
+  /* Grounds and lines */
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #efe9dc;
+  --line: #e6dfcf;
+  --line-strong: #7c8882;
+
+  /* Ink */
+  --ink: #0e1a16;
+  --ink-2: #33433c;
+  --ink-muted: #56655e;
+  --ink-faint: #8e9a93;
+  --focus-ring: #1f7a5a;
+
+  /* Meaning */
+  --income: #1f7a5a;
+  --income-soft: #e7f5ee;
+  --expense: #b42a2a;
+  --expense-fill: #c63a32;
+  --expense-soft: #fbeae6;
+  --warning: #8f5600;
+  --warning-fill: #e8a317;
+  --warning-soft: #fbf0d9;
+  --info: #2558b8;
+  --info-soft: #e7eefa;
+
+  /* Pillars */
+  --pillar-money: var(--emerald);
+  --pillar-money-soft: var(--mint-50);
+  --pillar-loans: #a04f14;
+  --pillar-loans-soft: #f8eadf;
+  --pillar-habits: #6244c4;
+  --pillar-habits-soft: #eeeafb;
+  --pillar-vault: var(--info);
+  --pillar-vault-soft: var(--info-soft);
+  --pillar-insights: #0b6f80;
+  --pillar-insights-soft: #e2f2f4;
+
+  /* Charts and category colours */
+  --chart-income: #1f7a5a;
+  --chart-expense: #e8857a;
+  --chart-savings: #7bd3a8;
+  --chart-grid: #e6dfcf;
+  --chart-other: #cfc8b8;
+  --cat-1: #1f7a5a;
+  --cat-2: #a04f14;
+  --cat-3: #6244c4;
+  --cat-4: #2558b8;
+  --cat-5: #0b6f80;
+  --cat-6: #b0477a;
+
+  /* Elevation (exposed as shadow-card/float/overlay/button below; the raw
+     values use another prefix so they don't collide with Tailwind's
+     --shadow-* namespace) */
+  --elevation-card: 0 1px 2px rgba(14, 26, 22, 0.06), 0 1px 1px rgba(14, 26, 22, 0.04);
+  --elevation-float: 0 10px 28px -8px rgba(11, 61, 46, 0.18), 0 2px 6px rgba(14, 26, 22, 0.06);
+  --elevation-overlay: 0 28px 60px -16px rgba(11, 61, 46, 0.3);
+  --elevation-button: 0 8px 18px -8px rgba(11, 61, 46, 0.55);
+
+  /* shadcn's tokens, mapped onto the palette above so its primitives and
+     the design's own components agree. */
+  --radius: 12px;
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--ink);
+  --primary: var(--forest);
+  --primary-foreground: var(--on-action);
+  --secondary: var(--surface-sunken);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--mint-50);
+  --accent-foreground: var(--brand-ink);
+  --destructive: var(--expense-fill);
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--focus-ring);
+  --chart-1: var(--chart-income);
+  --chart-2: var(--chart-expense);
+  --chart-3: var(--chart-savings);
+  --chart-4: var(--pillar-loans);
+  --chart-5: var(--pillar-habits);
+  --sidebar: var(--forest);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: var(--jade);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(191, 235, 215, 0.14);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(191, 235, 215, 0.12);
+  --sidebar-ring: var(--mint-300);
+}
+
+.dark {
+  --emerald: #4cc995;
+  --emerald-hover: #7bd3a8;
+  --brand-ink: #7bd3a8;
+  --jade: #2fd6a0;
+  --mint-50: #0f2a20;
+  --cream: #08120e;
+  --on-action: #04140e;
+
+  --surface: #0f1c17;
+  --surface-raised: #15251f;
+  --surface-sunken: #0b1712;
+  --line: #20332b;
+  --line-strong: #56706a;
+
+  --ink: #eaf2ee;
+  --ink-2: #c3d2ca;
+  --ink-muted: #93a89d;
+  --ink-faint: #61776b;
+  --focus-ring: #7bd3a8;
+
+  --income: #4cc995;
+  --income-soft: #0f2a20;
+  --expense: #f08080;
+  --expense-fill: #e5484d;
+  --expense-soft: #3a1715;
+  --warning: #f2b84b;
+  --warning-fill: #f2b84b;
+  --warning-soft: #33240a;
+  --info: #86abf2;
+  --info-soft: #14234a;
+
+  --pillar-loans: #f0a46a;
+  --pillar-loans-soft: #3a2010;
+  --pillar-habits: #b6a2ff;
+  --pillar-habits-soft: #251a45;
+  --pillar-insights: #5cccdb;
+  --pillar-insights-soft: #0b2e33;
+
+  --chart-income: #4cc995;
+  --chart-expense: #e5484d;
+  --chart-savings: #2fd6a0;
+  --chart-grid: #20332b;
+  --chart-other: #3a4d44;
+  --cat-1: #4cc995;
+  --cat-2: #f0a46a;
+  --cat-3: #b6a2ff;
+  --cat-4: #86abf2;
+  --cat-5: #5cccdb;
+  --cat-6: #f08fbf;
+
+  --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elevation-float: 0 10px 28px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --elevation-overlay: 0 28px 60px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --elevation-button: 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+
+  /* The main button turns emerald with deep-forest text in the dark theme. */
+  --primary: var(--emerald);
+  --primary-foreground: var(--on-action);
+  --secondary: var(--surface-raised);
+  --accent: var(--mint-50);
+  --accent-foreground: var(--brand-ink);
+  --sidebar-ring: var(--jade);
+
+  /* Pages not yet moved onto the tokens still use Tailwind's neutral ramp;
+     inverting it keeps them readable in the dark theme until each is
+     redone. Remove once no neutral-* class is left in the customer app. */
+  --color-neutral-50: #0b1712;
+  --color-neutral-100: #15251f;
+  --color-neutral-200: #20332b;
+  --color-neutral-300: #2d4238;
+  --color-neutral-400: #61776b;
+  --color-neutral-500: #93a89d;
+  --color-neutral-600: #c3d2ca;
+  --color-neutral-700: #d9e4df;
+  --color-neutral-800: #eaf2ee;
+  --color-neutral-900: #f4f8f6;
+  --color-neutral-950: #ffffff;
+}
+
 @theme inline {
+  /* Type */
+  --font-sans: var(--font-jakarta), var(--font-anek-bangla), system-ui, sans-serif;
+  --font-heading: var(--font-jakarta), var(--font-anek-bangla), system-ui, sans-serif;
+  --font-bn: var(--font-anek-bangla), var(--font-jakarta), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Text styles: text-display-xl, text-h1, text-body, text-amount ... each
+     sets size, line height, weight and tracking together. */
+  --text-display-xl: 48px;
+  --text-display-xl--line-height: 52px;
+  --text-display-xl--font-weight: 800;
+  --text-display-xl--letter-spacing: -0.03em;
+  --text-display: 36px;
+  --text-display--line-height: 42px;
+  --text-display--font-weight: 800;
+  --text-display--letter-spacing: -0.025em;
+  --text-h1: 28px;
+  --text-h1--line-height: 34px;
+  --text-h1--font-weight: 700;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h2: 22px;
+  --text-h2--line-height: 28px;
+  --text-h2--font-weight: 700;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h3: 18px;
+  --text-h3--line-height: 24px;
+  --text-h3--font-weight: 600;
+  --text-h3--letter-spacing: -0.01em;
+  --text-title: 16px;
+  --text-title--line-height: 22px;
+  --text-title--font-weight: 600;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-body--font-weight: 400;
+  --text-body-strong: 14px;
+  --text-body-strong--line-height: 20px;
+  --text-body-strong--font-weight: 600;
+  --text-small: 13px;
+  --text-small--line-height: 18px;
+  --text-small--font-weight: 400;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-caption--font-weight: 500;
+  --text-overline: 12px;
+  --text-overline--line-height: 16px;
+  --text-overline--font-weight: 700;
+  --text-overline--letter-spacing: 0.08em;
+  --text-amount-lg: 28px;
+  --text-amount-lg--line-height: 32px;
+  --text-amount-lg--font-weight: 700;
+  --text-amount-lg--letter-spacing: -0.02em;
+  --text-amount: 16px;
+  --text-amount--line-height: 22px;
+  --text-amount--font-weight: 600;
+  --text-amount-sm: 14px;
+  --text-amount-sm--line-height: 20px;
+  --text-amount-sm--font-weight: 600;
+  --text-bn-heading: 24px;
+  --text-bn-heading--line-height: 34px;
+  --text-bn-heading--font-weight: 600;
+  --text-bn-body: 15px;
+  --text-bn-body--line-height: 24px;
+  --text-bn-body--font-weight: 400;
+  --text-code: 13px;
+  --text-code--line-height: 18px;
+  --text-code--font-weight: 500;
+
+  /* Colours: bg-forest, text-ink-muted, border-line, bg-pillar-habits-soft ... */
+  --color-forest: var(--forest);
+  --color-forest-hover: var(--forest-hover);
+  --color-emerald: var(--emerald);
+  --color-emerald-hover: var(--emerald-hover);
+  --color-brand-ink: var(--brand-ink);
+  --color-jade: var(--jade);
+  --color-mint-50: var(--mint-50);
+  --color-mint-200: var(--mint-200);
+  --color-mint-300: var(--mint-300);
+  --color-cream: var(--cream);
+  --color-on-action: var(--on-action);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-focus-ring: var(--focus-ring);
+  --color-income: var(--income);
+  --color-income-soft: var(--income-soft);
+  --color-expense: var(--expense);
+  --color-expense-fill: var(--expense-fill);
+  --color-expense-soft: var(--expense-soft);
+  --color-warning: var(--warning);
+  --color-warning-fill: var(--warning-fill);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-pillar-money: var(--pillar-money);
+  --color-pillar-money-soft: var(--pillar-money-soft);
+  --color-pillar-loans: var(--pillar-loans);
+  --color-pillar-loans-soft: var(--pillar-loans-soft);
+  --color-pillar-habits: var(--pillar-habits);
+  --color-pillar-habits-soft: var(--pillar-habits-soft);
+  --color-pillar-vault: var(--pillar-vault);
+  --color-pillar-vault-soft: var(--pillar-vault-soft);
+  --color-pillar-insights: var(--pillar-insights);
+  --color-pillar-insights-soft: var(--pillar-insights-soft);
+  --color-chart-income: var(--chart-income);
+  --color-chart-expense: var(--chart-expense);
+  --color-chart-savings: var(--chart-savings);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-other: var(--chart-other);
+  --color-cat-1: var(--cat-1);
+  --color-cat-2: var(--cat-2);
+  --color-cat-3: var(--cat-3);
+  --color-cat-4: var(--cat-4);
+  --color-cat-5: var(--cat-5);
+  --color-cat-6: var(--cat-6);
+
+  /* Names older pages still use (bg-brand-primary, text-brand-danger,
+     bg-brand-content): aliases onto the palette, so nothing reads off-brand
+     while those pages wait their turn. Delete when the last use is gone. */
+  --color-brand-dark: var(--forest);
+  --color-brand-dark-hover: var(--forest-hover);
+  --color-brand-primary: var(--emerald);
+  --color-brand-primary-hover: var(--emerald-hover);
+  --color-brand-danger: var(--expense-fill);
+  --color-brand-danger-hover: var(--expense);
+  --color-brand-content: var(--cream);
+
+  /* shadcn */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-heading: var(--font-inter);
-  --font-mono: var(--font-geist-mono);
-  /* Bangla text (LocaleProvider switches to it). */
-  --font-bn: var(--font-hind-siliguri);
-
-  /* Admin panel brand palette -- see AGENTS/spec for the design theme this
-     locks in. Keep using these tokens (bg-brand-dark, text-brand-primary,
-     etc.) rather than raw hex values so a future theme tweak only touches
-     this block. The shadcn tokens in :root below are mapped onto this same
-     palette, so a shadcn <Button> and a hand-styled brand button match. */
-  --color-brand-dark: var(--brand-dark);
-  --color-brand-dark-hover: var(--brand-dark-hover);
-  --color-brand-primary: #22c55e;
-  --color-brand-primary-hover: #16a34a;
-  --color-brand-danger: #ef4444;
-  --color-brand-danger-hover: #dc2626;
-  --color-brand-content: var(--content-bg);
-  /* The customer app's cards and panels. */
-  --color-surface: var(--surface);
-
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radii: 8 chips and small badges, 12 buttons/inputs/tiles, 16 cards,
+     24 hero panels and drawers, full for pills. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+  --radius-4xl: 12px;
+
+  /* Shadows: shadow-card on cream, shadow-float for menus and the hero,
+     shadow-overlay for drawers and dialogs, shadow-button under the main
+     button. shadow-sm/md/lg stay usable for the same three depths. */
+  --shadow-card: var(--elevation-card);
+  --shadow-float: var(--elevation-float);
+  --shadow-overlay: var(--elevation-overlay);
+  --shadow-button: var(--elevation-button);
+  --shadow-sm: var(--elevation-card);
+  --shadow-md: var(--elevation-float);
+  --shadow-lg: var(--elevation-overlay);
+
+  /* Sizes: h-control-md, w-sidebar, max-w-content */
+  --spacing-control-sm: 36px;
+  --spacing-control-md: 44px;
+  --spacing-control-lg: 52px;
+  --spacing-sidebar: 264px;
+  --spacing-sidebar-admin: 240px;
+  --spacing-topbar: 64px;
+  --spacing-topbar-mobile: 56px;
+  --container-content: 1200px;
 }
 
-/* Brand colours are plain hex (easier to paste from a design); the neutral
-   greys stay oklch as shadcn generated them. */
-:root {
-  --radius: 0.625rem;
-  --brand-dark: #123d2b;
-  --brand-dark-hover: #1a4d36;
-  --content-bg: #f9fafb;
-  --surface: #ffffff;
-  --background: #f9fafb;
-  --foreground: #171717;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --popover: #ffffff;
-  --popover-foreground: #171717;
-  --primary: #22c55e;
-  --primary-foreground: #ffffff;
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: #ef4444;
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: #22c55e;
-  --chart-1: #22c55e;
-  --chart-2: #16a34a;
-  --chart-3: #86efac;
-  --chart-4: #123d2b;
-  --chart-5: #f59e0b;
-  --sidebar: #123d2b;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #22c55e;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a4d36;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgb(255 255 255 / 0.1);
-  --sidebar-ring: #22c55e;
+/* Gradients (bg-aurora, bg-night ...). */
+@utility bg-forest-depth {
+  background-image: linear-gradient(135deg, #0b3d2e 0%, #1f7a5a 100%);
 }
-
-/* Dark mode is the customer app's alone (see lib/theme.ts): the admin panel
-   and the sign-in pages never get `.dark`. Besides the shadcn tokens, it
-   inverts Tailwind's neutral ramp, so the customer app's bg-neutral-50 /
-   text-neutral-800 / border-neutral-100 styling turns dark without
-   per-component changes. The brand accents stay; the panels behind them go
-   near-black with a faint green undertone. */
-.dark {
-  --brand-dark: #0d1512;
-  --brand-dark-hover: #182420;
-  --content-bg: #101113;
-  --surface: #1b1c1f;
-  --color-neutral-50: #0a0a0a;
-  --color-neutral-100: #171717;
-  --color-neutral-200: #262626;
-  --color-neutral-300: #404040;
-  --color-neutral-400: #8a8a8a;
-  --color-neutral-500: #a3a3a3;
-  --color-neutral-600: #d4d4d4;
-  --color-neutral-700: #e5e5e5;
-  --color-neutral-800: #f5f5f5;
-  --color-neutral-900: #fafafa;
-  --color-neutral-950: #ffffff;
-  --background: #0b1410;
-  --foreground: oklch(0.985 0 0);
-  --card: #10201a;
-  --card-foreground: oklch(0.985 0 0);
-  --popover: #10201a;
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #22c55e;
-  --primary-foreground: #0b1410;
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: #f87171;
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: #22c55e;
-  --sidebar: #0f2a1e;
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #22c55e;
-  --sidebar-primary-foreground: #0b1410;
-  --sidebar-accent: #123d2b;
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #22c55e;
+@utility bg-aurora {
+  background-image: linear-gradient(135deg, #0b3d2e 0%, #1f7a5a 58%, #7bd3a8 100%);
+}
+@utility bg-night {
+  background-image: linear-gradient(160deg, #0e1a16 0%, #0b3d2e 100%);
+}
+/* The sidebar's own vertical night, fixed in px so it reads the same at any height. */
+@utility bg-night-panel {
+  background-image: linear-gradient(180deg, #0e1a16 0px, #0b3d2e 900px);
+}
+@utility bg-fresh {
+  background-image: linear-gradient(135deg, var(--cream) 0%, var(--mint-50) 100%);
+}
+@utility bg-mint-glow {
+  background-image: linear-gradient(135deg, #bfebd7 0%, #7bd3a8 100%);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans;
+  }
   body {
     @apply bg-background text-foreground;
   }
-  html {
-    @apply font-sans;
+  /* The design's one focus style: 2px ring, 2px off, on everything. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  ::placeholder {
+    color: var(--ink-faint);
+  }
+  ::selection {
+    background: var(--mint-200);
+    color: var(--forest);
   }
 }
 
@@ -175,8 +451,8 @@
      the main thread is busy hydrating. */
   .app-loader {
     --loader-size: 24px;
-    --loader-color-1: var(--primary);
-    --loader-color-2: color-mix(in srgb, var(--primary) 20%, transparent);
+    --loader-color-1: var(--emerald);
+    --loader-color-2: var(--surface-sunken);
     display: inline-block;
     width: var(--loader-size);
     height: var(--loader-size);

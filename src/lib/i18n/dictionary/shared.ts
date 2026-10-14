@@ -54,6 +54,7 @@ export const sharedDictionary: Record<string, string> = {
   "We couldn't load this page. Check your connection and try again.": "পেজটি লোড করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।",
   "Reference:": "রেফারেন্স:",
   "Try again": "আবার চেষ্টা করুন",
+  "Check your internet and try again. Nothing was lost.": "ইন্টারনেট দেখে আবার চেষ্টা করুন। কিছুই হারায়নি।",
   // app/error.tsx
   "The server may be temporarily unavailable. Please try again in a moment.": "সার্ভার সাময়িকভাবে বন্ধ থাকতে পারে। একটু পরে আবার চেষ্টা করুন।",
   Name: "নাম",

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import LocaleToggle from "@/components/shared/LocaleToggle";
 import LegalLinks from "@/components/modules/Legal/LegalLinks";
+import { BRAND_NAME } from "@/lib/brand";
+import Logo from "@/components/smartly/Logo";
 import AuthBrandPanel from "./AuthBrandPanel";
-import BrandMark from "./BrandMark";
 
 // The frame every sign-in page shares: the brand panel on wide screens, and
 // a column with the logo (small screens only -- the panel shows it on wide
@@ -13,8 +14,8 @@ const AuthShell = ({ children, notice }: { children: React.ReactNode; notice?: R
     <AuthBrandPanel />
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:justify-end">
-        <Link href="/" className="rounded-xl lg:hidden">
-          <BrandMark />
+        <Link href="/" aria-label={`${BRAND_NAME} home`} className="rounded-md lg:hidden">
+          <Logo height={38} alt="" />
         </Link>
         <LocaleToggle />
       </header>

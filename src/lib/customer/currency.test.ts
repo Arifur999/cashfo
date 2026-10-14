@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { currencySymbol, formatCurrency } from "./currency";
+import { currencySymbol, formatCurrency, formatSignedCurrency } from "./currency";
 
 // The symbol and the digits are joined by a no-break space.
 const NBSP = " ";
+
+describe("formatSignedCurrency", () => {
+  it("writes the sign in words the design uses", () => {
+    expect(formatSignedCurrency(85000, "BDT")).toBe(`+ ৳${NBSP}85,000.00`);
+    expect(formatSignedCurrency("-52300", "BDT")).toBe(`− ৳${NBSP}52,300.00`);
+    expect(formatSignedCurrency(0, "BDT")).toBe(`৳${NBSP}0.00`);
+    expect(formatSignedCurrency(-0.004, "BDT")).toBe(`৳${NBSP}0.00`);
+  });
+});
 
 describe("formatCurrency", () => {
   it("groups taka in lakhs and crores", () => {

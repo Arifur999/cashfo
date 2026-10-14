@@ -2,8 +2,8 @@
 
 import { ChartNoAxesCombined, Languages, PiggyBank, ShieldCheck } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
+import Logo from "@/components/smartly/Logo";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import BrandMark from "./BrandMark";
 
 const HIGHLIGHTS = [
   { icon: ChartNoAxesCombined, text: "Track income and expenses across every account" },
@@ -26,7 +26,7 @@ const AuthBrandPanel = () => {
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.05)_1px,transparent_1px)] bg-size-[56px_56px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
       />
 
-      <BrandMark inverted className="relative" />
+      <Logo onDark height={44} className="relative self-start" />
 
       <div className="relative max-w-md space-y-10">
         <div className="space-y-4">

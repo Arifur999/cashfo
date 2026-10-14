@@ -35,6 +35,18 @@ export function formatCurrency(amount: number | string, currencyCode: string): s
   return `${rounded < 0 ? "-" : ""}${symbol}\u00A0${groupDigits(Math.abs(rounded), locale)}`;
 }
 
+// "+ ৳ 85,000.00" for money in, "− ৳ 52,300.00" for money out, "৳ 0.00" for
+// nothing: the explicit sign the dashboards and statements show, with a real
+// minus sign and a space, as the design writes it.
+export function formatSignedCurrency(amount: number | string, currencyCode: string): string {
+  const value = Number(amount);
+  const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+  const unsigned = formatCurrency(Math.abs(rounded), currencyCode);
+  if (rounded > 0) return `+ ${unsigned}`;
+  if (rounded < 0) return `− ${unsigned}`;
+  return unsigned;
+}
+
 // Just the symbol, e.g. for an inline prefix inside an amount input --
 // callers that need the formatted number too should use formatCurrency().
 export function currencySymbol(currencyCode: string): string {

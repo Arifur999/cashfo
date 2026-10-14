@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LocaleToggle from "@/components/shared/LocaleToggle";
-import BrandMark from "@/components/modules/Auth/BrandMark";
+import Logo from "@/components/smartly/Logo";
+import { BRAND_NAME } from "@/lib/brand";
 import LegalLinks from "./LegalLinks";
 
 // The frame for pages anyone can open without signing in -- the legal pages
@@ -9,8 +10,8 @@ import LegalLinks from "./LegalLinks";
 const PublicShell = ({ children }: { children: React.ReactNode }) => (
   <div className="flex min-h-screen flex-col bg-background">
     <header className="flex items-center justify-between gap-4 border-b px-4 py-4 sm:px-8">
-      <Link href="/" className="rounded-xl">
-        <BrandMark />
+      <Link href="/" aria-label={`${BRAND_NAME} home`} className="rounded-md">
+        <Logo height={38} alt="" />
       </Link>
       <LocaleToggle />
     </header>
