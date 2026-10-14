@@ -282,6 +282,11 @@ export interface Transaction {
   voidedAt: string | null;
   voidedReason: string | null;
   reversalOfId: string | null;
+  // Set by the backend: false for a voided transaction, a reversal, and a
+  // posting a feature keeps its own record of (a savings goal's deposit or
+  // withdrawal, an asset purchase or sale, a referral payout) -- voiding
+  // only the money would leave that feature's figures wrong.
+  voidable: boolean;
   entries: TransactionEntry[];
 }
 

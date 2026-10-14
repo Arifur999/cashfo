@@ -12,6 +12,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { voidTransactionAction } from "@/lib/customer/transactionActions";
 import { NewLoanTransactionModal } from "./NewLoanTransactionModal";
 import { formatDate } from "@/lib/customer/date";
+import { isCancelled } from "@/lib/customer/transactionDisplay";
 
 interface LoanTransactionsPageClientProps {
   businessId: string;
@@ -213,7 +214,7 @@ export function LoanTransactionsPageClient({
                   const direction = directionFor(txn);
                   const account = moneyEntry(txn)?.account;
                   const amount = amountFor(txn);
-                  const isVoided = txn.status === "VOIDED";
+                  const isVoided = isCancelled(txn);
                   return (
                     <tr key={txn.id} className={isVoided ? "opacity-50" : ""}>
                       <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
@@ -250,7 +251,7 @@ export function LoanTransactionsPageClient({
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Link>
-                            {!isVoided && (
+                            {txn.voidable && (
                               <button
                                 type="button"
                                 disabled={isPending}

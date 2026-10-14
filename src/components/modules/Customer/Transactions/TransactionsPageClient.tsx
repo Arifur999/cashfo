@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { Account, Transaction, TransactionEntry, TransactionType } from "@/lib/customer/api";
+import { isCancelled } from "@/lib/customer/transactionDisplay";
 
 interface TransactionsPageClientProps {
   businessId: string;
@@ -106,6 +107,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   // file, one transaction row per iteration), which shadows this `t` (the
   // translate function) within that callback's scope.
   const voidedLabel = t("Voided");
+  const reversalLabel = t("Reversal");
 
   const categoryByName = new Map(categories.map((c) => [c.name, c]));
 
@@ -223,7 +225,8 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
               // neutral wallet glyph; a real category with no icon chosen
               // shows just its colored circle, no icon inside.
               const CategoryIcon = categoryMeta ? (categoryMeta.icon ? budgetCategoryIcon(categoryMeta.icon) : null) : Wallet;
-              const isVoided = t.status === "VOIDED";
+              const isVoided = isCancelled(t);
+              const cancelledNote = t.reversalOfId ? reversalLabel : voidedLabel;
               const note = noteFor(t);
               return (
                 <tr
@@ -244,7 +247,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
                       >
                         {CategoryIcon && <CategoryIcon className="h-3.5 w-3.5 text-white" />}
                       </div>
-                      {isVoided && <span className="text-xs font-normal text-brand-danger">{voidedLabel}</span>}
+                      {isVoided && <span className="text-xs font-normal text-brand-danger">{cancelledNote}</span>}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-neutral-600">{formatDate(t.transactionDate)}</td>
@@ -252,7 +255,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
                   <td className={`px-4 py-3 text-neutral-600 ${isVoided ? "line-through" : ""}`}>{accountLabelFor(t)}</td>
                   <td className="max-w-[12rem] truncate px-4 py-3 text-neutral-400">{note ?? "—"}</td>
                   <td className={`px-4 py-3 text-right font-semibold tabular-nums ${isVoided ? "text-neutral-400" : color}`}>
-                    {sign}
+                    {isVoided ? "" : sign}
                     {formatCurrency(amountFor(t), currency)}
                   </td>
                 </tr>

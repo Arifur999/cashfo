@@ -26,6 +26,7 @@ import { IncomeVsSavingsChart } from "@/components/modules/Customer/Reports/Inco
 import type { IncomeVsSavingsPoint, LoanDashboard, Transaction, TransactionEntry } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
+import { cancelledLabel } from "@/lib/customer/transactionDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface DashboardPageClientProps {
@@ -192,19 +193,27 @@ export function DashboardPageClient({
           ) : (
             <ul className="divide-y divide-neutral-50">
               {recentTransactions.map((tx) => {
-                const { Icon, color, sign } = typeVisual(tx.transactionType);
+                const visual = typeVisual(tx.transactionType);
+                // A voided transaction or its reversal moved no money: muted,
+                // with no +/- sign, so it never reads as new income/spending.
+                const note = cancelledLabel(tx);
+                const color = note ? "text-neutral-400" : visual.color;
+                const { Icon } = visual;
                 return (
-                  <li key={tx.id}>
+                  <li key={tx.id} className={note ? "opacity-60" : ""}>
                     <Link href={`/transactions/${tx.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-neutral-50/60">
                       <Icon className={`h-5 w-5 shrink-0 ${color}`} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-neutral-800">
                           {tx.description || accountLabelFor(tx)}
                         </p>
-                        <p className="text-xs text-neutral-400">{formatDate(tx.transactionDate)}</p>
+                        <p className="text-xs text-neutral-400">
+                          {formatDate(tx.transactionDate)}
+                          {note && <span className="text-brand-danger"> · {t(note)}</span>}
+                        </p>
                       </div>
                       <p className={`shrink-0 text-sm font-semibold tabular-nums ${color}`}>
-                        {sign}
+                        {note ? "" : visual.sign}
                         {formatCurrency(amountFor(tx), currency)}
                       </p>
                     </Link>

@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { VoidTransactionButton } from "@/components/modules/Customer/Transactions/VoidTransactionButton";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getLocale } from "@/lib/i18n/locale";
 import { translate } from "@/lib/i18n/translate";
+import { formatDate } from "@/lib/customer/date";
+import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { getTransaction } from "@/lib/customer/transactions";
 
 export default async function TransactionDetailPage({ params }: PageProps<"/transactions/[id]">) {
@@ -31,12 +34,17 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">{transaction.description ?? t("Journal Entry")}</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            {new Date(transaction.transactionDate).toLocaleDateString()} · {transaction.transactionType} ·{" "}
-            <span className={transaction.status === "VOIDED" ? "text-neutral-400 line-through" : "text-brand-primary"}>{transaction.status}</span>
+            {formatDate(transaction.transactionDate)} · {t(TRANSACTION_TYPE_LABELS[transaction.transactionType])} ·{" "}
+            <span className={transaction.status === "VOIDED" ? "text-neutral-400 line-through" : "text-brand-primary"}>
+              {t(transaction.status === "VOIDED" ? "Voided" : "Posted")}
+            </span>
           </p>
           {transaction.reversalOfId && (
             <p className="mt-1 text-xs text-neutral-400">
-              {t("Reversal of transaction")} {transaction.reversalOfId}
+              {t("Reversal of transaction")}{" "}
+              <Link href={`/transactions/${transaction.reversalOfId}`} className="underline hover:text-neutral-600">
+                {transaction.reversalOfId}
+              </Link>
             </p>
           )}
           {transaction.voidedReason && (
@@ -45,7 +53,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
             </p>
           )}
         </div>
-        {canManage && transaction.status === "POSTED" && !transaction.reversalOfId && (
+        {canManage && transaction.voidable && (
           <VoidTransactionButton businessId={activeBusinessId} transactionId={transaction.id} />
         )}
       </div>

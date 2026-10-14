@@ -13,6 +13,7 @@ import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { voidTransactionAction } from "@/lib/customer/transactionActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatDate } from "@/lib/customer/date";
+import { isCancelled } from "@/lib/customer/transactionDisplay";
 
 interface BalanceTransferPageClientProps {
   businessId: string;
@@ -149,6 +150,7 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
               const viewLabel = t("View");
               const voidLabel = t("Void");
               const voidedLabel = t("Voided");
+              const reversalLabel = t("Reversal");
               return (
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
@@ -173,7 +175,8 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                     )}
                     {transfers.map((t, index) => {
                       const { from, to } = partiesFor(t);
-                      const isVoided = t.status === "VOIDED";
+                      const isVoided = isCancelled(t);
+                      const cancelledNote = t.reversalOfId ? reversalLabel : voidedLabel;
                       return (
                         <tr key={t.id} className={isVoided ? "opacity-50" : ""}>
                           <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
@@ -197,7 +200,7 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                           <td className="px-4 py-3 text-right font-semibold tabular-nums text-neutral-900">{formatCurrency(amountFor(t), currency)}</td>
                           <td className="px-4 py-3 text-neutral-400">
                             {t.description ?? ""}
-                            {isVoided && <span className="text-brand-danger"> · {voidedLabel}</span>}
+                            {isVoided && <span className="text-brand-danger"> · {cancelledNote}</span>}
                           </td>
                           {canManage && (
                             <td className="px-4 py-3">
@@ -209,7 +212,7 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
                                 >
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Link>
-                                {!isVoided && (
+                                {t.voidable && (
                                   <button
                                     type="button"
                                     disabled={isPending}
