@@ -148,6 +148,8 @@ export const MANAGE_ROLES = {
   // Suspending/activating a customer, and changing their plan.
   ownerStatus: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
   ownerPlan: ["SUPER_ADMIN", "FINANCE_ADMIN"],
+  // "View as customer", a read-only look at the customer app as the owner.
+  ownerView: ["SUPER_ADMIN"],
   settings: ["SUPER_ADMIN"],
   revenue: ["SUPER_ADMIN", "FINANCE_ADMIN"],
 } satisfies Record<string, AdminRole[]>;

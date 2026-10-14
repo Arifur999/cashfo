@@ -34,6 +34,7 @@ const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
             plans={plans}
             canChangeStatus={canManage(admin?.role, "ownerStatus")}
             canChangePlan={canManage(admin?.role, "ownerPlan")}
+            canViewAsCustomer={canManage(admin?.role, "ownerView")}
           />
         }
       />
