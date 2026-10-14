@@ -20,4 +20,6 @@ export const updateAdminAccount = async (id: string, payload: IUpdateAdminPayloa
 
 export const suspendAdminAccount = async (id: string) => httpClient.patch<IAdminAccount>(`${BASE}/${id}/suspend`);
 
+export const activateAdminAccount = async (id: string) => httpClient.patch<IAdminAccount>(`${BASE}/${id}/activate`);
+
 export const resetAdminPassword = async (id: string) => httpClient.post<ITemporaryPassword>(`${BASE}/${id}/reset-password`);

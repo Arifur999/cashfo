@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { KeyRound, ShieldOff } from "lucide-react";
+import { KeyRound, ShieldCheck, ShieldOff } from "lucide-react";
 import { useMemo } from "react";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
@@ -31,6 +31,7 @@ const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
           // Nobody can suspend themselves (the API refuses it too).
           hidden: (row) => row.status !== "ACTIVE" || row.id === currentAdminId,
         },
+        { label: "Reactivate", icon: ShieldCheck, onClick: (row) => openDialog("activate", row), hidden: (row) => row.status !== "SUSPENDED" },
       ],
     }),
     [openDialog, currentAdminId],
