@@ -1,12 +1,10 @@
 import type { BudgetCategorySummary, HabitMonthTracker, IncomeVsSavingsPoint, LoanDashboard, SkillsOverview, Transaction } from "@/lib/customer/api";
+import type { CategoryMeta } from "@/lib/customer/transactionRows";
+
+export type { CategoryMeta };
 
 // What the Home page is told by its server page: figures already derived,
 // so the client components only draw.
-export interface CategoryMeta {
-  name: string;
-  icon: string | null;
-  color: string;
-}
 
 export interface HomeData {
   businessId: string;
