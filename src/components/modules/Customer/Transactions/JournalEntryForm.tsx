@@ -35,6 +35,9 @@ export function JournalEntryForm({ businessId, accounts }: JournalEntryFormProps
   const [description, setDescription] = useState("");
   const [rows, setRows] = useState<EntryRow[]>([emptyRow("DEBIT"), emptyRow("CREDIT")]);
   const [isPending, startTransition] = useTransition();
+  // One key for this entry however many times it is submitted; the page
+  // moves on after a success, so the next entry gets a new form and key.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   function addRow() {
     setRows((prev) => [...prev, emptyRow("DEBIT")]);
@@ -62,6 +65,7 @@ export function JournalEntryForm({ businessId, accounts }: JournalEntryFormProps
         transactionDate,
         description: description || undefined,
         entries: rows.map((r) => ({ accountId: r.accountId, entryType: r.entryType, amount: Number(r.amount) })),
+        idempotencyKey,
       });
       if (result.success && result.data) {
         toast.success(t("Transaction posted"));

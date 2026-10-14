@@ -41,14 +41,17 @@ export interface CreateTransactionInput {
   description?: string;
   referenceNo?: string;
   entries: CreateTransactionEntryInput[];
+  // One per form fill (see JournalEntryForm): a resubmit of the same entry
+  // -- a double click, a retried request -- is answered with the posting
+  // already made instead of making a second one.
+  idempotencyKey?: string;
 }
 
 export async function createTransactionAction(businessId: string, input: CreateTransactionInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
-    // Generated per-submit so a genuine double-click/network-retry hits the
-    // backend's idempotency short-circuit instead of creating two postings --
-    // NOT persisted/reused across separate user-initiated submits.
-    const idempotencyKey = crypto.randomUUID();
+    // A key made here would be new on every call, so two submits of one
+    // entry would still post twice; the form supplies one per fill.
+    const idempotencyKey = input.idempotencyKey ?? crypto.randomUUID();
     const res = await customerApi.post<Transaction>(
       `${API_BASE_URL}/api/businesses/${businessId}/transactions`,
       { ...input, idempotencyKey },
