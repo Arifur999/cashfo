@@ -19,6 +19,8 @@ import { useFeature } from "@/components/modules/Customer/Providers/PlatformProv
 interface BalanceTransferPageClientProps {
   businessId: string;
   transfers: Transaction[];
+  // false when there were more than the page reads (see getAllTransactions).
+  complete: boolean;
   currency: string;
   canManage: boolean;
   range: DateRangePreset;
@@ -44,7 +46,7 @@ const RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
   { value: "this-year", label: "This Year" },
 ];
 
-export function BalanceTransferPageClient({ businessId, transfers, currency, canManage, range }: BalanceTransferPageClientProps) {
+export function BalanceTransferPageClient({ businessId, transfers, currency, canManage, range, complete }: BalanceTransferPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
@@ -94,6 +96,9 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">{t("Balance Transfer")}</h1>
           <p className="mt-1 text-sm text-neutral-500">{t("Account Balance Transfer")}</p>
+          {!complete && (
+            <p className="mt-1 text-xs text-amber-700">{t("Showing and totalling the latest 1,000 only -- pick a shorter range to see the rest.")}</p>
+          )}
         </div>
         {canManage && (
           <button

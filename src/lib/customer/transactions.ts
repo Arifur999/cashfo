@@ -44,6 +44,27 @@ export const getTransactions = cache(async (businessId: string, filters: Transac
   }
 });
 
+// Pages whose summary cards total every matching transaction (Balance
+// Transfer, Loan Transactions) read them all, a page of 100 at a time, up to
+// `maxRows`; totals made from just the first 100 were wrong past that.
+// `complete` is false when even maxRows wasn't all of them.
+export async function getAllTransactions(
+  businessId: string,
+  filters: Omit<TransactionFilters, "page" | "limit">,
+  maxRows = 1000,
+): Promise<{ data: Transaction[]; total: number; complete: boolean }> {
+  const PAGE = 100;
+  const data: Transaction[] = [];
+  let total = 0;
+  for (let page = 1; data.length < maxRows; page++) {
+    const response = await getTransactions(businessId, { ...filters, page, limit: PAGE });
+    total = response.meta.total;
+    data.push(...response.data);
+    if (response.data.length < PAGE || data.length >= total) break;
+  }
+  return { data, total, complete: data.length >= total };
+}
+
 export const getTransaction = cache(async (businessId: string, id: string): Promise<Transaction | null> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return null;

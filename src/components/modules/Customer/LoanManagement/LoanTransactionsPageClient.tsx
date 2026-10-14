@@ -18,6 +18,8 @@ import { useFeature } from "@/components/modules/Customer/Providers/PlatformProv
 interface LoanTransactionsPageClientProps {
   businessId: string;
   transactions: Transaction[];
+  // false when there were more than the page reads (see getAllTransactions).
+  complete: boolean;
   loanContacts: Contact[];
   canManage: boolean;
   currency: string;
@@ -66,6 +68,7 @@ export function LoanTransactionsPageClient({
   currency,
   range,
   selectedContactId,
+  complete,
 }: LoanTransactionsPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -118,6 +121,9 @@ export function LoanTransactionsPageClient({
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">{t("Loan Transactions")}</h1>
           <p className="mt-1 text-sm text-neutral-500">{t("Receive and payment records")}</p>
+          {!complete && (
+            <p className="mt-1 text-xs text-amber-700">{t("Showing and totalling the latest 1,000 only -- pick a shorter range to see the rest.")}</p>
+          )}
         </div>
         {canManage && (
           <button

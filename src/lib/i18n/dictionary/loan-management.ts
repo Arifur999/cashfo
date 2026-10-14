@@ -194,4 +194,5 @@ export const loanManagementDictionary: Record<string, string> = {
   "Failed to record payment": "পেমেন্ট লেখা যায়নি",
   "Apply to specific transaction": "নির্দিষ্ট লেনদেনে প্রয়োগ করুন",
   "General payment (applies to oldest first)": "সাধারণ পেমেন্ট (সবচেয়ে পুরোনোটিতে আগে প্রয়োগ হবে)",
+  "Showing and totalling the latest 1,000 only -- pick a shorter range to see the rest.": "শুধু সর্বশেষ ১,০০০টি দেখানো ও যোগ করা হচ্ছে -- বাকিগুলো দেখতে ছোট সময়সীমা বেছে নিন।",
 };
