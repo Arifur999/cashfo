@@ -91,18 +91,40 @@ export const canAccessRoute = (pathname: string, role: AdminRole) => {
   return roles === null || roles.includes(role);
 };
 
+// Whitespace and control characters are refused outright: browsers drop
+// tabs and newlines from a URL, so "/\t/evil.com" would turn into the
+// protocol-relative "//evil.com" -- another site -- once followed.
+const UNSAFE_REDIRECT_CHARS = /[\s\u0000-\u001f\u007f\\]/;
+const REDIRECT_BASE = "http://redirect.invalid";
+
 // Guards ?redirect=, so a crafted link can't bounce anyone off-site (an open
 // redirect), onto the other side, or into a section their role can't open.
-export const isValidRedirect = (redirectPath: string, audience: TokenAudience, role: Role) => {
-  if (!redirectPath.startsWith("/") || redirectPath.startsWith("//") || redirectPath.includes("\\")) {
-    return false;
+// Returns the path to go to -- re-serialized from the parsed URL, so what is
+// checked is exactly what the browser will follow -- or null.
+export const safeRedirectPath = (redirectPath: string, audience: TokenAudience, role: Role): string | null => {
+  if (!redirectPath.startsWith("/") || redirectPath.startsWith("//") || UNSAFE_REDIRECT_CHARS.test(redirectPath)) {
+    return null;
   }
-  const pathname = redirectPath.split(/[?#]/)[0];
+  let url: URL;
+  try {
+    url = new URL(redirectPath, REDIRECT_BASE);
+  } catch {
+    return null;
+  }
+  if (url.origin !== REDIRECT_BASE) {
+    return null;
+  }
+  const { pathname } = url;
   if (pathname === "/" || isPublicRoute(pathname) || isUnder(pathname, "/api") || routeAudience(pathname) !== audience) {
-    return false;
+    return null;
   }
-  return audience === "user" || (isAdminRole(role) && canAccessRoute(pathname, role));
+  if (audience === "admin" && !(isAdminRole(role) && canAccessRoute(pathname, role))) {
+    return null;
+  }
+  return `${pathname}${url.search}${url.hash}`;
 };
+
+export const isValidRedirect = (redirectPath: string, audience: TokenAudience, role: Role) => safeRedirectPath(redirectPath, audience, role) !== null;
 
 // Which roles may mutate each area. Pages read this to decide whether to show
 // create/edit/delete controls; the backend enforces the same rules, so this

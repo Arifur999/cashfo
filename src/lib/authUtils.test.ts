@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { homeRouteFor, isAdminRole, isGuestOnlyRoute, isPublicRoute, isValidRedirect, routeAudience, sessionFromClaims } from "./authUtils";
+import { homeRouteFor, isAdminRole, isGuestOnlyRoute, isPublicRoute, isValidRedirect, routeAudience, safeRedirectPath, sessionFromClaims } from "./authUtils";
 
 describe("auth routes", () => {
   it("sends signed-in visitors away from the sign-in forms only", () => {
@@ -57,6 +57,20 @@ describe("isValidRedirect", () => {
   it("never crosses sides", () => {
     expect(isValidRedirect("/admin/users", "user", "USER")).toBe(false);
     expect(isValidRedirect("/dashboard", "admin", "SUPER_ADMIN")).toBe(false);
+  });
+
+  it("refuses anything a browser would follow off-site", () => {
+    // Browsers strip tabs and newlines, turning these into //evil.com.
+    expect(isValidRedirect("/\t/evil.com", "user", "USER")).toBe(false);
+    expect(isValidRedirect("/\n/evil.com", "user", "USER")).toBe(false);
+    expect(isValidRedirect("/\\evil.com", "user", "USER")).toBe(false);
+    expect(isValidRedirect("//evil.com", "user", "USER")).toBe(false);
+    expect(isValidRedirect("https://evil.com/dashboard", "user", "USER")).toBe(false);
+  });
+
+  it("returns the parsed path it checked", () => {
+    expect(safeRedirectPath("/transactions/42?x=1#top", "user", "USER")).toBe("/transactions/42?x=1#top");
+    expect(safeRedirectPath("/dashboard/../admin/users", "user", "USER")).toBe(null);
   });
 
   it("respects the admin role table", () => {
