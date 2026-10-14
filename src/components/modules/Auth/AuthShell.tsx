@@ -1,12 +1,14 @@
 import Link from "next/link";
 import LocaleToggle from "@/components/shared/LocaleToggle";
+import LegalLinks from "@/components/modules/Legal/LegalLinks";
 import AuthBrandPanel from "./AuthBrandPanel";
 import BrandMark from "./BrandMark";
 
 // The frame every sign-in page shares: the brand panel on wide screens, and
 // a column with the logo (small screens only -- the panel shows it on wide
-// ones), the language switch and the page's form.
-const AuthShell = ({ children }: { children: React.ReactNode }) => (
+// ones), the language switch, the page's form, and the legal links.
+// `notice` (the maintenance notice) sits above the form.
+const AuthShell = ({ children, notice }: { children: React.ReactNode; notice?: React.ReactNode }) => (
   <div className="grid min-h-screen bg-background lg:grid-cols-2 xl:grid-cols-[5fr_6fr]">
     <AuthBrandPanel />
     <div className="flex min-h-screen flex-col">
@@ -18,8 +20,14 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => (
       </header>
       {/* id + tabIndex give the root layout's skip link a focus target. */}
       <main id="main-content" tabIndex={-1} className="flex flex-1 items-center justify-center px-4 pt-4 pb-16 outline-none sm:px-8">
-        <div className="w-full max-w-[400px] space-y-6">{children}</div>
+        <div className="w-full max-w-[400px] space-y-6">
+          {notice}
+          {children}
+        </div>
       </main>
+      <footer className="px-4 pb-6 sm:px-8">
+        <LegalLinks />
+      </footer>
     </div>
   </div>
 );
