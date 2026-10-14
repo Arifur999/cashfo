@@ -16,8 +16,8 @@ interface NewLoanTransactionModalProps {
   open: boolean;
   onClose: () => void;
   businessId: string;
-  // Named for this page's context, but it's every contact in the business,
-  // not just category: LOAN ones -- see the page's data-fetching comment.
+  // Bank/person (category LOAN) contacts only -- see the page's
+  // data-fetching comment.
   loanContacts: Contact[];
 }
 
