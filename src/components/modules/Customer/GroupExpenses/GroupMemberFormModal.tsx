@@ -10,6 +10,9 @@ import { contactInitials } from "@/lib/customer/contactDisplay";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
+// The API's own limit for photos.
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
 interface GroupMemberFormModalProps {
   open: boolean;
   onClose: () => void;
@@ -42,16 +45,28 @@ export function GroupMemberFormModal({ open, onClose, businessId, editingMember 
     e.target.value = ""; // allow picking the same file again later
     if (!file) return;
 
+    if (file.size > MAX_PHOTO_BYTES) {
+      toast.error(t("Image must be 5MB or smaller"));
+      return;
+    }
+
     setUploadingPhoto(true);
     const formData = new FormData();
     formData.append("file", file);
-    const result = await uploadGroupMemberPhotoAction(businessId, formData);
-    if (result.success && result.data) {
-      setPhotoUrl(result.data.url);
-    } else {
-      toast.error(result.message ?? t("Failed to upload photo"));
+    try {
+      const result = await uploadGroupMemberPhotoAction(businessId, formData);
+      if (result.success && result.data) {
+        setPhotoUrl(result.data.url);
+      } else {
+        toast.error(result.message ?? t("Failed to upload photo"));
+      }
+    } catch {
+      // The request never completed (dropped connection, body refused) --
+      // the spinner must still stop.
+      toast.error(t("Failed to upload photo"));
+    } finally {
+      setUploadingPhoto(false);
     }
-    setUploadingPhoto(false);
   }
 
   function handleSubmit() {

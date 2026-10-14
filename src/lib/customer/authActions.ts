@@ -65,7 +65,9 @@ export async function uploadAvatarAction(formData: FormData): Promise<ActionResu
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/avatar`, {
       method: "POST",
-      headers: await authHeaders(),
+      // The visitor's address and browser too, like every other call (see
+      // apiClient.ts) -- fetch() skips customerApi's interceptor.
+      headers: { ...(await authHeaders()), ...(await getClientHeaders()) },
       body: formData,
     });
     if (!response.ok) {

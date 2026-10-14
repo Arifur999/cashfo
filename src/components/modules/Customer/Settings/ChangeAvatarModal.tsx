@@ -82,13 +82,18 @@ export function ChangeAvatarModal({ open, onClose, currentAvatarUrl, name }: Cha
     const formData = new FormData();
     formData.append("file", selectedFile);
     startTransition(async () => {
-      const result = await uploadAvatarAction(formData);
-      if (result.success) {
-        toast.success(t("Avatar updated"));
-        router.refresh();
-        onClose();
-      } else {
-        toast.error(result.message ?? t("Failed to upload avatar"));
+      try {
+        const result = await uploadAvatarAction(formData);
+        if (result.success) {
+          toast.success(t("Avatar updated"));
+          router.refresh();
+          onClose();
+        } else {
+          toast.error(result.message ?? t("Failed to upload avatar"));
+        }
+      } catch {
+        // The request never completed -- a toast, not the error screen.
+        toast.error(t("Failed to upload avatar"));
       }
     });
   }

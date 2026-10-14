@@ -15,6 +15,7 @@ import {
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
+import { getClientHeaders } from "@/lib/axios/clientHeaders";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -59,7 +60,9 @@ export async function uploadGroupMemberPhotoAction(businessId: string, formData:
   try {
     const response = await fetch(`${API_BASE_URL}/api/businesses/${businessId}/group/members/upload-photo`, {
       method: "POST",
-      headers: await authHeaders(),
+      // The visitor's address and browser too, like every other call (see
+      // apiClient.ts) -- fetch() skips customerApi's interceptor.
+      headers: { ...(await authHeaders()), ...(await getClientHeaders()) },
       body: formData,
     });
     if (!response.ok) {

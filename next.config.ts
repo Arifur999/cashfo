@@ -12,6 +12,15 @@ const nextConfig: NextConfig = {
     serverFunctions: false,
   },
 
+  experimental: {
+    serverActions: {
+      // Photos and avatars are uploaded through Server Actions, which refuse
+      // a body over 1MB by default -- every phone photo failed. The API takes
+      // images up to 5MB; this leaves room for the multipart framing.
+      bodySizeLimit: "6mb",
+    },
+  },
+
   // Query strings carry over, so ?redirect= and ?error= survive.
   async redirects() {
     return [
