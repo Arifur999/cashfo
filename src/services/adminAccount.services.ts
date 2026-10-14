@@ -23,3 +23,7 @@ export const suspendAdminAccount = async (id: string) => httpClient.patch<IAdmin
 export const activateAdminAccount = async (id: string) => httpClient.patch<IAdminAccount>(`${BASE}/${id}/activate`);
 
 export const resetAdminPassword = async (id: string) => httpClient.post<ITemporaryPassword>(`${BASE}/${id}/reset-password`);
+
+// The signed-in admin's own password. The API signs their other sessions out.
+export const changeOwnPassword = async (payload: { currentPassword: string; newPassword: string }) =>
+  httpClient.post<void>("/admin/auth/change-password", payload);
