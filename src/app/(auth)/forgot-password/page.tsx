@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import AuthFooterPrompt from "@/components/modules/Auth/AuthFooterPrompt";
+import AuthShell from "@/components/modules/Auth/AuthShell";
 import ForgotPasswordForm from "@/components/modules/Auth/ForgotPasswordForm";
-import { LOGIN_ROUTE } from "@/lib/authUtils";
+import MaintenanceNotice from "@/components/modules/Auth/MaintenanceNotice";
 
 export const metadata: Metadata = {
   title: "Reset your password",
@@ -9,9 +9,8 @@ export const metadata: Metadata = {
 
 export default function ForgotPasswordPage() {
   return (
-    <>
+    <AuthShell hero="narrow" notice={<MaintenanceNotice />}>
       <ForgotPasswordForm />
-      <AuthFooterPrompt prompt="Remembered it?" linkLabel="Back to sign in" href={LOGIN_ROUTE} />
-    </>
+    </AuthShell>
   );
 }

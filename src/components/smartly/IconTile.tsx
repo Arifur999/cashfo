@@ -4,10 +4,10 @@ import { SOFT_TONE, type Tone } from "./tones";
 const SIZES = {
   // Tile size → its icon size, radius and shape, as the design draws them.
   32: "size-8 rounded-md [&_svg]:size-4",
-  36: "size-9 rounded-md [&_svg]:size-[18px]",
+  36: "size-9 rounded-md [&_svg]:size-4.5",
   44: "size-11 rounded-full [&_svg]:size-5",
-  48: "size-12 rounded-md [&_svg]:size-[22px]",
-  72: "size-[72px] rounded-xl [&_svg]:size-[34px]",
+  48: "size-12 rounded-md [&_svg]:size-5.5",
+  72: "size-18 rounded-xl [&_svg]:size-8.5",
 } as const;
 
 interface IconTileProps {

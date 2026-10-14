@@ -1,8 +1,9 @@
 "use client";
 
+import { CircleAlert } from "lucide-react";
 import { useState } from "react";
-import Callout from "@/components/shared/Callout";
-import { Button } from "@/components/ui/button";
+import Banner from "@/components/smartly/Banner";
+import Button from "@/components/smartly/Button";
 import { GOOGLE_SIGN_IN_ROUTE, LOGIN_ROUTE } from "@/lib/authUtils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import GoogleIcon from "./GoogleIcon";
@@ -13,6 +14,8 @@ interface GoogleSignInButtonProps {
   // An invite code from the sign-up link (?ref=), credited to whoever
   // invited them if this creates the account.
   referralCode?: string;
+  // "Continue with Google" on sign-in, "Sign up with Google" on sign-up.
+  label?: string;
 }
 
 // Starts Google sign-in on better-auth (through this origin's /api/auth)
@@ -20,7 +23,7 @@ interface GoogleSignInButtonProps {
 // GOOGLE_SIGN_IN_ROUTE, or to the login page with ?error= if it fails.
 // requestSignUp: a Google address with no account yet gets a customer
 // account -- signing in and signing up are the same button.
-const GoogleSignInButton = ({ redirectTo, referralCode }: GoogleSignInButtonProps) => {
+const GoogleSignInButton = ({ redirectTo, referralCode, label = "Continue with Google" }: GoogleSignInButtonProps) => {
   const { translate } = useLocale();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,15 +54,15 @@ const GoogleSignInButton = ({ redirectTo, referralCode }: GoogleSignInButtonProp
   };
 
   return (
-    <div className="space-y-3">
-      <Button type="button" variant="outline" size="lg" className="w-full gap-2.5" onClick={signIn} disabled={isPending} aria-busy={isPending}>
-        <GoogleIcon className="size-4" aria-hidden="true" />
-        {translate(isPending ? "Opening Google..." : "Continue with Google")}
+    <div className="flex flex-col gap-3">
+      <Button type="button" variant="secondary" size="2xl" className="w-full gap-3 font-semibold" onClick={signIn} disabled={isPending} aria-busy={isPending}>
+        <GoogleIcon className="size-4.5" aria-hidden="true" />
+        {translate(isPending ? "Opening Google..." : label)}
       </Button>
       {error && (
-        <Callout variant="danger" role="alert">
+        <Banner tone="danger" inline role="alert" icon={<CircleAlert />} className="font-normal">
           {translate(error)}
-        </Callout>
+        </Banner>
       )}
     </div>
   );

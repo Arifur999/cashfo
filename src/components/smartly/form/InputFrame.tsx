@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 export const INPUT_HEIGHTS = {
   // 38 in toolbars, 44 in drawers, 48 in settings forms, 52 on sign-in and
   // every phone sheet (16px text there, so phones don't zoom).
-  sm: "h-[38px] text-body",
+  sm: "h-9.5 text-body",
   md: "h-11 text-body",
   lg: "h-12 text-body",
   xl: "h-13 text-body-lg",

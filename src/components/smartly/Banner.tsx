@@ -5,6 +5,8 @@ const TONES = {
   info: "bg-info-soft text-info",
   mint: "bg-mint-50 text-brand-ink",
   danger: "bg-expense-soft text-expense",
+  // A quiet note (how long a link lasts).
+  cream: "bg-cream text-ink-2",
 } as const;
 
 interface BannerProps extends React.ComponentProps<"div"> {
@@ -26,7 +28,7 @@ const Banner = ({ tone = "warning", icon, inline = false, className, children, .
     )}
     {...props}
   >
-    {icon && <span aria-hidden="true" className={cn("flex shrink-0 [&_svg]:size-4", inline && "mt-px [&_svg]:size-[18px]")}>{icon}</span>}
+    {icon && <span aria-hidden="true" className={cn("flex shrink-0 [&_svg]:size-4", inline && "mt-px [&_svg]:size-4.5")}>{icon}</span>}
     <div className="min-w-0 flex-1">{children}</div>
   </div>
 );

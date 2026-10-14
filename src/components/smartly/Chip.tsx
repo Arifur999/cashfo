@@ -28,7 +28,7 @@ const Chip = ({ tone = "mint", size = "md", className, ...props }: ChipProps) =>
   <span
     className={cn(
       "inline-flex shrink-0 items-center gap-1 rounded-full px-3 text-caption font-bold whitespace-nowrap tabular-nums",
-      size === "sm" ? "h-[22px] px-2" : "h-6",
+      size === "sm" ? "h-5.5 px-2" : "h-6",
       TONES[tone],
       className,
     )}

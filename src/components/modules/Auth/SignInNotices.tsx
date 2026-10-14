@@ -1,6 +1,7 @@
 "use client";
 
-import Callout from "@/components/shared/Callout";
+import { Clock, CircleAlert } from "lucide-react";
+import Banner from "@/components/smartly/Banner";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface SignInNoticesProps {
@@ -16,13 +17,17 @@ const SignInNotices = ({ sessionExpired = false, signInError }: SignInNoticesPro
 
   if (signInError) {
     return (
-      <Callout variant="danger" role="alert">
+      <Banner tone="danger" inline role="alert" icon={<CircleAlert />} className="font-normal">
         {translate(signInError)}
-      </Callout>
+      </Banner>
     );
   }
   if (sessionExpired) {
-    return <Callout role="status">{translate("Your session has expired. Please sign in again.")}</Callout>;
+    return (
+      <Banner tone="info" inline icon={<Clock />} className="font-normal">
+        {translate("For your safety we sign you out after a long time away, or when you choose Sign out everywhere on another device.")}
+      </Banner>
+    );
   }
   return null;
 };

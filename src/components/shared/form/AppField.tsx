@@ -1,21 +1,28 @@
 "use client";
 
 import type { AnyFieldApi } from "@tanstack/react-form";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import Input from "@/components/smartly/form/Input";
+import type { INPUT_HEIGHTS } from "@/components/smartly/form/InputFrame";
 import FormFieldShell from "./FormFieldShell";
+
+export type FieldSize = keyof typeof INPUT_HEIGHTS;
 
 type AppFieldProps = {
   field: AnyFieldApi;
-  label: string;
-  type?: "text" | "email" | "password" | "number" | "date" | "time" | "datetime-local";
+  label: React.ReactNode;
+  type?: "text" | "email" | "password" | "number" | "date" | "time" | "datetime-local" | "tel";
   placeholder?: string;
-  // Absolutely positioned inside the input (adds the matching padding) --
-  // this is how the password reveal toggle is done.
+  // Inside the frame, after the text -- this is how the password reveal
+  // toggle is done.
   append?: React.ReactNode;
+  // Inside the frame, before the text (an icon, a currency sign).
   prepend?: React.ReactNode;
+  aside?: React.ReactNode;
   description?: React.ReactNode;
   autoComplete?: string;
+  inputMode?: React.ComponentProps<"input">["inputMode"];
+  // The design's control heights: 38 / 44 / 48 / 52.
+  size?: FieldSize;
   className?: string;
   disabled?: boolean;
 };
@@ -29,37 +36,34 @@ const AppField = ({
   placeholder,
   append,
   prepend,
+  aside,
   description,
   autoComplete,
+  inputMode,
+  size = "md",
   className,
   disabled,
 }: AppFieldProps) => {
   return (
-    <FormFieldShell field={field} label={label} description={description}>
+    <FormFieldShell field={field} label={label} aside={aside} description={description}>
       {(control, hasError) => (
-        <div className="relative">
-          {prepend && (
-            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">{prepend}</span>
-          )}
-          <Input
-            {...control}
-            name={field.name}
-            type={type}
-            value={field.state.value ?? ""}
-            onBlur={field.handleBlur}
-            onChange={(event) => field.handleChange(event.target.value)}
-            placeholder={placeholder}
-            autoComplete={autoComplete}
-            disabled={disabled}
-            className={cn(
-              prepend && "pl-10",
-              append && "pr-10",
-              hasError && "border-destructive focus-visible:ring-destructive/20",
-              className,
-            )}
-          />
-          {append && <span className="absolute top-1/2 right-2 -translate-y-1/2">{append}</span>}
-        </div>
+        <Input
+          {...control}
+          name={field.name}
+          type={type}
+          size={size}
+          invalid={hasError}
+          leading={prepend}
+          trailing={append}
+          value={field.state.value ?? ""}
+          onBlur={field.handleBlur}
+          onChange={(event) => field.handleChange(event.target.value)}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
+          disabled={disabled}
+          className={className}
+        />
       )}
     </FormFieldShell>
   );

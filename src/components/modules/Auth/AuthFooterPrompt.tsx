@@ -10,12 +10,12 @@ interface AuthFooterPromptProps {
   href: string;
 }
 
-// "Don't have an account? Create one" under a form.
+// "New to Smartly? Create an account" under a form.
 const AuthFooterPrompt = ({ prompt, linkLabel, href }: AuthFooterPromptProps) => {
   const { translate } = useLocale();
 
   return (
-    <p className="text-center text-sm text-muted-foreground">
+    <p className="text-center text-body text-ink-muted">
       {translate(prompt)} <AuthLink href={href}>{translate(linkLabel)}</AuthLink>
     </p>
   );

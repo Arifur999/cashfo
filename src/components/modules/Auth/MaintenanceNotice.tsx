@@ -1,4 +1,5 @@
 import { TriangleAlert } from "lucide-react";
+import Banner from "@/components/smartly/Banner";
 import { getPublicPlatform } from "@/lib/customer/platform";
 import { getTranslator } from "@/lib/i18n/locale";
 
@@ -10,12 +11,9 @@ export default async function MaintenanceNotice() {
   if (!platform.maintenance.enabled) return null;
 
   return (
-    <div role="status" className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-      <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-      <div>
-        <p className="font-semibold">{t("Under maintenance")}</p>
-        <p className="mt-0.5 whitespace-pre-line">{platform.maintenance.message}</p>
-      </div>
-    </div>
+    <Banner tone="warning" inline icon={<TriangleAlert />} className="font-normal">
+      <p className="font-semibold">{t("Under maintenance")}</p>
+      <p className="mt-0.5 whitespace-pre-line">{platform.maintenance.message}</p>
+    </Banner>
   );
 }

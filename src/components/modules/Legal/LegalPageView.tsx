@@ -1,3 +1,4 @@
+import Eyebrow from "@/components/smartly/Eyebrow";
 import { getLegalDocument, type LegalPage } from "@/lib/customer/platform";
 import { formatDate } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
@@ -12,19 +13,20 @@ export default async function LegalPageView({ page, title }: { page: LegalPage; 
   const content = doc ? (locale === "bn" && doc.contentBn ? doc.contentBn : doc.contentEn) : null;
 
   return (
-    <article className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-foreground">{t(title)}</h1>
+    <article className="flex flex-col gap-4">
+      <header className="flex flex-col gap-2">
+        <Eyebrow tone="neutral">{t("Legal")}</Eyebrow>
+        <h1 className="text-h1 text-ink md:text-display">{t(title)}</h1>
         {doc && (
-          <p className="text-xs text-muted-foreground">
-            {t("Last updated")} {formatDate(doc.updatedAt)} · {t("Version")} {doc.version}
+          <p className="text-body text-ink-muted">
+            {t("Version")} {doc.version} · {t("Last updated")} {formatDate(doc.updatedAt, "d MMMM yyyy")}
           </p>
         )}
       </header>
       {content ? (
-        <div className="whitespace-pre-line text-sm leading-7 text-foreground">{content}</div>
+        <div className="text-body-lg leading-[27px] whitespace-pre-line text-ink-2">{content}</div>
       ) : (
-        <p className="text-sm text-muted-foreground">{t("This page isn't available right now. Please check back later.")}</p>
+        <p className="text-body text-ink-muted">{t("This page isn't available right now. Please check back later.")}</p>
       )}
     </article>
   );

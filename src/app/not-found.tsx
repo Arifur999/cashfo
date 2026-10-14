@@ -1,17 +1,31 @@
+import { Compass, House } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
+import StatePage from "@/components/smartly/StatePage";
+import { getLocale } from "@/lib/i18n/locale";
+import { translate } from "@/lib/i18n/translate";
 
 // Outside any dashboard shell: a URL no route matches at all. "/" sends a
 // signed-in visitor to their own home and everyone else to the sign-in page.
-export default function RootNotFound() {
+export default async function RootNotFound() {
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4 text-center">
-      <p className="text-5xl font-bold text-foreground tabular-nums">404</p>
-      <h1 className="text-lg font-semibold text-foreground">Page not found</h1>
-      <p className="text-sm text-muted-foreground">This page doesn&apos;t exist.</p>
-      <Button asChild className="mt-2">
-        <Link href="/">Go home</Link>
-      </Button>
-    </main>
+    <StatePage
+      icon={<Compass />}
+      tone="insights"
+      reference="404"
+      title={t("We can't find that page")}
+      description={t("It may have moved, or the link was typed wrong.")}
+      actions={
+        <Button size="xl" asChild>
+          <Link href="/">
+            <House />
+            {t("Go to Home")}
+          </Link>
+        </Button>
+      }
+    />
   );
 }

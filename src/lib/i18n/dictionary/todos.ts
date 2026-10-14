@@ -23,7 +23,21 @@ export const todosDictionary: Record<string, string> = {
   "Moved to next day": "পরের দিনে সরানো হয়েছে",
   "Failed to move task": "কাজ সরাতে ব্যর্থ হয়েছে",
 
-  // TodayTasksButton.tsx (TopBar quick-access popover)
+  // TodayTasksPanel.tsx (the top bar's Today's tasks popover / phone sheet)
   "Today's Tasks": "আজকের কাজ",
   "Open full list": "সম্পূর্ণ লিস্ট দেখুন",
+  "All days": "সব দিন",
+  "New task for today": "আজকের জন্য নতুন কাজ",
+  "Add a task for today…": "আজকের একটি কাজ লিখুন…",
+  "Tasks done today": "আজ শেষ হওয়া কাজ",
+  done: "শেষ",
+  "To do": "করতে হবে",
+  Done: "শেষ হয়েছে",
+  Hide: "লুকান",
+  Show: "দেখান",
+  Move: "সরান",
+  "to tomorrow": "টি আগামীকালে",
+  "Nothing planned for today": "আজকের জন্য কিছু ঠিক করা নেই",
+  "Type a task above and press Enter. It goes straight onto today's list.": "উপরে কাজটি লিখে Enter চাপুন। সরাসরি আজকের তালিকায় যোগ হবে।",
+  "Enter adds · Esc closes": "Enter যোগ করে · Esc বন্ধ করে",
 };

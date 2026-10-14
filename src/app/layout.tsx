@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Anek_Bangla, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
-import { Toaster } from "@/components/ui/sonner";
+import AppToaster from "@/components/smartly/AppToaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BRAND_NAME } from "@/lib/brand";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -62,7 +62,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <QueryProvider>
           <TooltipProvider>{children}</TooltipProvider>
-          <Toaster theme="light" richColors position="top-center" />
+          <AppToaster />
         </QueryProvider>
       </body>
     </html>

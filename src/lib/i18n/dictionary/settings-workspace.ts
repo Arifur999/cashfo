@@ -155,4 +155,27 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "Add New Workspace": "নতুন ওয়ার্কস্পেস যোগ করুন",
   "Password updated -- your other devices were signed out": "পাসওয়ার্ড আপডেট হয়েছে -- আপনার অন্য ডিভাইসগুলো থেকে সাইন আউট করা হয়েছে",
   "Use 8 to 128 characters, with at least one letter and one number": "৮ থেকে ১২৮ অক্ষর ব্যবহার করুন, অন্তত একটি অক্ষর ও একটি সংখ্যাসহ",
+
+  // The Smartly workspace chooser, PIN dialog and lock screen
+  "Which workspace?": "কোন ওয়ার্কস্পেস?",
+  "Each workspace keeps its own money and books. You can come back here any time from your name at the top right.":
+    "প্রতিটি ওয়ার্কস্পেসের নিজস্ব টাকা ও খাতা আছে। উপরে ডানে আপনার নাম থেকে যেকোনো সময় এখানে ফিরতে পারবেন।",
+  "PIN lock": "পিন লক",
+  Owner: "মালিক",
+  Accountant: "হিসাবরক্ষক",
+  Staff: "কর্মী",
+  "A personal or business workspace. Each keeps its own books.": "ব্যক্তিগত বা ব্যবসায়িক ওয়ার্কস্পেস। প্রতিটির নিজস্ব খাতা।",
+  "Mess and family groups open from": "মেস ও পরিবারের গ্রুপ খোলে",
+  "inside any workspace.": "থেকে, যেকোনো ওয়ার্কস্পেসের ভেতরে।",
+  Open: "খুলুন",
+  "Enter the PIN for": "পিন লিখুন:",
+  "has a PIN so others using this device can't open its books.": "-এ পিন দেওয়া আছে, যাতে এই ডিভাইসের অন্য কেউ এর খাতা খুলতে না পারে।",
+  "Remove the PIN with your account password": "অ্যাকাউন্টের পাসওয়ার্ড দিয়ে পিন সরান",
+  "Forgot the PIN?": "পিন ভুলে গেছেন?",
+  "Reset it with your account password": "অ্যাকাউন্টের পাসওয়ার্ড দিয়ে রিসেট করুন",
+  "Open the app": "অ্যাপ খুলুন",
+  "Terms of use": "ব্যবহারের শর্তাবলি",
+  "Privacy policy": "গোপনীয়তা নীতি",
+  "Refund policy": "রিফান্ড নীতি",
+  "Common questions": "সাধারণ জিজ্ঞাসা",
 };

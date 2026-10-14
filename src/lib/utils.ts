@@ -1,5 +1,5 @@
-// Re-exported from shadcn's `cn` package (a compiled drop-in for
-// clsx + tailwind-merge) -- the shadcn CLI generates every primitive in
-// components/ui/ importing it, so app code goes through the same function
-// instead of a second, hand-rolled clsx + twMerge copy.
-export { cn } from "cn";
+// The shadcn CLI generates every primitive in components/ui/ importing `cn`
+// from the "cn" package, and app code goes through this module -- both
+// resolve to lib/cn.ts (see the "cn" path in tsconfig.json), which knows
+// the design's text styles, shadows and gradients.
+export { cn } from "./cn";

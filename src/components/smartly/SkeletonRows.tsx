@@ -33,7 +33,7 @@ const SkeletonRows = ({ rows = 4, avatar = true, className }: SkeletonRowsProps)
             <span className={cn(bar, "h-2.5")} style={{ width: `${title}%` }} />
             <span className={cn(bar, "h-2")} style={{ width: `${meta}%` }} />
           </span>
-          <span className={cn(bar, "h-2.5 w-[90px]")} />
+          <span className={cn(bar, "h-2.5 w-22.5")} />
         </div>
       );
     })}
