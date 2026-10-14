@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal 
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ELLIPSIS_JUMP, getPageWindow } from "@/lib/table/pageWindow";
+import { formatNumber } from "@/lib/number";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -28,7 +29,7 @@ const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationPr
   return (
     <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground">
-        Total {totalRows.toLocaleString()} item{totalRows === 1 ? "" : "s"}, {pageCount} page{pageCount === 1 ? "" : "s"}
+        Total {formatNumber(totalRows)} item{totalRows === 1 ? "" : "s"}, {pageCount} page{pageCount === 1 ? "" : "s"}
       </p>
 
       <div className="flex flex-wrap items-center gap-4">
