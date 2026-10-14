@@ -1,11 +1,13 @@
-import { Wrench } from "lucide-react";
+import { Mail, RefreshCw, Wrench } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import PublicShell from "@/components/modules/Legal/PublicShell";
+import Button from "@/components/smartly/Button";
+import Card from "@/components/smartly/Card";
+import StatePage from "@/components/smartly/StatePage";
+import { BRAND_NAME } from "@/lib/brand";
 import { getPublicPlatform } from "@/lib/customer/platform";
 import { getLocale } from "@/lib/i18n/locale";
-import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { getTranslationOverrides } from "@/lib/i18n/overrides";
 import { translate } from "@/lib/i18n/translate";
 
@@ -25,27 +27,37 @@ export default async function MaintenancePage() {
   const t = (key: string) => translate(locale, key, overrides);
 
   return (
-    <LocaleProvider initialLocale={locale} overrides={overrides}>
-      <PublicShell>
-        <section className="mx-auto flex max-w-md flex-col items-center gap-4 py-10 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-            <Wrench className="h-7 w-7" aria-hidden />
-          </span>
-          <h1 className="text-xl font-semibold text-foreground">{t("We'll be back soon")}</h1>
-          <p className="whitespace-pre-line text-sm text-muted-foreground">{platform.maintenance.message}</p>
+    <StatePage
+      icon={<Wrench />}
+      tone="warning"
+      reference={t("Scheduled maintenance")}
+      title={`${BRAND_NAME} ${t("is getting an upgrade")}`}
+      description={t("Your data is safe and you can still read everything. Changes are paused for a short while so nothing gets lost.")}
+      actions={
+        <>
+          <Button size="xl" asChild>
+            <Link href="/maintenance">
+              <RefreshCw />
+              {t("Check again")}
+            </Link>
+          </Button>
           {platform.supportEmail && (
-            <p className="text-sm text-muted-foreground">
-              {t("Questions? Write to")}{" "}
-              <a href={`mailto:${platform.supportEmail}`} className="font-medium text-foreground underline">
-                {platform.supportEmail}
+            <Button size="xl" variant="secondary" asChild>
+              <a href={`mailto:${platform.supportEmail}`}>
+                <Mail />
+                {t("Write to support")}
               </a>
-            </p>
+            </Button>
           )}
-          <Link href="/maintenance" className="mt-2 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted">
-            {t("Check again")}
-          </Link>
-        </section>
-      </PublicShell>
-    </LocaleProvider>
+        </>
+      }
+    >
+      {platform.maintenance.message && (
+        <Card className="mt-2 w-full max-w-3xl text-left">
+          <span className="text-caption font-bold text-ink-muted uppercase">{t("Message from the team")}</span>
+          <p className="mt-2 text-body leading-relaxed whitespace-pre-line text-ink-2">{platform.maintenance.message}</p>
+        </Card>
+      )}
+    </StatePage>
   );
 }

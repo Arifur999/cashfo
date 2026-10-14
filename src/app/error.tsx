@@ -1,8 +1,10 @@
 "use client";
 
-import { ServerCrash } from "lucide-react";
+import { CircleAlert, House, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useSyncExternalStore } from "react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
+import StatePage from "@/components/smartly/StatePage";
 import { LOCALE_COOKIE } from "@/lib/i18n/localeCookie";
 import { translate, type Locale } from "@/lib/i18n/translate";
 
@@ -25,13 +27,28 @@ export default function RootError({ error, retry }: { error: Error & { digest?: 
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4 text-center">
-      <ServerCrash className="size-10 text-destructive" aria-hidden="true" />
-      <h1 className="text-lg font-semibold text-foreground">{t("Something went wrong")}</h1>
-      <p className="max-w-md text-sm text-muted-foreground">{t("The server may be temporarily unavailable. Please try again in a moment.")}</p>
-      <Button onClick={() => retry()} className="mt-2">
-        {t("Try again")}
-      </Button>
-    </div>
+    <StatePage
+      icon={<CircleAlert />}
+      tone="expense"
+      reference={error.digest ? `${t("Error reference")}: ${error.digest}` : undefined}
+      title={t("Something went wrong on our side")}
+      description={t("Nothing you entered was lost. Try again in a moment; if it keeps happening, send us the reference above and we will look into it.")}
+      actions={
+        <>
+          <Button size="xl" onClick={() => retry()}>
+            <RefreshCw />
+            {t("Try again")}
+          </Button>
+          <Button size="xl" variant="secondary" asChild>
+            <Link href="/">
+              <House />
+              {t("Go to Home")}
+            </Link>
+          </Button>
+        </>
+      }
+    >
+      <span className="text-small text-ink-muted">{t("Saved transactions stay saved. Anything you were typing may need to be entered again.")}</span>
+    </StatePage>
   );
 }
