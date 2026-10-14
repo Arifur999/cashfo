@@ -15,6 +15,8 @@ import { ContactFormModal } from "./ContactFormModal";
 interface ContactsPageClientProps {
   businessId: string;
   contacts: Contact[];
+  page: number;
+  totalPages: number;
   canManage: boolean;
   currency: string;
 }
@@ -27,7 +29,7 @@ const FILTER_PILLS: { value: ContactType | ""; label: string }[] = [
   { value: "OTHER", label: "Others" },
 ];
 
-export function ContactsPageClient({ businessId, contacts, canManage, currency }: ContactsPageClientProps) {
+export function ContactsPageClient({ businessId, contacts, page, totalPages, canManage, currency }: ContactsPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
@@ -43,6 +45,8 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
     const next = new URLSearchParams(searchParams.toString());
     if (value) next.set(key, value);
     else next.delete(key);
+    // A new filter or search starts from its first page.
+    if (key !== "page") next.delete("page");
     router.push(`/contacts?${next.toString()}`);
   }
 
@@ -201,6 +205,31 @@ export function ContactsPageClient({ businessId, contacts, canManage, currency }
             );
           })}
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-3 text-sm text-neutral-500">
+            <span>
+              {t("Page")} {page} {t("of")} {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => updateParam("page", String(page - 1))}
+                className="rounded-lg border border-neutral-200 px-3 py-1.5 hover:bg-neutral-50 disabled:opacity-40"
+              >
+                {t("Previous")}
+              </button>
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => updateParam("page", String(page + 1))}
+                className="rounded-lg border border-neutral-200 px-3 py-1.5 hover:bg-neutral-50 disabled:opacity-40"
+              >
+                {t("Next")}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <ContactFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingContact={editingContact} />
