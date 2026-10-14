@@ -14,7 +14,7 @@ const CreateTranslationDialog = () => {
       open={open}
       onOpenChange={setOpen}
       title="New string"
-      description="A UI text the end-user app shows, in English and Bangla."
+      description="A text the apps show, matched by its English wording, and the Bangla to show for it."
       trigger={
         <Button size="sm" className="h-8">
           <Plus aria-hidden="true" /> New string
