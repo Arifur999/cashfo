@@ -74,6 +74,11 @@ export function ProfileTab() {
       toast.error(t("Fill in your current and new password"));
       return;
     }
+    // The API's rules, checked here so the reason shows before sending.
+    if (newPassword.length < 8 || newPassword.length > 128 || !/[A-Za-z]/.test(newPassword) || !/d/.test(newPassword)) {
+      toast.error(t("Use 8 to 128 characters, with at least one letter and one number"));
+      return;
+    }
     if (newPassword !== confirmPassword) {
       toast.error(t("New password and confirmation don't match"));
       return;
@@ -81,7 +86,8 @@ export function ProfileTab() {
     startPasswordTransition(async () => {
       const result = await changePasswordAction({ currentPassword, newPassword });
       if (result.success) {
-        toast.success(t("Password updated"));
+        // The API signs every other device out; this one stays signed in.
+        toast.success(t("Password updated -- your other devices were signed out"));
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
