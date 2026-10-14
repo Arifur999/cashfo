@@ -1,6 +1,7 @@
 import "server-only";
 import axios from "axios";
 import { getClientHeaders } from "@/lib/axios/clientHeaders";
+import { toSafeApiError } from "@/lib/axios/safeApiError";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { API_BASE_URL } from "./api";
 
@@ -28,3 +29,8 @@ customerApi.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// A failed call rejects with a copy that keeps the status and the API's answer
+// but not the request config -- its headers hold the access token, and an
+// error that escapes into a render or a Server Action is logged whole.
+customerApi.interceptors.response.use(undefined, (error: unknown) => Promise.reject(toSafeApiError(error)));
