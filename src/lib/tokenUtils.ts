@@ -42,14 +42,66 @@ export const setAuthCookies = async (accessToken: string, refreshToken: string) 
   await setTokenInCookies(REFRESH_TOKEN_COOKIE, refreshToken, REFRESH_TOKEN_MAX_AGE_SECONDS);
 };
 
-// Also better-auth's own cookies from a Google sign-in. Its session ended
-// with the backend logout; this just leaves nothing stale behind.
+// Also better-auth's own cookies from a Google sign-in, the workspace
+// unlocks and a waiting admin session. That session ended with the backend
+// logout; this just leaves nothing stale behind.
 export const clearAuthCookies = async () => {
   await deleteCookie(ACCESS_TOKEN_COOKIE);
   await deleteCookie(REFRESH_TOKEN_COOKIE);
-  await deleteCookiesWhere(isBetterAuthCookie);
+  await deleteCookiesWhere((name) => isBetterAuthCookie(name) || isWorkspaceUnlockCookie(name));
+  await clearStashedAdminSession();
 };
 
 export const getAccessToken = () => getCookie(ACCESS_TOKEN_COOKIE);
 
 export const getRefreshToken = () => getCookie(REFRESH_TOKEN_COOKIE);
+
+// A PIN-locked workspace opens with the unlock its PIN earns (backend:
+// POST /api/businesses/:id/verify-pin), one cookie per workspace. The
+// customer API client sends it with that workspace's requests.
+const WORKSPACE_UNLOCK_COOKIE_PREFIX = "workspaceUnlock_";
+// The backend's WORKSPACE_UNLOCK_TTL_SECONDS.
+const WORKSPACE_UNLOCK_MAX_AGE_SECONDS = 12 * 60 * 60;
+
+const workspaceUnlockCookie = (businessId: string) => `${WORKSPACE_UNLOCK_COOKIE_PREFIX}${businessId}`;
+const isWorkspaceUnlockCookie = (name: string) => name.startsWith(WORKSPACE_UNLOCK_COOKIE_PREFIX);
+
+export const setWorkspaceUnlock = (businessId: string, unlockToken: string) =>
+  setTokenInCookies(workspaceUnlockCookie(businessId), unlockToken, WORKSPACE_UNLOCK_MAX_AGE_SECONDS);
+
+export const getWorkspaceUnlock = (businessId: string) => getCookie(workspaceUnlockCookie(businessId));
+
+export const clearWorkspaceUnlock = (businessId: string) => deleteCookie(workspaceUnlockCookie(businessId));
+
+// Whether this device holds a live unlock for the workspace: unexpired and
+// made in the current session. Decoded only, like everything here -- the
+// backend checks the signature and the PIN it was made with.
+export const hasWorkspaceUnlock = async (businessId: string): Promise<boolean> => {
+  const [unlockToken, accessToken] = await Promise.all([getWorkspaceUnlock(businessId), getAccessToken()]);
+  if (!unlockToken || !accessToken || getTokenSecondsRemaining(unlockToken) <= 0) {
+    return false;
+  }
+  const sessionId = jwtUtils.decodeToken(accessToken)?.sid;
+  return typeof sessionId === "string" && jwtUtils.decodeToken(unlockToken)?.sid === sessionId;
+};
+
+// "View as customer": while a super admin's cookies hold a customer's
+// tokens, the admin's own refresh token waits here, with the customer it is
+// about, so ending the view puts them back in the admin panel.
+const STASHED_ADMIN_REFRESH_COOKIE = "viewAsAdminRefreshToken";
+const VIEWED_OWNER_COOKIE = "viewAsOwnerId";
+
+export const stashAdminSession = async (adminRefreshToken: string, ownerId: string) => {
+  await setTokenInCookies(STASHED_ADMIN_REFRESH_COOKIE, adminRefreshToken, REFRESH_TOKEN_MAX_AGE_SECONDS);
+  await setCookie(VIEWED_OWNER_COOKIE, ownerId, getTokenSecondsRemaining(adminRefreshToken) || REFRESH_TOKEN_MAX_AGE_SECONDS);
+};
+
+export const getStashedAdminSession = async (): Promise<{ refreshToken: string; ownerId: string } | null> => {
+  const [refreshToken, ownerId] = await Promise.all([getCookie(STASHED_ADMIN_REFRESH_COOKIE), getCookie(VIEWED_OWNER_COOKIE)]);
+  return refreshToken && ownerId ? { refreshToken, ownerId } : null;
+};
+
+export const clearStashedAdminSession = async () => {
+  await deleteCookie(STASHED_ADMIN_REFRESH_COOKIE);
+  await deleteCookie(VIEWED_OWNER_COOKIE);
+};

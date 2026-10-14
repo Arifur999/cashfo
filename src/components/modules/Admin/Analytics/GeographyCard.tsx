@@ -2,14 +2,23 @@ import HorizontalBarList from "@/components/shared/charts/HorizontalBarList";
 import SectionCard from "@/components/shared/SectionCard";
 import type { IGeography } from "@/types/analytics.types";
 
-// Top cities by distinct users.
+// Top countries by distinct customers, from where they sign in. The API
+// geolocates offline with MaxMind's GeoLite2 data, whose licence (CC BY-SA
+// 4.0) asks for the credit below.
 const GeographyCard = ({ data }: { data: IGeography }) => {
   return (
-    <SectionCard title="Top Cities" tooltip="Cities with the most distinct users, from location-tagged activity.">
+    <SectionCard title="Top Countries" tooltip="Countries with the most distinct customers, by sign-in address. Private networks count as Unknown.">
       <HorizontalBarList
-        items={data.cities.slice(0, 10).map((entry) => ({ label: `${entry.city}, ${entry.country}`, value: entry.userCount, unit: "users" }))}
-        emptyMessage="No location data yet -- activity isn't geolocated."
+        items={data.countries.slice(0, 10).map((entry) => ({ label: entry.country, value: entry.userCount, unit: "users" }))}
+        emptyMessage="No sign-ins yet."
       />
+      <p className="mt-4 text-xs text-muted-foreground">
+        Country data: GeoLite2 by{" "}
+        <a href="https://www.maxmind.com" target="_blank" rel="noopener noreferrer" className="underline">
+          MaxMind
+        </a>
+        .
+      </p>
     </SectionCard>
   );
 };

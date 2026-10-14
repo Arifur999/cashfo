@@ -6,16 +6,14 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import { BalanceStatCard } from "@/components/modules/Customer/Balance/BalanceStatCard";
 import { formatCurrency } from "@/lib/customer/currency";
-import { getLocale } from "@/lib/i18n/locale";
-import { translate } from "@/lib/i18n/translate";
+import { getTranslator } from "@/lib/i18n/locale";
 
 // "Overview" is specifically about money accounts (cash/bank/mfs) --
 // the full Chart of Accounts (Income/Expense/Equity included) lives at
 // Wallet's sibling, the /accounts page, still reachable but not directly
 // linked from this sidebar group.
 export default async function BalanceOverviewPage() {
-  const locale = await getLocale();
-  const t = (key: string) => translate(locale, key);
+  const { locale, t } = await getTranslator();
 
   const user = await getCurrentUser();
   if (!user) redirect("/login");

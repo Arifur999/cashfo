@@ -2,7 +2,7 @@ import "server-only";
 import axios from "axios";
 import { getClientHeaders } from "@/lib/axios/clientHeaders";
 import { toSafeApiError } from "@/lib/axios/safeApiError";
-import { getAccessToken } from "@/lib/tokenUtils";
+import { getAccessToken, getWorkspaceUnlock } from "@/lib/tokenUtils";
 import { API_BASE_URL } from "./api";
 
 // The customer app's way to the API -- every reader and action goes through
@@ -13,12 +13,21 @@ import { API_BASE_URL } from "./api";
 //     a busy minute emptied everyone's pages.
 //   * carries the signed-in customer's access token (a caller that sets its
 //     own Authorization keeps it).
+//   * carries the unlock of the PIN-locked workspace it reads, if this
+//     device has one; without it the API answers 423.
 //   * gives up after 30 seconds, so a wedged API ends in the error screen
 //     instead of a spinner that never stops.
 export const customerApi = axios.create({ baseURL: API_BASE_URL, timeout: 30_000 });
 
+const WORKSPACE_PATH = /\/api\/businesses\/([^/?#]+)/;
+
 customerApi.interceptors.request.use(async (config) => {
-  const [accessToken, client] = await Promise.all([getAccessToken(), getClientHeaders()]);
+  const businessId = WORKSPACE_PATH.exec(config.url ?? "")?.[1];
+  const [accessToken, client, workspaceUnlock] = await Promise.all([
+    getAccessToken(),
+    getClientHeaders(),
+    businessId ? getWorkspaceUnlock(businessId) : undefined,
+  ]);
   for (const [name, value] of Object.entries(client)) {
     if (!config.headers.has(name)) {
       config.headers.set(name, value);
@@ -26,6 +35,9 @@ customerApi.interceptors.request.use(async (config) => {
   }
   if (accessToken && !config.headers.has("Authorization")) {
     config.headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+  if (workspaceUnlock) {
+    config.headers.set("x-workspace-unlock", workspaceUnlock);
   }
   return config;
 });

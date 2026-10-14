@@ -1,6 +1,6 @@
 import { isAxiosError } from "axios";
 import { redirect } from "next/navigation";
-import { MAINTENANCE_ROUTE } from "@/lib/authUtils";
+import { CUSTOMER_HOME_ROUTE, MAINTENANCE_ROUTE, unlockWorkspaceRoute } from "@/lib/authUtils";
 import { logServiceError } from "@/lib/axios/logServiceError";
 import { toRenderSafeError } from "@/lib/axios/renderSafeError";
 
@@ -21,6 +21,12 @@ export function emptyUnlessOutage<T>(error: unknown, empty: T): T {
   // that says so: show the maintenance page, not the error screen.
   if (isAxiosError(error) && error.response?.status === 503 && (error.response.data as { maintenance?: boolean } | undefined)?.maintenance) {
     redirect(MAINTENANCE_ROUTE);
+  }
+  // A PIN-locked workspace this device has no (or an outdated) unlock for:
+  // its PIN screen.
+  if (isAxiosError(error) && error.response?.status === 423) {
+    const businessId = (error.response.data as { businessId?: unknown } | undefined)?.businessId;
+    redirect(typeof businessId === "string" ? unlockWorkspaceRoute(businessId) : CUSTOMER_HOME_ROUTE);
   }
   logServiceError("Error reading from the API", error);
   // Into the page's render: never the AxiosError and the token it carries.

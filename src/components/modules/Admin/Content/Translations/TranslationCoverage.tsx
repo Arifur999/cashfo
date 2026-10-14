@@ -19,7 +19,7 @@ const TranslationCoverage = () => {
       items={[
         { title: "Strings", value: formatNumber(total), iconName: "FileText" },
         { title: "Bangla Coverage", value: formatPercent(coverage, 0), iconName: "BarChart3" },
-        { title: "Missing Bangla", value: formatNumber(missing), iconName: "AlertTriangle", description: "Shown in English until translated" },
+        { title: "Missing Bangla", value: formatNumber(missing), iconName: "AlertTriangle", description: "The app's own text shows until translated" },
       ]}
     />
   );

@@ -4,8 +4,7 @@ import { JournalEntryForm } from "@/components/modules/Customer/Transactions/Jou
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAccounts } from "@/lib/customer/accounts";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { getLocale } from "@/lib/i18n/locale";
-import { translate } from "@/lib/i18n/translate";
+import { getTranslator } from "@/lib/i18n/locale";
 import type { Account } from "@/lib/customer/api";
 
 function flatten(groups: { accounts: Account[] }[]): Account[] {
@@ -31,8 +30,7 @@ export default async function AdvancedJournalEntryPage() {
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
 
-  const locale = await getLocale();
-  const t = (key: string) => translate(locale, key);
+  const { t } = await getTranslator();
 
   const groups = await getAccounts(activeBusinessId);
   const accounts = flatten(groups).filter((a) => a.status === "ACTIVE");

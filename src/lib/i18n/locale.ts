@@ -4,9 +4,17 @@
 // LocaleProvider.tsx writes the cookie this reads.
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE } from "./localeCookie";
-import type { Locale } from "./translate";
+import { getTranslationOverrides } from "./overrides";
+import { translate, type Locale } from "./translate";
 
 export async function getLocale(): Promise<Locale> {
   const stored = (await cookies()).get(LOCALE_COOKIE)?.value;
   return stored === "bn" ? "bn" : "en";
+}
+
+// For Server Components that render text themselves: the reader's language
+// and the admin-edited Bangla, as one t().
+export async function getTranslator(): Promise<{ locale: Locale; t: (key: string) => string }> {
+  const [locale, overrides] = await Promise.all([getLocale(), getTranslationOverrides()]);
+  return { locale, t: (key: string) => translate(locale, key, overrides) };
 }

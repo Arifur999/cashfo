@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE_SECONDS } from "./localeCookie";
-import { translate as translateTo, type Locale } from "./translate";
+import { translate as translateTo, type Locale, type TranslationOverrides } from "./translate";
 
 export type { Locale };
 
@@ -32,10 +32,12 @@ interface LocaleProviderProps {
   // first render already matches what Server Components rendered -- no
   // flash of English for a Bangla reader.
   initialLocale?: Locale;
+  // The admin-edited Bangla (getTranslationOverrides() in overrides.ts).
+  overrides?: TranslationOverrides;
   children: React.ReactNode;
 }
 
-export function LocaleProvider({ initialLocale = "en", children }: LocaleProviderProps) {
+export function LocaleProvider({ initialLocale = "en", overrides, children }: LocaleProviderProps) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const router = useRouter();
 
@@ -54,7 +56,7 @@ export function LocaleProvider({ initialLocale = "en", children }: LocaleProvide
     router.refresh();
   }, [locale, router]);
 
-  const translate = useCallback((key: string) => translateTo(locale, key), [locale]);
+  const translate = useCallback((key: string) => translateTo(locale, key, overrides), [locale, overrides]);
   const value = useMemo(() => ({ locale, toggleLocale, translate, t: translate }), [locale, toggleLocale, translate]);
 
   return (

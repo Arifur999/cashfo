@@ -41,6 +41,8 @@ export interface CurrentUser {
   preferredLanguage: LanguagePreference;
   emailVerifiedAt: string | null;
   businesses: UserBusiness[];
+  // Set when this is a super admin's read-only "View as customer" session.
+  impersonatedBy?: { name: string; email: string | null } | null;
 }
 
 // Settings > Security > Device Management. isCurrent is a best-effort
