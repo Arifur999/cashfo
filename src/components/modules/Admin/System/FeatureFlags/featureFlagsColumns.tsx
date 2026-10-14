@@ -20,6 +20,12 @@ export const buildFeatureFlagsColumns = (planNames: Map<string, string>): Column
         <p className="font-medium text-foreground">{row.original.name}</p>
         <p className="font-mono text-xs text-muted-foreground">{row.original.key}</p>
         {row.original.description && <p className="text-xs whitespace-normal text-muted-foreground">{row.original.description}</p>}
+        {/* Whether toggling it does anything yet. */}
+        {row.original.usedFor ? (
+          <Badge variant="secondary" className="mt-1">{row.original.usedFor}</Badge>
+        ) : (
+          <Badge variant="outline" className="mt-1 text-muted-foreground">Not used by the app yet</Badge>
+        )}
       </div>
     ),
     meta: { exportValue: (row) => `${row.name} (${row.key})` },

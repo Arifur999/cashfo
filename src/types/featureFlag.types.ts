@@ -11,6 +11,9 @@ export interface IFeatureFlag {
   targetPlanIds: string[];
   updatedAt: string;
   updatedBy: string | null;
+  // What switching it changes in the app, or null for a key no code reads
+  // yet (toggling it then changes nothing).
+  usedFor?: string | null;
 }
 
 export interface ICreateFeatureFlagPayload {
