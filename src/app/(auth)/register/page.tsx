@@ -19,7 +19,7 @@ const RegisterPage = async ({ searchParams }: PageProps<"/register">) => {
     <>
       <AuthHeading title="Create your account" subtitle="Start managing your money in minutes" />
       {referralCode && <InviteCodeNotice code={referralCode} />}
-      <GoogleSignInButton />
+      <GoogleSignInButton referralCode={referralCode} />
       <OrDivider />
       <RegisterForm referralCode={referralCode} />
       <AuthFooterPrompt prompt="Already have an account?" linkLabel="Sign in" href={LOGIN_ROUTE} />

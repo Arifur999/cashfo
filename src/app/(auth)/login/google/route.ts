@@ -9,7 +9,9 @@ import { exchangeSession } from "@/services/auth.services";
 // the admin panel or the customer app -- or goes back to the login page
 // saying what went wrong.
 export const GET = async (request: NextRequest) => {
-  const result = await exchangeSession(request.headers);
+  // The invite code a Google sign-up began with on /register?ref=.
+  const referralCode = request.nextUrl.searchParams.get("ref")?.trim().slice(0, 64) || undefined;
+  const result = await exchangeSession(request.headers, referralCode);
   if (!result.ok) {
     redirect(`${LOGIN_ROUTE}?error=${result.reason}`);
   }

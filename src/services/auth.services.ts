@@ -42,7 +42,9 @@ export type SessionExchangeResult = { ok: true; session: ISignInResponse } | { o
 // session cookie its callback just set, and gets the usual token pair back,
 // bound to that same session, for whichever side the account belongs to.
 // Never throws -- the caller only needs to know where to send the browser.
-export const exchangeSession = async (requestHeaders: Pick<Headers, "get">): Promise<SessionExchangeResult> => {
+// referralCode: the invite code a Google sign-up started with (?ref=); the
+// API credits it only when this sign-in creates the account.
+export const exchangeSession = async (requestHeaders: Pick<Headers, "get">, referralCode?: string): Promise<SessionExchangeResult> => {
   const cookie = betterAuthCookies(requestHeaders.get("cookie"));
   if (!cookie) {
     return { ok: false, reason: "failed" };
@@ -51,7 +53,7 @@ export const exchangeSession = async (requestHeaders: Pick<Headers, "get">): Pro
   try {
     const response = await axios.post<ISignInResponse>(
       `${API_BASE_URL}/api/auth/session/sign-in`,
-      {},
+      referralCode ? { referralCode } : {},
       { headers: { Cookie: cookie, ...clientHeaders(requestHeaders) } },
     );
     return { ok: true, session: response.data };
