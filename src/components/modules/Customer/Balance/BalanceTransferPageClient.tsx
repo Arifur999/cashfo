@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { BalanceStatCard } from "./BalanceStatCard";
-import { TransferModal } from "@/components/modules/Customer/QuickEntry/TransferModal";
+import { TransactionDrawer } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import type { Transaction } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
@@ -246,7 +246,7 @@ export function BalanceTransferPageClient({ businessId, transfers, currency, can
           </div>
       </div>
 
-      <TransferModal open={modalOpen} onClose={() => setModalOpen(false)} businessId={businessId} />
+      <TransactionDrawer open={modalOpen} onClose={() => setModalOpen(false)} businessId={businessId} currency={currency} initialKind="TRANSFER" />
     </div>
   );
 }

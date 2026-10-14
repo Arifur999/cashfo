@@ -9,6 +9,18 @@ export interface CategoryMeta {
   color: string;
 }
 
+// An entry's categoryId holds the category's NAME (the quick-entry API
+// stores the label), so the index answers to the name as well as the id.
+export function categoryIndex(categories: { id: string; name: string; icon: string | null; color: string }[]): Record<string, CategoryMeta> {
+  const index: Record<string, CategoryMeta> = {};
+  for (const category of categories) {
+    const meta = { name: category.name, icon: category.icon, color: category.color };
+    index[category.id] = meta;
+    index[category.name] = meta;
+  }
+  return index;
+}
+
 export interface TransactionRow {
   transaction: Transaction;
   // What the row is called: the note, else the category, else the type.

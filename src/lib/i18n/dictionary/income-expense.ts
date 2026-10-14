@@ -183,4 +183,20 @@ export const incomeExpenseDictionary: Record<string, string> = {
   Equity: "মূলধন",
   "Income category": "আয়ের ক্যাটাগরি",
   "Expense category": "খরচের ক্যাটাগরি",
+
+  // The New transaction drawer (TransactionDrawer)
+  "Save income": "আয় সংরক্ষণ",
+  "Save expense": "খরচ সংরক্ষণ",
+  has: "-এ আছে",
+  "left after this": "এটির পর বাকি থাকবে",
+  "left this month.": "এই মাসে বাকি।",
+  "After this,": "এটির পর",
+  "will be left.": "বাকি থাকবে।",
+  "More…": "আরও…",
+  "add one under Budget": "বাজেটে একটি যোগ করুন",
+  "Weekly groceries": "সাপ্তাহিক বাজার",
+  "Save & add another": "সংরক্ষণ করে আরেকটি",
+  "after this": "এটির পর",
+  "No wallet yet": "এখনো ওয়ালেট নেই",
+  "Failed to add income": "আয় যোগ করতে ব্যর্থ হয়েছে",
 };

@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type BudgetCategory, type BudgetCategoryType } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type BudgetCategory, type BudgetCategoryType, type BudgetOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -9,10 +9,9 @@ import { customerApi } from "./apiClient";
 // business's custom categories in its Category dropdown) can't call
 // lib/budgets.ts's getBudgetOverview() directly -- that's a plain
 // server-only module (next/headers-based cookie read), not a Server Action.
-export async function getBudgetCategoryNamesAction(
-  businessId: string,
-  type: BudgetCategoryType = "EXPENSE",
-): Promise<Pick<BudgetCategory, "id" | "name" | "icon" | "color">[]> {
+export type BudgetCategoryName = Pick<BudgetCategory, "id" | "name" | "icon" | "color">;
+
+export async function getBudgetCategoryNamesAction(businessId: string, type: BudgetCategoryType = "EXPENSE"): Promise<BudgetCategoryName[]> {
   try {
     const res = await customerApi.get<Pick<BudgetCategory, "id" | "name" | "icon" | "color">[]>(
       `${API_BASE_URL}/api/businesses/${businessId}/budget/categories`,
@@ -21,6 +20,17 @@ export async function getBudgetCategoryNamesAction(
     return res.data;
   } catch {
     return [];
+  }
+}
+
+// The month's budget for the New transaction drawer's "left this month"
+// hint; null when it can't be read, and the hint simply stays off.
+export async function getBudgetOverviewAction(businessId: string, month: number, year: number): Promise<BudgetOverview | null> {
+  try {
+    const res = await customerApi.get<BudgetOverview>(`${API_BASE_URL}/api/businesses/${businessId}/budget`, { headers: await authHeaders(), params: { month, year, type: "EXPENSE" } });
+    return res.data;
+  } catch {
+    return null;
   }
 }
 

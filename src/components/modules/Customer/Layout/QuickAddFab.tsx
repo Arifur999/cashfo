@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
-import { AddTransactionModal } from "@/components/modules/Customer/QuickEntry/AddTransactionModal";
+import { TransactionDrawer } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // The floating + on phones, bottom right, opening New transaction. On
@@ -25,7 +25,7 @@ export function QuickAddFab() {
       >
         <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
       </button>
-      <AddTransactionModal open={open} onClose={() => setOpen(false)} businessId={activeBusinessId} currency={activeBusiness?.currency ?? "BDT"} />
+      <TransactionDrawer open={open} onClose={() => setOpen(false)} businessId={activeBusinessId} currency={activeBusiness?.currency ?? "BDT"} />
     </>
   );
 }

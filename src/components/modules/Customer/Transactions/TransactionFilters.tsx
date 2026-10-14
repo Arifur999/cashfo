@@ -87,7 +87,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
       <NativeSelect size="sm" value={categoryId} onChange={(event) => update({ categoryId: event.target.value })} aria-label={t("Category")} className="font-medium">
         <option value="">{t("All categories")}</option>
         {categories.map((category) => (
-          <option key={category.id} value={category.id}>
+          <option key={category.id} value={category.name}>
             {category.name}
           </option>
         ))}
@@ -246,7 +246,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
           </Chip>
           {categoryId && (
             <Chip tone="mint" className="font-semibold">
-              {categories.find((c) => c.id === categoryId)?.name}
+              {categoryId}
             </Chip>
           )}
         </div>

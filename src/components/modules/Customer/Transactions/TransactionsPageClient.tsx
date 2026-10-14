@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, CircleOff, Eye, Plus, Receipt } from "lucide
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createElement, useState } from "react";
-import { AddTransactionModal } from "@/components/modules/Customer/QuickEntry/AddTransactionModal";
+import { TransactionDrawer } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -16,7 +16,7 @@ import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatSignedCurrency } from "@/lib/customer/currency";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { dayHeading, describeTransaction, groupByDay, type CategoryMeta, type TransactionRow } from "@/lib/customer/transactionRows";
+import { categoryIndex, dayHeading, describeTransaction, groupByDay, type TransactionRow } from "@/lib/customer/transactionRows";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { TransactionFilters } from "./TransactionFilters";
@@ -56,8 +56,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   const [addOpen, setAddOpen] = useState(false);
   const [voiding, setVoiding] = useState<TransactionRow | null>(null);
 
-  const categoriesById: Record<string, CategoryMeta> = {};
-  for (const category of categories) categoriesById[category.id] = { name: category.name, icon: category.icon, color: category.color };
+  const categoriesById = categoryIndex(categories);
   const groups = groupByDay(transactions.map((transaction) => describeTransaction(transaction, categoriesById)));
   const filtered = searchParams.toString().replace(/page=\d+&?/, "") !== "";
 
@@ -179,7 +178,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         </>
       )}
 
-      <AddTransactionModal open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} currency={currency} />
+      <TransactionDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} currency={currency} />
       {voiding && (
         <VoidTransactionDialog
           open

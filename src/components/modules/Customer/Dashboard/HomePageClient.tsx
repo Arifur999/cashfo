@@ -4,8 +4,7 @@ import { ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, BookOpen, Box,
 import Link from "next/link";
 import { createElement, useState } from "react";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
-import { AddTransactionModal } from "@/components/modules/Customer/QuickEntry/AddTransactionModal";
-import { TransferModal } from "@/components/modules/Customer/QuickEntry/TransferModal";
+import { TransactionDrawer, type EntryKind } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -36,16 +35,16 @@ const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 export function HomePageClient({ data }: { data: HomeData }) {
   const { t } = useLocale();
   const loansOn = useFeature("loan_management");
-  const [modal, setModal] = useState<"add" | "transfer" | null>(null);
+  const [drawer, setDrawer] = useState<EntryKind | null>(null);
   const { currency } = data;
 
   const actions = (
     <>
-      <Button variant="secondary" size="lg" onClick={() => setModal("transfer")}>
+      <Button variant="secondary" size="lg" onClick={() => setDrawer("TRANSFER")}>
         <ArrowLeftRight />
         {t("Transfer")}
       </Button>
-      <Button size="lg" onClick={() => setModal("add")}>
+      <Button size="lg" onClick={() => setDrawer("EXPENSE")}>
         <Plus strokeWidth={2.25} />
         {t("Add transaction")}
       </Button>
@@ -66,7 +65,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
       />
 
       {data.setup ? (
-        <HomeSetup hasWallet={data.setup.hasWallet} hasTransaction={data.setup.hasTransaction} balance={data.balance} currency={currency} onAddTransaction={() => setModal("add")} />
+        <HomeSetup hasWallet={data.setup.hasWallet} hasTransaction={data.setup.hasTransaction} balance={data.balance} currency={currency} onAddTransaction={() => setDrawer("EXPENSE")} />
       ) : (
         <>
           <HomeHero {...data} />
@@ -312,8 +311,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
         </>
       )}
 
-      <AddTransactionModal open={modal === "add"} onClose={() => setModal(null)} businessId={data.businessId} currency={currency} />
-      <TransferModal open={modal === "transfer"} onClose={() => setModal(null)} businessId={data.businessId} />
+      <TransactionDrawer open={drawer !== null} initialKind={drawer ?? "EXPENSE"} onClose={() => setDrawer(null)} businessId={data.businessId} currency={currency} />
     </PageFrame>
   );
 }

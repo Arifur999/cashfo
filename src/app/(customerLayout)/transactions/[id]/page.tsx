@@ -15,7 +15,7 @@ import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDateTime } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { describeTransaction, type CategoryMeta } from "@/lib/customer/transactionRows";
+import { categoryIndex, describeTransaction } from "@/lib/customer/transactionRows";
 import { getTransaction } from "@/lib/customer/transactions";
 import { getTranslator } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
@@ -49,9 +49,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const currency = activeBusiness?.currency ?? "BDT";
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
-  const categoriesById: Record<string, CategoryMeta> = {};
-  for (const category of [...incomeCategories, ...expenseCategories]) categoriesById[category.id] = { name: category.name, icon: category.icon, color: category.color };
-  const row = describeTransaction(transaction, categoriesById);
+  const row = describeTransaction(transaction, categoryIndex([...incomeCategories, ...expenseCategories]));
   const title = row.title ?? t(TRANSACTION_TYPE_LABELS[transaction.transactionType]);
   const tone = transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   const typeTone = transaction.transactionType === "INCOME" ? "income" : transaction.transactionType === "EXPENSE" ? "expense" : "neutral";
