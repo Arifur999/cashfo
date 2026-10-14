@@ -5,6 +5,7 @@ import { TopBar } from "@/components/modules/Customer/Layout/TopBar";
 import { AuthProvider } from "@/components/modules/Customer/Providers/AuthProvider";
 import { PlatformProvider } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { ThemeProvider } from "@/components/modules/Customer/Providers/ThemeProvider";
+import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/WorkspaceLockScreen";
 import { MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
@@ -12,6 +13,7 @@ import { isFeatureOn } from "@/lib/customer/features";
 import { getPlatform } from "@/lib/customer/platform";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { hasWorkspaceUnlock } from "@/lib/tokenUtils";
 
 // The shell reads cookies (the session, the language), so it must be
 // dynamic -- otherwise it gets statically cached for every customer.
@@ -33,6 +35,23 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   }
 
   const [activeBusinessId, locale] = await Promise.all([resolveActiveBusinessId(user.businesses), getLocale()]);
+
+  // A PIN-locked workspace asks for its PIN first, on whatever page was
+  // opened, and stays on it once it opens.
+  const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
+  if (activeBusiness?.hasPinLock && !(await hasWorkspaceUnlock(activeBusiness.id))) {
+    return (
+      <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>
+        <LocaleProvider initialLocale={locale}>
+          <WorkspaceLockScreen
+            businessId={activeBusiness.id}
+            businessName={activeBusiness.isDefault ? user.name : activeBusiness.name}
+            isOwner={activeBusiness.role === "OWNER"}
+          />
+        </LocaleProvider>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>

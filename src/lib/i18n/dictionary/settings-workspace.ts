@@ -99,6 +99,25 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "Enter PIN:": "পিন লিখুন:",
   Unlock: "আনলক",
 
+  // src/components/workspace/EditWorkspaceModal.tsx -- setting or removing the lock
+  "Set a PIN": "একটি পিন সেট করুন",
+  "Asked before this workspace opens on any device. Leave blank for no PIN.":
+    "যেকোনো ডিভাইসে এই ওয়ার্কস্পেস খোলার আগে পিন চাওয়া হবে। পিন না চাইলে খালি রাখুন।",
+  "Remove the PIN": "পিন সরিয়ে দিন",
+
+  // src/components/workspace/WorkspaceLockScreen.tsx
+  "This workspace is locked. Enter its PIN to open it.": "এই ওয়ার্কস্পেসটি লক করা আছে। খুলতে পিন লিখুন।",
+  "Enter your account password to remove the PIN.": "পিন সরাতে আপনার অ্যাকাউন্টের পাসওয়ার্ড লিখুন।",
+  "Account password": "অ্যাকাউন্টের পাসওয়ার্ড",
+  "Remove PIN": "পিন সরান",
+  "Forgot PIN?": "পিন ভুলে গেছেন?",
+  "Enter PIN instead": "বরং পিন লিখুন",
+  "Ask the workspace owner for the PIN.": "পিনের জন্য ওয়ার্কস্পেসের মালিককে জিজ্ঞাসা করুন।",
+  "Failed to remove the PIN": "পিন সরাতে ব্যর্থ হয়েছে",
+
+  // src/components/Layout/UserMenu.tsx
+  "Lock workspace": "ওয়ার্কস্পেস লক করুন",
+
   // src/components/workspace/WorkspaceSettingsPage.tsx
   "This cannot be undone.": "এটি পূর্বাবস্থায় ফেরানো যাবে না।",
   "Workspace deleted": "ওয়ার্কস্পেস মুছে ফেলা হয়েছে",
