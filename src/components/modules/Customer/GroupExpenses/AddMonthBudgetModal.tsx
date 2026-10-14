@@ -8,6 +8,7 @@ import { createGroupMonthBudgetAction, updateGroupMonthBudgetAction } from "@/li
 import type { GroupMonthlyBudget } from "@/lib/customer/api";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface AddMonthBudgetModalProps {
   open: boolean;
@@ -105,7 +106,7 @@ export function AddMonthBudgetModal({ open, onClose, businessId, editingBudget =
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Monthly Budget")}</label>
           <input
             value={budgetAmount}
-            onChange={(e) => setBudgetAmount(e.target.value)}
+            onChange={(e) => setBudgetAmount(limitMoneyDecimals(e.target.value))}
             type="number"
             step="0.01"
             min={0}

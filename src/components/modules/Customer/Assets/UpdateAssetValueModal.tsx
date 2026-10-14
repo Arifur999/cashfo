@@ -12,6 +12,7 @@ import { updateAssetValueAction } from "@/lib/customer/assetActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface UpdateAssetValueModalProps {
   open: boolean;
@@ -86,7 +87,7 @@ export function UpdateAssetValueModal({ open, onClose, businessId, asset, curren
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("New Value")}</label>
           <input
             value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
+            onChange={(e) => setNewValue(limitMoneyDecimals(e.target.value))}
             type="number"
             step="0.01"
             min={0}

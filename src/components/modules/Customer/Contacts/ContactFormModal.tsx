@@ -9,6 +9,7 @@ import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
 import { contactInitials } from "@/lib/customer/contactDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 // The API's own limit for photos.
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -304,7 +305,7 @@ export function ContactFormModal({ open, onClose, businessId, editingContact }: 
             </div>
             <input
               value={openingBalance}
-              onChange={(e) => setOpeningBalance(e.target.value)}
+              onChange={(e) => setOpeningBalance(limitMoneyDecimals(e.target.value))}
               type="number"
               step="0.01"
               min={0}

@@ -11,6 +11,7 @@ import type { SavingsGoal } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createSavingsTransferAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface SavingsTransferModalProps {
   open: boolean;
@@ -87,7 +88,7 @@ export function SavingsTransferModal({ open, onClose, businessId, goals }: Savin
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <input
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
             type="number"
             step="0.01"
             min={0}

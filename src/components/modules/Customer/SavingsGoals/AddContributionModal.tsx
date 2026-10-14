@@ -12,6 +12,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { addContributionAction, getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface AddContributionModalProps {
   open: boolean;
@@ -140,7 +141,7 @@ export function AddContributionModal({ open, onClose, businessId, goal }: AddCon
           <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Amount")}</label>
           <input
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(limitMoneyDecimals(e.target.value))}
             type="number"
             step="0.01"
             min={0}

@@ -8,6 +8,7 @@ import type { Account, EntryType, TransactionType } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { createTransactionAction } from "@/lib/customer/transactionActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 const TRANSACTION_TYPES: TransactionType[] = ["JOURNAL", "INCOME", "EXPENSE", "TRANSFER", "SALE", "PURCHASE", "PAYMENT"];
 
@@ -137,7 +138,7 @@ export function JournalEntryForm({ businessId, accounts }: JournalEntryFormProps
               type="number"
               step="0.01"
               value={row.amount}
-              onChange={(e) => updateRow(index, { amount: e.target.value })}
+              onChange={(e) => updateRow(index, { amount: limitMoneyDecimals(e.target.value) })}
               placeholder="0.00"
               className="w-32 rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-primary"
             />

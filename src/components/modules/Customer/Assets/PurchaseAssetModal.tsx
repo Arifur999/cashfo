@@ -12,6 +12,7 @@ import { getAssetCategoriesAction, purchaseAssetAction } from "@/lib/customer/as
 import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface PurchaseAssetModalProps {
   open: boolean;
@@ -148,7 +149,7 @@ export function PurchaseAssetModal({ open, onClose, businessId, currency }: Purc
             min="0.01"
             step="0.01"
             value={purchasePrice}
-            onChange={(e) => setPurchasePrice(e.target.value)}
+            onChange={(e) => setPurchasePrice(limitMoneyDecimals(e.target.value))}
             placeholder="0.00"
             className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
           />

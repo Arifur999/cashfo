@@ -8,6 +8,7 @@ import { createAccountAction, updateAccountAction } from "@/lib/customer/account
 import type { Account } from "@/lib/customer/api";
 import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { limitMoneyDecimals } from "@/lib/customer/money";
 
 interface WalletFormModalProps {
   open: boolean;
@@ -106,7 +107,7 @@ export function WalletFormModal({ open, onClose, businessId, editingWallet }: Wa
             </label>
             <input
               value={openingBalance}
-              onChange={(e) => setOpeningBalance(e.target.value)}
+              onChange={(e) => setOpeningBalance(limitMoneyDecimals(e.target.value))}
               type="number"
               step="0.01"
               min="0"
