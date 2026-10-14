@@ -11,7 +11,7 @@ import type { Transaction } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
-import { cancelledLabel } from "@/lib/customer/transactionDisplay";
+import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { toDateInputValue } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -90,7 +90,7 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
               </IconTile>
               <span className="flex min-w-0 flex-col py-2">
                 <span className="flex items-center gap-2 truncate text-body font-semibold text-ink">
-                  {transaction.description || category?.name || t(transaction.transactionType === "TRANSFER" ? "Transfer" : "Transaction")}
+                  {transaction.description || category?.name || t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}
                   {cancelled && (
                     <Chip tone="neutral" size="sm">
                       {t(cancelled)}
