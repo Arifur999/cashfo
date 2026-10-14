@@ -10,6 +10,10 @@ export const RESET_PASSWORD_ROUTE = "/reset-password";
 // Where Google sign-in returns to: trades better-auth's session cookie for
 // the site's own tokens (app/(auth)/login/google/route.ts).
 export const GOOGLE_SIGN_IN_ROUTE = "/login/google";
+// Where customers are sent while maintenance mode is on (app/maintenance).
+export const MAINTENANCE_ROUTE = "/maintenance";
+// The admin-maintained legal pages, readable without an account.
+export const LEGAL_ROUTES = ["/terms", "/privacy", "/refund-policy", "/faq"];
 
 export const ADMIN_HOME_ROUTE = "/admin/dashboard";
 export const CUSTOMER_HOME_ROUTE = "/dashboard";
@@ -26,7 +30,7 @@ export const SESSION_EXPIRED_LOGIN_ROUTE = `${LOGIN_ROUTE}?reason=${SESSION_EXPI
 export const guestOnlyRoutes = [LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROUTE];
 // Open to everyone, signed in or not: a reset link works for whoever opens
 // it, and the Google landing route replaces whatever session was there.
-export const openRoutes = [RESET_PASSWORD_ROUTE, GOOGLE_SIGN_IN_ROUTE];
+export const openRoutes = [RESET_PASSWORD_ROUTE, GOOGLE_SIGN_IN_ROUTE, MAINTENANCE_ROUTE, ...LEGAL_ROUTES];
 
 export const isGuestOnlyRoute = (pathname: string) => guestOnlyRoutes.includes(pathname);
 export const isPublicRoute = (pathname: string) => isGuestOnlyRoute(pathname) || openRoutes.includes(pathname);

@@ -79,6 +79,9 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
         {(field) => <AppPasswordField field={field} label={translate("Confirm password")} autoComplete="new-password" />}
       </form.Field>
 
+      {/* The pages themselves are linked at the foot of every sign-in page. */}
+      <p className="text-xs text-muted-foreground">{translate("By creating an account, you agree to our Terms of Service and Privacy Policy.")}</p>
+
       <FormErrorCallout message={serverError} />
 
       <form.Subscribe selector={(state) => state.isSubmitting}>
