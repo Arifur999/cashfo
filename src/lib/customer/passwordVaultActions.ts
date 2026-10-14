@@ -48,9 +48,26 @@ export async function getVaultStatusAction(): Promise<ActionResult<{ hasVaultPas
   }, "Failed to check vault status");
 }
 
+// First-time setup sends the account password and the new vault password;
+// changing an existing one also needs the current vault password.
 export interface SetVaultPasswordInput {
   currentPassword: string;
   vaultPassword: string;
+  currentVaultPassword?: string;
+}
+
+// "Forgot vault password?": the saved entries are encrypted with the old
+// vault password, so a reset can only start over -- it deletes every entry.
+// `confirm` is the API's guard against doing that by accident.
+export async function resetVaultAction(input: { currentPassword: string; vaultPassword: string }): Promise<ActionResult<{ deletedEntries: number }>> {
+  return callApi(async () => {
+    const res = await customerApi.post<{ success: boolean; deletedEntries: number }>(
+      `${API_BASE_URL}/api/vault/reset`,
+      { ...input, confirm: "DELETE_ALL_ENTRIES" },
+      { headers: await authHeaders() },
+    );
+    return { deletedEntries: res.data.deletedEntries };
+  }, "Failed to reset the vault");
 }
 
 export async function setVaultPasswordAction(input: SetVaultPasswordInput): Promise<ActionResult> {
