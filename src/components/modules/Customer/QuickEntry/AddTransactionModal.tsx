@@ -17,21 +17,23 @@ import { getAppToday } from "@/lib/date";
 import { NoWalletHint } from "./NoWalletHint";
 import { limitMoneyDecimals } from "@/lib/customer/money";
 
+type EntryKind = "EXPENSE" | "INCOME";
+
 interface AddTransactionModalProps {
   open: boolean;
   onClose: () => void;
   businessId: string;
   currency: string;
+  // Which tab is open when the modal opens (the Add menu picks Income).
+  initialKind?: EntryKind;
 }
-
-type EntryKind = "EXPENSE" | "INCOME";
 
 // One form covering both Income and Expense (Transfer already has its own
 // dedicated flow at /balance/transfer, reachable from the sidebar, so it
 // isn't a third tab here). Switching the tab swaps which category list and
 // which account-picker label apply, rather than mounting two separate forms,
 // so the amount/date/notes the user already typed survive a tab switch.
-export function AddTransactionModal({ open, onClose, businessId, currency }: AddTransactionModalProps) {
+export function AddTransactionModal({ open, onClose, businessId, currency, initialKind = "EXPENSE" }: AddTransactionModalProps) {
   const { t } = useLocale();
   const router = useRouter();
   const [kind, setKind] = useState<EntryKind>("EXPENSE");
@@ -60,7 +62,7 @@ export function AddTransactionModal({ open, onClose, businessId, currency }: Add
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setKind("EXPENSE");
+      setKind(initialKind);
       setAmount("");
       setDate(getAppToday());
       setCategory("");

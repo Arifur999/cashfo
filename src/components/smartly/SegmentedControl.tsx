@@ -15,28 +15,28 @@ export interface SegmentOption<T extends string> {
 const VARIANTS = {
   // The EN / বাংলা switch: a pill with a white thumb.
   pill: {
-    group: "rounded-full bg-surface-sunken p-[3px]",
-    item: "h-[34px] rounded-full px-3 text-small font-semibold",
+    group: "rounded-full bg-surface-sunken p-0.75",
+    item: "h-8.5 rounded-full px-3 text-small font-semibold",
     on: "bg-surface text-ink shadow-[0_1px_2px_rgba(14,26,22,0.08)] dark:bg-surface-raised dark:shadow-[0_0_0_1px_var(--line)]",
     off: "text-ink-2 hover:text-ink",
   },
   // Filter tabs inside a toolbar.
   tabs: {
-    group: "rounded-md bg-surface-sunken p-[3px]",
+    group: "rounded-md bg-surface-sunken p-0.75",
     item: "h-8 rounded-sm px-3 text-small font-medium",
     on: "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(11,61,46,0.14)] dark:bg-surface-raised",
     off: "text-ink-2 hover:text-ink",
   },
   // Period tabs on white: the chosen one goes forest.
   solid: {
-    group: "rounded-md border border-line bg-surface p-[3px]",
+    group: "rounded-md border border-line bg-surface p-0.75",
     item: "h-8 rounded-sm px-3 text-small font-medium",
     on: "bg-forest font-semibold text-white dark:bg-emerald dark:text-on-action",
     off: "text-ink-2 hover:bg-surface-sunken hover:text-ink",
   },
   // On the Night drawer.
   onDark: {
-    group: "rounded-full bg-white/8 p-[3px]",
+    group: "rounded-full bg-white/8 p-0.75",
     item: "h-8 rounded-full px-3 text-small font-semibold",
     on: "bg-white text-ink",
     off: "text-white hover:bg-white/10",

@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { AnnouncementBanner } from "@/components/modules/Customer/Layout/AnnouncementBanner";
+import { AppSidebar } from "@/components/modules/Customer/Layout/AppSidebar";
+import { AppTopbar } from "@/components/modules/Customer/Layout/AppTopbar";
 import { OwnerViewBanner } from "@/components/modules/Customer/Layout/OwnerViewBanner";
-import { Sidebar } from "@/components/modules/Customer/Layout/Sidebar";
-import { TopBar } from "@/components/modules/Customer/Layout/TopBar";
+import { QuickAddFab } from "@/components/modules/Customer/Layout/QuickAddFab";
 import { AuthProvider } from "@/components/modules/Customer/Providers/AuthProvider";
 import { PlatformProvider } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { ThemeProvider } from "@/components/modules/Customer/Providers/ThemeProvider";
+import { TodayTasksProvider } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/WorkspaceLockScreen";
 import { MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
@@ -61,19 +63,23 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
       <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId}>
         <LocaleProvider initialLocale={locale} overrides={overrides}>
           <PlatformProvider value={{ flags: platform.flags, supportEmail: platform.supportEmail }}>
-            <div className="flex h-screen overflow-hidden bg-brand-content">
-              <Sidebar />
-              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
-                <TopBar />
-                {/* The only scrollable region: the sidebar and top bar stay put.
-                    id + tabIndex give the root layout's skip link a target. */}
-                <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
-                  <AnnouncementBanner announcements={platform.announcements} />
-                  {children}
-                </main>
+            <TodayTasksProvider>
+              {/* The Night sidebar on the left; the top bar and the one
+                  scrolling region on the right. */}
+              <div className="flex h-screen overflow-hidden bg-cream">
+                <AppSidebar />
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                  {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
+                  <AppTopbar />
+                  {/* id + tabIndex give the root layout's skip link a target. */}
+                  <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
+                    <AnnouncementBanner announcements={platform.announcements} />
+                    {children}
+                  </main>
+                </div>
               </div>
-            </div>
+              <QuickAddFab />
+            </TodayTasksProvider>
           </PlatformProvider>
         </LocaleProvider>
       </AuthProvider>

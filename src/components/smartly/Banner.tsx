@@ -26,7 +26,7 @@ const Banner = ({ tone = "warning", icon, inline = false, className, children, .
     )}
     {...props}
   >
-    {icon && <span aria-hidden="true" className={cn("flex shrink-0 [&_svg]:size-4", inline && "mt-px [&_svg]:size-[18px]")}>{icon}</span>}
+    {icon && <span aria-hidden="true" className={cn("flex shrink-0 [&_svg]:size-4", inline && "mt-px [&_svg]:size-4.5")}>{icon}</span>}
     <div className="min-w-0 flex-1">{children}</div>
   </div>
 );

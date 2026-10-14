@@ -102,7 +102,7 @@ export const OTHERS_THEME: TrackerTheme = {
 // line, so heroArabic/heroArabicAlign are omitted. No quote-of-the-day either
 // (unlike Book/Skills, whose quote lives in their OWN bespoke Hero component,
 // not this shared TrackerHero) -- To Do is a fast utility opened many times a
-// day, including from the header-less TodayTasksButton popover, so a
+// day, including from the header-less TodayTasksPanel popover, so a
 // rotating quote would show inconsistently and add friction, not value.
 export const TODO_THEME: TrackerTheme = {
   heroGradient: "linear-gradient(135deg, #042f2e 0%, #0f6b5c 46%, #7c2d12 100%)",
