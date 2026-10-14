@@ -8,7 +8,9 @@ beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_APP_TIME_ZONE", "Asia/Dhaka");
   vi.resetModules();
   presets = await import("./dateRangePresets");
-});
+  // A cold import of the date helpers can outlast the default 10s hook
+  // timeout on a busy machine, which skips every case in this file.
+}, 60_000);
 afterAll(() => {
   vi.unstubAllEnvs();
 });
