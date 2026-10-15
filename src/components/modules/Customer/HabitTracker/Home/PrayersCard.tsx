@@ -82,12 +82,13 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
         {PRAYERS.map((item) => {
           const prayed = current ? cellState(current, todayDay, item) === "prayed" : false;
           return (
-            <button key={item} type="button" disabled={!current} onClick={() => toggle(item, !prayed)} aria-pressed={prayed} aria-label={`${t(item)}, ${t(prayed ? "prayed" : "not marked yet")}`} className={cn("flex flex-col gap-2 rounded-md border p-3 text-left transition-colors", prayed ? "border-mint-200 bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
-              <span className={cn("text-small font-semibold", prayed ? "text-emerald" : "text-ink-2")}>{t(item)}</span>
-              <span className={cn("flex h-6.5 items-center gap-1 self-start rounded-full px-2 text-caption font-semibold whitespace-nowrap", prayed ? "bg-emerald text-white" : "bg-surface-sunken text-ink-muted")}>
+            <button key={item} type="button" disabled={!current} onClick={() => toggle(item, !prayed)} aria-pressed={prayed} aria-label={`${t(item)}, ${t(prayed ? "prayed" : "not marked yet")}`} className={cn("flex flex-col gap-2 rounded-md border p-2 text-left transition-colors sm:p-3", prayed ? "border-mint-200 bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
+              <span className={cn("truncate text-small font-semibold", prayed ? "text-emerald" : "text-ink-2")}>{t(item)}</span>
+              <span className={cn("hidden h-6.5 items-center gap-1 self-start rounded-full px-2 text-caption font-semibold whitespace-nowrap sm:flex", prayed ? "bg-emerald text-white" : "bg-surface-sunken text-ink-muted")}>
                 {prayed && <Check className="size-3" strokeWidth={3} aria-hidden="true" />}
                 {t(prayed ? "Prayed" : "Not yet")}
               </span>
+              <span className={cn("flex size-6.5 items-center justify-center rounded-sm sm:hidden", prayed ? "bg-emerald text-white" : "border-[1.5px] border-dashed border-line-strong")}>{prayed && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}</span>
             </button>
           );
         })}

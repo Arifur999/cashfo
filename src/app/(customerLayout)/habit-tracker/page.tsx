@@ -6,6 +6,8 @@ import { getBooksOverview } from "@/lib/customer/books";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
 import { getHabitMonth, getHabits, getHabitsToday, getHabitTrackers } from "@/lib/customer/habits";
 import { getSkillsOverview } from "@/lib/customer/skills";
+import { listFor } from "@/lib/customer/todoDisplay";
+import { getTodoLists } from "@/lib/customer/todos";
 import { getAppToday } from "@/lib/date";
 
 // Habits › Today: the day across every habit feature. Personal
@@ -16,7 +18,7 @@ export default async function HabitsTodayPage() {
 
   const today = getAppToday();
   const month = today.slice(0, 7);
-  const [namaz, habits, todayRows, thisMonth, lastMonth, books, skills, challenges, ramadan] = await Promise.all([
+  const [namaz, habits, todayRows, thisMonth, lastMonth, books, skills, challenges, ramadan, todoLists] = await Promise.all([
     getHabitTrackers("Namaz"),
     getHabits(true),
     getHabitsToday(),
@@ -26,8 +28,9 @@ export default async function HabitsTodayPage() {
     getSkillsOverview(),
     getHabitTrackers("Others"),
     getHabitTrackers("Ramadan"),
+    getTodoLists(),
   ]);
 
-  const data: HabitsHomeData = { today, namaz, habits, todayRows, logs: [...lastMonth.logs, ...thisMonth.logs], books, skills, challenges, ramadan };
+  const data: HabitsHomeData = { today, todayList: listFor(todoLists, today), namaz, habits, todayRows, logs: [...lastMonth.logs, ...thisMonth.logs], books, skills, challenges, ramadan };
   return <HabitsHomePageClient data={data} />;
 }

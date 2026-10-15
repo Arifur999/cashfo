@@ -242,9 +242,9 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
                         </button>
                         <span className={cn("min-w-0 flex-1 truncate text-body font-medium", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
                         {!item.completed && canMoveOn && (
-                          <Button type="button" variant="outline" size="sm" onClick={() => moveOne(item)} disabled={busy.has(item.id)} title={t("Move to tomorrow")} className="h-8 border-line px-3 text-ink-2">
+                          <Button type="button" variant="outline" size="sm" onClick={() => moveOne(item)} disabled={busy.has(item.id)} title={t("Move to tomorrow")} aria-label={`${t("Move to tomorrow")}: ${item.text}`} className="h-8 border-line px-2.5 text-ink-2 sm:px-3">
                             <ArrowRight className="size-3.5" strokeWidth={2.5} />
-                            {t("Tomorrow")}
+                            <span className="hidden sm:inline">{t("Tomorrow")}</span>
                           </Button>
                         )}
                         <DropdownMenu>

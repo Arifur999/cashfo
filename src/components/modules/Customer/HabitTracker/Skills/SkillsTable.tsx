@@ -95,19 +95,20 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
                 <SkillTile icon={skill.icon} color={skill.color} size={30} />
                 <span className="truncate font-semibold">{skill.name}</span>
               </span>
-              <span className="truncate text-ink-2">{skill.source || "—"}</span>
+              <span className="hidden truncate text-ink-2 md:block">{skill.source || "—"}</span>
               <span className="flex items-center gap-3">
                 <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
                   <span className="block h-full rounded-full" style={{ width: `${progressPct(skill)}%`, background: palette.to }} />
                 </span>
                 <span className="text-small whitespace-nowrap text-ink-2 tabular-nums">{progressText(skill, t)}</span>
               </span>
-              <span>
+              <span className="flex items-center gap-2">
                 <Chip tone={STATUS_TONE[skill.status]} size="sm">
                   {t(STATUS_LABEL[skill.status])}
                 </Chip>
+                <span className="text-caption text-ink-muted md:hidden">{lastPractised(skill)}</span>
               </span>
-              <span className="text-ink-2 md:text-right">{lastPractised(skill)}</span>
+              <span className="hidden text-ink-2 md:block md:text-right">{lastPractised(skill)}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
               {MENU[skill.status].map((item) => (

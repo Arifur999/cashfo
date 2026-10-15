@@ -70,7 +70,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
       </div>
 
       <div className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <TodayTasksCard today={today} inputRef={taskField} />
+        <TodayTasksCard today={today} initial={data.todayList} inputRef={taskField} />
         <Last7Card bars={bars} today={today} />
         <StreaksCard rows={streaks} />
       </div>

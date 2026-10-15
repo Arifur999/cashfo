@@ -1,8 +1,9 @@
-import type { BooksOverview, Habit, HabitMonthLog, HabitMonthTracker, HabitToday, SkillsOverview } from "@/lib/customer/api";
+import type { BooksOverview, Habit, HabitMonthLog, HabitMonthTracker, HabitToday, SkillsOverview, TodoList } from "@/lib/customer/api";
 
 // Everything the Today page reads, gathered by the server page in one go.
 export interface HabitsHomeData {
   today: string;
+  todayList: TodoList | null;
   namaz: HabitMonthTracker[];
   habits: Habit[];
   todayRows: HabitToday[];

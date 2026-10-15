@@ -9,13 +9,16 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Input from "@/components/smartly/form/Input";
-import type { TodoItem } from "@/lib/customer/api";
+import type { TodoItem, TodoList } from "@/lib/customer/api";
 import { addTodoItemAction, createTodoListAction, updateTodoItemAction } from "@/lib/customer/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface TodayTasksCardProps {
   today: string;
+  // Today's list as the server rendered it, shown until the shell's own
+  // copy has loaded.
+  initial: TodoList | null;
   // The add box, so the page header's "Add task" can jump to it.
   inputRef: RefObject<HTMLInputElement | null>;
 }
@@ -24,9 +27,11 @@ const SHOWN = 5;
 
 // Today's to-do list, the same copy the top bar shows: what is left first,
 // then what is done, and a box to add one more.
-export function TodayTasksCard({ today, inputRef }: TodayTasksCardProps) {
+export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps) {
   const { t } = useLocale();
-  const { list, loaded, setList } = useTodayTasks();
+  const shell = useTodayTasks();
+  const { loaded, setList } = shell;
+  const list = loaded ? shell.list : initial;
   const [text, setText] = useState("");
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState<Set<string>>(new Set());
@@ -114,7 +119,7 @@ export function TodayTasksCard({ today, inputRef }: TodayTasksCardProps) {
           )}
         </ul>
       ) : (
-        <span className="py-3 text-small text-ink-muted">{loaded ? t("Nothing planned for today. Add the first task below.") : t("Loading...")}</span>
+        <span className="py-3 text-small text-ink-muted">{t("Nothing planned for today. Add the first task below.")}</span>
       )}
       <form onSubmit={add} className="mt-auto flex gap-2 pt-2">
         <Input ref={inputRef} size="sm" value={text} onChange={(event) => setText(event.target.value)} maxLength={200} placeholder={t("Add a task for today…")} aria-label={t("New task for today")} frameClassName="flex-1" />
