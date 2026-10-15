@@ -204,10 +204,54 @@ export function netWorth(parts: NetWorthParts): NetWorth {
 }
 
 // Which part of the net worth is the largest, for the sentence under it.
-export function biggestPart(parts: NetWorthParts): keyof NetWorthParts | null {
+export function biggestPart(parts: NetWorthParts): Exclude<keyof NetWorthParts, "youOwe"> | null {
   const positive = (["wallets", "savings", "assets", "owedToYou"] as const).filter((key) => parts[key] > 0);
   if (positive.length === 0) return null;
   return positive.sort((a, b) => parts[b] - parts[a])[0];
+}
+
+// "2026-10" → "October" / "Oct" in the reader's language. Server and client
+// format the same way, so the month names never mismatch on hydration.
+export function monthName(key: string, locale: "en" | "bn", style: "long" | "short" = "long", withYear = false): string {
+  const [year, month] = key.split("-").map(Number);
+  return new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-US", { month: style, ...(withYear && { year: "numeric" }), timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
+export interface PeriodLabels {
+  // "October 2026", "August–October 2026", "January–October 2026".
+  period: string;
+  // What it is compared with: "September", "May–July", "2025".
+  previous: string;
+  // True when `previous` is a year, so the sentence says "the same months of".
+  previousIsYear: boolean;
+  // Short column headings for the changes table: "Sep" / "Oct", "2025" / "2026".
+  before: string;
+  now: string;
+}
+
+const monthKey = (day: string) => day.slice(0, 7);
+const span = (from: string, to: string, locale: "en" | "bn", style: "long" | "short", withYear: boolean) => {
+  const a = monthName(from, locale, style);
+  const b = monthName(to, locale, style, withYear);
+  return from === to ? b : `${a}–${b}`;
+};
+
+export function periodLabels(range: DayRange, previous: DayRange, period: InsightPeriod, locale: "en" | "bn"): PeriodLabels {
+  const from = monthKey(range.dateFrom);
+  const to = monthKey(range.dateTo);
+  const prevFrom = monthKey(previous.dateFrom);
+  const prevTo = monthKey(previous.dateTo);
+  if (period === "this-year") {
+    const year = (key: string) => new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-US", { year: "numeric", timeZone: "UTC" }).format(new Date(`${key}-01T00:00:00.000Z`));
+    return { period: span(from, to, locale, "long", true), previous: year(prevFrom), previousIsYear: true, before: year(prevFrom), now: year(from) };
+  }
+  return {
+    period: span(from, to, locale, "long", true),
+    previous: span(prevFrom, prevTo, locale, "long", false),
+    previousIsYear: false,
+    before: span(prevFrom, prevTo, locale, "short", false),
+    now: span(from, to, locale, "short", false),
+  };
 }
 
 // The default period for the overview, and the one a URL names.

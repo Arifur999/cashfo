@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CategoryBreakdown, MonthlyBreakdown } from "./api";
-import { biggestDrop, biggestPart, categoryMoves, concentrationNote, insightPeriodFrom, monthRates, monthSpan, netWorth, percentChange, periodTotals, previousRange, rankedRows, rateTrend } from "./insights";
+import { biggestDrop, biggestPart, categoryMoves, concentrationNote, insightPeriodFrom, monthName, monthRates, monthSpan, netWorth, percentChange, periodLabels, periodTotals, previousRange, rankedRows, rateTrend } from "./insights";
 
 const breakdown = (type: "INCOME" | "EXPENSE", rows: [string, number][]): CategoryBreakdown => ({
   type,
@@ -116,6 +116,37 @@ describe("netWorth", () => {
   it("is all green with nothing owed, and has no biggest part when empty", () => {
     expect(netWorth({ wallets: 0, savings: 0, assets: 0, owedToYou: 0, youOwe: 0 }).haveShare).toBe(100);
     expect(biggestPart({ wallets: 0, savings: 0, assets: 0, owedToYou: 0, youOwe: 500 })).toBeNull();
+  });
+});
+
+describe("periodLabels and monthName", () => {
+  it("names the period, what it is compared with, and the two columns", () => {
+    expect(periodLabels({ dateFrom: "2026-10-01", dateTo: "2026-10-15" }, { dateFrom: "2026-09-01", dateTo: "2026-09-30" }, "this-month", "en")).toEqual({
+      period: "October 2026",
+      previous: "September",
+      previousIsYear: false,
+      before: "Sep",
+      now: "Oct",
+    });
+    expect(periodLabels({ dateFrom: "2026-08-01", dateTo: "2026-10-15" }, { dateFrom: "2026-05-01", dateTo: "2026-07-31" }, "last-3-months", "en")).toEqual({
+      period: "August–October 2026",
+      previous: "May–July",
+      previousIsYear: false,
+      before: "May–Jul",
+      now: "Aug–Oct",
+    });
+    expect(periodLabels({ dateFrom: "2026-01-01", dateTo: "2026-10-15" }, { dateFrom: "2025-01-01", dateTo: "2025-10-31" }, "this-year", "en")).toEqual({
+      period: "January–October 2026",
+      previous: "2025",
+      previousIsYear: true,
+      before: "2025",
+      now: "2026",
+    });
+  });
+
+  it("speaks Bangla when asked", () => {
+    expect(monthName("2026-10", "bn")).toBe("অক্টোবর");
+    expect(monthName("2026-10", "en", "short", true)).toBe("Oct 2026");
   });
 });
 
