@@ -23,7 +23,7 @@ import { budgetTone } from "@/lib/budgetTone";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency, currencySymbol } from "@/lib/customer/currency";
 import { daysLeftInMonth } from "@/lib/customer/homeInsights";
-import { limitMoneyDecimals } from "@/lib/customer/money";
+import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CategoryDrawer } from "./CategoryDrawer";
@@ -307,7 +307,7 @@ function MonthlyBudgetDialog({ open, onClose, businessId, current, currency, mon
               {t("How much you plan to spend in")} {monthName}. {t("Categories share it.")}
             </DialogDescription>
           </div>
-          <Input id="budget-target" type="text" inputMode="decimal" size="lg" value={value} onChange={(event) => setValue(limitMoneyDecimals(event.target.value.replace(/[^\d.]/g, "")))} leading={<span className="text-body font-semibold">{currencySymbol(currency)}</span>} autoFocus aria-label={t("Monthly budget")} className="text-h3 font-semibold tabular-nums" />
+          <Input id="budget-target" type="text" inputMode="decimal" size="lg" value={value} onChange={(event) => setValue(normalizeMoneyInput(event.target.value))} leading={<span className="text-body font-semibold">{currencySymbol(currency)}</span>} autoFocus aria-label={t("Monthly budget")} className="text-h3 font-semibold tabular-nums" />
           <div className="flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}

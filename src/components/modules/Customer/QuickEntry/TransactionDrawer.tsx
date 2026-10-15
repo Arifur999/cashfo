@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CalendarDays, ChevronDown, CreditCard, Landmark, LayoutGrid, Smartphone, TriangleAlert, X } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CalendarDays, ChevronDown, LayoutGrid, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createElement, useEffect, useId, useState, useTransition } from "react";
@@ -19,8 +19,9 @@ import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
-import { limitMoneyDecimals } from "@/lib/customer/money";
+import { normalizeMoneyInput } from "@/lib/customer/money";
 import { createExpenseAction, createIncomeAction, createTransferAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { walletIcon } from "@/lib/customer/walletVisuals";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -43,17 +44,6 @@ const KIND_META: Record<EntryKind, { label: string; icon: React.ReactNode; activ
   EXPENSE: { label: "Expense", icon: <ArrowDownLeft className="text-expense" strokeWidth={2.25} />, active: "text-expense", save: "Save expense", done: "Expense added", failed: "Failed to add expense" },
   TRANSFER: { label: "Transfer", icon: <ArrowLeftRight className="text-info" />, active: "text-ink", save: "Move money", done: "Transfer completed", failed: "Failed to create transfer" },
 };
-
-function walletIcon(account: Account) {
-  switch (account.accountSubtype) {
-    case "bank":
-      return Landmark;
-    case "mfs":
-      return Smartphone;
-    default:
-      return CreditCard;
-  }
-}
 
 // New transaction: Income, Expense or Transfer in one drawer -- the amount
 // first, the category tiles, the wallet with what it will hold after this,
@@ -212,7 +202,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             type="text"
             inputMode="decimal"
             value={amount}
-            onChange={(event) => setAmount(limitMoneyDecimals(event.target.value.replace(/[^\d.]/g, "")))}
+            onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
             placeholder="0"
             autoFocus
             aria-label={t("Amount")}

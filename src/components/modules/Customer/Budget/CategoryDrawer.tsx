@@ -16,7 +16,7 @@ import { createBudgetCategoryAction, updateBudgetCategoryAction } from "@/lib/cu
 import { budgetCategoryHex, budgetCategoryIcon, budgetCategoryIconLabel, BUDGET_CATEGORY_COLORS, BUDGET_CATEGORY_ICONS, INCOME_CATEGORY_ICONS, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { limitMoneyDecimals } from "@/lib/customer/money";
+import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -209,7 +209,7 @@ export function CategoryDrawer({ open, onClose, businessId, type, editing, curre
                     type="text"
                     inputMode="decimal"
                     value={limit}
-                    onChange={(event) => setLimit(limitMoneyDecimals(event.target.value.replace(/[^\d.]/g, "")))}
+                    onChange={(event) => setLimit(normalizeMoneyInput(event.target.value))}
                     aria-describedby={over > 0 ? "cat-limit-help" : undefined}
                     className="min-w-0 flex-1 bg-transparent px-4 text-h2 font-semibold text-ink tabular-nums outline-none placeholder:text-ink-faint"
                     placeholder="0"
