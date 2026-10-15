@@ -10,7 +10,7 @@ const SIZES = {
   44: "size-11 text-body-lg",
 } as const;
 
-interface ContactAvatarProps {
+interface PersonAvatarProps {
   name: string;
   src?: string | null;
   size?: keyof typeof SIZES;
@@ -19,8 +19,9 @@ interface ContactAvatarProps {
   className?: string;
 }
 
-// A contact's photo, or their initials on a round tile.
-export function ContactAvatar({ name, src, size = 36, coloured = false, className }: ContactAvatarProps) {
+// A person's photo, or their initials on a round tile: a loan contact, a
+// group member.
+export function PersonAvatar({ name, src, size = 36, coloured = false, className }: PersonAvatarProps) {
   if (src) {
     // A backend-served upload, so a plain <img>.
     // eslint-disable-next-line @next/next/no-img-element

@@ -23,7 +23,7 @@ import { DIRECTION_META, LOAN_ENTRY_META, loanEntryOf, loanTotals } from "@/lib/
 import { cancelledLabel, isCancelled, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { ContactAvatar } from "./ContactAvatar";
+import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
 
 interface LoanTransactionsPageClientProps {
@@ -167,7 +167,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 <div key={transaction.id} className={cn("group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-surface-sunken px-4 py-3 text-body md:h-14.5 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
                   <span className="order-3 text-caption text-ink-2 md:order-0 md:text-small">{formatDate(transaction.transactionDate)}</span>
                   <Link href={`/transactions/${transaction.id}`} className="flex min-w-0 items-center gap-3">
-                    <ContactAvatar name={name} src={contact?.photoUrl} size={30} />
+                    <PersonAvatar name={name} src={contact?.photoUrl} size={30} />
                     <span className="flex min-w-0 flex-col md:block">
                       <span className="truncate font-medium text-ink">{name}</span>
                       <span className="truncate text-caption font-normal text-ink-muted md:hidden">{meta ? t(meta.title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}</span>
