@@ -2,7 +2,7 @@
 // minutes), the week of practice per skill, the streak and this year's
 // goal. Pure, so the page and its tests agree.
 import type { Skill, SkillStatus, SkillUnit, SkillWeekDay } from "./api";
-import { shiftDay } from "./habitDisplay";
+import { shiftDay, WEEKDAY_LONG, weekdayOf } from "./habitDisplay";
 
 // English, passed through t().
 export const STATUS_LABEL: Record<SkillStatus, string> = { WANT_TO_LEARN: "Want to learn", LEARNING: "Learning", COMPLETED: "Completed" };
@@ -95,6 +95,16 @@ export function relativeDay(date: string, today: string): "today" | "yesterday" 
   if (date === today) return "today";
   if (date === shiftDay(today, -1)) return "yesterday";
   return "earlier";
+}
+
+// "2 lessons today", "1.5 hours yesterday", "30 min · Sunday"; null when
+// nothing was logged this week.
+export function practiceLine(skill: Pick<Skill, "id" | "unit">, week: SkillWeekDay[], today: string, t: T): string | null {
+  const last = lastActivity(week, skill.id);
+  if (!last) return null;
+  const when = relativeDay(last.date, today);
+  const day = when === "today" ? t("today") : when === "yesterday" ? t("yesterday") : `· ${t(WEEKDAY_LONG[weekdayOf(last.date)])}`;
+  return `${amountText(skill.unit, last.amount, t)} ${day}`;
 }
 
 // The first day of the current streak, so the page can say "since Monday".

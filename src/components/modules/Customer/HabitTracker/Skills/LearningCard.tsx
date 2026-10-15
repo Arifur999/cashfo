@@ -5,8 +5,7 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import type { Skill, SkillWeekDay } from "@/lib/customer/api";
-import { WEEKDAY_LONG, weekdayOf } from "@/lib/customer/habitDisplay";
-import { amountText, lastActivity, progressPct, progressText, QUICK_ADD, relativeDay } from "@/lib/customer/skillsDisplay";
+import { practiceLine, progressPct, progressText, QUICK_ADD } from "@/lib/customer/skillsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paletteFor } from "./skillPalette";
 import { SkillTile } from "./SkillTile";
@@ -26,11 +25,8 @@ export function LearningCard({ skill, week, today, isPending, onQuickAdd, onLog 
   const { t } = useLocale();
   const palette = paletteFor(skill.color);
   const pct = progressPct(skill);
-  const last = lastActivity(week, skill.id);
   const quick = QUICK_ADD[skill.unit];
-
-  const when = last ? relativeDay(last.date, today) : null;
-  const lastLine = last && when ? `${amountText(skill.unit, last.amount, t)} ${when === "today" ? t("today") : when === "yesterday" ? t("yesterday") : `· ${t(WEEKDAY_LONG[weekdayOf(last.date)])}`}` : t("Nothing logged this week");
+  const lastLine = practiceLine(skill, week, today, t) ?? t("Nothing logged this week");
 
   return (
     <Card padding="none" className="flex flex-col gap-3 p-5">
