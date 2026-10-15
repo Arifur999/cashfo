@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, PiggyBank } from "lucide-react";
 import Link from "next/link";
 import { createElement, useId, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,6 +14,8 @@ export interface WalletPickerProps {
   label: string;
   // 56px in the transaction drawer, 52px in the loan one.
   size?: "lg" | "xl";
+  // Money wallets, or the savings wallets a goal is kept in.
+  variant?: "money" | "savings";
   wallets: Account[];
   value: string;
   onChange: (id: string) => void;
@@ -26,11 +28,17 @@ export interface WalletPickerProps {
 }
 
 // The wallet to pay from or into: its icon, name, balance now and after.
-export function WalletPicker({ label, size = "xl", wallets, value, onChange, after, currency, loading, error, onClose }: WalletPickerProps) {
+export function WalletPicker({ label, size = "xl", variant = "money", wallets, value, onChange, after, currency, loading, error, onClose }: WalletPickerProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const selected = wallets.find((w) => w.id === value);
   const id = useId();
+  const savings = variant === "savings";
+  const tile = (wallet: Account) => (
+    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md", savings ? "bg-pillar-habits-soft text-pillar-habits" : "bg-mint-50 text-emerald")}>
+      {savings ? <PiggyBank className="size-4" aria-hidden="true" /> : createElement(walletIcon(wallet), { className: "size-4", "aria-hidden": true })}
+    </span>
+  );
 
   return (
     <div className="flex flex-col gap-2">
@@ -48,17 +56,17 @@ export function WalletPicker({ label, size = "xl", wallets, value, onChange, aft
           >
             {selected ? (
               <>
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-mint-50 text-emerald">{createElement(walletIcon(selected), { className: "size-4", "aria-hidden": true })}</span>
+                {tile(selected)}
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="truncate text-body font-semibold text-ink">{selected.name}</span>
                   <span className="truncate text-caption font-normal text-ink-muted tabular-nums">
-                    {t("Balance")} {formatCurrency(selected.currentBalance, currency)}
+                    {savings ? t("Savings wallet") + " · " : t("Balance") + " "}{formatCurrency(selected.currentBalance, currency)}
                     {after !== null && ` · ${formatCurrency(after, currency)} ${t("after this")}`}
                   </span>
                 </span>
               </>
             ) : (
-              <span className="flex-1 text-body text-ink-muted">{loading ? t("Loading...") : t("No wallet yet")}</span>
+              <span className="flex-1 text-body text-ink-muted">{loading ? t("Loading...") : savings ? t("No savings wallet yet") : t("No wallet yet")}</span>
             )}
             <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
           </button>
@@ -77,7 +85,7 @@ export function WalletPicker({ label, size = "xl", wallets, value, onChange, aft
                     }}
                     className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-cream", on && "bg-mint-50")}
                   >
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-mint-50 text-emerald">{createElement(walletIcon(wallet), { className: "size-4", "aria-hidden": true })}</span>
+                    {tile(wallet)}
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-body font-semibold text-ink">{wallet.name}</span>
                       <span className="text-caption font-normal text-ink-muted tabular-nums">{formatCurrency(wallet.currentBalance, currency)}</span>
@@ -96,9 +104,9 @@ export function WalletPicker({ label, size = "xl", wallets, value, onChange, aft
       )}
       {!loading && !error && wallets.length === 0 && (
         <p className="text-caption text-ink-muted">
-          {t("No wallet yet.")}{" "}
-          <Link href="/balance/wallet" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
-            {t("Add a wallet")}
+          {savings ? t("No savings wallet yet.") : t("No wallet yet.")}{" "}
+          <Link href={savings ? "/savings-goals/wallet" : "/balance/wallet"} onNavigate={onClose} className="font-semibold text-emerald hover:underline">
+            {savings ? t("Add a savings wallet") : t("Add a wallet")}
           </Link>
         </p>
       )}
