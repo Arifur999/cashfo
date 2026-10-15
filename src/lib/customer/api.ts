@@ -856,6 +856,39 @@ export interface HabitLog {
   createdAt: string;
 }
 
+// What GET /api/habits/today returns: the habits planned for today, each
+// with today's log and the streak counted up to today.
+export interface HabitToday extends Habit {
+  todayLog: HabitLog | null;
+  streak: number;
+}
+
+// GET /api/habits/stats: one row per active habit.
+export interface HabitStat {
+  habitId: string;
+  name: string;
+  icon: string;
+  color: string;
+  currentStreak: number;
+  last30DaysCompleted: number;
+  // Against 30 days; the UI recomputes it against the planned days.
+  completionRate: number;
+}
+
+// GET /api/habits/month?month=YYYY-MM: every habit (archived too) and the
+// month's logs.
+export interface HabitMonthLog {
+  habitId: string;
+  date: string;
+  completed: boolean;
+  value: number | null;
+}
+
+export interface HabitMonth {
+  habits: Habit[];
+  logs: HabitMonthLog[];
+}
+
 // Habit Tracker -> Book: a personal reading list, tracked by pages. `status`
 // is settled server-side from pagesRead (BooksService.settle); `finishedYear`
 // is the Asia/Dhaka year of finishedAt, so the client never guesses timezones.
