@@ -3,13 +3,14 @@ import { BooksLoadError } from "@/components/modules/Customer/HabitTracker/Books
 import { BooksPageClient } from "@/components/modules/Customer/HabitTracker/Books/BooksPageClient";
 import { SkillsLoadError } from "@/components/modules/Customer/HabitTracker/Skills/SkillsLoadError";
 import { SkillsPageClient } from "@/components/modules/Customer/HabitTracker/Skills/SkillsPageClient";
-import { NamazListPageClient } from "@/components/modules/Customer/HabitTracker/Namaz/NamazListPageClient";
+import { NamazHomePageClient } from "@/components/modules/Customer/HabitTracker/Namaz/NamazHomePageClient";
 import { OthersListPageClient } from "@/components/modules/Customer/HabitTracker/Others/OthersListPageClient";
 import { RamadanListPageClient } from "@/components/modules/Customer/HabitTracker/Ramadan/RamadanListPageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { dhakaDayNumber, getBooksOverview } from "@/lib/customer/books";
 import { getHabitTrackers } from "@/lib/customer/habits";
 import { getSkillsOverview } from "@/lib/customer/skills";
+import { getAppToday } from "@/lib/date";
 
 export default async function HabitsPage({ searchParams }: PageProps<"/habit-tracker/habits">) {
   const user = await getCurrentUser();
@@ -24,7 +25,7 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
   // whole-account dashboard instead of rendering an orphaned page.
   if (category === "Namaz") {
     const trackers = await getHabitTrackers("Namaz");
-    return <NamazListPageClient trackers={trackers} />;
+    return <NamazHomePageClient trackers={trackers} today={getAppToday()} />;
   }
 
   if (category === "Ramadan") {
