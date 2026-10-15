@@ -341,7 +341,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         showCloseButton={false}
         className={cn(
           "gap-0 border-0 bg-surface p-0 text-ink",
-          wide ? "w-115 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] sm:max-w-115" : "h-[92vh] rounded-t-xl shadow-[0_-20px_60px_-16px_rgba(11,61,46,0.35)]",
+          wide ? "w-115 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] data-[side=right]:sm:max-w-115" : "h-[92vh] rounded-t-xl shadow-[0_-20px_60px_-16px_rgba(11,61,46,0.35)]",
         )}
       >
         {!wide && <span aria-hidden="true" className="mt-2 block h-1.25 w-10 shrink-0 self-center rounded-full bg-chart-other" />}

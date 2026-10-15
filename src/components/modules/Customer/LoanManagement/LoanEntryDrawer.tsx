@@ -126,7 +126,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
       <SheetContent
         side={wide ? "right" : "bottom"}
         showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-117.5 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] sm:max-w-117.5" : "h-[92vh] rounded-t-xl")}
+        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-117.5 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] data-[side=right]:sm:max-w-117.5" : "h-[92vh] rounded-t-xl")}
       >
         <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <SheetTitle className="text-h3 text-ink">{t("New loan entry")}</SheetTitle>
