@@ -974,6 +974,8 @@ export interface HabitMonthTracker {
   // current month, else null -- the sheet highlights that column.
   todayDay: number | null;
   checks: { day: number; item: string }[];
+  // When the sheet was created: a challenge counts its days from here.
+  createdAt: string;
 }
 
 // Habit Tracker -> To Do List: one list per calendar date, holding any number
