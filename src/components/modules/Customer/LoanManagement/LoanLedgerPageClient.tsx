@@ -225,7 +225,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                 {contact.name} · {t(LOAN_KIND_LABELS[contact.type])}
               </span>
               <span>
-                {statement.rows.length} {t("entries")}
+                {statement.rows.length} {t(statement.rows.length === 1 ? "entry" : "entries")}
               </span>
             </div>
           </Card>

@@ -113,6 +113,7 @@ export const balanceDictionary: Record<string, string> = {
   Reference: "রেফারেন্স",
   In: "জমা",
   Out: "উত্তোলন",
+  entry: "এন্ট্রি",
   entries: "এন্ট্রি",
   Page: "পৃষ্ঠা",
   Journal: "জার্নাল",
