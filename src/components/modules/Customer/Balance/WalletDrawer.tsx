@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { PiggyBank, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { createAccountAction, updateAccountAction } from "@/lib/customer/account
 import type { Account } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { normalizeMoneyInput } from "@/lib/customer/money";
+import { savingsPalette } from "@/lib/customer/savingsDisplay";
 import { maskAccountNumber, WALLET_TYPE_META, WALLET_TYPES, walletPalette, walletType, type WalletType } from "@/lib/customer/walletVisuals";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -27,12 +28,15 @@ interface WalletDrawerProps {
   // Which of the design's card colours the preview wears: the wallet's own
   // place in the list, or the next free one for a new wallet.
   paletteIndex: number;
+  // A savings wallet (a DPS, an FDR): no kind to pick, and it is saved with
+  // the savings subtype so goals can be kept in it.
+  savings?: boolean;
 }
 
 // Add or edit a wallet in the design's drawer: a live preview of the card,
 // the kind of wallet, its name, the account number, and -- for a new one --
 // what it holds right now. The type goes to the API as accountSubtype.
-export function WalletDrawer({ open, onClose, businessId, editing, currency, paletteIndex }: WalletDrawerProps) {
+export function WalletDrawer({ open, onClose, businessId, editing, currency, paletteIndex, savings = false }: WalletDrawerProps) {
   const { t } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -56,8 +60,9 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
   }
 
   const valid = name.trim().length > 0;
-  const palette = walletPalette(paletteIndex);
-  const meta = WALLET_TYPE_META[type];
+  const palette = savings ? savingsPalette(paletteIndex) : walletPalette(paletteIndex);
+  const chip = savings ? { icon: PiggyBank, label: "Savings wallet" } : WALLET_TYPE_META[type];
+  const subtype = savings ? "savings" : type;
   const previewAmount = editing ? editing.currentBalance : openingBalance || 0;
 
   function submit(event: React.FormEvent) {
@@ -66,12 +71,12 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
     startTransition(async () => {
       const result = editing
         ? // "" clears the account number; left out it would stay.
-          await updateAccountAction(businessId, editing.id, { name: name.trim(), accountNumber: accountNumber.trim(), accountSubtype: type })
+          await updateAccountAction(businessId, editing.id, { name: name.trim(), accountNumber: accountNumber.trim(), accountSubtype: subtype })
         : await createAccountAction(businessId, {
             name: name.trim(),
             accountNumber: accountNumber.trim() || undefined,
             accountType: "ASSET",
-            accountSubtype: type,
+            accountSubtype: subtype,
             openingBalance: openingBalance || undefined,
           });
       if (result.success) {
@@ -89,12 +94,12 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
       <SheetContent
         side={wide ? "right" : "bottom"}
         showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-110 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] sm:max-w-110" : "h-[92vh] rounded-t-xl")}
+        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-110 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] data-[side=right]:sm:max-w-110" : "h-[92vh] rounded-t-xl")}
       >
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-6" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
-            <SheetTitle className="text-h3 text-ink">{editing ? t("Edit wallet") : t("Add wallet")}</SheetTitle>
-            <p className="text-small text-ink-muted">{t("Where do you keep this money?")}</p>
+            <SheetTitle className="text-h3 text-ink">{savings ? (editing ? t("Edit savings wallet") : t("Add savings wallet")) : editing ? t("Edit wallet") : t("Add wallet")}</SheetTitle>
+            <p className="text-small text-ink-muted">{savings ? t("Where does your saved money sit?") : t("Where do you keep this money?")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -106,8 +111,8 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
             <div aria-label={t("Preview")} className={cn("relative flex h-33 shrink-0 flex-col justify-between overflow-hidden rounded-lg p-5 text-white", palette.gradient)}>
               <span aria-hidden="true" className="absolute -top-20 -right-15 size-50 rounded-full bg-white/8" />
               <span className="relative inline-flex items-center gap-2 self-start rounded-full bg-white/16 px-2 py-0.75 text-caption font-semibold [&_svg]:size-3.5">
-                {createElement(meta.icon, { "aria-hidden": true })}
-                {t(meta.label)}
+                {createElement(chip.icon, { "aria-hidden": true })}
+                {t(chip.label)}
               </span>
               <div className="relative flex items-end justify-between gap-3">
                 <span className="flex min-w-0 flex-col gap-0.5">
@@ -118,6 +123,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
               </div>
             </div>
 
+            {!savings && (
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
               <legend className="mb-2 text-body font-medium text-ink">{t("Type")}</legend>
               <div className="grid grid-cols-3 gap-2">
@@ -138,9 +144,10 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
                 })}
               </div>
             </fieldset>
+            )}
 
             <Field htmlFor="wallet-name" label={<span className="text-body font-medium text-ink">{t("Wallet name")}</span>}>
-              <Input id="wallet-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={t("e.g. Islami Bank")} />
+              <Input id="wallet-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={savings ? t("e.g. Islami Bank DPS") : t("e.g. Islami Bank")} />
             </Field>
 
             <Field

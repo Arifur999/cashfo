@@ -1,11 +1,14 @@
 import { redirect } from "next/navigation";
 import { LoanLedgerPageClient } from "@/components/modules/Customer/LoanManagement/LoanLedgerPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
-import { getContacts } from "@/lib/customer/contacts";
-import { getCurrentUser } from "@/lib/customer/auth";
-import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { getLoanStatement } from "@/lib/customer/receivablesPayables";
 import type { LoanStatement } from "@/lib/customer/api";
+import { getCurrentUser } from "@/lib/customer/auth";
+import { getContacts } from "@/lib/customer/contacts";
+import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { getLoanStatement } from "@/lib/customer/receivablesPayables";
+import { getAppToday } from "@/lib/date";
+
+const PRESETS: DateRangePreset[] = ["all", "this-year", "last-year", "custom"];
 
 export default async function LoanLedgerPage({ searchParams }: PageProps<"/loan-management/ledger">) {
   const params = await searchParams;
@@ -17,30 +20,33 @@ export default async function LoanLedgerPage({ searchParams }: PageProps<"/loan-
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
 
-  const range = (typeof params.range === "string" ? params.range : "all") as DateRangePreset;
+  const range = PRESETS.find((preset) => preset === params.range) ?? "all";
+  const customFrom = isIsoDay(params.dateFrom) ? params.dateFrom : undefined;
+  const customTo = isIsoDay(params.dateTo) ? params.dateTo : undefined;
   const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
 
-  // Not filtered by category -- see loan-management/transactions/page.tsx's comment.
   // Bank/person contacts, up to the API's 100 (it stopped at the default 20).
-  const { data: loanContacts } = await getContacts(activeBusinessId, { category: "LOAN", limit: 100 });
+  const { data: contacts } = await getContacts(activeBusinessId, { category: "LOAN", limit: 100 });
 
-  // The whole point of this page (per the reference layout): nothing is
-  // generated until a Bank/Person is actually picked -- no default "all
-  // contacts" statement, since a running balance only means something for
-  // ONE account at a time.
+  // A running balance only means something for one account at a time, so
+  // nothing loads until a bank or person is picked.
+  const { dateFrom, dateTo } = resolveDateRange(range, customFrom, customTo);
   let statement: LoanStatement | null = null;
   if (selectedContactId) {
-    const { dateFrom, dateTo } = resolveDateRange(range);
     statement = await getLoanStatement(activeBusinessId, selectedContactId, { dateFrom, dateTo });
   }
 
   return (
     <LoanLedgerPageClient
-      loanContacts={loanContacts}
+      contacts={contacts}
       currency={activeBusiness?.currency ?? "BDT"}
       range={range}
       selectedContactId={selectedContactId}
       statement={statement}
+      customFrom={customFrom}
+      customTo={customTo}
+      periodFrom={dateFrom}
+      periodTo={dateTo ?? getAppToday()}
     />
   );
 }

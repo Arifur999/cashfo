@@ -5,6 +5,7 @@ const SIZES = {
   // Tile size → its icon size, radius and shape, as the design draws them.
   32: "size-8 rounded-md [&_svg]:size-4",
   36: "size-9 rounded-md [&_svg]:size-4.5",
+  40: "size-10 rounded-md [&_svg]:size-5",
   44: "size-11 rounded-full [&_svg]:size-5",
   48: "size-12 rounded-md [&_svg]:size-5.5",
   72: "size-18 rounded-xl [&_svg]:size-8.5",

@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
-import { CurrentAssetListPageClient } from "@/components/modules/Customer/Assets/CurrentAssetListPageClient";
+import { MyAssetsPageClient } from "@/components/modules/Customer/Assets/MyAssetsPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
 
-export default async function CurrentAssetListPage() {
+// My assets: what is owned right now (a sold asset lives on the overview).
+export default async function MyAssetsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -15,13 +16,5 @@ export default async function CurrentAssetListPage() {
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  return (
-    <CurrentAssetListPageClient
-      businessId={activeBusinessId}
-      assets={assets.filter((a) => a.status === "ACTIVE")}
-      categories={categories}
-      currency={activeBusiness?.currency ?? "BDT"}
-      canManage={canManage}
-    />
-  );
+  return <MyAssetsPageClient businessId={activeBusinessId} assets={assets.filter((a) => a.status === "ACTIVE")} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
 }

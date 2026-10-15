@@ -217,7 +217,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
             </div>
             <div className="flex items-center justify-between border-t border-line px-6 py-3 text-small text-ink-muted print:hidden">
               <span>
-                {ledger.meta.total} {t("entries")} · {t("Page")} {ledger.meta.page} {t("of")} {Math.max(1, ledger.meta.totalPages)}
+                {ledger.meta.total} {t(ledger.meta.total === 1 ? "entry" : "entries")} · {t("Page")} {ledger.meta.page} {t("of")} {Math.max(1, ledger.meta.totalPages)}
               </span>
               <div className="flex gap-2">
                 <button type="button" disabled={ledger.meta.page <= 1} onClick={() => goToPage(ledger.meta.page - 1)} aria-label={t("Previous page")} className="flex size-8 items-center justify-center rounded-md border border-line bg-surface text-ink-2 disabled:opacity-50">

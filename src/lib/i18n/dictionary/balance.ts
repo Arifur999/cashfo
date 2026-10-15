@@ -18,6 +18,7 @@ export const balanceDictionary: Record<string, string> = {
   mfs: "মোবাইল",
 
   // Balance (balance/overview/page.tsx)
+  Opening: "প্রারম্ভিক",
   "Where your money sits right now, and how each account got there.": "আপনার টাকা এখন কোথায় আছে, আর প্রতিটি হিসাব কীভাবে সেখানে পৌঁছাল।",
   "Available balance": "ব্যবহারযোগ্য ব্যালেন্স",
   "in archived wallets": "আর্কাইভ করা ওয়ালেটে",
@@ -112,6 +113,7 @@ export const balanceDictionary: Record<string, string> = {
   Reference: "রেফারেন্স",
   In: "জমা",
   Out: "উত্তোলন",
+  entry: "এন্ট্রি",
   entries: "এন্ট্রি",
   Page: "পৃষ্ঠা",
   Journal: "জার্নাল",

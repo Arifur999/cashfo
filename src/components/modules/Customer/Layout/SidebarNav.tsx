@@ -1,33 +1,6 @@
 "use client";
 
-import {
-  ArrowLeftRight,
-  BookOpen,
-  BookText,
-  Box,
-  CalendarCheck,
-  ChartColumn,
-  ChartPie,
-  ChevronDown,
-  ChevronRight,
-  CircleCheckBig,
-  Clock,
-  CreditCard,
-  Gift,
-  GraduationCap,
-  House,
-  KeyRound,
-  ListChecks,
-  Moon,
-  PenLine,
-  PiggyBank,
-  Settings,
-  TrendingUp,
-  Users,
-  UsersRound,
-  Wallet,
-  type LucideProps,
-} from "lucide-react";
+import { ArrowLeftRight, BookOpen, BookText, Box, CalendarCheck, ChartColumn, ChartPie, ChevronDown, ChevronRight, CircleCheckBig, Clock, CreditCard, Gift, GraduationCap, House, KeyRound, ListChecks, Moon, PenLine, PiggyBank, Settings, Table2, TrendingUp, type LucideProps, Users, UsersRound, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
@@ -57,6 +30,7 @@ const ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
   todo: ListChecks,
   vault: KeyRound,
   insights: ChartColumn,
+  reports: Table2,
   ledger: BookText,
   people: UsersRound,
   clock: Clock,

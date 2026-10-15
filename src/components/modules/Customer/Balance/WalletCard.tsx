@@ -1,11 +1,12 @@
 "use client";
 
-import { Archive, ArchiveRestore, ArrowRight, Ellipsis, Pencil, ScrollText, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowRight, Ellipsis, Pencil, PiggyBank, ScrollText, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { createElement } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
+import { savingsPalette } from "@/lib/customer/savingsDisplay";
 import { maskAccountNumber, WALLET_TYPE_META, walletPalette, walletType } from "@/lib/customer/walletVisuals";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,8 @@ interface WalletCardProps {
   onEdit: () => void;
   onToggleArchive: () => void;
   onRemove: () => void;
+  // A savings wallet: the violet / teal cards, no kind chip.
+  savings?: boolean;
 }
 
 const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-cream [&_svg]:size-3.75";
@@ -26,10 +29,10 @@ const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 te
 // One wallet as a bank card: its kind, name and number, what it holds now
 // and held at the start, a link to its statement, and the actions menu.
 // Phones get the shorter card from the phone board.
-export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggleArchive, onRemove }: WalletCardProps) {
+export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggleArchive, onRemove, savings = false }: WalletCardProps) {
   const { t } = useLocale();
-  const palette = walletPalette(index);
-  const meta = WALLET_TYPE_META[walletType(wallet)];
+  const palette = savings ? savingsPalette(index) : walletPalette(index);
+  const meta = savings ? { label: "Savings wallet", icon: PiggyBank } : WALLET_TYPE_META[walletType(wallet)];
   const archived = wallet.status === "ARCHIVED";
   const ledgerHref = `/balance/ledger?accountId=${wallet.id}`;
 
@@ -94,7 +97,7 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
 
       <div className="relative flex items-end justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="hidden text-caption font-normal text-white/78 md:block">{t("Current balance")}</span>
+          <span className="hidden text-caption font-normal text-white/78 md:block">{savings ? t("Balance") : t("Current balance")}</span>
           <span className="truncate text-h1 font-extrabold tabular-nums md:font-bold">{formatCurrency(wallet.currentBalance, currency)}</span>
           <span className="text-caption font-normal text-white/78 tabular-nums">
             {t("Opening")} {formatCurrency(wallet.openingBalance, currency)}

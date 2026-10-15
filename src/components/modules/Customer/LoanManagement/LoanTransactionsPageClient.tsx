@@ -1,19 +1,30 @@
 "use client";
 
-import { Pencil, Plus, Printer, Trash2 } from "lucide-react";
+import { CircleOff, Eye, HandCoins, Plus, Printer, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
+import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
+import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
+import AmountText from "@/components/smartly/AmountText";
+import Banner from "@/components/smartly/Banner";
+import Button from "@/components/smartly/Button";
+import Card from "@/components/smartly/Card";
+import Chip from "@/components/smartly/Chip";
+import EmptyState from "@/components/smartly/EmptyState";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
+import PageFrame from "@/components/smartly/PageFrame";
+import PageHeader from "@/components/smartly/PageHeader";
 import type { Contact, Transaction } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { voidTransactionAction } from "@/lib/customer/transactionActions";
-import { NewLoanTransactionModal } from "./NewLoanTransactionModal";
 import { formatDate } from "@/lib/customer/date";
-import { isCancelled } from "@/lib/customer/transactionDisplay";
-import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
+import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { DIRECTION_META, LOAN_ENTRY_META, loanEntryOf, loanTotals } from "@/lib/customer/loanDisplay";
+import { cancelledLabel, isCancelled, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
+import { ContactAvatar } from "./ContactAvatar";
+import { LoanEntryDrawer } from "./LoanEntryDrawer";
 
 interface LoanTransactionsPageClientProps {
   businessId: string;
@@ -27,264 +38,225 @@ interface LoanTransactionsPageClientProps {
   selectedContactId: string;
 }
 
-// Money accounts are always this subtype set (same list the backend's
-// MONEY_ACCOUNT_SUBTYPES uses) -- needed here to find WHICH of a
-// transaction's two entries is the money-account side, since both a money
-// account and Accounts Receivable/Payable share accountType "ASSET"/
-// "LIABILITY" and can't be told apart by type alone.
-const MONEY_SUBTYPES = ["cash", "bank", "mfs"];
-
-const RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
-  { value: "all", label: "All Time" },
-  { value: "this-month", label: "This Month" },
-  { value: "last-month", label: "Last Month" },
-  { value: "this-year", label: "This Year" },
+const PERIODS: { value: DateRangePreset; label: string }[] = [
+  { value: "all", label: "All time" },
+  { value: "this-month", label: "This month" },
+  { value: "last-month", label: "Last month" },
+  { value: "this-year", label: "This year" },
 ];
 
-function moneyEntry(transaction: Transaction) {
-  return transaction.entries.find((e) => e.account?.accountSubtype && MONEY_SUBTYPES.includes(e.account.accountSubtype));
-}
+const GRID = "md:grid-cols-[92px_minmax(0,1fr)_140px_96px_120px_120px_170px_72px]";
 
-// DEBIT on the money account = cash increased = Received; CREDIT = cash
-// decreased = Paid. Holds for all three transaction types this page shows
-// (a loan given/taken, or a repayment either direction) since each is
-// always exactly one entry against a money account and one against
-// Accounts Receivable/Payable.
-function directionFor(transaction: Transaction): "PAID" | "RECEIVED" | null {
-  const entry = moneyEntry(transaction);
-  if (!entry) return null;
-  return entry.entryType === "DEBIT" ? "RECEIVED" : "PAID";
-}
-
-function amountFor(transaction: Transaction): number {
-  return Number(moneyEntry(transaction)?.amount ?? transaction.entries[0]?.amount ?? 0);
-}
-
-export function LoanTransactionsPageClient({
-  businessId,
-  transactions,
-  loanContacts,
-  canManage,
-  currency,
-  range,
-  selectedContactId,
-  complete,
-}: LoanTransactionsPageClientProps) {
+// Loan payments: every loan given or taken and every repayment, with what
+// each one did to the balance, and a void action on each standing entry.
+export function LoanTransactionsPageClient({ businessId, transactions, complete, loanContacts, canManage, currency, range, selectedContactId }: LoanTransactionsPageClientProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useLocale();
-  // Admin > System > Feature Flags: pdf_export off hides Print / Save as PDF.
+  // Admin > System > Feature Flags: pdf_export off hides Print.
   const pdfExportOn = useFeature("pdf_export");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [voiding, setVoiding] = useState<Transaction | null>(null);
 
-  // Named `txn`/`entry`, not `t` -- this component also has `const { t } =
-  // useLocale()` in scope, and a same-named loop variable would shadow the
-  // translate function for the rest of that callback's body.
-  const activeTransactions = transactions.filter((txn) => txn.status === "POSTED" && !txn.reversalOfId);
-  const totalReceive = activeTransactions.filter((txn) => directionFor(txn) === "RECEIVED").reduce((sum, entry) => sum + amountFor(entry), 0);
-  const totalPayment = activeTransactions.filter((txn) => directionFor(txn) === "PAID").reduce((sum, entry) => sum + amountFor(entry), 0);
-
-  const selectedContactName = loanContacts.find((c) => c.id === selectedContactId)?.name ?? t("All");
-  const rangeLabel = t(RANGE_OPTIONS.find((o) => o.value === range)?.label ?? "All Time");
+  const contactsById = new Map(loanContacts.map((contact) => [contact.id, contact]));
+  const totals = loanTotals(transactions);
+  const rows = transactions.map((transaction) => ({ transaction, entry: loanEntryOf(transaction), contact: transaction.contactId ? contactsById.get(transaction.contactId) : undefined }));
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
-    if (!value) params.delete(key);
+    if (!value || value === "all") params.delete(key);
     else params.set(key, value);
     router.push(`/loan-management/transactions?${params.toString()}`);
   }
 
-  function handleVoid(transaction: Transaction) {
-    const reason = window.prompt(
-      `${t("Void this transaction of")} ${formatCurrency(amountFor(transaction), currency)}? ${t("Enter a reason (min 5 characters)")}:`,
-    );
-    if (reason === null) return;
-    if (reason.trim().length < 5) {
-      toast.error(t("Reason must be at least 5 characters"));
-      return;
-    }
-    startTransition(async () => {
-      const result = await voidTransactionAction(businessId, transaction.id, reason.trim());
-      if (result.success) {
-        toast.success(t("Transaction voided"));
-        router.refresh();
-      } else {
-        toast.error(result.message ?? t("Failed to void transaction"));
-      }
-    });
-  }
+  const voidingEntry = voiding ? loanEntryOf(voiding) : null;
 
   return (
-    <div className="h-full bg-brand-content px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-neutral-900">{t("Loan Transactions")}</h1>
-          <p className="mt-1 text-sm text-neutral-500">{t("Receive and payment records")}</p>
-          {!complete && (
-            <p className="mt-1 text-xs text-amber-700">{t("Showing and totalling the latest 1,000 only -- pick a shorter range to see the rest.")}</p>
-          )}
-        </div>
-        {canManage && (
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
-          >
-            <Plus className="h-4 w-4" /> {t("New Transaction")}
-          </button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Receive")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-brand-primary">{formatCurrency(totalReceive, currency)}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Payment")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-brand-danger">{formatCurrency(totalPayment, currency)}</p>
-        </div>
-      </div>
-
-      <div className="mt-6 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3">
-          <div>
-            <h2 className="text-sm font-semibold text-neutral-900">{t("Transaction List")}</h2>
-            <p className="text-xs text-neutral-400">
-              {t("Date range")}: {rangeLabel} · {t("Bank / Person")}: {selectedContactName}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div>
-              <label className="mb-1 block text-[10px] uppercase tracking-wide text-neutral-400">{t("Bank / Person")}</label>
-              <select
-                value={selectedContactId}
-                onChange={(e) => updateParam("contactId", e.target.value)}
-                className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
-              >
-                <option value="">{t("All Bank / Person")}</option>
-                {loanContacts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-[10px] uppercase tracking-wide text-neutral-400">{t("Period")}</label>
-              <select
-                value={range}
-                onChange={(e) => updateParam("range", e.target.value)}
-                className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
-              >
-                {RANGE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {t(opt.label)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {pdfExportOn && (
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="mt-4 flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
-              >
-                <Printer className="h-3.5 w-3.5" /> {t("Print")}
-              </button>
+    <PageFrame className="gap-5">
+      <PageHeader
+        eyebrow={t("Loans")}
+        tone="loans"
+        title={t("Loan payments")}
+        description={t("Every loan you gave or took, and every repayment.")}
+        actions={
+          <>
+            {pdfExportOn && transactions.length > 0 && (
+              <Button variant="secondary" onClick={() => window.print()} className="print:hidden">
+                <Printer className="text-ink-2" />
+                {t("Print")}
+              </Button>
             )}
-          </div>
+            {canManage && (
+              <Button onClick={() => setDrawerOpen(true)}>
+                <Plus strokeWidth={2.5} className="size-4" />
+                {t("New loan entry")}
+              </Button>
+            )}
+          </>
+        }
+      />
+
+      {!complete && (
+        <Banner tone="warning" inline icon={<TriangleAlert />}>
+          {t("Showing and totalling the latest 1,000 only -- pick a shorter range to see the rest.")}
+        </Banner>
+      )}
+
+      <Card padding="none" className="grid grid-cols-2 md:grid-cols-4">
+        <TotalCell label={`${t("Money in")} · ${t("loans taken, money back")}`}>
+          <AmountText value={totals.in} currency={currency} size="h2" tone="income" signed />
+        </TotalCell>
+        <TotalCell label={`${t("Money out")} · ${t("loans given, paid back")}`} divided>
+          <AmountText value={-totals.out} currency={currency} size="h2" tone="expense" signed />
+        </TotalCell>
+        <TotalCell label={t("Net moved")} divided className="border-t md:border-t-0">
+          <AmountText value={totals.in - totals.out} currency={currency} size="h2" signed />
+        </TotalCell>
+        <TotalCell label={t("Entries")} divided className="border-t md:border-t-0">
+          <span className="text-h2 text-ink tabular-nums">{totals.count}</span>
+        </TotalCell>
+      </Card>
+
+      <Card padding="none" className="overflow-hidden">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 md:px-6 print:hidden">
+          <NativeSelect size="sm" value={selectedContactId} onChange={(event) => updateParam("contactId", event.target.value)} aria-label={t("Bank / person")} className="text-small">
+            <option value="">{t("All banks & people")}</option>
+            {loanContacts.map((contact) => (
+              <option key={contact.id} value={contact.id}>
+                {contact.name}
+              </option>
+            ))}
+          </NativeSelect>
+          <NativeSelect size="sm" value={range} onChange={(event) => updateParam("range", event.target.value)} aria-label={t("Period")} className="text-small">
+            {PERIODS.map((period) => (
+              <option key={period.value} value={period.value}>
+                {t(period.label)}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
+        {transactions.length === 0 ? (
+          <EmptyState
+            bordered={false}
+            tone="loans"
+            icon={<HandCoins />}
+            title={t("No loan entry yet")}
+            description={t("Record a loan you gave or took, or a repayment, and it shows up here.")}
+            action={canManage && <Button onClick={() => setDrawerOpen(true)}>{t("New loan entry")}</Button>}
+            className="border-t border-line"
+          />
+        ) : (
+          <>
+            <div className={cn("hidden items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+              <span>{t("Date")}</span>
+              <span>{t("Bank / person")}</span>
+              <span>{t("Entry")}</span>
+              <span>{t("Category")}</span>
+              <span>{t("Account")}</span>
+              <span className="text-right">{t("Amount")}</span>
+              <span>{t("Effect on balance")}</span>
+              <span />
+            </div>
+            {rows.map(({ transaction, entry, contact }) => {
+              const meta = entry ? LOAN_ENTRY_META[entry.kind] : null;
+              const cancelled = cancelledLabel(transaction);
+              const voided = isCancelled(transaction);
+              const effect = meta ? DIRECTION_META[meta.effect] : null;
+              const name = transaction.contact?.name ?? contact?.name ?? "—";
+              return (
+                <div key={transaction.id} className={cn("group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-surface-sunken px-4 py-3 text-body md:h-14.5 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
+                  <span className="order-3 text-caption text-ink-2 md:order-0 md:text-small">{formatDate(transaction.transactionDate)}</span>
+                  <Link href={`/transactions/${transaction.id}`} className="flex min-w-0 items-center gap-3">
+                    <ContactAvatar name={name} src={contact?.photoUrl} size={30} />
+                    <span className="flex min-w-0 flex-col md:block">
+                      <span className="truncate font-medium text-ink">{name}</span>
+                      <span className="truncate text-caption font-normal text-ink-muted md:hidden">{meta ? t(meta.title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}</span>
+                    </span>
+                  </Link>
+                  <span className="hidden items-center gap-2 text-small text-ink-2 md:flex">
+                    <span className="truncate">{meta ? t(meta.title) : "—"}</span>
+                    {cancelled && (
+                      <Chip tone="expense" size="sm" className="font-semibold">
+                        {t(cancelled)}
+                      </Chip>
+                    )}
+                  </span>
+                  <span className="hidden md:block">
+                    <Chip tone="neutral" size="sm" className="font-bold">
+                      {t("Principal")}
+                    </Chip>
+                  </span>
+                  <span className="hidden truncate text-small text-ink-2 md:block">{entry?.wallet ?? "—"}</span>
+                  <AmountText value={entry ? (meta?.flow === "in" ? entry.amount : -entry.amount) : 0} currency={currency} size="sm" signed tone={voided ? "neutral" : "auto"} className={cn("row-start-1 text-right font-semibold md:row-start-auto", voided && "text-ink-muted line-through")} />
+                  <span className="hidden flex-col gap-px text-caption md:flex">
+                    {meta && effect ? (
+                      <>
+                        <span className={cn("font-semibold", effect.text)}>
+                          {t(effect.name)} {meta.effectSign} {entry && formatCurrency(entry.amount, currency)}
+                        </span>
+                        <span className="font-normal text-ink-muted">{t(meta.effectSub)}</span>
+                      </>
+                    ) : (
+                      <span className="text-ink-muted">—</span>
+                    )}
+                  </span>
+                  <span className="hidden justify-end gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 md:flex print:hidden">
+                    <Link href={`/transactions/${transaction.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-7.5 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-cream">
+                      <Eye className="size-3.75" aria-hidden="true" />
+                    </Link>
+                    {canManage && transaction.voidable && (
+                      <button type="button" onClick={() => setVoiding(transaction)} aria-label={t("Void entry")} title={t("Void entry")} className="flex size-7.5 items-center justify-center rounded-md bg-surface text-expense shadow-[0_0_0_1px_var(--line)] hover:bg-expense-soft">
+                        <CircleOff className="size-3.75" aria-hidden="true" />
+                      </button>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between px-6 py-3 text-small text-ink-muted">
+              <span>
+                {t("Showing")} {transactions.length} · {t("newest first")}
+              </span>
+            </div>
+          </>
+        )}
+      </Card>
 
-        <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-left text-sm">
-              <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
-                <tr>
-                  <th className="px-4 py-3 font-medium">#</th>
-                  <th className="px-4 py-3 font-medium">{t("Date")}</th>
-                  <th className="px-4 py-3 font-medium">{t("Bank / Person")}</th>
-                  <th className="px-4 py-3 font-medium">{t("Type")}</th>
-                  <th className="px-4 py-3 font-medium">{t("Category")}</th>
-                  <th className="px-4 py-3 font-medium">{t("Account")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Receive")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Payment")}</th>
-                  <th className="px-4 py-3 font-medium">{t("Notes")}</th>
-                  {canManage && <th className="px-4 py-3 font-medium text-right">{t("Action")}</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-50">
-                {transactions.length === 0 && (
-                  <tr>
-                    <td colSpan={canManage ? 10 : 9} className="px-4 py-10 text-center text-neutral-400">
-                      {t("No loan transactions yet.")}
-                    </td>
-                  </tr>
-                )}
-                {transactions.map((txn, index) => {
-                  const direction = directionFor(txn);
-                  const account = moneyEntry(txn)?.account;
-                  const amount = amountFor(txn);
-                  const isVoided = isCancelled(txn);
-                  return (
-                    <tr key={txn.id} className={isVoided ? "opacity-50" : ""}>
-                      <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
-                      <td className="px-4 py-3 text-neutral-600">{formatDate(txn.transactionDate)}</td>
-                      <td className="px-4 py-3 font-medium text-neutral-800">{txn.contact?.name ?? "-"}</td>
-                      <td className={`px-4 py-3 font-medium ${direction === "RECEIVED" ? "text-brand-primary" : "text-brand-danger"}`}>
-                        {direction === "RECEIVED" ? t("Received") : direction === "PAID" ? t("Paid") : "-"}
-                        {isVoided && <span className="ml-1 text-xs font-normal text-neutral-400">{t("(Voided)")}</span>}
-                      </td>
-                      <td className="px-4 py-3 text-neutral-500">{t("Principal")}</td>
-                      <td className="px-4 py-3 text-neutral-600">{account?.name ?? "-"}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {direction === "RECEIVED" ? (
-                          <span className="font-semibold text-brand-primary">{formatCurrency(amount, currency)}</span>
-                        ) : (
-                          <span className="text-neutral-300">{formatCurrency(0, currency)}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {direction === "PAID" ? (
-                          <span className="font-semibold text-brand-danger">{formatCurrency(amount, currency)}</span>
-                        ) : (
-                          <span className="text-neutral-300">{formatCurrency(0, currency)}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-neutral-400">{txn.description ?? ""}</td>
-                      {canManage && (
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <Link
-                              href={`/transactions/${txn.id}`}
-                              title={t("View")}
-                              className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Link>
-                            {txn.voidable && (
-                              <button
-                                type="button"
-                                disabled={isPending}
-                                onClick={() => handleVoid(txn)}
-                                title={t("Void")}
-                                className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-      </div>
+      <LoanEntryDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} businessId={businessId} contacts={loanContacts.filter((contact) => contact.status === "ACTIVE")} currency={currency} initialContactId={selectedContactId || undefined} />
+      {voiding && (
+        <VoidTransactionDialog
+          open
+          onClose={() => setVoiding(null)}
+          businessId={businessId}
+          transactionId={voiding.id}
+          title={t("Entry")}
+          heading={t("Void this entry?")}
+          description={t("The balance goes back to what it was before this entry. It stays in your history, marked as voided.")}
+          confirmLabel="Void entry"
+          doneLabel="Entry voided"
+          detail={
+            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-4 py-3 text-body">
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate font-medium text-ink">{voiding.contact?.name ?? "—"}</span>
+                <span className="text-caption font-normal text-ink-muted">{voidingEntry ? t(LOAN_ENTRY_META[voidingEntry.kind].title) : ""}</span>
+              </span>
+              <span className="flex shrink-0 flex-col items-end gap-px">
+                <span className="font-bold text-ink tabular-nums">{formatCurrency(voidingEntry?.amount ?? 0, currency)}</span>
+                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate)}</span>
+              </span>
+            </div>
+          }
+        />
+      )}
+    </PageFrame>
+  );
+}
 
-      <NewLoanTransactionModal open={modalOpen} onClose={() => setModalOpen(false)} businessId={businessId} loanContacts={loanContacts} />
+function TotalCell({ label, children, divided = false, className }: { label: string; children: React.ReactNode; divided?: boolean; className?: string }) {
+  return (
+    <div className={cn("flex flex-col gap-1 px-4 py-3 md:px-5 md:py-4", divided && "md:border-l md:border-line", className)}>
+      <span className="text-caption font-normal text-ink-muted">{label}</span>
+      {children}
     </div>
   );
 }

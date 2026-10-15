@@ -27,6 +27,13 @@ const VARIANTS = {
     on: "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(11,61,46,0.14)] dark:bg-surface-raised",
     off: "text-ink-2 hover:text-ink",
   },
+  // Filter tabs on a white toolbar: the chosen one goes mint (People & banks).
+  soft: {
+    group: "rounded-md border border-line bg-surface p-1",
+    item: "h-7.5 rounded-sm px-3 text-small font-medium",
+    on: "bg-mint-50 font-semibold text-emerald",
+    off: "text-ink-2 hover:text-ink",
+  },
   // Period tabs on white: the chosen one goes forest.
   solid: {
     group: "rounded-md border border-line bg-surface p-0.75",

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { AssetsManagementPageClient } from "@/components/modules/Customer/Assets/AssetsManagementPageClient";
+import { AssetsDashboardPageClient } from "@/components/modules/Customer/Assets/AssetsDashboardPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
@@ -13,8 +13,7 @@ export default async function AssetsDashboardPage() {
 
   const [assets, categories] = await Promise.all([getAssets(activeBusinessId), getAssetCategories(activeBusinessId)]);
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  return (
-    <AssetsManagementPageClient assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} />
-  );
+  return <AssetsDashboardPageClient businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
 }

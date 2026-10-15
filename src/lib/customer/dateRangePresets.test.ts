@@ -38,6 +38,14 @@ describe("resolveDateRange", () => {
     at("2027-01-15T06:00:00.000Z");
     expect(presets.resolveDateRange("last-month")).toEqual({ dateFrom: "2026-12-01", dateTo: "2026-12-31" });
     expect(presets.resolveDateRange("this-year")).toEqual({ dateFrom: "2027-01-01", dateTo: "2027-01-15" });
+    expect(presets.resolveDateRange("last-year")).toEqual({ dateFrom: "2026-01-01", dateTo: "2026-12-31" });
+  });
+
+  it("starts the last 3 months two months back, across the year turn", () => {
+    at("2026-10-15T06:00:00.000Z");
+    expect(presets.resolveDateRange("last-3-months")).toEqual({ dateFrom: "2026-08-01", dateTo: "2026-10-15" });
+    at("2027-01-15T06:00:00.000Z");
+    expect(presets.resolveDateRange("last-3-months")).toEqual({ dateFrom: "2026-11-01", dateTo: "2027-01-15" });
   });
 
   it("passes a custom range through, and filters nothing otherwise", () => {
