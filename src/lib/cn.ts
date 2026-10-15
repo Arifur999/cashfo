@@ -31,7 +31,7 @@ export const cn = createCn({
     classGroups: {
       "font-size": [{ text: TEXT_STYLES }],
       shadow: [{ shadow: ["card", "float", "overlay", "button"] }],
-      "bg-image": [{ bg: ["aurora", "night", "night-panel", "forest-depth", "fresh", "mint-glow"] }],
+      "bg-image": [{ bg: ["aurora", "night", "night-panel", "forest-depth", "fresh", "mint-glow", "wallet-forest", "wallet-teal", "wallet-charcoal", "wallet-mint"] }],
     },
   },
 });

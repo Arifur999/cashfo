@@ -420,6 +420,19 @@
 @utility bg-mint-glow {
   background-image: linear-gradient(135deg, #bfebd7 0%, #7bd3a8 100%);
 }
+/* The four wallet cards, in the order the design cycles them. */
+@utility bg-wallet-forest {
+  background-image: linear-gradient(135deg, #1f7a5a 0%, #0b3d2e 100%);
+}
+@utility bg-wallet-teal {
+  background-image: linear-gradient(135deg, #0b6f80 0%, #0a4f5c 100%);
+}
+@utility bg-wallet-charcoal {
+  background-image: linear-gradient(135deg, #33433c 0%, #0e1a16 100%);
+}
+@utility bg-wallet-mint {
+  background-image: linear-gradient(135deg, #14b57a 0%, #1f7a5a 100%);
+}
 
 @layer base {
   * {
