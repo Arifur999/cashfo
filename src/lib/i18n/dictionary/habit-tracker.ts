@@ -511,4 +511,6 @@ export const habitTrackerDictionary: Record<string, string> = {
   "No sweets, No soft drinks… press Enter after each": "মিষ্টি নয়, কোল্ড ড্রিংক নয়… প্রতিটির পর Enter চাপুন",
   "A day counts as done when every item is ticked. With no items, you tick the day itself.": "প্রতিটি কাজে টিক পড়লে দিনটি হয়েছে ধরা হয়। কাজ না থাকলে দিনটিতেই টিক দেবেন।",
   "Start challenge": "চ্যালেঞ্জ শুরু করুন",
+  "Day 1 done. Keep going.": "দিন ১ হয়েছে। চালিয়ে যান।",
+  "Day 1 is today. Tick it off to begin.": "আজই দিন ১। শুরু করতে টিক দিন।",
 };

@@ -191,7 +191,17 @@ export function ChallengesHomePageClient({ trackers, today }: ChallengesHomePage
                           </label>
                         );
                       })}
-                      <span className="text-small text-ink-2">{summary.missed === 0 ? (todayDone ? `${t("All")} ${summary.done} ${t("days done so far. Keep going.")}` : `${summary.done} ${t("of")} ${window.today - 1} ${t("days done. Today is still open.")}`) : `${summary.done} ${t("of")} ${window.today} ${t("days done.")} ${summary.missed} ${t(summary.missed === 1 ? "day was missed." : "days were missed.")}`}</span>
+                      <span className="text-small text-ink-2">
+                        {summary.missed > 0
+                          ? `${summary.done} ${t("of")} ${window.today} ${t("days done.")} ${summary.missed} ${t(summary.missed === 1 ? "day was missed." : "days were missed.")}`
+                          : todayDone
+                            ? summary.done === 1
+                              ? t("Day 1 done. Keep going.")
+                              : `${t("All")} ${summary.done} ${t("days done so far. Keep going.")}`
+                            : window.today === 1
+                              ? t("Day 1 is today. Tick it off to begin.")
+                              : `${summary.done} ${t("of")} ${window.today - 1} ${t("days done. Today is still open.")}`}
+                      </span>
                     </div>
                   </div>
 
