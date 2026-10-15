@@ -1,34 +1,173 @@
-// Bangla translations for: /assets-management/* (Dashboard, Current Asset
-// list, Purchase & Sell Asset, Asset update, Category) and their components
-// under src/components/assets/.
+// Bangla translations for Money › Assets (/assets-management/*: Assets,
+// My assets, Buy & sell, Update value, Asset categories) and their
+// components under components/modules/Customer/Assets. Keys another
+// dictionary already defines ("Money", "Assets", "Cancel", "Close", "Date",
+// "Note", "Category", "Status", "All", "Wallets", "Savings wallets",
+// "Today", "Add category", "Delete", "Edit", "Loading...", "in", "for") are
+// not repeated.
 export const assetsDictionary: Record<string, string> = {
-  // AssetsManagementPageClient.tsx (Dashboard sub-page)
-  "Assets Management": "সম্পদ ব্যবস্থাপনা",
-  "Track and manage your physical and financial assets.": "আপনার ভৌত এবং আর্থিক সম্পদ ট্র্যাক ও পরিচালনা করুন।",
-  "Total Asset Value": "মোট সম্পদের মূল্য",
-  'No assets yet -- add one under "Purchase & Sell Asset".': 'এখনো কোনো সম্পদ নেই -- "সম্পদ ক্রয় ও বিক্রয়" এর অধীনে একটি যোগ করুন।',
-
-  // AssetListRows.tsx (shared row rendering: Dashboard)
+  // Shared across the section
+  Asset: "সম্পদ",
+  asset: "সম্পদ",
+  assets: "সম্পদ",
+  Value: "মূল্য",
+  "Value today": "আজকের মূল্য",
+  Paid: "দাম",
+  "You paid": "আপনি দিয়েছেন",
+  Bought: "কেনা",
+  bought: "কেনা",
+  "Bought on": "কেনার তারিখ",
   Sold: "বিক্রি হয়েছে",
+  sold: "বিক্রি",
+  Owned: "নিজের",
+  Change: "পরিবর্তন",
+  "vs what you paid": "দামের তুলনায়",
+  "vs paid": "দামের তুলনায়",
+  "Add asset": "সম্পদ যোগ করুন",
+  "Buy asset": "সম্পদ কিনুন",
+  update: "আপডেট",
+  updates: "আপডেট",
+  "Nothing owned yet": "এখনো কিছু নেই",
+  "Category deleted": "ক্যাটাগরি মুছে ফেলা হয়েছে",
+  "Failed to delete category": "ক্যাটাগরি মুছতে ব্যর্থ",
+  "Value updated": "মূল্য আপডেট হয়েছে",
+  "Failed to update value": "মূল্য আপডেট করতে ব্যর্থ",
+  "not enough": "যথেষ্ট নেই",
 
-  // AssetActionsMenu.tsx
-  // "View Details" reuses shared.ts's exact key/value.
+  // Assets overview (AssetsDashboardPageClient.tsx)
+  "Everything you own outside your wallets, and what it's worth today.": "ওয়ালেটের বাইরে আপনার যা আছে, আর আজ তার মূল্য কত।",
+  "Update a value": "মূল্য আপডেট করুন",
+  "No asset yet": "এখনো কোনো সম্পদ নেই",
+  "A plot of land, a car, gold, a laptop… add what you own and watch what it's worth.": "এক টুকরো জমি, গাড়ি, সোনা, ল্যাপটপ… যা আছে যোগ করুন, দেখুন তার মূল্য।",
+  "Total value today": "আজকের মোট মূল্য",
+  "asset you own": "টি সম্পদ আপনার",
+  "assets you own": "টি সম্পদ আপনার",
+  "Purchase price of the same": "একই সম্পদের কেনা দাম, মোট",
+  "Gain so far": "এ পর্যন্ত লাভ",
+  "Loss so far": "এ পর্যন্ত ক্ষতি",
+  "on what you paid": "দামের উপর",
+  "Nothing sold yet": "এখনো কিছু বিক্রি হয়নি",
+  "Value by category": "ক্যাটাগরি অনুযায়ী মূল্য",
+  "Today's value": "আজকের মূল্য",
+  "Biggest changes": "সবচেয়ে বড় পরিবর্তন",
+  "All assets": "সব সম্পদ",
+  "Nothing here.": "এখানে কিছু নেই।",
 
-  // AssetCategoryModal.tsx
-  "Give this category a name": "এই ক্যাটাগরিটির একটি নাম দিন",
+  // My assets (MyAssetsPageClient.tsx)
+  "thing you own": "টি জিনিস আপনার",
+  "things you own": "টি জিনিস আপনার",
+  today: "আজ",
+  "Search assets…": "সম্পদ খুঁজুন…",
+  "Search assets": "সম্পদ খুঁজুন",
+  "Add what you already own, or buy something new, and it shows up here.": "যা আছে যোগ করুন, বা নতুন কিছু কিনুন, এখানে দেখা যাবে।",
+  "Filter by category": "ক্যাটাগরি দিয়ে বাছুন",
+  "No asset matches": "কোনো সম্পদ মেলে না",
+  "Value over time": "সময়ের সাথে মূল্য",
+  "Never updated": "কখনো আপডেট হয়নি",
+
+  // Buy & sell (BuySellPageClient.tsx)
+  "Buying takes money out of a wallet. Selling puts the sale price into one.": "কিনলে ওয়ালেট থেকে টাকা যায়। বিক্রি করলে বিক্রয়মূল্য ওয়ালেটে আসে।",
+  "Sell an asset": "একটি সম্পদ বিক্রি করুন",
+  "you own": "টি আপনার",
+  "Nothing to sell yet": "এখনো বিক্রির কিছু নেই",
+  "Buy or add an asset first, and it shows up here.": "আগে একটি সম্পদ কিনুন বা যোগ করুন, এখানে দেখা যাবে।",
+  Sell: "বিক্রি",
+  "Recently sold": "সম্প্রতি বিক্রি",
+  "All sold": "সব বিক্রি",
+  "Where the money goes": "টাকা কোথায় যায়",
+  Buy: "কেনা",
+  "The price leaves the wallet you pick, and the asset joins your list.": "দামটা বাছাই করা ওয়ালেট থেকে যায়, আর সম্পদটি তালিকায় যোগ হয়।",
+  "The full sale price is recorded as income in the wallet you pick.": "পুরো বিক্রয়মূল্য বাছাই করা ওয়ালেটে আয় হিসেবে লেখা হয়।",
+  "Already own it?": "আগে থেকেই আছে?",
+  "Add it from My assets. No money moves.": "আমার সম্পদ থেকে যোগ করুন। কোনো টাকা নড়ে না।",
+
+  // Update value (UpdateValuePageClient.tsx)
+  "When the market price of something you own goes up or down, record the new value here.": "আপনার কোনো জিনিসের বাজারদর বাড়লে বা কমলে, নতুন মূল্য এখানে লিখুন।",
+  "asset hasn't been checked in over 6 months.": "টি সম্পদ ৬ মাসের বেশি দেখা হয়নি।",
+  "assets haven't been checked in over 6 months.": "টি সম্পদ ৬ মাসের বেশি দেখা হয়নি।",
+  "Its value may be out of date.": "এর মূল্য পুরোনো হতে পারে।",
+  "Their values may be out of date.": "এগুলোর মূল্য পুরোনো হতে পারে।",
+  "Show it": "দেখান",
+  "Show them": "দেখান",
+  "Show all": "সব দেখান",
+  "Add what you own first, then keep its value up to date here.": "আগে যা আছে যোগ করুন, তারপর এখানে মূল্য হালনাগাদ রাখুন।",
+  "Last updated": "শেষ আপডেট",
+  "Never checked": "কখনো দেখা হয়নি",
+  "No updates yet": "এখনো আপডেট নেই",
+  "Update value": "মূল্য আপডেট করুন",
+  "Update value of": "মূল্য আপডেট:",
+
+  // Asset categories (AssetCategoriesPageClient.tsx, CategoryDrawer.tsx)
+  "Asset categories": "সম্পদের ক্যাটাগরি",
+  "Group what you own. Click a category to see its assets.": "যা আছে তা গুছিয়ে রাখুন। সম্পদ দেখতে ক্যাটাগরিতে ক্লিক করুন।",
+  "e.g. Shares, Business, Livestock": "যেমন শেয়ার, ব্যবসা, গবাদি পশু",
+  "Deleting a category doesn't change the assets already in it.": "ক্যাটাগরি মুছলে তার ভেতরের সম্পদ বদলায় না।",
+  "Assets already in it keep the name; it just can't be picked for new ones.": "ভেতরের সম্পদ নামটি রাখবে; শুধু নতুনের জন্য আর বাছা যাবে না।",
+  "Delete category": "ক্যাটাগরি মুছুন",
+  "Edit category": "ক্যাটাগরি সম্পাদনা",
+  "Asset category": "সম্পদের ক্যাটাগরি",
+  "Group what you own.": "যা আছে তা গুছিয়ে রাখুন।",
+  Vehicle: "যানবাহন",
+
+  // Add an asset (AssetDrawer.tsx)
+  "Add an asset": "একটি সম্পদ যোগ করুন",
+  "Something you're buying now, or something you already own.": "এখন কিনছেন এমন কিছু, বা আগে থেকেই আছে এমন কিছু।",
+  "Buying it now": "এখন কিনছি",
+  "I already own it": "আগে থেকেই আছে",
+  "How did you get it": "কীভাবে পেলেন",
+  "Asset name": "সম্পদের নাম",
+  "Gold ring, 22K": "সোনার আংটি, ২২ ক্যারেট",
+  "No category yet -- add one under Categories first.": "এখনো কোনো ক্যাটাগরি নেই -- আগে ক্যাটাগরিতে একটি যোগ করুন।",
+  Price: "দাম",
+  "Pay from": "যেখান থেকে দেবেন",
+  "e.g. 4 ana, from Baitul Mukarram": "যেমন ৪ আনা, বায়তুল মোকাররম থেকে",
+  "Your assets": "আপনার সম্পদ",
+  "Buy for": "কিনুন",
+  "Asset bought": "সম্পদ কেনা হয়েছে",
+  "Asset added": "সম্পদ যোগ হয়েছে",
+  "Failed to add the asset": "সম্পদ যোগ করতে ব্যর্থ",
+
+  // Sell asset (SellAssetDrawer.tsx)
+  "Sell asset": "সম্পদ বিক্রি",
+  "Sale price": "বিক্রয়মূল্য",
+  "vs value today": "আজকের মূল্যের তুলনায়",
+  "Receive into": "যেখানে আসবে",
+  "Sold to a colleague": "সহকর্মীর কাছে বিক্রি",
+  "The full": "পুরো",
+  "is recorded as income in": "আয় হিসেবে লেখা হবে:",
+  and: "এবং",
+  "moves to Sold.": "বিক্রি হয়েছে-তে যাবে।",
+  "Sell for": "বিক্রি করুন",
+  "Sold and recorded as income": "বিক্রি হয়েছে, আয় হিসেবে লেখা হয়েছে",
+  "Failed to record the sale": "বিক্রি লিখতে ব্যর্থ",
+
+  // Update value (UpdateValueDrawer.tsx)
+  "Current value": "বর্তমান মূল্য",
+  since: "থেকে",
+  "never checked": "কখনো দেখা হয়নি",
+  on: "তারিখ",
+  "New value": "নতুন মূল্য",
+  "since last value": "শেষ মূল্যের পর",
+  "Same as the last value": "শেষ মূল্যের সমান",
+  "Mouza rate went up": "মৌজা রেট বেড়েছে",
+  "Value history": "মূল্যের ইতিহাস",
+  new: "নতুন",
+  "This update": "এই আপডেট",
+  Checked: "দেখা হয়েছে",
+  "Save new value": "নতুন মূল্য সংরক্ষণ",
+
+  // CategoryDrawer colour names and shared category strings
+  "Give this category a name": "এই ক্যাটাগরির একটি নাম দিন",
   "Category updated": "ক্যাটাগরি আপডেট হয়েছে",
   "Category added": "ক্যাটাগরি যোগ হয়েছে",
-  "Failed to save category": "ক্যাটাগরি সংরক্ষণ করতে ব্যর্থ হয়েছে",
-  "Edit Category": "ক্যাটাগরি সম্পাদনা করুন",
+  "Failed to save category": "ক্যাটাগরি সংরক্ষণ করতে ব্যর্থ",
+  "Edit Category": "ক্যাটাগরি সম্পাদনা",
   "Add Category": "ক্যাটাগরি যোগ করুন",
   "Category Name": "ক্যাটাগরির নাম",
-  "e.g., Vehicle, Land, Jewellery": "যেমন, গাড়ি, জমি, গহনা",
-  "Choose an Icon": "একটি আইকন বাছাই করুন",
+  "Choose an Icon": "একটি আইকন বেছে নিন",
   "Search icons...": "আইকন খুঁজুন...",
-  "No matching icon": "কোনো মিলযুক্ত আইকন পাওয়া যায়নি",
-  "Choose a Color": "একটি রঙ বাছাই করুন",
-  // Color swatch labels (shared BUDGET_CATEGORY_COLORS keys) -- generic,
-  // context-free color words.
+  "No matching icon": "মিলে এমন আইকন নেই",
+  "Choose a Color": "একটি রং বেছে নিন",
   blue: "নীল",
   green: "সবুজ",
   purple: "বেগুনি",
@@ -36,88 +175,14 @@ export const assetsDictionary: Record<string, string> = {
   pink: "গোলাপি",
   yellow: "হলুদ",
   red: "লাল",
-  indigo: "নীলাভ বেগুনি",
+  indigo: "নীলচে বেগুনি",
   teal: "টিল",
-  cyan: "আকাশি",
+  cyan: "সায়ান",
   violet: "ভায়োলেট",
   lime: "লাইম",
-
-  // AddCurrentAssetModal.tsx (Current Asset list's "Add Assets" modal)
-  "Asset name is required": "সম্পদের নাম আবশ্যক",
-  "Value must be greater than zero": "মূল্য শূন্যের চেয়ে বেশি হতে হবে",
-  "Asset saved": "সম্পদ সংরক্ষিত হয়েছে",
-  "Failed to save asset": "সম্পদ সংরক্ষণ করতে ব্যর্থ হয়েছে",
-  "Current Asset": "বর্তমান সম্পদ",
-  "Asset Name": "সম্পদের নাম",
-  "e.g. Toyota Corolla, Family Land": "যেমন, টয়োটা করোলা, পারিবারিক জমি",
-  "No categories yet": "এখনো কোনো ক্যাটাগরি নেই",
-  Value: "মূল্য",
-  "Save Asset": "সম্পদ সংরক্ষণ করুন",
-  // NOTE: "Category" and "Account" are already defined in shared.ts with
-  // these exact same Bangla values -- reused via t(), not redefined here.
-
-  // AssetUpdatePageClient.tsx (Asset update page)
-  "Update each asset's current market value as it appreciates or depreciates.":
-    "প্রতিটি সম্পদের বর্তমান বাজারমূল্য বাড়া বা কমার সাথে সাথে আপডেট করুন।",
-  "No assets yet -- purchase one first under Purchase & Sell Asset.": "এখনো কোনো সম্পদ নেই -- প্রথমে সম্পদ ক্রয় ও বিক্রয় এর অধীনে একটি কিনুন।",
-  "Purchased at": "কেনা হয়েছে",
-  "Update Value": "মূল্য আপডেট করুন",
-
-  // AssetValueHistoryModal.tsx
-  "Value History": "মূল্যের ইতিহাস",
-  "No value history yet.": "এখনো কোনো মূল্যের ইতিহাস নেই।",
-
-  // CategoryPageClient.tsx (Category page)
-  "Manage the categories your assets are organized into.": "আপনার সম্পদগুলো যেসব ক্যাটাগরিতে সাজানো তা পরিচালনা করুন।",
-  'Delete the "{name}" category? Existing assets keep showing this name, but it won\'t be pickable for new ones.':
-    'ক্যাটাগরি "{name}" মুছবেন? বিদ্যমান সম্পদগুলো এই নামটি দেখাতে থাকবে, তবে নতুন সম্পদের জন্য এটি আর নির্বাচন করা যাবে না।',
-  "Category deleted": "ক্যাটাগরি মুছে ফেলা হয়েছে",
-  "Failed to delete category": "ক্যাটাগরি মুছতে ব্যর্থ হয়েছে",
-  'No categories yet -- click "Add Category" to get started.': 'এখনো কোনো ক্যাটাগরি নেই -- শুরু করতে "ক্যাটাগরি যোগ করুন" ক্লিক করুন।',
-
-  // CurrentAssetListPageClient.tsx (Current Asset list page)
-  "Current Asset List": "বর্তমান সম্পদের তালিকা",
-  "Everything you currently own, at a glance.": "আপনার বর্তমানে মালিকানাধীন সবকিছু, এক নজরে।",
-  "Search asset name...": "সম্পদের নাম খুঁজুন...",
-  "Add Assets": "সম্পদ যোগ করুন",
-  Asset: "সম্পদ",
-  "Purchase Date": "ক্রয়ের তারিখ",
-  "Purchase Price": "ক্রয়মূল্য",
-  "Current Value": "বর্তমান মূল্য",
-  "No assets currently owned.": "বর্তমানে কোনো সম্পদের মালিকানা নেই।",
-  "No assets match your search.": "আপনার অনুসন্ধানের সাথে কোনো সম্পদ মেলেনি।",
-
-  // PurchaseAssetModal.tsx (Purchase & Sell Asset page's Purchase modal)
-  "Select an account to pay from": "যে হিসাব থেকে পরিশোধ করবেন তা নির্বাচন করুন",
-  "Asset purchased": "সম্পদ ক্রয় করা হয়েছে",
-  "Failed to record purchase": "ক্রয় রেকর্ড করতে ব্যর্থ হয়েছে",
-  "Purchase Asset": "সম্পদ ক্রয় করুন",
+  "No accounts yet": "এখনো কোনো হিসাব নেই",
+  "No accounts exist in this workspace yet -- add one in Chart of Accounts first.": "এই ওয়ার্কস্পেসে এখনো কোনো হিসাব নেই -- আগে হিসাবচিত্রে একটি যোগ করুন।",
   "General Accounts": "সাধারণ হিসাব",
   "Savings Accounts": "সঞ্চয় হিসাব",
-  "No accounts yet": "এখনো কোনো হিসাব নেই",
-  "No accounts exist in this workspace yet -- add one in Chart of Accounts first.":
-    "এই ওয়ার্কস্পেসে এখনো কোনো হিসাব নেই -- প্রথমে হিসাবচিত্রে একটি যোগ করুন।",
-
-  // PurchaseSellAssetPageClient.tsx (Purchase & Sell Asset page)
-  "Purchase a new asset, or sell one you currently own.": "একটি নতুন সম্পদ কিনুন, অথবা আপনার মালিকানাধীন কোনো একটি বিক্রি করুন।",
-  "Sell an Asset": "একটি সম্পদ বিক্রি করুন",
-  "No assets to sell yet -- purchase one first.": "বিক্রি করার মতো এখনো কোনো সম্পদ নেই -- প্রথমে একটি কিনুন।",
-  Sell: "বিক্রি করুন",
-
-  // SellAssetModal.tsx
-  'Selling "': 'বিক্রি করা হচ্ছে "',
-  '" (current value: {value}).': '" (বর্তমান মূল্য: {value})।',
-  "Asset sold -- recorded as income": "সম্পদ বিক্রি হয়েছে -- আয় হিসেবে রেকর্ড করা হয়েছে",
-  "Failed to record sale": "বিক্রয় রেকর্ড করতে ব্যর্থ হয়েছে",
-  "Sell Asset": "সম্পদ বিক্রি করুন",
-  "Sold Price": "বিক্রয় মূল্য",
-  "Deposit To": "যে হিসাবে জমা হবে",
-
-  // UpdateAssetValueModal.tsx
-  "Value updated": "মূল্য আপডেট হয়েছে",
-  "Failed to update value": "মূল্য আপডেট করতে ব্যর্থ হয়েছে",
-  "Current value:": "বর্তমান মূল্য:",
-  "New Value": "নতুন মূল্য",
   Note: "নোট",
-  "e.g. Market rate increased": "যেমন, বাজারদর বৃদ্ধি পেয়েছে",
 };
