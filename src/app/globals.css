@@ -433,6 +433,10 @@
 @utility bg-wallet-mint {
   background-image: linear-gradient(135deg, #14b57a 0%, #1f7a5a 100%);
 }
+/* The first savings wallet card. */
+@utility bg-savings-violet {
+  background-image: linear-gradient(135deg, #6244c4 0%, #3e2a86 100%);
+}
 
 @layer base {
   * {
