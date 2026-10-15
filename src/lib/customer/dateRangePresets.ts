@@ -1,6 +1,6 @@
 import { getAppToday } from "@/lib/date";
 
-export type DateRangePreset = "this-month" | "last-month" | "this-year" | "custom" | "all";
+export type DateRangePreset = "this-month" | "last-month" | "this-year" | "last-year" | "custom" | "all";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const ymd = (year: number, month: number, day: number) => `${year}-${pad(month)}-${pad(day)}`;
@@ -50,6 +50,8 @@ export function resolveDateRange(preset: DateRangePreset | undefined, customFrom
     }
     case "this-year":
       return { dateFrom: ymd(year, 1, 1), dateTo: today };
+    case "last-year":
+      return { dateFrom: ymd(year - 1, 1, 1), dateTo: ymd(year - 1, 12, 31) };
     case "custom":
       return { dateFrom: customFrom, dateTo: customTo };
     default:
