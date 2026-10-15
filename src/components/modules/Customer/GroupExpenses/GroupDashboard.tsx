@@ -23,7 +23,10 @@ interface GroupDashboardProps {
   onSetBudget: () => void;
 }
 
-const ROW = "grid-cols-[minmax(0,1fr)_120px_88px_150px]";
+const ROW = "grid-cols-[minmax(0,1fr)_120px_88px_190px]";
+
+// "Arif pays Khaled": first names keep the line short.
+const firstName = (name: string | undefined) => (name ?? "?").split(" ")[0];
 
 // A group's month at a glance: the four figures, every member's balance,
 // who pays whom, where the money went, and the last six months against
@@ -90,14 +93,15 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
           </div>
           {rows.length === 0 && <p className="border-t border-line px-5 py-8 text-center text-body text-ink-muted">{t("Add members to see their balances.")}</p>}
           {rows.map(({ row, member }) => (
-            <button key={row.groupMemberId} type="button" onClick={() => member && onStatement(member)} className={cn("grid w-full items-center gap-4 border-b border-surface-sunken px-5 py-3 text-left text-body tabular-nums hover:bg-cream md:min-h-16 md:py-0", "grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_120px_88px_150px]")}>
+            <button key={row.groupMemberId} type="button" onClick={() => member && onStatement(member)} className={cn("grid w-full items-center gap-4 border-b border-surface-sunken px-5 py-3 text-left text-body tabular-nums hover:bg-cream md:min-h-16 md:py-0", "grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
               <span className="flex min-w-0 items-center gap-3">
                 <PersonAvatar name={row.name} src={member?.photoUrl} size={34} coloured />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate font-semibold text-ink">{row.name}</span>
-                  <span className="truncate text-caption font-normal text-ink-muted">
+                  <span className="truncate text-caption font-normal text-ink-muted md:hidden">
                     {formatCurrency(row.contributed, currency)} {t("paid in")} · {formatCurrency(row.share, currency)} {t("cost")}
                   </span>
+                  <span className="hidden truncate text-caption font-normal text-ink-muted md:block">{member?.phone ?? t("Active member")}</span>
                 </span>
               </span>
               <span className="hidden text-right text-ink md:block">{formatCurrency(row.contributed, currency)}</span>
@@ -107,7 +111,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
           ))}
           {rows.length > 0 && (
             <>
-              <div className={cn("grid h-12.5 items-center gap-4 bg-cream px-5 text-body font-semibold tabular-nums", "grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_120px_88px_150px]")}>
+              <div className={cn("grid h-12.5 items-center gap-4 bg-cream px-5 text-body font-semibold tabular-nums", "grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
                 <span>{t("Total")}</span>
                 <span className="hidden text-right md:block">{formatCurrency(totalPaid, currency)}</span>
                 <span className="hidden text-right md:block">{formatCurrency(totalCost, currency)}</span>
@@ -139,10 +143,10 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                   <PersonAvatar name={to?.name ?? "?"} src={to?.photoUrl} size={34} coloured />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-body font-semibold text-ink">
-                      {from?.name} {t("pays")} {to?.name}
+                      {firstName(from?.name)} {t("pays")} {firstName(to?.name)}
                     </span>
                     <span className="truncate text-caption font-normal text-ink-muted">
-                      {t("Clears")} {from?.name}
+                      {t("Clears")} {firstName(from?.name)}
                       {t("'s")} {formatSignedCurrency(view.balances[transfer.fromId] ?? 0, currency)}
                     </span>
                   </span>
