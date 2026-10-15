@@ -155,7 +155,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
             </span>
             {isCurrentMonth && (
               <span className="flex items-center gap-1">
-                <CalendarDays className="size-[13px]" aria-hidden="true" />
+                <CalendarDays className="size-3.25" aria-hidden="true" />
                 {daysLeft} {t("days left in")} {monthName.split(" ")[0]}
               </span>
             )}
@@ -210,7 +210,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
           return (
             <Card key={category.id} className={cn("flex flex-col gap-3", tone === "expense" && "border-[#F2C9C0] dark:border-expense/40")}>
               <div className="flex items-center gap-3">
-                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-[19px]", visual.bg, visual.fg)}>{category.icon && createElement(budgetCategoryIcon(category.icon), { "aria-hidden": true })}</span>
+                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", visual.bg, visual.fg)}>{category.icon && createElement(budgetCategoryIcon(category.icon), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="truncate text-title text-ink">{category.name}</span>
                   <span className="text-caption font-normal text-ink-muted tabular-nums">

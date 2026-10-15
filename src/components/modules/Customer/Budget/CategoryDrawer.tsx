@@ -12,6 +12,7 @@ import ProgressBar from "@/components/smartly/ProgressBar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { BudgetCategorySummary, BudgetCategoryType } from "@/lib/customer/api";
+import { createAssetCategoryAction, updateAssetCategoryAction } from "@/lib/customer/assetActions";
 import { createBudgetCategoryAction, updateBudgetCategoryAction } from "@/lib/customer/budgetActions";
 import { budgetCategoryHex, budgetCategoryIcon, budgetCategoryIconLabel, BUDGET_CATEGORY_COLORS, BUDGET_CATEGORY_ICONS, INCOME_CATEGORY_ICONS, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
@@ -23,12 +24,19 @@ import { cn } from "@/lib/utils";
 type IconKey = (typeof BUDGET_CATEGORY_ICONS)[number];
 type ColorKey = (typeof BUDGET_CATEGORY_COLORS)[number];
 
+// What the drawer edits: a budget category in full, or just the name,
+// icon and colour of an asset category.
+export type EditableCategory = Pick<BudgetCategorySummary, "id" | "name" | "icon" | "color"> & Partial<Pick<BudgetCategorySummary, "monthlyLimit">>;
+
 interface CategoryDrawerProps {
   open: boolean;
   onClose: () => void;
   businessId: string;
-  type: BudgetCategoryType;
-  editing: BudgetCategorySummary | null;
+  // Budget categories are income or expense; an asset category has no
+  // type and no limit, and saves through the assets API.
+  type?: BudgetCategoryType;
+  variant?: "budget" | "asset";
+  editing: EditableCategory | null;
   currency: string;
   // The month's budget the limit is checked against (expense only): what
   // is still unassigned, so a limit past it gets a warning.
@@ -41,11 +49,14 @@ const QUICK_LIMITS = [2000, 5000, 10000, 20000];
 // Add or edit a category in the design's drawer: a live preview of the
 // tile, the name, the icon grid with search, the colour dots, and -- for
 // an expense -- the monthly limit with quick chips and the budget warning.
-export function CategoryDrawer({ open, onClose, businessId, type, editing, currency, unassigned = null, totalBudget = null }: CategoryDrawerProps) {
+export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", variant = "budget", editing, currency, unassigned = null, totalBudget = null }: CategoryDrawerProps) {
   const { t } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
+  const isAsset = variant === "asset";
   const isIncome = type === "INCOME";
+  // Only an expense category carries a monthly limit.
+  const noLimit = isIncome || isAsset;
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<IconKey | null>(null);
   const [color, setColor] = useState<ColorKey>(BUDGET_CATEGORY_COLORS[0]);
@@ -79,18 +90,24 @@ export function CategoryDrawer({ open, onClose, businessId, type, editing, curre
   }
 
   const limitValue = Number(limit) || 0;
-  const valid = name.trim().length > 0 && (isIncome || limitValue > 0);
+  const valid = name.trim().length > 0 && (noLimit || limitValue > 0);
   // How much of the budget this limit would take beyond what is unassigned
   // (editing adds back the category's current limit first).
   const currentLimit = editing?.monthlyLimit ? Number(editing.monthlyLimit) : 0;
-  const over = !isIncome && unassigned !== null && limitValue > unassigned + currentLimit ? limitValue - (unassigned + currentLimit) : 0;
+  const over = !noLimit && unassigned !== null && limitValue > unassigned + currentLimit ? limitValue - (unassigned + currentLimit) : 0;
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!valid || isPending) return;
     startTransition(async () => {
-      const input = { name: name.trim(), icon, color, ...(!isIncome && { monthlyLimit: limitValue }) };
-      const result = editing ? await updateBudgetCategoryAction(businessId, editing.id, input) : await createBudgetCategoryAction(businessId, { type, ...input });
+      const input = { name: name.trim(), icon, color, ...(!noLimit && { monthlyLimit: limitValue }) };
+      const result = isAsset
+        ? editing
+          ? await updateAssetCategoryAction(businessId, editing.id, input)
+          : await createAssetCategoryAction(businessId, input)
+        : editing
+          ? await updateBudgetCategoryAction(businessId, editing.id, input)
+          : await createBudgetCategoryAction(businessId, { type, ...input });
       if (result.success) {
         toast.success(editing ? t("Category updated") : t("Category added"));
         onClose();
@@ -105,7 +122,7 @@ export function CategoryDrawer({ open, onClose, businessId, type, editing, curre
   const query = iconSearch.trim().toLowerCase();
   const icons = query ? available.filter((key) => key.includes(query) || budgetCategoryIconLabel(key).toLowerCase().includes(query)) : available;
   const tone = categoryTone(color);
-  const title = editing ? t(isIncome ? "Edit income source" : "Edit expense category") : t(isIncome ? "Add income source" : "Add expense category");
+  const title = isAsset ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income source" : "Edit expense category") : t(isIncome ? "Add income source" : "Add expense category");
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
@@ -117,7 +134,7 @@ export function CategoryDrawer({ open, onClose, businessId, type, editing, curre
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{title}</SheetTitle>
-            <p className="text-small text-ink-muted">{t(isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
+            <p className="text-small text-ink-muted">{t(isAsset ? "Group what you own." : isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -128,18 +145,18 @@ export function CategoryDrawer({ open, onClose, businessId, type, editing, curre
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <div aria-label={t("Preview")} className="flex flex-col gap-3 rounded-lg border border-line bg-cream p-4">
               <div className="flex items-center gap-3">
-                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-[19px]", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
+                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="truncate text-title text-ink">{name.trim() || t(isIncome ? "New source" : "New category")}</span>
-                  <span className="text-caption font-normal text-ink-muted">{isIncome ? t("Income source") : `${t("Limit")} ${formatCurrency(limitValue, currency)}`}</span>
+                  <span className="text-caption font-normal text-ink-muted">{isAsset ? t("Asset category") : isIncome ? t("Income source") : `${t("Limit")} ${formatCurrency(limitValue, currency)}`}</span>
                 </span>
-                {!isIncome && <span className="text-caption font-semibold text-emerald">{formatCurrency(limitValue, currency)} {t("left")}</span>}
+                {!noLimit && <span className="text-caption font-semibold text-emerald">{formatCurrency(limitValue, currency)} {t("left")}</span>}
               </div>
               <ProgressBar value={0} size="sm" label={t("Preview")} />
             </div>
 
             <Field htmlFor="cat-name" label={<span className="text-body font-medium text-ink">{t("Name")}</span>}>
-              <Input id="cat-name" size="md" value={name} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isIncome ? "Salary" : "Groceries")} />
+              <Input id="cat-name" size="md" value={name} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isAsset ? "Vehicle" : isIncome ? "Salary" : "Groceries")} />
             </Field>
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
@@ -197,7 +214,7 @@ export function CategoryDrawer({ open, onClose, businessId, type, editing, curre
               </div>
             </fieldset>
 
-            {!isIncome && (
+            {!noLimit && (
               <div className="flex flex-col gap-2">
                 <label htmlFor="cat-limit" className="text-body font-medium text-ink">
                   {t("Monthly limit")}
@@ -224,7 +241,7 @@ export function CategoryDrawer({ open, onClose, businessId, type, editing, curre
                 </div>
                 {over > 0 && totalBudget !== null && (
                   <span id="cat-limit-help" className="flex gap-2 text-caption leading-relaxed text-warning">
-                    <TriangleAlert className="mt-0.5 size-[13px] shrink-0" strokeWidth={2.25} aria-hidden="true" />
+                    <TriangleAlert className="mt-0.5 size-3.25 shrink-0" strokeWidth={2.25} aria-hidden="true" />
                     {t("Only")} {formatCurrency((unassigned ?? 0) + currentLimit, currency)} {t("of your")} {formatCurrency(totalBudget, currency)} {t("budget is unassigned. This limit goes")} {formatCurrency(over, currency)} {t("over it.")}
                   </span>
                 )}
@@ -238,7 +255,7 @@ export function CategoryDrawer({ open, onClose, businessId, type, editing, curre
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {editing ? t("Save changes") : t(isIncome ? "Add source" : "Add category")}
+              {editing ? t("Save changes") : t(isIncome && !isAsset ? "Add source" : "Add category")}
             </Button>
           </div>
         </form>
