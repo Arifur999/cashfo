@@ -58,7 +58,7 @@ export function HomeTodoCard() {
           </label>
         ))
       )}
-      <Link href={list ? `/habit-tracker/todos/${list.id}` : "/habit-tracker/todos"} className="mt-auto text-body font-semibold text-emerald hover:text-emerald-hover">
+      <Link href="/habit-tracker/todos" className="mt-auto text-body font-semibold text-emerald hover:text-emerald-hover">
         {t("Open to-do list")}
       </Link>
     </Card>

@@ -16,7 +16,7 @@ import { addTodoItemAction, createTodoListAction, moveTodoItemToNextDayAction, r
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { formatTodoDate } from "./todoDate";
+import { dayLabel } from "@/lib/customer/todoDisplay";
 
 interface TodayTasksPanelProps {
   open: boolean;
@@ -162,7 +162,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
           <h2 className={cn("font-semibold", sheet ? "text-h3" : "text-title")}>{t("Today’s tasks")}</h2>
           <span className="flex items-center gap-3 text-small text-ink-muted">
             <span className="whitespace-nowrap">
-              {formatTodoDate(today)}
+              {dayLabel(today, "EEE, d MMM yyyy")}
               {items.length > 0 && ` · ${done} ${t("of")} ${items.length} ${t("done")}`}
             </span>
             {items.length > 0 && <ProgressBar value={(done / items.length) * 100} size="sm" label={t("Tasks done today")} className="w-22" />}
@@ -274,8 +274,8 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         ) : (
           <span className="text-caption font-normal text-ink-muted">{t("Enter adds · Esc closes")}</span>
         )}
-        <Link href={list ? `/habit-tracker/todos/${list.id}` : "/habit-tracker/todos"} onClick={onClose} className="flex items-center gap-1 text-small font-semibold whitespace-nowrap text-emerald hover:text-emerald-hover">
-          {list ? t("Open full list") : t("All days")}
+        <Link href="/habit-tracker/todos" onClick={onClose} className="flex items-center gap-1 text-small font-semibold whitespace-nowrap text-emerald hover:text-emerald-hover">
+          {t("Open full list")}
           <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
         </Link>
       </div>
