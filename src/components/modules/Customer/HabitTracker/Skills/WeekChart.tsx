@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { SkillWeekDay } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { DISPLAY_STACK } from "./fonts";
-import { hoursText } from "./skillMath";
+import { hoursText } from "@/lib/customer/skillsDisplay";
 import { SKILL_CARD } from "./skillTheme";
 
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

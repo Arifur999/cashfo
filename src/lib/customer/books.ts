@@ -18,10 +18,3 @@ export const getBooksOverview = cache(async (): Promise<BooksOverview | null> =>
     return emptyUnlessOutage(error, null);
   }
 });
-
-// Whole days since 1970-01-01 on the Asia/Dhaka calendar (fixed UTC+6). One
-// number that flips at Dhaka midnight, from which the page picks today's
-// quote -- computed on the server so the server and client render the same one.
-export function dhakaDayNumber(): number {
-  return Math.floor((Date.now() + 6 * 60 * 60 * 1000) / 86_400_000);
-}
