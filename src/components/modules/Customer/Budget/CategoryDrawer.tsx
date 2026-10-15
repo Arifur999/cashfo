@@ -14,6 +14,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { BudgetCategorySummary, BudgetCategoryType } from "@/lib/customer/api";
 import { createAssetCategoryAction, updateAssetCategoryAction } from "@/lib/customer/assetActions";
 import { createBudgetCategoryAction, updateBudgetCategoryAction } from "@/lib/customer/budgetActions";
+import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction } from "@/lib/customer/groupExpensesActions";
 import { budgetCategoryHex, budgetCategoryIcon, budgetCategoryIconLabel, BUDGET_CATEGORY_COLORS, BUDGET_CATEGORY_ICONS, INCOME_CATEGORY_ICONS, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
@@ -32,10 +33,10 @@ interface CategoryDrawerProps {
   open: boolean;
   onClose: () => void;
   businessId: string;
-  // Budget categories are income or expense; an asset category has no
-  // type and no limit, and saves through the assets API.
+  // Budget categories are income or expense; an asset or a group category
+  // has no type and no limit, and saves through its own API.
   type?: BudgetCategoryType;
-  variant?: "budget" | "asset";
+  variant?: "budget" | "asset" | "group";
   editing: EditableCategory | null;
   currency: string;
   // The month's budget the limit is checked against (expense only): what
@@ -54,9 +55,10 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const isAsset = variant === "asset";
+  const isGroup = variant === "group";
   const isIncome = type === "INCOME";
-  // Only an expense category carries a monthly limit.
-  const noLimit = isIncome || isAsset;
+  // Only a budget expense category carries a monthly limit.
+  const noLimit = isIncome || isAsset || isGroup;
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<IconKey | null>(null);
   const [color, setColor] = useState<ColorKey>(BUDGET_CATEGORY_COLORS[0]);
@@ -105,7 +107,11 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
         ? editing
           ? await updateAssetCategoryAction(businessId, editing.id, input)
           : await createAssetCategoryAction(businessId, input)
-        : editing
+        : isGroup
+          ? editing
+            ? await updateGroupExpenseCategoryAction(businessId, editing.id, input)
+            : await createGroupExpenseCategoryAction(businessId, input)
+          : editing
           ? await updateBudgetCategoryAction(businessId, editing.id, input)
           : await createBudgetCategoryAction(businessId, { type, ...input });
       if (result.success) {
@@ -122,7 +128,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
   const query = iconSearch.trim().toLowerCase();
   const icons = query ? available.filter((key) => key.includes(query) || budgetCategoryIconLabel(key).toLowerCase().includes(query)) : available;
   const tone = categoryTone(color);
-  const title = isAsset ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income source" : "Edit expense category") : t(isIncome ? "Add income source" : "Add expense category");
+  const title = isAsset || isGroup ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income source" : "Edit expense category") : t(isIncome ? "Add income source" : "Add expense category");
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
@@ -134,7 +140,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{title}</SheetTitle>
-            <p className="text-small text-ink-muted">{t(isAsset ? "Group what you own." : isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
+            <p className="text-small text-ink-muted">{t(isAsset ? "Group what you own." : isGroup ? "What an expense can be filed under." : isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -148,7 +154,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                 <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="truncate text-title text-ink">{name.trim() || t(isIncome ? "New source" : "New category")}</span>
-                  <span className="text-caption font-normal text-ink-muted">{isAsset ? t("Asset category") : isIncome ? t("Income source") : `${t("Limit")} ${formatCurrency(limitValue, currency)}`}</span>
+                  <span className="text-caption font-normal text-ink-muted">{isAsset ? t("Asset category") : isGroup ? t("Expense category") : isIncome ? t("Income source") : `${t("Limit")} ${formatCurrency(limitValue, currency)}`}</span>
                 </span>
                 {!noLimit && <span className="text-caption font-semibold text-emerald">{formatCurrency(limitValue, currency)} {t("left")}</span>}
               </div>
@@ -156,7 +162,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             </div>
 
             <Field htmlFor="cat-name" label={<span className="text-body font-medium text-ink">{t("Name")}</span>}>
-              <Input id="cat-name" size="md" value={name} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isAsset ? "Vehicle" : isIncome ? "Salary" : "Groceries")} />
+              <Input id="cat-name" size="md" value={name} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isAsset ? "Vehicle" : isGroup ? "Bazar" : isIncome ? "Salary" : "Groceries")} />
             </Field>
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
@@ -255,7 +261,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {editing ? t("Save changes") : t(isIncome && !isAsset ? "Add source" : "Add category")}
+              {editing ? t("Save changes") : t(isIncome && !isAsset && !isGroup ? "Add source" : "Add category")}
             </Button>
           </div>
         </form>

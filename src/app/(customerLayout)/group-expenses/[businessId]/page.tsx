@@ -1,28 +1,16 @@
 import { redirect } from "next/navigation";
-import { GroupWorkspacePageClient } from "@/components/modules/Customer/GroupExpenses/GroupWorkspacePageClient";
-import type { GroupExpenseCategory } from "@/lib/customer/api";
-import { getWorkspace } from "@/lib/customer/businesses";
+import { GroupPageClient } from "@/components/modules/Customer/GroupExpenses/GroupPageClient";
+import type { GroupPageData } from "@/components/modules/Customer/GroupExpenses/groupTypes";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { appMonthRange, appYearMonth, isIsoDay } from "@/lib/customer/dateRangePresets";
-import {
-  getGroupContributions,
-  getGroupExpenseCategories,
-  getGroupExpenses,
-  getGroupMembers,
-  getGroupMonthBudgets,
-  getGroupSettlement,
-  getGroupSettlementHistory,
-} from "@/lib/customer/groupExpenses";
+import { getWorkspace } from "@/lib/customer/businesses";
+import { closedRecordFor, groupTabFrom, inMonth, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
+import { getGroupContributions, getGroupExpenseCategories, getGroupExpenses, getGroupMembers, getGroupMonthBudgets, getGroupSettlement, getGroupSettlementHistory } from "@/lib/customer/groupExpenses";
+import { getAppToday } from "@/lib/date";
 
-// businessId comes straight from the URL, not the "active workspace" cookie
-// -- see Sidebar.tsx's comment on /group-expenses for why. Sequential
-// fetches (not Promise.all), matching contacts/[id]/page.tsx's own comment
-// on this app's local dev Postgres dropping connections under concurrent
-// load.
-export default async function GroupWorkspacePage({
-  params,
-  searchParams,
-}: PageProps<"/group-expenses/[businessId]">) {
+// A group, one month at a time. businessId comes from the URL, not the
+// active-workspace cookie: groups open from the list, whatever workspace
+// is active.
+export default async function GroupWorkspacePage({ params, searchParams }: PageProps<"/group-expenses/[businessId]">) {
   const { businessId } = await params;
   const sp = await searchParams;
   const user = await getCurrentUser();
@@ -31,49 +19,46 @@ export default async function GroupWorkspacePage({
   // Missing, someone else's, or not a group: back to the list. An outage
   // throws to the error screen instead.
   const business = await getWorkspace(businessId);
-  if (!business || business.type !== "GROUP") {
-    redirect("/group-expenses");
-  }
+  if (!business || business.type !== "GROUP") redirect("/group-expenses");
 
-  // From the URL, which anyone can edit: a malformed date would make the
-  // backend fail on every load, so it is dropped instead.
-  const from = isIsoDay(sp.from) ? sp.from : undefined;
-  const to = isIsoDay(sp.to) ? sp.to : undefined;
-  const groupMemberId = typeof sp.memberId === "string" ? sp.memberId : undefined;
-  const category = typeof sp.category === "string" ? (sp.category as GroupExpenseCategory) : undefined;
+  const today = getAppToday();
+  const range = monthRangeOf(monthKeyFrom(sp.month, today));
+  const sixFrom = monthRangeOf(shiftMonth(range.key, -5)).from;
 
-  // Dashboard's own period filter (All/This Month/This Year) -- separate
-  // from `from`/`to` above (Contributions/Expenses/Settlement's own shared
-  // filter param) so switching one never affects the other.
-  const dashRange = typeof sp.dashRange === "string" ? sp.dashRange : "month";
-  const dashboardPeriod =
-    dashRange === "all"
-      ? { from: "2000-01-01", to: "2100-12-31" }
-      : dashRange === "year"
-        ? { from: `${appYearMonth().year}-01-01`, to: `${appYearMonth().year}-12-31` }
-        : appMonthRange(); // Dhaka's month; the backend's own default follows its UTC clock
+  const [members, contributions, recentExpenses, categories, settlement, history, budgets] = await Promise.all([
+    getGroupMembers(businessId),
+    getGroupContributions(businessId, { from: range.from, to: range.to }),
+    getGroupExpenses(businessId, { from: sixFrom, to: range.to }),
+    getGroupExpenseCategories(businessId),
+    getGroupSettlement(businessId, range.from, range.to),
+    getGroupSettlementHistory(businessId),
+    getGroupMonthBudgets(businessId),
+  ]);
 
-  const members = await getGroupMembers(businessId);
-  const contributions = await getGroupContributions(businessId, { groupMemberId, from, to });
-  const expenses = await getGroupExpenses(businessId, { category, from, to });
-  const expenseCategories = await getGroupExpenseCategories(businessId);
-  const settlement = await getGroupSettlement(businessId, from, to);
-  const dashboardSettlement = await getGroupSettlement(businessId, dashboardPeriod.from, dashboardPeriod.to);
-  const settlementHistory = await getGroupSettlementHistory(businessId);
-  const monthBudgets = await getGroupMonthBudgets(businessId);
+  // The picker goes back to the earliest closed month, at least a year, and
+  // always includes the month in the URL.
+  const earliest = [...history.map((h) => h.periodStart.slice(0, 10)), range.from].sort()[0];
+  const months = monthChoices(today, earliest);
+  if (!months.includes(range.key)) months.push(range.key);
 
-  return (
-    <GroupWorkspacePageClient
-      businessId={businessId}
-      businessName={business.name}
-      members={members}
-      contributions={contributions}
-      expenses={expenses}
-      expenseCategories={expenseCategories}
-      settlement={settlement}
-      dashboardSettlement={dashboardSettlement}
-      settlementHistory={settlementHistory}
-      monthBudgets={monthBudgets}
-    />
-  );
+  const data: GroupPageData = {
+    businessId,
+    name: business.name,
+    currency: business.currency,
+    today,
+    tab: groupTabFrom(sp.tab),
+    range,
+    months,
+    closedRecord: closedRecordFor(history, range),
+    members,
+    contributions,
+    expenses: inMonth(recentExpenses, range),
+    recentExpenses,
+    categories,
+    settlement,
+    history,
+    budgets,
+  };
+
+  return <GroupPageClient data={data} />;
 }
