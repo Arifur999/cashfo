@@ -41,7 +41,8 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
   const comparedWith = labels.previousIsYear ? `${t("the same months of")} ${labels.previous}` : labels.previous;
   const topSource = data.sources[0];
   const topSpend = data.spend[0];
-  const rise = data.biggestMove && data.biggestMove.change > 0 ? data.biggestMove : null;
+  // A rise is only news when there was spending before to rise from.
+  const rise = previous.expense > 0 && data.biggestMove && data.biggestMove.change > 0 ? data.biggestMove : null;
 
   const periodControl = (
     <SegmentedControl

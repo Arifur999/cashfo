@@ -1,10 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import { OthersSheetPageClient } from "@/components/modules/Customer/HabitTracker/Others/OthersSheetPageClient";
+import { ChallengeDetailPageClient } from "@/components/modules/Customer/HabitTracker/Others/ChallengeDetailPageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getHabitTracker } from "@/lib/customer/habits";
+import { getAppToday } from "@/lib/date";
 
-// One challenge's sheet, opened from a card on Habits -> Others.
-export default async function OthersSheetPage({ params }: PageProps<"/habit-tracker/habits/others/[id]">) {
+// One challenge, opened from Habits › Challenges.
+export default async function ChallengePage({ params }: PageProps<"/habit-tracker/habits/others/[id]">) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -12,5 +13,5 @@ export default async function OthersSheetPage({ params }: PageProps<"/habit-trac
   const tracker = await getHabitTracker(id);
   if (!tracker || tracker.category !== "Others") notFound();
 
-  return <OthersSheetPageClient tracker={tracker} />;
+  return <ChallengeDetailPageClient tracker={tracker} today={getAppToday()} />;
 }

@@ -18,7 +18,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { ContactAvatar } from "./ContactAvatar";
+import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { LoanContactDrawer } from "./LoanContactDrawer";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
 
@@ -204,7 +204,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 const contact = contactsById.get(row.contactId);
                 return (
                   <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-surface-sunken")}>
-                    <ContactAvatar name={row.contactName} src={contact?.photoUrl} size={40} coloured />
+                    <PersonAvatar name={row.contactName} src={contact?.photoUrl} size={40} coloured />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <b className="truncate text-title text-ink">{row.contactName}</b>
                       <span className="text-caption font-normal text-ink-muted">{contact ? t(LOAN_KIND_LABELS[contact.type]) : (row.contactPhone ?? "")}</span>
@@ -257,7 +257,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
   return (
     <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink transition-colors hover:bg-cream", GRID)}>
       <span className="flex min-w-0 items-center gap-3">
-        <ContactAvatar name={row.contactName} src={contact?.photoUrl} size={36} />
+        <PersonAvatar name={row.contactName} src={contact?.photoUrl} size={36} />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="flex items-center gap-2">
             <span className="truncate font-medium">{row.contactName}</span>

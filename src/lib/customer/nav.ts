@@ -28,6 +28,7 @@ export type NavIcon =
   | "vault"
   | "insights"
   | "reports"
+  | "challenges"
   | "ledger"
   | "people"
   | "clock"
@@ -145,11 +146,12 @@ export const NAV_SECTIONS: NavSection[] = [
     tone: "habits",
     items: [
       { label: "Today", href: "/habit-tracker", icon: "today" },
-      { label: "Daily habits", href: "/habit-tracker/habits", query: { category: "Others" }, match: ["/habit-tracker/habits/others"], icon: "daily" },
+      { label: "Daily habits", href: "/habit-tracker/daily", icon: "daily" },
       { label: "Namaz", href: "/habit-tracker/habits", query: { category: "Namaz" }, match: ["/habit-tracker/habits/namaz"], icon: "namaz" },
       { label: "Ramadan", href: "/habit-tracker/habits", query: { category: "Ramadan" }, match: ["/habit-tracker/habits/ramadan"], icon: "ramadan" },
       { label: "My library", href: "/habit-tracker/habits", query: { category: "Book" }, icon: "library" },
       { label: "Skills", href: "/habit-tracker/habits", query: { category: "Course" }, icon: "skills" },
+      { label: "Challenges", href: "/habit-tracker/habits", query: { category: "Others" }, match: ["/habit-tracker/habits/others"], icon: "challenges" },
       { label: "To-do list", href: "/habit-tracker/todos", icon: "todo", badge: "todayTasks" },
     ],
   },

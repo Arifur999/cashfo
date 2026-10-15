@@ -18,7 +18,7 @@ import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { DIRECTION_META, LOAN_KIND_LABELS, loanDirection } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { ContactAvatar } from "./ContactAvatar";
+import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { ContactPicker } from "./ContactPicker";
 
 interface LoanLedgerPageClientProps {
@@ -136,7 +136,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                   const side = DIRECTION_META[loanDirection(pick.currentBalance)];
                   return (
                     <button key={pick.id} type="button" onClick={() => updateParams({ contactId: pick.id })} className="flex h-16 items-center gap-3 rounded-md border border-line bg-surface px-4 text-left shadow-card transition-colors hover:border-line-strong md:w-50">
-                      <ContactAvatar name={pick.name} src={pick.photoUrl} size={30} />
+                      <PersonAvatar name={pick.name} src={pick.photoUrl} size={30} />
                       <span className="flex min-w-0 flex-col gap-px">
                         <span className="truncate text-body font-semibold text-ink">{pick.name}</span>
                         <span className={cn("text-caption font-normal tabular-nums", side.text)}>{amountWithSide(Number(pick.currentBalance))}</span>
@@ -221,7 +221,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
             </div>
             <div className="flex items-center justify-between border-t border-line px-6 py-3 text-small text-ink-muted">
               <span className="flex items-center gap-2">
-                <ContactAvatar name={contact.name} src={contact.photoUrl} size={28} />
+                <PersonAvatar name={contact.name} src={contact.photoUrl} size={28} />
                 {contact.name} · {t(LOAN_KIND_LABELS[contact.type])}
               </span>
               <span>

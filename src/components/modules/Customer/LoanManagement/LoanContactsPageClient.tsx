@@ -23,7 +23,7 @@ import { formatDate } from "@/lib/customer/date";
 import { DIRECTION_META, LOAN_KIND_LABELS, loanDirection } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { ContactAvatar } from "./ContactAvatar";
+import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { LoanContactDrawer } from "./LoanContactDrawer";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
 
@@ -130,7 +130,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
               return (
                 <Card key={contact.id} className={cn("flex flex-col gap-4", archived && "opacity-60")}>
                   <div className="flex items-center gap-3">
-                    <ContactAvatar name={contact.name} src={contact.photoUrl} size={44} />
+                    <PersonAvatar name={contact.name} src={contact.photoUrl} size={44} />
                     <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                       <span className="flex items-center gap-2">
                         <span className="truncate text-title text-ink">{contact.name}</span>
