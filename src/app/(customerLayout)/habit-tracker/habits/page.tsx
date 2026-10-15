@@ -4,8 +4,8 @@ import { BooksPageClient } from "@/components/modules/Customer/HabitTracker/Book
 import { SkillsLoadError } from "@/components/modules/Customer/HabitTracker/Skills/SkillsLoadError";
 import { SkillsPageClient } from "@/components/modules/Customer/HabitTracker/Skills/SkillsPageClient";
 import { NamazHomePageClient } from "@/components/modules/Customer/HabitTracker/Namaz/NamazHomePageClient";
-import { OthersListPageClient } from "@/components/modules/Customer/HabitTracker/Others/OthersListPageClient";
-import { RamadanListPageClient } from "@/components/modules/Customer/HabitTracker/Ramadan/RamadanListPageClient";
+import { ChallengesHomePageClient } from "@/components/modules/Customer/HabitTracker/Others/ChallengesHomePageClient";
+import { RamadanHomePageClient } from "@/components/modules/Customer/HabitTracker/Ramadan/RamadanHomePageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { dhakaDayNumber, getBooksOverview } from "@/lib/customer/books";
 import { getHabitTrackers } from "@/lib/customer/habits";
@@ -30,7 +30,7 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
 
   if (category === "Ramadan") {
     const trackers = await getHabitTrackers("Ramadan");
-    return <RamadanListPageClient trackers={trackers} />;
+    return <RamadanHomePageClient trackers={trackers} today={getAppToday()} />;
   }
 
   if (category === "Book") {
@@ -49,7 +49,7 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
 
   if (category === "Others") {
     const trackers = await getHabitTrackers("Others");
-    return <OthersListPageClient trackers={trackers} />;
+    return <ChallengesHomePageClient trackers={trackers} today={getAppToday()} />;
   }
 
   redirect("/habit-tracker");
