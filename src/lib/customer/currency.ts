@@ -54,7 +54,7 @@ export function formatCompactAmount(amount: number): string {
   const short = (value: number, unit: string) => `${sign}${Number.isInteger(value) ? value : value.toFixed(1).replace(/.0$/, "")}${unit}`;
   if (abs >= 1e7) return short(Math.round((abs / 1e7) * 10) / 10, "Cr");
   if (abs >= 1e5) return short(Math.round((abs / 1e5) * 10) / 10, "L");
-  if (abs >= 1e3) return short(Math.round(abs / 1e3), "K");
+  if (abs >= 1e3) return short(Math.round((abs / 1e3) * 10) / 10, "K");
   return `${sign}${Math.round(abs)}`;
 }
 

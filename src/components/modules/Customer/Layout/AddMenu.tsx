@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
-import { AddTransactionModal } from "@/components/modules/Customer/QuickEntry/AddTransactionModal";
-import { TransferModal } from "@/components/modules/Customer/QuickEntry/TransferModal";
+import { TransactionDrawer, type EntryKind } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import Button from "@/components/smartly/Button";
 import IconTile from "@/components/smartly/IconTile";
 import Kbd from "@/components/smartly/Kbd";
@@ -57,7 +56,7 @@ export function AddMenu({ onAddTask }: AddMenuProps) {
   const { activeBusinessId, activeBusiness } = useAuth();
   const loansOn = useFeature("loan_management");
   const [open, setOpen] = useState(false);
-  const [modal, setModal] = useState<"income" | "expense" | "transfer" | null>(null);
+  const [drawer, setDrawer] = useState<EntryKind | null>(null);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -76,9 +75,13 @@ export function AddMenu({ onAddTask }: AddMenuProps) {
     setOpen(false);
     switch (choice) {
       case "income":
+        setDrawer("INCOME");
+        break;
       case "expense":
+        setDrawer("EXPENSE");
+        break;
       case "transfer":
-        setModal(choice);
+        setDrawer("TRANSFER");
         break;
       case "loan":
         router.push("/loan-management/transactions");
@@ -148,14 +151,7 @@ export function AddMenu({ onAddTask }: AddMenuProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AddTransactionModal
-        open={modal === "income" || modal === "expense"}
-        initialKind={modal === "income" ? "INCOME" : "EXPENSE"}
-        onClose={() => setModal(null)}
-        businessId={activeBusinessId}
-        currency={activeBusiness?.currency ?? "BDT"}
-      />
-      <TransferModal open={modal === "transfer"} onClose={() => setModal(null)} businessId={activeBusinessId} />
+      <TransactionDrawer open={drawer !== null} initialKind={drawer ?? "EXPENSE"} onClose={() => setDrawer(null)} businessId={activeBusinessId} currency={activeBusiness?.currency ?? "BDT"} />
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { HomePageClient } from "@/components/modules/Customer/Dashboard/HomePageClient";
-import type { CategoryMeta, HomeData } from "@/components/modules/Customer/Dashboard/homeTypes";
+import type { HomeData } from "@/components/modules/Customer/Dashboard/homeTypes";
 import { getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssets } from "@/lib/customer/assets";
@@ -15,6 +15,7 @@ import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
 import { getCategoryBreakdown, getIncomeVsSavingsTrend } from "@/lib/customer/reports";
 import { getSavingsGoals, getSavingsOverview } from "@/lib/customer/savingsGoals";
 import { getSkillsOverview } from "@/lib/customer/skills";
+import { categoryIndex } from "@/lib/customer/transactionRows";
 import { getTransactions } from "@/lib/customer/transactions";
 import { getVaultStatus } from "@/lib/customer/vault";
 import { APP_TIME_ZONE, getAppToday } from "@/lib/date";
@@ -91,10 +92,7 @@ export default async function DashboardPage() {
   const activeAssets = assets.filter((a) => a.status === "ACTIVE");
   const assetsValue = activeAssets.reduce((sum, a) => sum + Number(a.currentValue), 0);
   const assetsCost = activeAssets.reduce((sum, a) => sum + Number(a.purchasePrice), 0);
-  const categoriesById: Record<string, CategoryMeta> = {};
-  for (const category of [...incomeCategories, ...expenseCategories]) {
-    categoriesById[category.id] = { name: category.name, icon: category.icon, color: category.color };
-  }
+  const categoriesById = categoryIndex([...incomeCategories, ...expenseCategories]);
   const budgetFocus = [...budget.categories].filter((c) => c.monthlyLimit !== null && Number(c.monthlyLimit) > 0).sort((a, b) => b.percent - a.percent)[0] ?? null;
   const topIncome = topShare(income);
   const topExpense = topShare(expense);

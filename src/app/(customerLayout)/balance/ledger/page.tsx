@@ -1,11 +1,19 @@
 import { redirect } from "next/navigation";
 import { AccountLedgerPageClient } from "@/components/modules/Customer/Balance/AccountLedgerPageClient";
-import { getAccount, getAccountSummary, getLedger, getWallets } from "@/lib/customer/accounts";
-import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
-import { getCurrentUser } from "@/lib/customer/auth";
-import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { getLocale } from "@/lib/i18n/locale";
 import { displayLanguage } from "@/lib/customer/accountDisplay";
+import { getAccount, getAccounts, getAccountSummary, getLedger, getWallets } from "@/lib/customer/accounts";
+import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
+import type { Account } from "@/lib/customer/api";
+import { getCurrentUser } from "@/lib/customer/auth";
+import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { getLocale } from "@/lib/i18n/locale";
+
+const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year", "custom"];
+
+// Every account in the chart, parents before their children.
+function flatten(accounts: Account[]): Account[] {
+  return accounts.flatMap((account) => [account, ...flatten(account.children)]);
+}
 
 export default async function AccountLedgerPage({ searchParams }: PageProps<"/balance/ledger">) {
   const params = await searchParams;
@@ -19,16 +27,17 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
   const currency = activeBusiness?.currency ?? "BDT";
 
   const accountId = typeof params.accountId === "string" ? params.accountId : "";
-  const range = (typeof params.range === "string" ? params.range : "all") as DateRangePreset;
-  const customFrom = typeof params.dateFrom === "string" ? params.dateFrom : undefined;
-  const customTo = typeof params.dateTo === "string" ? params.dateTo : undefined;
-  const page = typeof params.page === "string" ? Number(params.page) : 1;
+  const range = PRESETS.find((preset) => preset === params.range) ?? "all";
+  const customFrom = isIsoDay(params.dateFrom) ? params.dateFrom : undefined;
+  const customTo = isIsoDay(params.dateTo) ? params.dateTo : undefined;
+  const page = typeof params.page === "string" ? Math.max(1, Number(params.page) || 1) : 1;
 
-  // Same account set as Balance Overview -- money accounts only (cash/
-  // bank/mfs), including archived ones (struck through), rather than the
-  // full chart of accounts (Income/Expense/Equity have no Adjustment
-  // concept the way a money account does).
-  const accounts = await getWallets(activeBusinessId);
+  // The wallets lead the picker (archived ones included, struck through);
+  // the rest of the chart -- income, expense, equity -- is there for anyone
+  // who types its name.
+  const [wallets, groups] = await Promise.all([getWallets(activeBusinessId), getAccounts(activeBusinessId)]);
+  const walletIds = new Set(wallets.map((wallet) => wallet.id));
+  const others = flatten(groups.flatMap((group) => group.accounts)).filter((account) => !walletIds.has(account.id));
 
   const { dateFrom, dateTo } = resolveDateRange(range, customFrom, customTo);
 
@@ -42,7 +51,8 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
 
   return (
     <AccountLedgerPageClient
-      accounts={accounts}
+      wallets={wallets}
+      others={others}
       account={account}
       ledger={ledger}
       summary={summary}

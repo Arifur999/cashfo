@@ -165,6 +165,8 @@ export interface WalletOverviewRow {
   name: string;
   nameBn: string | null;
   accountNumber: string | null;
+  // cash / bank / mfs, for the row's icon.
+  accountSubtype: string | null;
   status: AccountStatus;
   openingBalance: string;
   totalIn: string;

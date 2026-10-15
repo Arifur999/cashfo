@@ -12,7 +12,8 @@ describe("formatCompactAmount", () => {
     expect(formatCompactAmount(100000)).toBe("1L");
     expect(formatCompactAmount(150000)).toBe("1.5L");
     expect(formatCompactAmount(12000000)).toBe("1.2Cr");
-    expect(formatCompactAmount(-2500)).toBe("-3K");
+    expect(formatCompactAmount(-2500)).toBe("-2.5K");
+    expect(formatCompactAmount(2500)).toBe("2.5K");
   });
 });
 

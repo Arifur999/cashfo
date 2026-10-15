@@ -87,7 +87,7 @@ export function IncomeSavedChart({ points, currency, monthName }: IncomeSavedCha
         <div className="grid text-center text-caption" style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}>
           {points.map((point) => (
             <span key={point.month} className={point === current ? "font-bold text-ink" : "font-medium text-ink-muted"}>
-              {point.month}
+              {point.month.split(" ")[0]}
             </span>
           ))}
         </div>

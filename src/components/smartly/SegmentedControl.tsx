@@ -49,16 +49,18 @@ interface SegmentedControlProps<T extends string> {
   onChange: (value: T) => void;
   label: string;
   variant?: keyof typeof VARIANTS;
+  // "lg" stands 44px tall beside a 44px field (the Statement's Period).
+  size?: "md" | "lg";
   // Fill the width, each segment equal (the drawer's Income/Expense/Transfer).
   stretch?: boolean;
   className?: string;
 }
 
 // A row of exclusive choices; one is always on.
-const SegmentedControl = <T extends string>({ options, value, onChange, label, variant = "tabs", stretch = false, className }: SegmentedControlProps<T>) => {
+const SegmentedControl = <T extends string>({ options, value, onChange, label, variant = "tabs", size = "md", stretch = false, className }: SegmentedControlProps<T>) => {
   const styles = VARIANTS[variant];
   return (
-    <div role="group" aria-label={label} className={cn("inline-flex gap-0.5", stretch && "flex w-full", styles.group, className)}>
+    <div role="group" aria-label={label} className={cn("inline-flex gap-0.5", stretch && "flex w-full", styles.group, size === "lg" && "p-1", className)}>
       {options.map((option) => {
         const on = option.value === value;
         return (
@@ -68,7 +70,7 @@ const SegmentedControl = <T extends string>({ options, value, onChange, label, v
             aria-pressed={on}
             lang={option.lang}
             onClick={() => onChange(option.value)}
-            className={cn("inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors", styles.item, on ? styles.on : styles.off, stretch && "flex-1")}
+            className={cn("inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors", styles.item, on ? styles.on : styles.off, size === "lg" && "h-9", stretch && "flex-1")}
           >
             {option.dot && <span aria-hidden="true" className="size-2 rounded-full" style={{ background: option.dot }} />}
             {option.icon}
