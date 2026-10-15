@@ -1,19 +1,25 @@
-import { paletteFor } from "./skillPalette";
+import { cn } from "@/lib/utils";
 import { SkillIcon } from "./SkillIcon";
+import { paletteFor } from "./skillPalette";
 
-// A skill's "cover": its icon on a coloured gradient tile, drawn in CSS. The
-// width comes from className (e.g. "w-28"); the tile stays square.
-export function SkillTile({ icon, color, className = "" }: { icon: string; color: string; className?: string }) {
+interface SkillTileProps {
+  icon: string;
+  color: string;
+  size?: 30 | 40;
+  className?: string;
+}
+
+// A skill's icon on a soft wash of its own colour. The colour comes in as
+// CSS variables so the ink can flip to the lighter stop in dark mode.
+export function SkillTile({ icon, color, size = 40, className }: SkillTileProps) {
   const palette = paletteFor(color);
   return (
-    <div
-      aria-hidden
-      className={`relative flex aspect-square shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-lg shadow-black/20 ${className}`}
-      style={{ backgroundImage: `linear-gradient(135deg, ${palette.from}, ${palette.to})`, color: palette.ink }}
+    <span
+      aria-hidden="true"
+      className={cn("flex shrink-0 items-center justify-center rounded-md bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)", size === 40 ? "size-10 [&_svg]:size-5" : "size-7.5 [&_svg]:size-4", className)}
+      style={{ "--sk-ink": palette.to, "--sk-light": palette.from } as React.CSSProperties}
     >
-      <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.3)_0%,rgba(255,255,255,0)_45%)]" />
-      <div className="absolute -bottom-[18%] -right-[18%] h-[70%] w-[70%] rounded-full bg-white/15" />
-      <SkillIcon icon={icon} className="relative h-[46%] w-[46%]" />
-    </div>
+      <SkillIcon icon={icon} />
+    </span>
   );
 }

@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { BooksLoadError } from "@/components/modules/Customer/HabitTracker/Books/BooksLoadError";
-import { BooksPageClient } from "@/components/modules/Customer/HabitTracker/Books/BooksPageClient";
+import { LibraryPageClient } from "@/components/modules/Customer/HabitTracker/Books/LibraryPageClient";
+import { SkillsHomePageClient } from "@/components/modules/Customer/HabitTracker/Skills/SkillsHomePageClient";
 import { SkillsLoadError } from "@/components/modules/Customer/HabitTracker/Skills/SkillsLoadError";
-import { SkillsPageClient } from "@/components/modules/Customer/HabitTracker/Skills/SkillsPageClient";
 import { NamazHomePageClient } from "@/components/modules/Customer/HabitTracker/Namaz/NamazHomePageClient";
 import { ChallengesHomePageClient } from "@/components/modules/Customer/HabitTracker/Others/ChallengesHomePageClient";
 import { RamadanHomePageClient } from "@/components/modules/Customer/HabitTracker/Ramadan/RamadanHomePageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { dhakaDayNumber, getBooksOverview } from "@/lib/customer/books";
+import { getBooksOverview } from "@/lib/customer/books";
 import { getHabitTrackers } from "@/lib/customer/habits";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { getAppToday } from "@/lib/date";
@@ -37,14 +37,14 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
     const overview = await getBooksOverview();
     // Never render "no books yet" when the request merely failed.
     if (!overview) return <BooksLoadError />;
-    return <BooksPageClient overview={overview} quoteDay={dhakaDayNumber()} />;
+    return <LibraryPageClient overview={overview} today={getAppToday()} />;
   }
 
   // "Skills" (stored as the habit category "Course").
   if (category === "Course") {
     const overview = await getSkillsOverview();
     if (!overview) return <SkillsLoadError />;
-    return <SkillsPageClient overview={overview} quoteDay={dhakaDayNumber()} />;
+    return <SkillsHomePageClient overview={overview} today={getAppToday()} />;
   }
 
   if (category === "Others") {

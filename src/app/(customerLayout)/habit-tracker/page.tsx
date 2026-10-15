@@ -1,40 +1,36 @@
 import { redirect } from "next/navigation";
-import { HabitDashboardPageClient } from "@/components/modules/Customer/HabitTracker/HabitDashboardPageClient";
+import { HabitsHomePageClient } from "@/components/modules/Customer/HabitTracker/Home/HabitsHomePageClient";
+import type { HabitsHomeData } from "@/components/modules/Customer/HabitTracker/Home/homeTypes";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
-import { getHabitTrackers } from "@/lib/customer/habits";
+import { shiftMonth } from "@/lib/customer/groupDisplay";
+import { getHabitMonth, getHabits, getHabitsToday, getHabitTrackers } from "@/lib/customer/habits";
 import { getSkillsOverview } from "@/lib/customer/skills";
+import { listFor } from "@/lib/customer/todoDisplay";
 import { getTodoLists } from "@/lib/customer/todos";
 import { getAppToday } from "@/lib/date";
 
-// "Habit Tracker" app-mode's landing page, reached via the TopBar's "Switch"
-// button. A summary hub across every real feature (Namaz/Ramadan/My Library/
-// Skills/Others/To Do List) -- the old generic Habit/HabitLog checklist this
-// page used to show has no dedicated surface of its own anymore, same as
-// every other area that moved off that model this session.
-export default async function HabitTrackerDashboardPage() {
+// Habits › Today: the day across every habit feature. Personal
+// (user-scoped), not a workspace's.
+export default async function HabitsTodayPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // One after the other, not Promise.all: the local dev database (`prisma
-  // dev`) drops the connection when concurrent requests query it at once.
-  const namazTrackers = await getHabitTrackers("Namaz");
-  const ramadanTrackers = await getHabitTrackers("Ramadan");
-  const booksOverview = await getBooksOverview();
-  const skillsOverview = await getSkillsOverview();
-  const othersTrackers = await getHabitTrackers("Others");
-  const todoLists = await getTodoLists();
+  const today = getAppToday();
+  const month = today.slice(0, 7);
+  const [namaz, habits, todayRows, thisMonth, lastMonth, books, skills, challenges, ramadan, todoLists] = await Promise.all([
+    getHabitTrackers("Namaz"),
+    getHabits(true),
+    getHabitsToday(),
+    getHabitMonth(month),
+    getHabitMonth(shiftMonth(month, -1)),
+    getBooksOverview(),
+    getSkillsOverview(),
+    getHabitTrackers("Others"),
+    getHabitTrackers("Ramadan"),
+    getTodoLists(),
+  ]);
 
-  return (
-    <HabitDashboardPageClient
-      userName={user.name}
-      namazTrackers={namazTrackers}
-      ramadanTrackers={ramadanTrackers}
-      booksOverview={booksOverview}
-      skillsOverview={skillsOverview}
-      othersTrackers={othersTrackers}
-      todoLists={todoLists}
-      today={getAppToday()}
-    />
-  );
+  const data: HabitsHomeData = { today, todayList: listFor(todoLists, today), namaz, habits, todayRows, logs: [...lastMonth.logs, ...thisMonth.logs], books, skills, challenges, ramadan };
+  return <HabitsHomePageClient data={data} />;
 }

@@ -14,13 +14,14 @@ import { groupExpensesDictionary } from "./dictionary/group-expenses";
 import { habitTrackerDictionary } from "./dictionary/habit-tracker";
 import { incomeExpenseDictionary } from "./dictionary/income-expense";
 import { loanManagementDictionary } from "./dictionary/loan-management";
-import { personalDictionary } from "./dictionary/personal";
+import { referralsDictionary } from "./dictionary/referrals";
 import { reportsDictionary } from "./dictionary/reports";
 import { savingsGoalsDictionary } from "./dictionary/savings-goals";
 import { settingsWorkspaceDictionary } from "./dictionary/settings-workspace";
 import { sharedDictionary } from "./dictionary/shared";
 import { skillsDictionary } from "./dictionary/skills";
 import { todosDictionary } from "./dictionary/todos";
+import { vaultDictionary } from "./dictionary/vault";
 
 // The admin panel's own chrome.
 const bnAdminDictionary: Record<string, string> = {
@@ -81,7 +82,8 @@ export const bnDictionary: Record<string, string> = {
   ...loanManagementDictionary,
   ...incomeExpenseDictionary,
   ...reportsDictionary,
-  ...personalDictionary,
+  ...referralsDictionary,
+  ...vaultDictionary,
   ...settingsWorkspaceDictionary,
   ...groupExpensesDictionary,
   ...habitTrackerDictionary,
