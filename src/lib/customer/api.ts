@@ -244,6 +244,23 @@ export interface CategoryBreakdown {
   categories: CategoryBreakdownRow[];
 }
 
+// Insights › Reports: every category of one type with a column per calendar
+// month ("YYYY-MM", oldest first); amounts line up with `months`.
+export interface MonthlyBreakdownRow {
+  name: string;
+  color: string;
+  amounts: string[];
+  total: string;
+}
+
+export interface MonthlyBreakdown {
+  type: "INCOME" | "EXPENSE";
+  months: string[];
+  rows: MonthlyBreakdownRow[];
+  totals: string[];
+  total: string;
+}
+
 // Financial Reports page's "Income vs Savings" trend chart -- one point
 // per calendar month, oldest first.
 export interface IncomeVsSavingsPoint {
