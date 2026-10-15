@@ -27,6 +27,7 @@ export type NavIcon =
   | "todo"
   | "vault"
   | "insights"
+  | "reports"
   | "ledger"
   | "people"
   | "clock"
@@ -153,7 +154,14 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   { label: "Security", tone: "vault", items: [{ label: "Password vault", href: "/password-manager", icon: "vault" }] },
-  { label: "Insights", tone: "insights", items: [{ label: "Overview", href: "/reports/overview", icon: "insights", match: ["/reports"] }] },
+  {
+    label: "Insights",
+    tone: "insights",
+    items: [
+      { label: "Overview", href: "/reports/overview", icon: "insights" },
+      { label: "Reports", href: "/reports/detailed", icon: "reports" },
+    ],
+  },
 ];
 
 export const NAV_FOOT: NavItem[] = [

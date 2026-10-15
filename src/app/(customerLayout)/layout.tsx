@@ -66,13 +66,13 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
             <TodayTasksProvider>
               {/* The Night sidebar on the left; the top bar and the one
                   scrolling region on the right. */}
-              <div className="flex h-screen overflow-hidden bg-cream">
+              <div className="flex h-screen overflow-hidden bg-cream print:block print:h-auto print:overflow-visible">
                 <AppSidebar />
-                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
                   {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
                   <AppTopbar />
                   {/* id + tabIndex give the root layout's skip link a target. */}
-                  <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
+                  <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
                     <AnnouncementBanner announcements={platform.announcements} />
                     {children}
                   </main>
