@@ -20,11 +20,13 @@ interface ReferralsPageClientProps {
   currency: string;
   // Only an owner or accountant can post the withdrawal into a wallet.
   canManage: boolean;
+  // Where the app is served from, for the invite link.
+  origin: string;
 }
 
 // Account › Invite & earn: what is ready to withdraw, the invite link, and
 // every friend who joined with it.
-export function ReferralsPageClient({ businessId, info, currency, canManage }: ReferralsPageClientProps) {
+export function ReferralsPageClient({ businessId, info, currency, canManage, origin }: ReferralsPageClientProps) {
   const { t } = useLocale();
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const reward = info ? formatCurrency(info.rewardAmountPerReferral, currency) : "";
@@ -38,7 +40,7 @@ export function ReferralsPageClient({ businessId, info, currency, canManage }: R
         <>
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_470px]">
             <EarningsHero info={info} currency={currency} canWithdraw={canManage} onWithdraw={() => setWithdrawOpen(true)} />
-            <InviteLinkCard code={info.referralCode} rewardPerReferral={info.rewardAmountPerReferral} currency={currency} />
+            <InviteLinkCard code={info.referralCode} origin={origin} rewardPerReferral={info.rewardAmountPerReferral} currency={currency} />
           </div>
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
             <FriendsTable entries={info.recentReferrals} currency={currency} />

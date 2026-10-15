@@ -1,7 +1,6 @@
 "use client";
 
 import { Copy, Gift, Link2, Mail, MessageCircle, Send } from "lucide-react";
-import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -11,18 +10,16 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface InviteLinkCardProps {
   code: string;
+  // Where the app is served from, as the server page read it.
+  origin: string;
   rewardPerReferral: string;
   currency: string;
 }
 
-const subscribeNoop = () => () => {};
-
 // The invite link and code, each copied in a tap, with WhatsApp, Messenger
 // and email a tap away.
-export function InviteLinkCard({ code, rewardPerReferral, currency }: InviteLinkCardProps) {
+export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: InviteLinkCardProps) {
   const { t } = useLocale();
-  // The origin is only known in the browser; the server renders the path alone.
-  const origin = useSyncExternalStore(subscribeNoop, () => window.location.origin, () => "");
   const link = inviteLink(origin, code);
   const reward = formatCurrency(rewardPerReferral, currency);
   const share = shareLinks(link, t("Join me on Smartly, the money and habits app. Sign up with my link:"), t("Try Smartly"));
