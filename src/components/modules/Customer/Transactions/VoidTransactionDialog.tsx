@@ -18,8 +18,17 @@ interface VoidTransactionDialogProps {
   onClose: () => void;
   businessId: string;
   transactionId: string;
-  // What the row is called, so the dialog names it.
+  // What the row is called, so the dialog names it ("Void Groceries?").
   title: string;
+  // A whole heading instead ("Void this transfer?").
+  heading?: React.ReactNode;
+  description?: React.ReactNode;
+  // A box between the question and the reason: the transfer's wallets,
+  // amount and date.
+  detail?: React.ReactNode;
+  // English keys for the button and the toast.
+  confirmLabel?: string;
+  doneLabel?: string;
   // Runs after a successful void (the list refreshes itself).
   onVoided?: () => void;
 }
@@ -29,7 +38,7 @@ const MIN_REASON = 5;
 // Voiding reverses the posting and keeps it in the history; the reason is
 // required, as the API asks. Drawn as the design's confirm dialog with the
 // reason field inside.
-export function VoidTransactionDialog({ open, onClose, businessId, transactionId, title, onVoided }: VoidTransactionDialogProps) {
+export function VoidTransactionDialog({ open, onClose, businessId, transactionId, title, heading, description, detail, confirmLabel = "Void transaction", doneLabel = "Transaction voided", onVoided }: VoidTransactionDialogProps) {
   const { t } = useLocale();
   const router = useRouter();
   const [reason, setReason] = useState("");
@@ -42,7 +51,7 @@ export function VoidTransactionDialog({ open, onClose, businessId, transactionId
     startTransition(async () => {
       const result = await voidTransactionAction(businessId, transactionId, reason.trim());
       if (result.success) {
-        toast.success(t("Transaction voided"));
+        toast.success(t(doneLabel));
         setReason("");
         onClose();
         onVoided?.();
@@ -62,12 +71,11 @@ export function VoidTransactionDialog({ open, onClose, businessId, transactionId
               <CircleOff />
             </IconTile>
             <div className="flex min-w-0 flex-col gap-2">
-              <DialogTitle className="text-h3 text-ink">
-                {t("Void")} {title}?
-              </DialogTitle>
-              <DialogDescription className="text-body leading-[21px] text-ink-2">{t("It stays in your history, crossed out, and the balances go back to what they were. Say why, so the record makes sense later.")}</DialogDescription>
+              <DialogTitle className="text-h3 text-ink">{heading ?? `${t("Void")} ${title}?`}</DialogTitle>
+              <DialogDescription className="text-body leading-[21px] text-ink-2">{description ?? t("It stays in your history, crossed out, and the balances go back to what they were. Say why, so the record makes sense later.")}</DialogDescription>
             </div>
           </div>
+          {detail}
           <Field htmlFor="void-reason" label={t("Reason")} hint={`${t("At least")} ${MIN_REASON} ${t("characters")}`}>
             <Input id="void-reason" value={reason} onChange={(event) => setReason(event.target.value)} autoFocus size="md" placeholder={t("Entered twice by mistake")} maxLength={200} />
           </Field>
@@ -77,7 +85,7 @@ export function VoidTransactionDialog({ open, onClose, businessId, transactionId
             </Button>
             <Button type="submit" variant="danger" disabled={tooShort || isPending}>
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t("Void transaction")}
+              {t(confirmLabel)}
             </Button>
           </div>
         </form>
