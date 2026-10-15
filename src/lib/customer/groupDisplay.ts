@@ -197,3 +197,7 @@ export function needsSetup(contributions: GroupContribution[], expenses: GroupEx
 export function memberSince(member: GroupMember): string {
   return member.createdAt.slice(0, 7);
 }
+
+// The budget bar and its figure, by status.
+export const BUDGET_TONE_BAR: Record<BudgetTone, string> = { ok: "bg-emerald", warning: "bg-warning-fill", over: "bg-expense-fill" };
+export const BUDGET_TONE_TEXT: Record<BudgetTone, string> = { ok: "text-ink", warning: "text-warning", over: "text-expense" };

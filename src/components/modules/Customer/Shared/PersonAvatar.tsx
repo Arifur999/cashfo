@@ -3,8 +3,13 @@ import { avatarTone } from "@/lib/customer/loanDisplay";
 import { cn } from "@/lib/utils";
 
 const SIZES = {
+  22: "size-5.5 text-[11px]",
+  24: "size-6 text-[11px]",
+  26: "size-6.5 text-caption",
   28: "size-7 text-caption",
   30: "size-7.5 text-caption",
+  32: "size-8 text-caption",
+  34: "size-8.5 text-caption",
   36: "size-9 text-small",
   40: "size-10 text-small",
   44: "size-11 text-body-lg",
