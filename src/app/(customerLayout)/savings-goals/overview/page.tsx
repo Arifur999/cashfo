@@ -1,16 +1,29 @@
+import { PiggyBank } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { WalletShareBar } from "@/components/modules/Customer/Balance/WalletShareBar";
+import AmountText from "@/components/smartly/AmountText";
+import Button from "@/components/smartly/Button";
+import Card from "@/components/smartly/Card";
+import EmptyState from "@/components/smartly/EmptyState";
+import PageFrame from "@/components/smartly/PageFrame";
+import PageHeader from "@/components/smartly/PageHeader";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { formatCurrency } from "@/lib/customer/currency";
-import { getTranslator } from "@/lib/i18n/locale";
+import { savingsPalette } from "@/lib/customer/savingsDisplay";
 import { getSavingsAccountOverview } from "@/lib/customer/savingsGoals";
+import { walletShares } from "@/lib/customer/walletShares";
+import { getTranslator } from "@/lib/i18n/locale";
+import { cn } from "@/lib/utils";
 
-// Mirrors Balance's own Overview page (same cards, same table shape) --
-// each row is a real Savings Wallet Account, not a Savings Goal (that's
-// the Dashboard page's own per-goal progress list, a separate figure).
-// Read-only, same reasoning as the Savings Wallet page -- nothing here is
-// created/edited directly.
+const GRID = "grid-cols-[minmax(0,1fr)_repeat(3,140px)_160px]";
+
+// Savings summary: what sits in the savings wallets altogether, how it is
+// spread, and what went in and out of each one. Goals are targets; this is
+// the money.
 export default async function SavingsOverviewPage() {
+  const { t } = await getTranslator();
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -20,99 +33,108 @@ export default async function SavingsOverviewPage() {
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const currency = activeBusiness?.currency ?? "BDT";
   const overview = await getSavingsAccountOverview(activeBusinessId);
-  const { t } = await getTranslator();
-
-  const totals = overview.accounts.reduce(
-    (sum, a) => ({
-      opening: sum.opening + Number(a.openingBalance),
-      in: sum.in + Number(a.totalIn),
-      out: sum.out + Number(a.totalOut),
-      current: sum.current + Number(a.currentBalance),
-    }),
+  const rows = overview.accounts;
+  const totals = rows.reduce(
+    (sum, a) => ({ opening: sum.opening + Number(a.openingBalance), in: sum.in + Number(a.totalIn), out: sum.out + Number(a.totalOut), current: sum.current + Number(a.currentBalance) }),
     { opening: 0, in: 0, out: 0, current: 0 },
   );
+  const archived = rows.filter((row) => row.status === "ARCHIVED").length;
+
+  const outFigure = (value: number, className?: string) => <span className={cn("text-right tabular-nums", value > 0 ? "text-expense" : "text-ink-muted", className)}>{value > 0 ? `− ${formatCurrency(value, currency)}` : "—"}</span>;
+  const inFigure = (value: number, className?: string) => <span className={cn("text-right tabular-nums", value > 0 ? "text-income" : "text-ink-muted", className)}>{value > 0 ? `+ ${formatCurrency(value, currency)}` : "—"}</span>;
 
   return (
-    <div className="h-full bg-brand-content px-6 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">{t("Savings Overview")}</h1>
-      <p className="mt-1 text-sm text-neutral-500">{t("Savings Account Overview")}</p>
+    <PageFrame className="gap-6">
+      <PageHeader eyebrow={`${t("Money")} · ${t("Savings")}`} title={t("Savings summary")} description={t("Goals are targets. Savings wallets are where the money actually sits.")} />
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Total Accounts")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-neutral-900">{overview.totalAccounts}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Total Balance")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-brand-primary">{formatCurrency(overview.totalBalance, currency)}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Inactive Amount")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-brand-danger">{formatCurrency(overview.inactiveAmount, currency)}</p>
-        </div>
-        <div className="rounded-2xl bg-surface p-5 shadow-sm shadow-black/5">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">{t("Available Balance")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-brand-primary">{formatCurrency(overview.availableBalance, currency)}</p>
-        </div>
-      </div>
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={<PiggyBank />}
+          title={t("No savings wallet yet")}
+          description={t("Add the DPS, FDR or other account you save in, and your saved money shows up here.")}
+          action={
+            <Button asChild>
+              <Link href="/savings-goals/wallet">{t("Add savings wallet")}</Link>
+            </Button>
+          }
+          className="min-h-80"
+        />
+      ) : (
+        <>
+          <Card padding="lg" className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div className="flex flex-col gap-2">
+                <span className="text-small font-medium text-ink-muted">{t("In your savings wallets")}</span>
+                <AmountText value={overview.totalBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em]" />
+                <span className="text-small text-ink-muted tabular-nums">
+                  {t("Available")} {formatCurrency(overview.availableBalance, currency)} · {formatCurrency(overview.inactiveAmount, currency)} {t("in archived wallets")}
+                </span>
+              </div>
+              <div className="grid grid-cols-3">
+                <Stat label={t("Wallets")}>{rows.length - archived}</Stat>
+                <Stat label={t("Added")}>{inFigure(totals.in, "text-left")}</Stat>
+                <Stat label={t("Taken out")} last>
+                  {outFigure(totals.out, "text-left")}
+                </Stat>
+              </div>
+            </div>
+            <WalletShareBar slices={walletShares(rows, savingsPalette)} label={t("Share of savings by wallet")} legend currency={currency} />
+          </Card>
 
-      <div className="mt-6 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        <div className="border-b border-neutral-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-neutral-900">{t("Account Details")}</h2>
-        </div>
+          <Card padding="none" className="overflow-hidden">
+            <div className="flex items-center justify-between gap-4 px-6 py-5">
+              <h2 className="text-title text-ink">{t("Savings wallets")}</h2>
+              <Link href="/savings-goals/wallet" className="text-small font-semibold text-emerald hover:text-emerald-hover">
+                {t("Manage wallets")}
+              </Link>
+            </div>
+            <div className="overflow-x-auto">
+              <div className="min-w-220">
+                <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+                  <span>{t("Wallet")}</span>
+                  <span className="text-right">{t("Opening")}</span>
+                  <span className="text-right">{t("Added")}</span>
+                  <span className="text-right">{t("Taken out")}</span>
+                  <span className="text-right">{t("Balance")}</span>
+                </div>
+                {rows.map((row, index) => (
+                  <Link key={row.id} href={`/balance/ledger?accountId=${row.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-cream", GRID, row.status === "ARCHIVED" && "opacity-60")}>
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", savingsPalette(index).tile)}>
+                        <PiggyBank className="size-4.5" aria-hidden="true" />
+                      </span>
+                      <span className="flex min-w-0 flex-col gap-px">
+                        <span className={cn("truncate font-medium", row.status === "ARCHIVED" && "line-through")}>{row.name}</span>
+                        <span className="text-caption font-normal text-ink-muted">{row.status === "ARCHIVED" ? t("Archived") : t("Savings wallet")}</span>
+                      </span>
+                    </span>
+                    <span className="text-right text-ink-2">{formatCurrency(row.openingBalance, currency)}</span>
+                    {inFigure(Number(row.totalIn))}
+                    {outFigure(Number(row.totalOut))}
+                    <span className="text-right font-bold">{formatCurrency(row.currentBalance, currency)}</span>
+                  </Link>
+                ))}
+                <div className={cn("grid h-14 items-center gap-x-4 bg-cream px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
+                  <span>{t("Total")}</span>
+                  <span className="text-right">{formatCurrency(totals.opening, currency)}</span>
+                  {inFigure(totals.in)}
+                  {outFigure(totals.out)}
+                  <span className="text-right text-title font-bold">{formatCurrency(totals.current, currency)}</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </>
+      )}
+    </PageFrame>
+  );
+}
 
-        {overview.accounts.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">{t("No Savings Wallets yet.")}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
-                <tr>
-                  <th className="px-4 py-3 font-medium">#</th>
-                  <th className="px-4 py-3 font-medium">{t("Account")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Opening")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Total In")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Total Out")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Current Balance")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-50">
-                {overview.accounts.map((a, index) => {
-                  const isInactive = a.status === "ARCHIVED";
-                  return (
-                    <tr key={a.id} className={isInactive ? "bg-brand-danger/5" : ""}>
-                      <td className="px-4 py-2.5 text-neutral-400">{index + 1}</td>
-                      <td className="px-4 py-2.5">
-                        <span className={`text-neutral-700 ${isInactive ? "line-through" : ""}`}>{a.name}</span>
-                        {isInactive && (
-                          <span className="ml-2 rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-danger">
-                            {t("Inactive")}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-neutral-600">{formatCurrency(a.openingBalance, currency)}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-brand-primary">{formatCurrency(a.totalIn, currency)}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-brand-danger">{formatCurrency(a.totalOut, currency)}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-neutral-900">{formatCurrency(a.currentBalance, currency)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-neutral-200 text-sm font-bold text-neutral-900">
-                  <td className="px-4 py-3" colSpan={2}>
-                    {t("Total")}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.opening, currency)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(totals.in, currency)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(totals.out, currency)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.current, currency)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </div>
+function Stat({ label, last = false, children }: { label: string; last?: boolean; children: React.ReactNode }) {
+  return (
+    <div className={cn("flex flex-col gap-1 border-l border-line pl-6", !last && "pr-6")}>
+      <span className="text-caption font-normal text-ink-muted">{label}</span>
+      <span className="text-h3 font-bold text-ink tabular-nums">{children}</span>
     </div>
   );
 }
