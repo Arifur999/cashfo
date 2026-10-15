@@ -943,6 +943,7 @@ export interface SkillWeekDay {
   date: string; // 'YYYY-MM-DD', Asia/Dhaka
   minutes: number; // learned that day in HOURS skills
   lessons: number; // learned that day in LESSONS skills
+  bySkill: Record<string, number>; // that day's amount per skill id, in the skill's unit
 }
 
 export interface SkillsOverview {
