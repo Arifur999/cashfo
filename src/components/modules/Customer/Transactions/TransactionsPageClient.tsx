@@ -111,10 +111,10 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       </Card>
 
       {transactions.length === 0 ? (
-        <Card padding="none" className="flex min-h-[560px] flex-col items-center justify-center gap-3 p-10 text-center">
+        <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-3 p-10 text-center">
           <EmptyIllustration />
           <h2 className="text-h3 text-ink">{filtered ? t("Nothing matches these filters") : t("No transactions yet")}</h2>
-          <p className="max-w-[420px] text-body leading-relaxed text-ink-muted">
+          <p className="max-w-105 text-body leading-relaxed text-ink-muted">
             {filtered ? t("Try a wider date range, or clear the filters.") : t("Add your first income or expense. It takes a few seconds, and your dashboard, budget and reports fill in from here.")}
           </p>
           <div className="mt-3 flex gap-3">
@@ -205,7 +205,7 @@ function CategoryTile({ row, size = 36 }: { row: TransactionRow; size?: 36 | 40 
   const tone = row.transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   const icon = row.category?.icon ? budgetCategoryIcon(row.category.icon) : Receipt;
   return (
-    <span className={cn("flex shrink-0 items-center justify-center", size === 40 ? "size-10 rounded-md [&_svg]:size-4.5" : "size-9 rounded-full [&_svg]:size-[17px]", tone.bg, tone.fg)}>
+    <span className={cn("flex shrink-0 items-center justify-center", size === 40 ? "size-10 rounded-md [&_svg]:size-4.5" : "size-9 rounded-full [&_svg]:size-4.25", tone.bg, tone.fg)}>
       {createElement(icon, { "aria-hidden": true })}
     </span>
   );
@@ -228,7 +228,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
       </Link>
       <span className="min-w-0">
         {row.category && (
-          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-cream px-3 py-[3px] text-caption text-ink-2">
+          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-cream px-3 py-0.75 text-caption text-ink-2">
             <span className={cn("size-2 shrink-0 rounded-full bg-current", tone.fg)} />
             <span className="truncate">{row.category.name}</span>
           </span>
@@ -245,11 +245,11 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
       />
       <span className="flex justify-end gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
         <Link href={href} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-cream">
-          <Eye className="size-[15px]" aria-hidden="true" />
+          <Eye className="size-3.75" aria-hidden="true" />
         </Link>
         {canManage && row.transaction.voidable && (
           <button type="button" onClick={onVoid} aria-label={t("Void transaction")} title={t("Void transaction")} className="flex size-8 items-center justify-center rounded-md bg-surface text-expense shadow-[0_0_0_1px_var(--line)] hover:bg-expense-soft">
-            <CircleOff className="size-[15px]" aria-hidden="true" />
+            <CircleOff className="size-3.75" aria-hidden="true" />
           </button>
         )}
       </span>

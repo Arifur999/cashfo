@@ -203,7 +203,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <button type="button" aria-label={`${t("Filters")}${activeCount ? `, ${activeCount} ${t("on")}` : ""}`} className="relative flex size-12 shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink">
-                <Filter className="size-[19px]" aria-hidden="true" />
+                <Filter className="size-4.75" aria-hidden="true" />
                 {activeCount > 0 && <span className="absolute -top-1 -right-1 flex size-4.5 items-center justify-center rounded-full bg-emerald text-caption font-bold text-white">{activeCount}</span>}
               </button>
             </SheetTrigger>

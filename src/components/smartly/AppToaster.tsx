@@ -23,7 +23,7 @@ const AppToaster = (props: ToasterProps) => (
       warning: icon("bg-[#F2B84B] text-[#04140E]", <CircleOff />),
       error: icon("bg-[#E5484D] text-white", <CircleAlert />),
       loading: icon("bg-white/14 text-white", <Info />),
-      close: <X className="size-[15px]" />,
+      close: <X className="size-3.75" />,
     }}
     closeButton
     toastOptions={{
