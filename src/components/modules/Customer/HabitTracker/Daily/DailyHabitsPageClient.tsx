@@ -13,7 +13,7 @@ import type { Habit } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
-import { completionRate, dayMark, isPlannedOn, lastDays, perfectDays, plannedCount, ruleLabel, shiftDay, WEEK_START, WEEKDAY_SHORT, weekOf } from "@/lib/customer/habitDisplay";
+import { completionRate, countsOn, dayMark, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, shiftDay, WEEK_START, WEEKDAY_SHORT, weekOf } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction, removeCheckInAction, updateHabitAction } from "@/lib/customer/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -48,14 +48,14 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   };
   const streakOf = (habit: Habit) => todayRows.find((r) => r.id === habit.id)?.streak ?? stats.find((s) => s.habitId === habit.id)?.currentStreak ?? 0;
 
-  const planned = active.filter((h) => isPlannedOn(h, day) && day >= h.createdAt.slice(0, 10));
+  const planned = active.filter((h) => countsOn(h, logs, day));
   const resting = active.length - planned.length;
   const done = planned.filter((h) => logFor(h)?.completed);
   const open = planned.filter((h) => !logFor(h)?.completed);
   const week = weekOf(day);
   const last30 = lastDays(day, 30);
   const longest = [...active].map((h) => ({ habit: h, streak: streakOf(h) })).sort((a, b) => b.streak - a.streak)[0];
-  const planned30 = active.reduce((sum, h) => sum + plannedCount(h, last30.filter((d) => d >= h.createdAt.slice(0, 10))), 0);
+  const planned30 = active.reduce((sum, h) => sum + plannedCount(h, last30.filter((d) => d >= habitStart(h, logs))), 0);
   const done30 = logs.filter((l) => l.completed && last30.includes(l.date.slice(0, 10)) && active.some((h) => h.id === l.habitId)).length;
   const perfect = perfectDays(active, logs, last30);
   const selected = active.find((h) => h.id === selectedId) ?? planned[0] ?? active[0] ?? null;
@@ -159,9 +159,9 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               const tone = categoryTone(habit.color);
               const rule = ruleLabel(habit);
               const counted = !!habit.targetValue;
-              const rest = !isPlannedOn(habit, day) || day < habit.createdAt.slice(0, 10);
+              const rest = !countsOn(habit, logs, day);
               const streak = streakOf(habit);
-              const rate = completionRate(habit, logs, last30.filter((d) => d >= habit.createdAt.slice(0, 10)));
+              const rate = completionRate(habit, logs, last30.filter((d) => d >= habitStart(habit, logs)));
               const on = selected?.id === habit.id;
               const value = log?.value ?? 0;
               return (

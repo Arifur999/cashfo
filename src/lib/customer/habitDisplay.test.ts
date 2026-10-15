@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Habit, HabitMonthLog } from "./api";
-import { bestStreak, completionRate, countTone, dayMark, hijriDate, hijriParts, isPlannedOn, lastDays, monthGrid, nextRamadan, perfectDays, plannedCount, ruleLabel, weekOf } from "./habitDisplay";
+import { bestStreak, completionRate, countTone, dayMark, habitStart, hijriDate, hijriParts, isPlannedOn, lastDays, monthGrid, nextRamadan, perfectDays, plannedCount, ruleLabel, weekOf } from "./habitDisplay";
 
 const habit = (overrides: Partial<Habit>): Habit => ({
   id: "h",
@@ -73,6 +73,8 @@ describe("rates, marks and streaks", () => {
     expect(dayMark(daily, [], "2026-10-03", "2026-10-02")).toBe("future");
     expect(dayMark(habit({ id: "d", frequencyType: "WEEKLY_DAYS", weeklyDays: [0, 1, 2, 3, 4] }), [], "2026-10-02", "2026-10-02")).toBe("rest");
     expect(dayMark(daily, [], "2026-08-01", "2026-10-02")).toBe("rest"); // before it existed
+    expect(habitStart(daily, [log("d", "2026-07-20")])).toBe("2026-07-20");
+    expect(dayMark(daily, [log("d", "2026-07-20")], "2026-07-21", "2026-10-02")).toBe("missed");
   });
 
   it("finds the best streak, skipping rest days", () => {

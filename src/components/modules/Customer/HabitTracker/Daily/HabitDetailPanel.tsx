@@ -10,7 +10,7 @@ import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
-import { bestStreak, countTone, dayMark, isPlannedOn, monthGrid, ruleLabel, WEEK_START, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
+import { bestStreak, countsOn, countTone, dayMark, monthGrid, ruleLabel, WEEK_START, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -57,7 +57,7 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
   const monthDays = cells.filter((c): c is string => c !== null && c <= today);
   const monthLogs = logs.filter((l) => l.habitId === habit.id && l.date.slice(0, 7) === month);
   const doneThisMonth = monthDays.filter((d) => monthLogs.some((l) => l.completed && l.date.slice(0, 10) === d)).length;
-  const plannedThisMonth = monthDays.filter((d) => isPlannedOn(habit, d) && d >= habit.createdAt.slice(0, 10)).length;
+  const plannedThisMonth = monthDays.filter((d) => countsOn(habit, logs, d)).length;
   const counted = !!habit.targetValue;
   const values = monthLogs.filter((l) => l.value !== null).map((l) => l.value as number);
   const average = values.length ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10 : null;

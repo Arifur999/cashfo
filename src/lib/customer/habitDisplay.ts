@@ -96,13 +96,30 @@ export function completionRate(habit: Pick<Habit, "id" | "frequencyType" | "week
 
 export type DayMark = "done" | "missed" | "rest" | "open" | "future";
 
+// The first day a habit counts from: when it was added, or its earliest
+// log if that is earlier (a habit can be logged for days before it was
+// added to the app).
+export function habitStart(habit: Pick<Habit, "id" | "createdAt">, logs: HabitMonthLog[]): string {
+  const first = logs
+    .filter((l) => l.habitId === habit.id)
+    .map((l) => l.date.slice(0, 10))
+    .sort()[0];
+  const created = habit.createdAt.slice(0, 10);
+  return first && first < created ? first : created;
+}
+
+// Whether a day counts for a habit: planned, and not before it started.
+export function countsOn(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "createdAt">, logs: HabitMonthLog[], day: string): boolean {
+  return isPlannedOn(habit, day) && day >= habitStart(habit, logs);
+}
+
 // How a past or present day reads for a habit: done, missed, a rest day,
 // still open (today, not done yet) or not reached.
 export function dayMark(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "createdAt">, logs: HabitMonthLog[], day: string, today: string): DayMark {
   if (day > today) return "future";
   const done = logs.some((l) => l.habitId === habit.id && l.completed && l.date.slice(0, 10) === day);
   if (done) return "done";
-  if (!isPlannedOn(habit, day) || day < habit.createdAt.slice(0, 10)) return "rest";
+  if (!countsOn(habit, logs, day)) return "rest";
   return day === today ? "open" : "missed";
 }
 
@@ -122,7 +139,7 @@ export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDa
 // Days where every planned habit was done.
 export function perfectDays(habits: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "createdAt">[], logs: HabitMonthLog[], days: string[]): number {
   return days.filter((day) => {
-    const planned = habits.filter((h) => isPlannedOn(h, day) && day >= h.createdAt.slice(0, 10));
+    const planned = habits.filter((h) => countsOn(h, logs, day));
     return planned.length > 0 && planned.every((h) => logs.some((l) => l.habitId === h.id && l.completed && l.date.slice(0, 10) === day));
   }).length;
 }
