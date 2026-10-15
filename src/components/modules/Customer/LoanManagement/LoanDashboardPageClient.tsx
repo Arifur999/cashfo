@@ -1,188 +1,284 @@
 "use client";
 
-import { Activity, ArrowDownCircle, ArrowUpCircle, Users, Wallet } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import type { LoanDashboard } from "@/lib/customer/api";
-import { contactInitials } from "@/lib/customer/contactDisplay";
+import { ArrowDownLeft, ArrowUpRight, HandCoins, Plus, Search, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import AmountText from "@/components/smartly/AmountText";
+import Button from "@/components/smartly/Button";
+import Card from "@/components/smartly/Card";
+import Chip from "@/components/smartly/Chip";
+import EmptyState from "@/components/smartly/EmptyState";
+import Input from "@/components/smartly/form/Input";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
+import PageFrame from "@/components/smartly/PageFrame";
+import PageHeader from "@/components/smartly/PageHeader";
+import SegmentedControl from "@/components/smartly/SegmentedControl";
+import type { Contact, LoanBalanceDirection, LoanDashboard, LoanDashboardRow } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
+import { DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
+import { ContactAvatar } from "./ContactAvatar";
+import { LoanContactDrawer } from "./LoanContactDrawer";
+import { LoanEntryDrawer } from "./LoanEntryDrawer";
 
 interface LoanDashboardPageClientProps {
+  businessId: string;
   dashboard: LoanDashboard;
+  // The loan contacts, for each row's kind and photo.
+  contacts: Contact[];
   currency: string;
+  canManage: boolean;
 }
 
-type SortOrder = "high-low" | "low-high";
+type Tab = "ALL" | LoanBalanceDirection;
+type Sort = "biggest" | "smallest" | "name";
 
-export function LoanDashboardPageClient({ dashboard, currency }: LoanDashboardPageClientProps) {
-  const router = useRouter();
+const GRID = "grid-cols-[minmax(0,1fr)_120px_130px_130px_170px]";
+const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
+const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-muted)" };
+
+// A dash for nothing, else the figure.
+const figure = (value: string, currency: string, className?: string) => (Number(value) === 0 ? <span className={cn("text-right text-ink-muted", className)}>—</span> : <span className={cn("text-right text-ink tabular-nums", className)}>{formatCurrency(Math.abs(Number(value)), currency)}</span>);
+
+// Loans: what you are owed and what you owe, then everyone with a balance,
+// filtered by direction. Rows open the statement.
+export function LoanDashboardPageClient({ businessId, dashboard, contacts, currency, canManage }: LoanDashboardPageClientProps) {
   const { t } = useLocale();
+  const [tab, setTab] = useState<Tab>("ALL");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortOrder>("high-low");
+  const [sort, setSort] = useState<Sort>("biggest");
+  const [contactOpen, setContactOpen] = useState(false);
+  const [entry, setEntry] = useState<{ kind?: LoanEntryKind } | null>(null);
 
-  const rows = useMemo(() => {
-    const filtered = dashboard.rows.filter((r) => {
-      const q = search.trim().toLowerCase();
-      if (!q) return true;
-      return r.contactName.toLowerCase().includes(q) || (r.contactPhone ?? "").includes(q);
-    });
-    return filtered.slice().sort((a, b) => {
-      const diff = Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance));
-      return sort === "high-low" ? diff : -diff;
-    });
-  }, [dashboard.rows, search, sort]);
+  const contactsById = new Map(contacts.map((contact) => [contact.id, contact]));
+  const counts = { ALL: dashboard.rows.length, ...Object.fromEntries(DIRECTIONS.map((direction) => [direction, dashboard.rows.filter((row) => row.direction === direction).length])) } as Record<Tab, number>;
+  const q = search.trim().toLowerCase();
+  const shown = dashboard.rows
+    .filter((row) => tab === "ALL" || row.direction === tab)
+    .filter((row) => !q || row.contactName.toLowerCase().includes(q) || (row.contactPhone ?? "").includes(q))
+    .sort((a, b) => (sort === "name" ? a.contactName.localeCompare(b.contactName) : (Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance))) * (sort === "biggest" ? 1 : -1)));
+  const sums = shown.reduce((sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), net: sum.net + Number(row.currentBalance) }), { opening: 0, in: 0, out: 0, net: 0 });
+  const net = Number(dashboard.netBalance);
+
+  const tabs = [{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, ...DIRECTIONS.map((direction) => ({ value: direction as Tab, label: counted(t(DIRECTION_META[direction].name), counts[direction]), dot: DOT[direction] }))];
 
   return (
-    <div className="h-full bg-brand-content px-6 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">{t("Loan Management Dashboard")}</h1>
-      <p className="mt-1 text-sm text-neutral-500">{t("Manage loans, track outstanding and transactions.")}</p>
+    <PageFrame className="gap-6">
+      <PageHeader
+        eyebrow={t("Loans")}
+        tone="loans"
+        title={
+          <>
+            <span className="md:hidden">{t("Dena-pawna")}</span>
+            <span className="hidden md:inline">{t("Loans")}</span>
+          </>
+        }
+        description={
+          <>
+            <span className="md:hidden">{t("Who you owe, and who owes you.")}</span>
+            <span className="hidden md:inline">{t("Who owes you, and whom you owe: people, banks and NGOs.")}</span>
+          </>
+        }
+        actions={
+          canManage && (
+            <div className="hidden items-center gap-3 md:flex">
+              <Button variant="secondary" onClick={() => setContactOpen(true)}>
+                <UserPlus className="text-ink-2" />
+                {t("Add bank / person")}
+              </Button>
+              <Button onClick={() => setEntry({})}>
+                <Plus strokeWidth={2.5} className="size-4" />
+                {t("New loan entry")}
+              </Button>
+            </div>
+          )
+        }
+        className="max-md:gap-0"
+      />
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <SummaryCard icon={ArrowUpCircle} label={t("Total Dena")} value={formatCurrency(dashboard.totalDena, currency)} sub={t("Negative balances")} color="text-brand-danger" />
-        <SummaryCard icon={ArrowDownCircle} label={t("Total Pawna")} value={formatCurrency(dashboard.totalPawna, currency)} sub={t("Positive balances")} color="text-brand-primary" />
-        <SummaryCard icon={Wallet} label={t("Total Paid")} value={formatCurrency(dashboard.totalPaid, currency)} sub={t("Payment made")} color="text-neutral-900" />
-        <SummaryCard icon={Wallet} label={t("Total Received")} value={formatCurrency(dashboard.totalReceived, currency)} sub={t("Cash received")} color="text-neutral-900" />
-        <SummaryCard
-          icon={Activity}
-          label={t("Net Balance")}
-          value={formatCurrency(Math.abs(Number(dashboard.netBalance)), currency)}
-          sub={Number(dashboard.netBalance) >= 0 ? t("Pawna (+)") : t("Dena (-)")}
-          color={Number(dashboard.netBalance) >= 0 ? "text-brand-primary" : "text-brand-danger"}
+      <section className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
+        <Card padding="sm" className="flex flex-col gap-1 md:gap-2 md:p-5">
+          <span className="text-small font-medium text-ink-muted">
+            <span className="md:hidden">{t("Owed to you")}</span>
+            <span className="hidden md:inline">
+              {t("You'll receive")} · <span className="font-semibold text-income">{t("Pawna")}</span>
+            </span>
+          </span>
+          <AmountText value={Math.abs(Number(dashboard.totalPawna))} currency={currency} size="h2" tone="income" className="text-h3 whitespace-nowrap md:text-h1" />
+          <span className="text-caption font-normal text-ink-muted">
+            <span className="md:hidden">
+              {t("Pawna")} · {counts.PAWNA} {t("people")}
+            </span>
+            <span className="hidden md:inline">
+              {counts.PAWNA} {t(counts.PAWNA === 1 ? "contact" : "contacts")}
+            </span>
+          </span>
+        </Card>
+        <Card padding="sm" className="flex flex-col gap-1 md:gap-2 md:p-5">
+          <span className="text-small font-medium text-ink-muted">
+            <span className="md:hidden">{t("You owe")}</span>
+            <span className="hidden md:inline">
+              {t("You owe")} · <span className="font-semibold text-expense">{t("Dena")}</span>
+            </span>
+          </span>
+          <AmountText value={Math.abs(Number(dashboard.totalDena))} currency={currency} size="h2" tone="expense" className="text-h3 whitespace-nowrap md:text-h1" />
+          <span className="text-caption font-normal text-ink-muted">
+            <span className="md:hidden">
+              {t("Dena")} · {counts.DENA} {t("people")}
+            </span>
+            <span className="hidden md:inline">
+              {counts.DENA} {t(counts.DENA === 1 ? "contact" : "contacts")}
+            </span>
+          </span>
+        </Card>
+        <Card className="hidden flex-col gap-2 md:flex">
+          <span className="text-small font-medium text-ink-muted">{t("Net position")}</span>
+          <AmountText value={net} currency={currency} size="h2" signed className="text-h1" />
+          <span className="text-caption font-normal text-ink-muted">{net > 0 ? t("You're owed more than you owe") : net < 0 ? t("You owe more than you're owed") : t("All square")}</span>
+        </Card>
+        <Card className="hidden flex-col gap-2 md:flex">
+          <span className="text-small font-medium text-ink-muted">{t("Active accounts")}</span>
+          <span className="text-h1 text-ink tabular-nums">{dashboard.activeAccounts}</span>
+          <span className="text-caption font-normal text-ink-muted">{t("People and banks with a balance")}</span>
+        </Card>
+      </section>
+
+      {dashboard.rows.length === 0 ? (
+        <EmptyState
+          tone="loans"
+          icon={<HandCoins />}
+          title={t("Nothing outstanding")}
+          description={t("Add a bank or person, then record the loan you gave or took.")}
+          action={
+            canManage && (
+              <Button onClick={() => setContactOpen(true)}>
+                <UserPlus />
+                {t("Add bank / person")}
+              </Button>
+            )
+          }
+          className="min-h-80"
         />
-        <SummaryCard icon={Users} label={t("Active Accounts")} value={String(dashboard.activeAccounts)} sub={t("Total Active")} color="text-neutral-900" />
-      </div>
+      ) : (
+        <>
+          <Card padding="none" className="hidden overflow-hidden md:block">
+            <div className="flex items-center justify-between gap-4 px-6 py-4">
+              <SegmentedControl options={tabs} value={tab} onChange={setTab} label={t("Balance")} />
+              <div className="flex gap-3">
+                <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="w-60" />
+                <NativeSelect size="sm" value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label={t("Sort")} className="text-small">
+                  <option value="biggest">{t("Biggest balance first")}</option>
+                  <option value="smallest">{t("Smallest balance first")}</option>
+                  <option value="name">{t("Name A–Z")}</option>
+                </NativeSelect>
+              </div>
+            </div>
+            <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+              <span>{t("Bank / person")}</span>
+              <span className="text-right">{t("Opening")}</span>
+              <span className="text-right">{t("Money in")}</span>
+              <span className="text-right">{t("Money out")}</span>
+              <span className="text-right">{t("Balance")}</span>
+            </div>
+            {shown.length === 0 && <p className="px-6 py-10 text-center text-body text-ink-muted">{t("No one matches")}</p>}
+            {shown.map((row) => (
+              <DashboardRow key={row.contactId} row={row} contact={contactsById.get(row.contactId)} currency={currency} />
+            ))}
+            <div className={cn("grid h-13 items-center gap-x-4 bg-cream px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
+              <span>{t("Net")}</span>
+              <span className="text-right">{formatCurrency(Math.abs(sums.opening), currency)}</span>
+              <span className="text-right">{formatCurrency(sums.in, currency)}</span>
+              <span className="text-right">{formatCurrency(sums.out, currency)}</span>
+              <AmountText value={sums.net} currency={currency} signed size="sm" className="text-right text-body font-bold" />
+            </div>
+          </Card>
 
-      <div className="mt-6 overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-neutral-900">{t("Loan / Outstanding by Bank / Person")}</h2>
-          <div className="flex items-center gap-2">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("Search by name or phone...")}
-              className="w-56 rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
-            />
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortOrder)}
-              className="rounded-xl border border-neutral-200 bg-surface px-3 py-1.5 text-sm outline-none focus:border-brand-primary"
-            >
-              <option value="high-low">{t("Balance (high-low)")}</option>
-              <option value="low-high">{t("Balance (low-high)")}</option>
-            </select>
+          {/* Phone: the direction switch, then one row per contact. */}
+          <div className="flex flex-col gap-4 md:hidden">
+            <SegmentedControl options={[{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, { value: "PAWNA" as Tab, label: t("Owe you") }, { value: "DENA" as Tab, label: t("You owe") }, { value: "SETTLED" as Tab, label: t("Settled") }]} value={tab} onChange={setTab} label={t("Balance")} stretch />
+            <Card padding="none" elevated={false} className="overflow-hidden">
+              {shown.length === 0 && <p className="px-4 py-8 text-center text-body text-ink-muted">{t("No one matches")}</p>}
+              {shown.map((row, index) => {
+                const meta = DIRECTION_META[row.direction];
+                const contact = contactsById.get(row.contactId);
+                return (
+                  <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-surface-sunken")}>
+                    <ContactAvatar name={row.contactName} src={contact?.photoUrl} size={40} coloured />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <b className="truncate text-title text-ink">{row.contactName}</b>
+                      <span className="text-caption font-normal text-ink-muted">{contact ? t(LOAN_KIND_LABELS[contact.type]) : (row.contactPhone ?? "")}</span>
+                    </span>
+                    {row.direction === "SETTLED" ? (
+                      <b className="text-body font-bold text-ink-muted">{t("Settled")}</b>
+                    ) : (
+                      <span className="flex flex-col items-end">
+                        <b className={cn("text-body font-bold tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</b>
+                        <span className="text-caption font-normal text-ink-muted">{t(meta.short)}</span>
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </Card>
+            {canManage && (
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="secondary" size="xl" onClick={() => setEntry({ kind: "GIVE_LOAN" })} className="font-semibold">
+                  <ArrowUpRight className="text-expense-fill" />
+                  {t("Gave or lent")}
+                </Button>
+                <Button variant="secondary" size="xl" onClick={() => setEntry({ kind: "TAKE_LOAN" })} className="font-semibold">
+                  <ArrowDownLeft className="text-income" />
+                  {t("Took or borrowed")}
+                </Button>
+              </div>
+            )}
           </div>
-        </div>
+        </>
+      )}
 
-        <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
-                <tr>
-                  <th className="px-4 py-3 font-medium">#</th>
-                  <th className="px-4 py-3 font-medium">{t("Bank / Person")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Opening Balance")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Receive")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Payment")}</th>
-                  <th className="px-4 py-3 font-medium text-right">{t("Current Dena/Pawna")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-50">
-                {rows.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-neutral-400">
-                      {t("Nothing outstanding right now.")}
-                    </td>
-                  </tr>
-                )}
-                {rows.map((row, index) => (
-                  <tr
-                    key={row.contactId}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => router.push(`/contacts/${row.contactId}`)}
-                    className="cursor-pointer hover:bg-neutral-50/60"
-                  >
-                    <td className="px-4 py-3 text-neutral-400">{index + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-semibold text-neutral-500">
-                          {contactInitials(row.contactName)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-neutral-800">{row.contactName}</p>
-                          {row.contactPhone && <p className="text-xs text-neutral-400">{row.contactPhone}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-neutral-500">
-                      {Number(row.openingBalance) === 0 ? <span className="text-neutral-300">{t("Tk 0 (Balanced)")}</span> : formatCurrency(row.openingBalance, currency)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(row.totalReceive, currency)}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(row.totalPayment, currency)}</td>
-                    <td className={`px-4 py-3 text-right font-semibold tabular-nums ${row.direction === "PAWNA" ? "text-brand-primary" : row.direction === "DENA" ? "text-brand-danger" : "text-neutral-400"}`}>
-                      {formatCurrency(Math.abs(Number(row.currentBalance)), currency)}
-                      {row.direction !== "SETTLED" && <span className="ml-1 text-xs font-normal">({row.direction === "PAWNA" ? t("Pawna") : t("Dena")})</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              {rows.length > 0 && (
-                <tfoot>
-                  <tr className="border-t-2 border-neutral-200 text-sm font-bold text-neutral-900">
-                    <td className="px-4 py-3" colSpan={2}>
-                      {t("Total")}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatCurrency(
-                        rows.reduce((s, r) => s + Number(r.openingBalance), 0),
-                        currency,
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-brand-primary">{formatCurrency(dashboard.totalReceived, currency)}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-brand-danger">{formatCurrency(dashboard.totalPaid, currency)}</td>
-                    <td className={`px-4 py-3 text-right tabular-nums ${Number(dashboard.netBalance) >= 0 ? "text-brand-primary" : "text-brand-danger"}`}>
-                      {formatCurrency(Math.abs(Number(dashboard.netBalance)), currency)}
-                    </td>
-                  </tr>
-                </tfoot>
-              )}
-            </table>
-          </div>
-      </div>
-
-      <div className="mt-3 flex items-center gap-4 text-xs text-neutral-500">
-        <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-brand-primary" /> {t("Pawna (You Receive)")}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-brand-danger" /> {t("Dena (You Pay)")}
-        </span>
-      </div>
-    </div>
+      <LoanContactDrawer open={contactOpen} onClose={() => setContactOpen(false)} businessId={businessId} editing={null} currency={currency} />
+      <LoanEntryDrawer open={entry !== null} onClose={() => setEntry(null)} businessId={businessId} contacts={contacts.filter((contact) => contact.status === "ACTIVE")} currency={currency} initialKind={entry?.kind} />
+    </PageFrame>
   );
 }
 
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  color,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  sub: string;
-  color: string;
-}) {
+function counted(label: string, count: number) {
   return (
-    <div className="rounded-2xl bg-surface p-4 shadow-sm shadow-black/5">
-      <div className="flex items-center gap-2 text-neutral-400">
-        <Icon className="h-4 w-4" />
-        <span className="text-xs uppercase tracking-wide">{label}</span>
-      </div>
-      <p className={`mt-2 text-xl font-bold tabular-nums ${color}`}>{value}</p>
-      <p className="text-xs text-neutral-400">{sub}</p>
-    </div>
+    <>
+      {label} <span className="font-medium text-ink-muted">{count}</span>
+    </>
+  );
+}
+
+function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; contact?: Contact; currency: string }) {
+  const { t } = useLocale();
+  const meta = DIRECTION_META[row.direction];
+  return (
+    <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink transition-colors hover:bg-cream", GRID)}>
+      <span className="flex min-w-0 items-center gap-3">
+        <ContactAvatar name={row.contactName} src={contact?.photoUrl} size={36} />
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="flex items-center gap-2">
+            <span className="truncate font-medium">{row.contactName}</span>
+            {contact && (
+              <Chip tone="neutral" size="sm" className="font-semibold">
+                {t(LOAN_KIND_LABELS[contact.type])}
+              </Chip>
+            )}
+          </span>
+          <span className="text-caption font-normal text-ink-muted">{row.contactPhone ?? contact?.address ?? "—"}</span>
+        </span>
+      </span>
+      {figure(row.openingBalance, currency, "text-ink-2")}
+      {figure(row.totalReceive, currency)}
+      {figure(row.totalPayment, currency)}
+      <span className="flex items-center justify-end gap-2">
+        <span className={cn("font-bold tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</span>
+        <Chip tone={meta.chip} size="sm" className="font-semibold">
+          {t(meta.name)}
+        </Chip>
+      </span>
+    </Link>
   );
 }
