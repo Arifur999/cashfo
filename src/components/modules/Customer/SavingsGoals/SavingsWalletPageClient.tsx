@@ -1,16 +1,18 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removeAccountAction } from "@/lib/customer/accountActions";
-import type { Account } from "@/lib/customer/api";
-import { formatCurrency } from "@/lib/customer/currency";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { SavingsWalletFormModal } from "./SavingsWalletFormModal";
+import { WalletCard } from "@/components/modules/Customer/Balance/WalletCard";
+import { WalletDrawer } from "@/components/modules/Customer/Balance/WalletDrawer";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
+import Button from "@/components/smartly/Button";
+import PageFrame from "@/components/smartly/PageFrame";
+import PageHeader from "@/components/smartly/PageHeader";
+import { archiveAccountAction, removeAccountAction, unarchiveAccountAction, type ActionResult } from "@/lib/customer/accountActions";
+import type { Account } from "@/lib/customer/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface SavingsWalletPageClientProps {
   businessId: string;
@@ -19,118 +21,82 @@ interface SavingsWalletPageClientProps {
   currency: string;
 }
 
-// Same shape as Balance's own WalletPageClient -- a Savings Wallet is just
-// another money-holding Account (accountSubtype "savings"), managed the
-// same way (name/account number/opening balance, Add/Edit/Archive). Where
-// its balance actually lives day-to-day is /savings-goals/overview (per-
-// goal breakdown) and /accounts/[id] (this wallet's own ledger).
+// Savings wallets: the DPS, FDR and other accounts saved money sits in --
+// the same cards and drawer as My wallets, in the savings colours.
 export function SavingsWalletPageClient({ businessId, wallets, canManage, currency }: SavingsWalletPageClientProps) {
   const { t } = useLocale();
-  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const router = useRouter();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingWallet, setEditingWallet] = useState<Account | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const [drawer, setDrawer] = useState<"closed" | "create" | Account>("closed");
+  const [, startTransition] = useTransition();
+  const editing = typeof drawer === "object" ? drawer : null;
+  const ordered = [...wallets].sort((a, b) => Number(a.status === "ARCHIVED") - Number(b.status === "ARCHIVED"));
 
-  function openCreate() {
-    setEditingWallet(null);
-    setFormOpen(true);
+  function run(action: () => Promise<ActionResult<unknown>>, done: string, failed: string) {
+    startTransition(async () => {
+      const result = await action();
+      if (result.success) {
+        toast.success(t(done));
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t(failed));
+      }
+    });
   }
 
-  function openEdit(wallet: Account) {
-    setEditingWallet(wallet);
-    setFormOpen(true);
+  function toggleArchive(wallet: Account) {
+    const isArchived = wallet.status === "ARCHIVED";
+    run(() => (isArchived ? unarchiveAccountAction(businessId, wallet.id) : archiveAccountAction(businessId, wallet.id)), isArchived ? "Wallet activated" : "Wallet archived", isArchived ? "Failed to activate wallet" : "Failed to archive wallet");
   }
 
-  async function handleRemove(wallet: Account) {
-    if (!(await confirm({ message: `${t("Remove")} "${wallet.name}"?`, confirmLabel: "Remove" }))) return;
+  async function remove(wallet: Account) {
+    if (!(await confirm({ title: `${t("Remove")} ${wallet.name}?`, message: t("A wallet with transactions is archived instead of deleted, so your history stays whole."), confirmLabel: "Remove wallet" }))) return;
     startTransition(async () => {
       const result = await removeAccountAction(businessId, wallet.id);
       if (result.success) {
-        toast.success(result.data?.deleted ? t("Savings Wallet deleted") : t("Savings Wallet archived"));
+        toast.success(result.data?.deleted ? t("Wallet deleted") : t("Wallet archived"));
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to remove Savings Wallet"));
+        toast.error(result.message ?? t("Failed to remove wallet"));
       }
     });
   }
 
   return (
-    <div className="h-full bg-brand-content px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-neutral-900">{t("Savings Wallet")}</h1>
-          <p className="mt-1 text-sm text-neutral-500">{t("Where your saved money actually sits -- e.g. a bank DPS/FDR account.")}</p>
-        </div>
-        {canManage && (
-          <button
-            type="button"
-            onClick={openCreate}
-            className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
-          >
-            <Plus className="h-4 w-4" /> {t("Add")}
+    <PageFrame className="gap-6">
+      <PageHeader
+        eyebrow={`${t("Money")} · ${t("Savings")}`}
+        title={t("Savings wallets")}
+        description={t("Where your saved money actually sits, for example a bank DPS or FDR account.")}
+        actions={
+          canManage && (
+            <Button onClick={() => setDrawer("create")}>
+              <Plus strokeWidth={2.5} className="size-4" />
+              {t("Add savings wallet")}
+            </Button>
+          )
+        }
+      />
+
+      <div className="grid gap-4 md:grid-cols-3 md:gap-5">
+        {ordered.map((wallet) => (
+          <WalletCard key={wallet.id} wallet={wallet} index={wallets.indexOf(wallet)} currency={currency} canManage={canManage} savings onEdit={() => setDrawer(wallet)} onToggleArchive={() => toggleArchive(wallet)} onRemove={() => remove(wallet)} />
+        ))}
+        {canManage ? (
+          <button type="button" onClick={() => setDrawer("create")} className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border-[1.5px] border-dashed border-line-strong bg-surface transition-colors hover:border-emerald md:h-50">
+            <span className="flex size-11 items-center justify-center rounded-full bg-mint-50 text-emerald">
+              <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
+            </span>
+            <span className="text-title text-ink">{t("Add savings wallet")}</span>
+            <span className="text-small text-ink-muted">{t("DPS, FDR or any account you save in")}</span>
           </button>
+        ) : (
+          wallets.length === 0 && <p className="py-6 text-center text-body text-ink-muted md:col-span-3">{t("No savings wallet yet.")}</p>
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm shadow-black/5">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-neutral-100 text-xs uppercase text-neutral-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">{t("Name")}</th>
-                <th className="px-4 py-3 font-medium">{t("Account Number")}</th>
-                <th className="px-4 py-3 font-medium text-right">{t("Opening Balance")}</th>
-                {canManage && <th className="px-4 py-3 font-medium text-right">{t("Actions")}</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-50">
-              {wallets.length === 0 && (
-                <tr>
-                  <td colSpan={canManage ? 4 : 3} className="px-4 py-10 text-center text-neutral-400">
-                    {t("No Savings Wallets yet -- add one to start funding goals.")}
-                  </td>
-                </tr>
-              )}
-              {wallets.map((wallet) => (
-                <tr key={wallet.id}>
-                  <td className="px-4 py-3">
-                    <Link href={`/accounts/${wallet.id}`} className="font-medium text-neutral-800 hover:underline">
-                      {wallet.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-neutral-500">{wallet.accountNumber ?? "--"}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-neutral-700">{formatCurrency(wallet.openingBalance, currency)}</td>
-                  {canManage && (
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(wallet)}
-                          title={t("Edit")}
-                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={isPending}
-                          onClick={() => handleRemove(wallet)}
-                          title={t("Remove")}
-                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-brand-danger"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-      </div>
-
-      <SavingsWalletFormModal open={formOpen} onClose={() => setFormOpen(false)} businessId={businessId} editingWallet={editingWallet} />
+      <WalletDrawer open={drawer !== "closed"} onClose={() => setDrawer("closed")} businessId={businessId} editing={editing} currency={currency} paletteIndex={editing ? wallets.indexOf(editing) : wallets.length} savings />
       {confirmDialog}
-    </div>
+    </PageFrame>
   );
 }
