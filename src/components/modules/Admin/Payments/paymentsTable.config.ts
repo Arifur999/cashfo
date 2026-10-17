@@ -18,7 +18,7 @@ const STATUS_TABS: PaymentStatus[] = ["SUCCESS", "FAILED", "PENDING", "REFUNDED"
 // (memoize the result -- it must stay stable).
 export const buildPaymentsTableConfig = (plans: IPlanOption[], statusCounts?: Record<PaymentStatus, number>): ServerDataTableConfig => ({
   ...PAYMENTS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Payment ID, name or bKash ref" },
+  search: { placeholder: "Payment ID, name or bKash ref", width: "sm" },
   filters: [
     { id: "status", type: "tabs", label: "Status", options: STATUS_TABS.map((value) => ({ value, label: PAYMENT_STATUS_LABEL[value], count: statusCounts?.[value] })) },
     { id: "gateway", type: "single-select", label: "Gateway", options: enumOptions(PAYMENT_GATEWAYS) },

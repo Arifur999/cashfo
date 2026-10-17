@@ -64,6 +64,8 @@ export interface DataTableBulkAction<TData> {
 
 export interface DataTableSearchConfig {
   placeholder?: string;
+  // "sm" is the 240px box the design draws when tabs share the row.
+  width?: "sm" | "md";
   initialValue?: string;
   debounceMs?: number;
   // Present = server-side search (the URL drives the query); absent = the

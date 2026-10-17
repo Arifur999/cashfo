@@ -3,6 +3,7 @@ import {
   dateTimeInputToIso,
   endOfDayIso,
   formatDate,
+  formatElapsed,
   formatRelativeDateTime,
   formatRelativeDay,
   startOfDayIso,
@@ -62,6 +63,18 @@ describe("formatRelativeDay", () => {
     expect(formatRelativeDay("2026-09-30T10:00:00Z", now)).toBe("30 Sep");
     expect(formatRelativeDay("2025-06-02T10:00:00Z", now)).toBe("2 Jun 2025");
     expect(formatRelativeDay(null, now)).toBe("—");
+  });
+});
+
+describe("formatElapsed", () => {
+  const now = new Date("2026-10-02T06:00:00Z");
+
+  it("counts minutes, then hours up to two days, then days", () => {
+    expect(formatElapsed("2026-10-02T05:25:00Z", now)).toBe("35 min");
+    expect(formatElapsed("2026-10-02T04:00:00Z", now)).toBe("2 h");
+    expect(formatElapsed("2026-10-01T04:00:00Z", now)).toBe("26 h");
+    expect(formatElapsed("2026-09-30T06:00:00Z", now)).toBe("2 days");
+    expect(formatElapsed(null, now)).toBe("—");
   });
 });
 

@@ -14,7 +14,7 @@ export interface ServerDataTableConfig {
   // Every query param the endpoint accepts besides page/limit.
   queryKeys: readonly string[];
   filters?: DataTableFilterConfig[];
-  search?: { placeholder: string; queryKey?: string };
+  search?: { placeholder: string; queryKey?: string; width?: "sm" | "md" };
   defaultLimit?: number;
 }
 
@@ -46,7 +46,7 @@ export function useServerDataTable<TData>(config: ServerDataTableConfig) {
     initialPageSize: defaultLimit,
     pagination: { state: paginationState, onPaginationChange: handlePaginationChange },
     search: search
-      ? { initialValue: searchTermFromUrl, placeholder: search.placeholder, onDebouncedChange: handleDebouncedSearchChange }
+      ? { initialValue: searchTermFromUrl, placeholder: search.placeholder, width: search.width, onDebouncedChange: handleDebouncedSearchChange }
       : undefined,
     filters:
       filters.length > 0

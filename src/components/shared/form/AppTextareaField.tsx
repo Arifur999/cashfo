@@ -6,7 +6,7 @@ import FormFieldShell from "./FormFieldShell";
 
 interface AppTextareaFieldProps {
   field: AnyFieldApi;
-  label: string;
+  label: React.ReactNode;
   placeholder?: string;
   rows?: number;
   description?: React.ReactNode;

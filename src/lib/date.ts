@@ -105,6 +105,23 @@ export const formatRelativeDay = (value: DateInput, now: Date = new Date(), fall
   return formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy");
 };
 
+// "35 min", "2 h", "26 h", "2 days": how long ago something happened, the
+// way a support queue counts waiting time (hours up to two days).
+export const formatElapsed = (value: DateInput, now: Date = new Date(), fallback = "—"): string => {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) {
+    return fallback;
+  }
+  const minutes = Math.max(0, Math.round((now.getTime() - then) / 60_000));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return `${hours} h`;
+  return `${Math.round(hours / 24)} days`;
+};
+
 // "Today, 2:10 pm", "Yesterday, 6:55 pm", "1 Oct, 8:12 pm" (this year) or
 // "27 Sep 2025, 1:03 pm": when something happened, to the minute.
 export const formatRelativeDateTime = (value: DateInput, now: Date = new Date(), fallback = "—"): string => {

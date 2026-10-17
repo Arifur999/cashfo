@@ -62,6 +62,7 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
             onDebouncedChange={onServerSearch ?? ((value) => table.setGlobalFilter(value))}
             placeholder={search.placeholder}
             debounceMs={search.debounceMs}
+            width={search.width}
           />
         )}
         <div className="flex items-center gap-2">

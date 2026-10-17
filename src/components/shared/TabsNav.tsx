@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { formatNumber } from "@/lib/number";
 import { cn } from "@/lib/utils";
 
 export interface TabDef {
   label: string;
   href: string;
+  // A count in a small pill after the label ("Tickets 18").
+  count?: number;
   // Exact-match against pathname+query instead of a prefix match -- needed
   // when two tabs share the same path and differ only by query string (e.g.
   // Payments vs Failed Payments both live at /admin/payments).
@@ -60,13 +63,14 @@ const TabsNav = ({ tabs, label = "Section" }: { tabs: TabDef[]; label?: string }
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "relative flex h-10 shrink-0 items-center px-3 text-body transition-colors",
+              "relative flex h-10 shrink-0 items-center gap-2 px-3 text-body transition-colors",
               isActive
                 ? "font-semibold text-ink after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full after:bg-emerald"
                 : "font-medium text-ink-muted hover:text-ink",
             )}
           >
             {tab.label}
+            {tab.count !== undefined && <span className="rounded-full bg-surface-sunken px-2 text-caption font-semibold text-ink-2 tabular-nums">{formatNumber(tab.count)}</span>}
           </Link>
         );
       })}
