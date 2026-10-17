@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { avatarTone } from "@/lib/avatarTone";
 import { getInitials } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import T from "../T";
@@ -15,7 +16,8 @@ interface UserInfoCellProps {
   avatar?: boolean;
 }
 
-// A person in a list: 34px initials, the name and the email under it.
+// A person in a list: 34px initials in their own tint, the name and the
+// email under it.
 const UserInfoCell = ({ name, email, photo, meta, muted = false, avatar = true }: UserInfoCellProps) => {
   const displayName = name?.trim();
 
@@ -24,7 +26,7 @@ const UserInfoCell = ({ name, email, photo, meta, muted = false, avatar = true }
       {avatar && (
         <Avatar className="size-8.5">
           {photo && <AvatarImage src={photo} alt="" />}
-          <AvatarFallback className="bg-mint-50 text-caption font-bold text-emerald">{(displayName && getInitials(displayName)) || "?"}</AvatarFallback>
+          <AvatarFallback className={cn("text-caption font-bold", avatarTone(email ?? displayName ?? ""))}>{(displayName && getInitials(displayName)) || "?"}</AvatarFallback>
         </Avatar>
       )}
       <div className="flex min-w-0 flex-col gap-px">
