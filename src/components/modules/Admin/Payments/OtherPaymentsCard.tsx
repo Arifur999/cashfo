@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatCurrency } from "@/lib/currency";
+import { formatAmount } from "@/lib/currency";
 import { formatDate } from "@/lib/date";
 import { PAYMENT_STATUS_LABEL, shortPaymentId } from "@/lib/payments";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,7 @@ const OtherPaymentsCard = ({ payments }: { payments: IOtherPayment[] }) => {
                 </>
               )}
             </span>
-            <b className={cn("font-semibold tabular-nums", payment.status === "SUCCESS" ? "text-ink" : "text-ink-muted")}>{formatCurrency(payment.amount, payment.currency, 0)}</b>
+            <b className={cn("font-semibold tabular-nums", payment.status === "SUCCESS" ? "text-ink" : "text-ink-muted")}>{formatAmount(payment.amount, payment.currency)}</b>
           </Link>
         ))
       )}

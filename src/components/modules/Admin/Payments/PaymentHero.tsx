@@ -1,6 +1,6 @@
 import Chip from "@/components/smartly/Chip";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import { formatCurrency } from "@/lib/currency";
+import { formatAmount } from "@/lib/currency";
 import { PAYMENT_STATUS_LABEL, paymentLine, shortPaymentId } from "@/lib/payments";
 import type { IPaymentDetail } from "@/types/payment.types";
 import T from "@/components/shared/T";
@@ -29,7 +29,7 @@ const PaymentHero = async ({ payment, actions }: PaymentHeroProps) => {
         </div>
         <p className="text-body text-ink-2">{paymentLine(payment, t)}</p>
       </div>
-      <span className="text-h1 text-ink tabular-nums">{formatCurrency(payment.amount, payment.currency)}</span>
+      <span className="text-h1 text-ink tabular-nums">{formatAmount(payment.amount, payment.currency)}</span>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </section>
   );
