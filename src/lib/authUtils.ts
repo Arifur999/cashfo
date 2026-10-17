@@ -80,16 +80,25 @@ export const isRouteMatches = (pathname: string, routes: RouteConfig) => {
 // The admin route ownership table -- the single source of truth for which
 // role may open which section. proxy.ts does nothing but consult it.
 // Security & Audit and System are SUPER_ADMIN only (the backend 403s every
-// route under them too); every other /admin page is open to any admin.
+// route under them too), Revenue is for the money roles; every other
+// /admin page is open to any admin.
 export const superAdminRoutes: RouteConfig = {
   exact: [],
   pattern: [/^\/admin\/security(\/|$)/, /^\/admin\/system(\/|$)/],
+};
+
+export const financeRoutes: RouteConfig = {
+  exact: ["/admin/revenue"],
+  pattern: [],
 };
 
 // null means "any signed-in admin".
 export const getRouteRoles = (pathname: string): AdminRole[] | null => {
   if (isRouteMatches(pathname, superAdminRoutes)) {
     return ["SUPER_ADMIN"];
+  }
+  if (isRouteMatches(pathname, financeRoutes)) {
+    return ["SUPER_ADMIN", "FINANCE_ADMIN"];
   }
   return null;
 };
