@@ -29,6 +29,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     toolbarAction,
     footer,
     hideToolbar = false,
+    layout,
     toolbarRows,
     pager,
     exportFileName,
@@ -67,6 +68,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         onReset={reset}
         onRowClick={onRowClick}
         rowClassName={rowClassName}
+        layout={layout}
       />
       {totalRows > 0 &&
         (pager ? (

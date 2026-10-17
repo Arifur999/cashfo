@@ -15,5 +15,9 @@ declare module "@tanstack/react-table" {
     cellClassName?: string;
     // Numbers sit on the right, head and cells alike.
     align?: "left" | "right";
+    // The column's width in the design's grid, in px, gaps not included.
+    // A list that sets widths lays out like the design's grid: the one
+    // column without a width takes what is left.
+    width?: number;
   }
 }

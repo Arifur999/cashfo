@@ -82,6 +82,16 @@ export interface DataTableSimplePager {
   summary: (total: number, range: { first: number; last: number }) => React.ReactNode;
 }
 
+// How a list sits in its card, from the design's grid for it: the gap
+// between columns, the rows' height, the heads' padding and the actions
+// column's width. Column widths are each column's meta.width.
+export interface DataTableLayout {
+  gap?: 12 | 16;
+  rowHeight?: number;
+  headPadding?: 8 | 12;
+  actionsWidth?: number;
+}
+
 export interface DataTableSearchConfig {
   placeholder?: string;
   // "sm" is the 240px box the design draws when tabs share the row.
@@ -123,6 +133,7 @@ export interface DataTableProps<TData> {
   footer?: React.ReactNode;
   // A list with nothing to search or filter (the admin team) draws no toolbar.
   hideToolbar?: boolean;
+  layout?: DataTableLayout;
   // 2 puts the filter chips on a row of their own under the tabs and the
   // search, as the design's Users list does; 1 (the default) keeps one row.
   toolbarRows?: 1 | 2;

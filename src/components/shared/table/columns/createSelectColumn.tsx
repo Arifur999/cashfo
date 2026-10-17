@@ -6,10 +6,14 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export const SELECT_COLUMN_ID = "select";
 
+// The design's row checkbox: a 16px square, 4px corners, a 1.5px border.
+const BOX = "rounded-[4px] border-[1.5px] border-line-strong bg-surface";
+
 const SelectAllBox = <TData,>({ table }: { table: Table<TData> }) => {
   const { translate } = useLocale();
   return (
     <Checkbox
+      className={BOX}
       checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
       onCheckedChange={(checked) => table.toggleAllPageRowsSelected(Boolean(checked))}
       aria-label={translate("Select all rows on this page")}
@@ -21,6 +25,7 @@ const SelectRowBox = <TData,>({ row }: { row: Row<TData> }) => {
   const { translate } = useLocale();
   return (
     <Checkbox
+      className={BOX}
       checked={row.getIsSelected()}
       onCheckedChange={(checked) => row.toggleSelected(Boolean(checked))}
       onClick={(event) => event.stopPropagation()}
@@ -37,5 +42,5 @@ export const createSelectColumn = <TData,>(): ColumnDef<TData> => ({
   cell: ({ row }) => <SelectRowBox row={row} />,
   enableSorting: false,
   enableHiding: false,
-  size: 40,
+  meta: { width: 20 },
 });

@@ -29,5 +29,5 @@ export const createActionsColumn = <TData,>(actions: DataTableActions<TData>): C
         ),
         enableSorting: false,
         enableHiding: false,
-        size: 56,
+        meta: { width: 32 },
       };
