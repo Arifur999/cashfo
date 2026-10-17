@@ -7,7 +7,7 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import { unlockVaultAction } from "@/lib/customer/passwordVaultActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { PasswordField } from "./PasswordField";
+import { PasswordField } from "@/components/modules/Customer/Shared/PasswordField";
 import { GateAside, GateCard } from "./VaultGate";
 
 interface VaultUnlockFormProps {

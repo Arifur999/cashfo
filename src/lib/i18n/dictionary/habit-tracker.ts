@@ -446,4 +446,14 @@ export const habitTrackerDictionary: Record<string, string> = {
   "to go. It begins around": "বাকি। শুরু আনুমানিক",
   "See Ramadan": "দেখুন রমজান",
   "Open Ramadan": "রমজান খুলুন",
+
+  // Weekday names (habitDisplay's WEEKDAY_LONG / WEEKDAY_SHORT), shown on
+  // the Daily habits, Skills and Today pages.
+  Sunday: "রবিবার",
+  Monday: "সোমবার",
+  Tuesday: "মঙ্গলবার",
+  Wednesday: "বুধবার",
+  Thursday: "বৃহস্পতিবার",
+  Friday: "শুক্রবার",
+  Saturday: "শনিবার",
 };

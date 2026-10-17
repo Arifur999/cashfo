@@ -16,9 +16,9 @@ import { createVaultEntryAction, updateVaultEntryAction } from "@/lib/customer/p
 import { normalizeUrl, passwordStrength, type QuickLogin } from "@/lib/customer/vaultDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { PasswordField } from "./PasswordField";
+import { PasswordField } from "@/components/modules/Customer/Shared/PasswordField";
 import { PasswordGenerator } from "./PasswordGenerator";
-import { StrengthMeter } from "./StrengthMeter";
+import { StrengthMeter } from "@/components/modules/Customer/Shared/StrengthMeter";
 import { VAULT_CATEGORIES, VAULT_CATEGORY_ICONS, VAULT_CATEGORY_LABELS, VAULT_CATEGORY_TONE } from "./vaultCategoryDisplay";
 import { isLockedMessage } from "./VaultPageClient";
 
