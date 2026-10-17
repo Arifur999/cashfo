@@ -4,6 +4,7 @@ import type { Table } from "@tanstack/react-table";
 import type { DataTableFilterConfig, DataTableFiltersConfig, DataTableFilterValue, DateRangeValue } from "../dataTable.types";
 import DataTableDateRangeFilter from "./DataTableDateRangeFilter";
 import DataTableFacetedFilter from "./DataTableFacetedFilter";
+import DataTableSortMenu from "./DataTableSortMenu";
 import DataTableTabsFilter from "./DataTableTabsFilter";
 import DataTableTextFilter from "./DataTableTextFilter";
 import DataTableToggleFilter from "./DataTableToggleFilter";
@@ -70,6 +71,19 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
               width={config.width}
               value={toSelection(getValue(config))[0]}
               onChange={(value) => setValue(config, value)}
+            />
+          );
+        }
+
+        if (config.type === "sort") {
+          return (
+            <DataTableSortMenu
+              key={config.id}
+              label={config.label}
+              options={config.options}
+              value={toSelection(getValue(config))[0]}
+              defaultValue={config.defaultValue}
+              onChange={(value) => setSingle(config, value)}
             />
           );
         }

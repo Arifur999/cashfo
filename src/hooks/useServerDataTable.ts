@@ -33,7 +33,7 @@ export function useServerDataTable<TData>(config: ServerDataTableConfig) {
   const filters = useMemo(
     () =>
       configFilters.map((filter) =>
-        (filter.type === "tabs" || filter.type === "single-select") && defaults?.[filter.id] ? { ...filter, defaultValue: defaults[filter.id] } : filter,
+        (filter.type === "tabs" || filter.type === "single-select" || filter.type === "sort") && defaults?.[filter.id] ? { ...filter, defaultValue: defaults[filter.id] } : filter,
       ),
     [configFilters, defaults],
   );

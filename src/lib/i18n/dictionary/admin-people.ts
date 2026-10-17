@@ -97,4 +97,12 @@ export const adminPeopleDictionary: Record<string, string> = {
   "Owner data reset": "মালিকের ডেটা রিসেট হয়েছে",
   "Failed to reset owner data": "মালিকের ডেটা রিসেট করা যায়নি",
   "Showing {shown} of {total}": "{total}টির মধ্যে {shown}টি দেখানো হচ্ছে",
+  "Any number": "যেকোনো সংখ্যা",
+  "Just one": "শুধু একটি",
+  "2 or more": "২ বা তার বেশি",
+  "3 or more": "৩ বা তার বেশি",
+  "Not in 30 days": "৩০ দিনে আসেননি",
+  "Last active, newest first": "শেষ সক্রিয়, নতুনগুলো আগে",
+  "Joined, newest first": "যোগদান, নতুনরা আগে",
+  "Name, A to Z": "নাম, A থেকে Z",
 };

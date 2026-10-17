@@ -33,6 +33,9 @@ export type DataTableFilterConfig = (
   | { id: string; type: "text"; label: string; width?: "sm" | "md" }
   // A switch with its label ("Sensitive only"); on sends "true".
   | { id: string; type: "toggle"; label: string }
+  // The list's order, as plain words at the end of the filter row ("Sort:
+  // Last active, newest first").
+  | { id: string; type: "sort"; label: string; options: DataTableFilterOption[]; defaultValue?: string }
 ) & {
   // "end" puts the filter at the far right of the toolbar, beside the table
   // tools ("When: Last 24 hours", "Sensitive only").
