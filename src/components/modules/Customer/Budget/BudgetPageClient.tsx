@@ -64,6 +64,10 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
   const isCurrentMonth = today.startsWith(`${year}-${String(month).padStart(2, "0")}`);
   const daysLeft = isCurrentMonth ? daysLeftInMonth(today) : 0;
   const monthName = monthLabel(month, year, locale);
+  // The phone's one summary measures against the budget, or against what
+  // the categories were given when no budget is set.
+  const reference = total ?? allocated;
+  const referencePercent = reference > 0 ? Math.round((spent / reference) * 100) : 0;
 
   function goToMonth(nextMonth: number, nextYear: number) {
     const next = new URLSearchParams(searchParams.toString());
@@ -92,7 +96,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
         title={t("Budget")}
         description={t("Set a monthly limit for each kind of spending.")}
         actions={
-          <>
+          <div className="hidden items-center gap-3 md:flex">
             <MonthSwitcher month={month} year={year} onChange={goToMonth} />
             {canManage && (
               <Button onClick={() => setDrawer("create")}>
@@ -100,11 +104,35 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
                 {t("Add expense category")}
               </Button>
             )}
-          </>
+          </div>
         }
       />
 
-      <p className="flex items-center gap-3 text-body text-ink-muted">
+      {/* Phone: the month, then one card for the month's spending. */}
+      <div className="flex flex-col gap-4 md:hidden">
+        <MonthSwitcher month={month} year={year} onChange={goToMonth} stretch />
+        <Card padding="sm" className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between text-small text-ink-muted">
+            <span>{t("Spent")}</span>
+            <span className="flex items-center gap-2">
+              {reference > 0 && `${t("of")} ${formatCurrency(reference, currency)}`}
+              {canManage && (
+                <button type="button" onClick={() => setTargetOpen(true)} aria-label={t("Edit monthly budget")} className="flex size-7 items-center justify-center rounded-md border border-line bg-surface text-ink-2">
+                  <Pencil className="size-3.5" aria-hidden="true" />
+                </button>
+              )}
+            </span>
+          </div>
+          <AmountText value={spent} currency={currency} size="h2" className="text-h1" />
+          <ProgressBar value={referencePercent} tone="budget" label={t("Spent so far")} className="h-2.5" />
+          <span className={cn("text-small font-semibold", reference > 0 ? TONE_TEXT[budgetTone(referencePercent)] : "text-ink-muted")}>
+            {reference > 0 ? `${referencePercent}% ${t("used")} · ${formatCurrency(reference - spent, currency)} ${t("left")}` : t("Set a monthly budget to see what is still free")}
+            {reference > 0 && isCurrentMonth && ` ${t("for")} ${daysLeft} ${t(daysLeft === 1 ? "day" : "days")}`}
+          </span>
+        </Card>
+      </div>
+
+      <p className="hidden items-center gap-3 text-body text-ink-muted md:flex">
         <Info className="size-4 shrink-0" aria-hidden="true" />
         <span>
           {t("Budget is for spending limits. Money coming in lives in")}{" "}
@@ -115,7 +143,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
         </span>
       </p>
 
-      <Card padding="none" className="grid md:grid-cols-[0.8fr_1.3fr_1fr]">
+      <Card padding="none" className="hidden md:grid md:grid-cols-[0.8fr_1.3fr_1fr]">
         <div className="flex flex-col gap-2 px-5 py-5 md:px-6">
           <div className="flex items-center justify-between">
             <span className="text-small font-medium text-ink-muted">{t("Monthly budget")}</span>
@@ -184,7 +212,67 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
         </div>
       </Card>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Phone: one card of rows; a row opens its actions. */}
+      <Card padding="none" className="overflow-hidden md:hidden">
+        {overview.categories.length === 0 && <p className="px-4 py-8 text-center text-body text-ink-muted">{t("No expense categories yet.")}</p>}
+        {overview.categories.map((category, index) => {
+          const limit = Number(category.monthlyLimit ?? 0);
+          const used = Number(category.spent);
+          const left = limit - used;
+          const tone = budgetTone(category.percent);
+          const visual = categoryTone(category.color);
+          const status = left > 0 ? `${formatCurrency(left, currency)} ${t("left")}` : left === 0 ? t("Limit reached") : `${t("Over by")} ${formatCurrency(-left, currency)}`;
+          const row = (
+            <>
+              <span className="flex items-center gap-3">
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.25", visual.bg, visual.fg)}>{category.icon && createElement(budgetCategoryIcon(category.icon), { "aria-hidden": true })}</span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <b className="truncate text-body-lg font-semibold text-ink">{category.name}</b>
+                  <span className="text-caption text-ink-muted tabular-nums">
+                    {formatCurrency(used, currency)} {t("of")} {formatCurrency(limit, currency)}
+                  </span>
+                </span>
+                <span className="flex shrink-0 flex-col items-end">
+                  <b className={cn("text-body font-bold tabular-nums", TONE_TEXT[tone])}>{Math.round(category.percent)}%</b>
+                  <span className="text-caption text-ink-muted">{status}</span>
+                </span>
+              </span>
+              <ProgressBar value={category.percent} tone="budget" size="sm" label={category.name} />
+            </>
+          );
+          const rowClass = cn("flex w-full flex-col gap-2 px-4 py-4 text-left", index > 0 && "border-t border-surface-sunken");
+          return canManage ? (
+            <DropdownMenu key={category.id}>
+              <DropdownMenuTrigger aria-label={`${category.name}: ${t("actions")}`} className={cn(rowClass, "data-open:bg-cream/60")}>
+                {row}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
+                <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                  {t("Edit")}
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                  <Link href={`/transactions?type=EXPENSE&categoryId=${encodeURIComponent(category.name)}&dateFrom=${year}-${String(month).padStart(2, "0")}-01&dateTo=${year}-${String(month).padStart(2, "0")}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}`}>{t("See transactions")}</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => remove(category)} disabled={deleting} className="cursor-pointer rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">
+                  {t("Delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div key={category.id} className={rowClass}>
+              {row}
+            </div>
+          );
+        })}
+      </Card>
+      {canManage && (
+        <Button variant="soft" size="xl" onClick={() => setDrawer("create")} className="md:hidden">
+          <Plus strokeWidth={2.25} className="size-4" />
+          {t("Add a category")}
+        </Button>
+      )}
+
+      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
         <h2 className="text-title text-ink">{t("Categories")}</h2>
         <div className="flex gap-4 text-caption text-ink-2">
           <span className="flex items-center gap-2">
@@ -199,7 +287,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-3">
         {overview.categories.map((category) => {
           const limit = Number(category.monthlyLimit ?? 0);
           const used = Number(category.spent);

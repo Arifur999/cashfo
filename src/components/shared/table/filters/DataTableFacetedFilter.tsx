@@ -1,7 +1,6 @@
 "use client";
 
-import { Check, PlusCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -13,9 +12,11 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { DataTableFilterOption } from "../dataTable.types";
+
+// The chip the design draws for a filter: "Plan: All plans".
+export const FILTER_CHIP_CLASS = "h-8 gap-2 rounded-md border-line-strong bg-surface px-3 text-small font-normal text-ink-2 hover:bg-cream data-[state=open]:bg-cream";
 
 interface DataTableFacetedFilterProps {
   title: string;
@@ -40,25 +41,19 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircle aria-hidden="true" />
-          {title}
-          {selected.length > 0 && (
-            <>
-              <Separator orientation="vertical" className="mx-1 h-4" />
-              {selected.length > 2 ? (
-                <Badge variant="secondary">{selected.length} selected</Badge>
-              ) : (
-                options
-                  .filter((option) => selected.includes(option.value))
-                  .map((option) => (
-                    <Badge key={option.value} variant="secondary">
-                      {option.label}
-                    </Badge>
-                  ))
-              )}
-            </>
-          )}
+        <Button variant="outline" size="sm" className={FILTER_CHIP_CLASS}>
+          <span>{title}:</span>
+          <b className="font-semibold text-ink">
+            {selected.length === 0
+              ? "All"
+              : selected.length > 2
+                ? `${selected.length} selected`
+                : options
+                    .filter((option) => selected.includes(option.value))
+                    .map((option) => option.label)
+                    .join(", ")}
+          </b>
+          <ChevronDown className="size-3.5 text-ink-muted" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-0" align="start">

@@ -33,7 +33,7 @@ const DataTableSearch = ({ value, onDebouncedChange, placeholder = "Search...", 
   };
 
   return (
-    <InputGroup className="h-8 w-full sm:w-64">
+    <InputGroup className="h-9.5 w-full rounded-md border-line-strong bg-surface sm:w-95">
       <InputGroupAddon>
         <Search aria-hidden="true" />
       </InputGroupAddon>

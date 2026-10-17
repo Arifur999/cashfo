@@ -25,7 +25,7 @@ const DataTableColumnHeader = <TData, TValue>({ column, title, className }: Data
   const canHide = column.getCanHide();
 
   if (!canSort && !canHide) {
-    return <div className={cn("text-xs font-medium uppercase", className)}>{title}</div>;
+    return <div className={cn("text-caption font-medium", className)}>{title}</div>;
   }
 
   const sorted = column.getIsSorted();
@@ -38,7 +38,7 @@ const DataTableColumnHeader = <TData, TValue>({ column, title, className }: Data
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-3 h-8 text-xs font-medium uppercase data-[state=open]:bg-muted"
+            className="-ml-3 h-8 text-caption font-medium text-ink-muted hover:text-ink data-[state=open]:bg-surface-sunken"
             aria-label={`${title} column options`}
           >
             {title}

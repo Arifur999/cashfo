@@ -285,4 +285,9 @@ export const incomeExpenseDictionary: Record<string, string> = {
   Source: "উৎস",
   "Share of the month": "মাসের অংশ",
   "of the month": "মাসের",
+
+  // Budget on a phone
+  Spent: "খরচ হয়েছে",
+  "Add a category": "একটি খাত যোগ করুন",
+  "No expense categories yet.": "এখনো কোনো খরচের খাত নেই।",
 };

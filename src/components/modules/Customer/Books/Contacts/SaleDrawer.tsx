@@ -1,14 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
+import type { Account } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { limitMoneyDecimals } from "@/lib/customer/money";
+import { getExpenseAccountsAction, getIncomeAccountsAction } from "@/lib/customer/quickEntryActions";
 import { recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -33,6 +36,11 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
   const [date, setDate] = useState(getAppToday());
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
+  const [reference, setReference] = useState("");
+  const [accountId, setAccountId] = useState("");
+  // The income or expense accounts, fetched each time the drawer opens;
+  // null while they load.
+  const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const [prevOpen, setPrevOpen] = useState(false);
@@ -43,17 +51,35 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
       setDate(getAppToday());
       setDueDate("");
       setDescription("");
+      setReference("");
+      setAccounts(null);
     }
   }
 
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (kind === "sale" ? getIncomeAccountsAction(businessId) : getExpenseAccountsAction(businessId)).then((list) => {
+      if (cancelled) return;
+      setAccounts(list);
+      // Purchases go to a stock or purchases account when there is one, not
+      // to whatever expense account happens to come first.
+      const preferred = kind === "purchase" ? list.find((account) => /stock|purchase|goods|inventory|মাল/i.test(account.name)) : undefined;
+      setAccountId((current) => (list.some((account) => account.id === current) ? current : (preferred ?? list[0])?.id ?? ""));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, kind, businessId]);
+
   const value = Number(amount);
-  const valid = value > 0 && date.length === 10;
+  const valid = value > 0 && date.length === 10 && accountId !== "";
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!valid || isPending) return;
     startTransition(async () => {
-      const input = { contactId: contact.id, amount: value, date, dueDate: dueDate || undefined, description: description.trim() || undefined };
+      const input = { contactId: contact.id, amount: value, date, dueDate: dueDate || undefined, description: description.trim() || undefined, referenceNo: reference.trim() || undefined, ...(kind === "sale" ? { incomeAccountId: accountId } : { expenseAccountId: accountId }) };
       const result = kind === "sale" ? await recordSaleAction(businessId, input) : await recordPurchaseAction(businessId, input);
       if (result.success) {
         toast.success(`${formatCurrency(value, currency)} ${t(kind === "sale" ? "sold on credit to" : "bought on credit from")} ${contact.name}`);
@@ -100,6 +126,20 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
       </div>
       <Field htmlFor="sale-note" label={<>{t(kind === "sale" ? "What was sold" : "What was bought")}{optional}</>}>
         <Input id="sale-note" size="md" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={200} placeholder={t(kind === "sale" ? "e.g. Chargers and cables, 280 pcs" : "e.g. 40 cartons of phone cases")} />
+      </Field>
+      <Field htmlFor="sale-account" label={t("Book it under")} hint={t(kind === "sale" ? "The income account this sale counts towards." : "The expense account this purchase counts towards: stock for goods to resell, a cost account otherwise.")}>
+        <NativeSelect id="sale-account" value={accountId} disabled={accounts === null} onChange={(event) => setAccountId(event.target.value)}>
+          {accounts === null && <option value="">{t("Loading...")}</option>}
+          {(accounts ?? []).map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.accountNumber ? `${account.accountNumber} · ` : ""}
+              {account.name}
+            </option>
+          ))}
+        </NativeSelect>
+      </Field>
+      <Field htmlFor="sale-ref" label={<>{t(kind === "sale" ? "Invoice number" : "Bill number")}{optional}</>} hint={t("As it reads on the paper copy, so the two can be matched.")}>
+        <Input id="sale-ref" size="md" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={40} placeholder={kind === "sale" ? "INV-0421" : "NT-2209"} className="font-mono" />
       </Field>
     </Drawer>
   );

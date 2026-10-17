@@ -11,7 +11,8 @@ import { useDataTableReset } from "./useDataTableReset";
 // The single table component. Client-side by default (sorts, filters, pages
 // and exports in memory); passing `pagination` / `sorting` / server search
 // and filters flips that concern to server-managed mode. See
-// dataTable.types.ts for every option.
+// dataTable.types.ts for every option. The toolbar, the rows and the pager
+// sit in one card, as the design draws every admin list.
 const DataTable = <TData,>(props: DataTableProps<TData>) => {
   const {
     emptyMessage = "No results found.",
@@ -32,7 +33,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
   const totalRows = pagination ? (meta?.total ?? 0) : table.getFilteredRowModel().rows.length;
 
   return (
-    <div className="space-y-3">
+    <section className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
       <DataTableToolbar
         table={table}
         search={search}
@@ -51,7 +52,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         onRowClick={onRowClick}
       />
       {totalRows > 0 && <DataTablePagination table={table} totalRows={totalRows} />}
-    </div>
+    </section>
   );
 };
 

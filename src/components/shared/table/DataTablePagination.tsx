@@ -1,11 +1,11 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ELLIPSIS_JUMP, getPageWindow } from "@/lib/table/pageWindow";
 import { formatNumber } from "@/lib/number";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -20,23 +20,29 @@ interface DataTablePaginationProps<TData> {
   totalRows: number;
 }
 
+const PAGE_BUTTON = "flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-small font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+
+// The design's list footer: "Showing 1–10 of 1,284" on the left, the page
+// numbers on the right.
 const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationProps<TData>) => {
   const { pageIndex, pageSize } = table.getState().pagination;
   const pageCount = Math.max(table.getPageCount(), 1);
   const currentPage = pageIndex + 1;
   const goToPage = (page: number) => table.setPageIndex(Math.min(Math.max(page, 1), pageCount) - 1);
+  const first = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
+  const last = Math.min((pageIndex + 1) * pageSize, totalRows);
 
   return (
-    <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-muted-foreground">
-        Total {formatNumber(totalRows)} item{totalRows === 1 ? "" : "s"}, {pageCount} page{pageCount === 1 ? "" : "s"}
+    <div className="flex flex-col gap-3 border-t border-line px-5 py-3 text-small text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+      <p>
+        Showing <b className="font-semibold text-ink">{formatNumber(first)}–{formatNumber(last)}</b> of <b className="font-semibold text-ink">{formatNumber(totalRows)}</b>
       </p>
 
       <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Rows per page</span>
+        <div className="flex items-center gap-2">
+          <span>Rows per page</span>
           <Select value={String(pageSize)} onValueChange={(value) => table.setPageSize(Number(value))}>
-            <SelectTrigger size="sm" className="w-20" aria-label="Rows per page">
+            <SelectTrigger size="sm" className="h-8 w-18 rounded-md border-line-strong bg-surface text-small" aria-label="Rows per page">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -50,44 +56,38 @@ const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationPr
         </div>
 
         <nav aria-label="Pagination" className="flex items-center gap-1">
-          <Button variant="outline" size="icon-sm" onClick={() => goToPage(1)} disabled={!table.getCanPreviousPage()} aria-label="First page">
-            <ChevronsLeft aria-hidden="true" />
-          </Button>
-          <Button variant="outline" size="icon-sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} aria-label="Previous page">
-            <ChevronLeft aria-hidden="true" />
-          </Button>
+          <button type="button" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} aria-label="Previous page" className={cn(PAGE_BUTTON, "border-line bg-surface text-ink-2")}>
+            <ChevronLeft className="size-4" aria-hidden="true" />
+          </button>
 
           {getPageWindow(currentPage, pageCount).map((item) =>
             typeof item === "number" ? (
-              <Button
+              <button
                 key={item}
-                variant={item === currentPage ? "default" : "ghost"}
-                size="icon-sm"
+                type="button"
                 aria-label={`Page ${item}`}
                 aria-current={item === currentPage ? "page" : undefined}
                 onClick={() => goToPage(item)}
+                className={cn(PAGE_BUTTON, item === currentPage ? "border-forest bg-forest text-white dark:border-emerald dark:bg-emerald dark:text-on-action" : "border-line bg-surface text-ink-2 hover:bg-cream")}
               >
                 {item}
-              </Button>
+              </button>
             ) : (
-              <Button
+              <button
                 key={item}
-                variant="ghost"
-                size="icon-sm"
+                type="button"
                 aria-label={item === "ellipsis-start" ? `Back ${ELLIPSIS_JUMP} pages` : `Forward ${ELLIPSIS_JUMP} pages`}
                 onClick={() => goToPage(item === "ellipsis-start" ? currentPage - ELLIPSIS_JUMP : currentPage + ELLIPSIS_JUMP)}
+                className={cn(PAGE_BUTTON, "border-transparent text-ink-muted hover:bg-cream")}
               >
-                <MoreHorizontal aria-hidden="true" />
-              </Button>
+                <MoreHorizontal className="size-4" aria-hidden="true" />
+              </button>
             ),
           )}
 
-          <Button variant="outline" size="icon-sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} aria-label="Next page">
-            <ChevronRight aria-hidden="true" />
-          </Button>
-          <Button variant="outline" size="icon-sm" onClick={() => goToPage(pageCount)} disabled={!table.getCanNextPage()} aria-label="Last page">
-            <ChevronsRight aria-hidden="true" />
-          </Button>
+          <button type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} aria-label="Next page" className={cn(PAGE_BUTTON, "border-line bg-surface text-ink-2")}>
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </button>
         </nav>
       </div>
     </div>

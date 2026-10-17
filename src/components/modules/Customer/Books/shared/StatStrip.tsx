@@ -22,9 +22,9 @@ export function StatStrip({ stats, className }: StatStripProps) {
   return (
     <Card padding="none" className={cn("grid grid-cols-2 lg:grid-cols-4", className)}>
       {stats.map((stat, index) => (
-        <div key={index} className={cn("flex min-w-0 flex-col gap-1 px-5 py-4", index % 2 === 1 && "border-l border-line", index >= 2 && "border-t border-line lg:border-t-0", index > 0 && "lg:border-l lg:border-line")}>
+        <div key={index} className={cn("flex min-w-0 flex-col gap-1 px-4 py-3 lg:px-5 lg:py-4", index % 2 === 1 && "border-l border-line", index >= 2 && "border-t border-line lg:border-t-0", index > 0 && "lg:border-l lg:border-line")}>
           <span className="text-small text-ink-muted">{stat.label}</span>
-          <span className={cn("truncate text-h2 tabular-nums", TONE[stat.tone ?? "neutral"])}>{stat.value}</span>
+          <span className={cn("truncate text-h3 tabular-nums lg:text-h2", TONE[stat.tone ?? "neutral"])}>{stat.value}</span>
           {stat.note && <span className="text-caption text-ink-muted">{stat.note}</span>}
         </div>
       ))}

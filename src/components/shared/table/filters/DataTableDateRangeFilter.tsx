@@ -3,13 +3,12 @@
 import { format } from "date-fns";
 import { CalendarRange } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import type { DateRangeValue } from "../dataTable.types";
+import { FILTER_CHIP_CLASS } from "./DataTableFacetedFilter";
 
 interface DataTableDateRangeFilterProps {
   title: string;
@@ -49,15 +48,10 @@ const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRange
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <CalendarRange aria-hidden="true" />
-          {title}
-          {isActive && value && (
-            <>
-              <Separator orientation="vertical" className="mx-1 h-4" />
-              <Badge variant="secondary">{describeRange(value)}</Badge>
-            </>
-          )}
+        <Button variant="outline" size="sm" className={FILTER_CHIP_CLASS}>
+          <CalendarRange className="size-3.5 text-ink-muted" aria-hidden="true" />
+          <span>{title}:</span>
+          <b className="font-semibold text-ink">{isActive && value ? describeRange(value) : "Any time"}</b>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 space-y-3" align="start">

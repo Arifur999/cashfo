@@ -117,12 +117,20 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
         </span>
         <AmountText value={totalBalance} currency={currency} size="display" />
         <WalletShareBar slices={walletShares(wallets)} size="sm" label={t("Share of balance by wallet")} />
-        {canManage && (
-          <Button variant="secondary" size="lg" onClick={() => setDrawer("create")}>
-            <Plus strokeWidth={2.25} className="size-4" />
-            {t("Add wallet")}
+        <div className="flex gap-3">
+          <Button variant="secondary" size="lg" asChild className="flex-1">
+            <Link href="/balance/transfer">
+              <ArrowLeftRight className="text-ink-2" />
+              {t("Transfer")}
+            </Link>
           </Button>
-        )}
+          {canManage && (
+            <Button variant="soft" size="lg" onClick={() => setDrawer("create")} className="flex-1">
+              <Plus strokeWidth={2.25} className="size-4" />
+              {t("Add wallet")}
+            </Button>
+          )}
+        </div>
       </Card>
 
       <section className="hidden gap-4 md:grid md:grid-cols-3">

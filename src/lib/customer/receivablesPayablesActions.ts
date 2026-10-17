@@ -35,6 +35,12 @@ export interface RecordInvoiceInput {
   date: string;
   dueDate?: string;
   description?: string;
+  // The invoice or bill number, as it reads on paper.
+  referenceNo?: string;
+  // Which income (sale) or expense (purchase) account the amount lands in;
+  // the workspace's default when left out.
+  incomeAccountId?: string;
+  expenseAccountId?: string;
   // Required when the contact's category is LOAN (giving/taking a loan
   // moves real cash), ignored for a BUSINESS contact's credit sale/
   // purchase (revenue/expense recognized now, cash moves later).

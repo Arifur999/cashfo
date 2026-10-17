@@ -305,15 +305,15 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   );
 
   const footer = (
-    <div className={cn("flex items-center gap-2 border-t border-line bg-surface", wide ? "px-6 py-4" : "flex-wrap px-4 pt-3 pb-6")}>
-      <Button type="button" variant="secondary" onClick={() => save(true)} disabled={!valid || isPending} className={cn("px-3", !wide && "order-2 flex-1")}>
+    <div className={cn("flex items-center border-t border-line bg-surface", wide ? "gap-2 px-6 py-4" : "gap-3 px-4 pt-3 pb-8")}>
+      <Button type="button" variant="secondary" size={wide ? "md" : "xl"} onClick={() => save(true)} disabled={!valid || isPending} className={cn("px-3", !wide && "flex-1")}>
         {t("Save & add another")}
       </Button>
       <span className="hidden flex-1 md:block" />
       <Button type="button" variant="ghost" onClick={onClose} className="hidden px-3 md:inline-flex">
         {t("Cancel")}
       </Button>
-      <Button type="submit" variant="action" disabled={!valid || isPending} className={cn("px-4", !wide && "order-1 w-full")}>
+      <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={cn("px-4", !wide && "flex-1")}>
         {isPending && <Loader size={16} onDark label={t("Loading...")} />}
         {t(KIND_META[kind].save)}
         {wide && <Kbd className="rounded-[4px] border-0 bg-white/18 px-1 py-0 font-sans text-[11px] text-white">Enter</Kbd>}

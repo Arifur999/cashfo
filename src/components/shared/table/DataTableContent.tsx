@@ -42,12 +42,13 @@ const DataTableContent = <TData,>({
   return (
     // The max-height makes the table container the scroll box, which is what
     // lets the header stick while long pages scroll.
-    <div className="relative overflow-hidden rounded-2xl border bg-card shadow-sm shadow-black/5 [&_[data-slot=table-container]]:max-h-[70vh] [&_[data-slot=table-container]]:overflow-auto">
+    <div className="relative overflow-hidden border-t border-line **:data-[slot=table-container]:max-h-[70vh] **:data-[slot=table-container]:overflow-auto">
       {isFetching && !isLoading && (
         <div className="absolute inset-x-0 top-0 z-20 h-0.5 animate-pulse bg-primary" role="progressbar" aria-label="Refreshing" />
       )}
       <Table aria-busy={isLoading || isFetching}>
-        <TableHeader className="sticky top-0 z-10 bg-card">
+        {/* The design's column heads: a cream strip, 12px, no capitals. */}
+        <TableHeader className="sticky top-0 z-10 bg-cream [&_tr]:border-line">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (
@@ -58,7 +59,7 @@ const DataTableContent = <TData,>({
                   // get a fixed width; the rest size to content.
                   style={{ width: header.column.columnDef.size ? header.getSize() : undefined }}
                   className={cn(
-                    "text-xs text-muted-foreground",
+                    "h-9.5 px-5 text-caption font-medium text-ink-muted first:pl-5 last:pr-5",
                     header.column.columnDef.meta?.headerClassName,
                     getPinnedClassName(header.column, true),
                   )}
@@ -83,7 +84,7 @@ const DataTableContent = <TData,>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() ? "selected" : undefined}
-                className={cn("group/row hover:bg-muted", onRowClick && "cursor-pointer")}
+                className={cn("group/row border-surface-sunken hover:bg-cream/60", onRowClick && "cursor-pointer")}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 onKeyDown={
                   onRowClick
@@ -99,7 +100,7 @@ const DataTableContent = <TData,>({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn(cell.column.columnDef.meta?.cellClassName, getPinnedClassName(cell.column))}
+                    className={cn("px-5 py-3 text-body text-ink", cell.column.columnDef.meta?.cellClassName, getPinnedClassName(cell.column))}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
