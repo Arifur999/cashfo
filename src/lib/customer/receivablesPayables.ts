@@ -1,6 +1,6 @@
 // Server-only helpers, same shape as lib/accounts.ts.
 import { cache } from "react";
-import { API_BASE_URL, type AgingReport, type ContactBalanceDetail, type LoanDashboard, type LoanStatement, type OverdueRow } from "./api";
+import { API_BASE_URL, type AgingReport, type ContactBalanceDetail, type DueSoonRow, type LoanDashboard, type LoanStatement, type OverdueRow } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -138,3 +138,20 @@ export const getLoanStatement = cache(
     }
   },
 );
+
+// Unpaid sales (RECEIVABLE) or purchases (PAYABLE) due within the next
+// `days` days, soonest first -- Books' "Due this week".
+export const getDueSoon = cache(async (businessId: string, direction: "RECEIVABLE" | "PAYABLE", days = 7): Promise<DueSoonRow[]> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const response = await customerApi.get<DueSoonRow[]>(`${API_BASE_URL}/api/businesses/${businessId}/${direction === "RECEIVABLE" ? "receivables" : "payables"}/due-soon`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { days },
+    });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});
