@@ -1,10 +1,12 @@
 import { notFound, redirect } from "next/navigation";
-import { ContactDetailPageClient } from "@/components/modules/Customer/Contacts/ContactDetailPageClient";
+import { ContactDetailPageClient } from "@/components/modules/Customer/Books/Contacts/ContactDetailPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
-import { getContact, getContactTransactions } from "@/lib/customer/contacts";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { getContact, getContactTransactions } from "@/lib/customer/contacts";
 import { getContactBalanceDetail } from "@/lib/customer/receivablesPayables";
+import { getAppToday } from "@/lib/date";
 
+// Books › one customer or supplier, with their statement and what is owed.
 export default async function ContactDetailPage({ params }: PageProps<"/contacts/[id]">) {
   const { id } = await params;
   const user = await getCurrentUser();
@@ -13,27 +15,11 @@ export default async function ContactDetailPage({ params }: PageProps<"/contacts
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
 
-  // Sequential, not Promise.all -- see the backend's ReceivablesPayablesService
-  // comment on why concurrent queries are avoided against this app's local
-  // dev Postgres (prisma dev's built-in server), which has shown it can
-  // drop connections under even modest concurrent load.
-  const contact = await getContact(activeBusinessId, id);
+  const [contact, detail, transactions] = await Promise.all([getContact(activeBusinessId, id), getContactBalanceDetail(activeBusinessId, id), getContactTransactions(activeBusinessId, id)]);
   if (!contact) notFound();
-  const balanceDetail = await getContactBalanceDetail(activeBusinessId, id);
-  const { data: transactions, meta } = await getContactTransactions(activeBusinessId, id);
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  return (
-    <ContactDetailPageClient
-      businessId={activeBusinessId}
-      contact={contact}
-      balanceDetail={balanceDetail}
-      transactions={transactions}
-      transactionTotal={meta.total}
-      canManage={canManage}
-      currency={activeBusiness?.currency ?? "BDT"}
-    />
-  );
+  return <ContactDetailPageClient businessId={activeBusinessId} contact={contact} detail={detail} transactions={transactions.data} canManage={canManage} currency={activeBusiness?.currency ?? "BDT"} today={getAppToday()} />;
 }
