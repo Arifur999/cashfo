@@ -106,4 +106,5 @@ export const adminDashboardDictionary: Record<string, string> = {
   Off: "বন্ধ",
   version: "সংস্করণ",
   updated: "হালনাগাদ",
+  "{missing} of {total} words missing": "{total}টির মধ্যে {missing}টি শব্দ বাকি",
 };

@@ -47,7 +47,7 @@ export function ContentDashboard({ adminName, hour, translations, announcements,
       <Greeting name={adminName} hour={hour} line={translate("words and pages that need you.")} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label={translate("Bangla coverage")} value={coverage ? `${coverage.pct}%` : "—"} note={coverage ? `${formatNumber(coverage.missing)} ${translate("of")} ${formatNumber(coverage.total)} ${translate("words missing")}` : undefined} className="[&>span:nth-child(2)]:text-pillar-insights" />
+        <Kpi label={translate("Bangla coverage")} value={coverage ? `${coverage.pct}%` : "—"} note={coverage ? translate("{missing} of {total} words missing", { missing: formatNumber(coverage.missing), total: formatNumber(coverage.total) }) : undefined} className="[&>span:nth-child(2)]:text-pillar-insights" />
         <Kpi label={translate("Live announcements")} value={announcements ? formatNumber(live.length) : "—"} note={translate("showing to people now")} />
         <Kpi label={translate("Legal pages")} value={legal ? formatNumber(legal.length) : "—"} chip={legalMissing.length > 0 ? { text: `${legalMissing.length} ${translate("without Bangla")}`, tone: "warning" } : null} />
         <Kpi label={translate("Starting categories")} value={categories !== null ? formatNumber(categories) : "—"} note={translate("for a new workspace")} />

@@ -77,7 +77,7 @@ export const adminSharedDictionary: Record<string, string> = {
   Suspended: "সাময়িক বন্ধ",
   On: "চালু",
   Off: "বন্ধ",
-  Open: "খোলা",
+  "Open@@status": "খোলা",
   "On@@record": "কীসে",
   Name: "নাম",
   Email: "ইমেইল",
@@ -110,4 +110,8 @@ export const adminSharedDictionary: Record<string, string> = {
   "{count} min": "{count} মিনিট",
   "{count} h": "{count} ঘণ্টা",
   "{count} days": "{count} দিন",
+  "Showing {range} of {total}": "{total}টির মধ্যে {range} দেখানো হচ্ছে",
+  "{count} row selected": "{count}টি সারি বাছাই করা হয়েছে",
+  "{count} rows selected": "{count}টি সারি বাছাই করা হয়েছে",
+  "{count} selected": "{count}টি বাছাই করা",
 };

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { DataTableBulkAction } from "./dataTable.types";
+import { plural } from "@/lib/i18n/message";
 
 interface DataTableSelectionBarProps<TData> {
   table: Table<TData>;
@@ -28,7 +29,7 @@ const DataTableSelectionBar = <TData,>({ table, bulkActions }: DataTableSelectio
       className="mx-5 mb-3 flex flex-wrap items-center gap-2 rounded-md border border-line bg-cream px-3 py-2 text-small"
     >
       <span className="font-medium">
-        {selectedRows.length} {translate(selectedRows.length === 1 ? "row selected" : "rows selected")}
+        {plural(translate, selectedRows.length, "{count} row selected", "{count} rows selected")}
       </span>
       {bulkActions?.map(({ label, icon: Icon, onClick, destructive }) => (
         <Button

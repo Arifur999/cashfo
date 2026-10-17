@@ -7,6 +7,7 @@ import { ELLIPSIS_JUMP, getPageWindow } from "@/lib/table/pageWindow";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
 import { cn } from "@/lib/utils";
+import T from "../T";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -37,8 +38,18 @@ const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationPr
   return (
     <div className="flex flex-col gap-3 border-t border-line px-5 py-3 text-small text-ink-muted sm:flex-row sm:items-center sm:justify-between">
       <p>
-        {translate("Showing")} <b className="font-semibold text-ink">{formatNumber(first)}–{formatNumber(last)}</b> {translate("of")}{" "}
-        <b className="font-semibold text-ink">{formatNumber(totalRows)}</b>
+        <T
+          values={{
+            range: (
+              <b className="font-semibold text-ink">
+                {formatNumber(first)}–{formatNumber(last)}
+              </b>
+            ),
+            total: <b className="font-semibold text-ink">{formatNumber(totalRows)}</b>,
+          }}
+        >
+          {"Showing {range} of {total}"}
+        </T>
       </p>
 
       <div className="flex flex-wrap items-center gap-4">

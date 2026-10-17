@@ -5,7 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { type FillValues, fillText } from "./fill";
 import { inEnglish } from "./message";
 import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE_SECONDS } from "./localeCookie";
-import { translate as translateTo, type Locale, type TranslationOverrides } from "./translate";
+import { type DictionaryScope, translate as translateTo, type Locale, type TranslationOverrides } from "./translate";
 
 export type { Locale };
 
@@ -39,10 +39,12 @@ interface LocaleProviderProps {
   initialLocale?: Locale;
   // The admin-edited Bangla (getTranslationOverrides() in overrides.ts).
   overrides?: TranslationOverrides;
+  // "admin" in the admin panel, so its own wording wins there.
+  scope?: DictionaryScope;
   children: React.ReactNode;
 }
 
-export function LocaleProvider({ initialLocale = "en", overrides, children }: LocaleProviderProps) {
+export function LocaleProvider({ initialLocale = "en", overrides, scope = "app", children }: LocaleProviderProps) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const router = useRouter();
 
@@ -61,7 +63,10 @@ export function LocaleProvider({ initialLocale = "en", overrides, children }: Lo
     router.refresh();
   }, [locale, router]);
 
-  const translate = useCallback((key: string, values?: FillValues) => fillIn(translateTo(locale, key, overrides), values), [locale, overrides]);
+  const translate = useCallback(
+    (key: string, values?: FillValues) => fillIn(translateTo(locale, key, overrides, scope), values),
+    [locale, overrides, scope],
+  );
   const value = useMemo(() => ({ locale, toggleLocale, translate, t: translate }), [locale, toggleLocale, translate]);
 
   return (

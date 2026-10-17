@@ -4,6 +4,7 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
 import type { DataTableTabOption } from "../dataTable.types";
+import { asStatus } from "@/lib/i18n/message";
 
 interface DataTableTabsFilterProps {
   label: string;
@@ -37,7 +38,7 @@ const DataTableTabsFilter = ({ label, options, allLabel = "All", tone = "cream",
       className={tone === "cream" ? "border border-line bg-cream" : undefined}
       options={[
         { value: ALL, label: tab(translate(allLabel), hasCounts ? total : undefined) },
-        ...options.map((option) => ({ value: option.value, label: tab(translate(option.label), option.count) })),
+        ...options.map((option) => ({ value: option.value, label: tab(translate(asStatus(option.label)), option.count) })),
       ]}
       value={value ?? ALL}
       onChange={(next) => onChange(next === ALL ? undefined : next)}

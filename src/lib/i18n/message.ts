@@ -1,3 +1,4 @@
+import { formatNumber } from "@/lib/number";
 import { type FillValues, fillText } from "./fill";
 
 // How code outside React (lib/ helpers that build a sentence) gets its words:
@@ -13,9 +14,18 @@ export const withoutContext = (key: string) => {
   return at === -1 ? key : key.slice(0, at);
 };
 
+// A status word, which can read differently from the same word on a button:
+// "Open@@status" is খোলা, a button's "Open" is খুলুন.
+export const asStatus = (label: string) => `${label}@@status`;
+
 // English, for code with no reader to ask: tests, CSV exports, a component
 // rendered outside the locale provider.
 export const inEnglish: Translate = (key, values) => {
   const text = withoutContext(key);
   return values ? fillText(text, values) : text;
 };
+
+// "{count} entry" or "{count} entries": English picks the form by count and
+// Bangla words both keys alike. The count arrives formatted ("1,234").
+export const plural = (t: Translate, count: number, one: string, many: string, values?: FillValues) =>
+  t(count === 1 ? one : many, { ...values, count: formatNumber(count) });

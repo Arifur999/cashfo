@@ -76,10 +76,15 @@ const bnAdminDictionary: Record<string, string> = {
   Delete: "মুছুন",
 };
 
-export const bnDictionary: Record<string, string> = {
+// Every admin area's Bangla, in the order a later area wins.
+const adminDictionaries: Record<string, string> = {
   ...adminSharedDictionary,
   ...bnAdminDictionary,
   ...adminDashboardDictionary,
+};
+
+export const bnDictionary: Record<string, string> = {
+  ...adminDictionaries,
   ...bnAuthDictionary,
   ...chromeDictionary,
   ...dashboardDictionary,
@@ -102,4 +107,10 @@ export const bnDictionary: Record<string, string> = {
   // Last, so a word every customer page shares (see that file) always wins
   // over an area that happened to word it differently.
   ...sharedDictionary,
+};
+
+// The same words with the admin areas' wording on top, for the admin panel.
+export const bnAdminScopeDictionary: Record<string, string> = {
+  ...bnDictionary,
+  ...adminDictionaries,
 };
