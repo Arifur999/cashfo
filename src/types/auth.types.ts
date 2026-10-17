@@ -13,6 +13,9 @@ export interface IAdminUser {
   name: string;
   email: string;
   role: AdminRole;
+  // When their password was last set (My account); null for a Google-only
+  // account.
+  passwordChangedAt?: string | null;
 }
 
 export interface ISignInPayload {

@@ -10,6 +10,8 @@ const AdminBreadcrumb = ({ sections }: { sections: NavSection[] }) => {
   const pathname = usePathname();
   const { translate } = useLocale();
   const location = findAdminNavLocation(pathname, sections);
+  // A page outside the menu still says where you are.
+  const ownPage = !location && pathname === "/admin/account" ? "My account" : null;
 
   return (
     <nav aria-label={translate("Breadcrumb")} className="flex min-w-0 flex-1 items-center gap-2 text-body text-ink-muted">
@@ -21,6 +23,11 @@ const AdminBreadcrumb = ({ sections }: { sections: NavSection[] }) => {
             {translate(location.item.title)}
           </span>
         </>
+      )}
+      {ownPage && (
+        <span aria-current="page" className="truncate text-title text-ink">
+          {translate(ownPage)}
+        </span>
       )}
     </nav>
   );

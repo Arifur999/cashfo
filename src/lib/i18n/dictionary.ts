@@ -68,6 +68,7 @@ const bnAdminDictionary: Record<string, string> = {
   "Open navigation": "নেভিগেশন খুলুন",
   "Main navigation": "প্রধান নেভিগেশন",
   "Account menu": "অ্যাকাউন্ট মেনু",
+  "My account": "আমার অ্যাকাউন্ট",
   Save: "সংরক্ষণ",
   Cancel: "বাতিল",
   Edit: "সম্পাদনা",

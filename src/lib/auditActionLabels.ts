@@ -38,6 +38,7 @@ const ACTION_LABELS: Record<string, string> = {
   PLATFORM_SETTINGS_UPDATED: "Updated platform settings",
   SECURITY_CHECK_RUN: "Ran a security check",
   SECURITY_FLAG_UPDATED: "Reviewed suspicious activity",
+  ADMIN_SIGNED_OUT_OTHER_DEVICES: "Signed out their other devices",
 };
 
 export function auditActionLabel(action: string): string {

@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, KeyRound, LogOut } from "lucide-react";
+import { ChevronDown, KeyRound, LogOut, UserRound } from "lucide-react";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { logoutAction } from "@/app/-actions/authActions";
 import ChangeOwnPasswordForm from "@/components/modules/Admin/Account/ChangeOwnPasswordForm";
@@ -51,6 +52,14 @@ const UserMenu = ({ name, email, role }: UserMenuProps) => {
           </div>
           <DropdownMenuSeparator className="m-0 bg-line" />
           <div className="py-2">
+            {adminRole && (
+              <DropdownMenuItem asChild className={ITEM}>
+                <Link href="/admin/account">
+                  <UserRound aria-hidden="true" />
+                  {translate("My account")}
+                </Link>
+              </DropdownMenuItem>
+            )}
             {adminRole && (
               <DropdownMenuItem onSelect={() => setChangingPassword(true)} className={ITEM}>
                 <KeyRound aria-hidden="true" />
