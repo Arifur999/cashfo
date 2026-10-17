@@ -10,7 +10,9 @@ type AppSubmitButtonProps = {
   pendingLabel?: string;
   className?: string;
   disabled?: boolean;
-  variant?: "default" | "destructive";
+  // "action" is the emerald button of a dialog or card foot; "default" the
+  // forest one of a page or a sign-in form.
+  variant?: "default" | "action" | "destructive";
   size?: ButtonProps["size"];
 };
 
@@ -21,7 +23,7 @@ const AppSubmitButton = ({ isPending, children, pendingLabel, className, disable
   return (
     <Button
       type="submit"
-      variant={variant === "destructive" ? "danger" : "primary"}
+      variant={variant === "destructive" ? "danger" : variant === "action" ? "action" : "primary"}
       size={size}
       disabled={disabled || isPending}
       aria-busy={isPending}

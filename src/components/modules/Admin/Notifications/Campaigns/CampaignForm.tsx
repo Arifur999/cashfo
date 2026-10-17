@@ -168,7 +168,7 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
         submitLabel={when === "now" ? "Send now" : "Schedule campaign"}
         pendingLabel="Saving..."
         extra={
-          <Button type="button" variant="outline" disabled={isPending} className="border-line-strong bg-surface text-ink hover:bg-surface-sunken" onClick={() => submitAs("draft")}>
+          <Button type="button" variant="outline" disabled={isPending} className="h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken" onClick={() => submitAs("draft")}>
             Save as draft
           </Button>
         }

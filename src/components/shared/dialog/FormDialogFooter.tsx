@@ -25,11 +25,11 @@ const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disab
       <div>{extra}</div>
       <div className="flex flex-col-reverse gap-3 sm:flex-row">
         <DialogClose asChild>
-          <Button type="button" variant="outline" disabled={isPending} className="border-line-strong bg-surface text-ink hover:bg-surface-sunken">
+          <Button type="button" variant="outline" disabled={isPending} className="h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken">
             Cancel
           </Button>
         </DialogClose>
-        <AppSubmitButton isPending={isPending} pendingLabel={pendingLabel} variant={variant} disabled={disabled} className="w-auto">
+        <AppSubmitButton isPending={isPending} pendingLabel={pendingLabel} variant={variant === "destructive" ? "destructive" : "action"} disabled={disabled} size="md" className="w-auto">
           {submitLabel}
         </AppSubmitButton>
       </div>
