@@ -3,6 +3,7 @@
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import { Button } from "@/components/ui/button";
 import { DialogClose, DialogFooter } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface FormDialogFooterProps {
   isPending: boolean;
@@ -12,15 +13,19 @@ interface FormDialogFooterProps {
   disabled?: boolean;
   // Left-aligned secondary action (e.g. "Deactivate" in an edit dialog).
   extra?: React.ReactNode;
+  // In a drawer: sit at the bottom however short the form is (the form
+  // itself must be a flex column that fills the drawer).
+  pinned?: boolean;
 }
 
-const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disabled, extra }: FormDialogFooterProps) => {
+const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disabled, extra, pinned = false }: FormDialogFooterProps) => {
   return (
-    <DialogFooter className="items-center pt-2 sm:justify-between">
+    // The design's dialog foot: a cream strip across the bottom of the card.
+    <DialogFooter className={cn("-mx-6 -mb-5 items-center border-t border-line bg-cream px-6 py-4 sm:justify-between", pinned ? "mt-auto" : "mt-4")}>
       <div>{extra}</div>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row">
         <DialogClose asChild>
-          <Button type="button" variant="outline" disabled={isPending}>
+          <Button type="button" variant="outline" disabled={isPending} className="border-line-strong bg-surface text-ink hover:bg-surface-sunken">
             Cancel
           </Button>
         </DialogClose>

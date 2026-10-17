@@ -3,6 +3,7 @@ import OwnerActivityTimeline from "@/components/modules/Admin/UserManagement/Own
 import OwnerDetailActions from "@/components/modules/Admin/UserManagement/OwnerDetailActions";
 import OwnerProfileHeader from "@/components/modules/Admin/UserManagement/OwnerProfileHeader";
 import OwnerSummaryStats from "@/components/modules/Admin/UserManagement/OwnerSummaryStats";
+import BackLink from "@/components/shared/BackLink";
 import Callout from "@/components/shared/Callout";
 import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { canManage } from "@/lib/authUtils";
@@ -11,7 +12,7 @@ import { getUserInfo } from "@/services/auth.services";
 import { getOwnerById } from "@/services/owner.services";
 import { getPlans } from "@/services/plan.services";
 
-export const metadata: Metadata = { title: "User Details" };
+export const metadata: Metadata = { title: "User" };
 
 const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
   const { id } = await params;
@@ -25,7 +26,8 @@ const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
+      <BackLink href="/admin/users">All users</BackLink>
       <OwnerProfileHeader
         owner={owner}
         actions={

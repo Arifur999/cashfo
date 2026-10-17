@@ -29,12 +29,13 @@ const FormDialog = ({ open, onOpenChange, title, description, trigger, size = "m
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
-        className={cn("max-h-[90vh] gap-0 overflow-hidden p-0", SIZE_CLASSES[size])}
+        className={cn("max-h-[90vh] gap-0 overflow-hidden rounded-lg border-line bg-surface p-0 shadow-overlay", SIZE_CLASSES[size])}
         onInteractOutside={(event) => event.preventDefault()}
       >
-        <DialogHeader className="border-b px-6 py-5 pr-14">
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+        {/* The design's dialog head: 18px title, the explanation under it. */}
+        <DialogHeader className="gap-2 border-b border-line px-6 py-5 pr-14">
+          <DialogTitle className="text-h3 text-ink">{title}</DialogTitle>
+          {description && <DialogDescription className="text-body leading-relaxed text-ink-2">{description}</DialogDescription>}
         </DialogHeader>
         <ScrollArea className="max-h-[calc(90vh-5.5rem)]">
           <div className="px-6 py-5">{children}</div>

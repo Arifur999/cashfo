@@ -1,11 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Loader from "@/components/shared/Loader";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import FormDialog from "@/components/shared/dialog/FormDialog";
+import Loader from "@/components/shared/Loader";
 import { formatDateTime } from "@/lib/date";
+import { formatNumber } from "@/lib/number";
 import { couponRedemptionsQuery } from "@/queries/coupon.queries";
 import type { ICoupon } from "@/types/coupon.types";
 
@@ -17,30 +17,30 @@ const RedemptionsList = ({ couponId }: { couponId: string }) => {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader label="Loading redemptions" />
+        <Loader label="Loading who used it" />
       </div>
     );
   }
   if (isError) {
-    return <p className="py-6 text-center text-sm text-destructive">Couldn&apos;t load redemptions.</p>;
+    return <p className="py-6 text-center text-small text-expense">Couldn&apos;t load who used it.</p>;
   }
   if (!data || data.data.length === 0) {
-    return <p className="py-6 text-center text-sm text-muted-foreground">No redemptions yet.</p>;
+    return <p className="py-6 text-center text-small text-ink-muted">Nobody has used it yet.</p>;
   }
 
   return (
-    <ScrollArea className="max-h-80">
-      <ul className="space-y-3 pr-3">
-        {data.data.map((redemption) => (
-          <li key={redemption.id} className="rounded-xl border p-3">
-            <UserInfoCell name={redemption.platformUser?.name} email={redemption.platformUser?.email} />
-            <p className="mt-2 text-xs text-muted-foreground">
-              {redemption.plan.name} &middot; {formatDateTime(redemption.redeemedAt)}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </ScrollArea>
+    <ul className="flex max-h-80 flex-col gap-2 overflow-y-auto pr-1">
+      {data.data.map((redemption) => (
+        <li key={redemption.id} className="flex items-center justify-between gap-3 rounded-md border border-line px-3 py-2.5">
+          <UserInfoCell name={redemption.platformUser?.name} email={redemption.platformUser?.email} />
+          <span className="shrink-0 text-right text-caption text-ink-muted">
+            {redemption.plan.name}
+            <br />
+            {formatDateTime(redemption.redeemedAt)}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 };
 
@@ -52,15 +52,15 @@ interface CouponRedemptionsDialogProps {
 
 const CouponRedemptionsDialog = ({ coupon, open, onOpenChange }: CouponRedemptionsDialogProps) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Redemptions</DialogTitle>
-          <DialogDescription className="font-mono">{coupon?.code}</DialogDescription>
-        </DialogHeader>
-        {coupon && <RedemptionsList couponId={coupon.id} />}
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Who used ${coupon?.code ?? "it"}`}
+      description={coupon ? `${formatNumber(coupon.timesRedeemed)} ${coupon.timesRedeemed === 1 ? "use" : "uses"} so far, newest first.` : undefined}
+      size="sm"
+    >
+      {coupon && <RedemptionsList couponId={coupon.id} />}
+    </FormDialog>
   );
 };
 

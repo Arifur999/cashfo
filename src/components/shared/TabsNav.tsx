@@ -42,14 +42,16 @@ const isTabActive = (tab: TabDef, tabs: TabDef[], pathname: string, current: URL
   });
 };
 
-// Route-level tabs: each tab is a link to its own page.
+// Route-level tabs: each tab is a link to its own page. Drawn as the
+// design's section tabs: 40px tall on a line, the open one in bold with a
+// short emerald underline.
 const TabsNav = ({ tabs, label = "Section" }: { tabs: TabDef[]; label?: string }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const current = new URLSearchParams(searchParams.toString());
 
   return (
-    <nav aria-label={label} className="flex gap-1 overflow-x-auto border-b">
+    <nav aria-label={label} className="flex gap-1 overflow-x-auto border-b border-line">
       {tabs.map((tab) => {
         const isActive = isTabActive(tab, tabs, pathname, current);
         return (
@@ -58,8 +60,10 @@ const TabsNav = ({ tabs, label = "Section" }: { tabs: TabDef[]; label?: string }
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
-              isActive ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+              "relative flex h-10 shrink-0 items-center px-3 text-body transition-colors",
+              isActive
+                ? "font-semibold text-ink after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full after:bg-emerald"
+                : "font-medium text-ink-muted hover:text-ink",
             )}
           >
             {tab.label}

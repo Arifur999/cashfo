@@ -1,6 +1,6 @@
 import type { ServerDataTableConfig } from "@/hooks/useServerDataTable";
-import { enumOptions } from "@/lib/statusBadge";
-import { OWNER_STATUSES } from "@/types/owner.types";
+import { enumTabs } from "@/lib/statusBadge";
+import { OWNER_STATUSES, type OwnerStatus } from "@/types/owner.types";
 import type { IPlanOption } from "@/types/plan.types";
 
 // What the page needs to build the identical query string on the server.
@@ -9,13 +9,14 @@ export const USERS_TABLE_BASE_CONFIG = {
   defaultLimit: 20,
 } as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaultLimit">;
 
-// The plan filter's options come from the API, so the full config is built
-// once the plans are loaded (memoize the result -- it must stay stable).
-export const buildUsersTableConfig = (plans: IPlanOption[]): ServerDataTableConfig => ({
+// The plan filter's options come from the API and the status tabs' counts
+// from the list response, so the full config is built once those are
+// loaded (memoize the result -- it must stay stable).
+export const buildUsersTableConfig = (plans: IPlanOption[], statusCounts?: Record<OwnerStatus, number>): ServerDataTableConfig => ({
   ...USERS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Search by name, business, email or phone..." },
+  search: { placeholder: "Search name, email, phone or workspace" },
   filters: [
-    { id: "status", type: "single-select", label: "Status", options: enumOptions(OWNER_STATUSES) },
+    { id: "status", type: "tabs", label: "Status", options: enumTabs(OWNER_STATUSES, statusCounts) },
     { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name })) },
   ],
 });

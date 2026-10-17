@@ -23,10 +23,9 @@ const SuspendOwnerDialog = ({ owner, open, onOpenChange }: SuspendOwnerDialogPro
     <ReasonDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Suspend owner"
-      description={owner?.name}
-      warning="This immediately blocks the owner from logging in or using their account until they're reactivated."
-      confirmLabel="Suspend"
+      title={`Suspend ${owner?.name ?? "this owner"}?`}
+      description="This immediately blocks the owner from logging in or using their account until reactivated."
+      confirmLabel="Suspend account"
       pendingLabel="Suspending..."
       variant="destructive"
       isPending={isPending}

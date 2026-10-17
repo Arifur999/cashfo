@@ -3,7 +3,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/smartly/Card";
-import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Tone } from "@/components/smartly/tones";
@@ -31,36 +30,8 @@ export function Greeting({ name, hour, line, actions }: GreetingProps) {
   return <PageHeader title={`${translate(GREETING[dayPart(hour)])}, ${firstName(name)}`} description={`${formatDate(new Date(), "EEEE, d MMMM yyyy")} · ${line}`} actions={actions} />;
 }
 
-export type ChipTone = "income" | "expense" | "warning" | "info" | "neutral";
-
-interface KpiProps {
-  label: string;
-  value: React.ReactNode;
-  // A chip beside the note: "+212", "15.4%".
-  chip?: { text: string; tone: ChipTone } | null;
-  note?: React.ReactNode;
-  className?: string;
-}
-
-// One figure: label, value, and a chip with a note under it.
-export function Kpi({ label, value, chip, note, className }: KpiProps) {
-  return (
-    <Card padding="none" className={cn("flex flex-col gap-2 px-5 py-4", className)}>
-      <span className="text-small text-ink-muted">{label}</span>
-      <span className="text-h1 text-ink tabular-nums">{value}</span>
-      {(chip || note) && (
-        <span className="flex items-center gap-2 text-small text-ink-muted">
-          {chip && (
-            <Chip tone={chip.tone} size="sm">
-              {chip.text}
-            </Chip>
-          )}
-          {note}
-        </span>
-      )}
-    </Card>
-  );
-}
+// The KPI card is shared with the other admin overviews (Workspaces).
+export { default as Kpi, type ChipTone } from "@/components/shared/Kpi";
 
 export interface Attention {
   count: number;

@@ -22,7 +22,7 @@ interface DataTableContentProps<TData> {
 const renderHeader = <TData,>(header: Header<TData, unknown>) => {
   const content = header.column.columnDef.header;
   if (typeof content === "string") {
-    return <DataTableColumnHeader column={header.column} title={content} />;
+    return <DataTableColumnHeader column={header.column} title={content} align={header.column.columnDef.meta?.align} />;
   }
   return flexRender(content, header.getContext());
 };
@@ -60,6 +60,7 @@ const DataTableContent = <TData,>({
                   style={{ width: header.column.columnDef.size ? header.getSize() : undefined }}
                   className={cn(
                     "h-9.5 px-5 text-caption font-medium text-ink-muted first:pl-5 last:pr-5",
+                    header.column.columnDef.meta?.align === "right" && "text-right",
                     header.column.columnDef.meta?.headerClassName,
                     getPinnedClassName(header.column, true),
                   )}
@@ -100,7 +101,12 @@ const DataTableContent = <TData,>({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn("px-5 py-3 text-body text-ink", cell.column.columnDef.meta?.cellClassName, getPinnedClassName(cell.column))}
+                    className={cn(
+                      "px-5 py-3 text-body text-ink",
+                      cell.column.columnDef.meta?.align === "right" && "text-right",
+                      cell.column.columnDef.meta?.cellClassName,
+                      getPinnedClassName(cell.column),
+                    )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>

@@ -1,8 +1,7 @@
 "use client";
 
 import type { AnyFieldApi } from "@tanstack/react-form";
-import { Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import FormFieldShell from "./FormFieldShell";
 import type { SelectOption } from "./AppSelectField";
 
@@ -14,7 +13,8 @@ interface AppChipsFieldProps {
 }
 
 // Multi-select as a row of toggle chips (string[] value) -- applicable plans,
-// workspace types, ... Each chip is a real button with aria-pressed.
+// workspace types, ... Each chip is a real button with aria-pressed; a
+// chosen one goes mint with an emerald line, as the design draws them.
 const AppChipsField = ({ field, label, options, description }: AppChipsFieldProps) => {
   const selected: string[] = field.state.value ?? [];
 
@@ -36,17 +36,18 @@ const AppChipsField = ({ field, label, options, description }: AppChipsFieldProp
           {options.map((option) => {
             const isSelected = selected.includes(option.value);
             return (
-              <Button
+              <button
                 key={option.value}
                 type="button"
-                size="sm"
-                variant={isSelected ? "default" : "outline"}
                 aria-pressed={isSelected}
                 onClick={() => toggle(option.value)}
+                className={cn(
+                  "h-8.5 rounded-full border px-3 text-small font-semibold transition-colors",
+                  isSelected ? "border-emerald bg-mint-50 text-brand-ink" : "border-line-strong bg-surface text-ink-2 hover:bg-cream",
+                )}
               >
-                {isSelected && <Check aria-hidden="true" />}
                 {option.label}
-              </Button>
+              </button>
             );
           })}
         </div>

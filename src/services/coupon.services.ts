@@ -1,9 +1,11 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import type { ICoupon, ICouponPayload, ICouponRedemption } from "@/types/coupon.types";
+import type { ICoupon, ICouponPayload, ICouponRedemption, ICouponStats } from "@/types/coupon.types";
 
 export const getCoupons = async () => httpClient.get<ICoupon[]>("/admin/coupons");
+
+export const getCouponStats = async () => httpClient.get<ICouponStats>("/admin/coupons/stats");
 
 export const getCouponRedemptions = async (id: string) => httpClient.get<ICouponRedemption[]>(`/admin/coupons/${id}/redemptions`);
 

@@ -3,11 +3,13 @@
 import { httpClient } from "@/lib/axios/httpClient";
 import { toPaginationMeta } from "@/lib/pagination";
 import type { ApiResponse, IItemsPageBody } from "@/types/api.types";
-import type { IChangeOwnerPlanPayload, IOwnerDetail, IOwnerOverviewItem, ISuspendOwnerPayload } from "@/types/owner.types";
+import type { IChangeOwnerPlanPayload, IOwnerDetail, IOwnerOverviewItem, IOwnersPage, ISuspendOwnerPayload } from "@/types/owner.types";
 
-export const getOwners = async (queryString: string): Promise<ApiResponse<IOwnerOverviewItem[]>> => {
-  const { data: body } = await httpClient.get<IItemsPageBody<IOwnerOverviewItem>>(`/admin/owners?${queryString}`);
-  return { success: true, message: "", data: body.items, meta: toPaginationMeta(body) };
+type OwnersListBody = IItemsPageBody<IOwnerOverviewItem> & Pick<IOwnersPage, "statusCounts">;
+
+export const getOwners = async (queryString: string): Promise<ApiResponse<IOwnersPage>> => {
+  const { data: body } = await httpClient.get<OwnersListBody>(`/admin/owners?${queryString}`);
+  return { success: true, message: "", data: { items: body.items, statusCounts: body.statusCounts }, meta: toPaginationMeta(body) };
 };
 
 export const getOwnerById = async (userId: string) => httpClient.get<IOwnerDetail>(`/admin/owners/${userId}`);

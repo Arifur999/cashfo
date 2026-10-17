@@ -7,14 +7,17 @@ interface StatusBadgeCellProps {
   // Overrides for the rare value that needs a different colour or wording.
   tone?: BadgeTone;
   label?: string;
+  // The design's status chip carries a dot before the word.
+  dot?: boolean;
   className?: string;
 }
 
 // Every enum badge in the panel. Colour comes from lib/statusBadge.ts, so a
 // new status is a one-line change there, not a new component.
-const StatusBadgeCell = ({ status, tone, label, className }: StatusBadgeCellProps) => {
+const StatusBadgeCell = ({ status, tone, label, dot = false, className }: StatusBadgeCellProps) => {
   return (
-    <Badge className={cn("border-transparent", BADGE_TONE_CLASSES[tone ?? getStatusTone(status)], className)}>
+    <Badge className={cn("gap-1 rounded-full border-transparent px-2 text-caption font-semibold", BADGE_TONE_CLASSES[tone ?? getStatusTone(status)], className)}>
+      {dot && <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />}
       {label ?? humanizeEnum(status)}
     </Badge>
   );

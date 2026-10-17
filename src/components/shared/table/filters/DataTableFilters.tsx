@@ -4,10 +4,14 @@ import type { Table } from "@tanstack/react-table";
 import type { DataTableFilterConfig, DataTableFiltersConfig, DataTableFilterValue, DateRangeValue } from "../dataTable.types";
 import DataTableDateRangeFilter from "./DataTableDateRangeFilter";
 import DataTableFacetedFilter from "./DataTableFacetedFilter";
+import DataTableTabsFilter from "./DataTableTabsFilter";
 
 interface DataTableFiltersProps<TData> {
   table: Table<TData>;
   filters: DataTableFiltersConfig;
+  // A subset of filters.configs to draw here (the toolbar puts the tabs
+  // and the chips on different rows); every config by default.
+  configs?: DataTableFilterConfig[];
 }
 
 const toSelection = (value: DataTableFilterValue | undefined): string[] => {
@@ -20,7 +24,7 @@ const toSelection = (value: DataTableFilterValue | undefined): string[] => {
 // - server-managed: value/onFilterChange come from the URL-backed hook
 // - in-memory: reads/writes the matching column's filter state, and gets
 //   per-option counts from TanStack's faceting for free
-const DataTableFilters = <TData,>({ table, filters }: DataTableFiltersProps<TData>) => {
+const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }: DataTableFiltersProps<TData>) => {
   const { onFilterChange } = filters;
   const isServerManaged = Boolean(onFilterChange);
 
@@ -37,9 +41,14 @@ const DataTableFilters = <TData,>({ table, filters }: DataTableFiltersProps<TDat
     table.getColumn(config.id)?.setFilterValue(value);
   };
 
+  // Server single-value filters are a plain string in the URL; in-memory
+  // filters always store an array.
+  const setSingle = (config: DataTableFilterConfig, value: string | undefined) =>
+    setValue(config, isServerManaged ? value : value ? [value] : undefined);
+
   return (
     <>
-      {filters.configs.map((config) => {
+      {configs.map((config) => {
         if (config.type === "date-range") {
           return (
             <DataTableDateRangeFilter
@@ -47,6 +56,19 @@ const DataTableFilters = <TData,>({ table, filters }: DataTableFiltersProps<TDat
               title={config.label}
               value={getValue(config) as DateRangeValue | undefined}
               onChange={(value) => setValue(config, value)}
+            />
+          );
+        }
+
+        if (config.type === "tabs") {
+          return (
+            <DataTableTabsFilter
+              key={config.id}
+              label={config.label}
+              options={config.options}
+              allLabel={config.allLabel}
+              value={toSelection(getValue(config))[0]}
+              onChange={(value) => setSingle(config, value)}
             />
           );
         }
@@ -61,10 +83,8 @@ const DataTableFilters = <TData,>({ table, filters }: DataTableFiltersProps<TDat
             selected={toSelection(getValue(config))}
             facets={isServerManaged ? undefined : table.getColumn(config.id)?.getFacetedUniqueValues()}
             onChange={(values) => {
-              // Server single-select filters are a plain string in the URL;
-              // in-memory filters always store an array.
-              if (isServerManaged && !multiple) {
-                setValue(config, values[0]);
+              if (!multiple) {
+                setSingle(config, values[0]);
                 return;
               }
               setValue(config, values.length > 0 ? values : undefined);

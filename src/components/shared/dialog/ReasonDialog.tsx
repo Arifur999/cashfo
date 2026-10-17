@@ -42,8 +42,8 @@ const ReasonForm = ({ warning, confirmLabel, pendingLabel, variant, isPending, o
             field={field}
             label="Reason"
             rows={3}
-            placeholder={`Explain why (at least ${REASON_MIN_LENGTH} characters)`}
-            description="Recorded in the audit log."
+            placeholder="Explain why"
+            description={`At least ${REASON_MIN_LENGTH} characters. It goes into the audit log, and only admins can see it.`}
           />
         )}
       </form.Field>
