@@ -25,8 +25,9 @@ export function BooksBalanceCard({ balance, currency }: BooksBalanceCardProps) {
       <BalanceText value={value} currency={currency} className="text-h2" />
     </span>
   );
+  // The = and + read as a sentence only when the three sit in one row.
   const sign = (symbol: string) => (
-    <span aria-hidden="true" className="text-h2 font-normal text-ink-faint">
+    <span aria-hidden="true" className="hidden text-h2 font-normal text-ink-faint sm:block">
       {symbol}
     </span>
   );
@@ -40,7 +41,7 @@ export function BooksBalanceCard({ balance, currency }: BooksBalanceCardProps) {
         <b className="text-body-lg font-bold text-ink">{t("Your books balance")}</b>
         <span className="text-small text-ink-muted">{t("What the business owns equals what it owes plus your share. If this ever stops matching, an entry is missing.")}</span>
       </span>
-      <span className="flex flex-wrap items-center gap-x-3 gap-y-2 whitespace-nowrap">
+      <span className="flex flex-wrap items-center gap-x-3 gap-y-3 whitespace-nowrap max-sm:flex-col max-sm:items-start">
         {term(t("Owns"), balance.owns)}
         {sign("=")}
         {term(t("Owes"), balance.owes)}

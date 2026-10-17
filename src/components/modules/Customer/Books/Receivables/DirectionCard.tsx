@@ -31,7 +31,7 @@ export function DirectionCard({ direction, aging, overdue, currency }: Direction
   const people = aging.contacts.length;
 
   return (
-    <Card className="flex flex-col gap-4">
+    <Card className="flex min-w-0 flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <span className="flex flex-col gap-0.5">
           <h3 className="text-h3 text-ink">{t(receivable ? "Customers owe you" : "You owe suppliers")}</h3>
