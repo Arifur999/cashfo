@@ -57,12 +57,10 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
         data={data?.data}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="announcements"
         isLoading={isLoading}
         isFetching={isFetching}
         search={{ placeholder: "Search announcements", width: "sm" }}
         filters={{ configs: ANNOUNCEMENT_FILTERS }}
-        exportFileName="announcements"
         actions={actions}
         emptyMessage="No announcements yet."
       />

@@ -64,12 +64,10 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
         data={couponsResponse?.data}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="coupons"
         isLoading={isLoading}
         isFetching={isFetching}
         search={{ placeholder: "Search by code" }}
         filters={{ configs: COUPON_FILTERS }}
-        exportFileName="coupons"
         actions={actions}
         emptyMessage="No coupons yet."
       />

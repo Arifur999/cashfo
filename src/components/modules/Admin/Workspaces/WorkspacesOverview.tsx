@@ -30,9 +30,7 @@ const WorkspacesOverview = () => {
         data={overview?.items}
         columns={workspacesColumns}
         getRowId={(row) => row.userId}
-        tableId="workspaces"
         title="Biggest add-on first"
-        exportFileName="workspaces"
         onRowClick={(row) => router.push(`/admin/users/${row.userId}`)}
         emptyMessage="No users own more than one workspace yet."
         footer={

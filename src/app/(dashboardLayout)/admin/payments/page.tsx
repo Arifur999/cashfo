@@ -10,6 +10,7 @@ import { paymentsListQuery, paymentStatsQuery } from "@/queries/payment.queries"
 import { plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
 import { adminPageTitle } from "@/lib/i18n/locale";
+import { ExportButton, ExportProvider } from "@/components/shared/ExportAction";
 
 export const generateMetadata = adminPageTitle("Payments");
 
@@ -18,22 +19,24 @@ const PaymentsPage = async ({ searchParams }: PageProps<"/admin/payments">) => {
   const queryString = buildTableQueryString(params, PAYMENTS_TABLE_BASE_CONFIG);
 
   return (
-    <div className="space-y-4">
-      <PageHeader {...PAYMENTS_PAGE} />
-      <PaymentsTabs showRevenue={canManage(admin?.role, "revenue")} />
-      <QueryPrefetch
-        prefetch={(client) =>
-          Promise.all([
-            client.prefetchQuery(paymentsListQuery(queryString)),
-            client.prefetchQuery(paymentStatsQuery()),
-            client.prefetchQuery(plansQuery()),
-          ])
-        }
-      >
-        <PaymentStats />
-        <PaymentsTable canRetry={canManage(admin?.role, "payments")} />
-      </QueryPrefetch>
-    </div>
+    <ExportProvider>
+      <div className="space-y-4">
+        <PageHeader {...PAYMENTS_PAGE} actions={<ExportButton />} />
+        <PaymentsTabs showRevenue={canManage(admin?.role, "revenue")} />
+        <QueryPrefetch
+          prefetch={(client) =>
+            Promise.all([
+              client.prefetchQuery(paymentsListQuery(queryString)),
+              client.prefetchQuery(paymentStatsQuery()),
+              client.prefetchQuery(plansQuery()),
+            ])
+          }
+        >
+          <PaymentStats />
+          <PaymentsTable canRetry={canManage(admin?.role, "payments")} />
+        </QueryPrefetch>
+      </div>
+    </ExportProvider>
   );
 };
 

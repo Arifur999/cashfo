@@ -5,9 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import DataTableExpandToggle from "./DataTableExpandToggle";
-import DataTableExportButton from "./DataTableExportButton";
 import DataTableSearch from "./DataTableSearch";
-import DataTableViewOptions from "./DataTableViewOptions";
 import type { DataTableFilterConfig, DataTableFiltersConfig, DataTableSearchConfig } from "./dataTable.types";
 import DataTableFilters from "./filters/DataTableFilters";
 import { useDataTableReset } from "./useDataTableReset";
@@ -18,11 +16,9 @@ interface DataTableToolbarProps<TData> {
   search?: DataTableSearchConfig;
   filters?: DataTableFiltersConfig;
   toolbarAction?: React.ReactNode;
-  exportFileName?: string;
-  tools?: boolean;
 }
 
-const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction, exportFileName, tools = true }: DataTableToolbarProps<TData>) => {
+const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction }: DataTableToolbarProps<TData>) => {
   const { translate } = useLocale();
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const onServerSearch = search?.onDebouncedChange;
@@ -44,8 +40,8 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
   const draw = (subset: DataTableFilterConfig[]) => filters && subset.length > 0 && <DataTableFilters table={table} filters={filters} configs={subset} />;
 
   // The design's list toolbar: the title, the status tabs and the filter
-  // chips on the left; the end-placed filters, the search and the table
-  // tools on the right, all inside the card.
+  // chips on the left; the end-placed filters, the search and the toolbar's
+  // own action on the right, all inside the card.
   return (
     <div className="px-5 py-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -65,9 +61,7 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
           />
         )}
         <div className="flex items-center gap-2">
-          {tools && <DataTableExpandToggle table={table} />}
-          {tools && exportFileName && <DataTableExportButton table={table} fileName={exportFileName} />}
-          {tools && <DataTableViewOptions table={table} />}
+          <DataTableExpandToggle table={table} />
           {toolbarAction}
         </div>
       </div>

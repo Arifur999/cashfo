@@ -55,7 +55,6 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
       data={query.data?.data}
       columns={paymentsColumns}
       getRowId={(row) => row.id}
-      tableId="payments"
       exportFileName="payments"
       enableRowSelection
       actions={actions}

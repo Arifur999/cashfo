@@ -35,8 +35,6 @@ const TicketsTable = () => {
       data={query.data?.data}
       columns={ticketsColumns}
       getRowId={(row) => row.id}
-      tableId="tickets"
-      exportFileName="support-tickets"
       onRowClick={(row) => router.push(detailHref(row))}
       // An urgent ticket still in the queue gets the red wash.
       rowClassName={(row) => (row.priority === "URGENT" && OPEN_TICKET_STATUSES.includes(row.status) ? "bg-expense-soft/50 hover:bg-expense-soft/80" : undefined)}

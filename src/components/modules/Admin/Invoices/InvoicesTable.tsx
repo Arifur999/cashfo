@@ -27,7 +27,6 @@ const InvoicesTable = () => {
       data={query.data?.data}
       columns={invoicesColumns}
       getRowId={(row) => row.id}
-      tableId="invoices"
       exportFileName="invoices"
       actions={actions}
       onRowClick={(row) => router.push(detailHref(row))}

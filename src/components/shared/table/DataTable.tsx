@@ -1,17 +1,19 @@
 "use client";
 
+import { useExportAction } from "@/components/shared/ExportAction";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import DataTableContent from "./DataTableContent";
 import DataTablePagination from "./DataTablePagination";
 import DataTableSelectionBar from "./DataTableSelectionBar";
 import DataTableSimplePager from "./DataTableSimplePager";
 import DataTableToolbar from "./DataTableToolbar";
+import { exportTableCsv } from "./exportTableCsv";
 import type { DataTableProps } from "./dataTable.types";
 import { useDataTable } from "./useDataTable";
 import { useDataTableReset } from "./useDataTableReset";
 
-// The single table component. Client-side by default (sorts, filters, pages
-// and exports in memory); passing `pagination` / `sorting` / server search
+// The single table component. Client-side by default (sorts, filters and
+// pages in memory); passing `pagination` / `sorting` / server search
 // and filters flips that concern to server-managed mode. See
 // dataTable.types.ts for every option. The toolbar, the rows and the pager
 // sit in one card, as the design draws every admin list.
@@ -26,7 +28,6 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     toolbarAction,
     footer,
     hideToolbar = false,
-    tools = true,
     pager,
     exportFileName,
     search,
@@ -40,6 +41,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
   const table = useDataTable(props);
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const totalRows = pagination ? (meta?.total ?? 0) : table.getFilteredRowModel().rows.length;
+  useExportAction(exportFileName ? () => exportTableCsv(table, exportFileName) : null);
 
   return (
     <section className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
@@ -50,8 +52,6 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
           search={search}
           filters={filters}
           toolbarAction={toolbarAction}
-          exportFileName={exportFileName}
-          tools={tools}
         />
       )}
       <DataTableSelectionBar table={table} bulkActions={bulkActions} />

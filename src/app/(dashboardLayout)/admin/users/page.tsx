@@ -8,6 +8,7 @@ import { ownersListQuery } from "@/queries/owner.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
 import { adminPageTitle } from "@/lib/i18n/locale";
+import { ExportButton, ExportProvider } from "@/components/shared/ExportAction";
 
 export const generateMetadata = adminPageTitle("Users");
 
@@ -16,16 +17,22 @@ const UsersPage = async ({ searchParams }: PageProps<"/admin/users">) => {
   const admin = await getUserInfo();
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Users" description="Everyone with a Smartly account. Open a person to change their plan, reset their password or suspend them." />
-      <QueryPrefetch
-        prefetch={(client) =>
-          Promise.all([client.prefetchQuery(ownersListQuery(queryString)), client.prefetchQuery(plansQuery())])
-        }
-      >
-        <UsersTable canChangeStatus={canManage(admin?.role, "ownerStatus")} canChangePlan={canManage(admin?.role, "ownerPlan")} />
-      </QueryPrefetch>
-    </div>
+    <ExportProvider>
+      <div className="space-y-6">
+        <PageHeader
+          title="Users"
+          description="Everyone with a Smartly account. Open a person to change their plan, reset their password or suspend them."
+          actions={<ExportButton label="Export CSV" />}
+        />
+        <QueryPrefetch
+          prefetch={(client) =>
+            Promise.all([client.prefetchQuery(ownersListQuery(queryString)), client.prefetchQuery(plansQuery())])
+          }
+        >
+          <UsersTable canChangeStatus={canManage(admin?.role, "ownerStatus")} canChangePlan={canManage(admin?.role, "ownerPlan")} />
+        </QueryPrefetch>
+      </div>
+    </ExportProvider>
   );
 };
 

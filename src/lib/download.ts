@@ -1,3 +1,8 @@
+import { format } from "date-fns";
+
+// "users-2026-10-17": what an export's file is called on the day it's made.
+export const datedFileName = (name: string) => `${name}-${format(new Date(), "yyyy-MM-dd")}`;
+
 // Browser-only: saves in-memory content as a file via a temporary object URL.
 export const downloadBlob = (blob: Blob, fileName: string) => {
   const url = URL.createObjectURL(blob);

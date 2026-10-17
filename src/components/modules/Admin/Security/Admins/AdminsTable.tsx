@@ -29,7 +29,6 @@ const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
         data={rows}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="admin-team"
         isLoading={isLoading}
         isFetching={isFetching}
         hideToolbar

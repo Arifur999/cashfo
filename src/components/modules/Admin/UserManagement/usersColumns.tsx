@@ -7,8 +7,6 @@ import type { IOwnerOverviewItem } from "@/types/owner.types";
 import Localized from "@/components/shared/Localized";
 import { plural } from "@/lib/i18n/message";
 
-export const USERS_HIDDEN_COLUMNS = [] as const;
-
 // The design's Users list: who, phone, their workspace (and how many more),
 // plan, when they were last here, how long they have used Smartly, status.
 export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [

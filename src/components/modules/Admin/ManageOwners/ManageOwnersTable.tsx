@@ -53,8 +53,6 @@ const ManageOwnersTable = ({ canResetData }: { canResetData: boolean }) => {
         data={query.data?.data.items}
         columns={manageOwnersColumns}
         getRowId={(row) => row.userId}
-        tableId="manage-owners"
-        exportFileName="owners"
         actions={actions}
         emptyMessage="No owners match."
       />

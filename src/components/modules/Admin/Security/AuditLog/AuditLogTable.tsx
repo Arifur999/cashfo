@@ -53,8 +53,6 @@ const AuditLogTable = () => {
         data={query.data?.data}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="audit-log"
-        exportFileName="audit-log"
         onRowClick={(row) => setEntry(row.id)}
         rowClassName={(row) => (row.id === entryId ? "bg-mint-50 hover:bg-mint-50" : undefined)}
         pager={{ previous: "Newer", next: "Older", summary: (total) => plural(translate, total, "{count} entry · newest first", "{count} entries · newest first") }}

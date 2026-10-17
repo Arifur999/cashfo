@@ -63,7 +63,6 @@ const FeatureFlagsBoard = () => {
         data={data ? shown : undefined}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="feature-flags"
         isLoading={isLoading}
         isFetching={isFetching}
         hideToolbar

@@ -52,12 +52,10 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
         data={data?.data}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="campaigns"
         isLoading={isLoading}
         isFetching={isFetching}
         search={{ placeholder: "Search campaigns", width: "sm" }}
         filters={{ configs: CAMPAIGN_FILTERS }}
-        exportFileName="campaigns"
         actions={actions}
         emptyMessage="No campaigns yet."
       />

@@ -5,7 +5,6 @@ export const adminSharedDictionary: Record<string, string> = {
   Ascending: "ছোট থেকে বড়",
   Descending: "বড় থেকে ছোট",
   "Clear sort": "সাজানো মুছুন",
-  "Hide column": "কলাম লুকান",
   Showing: "দেখানো হচ্ছে",
   of: "মোট",
   "Rows per page": "প্রতি পাতায় সারি",
@@ -19,7 +18,6 @@ export const adminSharedDictionary: Record<string, string> = {
   Export: "এক্সপোর্ট",
   "Download the selected rows, or all rows shown, as CSV": "বাছাই করা সারি, বা দেখানো সব সারি CSV হিসেবে নামান",
   View: "দেখুন",
-  "Toggle columns": "কলাম দেখান বা লুকান",
   "Show all": "সব দেখান",
   Reset: "রিসেট",
   "Search...": "খুঁজুন...",
@@ -143,4 +141,5 @@ export const adminSharedDictionary: Record<string, string> = {
   "Admin frontend": "অ্যাডমিন প্যানেল",
   "Copy {label}": "{label} কপি করুন",
   "Page {page}": "পাতা {page}",
+  "Export CSV": "CSV এক্সপোর্ট",
 };

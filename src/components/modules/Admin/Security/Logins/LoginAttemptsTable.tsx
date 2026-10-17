@@ -30,8 +30,6 @@ const LoginAttemptsTable = () => {
       data={rows}
       columns={loginAttemptsColumns}
       getRowId={(row) => row.id}
-      tableId="sign-ins"
-      tools={false}
       rowClassName={(row) => (row.attempts.length > 1 ? "bg-expense-soft hover:bg-expense-soft" : undefined)}
       pager={{
         previous: "Newer",

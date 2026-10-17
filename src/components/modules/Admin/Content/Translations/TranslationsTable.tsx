@@ -47,14 +47,12 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
       data={data?.data}
       columns={columns}
       getRowId={(row) => row.id}
-      tableId="translations"
       defaultHiddenColumns={TRANSLATIONS_HIDDEN_COLUMNS}
       initialPageSize={25}
       isLoading={isLoading}
       isFetching={isFetching}
       search={{ placeholder: "Search a key or a word", width: "sm" }}
       filters={{ configs: filters }}
-      exportFileName="translations"
       toolbarAction={
         <>
           <ExportTranslationsMenu />
