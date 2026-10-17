@@ -3,6 +3,7 @@
 import DataTableContent from "./DataTableContent";
 import DataTablePagination from "./DataTablePagination";
 import DataTableSelectionBar from "./DataTableSelectionBar";
+import DataTableSimplePager from "./DataTableSimplePager";
 import DataTableToolbar from "./DataTableToolbar";
 import type { DataTableProps } from "./dataTable.types";
 import { useDataTable } from "./useDataTable";
@@ -23,6 +24,8 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     title,
     toolbarAction,
     footer,
+    hideToolbar = false,
+    pager,
     exportFileName,
     search,
     filters,
@@ -37,14 +40,16 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
 
   return (
     <section className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
-      <DataTableToolbar
-        table={table}
-        title={title}
-        search={search}
-        filters={filters}
-        toolbarAction={toolbarAction}
-        exportFileName={exportFileName}
-      />
+      {!hideToolbar && (
+        <DataTableToolbar
+          table={table}
+          title={title}
+          search={search}
+          filters={filters}
+          toolbarAction={toolbarAction}
+          exportFileName={exportFileName}
+        />
+      )}
       <DataTableSelectionBar table={table} bulkActions={bulkActions} />
       <DataTableContent
         table={table}
@@ -56,7 +61,12 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         onRowClick={onRowClick}
         rowClassName={rowClassName}
       />
-      {totalRows > 0 && <DataTablePagination table={table} totalRows={totalRows} />}
+      {totalRows > 0 &&
+        (pager ? (
+          <DataTableSimplePager table={table} totalRows={totalRows} pager={pager} />
+        ) : (
+          (pager !== false || table.getPageCount() > 1) && <DataTablePagination table={table} totalRows={totalRows} />
+        ))}
       {footer && <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">{footer}</div>}
     </section>
   );

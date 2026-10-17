@@ -5,6 +5,8 @@ import type { DataTableFilterConfig, DataTableFiltersConfig, DataTableFilterValu
 import DataTableDateRangeFilter from "./DataTableDateRangeFilter";
 import DataTableFacetedFilter from "./DataTableFacetedFilter";
 import DataTableTabsFilter from "./DataTableTabsFilter";
+import DataTableTextFilter from "./DataTableTextFilter";
+import DataTableToggleFilter from "./DataTableToggleFilter";
 
 interface DataTableFiltersProps<TData> {
   table: Table<TData>;
@@ -58,6 +60,22 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
               onChange={(value) => setValue(config, value)}
             />
           );
+        }
+
+        if (config.type === "text") {
+          return (
+            <DataTableTextFilter
+              key={config.id}
+              label={config.label}
+              width={config.width}
+              value={toSelection(getValue(config))[0]}
+              onChange={(value) => setValue(config, value)}
+            />
+          );
+        }
+
+        if (config.type === "toggle") {
+          return <DataTableToggleFilter key={config.id} label={config.label} value={toSelection(getValue(config))[0]} onChange={(value) => setSingle(config, value)} />;
         }
 
         if (config.type === "tabs") {
