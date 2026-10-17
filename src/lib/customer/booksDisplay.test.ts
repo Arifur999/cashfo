@@ -142,7 +142,7 @@ describe("a journal entry", () => {
     expect(journalEntries(lines)).toEqual([
       { accountId: "rent", entryType: "DEBIT", amount: 15000 },
       { accountId: "bank", entryType: "CREDIT", amount: 12000 },
-      { accountId: "cash", entryType: "CREDIT", amount: 3000, description: "Rest in cash" },
+      { accountId: "cash", entryType: "CREDIT", amount: 3000, note: "Rest in cash" },
     ]);
     expect(journalTotals([{ accountId: "a", note: "", debit: "10", credit: "" }]).complete).toBe(false);
     expect(journalTotals([{ accountId: "a", note: "", debit: "10", credit: "" }, { accountId: "", note: "", debit: "", credit: "10" }]).complete).toBe(false);

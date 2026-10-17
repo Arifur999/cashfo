@@ -33,6 +33,8 @@ export interface CreateTransactionEntryInput {
   accountId: string;
   entryType: EntryType;
   amount: number;
+  // A journal line's own note ("Cheque 004418").
+  note?: string;
 }
 
 export interface CreateTransactionInput {

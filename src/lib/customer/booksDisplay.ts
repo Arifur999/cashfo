@@ -293,8 +293,8 @@ export function journalTotals(lines: JournalLine[]): JournalTotals {
 }
 
 // The lines as the API takes them: one entry per used line.
-export function journalEntries(lines: JournalLine[]): { accountId: string; entryType: "DEBIT" | "CREDIT"; amount: number; description?: string }[] {
+export function journalEntries(lines: JournalLine[]): { accountId: string; entryType: "DEBIT" | "CREDIT"; amount: number; note?: string }[] {
   return lines
     .filter((line) => amountOf(line.debit) > 0 || amountOf(line.credit) > 0)
-    .map((line) => ({ accountId: line.accountId, entryType: amountOf(line.debit) > 0 ? ("DEBIT" as const) : ("CREDIT" as const), amount: amountOf(line.debit) > 0 ? amountOf(line.debit) : amountOf(line.credit), ...(line.note.trim() ? { description: line.note.trim() } : {}) }));
+    .map((line) => ({ accountId: line.accountId, entryType: amountOf(line.debit) > 0 ? ("DEBIT" as const) : ("CREDIT" as const), amount: amountOf(line.debit) > 0 ? amountOf(line.debit) : amountOf(line.credit), ...(line.note.trim() ? { note: line.note.trim() } : {}) }));
 }
