@@ -7,6 +7,7 @@ import type { IOwnerRef, OwnerDialog } from "@/types/owner.types";
 import type { IPlanOption } from "@/types/plan.types";
 import OwnerDialogs from "./OwnerDialogs";
 import ViewAsCustomerDialog from "./ViewAsCustomerDialog";
+import T from "@/components/shared/T";
 
 interface OwnerDetailActionsProps {
   owner: IOwnerRef;
@@ -28,22 +29,22 @@ const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan, canV
     <div className="flex flex-wrap gap-2">
       {canViewAsCustomer && owner.status === "ACTIVE" && (
         <Button variant="outline" onClick={() => setViewing(true)}>
-          <Eye aria-hidden="true" /> View as customer
+          <Eye aria-hidden="true" /> <T>View as customer</T>
         </Button>
       )}
       {canChangePlan && (
         <Button variant="outline" onClick={() => setActiveDialog("changePlan")}>
-          <ArrowLeftRight aria-hidden="true" /> Change plan
+          <ArrowLeftRight aria-hidden="true" /> <T>Change plan</T>
         </Button>
       )}
       {canChangeStatus && owner.status === "SUSPENDED" && (
         <Button variant="outline" onClick={() => setActiveDialog("activate")}>
-          <UserCheck aria-hidden="true" /> Activate
+          <UserCheck aria-hidden="true" /> <T>Activate</T>
         </Button>
       )}
       {canChangeStatus && owner.status === "ACTIVE" && (
         <Button variant="outline" className="border-expense/50 text-expense hover:bg-expense-soft hover:text-expense" onClick={() => setActiveDialog("suspend")}>
-          <ShieldOff aria-hidden="true" /> Suspend
+          <ShieldOff aria-hidden="true" /> <T>Suspend</T>
         </Button>
       )}
       <OwnerDialogs owner={owner} activeDialog={activeDialog} onClose={() => setActiveDialog(null)} plans={plans} />

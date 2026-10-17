@@ -11,6 +11,7 @@ import { formatDateTime } from "@/lib/date";
 import { getUserInfo } from "@/services/auth.services";
 import { getOwnerById } from "@/services/owner.services";
 import { getPlans } from "@/services/plan.services";
+import T from "@/components/shared/T";
 
 export const metadata: Metadata = { title: "User" };
 
@@ -27,7 +28,7 @@ const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <BackLink href="/admin/users">All users</BackLink>
+      <BackLink href="/admin/users"><T>All users</T></BackLink>
       <OwnerProfileHeader
         owner={owner}
         actions={
@@ -43,7 +44,7 @@ const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
       <OwnerSummaryStats owner={owner} />
       {owner.status === "SUSPENDED" && owner.suspendedReason && (
         <Callout variant="warning">
-          <strong>Suspended</strong> {formatDateTime(owner.suspendedAt)} &mdash; {owner.suspendedReason}
+          <T values={{ suspended: <strong><T>Suspended</T></strong>, date: formatDateTime(owner.suspendedAt), reason: owner.suspendedReason }}>{"{suspended} {date} — {reason}"}</T>
         </Callout>
       )}
       <OwnerActivityTimeline entries={owner.activityLog} />

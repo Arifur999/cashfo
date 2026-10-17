@@ -10,6 +10,7 @@ import { adminDashboardDictionary } from "./dictionary/admin-dashboard";
 import { adminSecurityDictionary } from "./dictionary/admin-security";
 import { adminMoneyDictionary } from "./dictionary/admin-money";
 import { adminNotificationsDictionary } from "./dictionary/admin-notifications";
+import { adminPeopleDictionary } from "./dictionary/admin-people";
 import { adminSharedDictionary } from "./dictionary/admin-shared";
 import { adminSubscriptionsDictionary } from "./dictionary/admin-subscriptions";
 import { adminSupportDictionary } from "./dictionary/admin-support";
@@ -38,7 +39,7 @@ import { vaultDictionary } from "./dictionary/vault";
 const bnAdminDictionary: Record<string, string> = {
   "Admin Panel": "অ্যাডমিন প্যানেল",
   Dashboard: "ড্যাশবোর্ড",
-  "User Management": "ইউজার ম্যানেজমেন্ট",
+  "User Management": "ব্যবহারকারী ব্যবস্থাপনা",
   Workspaces: "ওয়ার্কস্পেস",
   Subscriptions: "সাবস্ক্রিপশন",
   Payments: "পেমেন্ট",
@@ -58,7 +59,7 @@ const bnAdminDictionary: Record<string, string> = {
   // The Smartly admin shell
   Admin: "অ্যাডমিন",
   People: "মানুষ",
-  Users: "ইউজার",
+  Users: "ব্যবহারকারী",
   Owners: "মালিক",
   "Plans & coupons": "প্ল্যান ও কুপন",
   "Support & content": "সাপোর্ট ও কন্টেন্ট",
@@ -95,6 +96,7 @@ const adminDictionaries: Record<string, string> = {
   ...adminNotificationsDictionary,
   ...adminSubscriptionsDictionary,
   ...adminMoneyDictionary,
+  ...adminPeopleDictionary,
 };
 
 export const bnDictionary: Record<string, string> = {

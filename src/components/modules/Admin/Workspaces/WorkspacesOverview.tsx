@@ -11,6 +11,7 @@ import type { IWorkspaceOverviewItem } from "@/types/workspace.types";
 import WorkspaceKpis from "./WorkspaceKpis";
 import { workspacesColumns } from "./workspacesColumns";
 import { WORKSPACES_TABLE_CONFIG } from "./workspacesTable.config";
+import T from "@/components/shared/T";
 
 const WorkspacesOverview = () => {
   const router = useRouter();
@@ -37,7 +38,7 @@ const WorkspacesOverview = () => {
         footer={
           <>
             <Info className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
-            Add-on = extra workspaces × plan price × 50%. Workspaces on the Free plan add nothing. This is an estimate; nobody is charged for it yet.
+            <T>Add-on = extra workspaces × plan price × 50%. Workspaces on the Free plan add nothing. This is an estimate; nobody is charged for it yet.</T>
           </>
         }
       />

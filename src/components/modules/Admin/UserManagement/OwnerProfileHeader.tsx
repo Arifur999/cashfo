@@ -2,8 +2,10 @@ import { Mail, Phone } from "lucide-react";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDate, formatRelativeDay } from "@/lib/date";
-import { getInitials } from "@/lib/text";
+import { getInitials, lowerFirst } from "@/lib/text";
 import type { IOwnerDetail } from "@/types/owner.types";
+import { getTranslator } from "@/lib/i18n/locale";
+import { plural } from "@/lib/i18n/message";
 
 interface OwnerProfileHeaderProps {
   owner: IOwnerDetail;
@@ -14,7 +16,8 @@ const daysSince = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date
 
 // Who this is, in one card: initials, name with status and plan, how to
 // reach them, how long they have been here, and the actions on the right.
-const OwnerProfileHeader = ({ owner, actions }: OwnerProfileHeaderProps) => {
+const OwnerProfileHeader = async ({ owner, actions }: OwnerProfileHeaderProps) => {
+  const { t } = await getTranslator("admin");
   const days = daysSince(owner.createdAt);
   return (
     <section aria-label={owner.name} className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-5 shadow-card lg:flex-row lg:items-center">
@@ -39,9 +42,9 @@ const OwnerProfileHeader = ({ owner, actions }: OwnerProfileHeaderProps) => {
             </span>
           )}
           <span>
-            Member since {formatDate(owner.createdAt, "d MMM yyyy")} · {days} {days === 1 ? "day" : "days"}
+            {t("Member since {date} · {days}", { date: formatDate(owner.createdAt, "d MMM yyyy"), days: plural(t, days, "{count} day", "{count} days") })}
           </span>
-          <span>{owner.lastLoginAt ? `Last active ${formatRelativeDay(owner.lastLoginAt).replace(/^Today/, "today").replace(/^Yesterday/, "yesterday")}` : "Never signed in"}</span>
+          <span>{owner.lastLoginAt ? t("Last active {when}", { when: lowerFirst(formatRelativeDay(owner.lastLoginAt, { t })) }) : t("Never signed in")}</span>
         </div>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>

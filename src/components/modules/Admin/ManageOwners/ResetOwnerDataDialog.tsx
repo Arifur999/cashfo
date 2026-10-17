@@ -7,6 +7,8 @@ import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface ResetOwnerDataDialogProps {
   owner: IOwnerOverviewItem | null;
@@ -15,6 +17,7 @@ interface ResetOwnerDataDialogProps {
 }
 
 const ResetOwnerDataDialog = ({ owner, open, onOpenChange }: ResetOwnerDataDialogProps) => {
+  const { translate } = useLocale();
   const workspace = owner?.businessName ?? "this workspace";
   const { run, isPending } = useActionMutation({
     action: (userId: string) => resetOwnerDataAction(userId),
@@ -26,12 +29,11 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange }: ResetOwnerDataDialo
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={`Reset all data in ${workspace}?`}
+      title={translate("Reset all data in {workspace}?", { workspace })}
       description={
-        <>
-          This permanently deletes all transactions, accounts, contacts, savings goals, assets, and budget categories for{" "}
-          <b className="font-semibold text-ink">{workspace}</b>. Their account login stays intact.
-        </>
+        <T values={{ workspace: <b className="font-semibold text-ink">{workspace}</b> }}>
+          {"This permanently deletes all transactions, accounts, contacts, savings goals, assets, and budget categories for {workspace}. Their account login stays intact."}
+        </T>
       }
       variant="destructive"
       confirmLabel="Reset / delete all data"
@@ -49,7 +51,7 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange }: ResetOwnerDataDialo
       }}
     >
       <Callout variant="danger" className="font-semibold">
-        This can&apos;t be undone.
+        <T>This can&apos;t be undone.</T>
       </Callout>
     </ConfirmDialog>
   );
