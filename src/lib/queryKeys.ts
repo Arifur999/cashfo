@@ -31,6 +31,8 @@ export const queryKeys = {
   backups: createDomainKeys("backups"),
   featureFlags: createDomainKeys("feature-flags"),
   errorLogs: createDomainKeys("error-logs"),
+  health: createDomainKeys("health"),
+  settings: createDomainKeys("settings"),
   rateLimits: createDomainKeys("rate-limits"),
   notificationTemplates: createDomainKeys("notification-templates"),
   notificationLogs: createDomainKeys("notification-logs"),

@@ -1,7 +1,22 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { getFeatureFlags } from "@/services/featureFlag.services";
-import { getBackups, getBackupStatusSummary, getErrorLogs, getRateLimitLogs, getRateLimitSummary } from "@/services/system.services";
+import { getBackups, getBackupStatusSummary, getErrorLogs, getHealth, getRateLimitLogs, getRateLimitSummary } from "@/services/system.services";
+
+// API and database, checked when the page opens and again every minute.
+export const healthQuery = () =>
+  queryOptions({
+    queryKey: queryKeys.health.all,
+    queryFn: () => getHealth(),
+    refetchInterval: 60 * 1000,
+  });
+
+// The Errors tab's count: how many errors nobody has marked fixed.
+export const openErrorCountQuery = () =>
+  queryOptions({
+    queryKey: [...queryKeys.errorLogs.all, "open-count"] as const,
+    queryFn: () => getErrorLogs("page=1&limit=1&resolved=false"),
+  });
 
 export const backupsQuery = () =>
   queryOptions({
