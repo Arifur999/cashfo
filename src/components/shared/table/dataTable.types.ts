@@ -22,7 +22,8 @@ export type DataTableFilterConfig = (
   // The design's status tabs: one row of exclusive choices, with counts, at
   // the front of the toolbar. The first tab (allLabel) clears the filter.
   // "sunken" drops the cream border for the plainer pill some lists use.
-  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string; tone?: "cream" | "sunken" }
+  // defaultValue: the tab an empty URL means, with no All tab (Owners).
+  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string; tone?: "cream" | "sunken"; defaultValue?: string }
   // Server-managed date ranges map onto two URL params, dateFrom/dateTo by
   // default (the convention every list endpoint uses).
   | { id: string; type: "date-range"; label: string; fromKey?: string; toKey?: string }

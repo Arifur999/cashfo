@@ -16,6 +16,9 @@ export interface ServerDataTableConfig {
   filters?: DataTableFilterConfig[];
   search?: { placeholder: string; queryKey?: string; width?: "sm" | "md" };
   defaultLimit?: number;
+  // What the list shows while the URL names nothing else; a tabs filter
+  // with a default has no "All" tab.
+  defaults?: Readonly<Record<string, string>>;
 }
 
 const NO_FILTERS: DataTableFilterConfig[] = [];
@@ -24,8 +27,13 @@ const NO_FILTERS: DataTableFilterConfig[] = [];
 // a DataTable needs, plus the query string to fetch with -- so a feature
 // table is just useQuery + <DataTable {...dataTableProps} />.
 export function useServerDataTable<TData>(config: ServerDataTableConfig) {
-  const { filters = NO_FILTERS, search, defaultLimit = 10 } = config;
+  const { filters: configFilters = NO_FILTERS, search, defaultLimit = 10, defaults } = config;
   const searchParams = useSearchParams();
+  // Tabs learn which of them stands in for an empty URL.
+  const filters = useMemo(
+    () => configFilters.map((filter) => (filter.type === "tabs" && defaults?.[filter.id] ? { ...filter, defaultValue: defaults[filter.id] } : filter)),
+    [configFilters, defaults],
+  );
   const definitions = useMemo(() => toServerFilterDefinitions(filters), [filters]);
 
   const { paginationState, updateParams, handlePaginationChange } = useServerManagedDataTable({ searchParams, defaultLimit });
