@@ -23,7 +23,7 @@ const PaymentDetailPage = async ({ params }: PageProps<"/admin/payments/[id]">) 
   return (
     <div className="flex flex-col gap-4">
       <BackLink href="/admin/payments"><T>All payments</T></BackLink>
-      <PaymentHero payment={payment} actions={canManage(admin?.role, "payments") && <PaymentDetailActions payment={payment} />} />
+      <PaymentHero payment={payment} actions={<PaymentDetailActions payment={payment} canManage={canManage(admin?.role, "payments")} />} />
       {payment.duplicateOfId && <DuplicateNote payment={payment} />}
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-4">
