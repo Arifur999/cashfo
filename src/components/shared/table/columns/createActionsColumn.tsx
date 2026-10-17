@@ -10,7 +10,7 @@ export const ACTIONS_COLUMN_ID = "actions";
 // DataTable appends this automatically when `actions` is passed (and pins it
 // to the right edge) -- a columns file never defines its own actions column.
 export const createActionsColumn = <TData,>(actions: DataTableActions<TData>): ColumnDef<TData> =>
-  actions.display === "inline"
+  actions.display === "inline" || actions.display === "split"
     ? {
         id: ACTIONS_COLUMN_ID,
         header: "Actions",

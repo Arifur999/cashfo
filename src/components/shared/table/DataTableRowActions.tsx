@@ -14,11 +14,14 @@ import type { DataTableActions } from "./dataTable.types";
 interface DataTableRowActionsProps<TData> {
   row: TData;
   actions: DataTableActions<TData>;
+  // "outline" is the 32px bordered button the design draws beside an
+  // inline action; "ghost" the bare dots at the end of a row.
+  variant?: "ghost" | "outline";
 }
 
 // Order: View, Edit, extra actions, then everything destructive (extra
 // destructive actions and Delete) behind a separator.
-const DataTableRowActions = <TData,>({ row, actions }: DataTableRowActionsProps<TData>) => {
+const DataTableRowActions = <TData,>({ row, actions, variant = "ghost" }: DataTableRowActionsProps<TData>) => {
   const visibleExtras = (actions.extra ?? []).filter((action) => !action.hidden?.(row));
   const safeExtras = visibleExtras.filter((action) => !action.destructive);
   const destructiveExtras = visibleExtras.filter((action) => action.destructive);
@@ -33,9 +36,9 @@ const DataTableRowActions = <TData,>({ row, actions }: DataTableRowActionsProps<
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant={variant}
           size="icon-sm"
-          className="data-[state=open]:bg-muted"
+          className={variant === "outline" ? "rounded-md border-line-strong bg-surface text-ink hover:bg-cream data-[state=open]:bg-cream" : "data-[state=open]:bg-muted"}
           aria-label="Open row actions"
           // Keeps a row-level onRowClick from firing as well.
           onClick={(event) => event.stopPropagation()}

@@ -44,8 +44,11 @@ export interface DataTableRowAction<TData> {
 // A handler that's undefined simply doesn't render its menu item.
 export interface DataTableActions<TData> {
   // "inline" draws the actions as small buttons in the row (View, Reset
-  // data) instead of behind a "..." menu.
-  display?: "menu" | "inline";
+  // data) instead of behind a "..." menu; "split" draws only View as a
+  // button and keeps the rest behind the menu.
+  display?: "menu" | "inline" | "split";
+  // What the View button says when drawn inline ("Who used it").
+  viewLabel?: string;
   onView?: (row: TData) => void;
   onEdit?: (row: TData) => void;
   onDelete?: (row: TData) => void;

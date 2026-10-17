@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import DataTableRowActions from "./DataTableRowActions";
 import type { DataTableActions } from "./dataTable.types";
 
 interface DataTableInlineActionsProps<TData> {
@@ -20,17 +21,21 @@ const SAFE = "border-line-strong text-ink hover:bg-cream";
 const DANGER = "border-expense/40 text-expense hover:bg-expense-soft";
 
 // The row's actions as the design's small buttons (View, Reset data): the
-// safe ones first, the destructive ones outlined in red. A click never
-// reaches the row's own onRowClick.
+// safe ones first, the destructive ones outlined in red. In "split" mode
+// only View is a button and the rest stay behind the "..." menu. A click
+// never reaches the row's own onRowClick.
 const DataTableInlineActions = <TData,>({ row, actions }: DataTableInlineActionsProps<TData>) => {
+  const split = actions.display === "split";
   const extras = (actions.extra ?? []).filter((action) => !action.hidden?.(row));
   const buttons: InlineButton<TData>[] = [];
-  if (actions.onView) buttons.push({ label: "View", onClick: actions.onView });
-  if (actions.onEdit) buttons.push({ label: "Edit", onClick: actions.onEdit });
-  buttons.push(...extras.filter((action) => !action.destructive), ...extras.filter((action) => action.destructive));
-  if (actions.onDelete) buttons.push({ label: "Delete", onClick: actions.onDelete, destructive: true });
+  if (actions.onView) buttons.push({ label: actions.viewLabel ?? "View", onClick: actions.onView });
+  if (!split) {
+    if (actions.onEdit) buttons.push({ label: "Edit", onClick: actions.onEdit });
+    buttons.push(...extras.filter((action) => !action.destructive), ...extras.filter((action) => action.destructive));
+    if (actions.onDelete) buttons.push({ label: "Delete", onClick: actions.onDelete, destructive: true });
+  }
 
-  if (buttons.length === 0) {
+  if (buttons.length === 0 && !split) {
     return null;
   }
 
@@ -41,6 +46,7 @@ const DataTableInlineActions = <TData,>({ row, actions }: DataTableInlineActions
           {label}
         </Button>
       ))}
+      {split && <DataTableRowActions row={row} actions={{ ...actions, onView: undefined }} variant="outline" />}
     </div>
   );
 };
