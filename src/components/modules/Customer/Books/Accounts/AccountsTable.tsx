@@ -43,7 +43,9 @@ export function AccountsTable({ groups, preferredLanguage, currency, hasCodes }:
   const total = groups.reduce((sum, group) => sum + flattenAccounts(group.accounts).length, 0);
 
   function notes(account: Account): string {
-    const parts = [subtypeLabel(account.accountSubtype), account.children.length > 0 ? `${account.children.length} ${t(account.children.length === 1 ? "sub-account" : "sub-accounts")}` : null].filter((part): part is string => !!part).map((part) => t(part));
+    const kind = subtypeLabel(account.accountSubtype);
+    // "Cash · Cash" says nothing twice.
+    const parts = [kind && kind.toLowerCase() !== account.name.trim().toLowerCase() ? kind : null, account.children.length > 0 ? `${account.children.length} ${t(account.children.length === 1 ? "sub-account" : "sub-accounts")}` : null].filter((part): part is string => !!part).map((part) => t(part));
     if (parts.length === 0 && account.isSystemAccount) parts.push(t("Default account"));
     return parts.join(" · ");
   }

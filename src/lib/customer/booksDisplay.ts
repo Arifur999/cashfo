@@ -18,17 +18,35 @@ export const ACCOUNT_TYPES: AccountType[] = ["ASSET", "LIABILITY", "EQUITY", "IN
 
 export type AccountFilter = "ALL" | AccountType;
 
+// Siblings in code order (1010 before 1020), accounts without a code last
+// in the order the workspace keeps them.
+const byCode = (a: Account, b: Account): number => (a.accountNumber && b.accountNumber ? a.accountNumber.localeCompare(b.accountNumber, undefined, { numeric: true }) : a.accountNumber ? -1 : b.accountNumber ? 1 : a.displayOrder - b.displayOrder);
+
 // Every account in a group's tree, parents before their children, with
-// how deep each one sits.
+// how deep each one sits. A single account fetched on its own has no
+// children list at all.
 export function flattenAccounts(accounts: Account[], depth = 0): { account: Account; depth: number }[] {
-  return accounts.flatMap((account) => [{ account, depth }, ...flattenAccounts(account.children, depth + 1)]);
+  return [...accounts].sort(byCode).flatMap((account) => [{ account, depth }, ...flattenAccounts(account.children ?? [], depth + 1)]);
+}
+
+export interface YearRow {
+  name: string;
+  total: number;
+}
+
+// Income or expense accounts with what moved through each in the period,
+// largest first, zeros dropped. For an income account money "in" is what
+// was earned; for an expense account it is what was spent.
+export function yearRows(accounts: { name: string; totalIn: string; totalOut: string }[]): { rows: YearRow[]; total: number } {
+  const rows = accounts.map((account) => ({ name: account.name, total: Math.round((Number(account.totalIn) - Number(account.totalOut)) * 100) / 100 })).filter((row) => row.total !== 0).sort((a, b) => b.total - a.total);
+  return { rows, total: Math.round(rows.reduce((sum, row) => sum + row.total, 0) * 100) / 100 };
 }
 
 export const groupOf = (groups: AccountGroup[], type: AccountType): Account[] => groups.find((group) => group.accountType === type)?.accounts ?? [];
 
-// A group's balance: its top-level accounts, since a parent's balance
-// already holds its children's.
-export const groupTotal = (accounts: Account[]): number => accounts.reduce((sum, account) => sum + Number(account.currentBalance), 0);
+// A group's balance: every account in it, since a parent's balance is its
+// own and not its children's.
+export const groupTotal = (accounts: Account[]): number => flattenAccounts(accounts).reduce((sum, { account }) => sum + Number(account.currentBalance), 0);
 
 export interface BooksBalance {
   owns: number;

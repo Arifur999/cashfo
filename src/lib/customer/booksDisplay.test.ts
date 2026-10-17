@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Account, AccountGroup, Contact, OverdueRow, Transaction } from "./api";
-import { accountsCsvRows, agingFromInvoices, agingShares, agingTotal, booksBalance, contactStats, contactsCsvRows, daysBetween, descendantIds, filterAccounts, filterContacts, flattenAccounts, hasAccountCodes, journalEntries, journalTotals, lastRow, lateByContact, overdueOver30, statementRows } from "./booksDisplay";
+import { accountsCsvRows, agingFromInvoices, agingShares, agingTotal, booksBalance, contactStats, contactsCsvRows, daysBetween, descendantIds, filterAccounts, filterContacts, flattenAccounts, hasAccountCodes, journalEntries, journalTotals, lastRow, lateByContact, overdueOver30, statementRows, yearRows } from "./booksDisplay";
 
 function account(over: Partial<Account> & { id: string; accountType: Account["accountType"]; currentBalance: string }): Account {
   return { businessId: "b", parentId: null, name: over.id, nameBn: null, accountNumber: null, accountSubtype: null, openingBalance: "0.00", isSystemAccount: false, status: "ACTIVE", displayOrder: 0, children: [], ...over };
@@ -35,13 +35,22 @@ describe("accounts", () => {
     ]);
   });
 
-  it("checks that the books balance", () => {
+  it("checks that the books balance, counting sub-accounts", () => {
     const balance = booksBalance(GROUPS);
-    expect(balance.owns).toBe(360800);
+    expect(balance.owns).toBe(360900);
     expect(balance.owes).toBe(250000);
     expect(balance.share).toBe(110800);
-    expect(balance.balanced).toBe(true);
-    expect(booksBalance([...GROUPS.slice(0, 4), { accountType: "EXPENSE", accounts: [] }]).balanced).toBe(false);
+    expect(balance.balanced).toBe(false);
+    expect(booksBalance([...GROUPS.slice(0, 2), { accountType: "EQUITY", accounts: [account({ id: "Capital", accountType: "EQUITY", currentBalance: "50100.00" })] }, ...GROUPS.slice(3)]).balanced).toBe(true);
+  });
+
+  it("sums a year's income or expenses by account", () => {
+    expect(yearRows([{ name: "Rent", totalIn: "60000.00", totalOut: "0.00" }, { name: "Stock", totalIn: "620600.00", totalOut: "200.00" }, { name: "Interest", totalIn: "0.00", totalOut: "0.00" }])).toEqual({ rows: [{ name: "Stock", total: 620400 }, { name: "Rent", total: 60000 }], total: 680400 });
+  });
+
+  it("orders siblings by code, uncoded ones last", () => {
+    const rows = flattenAccounts([account({ id: "Late", accountType: "ASSET", currentBalance: "0", displayOrder: 1 }), account({ id: "B", accountType: "ASSET", currentBalance: "0", accountNumber: "1020" }), account({ id: "Early", accountType: "ASSET", currentBalance: "0", displayOrder: 0 }), account({ id: "A", accountType: "ASSET", currentBalance: "0", accountNumber: "1010" })]);
+    expect(rows.map((r) => r.account.id)).toEqual(["A", "B", "Early", "Late"]);
   });
 });
 
