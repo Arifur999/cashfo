@@ -54,10 +54,26 @@ export function filterAccounts(rows: { account: Account; depth: number }[], quer
   return rows.filter(({ account }) => [account.name, account.nameBn ?? "", account.accountNumber ?? "", account.accountSubtype ?? ""].some((text) => text.toLowerCase().includes(q)));
 }
 
-// English, passed through t().
-export const SUBTYPE_LABELS: Record<string, string> = { cash: "Cash", bank: "Bank", mfs: "Mobile banking", savings: "Savings", card: "Card" };
+// English, passed through t(). The first five can be picked for a new
+// account; receivable and payable belong to the two system accounts.
+export const SUBTYPE_LABELS: Record<string, string> = { cash: "Cash", bank: "Bank", mfs: "Mobile banking", savings: "Savings", card: "Card", receivable: "What customers owe you", payable: "What you owe suppliers" };
+
+export const ACCOUNT_SUBTYPES = ["cash", "bank", "mfs", "savings", "card"];
 
 export const subtypeLabel = (subtype: string | null): string | null => (subtype ? (SUBTYPE_LABELS[subtype] ?? subtype) : null);
+
+// Whether any account carries a code, so a chart without codes drops the column.
+export const hasAccountCodes = (groups: AccountGroup[]): boolean => groups.some((group) => flattenAccounts(group.accounts).some(({ account }) => account.accountNumber));
+
+// An account and everything under it: the ones it cannot be moved under.
+export function descendantIds(account: Account): Set<string> {
+  return new Set(flattenAccounts([account]).map(({ account: a }) => a.id));
+}
+
+// The chart as spreadsheet rows: code, name, type, subtype, balance.
+export function accountsCsvRows(groups: AccountGroup[]): (string | number)[][] {
+  return groups.flatMap((group) => flattenAccounts(group.accounts).map(({ account }) => [account.accountNumber ?? "", account.name, ACCOUNT_TYPE_META[account.accountType].singular, subtypeLabel(account.accountSubtype) ?? "", Number(account.currentBalance)]));
+}
 
 export type ContactsFilter = "ALL" | "CUSTOMER" | "SUPPLIER" | "OWE_YOU" | "YOU_OWE";
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Account, AccountGroup, Contact, OverdueRow } from "./api";
-import { agingShares, agingTotal, booksBalance, contactStats, daysBetween, filterAccounts, filterContacts, flattenAccounts, journalEntries, journalTotals, lateByContact } from "./booksDisplay";
+import { accountsCsvRows, agingShares, agingTotal, booksBalance, contactStats, daysBetween, descendantIds, filterAccounts, filterContacts, flattenAccounts, hasAccountCodes, journalEntries, journalTotals, lateByContact } from "./booksDisplay";
 
 function account(over: Partial<Account> & { id: string; accountType: Account["accountType"]; currentBalance: string }): Account {
   return { businessId: "b", parentId: null, name: over.id, nameBn: null, accountNumber: null, accountSubtype: null, openingBalance: "0.00", isSystemAccount: false, status: "ACTIVE", displayOrder: 0, children: [], ...over };
@@ -21,6 +21,18 @@ describe("accounts", () => {
     expect(filterAccounts(rows, "1020").map((r) => r.account.id)).toEqual(["Bank"]);
     expect(filterAccounts(rows, "cash").map((r) => r.account.id)).toEqual(["Cash"]);
     expect(filterAccounts(rows, "")).toHaveLength(3);
+    expect([...descendantIds(GROUPS[0].accounts[1])]).toEqual(["Bank", "Branch"]);
+  });
+
+  it("knows whether codes are worth a column and lays the chart out as rows", () => {
+    expect(hasAccountCodes(GROUPS)).toBe(true);
+    expect(hasAccountCodes(GROUPS.slice(1))).toBe(false);
+    expect(accountsCsvRows(GROUPS.slice(0, 2))).toEqual([
+      ["1010", "Cash", "Asset", "Cash", 42300],
+      ["1020", "Bank", "Asset", "Bank", 318500],
+      ["", "Branch", "Asset", "", 100],
+      ["", "Loan", "Liability", "", 250000],
+    ]);
   });
 
   it("checks that the books balance", () => {
