@@ -26,6 +26,9 @@ export const notificationTemplateFormZodSchema = z.object({
 
 export type INotificationTemplateFormValues = z.infer<typeof notificationTemplateFormZodSchema>;
 
+// The template's On switch, on its own.
+export const notificationTemplateActiveServerZodSchema = z.object({ isActive: z.boolean() }) satisfies z.ZodType<IUpdateNotificationTemplatePayload>;
+
 // Subjects only exist for email; for other channels they're left untouched.
 export const notificationTemplateServerZodSchema = notificationTemplateFormZodSchema
   .extend({ isEmail: z.boolean() })

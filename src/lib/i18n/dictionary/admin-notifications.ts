@@ -108,4 +108,7 @@ export const adminNotificationsDictionary: Record<string, string> = {
   Template: "টেমপ্লেট",
   "No notifications match these filters.": "এই ফিল্টারে কোনো নোটিফিকেশন মেলেনি।",
   SMS: "SMS",
+  "{key} is on": "{key} চালু",
+  "{key} is off": "{key} বন্ধ",
+  "Failed to switch the template": "টেমপ্লেট চালু/বন্ধ করা যায়নি",
 };

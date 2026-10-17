@@ -28,10 +28,11 @@ export interface INotificationTemplate {
 }
 
 export interface IUpdateNotificationTemplatePayload {
-  bodyEn: string;
-  bodyBn: string;
+  bodyEn?: string;
+  bodyBn?: string;
   subjectEn?: string;
   subjectBn?: string;
+  isActive?: boolean;
 }
 
 export interface INotificationLog {
