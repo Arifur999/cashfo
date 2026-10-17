@@ -29,6 +29,11 @@ export interface IPayment {
   currency: string;
   discountApplied: string | null;
   couponId: string | null;
+  // The coupon's code, looked up for the list.
+  couponCode: string | null;
+  // An earlier successful payment by the same person for the same plan
+  // within ten minutes: this one looks like a double charge.
+  duplicateOfId: string | null;
   gateway: PaymentGateway;
   gatewayReferenceId: string | null;
   status: PaymentStatus;
@@ -38,9 +43,30 @@ export interface IPayment {
   invoice: IInvoiceSummary | null;
 }
 
+export interface IOtherPayment {
+  id: string;
+  amount: string;
+  currency: string;
+  status: PaymentStatus;
+  createdAt: string;
+}
+
 export interface IPaymentDetail extends Omit<IPayment, "invoice"> {
   invoice: IInvoice | null;
   refund: IRefund | null;
+  // The same person's other payments, newest first.
+  otherPayments: IOtherPayment[];
+}
+
+// The figures over the payments list (Dhaka months). Money is a fixed-2dp
+// string.
+export interface IPaymentStats {
+  lastMonth: { month: string; collected: string; payments: number; changePct: number | null };
+  thisMonth: { month: string; collected: string; payments: number; days: number };
+  failedLast7Days: { count: number; amount: string };
+  refundsLastMonth: { count: number; amount: string };
+  gatewaysLastMonth: { gateway: PaymentGateway; count: number }[];
+  statusCounts: Record<PaymentStatus, number>;
 }
 
 export interface IRefundPayload {

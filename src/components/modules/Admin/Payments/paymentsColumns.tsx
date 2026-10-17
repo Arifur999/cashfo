@@ -1,70 +1,77 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import DateCell from "@/components/shared/cell/DateCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import { formatCurrency } from "@/lib/currency";
-import { formatDate } from "@/lib/date";
-import type { PaymentsView } from "@/queries/payment.queries";
+import { formatDate, formatRelativeDateTime } from "@/lib/date";
+import { GATEWAY_CHIP_CLASS, PAYMENT_STATUS_LABEL, paymentNote, shortPaymentId } from "@/lib/payments";
+import { humanizeEnum } from "@/lib/statusBadge";
+import { cn } from "@/lib/utils";
 import type { IPayment } from "@/types/payment.types";
-import GatewayCell from "./GatewayCell";
 
-const leadingColumns: ColumnDef<IPayment>[] = [
+const NOTE_TONE = { muted: "text-ink-muted", danger: "text-expense", warning: "text-warning" } as const;
+
+// The design's Payments list: the short id, the person over what matters
+// about the payment, plan, how they paid, the amount, status, and when.
+export const paymentsColumns: ColumnDef<IPayment>[] = [
   {
-    id: "createdAt",
-    accessorKey: "createdAt",
-    header: "Date",
-    cell: ({ row }) => <DateCell date={row.original.createdAt} />,
-    meta: { exportValue: (row) => formatDate(row.createdAt) },
+    id: "id",
+    accessorFn: (row) => shortPaymentId(row.id),
+    header: "Payment",
+    enableSorting: false,
+    cell: ({ getValue }) => <span className="font-mono text-small font-semibold">{String(getValue())}</span>,
   },
   {
     id: "user",
     accessorFn: (row) => row.platformUser?.name ?? "Unknown",
-    header: "User",
-    cell: ({ row }) => <UserInfoCell name={row.original.platformUser?.name} email={row.original.platformUser?.email} />,
-    meta: { exportValue: (row) => `${row.platformUser?.name ?? "Unknown"} <${row.platformUser?.email ?? ""}>` },
+    header: "Person",
+    cell: ({ row }) => {
+      const note = paymentNote(row.original);
+      return (
+        <span className="flex min-w-0 flex-col gap-px">
+          <span className="truncate font-semibold text-ink">{row.original.platformUser?.name ?? "Unknown person"}</span>
+          <span className={cn("truncate text-caption", NOTE_TONE[note.tone])}>{note.text}</span>
+        </span>
+      );
+    },
+    meta: { exportValue: (row) => `${row.platformUser?.name ?? "Unknown"} <${row.platformUser?.email ?? ""}>`, cellClassName: "max-w-72" },
   },
   {
     id: "plan",
     accessorFn: (row) => row.plan.name,
     header: "Plan",
+    cell: ({ row }) => <span className="text-ink-2">{row.original.plan.name}</span>,
+  },
+  {
+    id: "gateway",
+    accessorKey: "gateway",
+    header: "Paid with",
+    cell: ({ row }) => (
+      <span className={cn("inline-flex rounded-sm px-2 py-0.5 text-caption font-bold", GATEWAY_CHIP_CLASS[row.original.gateway])}>{humanizeEnum(row.original.gateway)}</span>
+    ),
+    meta: { exportValue: (row) => humanizeEnum(row.gateway) },
   },
   {
     id: "amount",
     accessorKey: "amount",
     header: "Amount",
-    cell: ({ row }) => <span className="font-medium tabular-nums">{formatCurrency(row.original.amount, row.original.currency)}</span>,
+    cell: ({ row }) => (
+      <span className={cn("font-semibold tabular-nums", row.original.status === "REFUNDED" ? "text-ink-muted" : "text-ink")}>
+        {formatCurrency(row.original.amount, row.original.currency)}
+      </span>
+    ),
+    meta: { align: "right" },
   },
   {
-    id: "gateway",
-    accessorKey: "gateway",
-    header: "Gateway",
-    cell: ({ row }) => <GatewayCell gateway={row.original.gateway} />,
+    id: "status",
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={PAYMENT_STATUS_LABEL[row.original.status]} dot />,
+    meta: { exportValue: (row) => PAYMENT_STATUS_LABEL[row.status] },
+  },
+  {
+    id: "createdAt",
+    accessorKey: "createdAt",
+    header: "When",
+    cell: ({ row }) => <span className="whitespace-nowrap text-small text-ink-2">{formatRelativeDateTime(row.original.createdAt)}</span>,
+    meta: { exportValue: (row) => formatDate(row.createdAt, "yyyy-MM-dd HH:mm") },
   },
 ];
-
-const statusColumn: ColumnDef<IPayment> = {
-  id: "status",
-  accessorKey: "status",
-  header: "Status",
-  cell: ({ row }) => <StatusBadgeCell status={row.original.status} />,
-};
-
-const failureReasonColumn: ColumnDef<IPayment> = {
-  id: "failureReason",
-  accessorKey: "failureReason",
-  header: "Failure Reason",
-  cell: ({ row }) => <span className="text-destructive">{row.original.failureReason ?? "—"}</span>,
-};
-
-const invoiceColumn: ColumnDef<IPayment> = {
-  id: "invoice",
-  accessorFn: (row) => row.invoice?.invoiceNumber ?? "",
-  header: "Invoice #",
-  cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.original.invoice?.invoiceNumber ?? "—"}</span>,
-};
-
-// The failed view swaps the status column for the failure reason.
-export const paymentsColumns: Record<PaymentsView, ColumnDef<IPayment>[]> = {
-  all: [...leadingColumns, statusColumn, invoiceColumn],
-  failed: [...leadingColumns, failureReasonColumn, invoiceColumn],
-};
