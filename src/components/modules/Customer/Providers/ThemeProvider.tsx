@@ -10,9 +10,13 @@ import { THEME_STORAGE_KEY } from "@/lib/theme";
 // re-run the script -- and takes it off again when the app unmounts, so the
 // sign-in pages it can lead to stay light.
 type Theme = "light" | "dark";
+// What the user chose: a theme, or to follow the device.
+export type ThemePreference = Theme | "system";
 
 interface ThemeContextValue {
   theme: Theme;
+  preference: ThemePreference;
+  setTheme: (preference: ThemePreference) => void;
   toggleTheme: () => void;
 }
 
@@ -21,9 +25,9 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const CHANGE_EVENT = "app:theme";
 // Where a choice lands when localStorage is blocked (private browsing), so
 // the toggle still works for this page load.
-let unsavedChoice: Theme | null = null;
+let unsavedChoice: ThemePreference | null = null;
 
-const readTheme = (): Theme => {
+const readPreference = (): ThemePreference => {
   if (unsavedChoice) {
     return unsavedChoice;
   }
@@ -35,6 +39,12 @@ const readTheme = (): Theme => {
   } catch {
     // Blocked storage: fall through to the OS setting.
   }
+  return "system";
+};
+
+const readTheme = (): Theme => {
+  const preference = readPreference();
+  if (preference !== "system") return preference;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
@@ -57,6 +67,7 @@ export function ThemeProvider({ children, allowDark = true }: { children: ReactN
   // The server can't see the choice, so it (and hydration) render "light";
   // the real value follows right after, without a setState in an effect.
   const chosen = useSyncExternalStore<Theme>(subscribe, readTheme, () => "light");
+  const preference = useSyncExternalStore<ThemePreference>(subscribe, readPreference, () => "system");
   const theme: Theme = allowDark ? chosen : "light";
 
   useEffect(() => {
@@ -65,18 +76,20 @@ export function ThemeProvider({ children, allowDark = true }: { children: ReactN
 
   useEffect(() => () => document.documentElement.classList.remove("dark"), []);
 
-  const toggleTheme = useCallback(() => {
-    const next: Theme = theme === "dark" ? "light" : "dark";
+  const setTheme = useCallback((next: ThemePreference) => {
     try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, next);
+      if (next === "system") window.localStorage.removeItem(THEME_STORAGE_KEY);
+      else window.localStorage.setItem(THEME_STORAGE_KEY, next);
       unsavedChoice = null;
     } catch {
       unsavedChoice = next;
     }
     window.dispatchEvent(new Event(CHANGE_EVENT));
-  }, [theme]);
+  }, []);
 
-  const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
+  const toggleTheme = useCallback(() => setTheme(theme === "dark" ? "light" : "dark"), [theme, setTheme]);
+
+  const value = useMemo(() => ({ theme, preference, setTheme, toggleTheme }), [theme, preference, setTheme, toggleTheme]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

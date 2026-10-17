@@ -12,8 +12,8 @@ import { resetVaultAction, setVaultPasswordAction } from "@/lib/customer/passwor
 import { rulesMet, vaultRules } from "@/lib/customer/vaultDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { PasswordField } from "./PasswordField";
-import { StrengthMeter } from "./StrengthMeter";
+import { PasswordField } from "@/components/modules/Customer/Shared/PasswordField";
+import { StrengthMeter } from "@/components/modules/Customer/Shared/StrengthMeter";
 import { GateAside, GateCard } from "./VaultGate";
 
 export type VaultPasswordMode = "setup" | "change" | "reset";
