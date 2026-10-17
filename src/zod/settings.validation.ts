@@ -22,6 +22,19 @@ export const updateSettingsFormZodSchema = z.object({
 
 export type IUpdateSettingsFormValues = z.infer<typeof updateSettingsFormZodSchema>;
 
+// The Settings page saves its General card and the referral reward
+// separately; maintenance is switched from System.
+export const generalSettingsFormZodSchema = updateSettingsFormZodSchema.pick({
+  platformName: true,
+  supportEmail: true,
+  defaultCurrency: true,
+  defaultTimezone: true,
+});
+export type IGeneralSettingsFormValues = z.infer<typeof generalSettingsFormZodSchema>;
+
+export const referralRewardFormZodSchema = updateSettingsFormZodSchema.pick({ referralRewardAmount: true });
+export type IReferralRewardFormValues = z.infer<typeof referralRewardFormZodSchema>;
+
 // B. Server schema -- coerced to API types and re-validated in the action.
 export const updateSettingsServerZodSchema = z
   .object({
