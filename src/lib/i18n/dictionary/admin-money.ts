@@ -153,4 +153,5 @@ export const adminMoneyDictionary: Record<string, string> = {
   "Total paid": "মোট পরিশোধ",
   "Thank you for using Smartly. Questions about this invoice? Reply from the Help page in the app.":
     "Smartly ব্যবহারের জন্য ধন্যবাদ। এই ইনভয়েস নিয়ে প্রশ্ন? অ্যাপের সাহায্য পাতা থেকে লিখুন।",
+  "Download MRR at the end of each month as CSV": "প্রতি মাস শেষের MRR CSV হিসেবে নামান",
 };
