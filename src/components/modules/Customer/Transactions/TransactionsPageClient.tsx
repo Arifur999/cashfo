@@ -71,32 +71,34 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
 
   return (
     <PageFrame>
+      {/* On a phone the floating + adds, and the title stands alone. */}
       <PageHeader
         eyebrow={t("Money")}
         title={t("Transactions")}
-        description={t("Every income and expense you've added, newest first.")}
+        description={<span className="hidden md:inline">{t("Every income and expense you've added, newest first.")}</span>}
         actions={
-          <Button onClick={() => setAddOpen(true)}>
+          <Button onClick={() => setAddOpen(true)} className="hidden md:inline-flex">
             <Plus strokeWidth={2.5} className="size-4" />
             {t("New transaction")}
           </Button>
         }
-        className="mb-1"
+        className="mb-1 max-md:gap-0"
       />
 
       <TransactionFilters accounts={accounts} categories={categories} />
 
-      <Card padding="none" className="grid grid-cols-2 md:grid-cols-4">
-        <TotalCell label={t("Money in")}>
+      {/* Two small cards on a phone; one strip of four on wider screens. */}
+      <Card padding="none" className="grid grid-cols-2 max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4">
+        <TotalCell label={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
           <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className="text-h3 md:text-h2" />
         </TotalCell>
-        <TotalCell label={t("Money out")} divided>
+        <TotalCell label={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
           <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className="text-h3 md:text-h2" />
         </TotalCell>
-        <TotalCell label={t("Net")} divided className="border-t md:border-t-0">
+        <TotalCell label={t("Net")} divided className="max-md:hidden">
           <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-h2" />
         </TotalCell>
-        <TotalCell label={t("Transactions")} divided className="border-t md:border-t-0">
+        <TotalCell label={t("Transactions")} divided className="max-md:hidden">
           <span className="text-h3 text-ink tabular-nums md:text-h2">
             {totals.count}
             {totals.voided > 0 && (

@@ -108,7 +108,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           <AmountText value={Math.abs(Number(dashboard.totalPawna))} currency={currency} size="h2" tone="income" className="text-h3 whitespace-nowrap md:text-h1" />
           <span className="text-caption font-normal text-ink-muted">
             <span className="md:hidden">
-              {t("Pawna")} · {counts.PAWNA} {t("people")}
+              {t("Pawna")} · {counts.PAWNA} {t(counts.PAWNA === 1 ? "person" : "people")}
             </span>
             <span className="hidden md:inline">
               {counts.PAWNA} {t(counts.PAWNA === 1 ? "contact" : "contacts")}
@@ -125,7 +125,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           <AmountText value={Math.abs(Number(dashboard.totalDena))} currency={currency} size="h2" tone="expense" className="text-h3 whitespace-nowrap md:text-h1" />
           <span className="text-caption font-normal text-ink-muted">
             <span className="md:hidden">
-              {t("Dena")} · {counts.DENA} {t("people")}
+              {t("Dena")} · {counts.DENA} {t(counts.DENA === 1 ? "person" : "people")}
             </span>
             <span className="hidden md:inline">
               {counts.DENA} {t(counts.DENA === 1 ? "contact" : "contacts")}
