@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import CouponStats from "@/components/modules/Admin/Subscriptions/Coupons/CouponStats";
 import CouponsTable from "@/components/modules/Admin/Subscriptions/Coupons/CouponsTable";
 import CreateCouponButton from "@/components/modules/Admin/Subscriptions/Coupons/CreateCouponButton";
@@ -10,8 +9,9 @@ import { formatDate } from "@/lib/date";
 import { couponsQuery, couponStatsQuery } from "@/queries/coupon.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Coupons" };
+export const generateMetadata = adminPageTitle("Coupons");
 
 const CouponsPage = async () => {
   const admin = await getUserInfo();

@@ -2,6 +2,7 @@
 // LocaleProvider, and Server Component pages that render text directly
 // instead of delegating to a "use client" component. The toggle in
 // LocaleProvider.tsx writes the cookie this reads.
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE } from "./localeCookie";
 import { getTranslationOverrides } from "./overrides";
@@ -25,3 +26,10 @@ export async function getTranslator(scope: DictionaryScope = "app"): Promise<{ l
   };
   return { locale, t };
 }
+
+// An admin page's tab title in the reader's language (the root layout adds
+// the brand): export const generateMetadata = adminPageTitle("Users");
+export const adminPageTitle = (title: string) => async (): Promise<Metadata> => {
+  const { t } = await getTranslator("admin");
+  return { title: t(title) };
+};

@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import TranslationsTable from "@/components/modules/Admin/Content/Translations/TranslationsTable";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
 import { translationsQuery } from "@/queries/translation.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Translations" };
+export const generateMetadata = adminPageTitle("Translations");
 
 const TranslationsPage = async () => {
   const admin = await getUserInfo();

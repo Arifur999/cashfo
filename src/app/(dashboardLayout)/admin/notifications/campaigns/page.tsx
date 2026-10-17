@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import CampaignsTable from "@/components/modules/Admin/Notifications/Campaigns/CampaignsTable";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
 import { campaignsQuery, notificationLogStatsQuery, notificationTemplatesQuery } from "@/queries/notification.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Campaigns" };
+export const generateMetadata = adminPageTitle("Campaigns");
 
 const CampaignsPage = async () => {
   const admin = await getUserInfo();

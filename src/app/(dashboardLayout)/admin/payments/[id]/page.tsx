@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import DuplicateNote from "@/components/modules/Admin/Payments/DuplicateNote";
 import OtherPaymentsCard from "@/components/modules/Admin/Payments/OtherPaymentsCard";
 import PaidByCard from "@/components/modules/Admin/Payments/PaidByCard";
@@ -13,8 +12,9 @@ import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { getUserInfo } from "@/services/auth.services";
 import { getPaymentById } from "@/services/payment.services";
 import T from "@/components/shared/T";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Payment" };
+export const generateMetadata = adminPageTitle("Payment");
 
 const PaymentDetailPage = async ({ params }: PageProps<"/admin/payments/[id]">) => {
   const { id } = await params;

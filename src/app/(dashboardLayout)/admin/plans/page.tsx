@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import CreatePlanButton from "@/components/modules/Admin/Subscriptions/Plans/CreatePlanButton";
 import PlansBoard from "@/components/modules/Admin/Subscriptions/Plans/PlansBoard";
 import SubscriptionsTabs, { SUBSCRIPTIONS_PAGE } from "@/components/modules/Admin/Subscriptions/SubscriptionsTabs";
@@ -7,8 +6,9 @@ import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
 import { planAnalyticsQuery, plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Plans" };
+export const generateMetadata = adminPageTitle("Plans");
 
 const PlansPage = async () => {
   const admin = await getUserInfo();

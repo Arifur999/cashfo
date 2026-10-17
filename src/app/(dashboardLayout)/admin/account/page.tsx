@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
 import MyAccountBoard from "@/components/modules/Admin/Account/MyAccountBoard";
 import PageHeader from "@/components/shared/PageHeader";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { myAccountQuery, mySessionsQuery, mySignInsQuery } from "@/queries/myAccount.queries";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "My account" };
+export const generateMetadata = adminPageTitle("My account");
 
 // Every admin's own page, whatever their role.
 const MyAccountPage = () => {

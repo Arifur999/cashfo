@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import PaymentsTabs, { PAYMENTS_PAGE } from "@/components/modules/Admin/Payments/PaymentsTabs";
 import ByPlanCard from "@/components/modules/Admin/Revenue/ByPlanCard";
 import MrrHistoryCard from "@/components/modules/Admin/Revenue/MrrHistoryCard";
@@ -6,8 +5,9 @@ import RevenueFacts from "@/components/modules/Admin/Revenue/RevenueFacts";
 import RevenueKpis from "@/components/modules/Admin/Revenue/RevenueKpis";
 import PageHeader from "@/components/shared/PageHeader";
 import { getRevenueOverview } from "@/services/revenue.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Revenue" };
+export const generateMetadata = adminPageTitle("Revenue");
 
 // Finance roles only: proxy.ts keeps everyone else out of this route.
 const RevenuePage = async () => {

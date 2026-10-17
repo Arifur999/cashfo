@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import TicketDetailView from "@/components/modules/Admin/Support/TicketDetail/TicketDetailView";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
 import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { assignableAdminsQuery, ticketDetailQuery } from "@/queries/ticket.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Support Ticket" };
+export const generateMetadata = adminPageTitle("Support ticket");
 
 const TicketDetailPage = async ({ params }: PageProps<"/admin/support/[id]">) => {
   const [{ id }, admin] = await Promise.all([params, getUserInfo()]);

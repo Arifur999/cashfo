@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import PaymentStats from "@/components/modules/Admin/Payments/PaymentStats";
 import PaymentsTable from "@/components/modules/Admin/Payments/PaymentsTable";
 import PaymentsTabs, { PAYMENTS_PAGE } from "@/components/modules/Admin/Payments/PaymentsTabs";
@@ -10,8 +9,9 @@ import { buildTableQueryString } from "@/lib/queryString";
 import { paymentsListQuery, paymentStatsQuery } from "@/queries/payment.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Payments" };
+export const generateMetadata = adminPageTitle("Payments");
 
 const PaymentsPage = async ({ searchParams }: PageProps<"/admin/payments">) => {
   const [params, admin] = await Promise.all([searchParams, getUserInfo()]);

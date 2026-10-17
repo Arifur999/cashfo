@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import ManageOwnersTable from "@/components/modules/Admin/ManageOwners/ManageOwnersTable";
 import { MANAGE_OWNERS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/ManageOwners/manageOwnersTable.config";
 import Callout from "@/components/shared/Callout";
@@ -9,8 +8,9 @@ import { buildTableQueryString } from "@/lib/queryString";
 import { ownersListQuery } from "@/queries/owner.queries";
 import { getUserInfo } from "@/services/auth.services";
 import T from "@/components/shared/T";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Manage owners" };
+export const generateMetadata = adminPageTitle("Manage owners");
 
 const ManageOwnersPage = async ({ searchParams }: PageProps<"/admin/manage-owners">) => {
   const [params, admin] = await Promise.all([searchParams, getUserInfo()]);

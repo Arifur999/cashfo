@@ -115,4 +115,11 @@ export const adminSharedDictionary: Record<string, string> = {
   "{count} rows selected": "{count}টি সারি বাছাই করা হয়েছে",
   "{count} selected": "{count}টি বাছাই করা",
   "Creating...": "তৈরি হচ্ছে...",
+  "Loading dashboard...": "ড্যাশবোর্ড লোড হচ্ছে...",
+  "Not found": "পাওয়া যায়নি",
+  "The page or record you're looking for doesn't exist, or was removed.": "যে পাতা বা রেকর্ড খুঁজছেন তা নেই, অথবা সরিয়ে ফেলা হয়েছে।",
+  "Back to dashboard": "ড্যাশবোর্ডে ফিরুন",
+  "This page hit an unexpected error. Try again, or head somewhere else from the sidebar.": "এই পাতায় একটি অপ্রত্যাশিত ত্রুটি হয়েছে। আবার চেষ্টা করুন, অথবা পাশের মেনু থেকে অন্য কোথাও যান।",
+  "Reference: {digest}": "রেফারেন্স: {digest}",
+  "Try again": "আবার চেষ্টা করুন",
 };

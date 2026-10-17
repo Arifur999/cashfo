@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import FeatureRequestBoard from "@/components/modules/Admin/Support/FeatureRequests/FeatureRequestBoard";
 import { SUPPORT_PAGE } from "@/components/modules/Admin/Support/supportPage";
 import SupportTabs from "@/components/modules/Admin/Support/SupportTabs";
@@ -8,8 +7,9 @@ import { canManage } from "@/lib/authUtils";
 import { featureRequestsQuery } from "@/queries/featureRequest.queries";
 import { ticketStatsQuery } from "@/queries/ticket.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Feature requests" };
+export const generateMetadata = adminPageTitle("Feature requests");
 
 const FeatureRequestsPage = async () => {
   const admin = await getUserInfo();

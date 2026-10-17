@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import { WORKSPACES_TABLE_CONFIG } from "@/components/modules/Admin/Workspaces/workspacesTable.config";
 import WorkspacesOverview from "@/components/modules/Admin/Workspaces/WorkspacesOverview";
 import PageHeader from "@/components/shared/PageHeader";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { buildTableQueryString } from "@/lib/queryString";
 import { workspaceOverviewQuery } from "@/queries/workspace.queries";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Workspaces" };
+export const generateMetadata = adminPageTitle("Workspaces");
 
 const WorkspacesPage = async ({ searchParams }: PageProps<"/admin/workspaces">) => {
   const queryString = buildTableQueryString(await searchParams, WORKSPACES_TABLE_CONFIG);

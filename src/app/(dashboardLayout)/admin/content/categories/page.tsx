@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import AccountTreePanel from "@/components/modules/Admin/Content/Accounts/AccountTreePanel";
 import CategoriesPanel from "@/components/modules/Admin/Content/Categories/CategoriesPanel";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
@@ -6,8 +5,9 @@ import { canManage } from "@/lib/authUtils";
 import { accountTemplatesQuery } from "@/queries/accountTemplate.queries";
 import { categoriesQuery } from "@/queries/category.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Categories" };
+export const generateMetadata = adminPageTitle("Categories");
 
 // What a new workspace starts with: its categories on the left, its
 // account tree on the right (the accounts also feed the category form's

@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import OwnerActivityTimeline from "@/components/modules/Admin/UserManagement/OwnerActivityTimeline";
 import OwnerDetailActions from "@/components/modules/Admin/UserManagement/OwnerDetailActions";
 import OwnerProfileHeader from "@/components/modules/Admin/UserManagement/OwnerProfileHeader";
@@ -12,8 +11,9 @@ import { getUserInfo } from "@/services/auth.services";
 import { getOwnerById } from "@/services/owner.services";
 import { getPlans } from "@/services/plan.services";
 import T from "@/components/shared/T";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "User" };
+export const generateMetadata = adminPageTitle("User");
 
 const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
   const { id } = await params;

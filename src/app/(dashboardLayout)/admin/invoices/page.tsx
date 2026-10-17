@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { INVOICES_TABLE_CONFIG } from "@/components/modules/Admin/Invoices/invoicesTable.config";
 import InvoicesTable from "@/components/modules/Admin/Invoices/InvoicesTable";
 import PaymentsTabs, { PAYMENTS_PAGE } from "@/components/modules/Admin/Payments/PaymentsTabs";
@@ -8,8 +7,9 @@ import { canManage } from "@/lib/authUtils";
 import { buildTableQueryString } from "@/lib/queryString";
 import { invoicesListQuery } from "@/queries/invoice.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Invoices" };
+export const generateMetadata = adminPageTitle("Invoices");
 
 const InvoicesPage = async ({ searchParams }: PageProps<"/admin/invoices">) => {
   const [params, admin] = await Promise.all([searchParams, getUserInfo()]);

@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import AnalyticsRangePicker from "@/components/modules/Admin/Analytics/AnalyticsRangePicker";
 import AnalyticsView from "@/components/modules/Admin/Analytics/AnalyticsView";
 import PageHeader from "@/components/shared/PageHeader";
@@ -6,8 +5,9 @@ import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { resolveAnalyticsRange, toAnalyticsRangeQuery } from "@/lib/analyticsRange";
 import { getAppToday } from "@/lib/date";
 import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Analytics" };
+export const generateMetadata = adminPageTitle("Analytics");
 
 const firstValue = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 

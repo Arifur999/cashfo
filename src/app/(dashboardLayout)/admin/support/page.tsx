@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { SUPPORT_PAGE } from "@/components/modules/Admin/Support/supportPage";
 import CreateTicketDialog from "@/components/modules/Admin/Support/Tickets/CreateTicketDialog";
 import SupportTabs from "@/components/modules/Admin/Support/SupportTabs";
@@ -12,8 +11,9 @@ import { buildTableQueryString } from "@/lib/queryString";
 import { featureRequestsQuery } from "@/queries/featureRequest.queries";
 import { assignableAdminsQuery, ticketStatsQuery, ticketsListQuery } from "@/queries/ticket.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Support" };
+export const generateMetadata = adminPageTitle("Support");
 
 const SupportPage = async ({ searchParams }: PageProps<"/admin/support">) => {
   const [params, admin] = await Promise.all([searchParams, getUserInfo()]);
