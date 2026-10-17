@@ -23,10 +23,10 @@ export const buildTemplateOptions = (templates: INotificationTemplate[]) =>
 
 // { planId, status } -> "Free plan, active", "Everyone", "Suspended accounts".
 export const describeAudience = (filter: ICampaignTargetFilter, planNames: Map<string, string>) => {
-  const plan = filter.planId ? `${planNames.get(filter.planId) ?? "One"} plan` : null;
+  const plan = filter.planId ? (planNames.has(filter.planId) ? `${planNames.get(filter.planId)} plan` : "A removed plan") : null;
   const status = filter.status ? humanizeEnum(filter.status).toLowerCase() : null;
   if (plan && status) return `${plan}, ${status}`;
   if (plan) return plan;
-  if (status) return `${humanizeEnum(filter.status!)} accounts`;
+  if (status) return `Everyone ${status}`;
   return "Everyone";
 };
