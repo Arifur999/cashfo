@@ -19,27 +19,28 @@ export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
         <span className="truncate text-small text-ink-muted">{row.original.workspaceNames.join(", ")}</span>
       </span>
     ),
-    meta: { exportValue: (row) => `${row.name} <${row.email}>`, cellClassName: "max-w-96" },
+    meta: { exportValue: (row) => `${row.name} <${row.email}>` },
   },
   {
     id: "planName",
     accessorKey: "planName",
     header: "Plan",
     cell: ({ row }) => <PlanChipCell plan={row.original.planName} />,
+    meta: { width: 120 },
   },
   {
     id: "totalWorkspaces",
     accessorKey: "totalWorkspaces",
     header: "Total workspaces",
     cell: ({ row }) => <span className="tabular-nums">{row.original.totalWorkspaces}</span>,
-    meta: NUMBER,
+    meta: { ...NUMBER, width: 140 },
   },
   {
     id: "additionalWorkspaces",
     accessorKey: "additionalWorkspaces",
     header: "Extra",
     cell: ({ row }) => <span className="font-semibold tabular-nums">+{row.original.additionalWorkspaces}</span>,
-    meta: NUMBER,
+    meta: { ...NUMBER, width: 110 },
   },
   {
     id: "estimatedMonthlyAddOnRevenue",
@@ -50,6 +51,6 @@ export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
         {formatCurrency(row.original.estimatedMonthlyAddOnRevenue)}
       </span>
     ),
-    meta: NUMBER,
+    meta: { ...NUMBER, width: 170 },
   },
 ];

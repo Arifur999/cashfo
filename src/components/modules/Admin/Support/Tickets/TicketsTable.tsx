@@ -34,10 +34,11 @@ const TicketsTable = () => {
       {...toTableQueryProps(query)}
       data={query.data?.data}
       columns={ticketsColumns}
+      layout={{ rowHeight: 58 }}
       getRowId={(row) => row.id}
       onRowClick={(row) => router.push(detailHref(row))}
       // An urgent ticket still in the queue gets the red wash.
-      rowClassName={(row) => (row.priority === "URGENT" && OPEN_TICKET_STATUSES.includes(row.status) ? "bg-expense-soft/50 hover:bg-expense-soft/80" : undefined)}
+      rowClassName={(row) => (row.priority === "URGENT" && OPEN_TICKET_STATUSES.includes(row.status) ? "bg-expense-soft hover:bg-expense-soft" : undefined)}
 
       emptyMessage="No tickets match these filters."
     />

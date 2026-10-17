@@ -56,20 +56,20 @@ export const buildCampaignsColumns = (planNames: Map<string, string>): ColumnDef
         <code className="font-mono text-caption text-ink-muted">{row.original.templateKey}</code>
       </span>
     ),
-    meta: { cellClassName: "max-w-80" },
   },
   {
     id: "audience",
     accessorFn: (row) => describeAudience(row.targetFilter, planNames),
     header: "Who gets it",
     cell: ({ row }) => <AudienceCell campaign={row.original} planNames={planNames} />,
+    meta: { width: 170 },
   },
   {
     id: "audienceCount",
     accessorKey: "audienceCount",
     header: "People",
     cell: ({ row }) => <span className="font-semibold tabular-nums">{formatNumber(row.original.audienceCount)}</span>,
-    meta: { align: "right" },
+    meta: { width: 60, align: "right" },
   },
   {
     id: "channel",
@@ -80,13 +80,13 @@ export const buildCampaignsColumns = (planNames: Map<string, string>): ColumnDef
         <T>{CHANNEL_META[row.original.channel].label}</T>
       </span>
     ),
-    meta: { exportValue: (row) => CHANNEL_META[row.channel].label },
+    meta: { width: 76, exportValue: (row) => CHANNEL_META[row.channel].label },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusCell campaign={row.original} />,
-    meta: { exportValue: (row) => `${CAMPAIGN_STATUS_LABEL[row.status]} · ${whenText(row, inEnglish)}` },
+    meta: { width: 150, exportValue: (row) => `${CAMPAIGN_STATUS_LABEL[row.status]} · ${whenText(row, inEnglish)}` },
   },
 ];

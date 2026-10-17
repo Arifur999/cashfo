@@ -28,6 +28,7 @@ const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
       <DataTable
         data={rows}
         columns={columns}
+        layout={{ rowHeight: 60, headPadding: 12 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}

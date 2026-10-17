@@ -35,7 +35,7 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
         </span>
       );
     },
-    meta: { exportValue: (row) => ANNOUNCEMENT_TYPE_META[row.type].label },
+    meta: { width: 130, exportValue: (row) => ANNOUNCEMENT_TYPE_META[row.type].label },
   },
   {
     id: "title",
@@ -47,26 +47,27 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
         <span className={cn("truncate text-small", row.original.titleBn ? "font-bn text-ink-2" : "text-warning")}>{row.original.titleBn || <T>No Bangla text yet</T>}</span>
       </span>
     ),
-    meta: { exportValue: (row) => row.title, cellClassName: "max-w-96" },
+    meta: { exportValue: (row) => row.title },
   },
   {
     id: "audience",
     accessorFn: (row) => audienceText(row.targetPlan, planNames),
     header: "Shown to",
     cell: ({ row }) => <AudienceCell targetPlan={row.original.targetPlan} planNames={planNames} />,
+    meta: { width: 150 },
   },
   {
     id: "startAt",
     accessorKey: "startAt",
     header: "When",
     cell: ({ row }) => <ScheduleCell announcement={row.original} />,
-    meta: { exportValue: (row) => scheduleText(row) },
+    meta: { width: 190, exportValue: (row) => scheduleText(row) },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={ANNOUNCEMENT_STATUS_LABEL[row.original.status]} dot />,
-    meta: { exportValue: (row) => ANNOUNCEMENT_STATUS_LABEL[row.status] },
+    meta: { width: 100, exportValue: (row) => ANNOUNCEMENT_STATUS_LABEL[row.status] },
   },
 ];

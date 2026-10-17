@@ -37,7 +37,7 @@ export const buildTranslationsColumns = (saveText: SaveTranslationText | null): 
     accessorKey: "key",
     header: "Key",
     cell: ({ row }) => <code className="block truncate font-mono text-small text-ink-2">{row.original.key}</code>,
-    meta: { cellClassName: "max-w-60" },
+    meta: { width: 230 },
   },
   {
     id: "en",
@@ -56,6 +56,7 @@ export const buildTranslationsColumns = (saveText: SaveTranslationText | null): 
     accessorFn: (row) => row.context ?? "",
     header: "Area",
     cell: ({ row }) => <span className="text-small text-ink-muted">{row.original.context ?? "—"}</span>,
+    meta: { width: 110 },
   },
   {
     id: "flags",

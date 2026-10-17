@@ -52,6 +52,7 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
         <T>{ADMIN_ROLE_SHORT_LABELS[row.original.role]}</T>
       </span>
     ),
+    meta: { width: 120 },
   },
   {
     id: "lastLoginAt",
@@ -62,7 +63,7 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
         {row.original.lastLoginAt ? <RelativeTime value={row.original.lastLoginAt} as="day" /> : <T>Never</T>}
       </span>
     ),
-    meta: { exportValue: (row) => (row.lastLoginAt ? formatDateTime(row.lastLoginAt) : "Never") },
+    meta: { width: 150, exportValue: (row) => (row.lastLoginAt ? formatDateTime(row.lastLoginAt) : "Never") },
   },
   {
     id: "status",
@@ -71,7 +72,7 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
     cell: ({ row }) => (
       <StatusBadgeCell status={row.original.status} label={STATUS_LABEL[row.original.status]} tone={row.original.status === "SUSPENDED" ? "danger" : "success"} />
     ),
-    meta: { exportValue: (row) => STATUS_LABEL[row.status] },
+    meta: { width: 110, exportValue: (row) => STATUS_LABEL[row.status] },
   },
   {
     id: "actions",
@@ -79,6 +80,6 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
     cell: ({ row }) => <AdminRowActions admin={row.original} isSelf={row.original.id === currentAdminId} onOpen={onOpen} />,
     enableSorting: false,
     enableHiding: false,
-    meta: { align: "right" },
+    meta: { width: 150, align: "right" },
   },
 ];

@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import { formatCurrency } from "@/lib/currency";
+import { formatAmount } from "@/lib/currency";
 import Localized from "@/components/shared/Localized";
 import RelativeTime from "@/components/shared/RelativeTime";
 import T from "@/components/shared/T";
@@ -21,6 +21,7 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     header: "Payment",
     enableSorting: false,
     cell: ({ getValue }) => <span className="font-mono text-small font-semibold">{String(getValue())}</span>,
+    meta: { width: 96 },
   },
   {
     id: "user",
@@ -37,13 +38,14 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
         </Localized>
       </span>
     ),
-    meta: { exportValue: (row) => `${row.platformUser?.name ?? "Unknown"} <${row.platformUser?.email ?? ""}>`, cellClassName: "max-w-72" },
+    meta: { exportValue: (row) => `${row.platformUser?.name ?? "Unknown"} <${row.platformUser?.email ?? ""}>` },
   },
   {
     id: "plan",
     accessorFn: (row) => row.plan.name,
     header: "Plan",
     cell: ({ row }) => <span className="text-ink-2">{row.original.plan.name}</span>,
+    meta: { width: 110 },
   },
   {
     id: "gateway",
@@ -54,7 +56,7 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
         <T>{humanizeEnum(row.original.gateway)}</T>
       </span>
     ),
-    meta: { exportValue: (row) => humanizeEnum(row.gateway) },
+    meta: { width: 112, exportValue: (row) => humanizeEnum(row.gateway) },
   },
   {
     id: "amount",
@@ -62,17 +64,17 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     header: "Amount",
     cell: ({ row }) => (
       <span className={cn("font-semibold tabular-nums", row.original.status === "REFUNDED" ? "text-ink-muted" : "text-ink")}>
-        {formatCurrency(row.original.amount, row.original.currency)}
+        {formatAmount(row.original.amount, row.original.currency)}
       </span>
     ),
-    meta: { align: "right" },
+    meta: { width: 110, align: "right" },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={PAYMENT_STATUS_LABEL[row.original.status]} dot />,
-    meta: { exportValue: (row) => PAYMENT_STATUS_LABEL[row.status] },
+    meta: { width: 150, exportValue: (row) => PAYMENT_STATUS_LABEL[row.status] },
   },
   {
     id: "createdAt",
@@ -81,6 +83,6 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     cell: ({ row }) => <span className="whitespace-nowrap text-small text-ink-2">
         <RelativeTime value={row.original.createdAt} />
       </span>,
-    meta: { exportValue: (row) => formatDate(row.createdAt, "yyyy-MM-dd HH:mm") },
+    meta: { width: 122, exportValue: (row) => formatDate(row.createdAt, "yyyy-MM-dd HH:mm") },
   },
 ];

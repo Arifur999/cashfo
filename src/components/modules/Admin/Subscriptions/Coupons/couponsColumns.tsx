@@ -39,6 +39,7 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     cell: ({ row }) => <span className="font-semibold">{<Localized>{(t) => discountText(row.original, t)}</Localized>}</span>,
     // Sort by the amount, not the formatted text.
     sortingFn: (a, b) => Number(a.original.discountValue) - Number(b.original.discountValue),
+    meta: { width: 110 },
   },
   {
     id: "plans",
@@ -46,6 +47,7 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     header: "Works on",
     enableSorting: false,
     cell: ({ row }) => <span className="text-ink-2">{<Localized>{(t) => worksOn(row.original.applicablePlans, planNames, t)}</Localized>}</span>,
+    meta: { width: 170 },
   },
   {
     id: "timesRedeemed",
@@ -81,14 +83,14 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
         </span>
       );
     },
-    meta: { exportValue: (row) => `${row.timesRedeemed} ${usesCap(row.maxRedemptions)}` },
+    meta: { width: 170, exportValue: (row) => `${row.timesRedeemed} ${usesCap(row.maxRedemptions)}` },
   },
   {
     id: "validUntil",
     accessorKey: "validUntil",
     header: "Valid",
     cell: ({ row }) => <span className="whitespace-nowrap text-ink-2">{validityText(row.original.validFrom, row.original.validUntil)}</span>,
-    meta: { exportValue: (row) => validityText(row.validFrom, row.validUntil) },
+    meta: { width: 170, exportValue: (row) => validityText(row.validFrom, row.validUntil) },
   },
   {
     id: "status",

@@ -63,6 +63,7 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
       <DataTable
         data={couponsResponse?.data}
         columns={columns}
+        layout={{ gap: 16, rowHeight: 62, headPadding: 12, actionsWidth: 120 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}

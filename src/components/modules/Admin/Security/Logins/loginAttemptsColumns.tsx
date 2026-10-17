@@ -55,12 +55,14 @@ export const loginAttemptsColumns: ColumnDef<LoginAttemptGroup>[] = [
     accessorKey: "ipAddress",
     header: "IP address",
     cell: ({ row }) => <code className="font-mono text-small whitespace-nowrap text-ink-2">{row.original.ipAddress}</code>,
+    meta: { width: 124 },
   },
   {
     id: "outcome",
     accessorFn: outcomeText,
     header: "Why it failed",
     cell: ({ row }) => <OutcomeCell row={row.original} />,
+    meta: { width: 210 },
   },
   {
     id: "when",
@@ -71,6 +73,6 @@ export const loginAttemptsColumns: ColumnDef<LoginAttemptGroup>[] = [
         <WhenCell row={row.original} />
       </span>
     ),
-    meta: { align: "right", exportValue: (row) => formatDateTime(row.lastAt) },
+    meta: { width: 130, align: "right", exportValue: (row) => formatDateTime(row.lastAt) },
   },
 ];

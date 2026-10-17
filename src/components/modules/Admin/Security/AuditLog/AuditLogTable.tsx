@@ -52,6 +52,7 @@ const AuditLogTable = () => {
         {...toTableQueryProps(query)}
         data={query.data?.data}
         columns={columns}
+        layout={{ rowHeight: 50 }}
         getRowId={(row) => row.id}
         onRowClick={(row) => setEntry(row.id)}
         rowClassName={(row) => (row.id === entryId ? "bg-mint-50 hover:bg-mint-50" : undefined)}

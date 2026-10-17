@@ -27,6 +27,7 @@ const WorkspacesOverview = () => {
         {...toTableQueryProps(query)}
         data={overview?.items}
         columns={workspacesColumns}
+        layout={{ rowHeight: 56 }}
         getRowId={(row) => row.userId}
         title="Biggest add-on first"
         onRowClick={(row) => router.push(`/admin/users/${row.userId}`)}

@@ -56,6 +56,7 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
       <DataTable
         data={data?.data}
         columns={columns}
+        layout={{ gap: 16, rowHeight: 62, headPadding: 12, actionsWidth: 90 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}
