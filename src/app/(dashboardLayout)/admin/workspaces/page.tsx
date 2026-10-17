@@ -12,11 +12,8 @@ const WorkspacesPage = async ({ searchParams }: PageProps<"/admin/workspaces">) 
   const queryString = buildTableQueryString(await searchParams, WORKSPACES_TABLE_CONFIG);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Workspaces"
-        description="Real end-user accounts with more than one workspace, and the estimated add-on revenue they represent."
-      />
+    <div className="space-y-4">
+      <PageHeader title="Workspaces" description="People with more than one workspace, and what the extra workspaces could earn as an add-on." />
       <QueryPrefetch prefetch={(client) => client.prefetchQuery(workspaceOverviewQuery(queryString))}>
         <WorkspacesOverview />
       </QueryPrefetch>
