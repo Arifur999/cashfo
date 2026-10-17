@@ -1,9 +1,11 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import type { ICohortRow, IDeviceBreakdownEntry, IEngagementPoint, IFeatureUsageEntry, IGeography } from "@/types/analytics.types";
+import type { IAnalyticsSummary, ICohortRow, IDeviceBreakdownEntry, IEngagementPoint, IFeatureUsageEntry, IGeography } from "@/types/analytics.types";
 
 const BASE = "/admin/analytics";
+
+export const getAnalyticsSummary = async () => httpClient.get<IAnalyticsSummary>(`${BASE}/summary`);
 
 // Range-bound reports take ?from=yyyy-MM-dd&to=yyyy-MM-dd.
 export const getFeatureUsage = async (rangeQuery: string) => httpClient.get<IFeatureUsageEntry[]>(`${BASE}/feature-usage?${rangeQuery}`);

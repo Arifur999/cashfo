@@ -1,14 +1,14 @@
 "use client";
 
-import { CalendarRange } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { AnalyticsRange } from "@/lib/analyticsRange";
-import { formatDate } from "@/lib/date";
-import type { AnalyticsRangeChange } from "./useAnalyticsRange";
+import { rangeSpan } from "@/lib/analyticsWording";
+import { cn } from "@/lib/utils";
+import { useAnalyticsRange } from "./useAnalyticsRange";
 
 const PRESETS = [
   { preset: "7", label: "7 days" },
@@ -16,15 +16,8 @@ const PRESETS = [
   { preset: "90", label: "90 days" },
 ] as const;
 
-interface AnalyticsRangePickerProps {
-  range: AnalyticsRange;
-  today: string;
-  onChange: (change: AnalyticsRangeChange) => void;
-  isUpdating?: boolean;
-}
-
-// Days are calendar dates, so format them as UTC midnight (no shifting).
-const dayLabel = (day: string) => formatDate(`${day}T12:00:00Z`);
+const SEGMENT = "h-7.5 rounded-sm px-3 text-small transition-colors";
+const segmentState = (on: boolean) => (on ? "bg-forest font-semibold text-white" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink");
 
 const CustomRangeForm = ({ range, today, onApply }: { range: AnalyticsRange; today: string; onApply: (from: string, to: string) => void }) => {
   const [from, setFrom] = useState(range.from);
@@ -56,48 +49,44 @@ const CustomRangeForm = ({ range, today, onApply }: { range: AnalyticsRange; tod
   );
 };
 
-const AnalyticsRangePicker = ({ range, today, onChange, isUpdating = false }: AnalyticsRangePickerProps) => {
+// The page header's period: the dates it covers, then 7 / 30 / 90 days (and
+// a custom range) in the design's forest-on-white switch. The range lives in
+// the URL, so the charts below follow it.
+const AnalyticsRangePicker = ({ today }: { today: string }) => {
+  const { range, setRange } = useAnalyticsRange(today);
   const [isCustomOpen, setIsCustomOpen] = useState(false);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div role="group" aria-label="Date range" className="flex flex-wrap gap-1 rounded-full bg-muted p-1">
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="text-small text-ink-muted" aria-live="polite">
+        {rangeSpan(range)}
+      </span>
+      <div role="group" aria-label="Period" className="inline-flex gap-0.5 rounded-md border border-line bg-surface p-0.75">
         {PRESETS.map(({ preset, label }) => (
-          <Button
-            key={preset}
-            size="sm"
-            variant={range.preset === preset ? "default" : "ghost"}
-            aria-pressed={range.preset === preset}
-            className="h-7"
-            onClick={() => onChange({ preset })}
-          >
+          <button key={preset} type="button" aria-pressed={range.preset === preset} className={cn(SEGMENT, segmentState(range.preset === preset))} onClick={() => setRange({ preset })}>
             {label}
-          </Button>
+          </button>
         ))}
         <Popover open={isCustomOpen} onOpenChange={setIsCustomOpen}>
           <PopoverTrigger asChild>
-            <Button size="sm" variant={range.preset === "custom" ? "default" : "ghost"} aria-pressed={range.preset === "custom"} className="h-7">
-              <CalendarRange aria-hidden="true" /> Custom
-            </Button>
+            <button type="button" aria-pressed={range.preset === "custom"} className={cn(SEGMENT, segmentState(range.preset === "custom"))}>
+              Custom
+            </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-80">
+          <PopoverContent align="end" className="w-80">
             {/* Remounted per range, so it opens on the current window. */}
             <CustomRangeForm
               key={`${range.from}:${range.to}`}
               range={range}
               today={today}
               onApply={(from, to) => {
-                onChange({ preset: "custom", from, to });
+                setRange({ preset: "custom", from, to });
                 setIsCustomOpen(false);
               }}
             />
           </PopoverContent>
         </Popover>
       </div>
-      <p className="text-sm text-muted-foreground" aria-live="polite">
-        {dayLabel(range.from)} &ndash; {dayLabel(range.to)}
-        {isUpdating && <span className="ml-2 animate-pulse">Updating...</span>}
-      </p>
     </div>
   );
 };
