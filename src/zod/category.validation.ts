@@ -2,6 +2,12 @@ import { z } from "zod";
 import { CATEGORY_DIRECTIONS, type ICategoryPayload } from "@/types/category.types";
 import { displayOrderSchema, localizedNameSchema } from "./common.validation";
 
+// A dragged list's new places, saved together.
+export const categoryOrderServerZodSchema = z
+  .array(z.object({ id: z.string().min(1), displayOrder: z.number().int().min(0) }))
+  .min(1)
+  .max(200);
+
 // Radix Select can't hold "", so "not linked" needs a value of its own.
 export const NO_LINKED_ACCOUNT = "none";
 
