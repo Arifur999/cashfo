@@ -4,6 +4,7 @@ import type { AnyFieldApi } from "@tanstack/react-form";
 import Input from "@/components/smartly/form/Input";
 import type { INPUT_HEIGHTS } from "@/components/smartly/form/InputFrame";
 import FormFieldShell from "./FormFieldShell";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export type FieldSize = keyof typeof INPUT_HEIGHTS;
 
@@ -44,6 +45,7 @@ const AppField = ({
   className,
   disabled,
 }: AppFieldProps) => {
+  const { translate } = useLocale();
   return (
     <FormFieldShell field={field} label={label} aside={aside} description={description}>
       {(control, hasError) => (
@@ -58,7 +60,7 @@ const AppField = ({
           value={field.state.value ?? ""}
           onBlur={field.handleBlur}
           onChange={(event) => field.handleChange(event.target.value)}
-          placeholder={placeholder}
+          placeholder={placeholder && translate(placeholder)}
           autoComplete={autoComplete}
           inputMode={inputMode}
           disabled={disabled}

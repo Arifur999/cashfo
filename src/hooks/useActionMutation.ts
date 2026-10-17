@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { ApiResult } from "@/types/api.types";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface UseActionMutationOptions<TVariables, TData> {
   action: (variables: TVariables) => Promise<ApiResult<TData>>;
@@ -30,6 +31,12 @@ interface UseActionMutationOptions<TVariables, TData> {
 export function useActionMutation<TVariables, TData = unknown>(options: UseActionMutationOptions<TVariables, TData>) {
   const queryClient = useQueryClient();
   const router = useRouter();
+  // Messages are English keys; whatever has Bangla is shown in it.
+  const { translate } = useLocale();
+  const translateRef = useRef(translate);
+  useLayoutEffect(() => {
+    translateRef.current = translate;
+  });
   const optionsRef = useRef(options);
   useLayoutEffect(() => {
     optionsRef.current = options;
@@ -49,16 +56,16 @@ export function useActionMutation<TVariables, TData = unknown>(options: UseActio
       } catch {
         // Actions never throw by design; this is the Next.js server itself
         // being unreachable.
-        toast.error("Unable to reach the server. Please try again.");
+        toast.error(translateRef.current("Unable to reach the server. Please try again."));
         return false;
       }
 
       if (!result.success) {
-        toast.error(result.message || errorMessage);
+        toast.error(translateRef.current(result.message || errorMessage));
         return false;
       }
 
-      toast.success(result.message || (typeof successMessage === "function" ? successMessage(result.data) : successMessage));
+      toast.success(translateRef.current(result.message || (typeof successMessage === "function" ? successMessage(result.data) : successMessage)));
       onSuccess?.(result.data);
       await Promise.all(invalidateKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
       if (refreshRoute) {

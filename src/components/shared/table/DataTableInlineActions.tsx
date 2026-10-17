@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import DataTableRowActions from "./DataTableRowActions";
 import type { DataTableActions } from "./dataTable.types";
@@ -25,6 +26,7 @@ const DANGER = "border-expense/40 text-expense hover:bg-expense-soft";
 // only View is a button and the rest stay behind the "..." menu. A click
 // never reaches the row's own onRowClick.
 const DataTableInlineActions = <TData,>({ row, actions }: DataTableInlineActionsProps<TData>) => {
+  const { translate } = useLocale();
   const split = actions.display === "split";
   const extras = (actions.extra ?? []).filter((action) => !action.hidden?.(row));
   const buttons: InlineButton<TData>[] = [];
@@ -43,7 +45,7 @@ const DataTableInlineActions = <TData,>({ row, actions }: DataTableInlineActions
     <div className="flex justify-end gap-2" onClick={(event) => event.stopPropagation()}>
       {buttons.map(({ label, onClick, destructive }) => (
         <Button key={label} type="button" variant="outline" size="sm" className={cn(BUTTON, destructive ? DANGER : SAFE)} onClick={() => onClick(row)}>
-          {label}
+          {translate(label)}
         </Button>
       ))}
       {split && <DataTableRowActions row={row} actions={{ ...actions, onView: undefined }} variant="outline" />}

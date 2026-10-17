@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface DataTableColumnHeaderProps<TData, TValue> {
@@ -23,12 +24,15 @@ interface DataTableColumnHeaderProps<TData, TValue> {
 // DataTable renders every plain-string `header` through this, so a columns
 // file just writes `header: "Amount"` and still gets sort + hide controls.
 const DataTableColumnHeader = <TData, TValue>({ column, title, align = "left", className }: DataTableColumnHeaderProps<TData, TValue>) => {
+  const { translate } = useLocale();
+  // Headers are English keys like every other string.
+  const label = translate(title);
   const canSort = column.getCanSort();
   const canHide = column.getCanHide();
   const right = align === "right";
 
   if (!canSort && !canHide) {
-    return <div className={cn("text-caption font-medium", className)}>{title}</div>;
+    return <div className={cn("text-caption font-medium", className)}>{label}</div>;
   }
 
   const sorted = column.getIsSorted();
@@ -42,9 +46,8 @@ const DataTableColumnHeader = <TData, TValue>({ column, title, align = "left", c
             variant="ghost"
             size="sm"
             className={cn("h-8 text-caption font-medium text-ink-muted hover:text-ink data-[state=open]:bg-surface-sunken", right ? "-mr-3" : "-ml-3")}
-            aria-label={`${title} column options`}
           >
-            {title}
+            {label}
             {canSort && <SortIcon className={cn("size-3.5", !sorted && "opacity-50")} aria-hidden="true" />}
           </Button>
         </DropdownMenuTrigger>
@@ -52,14 +55,14 @@ const DataTableColumnHeader = <TData, TValue>({ column, title, align = "left", c
           {canSort && (
             <>
               <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
-                <ArrowUp aria-hidden="true" /> Ascending
+                <ArrowUp aria-hidden="true" /> {translate("Ascending")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
-                <ArrowDown aria-hidden="true" /> Descending
+                <ArrowDown aria-hidden="true" /> {translate("Descending")}
               </DropdownMenuItem>
               {sorted && (
                 <DropdownMenuItem onClick={() => column.clearSorting()}>
-                  <X aria-hidden="true" /> Clear sort
+                  <X aria-hidden="true" /> {translate("Clear sort")}
                 </DropdownMenuItem>
               )}
             </>
@@ -67,7 +70,7 @@ const DataTableColumnHeader = <TData, TValue>({ column, title, align = "left", c
           {canSort && canHide && <DropdownMenuSeparator />}
           {canHide && (
             <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-              <EyeOff aria-hidden="true" /> Hide column
+              <EyeOff aria-hidden="true" /> {translate("Hide column")}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>

@@ -13,12 +13,21 @@ export type Locale = "en" | "bn";
 // over the built-in dictionaries.
 export type TranslationOverrides = Record<string, string>;
 
+// A word that reads differently by meaning carries its meaning after "@@"
+// ("On@@record" is the audit log's "what it was on", not a switch's "On").
+// English shows the part before it; Bangla looks the whole key up.
+const CONTEXT_MARK = "@@";
+export const withoutContext = (key: string) => {
+  const at = key.indexOf(CONTEXT_MARK);
+  return at === -1 ? key : key.slice(0, at);
+};
+
 export function translate(locale: Locale, key: string, overrides?: TranslationOverrides): string {
-  if (locale === "en") return key;
+  if (locale === "en") return withoutContext(key);
   if (overrides && Object.hasOwn(overrides, key)) return overrides[key];
   // hasOwn, not `bnDictionary[key] ?? key`: user-typed text (custom habit
   // names) goes through here too, and a name like "constructor" or
   // "toString" would otherwise resolve to an inherited Object.prototype
   // function instead of falling back to the key itself.
-  return Object.hasOwn(bnDictionary, key) ? bnDictionary[key] : key;
+  return Object.hasOwn(bnDictionary, key) ? bnDictionary[key] : withoutContext(key);
 }

@@ -4,6 +4,7 @@ import type { AnyFieldApi } from "@tanstack/react-form";
 import { cn } from "@/lib/utils";
 import FormFieldShell from "./FormFieldShell";
 import type { SelectOption } from "./AppSelectField";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface AppChipsFieldProps {
   field: AnyFieldApi;
@@ -16,6 +17,7 @@ interface AppChipsFieldProps {
 // workspace types, ... Each chip is a real button with aria-pressed; a
 // chosen one goes mint with an emerald line, as the design draws them.
 const AppChipsField = ({ field, label, options, description }: AppChipsFieldProps) => {
+  const { translate } = useLocale();
   const selected: string[] = field.state.value ?? [];
 
   const toggle = (value: string) => {
@@ -46,7 +48,7 @@ const AppChipsField = ({ field, label, options, description }: AppChipsFieldProp
                   isSelected ? "border-emerald bg-mint-50 text-brand-ink" : "border-line-strong bg-surface text-ink-2 hover:bg-cream",
                 )}
               >
-                {option.label}
+                {typeof option.label === "string" ? translate(option.label) : option.label}
               </button>
             );
           })}

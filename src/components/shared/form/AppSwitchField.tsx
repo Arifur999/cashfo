@@ -4,6 +4,7 @@ import type { AnyFieldApi } from "@tanstack/react-form";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface AppSwitchFieldProps {
   field: AnyFieldApi;
@@ -18,15 +19,16 @@ interface AppSwitchFieldProps {
 // right, a faint line under each. The whole row is the label, so the hit
 // area isn't just the switch.
 const AppSwitchField = ({ field, label, description, disabled, className }: AppSwitchFieldProps) => {
+  const { translate } = useLocale();
   const descriptionId = description ? `${field.name}-description` : undefined;
 
   return (
     <div className={cn("flex items-center justify-between gap-3 border-b border-surface-sunken py-3", className)}>
       <Label htmlFor={field.name} className="flex grow cursor-pointer flex-col items-start gap-px">
-        <span className="text-body font-medium text-ink">{label}</span>
+        <span className="text-body font-medium text-ink">{translate(label)}</span>
         {description && (
           <span id={descriptionId} className="text-small font-normal text-ink-muted">
-            {description}
+            {typeof description === "string" ? translate(description) : description}
           </span>
         )}
       </Label>

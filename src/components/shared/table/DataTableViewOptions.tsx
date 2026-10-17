@@ -12,11 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getColumnLabel } from "./columnLabel";
 
 // Column show/hide menu. With a `tableId` on the DataTable the choice is
 // remembered per browser (see usePersistentState).
 const DataTableViewOptions = <TData,>({ table }: { table: Table<TData> }) => {
+  const { translate } = useLocale();
   const hideableColumns = table.getAllColumns().filter((column) => column.getCanHide());
 
   if (hideableColumns.length === 0) {
@@ -28,11 +30,11 @@ const DataTableViewOptions = <TData,>({ table }: { table: Table<TData> }) => {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-8">
           <Settings2 aria-hidden="true" />
-          View
+          {translate("View")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+        <DropdownMenuLabel>{translate("Toggle columns")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {hideableColumns.map((column) => (
           <DropdownMenuCheckboxItem
@@ -42,12 +44,12 @@ const DataTableViewOptions = <TData,>({ table }: { table: Table<TData> }) => {
             // Keep the menu open so several columns can be toggled in a row.
             onSelect={(event) => event.preventDefault()}
           >
-            {getColumnLabel(column)}
+            {translate(getColumnLabel(column))}
           </DropdownMenuCheckboxItem>
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => table.resetColumnVisibility(true)}>
-          <RotateCcw aria-hidden="true" /> Show all
+          <RotateCcw aria-hidden="true" /> {translate("Show all")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

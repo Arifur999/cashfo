@@ -16,6 +16,12 @@ describe("translate", () => {
     expect(translate("en", "Cancel", { Cancel: "বাদ দিন" })).toBe("Cancel");
   });
 
+  it("tells two meanings of one word apart by their context", () => {
+    expect(translate("en", "On@@record")).toBe("On");
+    expect(translate("bn", "On@@record")).not.toBe(translate("bn", "On"));
+    expect(translate("bn", "Nothing@@unknown")).toBe("Nothing");
+  });
+
   it("never resolves an inherited property", () => {
     expect(translate("bn", "constructor", {})).toBe("constructor");
     expect(translate("bn", "toString", JSON.parse('{"__proto__": "x"}'))).toBe("toString");

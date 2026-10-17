@@ -6,6 +6,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { downloadCsv } from "@/lib/download";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { toCsv } from "@/lib/table/csv";
 import { getColumnLabel } from "./columnLabel";
 import { ACTIONS_COLUMN_ID } from "./columns/createActionsColumn";
@@ -19,6 +20,7 @@ const flattenRows = <TData,>(rows: Row<TData>[]): Row<TData>[] => rows.flatMap((
 // for in-memory tables, the current page for server-paginated ones), using
 // the visible columns in their on-screen order.
 const DataTableExportButton = <TData,>({ table, fileName }: { table: Table<TData>; fileName: string }) => {
+  const { translate } = useLocale();
   const handleExport = () => {
     const selectedRows = table.getSelectedRowModel().rows;
     const rows = selectedRows.length > 0 ? selectedRows : flattenRows(table.getPrePaginationRowModel().rows);
@@ -42,10 +44,10 @@ const DataTableExportButton = <TData,>({ table, fileName }: { table: Table<TData
       <TooltipTrigger asChild>
         <Button variant="outline" size="sm" className="h-8" onClick={handleExport}>
           <Download aria-hidden="true" />
-          Export
+          {translate("Export")}
         </Button>
       </TooltipTrigger>
-      <TooltipContent>Download the selected rows, or all rows shown, as CSV</TooltipContent>
+      <TooltipContent>{translate("Download the selected rows, or all rows shown, as CSV")}</TooltipContent>
     </Tooltip>
   );
 };

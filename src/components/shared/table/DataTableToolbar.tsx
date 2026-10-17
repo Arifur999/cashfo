@@ -3,6 +3,7 @@
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import DataTableExpandToggle from "./DataTableExpandToggle";
 import DataTableExportButton from "./DataTableExportButton";
 import DataTableSearch from "./DataTableSearch";
@@ -22,6 +23,7 @@ interface DataTableToolbarProps<TData> {
 }
 
 const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction, exportFileName, tools = true }: DataTableToolbarProps<TData>) => {
+  const { translate } = useLocale();
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const onServerSearch = search?.onDebouncedChange;
   const configs = filters?.configs ?? [];
@@ -35,7 +37,7 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
 
   const resetButton = canReset && configs.length > 0 && (
     <Button variant="ghost" size="sm" className="h-8 text-small text-ink-2" onClick={reset}>
-      Reset
+      {translate("Reset")}
       <X aria-hidden="true" />
     </Button>
   );
@@ -47,7 +49,7 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
   return (
     <div className="px-5 py-3">
       <div className="flex flex-wrap items-center gap-2">
-        {title && <h2 className="text-title text-ink">{title}</h2>}
+        {title && <h2 className="text-title text-ink">{translate(title)}</h2>}
         {draw(tabConfigs)}
         {!splitRows && draw(chipConfigs)}
         {!splitRows && resetButton}

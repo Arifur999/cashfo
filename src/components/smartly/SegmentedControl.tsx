@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 export interface SegmentOption<T extends string> {
@@ -65,9 +66,10 @@ interface SegmentedControlProps<T extends string> {
 
 // A row of exclusive choices; one is always on.
 const SegmentedControl = <T extends string>({ options, value, onChange, label, variant = "tabs", size = "md", stretch = false, className }: SegmentedControlProps<T>) => {
+  const { translate } = useLocale();
   const styles = VARIANTS[variant];
   return (
-    <div role="group" aria-label={label} className={cn("inline-flex gap-0.5", stretch && "flex w-full", styles.group, size === "lg" && "p-1", className)}>
+    <div role="group" aria-label={translate(label)} className={cn("inline-flex gap-0.5", stretch && "flex w-full", styles.group, size === "lg" && "p-1", className)}>
       {options.map((option) => {
         const on = option.value === value;
         return (
@@ -81,7 +83,7 @@ const SegmentedControl = <T extends string>({ options, value, onChange, label, v
           >
             {option.dot && <span aria-hidden="true" className="size-2 rounded-full" style={{ background: option.dot }} />}
             {option.icon}
-            {option.label}
+            {typeof option.label === "string" ? translate(option.label) : option.label}
           </button>
         );
       })}

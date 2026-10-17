@@ -4,6 +4,7 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface CopyButtonProps {
@@ -19,6 +20,7 @@ interface CopyButtonProps {
 const COPIED_FEEDBACK_MS = 2000;
 
 const CopyButton = ({ value, label, text = "Copy", size = "sm" }: CopyButtonProps) => {
+  const { translate } = useLocale();
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -39,11 +41,11 @@ const CopyButton = ({ value, label, text = "Copy", size = "sm" }: CopyButtonProp
       variant="outline"
       size={size === "md" ? "default" : "sm"}
       onClick={copy}
-      aria-label={`Copy ${label}`}
+      aria-label={`${translate("Copy")} ${translate(label)}`}
       className={cn(size === "md" && "h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken")}
     >
       {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-      {copied ? "Copied" : text}
+      {translate(copied ? "Copied" : text)}
     </Button>
   );
 };

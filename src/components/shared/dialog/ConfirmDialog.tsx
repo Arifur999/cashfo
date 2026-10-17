@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
@@ -61,6 +62,7 @@ const ConfirmBody = ({
   confirmationMatchedText,
   children,
 }: ConfirmBodyProps) => {
+  const { translate } = useLocale();
   const inputId = useId();
   const [typed, setTyped] = useState("");
   const matches = Boolean(confirmationText) && typed.trim() === confirmationText;
@@ -77,7 +79,7 @@ const ConfirmBody = ({
               <Label htmlFor={inputId} className="text-body font-medium text-ink">
                 {confirmationLabel ?? (
                   <>
-                    Type <span className="font-semibold">{confirmationText}</span> to confirm
+                    {translate("To confirm, type")} <span className="font-semibold">{confirmationText}</span>
                   </>
                 )}
               </Label>
@@ -94,7 +96,7 @@ const ConfirmBody = ({
               {matches && confirmationMatchedText && (
                 <span className="flex items-center gap-2 text-small text-emerald">
                   <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />
-                  {confirmationMatchedText}
+                  {translate(confirmationMatchedText)}
                 </span>
               )}
             </div>
@@ -104,7 +106,7 @@ const ConfirmBody = ({
       {/* The design's dialog foot: a cream strip across the bottom of the card. */}
       <AlertDialogFooter className="mt-0 flex-row items-center justify-end gap-3 border-t border-line bg-cream px-6 py-4">
         <AlertDialogCancel disabled={isPending} className={cn(BUTTON, "border-line-strong bg-surface text-ink hover:bg-cream")}>
-          Cancel
+          {translate("Cancel")}
         </AlertDialogCancel>
         <AlertDialogAction
           variant={variant}
@@ -116,8 +118,8 @@ const ConfirmBody = ({
             onConfirm();
           }}
         >
-          {isPending ? <Loader size={14} label={pendingLabel} /> : ConfirmIcon && <ConfirmIcon className="size-4" aria-hidden="true" />}
-          {isPending ? pendingLabel : confirmLabel}
+          {isPending ? <Loader size={14} label={translate(pendingLabel)} /> : ConfirmIcon && <ConfirmIcon className="size-4" aria-hidden="true" />}
+          {translate(isPending ? pendingLabel : confirmLabel)}
         </AlertDialogAction>
       </AlertDialogFooter>
     </>
@@ -129,6 +131,7 @@ const ConfirmBody = ({
 // the caller closes it on success. Drawn as the design's confirm card: an
 // icon in a circle, the question, the explanation, then the cream foot.
 const ConfirmDialog = ({ open, onOpenChange, title, description, icon, isPending = false, ...bodyProps }: ConfirmDialogProps) => {
+  const { translate } = useLocale();
   const destructive = bodyProps.variant === "destructive";
   const Icon = icon ?? (destructive ? AlertTriangle : Info);
 
@@ -146,8 +149,8 @@ const ConfirmDialog = ({ open, onOpenChange, title, description, icon, isPending
             <Icon className="size-5.5" aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-col gap-2">
-            <AlertDialogTitle className="text-h3 text-ink">{title}</AlertDialogTitle>
-            <AlertDialogDescription className="text-body leading-relaxed text-ink-2">{description}</AlertDialogDescription>
+            <AlertDialogTitle className="text-h3 text-ink">{translate(title)}</AlertDialogTitle>
+            <AlertDialogDescription className="text-body leading-relaxed text-ink-2">{typeof description === "string" ? translate(description) : description}</AlertDialogDescription>
           </div>
         </div>
         <ConfirmBody isPending={isPending} {...bodyProps} />

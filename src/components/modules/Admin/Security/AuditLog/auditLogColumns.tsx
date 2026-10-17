@@ -50,7 +50,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
   {
     id: "on",
     accessorFn: auditOnText,
-    header: "On",
+    header: "On@@record",
     cell: ({ row }) => {
       const text = auditOnText(row.original);
       return (

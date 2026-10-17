@@ -56,7 +56,7 @@ const FormFieldShell = ({ field, label, aside, description, className, children 
     <div className={cn("flex min-w-0 flex-col gap-2", className)}>
       <div className="flex items-center justify-between gap-3">
         <label id={`${field.name}-label`} htmlFor={field.name} className="text-small font-semibold text-ink-2 select-none">
-          {label}
+          {typeof label === "string" ? translate(label) : label}
         </label>
         {aside}
       </div>
@@ -70,7 +70,7 @@ const FormFieldShell = ({ field, label, aside, description, className, children 
       )}
       {description && !error && (
         <div id={descriptionId} className="text-caption font-normal text-ink-muted">
-          {description}
+          {typeof description === "string" ? translate(description) : description}
         </div>
       )}
       {error && (

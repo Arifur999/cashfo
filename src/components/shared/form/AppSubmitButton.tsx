@@ -2,6 +2,7 @@
 
 import Loader from "@/components/shared/Loader";
 import Button, { type ButtonProps } from "@/components/smartly/Button";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 type AppSubmitButtonProps = {
@@ -18,7 +19,8 @@ type AppSubmitButtonProps = {
 
 // Full width by default (auth forms); modals pass className="w-auto".
 const AppSubmitButton = ({ isPending, children, pendingLabel, className, disabled, variant = "default", size = "lg" }: AppSubmitButtonProps) => {
-  const label = pendingLabel ?? "Submitting...";
+  const { translate } = useLocale();
+  const label = translate(pendingLabel ?? "Submitting...");
 
   return (
     <Button
@@ -34,6 +36,8 @@ const AppSubmitButton = ({ isPending, children, pendingLabel, className, disable
           <Loader size={16} onDark label={label} />
           <span className="animate-pulse">{label}</span>
         </>
+      ) : typeof children === "string" ? (
+        translate(children)
       ) : (
         children
       )}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface DataTableTextFilterProps {
@@ -13,7 +14,9 @@ interface DataTableTextFilterProps {
 
 // "Email", "IP address": a plain box on the toolbar that narrows one field
 // as you type, its label standing in as the placeholder.
-const DataTableTextFilter = ({ label, value = "", onChange, width = "md" }: DataTableTextFilterProps) => {
+const DataTableTextFilter = ({ label: labelKey, value = "", onChange, width = "md" }: DataTableTextFilterProps) => {
+  const { translate } = useLocale();
+  const label = translate(labelKey);
   const [input, setInput] = useState(value);
   const [synced, setSynced] = useState(value);
   const debounced = useDebouncedCallback((next: string) => onChange(next.trim() || undefined), 400);

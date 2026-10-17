@@ -1,4 +1,7 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { BADGE_TONE_CLASSES, getStatusTone, humanizeEnum, type BadgeTone } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 
@@ -15,10 +18,11 @@ interface StatusBadgeCellProps {
 // Every enum badge in the panel. Colour comes from lib/statusBadge.ts, so a
 // new status is a one-line change there, not a new component.
 const StatusBadgeCell = ({ status, tone, label, dot = false, className }: StatusBadgeCellProps) => {
+  const { translate } = useLocale();
   return (
     <Badge className={cn("gap-1 rounded-full border-transparent px-2 text-caption font-semibold", BADGE_TONE_CLASSES[tone ?? getStatusTone(status)], className)}>
       {dot && <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />}
-      {label ?? humanizeEnum(status)}
+      {translate(label ?? humanizeEnum(status))}
     </Badge>
   );
 };

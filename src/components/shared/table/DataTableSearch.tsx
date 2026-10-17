@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface DataTableSearchProps {
@@ -14,7 +15,9 @@ interface DataTableSearchProps {
   width?: "sm" | "md";
 }
 
-const DataTableSearch = ({ value, onDebouncedChange, placeholder = "Search...", debounceMs = 500, width = "md" }: DataTableSearchProps) => {
+const DataTableSearch = ({ value, onDebouncedChange, placeholder: placeholderKey = "Search...", debounceMs = 500, width = "md" }: DataTableSearchProps) => {
+  const { translate } = useLocale();
+  const placeholder = translate(placeholderKey);
   const [inputValue, setInputValue] = useState(value);
   const [syncedValue, setSyncedValue] = useState(value);
   const debounced = useDebouncedCallback((next: string) => onDebouncedChange(next.trim()), debounceMs);
@@ -54,7 +57,7 @@ const DataTableSearch = ({ value, onDebouncedChange, placeholder = "Search...", 
       />
       {inputValue && (
         <InputGroupAddon align="inline-end">
-          <InputGroupButton size="icon-xs" aria-label="Clear search" onClick={clear}>
+          <InputGroupButton size="icon-xs" aria-label={translate("Clear search")} onClick={clear}>
             <X aria-hidden="true" />
           </InputGroupButton>
         </InputGroupAddon>

@@ -23,7 +23,7 @@ export const buildAuditLogTableConfig = (admins: IAdminAccount[]): ServerDataTab
   filters: [
     { id: "adminUserId", type: "single-select", label: "Admin", allLabel: "Anyone", options: admins.map((admin) => ({ value: admin.id, label: admin.name })) },
     { id: "action", type: "single-select", label: "What they did", allLabel: "Anything", options: AUDIT_ACTION_OPTIONS },
-    { id: "entityType", type: "single-select", label: "On", allLabel: "Anything", options: RECORD_TYPE_OPTIONS },
+    { id: "entityType", type: "single-select", label: "On@@record", allLabel: "Anything", options: RECORD_TYPE_OPTIONS },
     { id: "createdAt", type: "date-range", label: "When" },
     { id: "sensitiveOnly", type: "toggle", label: "Sensitive only", align: "end" },
   ],

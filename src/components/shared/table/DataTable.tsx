@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import DataTableContent from "./DataTableContent";
 import DataTablePagination from "./DataTablePagination";
 import DataTableSelectionBar from "./DataTableSelectionBar";
@@ -35,6 +36,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     meta,
   } = props;
 
+  const { translate } = useLocale();
   const table = useDataTable(props);
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const totalRows = pagination ? (meta?.total ?? 0) : table.getFilteredRowModel().rows.length;
@@ -69,7 +71,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         ) : (
           (pager !== false || table.getPageCount() > 1) && <DataTablePagination table={table} totalRows={totalRows} />
         ))}
-      {footer && <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">{footer}</div>}
+      {footer && <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">{typeof footer === "string" ? translate(footer) : footer}</div>}
     </section>
   );
 };
