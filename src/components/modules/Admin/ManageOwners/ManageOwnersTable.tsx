@@ -52,6 +52,7 @@ const ManageOwnersTable = ({ canResetData }: { canResetData: boolean }) => {
         {...toTableQueryProps(query)}
         data={query.data?.data.items}
         columns={manageOwnersColumns}
+        layout={{ rowHeight: 58, actionsWidth: 190 }}
         getRowId={(row) => row.userId}
         actions={actions}
         emptyMessage="No owners match."

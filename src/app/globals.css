@@ -77,6 +77,9 @@
   --cat-4: #2558b8;
   --cat-5: #0b6f80;
   --cat-6: #b0477a;
+  /* The fifth avatar tint (rose), beside mint, blue, amber and violet. */
+  --rose: #b0477a;
+  --rose-soft: #f9e6ef;
 
   /* Elevation (exposed as shadow-card/float/overlay/button below; the raw
      values use another prefix so they don't collide with Tailwind's
@@ -282,6 +285,9 @@
   --color-night-amber: #f2b84b;
   --color-night-coral: #f08080;
   --color-night-ink: #0e1a16;
+  /* A list row under the pointer: the cream at 60% on the card, opaque so a
+     pinned cell can take it too. */
+  --color-row-hover: color-mix(in oklab, var(--cream) 60%, var(--surface));
   --color-forest-hover: var(--forest-hover);
   --color-emerald: var(--emerald);
   --color-emerald-hover: var(--emerald-hover);
@@ -318,6 +324,8 @@
   --color-pillar-money-soft: var(--pillar-money-soft);
   --color-pillar-loans: var(--pillar-loans);
   --color-pillar-loans-soft: var(--pillar-loans-soft);
+  --color-rose: var(--rose);
+  --color-rose-soft: var(--rose-soft);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);

@@ -62,6 +62,7 @@ const FeatureFlagsBoard = () => {
       <DataTable
         data={data ? shown : undefined}
         columns={columns}
+        layout={{ gap: 16, rowHeight: 66, headPadding: 12 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}

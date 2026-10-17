@@ -46,6 +46,7 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
     <DataTable
       data={data?.data}
       columns={columns}
+      layout={{ gap: 16, rowHeight: 52 }}
       getRowId={(row) => row.id}
       defaultHiddenColumns={TRANSLATIONS_HIDDEN_COLUMNS}
       initialPageSize={25}

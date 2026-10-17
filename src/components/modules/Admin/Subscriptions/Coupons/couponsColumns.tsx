@@ -1,17 +1,11 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import type { DataTableFilterConfig } from "@/components/shared/table/dataTable.types";
 import Localized from "@/components/shared/Localized";
 import { formatNumber } from "@/lib/number";
 import { COUPON_STATUS_LABEL, discountText, usesCap, validityText, worksOn } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
-import { COUPON_STATUSES, type ICoupon } from "@/types/coupon.types";
+import type { ICoupon } from "@/types/coupon.types";
 import T from "@/components/shared/T";
-
-// In-memory filters: `id` is the column to facet on.
-export const COUPON_FILTERS: DataTableFilterConfig[] = [
-  { id: "status", type: "multi-select", label: "Status", options: COUPON_STATUSES.map((value) => ({ value, label: COUPON_STATUS_LABEL[value] })) },
-];
 
 // The design's coupons list: the code as a dashed tag, what it takes off,
 // which plans, how used up it is, when it runs, and its status. Built per
@@ -39,6 +33,7 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     cell: ({ row }) => <span className="font-semibold">{<Localized>{(t) => discountText(row.original, t)}</Localized>}</span>,
     // Sort by the amount, not the formatted text.
     sortingFn: (a, b) => Number(a.original.discountValue) - Number(b.original.discountValue),
+    meta: { width: 110 },
   },
   {
     id: "plans",
@@ -46,6 +41,7 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     header: "Works on",
     enableSorting: false,
     cell: ({ row }) => <span className="text-ink-2">{<Localized>{(t) => worksOn(row.original.applicablePlans, planNames, t)}</Localized>}</span>,
+    meta: { width: 170 },
   },
   {
     id: "timesRedeemed",
@@ -81,14 +77,14 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
         </span>
       );
     },
-    meta: { exportValue: (row) => `${row.timesRedeemed} ${usesCap(row.maxRedemptions)}` },
+    meta: { width: 170, exportValue: (row) => `${row.timesRedeemed} ${usesCap(row.maxRedemptions)}` },
   },
   {
     id: "validUntil",
     accessorKey: "validUntil",
     header: "Valid",
     cell: ({ row }) => <span className="whitespace-nowrap text-ink-2">{validityText(row.original.validFrom, row.original.validUntil)}</span>,
-    meta: { exportValue: (row) => validityText(row.validFrom, row.validUntil) },
+    meta: { width: 170, exportValue: (row) => validityText(row.validFrom, row.validUntil) },
   },
   {
     id: "status",

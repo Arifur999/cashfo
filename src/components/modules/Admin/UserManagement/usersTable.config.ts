@@ -16,6 +16,6 @@ export const buildUsersTableConfig = (plans: IPlanOption[], statusCounts?: Recor
   search: { placeholder: "Search name, email, phone or workspace" },
   filters: [
     { id: "status", type: "tabs", label: "Status", options: enumTabs(OWNER_STATUSES, statusCounts) },
-    { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name })) },
+    { id: "planId", type: "single-select", label: "Plan", allLabel: "All plans", options: plans.map((plan) => ({ value: plan.id, label: plan.name })) },
   ],
 });

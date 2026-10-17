@@ -37,7 +37,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
         <RelativeTime value={row.original.createdAt} as="log" />
       </span>
     ),
-    meta: { exportValue: (row) => formatDateTime(row.createdAt) },
+    meta: { width: 100, exportValue: (row) => formatDateTime(row.createdAt) },
   },
   {
     id: "admin",
@@ -49,6 +49,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
         <span className="whitespace-nowrap text-ink">{row.original.adminUser.name}</span>
       </span>
     ),
+    meta: { width: 170 },
   },
   {
     id: "action",
@@ -60,6 +61,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
         <T>{auditActionLabel(row.original.action)}</T>
       </span>
     ),
+    meta: { width: 220 },
   },
   {
     id: "on",
@@ -72,6 +74,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
     accessorKey: "ipAddress",
     header: "IP address",
     cell: ({ row }) => <code className="font-mono text-small whitespace-nowrap text-ink-2">{row.original.ipAddress ?? "—"}</code>,
+    meta: { width: 130 },
   },
   {
     id: "open",
@@ -92,5 +95,6 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
     ),
     enableSorting: false,
     enableHiding: false,
+    meta: { width: 50 },
   },
 ];

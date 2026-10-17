@@ -24,6 +24,14 @@ const getFormatter = (currency: string, fractionDigits: number) => {
   return formatter;
 };
 
+// "৳ 299", "৳ 2,699.10": the paisa only when there are some, as the design
+// writes payments and prices in its lists.
+export const formatAmount = (amount: number | string | null | undefined, currency = DEFAULT_CURRENCY): string => {
+  const value = typeof amount === "string" ? Number(amount) : amount;
+  const safeValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  return formatCurrency(safeValue, currency, Number.isInteger(safeValue) ? 0 : 2);
+};
+
 // formatCurrency(1500) -> "৳ 1,500.00"; formatCurrency(5, "USD") -> "$5.00";
 // non-numeric input falls back to 0.
 export const formatCurrency = (amount: number | string | null | undefined, currency = DEFAULT_CURRENCY, fractionDigits = 2): string => {

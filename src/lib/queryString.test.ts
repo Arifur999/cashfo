@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildListQueryString, buildQueryString } from "./queryString";
+import { buildListQueryString, buildQueryString, buildTableQueryString } from "./queryString";
 
 describe("buildQueryString", () => {
   it("keeps only whitelisted keys (the API rejects unknown params)", () => {
@@ -33,5 +33,18 @@ describe("buildListQueryString", () => {
 
   it("falls back on invalid page/limit values", () => {
     expect(buildListQueryString({ page: "-2", limit: "abc" }, [], 10)).toBe("page=1&limit=10");
+  });
+});
+
+describe("buildTableQueryString defaults", () => {
+  const config = { queryKeys: ["search", "status"], defaults: { status: "ACTIVE" } } as const;
+
+  it("fills in the default while the URL names nothing", () => {
+    expect(buildTableQueryString(new URLSearchParams("search=rahim"), config)).toBe("page=1&limit=10&search=rahim&status=ACTIVE");
+    expect(buildTableQueryString({}, config)).toBe("page=1&limit=10&status=ACTIVE");
+  });
+
+  it("lets the URL choose another value", () => {
+    expect(buildTableQueryString({ status: "SUSPENDED", page: "2" }, config)).toBe("page=2&limit=10&status=SUSPENDED");
   });
 });

@@ -139,4 +139,5 @@ export const adminSupportDictionary: Record<string, string> = {
   "{count} votes": "{count}টি ভোট",
   'Move "{title}"': "\"{title}\" সরান",
   "Failed to update feature request": "ফিচারের অনুরোধ হালনাগাদ করা যায়নি",
+  "All open": "সব খোলা",
 };

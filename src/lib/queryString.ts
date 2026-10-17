@@ -62,7 +62,22 @@ export const buildListQueryString = (source: ParamsSource, keys: readonly string
   return `page=${page}&limit=${limit}${filters ? `&${filters}` : ""}`;
 };
 
+// What a list shows while the URL names nothing else ({ status: "ACTIVE" }
+// opens Owners on its Active tab).
+type Defaults = Readonly<Record<string, string>>;
+
+const withDefaults = (source: ParamsSource, defaults: Defaults | undefined): ParamsSource => {
+  const missing = Object.entries(defaults ?? {}).filter(([key]) => readAll(source, key).length === 0);
+  if (missing.length === 0) {
+    return source;
+  }
+  const record: SearchParamsRecord = Object.fromEntries(missing);
+  const keys = typeof (source as URLSearchParams).keys === "function" ? [...(source as URLSearchParams).keys()] : Object.keys(source as SearchParamsRecord);
+  for (const key of keys) record[key] = readAll(source, key);
+  return record;
+};
+
 // buildListQueryString driven by a table's config (ServerDataTableConfig),
 // so a page and its client table pass the exact same inputs.
-export const buildTableQueryString = (source: ParamsSource, config: { queryKeys: readonly string[]; defaultLimit?: number }) =>
-  buildListQueryString(source, config.queryKeys, config.defaultLimit);
+export const buildTableQueryString = (source: ParamsSource, config: { queryKeys: readonly string[]; defaultLimit?: number; defaults?: Defaults }) =>
+  buildListQueryString(withDefaults(source, config.defaults), config.queryKeys, config.defaultLimit);

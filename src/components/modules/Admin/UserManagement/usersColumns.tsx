@@ -15,14 +15,14 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     accessorKey: "name",
     header: "User",
     cell: ({ row }) => <UserInfoCell name={row.original.name} email={row.original.email} muted={row.original.status === "DELETED"} />,
-    // A long email must not push the other columns off the page.
-    meta: { exportValue: (row) => `${row.name} <${row.email}>`, cellClassName: "max-w-80" },
+    meta: { exportValue: (row) => `${row.name} <${row.email}>` },
   },
   {
     id: "phone",
     accessorKey: "phone",
     header: "Phone",
     cell: ({ row }) => <span className={row.original.phone ? "text-ink-2 tabular-nums" : "text-ink-muted"}>{row.original.phone ?? "—"}</span>,
+    meta: { width: 120 },
   },
   {
     id: "businessName",
@@ -34,19 +34,21 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
         {row.original.workspaceCount > 1 && <span className="shrink-0 rounded-full bg-surface-sunken px-2 text-caption font-semibold text-ink-2">+{row.original.workspaceCount - 1}</span>}
       </span>
     ),
-    meta: { exportValue: (row) => row.businessName ?? "" },
+    meta: { width: 170, exportValue: (row) => row.businessName ?? "" },
   },
   {
     id: "planName",
     accessorKey: "planName",
     header: "Plan",
     cell: ({ row }) => <PlanChipCell plan={row.original.planName} />,
+    meta: { width: 116 },
   },
   {
     id: "lastLoginAt",
     accessorKey: "lastLoginAt",
     header: "Last active",
     cell: ({ row }) => <DateCell date={row.original.lastLoginAt} relative />,
+    meta: { width: 124 },
   },
   {
     id: "daysUsing",
@@ -57,11 +59,13 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
         <Localized>{(t) => plural(t, row.original.daysUsing, "{count} day", "{count} days")}</Localized>
       </span>
     ),
+    meta: { width: 84 },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadgeCell status={row.original.status} dot />,
+    meta: { width: 96 },
   },
 ];

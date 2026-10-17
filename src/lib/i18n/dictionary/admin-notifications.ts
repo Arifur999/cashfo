@@ -46,7 +46,6 @@ export const adminNotificationsDictionary: Record<string, string> = {
 
   // Campaigns
   "New campaign": "নতুন ক্যাম্পেইন",
-  "Search campaigns": "ক্যাম্পেইন খুঁজুন",
   "No campaigns yet.": "এখনো কোনো ক্যাম্পেইন নেই।",
   Campaign: "ক্যাম্পেইন",
   "Who gets it": "কারা পাবেন",

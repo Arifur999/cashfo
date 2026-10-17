@@ -69,13 +69,14 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     accessorFn: (row) => (row.isEnabled ? "On" : "Off"),
     header: "On",
     cell: ({ row }) => <FeatureFlagSwitch flag={row.original} />,
+    meta: { width: 64 },
   },
   {
     id: "rolloutPercent",
     accessorKey: "rolloutPercent",
     header: "How many people",
     cell: ({ row }) => <RolloutCell flag={row.original} />,
-    meta: { exportValue: (row) => rolloutLabel(row) },
+    meta: { width: 170, exportValue: (row) => rolloutLabel(row) },
   },
   {
     id: "targets",
@@ -83,6 +84,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     header: "Plans",
     enableSorting: false,
     cell: ({ row }) => <TargetsCell flag={row.original} planNames={planNames} />,
+    meta: { width: 200 },
   },
   {
     id: "updatedAt",
@@ -96,7 +98,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
         </span>
       </span>
     ),
-    meta: { exportValue: (row) => formatDate(row.updatedAt) },
+    meta: { width: 150, exportValue: (row) => formatDate(row.updatedAt) },
   },
   {
     id: "edit",
@@ -116,5 +118,6 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     ),
     enableSorting: false,
     enableHiding: false,
+    meta: { width: 56 },
   },
 ];

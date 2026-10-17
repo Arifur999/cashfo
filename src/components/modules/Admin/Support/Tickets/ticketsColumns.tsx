@@ -32,6 +32,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
         <code className="font-mono text-small font-semibold text-ink-2">{shortTicketId(row.original.id)}</code>
       </span>
     ),
+    meta: { width: 64 },
   },
   {
     id: "subject",
@@ -45,7 +46,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
         <span className="truncate text-small text-ink-muted">{row.original.platformUser?.name ?? <T>Unknown person</T>}</span>
       </span>
     ),
-    meta: { exportValue: (row) => `${row.subject} (${row.platformUser?.name ?? "Unknown"})`, cellClassName: "max-w-96" },
+    meta: { exportValue: (row) => `${row.subject} (${row.platformUser?.name ?? "Unknown"})` },
   },
   {
     id: "category",
@@ -54,20 +55,21 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     cell: ({ row }) => <span className="text-small text-ink-2">
         <T>{humanizeEnum(row.original.category)}</T>
       </span>,
-    meta: { exportValue: (row) => humanizeEnum(row.category) },
+    meta: { width: 120, exportValue: (row) => humanizeEnum(row.category) },
   },
   {
     id: "priority",
     accessorKey: "priority",
     header: "Priority",
     cell: ({ row }) => <StatusBadgeCell status={row.original.priority} />,
+    meta: { width: 86 },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={TICKET_STATUS_LABEL[row.original.status]} />,
-    meta: { exportValue: (row) => TICKET_STATUS_LABEL[row.status] },
+    meta: { width: 130, exportValue: (row) => TICKET_STATUS_LABEL[row.status] },
   },
   {
     id: "assignee",
@@ -84,6 +86,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
         </span>
       );
     },
+    meta: { width: 150 },
   },
   {
     id: "lastMessageAt",
@@ -93,6 +96,6 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
       const late = isLate(row.original);
       return <span className={cn("text-small whitespace-nowrap", late ? "font-bold text-expense" : "font-medium text-ink-muted")}><RelativeTime value={row.original.lastMessageAt ?? row.original.updatedAt} as="elapsed" /></span>;
     },
-    meta: { align: "right", exportValue: (row) => formatDateTime(row.lastMessageAt ?? row.updatedAt) },
+    meta: { width: 92, align: "right", exportValue: (row) => formatDateTime(row.lastMessageAt ?? row.updatedAt) },
   },
 ];

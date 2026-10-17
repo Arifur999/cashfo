@@ -17,7 +17,6 @@ export const adminContentDictionary: Record<string, string> = {
   "Users see one banner at a time, newest first": "ব্যবহারকারীরা একবারে একটি ব্যানার দেখেন, নতুনটি আগে",
   "Nothing is showing right now.": "এই মুহূর্তে কিছুই দেখা যাচ্ছে না।",
   "New announcement": "নতুন ঘোষণা",
-  "Search announcements": "ঘোষণা খুঁজুন",
   "No announcements yet.": "এখনো কোনো ঘোষণা নেই।",
   "Shown to": "কারা দেখেন",
   Title: "শিরোনাম",
