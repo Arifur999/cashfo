@@ -1,33 +1,26 @@
-import { AlertTriangle, Info, Megaphone, Wrench, type LucideIcon } from "lucide-react";
-import { BADGE_TONE_CLASSES, getStatusTone } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 import type { AnnouncementType } from "@/types/announcement.types";
-
-const TYPE_ICONS: Record<AnnouncementType, LucideIcon> = {
-  INFO: Info,
-  WARNING: AlertTriangle,
-  PROMOTION: Megaphone,
-  MAINTENANCE: Wrench,
-};
+import { ANNOUNCEMENT_TYPE_META } from "./announcementOptions";
 
 interface AnnouncementPreviewProps {
   type: AnnouncementType;
   title: string;
   body: string;
+  className?: string;
 }
 
-// Roughly how the banner reads in the app, so the admin sees the tone and
-// length of the message while writing it.
-const AnnouncementPreview = ({ type, title, body }: AnnouncementPreviewProps) => {
-  const Icon = TYPE_ICONS[type];
+// The banner as the app shows it: the kind's icon and colour, the title
+// in bold and the message after it.
+const AnnouncementPreview = ({ type, title, body, className }: AnnouncementPreviewProps) => {
+  const { icon: Icon, banner } = ANNOUNCEMENT_TYPE_META[type];
 
   return (
-    <div aria-label="Banner preview" className={cn("flex gap-3 rounded-xl px-4 py-3", BADGE_TONE_CLASSES[getStatusTone(type)])}>
-      <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-      <div className="min-w-0 space-y-0.5 text-sm">
-        <p className="font-semibold break-words">{title || "Announcement title"}</p>
-        <p className="break-words whitespace-pre-wrap opacity-90">{body || "The message users will see."}</p>
-      </div>
+    <div aria-label="Banner preview" className={cn("flex items-center gap-3 rounded-md border px-3 py-3", banner, className)}>
+      <Icon className="size-4.5 shrink-0" aria-hidden="true" />
+      <p className="min-w-0 text-body leading-snug text-ink">
+        <b className="font-semibold">{title || "The title"}</b>
+        {(body || !title) && <span className="text-ink-2"> · {body || "The message people will read."}</span>}
+      </p>
     </div>
   );
 };
