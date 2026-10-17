@@ -2,11 +2,25 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { auditActionLabel } from "@/lib/auditActionLabels";
 import { isSensitiveAuditEntry } from "@/lib/auditDiff";
 import { auditOnText } from "@/lib/auditRecords";
-import { formatDateTime, formatLogTime } from "@/lib/date";
+import { formatDateTime } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import AdminAvatar from "../AdminAvatar";
 import SensitiveMarker from "./SensitiveMarker";
+import T from "@/components/shared/T";
+import RelativeTime from "@/components/shared/RelativeTime";
+
+// The record and what changed, in the reader's language.
+const OnCell = ({ entry }: { entry: IAuditLogEntry }) => {
+  const { translate } = useLocale();
+  const text = auditOnText(entry, translate);
+  return (
+    <span className="block max-w-100 truncate text-ink-2" title={text}>
+      {text}
+    </span>
+  );
+};
 
 // A sign-in is routine; it reads quieter than a change.
 const QUIET_ACTIONS = new Set(["ADMIN_LOGIN"]);
@@ -20,7 +34,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
     header: "When",
     cell: ({ row }) => (
       <span className="text-small whitespace-nowrap text-ink-2" title={formatDateTime(row.original.createdAt)}>
-        {formatLogTime(row.original.createdAt)}
+        <RelativeTime value={row.original.createdAt} as="log" />
       </span>
     ),
     meta: { exportValue: (row) => formatDateTime(row.createdAt) },
@@ -43,22 +57,15 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
     cell: ({ row }) => (
       <span className={cn("flex items-center gap-2 font-semibold", QUIET_ACTIONS.has(row.original.action) ? "text-ink-muted" : "text-ink")}>
         {isSensitiveAuditEntry(row.original.newValue) && <SensitiveMarker />}
-        {auditActionLabel(row.original.action)}
+        <T>{auditActionLabel(row.original.action)}</T>
       </span>
     ),
   },
   {
     id: "on",
-    accessorFn: auditOnText,
+    accessorFn: (row) => auditOnText(row),
     header: "On@@record",
-    cell: ({ row }) => {
-      const text = auditOnText(row.original);
-      return (
-        <span className="block max-w-100 truncate text-ink-2" title={text}>
-          {text}
-        </span>
-      );
-    },
+    cell: ({ row }) => <OnCell entry={row.original} />,
   },
   {
     id: "ipAddress",
@@ -68,7 +75,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
   },
   {
     id: "open",
-    header: () => <span className="sr-only">Open</span>,
+    header: () => <span className="sr-only"><T>Open</T></span>,
     cell: ({ row }) => (
       <span className="flex justify-end">
         <button
@@ -79,7 +86,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
             onOpen(row.original);
           }}
         >
-          Open
+          <T>Open</T>
         </button>
       </span>
     ),

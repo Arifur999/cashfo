@@ -5,6 +5,7 @@ import DataTableRowActions from "@/components/shared/table/DataTableRowActions";
 import { Button } from "@/components/ui/button";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import type { AdminDialog } from "./AdminDialogs";
+import T from "@/components/shared/T";
 
 interface AdminRowActionsProps {
   admin: IAdminAccount;
@@ -31,7 +32,7 @@ const AdminRowActions = ({ admin, isSelf, onOpen }: AdminRowActionsProps) => {
         className="h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold whitespace-nowrap text-ink hover:bg-cream"
         onClick={() => onOpen(primary.dialog, admin)}
       >
-        {primary.label}
+        <T>{primary.label}</T>
       </Button>
       {!isSelf && !suspended && (
         <DataTableRowActions

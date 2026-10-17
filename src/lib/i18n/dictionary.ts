@@ -6,6 +6,7 @@
 // takes the value spread last below.
 import { bnAuthDictionary } from "./authDictionary";
 import { adminDashboardDictionary } from "./dictionary/admin-dashboard";
+import { adminSecurityDictionary } from "./dictionary/admin-security";
 import { adminSharedDictionary } from "./dictionary/admin-shared";
 import { assetsDictionary } from "./dictionary/assets";
 import { balanceDictionary } from "./dictionary/balance";
@@ -81,6 +82,7 @@ const adminDictionaries: Record<string, string> = {
   ...adminSharedDictionary,
   ...bnAdminDictionary,
   ...adminDashboardDictionary,
+  ...adminSecurityDictionary,
 };
 
 export const bnDictionary: Record<string, string> = {

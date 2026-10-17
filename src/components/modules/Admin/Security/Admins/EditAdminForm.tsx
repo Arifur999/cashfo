@@ -11,6 +11,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import { type IUpdateAdminFormValues, updateAdminFormZodSchema } from "@/zod/adminAccount.validation";
 import { ADMIN_ROLE_OPTIONS } from "./adminOptions";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const { shape } = updateAdminFormZodSchema;
 
@@ -22,9 +23,10 @@ interface EditAdminFormProps {
 }
 
 const EditAdminForm = ({ admin, isSelf, onDone }: EditAdminFormProps) => {
+  const { translate } = useLocale();
   const { run, isPending } = useActionMutation({
     action: (values: IUpdateAdminFormValues) => updateAdminAction(admin.id, values),
-    successMessage: (updated) => `${updated.name} updated`,
+    successMessage: (updated) => translate("{name} updated", { name: updated.name }),
     invalidateKeys: [queryKeys.admins.all],
     refreshRoute: false,
   });

@@ -1,10 +1,14 @@
+"use client";
+
 import { Check, Eye } from "lucide-react";
 import Card from "@/components/smartly/Card";
 import { ADMIN_ROLE_CHIP, ADMIN_ROLE_SHORT_LABELS } from "@/lib/adminRoles";
 import { ROLE_ACCESS_LABEL, ROLE_PERMISSIONS, type RoleAccess } from "@/lib/rolePermissions";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { upperFirst } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { ADMIN_ROLES } from "@/types/adminAccount.types";
+import T from "@/components/shared/T";
 
 const GRID = "grid min-w-180 grid-cols-[minmax(0,1fr)_repeat(4,130px)] items-center px-5";
 const KEY: RoleAccess[] = ["do", "look", "none"];
@@ -30,43 +34,50 @@ const AccessMark = ({ access, size = "md" }: { access: RoleAccess; size?: "sm" |
 // Security > Roles: what each admin role may do, area by area, as the panel
 // and the API enforce it today.
 const RolesMatrix = () => {
+  const { translate } = useLocale();
   return (
     <Card padding="none" className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
         <div className="flex flex-col gap-0.5">
           <h2 id="roles-title" className="text-title text-ink">
-            What each role can do
+            <T>What each role can do</T>
           </h2>
-          <p className="text-small text-ink-muted">This is what the server allows today. Changing it needs a code change for now.</p>
+          <p className="text-small text-ink-muted"><T>This is what the server allows today. Changing it needs a code change for now.</T></p>
         </div>
-        <ul aria-label="Key" className="flex flex-wrap gap-4 text-small whitespace-nowrap text-ink-2">
+        <ul aria-label={translate("Key")} className="flex flex-wrap gap-4 text-small whitespace-nowrap text-ink-2">
           {KEY.map((access) => (
             <li key={access} className="flex items-center gap-1">
               <AccessMark access={access} size="sm" />
-              {upperFirst(ROLE_ACCESS_LABEL[access])}
+              {upperFirst(translate(ROLE_ACCESS_LABEL[access]))}
             </li>
           ))}
         </ul>
       </div>
       <div role="table" aria-labelledby="roles-title" className="overflow-x-auto">
         <div role="row" className={cn(GRID, "border-y border-line bg-cream py-3 text-small font-semibold text-ink-2")}>
-          <span role="columnheader">Area</span>
+          <span role="columnheader"><T>Area</T></span>
           {ADMIN_ROLES.map((role) => (
             <span role="columnheader" key={role} className="text-center">
-              <span className={cn("rounded-full px-2 py-0.5", ADMIN_ROLE_CHIP[role])}>{ADMIN_ROLE_SHORT_LABELS[role]}</span>
+              <span className={cn("rounded-full px-2 py-0.5", ADMIN_ROLE_CHIP[role])}><T>{ADMIN_ROLE_SHORT_LABELS[role]}</T></span>
             </span>
           ))}
         </div>
         {ROLE_PERMISSIONS.map((row) => (
           <div role="row" key={row.area} className={cn(GRID, "min-h-11.5 border-b border-surface-sunken py-1 text-body last:border-b-0")}>
             <span role="rowheader" className="flex flex-col">
-              <span className="font-medium text-ink">{row.area}</span>
-              {row.note && <span className="text-caption text-ink-muted">{row.note}</span>}
+              <span className="font-medium text-ink">
+                <T>{row.area}</T>
+              </span>
+              {row.note && (
+                <span className="text-caption text-ink-muted">
+                  <T>{row.note}</T>
+                </span>
+              )}
             </span>
             {ADMIN_ROLES.map((role) => (
-              <span role="cell" key={role} className="flex justify-center" title={`${ADMIN_ROLE_SHORT_LABELS[role]}: ${ROLE_ACCESS_LABEL[row.access[role]]}`}>
+              <span role="cell" key={role} className="flex justify-center" title={`${translate(ADMIN_ROLE_SHORT_LABELS[role])}: ${translate(ROLE_ACCESS_LABEL[row.access[role]])}`}>
                 <AccessMark access={row.access[role]} />
-                <span className="sr-only">{ROLE_ACCESS_LABEL[row.access[role]]}</span>
+                <span className="sr-only"><T>{ROLE_ACCESS_LABEL[row.access[role]]}</T></span>
               </span>
             ))}
           </div>

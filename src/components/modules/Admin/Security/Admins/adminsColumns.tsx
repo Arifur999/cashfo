@@ -1,12 +1,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { ADMIN_ROLE_CHIP, ADMIN_ROLE_SHORT_LABELS } from "@/lib/adminRoles";
-import { formatDateTime, formatRelativeDay } from "@/lib/date";
+import { formatDateTime } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import AdminAvatar from "../AdminAvatar";
 import type { AdminDialog } from "./AdminDialogs";
 import AdminRowActions from "./AdminRowActions";
+import T from "@/components/shared/T";
+import RelativeTime from "@/components/shared/RelativeTime";
 
 const STATUS_LABEL: Record<IAdminAccount["status"], string> = { ACTIVE: "Active", SUSPENDED: "Suspended" };
 
@@ -27,7 +29,12 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
           <span className="flex min-w-0 flex-col gap-px">
             <span className={cn("truncate font-semibold", suspended ? "text-ink-muted" : "text-ink")}>
               {admin.name}
-              {admin.id === currentAdminId && " (you)"}
+              {admin.id === currentAdminId && (
+                <>
+                  {" "}
+                  <T>(you)</T>
+                </>
+              )}
             </span>
             <span className="truncate text-small text-ink-muted">{admin.email}</span>
           </span>
@@ -42,7 +49,7 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
     header: "Role",
     cell: ({ row }) => (
       <span className={cn("inline-flex rounded-full px-2 py-0.5 text-caption font-semibold whitespace-nowrap", ADMIN_ROLE_CHIP[row.original.role])}>
-        {ADMIN_ROLE_SHORT_LABELS[row.original.role]}
+        <T>{ADMIN_ROLE_SHORT_LABELS[row.original.role]}</T>
       </span>
     ),
   },
@@ -52,7 +59,7 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
     header: "Last sign-in",
     cell: ({ row }) => (
       <span className="text-small whitespace-nowrap text-ink-2" title={row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : undefined}>
-        {row.original.lastLoginAt ? formatRelativeDay(row.original.lastLoginAt) : "Never"}
+        {row.original.lastLoginAt ? <RelativeTime value={row.original.lastLoginAt} as="day" /> : <T>Never</T>}
       </span>
     ),
     meta: { exportValue: (row) => (row.lastLoginAt ? formatDateTime(row.lastLoginAt) : "Never") },

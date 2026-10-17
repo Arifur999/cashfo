@@ -5,11 +5,14 @@ import Link from "next/link";
 import { updateFlagStatusAction } from "@/app/(dashboardLayout)/admin/security/(sections)/flags/_action";
 import { Button } from "@/components/ui/button";
 import { useActionMutation } from "@/hooks/useActionMutation";
-import { formatRecentDateTime } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
 import { FLAG_STATUS_CHIP, FLAG_STATUS_LABEL, FLAG_TYPE_LABEL, flagClosedBy, flagDetails, flagNextStep, flagTriesLink, isOpenFlag, SEVERITY_META } from "@/lib/securityFlags";
 import { cn } from "@/lib/utils";
 import type { FlagStatus, ISecurityFlag, SuspiciousActivityType } from "@/types/securityFlag.types";
+import T from "@/components/shared/T";
+import RelativeTime from "@/components/shared/RelativeTime";
+import { asStatus } from "@/lib/i18n/message";
 
 const TYPE_ICON: Record<SuspiciousActivityType, LucideIcon> = {
   MULTIPLE_FAILED_LOGINS: Lock,
@@ -37,9 +40,10 @@ const FlagCard = ({ flag }: { flag: ISecurityFlag }) => {
   const severity = SEVERITY_META[flag.severity];
   const Icon = TYPE_ICON[flag.type];
   const next = flagNextStep(flag);
-  const tries = flagTriesLink(flag);
-  const details = flagDetails(flag);
-  const closedBy = flagClosedBy(flag);
+  const { translate } = useLocale();
+  const tries = flagTriesLink(flag, translate);
+  const details = flagDetails(flag, { t: translate });
+  const closedBy = flagClosedBy(flag, { t: translate });
 
   const { run, isPending } = useActionMutation({
     action: (status: FlagStatus) => updateFlagStatusAction(flag.id, { status }),
@@ -60,9 +64,12 @@ const FlagCard = ({ flag }: { flag: ISecurityFlag }) => {
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         <span className="flex flex-wrap items-center gap-2">
-          <span className={cn("rounded-full px-2 py-px text-caption font-bold tracking-wide", severity.chip)}>{flag.severity}</span>
-          <b className="text-body font-semibold text-ink">{FLAG_TYPE_LABEL[flag.type]}</b>
-          <span className="text-small text-ink-muted">· {formatRecentDateTime(flag.createdAt)}</span>
+          <span className={cn("rounded-full px-2 py-px text-caption font-bold tracking-wide", severity.chip)}>
+            <T>{flag.severity}</T>
+          </span>
+          <b className="text-body font-semibold text-ink"><T>{FLAG_TYPE_LABEL[flag.type]}</T></b>
+          <span className="text-small text-ink-muted">· <RelativeTime value={flag.createdAt} as="recent" />
+          </span>
         </span>
         <p className="text-body leading-normal text-ink">{flag.description}</p>
         {(details || tries) && (
@@ -77,7 +84,7 @@ const FlagCard = ({ flag }: { flag: ISecurityFlag }) => {
         )}
       </div>
       <div className="col-span-2 flex flex-col items-start gap-2 sm:col-span-1 sm:items-end">
-        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold whitespace-nowrap", FLAG_STATUS_CHIP[flag.status])}>{FLAG_STATUS_LABEL[flag.status]}</span>
+        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold whitespace-nowrap", FLAG_STATUS_CHIP[flag.status])}><T>{asStatus(FLAG_STATUS_LABEL[flag.status])}</T></span>
         {open && next && (
           <span className="flex gap-2">
             <Button
@@ -88,10 +95,10 @@ const FlagCard = ({ flag }: { flag: ISecurityFlag }) => {
               className={cn(SMALL_BUTTON, "border-line-strong bg-surface text-ink hover:bg-cream")}
               onClick={() => void run("FALSE_POSITIVE")}
             >
-              False alarm
+              <T>False alarm</T>
             </Button>
             <Button type="button" size="sm" disabled={isPending} className={SMALL_BUTTON} onClick={() => void run(next.status)}>
-              {next.label}
+              <T>{next.label}</T>
             </Button>
           </span>
         )}

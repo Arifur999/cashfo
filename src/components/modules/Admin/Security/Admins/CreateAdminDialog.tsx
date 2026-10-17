@@ -6,6 +6,7 @@ import TemporaryPasswordDialog from "@/components/shared/dialog/TemporaryPasswor
 import { Button } from "@/components/ui/button";
 import type { ICreatedAdmin } from "@/types/adminAccount.types";
 import CreateAdminForm from "./CreateAdminForm";
+import T from "@/components/shared/T";
 
 // Creating an account hands back a temporary password, revealed once in a
 // follow-up dialog.
@@ -23,7 +24,7 @@ const CreateAdminDialog = () => {
         size="sm"
         trigger={
           <Button size="lg" className="font-semibold shadow-button">
-            Add an admin
+            <T>Add an admin</T>
           </Button>
         }
       >
