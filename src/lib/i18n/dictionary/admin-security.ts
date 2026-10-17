@@ -292,7 +292,6 @@ export const adminSecurityDictionary: Record<string, string> = {
   "Where you're signed in": "যেসব ডিভাইসে সাইন ইন আছে",
   "Sign out other devices": "অন্য ডিভাইস থেকে সাইন আউট",
   "This device": "এই ডিভাইস",
-  "signed in {when}": "সাইন ইন: {when}",
   "{count} other device signed out": "অন্য {count}টি ডিভাইস থেকে সাইন আউট হয়েছে",
   "{count} other devices signed out": "অন্য {count}টি ডিভাইস থেকে সাইন আউট হয়েছে",
   "No other device was signed in": "অন্য কোনো ডিভাইসে সাইন ইন ছিল না",
@@ -306,4 +305,10 @@ export const adminSecurityDictionary: Record<string, string> = {
   Everything: "সবকিছু",
   "{count} entry today · newest first": "আজ {count}টি এন্ট্রি · নতুনগুলো আগে",
   "{count} entries today · newest first": "আজ {count}টি এন্ট্রি · নতুনগুলো আগে",
+  "this computer": "এই কম্পিউটার",
+  "this phone": "এই ফোন",
+  "{time} ago": "{time} আগে",
+  "Signed in {when}": "{when}-এ সাইন ইন",
+  "Unknown place": "অজানা জায়গা",
+  Now: "এখন",
 };

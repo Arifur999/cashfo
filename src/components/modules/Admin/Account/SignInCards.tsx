@@ -6,12 +6,11 @@ import { signOutOtherDevicesAction } from "@/app/(dashboardLayout)/admin/account
 import Card from "@/components/smartly/Card";
 import { Button } from "@/components/ui/button";
 import { useActionMutation } from "@/hooks/useActionMutation";
-import { formatDateTime, formatLogTime, formatRelativeDay } from "@/lib/date";
+import { formatDateTime, formatElapsed, formatRelativeDateTime } from "@/lib/date";
 import { failureReasonLabel } from "@/lib/loginAttempts";
 import { queryKeys } from "@/lib/queryKeys";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural } from "@/lib/i18n/message";
-import { lowerFirst } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { mySessionsQuery, mySignInsQuery } from "@/queries/myAccount.queries";
 import T from "@/components/shared/T";
@@ -59,18 +58,16 @@ export const DevicesCard = () => {
                 <Icon aria-hidden="true" className="size-4.5" />
               </span>
               <span className="flex min-w-0 grow flex-col">
-                <span className="truncate text-body font-semibold text-ink">{session.deviceLabel}</span>
-                <span className="truncate text-small text-ink-muted">
-                  {[
-                    session.ipAddress && translate("IP {ip}", { ip: session.ipAddress }),
-                    translate("signed in {when}", { when: lowerFirst(formatRelativeDay(session.signedInAt, { t: translate })) }),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
+                {/* "Chrome on Windows · this computer", then where: "Bangladesh · 203.0.113.24". */}
+                <span className="truncate text-body font-semibold text-ink">
+                  {session.current ? `${session.deviceLabel} · ${translate(isPhone(session.deviceLabel) ? "this phone" : "this computer")}` : session.deviceLabel}
+                </span>
+                <span className="truncate text-small text-ink-muted tabular-nums" title={translate("Signed in {when}", { when: formatDateTime(session.signedInAt) })}>
+                  {[session.place, session.ipAddress].filter(Boolean).join(" · ") || translate("Unknown place")}
                 </span>
               </span>
               <span className={cn("shrink-0 text-small font-semibold", session.current ? "text-emerald" : "text-ink-muted")} title={formatDateTime(session.lastActiveAt)}>
-                {session.current ? translate("This device") : formatLogTime(session.lastActiveAt, { t: translate })}
+                {session.current ? translate("Now") : translate("{time} ago", { time: formatElapsed(session.lastActiveAt, { t: translate }) })}
               </span>
             </li>
           );
@@ -106,12 +103,12 @@ export const RecentSignInsCard = () => {
               >
                 {attempt.success ? <Check className="size-3.5" strokeWidth={2.5} /> : <X className="size-3.5" strokeWidth={2.5} />}
               </span>
-              <span className="min-w-0 grow truncate text-ink">
-                {attempt.success ? translate("Signed in") : failureReasonLabel(attempt.failureReason, translate)} · {attempt.deviceLabel}
+              <span className="min-w-0 grow truncate text-ink" title={attempt.deviceLabel}>
+                {attempt.success ? translate("Signed in") : failureReasonLabel(attempt.failureReason, translate)}
               </span>
-              <code className="shrink-0 font-mono text-caption text-ink-muted">{attempt.ipAddress}</code>
+              <span className="shrink-0 text-ink-muted tabular-nums">{attempt.ipAddress}</span>
               <span className="w-30 shrink-0 text-right text-ink-muted" title={formatDateTime(attempt.createdAt)}>
-                {formatLogTime(attempt.createdAt, { t: translate })}
+                {formatRelativeDateTime(attempt.createdAt, { t: translate })}
               </span>
             </li>
           ))}

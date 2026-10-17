@@ -4,6 +4,8 @@ export interface IMySession {
   // "Chrome on Windows", from the user agent.
   deviceLabel: string;
   ipAddress: string | null;
+  // The country the address is in, when it can be placed.
+  place: string | null;
   signedInAt: string;
   lastActiveAt: string;
   // The device this page is open on.
