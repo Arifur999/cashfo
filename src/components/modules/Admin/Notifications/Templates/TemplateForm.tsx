@@ -16,6 +16,8 @@ import type { INotificationTemplate } from "@/types/notification.types";
 import { type INotificationTemplateFormValues, notificationTemplateFormZodSchema } from "@/zod/notification.validation";
 import { CHANNEL_META, SAMPLE_VALUES, templateWhen } from "../notificationOptions";
 import VariableChips from "./VariableChips";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const { shape } = notificationTemplateFormZodSchema;
 
@@ -31,6 +33,7 @@ interface TemplateFormProps {
 // real-looking person. Every {{placeholder}} must be one of the template's
 // declared variables, or users would receive it verbatim.
 const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
+  const { translate } = useLocale();
   const isEmail = template.channel === "EMAIL";
   const { label: channel, chip } = CHANNEL_META[template.channel];
   // Where a tapped variable goes: the field last typed in.
@@ -39,7 +42,7 @@ const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
 
   const { run, isPending } = useActionMutation({
     action: (values: INotificationTemplateFormValues) => updateNotificationTemplateAction(template.id, { ...values, isEmail }),
-    successMessage: (saved) => `Saved ${saved.key}`,
+    successMessage: (saved) => translate("Saved {key}", { key: saved.key }),
     invalidateKeys: [queryKeys.notificationTemplates.all],
     refreshRoute: false,
   });
@@ -67,13 +70,15 @@ const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
         <div className="flex grow flex-col gap-0.5">
           <h2 className="font-mono text-title text-ink">{template.key}</h2>
           <span className="text-small text-ink-muted">
-            {channel} · {templateWhen(template.key)}
+            <T>{channel}</T> · <T>{templateWhen(template.key)}</T>
           </span>
         </div>
         <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", template.isActive ? "bg-mint-50 text-emerald" : "bg-surface-sunken text-ink-2")}>
-          {template.isActive ? "On" : "Off"}
+          <T>{template.isActive ? "On" : "Off"}</T>
         </span>
-        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", chip)}>{channel}</span>
+        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", chip)}>
+          <T>{channel}</T>
+        </span>
       </div>
       <div className="grid gap-4 px-5 py-4 sm:grid-cols-2">
         {isEmail && (
@@ -117,9 +122,9 @@ const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
       <form.Subscribe selector={(state) => [state.values.subjectEn, state.values.bodyEn] as const}>
         {([subjectEn, bodyEn]) => (
           <div className="mx-4 mb-4 flex flex-col gap-2 rounded-md border border-line bg-cream p-4">
-            <span className="text-caption font-semibold text-ink-muted">Preview with a real user</span>
-            {isEmail && <b className="text-body font-semibold text-ink">{fillPlaceholders(subjectEn, SAMPLE_VALUES) || "No subject yet"}</b>}
-            <span className="text-body leading-relaxed whitespace-pre-wrap text-ink-2">{fillPlaceholders(bodyEn, SAMPLE_VALUES) || "No message yet"}</span>
+            <span className="text-caption font-semibold text-ink-muted"><T>Preview with a real user</T></span>
+            {isEmail && <b className="text-body font-semibold text-ink">{fillPlaceholders(subjectEn, SAMPLE_VALUES) || <T>No subject yet</T>}</b>}
+            <span className="text-body leading-relaxed whitespace-pre-wrap text-ink-2">{fillPlaceholders(bodyEn, SAMPLE_VALUES) || <T>No message yet</T>}</span>
           </div>
         )}
       </form.Subscribe>
@@ -127,9 +132,9 @@ const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
         <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>
           {([isDirty, isSubmitting]) => (
             <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-5 py-3">
-              {isDirty && <span className="mr-auto text-small text-warning">Unsaved changes</span>}
+              {isDirty && <span className="mr-auto text-small text-warning"><T>Unsaved changes</T></span>}
               <AppSubmitButton isPending={isPending || isSubmitting} disabled={!isDirty} pendingLabel="Saving..." className="h-9 w-auto rounded-md bg-emerald px-4 text-small font-semibold text-white hover:bg-forest">
-                Save template
+                <T>Save template</T>
               </AppSubmitButton>
             </div>
           )}
