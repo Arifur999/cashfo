@@ -5,7 +5,7 @@ import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { buildTableQueryString } from "@/lib/queryString";
 import { adminAccountsQuery, auditLogsListQuery } from "@/queries/security.queries";
 
-export const metadata: Metadata = { title: "Audit Log" };
+export const metadata: Metadata = { title: "Audit log" };
 
 const AuditLogPage = async ({ searchParams }: PageProps<"/admin/security">) => {
   const queryString = buildTableQueryString(await searchParams, AUDIT_LOG_TABLE_BASE_CONFIG);

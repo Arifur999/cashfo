@@ -36,6 +36,8 @@ const ACTION_LABELS: Record<string, string> = {
   NOTIFICATION_TEMPLATE_UPDATED: "Updated a notification template",
   CAMPAIGN_CANCELLED: "Cancelled a notification campaign",
   PLATFORM_SETTINGS_UPDATED: "Updated platform settings",
+  SECURITY_CHECK_RUN: "Ran a security check",
+  SECURITY_FLAG_UPDATED: "Reviewed suspicious activity",
 };
 
 export function auditActionLabel(action: string): string {

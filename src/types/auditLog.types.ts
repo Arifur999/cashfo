@@ -1,3 +1,5 @@
+import type { AdminRole } from "./auth.types";
+
 export interface IAuditLogEntry {
   id: string;
   adminUserId: string;
@@ -10,5 +12,8 @@ export interface IAuditLogEntry {
   newValue: unknown;
   ipAddress: string | null;
   createdAt: string;
-  adminUser: { id: string; name: string };
+  adminUser: { id: string; name: string; role: AdminRole };
+  // What a person calls the record ("Yearly Pro", a payment's payer, a
+  // ticket's subject); null when it is gone or has no single id.
+  entityLabel: string | null;
 }
