@@ -38,7 +38,7 @@ const HealthCard = ({ service }: { service: ServiceHealth }) => {
           <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", DOT[service.tone])} />
           {service.state}
         </span>
-        <span className="truncate text-small text-ink-muted">{service.sub}</span>
+        <span className="text-small text-ink-muted">{service.sub}</span>
       </span>
     </Card>
   );

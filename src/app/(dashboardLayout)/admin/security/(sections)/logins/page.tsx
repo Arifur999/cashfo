@@ -18,7 +18,9 @@ const SignInsPage = async ({ searchParams }: PageProps<"/admin/security/logins">
     >
       <div className="space-y-4">
         <LoginKpis />
-        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+        {/* The table needs about 800px for its four columns, so the side
+            card only sits beside it on wide screens (the design's 1440). */}
+        <div className="grid items-start gap-4 min-[1400px]:grid-cols-[minmax(0,1fr)_320px]">
           <LoginAttemptsTable />
           <FailingNetworks />
         </div>

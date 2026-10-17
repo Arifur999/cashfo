@@ -68,7 +68,7 @@ const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSetti
           {canManage && (
             <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>
               {([isDirty, isSubmitting]) => (
-                <span className="flex gap-2">
+                <span className="ml-auto flex gap-2">
                   <Button
                     type="button"
                     variant="outline"
