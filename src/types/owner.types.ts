@@ -20,6 +20,13 @@ export interface IOwnerOverviewItem {
   status: OwnerStatus;
 }
 
+// One page of the list, with how many owners each status holds under the
+// same search and plan filter (the status tabs).
+export interface IOwnersPage {
+  items: IOwnerOverviewItem[];
+  statusCounts: Record<OwnerStatus, number>;
+}
+
 export interface IOwnerActivityLogEntry {
   id: string;
   action: string;

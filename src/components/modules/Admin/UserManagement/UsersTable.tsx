@@ -2,19 +2,20 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowLeftRight, ShieldOff, UserCheck } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
+import { buildTableQueryString } from "@/lib/queryString";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { ownersListQuery } from "@/queries/owner.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import type { IOwnerOverviewItem, OwnerDialog } from "@/types/owner.types";
 import OwnerDialogs from "./OwnerDialogs";
 import { USERS_HIDDEN_COLUMNS, usersColumns } from "./usersColumns";
-import { buildUsersTableConfig } from "./usersTable.config";
+import { buildUsersTableConfig, USERS_TABLE_BASE_CONFIG } from "./usersTable.config";
 
 const detailHref = (row: IOwnerOverviewItem) => `/admin/users/${row.userId}`;
 
@@ -22,12 +23,17 @@ const detailHref = (row: IOwnerOverviewItem) => `/admin/users/${row.userId}`;
 // others got a 403 after clicking.
 const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boolean; canChangePlan: boolean }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: plansResponse } = useQuery(plansQuery());
   const plans = useMemo(() => plansResponse?.data ?? [], [plansResponse]);
-  const config = useMemo(() => buildUsersTableConfig(plans), [plans]);
 
-  const { queryString, dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config);
+  // The same query string the page prefetched with; the table's own config
+  // waits for the plans and this page's status counts, which its tabs show.
+  const queryString = buildTableQueryString(searchParams, USERS_TABLE_BASE_CONFIG);
   const query = useQuery({ ...ownersListQuery(queryString), placeholderData: keepPreviousData });
+  const statusCounts = query.data?.data.statusCounts;
+  const config = useMemo(() => buildUsersTableConfig(plans, statusCounts), [plans, statusCounts]);
+  const { dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config);
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IOwnerOverviewItem, OwnerDialog>();
 
   const actions = useMemo<DataTableActions<IOwnerOverviewItem>>(
@@ -53,7 +59,7 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
       <DataTable
         {...dataTableProps}
         {...toTableQueryProps(query)}
-        data={query.data?.data}
+        data={query.data?.data.items}
         columns={usersColumns}
         getRowId={(row) => row.userId}
         tableId="users"
