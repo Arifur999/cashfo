@@ -15,14 +15,17 @@ import { cn } from "@/lib/utils";
 interface DataTableColumnHeaderProps<TData, TValue> {
   column: Column<TData, TValue>;
   title: string;
+  // A number column's head sits on the right, like its cells.
+  align?: "left" | "right";
   className?: string;
 }
 
 // DataTable renders every plain-string `header` through this, so a columns
 // file just writes `header: "Amount"` and still gets sort + hide controls.
-const DataTableColumnHeader = <TData, TValue>({ column, title, className }: DataTableColumnHeaderProps<TData, TValue>) => {
+const DataTableColumnHeader = <TData, TValue>({ column, title, align = "left", className }: DataTableColumnHeaderProps<TData, TValue>) => {
   const canSort = column.getCanSort();
   const canHide = column.getCanHide();
+  const right = align === "right";
 
   if (!canSort && !canHide) {
     return <div className={cn("text-caption font-medium", className)}>{title}</div>;
@@ -32,13 +35,13 @@ const DataTableColumnHeader = <TData, TValue>({ column, title, className }: Data
   const SortIcon = sorted === "desc" ? ArrowDown : sorted === "asc" ? ArrowUp : ChevronsUpDown;
 
   return (
-    <div className={cn("flex items-center", className)}>
+    <div className={cn("flex items-center", right && "justify-end", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-3 h-8 text-caption font-medium text-ink-muted hover:text-ink data-[state=open]:bg-surface-sunken"
+            className={cn("h-8 text-caption font-medium text-ink-muted hover:text-ink data-[state=open]:bg-surface-sunken", right ? "-mr-3" : "-ml-3")}
             aria-label={`${title} column options`}
           >
             {title}

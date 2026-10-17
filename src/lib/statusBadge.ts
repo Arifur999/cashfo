@@ -109,3 +109,8 @@ export const humanizeEnum = (value: string): string => {
 // Builds a <select>/faceted-filter option list from an enum's values.
 export const enumOptions = <TValue extends string>(values: readonly TValue[]) =>
   values.map((value) => ({ value, label: humanizeEnum(value) }));
+
+// The status tabs' options, each with its count from the list response
+// (undefined until the first page has loaded).
+export const enumTabs = <TValue extends string>(values: readonly TValue[], counts?: Partial<Record<TValue, number>>) =>
+  values.map((value) => ({ value, label: humanizeEnum(value), count: counts?.[value] }));

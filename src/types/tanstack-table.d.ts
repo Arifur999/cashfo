@@ -13,5 +13,7 @@ declare module "@tanstack/react-table" {
     exportValue?: (row: TData) => string | number | boolean | null | undefined;
     headerClassName?: string;
     cellClassName?: string;
+    // Numbers sit on the right, head and cells alike.
+    align?: "left" | "right";
   }
 }

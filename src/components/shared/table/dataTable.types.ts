@@ -8,9 +8,19 @@ export interface DataTableFilterOption {
   icon?: LucideIcon;
 }
 
+export interface DataTableTabOption {
+  label: string;
+  value: string;
+  // Shown after the label: "Active 1,251".
+  count?: number;
+}
+
 export type DataTableFilterConfig =
   | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[] }
   | { id: string; type: "multi-select"; label: string; options: DataTableFilterOption[] }
+  // The design's status tabs: one row of exclusive choices, with counts, at
+  // the front of the toolbar. The first tab (allLabel) clears the filter.
+  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string }
   // Server-managed date ranges map onto two URL params, dateFrom/dateTo by
   // default (the convention every list endpoint uses).
   | { id: string; type: "date-range"; label: string; fromKey?: string; toKey?: string };
@@ -33,6 +43,9 @@ export interface DataTableRowAction<TData> {
 
 // A handler that's undefined simply doesn't render its menu item.
 export interface DataTableActions<TData> {
+  // "inline" draws the actions as small buttons in the row (View, Reset
+  // data) instead of behind a "..." menu.
+  display?: "menu" | "inline";
   onView?: (row: TData) => void;
   onEdit?: (row: TData) => void;
   onDelete?: (row: TData) => void;
@@ -79,7 +92,11 @@ export interface DataTableProps<TData> {
   // (e.g. a field already shown inside another cell). Keep it module-level.
   defaultHiddenColumns?: readonly string[];
   actions?: DataTableActions<TData>;
+  // A heading at the front of the toolbar ("Biggest add-on first").
+  title?: string;
   toolbarAction?: React.ReactNode;
+  // A note under the rows: how a column is worked out, a caveat.
+  footer?: React.ReactNode;
   emptyMessage?: string;
   // First load (skeleton rows) vs background refetch (progress bar, rows stay).
   isLoading?: boolean;

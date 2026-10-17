@@ -19,7 +19,9 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     isLoading = false,
     isFetching = false,
     onRowClick,
+    title,
     toolbarAction,
+    footer,
     exportFileName,
     search,
     filters,
@@ -36,6 +38,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     <section className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
       <DataTableToolbar
         table={table}
+        title={title}
         search={search}
         filters={filters}
         toolbarAction={toolbarAction}
@@ -52,6 +55,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         onRowClick={onRowClick}
       />
       {totalRows > 0 && <DataTablePagination table={table} totalRows={totalRows} />}
+      {footer && <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">{footer}</div>}
     </section>
   );
 };
