@@ -13,6 +13,7 @@ const SIZES = {
   36: "size-9 text-small",
   40: "size-10 text-small",
   44: "size-11 text-body-lg",
+  56: "size-14 text-h3",
 } as const;
 
 interface PersonAvatarProps {

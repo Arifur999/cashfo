@@ -2,7 +2,7 @@
 // them and whether they balance, the customers and suppliers with what is
 // due, the age of what is owed, and a journal entry's two columns. Pure,
 // so the pages and their tests agree.
-import type { Account, AccountGroup, AccountType, AgingReport, Contact, ContactType, OverdueRow } from "./api";
+import type { Account, AccountGroup, AccountType, AgingBucketRow, AgingReport, Contact, ContactType, OverdueRow, Transaction } from "./api";
 import { dayOf } from "./habitDisplay";
 
 // English, passed through t().
@@ -123,6 +123,73 @@ export function filterContacts(contacts: Contact[], filter: ContactsFilter, quer
 // English, passed through t().
 export const CONTACT_TYPE_WORD: Record<ContactType, string> = { CUSTOMER: "Customer", SUPPLIER: "Supplier", BOTH: "Customer and supplier", RELATIVE: "Relative", OTHER: "Other" };
 
+// The people as spreadsheet rows: name, type, phone, email, what they owe
+// you (negative when you owe them).
+export function contactsCsvRows(contacts: Contact[]): (string | number)[][] {
+  return contacts.map((contact) => [contact.name, CONTACT_TYPE_WORD[contact.type], contact.phone ?? "", contact.email ?? "", Number(contact.currentBalance)]);
+}
+
+export type StatementKind = "sale" | "purchase" | "received" | "paid";
+
+export interface StatementRow {
+  id: string;
+  date: string;
+  kind: StatementKind;
+  reference: string | null;
+  note: string | null;
+  // The wallet a payment went through.
+  wallet: string | null;
+  amount: number;
+  // What they owe you after this row; negative when you owe them.
+  running: number;
+  // Voided, or the reversal that voided it: shown, but not counted.
+  cancelled: boolean;
+}
+
+const SETTLEMENT_SUBTYPES = ["receivable", "payable"];
+
+// A payment that credits receivables came in from them; one that debits
+// payables went out to them.
+function statementKind(transaction: Transaction): StatementKind | null {
+  if (transaction.transactionType === "SALE") return "sale";
+  if (transaction.transactionType === "PURCHASE") return "purchase";
+  if (transaction.transactionType !== "PAYMENT") return null;
+  const receivable = transaction.entries.find((entry) => entry.account?.accountSubtype === "receivable");
+  if (receivable) return receivable.entryType === "CREDIT" ? "received" : "paid";
+  const payable = transaction.entries.find((entry) => entry.account?.accountSubtype === "payable");
+  if (payable) return payable.entryType === "DEBIT" ? "paid" : "received";
+  return null;
+}
+
+// A contact's statement from their postings, oldest first, with what they
+// owe you after each one.
+export function statementRows(transactions: Transaction[], openingBalance: string | number): StatementRow[] {
+  const ordered = [...transactions].sort((a, b) => a.transactionDate.localeCompare(b.transactionDate) || a.createdAt.localeCompare(b.createdAt));
+  let running = Number(openingBalance);
+  const rows: StatementRow[] = [];
+  for (const transaction of ordered) {
+    const kind = statementKind(transaction);
+    if (!kind) continue;
+    const amount = Number(transaction.entries[0]?.amount ?? 0);
+    const cancelled = transaction.status === "VOIDED" || transaction.reversalOfId !== null;
+    const wallet = kind === "received" || kind === "paid" ? (transaction.entries.find((entry) => !SETTLEMENT_SUBTYPES.includes(entry.account?.accountSubtype ?? ""))?.account?.name ?? null) : null;
+    if (!cancelled) running += kind === "sale" || kind === "paid" ? amount : -amount;
+    rows.push({ id: transaction.id, date: transaction.transactionDate, kind, reference: transaction.referenceNo, note: transaction.description, wallet, amount, running: Math.round(running * 100) / 100, cancelled });
+  }
+  return rows;
+}
+
+// The newest counted row of the given kinds, for "Last sale … · last payment …".
+export const lastRow = (rows: StatementRow[], kinds: StatementKind[]): StatementRow | undefined => [...rows].reverse().find((row) => !row.cancelled && kinds.includes(row.kind));
+
+export const agingRowFor = (report: AgingReport, contactId: string): AgingBucketRow | undefined => report.contacts.find((row) => row.contactId === contactId);
+
+// What is more than 30 days late, and how many people owe it.
+export function overdueOver30(report: AgingReport): { amount: number; contacts: number } {
+  const late = (row: Pick<AgingBucketRow, "days31to60" | "over60">) => Number(row.days31to60) + Number(row.over60);
+  return { amount: late(report.buckets), contacts: report.contacts.filter((row) => late(row) > 0).length };
+}
+
 export interface AgingShare {
   key: "current" | "days1to30" | "days31to60" | "over60";
   label: string;
@@ -146,6 +213,20 @@ export function agingShares(report: Pick<AgingReport, "buckets">): AgingShare[] 
 }
 
 export const agingTotal = (report: Pick<AgingReport, "buckets">): number => agingShares(report).reduce((sum, share) => sum + share.amount, 0);
+
+// One contact's unpaid invoices sorted into the same four age buckets the
+// aging report uses, counted from each due date to today.
+export function agingFromInvoices(invoices: { dueDate: string | null; remainingAmount: string }[], today: string): AgingReport["buckets"] {
+  const buckets = { current: 0, days1to30: 0, days31to60: 0, over60: 0 };
+  for (const invoice of invoices) {
+    const remaining = Number(invoice.remainingAmount);
+    if (remaining <= 0) continue;
+    const late = invoice.dueDate ? daysBetween(invoice.dueDate, today) : 0;
+    const key = late <= 0 ? "current" : late <= 30 ? "days1to30" : late <= 60 ? "days31to60" : "over60";
+    buckets[key] += remaining;
+  }
+  return { current: buckets.current.toFixed(2), days1to30: buckets.days1to30.toFixed(2), days31to60: buckets.days31to60.toFixed(2), over60: buckets.over60.toFixed(2) };
+}
 
 // Overdue rows folded to one line per contact: the oldest due date and the
 // whole amount late.

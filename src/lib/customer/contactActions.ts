@@ -35,6 +35,7 @@ export interface ContactFormInput {
   type: ContactType;
   category?: ContactCategory;
   phone?: string;
+  email?: string;
   address?: string;
   openingBalance?: string;
   notes?: string;

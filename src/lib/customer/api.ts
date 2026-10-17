@@ -345,6 +345,8 @@ export interface Contact {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  // The newest posting with this contact; only the list endpoint sets it.
+  lastActivityAt?: string | null;
 }
 
 export interface ContactListResponse {
@@ -408,6 +410,19 @@ export interface OverdueRow {
   remainingAmount: string;
   dueDate: string;
   daysOverdue: number;
+}
+
+// An unpaid sale or purchase whose due date is within the next few days
+// (Books › Receivables and payables, "Due this week").
+export interface DueSoonRow {
+  contactId: string;
+  contactName: string;
+  transactionId: string;
+  description: string | null;
+  remainingAmount: string;
+  dueDate: string;
+  // 0 for something due today.
+  daysUntilDue: number;
 }
 
 export type LoanBalanceDirection = "DENA" | "PAWNA" | "SETTLED";

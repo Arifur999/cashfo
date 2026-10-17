@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Account, AccountGroup, Contact, OverdueRow } from "./api";
-import { accountsCsvRows, agingShares, agingTotal, booksBalance, contactStats, daysBetween, descendantIds, filterAccounts, filterContacts, flattenAccounts, hasAccountCodes, journalEntries, journalTotals, lateByContact } from "./booksDisplay";
+import type { Account, AccountGroup, Contact, OverdueRow, Transaction } from "./api";
+import { accountsCsvRows, agingFromInvoices, agingShares, agingTotal, booksBalance, contactStats, contactsCsvRows, daysBetween, descendantIds, filterAccounts, filterContacts, flattenAccounts, hasAccountCodes, journalEntries, journalTotals, lastRow, lateByContact, overdueOver30, statementRows } from "./booksDisplay";
 
 function account(over: Partial<Account> & { id: string; accountType: Account["accountType"]; currentBalance: string }): Account {
   return { businessId: "b", parentId: null, name: over.id, nameBn: null, accountNumber: null, accountSubtype: null, openingBalance: "0.00", isSystemAccount: false, status: "ACTIVE", displayOrder: 0, children: [], ...over };
@@ -59,6 +59,39 @@ describe("contacts", () => {
     expect(filterContacts(contacts, "OWE_YOU", "").map((c) => c.id)).toEqual(["Rahim"]);
     expect(filterContacts(contacts, "YOU_OWE", "").map((c) => c.id)).toEqual(["Nabil"]);
     expect(filterContacts(contacts, "ALL", "0171").map((c) => c.id)).toEqual(["Rahim"]);
+    expect(contactsCsvRows(contacts.slice(0, 2))).toEqual([
+      ["Rahim", "Customer", "01712", "", 64500],
+      ["Nabil", "Supplier", "", "", -92600],
+    ]);
+  });
+});
+
+describe("a statement", () => {
+  const entry = (subtype: string | null, entryType: "DEBIT" | "CREDIT", amount: string, name = subtype ?? "Cash") => ({ id: `${name}-${entryType}`, transactionId: "", accountId: name, entryType, amount, categoryId: null, note: null, account: { id: name, name, accountType: "ASSET" as const, accountSubtype: subtype } });
+  const tx = (id: string, type: Transaction["transactionType"], date: string, entries: Transaction["entries"], over: Partial<Transaction> = {}): Transaction => ({ id, businessId: "b", transactionType: type, transactionDate: date, referenceNo: null, description: null, contactId: "r", status: "POSTED", createdBy: "u", createdAt: date, voidedAt: null, voidedReason: null, reversalOfId: null, voidable: true, entries, ...over });
+  const transactions = [
+    tx("pay", "PAYMENT", "2026-09-02", [entry("bank", "DEBIT", "35000", "Islami Bank"), entry("receivable", "CREDIT", "35000")], { description: "Clears INV-0277" }),
+    tx("s2", "SALE", "2026-07-20", [entry("receivable", "DEBIT", "15000"), entry(null, "CREDIT", "15000", "Sales")], { referenceNo: "INV-0318" }),
+    tx("s1", "SALE", "2026-06-03", [entry("receivable", "DEBIT", "35000"), entry(null, "CREDIT", "35000", "Sales")], { referenceNo: "INV-0277" }),
+    tx("void", "SALE", "2026-08-01", [entry("receivable", "DEBIT", "999"), entry(null, "CREDIT", "999", "Sales")], { status: "VOIDED" }),
+    tx("buy", "PURCHASE", "2026-09-10", [entry(null, "DEBIT", "5000", "Stock"), entry("payable", "CREDIT", "5000")]),
+    tx("out", "PAYMENT", "2026-09-12", [entry("payable", "DEBIT", "5000"), entry("cash", "CREDIT", "5000", "Cash")]),
+    tx("journal", "JOURNAL", "2026-09-13", []),
+  ];
+
+  it("runs oldest first, tells payments in from payments out and skips what was voided", () => {
+    const rows = statementRows(transactions, "0");
+    expect(rows.map((row) => `${row.kind}:${row.amount}:${row.running}${row.cancelled ? ":x" : ""}`)).toEqual(["sale:35000:35000", "sale:15000:50000", "sale:999:50000:x", "received:35000:15000", "purchase:5000:10000", "paid:5000:15000"]);
+    expect(rows[3].wallet).toBe("Islami Bank");
+    expect(rows[0].reference).toBe("INV-0277");
+    expect(lastRow(rows, ["sale"])?.id).toBe("s2");
+    expect(lastRow(rows, ["received", "paid"])?.id).toBe("out");
+    expect(statementRows([], "-1200")[0]).toBeUndefined();
+  });
+
+  it("sums what is more than 30 days late", () => {
+    const report = { buckets: { current: "98400.00", days1to30: "52000.00", days31to60: "21000.00", over60: "15000.00" }, contacts: [{ contactId: "r", contactName: "Rahim", current: "0", days1to30: "0", days31to60: "21000", over60: "0", total: "21000", totalInvoiced: "21000", totalPaid: "0" }, { contactId: "k", contactName: "Karim", current: "98400", days1to30: "52000", days31to60: "0", over60: "0", total: "150400", totalInvoiced: "150400", totalPaid: "0" }] };
+    expect(overdueOver30(report)).toEqual({ amount: 36000, contacts: 1 });
   });
 });
 
@@ -70,6 +103,18 @@ describe("ageing", () => {
     expect(agingTotal(report)).toBe(186400);
     expect(shares.map((s) => s.pct)).toEqual([52.8, 27.9, 11.3, 8]);
     expect(agingShares({ buckets: { current: "0", days1to30: "0", days31to60: "0", over60: "0" } }).every((s) => s.pct === 0)).toBe(true);
+  });
+
+  it("sorts one contact's invoices into the age buckets", () => {
+    const invoices = [
+      { dueDate: "2026-10-20", remainingAmount: "24500" },
+      { dueDate: null, remainingAmount: "100" },
+      { dueDate: "2026-09-10", remainingAmount: "25000" },
+      { dueDate: "2026-08-10", remainingAmount: "15000" },
+      { dueDate: "2026-06-01", remainingAmount: "7000" },
+      { dueDate: "2026-06-01", remainingAmount: "0" },
+    ];
+    expect(agingFromInvoices(invoices, "2026-10-02")).toEqual({ current: "24600.00", days1to30: "25000.00", days31to60: "15000.00", over60: "7000.00" });
   });
 
   it("folds overdue invoices to one line per contact, oldest first", () => {
