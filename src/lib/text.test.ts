@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { getInitials, pluralize, truncate } from "./text";
+import { getInitials, lowerFirst, pluralize, truncate, upperFirst } from "./text";
+
+describe("lowerFirst / upperFirst", () => {
+  it("changes only the first letter", () => {
+    expect(lowerFirst("Today, 9:15 am")).toBe("today, 9:15 am");
+    expect(upperFirst("signed in at 8:02 am")).toBe("Signed in at 8:02 am");
+    expect(lowerFirst("")).toBe("");
+  });
+});
 
 describe("getInitials", () => {
   it("takes the first letter of the first two words", () => {

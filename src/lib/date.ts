@@ -123,8 +123,9 @@ export const formatElapsed = (value: DateInput, now: Date = new Date(), fallback
 };
 
 // "Today, 2:10 pm", "Yesterday, 6:55 pm", "1 Oct, 8:12 pm" (this year) or
-// "27 Sep 2025, 1:03 pm": when something happened, to the minute.
-export const formatRelativeDateTime = (value: DateInput, now: Date = new Date(), fallback = "—"): string => {
+// "27 Sep 2025, 1:03 pm": when something happened, to the minute (or to the
+// second with withSeconds: "Today, 1:05:12 pm").
+export const formatRelativeDateTime = (value: DateInput, now: Date = new Date(), fallback = "—", withSeconds = false): string => {
   if (value === null || value === undefined || value === "") {
     return fallback;
   }
@@ -134,8 +135,59 @@ export const formatRelativeDateTime = (value: DateInput, now: Date = new Date(),
   }
   const today = toDateInputValue(now);
   const yesterday = toDateInputValue(new Date(new Date(`${today}T12:00:00Z`).getTime() - 86_400_000));
-  const time = formatDate(value, "h:mm aaa");
+  const time = formatDate(value, withSeconds ? "h:mm:ss aaa" : "h:mm aaa");
   if (day === today) return `Today, ${time}`;
   if (day === yesterday) return `Yesterday, ${time}`;
   return `${formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy")}, ${time}`;
+};
+
+// "Today, 2:48 pm", "Yesterday, 5:10 pm", then "28 Sep": the time while it
+// is recent, the day once it is older.
+export const formatRecentDateTime = (value: DateInput, now: Date = new Date(), fallback = "—"): string => {
+  const day = toDateInputValue(value);
+  if (!day) {
+    return fallback;
+  }
+  const today = toDateInputValue(now);
+  const yesterday = toDateInputValue(new Date(new Date(`${today}T12:00:00Z`).getTime() - 86_400_000));
+  return day === today || day === yesterday ? formatRelativeDateTime(value, now, fallback) : formatRelativeDay(value, now, fallback);
+};
+
+// "Today", "Yesterday", "28 Sep" or "2 Jun 2025": just the day.
+export const formatDayName = (value: DateInput, now: Date = new Date(), fallback = "—"): string => {
+  const day = toDateInputValue(value);
+  if (!day) {
+    return fallback;
+  }
+  return day === toDateInputValue(now) ? "Today" : formatRelativeDay(value, now, fallback);
+};
+
+// "2:48 pm" while it is today, else "Yesterday, 6:55 pm" or
+// "27 Sep, 1:03 pm": a log row's time, short enough for a narrow column.
+export const formatLogTime = (value: DateInput, now: Date = new Date(), fallback = "—"): string => {
+  const day = toDateInputValue(value);
+  if (!day) {
+    return fallback;
+  }
+  return day === toDateInputValue(now) ? formatDate(value, "h:mm aaa") : formatRelativeDateTime(value, now, fallback);
+};
+
+// "2:43 – 2:47 pm", "11:50 am – 12:10 pm", "Yesterday, 7:30 – 7:42 pm":
+// when a burst of tries began and ended. A single minute reads as one time.
+export const formatTimeRange = (from: DateInput, to: DateInput, now: Date = new Date(), fallback = "—"): string => {
+  const fromDay = toDateInputValue(from);
+  const toDay = toDateInputValue(to);
+  if (!fromDay || !toDay) {
+    return fallback;
+  }
+  if (fromDay !== toDay) {
+    return `${formatLogTime(from, now)} – ${formatLogTime(to, now)}`;
+  }
+  const start = formatDate(from, "h:mm aaa");
+  const end = formatDate(to, "h:mm aaa");
+  if (start === end) {
+    return formatLogTime(from, now);
+  }
+  const prefix = fromDay === toDateInputValue(now) ? "" : `${formatRelativeDay(from, now)}, `;
+  return `${prefix}${start.slice(-2) === end.slice(-2) ? formatDate(from, "h:mm") : start} – ${end}`;
 };
