@@ -1,35 +1,30 @@
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatDateTime } from "@/lib/date";
+import { formatRelativeDateTime } from "@/lib/date";
 import { humanizeEnum } from "@/lib/statusBadge";
+import { shortTicketId, TICKET_STATUS_LABEL } from "@/lib/tickets";
 import type { ISupportTicketDetail } from "@/types/ticket.types";
 
-interface TicketHeaderProps {
-  ticket: ISupportTicketDetail;
-  // Status / priority / assignee controls, for roles that can manage tickets.
-  controls?: React.ReactNode;
-}
+// "today at 1:12 pm", "yesterday at 9:40 am", "1 Oct at 8:12 pm".
+const openedAt = (value: string) => {
+  const when = formatRelativeDateTime(value);
+  return `${when.charAt(0).toLowerCase()}${when.slice(1)}`.replace(", ", " at ");
+};
 
-const TicketHeader = ({ ticket, controls }: TicketHeaderProps) => {
+// The top of the ticket: its number, how urgent, where it is, the subject,
+// and who opened it when.
+const TicketHeader = ({ ticket }: { ticket: ISupportTicketDetail }) => {
   return (
-    <Card className="shadow-sm shadow-black/5">
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusBadgeCell status={ticket.status} />
-            <StatusBadgeCell status={ticket.priority} label={`${humanizeEnum(ticket.priority)} priority`} />
-            <Badge variant="outline">{humanizeEnum(ticket.category)}</Badge>
-          </div>
-          <h1 className="text-xl font-semibold break-words text-foreground">{ticket.subject}</h1>
-          <p className="text-xs text-muted-foreground">
-            Opened {formatDateTime(ticket.createdAt)} by {ticket.platformUser?.name ?? "an unknown user"} &middot; Updated{" "}
-            {formatDateTime(ticket.updatedAt)}
-          </p>
-        </div>
-        {controls && <div className="border-t pt-4">{controls}</div>}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-2 border-b border-line px-5 py-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="font-mono text-small font-semibold text-ink-muted">{shortTicketId(ticket.id)}</code>
+        <StatusBadgeCell status={ticket.priority} />
+        <StatusBadgeCell status={ticket.status} label={TICKET_STATUS_LABEL[ticket.status]} />
+      </div>
+      <h1 className="text-h2 leading-snug wrap-break-word text-ink">{ticket.subject}</h1>
+      <span className="text-small text-ink-muted">
+        {humanizeEnum(ticket.category)} · opened {openedAt(ticket.createdAt)} by {ticket.platformUser?.name ?? "an unknown person"}
+      </span>
+    </div>
   );
 };
 

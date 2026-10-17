@@ -1,37 +1,48 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import DateCell from "@/components/shared/cell/DateCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import UserInfoCell from "@/components/shared/cell/UserInfoCell";
-import { DATE_TIME_FORMAT, formatDateTime } from "@/lib/date";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatDateTime, formatElapsed } from "@/lib/date";
 import { humanizeEnum } from "@/lib/statusBadge";
+import { getInitials } from "@/lib/text";
+import { awaitingReply, isLate, shortTicketId, TICKET_STATUS_LABEL } from "@/lib/tickets";
+import { cn } from "@/lib/utils";
 import type { ISupportTicket } from "@/types/ticket.types";
 
-// Toggle-able from the View menu; "Last Updated" is what triage looks at.
-export const TICKETS_HIDDEN_COLUMNS = ["createdAt"] as const;
-
+// The design's queue: the ticket's number with a dot when the user is
+// waiting, the subject over who wrote, what kind, how urgent, where it is,
+// who has it, and how long since the last message.
 export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
+  {
+    id: "id",
+    accessorFn: (row) => shortTicketId(row.id),
+    header: "Ticket",
+    enableSorting: false,
+    cell: ({ row }) => (
+      <span className="flex items-center gap-2">
+        {awaitingReply(row.original) && <span title="New reply from the user" className="size-1.75 shrink-0 rounded-full bg-info" />}
+        <code className="font-mono text-small font-semibold text-ink-2">{shortTicketId(row.original.id)}</code>
+      </span>
+    ),
+  },
   {
     id: "subject",
     accessorKey: "subject",
     header: "Subject",
     cell: ({ row }) => (
-      <span className="block max-w-xs truncate font-medium text-foreground" title={row.original.subject}>
-        {row.original.subject}
+      <span className="flex min-w-0 flex-col gap-px">
+        <span className={cn("truncate text-ink", awaitingReply(row.original) ? "font-bold" : "font-medium")} title={row.original.subject}>
+          {row.original.subject}
+        </span>
+        <span className="truncate text-small text-ink-muted">{row.original.platformUser?.name ?? "Unknown person"}</span>
       </span>
     ),
-  },
-  {
-    id: "user",
-    accessorFn: (row) => row.platformUser?.name ?? "Unknown",
-    header: "User",
-    cell: ({ row }) => <UserInfoCell name={row.original.platformUser?.name} email={row.original.platformUser?.email} />,
-    meta: { exportValue: (row) => `${row.platformUser?.name ?? "Unknown"} <${row.platformUser?.email ?? ""}>` },
+    meta: { exportValue: (row) => `${row.subject} (${row.platformUser?.name ?? "Unknown"})`, cellClassName: "max-w-96" },
   },
   {
     id: "category",
     accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => <span className="text-muted-foreground">{humanizeEnum(row.original.category)}</span>,
+    header: "Type",
+    cell: ({ row }) => <span className="text-small text-ink-2">{humanizeEnum(row.original.category)}</span>,
     meta: { exportValue: (row) => humanizeEnum(row.category) },
   },
   {
@@ -44,31 +55,33 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     id: "status",
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.status} />,
+    cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={TICKET_STATUS_LABEL[row.original.status]} />,
+    meta: { exportValue: (row) => TICKET_STATUS_LABEL[row.status] },
   },
   {
     id: "assignee",
-    accessorFn: (row) => row.assignedAdmin?.name ?? "Unassigned",
-    header: "Assigned To",
-    cell: ({ row }) =>
-      row.original.assignedAdmin ? (
-        <span className="text-foreground">{row.original.assignedAdmin.name}</span>
-      ) : (
-        <span className="text-muted-foreground italic">Unassigned</span>
-      ),
+    accessorFn: (row) => row.assignedAdmin?.name ?? "Not assigned",
+    header: "Assigned to",
+    cell: ({ row }) => {
+      const admin = row.original.assignedAdmin;
+      return (
+        <span className="flex min-w-0 items-center gap-2">
+          <Avatar className="size-6.5">
+            <AvatarFallback className={cn("text-caption font-bold", admin ? "bg-info-soft text-info" : "bg-surface-sunken text-ink-muted")}>{admin ? getInitials(admin.name) : "—"}</AvatarFallback>
+          </Avatar>
+          <span className={cn("truncate", admin ? "text-ink-2" : "text-ink-muted")}>{admin?.name ?? "Not assigned"}</span>
+        </span>
+      );
+    },
   },
   {
-    id: "updatedAt",
-    accessorKey: "updatedAt",
-    header: "Last Updated",
-    cell: ({ row }) => <DateCell date={row.original.updatedAt} formatString={DATE_TIME_FORMAT} />,
-    meta: { exportValue: (row) => formatDateTime(row.updatedAt) },
-  },
-  {
-    id: "createdAt",
-    accessorKey: "createdAt",
-    header: "Created",
-    cell: ({ row }) => <DateCell date={row.original.createdAt} formatString={DATE_TIME_FORMAT} />,
-    meta: { exportValue: (row) => formatDateTime(row.createdAt) },
+    id: "lastMessageAt",
+    accessorKey: "lastMessageAt",
+    header: "Last reply",
+    cell: ({ row }) => {
+      const late = isLate(row.original);
+      return <span className={cn("text-small whitespace-nowrap", late ? "font-bold text-expense" : "font-medium text-ink-muted")}>{formatElapsed(row.original.lastMessageAt ?? row.original.updatedAt)}</span>;
+    },
+    meta: { align: "right", exportValue: (row) => formatDateTime(row.lastMessageAt ?? row.updatedAt) },
   },
 ];

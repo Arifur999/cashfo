@@ -3,12 +3,16 @@
 import { useMemo, useState } from "react";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import SelectControl from "@/components/shared/form/SelectControl";
-import type { IAdminOption, TicketStatus } from "@/types/ticket.types";
-import { TICKET_PRIORITY_OPTIONS, TICKET_STATUS_OPTIONS } from "../ticketOptions";
+import { TICKET_STATUS_LABEL } from "@/lib/tickets";
+import { TICKET_STATUSES, type IAdminOption, type TicketStatus } from "@/types/ticket.types";
+import { TICKET_PRIORITY_OPTIONS } from "../ticketOptions";
 import type { TicketControlsState } from "./useTicketControls";
 
 // Radix Select reserves "" for "no value", so unassigned needs a token.
 const UNASSIGNED = "unassigned";
+
+const STATUS_OPTIONS = TICKET_STATUSES.map((status) => ({ value: status, label: TICKET_STATUS_LABEL[status] }));
+const SELECT = "h-9.5 w-full rounded-md border-line-strong bg-surface text-body font-medium text-ink";
 
 // Taking a ticket out of the queue is the one change worth a second look.
 const CLOSING_STATUSES: Partial<Record<TicketStatus, { title: string; description: string; confirmLabel: string }>> = {
@@ -29,13 +33,14 @@ interface TicketControlsProps {
   admins: IAdminOption[];
 }
 
+// The design's settings card beside the thread: status, priority, who has it.
 const TicketControls = ({ controls, admins }: TicketControlsProps) => {
   const { ticket, isPending, setStatus, setPriority, setAssignee } = controls;
   const [closingStatus, setClosingStatus] = useState<TicketStatus | null>(null);
   const closingCopy = closingStatus ? CLOSING_STATUSES[closingStatus] : undefined;
 
   const assigneeOptions = useMemo(() => {
-    const options = [{ value: UNASSIGNED, label: "Unassigned" }, ...admins.map((admin) => ({ value: admin.id, label: admin.name }))];
+    const options = [{ value: UNASSIGNED, label: "Not assigned" }, ...admins.map((admin) => ({ value: admin.id, label: admin.name }))];
     // An assignee who has since been deactivated isn't in the roster, but
     // the select must still be able to show them.
     const current = ticket.assignedAdmin;
@@ -54,15 +59,16 @@ const TicketControls = ({ controls, admins }: TicketControlsProps) => {
   };
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      <SelectControl label="Status" value={ticket.status} options={TICKET_STATUS_OPTIONS} onValueChange={changeStatus} disabled={isPending} />
-      <SelectControl label="Priority" value={ticket.priority} options={TICKET_PRIORITY_OPTIONS} onValueChange={setPriority} disabled={isPending} />
+    <section aria-label="Ticket settings" className="flex flex-col gap-3 rounded-lg border border-line bg-surface px-5 py-4 shadow-card">
+      <SelectControl label="Status" value={ticket.status} options={STATUS_OPTIONS} onValueChange={changeStatus} disabled={isPending} className={SELECT} />
+      <SelectControl label="Priority" value={ticket.priority} options={TICKET_PRIORITY_OPTIONS} onValueChange={setPriority} disabled={isPending} className={SELECT} />
       <SelectControl
-        label="Assignee"
+        label="Assigned to"
         value={ticket.assignedToAdminId ?? UNASSIGNED}
         options={assigneeOptions}
         onValueChange={(adminId) => setAssignee(admins.find((admin) => admin.id === adminId) ?? null)}
         disabled={isPending}
+        className={SELECT}
       />
 
       <ConfirmDialog
@@ -77,7 +83,7 @@ const TicketControls = ({ controls, admins }: TicketControlsProps) => {
           setClosingStatus(null);
         }}
       />
-    </div>
+    </section>
   );
 };
 
