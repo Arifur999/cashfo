@@ -105,4 +105,9 @@ export const adminSharedDictionary: Record<string, string> = {
   "Unknown user": "অজানা ব্যবহারকারী",
   "Edit {label}": "{label} সম্পাদনা করুন",
   "About {title}": "{title} সম্পর্কে",
+  "Today, {time}": "আজ, {time}",
+  "Yesterday, {time}": "গতকাল, {time}",
+  "{count} min": "{count} মিনিট",
+  "{count} h": "{count} ঘণ্টা",
+  "{count} days": "{count} দিন",
 };

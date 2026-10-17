@@ -57,12 +57,12 @@ export const flagTriesLink = (flag: Pick<ISecurityFlag, "status" | "type" | "rel
 export const flagDetails = (flag: Pick<ISecurityFlag, "status" | "relatedIp" | "reviewer" | "reviewedAt">, now: Date = new Date()): string | null => {
   const parts: string[] = [];
   if (flag.relatedIp) parts.push(`IP ${flag.relatedIp}`);
-  if (flag.status === "REVIEWING" && flag.reviewer) parts.push(`${flag.reviewer.name} is looking into it since ${formatLogTime(flag.reviewedAt, now)}`);
+  if (flag.status === "REVIEWING" && flag.reviewer) parts.push(`${flag.reviewer.name} is looking into it since ${formatLogTime(flag.reviewedAt, { now })}`);
   return parts.length > 0 ? parts.join(" · ") : null;
 };
 
 // Who closed a flag, and when: "Nadia Rahman · 28 Sep".
 export const flagClosedBy = (flag: Pick<ISecurityFlag, "status" | "reviewer" | "reviewedAt">, now: Date = new Date()): string | null => {
   if (isOpenFlag(flag) || !flag.reviewer) return null;
-  return `${flag.reviewer.name} · ${formatDayName(flag.reviewedAt, now)}`;
+  return `${flag.reviewer.name} · ${formatDayName(flag.reviewedAt, { now })}`;
 };

@@ -90,7 +90,7 @@ export const attemptOutcome = (group: LoginAttemptGroup, now: Date = new Date())
   if (account && isAdminAccount(account)) notes.push(account.status === "SUSPENDED" ? "admin account, suspended" : "admin account");
   if (group.signedInAt) {
     const gap = new Date(group.signedInAt).getTime() - new Date(group.lastAt).getTime();
-    notes.push(gap <= 2 * 60_000 ? "signed in a minute later" : `signed in at ${formatLogTime(group.signedInAt, now)}`);
+    notes.push(gap <= 2 * 60_000 ? "signed in a minute later" : `signed in at ${formatLogTime(group.signedInAt, { now })}`);
   }
 
   const note = notes.join(" · ");
@@ -104,7 +104,7 @@ export const attemptOutcome = (group: LoginAttemptGroup, now: Date = new Date())
 
 // "Most failed sign-ins": what to say under each network, and its colour.
 export const networkNote = (network: IFailingNetwork, now: Date = new Date()): string => {
-  const day = formatDayName(network.lastAt, now);
+  const day = formatDayName(network.lastAt, { now });
   if (network.flagStatus === "RESOLVED") return `${day} · flag resolved`;
   if (network.flagStatus === "FALSE_POSITIVE") return `${day} · flag was a false alarm`;
   const { account } = network;

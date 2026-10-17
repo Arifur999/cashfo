@@ -61,5 +61,5 @@ export const errorRequest = (log: IErrorLog, keep = 0): string | null => {
 // "5 times · first 8:14 am, last 12:40 pm", or "Once · 3:02 am".
 export const errorFrequency = (group: ErrorGroup, now: Date = new Date()): string =>
   group.logs.length === 1
-    ? `Once · ${formatLogTime(group.lastAt, now)}`
-    : `${group.logs.length} times · first ${formatLogTime(group.firstAt, now)}, last ${formatLogTime(group.lastAt, now)}`;
+    ? `Once · ${formatLogTime(group.lastAt, { now })}`
+    : `${group.logs.length} times · first ${formatLogTime(group.firstAt, { now })}, last ${formatLogTime(group.lastAt, { now })}`;

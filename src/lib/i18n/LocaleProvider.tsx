@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { type FillValues, fillText } from "./fill";
+import { inEnglish } from "./message";
 import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE_SECONDS } from "./localeCookie";
 import { translate as translateTo, type Locale, type TranslationOverrides } from "./translate";
 
@@ -19,7 +20,6 @@ interface LocaleContextValue {
 }
 
 const fillIn = (text: string, values?: FillValues) => (values ? fillText(text, values) : text);
-const inEnglish = (key: string, values?: FillValues) => fillIn(translateTo("en", key), values);
 
 // What a component rendered outside the provider (a test, a portal) gets:
 // readable English instead of a crash.

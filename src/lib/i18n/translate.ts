@@ -5,6 +5,9 @@
 // admin-frontend's own translate() uses) so adding a translation never
 // requires inventing a new key name -- just wrap the existing JSX text.
 import { bnDictionary } from "./dictionary";
+import { withoutContext } from "./message";
+
+export { withoutContext };
 
 export type Locale = "en" | "bn";
 
@@ -12,15 +15,6 @@ export type Locale = "en" | "bn";
 // English text it replaces (backend GET /api/platform/translations). It wins
 // over the built-in dictionaries.
 export type TranslationOverrides = Record<string, string>;
-
-// A word that reads differently by meaning carries its meaning after "@@"
-// ("On@@record" is the audit log's "what it was on", not a switch's "On").
-// English shows the part before it; Bangla looks the whole key up.
-const CONTEXT_MARK = "@@";
-export const withoutContext = (key: string) => {
-  const at = key.indexOf(CONTEXT_MARK);
-  return at === -1 ? key : key.slice(0, at);
-};
 
 export function translate(locale: Locale, key: string, overrides?: TranslationOverrides): string {
   if (locale === "en") return withoutContext(key);
