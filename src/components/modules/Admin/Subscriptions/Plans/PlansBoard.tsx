@@ -11,8 +11,10 @@ import type { ISubscriptionPlan } from "@/types/plan.types";
 import PaidPeopleChart from "./PaidPeopleChart";
 import PlanCard from "./PlanCard";
 import PlanDrawer from "./PlanDrawer";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const PlansBoard = ({ canManage }: { canManage: boolean }) => {
+  const { translate } = useLocale();
   const { data: plansResponse } = useQuery(plansQuery());
   const { data: analyticsResponse } = useQuery(planAnalyticsQuery());
   const { activeRow: plan, openDialog, closeDialog, getDialogProps } = useRowDialogs<ISubscriptionPlan, "edit" | "archive" | "delete">();
@@ -62,7 +64,7 @@ const PlansBoard = ({ canManage }: { canManage: boolean }) => {
 
       <ConfirmDialog
         {...getDialogProps("archive")}
-        title={`Take ${plan?.name ?? "this plan"} off sale?`}
+        title={translate("Take {name} off sale?", { name: plan?.name ?? "" })}
         description="New buyers stop seeing it. Everyone already on it keeps it, and you can put it back on sale any time."
         confirmLabel="Take off sale"
         pendingLabel="Saving..."
@@ -74,7 +76,7 @@ const PlansBoard = ({ canManage }: { canManage: boolean }) => {
 
       <ConfirmDialog
         {...getDialogProps("delete")}
-        title={`Delete ${plan?.name ?? "this plan"}?`}
+        title={translate("Delete {name}?", { name: plan?.name ?? "" })}
         description="This can't be undone, and only works while nobody is on the plan and no payment or coupon refers to it. Taking it off sale is usually enough."
         variant="destructive"
         confirmLabel="Delete plan"

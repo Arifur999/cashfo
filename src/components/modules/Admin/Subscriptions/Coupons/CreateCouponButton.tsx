@@ -8,6 +8,7 @@ import { plansQuery } from "@/queries/plan.queries";
 import type { ICouponFormValues } from "@/zod/coupon.validation";
 import { getNewCouponDefaults } from "./couponForm.defaults";
 import CouponForm from "./CouponForm";
+import T from "@/components/shared/T";
 
 // Self-contained (owns its trigger), so the page can drop it into the header.
 const CreateCouponButton = () => {
@@ -24,7 +25,7 @@ const CreateCouponButton = () => {
       width="sm"
       trigger={
         <Button size="lg" className="font-semibold shadow-button">
-          New coupon
+          <T>New coupon</T>
         </Button>
       }
     >

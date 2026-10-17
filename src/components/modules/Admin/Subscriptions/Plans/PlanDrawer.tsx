@@ -1,9 +1,10 @@
 "use client";
 
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
-import { formatNumber } from "@/lib/number";
 import type { ISubscriptionPlan } from "@/types/plan.types";
 import PlanForm from "./PlanForm";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 
 interface PlanDrawerProps {
   open: boolean;
@@ -17,12 +18,13 @@ interface PlanDrawerProps {
 // "Edit Monthly Pro" (132 people are on this plan) or "New plan", in the
 // design's right-hand drawer.
 const PlanDrawer = ({ open, onOpenChange, plan, people = 0, trigger }: PlanDrawerProps) => {
+  const { translate } = useLocale();
   return (
     <FormDrawer
       open={open}
       onOpenChange={onOpenChange}
-      title={plan ? `Edit ${plan.name}` : "New plan"}
-      description={plan ? `${formatNumber(people)} ${people === 1 ? "person is" : "people are"} on this plan` : "Pricing, trial and what the plan allows."}
+      title={plan ? translate("Edit {name}", { name: plan.name }) : "New plan"}
+      description={plan ? plural(translate, people, "{count} person is on this plan", "{count} people are on this plan") : "Pricing, trial and what the plan allows."}
       trigger={trigger}
     >
       <PlanForm plan={plan ?? undefined} people={people} onDone={() => onOpenChange(false)} />

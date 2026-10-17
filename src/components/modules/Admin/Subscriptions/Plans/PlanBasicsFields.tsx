@@ -6,6 +6,7 @@ import { enumOptions, humanizeEnum } from "@/lib/statusBadge";
 import { BILLING_CYCLES, type ISubscriptionPlan } from "@/types/plan.types";
 import { planFormZodSchema as schema } from "@/zod/plan.validation";
 import type { PlanFormApi } from "./usePlanForm";
+import T from "@/components/shared/T";
 
 const BILLING_CYCLE_OPTIONS = enumOptions(BILLING_CYCLES);
 
@@ -25,7 +26,7 @@ const PlanBasicsFields = ({ form, plan }: PlanBasicsFieldsProps) => {
           {(field) => <AppField field={field} label="Name" placeholder="Monthly Pro" />}
         </form.Field>
         <form.Field name="trialDays" validators={{ onChange: schema.shape.trialDays }}>
-          {(field) => <AppField field={field} label="Free trial" inputMode="numeric" append={<span className="text-small text-ink-muted">days</span>} />}
+          {(field) => <AppField field={field} label="Free trial" inputMode="numeric" append={<span className="text-small text-ink-muted"><T>days</T></span>} />}
         </form.Field>
       </div>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_150px]">
@@ -34,8 +35,10 @@ const PlanBasicsFields = ({ form, plan }: PlanBasicsFieldsProps) => {
         </form.Field>
         {plan ? (
           <div className="flex flex-col gap-2">
-            <span className="text-small font-semibold text-ink-2">Billing</span>
-            <span className="flex h-11 items-center rounded-md border border-line bg-cream px-4 text-body text-ink-muted">{humanizeEnum(plan.billingCycle)}</span>
+            <span className="text-small font-semibold text-ink-2"><T>Billing</T></span>
+            <span className="flex h-11 items-center rounded-md border border-line bg-cream px-4 text-body text-ink-muted">
+              <T>{humanizeEnum(plan.billingCycle)}</T>
+            </span>
           </div>
         ) : (
           <form.Field name="billingCycle">{(field) => <AppSelectField field={field} label="Billing" options={BILLING_CYCLE_OPTIONS} />}</form.Field>

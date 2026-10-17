@@ -7,6 +7,7 @@ import { randomCouponCode } from "@/lib/subscriptions";
 import type { DiscountType } from "@/types/coupon.types";
 import { couponFormZodSchema as schema, getPercentageError } from "@/zod/coupon.validation";
 import type { CouponFormApi } from "./useCouponForm";
+import T from "@/components/shared/T";
 
 const DISCOUNT_TYPE_OPTIONS: { value: DiscountType; label: string }[] = [
   { value: "PERCENTAGE", label: "Percent" },
@@ -29,7 +30,7 @@ const CouponDiscountFields = ({ form }: { form: CouponFormApi }) => {
             description="Letters and numbers, no spaces. People type it at checkout."
             aside={
               <button type="button" className="text-small font-semibold text-emerald hover:underline" onClick={() => field.handleChange(randomCouponCode())}>
-                Make one up
+                <T>Make one up</T>
               </button>
             }
           />
@@ -39,7 +40,7 @@ const CouponDiscountFields = ({ form }: { form: CouponFormApi }) => {
         <form.Field name="discountType">
           {(field) => (
             <div className="flex flex-col gap-2">
-              <span className="text-small font-semibold text-ink-2">Discount</span>
+              <span className="text-small font-semibold text-ink-2"><T>Discount</T></span>
               <SegmentedControl
                 label="Discount type"
                 variant="tabs"
@@ -66,7 +67,7 @@ const CouponDiscountFields = ({ form }: { form: CouponFormApi }) => {
               {(field) => (
                 <AppField
                   field={field}
-                  label={<span className="sr-only">{discountType === "PERCENTAGE" ? "Percent off" : "Taka off"}</span>}
+                  label={<span className="sr-only"><T>{discountType === "PERCENTAGE" ? "Percent off" : "Taka off"}</T></span>}
                   inputMode="decimal"
                   prepend={discountType === "FIXED_AMOUNT" ? <span className="text-body text-ink-muted">৳</span> : undefined}
                   append={discountType === "PERCENTAGE" ? <span className="text-body text-ink-muted">%</span> : undefined}

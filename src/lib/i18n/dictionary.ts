@@ -10,6 +10,7 @@ import { adminDashboardDictionary } from "./dictionary/admin-dashboard";
 import { adminSecurityDictionary } from "./dictionary/admin-security";
 import { adminNotificationsDictionary } from "./dictionary/admin-notifications";
 import { adminSharedDictionary } from "./dictionary/admin-shared";
+import { adminSubscriptionsDictionary } from "./dictionary/admin-subscriptions";
 import { adminSupportDictionary } from "./dictionary/admin-support";
 import { adminSystemDictionary } from "./dictionary/admin-system";
 import { assetsDictionary } from "./dictionary/assets";
@@ -91,6 +92,7 @@ const adminDictionaries: Record<string, string> = {
   ...adminSupportDictionary,
   ...adminContentDictionary,
   ...adminNotificationsDictionary,
+  ...adminSubscriptionsDictionary,
 };
 
 export const bnDictionary: Record<string, string> = {

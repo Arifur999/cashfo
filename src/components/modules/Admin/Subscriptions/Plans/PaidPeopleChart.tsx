@@ -4,6 +4,8 @@ import { formatNumber } from "@/lib/number";
 import { planAccentClass } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
 import type { IPlanAnalytics } from "@/types/plan.types";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const CHART_HEIGHT = 170;
 // Room above the tallest bar for its total.
@@ -12,6 +14,7 @@ const LABEL_ROOM = 24;
 // The design's "Paid people at the end of each month": one stacked bar per
 // month, a slice per paid plan, the total on top.
 const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
+  const { translate } = useLocale();
   const paidPlans = analytics.perPlan.filter((plan) => plan.billingCycle !== "FREE");
   const months = analytics.history.map((entry) => ({
     month: entry.month,
@@ -24,7 +27,7 @@ const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
   return (
     <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-title text-ink">Paid people at the end of each month</h2>
+        <h2 className="text-title text-ink"><T>Paid people at the end of each month</T></h2>
         <span className="flex flex-wrap gap-4 text-small text-ink-2">
           {paidPlans.map((plan) => (
             <span key={plan.planId} className="flex items-center gap-1">
@@ -35,10 +38,10 @@ const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
         </span>
       </div>
       {nobody ? (
-        <p className="py-8 text-center text-small text-ink-muted">Nobody has paid for a plan in these months yet.</p>
+        <p className="py-8 text-center text-small text-ink-muted"><T>Nobody has paid for a plan in these months yet.</T></p>
       ) : (
         <>
-          <div role="img" aria-label="Paid people per plan at the end of each month" className="flex items-end gap-8 border-b border-line px-3" style={{ height: CHART_HEIGHT }}>
+          <div role="img" aria-label={translate("Paid people per plan at the end of each month")} className="flex items-end gap-8 border-b border-line px-3" style={{ height: CHART_HEIGHT }}>
             {analytics.history.map((entry, index) => (
               <span key={entry.month} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
                 <span className="text-caption font-bold text-ink tabular-nums">{formatNumber(months[index].total)}</span>

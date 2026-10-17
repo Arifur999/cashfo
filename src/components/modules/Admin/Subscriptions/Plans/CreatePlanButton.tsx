@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import PlanDrawer from "./PlanDrawer";
+import T from "@/components/shared/T";
 
 // Self-contained (owns its trigger), so the page can drop it into the header.
 const CreatePlanButton = () => {
@@ -14,7 +15,7 @@ const CreatePlanButton = () => {
       onOpenChange={setOpen}
       trigger={
         <Button size="lg" className="font-semibold shadow-button">
-          New plan
+          <T>New plan</T>
         </Button>
       }
     />

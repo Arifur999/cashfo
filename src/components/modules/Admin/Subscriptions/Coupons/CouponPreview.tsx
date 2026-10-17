@@ -1,6 +1,7 @@
 import { discountedPrice, money } from "@/lib/subscriptions";
 import type { DiscountType } from "@/types/coupon.types";
 import type { ISubscriptionPlan } from "@/types/plan.types";
+import T from "@/components/shared/T";
 
 interface CouponPreviewProps {
   code: string;
@@ -22,7 +23,9 @@ const CouponPreview = ({ code, discountType, discountValue, applicablePlans, pla
 
   return (
     <div className="flex flex-col gap-2 rounded-md border border-mint-200 bg-mint-50 px-4 py-3" aria-live="polite">
-      <span className="text-caption font-semibold text-emerald">With {code.trim().toUpperCase() || "this coupon"}</span>
+      <span className="text-caption font-semibold text-emerald">
+        <T values={{ code: code.trim().toUpperCase() || <T>this coupon</T> }}>{"With {code}"}</T>
+      </span>
       {rows.map((plan) => (
         <span key={plan.id} className="flex justify-between gap-3 text-body text-ink">
           <span>{plan.name}</span>

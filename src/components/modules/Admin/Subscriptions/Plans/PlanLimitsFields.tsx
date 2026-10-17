@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { planFormZodSchema } from "@/zod/plan.validation";
 import { PLAN_FEATURE_TOGGLES, PLAN_NUMERIC_LIMITS } from "./planFeatures";
 import type { PlanFormApi } from "./usePlanForm";
+import T from "@/components/shared/T";
 
 const limitsSchema = planFormZodSchema.shape.featureLimits.shape;
 
@@ -44,7 +45,7 @@ const LimitField = ({ field, label }: { field: AnyFieldApi; label: string }) => 
               onCheckedChange={(checked) => field.handleChange(checked === true ? NO_LIMIT : "0")}
               className="rounded-[4px] border-line-strong data-checked:border-emerald data-checked:bg-emerald"
             />
-            No limit
+            <T>No limit</T>
           </label>
         </div>
       )}
@@ -58,7 +59,7 @@ const PlanLimitsFields = ({ form }: { form: PlanFormApi }) => {
   return (
     <>
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-3 text-body font-semibold text-ink">Limits</legend>
+        <legend className="mb-3 text-body font-semibold text-ink"><T>Limits</T></legend>
         <div className="grid gap-3 sm:grid-cols-3">
           {PLAN_NUMERIC_LIMITS.map(({ key, label }) => (
             <form.Field key={key} name={`featureLimits.${key}` as const} validators={{ onChange: limitsSchema[key] }}>
@@ -68,7 +69,7 @@ const PlanLimitsFields = ({ form }: { form: PlanFormApi }) => {
         </div>
       </fieldset>
       <fieldset>
-        <legend className="mb-1 text-body font-semibold text-ink">What&apos;s included</legend>
+        <legend className="mb-1 text-body font-semibold text-ink"><T>What&apos;s included</T></legend>
         {PLAN_FEATURE_TOGGLES.map(({ key, label, hint }) => (
           <form.Field key={key} name={`featureLimits.${key}` as const}>
             {(field) => <AppSwitchField field={field} label={label} description={hint} />}
