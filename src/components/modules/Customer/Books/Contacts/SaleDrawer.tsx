@@ -33,6 +33,7 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
   const [date, setDate] = useState(getAppToday());
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
+  const [reference, setReference] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const [prevOpen, setPrevOpen] = useState(false);
@@ -43,6 +44,7 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
       setDate(getAppToday());
       setDueDate("");
       setDescription("");
+      setReference("");
     }
   }
 
@@ -53,7 +55,7 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
     event.preventDefault();
     if (!valid || isPending) return;
     startTransition(async () => {
-      const input = { contactId: contact.id, amount: value, date, dueDate: dueDate || undefined, description: description.trim() || undefined };
+      const input = { contactId: contact.id, amount: value, date, dueDate: dueDate || undefined, description: description.trim() || undefined, referenceNo: reference.trim() || undefined };
       const result = kind === "sale" ? await recordSaleAction(businessId, input) : await recordPurchaseAction(businessId, input);
       if (result.success) {
         toast.success(`${formatCurrency(value, currency)} ${t(kind === "sale" ? "sold on credit to" : "bought on credit from")} ${contact.name}`);
@@ -100,6 +102,9 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
       </div>
       <Field htmlFor="sale-note" label={<>{t(kind === "sale" ? "What was sold" : "What was bought")}{optional}</>}>
         <Input id="sale-note" size="md" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={200} placeholder={t(kind === "sale" ? "e.g. Chargers and cables, 280 pcs" : "e.g. 40 cartons of phone cases")} />
+      </Field>
+      <Field htmlFor="sale-ref" label={<>{t(kind === "sale" ? "Invoice number" : "Bill number")}{optional}</>} hint={t("As it reads on the paper copy, so the two can be matched.")}>
+        <Input id="sale-ref" size="md" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={40} placeholder={kind === "sale" ? "INV-0421" : "NT-2209"} className="font-mono" />
       </Field>
     </Drawer>
   );
