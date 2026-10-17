@@ -16,9 +16,10 @@ interface DataTableToolbarProps<TData> {
   search?: DataTableSearchConfig;
   filters?: DataTableFiltersConfig;
   toolbarAction?: React.ReactNode;
+  rows?: 1 | 2;
 }
 
-const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction }: DataTableToolbarProps<TData>) => {
+const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction, rows = 1 }: DataTableToolbarProps<TData>) => {
   const { translate } = useLocale();
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const onServerSearch = search?.onDebouncedChange;
@@ -27,9 +28,9 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
   const startConfigs = configs.filter((config) => config.align !== "end");
   const tabConfigs = startConfigs.filter((config) => config.type === "tabs");
   const chipConfigs = startConfigs.filter((config) => config.type !== "tabs");
-  // Status tabs and dropdown chips take two rows, the tabs above; small
-  // text boxes and switches stay on the tabs' row.
-  const splitRows = tabConfigs.length > 0 && chipConfigs.some((config) => config.type === "single-select" || config.type === "multi-select" || config.type === "date-range");
+  // Two rows (Users): the tabs and the search above, the filter chips under
+  // them. Otherwise everything shares one row and wraps when it must.
+  const splitRows = rows === 2 && chipConfigs.length > 0;
 
   const resetButton = canReset && configs.length > 0 && (
     <Button variant="ghost" size="sm" className="h-8 text-small text-ink-2" onClick={reset}>

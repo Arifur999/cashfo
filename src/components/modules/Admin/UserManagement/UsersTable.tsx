@@ -64,6 +64,7 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
         getRowId={(row) => row.userId}
         exportFileName="users"
         enableRowSelection
+        toolbarRows={2}
         actions={actions}
         onRowClick={(row) => router.push(detailHref(row))}
         emptyMessage="No users match these filters."
