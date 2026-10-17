@@ -7,7 +7,7 @@ import DataTableExpandToggle from "./DataTableExpandToggle";
 import DataTableExportButton from "./DataTableExportButton";
 import DataTableSearch from "./DataTableSearch";
 import DataTableViewOptions from "./DataTableViewOptions";
-import type { DataTableFiltersConfig, DataTableSearchConfig } from "./dataTable.types";
+import type { DataTableFilterConfig, DataTableFiltersConfig, DataTableSearchConfig } from "./dataTable.types";
 import DataTableFilters from "./filters/DataTableFilters";
 import { useDataTableReset } from "./useDataTableReset";
 
@@ -23,45 +23,42 @@ interface DataTableToolbarProps<TData> {
 const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction, exportFileName }: DataTableToolbarProps<TData>) => {
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const onServerSearch = search?.onDebouncedChange;
-  const tabConfigs = filters?.configs.filter((config) => config.type === "tabs") ?? [];
-  const chipConfigs = filters?.configs.filter((config) => config.type !== "tabs") ?? [];
+  const configs = filters?.configs ?? [];
+  const endConfigs = configs.filter((config) => config.align === "end");
+  const startConfigs = configs.filter((config) => config.align !== "end");
+  const tabConfigs = startConfigs.filter((config) => config.type === "tabs");
+  const chipConfigs = startConfigs.filter((config) => config.type !== "tabs");
+  // Status tabs and dropdown chips take two rows, the tabs above; small
+  // text boxes and switches stay on the tabs' row.
+  const splitRows = tabConfigs.length > 0 && chipConfigs.some((config) => config.type === "single-select" || config.type === "multi-select" || config.type === "date-range");
 
-  const resetButton = canReset && (
+  const resetButton = canReset && configs.length > 0 && (
     <Button variant="ghost" size="sm" className="h-8 text-small text-ink-2" onClick={reset}>
       Reset
       <X aria-hidden="true" />
     </Button>
   );
-  const chips = filters && chipConfigs.length > 0 && (
-    <>
-      <DataTableFilters table={table} filters={filters} configs={chipConfigs} />
-      {resetButton}
-    </>
-  );
+  const draw = (subset: DataTableFilterConfig[]) => filters && subset.length > 0 && <DataTableFilters table={table} filters={filters} configs={subset} />;
 
-  // The design's list toolbar: the title or the status tabs (else the
-  // filter chips) on the left, the search and the table tools on the right,
-  // all inside the card. A list with tabs and chips puts the chips on a
-  // second row.
+  // The design's list toolbar: the title, the status tabs and the filter
+  // chips on the left; the end-placed filters, the search and the table
+  // tools on the right, all inside the card.
   return (
     <div className="px-5 py-3">
       <div className="flex flex-wrap items-center gap-2">
         {title && <h2 className="text-title text-ink">{title}</h2>}
-        {filters && tabConfigs.length > 0 ? (
-          <>
-            <DataTableFilters table={table} filters={filters} configs={tabConfigs} />
-            {chipConfigs.length === 0 && resetButton}
-          </>
-        ) : (
-          chips
-        )}
+        {draw(tabConfigs)}
+        {!splitRows && draw(chipConfigs)}
+        {!splitRows && resetButton}
         <span className="flex-1" />
+        {draw(endConfigs)}
         {search && (
           <DataTableSearch
             value={onServerSearch ? (search.initialValue ?? "") : String(table.getState().globalFilter ?? "")}
             onDebouncedChange={onServerSearch ?? ((value) => table.setGlobalFilter(value))}
             placeholder={search.placeholder}
             debounceMs={search.debounceMs}
+            width={search.width}
           />
         )}
         <div className="flex items-center gap-2">
@@ -71,7 +68,12 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
           {toolbarAction}
         </div>
       </div>
-      {tabConfigs.length > 0 && chips && <div className="mt-3 flex flex-wrap items-center gap-2">{chips}</div>}
+      {splitRows && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {draw(chipConfigs)}
+          {resetButton}
+        </div>
+      )}
     </div>
   );
 };

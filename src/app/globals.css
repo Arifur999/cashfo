@@ -49,6 +49,9 @@
   --warning-soft: #fbf0d9;
   --info: #2558b8;
   --info-soft: #e7eefa;
+  /* The payment gateways' own colours, for their tags on the Payments page. */
+  --gateway-bkash: #e2136e;
+  --gateway-nagad: #d9480f;
 
   /* Pillars */
   --pillar-money: var(--emerald);
@@ -150,6 +153,8 @@
   --warning-soft: #33240a;
   --info: #86abf2;
   --info-soft: #14234a;
+  --gateway-bkash: #f04a93;
+  --gateway-nagad: #f0763f;
 
   --pillar-loans: #f0a46a;
   --pillar-loans-soft: #3a2010;
@@ -302,6 +307,8 @@
   --color-warning-soft: var(--warning-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-gateway-bkash: var(--gateway-bkash);
+  --color-gateway-nagad: var(--gateway-nagad);
   --color-pillar-money: var(--pillar-money);
   --color-pillar-money-soft: var(--pillar-money-soft);
   --color-pillar-loans: var(--pillar-loans);

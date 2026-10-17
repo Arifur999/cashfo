@@ -46,6 +46,14 @@ export interface INotificationLog {
   platformUser: { id: string; name: string; email: string } | null;
 }
 
+// The last 24 hours of sending, and the latest failure.
+export interface INotificationLogStats {
+  sent: number;
+  queued: number;
+  failed: number;
+  lastFailure: { templateKey: string; channel: NotificationChannel; errorMessage: string | null; userName: string | null } | null;
+}
+
 export interface ICampaignTargetFilter {
   planId?: string;
   status?: AudienceUserStatus;
@@ -61,6 +69,8 @@ export interface ICampaign {
   scheduledFor: string | null;
   sentCount: number;
   failedCount: number;
+  // How many people the filter reaches right now.
+  audienceCount: number;
   createdBy: string;
   createdAt: string;
 }

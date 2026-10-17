@@ -1,52 +1,59 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import { formatDateTime } from "@/lib/date";
+import { ANNOUNCEMENT_STATUS_LABEL, audienceText, scheduleText } from "@/lib/announcements";
+import { cn } from "@/lib/utils";
 import type { IAnnouncement } from "@/types/announcement.types";
+import { ANNOUNCEMENT_TYPE_META } from "./announcementOptions";
 
-const audienceOf = (announcement: IAnnouncement, planNames: Map<string, string>) =>
-  announcement.targetPlan ? `${planNames.get(announcement.targetPlan) ?? "Unknown plan"} subscribers` : "All users";
-
-// Built per plan list, since the audience column shows plan names for ids.
+// The design's announcements list: the kind as a chip with its icon, the
+// title over its Bangla, who sees it, when, and whether it is live. Built
+// per plan list, since the audience shows plan names for ids.
 export const buildAnnouncementsColumns = (planNames: Map<string, string>): ColumnDef<IAnnouncement>[] => [
-  {
-    id: "title",
-    accessorKey: "title",
-    header: "Announcement",
-    cell: ({ row }) => (
-      <div className="max-w-md min-w-0 space-y-0.5">
-        <p className="font-medium whitespace-normal text-foreground">{row.original.title}</p>
-        <p className="line-clamp-2 text-xs whitespace-normal text-muted-foreground">{row.original.body}</p>
-      </div>
-    ),
-  },
   {
     id: "type",
     accessorKey: "type",
     header: "Type",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.type} />,
+    cell: ({ row }) => {
+      const { label, icon: Icon, chip } = ANNOUNCEMENT_TYPE_META[row.original.type];
+      return (
+        <span className={cn("inline-flex items-center gap-2 rounded-full px-2 py-0.75 text-caption font-semibold", chip)}>
+          <Icon className="size-3.5" aria-hidden="true" />
+          {label}
+        </span>
+      );
+    },
+    meta: { exportValue: (row) => ANNOUNCEMENT_TYPE_META[row.type].label },
+  },
+  {
+    id: "title",
+    accessorKey: "title",
+    header: "Title",
+    cell: ({ row }) => (
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate font-semibold text-ink">{row.original.title}</span>
+        <span className={cn("truncate text-small", row.original.titleBn ? "font-bn text-ink-2" : "text-warning")}>{row.original.titleBn || "No Bangla text yet"}</span>
+      </span>
+    ),
+    meta: { exportValue: (row) => row.title, cellClassName: "max-w-96" },
   },
   {
     id: "audience",
-    accessorFn: (row) => audienceOf(row, planNames),
-    header: "Audience",
-    cell: ({ getValue }) => <span className="text-muted-foreground">{String(getValue())}</span>,
+    accessorFn: (row) => audienceText(row.targetPlan, planNames),
+    header: "Shown to",
+    cell: ({ getValue }) => <span className="text-ink-2">{String(getValue())}</span>,
   },
   {
     id: "startAt",
     accessorKey: "startAt",
-    header: "Schedule",
-    cell: ({ row }) => (
-      <div className="text-xs whitespace-nowrap">
-        <p className="text-foreground">{formatDateTime(row.original.startAt)}</p>
-        <p className="text-muted-foreground">{row.original.endAt ? `until ${formatDateTime(row.original.endAt)}` : "No end date"}</p>
-      </div>
-    ),
-    meta: { exportValue: (row) => `${formatDateTime(row.startAt)} - ${row.endAt ? formatDateTime(row.endAt) : "open"}` },
+    header: "When",
+    cell: ({ row }) => <span className="text-small whitespace-nowrap text-ink-2">{scheduleText(row.original)}</span>,
+    meta: { exportValue: (row) => scheduleText(row) },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.status} />,
+    cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={ANNOUNCEMENT_STATUS_LABEL[row.original.status]} dot />,
+    meta: { exportValue: (row) => ANNOUNCEMENT_STATUS_LABEL[row.status] },
   },
 ];

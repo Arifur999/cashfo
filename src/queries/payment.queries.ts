@@ -1,12 +1,16 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { getPayments } from "@/services/payment.services";
+import { getPayments, getPaymentStats } from "@/services/payment.services";
 
-export type PaymentsView = "all" | "failed";
-
-// `view` picks the endpoint, so it's part of the key alongside the query.
-export const paymentsListQuery = (queryString: string, view: PaymentsView) =>
+export const paymentsListQuery = (queryString: string) =>
   queryOptions({
-    queryKey: [...queryKeys.payments.list(queryString), view] as const,
-    queryFn: () => getPayments(queryString, view),
+    queryKey: queryKeys.payments.list(queryString),
+    queryFn: () => getPayments(queryString),
+  });
+
+// Under payments.all, so a refund or retry refreshes the figures too.
+export const paymentStatsQuery = () =>
+  queryOptions({
+    queryKey: [...queryKeys.payments.all, "stats"] as const,
+    queryFn: () => getPaymentStats(),
   });

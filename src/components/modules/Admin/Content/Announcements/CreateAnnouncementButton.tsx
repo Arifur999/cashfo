@@ -1,34 +1,33 @@
 "use client";
 
-import { Plus } from "lucide-react";
 import { useState } from "react";
-import FormDialog from "@/components/shared/dialog/FormDialog";
+import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import { Button } from "@/components/ui/button";
 import type { IAnnouncementFormValues } from "@/zod/announcement.validation";
 import { getNewAnnouncementDefaults } from "./announcementForm.defaults";
 import AnnouncementForm from "./AnnouncementForm";
 
-const CreateAnnouncementDialog = () => {
-  // Built when the dialog opens (an event), so the start time is "now" at
+// Self-contained (owns its trigger), so the layout can drop it into the header.
+const CreateAnnouncementButton = () => {
+  // Built when the drawer opens (an event), so the start time is "now" at
   // that moment and render stays pure.
   const [defaults, setDefaults] = useState<IAnnouncementFormValues | null>(null);
 
   return (
-    <FormDialog
+    <FormDrawer
       open={defaults !== null}
       onOpenChange={(open) => setDefaults(open ? getNewAnnouncementDefaults(new Date()) : null)}
       title="New announcement"
-      description="A banner in the end-user app, for everyone or one plan's subscribers."
-      size="lg"
+      width="lg"
       trigger={
-        <Button>
-          <Plus aria-hidden="true" /> New announcement
+        <Button size="lg" className="font-semibold shadow-button">
+          New announcement
         </Button>
       }
     >
       {defaults && <AnnouncementForm defaultValues={defaults} onDone={() => setDefaults(null)} />}
-    </FormDialog>
+    </FormDrawer>
   );
 };
 
-export default CreateAnnouncementDialog;
+export default CreateAnnouncementButton;

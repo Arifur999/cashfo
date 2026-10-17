@@ -15,7 +15,7 @@ export interface DataTableTabOption {
   count?: number;
 }
 
-export type DataTableFilterConfig =
+export type DataTableFilterConfig = (
   | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[] }
   | { id: string; type: "multi-select"; label: string; options: DataTableFilterOption[] }
   // The design's status tabs: one row of exclusive choices, with counts, at
@@ -23,7 +23,17 @@ export type DataTableFilterConfig =
   | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string }
   // Server-managed date ranges map onto two URL params, dateFrom/dateTo by
   // default (the convention every list endpoint uses).
-  | { id: string; type: "date-range"; label: string; fromKey?: string; toKey?: string };
+  | { id: string; type: "date-range"; label: string; fromKey?: string; toKey?: string }
+  // A small text box for one field ("Email", "IP address"); the label is its
+  // placeholder. "sm" is 130px wide, "md" 170px.
+  | { id: string; type: "text"; label: string; width?: "sm" | "md" }
+  // A switch with its label ("Sensitive only"); on sends "true".
+  | { id: string; type: "toggle"; label: string }
+) & {
+  // "end" puts the filter at the far right of the toolbar, beside the table
+  // tools ("When: Last 24 hours", "Sensitive only").
+  align?: "start" | "end";
+};
 
 export interface DateRangeValue {
   from?: string;
@@ -62,8 +72,17 @@ export interface DataTableBulkAction<TData> {
   destructive?: boolean;
 }
 
+export interface DataTableSimplePager {
+  previous: string;
+  next: string;
+  // Left of the buttons: "1,284 entries · newest first".
+  summary: (total: number) => React.ReactNode;
+}
+
 export interface DataTableSearchConfig {
   placeholder?: string;
+  // "sm" is the 240px box the design draws when tabs share the row.
+  width?: "sm" | "md";
   initialValue?: string;
   debounceMs?: number;
   // Present = server-side search (the URL drives the query); absent = the
@@ -100,11 +119,20 @@ export interface DataTableProps<TData> {
   toolbarAction?: React.ReactNode;
   // A note under the rows: how a column is worked out, a caveat.
   footer?: React.ReactNode;
+  // A list with nothing to search or filter (the admin team) draws no toolbar.
+  hideToolbar?: boolean;
+  // Under the rows: numbered pages by default. A time-ordered log draws
+  // "Newer" / "Older" beside a summary instead; false hides the pager while
+  // every row fits on one page.
+  pager?: false | DataTableSimplePager;
   emptyMessage?: string;
   // First load (skeleton rows) vs background refetch (progress bar, rows stay).
   isLoading?: boolean;
   isFetching?: boolean;
   onRowClick?: (row: TData) => void;
+  // Extra classes for a row that needs singling out (a payment that looks
+  // like a double charge gets an amber wash).
+  rowClassName?: (row: TData) => string | undefined;
   enableRowSelection?: boolean;
   bulkActions?: DataTableBulkAction<TData>[];
   // Enables the CSV export button; the file is named after it.

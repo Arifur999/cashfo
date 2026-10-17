@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { getNewAccountTemplateDefaults } from "./accountTemplateForm.defaults";
 import AccountTemplateForm from "./AccountTemplateForm";
 
-const CreateAccountTemplateDialog = () => {
+// Self-contained (owns its trigger); the panel passes its own small button.
+const CreateAccountTemplateDialog = ({ trigger }: { trigger?: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -17,9 +18,11 @@ const CreateAccountTemplateDialog = () => {
       title="New account"
       description="A top-level default account. Add sub-accounts to it from its row."
       trigger={
-        <Button>
-          <Plus aria-hidden="true" /> New account
-        </Button>
+        trigger ?? (
+          <Button>
+            <Plus aria-hidden="true" /> New account
+          </Button>
+        )
       }
     >
       <AccountTemplateForm defaultValues={getNewAccountTemplateDefaults()} onDone={() => setOpen(false)} />

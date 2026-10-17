@@ -16,6 +16,7 @@ interface DataTableContentProps<TData> {
   canReset: boolean;
   onReset: () => void;
   onRowClick?: (row: TData) => void;
+  rowClassName?: (row: TData) => string | undefined;
 }
 
 // A plain-string header gets the sort/hide menu automatically.
@@ -35,6 +36,7 @@ const DataTableContent = <TData,>({
   canReset,
   onReset,
   onRowClick,
+  rowClassName,
 }: DataTableContentProps<TData>) => {
   const rows = table.getRowModel().rows;
   const columnCount = table.getVisibleLeafColumns().length;
@@ -85,7 +87,7 @@ const DataTableContent = <TData,>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() ? "selected" : undefined}
-                className={cn("group/row border-surface-sunken hover:bg-cream/60", onRowClick && "cursor-pointer")}
+                className={cn("group/row border-surface-sunken hover:bg-cream/60", onRowClick && "cursor-pointer", rowClassName?.(row.original))}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 onKeyDown={
                   onRowClick

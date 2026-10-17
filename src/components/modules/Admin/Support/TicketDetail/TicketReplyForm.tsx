@@ -1,26 +1,39 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { Send } from "lucide-react";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { replyToTicketAction } from "@/app/(dashboardLayout)/admin/support/_action";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import AppTextareaField from "@/components/shared/form/AppTextareaField";
+import SelectControl from "@/components/shared/form/SelectControl";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
+import { TICKET_STATUS_LABEL } from "@/lib/tickets";
+import { TICKET_STATUSES, type TicketStatus } from "@/types/ticket.types";
 import { type ITicketReplyFormValues, ticketReplyFormZodSchema } from "@/zod/ticket.validation";
 import type { ThreadMessage } from "./TicketMessageBubble";
 
+// Radix Select reserves "" for "no value", so "leave it" needs a token.
+const KEEP = "keep";
+const AFTER_SEND_OPTIONS = [{ value: KEEP, label: "Leave as is" }, ...TICKET_STATUSES.map((status) => ({ value: status, label: TICKET_STATUS_LABEL[status] }))];
+
 interface TicketReplyFormProps {
   ticketId: string;
+  // Who the reply goes to, for the placeholder.
+  requesterName: string;
   currentAdminId: string | null;
   // Puts the reply in the thread while it's being sent.
   onSending: (message: ThreadMessage) => void;
+  // Applies the "after sending, set to" status once the reply is away.
+  onSetStatus?: (status: TicketStatus) => void;
 }
 
-const TicketReplyForm = ({ ticketId, currentAdminId, onSending }: TicketReplyFormProps) => {
+// The reply box under the thread, with what to set the ticket to once the
+// reply has gone (usually Waiting on user).
+const TicketReplyForm = ({ ticketId, requesterName, currentAdminId, onSending, onSetStatus }: TicketReplyFormProps) => {
   const [isSending, startTransition] = useTransition();
+  const [afterSend, setAfterSend] = useState<string>(KEEP);
   const reply = useActionMutation({
     action: (values: ITicketReplyFormValues) => replyToTicketAction(ticketId, values),
     successMessage: "Reply sent",
@@ -46,21 +59,22 @@ const TicketReplyForm = ({ ticketId, currentAdminId, onSending }: TicketReplyFor
         // Put the text back, so a failed send isn't lost.
         if (!(await reply.run(value))) {
           formApi.setFieldValue("message", value.message);
+          return;
         }
+        if (afterSend !== KEEP) onSetStatus?.(afterSend as TicketStatus);
       });
     },
   });
 
   return (
-    <AppForm onSubmit={form.handleSubmit} className="space-y-3">
+    <AppForm onSubmit={form.handleSubmit} className="flex flex-col gap-3 space-y-0 border-t border-line px-5 pt-4 pb-5">
       <form.Field name="message" validators={{ onChange: ticketReplyFormZodSchema.shape.message }}>
         {(field) => (
           <AppTextareaField
             field={field}
-            label="Reply"
+            label={<span className="sr-only">Reply</span>}
             rows={3}
-            placeholder="Write a reply..."
-            description="Ctrl + Enter to send."
+            placeholder={`Write a reply to ${requesterName}`}
             onKeyDown={(event) => {
               if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !isSending) {
                 event.preventDefault();
@@ -70,9 +84,17 @@ const TicketReplyForm = ({ ticketId, currentAdminId, onSending }: TicketReplyFor
           />
         )}
       </form.Field>
-      <div className="flex justify-end">
-        <AppSubmitButton isPending={isSending} pendingLabel="Sending..." className="w-auto">
-          <Send aria-hidden="true" /> Send reply
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <span className="text-small text-ink-muted">Ctrl + Enter sends.</span>
+        <span className="flex-1" />
+        {onSetStatus && (
+          <>
+            <span className="text-small text-ink-muted">After sending, set to</span>
+            <SelectControl ariaLabel="Status after sending" value={afterSend} options={AFTER_SEND_OPTIONS} onValueChange={setAfterSend} size="sm" className="h-9 w-44 rounded-md border-line-strong bg-surface text-small font-semibold text-ink" />
+          </>
+        )}
+        <AppSubmitButton isPending={isSending} pendingLabel="Sending..." className="h-9 w-auto rounded-md bg-emerald px-4 text-body font-semibold text-white hover:bg-forest">
+          Send reply
         </AppSubmitButton>
       </div>
     </AppForm>

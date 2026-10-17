@@ -4,10 +4,18 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import FormDialog from "@/components/shared/dialog/FormDialog";
 import { Button } from "@/components/ui/button";
+import type { CategoryDirection } from "@/types/category.types";
 import { NEW_CATEGORY_DEFAULTS } from "./categoryForm.defaults";
 import CategoryForm from "./CategoryForm";
 
-const CreateCategoryDialog = () => {
+interface CreateCategoryDialogProps {
+  // Which side the new category starts on (the panel's open tab).
+  direction?: CategoryDirection;
+  trigger?: React.ReactNode;
+}
+
+// Self-contained (owns its trigger); the panel passes its own small button.
+const CreateCategoryDialog = ({ direction = "EXPENSE", trigger }: CreateCategoryDialogProps) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -15,14 +23,16 @@ const CreateCategoryDialog = () => {
       open={open}
       onOpenChange={setOpen}
       title="New category"
-      description="A default income or expense category new workspaces start with."
+      description="A starting income or expense category every new workspace gets."
       trigger={
-        <Button>
-          <Plus aria-hidden="true" /> New category
-        </Button>
+        trigger ?? (
+          <Button>
+            <Plus aria-hidden="true" /> New category
+          </Button>
+        )
       }
     >
-      <CategoryForm defaultValues={NEW_CATEGORY_DEFAULTS} onDone={() => setOpen(false)} />
+      <CategoryForm defaultValues={{ ...NEW_CATEGORY_DEFAULTS, type: direction }} onDone={() => setOpen(false)} />
     </FormDialog>
   );
 };

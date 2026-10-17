@@ -1,17 +1,16 @@
 import TabsNav from "@/components/shared/TabsNav";
 
 // Each content area is its own route, so a tab is linkable and only loads
-// its own data.
+// its own data. The starting accounts live on the Categories tab.
 const ContentTabs = () => {
   return (
     <TabsNav
-      label="Content sections"
+      label="Content"
       tabs={[
-        { label: "Chart of Accounts", href: "/admin/content", exact: true },
-        { label: "Categories", href: "/admin/content/categories" },
-        { label: "Translations", href: "/admin/content/translations" },
         { label: "Announcements", href: "/admin/content/announcements" },
-        { label: "Legal Pages", href: "/admin/content/legal" },
+        { label: "Legal pages", href: "/admin/content/legal" },
+        { label: "Translations", href: "/admin/content/translations" },
+        { label: "Categories", href: "/admin/content/categories" },
       ]}
     />
   );

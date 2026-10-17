@@ -4,15 +4,17 @@ import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
+import { cn } from "@/lib/utils";
 
 interface DataTableSearchProps {
   value: string;
   onDebouncedChange: (value: string) => void;
   placeholder?: string;
   debounceMs?: number;
+  width?: "sm" | "md";
 }
 
-const DataTableSearch = ({ value, onDebouncedChange, placeholder = "Search...", debounceMs = 500 }: DataTableSearchProps) => {
+const DataTableSearch = ({ value, onDebouncedChange, placeholder = "Search...", debounceMs = 500, width = "md" }: DataTableSearchProps) => {
   const [inputValue, setInputValue] = useState(value);
   const [syncedValue, setSyncedValue] = useState(value);
   const debounced = useDebouncedCallback((next: string) => onDebouncedChange(next.trim()), debounceMs);
@@ -33,7 +35,7 @@ const DataTableSearch = ({ value, onDebouncedChange, placeholder = "Search...", 
   };
 
   return (
-    <InputGroup className="h-9.5 w-full rounded-md border-line-strong bg-surface sm:w-95">
+    <InputGroup className={cn("h-9.5 w-full rounded-md border-line-strong bg-surface", width === "sm" ? "sm:w-60" : "sm:w-95")}>
       <InputGroupAddon>
         <Search aria-hidden="true" />
       </InputGroupAddon>

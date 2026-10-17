@@ -1,3 +1,5 @@
+import type { PaymentGateway } from "./payment.types";
+
 export interface IInvoiceLineItem {
   description: string;
   amount: number;
@@ -25,5 +27,5 @@ export interface IInvoiceListItem extends IInvoice {
 }
 
 export interface IInvoiceDetail extends IInvoice {
-  payment: { id: string; currency?: string; plan: { id: string; name: string } };
+  payment: { id: string; currency?: string; gateway?: PaymentGateway; plan: { id: string; name: string } };
 }

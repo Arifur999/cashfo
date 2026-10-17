@@ -3,13 +3,25 @@
 import { httpClient } from "@/lib/axios/httpClient";
 import type {
   ICampaign,
+  ICampaignTargetFilter,
   ICreateCampaignPayload,
   INotificationLog,
+  INotificationLogStats,
   INotificationTemplate,
   IUpdateNotificationTemplatePayload,
 } from "@/types/notification.types";
 
 const BASE = "/admin/notifications";
+
+export const getNotificationLogStats = async () => httpClient.get<INotificationLogStats>(`${BASE}/logs/stats`);
+
+// How many people a target filter reaches right now.
+export const getCampaignAudience = async (filter: ICampaignTargetFilter) => {
+  const params = new URLSearchParams();
+  if (filter.planId) params.set("planId", filter.planId);
+  if (filter.status) params.set("status", filter.status);
+  return httpClient.get<{ count: number }>(`${BASE}/campaigns/audience?${params.toString()}`);
+};
 
 // Sorted by key.
 export const getNotificationTemplates = async () => httpClient.get<INotificationTemplate[]>(`${BASE}/templates`);

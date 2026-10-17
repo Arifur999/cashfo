@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { refundPaymentAction } from "@/app/(dashboardLayout)/admin/payments/_action";
 import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
 import AppField from "@/components/shared/form/AppField";
@@ -9,19 +9,27 @@ import AppForm from "@/components/shared/form/AppForm";
 import AppTextareaField from "@/components/shared/form/AppTextareaField";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 import { queryKeys } from "@/lib/queryKeys";
+import { humanizeEnum } from "@/lib/statusBadge";
+import { cn } from "@/lib/utils";
 import type { IPaymentDetail } from "@/types/payment.types";
 import { buildRefundFormZodSchema, type IRefundFormValues } from "@/zod/payment.validation";
 
-// Mounted inside the dialog content, so each open starts at the full amount.
+type HowMuch = "all" | "part";
+
+// Mounted inside the dialog content, so each open starts at the full
+// amount. All of it, or part of it with an amount, then the reason.
 const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () => void }) => {
   const maxAmount = Number(payment.amount);
   const schema = useMemo(() => buildRefundFormZodSchema(maxAmount), [maxAmount]);
+  const [howMuch, setHowMuch] = useState<HowMuch>("all");
 
   const { run, isPending } = useActionMutation({
     action: (values: IRefundFormValues) => refundPaymentAction(payment.id, values),
     successMessage: "Payment refunded",
     invalidateKeys: [queryKeys.payments.all],
+    refreshRoute: true,
   });
 
   const form = useForm({
@@ -33,22 +41,75 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
     },
   });
 
+  const choose = (next: HowMuch) => {
+    setHowMuch(next);
+    if (next === "all") form.setFieldValue("amount", String(maxAmount));
+  };
+
+  const options: { value: HowMuch; title: string; sub: string }[] = [
+    { value: "all", title: "All of it", sub: formatCurrency(maxAmount, payment.currency) },
+    { value: "part", title: "Part of it", sub: "Type an amount" },
+  ];
+
   return (
     <AppForm onSubmit={form.handleSubmit}>
-      <form.Field name="amount" validators={{ onChange: schema.shape.amount }}>
-        {(field) => (
-          <AppField
-            field={field}
-            label="Amount"
-            type="number"
-            description={`Up to ${formatCurrency(maxAmount, payment.currency)} -- less for a partial refund.`}
+      <p className="text-body leading-relaxed text-ink-2">
+        The money goes back through <b className="font-semibold text-ink">{humanizeEnum(payment.gateway)}</b> to the account that paid.{" "}
+        {payment.platformUser?.name ?? "The person"} paid <b className="font-semibold text-ink">{formatCurrency(maxAmount, payment.currency, 0)}</b> on{" "}
+        {formatDate(payment.paidAt ?? payment.createdAt, "d MMM")}.
+      </p>
+      <div role="radiogroup" aria-label="How much" className="grid gap-3 sm:grid-cols-2">
+        {options.map((option) => {
+          const on = howMuch === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => choose(option.value)}
+              className={cn("flex items-center gap-3 rounded-md border px-4 py-3 text-left transition-colors", on ? "border-emerald bg-mint-50" : "border-line hover:bg-cream")}
+            >
+              <span className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full border-2", on ? "border-emerald" : "border-line-strong")} aria-hidden="true">
+                {on && <span className="size-2 rounded-full bg-emerald" />}
+              </span>
+              <span className="flex flex-col">
+                <b className="text-body font-semibold text-ink">{option.title}</b>
+                <span className="text-small text-ink-2">{option.sub}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {howMuch === "part" && (
+        <form.Field name="amount" validators={{ onChange: schema.shape.amount }}>
+          {(field) => (
+            <AppField
+              field={field}
+              label="Amount"
+              inputMode="decimal"
+              prepend={<span className="text-body text-ink-muted">৳</span>}
+              description={`Up to ${formatCurrency(maxAmount, payment.currency)}.`}
+            />
+          )}
+        </form.Field>
+      )}
+      <form.Field name="reason" validators={{ onChange: schema.shape.reason }}>
+        {(field) => <AppTextareaField field={field} label="Reason" rows={2} placeholder="Why the money is going back" />}
+      </form.Field>
+      <p className="rounded-md border border-line bg-cream px-4 py-3 text-small leading-relaxed text-ink-2">
+        The refund and the reason go into the audit log. Nothing is sent to the gateway from here: send the money back there, then record it.
+      </p>
+      <form.Subscribe selector={(state) => state.values.amount}>
+        {(amount) => (
+          <FormDialogFooter
+            isPending={isPending}
+            submitLabel={`Refund ${formatCurrency(Number(amount) || 0, payment.currency, Number.isInteger(Number(amount)) ? 0 : 2)}`}
+            pendingLabel="Refunding..."
+            variant="destructive"
           />
         )}
-      </form.Field>
-      <form.Field name="reason" validators={{ onChange: schema.shape.reason }}>
-        {(field) => <AppTextareaField field={field} label="Reason" rows={3} description="Recorded in the audit log." />}
-      </form.Field>
-      <FormDialogFooter isPending={isPending} submitLabel="Confirm refund" pendingLabel="Refunding..." variant="destructive" />
+      </form.Subscribe>
     </AppForm>
   );
 };

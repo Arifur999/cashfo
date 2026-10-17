@@ -45,7 +45,7 @@ export const adminNavSections: NavSection[] = [
     title: "Money",
     items: [
       { title: "Plans & coupons", href: "/admin/plans", icon: "Layers", activeMatch: ["/admin/plans", "/admin/coupons"], manage: "subscriptions" },
-      { title: "Payments", href: "/admin/payments", icon: "CreditCard", activeMatch: ["/admin/payments", "/admin/invoices"], manage: "payments" },
+      { title: "Payments", href: "/admin/payments", icon: "CreditCard", activeMatch: ["/admin/payments", "/admin/invoices", "/admin/revenue"], manage: "payments" },
     ],
   },
   {

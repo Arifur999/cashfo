@@ -1,30 +1,33 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
+import { buildTableQueryString } from "@/lib/queryString";
 import { toTableQueryProps } from "@/lib/table/queryProps";
-import { assignableAdminsQuery, ticketsListQuery } from "@/queries/ticket.queries";
+import { OPEN_TICKET_STATUSES } from "@/lib/tickets";
+import { assignableAdminsQuery, ticketsListQuery, ticketStatsQuery } from "@/queries/ticket.queries";
 import type { ISupportTicket } from "@/types/ticket.types";
 import CreateTicketDialog from "./CreateTicketDialog";
-import { TICKETS_HIDDEN_COLUMNS, ticketsColumns } from "./ticketsColumns";
-import { buildTicketsTableConfig } from "./ticketsTable.config";
+import { ticketsColumns } from "./ticketsColumns";
+import { buildTicketsTableConfig, TICKETS_TABLE_BASE_CONFIG } from "./ticketsTable.config";
 
 const detailHref = (row: ISupportTicket) => `/admin/support/${row.id}`;
 
 const TicketsTable = ({ canManage }: { canManage: boolean }) => {
   const router = useRouter();
-  const { data: adminsResponse } = useQuery(assignableAdminsQuery());
-  const admins = useMemo(() => adminsResponse?.data ?? [], [adminsResponse]);
-  const config = useMemo(() => buildTicketsTableConfig(admins), [admins]);
+  const searchParams = useSearchParams();
+  const admins = useQuery(assignableAdminsQuery()).data?.data;
+  const statusCounts = useQuery(ticketStatsQuery()).data?.data.statusCounts;
 
-  const { queryString, dataTableProps } = useServerDataTable<ISupportTicket>(config);
+  // The same query string the page prefetched with; the table's own config
+  // waits for the admin roster and the status counts its tabs show.
+  const queryString = buildTableQueryString(searchParams, TICKETS_TABLE_BASE_CONFIG);
   const query = useQuery({ ...ticketsListQuery(queryString), placeholderData: keepPreviousData });
-
-  const actions = useMemo<DataTableActions<ISupportTicket>>(() => ({ onView: (row) => router.push(detailHref(row)) }), [router]);
+  const config = useMemo(() => buildTicketsTableConfig(admins ?? [], statusCounts), [admins, statusCounts]);
+  const { dataTableProps } = useServerDataTable<ISupportTicket>(config);
 
   return (
     <DataTable
@@ -34,10 +37,10 @@ const TicketsTable = ({ canManage }: { canManage: boolean }) => {
       columns={ticketsColumns}
       getRowId={(row) => row.id}
       tableId="tickets"
-      defaultHiddenColumns={TICKETS_HIDDEN_COLUMNS}
       exportFileName="support-tickets"
-      actions={actions}
       onRowClick={(row) => router.push(detailHref(row))}
+      // An urgent ticket still in the queue gets the red wash.
+      rowClassName={(row) => (row.priority === "URGENT" && OPEN_TICKET_STATUSES.includes(row.status) ? "bg-expense-soft/50 hover:bg-expense-soft/80" : undefined)}
       toolbarAction={canManage ? <CreateTicketDialog /> : undefined}
       emptyMessage="No tickets match these filters."
     />

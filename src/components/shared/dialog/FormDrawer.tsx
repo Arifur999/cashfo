@@ -3,10 +3,12 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-// The design's drawers: 480 for a coupon, 500 for a plan.
+// The design's drawers: 480 for a coupon, 500 for a plan, 520 for an
+// announcement.
 const WIDTH_CLASSES = {
   sm: "sm:max-w-120!",
   md: "sm:max-w-125!",
+  lg: "sm:max-w-130!",
 } as const;
 
 interface FormDrawerProps {

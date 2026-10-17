@@ -38,13 +38,18 @@ export interface ISupportTicket {
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;
+  // The last message, which says whether the user is waiting on an answer.
+  lastMessageAt: string | null;
+  lastMessageFrom: SenderType | null;
   platformUser: ITicketUser | null;
   assignedAdmin: { id: string; name: string } | null;
 }
 
-export interface ISupportTicketDetail extends Omit<ISupportTicket, "platformUser"> {
+export interface ISupportTicketDetail extends Omit<ISupportTicket, "platformUser" | "lastMessageAt" | "lastMessageFrom"> {
   messages: ITicketMessage[];
   platformUser: (ITicketUser & { plan: { id: string; name: string } | null }) | null;
+  // The person's other tickets: how many, and how many were solved.
+  requesterTickets: { total: number; solved: number };
 }
 
 // POST /admin/tickets answers with the bare ticket and its first message --
@@ -53,9 +58,19 @@ export type ICreatedTicket = Omit<ISupportTicketDetail, "platformUser" | "assign
 
 export interface ITicketStats {
   openCount: number;
+  // Open tickets nobody has picked up.
+  unassignedOpenCount: number;
   inProgressCount: number;
+  // In progress, but nothing has happened on them for a day.
+  inProgressOver24hCount: number;
+  waitingOnUserCount: number;
   urgentCount: number;
+  solvedThisWeekCount: number;
   avgResolutionHours: number;
+  // From a ticket opening to the first admin reply, over the last 30 days;
+  // 0 until there has been one.
+  avgFirstReplyHours: number;
+  statusCounts: Record<TicketStatus, number>;
   byCategory: { category: TicketCategory; count: number }[];
   byPriority: { priority: TicketPriority; count: number }[];
 }
