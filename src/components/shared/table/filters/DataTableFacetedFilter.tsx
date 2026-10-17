@@ -30,9 +30,11 @@ interface DataTableFacetedFilterProps {
   emptyLabel?: string;
   // Per-option row counts, only known for in-memory tables.
   facets?: Map<unknown, number>;
+  // The option an empty value means: always one picked, no "Clear filter".
+  defaultValue?: string;
 }
 
-const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple = false, emptyLabel = "All", facets }: DataTableFacetedFilterProps) => {
+const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple = false, emptyLabel = "All", facets, defaultValue }: DataTableFacetedFilterProps) => {
   const { translate } = useLocale();
   const toggle = (value: string) => {
     const isSelected = selected.includes(value);
@@ -40,7 +42,8 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
       onChange(isSelected ? selected.filter((item) => item !== value) : [...selected, value]);
       return;
     }
-    onChange(isSelected ? [] : [value]);
+    // Picking the chosen one again clears it, back to the default if any.
+    onChange(isSelected ? (defaultValue ? [defaultValue] : []) : [value]);
   };
 
   return (
@@ -88,7 +91,7 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
                 );
               })}
             </CommandGroup>
-            {selected.length > 0 && (
+            {selected.length > 0 && !(defaultValue && selected[0] === defaultValue) && (
               <>
                 <CommandSeparator />
                 <CommandGroup>

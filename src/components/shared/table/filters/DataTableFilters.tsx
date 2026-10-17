@@ -94,6 +94,10 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
         }
 
         const multiple = config.type === "multi-select";
+        // A single choice with a default shows it while the URL is empty,
+        // and choosing it again empties the URL.
+        const defaultValue = config.type === "single-select" ? config.defaultValue : undefined;
+        const selected = toSelection(getValue(config));
         return (
           <DataTableFacetedFilter
             key={config.id}
@@ -101,11 +105,12 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
             options={config.options}
             emptyLabel={config.allLabel}
             multiple={multiple}
-            selected={toSelection(getValue(config))}
+            selected={selected.length === 0 && defaultValue ? [defaultValue] : selected}
+            defaultValue={defaultValue}
             facets={isServerManaged ? undefined : table.getColumn(config.id)?.getFacetedUniqueValues()}
             onChange={(values) => {
               if (!multiple) {
-                setSingle(config, values[0]);
+                setSingle(config, values[0] === defaultValue ? undefined : values[0]);
                 return;
               }
               setValue(config, values.length > 0 ? values : undefined);

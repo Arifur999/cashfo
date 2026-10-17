@@ -29,9 +29,12 @@ const NO_FILTERS: DataTableFilterConfig[] = [];
 export function useServerDataTable<TData>(config: ServerDataTableConfig) {
   const { filters: configFilters = NO_FILTERS, search, defaultLimit = 10, defaults } = config;
   const searchParams = useSearchParams();
-  // Tabs learn which of them stands in for an empty URL.
+  // Tabs and single choices learn which option stands in for an empty URL.
   const filters = useMemo(
-    () => configFilters.map((filter) => (filter.type === "tabs" && defaults?.[filter.id] ? { ...filter, defaultValue: defaults[filter.id] } : filter)),
+    () =>
+      configFilters.map((filter) =>
+        (filter.type === "tabs" || filter.type === "single-select") && defaults?.[filter.id] ? { ...filter, defaultValue: defaults[filter.id] } : filter,
+      ),
     [configFilters, defaults],
   );
   const definitions = useMemo(() => toServerFilterDefinitions(filters), [filters]);

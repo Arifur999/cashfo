@@ -16,8 +16,9 @@ export interface DataTableTabOption {
 }
 
 export type DataTableFilterConfig = (
-  // allLabel is what the chip says while nothing is picked ("Admin: Anyone").
-  | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[]; allLabel?: string }
+  // allLabel is what the chip says while nothing is picked ("Admin: Anyone");
+  // a defaultValue is picked while the URL names nothing ("When: Today").
+  | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[]; allLabel?: string; defaultValue?: string }
   | { id: string; type: "multi-select"; label: string; options: DataTableFilterOption[]; allLabel?: string }
   // The design's status tabs: one row of exclusive choices, with counts, at
   // the front of the toolbar. The first tab (allLabel) clears the filter.
