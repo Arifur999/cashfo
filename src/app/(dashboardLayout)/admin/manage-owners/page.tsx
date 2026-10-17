@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import ManageOwnersTable from "@/components/modules/Admin/ManageOwners/ManageOwnersTable";
 import { MANAGE_OWNERS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/ManageOwners/manageOwnersTable.config";
 import Callout from "@/components/shared/Callout";
@@ -8,8 +7,10 @@ import { canManage } from "@/lib/authUtils";
 import { buildTableQueryString } from "@/lib/queryString";
 import { ownersListQuery } from "@/queries/owner.queries";
 import { getUserInfo } from "@/services/auth.services";
+import T from "@/components/shared/T";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Manage owners" };
+export const generateMetadata = adminPageTitle("Manage owners");
 
 const ManageOwnersPage = async ({ searchParams }: PageProps<"/admin/manage-owners">) => {
   const [params, admin] = await Promise.all([searchParams, getUserInfo()]);
@@ -22,8 +23,9 @@ const ManageOwnersPage = async ({ searchParams }: PageProps<"/admin/manage-owner
         description="Every owner's account. If an owner asks for a fresh start, reset their workspace's money data here. Their login stays as it is."
       />
       <Callout variant="warning" role="status" className="text-body">
-        <b className="font-semibold">Only super admins can reset data</b>, and only after the owner asks in writing. Each reset is saved in the audit
-        log.
+        <T values={{ who: <b className="font-semibold"><T>Only super admins can reset data</T></b> }}>
+          {"{who}, and only after the owner asks in writing. Each reset is saved in the audit log."}
+        </T>
       </Callout>
       <QueryPrefetch prefetch={(client) => client.prefetchQuery(ownersListQuery(queryString))}>
         <ManageOwnersTable canResetData={canManage(admin?.role, "ownerData")} />

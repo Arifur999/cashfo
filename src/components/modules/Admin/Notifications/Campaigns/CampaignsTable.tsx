@@ -16,12 +16,14 @@ import type { ICampaign } from "@/types/notification.types";
 import { CAMPAIGN_FILTERS } from "./campaignOptions";
 import { buildCampaignsColumns } from "./campaignsColumns";
 import SendSummaryCard from "./SendSummaryCard";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const isOpen = (campaign: ICampaign) => campaign.status === "DRAFT" || campaign.status === "SCHEDULED";
 
 // The campaigns, with the last day of sending beside them. Any admin can
 // draft a campaign; cancelling is for the roles that may send.
 const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
+  const { translate } = useLocale();
   const { data, isLoading, isFetching } = useQuery(campaignsQuery());
   const { data: plansResponse } = useQuery(plansQuery());
   const columns = useMemo(() => buildCampaignsColumns(new Map((plansResponse?.data ?? []).map((plan) => [plan.id, plan.name]))), [plansResponse]);
@@ -29,7 +31,7 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
 
   const cancel = useActionMutation({
     action: cancelCampaignAction,
-    successMessage: (cancelled) => `${cancelled.title} cancelled`,
+    successMessage: (cancelled) => translate("{title} cancelled", { title: cancelled.title }),
     invalidateKeys: [queryKeys.campaigns.all],
     refreshRoute: false,
   });
@@ -50,19 +52,17 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
         data={data?.data}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="campaigns"
         isLoading={isLoading}
         isFetching={isFetching}
         search={{ placeholder: "Search campaigns", width: "sm" }}
         filters={{ configs: CAMPAIGN_FILTERS }}
-        exportFileName="campaigns"
         actions={actions}
         emptyMessage="No campaigns yet."
       />
       <SendSummaryCard />
       <ConfirmDialog
         {...getDialogProps("cancel")}
-        title={`Cancel ${campaign?.title ?? "this campaign"}?`}
+        title={translate("Cancel {title}?", { title: campaign?.title ?? "" })}
         description="It won't be sent. This can't be undone, but you can make a new one."
         variant="destructive"
         confirmLabel="Cancel campaign"

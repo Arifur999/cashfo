@@ -1,6 +1,7 @@
 import type { Severity } from "@/types/securityFlag.types";
 import type { ErrorSource, IErrorLog } from "@/types/system.types";
-import { formatLogTime } from "./date";
+import { formatLogTime, type RelativeDateOptions } from "./date";
+import { inEnglish } from "./i18n/message";
 
 export const ERROR_SOURCE_LABEL: Record<ErrorSource, string> = {
   BACKEND_API: "Server",
@@ -59,7 +60,11 @@ export const errorRequest = (log: IErrorLog, keep = 0): string | null => {
 };
 
 // "5 times · first 8:14 am, last 12:40 pm", or "Once · 3:02 am".
-export const errorFrequency = (group: ErrorGroup, now: Date = new Date()): string =>
+export const errorFrequency = (group: ErrorGroup, { now = new Date(), t = inEnglish }: Pick<RelativeDateOptions, "now" | "t"> = {}): string =>
   group.logs.length === 1
-    ? `Once · ${formatLogTime(group.lastAt, now)}`
-    : `${group.logs.length} times · first ${formatLogTime(group.firstAt, now)}, last ${formatLogTime(group.lastAt, now)}`;
+    ? t("Once · {time}", { time: formatLogTime(group.lastAt, { now, t }) })
+    : t("{count} times · first {first}, last {last}", {
+        count: group.logs.length,
+        first: formatLogTime(group.firstAt, { now, t }),
+        last: formatLogTime(group.lastAt, { now, t }),
+      });

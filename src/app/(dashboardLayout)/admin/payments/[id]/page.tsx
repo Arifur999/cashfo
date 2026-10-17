@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import DuplicateNote from "@/components/modules/Admin/Payments/DuplicateNote";
 import OtherPaymentsCard from "@/components/modules/Admin/Payments/OtherPaymentsCard";
 import PaidByCard from "@/components/modules/Admin/Payments/PaidByCard";
@@ -12,8 +11,10 @@ import { canManage } from "@/lib/authUtils";
 import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { getUserInfo } from "@/services/auth.services";
 import { getPaymentById } from "@/services/payment.services";
+import T from "@/components/shared/T";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Payment" };
+export const generateMetadata = adminPageTitle("Payment");
 
 const PaymentDetailPage = async ({ params }: PageProps<"/admin/payments/[id]">) => {
   const { id } = await params;
@@ -21,7 +22,7 @@ const PaymentDetailPage = async ({ params }: PageProps<"/admin/payments/[id]">) 
 
   return (
     <div className="flex flex-col gap-4">
-      <BackLink href="/admin/payments">All payments</BackLink>
+      <BackLink href="/admin/payments"><T>All payments</T></BackLink>
       <PaymentHero payment={payment} actions={canManage(admin?.role, "payments") && <PaymentDetailActions payment={payment} />} />
       {payment.duplicateOfId && <DuplicateNote payment={payment} />}
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">

@@ -12,6 +12,8 @@ import CreateTranslationDialog from "./CreateTranslationDialog";
 import ExportTranslationsMenu from "./ExportTranslationsMenu";
 import { buildTranslationFilters } from "./translationFilters";
 import { buildTranslationsColumns, TRANSLATIONS_HIDDEN_COLUMNS } from "./translationsColumns";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface SaveTextVariables {
   translation: ITranslation;
@@ -25,10 +27,11 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
   const { data, isLoading, isFetching } = useQuery(translationsQuery());
   const translations = useMemo(() => data?.data ?? [], [data]);
   const filters = useMemo(() => buildTranslationFilters(translations), [translations]);
+  const { translate } = useLocale();
 
   const { run } = useActionMutation({
     action: ({ translation, language, value }: SaveTextVariables) => updateTranslationTextAction(translation.id, { language, value }),
-    successMessage: (updated) => `Saved ${updated.key}`,
+    successMessage: (updated) => translate("Saved {key}", { key: updated.key }),
     invalidateKeys: [queryKeys.translations.all],
     refreshRoute: false,
   });
@@ -44,21 +47,21 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
       data={data?.data}
       columns={columns}
       getRowId={(row) => row.id}
-      tableId="translations"
       defaultHiddenColumns={TRANSLATIONS_HIDDEN_COLUMNS}
       initialPageSize={25}
       isLoading={isLoading}
       isFetching={isFetching}
       search={{ placeholder: "Search a key or a word", width: "sm" }}
       filters={{ configs: filters }}
-      exportFileName="translations"
       toolbarAction={
         <>
           <ExportTranslationsMenu />
           {canManage && <CreateTranslationDialog />}
         </>
       }
-      footer={<>Changes go live in the app within a minute. Keep placeholders like {"{{name}}"} the same in both languages.</>}
+      footer={
+        <T values={{ example: "{{name}}" }}>{"Changes go live in the app within a minute. Keep placeholders like {example} the same in both languages."}</T>
+      }
       emptyMessage="No strings match."
     />
   );

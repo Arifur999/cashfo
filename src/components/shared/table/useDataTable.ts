@@ -20,7 +20,6 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import { usePersistentState } from "@/hooks/usePersistentState";
 import { smartColumnFilterFn } from "@/lib/table/filterFns";
 import { ACTIONS_COLUMN_ID, createActionsColumn } from "./columns/createActionsColumn";
 import { createSelectColumn, SELECT_COLUMN_ID } from "./columns/createSelectColumn";
@@ -41,7 +40,6 @@ export function useDataTable<TData>({
   columns,
   getRowId,
   getSubRows,
-  tableId,
   defaultHiddenColumns = NO_HIDDEN_COLUMNS,
   actions,
   enableRowSelection = false,
@@ -63,13 +61,9 @@ export function useDataTable<TData>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   // Tree rows start fully expanded (`true` = every row).
   const [expanded, setExpanded] = useState<ExpandedState>(true);
-  const defaultVisibility = useMemo<VisibilityState>(
+  const columnVisibility = useMemo<VisibilityState>(
     () => Object.fromEntries(defaultHiddenColumns.map((columnId) => [columnId, false])),
     [defaultHiddenColumns],
-  );
-  const [columnVisibility, setColumnVisibility] = usePersistentState<VisibilityState>(
-    tableId ? `data-table:${tableId}:columns` : undefined,
-    defaultVisibility,
   );
 
   const allColumns = useMemo<ColumnDef<TData>[]>(
@@ -118,7 +112,6 @@ export function useDataTable<TData>({
     },
     onRowSelectionChange: setRowSelection,
     onExpandedChange: setExpanded,
-    onColumnVisibilityChange: setColumnVisibility,
     defaultColumn: { filterFn: smartColumnFilterFn as FilterFn<TData> },
     globalFilterFn: "includesString",
     enableRowSelection,

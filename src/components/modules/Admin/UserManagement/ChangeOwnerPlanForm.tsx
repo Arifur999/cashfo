@@ -11,6 +11,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import type { IOwnerRef } from "@/types/owner.types";
 import type { IPlanOption } from "@/types/plan.types";
 import { changeOwnerPlanFormZodSchema, type IChangeOwnerPlanFormValues } from "@/zod/owner.validation";
+import T from "@/components/shared/T";
 
 interface ChangeOwnerPlanFormProps {
   owner: IOwnerRef;
@@ -43,7 +44,7 @@ const ChangeOwnerPlanForm = ({ owner, plans, onDone }: ChangeOwnerPlanFormProps)
   return (
     <AppForm onSubmit={form.handleSubmit}>
       <p className="text-sm text-muted-foreground">
-        Current plan: <span className="font-medium text-foreground">{owner.planName ?? "None"}</span>
+        <T values={{ plan: <span className="font-medium text-foreground">{owner.planName ?? <T>None</T>}</span> }}>{"Current plan: {plan}"}</T>
       </p>
       <form.Field name="newPlanId" validators={{ onChange: changeOwnerPlanFormZodSchema.shape.newPlanId }}>
         {(field) => <AppSelectField field={field} label="New plan" options={options} placeholder="Select a plan..." />}

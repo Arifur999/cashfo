@@ -7,6 +7,7 @@ import TicketConversation from "./TicketConversation";
 import TicketHeader from "./TicketHeader";
 import TicketRequesterCard from "./TicketRequesterCard";
 import { useTicketControls } from "./useTicketControls";
+import T from "@/components/shared/T";
 
 interface TicketDetailLayoutProps {
   ticket: ISupportTicketDetail;
@@ -25,7 +26,7 @@ const TicketDetailLayout = ({ ticket, admins, currentAdminId, canManage }: Ticke
 
   return (
     <div className="flex flex-col gap-4">
-      <BackLink href="/admin/support">All tickets</BackLink>
+      <BackLink href="/admin/support"><T>All tickets</T></BackLink>
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section aria-labelledby="ticket-subject" className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-card">
           <TicketHeader ticket={view} />

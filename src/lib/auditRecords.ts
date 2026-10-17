@@ -1,5 +1,6 @@
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import { diffAuditValues } from "./auditDiff";
+import { inEnglish, type Translate } from "./i18n/message";
 import { shortPaymentId } from "./payments";
 import { humanizeEnum } from "./statusBadge";
 import { shortTicketId } from "./tickets";
@@ -27,11 +28,11 @@ export const AUDIT_RECORD_TYPE_LABEL: Record<string, string> = {
 };
 
 // "SubscriptionPlan" -> "Subscription plan", for a type nobody listed yet.
-export const auditRecordTypeLabel = (entityType: string) => {
+export const auditRecordTypeLabel = (entityType: string, t: Translate = inEnglish) => {
   const known = AUDIT_RECORD_TYPE_LABEL[entityType];
-  if (known) return known;
+  if (known) return t(known);
   const words = entityType.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
+  return t(words.charAt(0).toUpperCase() + words.slice(1));
 };
 
 // Actions about the admin themselves (or a check they ran): there is no
@@ -54,7 +55,7 @@ const snapshotName = (value: unknown): string | null => {
 
 // What the entry was about: "Yearly Pro", "PAY-1A2B3C4D · Mahbub Alam",
 // "#4F2A1 · Can't add bKash", "Privacy policy".
-export const auditRecordName = (entry: AuditRecord): string => {
+export const auditRecordName = (entry: AuditRecord, t: Translate = inEnglish): string => {
   const label = entry.entityLabel ?? snapshotName(entry.newValue) ?? snapshotName(entry.oldValue);
   if (entry.entityType === "Payment" && entry.entityId) {
     return label ? `${shortPaymentId(entry.entityId)} · ${label}` : shortPaymentId(entry.entityId);
@@ -63,39 +64,39 @@ export const auditRecordName = (entry: AuditRecord): string => {
     return label ? `${shortTicketId(entry.entityId)} · ${label}` : shortTicketId(entry.entityId);
   }
   if (entry.entityType === "LegalDocument" && label) {
-    return humanizeEnum(label);
+    return t(humanizeEnum(label));
   }
-  return label ?? auditRecordTypeLabel(entry.entityType);
+  return label ?? auditRecordTypeLabel(entry.entityType, t);
 };
 
 // "trialDays" -> "trial days"; a nested path keeps only its last part.
 export const auditFieldLabel = (path: string) => (path.split(".").pop() ?? path).replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
 
-const shortValue = (value: string | undefined) => {
-  if (value === undefined || value === "null") return "none";
+const shortValue = (value: string | undefined, t: Translate) => {
+  if (value === undefined || value === "null") return t("none");
   return value.length > 24 ? `${value.slice(0, 23)}…` : value;
 };
 
 // One line on what changed: the reason given ("spam invites"), the one field
 // that moved ("trial days 7 → 14"), or how many did.
-export const auditChangeSummary = (entry: Pick<IAuditLogEntry, "oldValue" | "newValue">): string | null => {
+export const auditChangeSummary = (entry: Pick<IAuditLogEntry, "oldValue" | "newValue">, t: Translate = inEnglish): string | null => {
   const reason = entry.newValue && typeof entry.newValue === "object" ? (entry.newValue as { reason?: unknown }).reason : undefined;
   if (typeof reason === "string" && reason.trim()) return reason.trim();
   const changed = diffAuditValues(entry.oldValue, entry.newValue).filter((row) => row.changed && !QUIET_FIELDS.has(row.field.split(".").pop() ?? row.field));
   if (changed.length === 0) return null;
   if (changed.length === 1) {
     const [row] = changed;
-    return `${auditFieldLabel(row.field)} ${shortValue(row.before)} → ${shortValue(row.after)}`;
+    return `${auditFieldLabel(row.field)} ${shortValue(row.before, t)} → ${shortValue(row.after, t)}`;
   }
-  if (changed.length === 2) return `${auditFieldLabel(changed[0].field)} and ${auditFieldLabel(changed[1].field)} changed`;
-  return `${changed.length} fields changed`;
+  if (changed.length === 2) return t("{first} and {second} changed", { first: auditFieldLabel(changed[0].field), second: auditFieldLabel(changed[1].field) });
+  return t("{count} fields changed", { count: changed.length });
 };
 
 // The audit log's "On" column: the record, then what changed.
-export const auditOnText = (entry: AuditRecord): string => {
+export const auditOnText = (entry: AuditRecord, t: Translate = inEnglish): string => {
   if (SELF_ACTIONS.has(entry.action)) return "—";
-  const summary = auditChangeSummary(entry);
-  const name = auditRecordName(entry);
+  const summary = auditChangeSummary(entry, t);
+  const name = auditRecordName(entry, t);
   return summary ? `${name} · ${summary}` : name;
 };
 

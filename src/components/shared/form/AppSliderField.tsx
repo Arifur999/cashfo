@@ -2,6 +2,7 @@
 
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Slider } from "@/components/ui/slider";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import FormFieldShell from "./FormFieldShell";
 
 interface AppSliderFieldProps {
@@ -18,6 +19,7 @@ interface AppSliderFieldProps {
 
 // A numeric range field (rollout %, thresholds) with its value shown live.
 const AppSliderField = ({ field, label, min = 0, max = 100, step = 1, formatValue = String, description }: AppSliderFieldProps) => {
+  const { translate } = useLocale();
   const value = Number(field.state.value ?? min);
 
   return (
@@ -25,7 +27,7 @@ const AppSliderField = ({ field, label, min = 0, max = 100, step = 1, formatValu
       field={field}
       label={
         <span className="flex w-full items-center justify-between gap-2">
-          {label}
+          {translate(label)}
           <span className="font-semibold text-foreground tabular-nums">{formatValue(value)}</span>
         </span>
       }

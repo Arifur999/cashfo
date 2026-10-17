@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import T from "./T";
 
 interface LoaderProps {
   size?: number;
@@ -16,7 +17,9 @@ const Loader = ({ size = 24, onDark = false, label, className }: LoaderProps) =>
       style={{ ["--loader-size" as string]: `${size}px` }}
       role="status"
     >
-      <span className="sr-only">{label ?? "Loading"}</span>
+      <span className="sr-only">
+        <T>{label ?? "Loading"}</T>
+      </span>
     </span>
   );
 };

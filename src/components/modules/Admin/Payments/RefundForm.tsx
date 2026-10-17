@@ -15,6 +15,8 @@ import { humanizeEnum } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 import type { IPaymentDetail } from "@/types/payment.types";
 import { buildRefundFormZodSchema, type IRefundFormValues } from "@/zod/payment.validation";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 type HowMuch = "all" | "part";
 
@@ -24,6 +26,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
   const maxAmount = Number(payment.amount);
   const schema = useMemo(() => buildRefundFormZodSchema(maxAmount), [maxAmount]);
   const [howMuch, setHowMuch] = useState<HowMuch>("all");
+  const { translate } = useLocale();
 
   const { run, isPending } = useActionMutation({
     action: (values: IRefundFormValues) => refundPaymentAction(payment.id, values),
@@ -54,11 +57,18 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
   return (
     <AppForm onSubmit={form.handleSubmit}>
       <p className="text-body leading-relaxed text-ink-2">
-        The money goes back through <b className="font-semibold text-ink">{humanizeEnum(payment.gateway)}</b> to the account that paid.{" "}
-        {payment.platformUser?.name ?? "The person"} paid <b className="font-semibold text-ink">{formatCurrency(maxAmount, payment.currency, 0)}</b> on{" "}
-        {formatDate(payment.paidAt ?? payment.createdAt, "d MMM")}.
+        <T
+          values={{
+            gateway: <b className="font-semibold text-ink">{translate(humanizeEnum(payment.gateway))}</b>,
+            name: payment.platformUser?.name ?? translate("The person"),
+            amount: <b className="font-semibold text-ink">{formatCurrency(maxAmount, payment.currency, 0)}</b>,
+            date: formatDate(payment.paidAt ?? payment.createdAt, "d MMM"),
+          }}
+        >
+          {"The money goes back through {gateway} to the account that paid. {name} paid {amount} on {date}."}
+        </T>
       </p>
-      <div role="radiogroup" aria-label="How much" className="grid gap-3 sm:grid-cols-2">
+      <div role="radiogroup" aria-label={translate("How much")} className="grid gap-3 sm:grid-cols-2">
         {options.map((option) => {
           const on = howMuch === option.value;
           return (
@@ -74,8 +84,12 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
                 {on && <span className="size-2 rounded-full bg-emerald" />}
               </span>
               <span className="flex flex-col">
-                <b className="text-body font-semibold text-ink">{option.title}</b>
-                <span className="text-small text-ink-2">{option.sub}</span>
+                <b className="text-body font-semibold text-ink">
+                  <T>{option.title}</T>
+                </b>
+                <span className="text-small text-ink-2">
+                  <T>{option.sub}</T>
+                </span>
               </span>
             </button>
           );
@@ -89,7 +103,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
               label="Amount"
               inputMode="decimal"
               prepend={<span className="text-body text-ink-muted">৳</span>}
-              description={`Up to ${formatCurrency(maxAmount, payment.currency)}.`}
+              description={translate("Up to {amount}.", { amount: formatCurrency(maxAmount, payment.currency) })}
             />
           )}
         </form.Field>
@@ -98,13 +112,13 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
         {(field) => <AppTextareaField field={field} label="Reason" rows={2} placeholder="Why the money is going back" />}
       </form.Field>
       <p className="rounded-md border border-line bg-cream px-4 py-3 text-small leading-relaxed text-ink-2">
-        The refund and the reason go into the audit log. Nothing is sent to the gateway from here: send the money back there, then record it.
+        <T>The refund and the reason go into the audit log. Nothing is sent to the gateway from here: send the money back there, then record it.</T>
       </p>
       <form.Subscribe selector={(state) => state.values.amount}>
         {(amount) => (
           <FormDialogFooter
             isPending={isPending}
-            submitLabel={`Refund ${formatCurrency(Number(amount) || 0, payment.currency, Number.isInteger(Number(amount)) ? 0 : 2)}`}
+            submitLabel={translate("Refund {amount}", { amount: formatCurrency(Number(amount) || 0, payment.currency, Number.isInteger(Number(amount)) ? 0 : 2) })}
             pendingLabel="Refunding..."
             variant="destructive"
           />

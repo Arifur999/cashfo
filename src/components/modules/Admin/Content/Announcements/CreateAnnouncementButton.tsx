@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
-import { Button } from "@/components/ui/button";
+import CreateButton from "@/components/shared/CreateButton";
 import type { IAnnouncementFormValues } from "@/zod/announcement.validation";
 import { getNewAnnouncementDefaults } from "./announcementForm.defaults";
 import AnnouncementForm from "./AnnouncementForm";
@@ -20,9 +20,7 @@ const CreateAnnouncementButton = () => {
       title="New announcement"
       width="lg"
       trigger={
-        <Button size="lg" className="font-semibold shadow-button">
-          New announcement
-        </Button>
+        <CreateButton>New announcement</CreateButton>
       }
     >
       {defaults && <AnnouncementForm defaultValues={defaults} onDone={() => setDefaults(null)} />}

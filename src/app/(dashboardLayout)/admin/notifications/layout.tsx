@@ -3,6 +3,7 @@ import { NOTIFICATIONS_PAGE } from "@/components/modules/Admin/Notifications/not
 import NotificationTabs from "@/components/modules/Admin/Notifications/NotificationTabs";
 import Callout from "@/components/shared/Callout";
 import PageHeader from "@/components/shared/PageHeader";
+import T from "@/components/shared/T";
 
 // Shared by every notifications tab, so switching tabs keeps the header
 // and tab bar in place and only the panel below loads.
@@ -12,7 +13,7 @@ const NotificationsLayout = ({ children }: LayoutProps<"/admin/notifications">) 
       <PageHeader {...NOTIFICATIONS_PAGE} actions={<NotificationsHeaderAction />} />
       <NotificationTabs />
       <Callout variant="warning" role="status">
-        No email, SMS or push provider is connected yet, so templates and campaigns are saved here but nothing goes out to users.
+        <T>No email, SMS or push provider is connected yet, so templates and campaigns are saved here but nothing goes out to users.</T>
       </Callout>
       {children}
     </div>

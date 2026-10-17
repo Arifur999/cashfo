@@ -25,8 +25,6 @@ const NotificationLogsTable = () => {
       data={query.data?.data}
       columns={notificationLogsColumns}
       getRowId={(row) => row.id}
-      tableId="notification-logs"
-      exportFileName="notification-history"
       emptyMessage="No notifications match these filters."
     />
   );

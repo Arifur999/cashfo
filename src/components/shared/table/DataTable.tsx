@@ -1,16 +1,20 @@
 "use client";
 
+import { Info } from "lucide-react";
+import { useExportAction } from "@/components/shared/ExportAction";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import DataTableContent from "./DataTableContent";
 import DataTablePagination from "./DataTablePagination";
 import DataTableSelectionBar from "./DataTableSelectionBar";
 import DataTableSimplePager from "./DataTableSimplePager";
 import DataTableToolbar from "./DataTableToolbar";
+import { exportTableCsv } from "./exportTableCsv";
 import type { DataTableProps } from "./dataTable.types";
 import { useDataTable } from "./useDataTable";
 import { useDataTableReset } from "./useDataTableReset";
 
-// The single table component. Client-side by default (sorts, filters, pages
-// and exports in memory); passing `pagination` / `sorting` / server search
+// The single table component. Client-side by default (sorts, filters and
+// pages in memory); passing `pagination` / `sorting` / server search
 // and filters flips that concern to server-managed mode. See
 // dataTable.types.ts for every option. The toolbar, the rows and the pager
 // sit in one card, as the design draws every admin list.
@@ -25,7 +29,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     toolbarAction,
     footer,
     hideToolbar = false,
-    tools = true,
+    toolbarRows,
     pager,
     exportFileName,
     search,
@@ -35,9 +39,11 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     meta,
   } = props;
 
+  const { translate } = useLocale();
   const table = useDataTable(props);
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const totalRows = pagination ? (meta?.total ?? 0) : table.getFilteredRowModel().rows.length;
+  useExportAction(exportFileName ? () => exportTableCsv(table, exportFileName) : null);
 
   return (
     <section className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
@@ -48,8 +54,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
           search={search}
           filters={filters}
           toolbarAction={toolbarAction}
-          exportFileName={exportFileName}
-          tools={tools}
+          rows={toolbarRows}
         />
       )}
       <DataTableSelectionBar table={table} bulkActions={bulkActions} />
@@ -67,9 +72,15 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         (pager ? (
           <DataTableSimplePager table={table} totalRows={totalRows} pager={pager} />
         ) : (
-          (pager !== false || table.getPageCount() > 1) && <DataTablePagination table={table} totalRows={totalRows} />
+          table.getPageCount() > 1 && <DataTablePagination table={table} totalRows={totalRows} />
         ))}
-      {footer && <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">{footer}</div>}
+      {/* The design's note under a list, behind an (i). */}
+      {footer && (
+        <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">
+          <Info className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
+          <span>{typeof footer === "string" ? translate(footer) : footer}</span>
+        </div>
+      )}
     </section>
   );
 };

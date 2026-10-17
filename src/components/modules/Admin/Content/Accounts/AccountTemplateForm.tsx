@@ -12,6 +12,8 @@ import { queryKeys } from "@/lib/queryKeys";
 import type { IAccountTemplate } from "@/types/accountTemplate.types";
 import { accountTemplateFormZodSchema, type IAccountTemplateFormValues } from "@/zod/accountTemplate.validation";
 import { ACCOUNT_TYPE_OPTIONS, WORKSPACE_TYPE_OPTIONS } from "./accountTemplateOptions";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { localName } from "@/lib/i18n/message";
 
 const { shape } = accountTemplateFormZodSchema;
 
@@ -26,13 +28,14 @@ interface AccountTemplateFormProps {
 
 // Mounted inside the dialog content, so each open starts from defaultValues.
 const AccountTemplateForm = ({ defaultValues, template, parent, onDone }: AccountTemplateFormProps) => {
+  const { locale, translate } = useLocale();
   // A parent and its children must share one type.
   const isTypeLocked = Boolean(parent || template?.parentId || template?.children?.length);
 
   const { run, isPending } = useActionMutation({
     action: (values: IAccountTemplateFormValues) =>
       template ? updateAccountTemplateAction(template.id, values) : createAccountTemplateAction(values, parent?.id),
-    successMessage: template ? "Account updated" : parent ? `Sub-account added under ${parent.name}` : "Account created",
+    successMessage: template ? "Account updated" : parent ? translate("Sub-account added under {name}", { name: localName(locale, parent) }) : "Account created",
     // Categories show the names of the accounts they link to.
     invalidateKeys: [queryKeys.accountTemplates.all, queryKeys.categories.all],
     refreshRoute: false,

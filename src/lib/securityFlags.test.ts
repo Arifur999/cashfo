@@ -41,11 +41,11 @@ describe("flag lines", () => {
   const nadia = { id: "n", name: "Nadia Rahman" };
 
   it("says who is looking into an open flag, and who closed one", () => {
-    expect(flagDetails(flag({ status: "REVIEWING", reviewer: nadia, reviewedAt: "2026-10-02T03:15:00Z" }), now)).toBe(
+    expect(flagDetails(flag({ status: "REVIEWING", reviewer: nadia, reviewedAt: "2026-10-02T03:15:00Z" }), { now })).toBe(
       "IP 198.51.100.77 · Nadia Rahman is looking into it since 9:15 am",
     );
-    expect(flagClosedBy(flag({ status: "RESOLVED", reviewer: nadia, reviewedAt: "2026-09-28T05:00:00Z" }), now)).toBe("Nadia Rahman · 28 Sep");
-    expect(flagClosedBy(flag({ reviewer: nadia }), now)).toBeNull();
+    expect(flagClosedBy(flag({ status: "RESOLVED", reviewer: nadia, reviewedAt: "2026-09-28T05:00:00Z" }), { now })).toBe("Nadia Rahman · 28 Sep");
+    expect(flagClosedBy(flag({ reviewer: nadia }), { now })).toBeNull();
     expect(isOpenFlag(flag({ status: "REVIEWING" }))).toBe(true);
   });
 });

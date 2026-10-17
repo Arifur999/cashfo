@@ -12,6 +12,7 @@ import AppTextareaField from "@/components/shared/form/AppTextareaField";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { dateTimeInputToIso } from "@/lib/date";
 import { firstZodError } from "@/lib/formValidators";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
 import { queryKeys } from "@/lib/queryKeys";
 import { planAnalyticsQuery, plansQuery } from "@/queries/plan.queries";
@@ -20,6 +21,7 @@ import { ALL_PLANS, announcementFormZodSchema, getScheduleError, type IAnnouncem
 import { buildAudienceOptions } from "./announcementOptions";
 import AnnouncementPreview from "./AnnouncementPreview";
 import AnnouncementTypeField from "./AnnouncementTypeField";
+import T from "@/components/shared/T";
 
 const { shape } = announcementFormZodSchema;
 
@@ -44,7 +46,8 @@ const submitLabel = (announcement: IAnnouncement | undefined, startAt: string) =
 const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementFormProps) => {
   const plans = useQuery(plansQuery()).data?.data;
   const analytics = useQuery(planAnalyticsQuery()).data?.data;
-  const audienceOptions = useMemo(() => buildAudienceOptions(plans ?? []), [plans]);
+  const { translate } = useLocale();
+  const audienceOptions = useMemo(() => buildAudienceOptions(plans ?? [], translate), [plans, translate]);
 
   const { run, isPending } = useActionMutation({
     action: (values: IAnnouncementFormValues) => (announcement ? updateAnnouncementAction(announcement.id, values) : createAnnouncementAction(values)),
@@ -65,9 +68,9 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
   // "About 1,076 people on the Free plan will see it."
   const reach = (targetPlan: string) => {
     if (!analytics) return null;
-    if (targetPlan === ALL_PLANS) return `About ${formatNumber(analytics.summary.totalUsers)} people will see it.`;
+    if (targetPlan === ALL_PLANS) return translate("About {count} people will see it.", { count: formatNumber(analytics.summary.totalUsers) });
     const plan = analytics.perPlan.find((entry) => entry.planId === targetPlan);
-    return plan ? `About ${formatNumber(plan.totalUsers)} people on the ${plan.planName} plan will see it.` : null;
+    return plan ? translate("About {count} people on the {plan} plan will see it.", { count: formatNumber(plan.totalUsers), plan: plan.planName }) : null;
   };
 
   return (
@@ -109,7 +112,7 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
       <form.Subscribe selector={(state) => state.values}>
         {(values) => (
           <div className="flex flex-col gap-2 rounded-lg bg-surface-sunken p-3">
-            <span className="text-caption font-semibold text-ink-muted">Preview in the app · English</span>
+            <span className="text-caption font-semibold text-ink-muted"><T>Preview in the app · English</T></span>
             <AnnouncementPreview type={values.type} title={values.title} body={values.body} />
             {reach(values.targetPlan) && <span className="text-caption text-ink-muted">{reach(values.targetPlan)}</span>}
           </div>

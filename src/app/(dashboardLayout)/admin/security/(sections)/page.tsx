@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import { AUDIT_LOG_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Security/AuditLog/auditLogTable.config";
 import AuditLogTable from "@/components/modules/Admin/Security/AuditLog/AuditLogTable";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { buildTableQueryString } from "@/lib/queryString";
 import { adminAccountsQuery, auditLogsListQuery } from "@/queries/security.queries";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Audit log" };
+export const generateMetadata = adminPageTitle("Audit log");
 
 const AuditLogPage = async ({ searchParams }: PageProps<"/admin/security">) => {
   const queryString = buildTableQueryString(await searchParams, AUDIT_LOG_TABLE_BASE_CONFIG);

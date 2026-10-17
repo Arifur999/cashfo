@@ -1,5 +1,6 @@
-import { formatDate, formatRelativeDay } from "@/lib/date";
+import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import RelativeTime from "../RelativeTime";
 
 interface DateCellProps {
   date: string | null | undefined;
@@ -17,7 +18,7 @@ const DateCell = ({ date, formatString, relative = false, className }: DateCellP
   }
   return (
     <time dateTime={date} className={cn("whitespace-nowrap text-ink-2", className)}>
-      {relative ? formatRelativeDay(date) : formatDate(date, formatString)}
+      {relative ? <RelativeTime value={date} as="day" /> : formatDate(date, formatString)}
     </time>
   );
 };

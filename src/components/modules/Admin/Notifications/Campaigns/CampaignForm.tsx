@@ -21,6 +21,8 @@ import { NOTIFICATION_CHANNELS, type AudienceUserStatus, type NotificationChanne
 import { ANY_PLAN, ANY_STATUS, campaignFormZodSchema, getScheduleInPastError, type ICampaignFormValues } from "@/zod/notification.validation";
 import { CHANNEL_META } from "../notificationOptions";
 import { buildPlanOptions, buildTemplateOptions, USER_STATUS_OPTIONS } from "./campaignOptions";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const { shape } = campaignFormZodSchema;
 
@@ -36,7 +38,7 @@ const DEFAULT_VALUES: ICampaignFormValues = {
 type When = "now" | "later";
 
 // A choice drawn as a card with a radio dot, a name and a line under it.
-const ChoiceCard = <T extends string>({ value, on, title, sub, onPick }: { value: T; on: boolean; title: string; sub: string; onPick: (value: T) => void }) => (
+const ChoiceCard = <TValue extends string>({ value, on, title, sub, onPick }: { value: TValue; on: boolean; title: string; sub: string; onPick: (value: TValue) => void }) => (
   <button
     type="button"
     role="radio"
@@ -48,9 +50,13 @@ const ChoiceCard = <T extends string>({ value, on, title, sub, onPick }: { value
       <span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border-2", on ? "border-emerald" : "border-line-strong")} aria-hidden="true">
         {on && <span className="size-1.5 rounded-full bg-emerald" />}
       </span>
-      <b className="text-body font-semibold text-ink">{title}</b>
+      <b className="text-body font-semibold text-ink">
+        <T>{title}</T>
+      </b>
     </span>
-    <span className="pl-6 text-caption text-ink-muted">{sub}</span>
+    <span className="pl-6 text-caption text-ink-muted">
+      <T>{sub}</T>
+    </span>
   </button>
 );
 
@@ -61,12 +67,13 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
   const templates = useQuery(notificationTemplatesQuery()).data?.data;
   const plans = useQuery(plansQuery()).data?.data;
   const templateOptions = useMemo(() => buildTemplateOptions(templates ?? []), [templates]);
-  const planOptions = useMemo(() => buildPlanOptions(plans ?? []), [plans]);
+  const { translate } = useLocale();
+  const planOptions = useMemo(() => buildPlanOptions(plans ?? [], translate), [plans, translate]);
   const [when, setWhen] = useState<When>("later");
 
   const { run, isPending } = useActionMutation({
     action: createCampaignAction,
-    successMessage: (campaign) => (campaign.status === "SCHEDULED" ? `${campaign.title} scheduled` : `${campaign.title} saved as a draft`),
+    successMessage: (campaign) => translate(campaign.status === "SCHEDULED" ? "{title} scheduled" : "{title} saved as a draft", { title: campaign.title }),
     invalidateKeys: [queryKeys.campaigns.all],
     refreshRoute: false,
   });
@@ -108,8 +115,8 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
       <form.Field name="channel" validators={{ onChange: shape.channel }}>
         {(field) => (
           <div className="flex flex-col gap-2">
-            <span className="text-small font-semibold text-ink-2">Send by</span>
-            <div role="radiogroup" aria-label="Channel" className="grid gap-2 sm:grid-cols-3">
+            <span className="text-small font-semibold text-ink-2"><T>Send by</T></span>
+            <div role="radiogroup" aria-label={translate("Channel")} className="grid gap-2 sm:grid-cols-3">
               {NOTIFICATION_CHANNELS.map((channel) => (
                 <ChoiceCard<NotificationChannel>
                   key={channel}
@@ -125,13 +132,13 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
         )}
       </form.Field>
       <div className="flex flex-col gap-2">
-        <span className="text-small font-semibold text-ink-2">Who gets it</span>
+        <span className="text-small font-semibold text-ink-2"><T>Who gets it</T></span>
         <div className="grid gap-3 sm:grid-cols-2">
           <form.Field name="planId" validators={{ onChange: shape.planId }}>
-            {(field) => <AppSelectField field={field} label={<span className="sr-only">Plan</span>} options={planOptions} />}
+            {(field) => <AppSelectField field={field} label={<span className="sr-only"><T>Plan</T></span>} options={planOptions} />}
           </form.Field>
           <form.Field name="userStatus" validators={{ onChange: shape.userStatus }}>
-            {(field) => <AppSelectField field={field} label={<span className="sr-only">Account status</span>} options={USER_STATUS_OPTIONS} />}
+            {(field) => <AppSelectField field={field} label={<span className="sr-only"><T>Account status</T></span>} options={USER_STATUS_OPTIONS} />}
           </form.Field>
         </div>
         <form.Subscribe selector={(state) => [state.values.planId, state.values.userStatus] as const}>
@@ -141,16 +148,16 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
         </form.Subscribe>
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-small font-semibold text-ink-2">When</span>
+        <span className="text-small font-semibold text-ink-2"><T>When</T></span>
         <form.Subscribe selector={(state) => state.values.scheduledFor}>
           {(scheduledFor) => (
-            <div role="radiogroup" aria-label="When" className="grid gap-2 sm:grid-cols-2">
+            <div role="radiogroup" aria-label={translate("When")} className="grid gap-2 sm:grid-cols-2">
               <ChoiceCard<When> value="now" on={when === "now"} title="Send now" sub="Starts in a minute" onPick={setWhen} />
               <ChoiceCard<When>
                 value="later"
                 on={when === "later"}
                 title="Later"
-                sub={scheduledFor ? formatRelativeDateTime(scheduledFor) : "Pick a date and time"}
+                sub={scheduledFor ? formatRelativeDateTime(scheduledFor, { t: translate }) : "Pick a date and time"}
                 onPick={setWhen}
               />
             </div>
@@ -158,7 +165,7 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
         </form.Subscribe>
         {when === "later" && (
           <form.Field name="scheduledFor" validators={{ onChange: ({ value }) => firstZodError(shape.scheduledFor, value) ?? getScheduleInPastError(value) }}>
-            {(field) => <AppField field={field} label={<span className="sr-only">Date and time</span>} type="datetime-local" size="sm" />}
+            {(field) => <AppField field={field} label={<span className="sr-only"><T>Date and time</T></span>} type="datetime-local" size="sm" />}
           </form.Field>
         )}
       </div>
@@ -168,8 +175,8 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
         submitLabel={when === "now" ? "Send now" : "Schedule campaign"}
         pendingLabel="Saving..."
         extra={
-          <Button type="button" variant="outline" disabled={isPending} className="border-line-strong bg-surface text-ink hover:bg-surface-sunken" onClick={() => submitAs("draft")}>
-            Save as draft
+          <Button type="button" variant="outline" disabled={isPending} className="h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken" onClick={() => submitAs("draft")}>
+            <T>Save as draft</T>
           </Button>
         }
       />
@@ -183,11 +190,19 @@ const AudienceLine = ({ planId, status }: { planId?: string; status?: AudienceUs
   return (
     <div className="rounded-md border border-mint-200 bg-mint-50 px-3 py-3 text-body text-forest">
       {count === undefined ? (
-        "Counting who matches..."
+        <T>Counting who matches...</T>
       ) : (
-        <>
-          About <b className="font-semibold">{formatNumber(count)} people</b> match right now.
-        </>
+        <T
+          values={{
+            people: (
+              <b className="font-semibold">
+                <T values={{ count: formatNumber(count) }}>{"{count} people"}</T>
+              </b>
+            ),
+          }}
+        >
+          {"About {people} match right now."}
+        </T>
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/text";
 import type { IPaymentDetail } from "@/types/payment.types";
+import T from "@/components/shared/T";
 
 // Who paid, and a way to their page (found by email, since payments keep
 // their own record of the person).
@@ -10,7 +11,7 @@ const PaidByCard = ({ payment }: { payment: IPaymentDetail }) => {
   return (
     <section aria-labelledby="paid-by" className="flex flex-col gap-3 rounded-lg border border-line bg-surface px-5 py-4 shadow-card">
       <h2 id="paid-by" className="text-title text-ink">
-        Paid by
+        <T>Paid by</T>
       </h2>
       {person ? (
         <>
@@ -25,11 +26,11 @@ const PaidByCard = ({ payment }: { payment: IPaymentDetail }) => {
           </div>
           <span className="text-small text-ink-2">{payment.plan.name}</span>
           <Link href={`/admin/users?search=${encodeURIComponent(person.email)}`} className="text-small font-semibold text-emerald hover:underline">
-            Open their page
+            <T>Open their page</T>
           </Link>
         </>
       ) : (
-        <p className="text-small text-ink-muted">This person&apos;s record is gone.</p>
+        <p className="text-small text-ink-muted"><T>This person&apos;s record is gone.</T></p>
       )}
     </section>
   );

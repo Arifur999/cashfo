@@ -6,8 +6,7 @@ import type { IPlanOption } from "@/types/plan.types";
 // What the page needs to build the identical query string on the server.
 export const USERS_TABLE_BASE_CONFIG = {
   queryKeys: ["search", "status", "planId"],
-  defaultLimit: 20,
-} as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaultLimit">;
+} as const satisfies Pick<ServerDataTableConfig, "queryKeys">;
 
 // The plan filter's options come from the API and the status tabs' counts
 // from the list response, so the full config is built once those are

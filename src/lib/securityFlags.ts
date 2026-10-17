@@ -1,5 +1,6 @@
 import type { FlagStatus, ISecurityFlag, Severity, SuspiciousActivityType } from "@/types/securityFlag.types";
-import { formatDayName, formatLogTime } from "./date";
+import { formatDayName, formatLogTime, type RelativeDateOptions } from "./date";
+import { inEnglish, type Translate } from "./i18n/message";
 
 // The design's names for each kind of flag.
 export const FLAG_TYPE_LABEL: Record<SuspiciousActivityType, string> = {
@@ -44,25 +45,30 @@ export const flagNextStep = (flag: Pick<ISecurityFlag, "status" | "type">): { la
 };
 
 // "See the 9 tries": the network's failed sign-ins, while the flag is open.
-export const flagTriesLink = (flag: Pick<ISecurityFlag, "status" | "type" | "relatedIp" | "description">): { href: string; label: string } | null => {
+export const flagTriesLink = (flag: Pick<ISecurityFlag, "status" | "type" | "relatedIp" | "description">, t: Translate = inEnglish): { href: string; label: string } | null => {
   if (flag.type !== "MULTIPLE_FAILED_LOGINS" || !flag.relatedIp || !isOpenFlag(flag)) return null;
   const tries = /^(\d+) failed/.exec(flag.description)?.[1];
   return {
     href: `/admin/security/logins?ipAddress=${encodeURIComponent(flag.relatedIp)}&success=false`,
-    label: tries ? `See the ${tries} tries` : "See the tries",
+    label: tries ? t("See the {count} tries", { count: tries }) : t("See the tries"),
   };
 };
 
 // The grey line under the text: the network, and who is looking into it.
-export const flagDetails = (flag: Pick<ISecurityFlag, "status" | "relatedIp" | "reviewer" | "reviewedAt">, now: Date = new Date()): string | null => {
+export const flagDetails = (
+  flag: Pick<ISecurityFlag, "status" | "relatedIp" | "reviewer" | "reviewedAt">,
+  { now = new Date(), t = inEnglish }: Pick<RelativeDateOptions, "now" | "t"> = {},
+): string | null => {
   const parts: string[] = [];
-  if (flag.relatedIp) parts.push(`IP ${flag.relatedIp}`);
-  if (flag.status === "REVIEWING" && flag.reviewer) parts.push(`${flag.reviewer.name} is looking into it since ${formatLogTime(flag.reviewedAt, now)}`);
+  if (flag.relatedIp) parts.push(t("IP {ip}", { ip: flag.relatedIp }));
+  if (flag.status === "REVIEWING" && flag.reviewer) {
+    parts.push(t("{name} is looking into it since {time}", { name: flag.reviewer.name, time: formatLogTime(flag.reviewedAt, { now, t }) }));
+  }
   return parts.length > 0 ? parts.join(" · ") : null;
 };
 
 // Who closed a flag, and when: "Nadia Rahman · 28 Sep".
-export const flagClosedBy = (flag: Pick<ISecurityFlag, "status" | "reviewer" | "reviewedAt">, now: Date = new Date()): string | null => {
+export const flagClosedBy = (flag: Pick<ISecurityFlag, "status" | "reviewer" | "reviewedAt">, options: Pick<RelativeDateOptions, "now" | "t"> = {}): string | null => {
   if (isOpenFlag(flag) || !flag.reviewer) return null;
-  return `${flag.reviewer.name} · ${formatDayName(flag.reviewedAt, now)}`;
+  return `${flag.reviewer.name} · ${formatDayName(flag.reviewedAt, options)}`;
 };

@@ -6,6 +6,7 @@ import FormDialog from "@/components/shared/dialog/FormDialog";
 import DataTable from "@/components/shared/table/DataTable";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
 import { plansQuery } from "@/queries/plan.queries";
 import { adminAccountsQuery } from "@/queries/security.queries";
@@ -13,12 +14,14 @@ import { featureFlagsQuery } from "@/queries/system.queries";
 import type { IFeatureFlag } from "@/types/featureFlag.types";
 import FeatureFlagRolloutForm from "./FeatureFlagRolloutForm";
 import { buildFeatureFlagsColumns } from "./featureFlagsColumns";
+import T from "@/components/shared/T";
 
 type View = "all" | "on" | "off";
 
 // Every flag on one card, filtered All / On / Off in place. Edit opens the
 // rollout and plans of one flag; "New flag" lives in the page header.
 const FeatureFlagsBoard = () => {
+  const { translate } = useLocale();
   const { data, isLoading, isFetching } = useQuery(featureFlagsQuery());
   const plans = useQuery(plansQuery()).data?.data;
   const admins = useQuery(adminAccountsQuery()).data?.data;
@@ -48,23 +51,21 @@ const FeatureFlagsBoard = () => {
           value={view}
           onChange={setView}
           options={[
-            { value: "all", label: `All · ${formatNumber(flags.length)}` },
-            { value: "on", label: `On · ${formatNumber(onCount)}` },
-            { value: "off", label: `Off · ${formatNumber(flags.length - onCount)}` },
+            { value: "all", label: translate("All · {count}", { count: formatNumber(flags.length) }) },
+            { value: "on", label: translate("On · {count}", { count: formatNumber(onCount) }) },
+            { value: "off", label: translate("Off · {count}", { count: formatNumber(flags.length - onCount) }) },
           ]}
         />
         <span className="flex-1" />
-        <span className="text-small text-ink-muted">Each person always gets the same answer for a flag, so a 25% rollout stays the same 25%.</span>
+        <span className="text-small text-ink-muted"><T>Each person always gets the same answer for a flag, so a 25% rollout stays the same 25%.</T></span>
       </div>
       <DataTable
         data={data ? shown : undefined}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="feature-flags"
         isLoading={isLoading}
         isFetching={isFetching}
         hideToolbar
-        pager={false}
         initialPageSize={100}
         emptyMessage={view === "all" ? "No feature flags yet." : "No flags here."}
       />

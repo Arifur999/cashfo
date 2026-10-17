@@ -13,10 +13,13 @@ import { TICKET_STATUS_LABEL } from "@/lib/tickets";
 import { TICKET_STATUSES, type TicketStatus } from "@/types/ticket.types";
 import { type ITicketReplyFormValues, ticketReplyFormZodSchema } from "@/zod/ticket.validation";
 import type { ThreadMessage } from "./TicketMessageBubble";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { asStatus } from "@/lib/i18n/message";
 
 // Radix Select reserves "" for "no value", so "leave it" needs a token.
 const KEEP = "keep";
-const AFTER_SEND_OPTIONS = [{ value: KEEP, label: "Leave as is" }, ...TICKET_STATUSES.map((status) => ({ value: status, label: TICKET_STATUS_LABEL[status] }))];
+const AFTER_SEND_OPTIONS = [{ value: KEEP, label: "Leave as is" }, ...TICKET_STATUSES.map((status) => ({ value: status, label: asStatus(TICKET_STATUS_LABEL[status]) }))];
 
 interface TicketReplyFormProps {
   ticketId: string;
@@ -34,6 +37,7 @@ interface TicketReplyFormProps {
 const TicketReplyForm = ({ ticketId, requesterName, currentAdminId, onSending, onSetStatus }: TicketReplyFormProps) => {
   const [isSending, startTransition] = useTransition();
   const [afterSend, setAfterSend] = useState<string>(KEEP);
+  const { translate } = useLocale();
   const reply = useActionMutation({
     action: (values: ITicketReplyFormValues) => replyToTicketAction(ticketId, values),
     successMessage: "Reply sent",
@@ -72,9 +76,9 @@ const TicketReplyForm = ({ ticketId, requesterName, currentAdminId, onSending, o
         {(field) => (
           <AppTextareaField
             field={field}
-            label={<span className="sr-only">Reply</span>}
+            label={<span className="sr-only"><T>Reply</T></span>}
             rows={3}
-            placeholder={`Write a reply to ${requesterName}`}
+            placeholder={translate("Write a reply to {name}", { name: requesterName })}
             onKeyDown={(event) => {
               if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !isSending) {
                 event.preventDefault();
@@ -85,16 +89,16 @@ const TicketReplyForm = ({ ticketId, requesterName, currentAdminId, onSending, o
         )}
       </form.Field>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <span className="text-small text-ink-muted">Ctrl + Enter sends.</span>
+        <span className="text-small text-ink-muted"><T>Ctrl + Enter sends.</T></span>
         <span className="flex-1" />
         {onSetStatus && (
           <>
-            <span className="text-small text-ink-muted">After sending, set to</span>
+            <span className="text-small text-ink-muted"><T>After sending, set to</T></span>
             <SelectControl ariaLabel="Status after sending" value={afterSend} options={AFTER_SEND_OPTIONS} onValueChange={setAfterSend} size="sm" className="h-9 w-44 rounded-md border-line-strong bg-surface text-small font-semibold text-ink" />
           </>
         )}
         <AppSubmitButton isPending={isSending} pendingLabel="Sending..." className="h-9 w-auto rounded-md bg-emerald px-4 text-body font-semibold text-white hover:bg-forest">
-          Send reply
+          <T>Send reply</T>
         </AppSubmitButton>
       </div>
     </AppForm>

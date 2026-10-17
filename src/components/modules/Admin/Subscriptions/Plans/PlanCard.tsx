@@ -5,11 +5,13 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber, formatPercent } from "@/lib/number";
 import { billingPeriod, limitText, money, planAccentClass, trialLine, trialsLine } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
 import type { IPlanAnalyticsEntry, ISubscriptionPlan } from "@/types/plan.types";
 import { PLAN_FEATURE_TOGGLES, PLAN_NUMERIC_LIMITS } from "./planFeatures";
+import T from "@/components/shared/T";
 
 interface PlanCardProps {
   plan: ISubscriptionPlan;
@@ -28,14 +30,15 @@ interface PlanCardProps {
 const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, onPutOnSale, onDelete }: PlanCardProps) => {
   const people = analytics?.totalUsers ?? 0;
   const share = totalUsers > 0 ? (people / totalUsers) * 100 : 0;
-  const period = billingPeriod(plan.billingCycle);
+  const { translate } = useLocale();
+  const period = billingPeriod(plan.billingCycle, translate);
 
   return (
     <Card padding="none" className={cn("flex flex-col gap-3 p-5", !plan.isActive && "opacity-80")}>
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-title text-ink">{plan.name}</h2>
         <Chip tone={plan.isActive ? "mint" : "neutral"} size="sm">
-          {plan.isActive ? "On sale" : "Not on sale"}
+          <T>{plan.isActive ? "On sale" : "Not on sale"}</T>
         </Chip>
       </div>
 
@@ -44,33 +47,39 @@ const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, o
           <span className="text-h1 text-ink">{money(plan.price, plan.currency)}</span>
           {period && <span className="text-small text-ink-muted">{period}</span>}
         </span>
-        <span className="text-small text-ink-muted">{trialLine(plan)}</span>
+        <span className="text-small text-ink-muted">{trialLine(plan, translate)}</span>
       </div>
 
       <div className="flex flex-col gap-2 rounded-md bg-cream p-3">
         <span className="flex justify-between text-small">
-          <b className="font-semibold text-ink">{formatNumber(people)} people</b>
+          <b className="font-semibold text-ink">
+            <T values={{ count: formatNumber(people) }}>{"{count} people"}</T>
+          </b>
           <span className="text-ink-muted">{formatPercent(share)}</span>
         </span>
         <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken">
           <span className={cn("block h-full rounded-full", planAccentClass(plan.name))} style={{ width: `${Math.round(share)}%` }} />
         </span>
-        <span className="text-caption text-ink-muted">{trialsLine(plan.billingCycle, analytics?.trialing ?? 0)}</span>
+        <span className="text-caption text-ink-muted">{trialsLine(plan.billingCycle, analytics?.trialing ?? 0, translate)}</span>
       </div>
 
       <ul className="flex flex-col gap-2 text-small">
         {PLAN_NUMERIC_LIMITS.map(({ key, label }) => (
           <li key={key} className="flex items-center gap-2">
-            <span className="grow text-ink-2">{label}</span>
-            <b className="font-semibold text-ink-2 tabular-nums">{limitText(plan.featureLimits[key])}</b>
+            <span className="grow text-ink-2">
+              <T>{label}</T>
+            </span>
+            <b className="font-semibold text-ink-2 tabular-nums">{limitText(plan.featureLimits[key], translate)}</b>
           </li>
         ))}
         {PLAN_FEATURE_TOGGLES.map(({ key, label }) => {
           const on = plan.featureLimits[key];
           return (
             <li key={key} className={cn("flex items-center gap-2", on ? "text-ink-2" : "text-ink-muted")}>
-              <span className="grow">{label}</span>
-              {on ? <Check className="size-4 text-emerald" aria-label="Included" /> : <X className="size-4" aria-label="Not included" />}
+              <span className="grow">
+                <T>{label}</T>
+              </span>
+              {on ? <Check className="size-4 text-emerald" aria-label={translate("Included")} /> : <X className="size-4" aria-label={translate("Not included")} />}
             </li>
           );
         })}
@@ -79,27 +88,27 @@ const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, o
       {canManage && (
         <div className="mt-auto flex gap-2 border-t border-surface-sunken pt-3">
           <Button variant="outline" size="sm" className="h-9 flex-1 border-line-strong bg-surface text-small font-semibold text-ink hover:bg-cream" onClick={onEdit}>
-            Edit plan
+            <T>Edit plan</T>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon-sm" className="size-9 border-line-strong bg-surface text-ink hover:bg-cream data-[state=open]:bg-cream" aria-label={`More for ${plan.name}`}>
+              <Button variant="outline" size="icon-sm" className="size-9 border-line-strong bg-surface text-ink hover:bg-cream data-[state=open]:bg-cream" aria-label={translate("More for {name}", { name: plan.name })}>
                 <MoreHorizontal aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
               {plan.isActive ? (
                 <DropdownMenuItem onClick={onArchive}>
-                  <Archive aria-hidden="true" /> Take off sale
+                  <Archive aria-hidden="true" /> <T>Take off sale</T>
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem onClick={onPutOnSale}>
-                  <Tag aria-hidden="true" /> Put back on sale
+                  <Tag aria-hidden="true" /> <T>Put back on sale</T>
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onClick={onDelete}>
-                <Trash2 aria-hidden="true" /> Delete plan
+                <Trash2 aria-hidden="true" /> <T>Delete plan</T>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

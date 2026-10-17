@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import FeatureFlagsBoard from "@/components/modules/Admin/System/FeatureFlags/FeatureFlagsBoard";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { plansQuery } from "@/queries/plan.queries";
 import { adminAccountsQuery } from "@/queries/security.queries";
 import { featureFlagsQuery } from "@/queries/system.queries";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Feature flags" };
+export const generateMetadata = adminPageTitle("Feature flags");
 
 const FeatureFlagsPage = () => {
   return (

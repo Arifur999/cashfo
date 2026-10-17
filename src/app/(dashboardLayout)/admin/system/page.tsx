@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import BackupsCard from "@/components/modules/Admin/System/Backups/BackupsCard";
 import HealthCards from "@/components/modules/Admin/System/Health/HealthCards";
 import MaintenanceCard from "@/components/modules/Admin/System/Health/MaintenanceCard";
@@ -7,8 +6,9 @@ import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { adminAccountsQuery } from "@/queries/security.queries";
 import { platformSettingsQuery } from "@/queries/settings.queries";
 import { backupsQuery, backupStatusSummaryQuery, healthQuery, rateLimitSummaryQuery } from "@/queries/system.queries";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Health and backups" };
+export const generateMetadata = adminPageTitle("Health and backups");
 
 const HealthAndBackupsPage = () => {
   return (

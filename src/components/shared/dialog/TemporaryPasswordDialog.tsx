@@ -5,6 +5,7 @@ import Callout from "@/components/shared/Callout";
 import CopyButton from "@/components/shared/CopyButton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface TemporaryPasswordDialogProps {
   // The password to reveal; null keeps the dialog closed.
@@ -17,6 +18,7 @@ interface TemporaryPasswordDialogProps {
 // Shows a generated password exactly once -- the API keeps only its hash,
 // so closing this is the last chance to see it.
 const TemporaryPasswordDialog = ({ password, accountName, onClose }: TemporaryPasswordDialogProps) => {
+  const { translate } = useLocale();
   return (
     <Dialog open={password !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
@@ -26,9 +28,12 @@ const TemporaryPasswordDialog = ({ password, accountName, onClose }: TemporaryPa
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <KeyRound className="size-4" aria-hidden="true" /> Temporary password
+            <KeyRound className="size-4" aria-hidden="true" /> {translate("Temporary password")}
           </DialogTitle>
-          <DialogDescription>{accountName ? `For ${accountName}.` : "For the new account."} They sign in with it once, then choose their own.</DialogDescription>
+          <DialogDescription>
+            {accountName ? translate("For {name}.").replace("{name}", accountName) : translate("For the new account.")}{" "}
+            {translate("They sign in with it once, then choose their own.")}
+          </DialogDescription>
         </DialogHeader>
         {password && (
           <div className="flex items-center gap-2 rounded-xl border bg-muted/40 px-4 py-3">
@@ -38,7 +43,7 @@ const TemporaryPasswordDialog = ({ password, accountName, onClose }: TemporaryPa
         )}
         <Callout variant="warning">Shown once and not stored anywhere readable. Share it over a secure channel.</Callout>
         <DialogFooter>
-          <Button onClick={onClose}>Done</Button>
+          <Button onClick={onClose}>{translate("Done")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

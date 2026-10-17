@@ -29,11 +29,9 @@ const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
         data={rows}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="admin-team"
         isLoading={isLoading}
         isFetching={isFetching}
         hideToolbar
-        pager={false}
         initialPageSize={100}
         footer="The ⋯ menu has Reset password and Suspend. You can't suspend yourself or change your own role, so the panel always keeps a super admin."
         emptyMessage="No admins yet."

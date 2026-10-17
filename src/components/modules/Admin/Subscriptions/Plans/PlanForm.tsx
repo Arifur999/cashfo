@@ -10,6 +10,7 @@ import type { ISubscriptionPlan } from "@/types/plan.types";
 import PlanBasicsFields from "./PlanBasicsFields";
 import PlanLimitsFields from "./PlanLimitsFields";
 import { usePlanForm } from "./usePlanForm";
+import T from "@/components/shared/T";
 
 interface PlanFormProps {
   // Omit to create a plan.
@@ -29,8 +30,11 @@ const PlanForm = ({ plan, people = 0, onDone }: PlanFormProps) => {
       <PlanBasicsFields form={form} plan={plan} />
       {plan && plan.billingCycle !== "FREE" && (
         <Callout variant="info">
-          A new price applies from each person&apos;s next payment. The {formatNumber(people)} {people === 1 ? "person" : "people"} on it now keep{" "}
-          {money(plan.price, plan.currency)} until they renew.
+          <T values={{ count: formatNumber(people), price: money(plan.price, plan.currency) }}>
+            {people === 1
+              ? "A new price applies from each person's next payment. The {count} person on it now keeps {price} until they renew."
+              : "A new price applies from each person's next payment. The {count} people on it now keep {price} until they renew."}
+          </T>
         </Callout>
       )}
       <PlanLimitsFields form={form} />

@@ -1,4 +1,5 @@
 import Loader from "./Loader";
+import T from "./T";
 
 // What every route's loading.tsx returns, so a slow Server Component render
 // shows a consistent placeholder inside the dashboard shell instead of a
@@ -7,7 +8,9 @@ const RouteLoading = ({ label }: { label: string }) => {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3" aria-live="polite">
       <Loader size={32} label={label} />
-      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-sm text-muted-foreground">
+        <T>{label}</T>
+      </p>
     </div>
   );
 };

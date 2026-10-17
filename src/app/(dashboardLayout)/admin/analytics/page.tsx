@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
+import AnalyticsRangePicker from "@/components/modules/Admin/Analytics/AnalyticsRangePicker";
 import AnalyticsView from "@/components/modules/Admin/Analytics/AnalyticsView";
 import PageHeader from "@/components/shared/PageHeader";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { resolveAnalyticsRange, toAnalyticsRangeQuery } from "@/lib/analyticsRange";
 import { getAppToday } from "@/lib/date";
-import { cohortsQuery, devicesQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
+import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Analytics" };
+export const generateMetadata = adminPageTitle("Analytics");
 
 const firstValue = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
@@ -18,11 +19,12 @@ const AnalyticsPage = async ({ searchParams }: PageProps<"/admin/analytics">) =>
   );
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Analytics" description="Feature usage, engagement, retention and reach." />
+    <div className="space-y-4">
+      <PageHeader title="Analytics" description="How people use Smartly, counted from what they save in the app." actions={<AnalyticsRangePicker today={today} />} />
       <QueryPrefetch
         prefetch={(client) =>
           Promise.all([
+            client.prefetchQuery(analyticsSummaryQuery()),
             client.prefetchQuery(featureUsageQuery(rangeQuery)),
             client.prefetchQuery(engagementQuery(rangeQuery)),
             client.prefetchQuery(cohortsQuery()),

@@ -6,7 +6,8 @@ import { useCallback, useMemo } from "react";
 import DataTable from "@/components/shared/table/DataTable";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { toTableQueryProps } from "@/lib/table/queryProps";
-import { pluralize } from "@/lib/text";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { adminAccountsQuery, auditLogsListQuery } from "@/queries/security.queries";
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import AuditEntryDrawer from "./AuditEntryDrawer";
@@ -18,6 +19,7 @@ import { buildAuditLogTableConfig } from "./auditLogTable.config";
 const ENTRY_PARAM = "entry";
 
 const AuditLogTable = () => {
+  const { translate } = useLocale();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const entryId = searchParams.get(ENTRY_PARAM);
@@ -51,11 +53,9 @@ const AuditLogTable = () => {
         data={query.data?.data}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="audit-log"
-        exportFileName="audit-log"
         onRowClick={(row) => setEntry(row.id)}
         rowClassName={(row) => (row.id === entryId ? "bg-mint-50 hover:bg-mint-50" : undefined)}
-        pager={{ previous: "Newer", next: "Older", summary: (total) => `${pluralize(total, "entry", "entries")} · newest first` }}
+        pager={{ previous: "Newer", next: "Older", summary: (total) => plural(translate, total, "{count} entry · newest first", "{count} entries · newest first") }}
         emptyMessage="No audit entries match these filters."
       />
       <AuditEntryDrawer entryId={entryId} listEntry={openRow} onClose={() => setEntry(null)} />

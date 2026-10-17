@@ -12,8 +12,10 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { DataTableFilterOption } from "../dataTable.types";
+import { asStatus } from "@/lib/i18n/message";
 
 // The chip the design draws for a filter: "Plan: All plans".
 export const FILTER_CHIP_CLASS = "h-8 gap-2 rounded-md border-line-strong bg-surface px-3 text-small font-normal text-ink-2 hover:bg-cream data-[state=open]:bg-cream";
@@ -31,6 +33,7 @@ interface DataTableFacetedFilterProps {
 }
 
 const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple = false, emptyLabel = "All", facets }: DataTableFacetedFilterProps) => {
+  const { translate } = useLocale();
   const toggle = (value: string) => {
     const isSelected = selected.includes(value);
     if (multiple) {
@@ -44,15 +47,15 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className={FILTER_CHIP_CLASS}>
-          <span>{title}:</span>
+          <span>{translate(title)}:</span>
           <b className="font-semibold text-ink">
             {selected.length === 0
-              ? emptyLabel
+              ? translate(emptyLabel)
               : selected.length > 2
-                ? `${selected.length} selected`
+                ? translate("{count} selected", { count: selected.length })
                 : options
                     .filter((option) => selected.includes(option.value))
-                    .map((option) => option.label)
+                    .map((option) => translate(asStatus(option.label)))
                     .join(", ")}
           </b>
           <ChevronDown className="size-3.5 text-ink-muted" aria-hidden="true" />
@@ -60,9 +63,9 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
       </PopoverTrigger>
       <PopoverContent className="w-56 p-0" align="start">
         <Command>
-          <CommandInput placeholder={title} />
+          <CommandInput placeholder={translate(title)} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{translate("No results found.")}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
                 const isSelected = selected.includes(option.value);
@@ -79,7 +82,7 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
                       <Check className="size-3" aria-hidden="true" />
                     </span>
                     {option.icon && <option.icon className="size-4 text-muted-foreground" aria-hidden="true" />}
-                    <span>{option.label}</span>
+                    <span>{translate(asStatus(option.label))}</span>
                     {count !== undefined && <span className="ml-auto font-mono text-xs text-muted-foreground">{count}</span>}
                   </CommandItem>
                 );
@@ -90,7 +93,7 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem onSelect={() => onChange([])} className="justify-center text-center">
-                    Clear filter
+                    {translate("Clear filter")}
                   </CommandItem>
                 </CommandGroup>
               </>

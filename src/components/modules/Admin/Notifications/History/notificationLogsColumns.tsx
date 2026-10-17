@@ -1,7 +1,9 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
-import { formatDateTime, formatRelativeDateTime } from "@/lib/date";
+import RelativeTime from "@/components/shared/RelativeTime";
+import T from "@/components/shared/T";
+import { formatDateTime } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { INotificationLog } from "@/types/notification.types";
 import { CHANNEL_META, LOG_STATUS_LABEL } from "../notificationOptions";
@@ -13,13 +15,15 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     id: "createdAt",
     accessorKey: "createdAt",
     header: "When",
-    cell: ({ row }) => <span className="text-small whitespace-nowrap text-ink-2">{formatRelativeDateTime(row.original.createdAt)}</span>,
+    cell: ({ row }) => <span className="text-small whitespace-nowrap text-ink-2">
+        <RelativeTime value={row.original.createdAt} />
+      </span>,
     meta: { exportValue: (row) => formatDateTime(row.createdAt) },
   },
   {
     id: "user",
     accessorFn: (row) => row.platformUser?.name ?? "Unknown",
-    header: "To",
+    header: "To@@recipient",
     cell: ({ row }) => <UserInfoCell name={row.original.platformUser?.name} email={row.original.platformUser?.email} avatar={false} />,
     meta: { exportValue: (row) => `${row.platformUser?.name ?? "Unknown"} <${row.platformUser?.email ?? ""}>`, cellClassName: "max-w-72" },
   },
@@ -33,7 +37,11 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     id: "channel",
     accessorKey: "channel",
     header: "Channel",
-    cell: ({ row }) => <span className={cn("inline-flex rounded-full px-2 py-0.5 text-caption font-semibold", CHANNEL_META[row.original.channel].chip)}>{CHANNEL_META[row.original.channel].label}</span>,
+    cell: ({ row }) => (
+      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-caption font-semibold", CHANNEL_META[row.original.channel].chip)}>
+        <T>{CHANNEL_META[row.original.channel].label}</T>
+      </span>
+    ),
     meta: { exportValue: (row) => CHANNEL_META[row.channel].label },
   },
   {
@@ -52,7 +60,9 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     id: "sentAt",
     accessorKey: "sentAt",
     header: "Sent",
-    cell: ({ row }) => <span className="text-small whitespace-nowrap text-ink-muted">{row.original.sentAt ? formatRelativeDateTime(row.original.sentAt) : "—"}</span>,
+    cell: ({ row }) => <span className="text-small whitespace-nowrap text-ink-muted">
+        <RelativeTime value={row.original.sentAt} />
+      </span>,
     meta: { exportValue: (row) => formatDateTime(row.sentAt) },
   },
 ];

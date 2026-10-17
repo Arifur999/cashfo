@@ -11,6 +11,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import type { ICreatedAdmin } from "@/types/adminAccount.types";
 import { createAdminFormZodSchema, type ICreateAdminFormValues } from "@/zod/adminAccount.validation";
 import { ADMIN_ROLE_OPTIONS } from "./adminOptions";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const { shape } = createAdminFormZodSchema;
 
@@ -18,9 +19,10 @@ const DEFAULT_VALUES: ICreateAdminFormValues = { name: "", email: "", role: "SUP
 
 // Mounted inside the dialog content, so each open starts empty.
 const CreateAdminForm = ({ onCreated }: { onCreated: (admin: ICreatedAdmin) => void }) => {
+  const { translate } = useLocale();
   const { run, isPending } = useActionMutation({
     action: createAdminAction,
-    successMessage: (admin) => `${admin.name}'s account is ready`,
+    successMessage: (admin) => translate("{name}'s account is ready", { name: admin.name }),
     // The new account also joins the assignee and audit-log filters.
     invalidateKeys: [queryKeys.admins.all],
     onSuccess: onCreated,

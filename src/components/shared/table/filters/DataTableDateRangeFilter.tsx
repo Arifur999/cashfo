@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { DateRangeValue } from "../dataTable.types";
 import { FILTER_CHIP_CLASS } from "./DataTableFacetedFilter";
 
@@ -18,16 +19,17 @@ interface DataTableDateRangeFilterProps {
 
 const formatDay = (day: string) => format(new Date(`${day}T00:00:00`), "MMM d, yyyy");
 
-const describeRange = ({ from, to }: DateRangeValue) => {
+const describeRange = ({ from, to }: DateRangeValue, translate: (key: string) => string) => {
   if (from && to) return `${formatDay(from)} – ${formatDay(to)}`;
-  if (from) return `From ${formatDay(from)}`;
-  if (to) return `Until ${formatDay(to)}`;
+  if (from) return translate("From {date}").replace("{date}", formatDay(from));
+  if (to) return translate("Until {date}").replace("{date}", formatDay(to));
   return "";
 };
 
 // Edits a draft and only applies on "Apply", so picking two dates fires one
 // query instead of two.
 const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRangeFilterProps) => {
+  const { translate } = useLocale();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRangeValue>(value ?? {});
   const isActive = Boolean(value?.from || value?.to);
@@ -50,13 +52,13 @@ const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRange
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className={FILTER_CHIP_CLASS}>
           <CalendarRange className="size-3.5 text-ink-muted" aria-hidden="true" />
-          <span>{title}:</span>
-          <b className="font-semibold text-ink">{isActive && value ? describeRange(value) : "Any time"}</b>
+          <span>{translate(title)}:</span>
+          <b className="font-semibold text-ink">{isActive && value ? describeRange(value, translate) : translate("Any time")}</b>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 space-y-3" align="start">
         <div className="space-y-1.5">
-          <Label htmlFor={`${title}-from`}>From</Label>
+          <Label htmlFor={`${title}-from`}>{translate("Start date")}</Label>
           <Input
             id={`${title}-from`}
             type="date"
@@ -66,7 +68,7 @@ const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRange
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor={`${title}-to`}>To</Label>
+          <Label htmlFor={`${title}-to`}>{translate("End date")}</Label>
           <Input
             id={`${title}-to`}
             type="date"
@@ -75,13 +77,13 @@ const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRange
             onChange={(event) => setDraft((previous) => ({ ...previous, to: event.target.value || undefined }))}
           />
         </div>
-        {isInvalid && <p className="text-xs text-destructive">&ldquo;From&rdquo; must be on or before &ldquo;To&rdquo;.</p>}
+        {isInvalid && <p className="text-xs text-destructive">{translate("The start must be on or before the end.")}</p>}
         <div className="flex justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => apply(undefined)}>
-            Clear
+            {translate("Clear")}
           </Button>
           <Button size="sm" disabled={isInvalid} onClick={() => apply(draft)}>
-            Apply
+            {translate("Apply")}
           </Button>
         </div>
       </PopoverContent>

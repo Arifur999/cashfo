@@ -2,10 +2,13 @@
 // LocaleProvider, and Server Component pages that render text directly
 // instead of delegating to a "use client" component. The toggle in
 // LocaleProvider.tsx writes the cookie this reads.
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE } from "./localeCookie";
 import { getTranslationOverrides } from "./overrides";
-import { translate, type Locale } from "./translate";
+import { type FillValues, fillText } from "./fill";
+import type { Translate } from "./message";
+import { type DictionaryScope, translate, type Locale } from "./translate";
 
 export async function getLocale(): Promise<Locale> {
   const stored = (await cookies()).get(LOCALE_COOKIE)?.value;
@@ -13,8 +16,20 @@ export async function getLocale(): Promise<Locale> {
 }
 
 // For Server Components that render text themselves: the reader's language
-// and the admin-edited Bangla, as one t().
-export async function getTranslator(): Promise<{ locale: Locale; t: (key: string) => string }> {
+// and the admin-edited Bangla, as one t() that also fills {placeholders}.
+// The admin panel's Server Components pass "admin" for its own wording.
+export async function getTranslator(scope: DictionaryScope = "app"): Promise<{ locale: Locale; t: Translate }> {
   const [locale, overrides] = await Promise.all([getLocale(), getTranslationOverrides()]);
-  return { locale, t: (key: string) => translate(locale, key, overrides) };
+  const t = (key: string, values?: FillValues) => {
+    const text = translate(locale, key, overrides, scope);
+    return values ? fillText(text, values) : text;
+  };
+  return { locale, t };
 }
+
+// An admin page's tab title in the reader's language (the root layout adds
+// the brand): export const generateMetadata = adminPageTitle("Users");
+export const adminPageTitle = (title: string) => async (): Promise<Metadata> => {
+  const { t } = await getTranslator("admin");
+  return { title: t(title) };
+};

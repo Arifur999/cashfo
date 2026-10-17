@@ -10,6 +10,7 @@ import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IFeatureFlag } from "@/types/featureFlag.types";
 import { featureFlagRolloutFormZodSchema, type IFeatureFlagRolloutFormValues } from "@/zod/featureFlag.validation";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface FeatureFlagRolloutFormProps {
   flag: IFeatureFlag;
@@ -19,9 +20,10 @@ interface FeatureFlagRolloutFormProps {
 
 // Who gets an enabled flag: a share of users, optionally limited to plans.
 const FeatureFlagRolloutForm = ({ flag, planOptions, onDone }: FeatureFlagRolloutFormProps) => {
+  const { translate } = useLocale();
   const { run, isPending } = useActionMutation({
     action: (values: IFeatureFlagRolloutFormValues) => updateFeatureFlagAction(flag.id, values),
-    successMessage: (updated) => `${updated.name}: rollout saved`,
+    successMessage: (updated) => translate("{name}: rollout saved", { name: updated.name }),
     invalidateKeys: [queryKeys.featureFlags.all],
     refreshRoute: false,
   });

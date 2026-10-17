@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { type FillValues, fillText } from "./fill";
+import { inEnglish } from "./message";
 import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE_SECONDS } from "./localeCookie";
-import { translate as translateTo, type Locale, type TranslationOverrides } from "./translate";
+import { type DictionaryScope, translate as translateTo, type Locale, type TranslationOverrides } from "./translate";
 
 export type { Locale };
 
@@ -11,18 +13,21 @@ interface LocaleContextValue {
   locale: Locale;
   toggleLocale: () => void;
   // One function, two names: the admin panel calls it translate(), the
-  // customer app t().
-  translate: (key: string) => string;
-  t: (key: string) => string;
+  // customer app t(). Values fill the sentence's {placeholders} after it is
+  // translated: translate("{count} tries", { count: 3 }).
+  translate: (key: string, values?: FillValues) => string;
+  t: (key: string, values?: FillValues) => string;
 }
+
+const fillIn = (text: string, values?: FillValues) => (values ? fillText(text, values) : text);
 
 // What a component rendered outside the provider (a test, a portal) gets:
 // readable English instead of a crash.
 const fallbackContext: LocaleContextValue = {
   locale: "en",
   toggleLocale: () => {},
-  translate: (key) => key,
-  t: (key) => key,
+  translate: inEnglish,
+  t: inEnglish,
 };
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
@@ -34,10 +39,12 @@ interface LocaleProviderProps {
   initialLocale?: Locale;
   // The admin-edited Bangla (getTranslationOverrides() in overrides.ts).
   overrides?: TranslationOverrides;
+  // "admin" in the admin panel, so its own wording wins there.
+  scope?: DictionaryScope;
   children: React.ReactNode;
 }
 
-export function LocaleProvider({ initialLocale = "en", overrides, children }: LocaleProviderProps) {
+export function LocaleProvider({ initialLocale = "en", overrides, scope = "app", children }: LocaleProviderProps) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const router = useRouter();
 
@@ -56,7 +63,10 @@ export function LocaleProvider({ initialLocale = "en", overrides, children }: Lo
     router.refresh();
   }, [locale, router]);
 
-  const translate = useCallback((key: string) => translateTo(locale, key, overrides), [locale, overrides]);
+  const translate = useCallback(
+    (key: string, values?: FillValues) => fillIn(translateTo(locale, key, overrides, scope), values),
+    [locale, overrides, scope],
+  );
   const value = useMemo(() => ({ locale, toggleLocale, translate, t: translate }), [locale, toggleLocale, translate]);
 
   return (

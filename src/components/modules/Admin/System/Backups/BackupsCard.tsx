@@ -5,11 +5,14 @@ import { useMemo } from "react";
 import Card from "@/components/smartly/Card";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, formatRelativeDateTime } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { Translate } from "@/lib/i18n/message";
 import { formatNumber, formatPercent } from "@/lib/number";
 import { cn } from "@/lib/utils";
 import { adminAccountsQuery } from "@/queries/security.queries";
 import { backupsQuery, backupStatusSummaryQuery } from "@/queries/system.queries";
 import type { BackupStatus, IBackupRecord } from "@/types/system.types";
+import T from "@/components/shared/T";
 
 const ROWS_SHOWN = 8;
 
@@ -22,18 +25,22 @@ const RESULT: Record<BackupStatus, { label: string; chip: string }> = {
 const sizeText = (sizeMb: number | null) => (sizeMb === null ? "—" : `${formatNumber(Math.round(sizeMb))} MB`);
 
 // "Took 4 minutes", or what went wrong.
-const resultNote = (backup: IBackupRecord) => {
+const resultNote = (backup: IBackupRecord, t: Translate) => {
   if (backup.errorMessage) return backup.errorMessage;
   if (!backup.completedAt) return "";
   const minutes = Math.max(1, Math.round((new Date(backup.completedAt).getTime() - new Date(backup.startedAt).getTime()) / 60_000));
-  return `Took ${minutes === 1 ? "a minute" : `${minutes} minutes`}`;
+  return minutes === 1 ? t("Took a minute") : t("Took {count} minutes", { count: minutes });
 };
 
 const SummaryCell = ({ label, value, sub }: { label: string; value: string; sub: string }) => (
   <div className="flex flex-col gap-0.5 border-r border-surface-sunken px-5 py-3 last:border-r-0">
-    <span className="text-small text-ink-muted">{label}</span>
+    <span className="text-small text-ink-muted">
+      <T>{label}</T>
+    </span>
     <span className="text-h3 font-bold text-ink tabular-nums">{value}</span>
-    <span className="text-caption text-ink-muted">{sub}</span>
+    <span className="text-caption text-ink-muted">
+      <T>{sub}</T>
+    </span>
   </div>
 );
 
@@ -41,6 +48,7 @@ const SummaryCell = ({ label, value, sub }: { label: string; value: string; sub:
 // have been, then the latest runs. Nothing backs the database up yet (a NEW
 // item in the design notes), so "Back up now" stays off and says why.
 const BackupsCard = () => {
+  const { translate } = useLocale();
   const summary = useQuery(backupStatusSummaryQuery()).data?.data;
   const backups = useQuery(backupsQuery()).data?.data;
   const admins = useQuery(adminAccountsQuery()).data?.data;
@@ -53,23 +61,27 @@ const BackupsCard = () => {
     <Card padding="none" className="overflow-hidden">
       <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 className="text-title text-ink">Backups</h2>
-          <span className="text-small text-ink-muted">Not automated yet: nothing backs the database up at night. Runs recorded so far show here.</span>
+          <h2 className="text-title text-ink"><T>Backups</T></h2>
+          <span className="text-small text-ink-muted"><T>Not automated yet: nothing backs the database up at night. Runs recorded so far show here.</T></span>
         </div>
-        <Button type="button" variant="outline" disabled title="Backups aren't wired up yet" className="h-9 shrink-0 self-start border-line-strong bg-surface px-4 font-semibold text-ink sm:self-auto">
-          Back up now
+        <Button type="button" variant="outline" disabled title={translate("Backups aren't wired up yet")} className="h-9 shrink-0 self-start border-line-strong bg-surface px-4 font-semibold text-ink sm:self-auto">
+          <T>Back up now</T>
         </Button>
       </div>
       <div className="grid grid-cols-1 border-y border-surface-sunken sm:grid-cols-3">
         <SummaryCell
           label="Last good backup"
-          value={summary?.lastSuccessfulBackupAt ? formatRelativeDateTime(summary.lastSuccessfulBackupAt) : "Never"}
+          value={summary?.lastSuccessfulBackupAt ? formatRelativeDateTime(summary.lastSuccessfulBackupAt, { t: translate }) : translate("Never")}
           sub={lastGood ? sizeText(lastGood.sizeMb) : "No backup yet"}
         />
         <SummaryCell
           label="Worked, last 30 days"
           value={formatPercent(summary?.successRate30d)}
-          sub={summary?.finishedLast30d ? `${formatNumber(summary.succeededLast30d)} of ${formatNumber(summary.finishedLast30d)} backups` : "No backups in 30 days"}
+          sub={
+            summary?.finishedLast30d
+              ? translate("{done} of {total} backups", { done: formatNumber(summary.succeededLast30d), total: formatNumber(summary.finishedLast30d) })
+              : "No backups in 30 days"
+          }
         />
         <SummaryCell label="Days since a good backup" value={formatNumber(summary?.daysSinceLastBackup)} sub="Worth a look after 2 days" />
       </div>
@@ -83,16 +95,16 @@ const BackupsCard = () => {
         <thead className="bg-cream text-caption font-medium text-ink-muted">
           <tr className="border-b border-line">
             <th scope="col" className="px-5 py-2 text-left font-medium">
-              Started
+              <T>Started</T>
             </th>
             <th scope="col" className="py-2 text-left font-medium">
-              Type
+              <T>Type</T>
             </th>
             <th scope="col" className="py-2 pl-3 text-left font-medium">
-              Result
+              <T>Result</T>
             </th>
             <th scope="col" className="px-5 py-2 text-right font-medium">
-              Size
+              <T>Size</T>
             </th>
           </tr>
         </thead>
@@ -100,27 +112,29 @@ const BackupsCard = () => {
           {rows.length === 0 ? (
             <tr>
               <td colSpan={4} className="px-5 py-6 text-center text-small text-ink-muted">
-                No backups recorded yet.
+                <T>No backups recorded yet.</T>
               </td>
             </tr>
           ) : (
             rows.slice(0, ROWS_SHOWN).map((backup) => {
               const by = backup.type === "MANUAL" ? nameById.get(backup.triggeredBy) : null;
-              const note = resultNote(backup);
+              const note = resultNote(backup, translate);
               return (
                 <tr key={backup.id} className="h-11.5 border-b border-surface-sunken last:border-b-0">
                   <td className="px-5 text-ink-2" title={formatDateTime(backup.startedAt)}>
-                    {formatRelativeDateTime(backup.startedAt)}
+                    {formatRelativeDateTime(backup.startedAt, { t: translate })}
                   </td>
                   <td>
                     <span className="flex flex-col">
-                      <span>{backup.type === "MANUAL" ? "Manual" : "Scheduled"}</span>
+                      <span><T>{backup.type === "MANUAL" ? "Manual" : "Scheduled"}</T></span>
                       {by && <span className="text-caption text-ink-muted">{by}</span>}
                     </span>
                   </td>
                   <td className="pl-3">
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold", RESULT[backup.status].chip)}>{RESULT[backup.status].label}</span>
+                      <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold", RESULT[backup.status].chip)}>
+                        <T>{RESULT[backup.status].label}</T>
+                      </span>
                       {note && <span className="truncate text-small text-ink-muted">{note}</span>}
                     </span>
                   </td>

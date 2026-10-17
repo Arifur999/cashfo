@@ -17,7 +17,7 @@ const DashboardNavbar = async () => {
   return (
     <header className="flex h-topbar-mobile shrink-0 items-center gap-2 border-b border-line bg-surface px-2 md:h-topbar md:gap-3 md:px-8 print:hidden">
       <MobileNav sections={sections} admin={admin} />
-      <AdminBreadcrumb sections={sections} />
+      <AdminBreadcrumb sections={sections} adminName={admin.name} />
       <div className="hidden md:block">
         <LocalePill />
       </div>

@@ -16,6 +16,24 @@ describe("translate", () => {
     expect(translate("en", "Cancel", { Cancel: "বাদ দিন" })).toBe("Cancel");
   });
 
+  it("tells two meanings of one word apart by their context", () => {
+    expect(translate("en", "On@@record")).toBe("On");
+    expect(translate("bn", "On@@record")).not.toBe(translate("bn", "On"));
+    expect(translate("bn", "Nothing@@unknown")).toBe("Nothing");
+  });
+
+  it("falls back from a word in context to the plain word", () => {
+    expect(translate("bn", "Cancel@@nothing-special")).toBe(translate("bn", "Cancel"));
+    expect(translate("bn", "Open@@status")).not.toBe(translate("bn", "Open"));
+    expect(translate("en", "Open@@status")).toBe("Open");
+  });
+
+  it("lets the admin panel keep its own wording where the app words it differently", () => {
+    // The admin dictionaries word "Status" অবস্থা; the customer app স্ট্যাটাস.
+    expect(translate("bn", "Status", undefined, "admin")).not.toBe(translate("bn", "Status"));
+    expect(translate("bn", "Status", undefined, "admin")).toBe("অবস্থা");
+  });
+
   it("never resolves an inherited property", () => {
     expect(translate("bn", "constructor", {})).toBe("constructor");
     expect(translate("bn", "toString", JSON.parse('{"__proto__": "x"}'))).toBe("toString");

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
-import { Button } from "@/components/ui/button";
+import CreateButton from "@/components/shared/CreateButton";
 import CampaignForm from "./CampaignForm";
 
 // Self-contained (owns its trigger), so the layout can drop it into the header.
@@ -16,9 +16,7 @@ const CreateCampaignButton = () => {
       title="New campaign"
       width="lg"
       trigger={
-        <Button size="lg" className="font-semibold shadow-button">
-          New campaign
-        </Button>
+        <CreateButton>New campaign</CreateButton>
       }
     >
       <CampaignForm onDone={() => setOpen(false)} />

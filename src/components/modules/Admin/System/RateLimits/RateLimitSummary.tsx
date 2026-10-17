@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import HorizontalBarList from "@/components/shared/charts/HorizontalBarList";
 import Kpi from "@/components/shared/Kpi";
 import SectionCard from "@/components/shared/SectionCard";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
 import { humanizeEnum } from "@/lib/statusBadge";
 import { rateLimitSummaryQuery } from "@/queries/system.queries";
@@ -13,6 +14,7 @@ import { rateLimitSummaryQuery } from "@/queries/system.queries";
 const RateLimitSummary = () => {
   const summary = useQuery(rateLimitSummaryQuery()).data?.data;
   const [busiest] = summary?.topEndpoints ?? [];
+  const { translate } = useLocale();
 
   return (
     <div className="space-y-4">
@@ -22,7 +24,7 @@ const RateLimitSummary = () => {
           size="sm"
           label="Busiest endpoint"
           value={<code className="block truncate font-mono text-title">{busiest?.endpoint ?? "—"}</code>}
-          note={busiest ? `${formatNumber(busiest.requestCount)} requests so far` : "No requests recorded yet"}
+          note={busiest ? translate("{count} requests so far", { count: formatNumber(busiest.requestCount) }) : "No requests recorded yet"}
         />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
@@ -35,7 +37,7 @@ const RateLimitSummary = () => {
         <SectionCard title="Top offenders" tooltip="Callers who exceeded a limit most often.">
           <HorizontalBarList
             items={(summary?.topOffenders ?? []).map((entry) => ({
-              label: `${entry.identifier} (${humanizeEnum(entry.identifierType.toUpperCase())})`,
+              label: `${entry.identifier} (${translate(humanizeEnum(entry.identifierType.toUpperCase()))})`,
               value: entry.count,
               unit: "hits",
             }))}

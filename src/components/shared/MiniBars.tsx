@@ -1,3 +1,6 @@
+"use client";
+
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 export interface Bar {
@@ -22,10 +25,11 @@ const GAP = { "4": "gap-4", "6": "gap-6" } as const;
 // A row of bars, the tallest filling the height; the highlighted one (the
 // month that is running) in forest, the rest in mint.
 const MiniBars = ({ bars, height = 150, label, gap = "4" }: MiniBarsProps) => {
+  const { translate } = useLocale();
   const max = Math.max(0, ...bars.map((bar) => bar.value));
   return (
     <div className="flex flex-col gap-1.5">
-      <div role="img" aria-label={label} className={cn("flex items-end border-b border-line px-2", GAP[gap])} style={{ height }}>
+      <div role="img" aria-label={translate(label)} className={cn("flex items-end border-b border-line px-2", GAP[gap])} style={{ height }}>
         {bars.map((bar) => (
           <span key={bar.label} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
             {bar.short && <span className="text-caption font-semibold whitespace-nowrap text-ink-2 tabular-nums">{bar.short}</span>}

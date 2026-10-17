@@ -3,6 +3,7 @@
 import { Pencil } from "lucide-react";
 import { useOptimistic, useRef, useState, useTransition } from "react";
 import Input from "@/components/smartly/form/Input";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface EditableTextCellProps {
@@ -31,6 +32,7 @@ const TONE_CLASS = {
 // clicking away saves, Escape cancels. The new text shows at once while it
 // saves and reverts if the save fails.
 const EditableTextCell = ({ value, onSave, label, placeholder = "—", readOnly = false, tone = "plain", lang }: EditableTextCellProps) => {
+  const { translate } = useLocale();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [shown, setShown] = useOptimistic(value);
@@ -57,7 +59,7 @@ const EditableTextCell = ({ value, onSave, label, placeholder = "—", readOnly 
     });
   };
 
-  const emptyText = <span className={tone === "missing" ? "font-medium" : "text-ink-muted italic"}>{placeholder}</span>;
+  const emptyText = <span className={tone === "missing" ? "font-medium" : "text-ink-muted italic"}>{translate(placeholder)}</span>;
 
   if (readOnly) {
     return (
@@ -96,7 +98,7 @@ const EditableTextCell = ({ value, onSave, label, placeholder = "—", readOnly 
       type="button"
       lang={lang}
       onClick={startEditing}
-      aria-label={`Edit ${label}`}
+      aria-label={translate("Edit {label}", { label })}
       aria-busy={isSaving}
       className={cn("group/edit flex w-full min-w-40 items-center justify-between gap-2 text-left text-body text-ink", TONE_CLASS[tone], isSaving && "opacity-60")}
     >

@@ -1,11 +1,18 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { getCohorts, getDevices, getEngagement, getFeatureUsage, getGeography } from "@/services/analytics.services";
+import { getAnalyticsSummary, getCohorts, getDevices, getEngagement, getFeatureUsage, getGeography } from "@/services/analytics.services";
 
 const { all } = queryKeys.analytics;
 
 // Reports are aggregates that move slowly; no need to refetch on every focus.
 const ANALYTICS_STALE_TIME = 5 * 60 * 1000;
+
+export const analyticsSummaryQuery = () =>
+  queryOptions({
+    queryKey: [...all, "summary"] as const,
+    queryFn: () => getAnalyticsSummary(),
+    staleTime: ANALYTICS_STALE_TIME,
+  });
 
 export const featureUsageQuery = (rangeQuery: string) =>
   queryOptions({

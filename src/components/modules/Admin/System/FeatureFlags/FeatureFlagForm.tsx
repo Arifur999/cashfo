@@ -12,6 +12,7 @@ import AppTextareaField from "@/components/shared/form/AppTextareaField";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import { featureFlagFormZodSchema, type IFeatureFlagFormValues } from "@/zod/featureFlag.validation";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const { shape } = featureFlagFormZodSchema;
 
@@ -33,9 +34,10 @@ interface FeatureFlagFormProps {
 
 // Mounted inside the dialog content, so each open starts empty.
 const FeatureFlagForm = ({ planOptions, onDone }: FeatureFlagFormProps) => {
+  const { translate } = useLocale();
   const { run, isPending } = useActionMutation({
     action: createFeatureFlagAction,
-    successMessage: (created) => `Created ${created.key}`,
+    successMessage: (created) => translate("Created {key}", { key: created.key }),
     invalidateKeys: [queryKeys.featureFlags.all],
     refreshRoute: false,
   });

@@ -3,6 +3,7 @@
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import { Button } from "@/components/ui/button";
 import { DialogClose, DialogFooter } from "@/components/ui/dialog";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface FormDialogFooterProps {
@@ -19,18 +20,19 @@ interface FormDialogFooterProps {
 }
 
 const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disabled, extra, pinned = false }: FormDialogFooterProps) => {
+  const { translate } = useLocale();
   return (
     // The design's dialog foot: a cream strip across the bottom of the card.
     <DialogFooter className={cn("-mx-6 -mb-5 items-center border-t border-line bg-cream px-6 py-4 sm:justify-between", pinned ? "mt-auto" : "mt-4")}>
       <div>{extra}</div>
       <div className="flex flex-col-reverse gap-3 sm:flex-row">
         <DialogClose asChild>
-          <Button type="button" variant="outline" disabled={isPending} className="border-line-strong bg-surface text-ink hover:bg-surface-sunken">
-            Cancel
+          <Button type="button" variant="outline" disabled={isPending} className="h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken">
+            {translate("Cancel")}
           </Button>
         </DialogClose>
-        <AppSubmitButton isPending={isPending} pendingLabel={pendingLabel} variant={variant} disabled={disabled} className="w-auto">
-          {submitLabel}
+        <AppSubmitButton isPending={isPending} pendingLabel={pendingLabel} variant={variant === "destructive" ? "destructive" : "action"} disabled={disabled} size="md" className="w-auto">
+          {translate(submitLabel)}
         </AppSubmitButton>
       </div>
     </DialogFooter>

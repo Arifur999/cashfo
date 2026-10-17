@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import AnnouncementsTable from "@/components/modules/Admin/Content/Announcements/AnnouncementsTable";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
 import { announcementsQuery } from "@/queries/announcement.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Announcements" };
+export const generateMetadata = adminPageTitle("Announcements");
 
 const AnnouncementsPage = async () => {
   const admin = await getUserInfo();

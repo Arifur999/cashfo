@@ -4,13 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import TabsNav from "@/components/shared/TabsNav";
 import { featureRequestsQuery } from "@/queries/featureRequest.queries";
 import { ticketStatsQuery } from "@/queries/ticket.queries";
+import { openTicketCount } from "@/lib/tickets";
 
 // Each tab carries what is waiting there: open tickets, and requests that
 // have not been declined.
 const SupportTabs = () => {
   const stats = useQuery(ticketStatsQuery()).data?.data;
   const requests = useQuery(featureRequestsQuery()).data?.data;
-  const openTickets = stats ? stats.statusCounts.OPEN + stats.statusCounts.IN_PROGRESS + stats.statusCounts.WAITING_ON_USER : undefined;
+  const openTickets = stats && openTicketCount(stats.statusCounts);
   const liveRequests = requests?.filter((request) => request.status !== "DECLINED").length;
 
   return (

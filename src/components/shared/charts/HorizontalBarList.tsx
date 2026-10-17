@@ -1,4 +1,5 @@
 import { formatNumber } from "@/lib/number";
+import T from "../T";
 
 export interface BarListItem {
   label: string;
@@ -17,7 +18,9 @@ interface HorizontalBarListProps {
 // pairs.
 const HorizontalBarList = ({ items, emptyMessage = "No data for this period." }: HorizontalBarListProps) => {
   if (items.length === 0) {
-    return <p className="py-10 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
+    return <p className="py-10 text-center text-sm text-muted-foreground">
+        <T>{emptyMessage}</T>
+      </p>;
   }
 
   const max = Math.max(...items.map((item) => item.value), 1);
@@ -34,7 +37,12 @@ const HorizontalBarList = ({ items, emptyMessage = "No data for this period." }:
           </div>
           <span className="w-20 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
             {formatNumber(item.value)}
-            {item.unit ? ` ${item.unit}` : ""}
+            {item.unit && (
+              <>
+                {" "}
+                <T>{item.unit}</T>
+              </>
+            )}
           </span>
         </li>
       ))}

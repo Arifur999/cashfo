@@ -4,6 +4,8 @@ import { useMemo, useOptimistic } from "react";
 import type { IAdminOption, ISupportTicketDetail, TicketStatus } from "@/types/ticket.types";
 import TicketMessageBubble, { type ThreadMessage } from "./TicketMessageBubble";
 import TicketReplyForm from "./TicketReplyForm";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const appendMessage = (messages: ThreadMessage[], pending: ThreadMessage) => [...messages, pending];
 
@@ -21,20 +23,21 @@ const TicketConversation = ({ ticket, admins, currentAdminId, canReply, onSetSta
   // request settles.
   const [messages, addPendingMessage] = useOptimistic<ThreadMessage[], ThreadMessage>(ticket.messages, appendMessage);
   const adminNames = useMemo(() => new Map(admins.map((admin) => [admin.id, admin.name])), [admins]);
-  const requesterName = ticket.platformUser?.name ?? "the user";
+  const { translate } = useLocale();
+  const requesterName = ticket.platformUser?.name ?? translate("the user");
 
   const senderName = (message: ThreadMessage) => {
-    if (message.senderType === "USER") return ticket.platformUser?.name ?? "User";
-    return adminNames.get(message.senderId) ?? (message.senderId === currentAdminId ? "You" : "Support team");
+    if (message.senderType === "USER") return ticket.platformUser?.name ?? translate("User");
+    return adminNames.get(message.senderId) ?? translate(message.senderId === currentAdminId ? "You" : "Support team");
   };
 
   return (
     <>
       <div className="flex flex-col gap-4 bg-cream p-5">
         {messages.length === 0 ? (
-          <p className="py-8 text-center text-small text-ink-muted">No messages yet.</p>
+          <p className="py-8 text-center text-small text-ink-muted"><T>No messages yet.</T></p>
         ) : (
-          <ol className="flex flex-col gap-4" aria-label="Messages">
+          <ol className="flex flex-col gap-4" aria-label={translate("Messages")}>
             {messages.map((message) => (
               <li key={message.id}>
                 <TicketMessageBubble message={message} senderName={senderName(message)} />

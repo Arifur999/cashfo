@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { downloadJson } from "@/lib/download";
 import type { ITranslationBundles, TranslationLanguage } from "@/types/translation.types";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 type ExportChoice = TranslationLanguage | "both";
 
@@ -21,16 +23,17 @@ const EXPORTS: { choice: ExportChoice; label: string; fileName: string; pick: (b
 
 const ExportTranslationsMenu = () => {
   const [isExporting, startTransition] = useTransition();
+  const { translate } = useLocale();
 
   const exportBundle = (entry: (typeof EXPORTS)[number]) =>
     startTransition(async () => {
       const result = await exportTranslationsAction();
       if (!result.success) {
-        toast.error(result.message);
+        toast.error(translate(result.message));
         return;
       }
       downloadJson(entry.pick(result.data), entry.fileName);
-      toast.success(`Exported ${entry.fileName}`);
+      toast.success(translate("Exported {file}", { file: entry.fileName }));
     });
 
   return (
@@ -38,13 +41,13 @@ const ExportTranslationsMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-8" disabled={isExporting}>
           {isExporting ? <Loader size={14} label="Exporting..." /> : <Download aria-hidden="true" />}
-          Export JSON
+          <T>Export JSON</T>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {EXPORTS.map((entry) => (
           <DropdownMenuItem key={entry.choice} onClick={() => exportBundle(entry)}>
-            {entry.label}
+            <T>{entry.label}</T>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

@@ -5,20 +5,24 @@ import { formatNumber } from "@/lib/number";
 import { planAccentClass } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
 import type { IRevenueOverview } from "@/types/revenue.types";
+import T from "@/components/shared/T";
+import { getTranslator } from "@/lib/i18n/locale";
+import { plural } from "@/lib/i18n/message";
 
 // This month's takings by plan: how many payments, how much, what share.
-const ByPlanCard = ({ overview }: { overview: IRevenueOverview }) => {
+const ByPlanCard = async ({ overview }: { overview: IRevenueOverview }) => {
+  const { t } = await getTranslator("admin");
   const total = Number(overview.thisMonthTotal);
   const refunds = overview.refundsThisMonth;
 
   return (
     <Card padding="none" className="flex flex-col gap-4 px-5 py-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-title text-ink">{formatMonthName(overview.month)} by plan</h2>
+        <h2 className="text-title text-ink">{t("{month} by plan", { month: t(formatMonthName(overview.month)) })}</h2>
         <b className="text-body font-semibold text-ink tabular-nums">{formatCurrency(total, undefined, 0)}</b>
       </div>
       {overview.byPlan.length === 0 ? (
-        <p className="text-small text-ink-muted">No payments yet this month.</p>
+        <p className="text-small text-ink-muted"><T>No payments yet this month.</T></p>
       ) : (
         overview.byPlan.map((plan) => {
           const amount = Number(plan.amount);
@@ -29,7 +33,7 @@ const ByPlanCard = ({ overview }: { overview: IRevenueOverview }) => {
                 <span>
                   <b className="font-semibold text-ink">{plan.planName}</b>{" "}
                   <span className="text-ink-muted">
-                    {formatNumber(plan.payments)} {plan.payments === 1 ? "payment" : "payments"}
+                    {plural(t, plan.payments, "{count} payment", "{count} payments")}
                   </span>
                 </span>
                 <span className="tabular-nums">
@@ -45,7 +49,7 @@ const ByPlanCard = ({ overview }: { overview: IRevenueOverview }) => {
       )}
       {refunds.count > 0 && (
         <span className="text-small text-ink-muted">
-          After {formatNumber(refunds.count)} {refunds.count === 1 ? "refund" : "refunds"} of {formatCurrency(refunds.amount, undefined, 0)}.
+          {t(refunds.count === 1 ? "After {count} refund of {amount}." : "After {count} refunds of {amount}.", { count: formatNumber(refunds.count), amount: formatCurrency(refunds.amount, undefined, 0) })}
         </span>
       )}
     </Card>

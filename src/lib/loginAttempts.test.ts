@@ -42,23 +42,23 @@ describe("groupLoginAttempts", () => {
 describe("attemptOutcome", () => {
   it("counts the first reason and says what followed", () => {
     const [row] = groupLoginAttempts([attempt(47, { failureReason: "rate_limited" }), attempt(46, { failureReason: "rate_limited" }), attempt(45), attempt(44), attempt(43)]);
-    expect(attemptOutcome(row, now)).toEqual({ text: "Wrong password ×3", note: "then paused ×2 · no account with this email", tone: "expense" });
+    expect(attemptOutcome(row, { now })).toEqual({ text: "Wrong password ×3", note: "then paused ×2 · no account with this email", tone: "expense" });
   });
 
   it("notes an admin account, a suspension and a later sign-in", () => {
     const suspended = groupLoginAttempts([attempt(30, { failureReason: "account_suspended", account: { name: "Mehedi Hasan", role: "SUPPORT_ADMIN", status: "SUSPENDED" } })])[0];
-    expect(attemptOutcome(suspended, now)).toEqual({ text: "Account suspended", note: "Admin account, suspended", tone: "warning" });
+    expect(attemptOutcome(suspended, { now })).toEqual({ text: "Account suspended", note: "Admin account, suspended", tone: "warning" });
 
     const app = { name: "Shakil Ahmed", role: "USER" as const, status: "ACTIVE" };
     const quick = groupLoginAttempts([attempt(1, { account: app, signedInAt: new Date(Date.UTC(2026, 9, 2, 8, 2)).toISOString() })])[0];
-    expect(attemptOutcome(quick, now).note).toBe("Signed in a minute later");
+    expect(attemptOutcome(quick, { now }).note).toBe("Signed in a minute later");
     const later = groupLoginAttempts([attempt(1, { account: app, signedInAt: new Date(Date.UTC(2026, 9, 2, 8, 30)).toISOString() })])[0];
-    expect(attemptOutcome(later, now).note).toBe("Signed in at 2:30 pm");
+    expect(attemptOutcome(later, { now }).note).toBe("Signed in at 2:30 pm");
   });
 
   it("calls a success a success", () => {
     const [row] = groupLoginAttempts([attempt(5, { success: true, failureReason: null })]);
-    expect(attemptOutcome(row, now)).toEqual({ text: "Signed in", note: null, tone: "income" });
+    expect(attemptOutcome(row, { now })).toEqual({ text: "Signed in", note: null, tone: "income" });
   });
 });
 
@@ -75,11 +75,11 @@ describe("network and summary notes", () => {
   });
 
   it("says whose account a network went for, or how its flag ended", () => {
-    expect(networkNote(network(), now)).toBe("Today · tried admin@example.com");
-    expect(networkNote(network({ emailCount: 3 }), now)).toBe("Today · tried admin@example.com and 2 more");
-    expect(networkNote(network({ lastAt: "2026-09-28T05:00:00Z", flagStatus: "RESOLVED" }), now)).toBe("28 Sep · flag resolved");
-    expect(networkNote(network({ account: { name: "Mehedi Hasan", role: "SUPPORT_ADMIN", status: "SUSPENDED" } }), now)).toBe("Mehedi Hasan, suspended admin");
-    expect(networkNote(network({ account: { name: "Tanzila Haque", role: "USER", status: "ACTIVE" } }), now)).toBe("App user");
+    expect(networkNote(network(), { now })).toBe("Today · tried admin@example.com");
+    expect(networkNote(network({ emailCount: 3 }), { now })).toBe("Today · tried admin@example.com and 2 more");
+    expect(networkNote(network({ lastAt: "2026-09-28T05:00:00Z", flagStatus: "RESOLVED" }), { now })).toBe("28 Sep · flag resolved");
+    expect(networkNote(network({ account: { name: "Mehedi Hasan", role: "SUPPORT_ADMIN", status: "SUSPENDED" } }), { now })).toBe("Mehedi Hasan, suspended admin");
+    expect(networkNote(network({ account: { name: "Tanzila Haque", role: "USER", status: "ACTIVE" } }), { now })).toBe("App user");
   });
 
   it("colours a network by its flag", () => {

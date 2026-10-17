@@ -1,10 +1,12 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import type { DataTableFilterConfig } from "@/components/shared/table/dataTable.types";
+import Localized from "@/components/shared/Localized";
 import { formatNumber } from "@/lib/number";
 import { COUPON_STATUS_LABEL, discountText, usesCap, validityText, worksOn } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
 import { COUPON_STATUSES, type ICoupon } from "@/types/coupon.types";
+import T from "@/components/shared/T";
 
 // In-memory filters: `id` is the column to facet on.
 export const COUPON_FILTERS: DataTableFilterConfig[] = [
@@ -34,7 +36,7 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     id: "discount",
     accessorFn: (row) => discountText(row),
     header: "Discount",
-    cell: ({ getValue }) => <span className="font-semibold">{String(getValue())}</span>,
+    cell: ({ row }) => <span className="font-semibold">{<Localized>{(t) => discountText(row.original, t)}</Localized>}</span>,
     // Sort by the amount, not the formatted text.
     sortingFn: (a, b) => Number(a.original.discountValue) - Number(b.original.discountValue),
   },
@@ -43,7 +45,7 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     accessorFn: (row) => worksOn(row.applicablePlans, planNames),
     header: "Works on",
     enableSorting: false,
-    cell: ({ getValue }) => <span className="text-ink-2">{String(getValue())}</span>,
+    cell: ({ row }) => <span className="text-ink-2">{<Localized>{(t) => worksOn(row.original.applicablePlans, planNames, t)}</Localized>}</span>,
   },
   {
     id: "timesRedeemed",
@@ -54,7 +56,19 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
       return (
         <span className="flex w-36 flex-col gap-1">
           <span className="tabular-nums">
-            <b className="font-semibold">{formatNumber(timesRedeemed)}</b> <span className="text-ink-muted">{usesCap(maxRedemptions)}</span>
+            {/* One sentence, so Bangla can put "of 500" before the count. */}
+            <Localized>
+              {(t) => (
+                <T
+                  values={{
+                    used: <b className="font-semibold">{formatNumber(timesRedeemed)}</b>,
+                    cap: <span className="text-ink-muted">{usesCap(maxRedemptions, t)}</span>,
+                  }}
+                >
+                  {maxRedemptions === null ? "{used} {cap}@@unlimited" : "{used} {cap}"}
+                </T>
+              )}
+            </Localized>
           </span>
           {maxRedemptions !== null && (
             <span className="h-1.25 overflow-hidden rounded-full bg-surface-sunken">

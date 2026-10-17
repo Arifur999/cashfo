@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
 import FlagsBoard from "@/components/modules/Admin/Security/Flags/FlagsBoard";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { securityFlagsQuery } from "@/queries/security.queries";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Suspicious activity" };
+export const generateMetadata = adminPageTitle("Suspicious activity");
 
 const SuspiciousActivityPage = () => {
   return (

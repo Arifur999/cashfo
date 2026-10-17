@@ -25,8 +25,6 @@ const RateLimitsTable = () => {
       data={query.data?.data}
       columns={rateLimitsColumns}
       getRowId={(row) => row.id}
-      tableId="rate-limits"
-      exportFileName="rate-limits"
       emptyMessage="No request windows match these filters."
     />
   );

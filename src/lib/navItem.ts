@@ -2,6 +2,10 @@ import { canAccessRoute, canManage, type ManageArea } from "./authUtils";
 import type { IconName } from "./iconMapper";
 import type { AdminRole } from "@/types/auth.types";
 
+// A count beside a menu item: work waiting there, shown to roles that can
+// act on it.
+export type NavBadgeKind = "openTickets" | "securityFlags";
+
 export interface NavItem {
   // Plain English key, translated at render time through useLocale() --
   // this config is module-scope data and can't react to a locale change.
@@ -14,6 +18,7 @@ export interface NavItem {
   // The area a role must be allowed to change to edit here; other roles
   // see the page with a lock, read-only.
   manage?: ManageArea;
+  badge?: NavBadgeKind;
 }
 
 export interface NavSection {
@@ -51,7 +56,7 @@ export const adminNavSections: NavSection[] = [
   {
     title: "Support & content",
     items: [
-      { title: "Support", href: "/admin/support", icon: "LifeBuoy", activeMatch: ["/admin/support", "/admin/feature-requests"], manage: "support" },
+      { title: "Support", href: "/admin/support", icon: "LifeBuoy", activeMatch: ["/admin/support", "/admin/feature-requests"], manage: "support", badge: "openTickets" },
       { title: "Content", href: "/admin/content", icon: "FileText", manage: "content" },
       { title: "Notifications", href: "/admin/notifications", icon: "Bell", manage: "notificationTemplates" },
     ],
@@ -59,7 +64,7 @@ export const adminNavSections: NavSection[] = [
   {
     title: "Platform",
     items: [
-      { title: "Security", href: "/admin/security", icon: "Shield" },
+      { title: "Security", href: "/admin/security", icon: "Shield", badge: "securityFlags" },
       { title: "System", href: "/admin/system", icon: "Server" },
       { title: "Settings", href: "/admin/settings", icon: "Settings", manage: "settings" },
     ],
@@ -76,6 +81,10 @@ export const isNavItemActive = (item: NavItem, pathname: string) =>
 
 // Read-only for this role: the page opens, but nothing on it can be changed.
 export const isNavItemViewOnly = (item: NavItem, role: AdminRole) => item.manage !== undefined && !canManage(role, item.manage);
+
+// The counts this role's menu shows: on items it can act on.
+export const navBadgesFor = (sections: NavSection[], role: AdminRole): NavBadgeKind[] =>
+  sections.flatMap((section) => section.items).flatMap((item) => (item.badge && !isNavItemViewOnly(item, role) ? [item.badge] : []));
 
 // The section and item a path belongs to, for the top bar's breadcrumb.
 export const findAdminNavLocation = (pathname: string, sections: NavSection[] = adminNavSections): { section: NavSection; item: NavItem } | null => {

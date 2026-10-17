@@ -18,9 +18,11 @@ import { toCouponFormValues } from "./couponForm.defaults";
 import CouponForm from "./CouponForm";
 import CouponRedemptionsDialog from "./CouponRedemptionsDialog";
 import { buildCouponsColumns, COUPON_FILTERS } from "./couponsColumns";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Coupons are a short list, so the table sorts, filters and pages in memory.
 const CouponsTable = ({ canManage }: { canManage: boolean }) => {
+  const { translate } = useLocale();
   const { data: couponsResponse, isLoading, isFetching } = useQuery(couponsQuery());
   const { data: plansResponse } = useQuery(plansQuery());
   const plans = useMemo(() => plansResponse?.data ?? [], [plansResponse]);
@@ -62,25 +64,23 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
         data={couponsResponse?.data}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="coupons"
         isLoading={isLoading}
         isFetching={isFetching}
         search={{ placeholder: "Search by code" }}
         filters={{ configs: COUPON_FILTERS }}
-        exportFileName="coupons"
         actions={actions}
         emptyMessage="No coupons yet."
       />
 
       <CouponRedemptionsDialog coupon={coupon} {...getDialogProps("redemptions")} />
 
-      <FormDrawer title={`Edit ${coupon?.code ?? "coupon"}`} width="sm" {...getDialogProps("edit")}>
+      <FormDrawer title={translate("Edit {name}", { name: coupon?.code ?? "" })} width="sm" {...getDialogProps("edit")}>
         {coupon && <CouponForm coupon={coupon} defaultValues={toCouponFormValues(coupon)} plans={plans} onDone={closeDialog} />}
       </FormDrawer>
 
       <ConfirmDialog
         {...getDialogProps("delete")}
-        title={`Delete ${coupon?.code ?? "this coupon"}?`}
+        title={translate("Delete {name}?", { name: coupon?.code ?? "" })}
         description="Nobody has used it, so it can go. This can't be undone."
         variant="destructive"
         confirmLabel="Delete coupon"

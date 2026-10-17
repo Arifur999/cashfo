@@ -1,3 +1,13 @@
+// The figures over the Analytics page (distinct customers with a session
+// made or used in each window).
+export interface IAnalyticsSummary {
+  activeLast30d: number;
+  activeLast7d: number;
+  activePrevious7d: number;
+  activeYesterday: number;
+  totalAccounts: number;
+}
+
 export interface IFeatureUsageEntry {
   // "income_added", "login", ...
   eventType: string;

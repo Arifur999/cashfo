@@ -3,12 +3,14 @@ import { formatCurrency } from "@/lib/currency";
 import { formatMonthName } from "@/lib/date";
 import { formatNumber, formatPercent } from "@/lib/number";
 import type { IRevenueOverview } from "@/types/revenue.types";
+import { getTranslator } from "@/lib/i18n/locale";
 
 const money = (value: number) => formatCurrency(value, undefined, 0);
 
 // The design's four figures: MRR, ARR, paid people, churn.
-const RevenueKpis = ({ overview }: { overview: IRevenueOverview }) => {
-  const month = formatMonthName(overview.month);
+const RevenueKpis = async ({ overview }: { overview: IRevenueOverview }) => {
+  const { t } = await getTranslator("admin");
+  const month = t(formatMonthName(overview.month));
   const change = overview.mrrChangePct;
   const { paidPeople, churn } = overview;
   const delta = paidPeople.joinedThisMonth - paidPeople.leftThisMonth;
@@ -24,7 +26,7 @@ const RevenueKpis = ({ overview }: { overview: IRevenueOverview }) => {
             "Monthly recurring revenue"
           ) : (
             <span className={change >= 0 ? "text-emerald" : "text-expense"}>
-              {change >= 0 ? "Up" : "Down"} {Math.abs(change)}% on last month
+              {t(change >= 0 ? "Up {percent}% on last month" : "Down {percent}% on last month", { percent: Math.abs(change) })}
             </span>
           )
         }
@@ -34,15 +36,20 @@ const RevenueKpis = ({ overview }: { overview: IRevenueOverview }) => {
         size="sm"
         label="Paid people"
         value={formatNumber(paidPeople.now)}
-        note={`${delta >= 0 ? "+" : ""}${formatNumber(delta)} in ${month}: ${formatNumber(paidPeople.joinedThisMonth)} joined, ${formatNumber(paidPeople.leftThisMonth)} left`}
+        note={t("{change} in {month}: {joined} joined, {left} left", {
+          change: `${delta >= 0 ? "+" : ""}${formatNumber(delta)}`,
+          month,
+          joined: formatNumber(paidPeople.joinedThisMonth),
+          left: formatNumber(paidPeople.leftThisMonth),
+        })}
       />
       <Kpi
         size="sm"
-        label={`Churn, ${month}`}
+        label={t("Churn, {month}", { month })}
         value={formatPercent(churn.churnRatePercent)}
         note={
           <span className={churn.churnedThisMonth > 0 ? "text-warning" : undefined}>
-            {formatNumber(churn.churnedThisMonth)} of the {formatNumber(churn.startOfMonthPaidCount)} who started the month
+            {t("{left} of the {started} who started the month", { left: formatNumber(churn.churnedThisMonth), started: formatNumber(churn.startOfMonthPaidCount) })}
           </span>
         }
       />

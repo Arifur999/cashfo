@@ -9,6 +9,7 @@ import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import EditAdminForm from "./EditAdminForm";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export type AdminDialog = "edit" | "resetPassword" | "suspend" | "activate";
 
@@ -21,6 +22,7 @@ interface AdminDialogsProps {
 
 // Every row-level admin dialog in one place.
 const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDialogsProps) => {
+  const { translate } = useLocale();
   const [revealed, setRevealed] = useState<{ name: string; password: string } | null>(null);
 
   const resetPassword = useActionMutation({
@@ -31,14 +33,14 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
   });
   const suspend = useActionMutation({
     action: suspendAdminAction,
-    successMessage: (suspended) => `${suspended.name} suspended`,
+    successMessage: (suspended) => translate("{name} suspended", { name: suspended.name }),
     invalidateKeys: [queryKeys.admins.all],
     refreshRoute: false,
   });
 
   const activate = useActionMutation({
     action: activateAdminAction,
-    successMessage: (activated) => `${activated.name} can sign in again`,
+    successMessage: (activated) => translate("{name} can sign in again", { name: activated.name }),
     invalidateKeys: [queryKeys.admins.all],
     refreshRoute: false,
   });
@@ -61,7 +63,7 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
       <ConfirmDialog
         {...dialogProps("resetPassword")}
         title="Reset password"
-        description={`${admin?.name}'s current password stops working and a new temporary one is generated. You'll see it once.`}
+        description={translate("{name}'s current password stops working and a new temporary one is generated. You'll see it once.", { name: admin?.name ?? "" })}
         confirmLabel="Reset password"
         pendingLabel="Resetting..."
         isPending={resetPassword.isPending}
@@ -73,7 +75,7 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
       <ConfirmDialog
         {...dialogProps("suspend")}
         title="Suspend admin"
-        description={`${admin?.name} is signed out everywhere and can't sign in until reactivated.`}
+        description={translate("{name} is signed out everywhere and can't sign in until reactivated.", { name: admin?.name ?? "" })}
         variant="destructive"
         confirmLabel="Suspend"
         pendingLabel="Suspending..."
@@ -86,8 +88,8 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
 
       <ConfirmDialog
         {...dialogProps("activate")}
-        title={`Turn ${admin?.name ?? "this admin"} back on`}
-        description={`${admin?.name} can sign in again with their current password, with the same role.`}
+        title={translate("Turn {name} back on", { name: admin?.name ?? "" })}
+        description={translate("{name} can sign in again with their current password, with the same role.", { name: admin?.name ?? "" })}
         confirmLabel="Turn back on"
         pendingLabel="Turning on..."
         isPending={activate.isPending}

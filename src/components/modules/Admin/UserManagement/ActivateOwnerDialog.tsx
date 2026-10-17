@@ -5,6 +5,7 @@ import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IOwnerRef } from "@/types/owner.types";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface ActivateOwnerDialogProps {
   owner: IOwnerRef | null;
@@ -13,6 +14,7 @@ interface ActivateOwnerDialogProps {
 }
 
 const ActivateOwnerDialog = ({ owner, open, onOpenChange }: ActivateOwnerDialogProps) => {
+  const { translate } = useLocale();
   const { run, isPending } = useActionMutation({
     action: (userId: string) => activateOwnerAction(userId),
     successMessage: "Owner activated",
@@ -24,7 +26,7 @@ const ActivateOwnerDialog = ({ owner, open, onOpenChange }: ActivateOwnerDialogP
       open={open}
       onOpenChange={onOpenChange}
       title="Activate owner"
-      description={`${owner?.name ?? "This owner"} will be able to sign in and use their account again.`}
+      description={translate("{name} will be able to sign in and use their account again.", { name: owner?.name ?? translate("This owner") })}
       confirmLabel="Activate"
       pendingLabel="Activating..."
       isPending={isPending}

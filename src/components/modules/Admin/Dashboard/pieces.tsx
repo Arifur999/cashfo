@@ -27,7 +27,10 @@ const GREETING = { morning: "Good morning", afternoon: "Good afternoon", evening
 // "Good afternoon, Nadia" and today's date.
 export function Greeting({ name, hour, line, actions }: GreetingProps) {
   const { translate } = useLocale();
-  return <PageHeader title={`${translate(GREETING[dayPart(hour)])}, ${firstName(name)}`} description={`${formatDate(new Date(), "EEEE, d MMMM yyyy")} · ${line}`} actions={actions} />;
+  const now = new Date();
+  // "Saturday, 17 October 2026", with the day and month in the reader's language.
+  const today = `${translate(formatDate(now, "EEEE"))}, ${formatDate(now, "d")} ${translate(formatDate(now, "MMMM"))} ${formatDate(now, "yyyy")}`;
+  return <PageHeader title={`${translate(GREETING[dayPart(hour)])}, ${firstName(name)}`} description={`${today} · ${line}`} actions={actions} />;
 }
 
 // The KPI card is shared with the other admin overviews (Workspaces).

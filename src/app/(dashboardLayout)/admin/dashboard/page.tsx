@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { ContentDashboard, type ContentDashboardData } from "@/components/modules/Admin/Dashboard/ContentDashboard";
 import { FinanceDashboard, type FinanceDashboardData } from "@/components/modules/Admin/Dashboard/FinanceDashboard";
 import { SuperDashboard, type SuperDashboardData } from "@/components/modules/Admin/Dashboard/SuperDashboard";
@@ -17,8 +16,9 @@ import { getBackupStatusSummary, getErrorLogs, getHealth } from "@/services/syst
 import { getTickets, getTicketStats } from "@/services/ticket.services";
 import { getTranslations } from "@/services/translation.services";
 import type { IAdminUser } from "@/types/auth.types";
+import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const generateMetadata = adminPageTitle("Dashboard");
 
 // A section a role can't read (403) or a call that fails shows as "not
 // available" rather than failing the whole page.

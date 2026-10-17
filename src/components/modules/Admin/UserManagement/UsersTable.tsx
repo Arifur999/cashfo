@@ -14,7 +14,7 @@ import { ownersListQuery } from "@/queries/owner.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import type { IOwnerOverviewItem, OwnerDialog } from "@/types/owner.types";
 import OwnerDialogs from "./OwnerDialogs";
-import { USERS_HIDDEN_COLUMNS, usersColumns } from "./usersColumns";
+import { usersColumns } from "./usersColumns";
 import { buildUsersTableConfig, USERS_TABLE_BASE_CONFIG } from "./usersTable.config";
 
 const detailHref = (row: IOwnerOverviewItem) => `/admin/users/${row.userId}`;
@@ -62,10 +62,9 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
         data={query.data?.data.items}
         columns={usersColumns}
         getRowId={(row) => row.userId}
-        tableId="users"
-        defaultHiddenColumns={USERS_HIDDEN_COLUMNS}
         exportFileName="users"
         enableRowSelection
+        toolbarRows={2}
         actions={actions}
         onRowClick={(row) => router.push(detailHref(row))}
         emptyMessage="No users match these filters."

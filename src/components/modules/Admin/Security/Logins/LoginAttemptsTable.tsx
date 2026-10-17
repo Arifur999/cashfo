@@ -10,12 +10,14 @@ import { toTableQueryProps } from "@/lib/table/queryProps";
 import { loginAttemptsListQuery, loginAttemptsSummaryQuery } from "@/queries/security.queries";
 import { loginAttemptsColumns } from "./loginAttemptsColumns";
 import { LOGIN_ATTEMPTS_TABLE_CONFIG } from "./loginAttemptsTable.config";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const GROUPING_NOTE = "Repeated tries from one network are shown as one row.";
 
 // The API pages through single attempts; each page is folded into rows here,
 // so a burst of failures reads as one line with its count.
 const LoginAttemptsTable = () => {
+  const { translate } = useLocale();
   const failedToday = useQuery(loginAttemptsSummaryQuery()).data?.data.failedLast24h;
   const { queryString, dataTableProps } = useServerDataTable<LoginAttemptGroup>(LOGIN_ATTEMPTS_TABLE_CONFIG);
   const query = useQuery({ ...loginAttemptsListQuery(queryString), placeholderData: keepPreviousData });
@@ -28,13 +30,14 @@ const LoginAttemptsTable = () => {
       data={rows}
       columns={loginAttemptsColumns}
       getRowId={(row) => row.id}
-      tableId="sign-ins"
-      tools={false}
       rowClassName={(row) => (row.attempts.length > 1 ? "bg-expense-soft hover:bg-expense-soft" : undefined)}
       pager={{
         previous: "Newer",
         next: "Older",
-        summary: () => (failedToday === undefined ? GROUPING_NOTE : `${formatNumber(failedToday)} failed in the last 24 hours. ${GROUPING_NOTE}`),
+        summary: () =>
+          failedToday === undefined
+            ? translate(GROUPING_NOTE)
+            : `${translate("{count} failed in the last 24 hours.", { count: formatNumber(failedToday) })} ${translate(GROUPING_NOTE)}`,
       }}
       emptyMessage="No sign-in attempts match these filters."
     />

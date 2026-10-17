@@ -38,4 +38,5 @@ export const queryKeys = {
   notificationLogs: createDomainKeys("notification-logs"),
   campaigns: createDomainKeys("campaigns"),
   analytics: createDomainKeys("analytics"),
+  myAccount: createDomainKeys("my-account"),
 } as const;

@@ -1,4 +1,7 @@
+"use client";
+
 import { AlertCircle, AlertTriangle, Info, type LucideIcon } from "lucide-react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 // The design's notes: a pale fill, a faint line of the same hue, its ink.
@@ -17,12 +20,13 @@ interface CalloutProps {
 }
 
 const Callout = ({ variant = "info", role, className, children }: CalloutProps) => {
+  const { translate } = useLocale();
   const { icon: Icon, className: variantClassName } = VARIANTS[variant];
 
   return (
     <div role={role} className={cn("flex items-start gap-3 rounded-md border px-4 py-3 text-small leading-relaxed", variantClassName, className)}>
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-      <div className="min-w-0">{children}</div>
+      <div className="min-w-0">{typeof children === "string" ? translate(children) : children}</div>
     </div>
   );
 };

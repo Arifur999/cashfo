@@ -1,4 +1,5 @@
 import type { ISupportTicket, TicketStatus } from "@/types/ticket.types";
+import { inEnglish, type Translate } from "./i18n/message";
 
 // How a ticket's status reads: where it is in the conversation.
 export const TICKET_STATUS_LABEL: Record<TicketStatus, string> = {
@@ -18,6 +19,10 @@ export const TICKET_TAB_LABEL: Record<TicketStatus, string> = {
 // Tickets still in the queue, in the order the tabs show them.
 export const OPEN_TICKET_STATUSES: TicketStatus[] = ["OPEN", "IN_PROGRESS", "WAITING_ON_USER"];
 
+// How many tickets are still in the queue, from the stats' count per status.
+export const openTicketCount = (statusCounts: Partial<Record<TicketStatus, number>>) =>
+  OPEN_TICKET_STATUSES.reduce((sum, status) => sum + (statusCounts[status] ?? 0), 0);
+
 // "#3F2A1": the first part of the id, which is what people quote.
 export const shortTicketId = (id: string) => `#${id.slice(0, 5).toUpperCase()}`;
 
@@ -32,18 +37,17 @@ export const isLate = (ticket: Pick<ISupportTicket, "status" | "lastMessageFrom"
   awaitingReply(ticket) && ticket.lastMessageAt !== null && now.getTime() - new Date(ticket.lastMessageAt).getTime() > WAIT_GOAL_MS;
 
 // "3h 20m", "45m", "2d 4h": an average first-reply time.
-export const hoursText = (hours: number) => {
+export const hoursText = (hours: number, t: Translate = inEnglish) => {
   if (hours <= 0) return "—";
   const minutes = Math.round(hours * 60);
-  if (minutes < 60) return `${minutes}m`;
-  if (minutes < 48 * 60) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
-  return `${Math.floor(minutes / 1440)}d ${Math.floor((minutes % 1440) / 60)}h`;
+  if (minutes < 60) return t("{m}m", { m: minutes });
+  if (minutes < 48 * 60) return t("{h}h {m}m", { h: Math.floor(minutes / 60), m: minutes % 60 });
+  return t("{d}d {h}h", { d: Math.floor(minutes / 1440), h: Math.floor((minutes % 1440) / 60) });
 };
 
 // "3, all solved", "2, 1 still open", "None before this one".
-export const earlierTicketsText = (history: { total: number; solved: number }) => {
-  if (history.total === 0) return "None before this one";
-  if (history.solved === history.total) return `${history.total}, all solved`;
-  const open = history.total - history.solved;
-  return `${history.total}, ${open} still open`;
+export const earlierTicketsText = (history: { total: number; solved: number }, t: Translate = inEnglish) => {
+  if (history.total === 0) return t("None before this one");
+  if (history.solved === history.total) return t("{total}, all solved", { total: history.total });
+  return t("{total}, {open} still open", { total: history.total, open: history.total - history.solved });
 };

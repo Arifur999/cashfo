@@ -1,7 +1,6 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DataTable from "@/components/shared/table/DataTable";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
@@ -29,17 +28,10 @@ const WorkspacesOverview = () => {
         data={overview?.items}
         columns={workspacesColumns}
         getRowId={(row) => row.userId}
-        tableId="workspaces"
         title="Biggest add-on first"
-        exportFileName="workspaces"
         onRowClick={(row) => router.push(`/admin/users/${row.userId}`)}
         emptyMessage="No users own more than one workspace yet."
-        footer={
-          <>
-            <Info className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
-            Add-on = extra workspaces × plan price × 50%. Workspaces on the Free plan add nothing. This is an estimate; nobody is charged for it yet.
-          </>
-        }
+        footer="Add-on = extra workspaces × plan price × 50%. Workspaces on the Free plan add nothing. This is an estimate; nobody is charged for it yet."
       />
     </div>
   );

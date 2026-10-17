@@ -4,8 +4,8 @@ import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
-
-export const USERS_HIDDEN_COLUMNS = [] as const;
+import Localized from "@/components/shared/Localized";
+import { plural } from "@/lib/i18n/message";
 
 // The design's Users list: who, phone, their workspace (and how many more),
 // plan, when they were last here, how long they have used Smartly, status.
@@ -54,7 +54,7 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     header: "Using for",
     cell: ({ row }) => (
       <span className="text-ink-2 tabular-nums">
-        {row.original.daysUsing} {row.original.daysUsing === 1 ? "day" : "days"}
+        <Localized>{(t) => plural(t, row.original.daysUsing, "{count} day", "{count} days")}</Localized>
       </span>
     ),
   },

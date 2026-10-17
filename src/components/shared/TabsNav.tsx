@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
 import { cn } from "@/lib/utils";
 
@@ -52,12 +53,13 @@ const isTabActive = (tab: TabDef, tabs: TabDef[], pathname: string, current: URL
 // design's section tabs: 40px tall on a line, the open one in bold with a
 // short emerald underline.
 const TabsNav = ({ tabs, label = "Section" }: { tabs: TabDef[]; label?: string }) => {
+  const { translate } = useLocale();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const current = new URLSearchParams(searchParams.toString());
 
   return (
-    <nav aria-label={label} className="flex gap-1 overflow-x-auto border-b border-line">
+    <nav aria-label={translate(label)} className="flex gap-1 overflow-x-auto border-b border-line">
       {tabs.map((tab) => {
         const isActive = isTabActive(tab, tabs, pathname, current);
         return (
@@ -72,7 +74,7 @@ const TabsNav = ({ tabs, label = "Section" }: { tabs: TabDef[]; label?: string }
                 : "font-medium text-ink-muted hover:text-ink",
             )}
           >
-            {tab.label}
+            {translate(tab.label)}
             {tab.count !== undefined && (
               <span
                 className={cn(

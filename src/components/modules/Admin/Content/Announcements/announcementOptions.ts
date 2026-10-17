@@ -5,6 +5,7 @@ import { enumOptions } from "@/lib/statusBadge";
 import { ANNOUNCEMENT_STATUSES, ANNOUNCEMENT_TYPES, type AnnouncementType } from "@/types/announcement.types";
 import type { ISubscriptionPlan } from "@/types/plan.types";
 import { ALL_PLANS } from "@/zod/announcement.validation";
+import { inEnglish, type Translate } from "@/lib/i18n/message";
 
 // Each kind of banner: its icon and the colours it is drawn in, in the
 // list's chip and in the app.
@@ -23,7 +24,7 @@ export const ANNOUNCEMENT_FILTERS: DataTableFilterConfig[] = [
   { id: "type", type: "single-select", label: "Type", options: ANNOUNCEMENT_TYPE_OPTIONS },
 ];
 
-export const buildAudienceOptions = (plans: Pick<ISubscriptionPlan, "id" | "name">[]) => [
+export const buildAudienceOptions = (plans: Pick<ISubscriptionPlan, "id" | "name">[], t: Translate = inEnglish) => [
   { value: ALL_PLANS, label: "Everyone" },
-  ...plans.map((plan) => ({ value: plan.id, label: `${plan.name} plan` })),
+  ...plans.map((plan) => ({ value: plan.id, label: t("{name} plan", { name: plan.name }) })),
 ];

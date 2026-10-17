@@ -12,6 +12,8 @@ import { formatRelativeDateTime } from "@/lib/date";
 import { auditLogDetailQuery } from "@/queries/security.queries";
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import AuditValueDiff from "./AuditValueDiff";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 
 interface AuditEntryDrawerProps {
@@ -25,6 +27,7 @@ interface AuditEntryDrawerProps {
 // where, the fields that changed (before struck out, after in green), and
 // the whole saved record to copy.
 const AuditEntryDrawer = ({ entryId, listEntry, onClose }: AuditEntryDrawerProps) => {
+  const { translate } = useLocale();
   const detail = useQuery({ ...auditLogDetailQuery(entryId ?? ""), enabled: Boolean(entryId) });
   const entry = detail.data?.data ?? listEntry;
 
@@ -40,18 +43,20 @@ const AuditEntryDrawer = ({ entryId, listEntry, onClose }: AuditEntryDrawerProps
       description={
         entry ? (
           <>
-            {formatRelativeDateTime(entry.createdAt, undefined, "—", true)} · <code className="font-mono text-caption">{entry.action}</code>
+            {formatRelativeDateTime(entry.createdAt, { withSeconds: true, t: translate })} · <code className="font-mono text-caption">{entry.action}</code>
           </>
         ) : undefined
       }
     >
-      {entry ? <EntryBody entry={entry} /> : <p className="text-small text-ink-muted">{detail.isFetching ? "Loading..." : "This entry may have been removed, or the link is wrong."}</p>}
+      {entry ? <EntryBody entry={entry} /> : <p className="text-small text-ink-muted"><T>{detail.isFetching ? "Loading..." : "This entry may have been removed, or the link is wrong."}</T></p>}
     </FormDrawer>
   );
 };
 
 const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
-  const recordName = auditRecordName(entry);
+  const { translate } = useLocale();
+  const recordName = auditRecordName(entry, translate);
+  const typeLabel = auditRecordTypeLabel(entry.entityType, translate);
   const href = auditRecordHref(entry);
   const saved = JSON.stringify(
     {
@@ -70,20 +75,20 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
   return (
     <div className="flex flex-1 flex-col gap-4">
       <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-3 text-body">
-        <dt className="text-ink-muted">Admin</dt>
+        <dt className="text-ink-muted"><T>Admin</T></dt>
         <dd className="font-semibold text-ink">
-          {entry.adminUser.name} · {ADMIN_ROLE_LABELS[entry.adminUser.role]}
+          {entry.adminUser.name} · <T>{ADMIN_ROLE_LABELS[entry.adminUser.role]}</T>
         </dd>
         {!namesNoRecord(entry.action) && (
           <>
-            <dt className="text-ink-muted">Changed</dt>
+            <dt className="text-ink-muted"><T>Changed</T></dt>
             <dd className="font-semibold text-ink">
-              {auditRecordTypeLabel(entry.entityType)}
-              {recordName !== auditRecordTypeLabel(entry.entityType) && ` · ${recordName}`}
+              {typeLabel}
+              {recordName !== typeLabel && ` · ${recordName}`}
             </dd>
           </>
         )}
-        <dt className="text-ink-muted">IP address</dt>
+        <dt className="text-ink-muted"><T>IP address</T></dt>
         <dd>
           <code className="font-mono text-ink">{entry.ipAddress ?? "—"}</code>
         </dd>
@@ -91,7 +96,7 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
 
       <section aria-labelledby="audit-changed" className="flex flex-col gap-2">
         <h3 id="audit-changed" className="text-body font-semibold text-ink">
-          What changed
+          <T>What changed</T>
         </h3>
         <AuditValueDiff oldValue={entry.oldValue} newValue={entry.newValue} />
       </section>
@@ -99,9 +104,9 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
       <section aria-labelledby="audit-saved" className="flex flex-col gap-2">
         <span className="flex items-baseline justify-between gap-2">
           <h3 id="audit-saved" className="text-body font-semibold text-ink">
-            Saved record
+            <T>Saved record</T>
           </h3>
-          <span className="text-caption text-ink-muted">The whole entry, as it was saved</span>
+          <span className="text-caption text-ink-muted"><T>The whole entry, as it was saved</T></span>
         </span>
         <pre className="max-h-64 overflow-auto rounded-md bg-ink px-4 py-3 font-mono text-caption leading-relaxed whitespace-pre-wrap text-line-strong">{saved}</pre>
       </section>
@@ -110,7 +115,9 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
         <CopyButton value={saved} label="the entry as JSON" text="Copy as JSON" size="md" />
         {href && (
           <Button asChild>
-            <Link href={href}>Open {recordName}</Link>
+            <Link href={href}>
+              <T values={{ name: recordName }}>{"Open {name}"}</T>
+            </Link>
           </Button>
         )}
       </div>

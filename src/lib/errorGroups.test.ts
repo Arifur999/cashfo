@@ -42,8 +42,8 @@ describe("error wording", () => {
 
   it("says how often a problem happened", () => {
     const [many] = groupErrors([log(40), log(14)]);
-    expect(errorFrequency(many, now)).toBe("2 times · first 12:14 pm, last 12:40 pm");
+    expect(errorFrequency(many, { now })).toBe("2 times · first 12:14 pm, last 12:40 pm");
     const [once] = groupErrors([log(2)]);
-    expect(errorFrequency(once, now)).toBe("Once · 12:02 pm");
+    expect(errorFrequency(once, { now })).toBe("Once · 12:02 pm");
   });
 });

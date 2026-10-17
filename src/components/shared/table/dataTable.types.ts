@@ -77,8 +77,9 @@ export interface DataTableBulkAction<TData> {
 export interface DataTableSimplePager {
   previous: string;
   next: string;
-  // Left of the buttons: "1,284 entries · newest first".
-  summary: (total: number) => React.ReactNode;
+  // Left of the buttons: "1,284 entries · newest first", or the rows on
+  // screen ("Showing 1–10 of 1,912 payments").
+  summary: (total: number, range: { first: number; last: number }) => React.ReactNode;
 }
 
 export interface DataTableSearchConfig {
@@ -110,25 +111,24 @@ export interface DataTableProps<TData> {
   // expanded, search/filters keep a parent whose child matches, and pages
   // count top-level rows only. Render the first column with DataTableTreeCell.
   getSubRows?: (row: TData) => TData[] | undefined;
-  // Persists column visibility per table in localStorage when set.
-  tableId?: string;
-  // Column ids hidden until the admin turns them on from the View menu
-  // (e.g. a field already shown inside another cell). Keep it module-level.
+  // Column ids that stay off screen: there only for the tabs and filters
+  // to work on. Keep it module-level.
   defaultHiddenColumns?: readonly string[];
   actions?: DataTableActions<TData>;
   // A heading at the front of the toolbar ("Biggest add-on first").
   title?: string;
   toolbarAction?: React.ReactNode;
-  // A note under the rows: how a column is worked out, a caveat.
+  // A note under the rows, after an (i): how a column is worked out, a
+  // caveat.
   footer?: React.ReactNode;
   // A list with nothing to search or filter (the admin team) draws no toolbar.
   hideToolbar?: boolean;
-  // false leaves the column and export tools off a busy toolbar (sign-ins).
-  tools?: boolean;
-  // Under the rows: numbered pages by default. A time-ordered log draws
-  // "Newer" / "Older" beside a summary instead; false hides the pager while
-  // every row fits on one page.
-  pager?: false | DataTableSimplePager;
+  // 2 puts the filter chips on a row of their own under the tabs and the
+  // search, as the design's Users list does; 1 (the default) keeps one row.
+  toolbarRows?: 1 | 2;
+  // Under the rows: numbered pages once there is more than one. A
+  // time-ordered log draws "Newer" / "Older" beside a summary instead.
+  pager?: DataTableSimplePager;
   emptyMessage?: string;
   // First load (skeleton rows) vs background refetch (progress bar, rows stay).
   isLoading?: boolean;
@@ -139,7 +139,9 @@ export interface DataTableProps<TData> {
   rowClassName?: (row: TData) => string | undefined;
   enableRowSelection?: boolean;
   bulkActions?: DataTableBulkAction<TData>[];
-  // Enables the CSV export button; the file is named after it.
+  // What the page header's Export button downloads, as CSV, when the page
+  // wraps its header and table in an ExportProvider; the file is named
+  // after it.
   exportFileName?: string;
   search?: DataTableSearchConfig;
   filters?: DataTableFiltersConfig;
