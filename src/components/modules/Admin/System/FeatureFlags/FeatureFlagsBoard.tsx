@@ -66,7 +66,6 @@ const FeatureFlagsBoard = () => {
         isLoading={isLoading}
         isFetching={isFetching}
         hideToolbar
-        pager={false}
         initialPageSize={100}
         emptyMessage={view === "all" ? "No feature flags yet." : "No flags here."}
       />

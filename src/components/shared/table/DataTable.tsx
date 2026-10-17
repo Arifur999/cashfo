@@ -29,6 +29,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     toolbarAction,
     footer,
     hideToolbar = false,
+    toolbarRows,
     pager,
     exportFileName,
     search,
@@ -53,6 +54,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
           search={search}
           filters={filters}
           toolbarAction={toolbarAction}
+          rows={toolbarRows}
         />
       )}
       <DataTableSelectionBar table={table} bulkActions={bulkActions} />
@@ -70,7 +72,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         (pager ? (
           <DataTableSimplePager table={table} totalRows={totalRows} pager={pager} />
         ) : (
-          (pager !== false || table.getPageCount() > 1) && <DataTablePagination table={table} totalRows={totalRows} />
+          table.getPageCount() > 1 && <DataTablePagination table={table} totalRows={totalRows} />
         ))}
       {/* The design's note under a list, behind an (i). */}
       {footer && (

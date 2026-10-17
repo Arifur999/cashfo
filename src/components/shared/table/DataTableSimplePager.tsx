@@ -18,9 +18,12 @@ interface DataTableSimplePagerProps<TData> {
 // "Older" on the right.
 const DataTableSimplePager = <TData,>({ table, totalRows, pager }: DataTableSimplePagerProps<TData>) => {
   const { translate } = useLocale();
+  const { pageIndex, pageSize } = table.getState().pagination;
+  const first = pageIndex * pageSize + 1;
+  const last = Math.min((pageIndex + 1) * pageSize, totalRows);
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3 text-small text-ink-muted">
-      <span>{pager.summary(totalRows)}</span>
+      <span>{pager.summary(totalRows, { first, last })}</span>
       <span className="flex gap-2">
         <Button type="button" variant="outline" size="sm" className={BUTTON} disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>
           {translate(pager.previous)}

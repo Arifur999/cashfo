@@ -7,7 +7,6 @@ export const adminSharedDictionary: Record<string, string> = {
   "Clear sort": "সাজানো মুছুন",
   Showing: "দেখানো হচ্ছে",
   of: "মোট",
-  "Rows per page": "প্রতি পাতায় সারি",
   Pagination: "পাতা বদল",
   "Previous page": "আগের পাতা",
   "Next page": "পরের পাতা",

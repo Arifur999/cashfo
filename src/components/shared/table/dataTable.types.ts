@@ -77,8 +77,9 @@ export interface DataTableBulkAction<TData> {
 export interface DataTableSimplePager {
   previous: string;
   next: string;
-  // Left of the buttons: "1,284 entries · newest first".
-  summary: (total: number) => React.ReactNode;
+  // Left of the buttons: "1,284 entries · newest first", or the rows on
+  // screen ("Showing 1–10 of 1,912 payments").
+  summary: (total: number, range: { first: number; last: number }) => React.ReactNode;
 }
 
 export interface DataTableSearchConfig {
@@ -122,10 +123,12 @@ export interface DataTableProps<TData> {
   footer?: React.ReactNode;
   // A list with nothing to search or filter (the admin team) draws no toolbar.
   hideToolbar?: boolean;
-  // Under the rows: numbered pages by default. A time-ordered log draws
-  // "Newer" / "Older" beside a summary instead; false hides the pager while
-  // every row fits on one page.
-  pager?: false | DataTableSimplePager;
+  // 2 puts the filter chips on a row of their own under the tabs and the
+  // search, as the design's Users list does; 1 (the default) keeps one row.
+  toolbarRows?: 1 | 2;
+  // Under the rows: numbered pages once there is more than one. A
+  // time-ordered log draws "Newer" / "Older" beside a summary instead.
+  pager?: DataTableSimplePager;
   emptyMessage?: string;
   // First load (skeleton rows) vs background refetch (progress bar, rows stay).
   isLoading?: boolean;
