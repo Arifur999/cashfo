@@ -41,7 +41,7 @@ const CopyButton = ({ value, label, text = "Copy", size = "sm" }: CopyButtonProp
       variant="outline"
       size={size === "md" ? "default" : "sm"}
       onClick={copy}
-      aria-label={`${translate("Copy")} ${translate(label)}`}
+      aria-label={translate("Copy {label}", { label: translate(label) })}
       className={cn(size === "md" && "h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken")}
     >
       {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}

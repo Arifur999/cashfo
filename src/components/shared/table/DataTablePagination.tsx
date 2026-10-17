@@ -79,7 +79,7 @@ const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationPr
               <button
                 key={item}
                 type="button"
-                aria-label={`${translate("Page")} ${item}`}
+                aria-label={translate("Page {page}", { page: item })}
                 aria-current={item === currentPage ? "page" : undefined}
                 onClick={() => goToPage(item)}
                 className={cn(PAGE_BUTTON, item === currentPage ? "border-forest bg-forest text-white dark:border-emerald dark:bg-emerald dark:text-on-action" : "border-line bg-surface text-ink-2 hover:bg-cream")}
