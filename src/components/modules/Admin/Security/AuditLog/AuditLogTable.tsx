@@ -12,7 +12,7 @@ import { adminAccountsQuery, auditLogsListQuery } from "@/queries/security.queri
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import AuditEntryDrawer from "./AuditEntryDrawer";
 import { buildAuditLogColumns } from "./auditLogColumns";
-import { buildAuditLogTableConfig } from "./auditLogTable.config";
+import { AUDIT_LOG_TABLE_BASE_CONFIG, buildAuditLogTableConfig } from "./auditLogTable.config";
 
 // ?entry=<id> opens that entry in the drawer, so an entry can be linked to.
 // The API never sees it: the list query only copies its own keys.
@@ -44,6 +44,8 @@ const AuditLogTable = () => {
   );
   const columns = useMemo(() => buildAuditLogColumns((entry) => setEntry(entry.id)), [setEntry]);
   const openRow = query.data?.data.find((entry) => entry.id === entryId);
+  // "11 entries today" while the list shows today, as it opens.
+  const today = (searchParams.get("within") ?? AUDIT_LOG_TABLE_BASE_CONFIG.defaults.within) === "today";
 
   return (
     <>
@@ -56,7 +58,14 @@ const AuditLogTable = () => {
         getRowId={(row) => row.id}
         onRowClick={(row) => setEntry(row.id)}
         rowClassName={(row) => (row.id === entryId ? "bg-mint-50 hover:bg-mint-50" : undefined)}
-        pager={{ previous: "Newer", next: "Older", summary: (total) => plural(translate, total, "{count} entry · newest first", "{count} entries · newest first") }}
+        pager={{
+          previous: "Newer",
+          next: "Older",
+          summary: (total) =>
+            today
+              ? plural(translate, total, "{count} entry today · newest first", "{count} entries today · newest first")
+              : plural(translate, total, "{count} entry · newest first", "{count} entries · newest first"),
+        }}
         emptyMessage="No audit entries match these filters."
       />
       <AuditEntryDrawer entryId={entryId} listEntry={openRow} onClose={() => setEntry(null)} />

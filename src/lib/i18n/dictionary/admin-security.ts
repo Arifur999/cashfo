@@ -302,4 +302,8 @@ export const adminSecurityDictionary: Record<string, string> = {
   "Recent sign-ins": "সাম্প্রতিক সাইন-ইন",
   "No sign-ins recorded yet.": "এখনো কোনো সাইন-ইন নথিভুক্ত হয়নি।",
   "Open security flags": "খোলা নিরাপত্তা সতর্কতা",
+  Action: "কাজ",
+  Everything: "সবকিছু",
+  "{count} entry today · newest first": "আজ {count}টি এন্ট্রি · নতুনগুলো আগে",
+  "{count} entries today · newest first": "আজ {count}টি এন্ট্রি · নতুনগুলো আগে",
 };
