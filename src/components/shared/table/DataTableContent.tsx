@@ -131,7 +131,7 @@ const DataTableContent = <TData,>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() ? "selected" : undefined}
-                className={cn("group/row border-surface-sunken hover:bg-cream/60", onRowClick && "cursor-pointer", rowClassName?.(row.original))}
+                className={cn("group/row border-surface-sunken bg-surface hover:bg-row-hover", onRowClick && "cursor-pointer", rowClassName?.(row.original))}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 onKeyDown={
                   onRowClick

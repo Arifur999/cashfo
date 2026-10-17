@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 
 // Sticky styling for pinned columns (select pinned left, actions pinned
 // right), so the row's controls stay reachable while a wide table scrolls
-// sideways. The background follows the row's hover/selected state, since a
-// sticky cell must be opaque to cover what scrolls underneath it -- the
-// hover is the row's cream/60 mixed onto the surface.
+// sideways. A sticky cell must be opaque to cover what scrolls underneath
+// it, so it takes the row's own colour: rows are opaque (the surface, the
+// opaque row-hover, or a highlight such as a double charge's amber).
 export const getPinnedClassName = <TData,>(column: Column<TData, unknown>, isHeader = false) => {
   const pinned = column.getIsPinned();
   if (!pinned) {
@@ -14,7 +14,7 @@ export const getPinnedClassName = <TData,>(column: Column<TData, unknown>, isHea
 
   return cn(
     "sticky z-[1]",
-    isHeader ? "bg-cream" : "bg-surface group-hover/row:bg-[color-mix(in_oklab,var(--cream)_60%,var(--surface))] group-data-[state=selected]/row:bg-muted",
+    isHeader ? "bg-cream" : "bg-inherit",
     pinned === "left" ? "left-0" : "right-0",
   );
 };

@@ -285,6 +285,9 @@
   --color-night-amber: #f2b84b;
   --color-night-coral: #f08080;
   --color-night-ink: #0e1a16;
+  /* A list row under the pointer: the cream at 60% on the card, opaque so a
+     pinned cell can take it too. */
+  --color-row-hover: color-mix(in oklab, var(--cream) 60%, var(--surface));
   --color-forest-hover: var(--forest-hover);
   --color-emerald: var(--emerald);
   --color-emerald-hover: var(--emerald-hover);
