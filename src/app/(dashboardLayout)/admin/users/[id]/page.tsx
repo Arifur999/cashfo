@@ -12,6 +12,7 @@ import { getOwnerById } from "@/services/owner.services";
 import { getPlans } from "@/services/plan.services";
 import T from "@/components/shared/T";
 import { adminPageTitle } from "@/lib/i18n/locale";
+import BreadcrumbTitle from "@/components/modules/Dashboard/BreadcrumbTitle";
 
 export const generateMetadata = adminPageTitle("User");
 
@@ -28,6 +29,7 @@ const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
 
   return (
     <div className="flex flex-col gap-4">
+      <BreadcrumbTitle title={owner.name} />
       <BackLink href="/admin/users"><T>All users</T></BackLink>
       <OwnerProfileHeader
         owner={owner}

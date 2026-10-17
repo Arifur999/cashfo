@@ -7,6 +7,7 @@ import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { getUserInfo } from "@/services/auth.services";
 import { getInvoiceById, getInvoices } from "@/services/invoice.services";
 import { adminPageTitle } from "@/lib/i18n/locale";
+import BreadcrumbTitle from "@/components/modules/Dashboard/BreadcrumbTitle";
 
 export const generateMetadata = adminPageTitle("Invoice");
 
@@ -22,6 +23,7 @@ const InvoiceDetailPage = async ({ params }: PageProps<"/admin/invoices/[id]">) 
 
   return (
     <div className="space-y-4">
+      <BreadcrumbTitle title={invoice.invoiceNumber} />
       <div className="print:hidden">
         <PageHeader {...PAYMENTS_PAGE} />
       </div>
