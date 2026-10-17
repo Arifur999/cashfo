@@ -1,35 +1,23 @@
 "use client";
 
-import { toast } from "sonner";
-
-// The placeholders a template may use, each one click to copy -- so typing
-// them by hand (and mistyping them) isn't needed.
-const VariableChips = ({ variables }: { variables: string[] }) => {
+// The placeholders a template may use, each one tap to add to the field
+// last typed in -- so typing them by hand (and mistyping them) isn't needed.
+const VariableChips = ({ variables, onPick }: { variables: string[]; onPick: (placeholder: string) => void }) => {
   if (variables.length === 0) {
-    return <p className="text-xs text-muted-foreground">This template takes no variables.</p>;
+    return <p className="text-small text-ink-muted">This template takes no variables.</p>;
   }
 
-  const copy = async (placeholder: string) => {
-    try {
-      await navigator.clipboard.writeText(placeholder);
-      toast.success(`Copied ${placeholder}`);
-    } catch {
-      toast.error("Couldn't copy -- type it in by hand.");
-    }
-  };
-
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-xs text-muted-foreground">Variables:</span>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-small text-ink-muted">Tap to add:</span>
       {variables.map((name) => {
         const placeholder = `{{${name}}}`;
         return (
           <button
             key={name}
             type="button"
-            onClick={() => copy(placeholder)}
-            className="rounded-md border bg-muted/50 px-1.5 py-0.5 font-mono text-xs text-foreground hover:bg-muted"
-            title="Copy"
+            onClick={() => onPick(placeholder)}
+            className="h-7 rounded-full border border-line-strong bg-cream px-3 font-mono text-caption text-ink-2 hover:bg-surface-sunken"
           >
             {placeholder}
           </button>
