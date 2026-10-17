@@ -15,7 +15,14 @@ const FeatureFlagSwitch = ({ flag }: { flag: IFeatureFlag }) => {
     refreshRoute: false,
   });
 
-  return <InlineSwitch checked={flag.isEnabled} onChange={run} ariaLabel={`Enable ${flag.name}`} />;
+  return (
+    <InlineSwitch
+      checked={flag.isEnabled}
+      onChange={run}
+      ariaLabel={`Turn ${flag.key} ${flag.isEnabled ? "off" : "on"}`}
+      className="data-checked:bg-emerald data-unchecked:bg-line-strong"
+    />
+  );
 };
 
 export default FeatureFlagSwitch;
