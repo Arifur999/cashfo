@@ -96,4 +96,5 @@ export const adminPeopleDictionary: Record<string, string> = {
   "this workspace": "এই ওয়ার্কস্পেস",
   "Owner data reset": "মালিকের ডেটা রিসেট হয়েছে",
   "Failed to reset owner data": "মালিকের ডেটা রিসেট করা যায়নি",
+  "Showing {shown} of {total}": "{total}টির মধ্যে {shown}টি দেখানো হচ্ছে",
 };
