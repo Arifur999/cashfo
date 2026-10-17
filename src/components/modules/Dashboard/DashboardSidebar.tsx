@@ -1,4 +1,6 @@
-import { getNavSectionsByRole } from "@/lib/navItem";
+import QueryPrefetch from "@/components/shared/QueryPrefetch";
+import { getNavSectionsByRole, navBadgesFor } from "@/lib/navItem";
+import { prefetchNavBadge } from "@/queries/navBadge.queries";
 import { getUserInfo } from "@/services/auth.services";
 import SidebarBrand from "./SidebarBrand";
 import SidebarFoot from "./SidebarFoot";
@@ -14,10 +16,16 @@ const DashboardSidebar = async () => {
     return null;
   }
 
+  const sections = getNavSectionsByRole(admin.role);
+  // The menu's counts arrive with the page instead of popping in after it.
+  const badges = navBadgesFor(sections, admin.role);
+
   return (
     <aside className="sticky top-0 hidden h-screen w-sidebar-admin shrink-0 flex-col bg-night-panel px-3 pt-5 pb-4 text-white lg:flex print:hidden">
       <SidebarBrand />
-      <SidebarNav sections={getNavSectionsByRole(admin.role)} role={admin.role} />
+      <QueryPrefetch prefetch={(client) => Promise.all(badges.map((kind) => prefetchNavBadge[kind](client)))}>
+        <SidebarNav sections={sections} role={admin.role} />
+      </QueryPrefetch>
       <SidebarFoot admin={admin} />
     </aside>
   );

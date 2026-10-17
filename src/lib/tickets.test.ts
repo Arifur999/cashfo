@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { awaitingReply, earlierTicketsText, hoursText, isLate, shortTicketId } from "./tickets";
+import { awaitingReply, earlierTicketsText, hoursText, isLate, openTicketCount, shortTicketId } from "./tickets";
 
 describe("ticket words", () => {
   it("shows the first part of the id with a hash", () => {
@@ -27,5 +27,15 @@ describe("ticket words", () => {
     expect(earlierTicketsText({ total: 0, solved: 0 })).toBe("None before this one");
     expect(earlierTicketsText({ total: 3, solved: 3 })).toBe("3, all solved");
     expect(earlierTicketsText({ total: 2, solved: 1 })).toBe("2, 1 still open");
+  });
+});
+
+describe("openTicketCount", () => {
+  it("adds up the tickets still in the queue", () => {
+    expect(openTicketCount({ OPEN: 4, IN_PROGRESS: 3, WAITING_ON_USER: 2, RESOLVED: 9, CLOSED: 1 })).toBe(9);
+  });
+
+  it("counts a status the stats leave out as none", () => {
+    expect(openTicketCount({ OPEN: 2 })).toBe(2);
   });
 });

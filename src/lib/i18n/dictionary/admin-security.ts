@@ -301,4 +301,5 @@ export const adminSecurityDictionary: Record<string, string> = {
   "Failed to sign out your other devices": "অন্য ডিভাইস থেকে সাইন আউট করা যায়নি",
   "Recent sign-ins": "সাম্প্রতিক সাইন-ইন",
   "No sign-ins recorded yet.": "এখনো কোনো সাইন-ইন নথিভুক্ত হয়নি।",
+  "Open security flags": "খোলা নিরাপত্তা সতর্কতা",
 };

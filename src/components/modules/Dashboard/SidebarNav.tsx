@@ -9,6 +9,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { isNavItemActive, isNavItemViewOnly, type NavSection } from "@/lib/navItem";
 import { cn } from "@/lib/utils";
 import type { AdminRole } from "@/types/auth.types";
+import NavBadge from "./NavBadge";
 
 interface SidebarNavProps {
   sections: NavSection[];
@@ -19,7 +20,8 @@ interface SidebarNavProps {
 }
 
 // The admin menu on the Night sidebar: five groups, 38px rows, the jade
-// marker on the open page, a lock on pages this role can only read.
+// marker on the open page, a lock on pages this role can only read and a
+// count where work is waiting.
 const SidebarNav = ({ sections, role, onNavigate, className }: SidebarNavProps) => {
   const pathname = usePathname();
   const { translate } = useLocale();
@@ -51,6 +53,7 @@ const SidebarNav = ({ sections, role, onNavigate, className }: SidebarNavProps) 
                     <Lock className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
                   </span>
                 )}
+                {!viewOnly && item.badge && <NavBadge kind={item.badge} />}
               </Link>
             );
           })}

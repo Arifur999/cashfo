@@ -277,6 +277,11 @@
 
   /* Colours: bg-forest, text-ink-muted, border-line, bg-pillar-habits-soft ... */
   --color-forest: var(--forest);
+  /* The night sidebar's counts: amber and coral on the always-dark panel,
+     with dark ink on them, the same in either theme. */
+  --color-night-amber: #f2b84b;
+  --color-night-coral: #f08080;
+  --color-night-ink: #0e1a16;
   --color-forest-hover: var(--forest-hover);
   --color-emerald: var(--emerald);
   --color-emerald-hover: var(--emerald-hover);

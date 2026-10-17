@@ -19,6 +19,10 @@ export const TICKET_TAB_LABEL: Record<TicketStatus, string> = {
 // Tickets still in the queue, in the order the tabs show them.
 export const OPEN_TICKET_STATUSES: TicketStatus[] = ["OPEN", "IN_PROGRESS", "WAITING_ON_USER"];
 
+// How many tickets are still in the queue, from the stats' count per status.
+export const openTicketCount = (statusCounts: Partial<Record<TicketStatus, number>>) =>
+  OPEN_TICKET_STATUSES.reduce((sum, status) => sum + (statusCounts[status] ?? 0), 0);
+
 // "#3F2A1": the first part of the id, which is what people quote.
 export const shortTicketId = (id: string) => `#${id.slice(0, 5).toUpperCase()}`;
 
