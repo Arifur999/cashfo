@@ -4,7 +4,7 @@ import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { adminAccountsQuery } from "@/queries/security.queries";
 import { getUserInfo } from "@/services/auth.services";
 
-export const metadata: Metadata = { title: "Admin Accounts" };
+export const metadata: Metadata = { title: "Admin team" };
 
 const AdminAccountsPage = async () => {
   const admin = await getUserInfo();

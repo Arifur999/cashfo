@@ -50,10 +50,12 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
     },
   });
 
+  const isSelf = admin !== null && admin.id === currentAdminId;
+
   return (
     <>
-      <FormDialog title="Edit admin" description={admin?.email} size="sm" {...dialogProps("edit")}>
-        {admin && <EditAdminForm admin={admin} isSelf={admin.id === currentAdminId} onDone={onClose} />}
+      <FormDialog title={isSelf ? "Edit your name" : "Change role"} description={admin?.email} size="sm" {...dialogProps("edit")}>
+        {admin && <EditAdminForm admin={admin} isSelf={isSelf} onDone={onClose} />}
       </FormDialog>
 
       <ConfirmDialog
@@ -84,10 +86,10 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
 
       <ConfirmDialog
         {...dialogProps("activate")}
-        title="Reactivate admin"
+        title={`Turn ${admin?.name ?? "this admin"} back on`}
         description={`${admin?.name} can sign in again with their current password, with the same role.`}
-        confirmLabel="Reactivate"
-        pendingLabel="Reactivating..."
+        confirmLabel="Turn back on"
+        pendingLabel="Turning on..."
         isPending={activate.isPending}
         onConfirm={async () => {
           if (admin && (await activate.run(admin.id))) onClose();

@@ -1,58 +1,42 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { KeyRound, ShieldCheck, ShieldOff } from "lucide-react";
 import { useMemo } from "react";
-import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
 import { adminAccountsQuery } from "@/queries/security.queries";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import AdminDialogs, { type AdminDialog } from "./AdminDialogs";
-import { ADMIN_FILTERS } from "./adminOptions";
-import { ADMINS_HIDDEN_COLUMNS, buildAdminsColumns } from "./adminsColumns";
-import CreateAdminDialog from "./CreateAdminDialog";
+import { buildAdminsColumns } from "./adminsColumns";
 
+// You first, then everyone who can sign in, then the suspended; by name.
+const teamOrder = (admins: IAdminAccount[], currentAdminId: string | null) =>
+  [...admins].sort((a, b) => {
+    const rank = (admin: IAdminAccount) => (admin.id === currentAdminId ? 0 : admin.status === "ACTIVE" ? 1 : 2);
+    return rank(a) - rank(b) || a.name.localeCompare(b.name);
+  });
+
+// The whole team fits on one card, so there is nothing to search or page.
 const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
   const { data, isLoading, isFetching } = useQuery(adminAccountsQuery());
-  const columns = useMemo(() => buildAdminsColumns(currentAdminId), [currentAdminId]);
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IAdminAccount, AdminDialog>();
-
-  const actions = useMemo<DataTableActions<IAdminAccount>>(
-    () => ({
-      onEdit: (row) => openDialog("edit", row),
-      extra: [
-        { label: "Reset password", icon: KeyRound, onClick: (row) => openDialog("resetPassword", row), hidden: (row) => row.status !== "ACTIVE" },
-        {
-          label: "Suspend",
-          icon: ShieldOff,
-          destructive: true,
-          onClick: (row) => openDialog("suspend", row),
-          // Nobody can suspend themselves (the API refuses it too).
-          hidden: (row) => row.status !== "ACTIVE" || row.id === currentAdminId,
-        },
-        { label: "Reactivate", icon: ShieldCheck, onClick: (row) => openDialog("activate", row), hidden: (row) => row.status !== "SUSPENDED" },
-      ],
-    }),
-    [openDialog, currentAdminId],
-  );
+  const columns = useMemo(() => buildAdminsColumns(currentAdminId, openDialog), [currentAdminId, openDialog]);
+  const rows = useMemo(() => (data?.data ? teamOrder(data.data, currentAdminId) : undefined), [data, currentAdminId]);
 
   return (
     <>
       <DataTable
-        data={data?.data}
+        data={rows}
         columns={columns}
         getRowId={(row) => row.id}
-        tableId="admin-accounts"
-        defaultHiddenColumns={ADMINS_HIDDEN_COLUMNS}
+        tableId="admin-team"
         isLoading={isLoading}
         isFetching={isFetching}
-        search={{ placeholder: "Search admins..." }}
-        filters={{ configs: ADMIN_FILTERS }}
-        exportFileName="admin-accounts"
-        actions={actions}
-        toolbarAction={<CreateAdminDialog />}
-        emptyMessage="No admin accounts match these filters."
+        hideToolbar
+        pager={false}
+        initialPageSize={100}
+        footer="The ⋯ menu has Reset password and Suspend. You can't suspend yourself or change your own role, so the panel always keeps a super admin."
+        emptyMessage="No admins yet."
       />
       <AdminDialogs admin={activeRow} activeDialog={activeDialog} currentAdminId={currentAdminId} onClose={closeDialog} />
     </>

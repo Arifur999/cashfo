@@ -1,61 +1,77 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import DateCell from "@/components/shared/cell/DateCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import UserInfoCell from "@/components/shared/cell/UserInfoCell";
-import { Badge } from "@/components/ui/badge";
-import { DATE_TIME_FORMAT, formatDate, formatDateTime } from "@/lib/date";
+import { ADMIN_ROLE_CHIP, ADMIN_ROLE_SHORT_LABELS } from "@/lib/adminRoles";
+import { formatDateTime, formatRelativeDay } from "@/lib/date";
+import { cn } from "@/lib/utils";
 import type { IAdminAccount } from "@/types/adminAccount.types";
+import AdminAvatar from "../AdminAvatar";
+import type { AdminDialog } from "./AdminDialogs";
+import AdminRowActions from "./AdminRowActions";
 
-// Shown under the name already; still searchable and exportable.
-export const ADMINS_HIDDEN_COLUMNS = ["email"] as const;
+const STATUS_LABEL: Record<IAdminAccount["status"], string> = { ACTIVE: "Active", SUSPENDED: "Suspended" };
 
-// Built per viewer, so your own row is marked.
-export const buildAdminsColumns = (currentAdminId: string | null): ColumnDef<IAdminAccount>[] => [
+// The admin team as the design draws it: who (with "(you)" on your own
+// row), their role, when they last signed in, whether they can, and the
+// row's actions. Built per viewer, so your own row is marked.
+export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialog: AdminDialog, admin: IAdminAccount) => void): ColumnDef<IAdminAccount>[] => [
   {
     id: "name",
     accessorKey: "name",
     header: "Admin",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <UserInfoCell name={row.original.name} email={row.original.email} />
-        {row.original.id === currentAdminId && <Badge variant="secondary">You</Badge>}
-      </div>
-    ),
-  },
-  {
-    id: "email",
-    accessorKey: "email",
-    header: "Email",
+    cell: ({ row }) => {
+      const admin = row.original;
+      const suspended = admin.status === "SUSPENDED";
+      return (
+        <span className="flex min-w-0 items-center gap-3">
+          <AdminAvatar name={admin.name} role={admin.role} muted={suspended} />
+          <span className="flex min-w-0 flex-col gap-px">
+            <span className={cn("truncate font-semibold", suspended ? "text-ink-muted" : "text-ink")}>
+              {admin.name}
+              {admin.id === currentAdminId && " (you)"}
+            </span>
+            <span className="truncate text-small text-ink-muted">{admin.email}</span>
+          </span>
+        </span>
+      );
+    },
+    meta: { exportValue: (row) => `${row.name} <${row.email}>` },
   },
   {
     id: "role",
-    accessorKey: "role",
+    accessorFn: (row) => ADMIN_ROLE_SHORT_LABELS[row.role],
     header: "Role",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.role} />,
+    cell: ({ row }) => (
+      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-caption font-semibold whitespace-nowrap", ADMIN_ROLE_CHIP[row.original.role])}>
+        {ADMIN_ROLE_SHORT_LABELS[row.original.role]}
+      </span>
+    ),
+  },
+  {
+    id: "lastLoginAt",
+    accessorKey: "lastLoginAt",
+    header: "Last sign-in",
+    cell: ({ row }) => (
+      <span className="text-small whitespace-nowrap text-ink-2" title={row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : undefined}>
+        {row.original.lastLoginAt ? formatRelativeDay(row.original.lastLoginAt) : "Never"}
+      </span>
+    ),
+    meta: { exportValue: (row) => (row.lastLoginAt ? formatDateTime(row.lastLoginAt) : "Never") },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.status} />,
+    cell: ({ row }) => (
+      <StatusBadgeCell status={row.original.status} label={STATUS_LABEL[row.original.status]} tone={row.original.status === "SUSPENDED" ? "danger" : "success"} />
+    ),
+    meta: { exportValue: (row) => STATUS_LABEL[row.status] },
   },
   {
-    id: "lastLoginAt",
-    accessorKey: "lastLoginAt",
-    header: "Last Sign-in",
-    cell: ({ row }) =>
-      row.original.lastLoginAt ? (
-        <DateCell date={row.original.lastLoginAt} formatString={DATE_TIME_FORMAT} />
-      ) : (
-        <span className="text-muted-foreground italic">Never</span>
-      ),
-    meta: { exportValue: (row) => (row.lastLoginAt ? formatDateTime(row.lastLoginAt) : "Never") },
-  },
-  {
-    id: "createdAt",
-    accessorKey: "createdAt",
-    header: "Added",
-    cell: ({ row }) => <DateCell date={row.original.createdAt} />,
-    meta: { exportValue: (row) => formatDate(row.createdAt) },
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => <AdminRowActions admin={row.original} isSelf={row.original.id === currentAdminId} onOpen={onOpen} />,
+    enableSorting: false,
+    enableHiding: false,
+    meta: { align: "right" },
   },
 ];
