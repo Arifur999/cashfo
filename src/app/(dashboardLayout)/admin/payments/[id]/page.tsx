@@ -12,6 +12,7 @@ import { canManage } from "@/lib/authUtils";
 import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { getUserInfo } from "@/services/auth.services";
 import { getPaymentById } from "@/services/payment.services";
+import T from "@/components/shared/T";
 
 export const metadata: Metadata = { title: "Payment" };
 
@@ -21,7 +22,7 @@ const PaymentDetailPage = async ({ params }: PageProps<"/admin/payments/[id]">) 
 
   return (
     <div className="flex flex-col gap-4">
-      <BackLink href="/admin/payments">All payments</BackLink>
+      <BackLink href="/admin/payments"><T>All payments</T></BackLink>
       <PaymentHero payment={payment} actions={canManage(admin?.role, "payments") && <PaymentDetailActions payment={payment} />} />
       {payment.duplicateOfId && <DuplicateNote payment={payment} />}
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">

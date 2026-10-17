@@ -40,7 +40,6 @@ export const adminSystemDictionary: Record<string, string> = {
   Result: "ফলাফল",
   Size: "আকার",
   "No backups recorded yet.": "এখনো কোনো ব্যাকআপ নথিভুক্ত হয়নি।",
-  Manual: "নিজে চালানো",
   Running: "চলছে",
   "Took a minute": "এক মিনিট লেগেছে",
   "Took {count} minutes": "{count} মিনিট লেগেছে",

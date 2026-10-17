@@ -1,7 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { formatCurrency } from "@/lib/currency";
-import { formatDate, formatRelativeDateTime } from "@/lib/date";
+import Localized from "@/components/shared/Localized";
+import RelativeTime from "@/components/shared/RelativeTime";
+import T from "@/components/shared/T";
+import { formatDate } from "@/lib/date";
 import { GATEWAY_CHIP_CLASS, PAYMENT_STATUS_LABEL, paymentNote, shortPaymentId } from "@/lib/payments";
 import { humanizeEnum } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
@@ -23,15 +26,17 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     id: "user",
     accessorFn: (row) => row.platformUser?.name ?? "Unknown",
     header: "Person",
-    cell: ({ row }) => {
-      const note = paymentNote(row.original);
-      return (
-        <span className="flex min-w-0 flex-col gap-px">
-          <span className="truncate font-semibold text-ink">{row.original.platformUser?.name ?? "Unknown person"}</span>
-          <span className={cn("truncate text-caption", NOTE_TONE[note.tone])}>{note.text}</span>
-        </span>
-      );
-    },
+    cell: ({ row }) => (
+      <span className="flex min-w-0 flex-col gap-px">
+        <span className="truncate font-semibold text-ink">{row.original.platformUser?.name ?? <T>Unknown person</T>}</span>
+        <Localized>
+          {(t) => {
+            const note = paymentNote(row.original, t);
+            return <span className={cn("truncate text-caption", NOTE_TONE[note.tone])}>{note.text}</span>;
+          }}
+        </Localized>
+      </span>
+    ),
     meta: { exportValue: (row) => `${row.platformUser?.name ?? "Unknown"} <${row.platformUser?.email ?? ""}>`, cellClassName: "max-w-72" },
   },
   {
@@ -45,7 +50,9 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     accessorKey: "gateway",
     header: "Paid with",
     cell: ({ row }) => (
-      <span className={cn("inline-flex rounded-sm px-2 py-0.5 text-caption font-bold", GATEWAY_CHIP_CLASS[row.original.gateway])}>{humanizeEnum(row.original.gateway)}</span>
+      <span className={cn("inline-flex rounded-sm px-2 py-0.5 text-caption font-bold", GATEWAY_CHIP_CLASS[row.original.gateway])}>
+        <T>{humanizeEnum(row.original.gateway)}</T>
+      </span>
     ),
     meta: { exportValue: (row) => humanizeEnum(row.gateway) },
   },
@@ -71,7 +78,9 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     id: "createdAt",
     accessorKey: "createdAt",
     header: "When",
-    cell: ({ row }) => <span className="whitespace-nowrap text-small text-ink-2">{formatRelativeDateTime(row.original.createdAt)}</span>,
+    cell: ({ row }) => <span className="whitespace-nowrap text-small text-ink-2">
+        <RelativeTime value={row.original.createdAt} />
+      </span>,
     meta: { exportValue: (row) => formatDate(row.createdAt, "yyyy-MM-dd HH:mm") },
   },
 ];
