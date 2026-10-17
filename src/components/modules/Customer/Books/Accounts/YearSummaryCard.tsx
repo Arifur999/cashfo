@@ -1,21 +1,21 @@
 "use client";
 
 import Card from "@/components/smartly/Card";
-import type { MonthlyBreakdown } from "@/lib/customer/api";
+import type { YearRow } from "@/lib/customer/booksDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface YearSummaryCardProps {
   title: string;
   description: string;
-  breakdown: MonthlyBreakdown;
+  rows: YearRow[];
+  total: number;
   currency: string;
 }
 
-// This year's income or expenses by category, largest first, with the total.
-export function YearSummaryCard({ title, description, breakdown, currency }: YearSummaryCardProps) {
+// This year's income or expenses by account, largest first, with the total.
+export function YearSummaryCard({ title, description, rows, total, currency }: YearSummaryCardProps) {
   const { t } = useLocale();
-  const rows = [...breakdown.rows].filter((row) => Number(row.total) !== 0).sort((a, b) => Number(b.total) - Number(a.total));
   const line = "grid grid-cols-[minmax(0,1fr)_auto] gap-4 py-3 text-body sm:grid-cols-[200px_minmax(0,1fr)]";
 
   return (
@@ -36,7 +36,7 @@ export function YearSummaryCard({ title, description, breakdown, currency }: Yea
           ))}
           <div className={line}>
             <b className="text-ink">{t("Total")}</b>
-            <b className="tabular-nums text-ink">{formatCurrency(breakdown.total, currency)}</b>
+            <b className="tabular-nums text-ink">{formatCurrency(total, currency)}</b>
           </div>
         </div>
       )}

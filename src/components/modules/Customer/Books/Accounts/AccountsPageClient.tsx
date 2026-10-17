@@ -5,8 +5,8 @@ import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import type { AccountGroup, LanguagePreference, MonthlyBreakdown } from "@/lib/customer/api";
-import { accountsCsvRows, booksBalance, flattenAccounts, hasAccountCodes } from "@/lib/customer/booksDisplay";
+import type { AccountGroup, LanguagePreference } from "@/lib/customer/api";
+import { accountsCsvRows, booksBalance, flattenAccounts, hasAccountCodes, type YearRow } from "@/lib/customer/booksDisplay";
 import { formatDate } from "@/lib/customer/date";
 import { downloadCsv } from "@/lib/download";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -20,9 +20,9 @@ interface AccountsPageClientProps {
   businessId: string;
   businessName: string;
   groups: AccountGroup[];
-  // This year's income and expenses by category, 1 January to today.
-  income: MonthlyBreakdown;
-  expense: MonthlyBreakdown;
+  // This year's income and expenses by account, 1 January to today.
+  income: { rows: YearRow[]; total: number };
+  expense: { rows: YearRow[]; total: number };
   today: string;
   canManage: boolean;
   preferredLanguage: LanguagePreference;
@@ -67,8 +67,8 @@ export function AccountsPageClient({ businessId, businessName, groups, income, e
       <BooksBalanceCard balance={booksBalance(groups)} currency={currency} />
       <AccountsTable groups={groups} preferredLanguage={preferredLanguage} currency={currency} hasCodes={hasAccountCodes(groups)} />
       <div className="grid gap-4 lg:grid-cols-2">
-        <YearSummaryCard title={t("Income this year")} description={since} breakdown={income} currency={currency} />
-        <YearSummaryCard title={t("Expenses this year")} description={since} breakdown={expense} currency={currency} />
+        <YearSummaryCard title={t("Income this year")} description={since} rows={income.rows} total={income.total} currency={currency} />
+        <YearSummaryCard title={t("Expenses this year")} description={since} rows={expense.rows} total={expense.total} currency={currency} />
       </div>
 
       <AccountDrawer open={adding} editing={null} accounts={accounts} businessId={businessId} preferredLanguage={preferredLanguage} currency={currency} onClose={() => setAdding(false)} />
