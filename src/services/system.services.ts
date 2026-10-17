@@ -21,3 +21,6 @@ export const reportFrontendError = async (report: { message: string; stackTrace?
 export const getRateLimitLogs = async (queryString: string) => httpClient.getPaginated<IRateLimitLog>(`/admin/system/rate-limits?${queryString}`);
 
 export const getRateLimitSummary = async () => httpClient.get<IRateLimitSummary>("/admin/system/rate-limits/summary");
+
+// The API's own health check: ok when it can reach the database.
+export const getHealth = async () => httpClient.get<{ status: "ok" | "error"; timestamp: string }>("/health");
