@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import FlagsTable from "@/components/modules/Admin/Security/Flags/FlagsTable";
+import FlagsBoard from "@/components/modules/Admin/Security/Flags/FlagsBoard";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { securityFlagsQuery } from "@/queries/security.queries";
 
-export const metadata: Metadata = { title: "Suspicious Activity" };
+export const metadata: Metadata = { title: "Suspicious activity" };
 
 const SuspiciousActivityPage = () => {
   return (
     <QueryPrefetch prefetch={(client) => client.prefetchQuery(securityFlagsQuery())}>
-      <FlagsTable />
+      <FlagsBoard />
     </QueryPrefetch>
   );
 };
