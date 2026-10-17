@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { IAnnouncementFormValues } from "@/zod/announcement.validation";
 import { getNewAnnouncementDefaults } from "./announcementForm.defaults";
 import AnnouncementForm from "./AnnouncementForm";
+import T from "@/components/shared/T";
 
 // Self-contained (owns its trigger), so the layout can drop it into the header.
 const CreateAnnouncementButton = () => {
@@ -21,7 +22,7 @@ const CreateAnnouncementButton = () => {
       width="lg"
       trigger={
         <Button size="lg" className="font-semibold shadow-button">
-          New announcement
+          <T>New announcement</T>
         </Button>
       }
     >

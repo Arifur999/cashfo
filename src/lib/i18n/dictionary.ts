@@ -5,6 +5,7 @@
 // area never touches another. It is one flat namespace: a key defined twice
 // takes the value spread last below.
 import { bnAuthDictionary } from "./authDictionary";
+import { adminContentDictionary } from "./dictionary/admin-content";
 import { adminDashboardDictionary } from "./dictionary/admin-dashboard";
 import { adminSecurityDictionary } from "./dictionary/admin-security";
 import { adminSharedDictionary } from "./dictionary/admin-shared";
@@ -87,6 +88,7 @@ const adminDictionaries: Record<string, string> = {
   ...adminSecurityDictionary,
   ...adminSystemDictionary,
   ...adminSupportDictionary,
+  ...adminContentDictionary,
 };
 
 export const bnDictionary: Record<string, string> = {

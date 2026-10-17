@@ -1,5 +1,6 @@
 import type { AnnouncementStatus, IAnnouncement } from "@/types/announcement.types";
 import { formatDate } from "./date";
+import { inEnglish, type Translate } from "./i18n/message";
 
 // How an announcement's status reads: whether people see it right now.
 export const ANNOUNCEMENT_STATUS_LABEL: Record<AnnouncementStatus, string> = {
@@ -16,11 +17,11 @@ const atDayEnd = (value: string) => formatDate(value, "HH:mm") === "23:59";
 
 // "25 Sep – 9 Oct", "4 Oct, 2:00 – 3:00 am", "28 Sep, all day",
 // "From 10 Oct": when a banner shows, as short as the schedule allows.
-export const scheduleText = (announcement: Pick<IAnnouncement, "startAt" | "endAt">): string => {
+export const scheduleText = (announcement: Pick<IAnnouncement, "startAt" | "endAt">, t: Translate = inEnglish): string => {
   const { startAt, endAt } = announcement;
-  if (!endAt) return `From ${formatDate(startAt, "d MMM")}`;
+  if (!endAt) return t("From {date}", { date: formatDate(startAt, "d MMM") });
   if (sameDay(startAt, endAt)) {
-    if (atMidnight(startAt) && atDayEnd(endAt)) return `${formatDate(startAt, "d MMM")}, all day`;
+    if (atMidnight(startAt) && atDayEnd(endAt)) return t("{date}, all day", { date: formatDate(startAt, "d MMM") });
     return `${formatDate(startAt, "d MMM")}, ${formatDate(startAt, "h:mm")} – ${formatDate(endAt, "h:mm aaa")}`;
   }
   const wholeDays = atMidnight(startAt) && atDayEnd(endAt);
@@ -30,5 +31,5 @@ export const scheduleText = (announcement: Pick<IAnnouncement, "startAt" | "endA
 };
 
 // "Everyone", or the plan's name.
-export const audienceText = (targetPlan: string | null, planNames: Map<string, string>) =>
-  targetPlan ? (planNames.get(targetPlan) ?? "One plan") : "Everyone";
+export const audienceText = (targetPlan: string | null, planNames: Map<string, string>, t: Translate = inEnglish) =>
+  targetPlan ? (planNames.get(targetPlan) ?? t("One plan")) : t("Everyone");

@@ -1,9 +1,22 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { ANNOUNCEMENT_STATUS_LABEL, audienceText, scheduleText } from "@/lib/announcements";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { IAnnouncement } from "@/types/announcement.types";
 import { ANNOUNCEMENT_TYPE_META } from "./announcementOptions";
+
+// Who sees it and when, in the reader's language.
+const AudienceCell = ({ targetPlan, planNames }: { targetPlan: string | null; planNames: Map<string, string> }) => {
+  const { translate } = useLocale();
+  return <span className="text-ink-2">{audienceText(targetPlan, planNames, translate)}</span>;
+};
+
+const ScheduleCell = ({ announcement }: { announcement: IAnnouncement }) => {
+  const { translate } = useLocale();
+  return <span className="text-small whitespace-nowrap text-ink-2">{scheduleText(announcement, translate)}</span>;
+};
 
 // The design's announcements list: the kind as a chip with its icon, the
 // title over its Bangla, who sees it, when, and whether it is live. Built
@@ -18,7 +31,7 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
       return (
         <span className={cn("inline-flex items-center gap-2 rounded-full px-2 py-0.75 text-caption font-semibold", chip)}>
           <Icon className="size-3.5" aria-hidden="true" />
-          {label}
+          <T>{label}</T>
         </span>
       );
     },
@@ -31,7 +44,7 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate font-semibold text-ink">{row.original.title}</span>
-        <span className={cn("truncate text-small", row.original.titleBn ? "font-bn text-ink-2" : "text-warning")}>{row.original.titleBn || "No Bangla text yet"}</span>
+        <span className={cn("truncate text-small", row.original.titleBn ? "font-bn text-ink-2" : "text-warning")}>{row.original.titleBn || <T>No Bangla text yet</T>}</span>
       </span>
     ),
     meta: { exportValue: (row) => row.title, cellClassName: "max-w-96" },
@@ -40,13 +53,13 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
     id: "audience",
     accessorFn: (row) => audienceText(row.targetPlan, planNames),
     header: "Shown to",
-    cell: ({ getValue }) => <span className="text-ink-2">{String(getValue())}</span>,
+    cell: ({ row }) => <AudienceCell targetPlan={row.original.targetPlan} planNames={planNames} />,
   },
   {
     id: "startAt",
     accessorKey: "startAt",
     header: "When",
-    cell: ({ row }) => <span className="text-small whitespace-nowrap text-ink-2">{scheduleText(row.original)}</span>,
+    cell: ({ row }) => <ScheduleCell announcement={row.original} />,
     meta: { exportValue: (row) => scheduleText(row) },
   },
   {

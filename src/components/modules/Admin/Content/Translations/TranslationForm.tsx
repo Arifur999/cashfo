@@ -9,6 +9,7 @@ import AppTextareaField from "@/components/shared/form/AppTextareaField";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import { type ITranslationFormValues, translationFormZodSchema } from "@/zod/translation.validation";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const { shape } = translationFormZodSchema;
 
@@ -16,9 +17,10 @@ const DEFAULT_VALUES: ITranslationFormValues = { key: "", en: "", bn: "", contex
 
 // Mounted inside the dialog content, so each open starts empty.
 const TranslationForm = ({ onDone }: { onDone: () => void }) => {
+  const { translate } = useLocale();
   const { run, isPending } = useActionMutation({
     action: createTranslationAction,
-    successMessage: (created) => `Added ${created.key}`,
+    successMessage: (created) => translate("Added {key}", { key: created.key }),
     invalidateKeys: [queryKeys.translations.all],
     refreshRoute: false,
   });

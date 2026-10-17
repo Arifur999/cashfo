@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { CategoryDirection } from "@/types/category.types";
 import { NEW_CATEGORY_DEFAULTS } from "./categoryForm.defaults";
 import CategoryForm from "./CategoryForm";
+import T from "@/components/shared/T";
 
 interface CreateCategoryDialogProps {
   // Which side the new category starts on (the panel's open tab).
@@ -27,7 +28,7 @@ const CreateCategoryDialog = ({ direction = "EXPENSE", trigger }: CreateCategory
       trigger={
         trigger ?? (
           <Button>
-            <Plus aria-hidden="true" /> New category
+            <Plus aria-hidden="true" /> <T>New category</T>
           </Button>
         )
       }

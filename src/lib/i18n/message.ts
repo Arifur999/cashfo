@@ -18,6 +18,11 @@ export const withoutContext = (key: string) => {
 // "Open@@status" is খোলা, a button's "Open" is খুলুন.
 export const asStatus = (label: string) => `${label}@@status`;
 
+// A record's own name in the reader's language: its Bangla twin when it has
+// one (account templates and categories keep both), else the English.
+export const localName = (locale: "en" | "bn", item: { name: string; nameBn?: string | null }) =>
+  locale === "bn" && item.nameBn?.trim() ? item.nameBn : item.name;
+
 // English, for code with no reader to ask: tests, CSV exports, a component
 // rendered outside the locale provider.
 export const inEnglish: Translate = (key, values) => {

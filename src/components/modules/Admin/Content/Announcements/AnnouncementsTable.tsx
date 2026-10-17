@@ -17,10 +17,12 @@ import AnnouncementForm from "./AnnouncementForm";
 import { ANNOUNCEMENT_FILTERS } from "./announcementOptions";
 import { buildAnnouncementsColumns } from "./announcementsColumns";
 import LiveAnnouncementsCard from "./LiveAnnouncementsCard";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // What is live now, then every announcement. Edit and turn off sit in the
 // row as the design draws them.
 const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
+  const { translate } = useLocale();
   const { data, isLoading, isFetching } = useQuery(announcementsQuery());
   const { data: plansResponse } = useQuery(plansQuery());
   const columns = useMemo(() => buildAnnouncementsColumns(new Map((plansResponse?.data ?? []).map((plan) => [plan.id, plan.name]))), [plansResponse]);
@@ -64,7 +66,7 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
         actions={actions}
         emptyMessage="No announcements yet."
       />
-      <FormDrawer title={announcement ? `Edit: ${announcement.title}` : "Edit announcement"} width="lg" {...getDialogProps("edit")}>
+      <FormDrawer title={announcement ? translate("Edit: {title}", { title: announcement.title }) : "Edit announcement"} width="lg" {...getDialogProps("edit")}>
         {announcement && <AnnouncementForm announcement={announcement} defaultValues={toAnnouncementFormValues(announcement)} onDone={closeDialog} />}
       </FormDrawer>
     </>

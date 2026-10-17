@@ -15,6 +15,7 @@ import type { ICategory } from "@/types/category.types";
 import { categoryFormZodSchema, type ICategoryFormValues } from "@/zod/category.validation";
 import CategoryIconField from "./CategoryIconField";
 import { buildLinkedAccountOptions, CATEGORY_DIRECTION_OPTIONS } from "./categoryOptions";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const { shape } = categoryFormZodSchema;
 
@@ -47,9 +48,10 @@ const CategoryForm = ({ defaultValues, category, onDone }: CategoryFormProps) =>
 
   // The account list re-orders when the direction changes.
   const direction = useStore(form.store, (state) => state.values.type);
+  const { locale, translate } = useLocale();
   const accountOptions = useMemo(
-    () => buildLinkedAccountOptions(templatesResponse?.data ?? [], direction, category?.linkedAccountTemplateId),
-    [templatesResponse, direction, category?.linkedAccountTemplateId],
+    () => buildLinkedAccountOptions(templatesResponse?.data ?? [], direction, category?.linkedAccountTemplateId, { t: translate, locale }),
+    [templatesResponse, direction, category?.linkedAccountTemplateId, translate, locale],
   );
 
   return (

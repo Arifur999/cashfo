@@ -90,7 +90,7 @@ export const adminDashboardDictionary: Record<string, string> = {
   "showing to people now": "এখন মানুষ দেখছে",
   "Legal pages": "আইনি পাতা",
   "without Bangla": "বাংলা ছাড়া",
-  "Starting categories": "শুরুর খাত",
+  "Starting categories": "শুরুর ক্যাটাগরি",
   "for a new workspace": "নতুন ওয়ার্কস্পেসের জন্য",
   "Words without Bangla": "বাংলা ছাড়া শব্দ",
   "Open translations": "অনুবাদ খুলুন",

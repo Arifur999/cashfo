@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { localName, type Translate } from "@/lib/i18n/message";
 import { formatNumber } from "@/lib/number";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
@@ -19,17 +21,20 @@ import type { CategoryDirection, ICategory } from "@/types/category.types";
 import { toCategoryFormValues } from "./categoryForm.defaults";
 import CategoryForm from "./CategoryForm";
 import CreateCategoryDialog from "./CreateCategoryDialog";
+import T from "@/components/shared/T";
 
 const count = (label: string, n: number) => (
   <>
-    {label}
+    <T>{label}</T>
     <span className="font-normal text-ink-muted">{formatNumber(n)}</span>
   </>
 );
 
 // "Paid from Cash" for an expense, "Goes to Bank" for income.
-const linkText = (category: ICategory) =>
-  category.linkedAccountTemplate ? `${category.type === "EXPENSE" ? "Paid from" : "Goes to"} ${category.linkedAccountTemplate.name}` : "No account yet";
+const linkText = (category: ICategory, t: Translate, locale: "en" | "bn") =>
+  category.linkedAccountTemplate
+    ? t(category.type === "EXPENSE" ? "Paid from {name}" : "Goes to {name}", { name: localName(locale, category.linkedAccountTemplate) })
+    : t("No account yet");
 
 // The design's "Starting categories": expense or income, each category with
 // its Bangla name, where its money goes, and a switch that says whether
@@ -37,11 +42,12 @@ const linkText = (category: ICategory) =>
 const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
   const categories = useQuery(categoriesQuery()).data?.data ?? [];
   const [direction, setDirection] = useState<CategoryDirection>("EXPENSE");
+  const { locale, translate } = useLocale();
   const { activeRow: category, openDialog, closeDialog, getDialogProps } = useRowDialogs<ICategory, "edit">();
 
   const { run: setActive } = useActionMutation({
     action: ({ id, isActive }: { id: string; isActive: boolean }) => setCategoryActiveAction(id, isActive),
-    successMessage: (updated) => `${updated.name} ${updated.isActive ? "is back for new workspaces" : "no longer goes to new workspaces"}`,
+    successMessage: (updated) => translate(updated.isActive ? "{name} is back for new workspaces" : "{name} no longer goes to new workspaces", { name: updated.name }),
     invalidateKeys: [queryKeys.categories.all],
     refreshRoute: false,
   });
@@ -53,15 +59,15 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
     <Card padding="none" className="flex flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         <div className="flex flex-col gap-0.5">
-          <h2 className="text-title text-ink">Starting categories</h2>
-          <span className="text-small text-ink-muted">Every new workspace gets these. People can change their own later.</span>
+          <h2 className="text-title text-ink"><T>Starting categories</T></h2>
+          <span className="text-small text-ink-muted"><T>Every new workspace gets these. People can change their own later.</T></span>
         </div>
         {canManage && (
           <CreateCategoryDialog
             direction={direction}
             trigger={
               <Button variant="outline" size="sm" className="h-8.5 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-cream">
-                Add
+                <T>Add</T>
               </Button>
             }
           />
@@ -78,7 +84,9 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
         value={direction}
         onChange={setDirection}
       />
-      {shown.length === 0 && <p className="border-t border-surface-sunken px-5 py-4 text-small text-ink-muted">No {direction.toLowerCase()} categories yet.</p>}
+      {shown.length === 0 && (
+        <p className="border-t border-surface-sunken px-5 py-4 text-small text-ink-muted">{translate(direction === "EXPENSE" ? "No expense categories yet." : "No income categories yet.")}</p>
+      )}
       {shown.map((item) => (
         <div key={item.id} className="flex items-center gap-3 border-t border-surface-sunken px-5 py-2 text-body">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-surface-sunken text-ink-2">
@@ -95,17 +103,17 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
               {item.nameBn}
             </span>
           </button>
-          <span className="shrink-0 text-caption text-ink-muted">{linkText(item)}</span>
+          <span className="shrink-0 text-caption text-ink-muted">{linkText(item, translate, locale)}</span>
           <Switch
             checked={item.isActive}
             disabled={!canManage}
             onCheckedChange={(checked) => void setActive({ id: item.id, isActive: checked })}
-            aria-label={`Use ${item.name}`}
+            aria-label={translate("Use {name}", { name: item.name })}
             className="data-checked:bg-emerald data-unchecked:bg-line-strong"
           />
         </div>
       ))}
-      <FormDialog title={category ? `Edit ${category.name}` : "Edit category"} {...getDialogProps("edit")}>
+      <FormDialog title={category ? translate("Edit {name}", { name: category.name }) : "Edit category"} {...getDialogProps("edit")}>
         {category && <CategoryForm category={category} defaultValues={toCategoryFormValues(category)} onDone={closeDialog} />}
       </FormDialog>
     </Card>

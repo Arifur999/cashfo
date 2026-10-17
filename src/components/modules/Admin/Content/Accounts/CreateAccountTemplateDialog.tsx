@@ -6,6 +6,7 @@ import FormDialog from "@/components/shared/dialog/FormDialog";
 import { Button } from "@/components/ui/button";
 import { getNewAccountTemplateDefaults } from "./accountTemplateForm.defaults";
 import AccountTemplateForm from "./AccountTemplateForm";
+import T from "@/components/shared/T";
 
 // Self-contained (owns its trigger); the panel passes its own small button.
 const CreateAccountTemplateDialog = ({ trigger }: { trigger?: React.ReactNode }) => {
@@ -20,7 +21,7 @@ const CreateAccountTemplateDialog = ({ trigger }: { trigger?: React.ReactNode })
       trigger={
         trigger ?? (
           <Button>
-            <Plus aria-hidden="true" /> New account
+            <Plus aria-hidden="true" /> <T>New account</T>
           </Button>
         )
       }

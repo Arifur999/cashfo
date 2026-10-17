@@ -2,8 +2,26 @@ import type { ColumnDef } from "@tanstack/react-table";
 import DateCell from "@/components/shared/cell/DateCell";
 import EditableTextCell from "@/components/shared/cell/EditableTextCell";
 import { formatDate } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { ITranslation, TranslationLanguage } from "@/types/translation.types";
 import { flagsOf } from "./translationFilters";
+
+// A text cell whose screen-reader name says which key and language it is.
+const TextCell = ({ translation, language, saveText }: { translation: ITranslation; language: TranslationLanguage; saveText: SaveTranslationText | null }) => {
+  const { translate } = useLocale();
+  const bangla = language === "bn";
+  return (
+    <EditableTextCell
+      value={translation[language]}
+      label={translate(bangla ? "Bangla text of {key}" : "English text of {key}", { key: translation.key })}
+      placeholder={bangla ? "Add the Bangla words" : undefined}
+      tone={bangla ? (translation.bn.trim() ? "box" : "missing") : undefined}
+      lang={bangla ? "bn" : undefined}
+      readOnly={saveText === null}
+      onSave={(value) => saveText?.(translation, language, value) ?? Promise.resolve(false)}
+    />
+  );
+};
 
 // Only there to facet on (the tabs); the Bangla column shows what is missing.
 export const TRANSLATIONS_HIDDEN_COLUMNS = ["flags", "updatedAt"] as const;
@@ -25,30 +43,13 @@ export const buildTranslationsColumns = (saveText: SaveTranslationText | null): 
     id: "en",
     accessorKey: "en",
     header: "English",
-    cell: ({ row }) => (
-      <EditableTextCell
-        value={row.original.en}
-        label={`English text of ${row.original.key}`}
-        readOnly={saveText === null}
-        onSave={(value) => saveText?.(row.original, "en", value) ?? Promise.resolve(false)}
-      />
-    ),
+    cell: ({ row }) => <TextCell translation={row.original} language="en" saveText={saveText} />,
   },
   {
     id: "bn",
     accessorKey: "bn",
     header: "বাংলা",
-    cell: ({ row }) => (
-      <EditableTextCell
-        value={row.original.bn}
-        label={`Bangla text of ${row.original.key}`}
-        placeholder="Add the Bangla words"
-        tone={row.original.bn.trim() ? "box" : "missing"}
-        lang="bn"
-        readOnly={saveText === null}
-        onSave={(value) => saveText?.(row.original, "bn", value) ?? Promise.resolve(false)}
-      />
-    ),
+    cell: ({ row }) => <TextCell translation={row.original} language="bn" saveText={saveText} />,
   },
   {
     id: "context",
