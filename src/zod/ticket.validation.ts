@@ -47,8 +47,9 @@ export const updateTicketServerZodSchema = z
   .object({
     status: z.enum(TICKET_STATUSES).optional(),
     priority: z.enum(TICKET_PRIORITIES).optional(),
+    category: z.enum(TICKET_CATEGORIES).optional(),
   })
-  .refine((values) => values.status !== undefined || values.priority !== undefined, "Nothing to update") satisfies z.ZodType<IUpdateTicketPayload>;
+  .refine((values) => values.status !== undefined || values.priority !== undefined || values.category !== undefined, "Nothing to update") satisfies z.ZodType<IUpdateTicketPayload>;
 
 // null unassigns the ticket.
 export const assignTicketServerZodSchema = z.object({ adminId: z.string().min(1).nullable() });

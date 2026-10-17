@@ -101,4 +101,5 @@ export interface ICreateTicketPayload {
 export interface IUpdateTicketPayload {
   status?: TicketStatus;
   priority?: TicketPriority;
+  category?: TicketCategory;
 }

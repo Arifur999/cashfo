@@ -4,13 +4,13 @@ import { useOptimistic, useTransition } from "react";
 import { assignTicketAction, updateTicketAction } from "@/app/(dashboardLayout)/admin/support/_action";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
-import type { IAdminOption, ISupportTicketDetail, IUpdateTicketPayload, TicketPriority, TicketStatus } from "@/types/ticket.types";
+import type { IAdminOption, ISupportTicketDetail, IUpdateTicketPayload, TicketCategory, TicketPriority, TicketStatus } from "@/types/ticket.types";
 
-type TicketPatch = Partial<Pick<ISupportTicketDetail, "status" | "priority" | "assignedToAdminId" | "assignedAdmin">>;
+type TicketPatch = Partial<Pick<ISupportTicketDetail, "status" | "priority" | "category" | "assignedToAdminId" | "assignedAdmin">>;
 
 const applyPatch = (ticket: ISupportTicketDetail, patch: TicketPatch): ISupportTicketDetail => ({ ...ticket, ...patch });
 
-// Status, priority and assignee changes apply optimistically: the whole page
+// Status, priority, type and assignee changes apply optimistically: the whole page
 // shows the new value at once, and React drops the optimistic copy when the
 // request settles -- by then the refetched ticket carries the change, or (on
 // failure) the server's value returns alongside the error toast.
@@ -45,6 +45,7 @@ export function useTicketControls(ticket: ISupportTicketDetail) {
     isPending,
     setStatus: (status: TicketStatus) => commit({ status }, () => update.run({ status })),
     setPriority: (priority: TicketPriority) => commit({ priority }, () => update.run({ priority })),
+    setCategory: (category: TicketCategory) => commit({ category }, () => update.run({ category })),
     setAssignee: (admin: IAdminOption | null) =>
       commit({ assignedToAdminId: admin?.id ?? null, assignedAdmin: admin && { id: admin.id, name: admin.name } }, () =>
         assign.run(admin?.id ?? null),
