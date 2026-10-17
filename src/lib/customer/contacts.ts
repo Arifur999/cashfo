@@ -62,3 +62,15 @@ export const getContactTransactions = cache(async (businessId: string, contactId
     return emptyUnlessOutage(error, empty);
   }
 });
+
+// Every customer and supplier the business trades with (category BUSINESS;
+// lending contacts live in Loans), across however many pages the API
+// needs. Books' lists and totals want them all at once.
+export const getBusinessContacts = cache(async (businessId: string): Promise<Contact[]> => {
+  const contacts: Contact[] = [];
+  for (let page = 1; ; page++) {
+    const { data, meta } = await getContacts(businessId, { category: "BUSINESS", page, limit: 100 });
+    contacts.push(...data);
+    if (page >= meta.totalPages) return contacts;
+  }
+});
