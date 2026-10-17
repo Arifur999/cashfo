@@ -8,6 +8,7 @@ import { bnAuthDictionary } from "./authDictionary";
 import { adminDashboardDictionary } from "./dictionary/admin-dashboard";
 import { adminSecurityDictionary } from "./dictionary/admin-security";
 import { adminSharedDictionary } from "./dictionary/admin-shared";
+import { adminSystemDictionary } from "./dictionary/admin-system";
 import { assetsDictionary } from "./dictionary/assets";
 import { balanceDictionary } from "./dictionary/balance";
 import { booksDictionary } from "./dictionary/books";
@@ -83,6 +84,7 @@ const adminDictionaries: Record<string, string> = {
   ...bnAdminDictionary,
   ...adminDashboardDictionary,
   ...adminSecurityDictionary,
+  ...adminSystemDictionary,
 };
 
 export const bnDictionary: Record<string, string> = {

@@ -114,4 +114,5 @@ export const adminSharedDictionary: Record<string, string> = {
   "{count} row selected": "{count}টি সারি বাছাই করা হয়েছে",
   "{count} rows selected": "{count}টি সারি বাছাই করা হয়েছে",
   "{count} selected": "{count}টি বাছাই করা",
+  "Creating...": "তৈরি হচ্ছে...",
 };

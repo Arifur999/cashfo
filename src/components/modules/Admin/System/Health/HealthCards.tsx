@@ -3,7 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { CreditCard, FolderOpen, type LucideIcon, Mail, Server } from "lucide-react";
 import Card from "@/components/smartly/Card";
+import T from "@/components/shared/T";
 import { formatLogTime } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { healthQuery } from "@/queries/system.queries";
 
@@ -33,12 +35,16 @@ const HealthCard = ({ service }: { service: ServiceHealth }) => {
         <Icon aria-hidden="true" className="size-4.5" />
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-small text-ink-muted">{service.name}</span>
+        <span className="text-small text-ink-muted">
+          <T>{service.name}</T>
+        </span>
         <span className="flex items-center gap-2 text-title font-semibold text-ink">
           <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", DOT[service.tone])} />
-          {service.state}
+          <T>{service.state}</T>
         </span>
-        <span className="text-small text-ink-muted">{service.sub}</span>
+        <span className="text-small text-ink-muted">
+          <T>{service.sub}</T>
+        </span>
       </span>
     </Card>
   );
@@ -48,6 +54,7 @@ const HealthCard = ({ service }: { service: ServiceHealth }) => {
 const HealthCards = () => {
   const { data, isError } = useQuery(healthQuery());
   const health = data?.data;
+  const { translate } = useLocale();
 
   const api: ServiceHealth = {
     name: "API and database",
@@ -55,7 +62,7 @@ const HealthCards = () => {
     ...(isError || health?.status === "error"
       ? { tone: "down", state: "Not answering", sub: "The API or its database is down" }
       : health
-        ? { tone: "ok", state: "Working", sub: `Answered in ${health.latencyMs} ms · ${formatLogTime(health.timestamp)}` }
+        ? { tone: "ok", state: "Working", sub: translate("Answered in {ms} ms · {time}", { ms: health.latencyMs, time: formatLogTime(health.timestamp, { t: translate }) }) }
         : { tone: "unknown", state: "Checking...", sub: "" }),
   };
   const services: ServiceHealth[] = [

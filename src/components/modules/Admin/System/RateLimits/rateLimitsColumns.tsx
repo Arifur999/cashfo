@@ -5,6 +5,7 @@ import { DATE_TIME_FORMAT, formatDateTime } from "@/lib/date";
 import { formatNumber } from "@/lib/number";
 import { humanizeEnum } from "@/lib/statusBadge";
 import type { IRateLimitLog } from "@/types/system.types";
+import T from "@/components/shared/T";
 
 export const rateLimitsColumns: ColumnDef<IRateLimitLog>[] = [
   {
@@ -27,7 +28,9 @@ export const rateLimitsColumns: ColumnDef<IRateLimitLog>[] = [
     cell: ({ row }) => (
       <div className="space-y-0.5">
         <p className="font-mono text-xs text-foreground">{row.original.identifier}</p>
-        <p className="text-xs text-muted-foreground">{humanizeEnum(row.original.identifierType.toUpperCase())}</p>
+        <p className="text-xs text-muted-foreground">
+          <T>{humanizeEnum(row.original.identifierType.toUpperCase())}</T>
+        </p>
       </div>
     ),
   },

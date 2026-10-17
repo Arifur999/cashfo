@@ -1,11 +1,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import { Button } from "@/components/ui/button";
-import { formatDate, formatRelativeDay } from "@/lib/date";
+import RelativeTime from "@/components/shared/RelativeTime";
+import { formatDate } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { rolloutLabel } from "@/lib/featureFlags";
 import { cn } from "@/lib/utils";
 import type { IFeatureFlag } from "@/types/featureFlag.types";
 import FeatureFlagSwitch from "./FeatureFlagSwitch";
+import T from "@/components/shared/T";
 
 interface FeatureFlagColumnsOptions {
   planNames: Map<string, string>;
@@ -15,6 +18,31 @@ interface FeatureFlagColumnsOptions {
 
 const targetsOf = (flag: IFeatureFlag, planNames: Map<string, string>) =>
   flag.targetPlanIds.length === 0 ? ["All plans"] : flag.targetPlanIds.map((id) => planNames.get(id) ?? "Removed plan");
+
+// How many people get it, with its bar, in the reader's language.
+const RolloutCell = ({ flag }: { flag: IFeatureFlag }) => {
+  const { translate } = useLocale();
+  return (
+    <span className="flex w-40 flex-col gap-1">
+      <span className={cn("text-small font-semibold", flag.isEnabled ? "text-ink" : "text-ink-muted")}>{rolloutLabel(flag, translate)}</span>
+      <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
+        <span className={cn("block h-full rounded-full", flag.isEnabled ? "bg-emerald" : "bg-line-strong")} style={{ width: `${flag.rolloutPercent}%` }} />
+      </span>
+    </span>
+  );
+};
+
+// The plans it is limited to; "All plans" and "Removed plan" are words, the rest names.
+const TargetsCell = ({ flag, planNames }: { flag: IFeatureFlag; planNames: Map<string, string> }) => {
+  const { translate } = useLocale();
+  return (
+    <span className="flex max-w-52 flex-wrap gap-1">
+      {targetsOf(flag, planNames).map((name) => (
+        <PlanChipCell key={name} plan={name === "All plans" || name === "Removed plan" ? translate(name) : name} />
+      ))}
+    </span>
+  );
+};
 
 // The design's flag list: what it is, its switch, how many people get it,
 // on which plans, who changed it last, and Edit.
@@ -31,7 +59,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
         </span>
         {row.original.description && <span className="truncate text-small text-ink-muted">{row.original.description}</span>}
         {/* A key no code reads yet: switching it changes nothing. */}
-        {!row.original.usedFor && <span className="text-caption font-semibold text-warning">Not used by the app yet</span>}
+        {!row.original.usedFor && <span className="text-caption font-semibold text-warning"><T>Not used by the app yet</T></span>}
       </span>
     ),
     meta: { exportValue: (row) => `${row.name} (${row.key})` },
@@ -46,14 +74,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     id: "rolloutPercent",
     accessorKey: "rolloutPercent",
     header: "How many people",
-    cell: ({ row }) => (
-      <span className="flex w-40 flex-col gap-1">
-        <span className={cn("text-small font-semibold", row.original.isEnabled ? "text-ink" : "text-ink-muted")}>{rolloutLabel(row.original)}</span>
-        <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
-          <span className={cn("block h-full rounded-full", row.original.isEnabled ? "bg-emerald" : "bg-line-strong")} style={{ width: `${row.original.rolloutPercent}%` }} />
-        </span>
-      </span>
-    ),
+    cell: ({ row }) => <RolloutCell flag={row.original} />,
     meta: { exportValue: (row) => rolloutLabel(row) },
   },
   {
@@ -61,13 +82,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     accessorFn: (row) => targetsOf(row, planNames).join(", "),
     header: "Plans",
     enableSorting: false,
-    cell: ({ row }) => (
-      <span className="flex max-w-52 flex-wrap gap-1">
-        {targetsOf(row.original, planNames).map((name) => (
-          <PlanChipCell key={name} plan={name} />
-        ))}
-      </span>
-    ),
+    cell: ({ row }) => <TargetsCell flag={row.original} planNames={planNames} />,
   },
   {
     id: "updatedAt",
@@ -76,14 +91,16 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     cell: ({ row }) => (
       <span className="flex flex-col gap-px text-small">
         <span className="text-ink">{(row.original.updatedBy && adminNames.get(row.original.updatedBy)) ?? "—"}</span>
-        <span className="text-ink-muted">{formatRelativeDay(row.original.updatedAt)}</span>
+        <span className="text-ink-muted">
+          <RelativeTime value={row.original.updatedAt} as="day" />
+        </span>
       </span>
     ),
     meta: { exportValue: (row) => formatDate(row.updatedAt) },
   },
   {
     id: "edit",
-    header: () => <span className="sr-only">Edit</span>,
+    header: () => <span className="sr-only"><T>Edit</T></span>,
     cell: ({ row }) => (
       <span className="flex justify-end">
         <Button
@@ -93,7 +110,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
           className="h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold text-ink hover:bg-cream"
           onClick={() => onEdit(row.original)}
         >
-          Edit
+          <T>Edit</T>
         </Button>
       </span>
     ),

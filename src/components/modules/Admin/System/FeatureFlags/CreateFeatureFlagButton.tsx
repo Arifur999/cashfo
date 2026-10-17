@@ -6,6 +6,7 @@ import FormDialog from "@/components/shared/dialog/FormDialog";
 import { Button } from "@/components/ui/button";
 import { plansQuery } from "@/queries/plan.queries";
 import FeatureFlagForm from "./FeatureFlagForm";
+import T from "@/components/shared/T";
 
 // Self-contained (owns its trigger), so the layout can put it in the header.
 const CreateFeatureFlagButton = () => {
@@ -21,7 +22,7 @@ const CreateFeatureFlagButton = () => {
       description="Ship code dark, then switch it on here."
       trigger={
         <Button size="lg" className="font-semibold shadow-button">
-          New flag
+          <T>New flag</T>
         </Button>
       }
     >

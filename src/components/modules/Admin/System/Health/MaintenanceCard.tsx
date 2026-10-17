@@ -13,6 +13,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { platformSettingsQuery } from "@/queries/settings.queries";
 import type { IUpdatePlatformSettingsPayload } from "@/types/settings.types";
+import T from "@/components/shared/T";
 
 const OUTLINE = "h-9.5 border-line-strong bg-surface font-semibold text-ink hover:bg-cream";
 
@@ -45,12 +46,12 @@ const MaintenanceCard = () => {
         <span className="flex size-9 items-center justify-center rounded-md bg-warning-soft text-warning">
           <Construction aria-hidden="true" className="size-4.5" />
         </span>
-        <h2 className="grow text-title text-ink">Maintenance mode</h2>
-        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", on ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}>{on ? "On" : "Off"}</span>
+        <h2 className="grow text-title text-ink"><T>Maintenance mode</T></h2>
+        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", on ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}><T>{on ? "On" : "Off"}</T></span>
       </div>
-      <p className="text-small leading-normal text-ink-2">While it&apos;s on, customers see this message and can&apos;t use the app. Admins can still sign in here.</p>
+      <p className="text-small leading-normal text-ink-2"><T>While it&apos;s on, customers see this message and can&apos;t use the app. Admins can still sign in here.</T></p>
       <label className="flex flex-col gap-1">
-        <span className="text-small font-medium text-ink">Message</span>
+        <span className="text-small font-medium text-ink"><T>Message</T></span>
         <Textarea
           rows={2}
           value={message}
@@ -62,11 +63,11 @@ const MaintenanceCard = () => {
         {on ? (
           <>
             <Button type="button" variant="outline" disabled={isPending} className={cn(OUTLINE, "grow")} onClick={() => void save({ maintenanceMode: false })}>
-              Turn off maintenance
+              <T>Turn off maintenance</T>
             </Button>
             {edited && (
               <Button type="button" disabled={isPending} className="h-9.5 font-semibold" onClick={() => void save({ maintenanceMessage: message.trim() })}>
-                Save message
+                <T>Save message</T>
               </Button>
             )}
           </>
@@ -78,7 +79,7 @@ const MaintenanceCard = () => {
             className={cn(OUTLINE, "grow border-warning-fill text-warning hover:bg-warning-soft")}
             onClick={() => setConfirming(true)}
           >
-            Turn on maintenance
+            <T>Turn on maintenance</T>
           </Button>
         )}
       </div>

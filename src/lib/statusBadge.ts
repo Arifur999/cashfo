@@ -88,6 +88,7 @@ const STATUS_TONES: Record<string, BadgeTone> = {
 // Values whose humanized form would read wrong.
 const LABEL_OVERRIDES: Record<string, string> = {
   SMS: "SMS",
+  IP: "IP",
   IN_APP_PUSH: "In-app push",
   BACKEND_API: "Backend API",
   BKASH: "bKash",
