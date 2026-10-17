@@ -117,7 +117,8 @@ export interface DataTableProps<TData> {
   // A heading at the front of the toolbar ("Biggest add-on first").
   title?: string;
   toolbarAction?: React.ReactNode;
-  // A note under the rows: how a column is worked out, a caveat.
+  // A note under the rows, after an (i): how a column is worked out, a
+  // caveat.
   footer?: React.ReactNode;
   // A list with nothing to search or filter (the admin team) draws no toolbar.
   hideToolbar?: boolean;

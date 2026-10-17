@@ -1,5 +1,6 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { useExportAction } from "@/components/shared/ExportAction";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import DataTableContent from "./DataTableContent";
@@ -71,7 +72,13 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         ) : (
           (pager !== false || table.getPageCount() > 1) && <DataTablePagination table={table} totalRows={totalRows} />
         ))}
-      {footer && <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">{typeof footer === "string" ? translate(footer) : footer}</div>}
+      {/* The design's note under a list, behind an (i). */}
+      {footer && (
+        <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">
+          <Info className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
+          <span>{typeof footer === "string" ? translate(footer) : footer}</span>
+        </div>
+      )}
     </section>
   );
 };
