@@ -3,10 +3,9 @@
 import { useState } from "react";
 import FormDialog from "@/components/shared/dialog/FormDialog";
 import TemporaryPasswordDialog from "@/components/shared/dialog/TemporaryPasswordDialog";
-import { Button } from "@/components/ui/button";
+import CreateButton from "@/components/shared/CreateButton";
 import type { ICreatedAdmin } from "@/types/adminAccount.types";
 import CreateAdminForm from "./CreateAdminForm";
-import T from "@/components/shared/T";
 
 // Creating an account hands back a temporary password, revealed once in a
 // follow-up dialog.
@@ -23,9 +22,7 @@ const CreateAdminDialog = () => {
         description="A panel account with one role. They get a temporary password to sign in with, shown to you once."
         size="sm"
         trigger={
-          <Button size="lg" className="font-semibold shadow-button">
-            <T>Add an admin</T>
-          </Button>
+          <CreateButton>Add an admin</CreateButton>
         }
       >
         <CreateAdminForm

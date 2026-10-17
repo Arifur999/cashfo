@@ -3,10 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import FormDialog from "@/components/shared/dialog/FormDialog";
-import { Button } from "@/components/ui/button";
+import CreateButton from "@/components/shared/CreateButton";
 import { plansQuery } from "@/queries/plan.queries";
 import FeatureFlagForm from "./FeatureFlagForm";
-import T from "@/components/shared/T";
 
 // Self-contained (owns its trigger), so the layout can put it in the header.
 const CreateFeatureFlagButton = () => {
@@ -21,9 +20,7 @@ const CreateFeatureFlagButton = () => {
       title="New feature flag"
       description="Ship code dark, then switch it on here."
       trigger={
-        <Button size="lg" className="font-semibold shadow-button">
-          <T>New flag</T>
-        </Button>
+        <CreateButton>New flag</CreateButton>
       }
     >
       <FeatureFlagForm planOptions={planOptions} onDone={() => setOpen(false)} />

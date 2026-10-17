@@ -3,12 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
-import { Button } from "@/components/ui/button";
+import CreateButton from "@/components/shared/CreateButton";
 import { plansQuery } from "@/queries/plan.queries";
 import type { ICouponFormValues } from "@/zod/coupon.validation";
 import { getNewCouponDefaults } from "./couponForm.defaults";
 import CouponForm from "./CouponForm";
-import T from "@/components/shared/T";
 
 // Self-contained (owns its trigger), so the page can drop it into the header.
 const CreateCouponButton = () => {
@@ -24,9 +23,7 @@ const CreateCouponButton = () => {
       title="New coupon"
       width="sm"
       trigger={
-        <Button size="lg" className="font-semibold shadow-button">
-          <T>New coupon</T>
-        </Button>
+        <CreateButton>New coupon</CreateButton>
       }
     >
       {defaults && <CouponForm defaultValues={defaults} plans={plansResponse?.data ?? []} onDone={() => setDefaults(null)} />}
