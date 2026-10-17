@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import TranslationCoverage from "@/components/modules/Admin/Content/Translations/TranslationCoverage";
 import TranslationsTable from "@/components/modules/Admin/Content/Translations/TranslationsTable";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
@@ -13,7 +12,6 @@ const TranslationsPage = async () => {
 
   return (
     <QueryPrefetch prefetch={(client) => client.prefetchQuery(translationsQuery())}>
-      <TranslationCoverage />
       <TranslationsTable canManage={canManage(admin?.role, "content")} />
     </QueryPrefetch>
   );

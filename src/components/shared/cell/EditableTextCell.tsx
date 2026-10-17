@@ -2,7 +2,7 @@
 
 import { Pencil } from "lucide-react";
 import { useOptimistic, useRef, useState, useTransition } from "react";
-import { Input } from "@/components/ui/input";
+import Input from "@/components/smartly/form/Input";
 import { cn } from "@/lib/utils";
 
 interface EditableTextCellProps {
@@ -14,12 +14,23 @@ interface EditableTextCellProps {
   // Shown (muted) while the value is empty.
   placeholder?: string;
   readOnly?: boolean;
+  // "box" draws the text in its own bordered box (the design's Bangla
+  // column); "missing" the dashed amber box that asks for the words.
+  tone?: "plain" | "box" | "missing";
+  // The text's language, so the right typeface is used.
+  lang?: string;
 }
+
+const TONE_CLASS = {
+  plain: "rounded-md px-2 py-1 hover:bg-cream",
+  box: "min-h-9 rounded-md border border-transparent bg-surface px-3 py-1.5 hover:border-line-strong",
+  missing: "min-h-9 rounded-md border border-dashed border-warning-fill bg-warning-soft px-3 py-1.5 text-warning",
+} as const;
 
 // Spreadsheet-style editing in a table cell: click to edit, Enter or
 // clicking away saves, Escape cancels. The new text shows at once while it
 // saves and reverts if the save fails.
-const EditableTextCell = ({ value, onSave, label, placeholder = "—", readOnly = false }: EditableTextCellProps) => {
+const EditableTextCell = ({ value, onSave, label, placeholder = "—", readOnly = false, tone = "plain", lang }: EditableTextCellProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [shown, setShown] = useOptimistic(value);
@@ -46,16 +57,22 @@ const EditableTextCell = ({ value, onSave, label, placeholder = "—", readOnly 
     });
   };
 
-  const emptyText = <span className="text-muted-foreground italic">{placeholder}</span>;
+  const emptyText = <span className={tone === "missing" ? "font-medium" : "text-ink-muted italic"}>{placeholder}</span>;
 
   if (readOnly) {
-    return <span className="whitespace-normal">{value || emptyText}</span>;
+    return (
+      <span lang={lang} className="whitespace-normal">
+        {value || emptyText}
+      </span>
+    );
   }
 
   if (isEditing) {
     return (
       <Input
         autoFocus
+        size="sm"
+        lang={lang}
         value={draft}
         aria-label={label}
         onChange={(event) => setDraft(event.target.value)}
@@ -69,7 +86,7 @@ const EditableTextCell = ({ value, onSave, label, placeholder = "—", readOnly 
             finish(false);
           }
         }}
-        className="h-8 min-w-48"
+        frameClassName="min-w-48"
       />
     );
   }
@@ -77,16 +94,14 @@ const EditableTextCell = ({ value, onSave, label, placeholder = "—", readOnly 
   return (
     <button
       type="button"
+      lang={lang}
       onClick={startEditing}
       aria-label={`Edit ${label}`}
       aria-busy={isSaving}
-      className={cn(
-        "group/edit flex w-full min-w-40 items-center justify-between gap-2 rounded-md px-2 py-1 text-left hover:bg-muted",
-        isSaving && "opacity-60",
-      )}
+      className={cn("group/edit flex w-full min-w-40 items-center justify-between gap-2 text-left text-body text-ink", TONE_CLASS[tone], isSaving && "opacity-60")}
     >
       <span className="whitespace-normal">{shown || emptyText}</span>
-      <Pencil className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/edit:opacity-100" aria-hidden="true" />
+      <Pencil className="size-3 shrink-0 text-ink-muted opacity-0 group-hover/edit:opacity-100" aria-hidden="true" />
     </button>
   );
 };

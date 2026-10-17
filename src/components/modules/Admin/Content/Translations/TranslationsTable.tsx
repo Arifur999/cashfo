@@ -19,7 +19,8 @@ interface SaveTextVariables {
   value: string;
 }
 
-// Every UI string, edited in place: click a cell, type, press Enter.
+// Every UI string, edited in place: click a cell, type, press Enter. The
+// tabs single out what is missing Bangla or changed this week.
 const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
   const { data, isLoading, isFetching } = useQuery(translationsQuery());
   const translations = useMemo(() => data?.data ?? [], [data]);
@@ -48,7 +49,7 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
       initialPageSize={25}
       isLoading={isLoading}
       isFetching={isFetching}
-      search={{ placeholder: "Search keys or text..." }}
+      search={{ placeholder: "Search a key or a word", width: "sm" }}
       filters={{ configs: filters }}
       exportFileName="translations"
       toolbarAction={
@@ -57,7 +58,8 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
           {canManage && <CreateTranslationDialog />}
         </>
       }
-      emptyMessage="No strings match these filters."
+      footer={<>Changes go live in the app within a minute. Keep placeholders like {"{{name}}"} the same in both languages.</>}
+      emptyMessage="No strings match."
     />
   );
 };

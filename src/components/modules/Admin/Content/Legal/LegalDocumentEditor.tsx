@@ -1,40 +1,43 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
+import { useState } from "react";
 import { updateLegalDocumentAction } from "@/app/(dashboardLayout)/admin/content/legal/_action";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
-import AppTextareaField from "@/components/shared/form/AppTextareaField";
-import SectionCard from "@/components/shared/SectionCard";
+import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Button } from "@/components/ui/button";
 import { useActionMutation } from "@/hooks/useActionMutation";
-import { formatDateTime } from "@/lib/date";
-import { formatNumber } from "@/lib/number";
+import { formatRelativeDateTime } from "@/lib/date";
 import { queryKeys } from "@/lib/queryKeys";
+import { cn } from "@/lib/utils";
 import type { ILegalDocument } from "@/types/legalDocument.types";
 import { type ILegalDocumentFormValues, legalDocumentFormZodSchema } from "@/zod/legalDocument.validation";
 import { LEGAL_DOC_LABELS, toLegalDocumentFormValues } from "./legalDocumentLabels";
 
 const { shape } = legalDocumentFormZodSchema;
 
-// The textarea grows with its content; a long document still starts in a
-// comfortable, scrollable editing area.
-const EDITOR_CLASS_NAME = "max-h-[60vh] min-h-72";
+type Language = "contentEn" | "contentBn";
 
-const characterCount = (text: string) => `${formatNumber(text.length)} characters`;
+const LANGUAGE_OPTIONS = [
+  { value: "contentEn" as const, label: "English" },
+  { value: "contentBn" as const, label: "বাংলা", lang: "bn" },
+];
 
 interface LegalDocumentEditorProps {
   document: ILegalDocument;
   canManage: boolean;
 }
 
-// English and Bangla side by side; every save publishes the next version.
+// One document: the live version in its head, one language at a time in
+// the editor, and the foot that publishes the next version.
 const LegalDocumentEditor = ({ document, canManage }: LegalDocumentEditorProps) => {
   const label = LEGAL_DOC_LABELS[document.type];
+  const [language, setLanguage] = useState<Language>("contentEn");
 
   const { run, isPending } = useActionMutation({
     action: (values: ILegalDocumentFormValues) => updateLegalDocumentAction(document.type, values),
-    successMessage: (saved) => `${LEGAL_DOC_LABELS[saved.type]} saved as version ${saved.version}`,
+    successMessage: (saved) => `${LEGAL_DOC_LABELS[saved.type]} published as version ${saved.version}`,
     invalidateKeys: [queryKeys.legalDocuments.all],
     refreshRoute: false,
   });
@@ -52,57 +55,54 @@ const LegalDocumentEditor = ({ document, canManage }: LegalDocumentEditorProps) 
   });
 
   return (
-    <AppForm onSubmit={form.handleSubmit}>
-      <SectionCard
-        title={label}
-        action={
-          <span className="text-xs text-muted-foreground">
-            Version {document.version} &middot; updated {formatDateTime(document.updatedAt)}
+    <AppForm onSubmit={form.handleSubmit} className="flex flex-col space-y-0 overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-title text-ink">{label}</h2>
+          <span className="text-small text-ink-muted">
+            Live version {document.version} · updated {formatRelativeDateTime(document.updatedAt).replace(/^(Today|Yesterday)/, (word) => word.toLowerCase())}
           </span>
-        }
-      >
-        <div className="grid gap-5 lg:grid-cols-2">
-          <form.Field name="contentEn" validators={{ onChange: shape.contentEn }}>
-            {(field) => (
-              <AppTextareaField
-                field={field}
-                label="English"
-                readOnly={!canManage}
-                description={characterCount(field.state.value)}
-                className={EDITOR_CLASS_NAME}
-              />
-            )}
-          </form.Field>
-          <form.Field name="contentBn" validators={{ onChange: shape.contentBn }}>
-            {(field) => (
-              <AppTextareaField
-                field={field}
-                label="Bangla"
-                className={EDITOR_CLASS_NAME}
-                readOnly={!canManage}
-                placeholder="Not translated yet -- the app shows the English text."
-                description={characterCount(field.state.value)}
-              />
-            )}
-          </form.Field>
         </div>
-
-        {canManage && (
-          <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>
-            {([isDirty, isSubmitting]) => (
-              <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
-                {isDirty && <span className="mr-auto text-xs font-medium text-amber-600 dark:text-amber-400">Unsaved changes</span>}
-                <Button type="button" variant="outline" disabled={!isDirty || isPending} onClick={() => form.reset()}>
-                  Discard
-                </Button>
-                <AppSubmitButton isPending={isPending || isSubmitting} disabled={!isDirty} pendingLabel="Saving..." className="w-auto">
-                  Save as version {document.version + 1}
-                </AppSubmitButton>
-              </div>
-            )}
-          </form.Subscribe>
-        )}
-      </SectionCard>
+        <SegmentedControl label="Language" variant="tabs" options={LANGUAGE_OPTIONS} value={language} onChange={setLanguage} />
+      </div>
+      {LANGUAGE_OPTIONS.map((option) => (
+        <form.Field key={option.value} name={option.value} validators={{ onChange: shape[option.value] }}>
+          {(field) => (
+            <textarea
+              aria-label={`${label}, ${option.label}`}
+              lang={option.lang}
+              value={field.state.value ?? ""}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.target.value)}
+              readOnly={!canManage}
+              placeholder={option.value === "contentBn" ? "Not written yet. The app shows the English text until it is." : "The document, as people read it."}
+              className={cn(
+                "min-h-90 w-full resize-y bg-transparent px-6 py-5 text-body leading-relaxed text-ink outline-none placeholder:text-ink-faint",
+                option.value !== language && "hidden",
+              )}
+            />
+          )}
+        </form.Field>
+      ))}
+      {canManage && (
+        <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting, state.values.contentBn] as const}>
+          {([isDirty, isSubmitting, contentBn]) => (
+            <div className="flex flex-wrap items-center gap-3 border-t border-line bg-cream px-5 py-3">
+              <span className={cn("text-small", contentBn.trim() ? "text-emerald" : "text-warning")}>
+                {contentBn.trim() ? "Both languages are written" : "The Bangla version is empty"}
+                {isDirty && " · unsaved changes"}
+              </span>
+              <span className="flex-1" />
+              <Button type="button" variant="outline" size="sm" className="h-9 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-surface-sunken" disabled={!isDirty || isPending} onClick={() => form.reset()}>
+                Discard
+              </Button>
+              <AppSubmitButton isPending={isPending || isSubmitting} disabled={!isDirty} pendingLabel="Publishing..." className="h-9 w-auto rounded-md bg-emerald px-4 text-small font-semibold text-white hover:bg-forest">
+                Publish as version {document.version + 1}
+              </AppSubmitButton>
+            </div>
+          )}
+        </form.Subscribe>
+      )}
     </AppForm>
   );
 };
