@@ -1,57 +1,64 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import DateCell from "@/components/shared/cell/DateCell";
-import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import { DATE_TIME_FORMAT, formatDateTime } from "@/lib/date";
-import { humanizeEnum } from "@/lib/statusBadge";
-import type { ILoginAttempt } from "@/types/loginAttempt.types";
+import { formatDateTime, formatTimeRange } from "@/lib/date";
+import { attemptOutcome, type LoginAttemptGroup } from "@/lib/loginAttempts";
+import { cn } from "@/lib/utils";
 
-export const LOGIN_ATTEMPTS_HIDDEN_COLUMNS = ["userAgent"] as const;
+const OUTCOME_TONE = { income: "text-emerald", expense: "text-expense", warning: "text-warning" } as const;
 
-const resultOf = (attempt: ILoginAttempt) => (attempt.success ? "SUCCESS" : "FAILED");
+const outcomeText = (row: LoginAttemptGroup) => {
+  const { text, note } = attemptOutcome(row);
+  return note ? `${text} (${note})` : text;
+};
 
-// "invalid_password" -> "Invalid password"
-const reasonOf = (attempt: ILoginAttempt) => (attempt.failureReason ? humanizeEnum(attempt.failureReason.toUpperCase()) : "");
-
-export const loginAttemptsColumns: ColumnDef<ILoginAttempt>[] = [
-  {
-    id: "createdAt",
-    accessorKey: "createdAt",
-    header: "Date",
-    cell: ({ row }) => <DateCell date={row.original.createdAt} formatString={DATE_TIME_FORMAT} />,
-    meta: { exportValue: (row) => formatDateTime(row.createdAt) },
-  },
+// One row per attempt, or per burst of failures by one email from one
+// network: who and on what device, from where, why it failed, and when.
+export const loginAttemptsColumns: ColumnDef<LoginAttemptGroup>[] = [
   {
     id: "email",
     accessorKey: "email",
-    header: "Email",
-    cell: ({ row }) => <span className="text-foreground">{row.original.email}</span>,
+    header: "Email and device",
+    cell: ({ row }) => (
+      <span className="flex min-w-0 flex-col gap-px">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-medium text-ink">{row.original.email}</span>
+          {row.original.attempts.length > 1 && (
+            <span className="shrink-0 rounded-full bg-expense-soft px-2 py-px text-caption font-bold text-expense">{row.original.attempts.length} tries</span>
+          )}
+        </span>
+        <span className="text-small text-ink-muted">{row.original.deviceLabel}</span>
+      </span>
+    ),
+    meta: { exportValue: (row) => `${row.email} (${row.deviceLabel})` },
   },
   {
     id: "ipAddress",
     accessorKey: "ipAddress",
-    header: "IP Address",
-    cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.original.ipAddress}</span>,
+    header: "IP address",
+    cell: ({ row }) => <code className="font-mono text-small whitespace-nowrap text-ink-2">{row.original.ipAddress}</code>,
   },
   {
-    id: "result",
-    accessorFn: resultOf,
-    header: "Result",
-    cell: ({ row }) => <StatusBadgeCell status={resultOf(row.original)} label={row.original.success ? "Succeeded" : "Failed"} />,
+    id: "outcome",
+    accessorFn: outcomeText,
+    header: "Why it failed",
+    cell: ({ row }) => {
+      const { text, note, tone } = attemptOutcome(row.original);
+      return (
+        <span className="flex flex-col gap-px">
+          <span className={cn("font-semibold", OUTCOME_TONE[tone])}>{text}</span>
+          {note && <span className="text-caption text-ink-muted">{note}</span>}
+        </span>
+      );
+    },
   },
   {
-    id: "failureReason",
-    accessorFn: reasonOf,
-    header: "Reason",
-    cell: ({ row }) => <span className="text-muted-foreground">{reasonOf(row.original) || "—"}</span>,
-  },
-  {
-    id: "userAgent",
-    accessorKey: "userAgent",
-    header: "Browser",
+    id: "when",
+    accessorKey: "lastAt",
+    header: "When",
     cell: ({ row }) => (
-      <span className="block max-w-xs truncate text-xs text-muted-foreground" title={row.original.userAgent ?? undefined}>
-        {row.original.userAgent ?? "—"}
+      <span className="block text-right text-small whitespace-nowrap text-ink-2" title={formatDateTime(row.original.lastAt)}>
+        {formatTimeRange(row.original.firstAt, row.original.lastAt)}
       </span>
     ),
+    meta: { align: "right", exportValue: (row) => formatDateTime(row.lastAt) },
   },
 ];
