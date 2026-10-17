@@ -10,13 +10,12 @@ import { toTableQueryProps } from "@/lib/table/queryProps";
 import { OPEN_TICKET_STATUSES } from "@/lib/tickets";
 import { assignableAdminsQuery, ticketsListQuery, ticketStatsQuery } from "@/queries/ticket.queries";
 import type { ISupportTicket } from "@/types/ticket.types";
-import CreateTicketDialog from "./CreateTicketDialog";
 import { ticketsColumns } from "./ticketsColumns";
 import { buildTicketsTableConfig, TICKETS_TABLE_BASE_CONFIG } from "./ticketsTable.config";
 
 const detailHref = (row: ISupportTicket) => `/admin/support/${row.id}`;
 
-const TicketsTable = ({ canManage }: { canManage: boolean }) => {
+const TicketsTable = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const admins = useQuery(assignableAdminsQuery()).data?.data;
@@ -41,7 +40,7 @@ const TicketsTable = ({ canManage }: { canManage: boolean }) => {
       onRowClick={(row) => router.push(detailHref(row))}
       // An urgent ticket still in the queue gets the red wash.
       rowClassName={(row) => (row.priority === "URGENT" && OPEN_TICKET_STATUSES.includes(row.status) ? "bg-expense-soft/50 hover:bg-expense-soft/80" : undefined)}
-      toolbarAction={canManage ? <CreateTicketDialog /> : undefined}
+
       emptyMessage="No tickets match these filters."
     />
   );

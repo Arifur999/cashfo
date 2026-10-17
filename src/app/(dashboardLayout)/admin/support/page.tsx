@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SUPPORT_PAGE } from "@/components/modules/Admin/Support/supportPage";
+import CreateTicketDialog from "@/components/modules/Admin/Support/Tickets/CreateTicketDialog";
 import SupportTabs from "@/components/modules/Admin/Support/SupportTabs";
 import TicketStats from "@/components/modules/Admin/Support/Tickets/TicketStats";
 import { TICKETS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Support/Tickets/ticketsTable.config";
@@ -20,7 +21,7 @@ const SupportPage = async ({ searchParams }: PageProps<"/admin/support">) => {
 
   return (
     <div className="space-y-4">
-      <PageHeader {...SUPPORT_PAGE} />
+      <PageHeader {...SUPPORT_PAGE} actions={canManage(admin?.role, "support") ? <CreateTicketDialog /> : undefined} />
       <QueryPrefetch
         prefetch={(client) =>
           Promise.all([
@@ -33,7 +34,7 @@ const SupportPage = async ({ searchParams }: PageProps<"/admin/support">) => {
       >
         <SupportTabs />
         <TicketStats />
-        <TicketsTable canManage={canManage(admin?.role, "support")} />
+        <TicketsTable />
       </QueryPrefetch>
     </div>
   );
