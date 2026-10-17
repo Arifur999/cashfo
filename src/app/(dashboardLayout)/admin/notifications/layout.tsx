@@ -1,16 +1,19 @@
+import NotificationsHeaderAction from "@/components/modules/Admin/Notifications/NotificationsHeaderAction";
+import { NOTIFICATIONS_PAGE } from "@/components/modules/Admin/Notifications/notificationsPage";
 import NotificationTabs from "@/components/modules/Admin/Notifications/NotificationTabs";
 import Callout from "@/components/shared/Callout";
 import PageHeader from "@/components/shared/PageHeader";
 
+// Shared by every notifications tab, so switching tabs keeps the header
+// and tab bar in place and only the panel below loads.
 const NotificationsLayout = ({ children }: LayoutProps<"/admin/notifications">) => {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Notifications" description="Templates, send history and bulk campaigns." />
-      <Callout variant="warning">
-        Delivery isn&apos;t wired up yet: no email, SMS or push provider is connected, so templates and campaigns are saved but nothing is
-        sent to users.
-      </Callout>
+    <div className="space-y-4">
+      <PageHeader {...NOTIFICATIONS_PAGE} actions={<NotificationsHeaderAction />} />
       <NotificationTabs />
+      <Callout variant="warning" role="status">
+        No email, SMS or push provider is connected yet, so templates and campaigns are saved here but nothing goes out to users.
+      </Callout>
       {children}
     </div>
   );

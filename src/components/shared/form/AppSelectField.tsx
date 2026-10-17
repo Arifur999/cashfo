@@ -7,12 +7,12 @@ import FormFieldShell from "./FormFieldShell";
 
 export interface SelectOption {
   value: string;
-  label: string;
+  label: React.ReactNode;
 }
 
 interface AppSelectFieldProps {
   field: AnyFieldApi;
-  label: string;
+  label: React.ReactNode;
   options: readonly SelectOption[];
   placeholder?: string;
   description?: React.ReactNode;

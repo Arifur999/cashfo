@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractPlaceholders, findUnknownPlaceholders, getPlaceholderError } from "./templatePlaceholders";
+import { extractPlaceholders, fillPlaceholders, findUnknownPlaceholders, getPlaceholderError } from "./templatePlaceholders";
 
 describe("extractPlaceholders", () => {
   it("finds each placeholder once, tolerating inner spaces", () => {
@@ -24,5 +24,13 @@ describe("getPlaceholderError", () => {
 
   it("names the offending placeholders", () => {
     expect(getPlaceholderError("{{foo}} and {{bar}}", [])).toBe("Not a variable of this template: {{foo}}, {{bar}}");
+  });
+});
+
+describe("fillPlaceholders", () => {
+  it("swaps each placeholder for its sample and leaves unknown ones alone", () => {
+    expect(fillPlaceholders("Hi {{userName}}, {{planName}} ends on {{expiryDate}}", { userName: "Sharmin", planName: "Monthly Pro" })).toBe(
+      "Hi Sharmin, Monthly Pro ends on {{expiryDate}}",
+    );
   });
 });

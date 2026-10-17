@@ -3,11 +3,11 @@ import TabsNav from "@/components/shared/TabsNav";
 const NotificationTabs = () => {
   return (
     <TabsNav
-      label="Notification sections"
+      label="Notifications"
       tabs={[
         { label: "Templates", href: "/admin/notifications", exact: true },
-        { label: "Send History", href: "/admin/notifications/history" },
         { label: "Campaigns", href: "/admin/notifications/campaigns" },
+        { label: "Send history", href: "/admin/notifications/history" },
       ]}
     />
   );
