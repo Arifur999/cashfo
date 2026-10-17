@@ -106,37 +106,8 @@ export function SectionLink({ href, children }: { href: string; children: React.
   );
 }
 
-export interface Bar {
-  label: string;
-  value: number;
-  // Printed above the bar; nothing when left out.
-  short?: string;
-  highlight?: boolean;
-}
-
-// A row of bars, the tallest filling the height.
-export function MiniBars({ bars, height = 150, label }: { bars: Bar[]; height?: number; label: string }) {
-  const max = Math.max(0, ...bars.map((bar) => bar.value));
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div role="img" aria-label={label} className="flex items-end gap-4 border-b border-line px-2" style={{ height }}>
-        {bars.map((bar) => (
-          <span key={bar.label} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-            {bar.short && <span className="text-caption font-semibold whitespace-nowrap text-ink-2 tabular-nums">{bar.short}</span>}
-            <span className={cn("w-full max-w-11.5 rounded-t-[5px]", bar.highlight ? "bg-forest dark:bg-emerald" : "bg-mint-300")} style={{ height: max > 0 ? `${Math.max(2, Math.round((bar.value / max) * (height - (bar.short ? 32 : 8))))}px` : "2px" }} />
-          </span>
-        ))}
-      </div>
-      <div className="flex gap-4 px-2">
-        {bars.map((bar) => (
-          <span key={bar.label} className={cn("flex-1 text-center text-caption", bar.highlight ? "font-semibold text-ink" : "text-ink-muted")}>
-            {bar.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
+// The bar chart is shared with the Revenue page.
+export { default as MiniBars, type Bar } from "@/components/shared/MiniBars";
 
 // A note where a section would be, when the role can't read it or the
 // call failed.

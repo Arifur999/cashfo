@@ -68,6 +68,10 @@ export const dateTimeInputToIso = (value: string): string => {
 };
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// "2026-10" -> "October": the month's full name for a sentence.
+export const formatMonthName = (key: string): string => MONTH_NAMES[Number(key.split("-")[1]) - 1] ?? key;
 
 // "2026-10" -> "Oct 2026" (or "Oct" with withYear = false). Month keys are
 // already calendar months, so no timezone conversion applies.
@@ -99,4 +103,22 @@ export const formatRelativeDay = (value: DateInput, now: Date = new Date(), fall
     return "Yesterday";
   }
   return formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy");
+};
+
+// "Today, 2:10 pm", "Yesterday, 6:55 pm", "1 Oct, 8:12 pm" (this year) or
+// "27 Sep 2025, 1:03 pm": when something happened, to the minute.
+export const formatRelativeDateTime = (value: DateInput, now: Date = new Date(), fallback = "—"): string => {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+  const day = toDateInputValue(value);
+  if (!day) {
+    return fallback;
+  }
+  const today = toDateInputValue(now);
+  const yesterday = toDateInputValue(new Date(new Date(`${today}T12:00:00Z`).getTime() - 86_400_000));
+  const time = formatDate(value, "h:mm aaa");
+  if (day === today) return `Today, ${time}`;
+  if (day === yesterday) return `Yesterday, ${time}`;
+  return `${formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy")}, ${time}`;
 };

@@ -19,6 +19,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     isLoading = false,
     isFetching = false,
     onRowClick,
+    rowClassName,
     title,
     toolbarAction,
     footer,
@@ -53,6 +54,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         canReset={canReset}
         onReset={reset}
         onRowClick={onRowClick}
+        rowClassName={rowClassName}
       />
       {totalRows > 0 && <DataTablePagination table={table} totalRows={totalRows} />}
       {footer && <div className="flex items-center gap-2 border-t border-line px-5 py-3 text-small text-ink-2">{footer}</div>}

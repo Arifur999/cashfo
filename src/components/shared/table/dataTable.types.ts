@@ -105,6 +105,9 @@ export interface DataTableProps<TData> {
   isLoading?: boolean;
   isFetching?: boolean;
   onRowClick?: (row: TData) => void;
+  // Extra classes for a row that needs singling out (a payment that looks
+  // like a double charge gets an amber wash).
+  rowClassName?: (row: TData) => string | undefined;
   enableRowSelection?: boolean;
   bulkActions?: DataTableBulkAction<TData>[];
   // Enables the CSV export button; the file is named after it.
