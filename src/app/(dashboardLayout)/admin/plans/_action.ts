@@ -13,5 +13,9 @@ export const updatePlanAction = async (id: string, values: unknown) =>
 export const archivePlanAction = async (id: string) =>
   requireId(id, "plan") ?? runAction("Failed to archive plan", () => archivePlan(id));
 
+// Puts an archived plan back on sale (the opposite of archive).
+export const putPlanOnSaleAction = async (id: string) =>
+  requireId(id, "plan") ?? runAction("Failed to put the plan on sale", () => updatePlan(id, { isActive: true }));
+
 // The API refuses while any user is still on the plan.
 export const deletePlanAction = async (id: string) => requireId(id, "plan") ?? runAction("Failed to delete plan", () => deletePlan(id));

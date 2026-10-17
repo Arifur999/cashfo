@@ -6,18 +6,17 @@ type BooleanLimitKey = {
 
 type NumericLimitKey = Exclude<keyof IFeatureLimits, BooleanLimitKey>;
 
-// One list of plan features, shared by the plan form and the plan card.
-export const PLAN_FEATURE_TOGGLES: { key: BooleanLimitKey; label: string }[] = [
-  { key: "advancedReports", label: "Advanced reports" },
-  { key: "pdfExport", label: "PDF export" },
-  { key: "multiUser", label: "Multi-user" },
-  { key: "incomeGoalTracking", label: "Income goal tracking" },
+// One list of plan features, shared by the plan form and the plan card,
+// worded as the design words them.
+export const PLAN_FEATURE_TOGGLES: { key: BooleanLimitKey; label: string; hint: string }[] = [
+  { key: "advancedReports", label: "Advanced reports", hint: "Yearly view, category trends" },
+  { key: "pdfExport", label: "PDF export", hint: "Download reports as PDF" },
+  { key: "multiUser", label: "More than one user", hint: "Share a workspace with family or staff" },
+  { key: "incomeGoalTracking", label: "Income goals", hint: "Set and track income targets" },
 ];
 
-export const PLAN_NUMERIC_LIMITS: { key: NumericLimitKey; label: string; hint?: string }[] = [
+export const PLAN_NUMERIC_LIMITS: { key: NumericLimitKey; label: string }[] = [
   { key: "maxWorkspaces", label: "Workspaces" },
-  { key: "maxBusinessWorkspaces", label: "Business workspaces", hint: "-1 = unlimited" },
-  { key: "maxTransactionsPerMonth", label: "Transactions / month", hint: "-1 = unlimited" },
+  { key: "maxBusinessWorkspaces", label: "Business workspaces" },
+  { key: "maxTransactionsPerMonth", label: "Transactions a month" },
 ];
-
-export const formatLimit = (value: number) => (value === -1 ? "Unlimited" : String(value));

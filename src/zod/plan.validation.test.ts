@@ -39,9 +39,11 @@ describe("planServerZodSchema", () => {
     expect(planServerZodSchema.safeParse({ ...validPayload, featureLimits }).success).toBe(true);
   });
 
-  it("rejects -1 for the plain workspace limit", () => {
-    const featureLimits = { ...validPayload.featureLimits, maxWorkspaces: "-1" };
-    expect(planServerZodSchema.safeParse({ ...validPayload, featureLimits }).success).toBe(false);
+  it("accepts -1 (no limit) for every count, but nothing lower", () => {
+    const unlimited = { ...validPayload.featureLimits, maxWorkspaces: "-1" };
+    expect(planServerZodSchema.safeParse({ ...validPayload, featureLimits: unlimited }).success).toBe(true);
+    const nonsense = { ...validPayload.featureLimits, maxWorkspaces: "-2" };
+    expect(planServerZodSchema.safeParse({ ...validPayload, featureLimits: nonsense }).success).toBe(false);
   });
 
   it("rejects a slug with uppercase letters or spaces", () => {
