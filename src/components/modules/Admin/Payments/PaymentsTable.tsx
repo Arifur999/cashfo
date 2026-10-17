@@ -4,7 +4,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { retryPaymentAction } from "@/app/(dashboardLayout)/admin/payments/_action";
-import type { DataTableActions } from "@/components/shared/table/dataTable.types";
+import type { DataTableActions, DataTableSimplePager } from "@/components/shared/table/dataTable.types";
+import ShowingRange from "@/components/shared/table/ShowingRange";
 import DataTable from "@/components/shared/table/DataTable";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
@@ -18,6 +19,17 @@ import { paymentsColumns } from "./paymentsColumns";
 import { buildPaymentsTableConfig, PAYMENTS_TABLE_BASE_CONFIG } from "./paymentsTable.config";
 
 const detailHref = (row: IPayment) => `/admin/payments/${row.id}`;
+
+// "Showing 1–10 of 1,912 payments", then Previous and Next.
+const PAGER: DataTableSimplePager = {
+  previous: "Previous",
+  next: "Next",
+  summary: (total, { first, last }) => (
+    <ShowingRange first={first} last={last} total={total}>
+      {"Showing {range} of {total} payments"}
+    </ShowingRange>
+  ),
+};
 
 // Retry is for finance roles; a failed payment goes back to Pending so it
 // can be collected again (no gateway is charged from here).
@@ -43,6 +55,7 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
   const actions = useMemo<DataTableActions<IPayment>>(
     () => ({
       display: "inline",
+      heading: false,
       extra: [{ label: "Retry", onClick: (row) => void retry.run(row.id), hidden: (row) => !canRetry || row.status !== "FAILED" }],
     }),
     [canRetry, retry],
@@ -54,13 +67,14 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
       {...toTableQueryProps(query)}
       data={query.data?.data}
       columns={paymentsColumns}
+      layout={{ rowHeight: 54, actionsWidth: 70 }}
       getRowId={(row) => row.id}
       exportFileName="payments"
-      enableRowSelection
       actions={actions}
+      pager={PAGER}
       onRowClick={(row) => router.push(detailHref(row))}
       // A payment that looks like a double charge gets the amber wash.
-      rowClassName={(row) => (row.duplicateOfId ? "bg-warning-soft/60 hover:bg-warning-soft" : undefined)}
+      rowClassName={(row) => (row.duplicateOfId ? "bg-warning-soft hover:bg-warning-soft" : undefined)}
       emptyMessage="No payments match these filters."
     />
   );

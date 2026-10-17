@@ -61,6 +61,9 @@ export interface DataTableActions<TData> {
   display?: "menu" | "inline" | "split";
   // What the View button says when drawn inline ("Who used it").
   viewLabel?: string;
+  // false leaves the inline buttons' column without a heading, as the
+  // design's Payments list draws its Retry column.
+  heading?: boolean;
   onView?: (row: TData) => void;
   onEdit?: (row: TData) => void;
   onDelete?: (row: TData) => void;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCurrency } from "./currency";
+import { formatAmount, formatCurrency } from "./currency";
 
 const NBSP = " ";
 
@@ -21,5 +21,20 @@ describe("formatCurrency", () => {
 
   it("keeps the international form for other currencies", () => {
     expect(formatCurrency(5, "USD")).toBe("$5.00");
+  });
+});
+
+describe("formatAmount", () => {
+  it("leaves the paisa off a whole amount", () => {
+    expect(formatAmount(299)).toBe(`৳${NBSP}299`);
+    expect(formatAmount("1500.00")).toBe(`৳${NBSP}1,500`);
+  });
+
+  it("keeps both paisa digits when there are some", () => {
+    expect(formatAmount(2699.1)).toBe(`৳${NBSP}2,699.10`);
+  });
+
+  it("treats what is not a number as zero", () => {
+    expect(formatAmount(null)).toBe(`৳${NBSP}0`);
   });
 });

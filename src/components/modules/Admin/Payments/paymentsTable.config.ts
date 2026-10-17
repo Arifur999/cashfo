@@ -6,7 +6,7 @@ import type { IPlanOption } from "@/types/plan.types";
 
 // What the page needs to build the identical query string on the server.
 export const PAYMENTS_TABLE_BASE_CONFIG = {
-  queryKeys: ["search", "status", "gateway", "planId", "dateFrom", "dateTo"],
+  queryKeys: ["search", "status", "gateway", "planId"],
   defaultLimit: 10,
 } as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaultLimit">;
 
@@ -21,9 +21,8 @@ export const buildPaymentsTableConfig = (plans: IPlanOption[], statusCounts?: Re
   search: { placeholder: "Payment ID, name or bKash ref", width: "sm" },
   filters: [
     { id: "status", type: "tabs", label: "Status", options: STATUS_TABS.map((value) => ({ value, label: PAYMENT_STATUS_LABEL[value], count: statusCounts?.[value] })) },
-    { id: "gateway", type: "single-select", label: "Gateway", options: enumOptions(PAYMENT_GATEWAYS) },
-    { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name })) },
-    { id: "createdAt", type: "date-range", label: "Date" },
+    { id: "gateway", type: "single-select", label: "Gateway", options: enumOptions(PAYMENT_GATEWAYS), align: "end" },
+    { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name })), align: "end" },
   ],
 });
 
