@@ -1,17 +1,11 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import type { DataTableFilterConfig } from "@/components/shared/table/dataTable.types";
 import Localized from "@/components/shared/Localized";
 import { formatNumber } from "@/lib/number";
 import { COUPON_STATUS_LABEL, discountText, usesCap, validityText, worksOn } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
-import { COUPON_STATUSES, type ICoupon } from "@/types/coupon.types";
+import type { ICoupon } from "@/types/coupon.types";
 import T from "@/components/shared/T";
-
-// In-memory filters: `id` is the column to facet on.
-export const COUPON_FILTERS: DataTableFilterConfig[] = [
-  { id: "status", type: "multi-select", label: "Status", options: COUPON_STATUSES.map((value) => ({ value, label: COUPON_STATUS_LABEL[value] })) },
-];
 
 // The design's coupons list: the code as a dashed tag, what it takes off,
 // which plans, how used up it is, when it runs, and its status. Built per

@@ -13,7 +13,6 @@ import { queryKeys } from "@/lib/queryKeys";
 import { campaignsQuery } from "@/queries/notification.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import type { ICampaign } from "@/types/notification.types";
-import { CAMPAIGN_FILTERS } from "./campaignOptions";
 import { buildCampaignsColumns } from "./campaignsColumns";
 import SendSummaryCard from "./SendSummaryCard";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -55,8 +54,8 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}
-        search={{ placeholder: "Search campaigns", width: "sm" }}
-        filters={{ configs: CAMPAIGN_FILTERS }}
+        // A short list: the board draws it without search or filters.
+        hideToolbar
         actions={actions}
         emptyMessage="No campaigns yet."
       />

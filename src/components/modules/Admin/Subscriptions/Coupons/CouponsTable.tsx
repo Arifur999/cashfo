@@ -17,7 +17,7 @@ import type { ICoupon } from "@/types/coupon.types";
 import { toCouponFormValues } from "./couponForm.defaults";
 import CouponForm from "./CouponForm";
 import CouponRedemptionsDialog from "./CouponRedemptionsDialog";
-import { buildCouponsColumns, COUPON_FILTERS } from "./couponsColumns";
+import { buildCouponsColumns } from "./couponsColumns";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Coupons are a short list, so the table sorts, filters and pages in memory.
@@ -67,8 +67,8 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}
-        search={{ placeholder: "Search by code" }}
-        filters={{ configs: COUPON_FILTERS }}
+        // A short list: the board draws it without search or filters.
+        hideToolbar
         actions={actions}
         emptyMessage="No coupons yet."
       />

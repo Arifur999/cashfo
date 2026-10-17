@@ -100,7 +100,6 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "{count} time": "{count} বার",
   "{count} times": "{count} বার",
   "No coupon has been used yet": "এখনো কোনো কুপন ব্যবহার হয়নি",
-  "Search by code": "কোড দিয়ে খুঁজুন",
   "No coupons yet.": "এখনো কোনো কুপন নেই।",
   Code: "কোড",
   Discount: "ছাড়",

@@ -14,7 +14,6 @@ import { plansQuery } from "@/queries/plan.queries";
 import type { IAnnouncement } from "@/types/announcement.types";
 import { toAnnouncementFormValues } from "./announcementForm.defaults";
 import AnnouncementForm from "./AnnouncementForm";
-import { ANNOUNCEMENT_FILTERS } from "./announcementOptions";
 import { buildAnnouncementsColumns } from "./announcementsColumns";
 import LiveAnnouncementsCard from "./LiveAnnouncementsCard";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -60,8 +59,8 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}
-        search={{ placeholder: "Search announcements", width: "sm" }}
-        filters={{ configs: ANNOUNCEMENT_FILTERS }}
+        // A short list: the board draws it without search or filters.
+        hideToolbar
         actions={actions}
         emptyMessage="No announcements yet."
       />
