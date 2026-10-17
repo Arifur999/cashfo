@@ -1,6 +1,5 @@
 "use client";
 
-import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import FormDialog from "@/components/shared/dialog/FormDialog";
 import TemporaryPasswordDialog from "@/components/shared/dialog/TemporaryPasswordDialog";
@@ -19,12 +18,12 @@ const CreateAdminDialog = () => {
       <FormDialog
         open={open}
         onOpenChange={setOpen}
-        title="New admin"
-        description="A panel account with one role. They get a temporary password to sign in with."
+        title="Add an admin"
+        description="A panel account with one role. They get a temporary password to sign in with, shown to you once."
         size="sm"
         trigger={
-          <Button size="sm" className="h-8">
-            <UserPlus aria-hidden="true" /> New admin
+          <Button size="lg" className="font-semibold shadow-button">
+            Add an admin
           </Button>
         }
       >

@@ -7,6 +7,7 @@ import {
   getLoginAttempts,
   getLoginAttemptsSummary,
   getSecurityFlags,
+  getSecurityFlagsSummary,
 } from "@/services/security.services";
 
 export const auditLogsListQuery = (queryString: string) =>
@@ -38,6 +39,13 @@ export const securityFlagsQuery = () =>
   queryOptions({
     queryKey: queryKeys.securityFlags.list(),
     queryFn: () => getSecurityFlags(),
+  });
+
+// Under securityFlags.all, so a review or a check refreshes the tab count.
+export const securityFlagsSummaryQuery = () =>
+  queryOptions({
+    queryKey: [...queryKeys.securityFlags.all, "summary"] as const,
+    queryFn: () => getSecurityFlagsSummary(),
   });
 
 export const adminAccountsQuery = () =>

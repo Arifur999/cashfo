@@ -28,9 +28,17 @@ export interface ISecurityFlag {
   reviewer: { id: string; name: string } | null;
 }
 
-// What a manual detection run found.
+// What a manual check found; it is also what "Last checked" shows next.
 export interface IDetectionRunResult {
   scanned: number;
   ipsOverThreshold: number;
   flagsCreated: number;
+  checkedAt: string;
+}
+
+// The count on the "Suspicious activity" tab (open or being reviewed) and
+// when the last check ran.
+export interface ISecurityFlagsSummary {
+  needsLook: number;
+  lastCheckedAt: string | null;
 }
