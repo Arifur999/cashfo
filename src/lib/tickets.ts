@@ -10,18 +10,26 @@ export const TICKET_STATUS_LABEL: Record<TicketStatus, string> = {
   CLOSED: "Closed",
 };
 
-// The status tabs say what the queue needs from an admin.
-export const TICKET_TAB_LABEL: Record<TicketStatus, string> = {
-  ...TICKET_STATUS_LABEL,
-  OPEN: "Need a reply",
-};
-
 // Tickets still in the queue, in the order the tabs show them.
 export const OPEN_TICKET_STATUSES: TicketStatus[] = ["OPEN", "IN_PROGRESS", "WAITING_ON_USER"];
 
-// How many tickets are still in the queue, from the stats' count per status.
-export const openTicketCount = (statusCounts: Partial<Record<TicketStatus, number>>) =>
-  OPEN_TICKET_STATUSES.reduce((sum, status) => sum + (statusCounts[status] ?? 0), 0);
+// The inbox's tabs as the board names them: everything still in the queue
+// first (the API's IN_QUEUE), each step of it, then what is done, resolved
+// or closed (DONE).
+export const TICKET_TABS: { value: string; label: string; statuses: TicketStatus[] }[] = [
+  { value: "IN_QUEUE", label: "All open", statuses: OPEN_TICKET_STATUSES },
+  { value: "OPEN", label: "Need a reply", statuses: ["OPEN"] },
+  { value: "IN_PROGRESS", label: "In progress", statuses: ["IN_PROGRESS"] },
+  { value: "WAITING_ON_USER", label: "Waiting on user", statuses: ["WAITING_ON_USER"] },
+  { value: "DONE", label: "Resolved", statuses: ["RESOLVED", "CLOSED"] },
+];
+
+// How many tickets the given statuses hold, from the stats' count per status.
+export const ticketCount = (statusCounts: Partial<Record<TicketStatus, number>>, statuses: TicketStatus[]) =>
+  statuses.reduce((sum, status) => sum + (statusCounts[status] ?? 0), 0);
+
+// How many tickets are still in the queue.
+export const openTicketCount = (statusCounts: Partial<Record<TicketStatus, number>>) => ticketCount(statusCounts, OPEN_TICKET_STATUSES);
 
 // "#3F2A1": the first part of the id, which is what people quote.
 export const shortTicketId = (id: string) => `#${id.slice(0, 5).toUpperCase()}`;

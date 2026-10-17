@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { awaitingReply, earlierTicketsText, hoursText, isLate, openTicketCount, shortTicketId } from "./tickets";
+import { awaitingReply, earlierTicketsText, hoursText, isLate, openTicketCount, shortTicketId, TICKET_TABS, ticketCount } from "./tickets";
 
 describe("ticket words", () => {
   it("shows the first part of the id with a hash", () => {
@@ -37,5 +37,19 @@ describe("openTicketCount", () => {
 
   it("counts a status the stats leave out as none", () => {
     expect(openTicketCount({ OPEN: 2 })).toBe(2);
+  });
+});
+
+describe("TICKET_TABS", () => {
+  const counts = { OPEN: 8, IN_PROGRESS: 6, WAITING_ON_USER: 4, RESOLVED: 20, CLOSED: 3 } as const;
+
+  it("counts each tab from the stats, all open first and resolved with closed last", () => {
+    expect(TICKET_TABS.map((tab) => [tab.label, ticketCount(counts, tab.statuses)])).toEqual([
+      ["All open", 18],
+      ["Need a reply", 8],
+      ["In progress", 6],
+      ["Waiting on user", 4],
+      ["Resolved", 23],
+    ]);
   });
 });
