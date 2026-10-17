@@ -13,11 +13,14 @@ import { formatCurrency } from "@/lib/currency";
 import { queryKeys } from "@/lib/queryKeys";
 import { type IReferralRewardFormValues, referralRewardFormZodSchema as schema } from "@/zod/settings.validation";
 import SettingsSideCard, { SIDE_CARD_LINK } from "./SettingsSideCard";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const RewardForm = ({ amount, onDone }: { amount: number; onDone: () => void }) => {
+  const { translate } = useLocale();
   const { run, isPending } = useActionMutation({
     action: updateSettingsAction,
-    successMessage: (updated) => `Referrers now earn ${formatCurrency(updated.referralRewardAmount, undefined, 0)}`,
+    successMessage: (updated) => translate("Referrers now earn {amount}", { amount: formatCurrency(updated.referralRewardAmount, undefined, 0) }),
     invalidateKeys: [queryKeys.settings.all],
     refreshRoute: false,
   });
@@ -66,7 +69,7 @@ const ReferralRulesCard = ({ amount, canManage }: { amount: number; canManage: b
             size="sm"
             trigger={
               <button type="button" className={SIDE_CARD_LINK}>
-                Change the reward <ArrowRight aria-hidden="true" className="size-3.5" />
+                <T>Change the reward</T> <ArrowRight aria-hidden="true" className="size-3.5" />
               </button>
             }
           >
@@ -75,7 +78,7 @@ const ReferralRulesCard = ({ amount, canManage }: { amount: number; canManage: b
         )
       }
     >
-      Referrers earn <b className="font-semibold text-ink">{formatCurrency(amount, undefined, 0)}</b> for each friend who signs up with their link.
+      <T values={{ amount: <b className="font-semibold text-ink">{formatCurrency(amount, undefined, 0)}</b> }}>{"Referrers earn {amount} for each friend who signs up with their link."}</T>
     </SettingsSideCard>
   );
 };

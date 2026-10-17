@@ -7,30 +7,34 @@ import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import Card from "@/components/smartly/Card";
 import { Button } from "@/components/ui/button";
 import { formatDayName } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { Translate } from "@/lib/i18n/message";
 import type { IPlatformSettings } from "@/types/settings.types";
 import { generalSettingsFormZodSchema as schema } from "@/zod/settings.validation";
 import { CURRENCY_OPTIONS, TIME_ZONE_OPTIONS, withCurrent } from "./settingsOptions";
 import { useSettingsForm } from "./useSettingsForm";
+import T from "@/components/shared/T";
 
 // "Last changed by Nadia Rahman on 14 Sep."
-const lastChangeText = (settings: IPlatformSettings) => {
+const lastChangeText = (settings: IPlatformSettings, t: Translate) => {
   const change = settings.lastChange;
-  if (!change) return "Not changed yet.";
+  if (!change) return t("Not changed yet.");
   const day = formatDayName(change.at);
-  const when = day === "Today" || day === "Yesterday" ? day.toLowerCase() : `on ${day}`;
-  return change.by ? `Last changed by ${change.by} ${when}.` : `Last changed ${when}.`;
+  const when = day === "Today" || day === "Yesterday" ? t(day.toLowerCase()) : t("on {day}", { day });
+  return change.by ? t("Last changed by {name} {when}.", { name: change.by, when }) : t("Last changed {when}.", { when });
 };
 
 // The design's General card: name, support email, default currency and
 // time zone, with the save bar at its foot. Other roles see it locked.
 const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSettings; canManage: boolean }) => {
   const { form, isPending } = useSettingsForm(settings);
+  const { translate } = useLocale();
   const disabled = !canManage;
 
   return (
     <Card padding="none" className="overflow-hidden">
       <AppForm onSubmit={form.handleSubmit} className="space-y-0">
-        <h2 className="px-5 pt-4 pb-1 text-title text-ink">General</h2>
+        <h2 className="px-5 pt-4 pb-1 text-title text-ink"><T>General</T></h2>
         <div className="grid gap-4 px-5 pt-4 pb-5 sm:grid-cols-2">
           <form.Field name="platformName" validators={{ onChange: schema.shape.platformName }}>
             {(field) => <AppField field={field} label="Platform name" disabled={disabled} description="Shown in emails and the browser tab" />}
@@ -63,7 +67,7 @@ const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSetti
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-cream px-5 py-3">
           <span className="text-small text-ink-muted">
-            {lastChangeText(settings)} {canManage ? "Every save goes to the audit log." : "Only super admins can change these."}
+            {lastChangeText(settings, translate)} <T>{canManage ? "Every save goes to the audit log." : "Only super admins can change these."}</T>
           </span>
           {canManage && (
             <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>
@@ -76,10 +80,10 @@ const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSetti
                     className="h-9.5 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken"
                     onClick={() => form.reset()}
                   >
-                    Discard
+                    <T>Discard</T>
                   </Button>
                   <AppSubmitButton isPending={isPending || isSubmitting} disabled={!isDirty} pendingLabel="Saving..." variant="action" size="md" className="h-9.5 w-auto">
-                    Save changes
+                    <T>Save changes</T>
                   </AppSubmitButton>
                 </span>
               )}

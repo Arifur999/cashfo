@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import Card from "@/components/smartly/Card";
+import T from "@/components/shared/T";
 import { cn } from "@/lib/utils";
 
 const TONES = {
@@ -25,7 +26,9 @@ const SettingsSideCard = ({ icon: Icon, tone, title, children, action }: Setting
       <span className={cn("flex size-8.5 shrink-0 items-center justify-center rounded-md", TONES[tone])}>
         <Icon aria-hidden="true" className="size-4.5" />
       </span>
-      <h2 className="text-title text-ink">{title}</h2>
+      <h2 className="text-title text-ink">
+        <T>{title}</T>
+      </h2>
     </div>
     <div className="text-small leading-normal text-ink-2">{children}</div>
     {action}
