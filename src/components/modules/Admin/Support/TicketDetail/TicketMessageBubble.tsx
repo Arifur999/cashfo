@@ -1,10 +1,11 @@
 import { Paperclip } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { formatRelativeDateTime } from "@/lib/date";
 import { getInitials } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { isHttpUrl } from "@/lib/validators";
 import type { ITicketMessage } from "@/types/ticket.types";
+import T from "@/components/shared/T";
+import RelativeTime from "@/components/shared/RelativeTime";
 
 // A reply still on its way to the server is shown optimistically.
 export type ThreadMessage = ITicketMessage & { isPending?: boolean };
@@ -26,7 +27,13 @@ const TicketMessageBubble = ({ message, senderName }: TicketMessageBubbleProps) 
       </Avatar>
       <div className={cn("flex max-w-[76%] min-w-0 flex-col gap-1", fromStaff ? "items-end" : "items-start")}>
         <span className="text-caption text-ink-muted">
-          <b className="font-semibold text-ink">{senderName}</b> · {message.isPending ? "Sending..." : <time dateTime={message.createdAt}>{formatRelativeDateTime(message.createdAt)}</time>}
+          <b className="font-semibold text-ink">{senderName}</b> · {message.isPending ? (
+            <T>Sending...</T>
+          ) : (
+            <time dateTime={message.createdAt}>
+              <RelativeTime value={message.createdAt} />
+            </time>
+          )}
         </span>
         <div
           className={cn(
@@ -44,7 +51,7 @@ const TicketMessageBubble = ({ message, senderName }: TicketMessageBubbleProps) 
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-md border border-line bg-surface px-3 py-2 text-small text-ink-2 hover:text-ink"
           >
-            <Paperclip className="size-3.5" aria-hidden="true" /> Attachment
+            <Paperclip className="size-3.5" aria-hidden="true" /> <T>Attachment</T>
           </a>
         )}
       </div>

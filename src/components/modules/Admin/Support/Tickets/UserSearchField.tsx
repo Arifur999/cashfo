@@ -14,6 +14,8 @@ import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { cn } from "@/lib/utils";
 import { platformUserSearchQuery, USER_SEARCH_MIN_LENGTH } from "@/queries/ticket.queries";
 import type { IUserSearchResult } from "@/types/ticket.types";
+import T from "@/components/shared/T";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const SearchHint = ({ children }: { children: React.ReactNode }) => (
   <div className="flex justify-center py-6 text-center text-sm text-muted-foreground">{children}</div>
@@ -34,6 +36,7 @@ const UserSearchField = ({ field, label, description }: UserSearchFieldProps) =>
   const [input, setInput] = useState("");
   const [term, setTerm] = useState("");
   const [selected, setSelected] = useState<IUserSearchResult | null>(null);
+  const { translate } = useLocale();
   const applyTerm = useDebouncedCallback((value: string) => setTerm(value.trim()), 300);
 
   const { data, isFetching, isError } = useQuery({ ...platformUserSearchQuery(term), placeholderData: keepPreviousData });
@@ -47,8 +50,8 @@ const UserSearchField = ({ field, label, description }: UserSearchFieldProps) =>
   };
 
   const renderStatus = () => {
-    if (!canSearch) return <SearchHint>Type at least {USER_SEARCH_MIN_LENGTH} characters of a name or email.</SearchHint>;
-    if (isError) return <SearchHint>Couldn&apos;t search users. Try again.</SearchHint>;
+    if (!canSearch) return <SearchHint>{translate("Type at least {count} characters of a name or email.", { count: USER_SEARCH_MIN_LENGTH })}</SearchHint>;
+    if (isError) return <SearchHint><T>Couldn&apos;t search users. Try again.</T></SearchHint>;
     if (users.length > 0) return null;
     if (isFetching) {
       return (
@@ -57,7 +60,7 @@ const UserSearchField = ({ field, label, description }: UserSearchFieldProps) =>
         </SearchHint>
       );
     }
-    return <SearchHint>No users match &ldquo;{term}&rdquo;.</SearchHint>;
+    return <SearchHint>{translate("No users match “{term}”.", { term })}</SearchHint>;
   };
 
   return (
@@ -87,7 +90,7 @@ const UserSearchField = ({ field, label, description }: UserSearchFieldProps) =>
                   <span className="truncate text-xs text-muted-foreground">{selected.email}</span>
                 </span>
               ) : (
-                <span className="text-muted-foreground">Search by name or email...</span>
+                <span className="text-muted-foreground"><T>Search by name or email...</T></span>
               )}
               <ChevronsUpDown className="opacity-50" aria-hidden="true" />
             </Button>
@@ -100,7 +103,7 @@ const UserSearchField = ({ field, label, description }: UserSearchFieldProps) =>
                   setInput(value);
                   applyTerm.run(value);
                 }}
-                placeholder="Name or email..."
+                placeholder={translate("Name or email...")}
               />
               <CommandList>
                 {renderStatus()}

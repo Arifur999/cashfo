@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateFeatureRequestStatusAction } from "@/app/(dashboardLayout)/admin/feature-requests/_action";
 import { useActionMutation } from "@/hooks/useActionMutation";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,7 @@ import { featureRequestsQuery } from "@/queries/featureRequest.queries";
 import type { FeatureRequestStatus, IFeatureRequest } from "@/types/featureRequest.types";
 import FeatureRequestCard from "./FeatureRequestCard";
 import { DECLINED_COLUMN, FEATURE_REQUEST_COLUMNS, FEATURE_REQUEST_STATUS_LABEL } from "./featureRequestOptions";
+import T from "@/components/shared/T";
 
 type Move = { id: string; status: FeatureRequestStatus };
 
@@ -26,10 +28,11 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
   const [showDeclined, setShowDeclined] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<FeatureRequestStatus | null>(null);
+  const { translate } = useLocale();
 
   const update = useActionMutation({
     action: (move: Move) => updateFeatureRequestStatusAction(move.id, { status: move.status }),
-    successMessage: (updated) => `"${updated.title}" moved to ${FEATURE_REQUEST_STATUS_LABEL[updated.status]}`,
+    successMessage: (updated) => translate('"{title}" moved to {status}', { title: updated.title, status: translate(FEATURE_REQUEST_STATUS_LABEL[updated.status]) }),
     invalidateKeys: [queryKeys.featureRequests.all],
     refreshRoute: false,
   });
@@ -48,10 +51,10 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3 text-small text-ink-2">
-        {canManage ? "Drag a card to change its status, or use its menu." : "What people have asked for, most voted first."}
+        <T>{canManage ? "Drag a card to change its status, or use its menu." : "What people have asked for, most voted first."}</T>
         <span className="flex-1" />
         <button type="button" className="font-semibold text-ink-2 hover:text-ink" onClick={() => setShowDeclined((value) => !value)} aria-pressed={showDeclined}>
-          {showDeclined ? "Hide declined" : `Declined (${formatNumber(declined.length)})`}
+          {showDeclined ? translate("Hide declined") : translate("Declined ({count})", { count: formatNumber(declined.length) })}
         </button>
       </div>
       <div className={cn("grid items-start gap-3", showDeclined ? "xl:grid-cols-6 md:grid-cols-3" : "xl:grid-cols-5 md:grid-cols-3")}>
@@ -60,7 +63,7 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
           return (
             <section
               key={column.status}
-              aria-label={column.label}
+              aria-label={translate(column.label)}
               onDragOver={canManage ? (event) => { event.preventDefault(); if (over !== column.status) setOver(column.status); } : undefined}
               onDragLeave={canManage ? () => setOver((current) => (current === column.status ? null : current)) : undefined}
               onDrop={
@@ -78,7 +81,9 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
             >
               <div className="flex items-center gap-2 px-1 py-0.5">
                 <span className={cn("size-2 rounded-full", column.dot)} aria-hidden="true" />
-                <h2 className="grow text-body font-semibold text-ink">{column.label}</h2>
+                <h2 className="grow text-body font-semibold text-ink">
+                  <T>{column.label}</T>
+                </h2>
                 <span className="text-caption font-semibold text-ink-muted tabular-nums">{formatNumber(cards.length)}</span>
               </div>
               {cards.map((request) => (
@@ -91,7 +96,7 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
                   dragging={dragging === request.id}
                 />
               ))}
-              {cards.length === 0 && <p className="px-1 py-2 text-caption text-ink-muted">Nothing here.</p>}
+              {cards.length === 0 && <p className="px-1 py-2 text-caption text-ink-muted"><T>Nothing here.</T></p>}
             </section>
           );
         })}

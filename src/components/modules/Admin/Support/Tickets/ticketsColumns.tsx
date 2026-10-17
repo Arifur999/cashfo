@@ -1,12 +1,21 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { formatDateTime, formatElapsed } from "@/lib/date";
+import RelativeTime from "@/components/shared/RelativeTime";
+import T from "@/components/shared/T";
+import { formatDateTime } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { humanizeEnum } from "@/lib/statusBadge";
 import { getInitials } from "@/lib/text";
 import { awaitingReply, isLate, shortTicketId, TICKET_STATUS_LABEL } from "@/lib/tickets";
 import { cn } from "@/lib/utils";
 import type { ISupportTicket } from "@/types/ticket.types";
+
+// The dot beside a ticket the user wrote in last.
+const NewReplyDot = () => {
+  const { translate } = useLocale();
+  return <span title={translate("New reply from the user")} className="size-1.75 shrink-0 rounded-full bg-info" />;
+};
 
 // The design's queue: the ticket's number with a dot when the user is
 // waiting, the subject over who wrote, what kind, how urgent, where it is,
@@ -19,7 +28,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     enableSorting: false,
     cell: ({ row }) => (
       <span className="flex items-center gap-2">
-        {awaitingReply(row.original) && <span title="New reply from the user" className="size-1.75 shrink-0 rounded-full bg-info" />}
+        {awaitingReply(row.original) && <NewReplyDot />}
         <code className="font-mono text-small font-semibold text-ink-2">{shortTicketId(row.original.id)}</code>
       </span>
     ),
@@ -33,7 +42,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
         <span className={cn("truncate text-ink", awaitingReply(row.original) ? "font-bold" : "font-medium")} title={row.original.subject}>
           {row.original.subject}
         </span>
-        <span className="truncate text-small text-ink-muted">{row.original.platformUser?.name ?? "Unknown person"}</span>
+        <span className="truncate text-small text-ink-muted">{row.original.platformUser?.name ?? <T>Unknown person</T>}</span>
       </span>
     ),
     meta: { exportValue: (row) => `${row.subject} (${row.platformUser?.name ?? "Unknown"})`, cellClassName: "max-w-96" },
@@ -42,7 +51,9 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     id: "category",
     accessorKey: "category",
     header: "Type",
-    cell: ({ row }) => <span className="text-small text-ink-2">{humanizeEnum(row.original.category)}</span>,
+    cell: ({ row }) => <span className="text-small text-ink-2">
+        <T>{humanizeEnum(row.original.category)}</T>
+      </span>,
     meta: { exportValue: (row) => humanizeEnum(row.category) },
   },
   {
@@ -69,7 +80,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
           <Avatar className="size-6.5">
             <AvatarFallback className={cn("text-caption font-bold", admin ? "bg-info-soft text-info" : "bg-surface-sunken text-ink-muted")}>{admin ? getInitials(admin.name) : "—"}</AvatarFallback>
           </Avatar>
-          <span className={cn("truncate", admin ? "text-ink-2" : "text-ink-muted")}>{admin?.name ?? "Not assigned"}</span>
+          <span className={cn("truncate", admin ? "text-ink-2" : "text-ink-muted")}>{admin?.name ?? <T>Not assigned</T>}</span>
         </span>
       );
     },
@@ -80,7 +91,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     header: "Last reply",
     cell: ({ row }) => {
       const late = isLate(row.original);
-      return <span className={cn("text-small whitespace-nowrap", late ? "font-bold text-expense" : "font-medium text-ink-muted")}>{formatElapsed(row.original.lastMessageAt ?? row.original.updatedAt)}</span>;
+      return <span className={cn("text-small whitespace-nowrap", late ? "font-bold text-expense" : "font-medium text-ink-muted")}><RelativeTime value={row.original.lastMessageAt ?? row.original.updatedAt} as="elapsed" /></span>;
     },
     meta: { align: "right", exportValue: (row) => formatDateTime(row.lastMessageAt ?? row.updatedAt) },
   },
