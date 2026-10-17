@@ -1,6 +1,9 @@
+"use client";
+
 import { Info } from "lucide-react";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface SectionCardProps {
@@ -13,19 +16,20 @@ interface SectionCardProps {
 }
 
 const SectionCard = ({ title, tooltip, action, className, children }: SectionCardProps) => {
+  const { translate } = useLocale();
   return (
     <Card className={cn("shadow-sm shadow-black/5", className)}>
       <CardHeader>
         <CardTitle className="flex items-center gap-1.5 text-sm font-semibold">
-          {title}
+          {translate(title)}
           {tooltip && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <button type="button" className="text-muted-foreground" aria-label={`About ${title}`}>
+                <button type="button" className="text-muted-foreground" aria-label={translate("About {title}", { title: translate(title) })}>
                   <Info className="size-3.5" aria-hidden="true" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs">{tooltip}</TooltipContent>
+              <TooltipContent className="max-w-xs">{translate(tooltip)}</TooltipContent>
             </Tooltip>
           )}
         </CardTitle>

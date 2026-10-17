@@ -2,6 +2,7 @@
 
 import { flexRender, type Header, type Table as TanStackTable } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import DataTableColumnHeader from "./DataTableColumnHeader";
 import DataTableEmpty from "./DataTableEmpty";
@@ -38,6 +39,7 @@ const DataTableContent = <TData,>({
   onRowClick,
   rowClassName,
 }: DataTableContentProps<TData>) => {
+  const { translate } = useLocale();
   const rows = table.getRowModel().rows;
   const columnCount = table.getVisibleLeafColumns().length;
 
@@ -46,7 +48,7 @@ const DataTableContent = <TData,>({
     // lets the header stick while long pages scroll.
     <div className="relative overflow-hidden border-t border-line **:data-[slot=table-container]:max-h-[70vh] **:data-[slot=table-container]:overflow-auto">
       {isFetching && !isLoading && (
-        <div className="absolute inset-x-0 top-0 z-20 h-0.5 animate-pulse bg-primary" role="progressbar" aria-label="Refreshing" />
+        <div className="absolute inset-x-0 top-0 z-20 h-0.5 animate-pulse bg-primary" role="progressbar" aria-label={translate("Refreshing")} />
       )}
       <Table aria-busy={isLoading || isFetching}>
         {/* The design's column heads: a cream strip, 12px, no capitals. */}

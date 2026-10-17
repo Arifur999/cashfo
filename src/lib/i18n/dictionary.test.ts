@@ -18,4 +18,12 @@ describe("bnDictionary", () => {
       expect(bnDictionary[label], label).toBeTruthy();
     }
   });
+
+  // A Bangla sentence that lost {count} would show the wrong figure, or none.
+  it("keeps every {placeholder} of the English in its Bangla", () => {
+    const placeholders = (text: string) => [...text.matchAll(/(?<!\{)\{(\w+)\}(?!\})/g)].map((match) => match[1]).sort();
+    for (const [english, bangla] of Object.entries(bnDictionary)) {
+      expect(placeholders(bangla), english).toEqual(placeholders(english));
+    }
+  });
 });

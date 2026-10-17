@@ -31,7 +31,7 @@ const CopyButton = ({ value, label, text = "Copy", size = "sm" }: CopyButtonProp
     } catch {
       // Clipboard access needs a secure context and permission; the value is
       // still on screen to copy by hand.
-      toast.error("Couldn't copy -- select the text and copy it manually.");
+      toast.error(translate("Couldn't copy -- select the text and copy it manually."));
     }
   };
 
