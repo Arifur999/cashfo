@@ -122,4 +122,11 @@ export const adminSharedDictionary: Record<string, string> = {
   "This page hit an unexpected error. Try again, or head somewhere else from the sidebar.": "এই পাতায় একটি অপ্রত্যাশিত ত্রুটি হয়েছে। আবার চেষ্টা করুন, অথবা পাশের মেনু থেকে অন্য কোথাও যান।",
   "Reference: {digest}": "রেফারেন্স: {digest}",
   "Try again": "আবার চেষ্টা করুন",
+  "A whole number from 0 to 9999": "০ থেকে ৯৯৯৯-এর মধ্যে একটি পূর্ণ সংখ্যা",
+  "Backend API": "ব্যাকএন্ড এপিআই",
+  "Choose a password different from the current one": "বর্তমানটির চেয়ে আলাদা একটি পাসওয়ার্ড বাছুন",
+  "Choose a role": "একটি ভূমিকা বাছুন",
+  "Enter a name": "একটি নাম লিখুন",
+  "Invalid input": "ভুল তথ্য",
+  "Keep it under 100 characters": "১০০ অক্ষরের মধ্যে রাখুন",
 };
