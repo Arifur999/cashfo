@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { AnalyticsRange } from "@/lib/analyticsRange";
 import { rangeSpan } from "@/lib/analyticsWording";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { useAnalyticsRange } from "./useAnalyticsRange";
+import T from "@/components/shared/T";
 
 const PRESETS = [
   { preset: "7", label: "7 days" },
@@ -34,16 +36,16 @@ const CustomRangeForm = ({ range, today, onApply }: { range: AnalyticsRange; tod
     >
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="analytics-from">From</Label>
+          <Label htmlFor="analytics-from"><T>From</T></Label>
           <Input id="analytics-from" type="date" value={from} max={to || today} onChange={(event) => setFrom(event.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="analytics-to">To</Label>
+          <Label htmlFor="analytics-to"><T>To</T></Label>
           <Input id="analytics-to" type="date" value={to} min={from} max={today} onChange={(event) => setTo(event.target.value)} />
         </div>
       </div>
       <Button type="submit" size="sm" className="w-full" disabled={!isValid}>
-        Apply range
+        <T>Apply range</T>
       </Button>
     </form>
   );
@@ -55,22 +57,23 @@ const CustomRangeForm = ({ range, today, onApply }: { range: AnalyticsRange; tod
 const AnalyticsRangePicker = ({ today }: { today: string }) => {
   const { range, setRange } = useAnalyticsRange(today);
   const [isCustomOpen, setIsCustomOpen] = useState(false);
+  const { translate } = useLocale();
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="text-small text-ink-muted" aria-live="polite">
         {rangeSpan(range)}
       </span>
-      <div role="group" aria-label="Period" className="inline-flex gap-0.5 rounded-md border border-line bg-surface p-0.75">
+      <div role="group" aria-label={translate("Period")} className="inline-flex gap-0.5 rounded-md border border-line bg-surface p-0.75">
         {PRESETS.map(({ preset, label }) => (
           <button key={preset} type="button" aria-pressed={range.preset === preset} className={cn(SEGMENT, segmentState(range.preset === preset))} onClick={() => setRange({ preset })}>
-            {label}
+            <T>{label}</T>
           </button>
         ))}
         <Popover open={isCustomOpen} onOpenChange={setIsCustomOpen}>
           <PopoverTrigger asChild>
             <button type="button" aria-pressed={range.preset === "custom"} className={cn(SEGMENT, segmentState(range.preset === "custom"))}>
-              Custom
+              <T>Custom</T>
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-80">

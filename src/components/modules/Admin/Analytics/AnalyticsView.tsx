@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { rangeName } from "@/lib/analyticsWording";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
 import ActivePeopleCard from "./ActivePeopleCard";
 import AnalyticsKpis from "./AnalyticsKpis";
@@ -16,6 +17,7 @@ import { useAnalyticsRange } from "./useAnalyticsRange";
 // switch sits in the page header and shares the range through the URL.
 const AnalyticsView = ({ today }: { today: string }) => {
   const { range, rangeQuery } = useAnalyticsRange(today);
+  const { translate } = useLocale();
   // Range-bound reports keep the previous range's data on screen while the
   // next one loads; the rest don't depend on the range at all.
   const featureUsage = useQuery({ ...featureUsageQuery(rangeQuery), placeholderData: keepPreviousData });
@@ -33,7 +35,7 @@ const AnalyticsView = ({ today }: { today: string }) => {
         <DevicesCard data={devices.data?.data ?? []} />
       </div>
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <FeatureUsageCard data={featureUsage.data?.data ?? []} rangeLabel={rangeName(range)} />
+        <FeatureUsageCard data={featureUsage.data?.data ?? []} rangeLabel={rangeName(range, translate)} />
         <PlacesCard data={geography.data?.data ?? { countries: [], cities: [] }} />
       </div>
       <ComeBackCard rows={cohorts.data?.data ?? []} currentMonth={today.slice(0, 7)} />

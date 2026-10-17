@@ -3,6 +3,7 @@
 import Kpi from "@/components/shared/Kpi";
 import { rangeName, shareOfAccounts, shareOfWeek, weekChange } from "@/lib/analyticsWording";
 import type { AnalyticsRange } from "@/lib/analyticsRange";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
 import { cn } from "@/lib/utils";
 import type { IAnalyticsSummary, IFeatureUsageEntry } from "@/types/analytics.types";
@@ -22,7 +23,8 @@ interface AnalyticsKpisProps {
 // in the chosen period.
 const AnalyticsKpis = ({ summary, featureUsage, range }: AnalyticsKpisProps) => {
   const added = featureUsage?.filter((entry) => entry.eventType === "income_added" || entry.eventType === "expense_added").reduce((sum, entry) => sum + entry.count, 0);
-  const change = summary ? weekChange(summary.activeLast7d, summary.activePrevious7d) : null;
+  const { translate } = useLocale();
+  const change = summary ? weekChange(summary.activeLast7d, summary.activePrevious7d, translate) : null;
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -30,16 +32,16 @@ const AnalyticsKpis = ({ summary, featureUsage, range }: AnalyticsKpisProps) => 
         size="sm"
         label="Active in the last 30 days"
         value={formatNumber(summary?.activeLast30d)}
-        note={summary && <Note>{shareOfAccounts(summary.activeLast30d, summary.totalAccounts)}</Note>}
+        note={summary && <Note>{shareOfAccounts(summary.activeLast30d, summary.totalAccounts, translate)}</Note>}
       />
       <Kpi size="sm" label="Active in the last 7 days" value={formatNumber(summary?.activeLast7d)} note={change && <Note className={CHANGE_TONE[change.tone]}>{change.text}</Note>} />
       <Kpi
         size="sm"
         label="Active yesterday"
         value={formatNumber(summary?.activeYesterday)}
-        note={summary && <Note>{shareOfWeek(summary.activeYesterday, summary.activeLast7d)}</Note>}
+        note={summary && <Note>{shareOfWeek(summary.activeYesterday, summary.activeLast7d, translate)}</Note>}
       />
-      <Kpi size="sm" label="Income and expenses added" value={formatNumber(added)} note={<Note>{rangeName(range)}</Note>} />
+      <Kpi size="sm" label="Income and expenses added" value={formatNumber(added)} note={<Note>{rangeName(range, translate)}</Note>} />
     </div>
   );
 };
