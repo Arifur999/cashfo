@@ -22,7 +22,8 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     accessorKey: "name",
     header: "User",
     cell: ({ row }) => <UserInfoCell name={row.original.name} email={row.original.email} muted={row.original.status === "DELETED"} />,
-    meta: { exportValue: (row) => `${row.name} <${row.email}>` },
+    // A long email must not push the other columns off the page.
+    meta: { exportValue: (row) => `${row.name} <${row.email}>`, cellClassName: "max-w-80" },
   },
   {
     id: "phone",

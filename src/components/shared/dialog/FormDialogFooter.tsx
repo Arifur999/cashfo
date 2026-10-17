@@ -16,11 +16,12 @@ interface FormDialogFooterProps {
 
 const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disabled, extra }: FormDialogFooterProps) => {
   return (
-    <DialogFooter className="items-center pt-2 sm:justify-between">
+    // The design's dialog foot: a cream strip across the bottom of the card.
+    <DialogFooter className="-mx-6 -mb-5 mt-4 items-center border-t border-line bg-cream px-6 py-4 sm:justify-between">
       <div>{extra}</div>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row">
         <DialogClose asChild>
-          <Button type="button" variant="outline" disabled={isPending}>
+          <Button type="button" variant="outline" disabled={isPending} className="border-line-strong bg-surface text-ink hover:bg-surface-sunken">
             Cancel
           </Button>
         </DialogClose>
