@@ -17,6 +17,7 @@ import { loanManagementDictionary } from "./dictionary/loan-management";
 import { referralsDictionary } from "./dictionary/referrals";
 import { reportsDictionary } from "./dictionary/reports";
 import { savingsGoalsDictionary } from "./dictionary/savings-goals";
+import { settingsDictionary } from "./dictionary/settings";
 import { settingsWorkspaceDictionary } from "./dictionary/settings-workspace";
 import { sharedDictionary } from "./dictionary/shared";
 import { skillsDictionary } from "./dictionary/skills";
@@ -85,6 +86,7 @@ export const bnDictionary: Record<string, string> = {
   ...referralsDictionary,
   ...vaultDictionary,
   ...settingsWorkspaceDictionary,
+  ...settingsDictionary,
   ...groupExpensesDictionary,
   ...habitTrackerDictionary,
   ...booksDictionary,
