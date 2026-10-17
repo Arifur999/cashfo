@@ -35,6 +35,7 @@ const STATUS_TONES: Record<string, BadgeTone> = {
   PLANNED: "accent",
   WAITING_ON_USER: "accent",
   SUSPENDED: "orange",
+  USED_UP: "warning",
   FAILED: "danger",
   DISABLED: "danger",
   DECLINED: "danger",

@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { deleteCouponAction } from "@/app/(dashboardLayout)/admin/coupons/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
-import FormDialog from "@/components/shared/dialog/FormDialog";
+import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
 import { useActionMutation } from "@/hooks/useActionMutation";
@@ -33,8 +33,11 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
     invalidateKeys: [queryKeys.coupons.all],
   });
 
+  // "Who used it" sits in the row; editing and deleting stay behind the menu.
   const actions = useMemo<DataTableActions<ICoupon>>(
     () => ({
+      display: "split",
+      viewLabel: "Who used it",
       onView: (row) => openDialog("redemptions", row),
       onEdit: canManage ? (row) => openDialog("edit", row) : undefined,
       extra: canManage
@@ -62,7 +65,7 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
         tableId="coupons"
         isLoading={isLoading}
         isFetching={isFetching}
-        search={{ placeholder: "Search coupons..." }}
+        search={{ placeholder: "Search by code" }}
         filters={{ configs: COUPON_FILTERS }}
         exportFileName="coupons"
         actions={actions}
@@ -71,16 +74,16 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
 
       <CouponRedemptionsDialog coupon={coupon} {...getDialogProps("redemptions")} />
 
-      <FormDialog title="Edit coupon" description={coupon?.code} {...getDialogProps("edit")}>
+      <FormDrawer title={`Edit ${coupon?.code ?? "coupon"}`} width="sm" {...getDialogProps("edit")}>
         {coupon && <CouponForm coupon={coupon} defaultValues={toCouponFormValues(coupon)} plans={plans} onDone={closeDialog} />}
-      </FormDialog>
+      </FormDrawer>
 
       <ConfirmDialog
         {...getDialogProps("delete")}
-        title="Delete coupon"
-        description={`Permanently delete "${coupon?.code}"? This can't be undone.`}
+        title={`Delete ${coupon?.code ?? "this coupon"}?`}
+        description="Nobody has used it, so it can go. This can't be undone."
         variant="destructive"
-        confirmLabel="Delete"
+        confirmLabel="Delete coupon"
         pendingLabel="Deleting..."
         isPending={remove.isPending}
         onConfirm={async () => {
