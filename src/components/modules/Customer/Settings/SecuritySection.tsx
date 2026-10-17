@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 
 const RECENT = 5;
+const SHOWN_DEVICES = 6;
 
 const METHODS = [
   { icon: Smartphone, title: "Authenticator app", body: "Google Authenticator, Microsoft Authenticator or a similar app makes a new 6-digit code every 30 seconds. Works without internet." },
@@ -42,10 +43,14 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [sessions, setSessions] = useState<UserSessionSummary[] | null>(initialSessions);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const [isPending, startTransition] = useTransition();
   const history = initialHistory;
 
   const others = (sessions ?? []).filter((session) => !session.isCurrent);
+  // This device first, then the rest by last use; a long list folds.
+  const ordered = [...(sessions ?? [])].sort((a, b) => Number(b.isCurrent) - Number(a.isCurrent) || b.lastUsedAt.localeCompare(a.lastUsedAt));
+  const shownSessions = showAll ? ordered : ordered.slice(0, SHOWN_DEVICES);
 
   function signOut(session: UserSessionSummary) {
     setBusyId(session.id);
@@ -129,7 +134,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
             {t("Sign out everywhere else")}
           </Button>
         </div>
-        {(sessions ?? []).map((session) => {
+        {shownSessions.map((session) => {
           const Icon = isPhone(session.deviceLabel) ? Smartphone : Laptop;
           return (
             <div key={session.id} className="flex items-center gap-4 border-t border-surface-sunken px-6 py-3">
@@ -158,6 +163,11 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
           );
         })}
         {sessions !== null && sessions.length === 0 && <div className="border-t border-surface-sunken px-6 py-6 text-small text-ink-muted">{t("No active sessions found.")}</div>}
+        {ordered.length > SHOWN_DEVICES && (
+          <button type="button" onClick={() => setShowAll((v) => !v)} className="w-full border-t border-surface-sunken px-6 py-3 text-left text-small font-semibold text-emerald hover:bg-cream/60">
+            {showAll ? t("Show fewer") : `${t("Show all")} ${ordered.length}`}
+          </button>
+        )}
       </Card>
 
       <Card padding="none" className="overflow-hidden">
