@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateTimeInputToIso, endOfDayIso, formatDate, startOfDayIso, toDateInputValue, toDateTimeInputValue } from "./date";
+import { dateTimeInputToIso, endOfDayIso, formatDate, formatRelativeDay, startOfDayIso, toDateInputValue, toDateTimeInputValue } from "./date";
 
 describe("formatDate", () => {
   it("renders in Asia/Dhaka regardless of the machine timezone", () => {
@@ -41,5 +41,17 @@ describe("dateTimeInputToIso / toDateTimeInputValue", () => {
 
   it("gives an empty value for no date", () => {
     expect(toDateTimeInputValue(null)).toBe("");
+  });
+});
+
+describe("formatRelativeDay", () => {
+  const now = new Date("2026-10-02T06:00:00Z"); // 12:00 in Dhaka
+
+  it("says today with the time, yesterday, or the date", () => {
+    expect(formatRelativeDay("2026-10-02T05:42:00Z", now)).toBe("Today, 11:42 am");
+    expect(formatRelativeDay("2026-10-01T10:00:00Z", now)).toBe("Yesterday");
+    expect(formatRelativeDay("2026-09-30T10:00:00Z", now)).toBe("30 Sep");
+    expect(formatRelativeDay("2025-06-02T10:00:00Z", now)).toBe("2 Jun 2025");
+    expect(formatRelativeDay(null, now)).toBe("—");
   });
 });

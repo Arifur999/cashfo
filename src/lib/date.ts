@@ -79,3 +79,24 @@ export const formatMonthKey = (key: string, withYear = true): string => {
   }
   return withYear ? `${label} ${year}` : label;
 };
+
+// "Today, 11:42 am", "Yesterday", "30 Sep" (this year) or "2 Jun 2025":
+// the way a list says when something last happened.
+export const formatRelativeDay = (value: DateInput, now: Date = new Date(), fallback = "—"): string => {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+  const day = toDateInputValue(value);
+  if (!day) {
+    return fallback;
+  }
+  const today = toDateInputValue(now);
+  if (day === today) {
+    return `Today, ${formatDate(value, "h:mm aaa")}`;
+  }
+  const yesterday = toDateInputValue(new Date(new Date(`${today}T12:00:00Z`).getTime() - 86_400_000));
+  if (day === yesterday) {
+    return "Yesterday";
+  }
+  return formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy");
+};

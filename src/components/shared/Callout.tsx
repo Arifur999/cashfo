@@ -2,9 +2,9 @@ import { AlertCircle, AlertTriangle, Info, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils";
 
 const VARIANTS: Record<"info" | "warning" | "danger", { icon: LucideIcon; className: string }> = {
-  info: { icon: Info, className: "bg-muted text-muted-foreground" },
-  warning: { icon: AlertTriangle, className: "bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300" },
-  danger: { icon: AlertCircle, className: "bg-destructive/10 text-destructive" },
+  info: { icon: Info, className: "bg-info-soft text-info" },
+  warning: { icon: AlertTriangle, className: "bg-warning-soft text-warning" },
+  danger: { icon: AlertCircle, className: "bg-expense-soft text-expense" },
 };
 
 interface CalloutProps {
@@ -19,7 +19,7 @@ const Callout = ({ variant = "info", role, className, children }: CalloutProps) 
   const { icon: Icon, className: variantClassName } = VARIANTS[variant];
 
   return (
-    <div role={role} className={cn("flex items-start gap-2 rounded-xl px-3.5 py-2.5 text-sm", variantClassName, className)}>
+    <div role={role} className={cn("flex items-start gap-3 rounded-md px-4 py-3 text-small leading-relaxed", variantClassName, className)}>
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
       <div className="min-w-0">{children}</div>
     </div>

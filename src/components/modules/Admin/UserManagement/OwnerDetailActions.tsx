@@ -42,7 +42,7 @@ const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan, canV
         </Button>
       )}
       {canChangeStatus && owner.status === "ACTIVE" && (
-        <Button variant="destructive" onClick={() => setActiveDialog("suspend")}>
+        <Button variant="outline" className="border-expense/50 text-expense hover:bg-expense-soft hover:text-expense" onClick={() => setActiveDialog("suspend")}>
           <ShieldOff aria-hidden="true" /> Suspend
         </Button>
       )}

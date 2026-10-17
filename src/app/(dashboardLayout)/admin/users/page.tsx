@@ -9,7 +9,7 @@ import { ownersListQuery } from "@/queries/owner.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
 
-export const metadata: Metadata = { title: "User Management" };
+export const metadata: Metadata = { title: "Users" };
 
 const UsersPage = async ({ searchParams }: PageProps<"/admin/users">) => {
   const queryString = buildTableQueryString(await searchParams, USERS_TABLE_BASE_CONFIG);
@@ -17,7 +17,7 @@ const UsersPage = async ({ searchParams }: PageProps<"/admin/users">) => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="User Management" description="View and manage the platform's real registered owners." />
+      <PageHeader title="Users" description="Everyone with a Smartly account. Open a person to change their plan, reset their password or suspend them." />
       <QueryPrefetch
         prefetch={(client) =>
           Promise.all([client.prefetchQuery(ownersListQuery(queryString)), client.prefetchQuery(plansQuery())])
