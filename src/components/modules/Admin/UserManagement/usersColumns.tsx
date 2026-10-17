@@ -1,18 +1,11 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import DateCell from "@/components/shared/cell/DateCell";
+import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
 
 export const USERS_HIDDEN_COLUMNS = [] as const;
-
-// A plan's chip, as the design colours them: the paid plans in mint and
-// forest, Business in amber, Free in the sunken grey.
-const PLAN_TONE: Record<string, string> = {
-  "Monthly Pro": "bg-mint-50 text-emerald",
-  "Yearly Pro": "bg-forest text-white dark:bg-emerald dark:text-on-action",
-  Business: "bg-warning-soft text-warning",
-};
 
 // The design's Users list: who, phone, their workspace (and how many more),
 // plan, when they were last here, how long they have used Smartly, status.
@@ -47,7 +40,7 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     id: "planName",
     accessorKey: "planName",
     header: "Plan",
-    cell: ({ row }) => (row.original.planName ? <span className={`inline-flex rounded-full px-2 py-px text-caption font-semibold whitespace-nowrap ${PLAN_TONE[row.original.planName] ?? "bg-surface-sunken text-ink-2"}`}>{row.original.planName}</span> : <span className="text-ink-muted">—</span>),
+    cell: ({ row }) => <PlanChipCell plan={row.original.planName} />,
   },
   {
     id: "lastLoginAt",

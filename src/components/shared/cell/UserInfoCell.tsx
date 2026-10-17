@@ -10,18 +10,22 @@ interface UserInfoCellProps {
   meta?: string | null;
   // A deleted or suspended person reads muted.
   muted?: boolean;
+  // Some lists (Manage owners) draw just the two lines.
+  avatar?: boolean;
 }
 
 // A person in a list: 34px initials, the name and the email under it.
-const UserInfoCell = ({ name, email, photo, meta, muted = false }: UserInfoCellProps) => {
+const UserInfoCell = ({ name, email, photo, meta, muted = false, avatar = true }: UserInfoCellProps) => {
   const displayName = name?.trim() || "Unknown user";
 
   return (
     <div className="flex items-center gap-3">
-      <Avatar className="size-8.5">
-        {photo && <AvatarImage src={photo} alt="" />}
-        <AvatarFallback className="bg-mint-50 text-caption font-bold text-emerald">{getInitials(displayName) || "?"}</AvatarFallback>
-      </Avatar>
+      {avatar && (
+        <Avatar className="size-8.5">
+          {photo && <AvatarImage src={photo} alt="" />}
+          <AvatarFallback className="bg-mint-50 text-caption font-bold text-emerald">{getInitials(displayName) || "?"}</AvatarFallback>
+        </Avatar>
+      )}
       <div className="flex min-w-0 flex-col gap-px">
         <p className={cn("truncate font-semibold", muted ? "text-ink-muted" : "text-ink")}>{displayName}</p>
         {email && <p className="truncate text-small text-ink-muted">{email}</p>}
