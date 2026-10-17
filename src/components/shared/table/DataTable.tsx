@@ -25,6 +25,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     toolbarAction,
     footer,
     hideToolbar = false,
+    tools = true,
     pager,
     exportFileName,
     search,
@@ -48,6 +49,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
           filters={filters}
           toolbarAction={toolbarAction}
           exportFileName={exportFileName}
+          tools={tools}
         />
       )}
       <DataTableSelectionBar table={table} bulkActions={bulkActions} />

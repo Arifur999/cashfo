@@ -85,6 +85,7 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
               label={config.label}
               options={config.options}
               allLabel={config.allLabel}
+              tone={config.tone}
               value={toSelection(getValue(config))[0]}
               onChange={(value) => setSingle(config, value)}
             />
@@ -97,6 +98,7 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
             key={config.id}
             title={config.label}
             options={config.options}
+            emptyLabel={config.allLabel}
             multiple={multiple}
             selected={toSelection(getValue(config))}
             facets={isServerManaged ? undefined : table.getColumn(config.id)?.getFacetedUniqueValues()}

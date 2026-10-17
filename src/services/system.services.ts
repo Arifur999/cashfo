@@ -22,5 +22,10 @@ export const getRateLimitLogs = async (queryString: string) => httpClient.getPag
 
 export const getRateLimitSummary = async () => httpClient.get<IRateLimitSummary>("/admin/system/rate-limits/summary");
 
-// The API's own health check: ok when it can reach the database.
-export const getHealth = async () => httpClient.get<{ status: "ok" | "error"; timestamp: string }>("/health");
+// The API's own health check: ok when it can reach the database. Timed from
+// this server, so "answered in 120 ms" is the round trip the panel sees.
+export const getHealth = async () => {
+  const started = performance.now();
+  const response = await httpClient.get<{ status: "ok" | "error"; timestamp: string }>("/health");
+  return { ...response, data: { ...response.data, latencyMs: Math.round(performance.now() - started) } };
+};

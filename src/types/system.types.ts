@@ -23,6 +23,8 @@ export interface IBackupStatusSummary {
   daysSinceLastBackup: number | null;
   // Over the last 30 days, finished runs only; null when there were none.
   successRate30d: number | null;
+  succeededLast30d: number;
+  finishedLast30d: number;
 }
 
 // --- Error logs ---

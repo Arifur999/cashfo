@@ -24,11 +24,13 @@ interface DataTableFacetedFilterProps {
   selected: string[];
   onChange: (values: string[]) => void;
   multiple?: boolean;
+  // What the chip says while nothing is picked: "All", "Anyone", "Any".
+  emptyLabel?: string;
   // Per-option row counts, only known for in-memory tables.
   facets?: Map<unknown, number>;
 }
 
-const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple = false, facets }: DataTableFacetedFilterProps) => {
+const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple = false, emptyLabel = "All", facets }: DataTableFacetedFilterProps) => {
   const toggle = (value: string) => {
     const isSelected = selected.includes(value);
     if (multiple) {
@@ -45,7 +47,7 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
           <span>{title}:</span>
           <b className="font-semibold text-ink">
             {selected.length === 0
-              ? "All"
+              ? emptyLabel
               : selected.length > 2
                 ? `${selected.length} selected`
                 : options

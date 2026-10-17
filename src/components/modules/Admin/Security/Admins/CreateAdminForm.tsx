@@ -45,7 +45,7 @@ const CreateAdminForm = ({ onCreated }: { onCreated: (admin: ICreatedAdmin) => v
       <form.Field name="role" validators={{ onChange: shape.role }}>
         {(field) => <AppSelectField field={field} label="Role" options={ADMIN_ROLE_OPTIONS} description="Decides which sections they can manage." />}
       </form.Field>
-      <FormDialogFooter isPending={isPending} submitLabel="Create admin" pendingLabel="Creating..." />
+      <FormDialogFooter isPending={isPending} submitLabel="Add admin" pendingLabel="Adding..." />
     </AppForm>
   );
 };

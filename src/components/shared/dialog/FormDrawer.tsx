@@ -19,6 +19,9 @@ interface FormDrawerProps {
   description?: React.ReactNode;
   trigger?: React.ReactNode;
   width?: keyof typeof WIDTH_CLASSES;
+  // A drawer that only shows something (an audit entry) closes on a click
+  // outside it; a form keeps what was typed.
+  closeOnOutsideClick?: boolean;
   children: React.ReactNode;
 }
 
@@ -26,14 +29,14 @@ interface FormDrawerProps {
 // editing: a titled head, the fields, and the cream foot pinned to the
 // bottom (give the form FormDialogFooter's `pinned`). Like FormDialog, a
 // stray outside click doesn't throw the form away; Escape still closes.
-const FormDrawer = ({ open, onOpenChange, title, description, trigger, width = "md", children }: FormDrawerProps) => {
+const FormDrawer = ({ open, onOpenChange, title, description, trigger, width = "md", closeOnOutsideClick = false, children }: FormDrawerProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
       <SheetContent
         side="right"
         className={cn("w-full! gap-0 border-l-0 bg-surface p-0 text-ink shadow-overlay", WIDTH_CLASSES[width])}
-        onInteractOutside={(event) => event.preventDefault()}
+        onInteractOutside={closeOnOutsideClick ? undefined : (event) => event.preventDefault()}
       >
         <SheetHeader className="gap-0.5 border-b border-line px-6 py-5 pr-14">
           <SheetTitle className="text-h3 text-ink">{title}</SheetTitle>

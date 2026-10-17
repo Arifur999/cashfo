@@ -6,7 +6,7 @@ import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { buildTableQueryString } from "@/lib/queryString";
 import { rateLimitLogsListQuery, rateLimitSummaryQuery } from "@/queries/system.queries";
 
-export const metadata: Metadata = { title: "Rate Limits" };
+export const metadata: Metadata = { title: "Rate limits" };
 
 const RateLimitsPage = async ({ searchParams }: PageProps<"/admin/system/rate-limits">) => {
   const queryString = buildTableQueryString(await searchParams, RATE_LIMITS_TABLE_BASE_CONFIG);

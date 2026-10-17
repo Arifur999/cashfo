@@ -4,16 +4,21 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface CopyButtonProps {
   value: string;
   // What's being copied, for the button's accessible name ("Copy password").
   label: string;
+  // The button's words ("Copy as JSON"); "Copy" by default.
+  text?: string;
+  // "md" is the 40px button of a drawer's foot.
+  size?: "sm" | "md";
 }
 
 const COPIED_FEEDBACK_MS = 2000;
 
-const CopyButton = ({ value, label }: CopyButtonProps) => {
+const CopyButton = ({ value, label, text = "Copy", size = "sm" }: CopyButtonProps) => {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -29,9 +34,16 @@ const CopyButton = ({ value, label }: CopyButtonProps) => {
   };
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={copy} aria-label={`Copy ${label}`}>
+    <Button
+      type="button"
+      variant="outline"
+      size={size === "md" ? "default" : "sm"}
+      onClick={copy}
+      aria-label={`Copy ${label}`}
+      className={cn(size === "md" && "h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken")}
+    >
       {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-      {copied ? "Copied" : "Copy"}
+      {copied ? "Copied" : text}
     </Button>
   );
 };

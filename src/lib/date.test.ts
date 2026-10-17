@@ -3,9 +3,13 @@ import {
   dateTimeInputToIso,
   endOfDayIso,
   formatDate,
+  formatDayName,
   formatElapsed,
+  formatLogTime,
+  formatRecentDateTime,
   formatRelativeDateTime,
   formatRelativeDay,
+  formatTimeRange,
   startOfDayIso,
   toDateInputValue,
   toDateTimeInputValue,
@@ -87,5 +91,38 @@ describe("formatRelativeDateTime", () => {
     expect(formatRelativeDateTime("2026-09-27T07:03:00Z", now)).toBe("27 Sep, 1:03 pm");
     expect(formatRelativeDateTime("2025-09-27T07:03:00Z", now)).toBe("27 Sep 2025, 1:03 pm");
     expect(formatRelativeDateTime(null, now)).toBe("—");
+  });
+
+  it("can keep the seconds, as an audit entry does", () => {
+    expect(formatRelativeDateTime("2026-10-02T07:05:12Z", now, "—", true)).toBe("Today, 1:05:12 pm");
+  });
+});
+
+describe("formatDayName / formatLogTime / formatTimeRange", () => {
+  const now = new Date("2026-10-02T09:00:00Z"); // 3:00 pm in Dhaka
+
+  it("keeps the time only while it is recent", () => {
+    expect(formatRecentDateTime("2026-10-02T08:48:00Z", now)).toBe("Today, 2:48 pm");
+    expect(formatRecentDateTime("2026-10-01T11:10:00Z", now)).toBe("Yesterday, 5:10 pm");
+    expect(formatRecentDateTime("2026-09-28T05:00:00Z", now)).toBe("28 Sep");
+  });
+
+  it("names the day alone", () => {
+    expect(formatDayName("2026-10-02T03:00:00Z", now)).toBe("Today");
+    expect(formatDayName("2026-10-01T03:00:00Z", now)).toBe("Yesterday");
+    expect(formatDayName("2026-09-28T03:00:00Z", now)).toBe("28 Sep");
+  });
+
+  it("leaves the day out of a log time while it is today", () => {
+    expect(formatLogTime("2026-10-02T08:48:00Z", now)).toBe("2:48 pm");
+    expect(formatLogTime("2026-10-01T12:55:00Z", now)).toBe("Yesterday, 6:55 pm");
+    expect(formatLogTime(null, now)).toBe("—");
+  });
+
+  it("shows a burst of tries as one span", () => {
+    expect(formatTimeRange("2026-10-02T08:43:00Z", "2026-10-02T08:47:00Z", now)).toBe("2:43 – 2:47 pm");
+    expect(formatTimeRange("2026-10-02T05:50:00Z", "2026-10-02T06:10:00Z", now)).toBe("11:50 am – 12:10 pm");
+    expect(formatTimeRange("2026-10-01T13:30:00Z", "2026-10-01T13:42:00Z", now)).toBe("Yesterday, 7:30 – 7:42 pm");
+    expect(formatTimeRange("2026-10-02T08:43:10Z", "2026-10-02T08:43:50Z", now)).toBe("2:43 pm");
   });
 });

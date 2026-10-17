@@ -4,30 +4,38 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import DataTable from "@/components/shared/table/DataTable";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
+import { groupLoginAttempts, type LoginAttemptGroup } from "@/lib/loginAttempts";
+import { formatNumber } from "@/lib/number";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { loginAttemptsListQuery, loginAttemptsSummaryQuery } from "@/queries/security.queries";
-import type { ILoginAttempt } from "@/types/loginAttempt.types";
-import { LOGIN_ATTEMPTS_HIDDEN_COLUMNS, loginAttemptsColumns } from "./loginAttemptsColumns";
-import { buildLoginAttemptsTableConfig } from "./loginAttemptsTable.config";
+import { loginAttemptsColumns } from "./loginAttemptsColumns";
+import { LOGIN_ATTEMPTS_TABLE_CONFIG } from "./loginAttemptsTable.config";
 
+const GROUPING_NOTE = "Repeated tries from one network are shown as one row.";
+
+// The API pages through single attempts; each page is folded into rows here,
+// so a burst of failures reads as one line with its count.
 const LoginAttemptsTable = () => {
-  const { data: summaryResponse } = useQuery(loginAttemptsSummaryQuery());
-  const topIps = useMemo(() => summaryResponse?.data.topIps ?? [], [summaryResponse]);
-  const config = useMemo(() => buildLoginAttemptsTableConfig(topIps), [topIps]);
-
-  const { queryString, dataTableProps } = useServerDataTable<ILoginAttempt>(config);
+  const failedToday = useQuery(loginAttemptsSummaryQuery()).data?.data.failedLast24h;
+  const { queryString, dataTableProps } = useServerDataTable<LoginAttemptGroup>(LOGIN_ATTEMPTS_TABLE_CONFIG);
   const query = useQuery({ ...loginAttemptsListQuery(queryString), placeholderData: keepPreviousData });
+  const rows = useMemo(() => (query.data?.data ? groupLoginAttempts(query.data.data) : undefined), [query.data]);
 
   return (
     <DataTable
       {...dataTableProps}
       {...toTableQueryProps(query)}
-      data={query.data?.data}
+      data={rows}
       columns={loginAttemptsColumns}
       getRowId={(row) => row.id}
-      tableId="login-attempts"
-      defaultHiddenColumns={LOGIN_ATTEMPTS_HIDDEN_COLUMNS}
-      exportFileName="login-attempts"
+      tableId="sign-ins"
+      tools={false}
+      rowClassName={(row) => (row.attempts.length > 1 ? "bg-expense-soft hover:bg-expense-soft" : undefined)}
+      pager={{
+        previous: "Newer",
+        next: "Older",
+        summary: () => (failedToday === undefined ? GROUPING_NOTE : `${formatNumber(failedToday)} failed in the last 24 hours. ${GROUPING_NOTE}`),
+      }}
       emptyMessage="No sign-in attempts match these filters."
     />
   );

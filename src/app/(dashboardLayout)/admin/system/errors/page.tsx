@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
-import ErrorLogsTable from "@/components/modules/Admin/System/ErrorLogs/ErrorLogsTable";
-import { ERROR_LOGS_TABLE_CONFIG } from "@/components/modules/Admin/System/ErrorLogs/errorLogsTable.config";
+import ErrorsBoard from "@/components/modules/Admin/System/ErrorLogs/ErrorsBoard";
+import { errorsQueryString } from "@/components/modules/Admin/System/ErrorLogs/errorsQuery";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
-import { buildTableQueryString } from "@/lib/queryString";
 import { errorLogsListQuery } from "@/queries/system.queries";
 
-export const metadata: Metadata = { title: "Error Logs" };
+export const metadata: Metadata = { title: "Errors" };
 
-const ErrorLogsPage = async ({ searchParams }: PageProps<"/admin/system/errors">) => {
-  const queryString = buildTableQueryString(await searchParams, ERROR_LOGS_TABLE_CONFIG);
-
+const ErrorsPage = () => {
   return (
-    <QueryPrefetch prefetch={(client) => client.prefetchQuery(errorLogsListQuery(queryString))}>
-      <ErrorLogsTable />
+    <QueryPrefetch prefetch={(client) => client.prefetchQuery(errorLogsListQuery(errorsQueryString()))}>
+      <ErrorsBoard />
     </QueryPrefetch>
   );
 };
 
-export default ErrorLogsPage;
+export default ErrorsPage;

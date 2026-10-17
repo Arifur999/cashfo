@@ -16,11 +16,13 @@ export interface DataTableTabOption {
 }
 
 export type DataTableFilterConfig = (
-  | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[] }
-  | { id: string; type: "multi-select"; label: string; options: DataTableFilterOption[] }
+  // allLabel is what the chip says while nothing is picked ("Admin: Anyone").
+  | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[]; allLabel?: string }
+  | { id: string; type: "multi-select"; label: string; options: DataTableFilterOption[]; allLabel?: string }
   // The design's status tabs: one row of exclusive choices, with counts, at
   // the front of the toolbar. The first tab (allLabel) clears the filter.
-  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string }
+  // "sunken" drops the cream border for the plainer pill some lists use.
+  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string; tone?: "cream" | "sunken" }
   // Server-managed date ranges map onto two URL params, dateFrom/dateTo by
   // default (the convention every list endpoint uses).
   | { id: string; type: "date-range"; label: string; fromKey?: string; toKey?: string }
@@ -121,6 +123,8 @@ export interface DataTableProps<TData> {
   footer?: React.ReactNode;
   // A list with nothing to search or filter (the admin team) draws no toolbar.
   hideToolbar?: boolean;
+  // false leaves the column and export tools off a busy toolbar (sign-ins).
+  tools?: boolean;
   // Under the rows: numbered pages by default. A time-ordered log draws
   // "Newer" / "Older" beside a summary instead; false hides the pager while
   // every row fits on one page.
