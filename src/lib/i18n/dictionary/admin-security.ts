@@ -232,7 +232,7 @@ export const adminSecurityDictionary: Record<string, string> = {
   // Roles
   "What each role can do": "কোন ভূমিকা কী করতে পারে",
   "This is what the server allows today. Changing it needs a code change for now.": "সার্ভার আজ এটুকুই অনুমতি দেয়। আপাতত এটি বদলাতে কোড বদলাতে হবে।",
-  Key: "চিহ্নের মানে",
+  "Key@@legend": "চিহ্নের মানে",
   Area: "বিভাগ",
   Super: "সুপার",
   Finance: "ফিন্যান্স",

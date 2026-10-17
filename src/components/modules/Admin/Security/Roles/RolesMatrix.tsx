@@ -44,7 +44,7 @@ const RolesMatrix = () => {
           </h2>
           <p className="text-small text-ink-muted"><T>This is what the server allows today. Changing it needs a code change for now.</T></p>
         </div>
-        <ul aria-label={translate("Key")} className="flex flex-wrap gap-4 text-small whitespace-nowrap text-ink-2">
+        <ul aria-label={translate("Key@@legend")} className="flex flex-wrap gap-4 text-small whitespace-nowrap text-ink-2">
           {KEY.map((access) => (
             <li key={access} className="flex items-center gap-1">
               <AccessMark access={access} size="sm" />
