@@ -8,6 +8,7 @@ import { bnAuthDictionary } from "./authDictionary";
 import { assetsDictionary } from "./dictionary/assets";
 import { balanceDictionary } from "./dictionary/balance";
 import { booksDictionary } from "./dictionary/books";
+import { businessBooksDictionary } from "./dictionary/business-books";
 import { chromeDictionary } from "./dictionary/chrome";
 import { dashboardDictionary } from "./dictionary/dashboard";
 import { groupExpensesDictionary } from "./dictionary/group-expenses";
@@ -90,6 +91,7 @@ export const bnDictionary: Record<string, string> = {
   ...groupExpensesDictionary,
   ...habitTrackerDictionary,
   ...booksDictionary,
+  ...businessBooksDictionary,
   ...skillsDictionary,
   ...todosDictionary,
   // Last, so a word every customer page shares (see that file) always wins
