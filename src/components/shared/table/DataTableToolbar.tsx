@@ -18,9 +18,10 @@ interface DataTableToolbarProps<TData> {
   filters?: DataTableFiltersConfig;
   toolbarAction?: React.ReactNode;
   exportFileName?: string;
+  tools?: boolean;
 }
 
-const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction, exportFileName }: DataTableToolbarProps<TData>) => {
+const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction, exportFileName, tools = true }: DataTableToolbarProps<TData>) => {
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const onServerSearch = search?.onDebouncedChange;
   const configs = filters?.configs ?? [];
@@ -62,9 +63,9 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
           />
         )}
         <div className="flex items-center gap-2">
-          <DataTableExpandToggle table={table} />
-          {exportFileName && <DataTableExportButton table={table} fileName={exportFileName} />}
-          <DataTableViewOptions table={table} />
+          {tools && <DataTableExpandToggle table={table} />}
+          {tools && exportFileName && <DataTableExportButton table={table} fileName={exportFileName} />}
+          {tools && <DataTableViewOptions table={table} />}
           {toolbarAction}
         </div>
       </div>
