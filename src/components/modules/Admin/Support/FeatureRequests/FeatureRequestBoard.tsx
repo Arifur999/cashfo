@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Info } from "lucide-react";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateFeatureRequestStatusAction } from "@/app/(dashboardLayout)/admin/feature-requests/_action";
 import { useActionMutation } from "@/hooks/useActionMutation";
@@ -51,7 +52,10 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3 text-small text-ink-2">
-        <T>{canManage ? "Drag a card to change its status, or use its menu." : "What people have asked for, most voted first."}</T>
+        <span className="flex items-center gap-2">
+          <Info className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
+          <T>{canManage ? "Drag a card to change its status, or use its menu." : "What people have asked for, most voted first."}</T>
+        </span>
         <span className="flex-1" />
         <button type="button" className="font-semibold text-ink-2 hover:text-ink" onClick={() => setShowDeclined((value) => !value)} aria-pressed={showDeclined}>
           {showDeclined ? translate("Hide declined") : translate("Declined ({count})", { count: formatNumber(declined.length) })}

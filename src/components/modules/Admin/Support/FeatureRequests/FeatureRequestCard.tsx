@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
+import { ChevronUp, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatRelativeDay } from "@/lib/date";
@@ -46,7 +46,8 @@ const FeatureRequestCard = ({ request, canManage, onMove, onDragStart, dragging 
         dragging && "opacity-50",
       )}
     >
-      <span className="flex h-11.5 w-10.5 shrink-0 flex-col items-center justify-center rounded-md border border-line" title={plural(translate, request.voteCount, "{count} vote", "{count} votes")}>
+      <span className="flex h-11.5 w-10.5 shrink-0 flex-col items-center justify-center gap-px rounded-md border border-line" title={plural(translate, request.voteCount, "{count} vote", "{count} votes")}>
+        <ChevronUp className="size-3.25 text-ink-2" strokeWidth={2.5} aria-hidden="true" />
         <b className="text-body font-bold text-ink tabular-nums">{formatNumber(request.voteCount)}</b>
       </span>
       <span className="flex min-w-0 grow flex-col gap-0.75">
