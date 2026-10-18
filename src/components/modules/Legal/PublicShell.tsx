@@ -7,7 +7,6 @@ import { BRAND_NAME } from "@/lib/brand";
 import { getLegalDocument } from "@/lib/customer/platform";
 import { getTranslator } from "@/lib/i18n/locale";
 import { getAccessToken } from "@/lib/tokenUtils";
-import LegalLinks from "./LegalLinks";
 import LegalNav from "./LegalNav";
 import { LEGAL_PAGES, type LegalVersions } from "./legalPages";
 
@@ -21,8 +20,8 @@ async function policyVersions(): Promise<LegalVersions> {
 
 // The frame of the legal pages, which anyone can open: the logo, the
 // language pill and the way in (or back into the app), the side menu, the
-// page, its "On this page" list on a wide screen, and the legal links at
-// the foot.
+// page, and its "On this page" list on a wide screen. No footer: the side
+// menu already links every legal page.
 const PublicShell = async ({ children }: { children: React.ReactNode }) => {
   const [{ t }, signedIn, versions] = await Promise.all([getTranslator(), getAccessToken().then(Boolean), policyVersions()]);
 
@@ -57,9 +56,6 @@ const PublicShell = async ({ children }: { children: React.ReactNode }) => {
         <LegalNav versions={versions} />
         {children}
       </main>
-      <footer className="border-t border-line px-5 py-6 md:px-12">
-        <LegalLinks />
-      </footer>
     </div>
   );
 };
