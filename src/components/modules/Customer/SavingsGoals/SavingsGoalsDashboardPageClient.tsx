@@ -160,9 +160,9 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                 {!setup && <span className="text-caption font-normal text-ink-muted">{t("of all goals")}</span>}
               </GoalRing>
               <div className="flex flex-col gap-2">
-                <span className="text-small font-medium text-ink-muted">{t("Saved so far")}</span>
-                <AmountText value={totalSaved} currency={currency} size="h2" className={cn("text-h1", totalSaved === 0 && "text-ink-muted")} />
-                <span className="text-small text-ink-muted tabular-nums">
+                <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Saved so far")}</span>
+                <AmountText value={totalSaved} currency={currency} size="h2" className={cn("text-h1 leading-[normal]", totalSaved === 0 && "text-ink-muted")} />
+                <span className="text-small leading-[normal] text-ink-muted tabular-nums">
                   {totalSaved > 0 ? (
                     <>
                       {t("of")} {formatCurrency(totalGoals, currency)} · <span className="font-semibold text-ink-2">{formatCurrency(overview.remaining, currency)}</span> {t("to go")}
@@ -175,9 +175,9 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
             </div>
             {setup ? (
               <div className="flex flex-col justify-center gap-2 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
-                <span className="text-small font-medium text-ink-muted">{t("Monthly target")}</span>
-                <span className="text-h2 text-ink tabular-nums">{formatCurrency(overview.monthlyTarget, currency)}</span>
-                <span className="text-caption font-normal text-ink-muted">
+                <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Monthly target")}</span>
+                <span className="text-h2 leading-[normal] text-ink tabular-nums">{formatCurrency(overview.monthlyTarget, currency)}</span>
+                <span className="text-caption leading-[normal] font-normal text-ink-muted">
                   {activeGoals.length === 1
                     ? t("To reach {name} by {date}", { name: activeGoals[0].name, date: formatDate(activeGoals[0].targetDate, "MMM yyyy") })
                     : plural(t, activeCount, "Across {count} active goal", "Across {count} active goals")}
@@ -186,24 +186,26 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
             ) : (
               <div className="flex flex-col justify-center gap-3 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-small font-medium text-ink-muted">{t("Saved this month")}</span>
-                  <span className="text-caption font-semibold text-ink-2">
+                  <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Saved this month")}</span>
+                  <span className="text-caption leading-[normal] font-semibold text-ink-2">
                     {overview.monthlyProgressPercent}% {t("of target")}
                   </span>
                 </div>
-                <span className="text-h2 text-ink tabular-nums">
+                <span className="text-h2 leading-[normal] text-ink tabular-nums">
                   {formatCurrency(overview.savedThisMonth, currency)} <span className="text-body font-medium text-ink-muted">{t("of")} {formatCurrency(overview.monthlyTarget, currency)}</span>
                 </span>
                 <ProgressBar value={overview.monthlyProgressPercent} label={t("Saved this month")} />
-                <span className="text-caption font-normal text-ink-muted">
+                <span className="text-caption leading-[normal] font-normal text-ink-muted">
                   {t("Monthly target across")} {activeCount} {t(activeCount === 1 ? "active goal" : "active goals")}
                 </span>
               </div>
             )}
             <div className="flex flex-col justify-center gap-2 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
-              <span className="text-small font-medium text-ink-muted">{t("Savings rate")}</span>
-              <span className={cn("text-h1", !hasRate && "text-h2 text-ink-muted")}>{hasRate ? `${overview.savingsRatePercent}%` : "—"}</span>
-              <span className="text-caption font-normal text-ink-muted">{hasRate ? t("of this month's income") : t("Shows once you save and earn")}</span>
+              <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Savings rate")}</span>
+              <span className={cn("text-h1", !hasRate && "text-h2 text-ink-muted", "leading-[normal]")}>{hasRate ? `${overview.savingsRatePercent}%` : "—"}</span>
+              <span className="text-caption leading-[normal] font-normal text-ink-muted">
+                {hasRate ? t("of this month's income ({amount})", { amount: formatCurrency(overview.incomeThisMonth, currency) }) : t("Shows once you save and earn")}
+              </span>
             </div>
           </Card>
 
@@ -227,8 +229,8 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                   </GoalRing>
                   <div className="flex min-w-0 flex-1 flex-col gap-3">
                     <div className="flex items-center gap-3">
-                      <span className="truncate text-title text-ink">{goal.name}</span>
-                      <Chip tone={badge.chip} size="sm" className="font-semibold">
+                      <span className="truncate text-title leading-[normal] text-ink">{goal.name}</span>
+                      <Chip tone={badge.chip} size="sm" className="h-4.75 font-semibold">
                         {t(badge.label)}
                       </Chip>
                       <span className="flex-1" />
@@ -273,10 +275,10 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                         </DropdownMenu>
                       )}
                     </div>
-                    <span className="text-h2 tracking-[-0.01em] text-ink tabular-nums">
-                      {formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency)} <span className="text-small font-medium text-ink-muted">{t("of")} {formatCurrency(goal.targetAmount, currency)}</span>
+                    <span className="text-h2 leading-[normal] tracking-[-0.01em] text-ink tabular-nums">
+                      {formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency)} <span className="text-small leading-[normal] font-medium text-ink-muted">{t("of")} {formatCurrency(goal.targetAmount, currency)}</span>
                     </span>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-caption font-normal text-ink-muted">
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-caption leading-[normal] font-normal text-ink-muted">
                       <span className="flex items-center gap-1">
                         {!setup && <CalendarDays className="size-3.5" aria-hidden="true" />}
                         {formatDate(goal.targetDate, "MMM yyyy")} · {paused ? t("paused") : closed ? t("withdrawn") : `${left} ${t(left === 1 ? "month left" : "months left")}`}
@@ -307,7 +309,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                         </Button>
                       )}
                       {locked ? (
-                        <span className="text-caption font-normal text-ink-muted">{t("Needs a savings wallet")}</span>
+                        <span className="text-caption leading-[normal] font-normal text-ink-muted">{t("Needs a savings wallet")}</span>
                       ) : (
                         <button type="button" onClick={() => setDetail(goal)} className="text-small font-semibold text-emerald hover:text-emerald-hover">
                           {t("Details")}
@@ -323,8 +325,8 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                 <span className="flex size-10 items-center justify-center rounded-full bg-mint-50 text-emerald">
                   <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
                 </span>
-                <span className="text-body font-semibold text-ink">{t("New goal")}</span>
-                <span className="text-caption font-normal text-ink-muted">{t("Emergency fund, Hajj, a new bike…")}</span>
+                <span className="text-body leading-[normal] font-semibold text-ink">{t("New goal")}</span>
+                <span className="text-caption leading-[normal] font-normal text-ink-muted">{t("Emergency fund, Hajj, a new bike…")}</span>
               </button>
             )}
           </div>

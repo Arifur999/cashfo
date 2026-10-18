@@ -37,6 +37,7 @@ const EMPTY_OVERVIEW: SavingsOverview = {
   savedThisMonth: "0.00",
   monthlyProgressPercent: 0,
   savingsRatePercent: 0,
+  incomeThisMonth: "0.00",
 };
 
 export const getSavingsOverview = cache(async (businessId: string): Promise<SavingsOverview> => {

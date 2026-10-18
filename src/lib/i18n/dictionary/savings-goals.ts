@@ -80,7 +80,7 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "Across {count} active goal": "{count}টি সক্রিয় লক্ষ্য মিলিয়ে",
   "Across {count} active goals": "{count}টি সক্রিয় লক্ষ্য মিলিয়ে",
   "Savings rate": "সঞ্চয়ের হার",
-  "of this month's income": "এই মাসের আয়ের",
+  "of this month's income ({amount})": "এই মাসের আয়ের ({amount})",
   "Shows once you save and earn": "জমা ও আয় হলে দেখা যাবে",
   "Goal status": "লক্ষ্যের অবস্থা",
   "No goal here.": "এখানে কোনো লক্ষ্য নেই।",

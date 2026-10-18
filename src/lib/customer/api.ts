@@ -576,6 +576,7 @@ export interface SavingsOverview {
   savedThisMonth: string;
   monthlyProgressPercent: number;
   savingsRatePercent: number;
+  incomeThisMonth: string;
 }
 
 // Savings Overview page (/savings-goals/overview) -- same shape as
