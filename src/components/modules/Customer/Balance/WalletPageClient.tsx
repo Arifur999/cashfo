@@ -122,7 +122,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
       {/* Phone: the total, the share bar and the add button in one card. */}
       <Card padding="sm" elevated={false} className="flex flex-col gap-3 md:hidden">
         <span className="text-small leading-[normal] text-ink-muted">
-          {t("Available across")} {active.length} {t("wallets")}
+          {t("Available across {count} wallets", { count: active.length })}
         </span>
         <AmountText value={totalBalance} currency={currency} size="display" />
         <WalletShareBar slices={walletShares(wallets)} size="sm" label={t("Share of balance by wallet")} />

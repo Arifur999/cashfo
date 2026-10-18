@@ -35,8 +35,8 @@ export const balanceDictionary: Record<string, string> = {
 
   // My wallets (WalletPageClient.tsx, WalletCard.tsx)
   "The cash, bank and mobile accounts that hold your money.": "আপনার টাকা যেখানে থাকে: নগদ, ব্যাংক ও মোবাইল হিসাব।",
-  "Available across": "মোট",
-  wallets: "ওয়ালেটে",
+  // One key, so its "ওয়ালেটে" never overrides Home's bare "wallets".
+  "Available across {count} wallets": "মোট {count} ওয়ালেটে",
   Across: "মোট",
   "active wallets": "সক্রিয় ওয়ালেটে",
   "Opening balances": "প্রারম্ভিক ব্যালেন্স",
