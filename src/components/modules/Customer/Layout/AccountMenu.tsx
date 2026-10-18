@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Check, ChevronDown, Gift, Lock, LogOut, Settings, User, Users } from "lucide-react";
+import { Check, ChevronDown, Gift, Lock, LogOut, Settings, Store, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -68,7 +68,7 @@ export function AccountMenu() {
           <DropdownMenuLabel className="px-4 pt-1 pb-2 text-overline text-ink-muted uppercase">{t("Workspace")}</DropdownMenuLabel>
           <div role="menuitemradio" aria-checked="true" className="flex items-center gap-3 bg-mint-50 px-4 py-2 text-ink">
             <IconTile tone={kind === "Business" ? "loans" : "white"} size={32} className={cn(kind !== "Business" && "bg-surface")}>
-              {kind === "Business" ? <Briefcase /> : kind === "Group" ? <Users /> : <User />}
+              {kind === "Business" ? <Store /> : kind === "Group" ? <Users /> : <User />}
             </IconTile>
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-body font-semibold">{workspaceName}</span>
