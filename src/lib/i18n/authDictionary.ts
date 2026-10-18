@@ -177,4 +177,5 @@ export const bnAuthDictionary: Record<string, string> = {
   "A vault for every password": "প্রতিটি পাসওয়ার্ডের জন্য একটি ভল্ট",
   "Its own password, and it locks itself after a few minutes.": "আলাদা পাসওয়ার্ড, আর কয়েক মিনিট পর নিজেই লক হয়ে যায়।",
   "Sign in again": "আবার সাইন ইন করুন",
+  "Keep me signed in on this device": "এই ডিভাইসে সাইন ইন থাকুন",
 };
