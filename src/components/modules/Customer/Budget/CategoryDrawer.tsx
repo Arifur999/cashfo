@@ -168,7 +168,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
               <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Icon")}</legend>
               <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t("Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} />
-              <div className="grid max-h-56 grid-cols-8 gap-2 overflow-y-auto">
+              <div className="grid max-h-23 grid-cols-8 gap-2 overflow-y-auto">
                 {icons.length === 0 ? (
                   <p className="col-span-8 py-4 text-center text-small text-ink-muted">{t("No matching icon")}</p>
                 ) : (
