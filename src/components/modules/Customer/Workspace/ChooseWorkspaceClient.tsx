@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Briefcase, Check, Lock, LogOut, Plus, User } from "lucide-react";
+import { ArrowRight, Check, Lock, LogOut, Plus, Store, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { logoutAction } from "@/app/-actions/authActions";
@@ -84,7 +84,7 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
 
       <div className="mt-12 flex flex-col items-center gap-2 text-center md:mt-18">
         <h1 className="text-h1 text-ink md:text-display">{t("Which workspace?")}</h1>
-        <p className="max-w-2xl text-body-lg text-ink-muted">{t("Each workspace keeps its own money and books. You can come back here any time from your name at the top right.")}</p>
+        <p className="text-body-lg text-ink-muted">{t("Each workspace keeps its own money and books. You can come back here any time from your name at the top right.")}</p>
       </div>
 
       <div className="mt-10 grid w-full max-w-[880px] grid-cols-1 justify-center gap-5 sm:grid-cols-[repeat(auto-fit,280px)]">
@@ -108,7 +108,7 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
             >
               <div className="flex items-center justify-between">
                 <IconTile tone={isBusiness ? "loans" : "money"} size={44} className="rounded-md">
-                  {isBusiness ? <Briefcase /> : <User />}
+                  {isBusiness ? <Store /> : <User />}
                 </IconTile>
                 <span className="flex items-center gap-3">
                   {business.hasPinLock && (
