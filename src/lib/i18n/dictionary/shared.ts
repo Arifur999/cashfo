@@ -67,8 +67,8 @@ export const sharedDictionary: Record<string, string> = {
     "এটি সরে গেছে, অথবা লিংকটি ভুল লেখা হয়েছে। লেনদেন বা লক্ষ্য হলে অন্য ডিভাইস থেকে মুছে ফেলা হয়ে থাকতে পারে।",
   "Scheduled maintenance": "নির্ধারিত রক্ষণাবেক্ষণ",
   "is getting an upgrade": "আপগ্রেড হচ্ছে",
-  "Your data is safe and you can still read everything. Changes are paused for a short while so nothing gets lost.":
-    "আপনার তথ্য নিরাপদ এবং সবকিছু দেখতে পারবেন। কিছু যেন না হারায় সেজন্য অল্প সময়ের জন্য পরিবর্তন বন্ধ আছে।",
+  "Your data is safe. Everything is paused for a short while so nothing gets lost.":
+    "আপনার তথ্য নিরাপদ আছে। কিছু যেন না হারায় সেজন্য অল্প সময়ের জন্য সবকিছু বন্ধ আছে।",
   "Write to support": "সাপোর্টকে লিখুন",
   "Message from the team": "টিমের বার্তা",
   // app/error.tsx

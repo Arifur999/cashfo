@@ -32,7 +32,7 @@ export default async function MaintenancePage() {
       tone="warning"
       reference={t("Scheduled maintenance")}
       title={`${BRAND_NAME} ${t("is getting an upgrade")}`}
-      description={t("Your data is safe and you can still read everything. Changes are paused for a short while so nothing gets lost.")}
+      description={t("Your data is safe. Everything is paused for a short while so nothing gets lost.")}
       actions={
         <>
           <Button size="xl" asChild>
