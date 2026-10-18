@@ -307,8 +307,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
 
       {wide ? (
         <>
-          <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-          {isTransfer && <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} />}
+          <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+          {isTransfer && <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />}
           <div className="grid grid-cols-[170px_minmax(0,1fr)] gap-3">
             <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
               <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />

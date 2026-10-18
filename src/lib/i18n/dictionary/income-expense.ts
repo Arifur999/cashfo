@@ -196,7 +196,7 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "add one under Budget": "বাজেটে একটি যোগ করুন",
   "Weekly groceries": "সাপ্তাহিক বাজার",
   "Save & add another": "সংরক্ষণ করে আরেকটি",
-  "after this": "এটির পর",
+  "{amount} after this": "এটির পর {amount}",
   "No wallet yet": "এখনো ওয়ালেট নেই",
   "Failed to add income": "আয় যোগ করতে ব্যর্থ হয়েছে",
 

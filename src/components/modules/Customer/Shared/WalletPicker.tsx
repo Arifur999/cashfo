@@ -29,8 +29,10 @@ export interface WalletPickerProps {
   savingsWallets?: Account[];
   value: string;
   onChange: (id: string) => void;
-  // The wallet's balance once this entry is saved.
+  // The wallet's balance once this entry is saved: "→ ৳ 7,200", or in
+  // words ("· ৳ 7,200 after this") where the board writes it so.
   after: number | null;
+  afterInWords?: boolean;
   // Wallets holding less than this are greyed out ("not enough").
   minBalance?: number;
   currency: string;
@@ -40,7 +42,7 @@ export interface WalletPickerProps {
 }
 
 // The wallet to pay from or into: its icon, name, balance now and after.
-export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, minBalance = 0, currency, loading, error, onClose }: WalletPickerProps) {
+export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, afterInWords = false, minBalance = 0, currency, loading, error, onClose }: WalletPickerProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const all = [...wallets, ...savingsWallets];
@@ -108,7 +110,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
                   <span className="truncate text-caption font-normal text-ink-muted tabular-nums">
                     {isSavings(selected) ? `${t("Savings wallet")} · ` : `${t(balanceLabel)} `}
                     {formatCurrency(selected.currentBalance, currency)}
-                    {after !== null && ` → ${formatCurrency(after, currency)}`}
+                    {after !== null && (afterInWords ? ` · ${t("{amount} after this", { amount: formatCurrency(after, currency) })}` : ` → ${formatCurrency(after, currency)}`)}
                   </span>
                 </span>
               </>

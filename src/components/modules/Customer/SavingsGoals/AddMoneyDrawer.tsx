@@ -149,7 +149,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
               )}
             </Field>
 
-            <WalletPicker label={t("Take it from")} wallets={wallets} value={fromId} onChange={setFromId} after={from ? Number(from.currentBalance) - value : null} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+            <WalletPicker label={t("Take it from")} balanceLabel="Available@@balance" tone="sand" wallets={wallets} value={fromId} onChange={setFromId} after={null} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
             <WalletPicker label={t("Keep it in")} variant="savings" wallets={savingsWallets} value={intoId} onChange={setIntoId} after={null} currency={currency} loading={loading} error={null} onClose={onClose} />
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">

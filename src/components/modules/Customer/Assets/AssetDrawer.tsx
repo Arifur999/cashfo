@@ -180,7 +180,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
               />
             </Field>
 
-            {buying && <WalletPicker label={t("Pay from")} wallets={wallets} savingsWallets={savingsWallets} value={walletId} onChange={setWalletId} after={wallet && value > 0 ? Number(wallet.currentBalance) - value : null} minBalance={value} currency={currency} loading={loading} error={walletsError} onClose={onClose} />}
+            {buying && <WalletPicker label={t("Pay from")} balanceLabel="Available@@balance" tone="sand" wallets={wallets} savingsWallets={savingsWallets} value={walletId} onChange={setWalletId} after={null} minBalance={value} currency={currency} loading={loading} error={walletsError} onClose={onClose} />}
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="asset-date" label={label(buying ? t("Date") : t("Bought on"))}>
