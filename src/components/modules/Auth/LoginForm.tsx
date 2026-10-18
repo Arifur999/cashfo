@@ -43,7 +43,7 @@ const LoginForm = ({ redirectTo, again = false }: { redirectTo?: string; again?:
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
       <form.Field name="email" validators={{ onChange: loginFormZodSchema.shape.email }}>
-        {(field) => <AppField field={field} label={translate("Email")} type="email" size="auth" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
+        {(field) => <AppField field={field} label={translate("Email")} type="email" size="signIn" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
       </form.Field>
 
       <form.Field name="password" validators={{ onChange: loginFormZodSchema.shape.password }}>
@@ -51,7 +51,7 @@ const LoginForm = ({ redirectTo, again = false }: { redirectTo?: string; again?:
           <AppPasswordField
             field={field}
             label={translate("Password")}
-            size="auth"
+            size="signIn"
             prepend={<Lock />}
             autoComplete="current-password"
             placeholder={translate("Enter your password")}

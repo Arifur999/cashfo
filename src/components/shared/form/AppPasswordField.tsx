@@ -33,7 +33,7 @@ const AppPasswordField = ({ field, label, autoComplete, placeholder, prepend, as
       aside={aside}
       description={description}
       size={size}
-      append={<PasswordRevealButton visible={visible} onToggle={() => setVisible((value) => !value)} size={size === "xl" ? "lg" : size === "auth" ? "auth" : "sm"} />}
+      append={<PasswordRevealButton visible={visible} onToggle={() => setVisible((value) => !value)} size={size === "xl" ? "lg" : size === "auth" ? "auth" : size === "signIn" ? "signIn" : "sm"} />}
     />
   );
 };
