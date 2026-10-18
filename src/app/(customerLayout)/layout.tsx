@@ -3,6 +3,7 @@ import { AnnouncementBanner } from "@/components/modules/Customer/Layout/Announc
 import { AppSidebar } from "@/components/modules/Customer/Layout/AppSidebar";
 import { AppTopbar } from "@/components/modules/Customer/Layout/AppTopbar";
 import { OwnerViewBanner } from "@/components/modules/Customer/Layout/OwnerViewBanner";
+import { PhoneTopbarProvider } from "@/components/modules/Customer/Layout/PhoneTopbarExtras";
 import { QuickAddFab } from "@/components/modules/Customer/Layout/QuickAddFab";
 import { AuthProvider } from "@/components/modules/Customer/Providers/AuthProvider";
 import { PlatformProvider } from "@/components/modules/Customer/Providers/PlatformProvider";
@@ -64,21 +65,23 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
         <LocaleProvider initialLocale={locale} overrides={overrides}>
           <PlatformProvider value={{ flags: platform.flags, supportEmail: platform.supportEmail }}>
             <TodayTasksProvider>
-              {/* The Night sidebar on the left; the top bar and the one
-                  scrolling region on the right. */}
-              <div className="flex h-screen overflow-hidden bg-cream print:block print:h-auto print:overflow-visible">
-                <AppSidebar />
-                <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
-                  {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
-                  <AppTopbar />
-                  {/* id + tabIndex give the root layout's skip link a target. */}
-                  <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
-                    <AnnouncementBanner announcements={platform.announcements} />
-                    {children}
-                  </main>
+              <PhoneTopbarProvider>
+                {/* The Night sidebar on the left; the top bar and the one
+                    scrolling region on the right. */}
+                <div className="flex h-screen overflow-hidden bg-cream print:block print:h-auto print:overflow-visible">
+                  <AppSidebar />
+                  <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
+                    {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
+                    <AppTopbar />
+                    {/* id + tabIndex give the root layout's skip link a target. */}
+                    <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
+                      <AnnouncementBanner announcements={platform.announcements} />
+                      {children}
+                    </main>
+                  </div>
                 </div>
-              </div>
-              <QuickAddFab />
+                <QuickAddFab />
+              </PhoneTopbarProvider>
             </TodayTasksProvider>
           </PlatformProvider>
         </LocaleProvider>
