@@ -40,6 +40,7 @@ import {
   getTokenSecondsRemaining,
   isTokenExpiringSoon,
   REFRESH_TOKEN_COOKIE,
+  SESSION_ONLY_COOKIE,
 } from "./lib/tokenUtils";
 import { refreshAccessToken } from "./services/auth.services";
 import type { IAccessTokenPayload } from "./types/auth.types";
@@ -47,6 +48,7 @@ import type { IAccessTokenPayload } from "./types/auth.types";
 const withoutAuthCookies = (response: NextResponse) => {
   response.cookies.delete(ACCESS_TOKEN_COOKIE);
   response.cookies.delete(REFRESH_TOKEN_COOKIE);
+  response.cookies.delete(SESSION_ONLY_COOKIE);
   return response;
 };
 
@@ -88,12 +90,14 @@ export async function proxy(request: NextRequest) {
   const withRefreshedCookie = (response: NextResponse) => {
     if (refreshedAccessToken) {
       const remaining = getTokenSecondsRemaining(refreshedAccessToken);
+      // A sign-in that didn't stay signed in keeps a browser-session cookie.
+      const sessionOnly = request.cookies.get(SESSION_ONLY_COOKIE)?.value === "1";
       response.cookies.set(ACCESS_TOKEN_COOKIE, refreshedAccessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: remaining > 0 ? remaining : ACCESS_TOKEN_MAX_AGE_SECONDS,
+        ...(!sessionOnly && { maxAge: remaining > 0 ? remaining : ACCESS_TOKEN_MAX_AGE_SECONDS }),
       });
     }
     return response;

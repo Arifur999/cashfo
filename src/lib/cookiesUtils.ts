@@ -5,15 +5,16 @@ const isProd = process.env.NODE_ENV === "production";
 
 // httpOnly because the browser never needs to read these -- every backend
 // call goes through this Next.js server. `lax` (not `strict`) so a top-level
-// navigation from an emailed /admin link still carries the session.
-export const setCookie = async (name: string, value: string, maxAgeInSeconds: number) => {
+// navigation from an emailed /admin link still carries the session. A null
+// lifetime makes a browser-session cookie, gone when the browser closes.
+export const setCookie = async (name: string, value: string, maxAgeInSeconds: number | null) => {
   const cookieStore = await cookies();
   cookieStore.set(name, value, {
     httpOnly: true,
     secure: isProd,
     sameSite: "lax",
     path: "/",
-    maxAge: maxAgeInSeconds,
+    ...(maxAgeInSeconds !== null && { maxAge: maxAgeInSeconds }),
   });
 };
 
