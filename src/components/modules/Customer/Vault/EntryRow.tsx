@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, KeyRound } from "lucide-react";
+import { Copy, KeyRound, UserRound } from "lucide-react";
 import { SOFT_TONE } from "@/components/smartly/tones";
 import type { VaultEntrySummary } from "@/lib/customer/api";
 import { avatarLetter } from "@/lib/customer/vaultDisplay";
@@ -16,26 +16,28 @@ interface EntryRowProps {
   onCopyPassword: () => void;
 }
 
-const ICON_BUTTON = "flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-cream hover:text-ink disabled:opacity-40";
+const ICON_BUTTON = "flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-cream hover:text-ink disabled:opacity-40 md:size-8 md:text-ink-muted [&_svg]:size-4.5 md:[&_svg]:size-4";
 
 // One login in the list: a letter, the name and the username, and copy
-// buttons for the username and the password.
+// buttons for the username and the password. Phones get the board's taller
+// row, a person for the username and 44px buttons.
 export function EntryRow({ entry, selected, onSelect, onCopyUsername, onCopyPassword }: EntryRowProps) {
   const { t } = useLocale();
   return (
-    <div className={cn("flex min-h-12.5 items-center gap-3 border-b border-surface-sunken py-1 pr-3 pl-4 last:border-b-0", selected ? "bg-mint-50 shadow-[inset_3px_0_0_var(--emerald)]" : "hover:bg-cream/60")}>
+    <div className={cn("box-content flex min-h-16 items-center gap-3 border-b border-surface-sunken pr-2 pl-4 max-md:bg-surface md:box-border md:min-h-12.5 md:py-1 md:pr-3 md:last:border-b-0", selected ? "bg-mint-50 shadow-[inset_3px_0_0_var(--emerald)]" : "hover:bg-cream/60")}>
       <button type="button" onClick={onSelect} aria-current={selected || undefined} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-        <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md text-body font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>{avatarLetter(entry.title)}</span>
-        <span className="flex min-w-0 flex-col gap-px">
-          <span className="truncate text-body font-semibold text-ink">{entry.title}</span>
+        <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-md text-body-lg font-bold md:size-8 md:text-body", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>{avatarLetter(entry.title)}</span>
+        <span className="flex min-w-0 flex-col gap-0.5 md:gap-px">
+          <span className="truncate text-body-lg font-semibold text-ink md:text-body">{entry.title}</span>
           {entry.usernameOrEmail && <span className="truncate text-small text-ink-muted">{entry.usernameOrEmail}</span>}
         </span>
       </button>
       <button type="button" onClick={onCopyUsername} disabled={!entry.usernameOrEmail} aria-label={`${t("Copy username for")} ${entry.title}`} title={t("Copy username")} className={ICON_BUTTON}>
-        <Copy className="size-4" aria-hidden="true" />
+        <UserRound className="md:hidden" aria-hidden="true" />
+        <Copy className="max-md:hidden" aria-hidden="true" />
       </button>
       <button type="button" onClick={onCopyPassword} aria-label={`${t("Copy password for")} ${entry.title}`} title={t("Copy password")} className={ICON_BUTTON}>
-        <KeyRound className="size-4" aria-hidden="true" />
+        <KeyRound aria-hidden="true" />
       </button>
     </div>
   );
