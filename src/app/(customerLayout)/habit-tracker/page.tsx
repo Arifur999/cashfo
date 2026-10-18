@@ -3,12 +3,13 @@ import { HabitsHomePageClient } from "@/components/modules/Customer/HabitTracker
 import type { HabitsHomeData } from "@/components/modules/Customer/HabitTracker/Home/homeTypes";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
+import { greetingFor, hourIn } from "@/lib/customer/greeting";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
 import { getHabitMonth, getHabits, getHabitsToday, getHabitTrackers } from "@/lib/customer/habits";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { listFor } from "@/lib/customer/todoDisplay";
 import { getTodoLists } from "@/lib/customer/todos";
-import { getAppToday } from "@/lib/date";
+import { APP_TIME_ZONE, getAppToday } from "@/lib/date";
 
 // Habits › Today: the day across every habit feature. Personal
 // (user-scoped), not a workspace's.
@@ -31,6 +32,19 @@ export default async function HabitsTodayPage() {
     getTodoLists(),
   ]);
 
-  const data: HabitsHomeData = { today, todayList: listFor(todoLists, today), namaz, habits, todayRows, logs: [...lastMonth.logs, ...thisMonth.logs], books, skills, challenges, ramadan };
+  const data: HabitsHomeData = {
+    today,
+    greeting: greetingFor(hourIn(APP_TIME_ZONE)),
+    firstName: user.name.trim().split(/\s+/)[0] || user.name,
+    todayList: listFor(todoLists, today),
+    namaz,
+    habits,
+    todayRows,
+    logs: [...lastMonth.logs, ...thisMonth.logs],
+    books,
+    skills,
+    challenges,
+    ramadan,
+  };
   return <HabitsHomePageClient data={data} />;
 }

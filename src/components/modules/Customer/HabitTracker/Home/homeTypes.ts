@@ -3,6 +3,9 @@ import type { BooksOverview, Habit, HabitMonthLog, HabitMonthTracker, HabitToday
 // Everything the Today page reads, gathered by the server page in one go.
 export interface HabitsHomeData {
   today: string;
+  // "Good afternoon" and the reader's first name, for the phone's heading.
+  greeting: "Good morning" | "Good afternoon" | "Good evening";
+  firstName: string;
   todayList: TodoList | null;
   namaz: HabitMonthTracker[];
   habits: Habit[];
