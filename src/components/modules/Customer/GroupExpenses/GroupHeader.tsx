@@ -11,6 +11,7 @@ import { GROUP_TAB_LABELS, GROUP_TABS, type GroupTab } from "@/lib/customer/grou
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 
 interface GroupHeaderProps {
   businessId: string;
@@ -39,6 +40,7 @@ export function GroupHeader({ businessId, name, members, tab, monthKey, months, 
 
   return (
     <div className="flex flex-col gap-4">
+      <TopbarExtras record={name} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           <IconTile tone="money" size={48} className="rounded-lg [&_svg]:size-6">

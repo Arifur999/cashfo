@@ -19,6 +19,7 @@ import { categoryIndex, describeTransaction } from "@/lib/customer/transactionRo
 import { getTransaction } from "@/lib/customer/transactions";
 import { getTranslator } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 
 const ACCOUNT_KIND: Record<string, string> = {
   ASSET: "Wallet",
@@ -96,6 +97,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
 
   return (
     <PageFrame className="gap-6">
+      <TopbarExtras record={title} />
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
           <Link href="/transactions" className="mb-1 inline-flex items-center gap-2 text-small font-semibold text-emerald hover:text-emerald-hover">

@@ -18,6 +18,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { withCheck } from "../trackerChecks";
 import { PrayerSheet } from "./PrayerSheet";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 
 interface NamazSheetPageClientProps {
   tracker: HabitMonthTracker;
@@ -92,6 +93,7 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
 
   return (
     <PageFrame className="gap-5">
+      <TopbarExtras record={monthName(key, locale, "long", true)} />
       <PageHeader
         eyebrow={
           <span className="flex flex-col gap-1">

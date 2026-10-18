@@ -22,6 +22,7 @@ import { RangePicker, type RangeChange } from "../shared/RangePicker";
 import { StatStrip } from "../shared/StatStrip";
 import { AccountDrawer } from "./AccountDrawer";
 import { LedgerTable } from "./LedgerTable";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 
 interface AccountDetailPageClientProps {
   businessId: string;
@@ -77,6 +78,7 @@ export function AccountDetailPageClient({ businessId, account, accounts, ledger,
     <PageFrame className="gap-6">
       <div className="flex flex-col gap-1">
         <BackLink href="/accounts">{t("All accounts")}</BackLink>
+        <TopbarExtras record={name} />
         <PageHeader
           eyebrow={`${t("Books")} › ${t("Accounts")}`}
           tone="neutral"
