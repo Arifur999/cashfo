@@ -144,7 +144,7 @@ export function PinCard({ businessId, businessName, isOwner, onOpened, cancelLab
         </Button>
         <Button type="submit" disabled={isPending || (forgot ? !password : pin.length < 4)}>
           {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-          {forgot ? t("Remove PIN") : t("Open")}
+          {forgot ? t("Remove PIN") : t("Open workspace")}
         </Button>
       </div>
     </AppForm>

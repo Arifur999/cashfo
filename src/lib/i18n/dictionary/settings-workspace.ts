@@ -109,6 +109,7 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "inside any workspace.": "থেকে, যেকোনো ওয়ার্কস্পেসের ভেতরে।",
   Open: "খুলুন",
   "Enter the PIN for": "পিন লিখুন:",
+  "Open workspace": "ওয়ার্কস্পেস খুলুন",
   "has a PIN so others using this device can't open its books.": "-এ পিন দেওয়া আছে, যাতে এই ডিভাইসের অন্য কেউ এর খাতা খুলতে না পারে।",
   "Remove the PIN with your account password": "অ্যাকাউন্টের পাসওয়ার্ড দিয়ে পিন সরান",
   "Forgot the PIN?": "পিন ভুলে গেছেন?",
