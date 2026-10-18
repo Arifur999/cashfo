@@ -164,7 +164,9 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
     </Button>
   );
 
-  const searchForm = (
+  // The desktop board's placeholder trails off ("Search notes…"); the
+  // phone board's doesn't.
+  const searchForm = (placeholder: string) => (
     <form
       onSubmit={(event) => {
         event.preventDefault();
@@ -178,7 +180,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         leading={<Search />}
-        placeholder={t("Search notes…")}
+        placeholder={placeholder}
         aria-label={t("Search transactions")}
         frameClassName="h-12 md:h-9.5 md:w-65"
       />
@@ -189,7 +191,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
     <>
       {/* Desktop: one bar. */}
       <div className="hidden flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3 shadow-card md:flex">
-        {searchForm}
+        {searchForm(t("Search notes…"))}
         <SegmentedControl options={typeOptions} value={type} onChange={(value) => update({ type: value })} label={t("Type")} />
         {selects}
         {dateRange}
@@ -197,9 +199,9 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
       </div>
 
       {/* Phone: search beside a filter button that opens the sheet; chips say what is on. */}
-      <div className="flex flex-col gap-3 md:hidden">
+      <div className="flex flex-col gap-4 md:hidden">
         <div className="flex gap-2">
-          {searchForm}
+          {searchForm(t("Search notes"))}
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <button type="button" aria-label={`${t("Filters")}${activeCount ? `, ${activeCount} ${t("on")}` : ""}`} className="relative flex size-12 shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink">

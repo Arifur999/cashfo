@@ -92,10 +92,10 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       {/* Two small cards on a phone; one strip of four on wider screens. */}
       <Card padding="none" className="grid grid-cols-2 max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4">
         <TotalCell label={t("Income")} phoneLabel={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
-          <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className="text-h3 md:text-h2" />
+          <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className={PHONE_FIGURE} />
         </TotalCell>
         <TotalCell label={t("Expense")} phoneLabel={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
-          <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className="text-h3 md:text-h2" />
+          <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className={PHONE_FIGURE} />
         </TotalCell>
         <TotalCell label={t("Net")} divided className="max-md:hidden">
           <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-h2" />
@@ -166,7 +166,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           <div className="flex flex-col md:hidden">
             {groups.map((group) => (
               <div key={group.day}>
-                <div className="flex justify-between px-1 pt-4 pb-2 text-small font-semibold text-ink-2">
+                <div className="flex justify-between px-1 pt-4 pb-2 text-small leading-[normal] font-semibold text-ink-2">
                   <span>{dayHeading(group.day, today, t)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>
@@ -196,12 +196,16 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   );
 }
 
+// The money in and out figures: 18px bold on a 1.2 line on phones, the
+// h2 on wider screens.
+const PHONE_FIGURE = "text-h3 max-md:leading-[1.2] max-md:font-bold md:text-h2";
+
 // The desktop board says Income and Expense; the phone board, Money in and
 // Money out (phoneLabel).
 function TotalCell({ label, phoneLabel = label, children, divided = false, className }: { label: string; phoneLabel?: string; children: React.ReactNode; divided?: boolean; className?: string }) {
   return (
     <div className={cn("flex flex-col gap-1 px-4 py-3 md:px-5 md:py-4", divided && "md:border-l md:border-line", className)}>
-      <span className="text-caption font-normal text-ink-muted md:hidden">{phoneLabel}</span>
+      <span className="text-small font-normal text-ink-muted md:hidden">{phoneLabel}</span>
       <span className="text-small font-normal text-ink-muted max-md:hidden">{label}</span>
       {children}
     </div>
@@ -267,7 +271,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
 function PhoneRow({ row, currency, divided }: { row: TransactionRow; currency: string; divided: boolean }) {
   const { t } = useLocale();
   return (
-    <Link href={`/transactions/${row.transaction.id}`} className={cn("grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4", divided && "border-t border-surface-sunken", row.cancelled && "opacity-60")}>
+    <Link href={`/transactions/${row.transaction.id}`} className={cn("box-content grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4", divided && "border-t border-surface-sunken", row.cancelled && "opacity-60")}>
       <CategoryTile row={row} size={40} />
       <span className="flex min-w-0 flex-col">
         <span className={cn("truncate text-title text-ink", row.cancelled && "line-through")}>{row.title ?? t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType])}</span>
