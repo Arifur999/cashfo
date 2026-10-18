@@ -45,6 +45,15 @@ export const toDateInputValue = (value: DateInput) => formatDate(value, "yyyy-MM
 // component.
 export const getAppToday = () => toDateInputValue(new Date());
 
+// A form's day as the boards write it: "Today, 2 Oct", else "30 Sep 2026".
+// `day` and `today` are "YYYY-MM-DD"; `todayWord` is "Today" in the
+// reader's language.
+export const formDayLabel = (day: string, today: string, todayWord: string): string => {
+  if (!day) return "";
+  const instant = `${day}T00:00:00.000Z`;
+  return day === today ? `${todayWord}, ${formatDate(instant, "d MMM")}` : formatDate(instant, "d MMM yyyy");
+};
+
 const parseDay = (day: string) => {
   const [year, month, date] = day.split("-").map(Number);
   return { year, monthIndex: month - 1, date };
