@@ -1,7 +1,8 @@
 "use client";
 
-import { Calendar, ChevronDown, Lock, Plus, UserPlus, Users, Wallet } from "lucide-react";
+import { Banknote, Calendar, ChevronDown, LayoutDashboard, Lock, type LucideIcon, Plus, Receipt, Scale, Settings, UserPlus, Users, Wallet } from "lucide-react";
 import Link from "next/link";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
@@ -11,7 +12,16 @@ import { GROUP_TAB_LABELS, GROUP_TABS, type GroupTab } from "@/lib/customer/grou
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
+
+// Each section's icon in the tab bar, as the board draws them.
+const TAB_ICONS: Record<GroupTab, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  members: Users,
+  contributions: Banknote,
+  expenses: Receipt,
+  settlement: Scale,
+  settings: Settings,
+};
 
 interface GroupHeaderProps {
   businessId: string;
@@ -103,6 +113,7 @@ export function GroupHeader({ businessId, name, members, tab, monthKey, months, 
       <nav role="tablist" aria-label={t("Group sections")} className="-mx-4 flex gap-1 overflow-x-auto border-b border-line px-4 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden">
         {GROUP_TABS.map((value) => {
           const on = value === tab;
+          const Icon = TAB_ICONS[value];
           return (
             <Link
               key={value}
@@ -111,6 +122,7 @@ export function GroupHeader({ businessId, name, members, tab, monthKey, months, 
               href={{ pathname: `/group-expenses/${businessId}`, query: { tab: value, month: monthKey } }}
               className={cn("relative flex h-10.5 shrink-0 items-center gap-2 px-3 text-body transition-colors", on ? "font-semibold text-emerald" : "font-medium text-ink-2 hover:text-ink")}
             >
+              <Icon className={cn("size-4 shrink-0", on ? "text-emerald" : "text-ink-muted")} aria-hidden="true" />
               {t(GROUP_TAB_LABELS[value])}
               {on && <span aria-hidden="true" className="absolute right-2 -bottom-px left-2 h-0.5 rounded-sm bg-emerald" />}
             </Link>

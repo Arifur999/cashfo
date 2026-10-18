@@ -107,7 +107,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, s
           <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
             {t("Not yet")}
           </Button>
-          <Button type="button" onClick={confirm} disabled={isPending} className="px-5">
+          <Button type="button" variant="action" onClick={confirm} disabled={isPending} className="px-5">
             {isPending && <Loader />}
             {t("Close")} {monthName(range.key, locale)}
           </Button>

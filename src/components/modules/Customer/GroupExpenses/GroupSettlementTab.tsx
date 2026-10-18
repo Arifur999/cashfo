@@ -51,7 +51,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
             {month} {t("is closed")}
           </span>
         ) : (
-          <Button onClick={onCloseMonth} disabled={rows.length === 0}>
+          <Button variant="action" onClick={onCloseMonth} disabled={rows.length === 0}>
             <Lock />
             {t("Close")} {month}
           </Button>
