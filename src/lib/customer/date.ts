@@ -1,4 +1,5 @@
 import { formatDate as formatInAppTimeZone } from "@/lib/date";
+import { inEnglish, plural, type Translate } from "@/lib/i18n/message";
 
 // Shared date-display utility -- a compact "14 Sep 2026" style for table
 // cells, distinct from DatePicker's own longer "September 14th, 2026" (too
@@ -12,6 +13,19 @@ export function formatDate(value: string | Date, pattern = "d MMM yyyy"): string
 
 export function formatDateTime(value: string | Date): string {
   return formatInAppTimeZone(value, "d MMM yyyy, h:mm a");
+}
+
+// "5 minutes ago", "2 hours ago", "3 days ago", then the date: how long
+// ago something last happened, as the Security board says it of a device.
+export function formatTimeAgo(value: string | Date, t: Translate = inEnglish, now: Date = new Date()): string {
+  const minutes = Math.max(0, Math.floor((now.getTime() - new Date(value).getTime()) / 60_000));
+  if (minutes < 1) return t("just now");
+  if (minutes < 60) return plural(t, minutes, "{count} minute ago", "{count} minutes ago");
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return plural(t, hours, "{count} hour ago", "{count} hours ago");
+  const days = Math.floor(hours / 24);
+  if (days < 30) return plural(t, days, "{count} day ago", "{count} days ago");
+  return formatDate(value);
 }
 
 // Whole calendar months from `from` to `to`, floored -- used to auto-derive
