@@ -13,13 +13,13 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { updateAssetValueAction } from "@/lib/customer/assetActions";
 import { categoryVisual, gainChip, lastValued } from "@/lib/customer/assetDisplay";
-import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import DayInput from "@/components/smartly/form/DayInput";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 
 interface UpdateValueDrawerProps {
   open: boolean;
@@ -125,19 +125,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
             </div>
 
             <Field htmlFor="upd-value" label={label(t("New value"))}>
-              <Input
-                id="upd-value"
-                type="text"
-                inputMode="decimal"
-                size="xl"
-                value={value}
-                onChange={(event) => setValue(normalizeMoneyInput(event.target.value))}
-                placeholder="0"
-                autoFocus
-                leading={<span className="flex h-14 w-13 items-center justify-center border-r border-line bg-cream text-h2 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                frameClassName="h-14 gap-0 overflow-hidden pl-0"
-                className="pl-4 text-h2 tabular-nums"
-              />
+              <AmountInput id="upd-value" value={value} onChange={setValue} currency={currency} autoFocus />
               {next > 0 && (
                 <div className="flex flex-wrap gap-2">
                   <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-caption font-semibold tabular-nums", CHIP[sinceLast.tone])}>

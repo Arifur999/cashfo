@@ -14,15 +14,15 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { sellAssetAction } from "@/lib/customer/assetActions";
 import { categoryVisual } from "@/lib/customer/assetDisplay";
-import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import DayInput from "@/components/smartly/form/DayInput";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 
 const BOX = { income: "bg-mint-50 text-income", expense: "bg-expense-soft text-expense", neutral: "bg-cream text-ink-2" } as const;
 
@@ -154,19 +154,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
             </div>
 
             <Field htmlFor="sell-price" label={label(t("Sale price"))}>
-              <Input
-                id="sell-price"
-                type="text"
-                inputMode="decimal"
-                size="xl"
-                value={price}
-                onChange={(event) => setPrice(normalizeMoneyInput(event.target.value))}
-                placeholder="0"
-                autoFocus
-                leading={<span className="flex h-14 w-13 items-center justify-center border-r border-line bg-cream text-h2 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                frameClassName="h-14 gap-0 overflow-hidden pl-0"
-                className="pl-4 text-h2 tabular-nums"
-              />
+              <AmountInput id="sell-price" value={price} onChange={setPrice} currency={currency} autoFocus />
               {value > 0 && (
                 <div className="grid grid-cols-2 gap-2">
                   <span className={cn("flex flex-col gap-0.5 rounded-md p-3", BOX[vsPaid.tone])}>
