@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Plus, Search } from "lucide-react";
+import { PhoneTopbarExtras } from "@/components/modules/Customer/Layout/PhoneTopbarExtras";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
@@ -110,7 +111,21 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
 
   return (
     <PageFrame className="gap-4">
+      <PhoneTopbarExtras
+        subtitle={
+          <span role="timer" aria-label={`${t("Vault locks in")} ${countdownText(msLeft)}`} className="flex items-center gap-1 text-caption font-normal text-emerald tabular-nums">
+            <span className="size-1.75 rounded-full bg-emerald" aria-hidden="true" />
+            {t("Unlocked")} · {t("locks in")} {countdownText(msLeft)}
+          </span>
+        }
+        action={
+          <button type="button" onClick={onLock} aria-label={t("Lock now")} title={t("Lock now")} className="flex h-11 w-10 items-center justify-center rounded-md text-ink-2">
+            <Lock className="size-5" aria-hidden="true" />
+          </button>
+        }
+      />
       <PageHeader
+        className="max-md:hidden"
         eyebrow={t("Security")}
         tone="vault"
         title={t("Password vault")}
@@ -137,30 +152,42 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
         <VaultEmpty onPick={openAdd} />
       ) : (
         <>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Input size="md" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${t("Search")} ${entries.length} ${t(entries.length === 1 ? "login by name, username or website" : "logins by name, username or website")}`} aria-label={t("Search logins")} leading={<Search />} frameClassName="flex-1" />
-            <NativeSelect size="md" value={sort} onChange={(event) => setSort(event.target.value as VaultSort)} aria-label={t("Sort")} frameClassName="sm:w-52">
-              {VAULT_SORTS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t("Sort")}: {t(option.label)}
-                </option>
-              ))}
-            </NativeSelect>
+          {/* Phones: one white band under the bar with the search and the chips. */}
+          <div className="-mx-4 -mt-5 flex flex-col gap-3 border-b border-line bg-surface px-4 pt-3 pb-2 md:contents">
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={`${t("Search")} ${entries.length} ${t(entries.length === 1 ? "login" : "logins")}`}
+              aria-label={t("Search logins")}
+              leading={<Search />}
+              size="md"
+              frameClassName="h-11.5 rounded-lg bg-cream text-body-lg md:hidden"
+            />
+            <div className="flex flex-col gap-3 max-md:hidden sm:flex-row">
+              <Input size="md" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${t("Search")} ${entries.length} ${t(entries.length === 1 ? "login by name, username or website" : "logins by name, username or website")}`} aria-label={t("Search logins")} leading={<Search />} frameClassName="flex-1" />
+              <NativeSelect size="md" value={sort} onChange={(event) => setSort(event.target.value as VaultSort)} aria-label={t("Sort")} frameClassName="sm:w-52">
+                {VAULT_SORTS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t("Sort")}: {t(option.label)}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+
+            <div role="tablist" aria-label={t("Filter")} className="-mx-4 flex gap-2 overflow-x-auto px-4 lg:hidden">
+              {(["", ...VAULT_CATEGORIES] as const).map((value) => {
+                const on = category === value;
+                const count = value === "" ? entries.length : counts[value];
+                return (
+                  <button key={value || "all"} type="button" role="tab" aria-selected={on} onClick={() => setCategory(value)} className={cn("flex h-8.5 shrink-0 items-center gap-1.5 rounded-full px-3 text-small font-medium", on ? "bg-emerald font-semibold text-white" : "border border-line bg-surface text-ink-2")}>
+                    {value === "" ? t("All") : t(VAULT_CATEGORY_LABELS[value])} <span className="opacity-70">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div role="tablist" aria-label={t("Filter")} className="-mx-4 flex gap-2 overflow-x-auto px-4 lg:hidden">
-            {(["", ...VAULT_CATEGORIES] as const).map((value) => {
-              const on = category === value;
-              const count = value === "" ? entries.length : counts[value];
-              return (
-                <button key={value || "all"} type="button" role="tab" aria-selected={on} onClick={() => setCategory(value)} className={cn("flex h-8.5 shrink-0 items-center gap-1.5 rounded-full px-3 text-small font-medium", on ? "bg-emerald font-semibold text-white" : "border border-line bg-surface text-ink-2")}>
-                  {value === "" ? t("All") : t(VAULT_CATEGORY_LABELS[value])} <span className="opacity-70">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="grid items-start gap-4 lg:grid-cols-[212px_minmax(0,1fr)_372px]">
+          <div className="grid items-start gap-4 max-md:-mx-4 max-md:-mt-4 lg:grid-cols-[212px_minmax(0,1fr)_372px]">
             <nav aria-label={t("Vault sections")} className="hidden flex-col gap-0.5 lg:flex">
               <button type="button" aria-current={category === "" ? "page" : undefined} onClick={() => setCategory("")} className={cn("flex h-9.5 items-center gap-3 rounded-md px-3 text-body", category === "" ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-cream")}>
                 <Lock className="size-4" aria-hidden="true" />
@@ -183,8 +210,8 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
               })}
             </nav>
 
-            <Card padding="none" className="overflow-hidden">
-              <div className="flex items-center justify-between border-b border-line bg-cream px-4 py-3 text-caption font-medium text-ink-muted">
+            <Card padding="none" className="overflow-hidden max-md:rounded-none max-md:border-0 max-md:shadow-none">
+              <div className="flex items-center justify-between border-b border-line bg-cream px-4 py-3 text-caption font-medium text-ink-muted max-md:hidden">
                 <span>
                   {listLabel} · {visible.length}
                 </span>
@@ -218,6 +245,12 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
             </SheetContent>
           </Sheet>
         </>
+      )}
+
+      {entries.length > 0 && (
+        <button type="button" onClick={() => openAdd()} aria-label={t("Add login")} className="fixed right-4 bottom-6 z-30 flex size-14.5 items-center justify-center rounded-xl bg-emerald text-white shadow-[0_10px_24px_rgba(14,26,22,0.25)] md:hidden">
+          <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
+        </button>
       )}
 
       <EntryDrawer open={drawer.open} editing={drawer.editing} preset={drawer.preset} token={token} onClose={() => setDrawer({ open: false, editing: null, preset: null })} onSaved={saved} onLocked={onLocked} />

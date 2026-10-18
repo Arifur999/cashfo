@@ -88,8 +88,9 @@ export function VaultPageClient({ hasVaultPassword }: VaultPageClientProps) {
   const formMode: VaultPasswordMode | null = mode === "setup" || mode === "change" || mode === "reset" ? mode : null;
 
   return (
-    <PageFrame className="gap-6">
-      <PageHeader eyebrow={t("Security")} tone="vault" title={t("Password vault")} description={t("Logins for your other accounts: Facebook, bank, email and more.")} />
+    <PageFrame className="gap-6 max-md:pt-4">
+      {/* Phones name the vault in the top bar. */}
+      <PageHeader className="max-md:hidden" eyebrow={t("Security")} tone="vault" title={t("Password vault")} description={t("Logins for your other accounts: Facebook, bank, email and more.")} />
       <VaultGate>{formMode ? <VaultPasswordForm mode={formMode} onDone={() => setMode("unlock")} onBack={() => setMode("unlock")} /> : <VaultUnlockForm onUnlocked={unlocked} onForgot={() => setMode("reset")} onChange={() => setMode("change")} />}</VaultGate>
     </PageFrame>
   );
