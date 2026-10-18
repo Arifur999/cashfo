@@ -6,14 +6,16 @@ import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
+import ChoiceCard from "@/components/smartly/ChoiceCard";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
+import WeekdayPicker from "@/components/smartly/WeekdayPicker";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Habit, HabitFrequency } from "@/lib/customer/api";
 import { budgetCategoryHex, budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { ruleLabel, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
+import { ruleLabel } from "@/lib/customer/habitDisplay";
 import { createHabitAction, deleteHabitAction, updateHabitAction } from "@/lib/customer/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -30,9 +32,6 @@ const OFTEN: { value: HabitFrequency; title: string; sub: string }[] = [
   { value: "WEEKLY_DAYS", title: "On certain days", sub: "Pick the days, like Sunday to Thursday" },
   { value: "WEEKLY_COUNT", title: "A few times a week", sub: "Any days you like. The week starts on Saturday." },
 ];
-
-// Saturday first, as the app's week runs.
-const DAY_ORDER = [6, 0, 1, 2, 3, 4, 5];
 
 // A new or edited habit in the design's drawer: its name, icon and colour,
 // how often, and whether an amount is counted each time.
@@ -112,7 +111,6 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
     });
   }
 
-  const toggleDay = (day: number) => setDays(days.includes(day) ? days.filter((d) => d !== day) : [...days, day]);
   const label = (text: string) => <span className="text-body font-medium text-ink">{text}</span>;
 
   return (
@@ -161,48 +159,25 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
 
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("How often")}</legend>
-              {OFTEN.map((option) => {
-                const on = frequency === option.value;
-                return (
-                  <label key={option.value} className={cn("flex cursor-pointer flex-col gap-3 rounded-md border px-4 py-3 transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
-                    <span className="flex items-center gap-3">
-                      <span role="radio" aria-checked={on} tabIndex={0} onClick={() => setFrequency(option.value)} onKeyDown={(event) => (event.key === " " || event.key === "Enter") && (event.preventDefault(), setFrequency(option.value))} className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full border bg-surface", on ? "border-2 border-emerald" : "border-[1.5px] border-line-strong")}>
-                        <span className={cn("size-2 rounded-full", on ? "bg-emerald" : "bg-transparent")} />
+              {OFTEN.map((option) => (
+                <ChoiceCard key={option.value} checked={frequency === option.value} onSelect={() => setFrequency(option.value)} title={t(option.title)} sub={t(option.sub)}>
+                  {option.value === "WEEKLY_DAYS" && <WeekdayPicker value={days} onChange={setDays} className="pl-8" />}
+                  {option.value === "WEEKLY_COUNT" && (
+                    <span className="flex items-center gap-3 pl-8">
+                      <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface">
+                        <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-cream">
+                          <Minus className="size-4" aria-hidden="true" />
+                        </button>
+                        <span className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">{count}</span>
+                        <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-cream">
+                          <Plus className="size-4" aria-hidden="true" />
+                        </button>
                       </span>
-                      <span className="flex flex-col gap-px">
-                        <span className="text-body font-semibold text-ink">{t(option.title)}</span>
-                        <span className="text-small text-ink-muted">{t(option.sub)}</span>
-                      </span>
+                      <span className="text-body text-ink-2">{t("times a week, on any days")}</span>
                     </span>
-                    {on && option.value === "WEEKLY_DAYS" && (
-                      <span className="flex gap-2 pl-8">
-                        {DAY_ORDER.map((day) => {
-                          const picked = days.includes(day);
-                          return (
-                            <button key={day} type="button" aria-pressed={picked} onClick={() => toggleDay(day)} className={cn("flex h-8 w-9 items-center justify-center rounded-sm text-small font-semibold transition-colors", picked ? "bg-emerald text-white" : "border border-line bg-surface text-ink-2 hover:border-line-strong")}>
-                              {t(WEEKDAY_SHORT[day]).slice(0, 2)}
-                            </button>
-                          );
-                        })}
-                      </span>
-                    )}
-                    {on && option.value === "WEEKLY_COUNT" && (
-                      <span className="flex items-center gap-3 pl-8">
-                        <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface">
-                          <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-cream">
-                            <Minus className="size-4" aria-hidden="true" />
-                          </button>
-                          <span className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">{count}</span>
-                          <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-cream">
-                            <Plus className="size-4" aria-hidden="true" />
-                          </button>
-                        </span>
-                        <span className="text-body text-ink-2">{t("times a week, on any days")}</span>
-                      </span>
-                    )}
-                  </label>
-                );
-              })}
+                  )}
+                </ChoiceCard>
+              ))}
             </fieldset>
 
             <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4">

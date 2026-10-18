@@ -26,6 +26,9 @@ export const WEEK_START = 6;
 export const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const WEEKDAY_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+// The app's week runs Saturday first.
+export const WEEK_ORDER = [6, 0, 1, 2, 3, 4, 5];
+
 // The seven days of the week `key` falls in, Saturday first.
 export function weekOf(key: string): string[] {
   const back = (weekdayOf(key) - WEEK_START + 7) % 7;
