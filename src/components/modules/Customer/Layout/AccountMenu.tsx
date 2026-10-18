@@ -3,7 +3,7 @@
 import { Check, ChevronDown, CircleHelp, Gift, Lock, LogOut, Settings, Store, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Avatar from "@/components/smartly/Avatar";
 import IconTile from "@/components/smartly/IconTile";
@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { lockWorkspaceAction } from "@/lib/customer/businessActions";
+import { formatCurrency } from "@/lib/customer/currency";
+import { getReferralInfoAction } from "@/lib/customer/referralActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { workspaceKind } from "./workspaceKind";
@@ -24,7 +26,8 @@ import { workspaceKind } from "./workspaceKind";
 const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 py-2 text-body font-medium text-ink focus:bg-cream [&_svg]:size-4.5 [&_svg]:text-ink-2";
 
 // The top bar's account button and its menu: who is signed in, the open
-// workspace, the links to settings and referrals, lock and sign out.
+// workspace, the links to settings, referrals (with what is ready to
+// withdraw) and help, lock and sign out.
 export function AccountMenu() {
   const { user, activeBusiness, logout } = useAuth();
   const { t } = useLocale();
@@ -33,6 +36,15 @@ export function AccountMenu() {
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
   const kind = workspaceKind(activeBusiness);
   const workspaceName = activeBusiness?.isDefault ? user.name : (activeBusiness?.name ?? user.name);
+  // Read when the menu first opens, not on every page.
+  const [earnings, setEarnings] = useState<string | null>(null);
+
+  function loadEarnings(open: boolean) {
+    if (!open || earnings !== null) return;
+    void getReferralInfoAction().then((result) => {
+      if (result.success && result.data) setEarnings(result.data.availableBalance);
+    });
+  }
 
   function lock() {
     if (!activeBusiness) return;
@@ -43,7 +55,7 @@ export function AccountMenu() {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={loadEarnings}>
       <DropdownMenuTrigger
         aria-label={`${t("Account menu")} — ${user.name}, ${t(kind)}`}
         className="flex h-11 shrink-0 items-center gap-3 rounded-full pr-0 pl-1 md:ml-1 md:pr-3 data-open:bg-surface-sunken"
@@ -94,7 +106,8 @@ export function AccountMenu() {
           <DropdownMenuItem asChild className={ITEM}>
             <Link href="/referrals">
               <Gift />
-              {t("Invite & earn")}
+              <span className="flex-1">{t("Invite & earn")}</span>
+              {earnings !== null && Number(earnings) > 0 && <span className="text-small font-bold text-emerald tabular-nums">{formatCurrency(earnings, "BDT")}</span>}
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className={ITEM}>
