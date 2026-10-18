@@ -71,7 +71,7 @@ export function PinCard({ businessId, businessName, isOwner, onOpened, cancelLab
   const forgot = mode === "forgot";
 
   return (
-    <AppForm onSubmit={forgot ? submitReset : submitPin} className="flex flex-col gap-4">
+    <AppForm onSubmit={forgot ? submitReset : submitPin} className="flex flex-col gap-4 space-y-0">
       <div className="flex items-start gap-4">
         <IconTile tone="loans" size={44}>
           <Lock />
