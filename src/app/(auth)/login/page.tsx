@@ -37,7 +37,7 @@ const LoginPage = async ({ searchParams }: PageProps<"/login">) => {
       <LoginForm redirectTo={redirectTo} />
       <OrDivider />
       <GoogleSignInButton redirectTo={redirectTo} />
-      <AuthFooterPrompt prompt="New to Smartly?" linkLabel="Create an account" href={REGISTER_ROUTE} />
+      <AuthFooterPrompt prompt="Don't have an account?" linkLabel="Create an account" href={REGISTER_ROUTE} />
     </AuthShell>
   );
 };

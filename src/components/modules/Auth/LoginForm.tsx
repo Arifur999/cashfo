@@ -2,7 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { signInAction } from "@/app/(auth)/login/_action";
 import AppField from "@/components/shared/form/AppField";
@@ -42,7 +42,7 @@ const LoginForm = ({ redirectTo }: { redirectTo?: string }) => {
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
       <form.Field name="email" validators={{ onChange: loginFormZodSchema.shape.email }}>
-        {(field) => <AppField field={field} label={translate("Email")} type="email" size="xl" autoComplete="email" placeholder="you@example.com" />}
+        {(field) => <AppField field={field} label={translate("Email")} type="email" size="auth" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
       </form.Field>
 
       <form.Field name="password" validators={{ onChange: loginFormZodSchema.shape.password }}>
@@ -50,17 +50,24 @@ const LoginForm = ({ redirectTo }: { redirectTo?: string }) => {
           <AppPasswordField
             field={field}
             label={translate("Password")}
-            size="xl"
+            size="auth"
+            prepend={<Lock />}
             autoComplete="current-password"
-            placeholder={translate("Your password")}
+            placeholder={translate("Enter your password")}
             aside={
-              <AuthLink href={FORGOT_PASSWORD_ROUTE} className="text-small font-semibold">
+              <AuthLink href={FORGOT_PASSWORD_ROUTE} className="text-small font-semibold max-md:hidden">
                 {translate("Forgot password?")}
               </AuthLink>
             }
           />
         )}
       </form.Field>
+      {/* Phones: under the field, on the right, as the phone board has it. */}
+      <div className="-mt-2 flex justify-end md:hidden">
+        <AuthLink href={FORGOT_PASSWORD_ROUTE} className="py-2 text-body font-medium">
+          {translate("Forgot password?")}
+        </AuthLink>
+      </div>
 
       <FormErrorCallout message={serverError} />
 
