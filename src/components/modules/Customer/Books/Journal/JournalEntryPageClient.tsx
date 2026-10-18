@@ -76,6 +76,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
         tone="neutral"
         title={t("New journal entry")}
         description={t("For entries that do not fit a normal sale, purchase or payment. Saved entries cannot be edited, only voided.")}
+        looseDescription
         actions={
           <>
             <Button variant="secondary" asChild>

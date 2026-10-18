@@ -46,6 +46,7 @@ export function ReceivablesPageClient({ businessId, receivableAging, payableAgin
         tone="neutral"
         title={t("Receivables and payables")}
         description={t("Money customers still owe the business, and money the business still owes suppliers, by age.")}
+        looseDescription
         actions={
           <Button variant="secondary" onClick={exportCsv} disabled={receivableOverdue.length === 0 && payableOverdue.length === 0}>
             <Download className="text-ink-2" />

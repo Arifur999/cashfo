@@ -82,6 +82,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, transacti
           tone="neutral"
           title={contact.name}
           description={[t(CONTACT_TYPE_WORD[contact.type]), contact.address ?? contact.phone, contact.status === "ARCHIVED" ? t("Archived") : null].filter(Boolean).join(" · ")}
+          looseDescription
           actions={
             canManage && (
               <Button variant="secondary" onClick={() => setOpen({ kind: "edit" })} className="print:hidden">

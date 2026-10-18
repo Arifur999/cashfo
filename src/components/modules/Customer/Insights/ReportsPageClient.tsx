@@ -77,6 +77,7 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
         tone="insights"
         title={t("Reports")}
         description={t("Every category, month by month. Download it for your records or your tax file.")}
+        looseDescription
         actions={
           <div className="flex gap-3 print:hidden">
             <Button variant="secondary" size="lg" onClick={downloadCsv} disabled={!hasRows}>
