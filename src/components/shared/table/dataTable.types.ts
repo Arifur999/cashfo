@@ -98,6 +98,9 @@ export interface DataTableLayout {
   rowHeight?: number;
   headPadding?: 8 | 12;
   actionsWidth?: number;
+  // The card's width on the 1440 board (1136, or less beside a side card):
+  // columns keep their share of it at any screen width.
+  designWidth?: number;
 }
 
 export interface DataTableSearchConfig {

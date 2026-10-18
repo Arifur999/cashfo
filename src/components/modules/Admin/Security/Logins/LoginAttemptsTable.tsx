@@ -29,7 +29,7 @@ const LoginAttemptsTable = () => {
       {...toTableQueryProps(query)}
       data={rows}
       columns={loginAttemptsColumns}
-      layout={{ rowHeight: 54 }}
+      layout={{ rowHeight: 54, designWidth: 800 }}
       getRowId={(row) => row.id}
       rowClassName={(row) => (row.attempts.length > 1 ? "bg-expense-soft hover:bg-expense-soft" : undefined)}
       pager={{
