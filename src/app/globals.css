@@ -519,6 +519,14 @@
   backdrop-filter: none;
 }
 
+/* An alert dialog is as wide as its w-* class says (every one sets it), up
+   to the screen less 16px a side. The primitive's own caps -- 320px, then
+   448px from sm -- sit on a data-size selector that outranks max-w-*, so
+   wider dialogs were cut to 448px and every phone dialog to 320px. */
+[data-slot="alert-dialog-content"][data-size="default"] {
+  max-width: calc(100vw - 32px);
+}
+
 /* A drawer is edged by its shadow alone: the sheet's side border outranks
    the border-0 every drawer passes. */
 [data-slot="sheet-content"] {
