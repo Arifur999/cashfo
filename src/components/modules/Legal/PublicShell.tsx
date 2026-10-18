@@ -11,7 +11,8 @@ import LegalNav from "./LegalNav";
 
 // The frame of the legal pages, which anyone can open: the logo, the
 // language pill and the way in (or back into the app), the side menu, the
-// page, and the legal links at the foot.
+// page, its "On this page" list on a wide screen, and the legal links at
+// the foot.
 const PublicShell = async ({ children }: { children: React.ReactNode }) => {
   const [{ t }, signedIn] = await Promise.all([getTranslator(), getAccessToken().then(Boolean)]);
 
@@ -38,9 +39,13 @@ const PublicShell = async ({ children }: { children: React.ReactNode }) => {
           </>
         )}
       </header>
-      <main id="main-content" tabIndex={-1} className="grid flex-1 justify-center gap-8 px-5 py-8 outline-none md:px-12 md:py-12 lg:grid-cols-[240px_minmax(0,680px)] lg:gap-14">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="grid flex-1 content-start justify-center gap-8 px-5 py-8 outline-none md:px-12 md:py-12 lg:grid-cols-[240px_minmax(0,680px)] lg:gap-14 xl:grid-cols-[240px_minmax(0,680px)_200px]"
+      >
         <LegalNav />
-        <div className="min-w-0">{children}</div>
+        {children}
       </main>
       <footer className="border-t border-line px-5 py-6 md:px-12">
         <LegalLinks />

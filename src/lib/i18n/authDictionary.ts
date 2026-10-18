@@ -107,6 +107,7 @@ export const bnAuthDictionary: Record<string, string> = {
   "Last updated": "সর্বশেষ হালনাগাদ",
   Version: "সংস্করণ",
   "This page isn't available right now. Please check back later.": "পৃষ্ঠাটি এখন পাওয়া যাচ্ছে না। একটু পরে আবার দেখুন।",
+  "On this page": "এই পৃষ্ঠায়",
   "By creating an account, you agree to our Terms of Service and Privacy Policy.":
     "অ্যাকাউন্ট খোলার মাধ্যমে আপনি আমাদের সেবার শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত হচ্ছেন।",
   "Under maintenance": "রক্ষণাবেক্ষণ চলছে",
