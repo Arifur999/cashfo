@@ -519,6 +519,22 @@
   backdrop-filter: none;
 }
 
+/* A drawer is edged by its shadow alone: the sheet's side border outranks
+   the border-0 every drawer passes. */
+[data-slot="sheet-content"] {
+  border-width: 0;
+}
+
+/* Dialog and drawer titles in the design's h3: semibold on a normal line.
+   The primitives' font-medium (and the dialog's leading-none) would win
+   over the text-h3 every title is given. */
+[data-slot="sheet-title"],
+[data-slot="dialog-title"],
+[data-slot="alert-dialog-title"] {
+  font-weight: 600;
+  line-height: normal;
+}
+
 @keyframes app-loader-spin {
   to {
     transform: rotate(360deg);
