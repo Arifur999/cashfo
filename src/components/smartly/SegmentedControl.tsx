@@ -14,10 +14,11 @@ export interface SegmentOption<T extends string> {
 }
 
 const VARIANTS = {
-  // The EN / বাংলা switch: a pill with a white thumb.
+  // The EN / বাংলা switch: a pill with a white thumb. Its Bangla label is
+  // set a size up and lighter, as the boards draw it.
   pill: {
     group: "rounded-full bg-surface-sunken p-0.75",
-    item: "h-8.5 rounded-full px-3 text-small font-semibold",
+    item: "h-8.5 rounded-full px-3 text-small font-semibold [&[lang=bn]]:text-body [&[lang=bn]]:font-medium",
     on: "bg-surface text-ink shadow-[0_1px_2px_rgba(14,26,22,0.08)] dark:bg-surface-raised dark:shadow-[0_0_0_1px_var(--line)]",
     off: "text-ink-2 hover:text-ink",
   },
@@ -45,7 +46,7 @@ const VARIANTS = {
   // On the Night drawer.
   onDark: {
     group: "rounded-full bg-white/8 p-0.75",
-    item: "h-8 rounded-full px-3 text-small font-semibold",
+    item: "h-8 rounded-full px-3 text-small font-semibold [&[lang=bn]]:text-body [&[lang=bn]]:font-normal",
     on: "bg-white text-ink",
     off: "text-white hover:bg-white/10",
   },

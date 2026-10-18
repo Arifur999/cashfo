@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ChooseWorkspaceClient } from "@/components/modules/Customer/Workspace/ChooseWorkspaceClient";
+import { getWorkspaceFigure } from "@/lib/customer/accounts";
 import { getCurrentUser } from "@/lib/customer/auth";
 
 // Deliberately a plain top-level route -- NOT under (auth) or (dashboard), so
@@ -20,5 +21,10 @@ export default async function ChooseWorkspacePage() {
   if (!user) redirect("/login");
   if (user.businesses.length <= 1) redirect("/dashboard");
 
-  return <ChooseWorkspaceClient user={user} />;
+  // Each card's figure, read side by side. A PIN-locked workspace keeps its
+  // figures behind the PIN, so it isn't asked.
+  const workspaces = user.businesses.filter((business) => business.type !== "GROUP");
+  const figures = await Promise.all(workspaces.map((business) => (business.hasPinLock ? null : getWorkspaceFigure(business.id))));
+
+  return <ChooseWorkspaceClient user={user} figures={Object.fromEntries(workspaces.map((business, index) => [business.id, figures[index]]))} />;
 }

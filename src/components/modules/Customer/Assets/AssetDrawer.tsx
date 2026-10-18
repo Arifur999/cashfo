@@ -11,12 +11,12 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, AssetCategoryOption } from "@/lib/customer/api";
 import { purchaseAssetAction } from "@/lib/customer/assetActions";
 import { categoryVisual } from "@/lib/customer/assetDisplay";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
@@ -49,6 +49,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
+  const priceField = useAmountField(price, setPrice, currency);
   const [walletId, setWalletId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [note, setNote] = useState("");
@@ -120,7 +121,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{t("Add an asset")}</SheetTitle>
-            <p className="text-small text-ink-muted">{t("Something you're buying now, or something you already own.")}</p>
+            <p className="text-small leading-[normal] text-ink-muted">{t("Something you're buying now, or something you already own.")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -146,7 +147,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
             </Field>
 
             <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Category")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Category")}</legend>
               {categories.length === 0 ? (
                 <p className="text-caption text-ink-muted">{t("No category yet -- add one under Categories first.")}</p>
               ) : (
@@ -171,8 +172,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
                 type="text"
                 inputMode="decimal"
                 size="xl"
-                value={price}
-                onChange={(event) => setPrice(normalizeMoneyInput(event.target.value))}
+                {...priceField}
                 placeholder="0"
                 leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                 frameClassName="gap-0 overflow-hidden pl-0"
@@ -180,7 +180,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
               />
             </Field>
 
-            {buying && <WalletPicker label={t("Pay from")} wallets={wallets} savingsWallets={savingsWallets} value={walletId} onChange={setWalletId} after={wallet && value > 0 ? Number(wallet.currentBalance) - value : null} minBalance={value} currency={currency} loading={loading} error={walletsError} onClose={onClose} />}
+            {buying && <WalletPicker label={t("Pay from")} balanceLabel="Available@@balance" tone="sand" wallets={wallets} savingsWallets={savingsWallets} value={walletId} onChange={setWalletId} after={null} minBalance={value} currency={currency} loading={loading} error={walletsError} onClose={onClose} />}
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="asset-date" label={label(buying ? t("Date") : t("Bought on"))}>

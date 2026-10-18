@@ -82,6 +82,7 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
         eyebrow={t("Money")}
         title={t("Income sources")}
         description={t("Where your money comes from, and how much came from each one this month.")}
+        looseDescription
         actions={
           <>
             <MonthSwitcher month={month} year={year} onChange={goToMonth} />

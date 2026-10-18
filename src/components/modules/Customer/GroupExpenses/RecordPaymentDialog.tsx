@@ -9,13 +9,15 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupMember } from "@/lib/customer/api";
-import { currencySymbol, formatSignedCurrency } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { formatDate } from "@/lib/customer/date";
 import type { MonthRange, Transfer } from "@/lib/customer/groupDisplay";
 import { createGroupContributionAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { banglaDayMonth } from "@/lib/i18n/banglaDates";
 import { cn } from "@/lib/utils";
 import { dayInMonth } from "./ContributionDrawer";
 import { MemberPicker } from "./MemberPicker";
@@ -27,6 +29,8 @@ interface RecordPaymentDialogProps {
   currency: string;
   members: GroupMember[];
   balances: Record<string, number>;
+  // The fund's cash, which a payment between members leaves as it is.
+  cashInHand: number;
   range: MonthRange;
   today: string;
   // Who pays whom, when opened from a settle-up row.
@@ -36,13 +40,14 @@ interface RecordPaymentDialogProps {
 // A member paying another to settle the month: saved as two entries dated
 // inside the month, a deposit by the payer and a return to the receiver,
 // so the fund's cash stays the same and both balances move.
-export function RecordPaymentDialog({ open, onClose, businessId, currency, members, balances, range, today, preset }: RecordPaymentDialogProps) {
+export function RecordPaymentDialog({ open, onClose, businessId, currency, members, balances, cashInHand, range, today, preset }: RecordPaymentDialogProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const active = members.filter((member) => member.status === "ACTIVE");
   const [fromId, setFromId] = useState("");
   const [toId, setToId] = useState("");
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -126,8 +131,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                   id="pay-amount"
                   size="lg"
                   inputMode="decimal"
-                  value={amount}
-                  onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+                  {...amountField}
                   placeholder="0"
                   className="text-h3 font-bold tabular-nums"
                   leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
@@ -148,7 +152,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
             {from && to && (
               <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4 text-small tabular-nums">
                 <span className="text-caption font-semibold text-ink-muted">
-                  {t("Saved as two entries dated")} {date}, {t("so")} {monthLabel} {t("evens out")}
+                  {t("Saved as two entries dated")} {locale === "bn" ? banglaDayMonth(date) : formatDate(`${date}T00:00:00.000Z`, "d MMM")}, {t("so")} {monthLabel} {t("evens out")}
                 </span>
                 <div className="flex justify-between gap-3">
                   <span className="text-ink-2">
@@ -187,7 +191,9 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                 </div>
                 <div className="flex justify-between gap-3">
                   <span className="text-ink-2">{t("Cash in hand")}</span>
-                  <span className="text-ink-muted">{t("unchanged")}</span>
+                  <span className="text-ink-muted">
+                    {formatCurrency(cashInHand, currency)}, {t("unchanged")}
+                  </span>
                 </div>
               </div>
             )}
@@ -197,7 +203,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={!valid || isPending} className="px-5">
+            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader />}
               {t("Save payment")}
             </Button>

@@ -12,8 +12,7 @@ import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, SavingsGoal } from "@/lib/customer/api";
-import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { normalizeMoneyInput } from "@/lib/customer/money";
+import { formatCurrency } from "@/lib/customer/currency";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { addContributionAction, getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
 import { goalBadge, goalColor, quickAmounts } from "@/lib/customer/savingsDisplay";
@@ -22,6 +21,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GoalRing } from "./GoalRing";
 import DayInput from "@/components/smartly/form/DayInput";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 
 interface AddMoneyDrawerProps {
   open: boolean;
@@ -135,19 +135,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <Field htmlFor="add-amount" label={label(t("Amount"))}>
-              <Input
-                id="add-amount"
-                type="text"
-                inputMode="decimal"
-                size="xl"
-                value={amount}
-                onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
-                placeholder="0"
-                autoFocus
-                leading={<span className="flex h-14 w-13 items-center justify-center border-r border-line bg-cream text-h2 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                frameClassName="h-14 gap-0 overflow-hidden pl-0"
-                className="pl-4 text-h2 tabular-nums"
-              />
+              <AmountInput id="add-amount" value={amount} onChange={setAmount} currency={currency} autoFocus />
               {goal && (
                 <div className="flex flex-wrap gap-2">
                   {quickAmounts(goal).map((pick) => (
@@ -161,7 +149,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
               )}
             </Field>
 
-            <WalletPicker label={t("Take it from")} wallets={wallets} value={fromId} onChange={setFromId} after={from ? Number(from.currentBalance) - value : null} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+            <WalletPicker label={t("Take it from")} balanceLabel="Available@@balance" tone="sand" wallets={wallets} value={fromId} onChange={setFromId} after={null} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
             <WalletPicker label={t("Keep it in")} variant="savings" wallets={savingsWallets} value={intoId} onChange={setIntoId} after={null} currency={currency} loading={loading} error={null} onClose={onClose} />
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">

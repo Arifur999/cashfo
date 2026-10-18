@@ -45,6 +45,7 @@ export function ContactsPageClient({ businessId, contacts, receivableAging, canM
         tone="neutral"
         title={t("Customers and suppliers")}
         description={t("Who buys from the business and who it buys from, with what is still due.")}
+        looseDescription
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv} disabled={contacts.length === 0}>

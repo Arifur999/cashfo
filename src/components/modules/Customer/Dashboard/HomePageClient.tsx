@@ -7,6 +7,7 @@ import { useFeature } from "@/components/modules/Customer/Providers/PlatformProv
 import { TransactionDrawer, type EntryKind } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
+import ByWidth from "@/components/smartly/ByWidth";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Eyebrow from "@/components/smartly/Eyebrow";
@@ -19,6 +20,7 @@ import SectionHeader from "@/components/smartly/SectionHeader";
 import { budgetCategoryIcon, categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 import { HomeHero } from "./HomeHero";
 import { HomeSetup } from "./HomeSetup";
@@ -185,10 +187,10 @@ export function HomePageClient({ data }: { data: HomeData }) {
               <PhoneLoanCards loans={data.loans} counts={data.loanCounts} currency={currency} />
               <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-4 lg:gap-6">
                 <KpiTile icon={<ArrowDownLeft />} tone="income" label={`${t("Owed to you")} · ${t("pawna")}`} value={<AmountText value={Number(data.loans.totalPawna)} currency={currency} size="lg" signed tone="income" />}>
-                  {t("From")} {data.loanCounts.oweYou} {t(data.loanCounts.oweYou === 1 ? "person" : "people")}
+                  {plural(t, data.loanCounts.oweYou, "From {count} person", "From {count} people")}
                 </KpiTile>
                 <KpiTile icon={<ArrowUpRight />} tone="expense" label={`${t("You owe")} · ${t("dena")}`} value={<AmountText value={-Number(data.loans.totalDena)} currency={currency} size="lg" signed tone="expense" />}>
-                  {t("To")} {data.loanCounts.youOwe} {t(data.loanCounts.youOwe === 1 ? "person" : "people")}
+                  {plural(t, data.loanCounts.youOwe, "To {count} person", "To {count} people")}
                 </KpiTile>
                 <KpiTile icon={<CreditCard />} tone="loans" label={t("Net position")} value={<AmountText value={Number(data.loans.netBalance)} currency={currency} size="lg" signed />}>
                   {Number(data.loans.netBalance) < 0 ? t("You owe more than you are owed") : Number(data.loans.netBalance) > 0 ? t("You are owed more than you owe") : t("All settled")}
@@ -347,16 +349,6 @@ function BudgetFocus({ focus, currency, daysLeft }: { focus: HomeData["budgetFoc
       <span className={cn("text-small", focus.percent > 90 ? "font-semibold text-expense" : focus.percent >= 70 ? "font-semibold text-warning" : "text-ink-muted")}>
         {Math.round(focus.percent)}% {t("used")} · {left >= 0 ? `${formatCurrency(left, currency)} ${t("left for")} ${daysLeft} ${t("days")}` : `${formatCurrency(-left, currency)} ${t("over")}`}
       </span>
-    </>
-  );
-}
-
-// The shorter wording phones use ("See all", "Open") beside the full one.
-function ByWidth({ phone, wide }: { phone: string; wide: string }) {
-  return (
-    <>
-      <span className="md:hidden">{phone}</span>
-      <span className="hidden md:inline">{wide}</span>
     </>
   );
 }

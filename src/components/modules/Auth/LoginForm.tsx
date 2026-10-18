@@ -23,9 +23,12 @@ const defaultValues: ILoginFormValues = { email: "", password: "" };
 const LoginForm = ({ redirectTo, again = false }: { redirectTo?: string; again?: boolean }) => {
   const { translate } = useLocale();
   const [serverError, setServerError] = useState<string | null>(null);
+  // Unticked, the sign-in lasts until the browser closes. Phones don't show
+  // it (their board leaves it out) and stay signed in.
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: (values: ILoginFormValues) => signInAction(values, redirectTo),
+    mutationFn: (values: ILoginFormValues) => signInAction(values, redirectTo, keepSignedIn),
   });
 
   const form = useForm({
@@ -43,7 +46,7 @@ const LoginForm = ({ redirectTo, again = false }: { redirectTo?: string; again?:
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
       <form.Field name="email" validators={{ onChange: loginFormZodSchema.shape.email }}>
-        {(field) => <AppField field={field} label={translate("Email")} type="email" size="auth" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
+        {(field) => <AppField field={field} label={translate("Email")} type="email" size="signIn" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
       </form.Field>
 
       <form.Field name="password" validators={{ onChange: loginFormZodSchema.shape.password }}>
@@ -51,7 +54,7 @@ const LoginForm = ({ redirectTo, again = false }: { redirectTo?: string; again?:
           <AppPasswordField
             field={field}
             label={translate("Password")}
-            size="auth"
+            size="signIn"
             prepend={<Lock />}
             autoComplete="current-password"
             placeholder={translate("Enter your password")}
@@ -69,6 +72,10 @@ const LoginForm = ({ redirectTo, again = false }: { redirectTo?: string; again?:
           {translate("Forgot password?")}
         </AuthLink>
       </div>
+      <label className="hidden cursor-pointer items-center gap-3 text-body text-ink-2 md:flex">
+        <input type="checkbox" checked={keepSignedIn} onChange={(event) => setKeepSignedIn(event.target.checked)} className="size-4.5 shrink-0 accent-emerald" />
+        {translate("Keep me signed in on this device")}
+      </label>
 
       <FormErrorCallout message={serverError} />
 

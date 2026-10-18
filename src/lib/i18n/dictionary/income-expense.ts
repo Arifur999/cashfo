@@ -23,6 +23,8 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Search description...": "বিবরণ খুঁজুন...",
   "All types": "সব ধরন",
   "All accounts": "সব হিসাব",
+  // The Transactions filter over wallets ("সব ওয়ালেট" on the Bangla board).
+  "All accounts@@wallets": "সব ওয়ালেট",
   "From date": "শুরুর তারিখ",
   "To date": "শেষের তারিখ",
   Icon: "আইকন",
@@ -137,7 +139,9 @@ export const incomeExpenseDictionary: Record<string, string> = {
 
   // The Smartly Transactions page, its filters, the void dialog and the detail page
   "New transaction": "নতুন লেনদেন",
-  "Every income and expense you've added, newest first.": "আপনার যোগ করা প্রতিটি আয় ও খরচ, নতুন থেকে পুরনো।",
+  "Every income and expense you've added, newest first.": "আপনার যোগ করা সব আয় ও ব্যয়, নতুনগুলো আগে।",
+  // The list's foot, as the Bangla board words it: "৮টির মধ্যে ১–৮".
+  "Showing {from}–{to} of {total}": "{total}টির মধ্যে {from}–{to}",
   Net: "নিট",
   voided: "বাতিল",
   "this page": "এই পাতা",
@@ -145,7 +149,9 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Try a wider date range, or clear the filters.": "তারিখের পরিসর বাড়ান, বা ফিল্টার মুছুন।",
   "Add your first income or expense. It takes a few seconds, and your dashboard, budget and reports fill in from here.":
     "প্রথম আয় বা খরচ যোগ করুন। কয়েক সেকেন্ড লাগে, আর এখান থেকেই হোম, বাজেট ও রিপোর্ট ভরে উঠবে।",
-  "Add a wallet first": "আগে একটি ওয়ালেট যোগ করুন",
+  "Add first transaction": "প্রথম লেনদেন যোগ করুন",
+  "Set up categories first": "আগে ক্যাটাগরি সাজিয়ে নিন",
+  "Tip: press {key} anywhere to add a transaction": "টিপ: যেকোনো জায়গায় {key} চাপলেই লেনদেন যোগ করা যায়",
   "View details": "বিস্তারিত দেখুন",
   "Void transaction": "লেনদেন বাতিল করুন",
   "Previous page": "আগের পাতা",
@@ -163,8 +169,8 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Search transactions": "লেনদেন খুঁজুন",
   "Clear filters": "ফিল্টার মুছুন",
   Reason: "কারণ",
-  "At least": "কমপক্ষে",
-  characters: "অক্ষর",
+  "At least {count} characters. It's saved with the transaction.": "কমপক্ষে {count} অক্ষর। এটি লেনদেনের সাথে সংরক্ষিত থাকে।",
+  "At least {count} characters. It's saved with the transfer.": "কমপক্ষে {count} অক্ষর। এটি ট্রান্সফারের সাথে সংরক্ষিত থাকে।",
   "Entered twice by mistake": "ভুলে দুবার লেখা হয়েছে",
   "It stays in your history, crossed out, and the balances go back to what they were. Say why, so the record makes sense later.":
     "এটি ইতিহাসে কাটা অবস্থায় থাকবে, আর ব্যালেন্স আগের মতো হয়ে যাবে। কারণ লিখুন, যাতে পরে রেকর্ডটি বোঝা যায়।",
@@ -177,6 +183,19 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "How Smartly records this in your books. Debits always equal credits.": "Smartly আপনার খাতায় এটি যেভাবে লেখে। ডেবিট সবসময় ক্রেডিটের সমান।",
   Added: "যোগ হয়েছে",
   "Made a mistake?": "ভুল হয়ে গেছে?",
+  // Edit (decision D2): the drawer and the detail page
+  "Edit transaction": "লেনদেন সম্পাদনা",
+  "You're editing a saved transaction. When you save, the original stays in History marked as corrected, and your balances update straight away.":
+    "আপনি একটি সংরক্ষিত লেনদেন বদলাচ্ছেন। সংরক্ষণ করলে মূলটি ইতিহাসে সংশোধিত হিসেবে থেকে যাবে, আর ব্যালেন্স সঙ্গে সঙ্গে হালনাগাদ হবে।",
+  "Was {amount}": "আগে ছিল {amount}",
+  "{count} change": "{count}টি পরিবর্তন",
+  "{count} changes": "{count}টি পরিবর্তন",
+  "Changes saved": "পরিবর্তন সংরক্ষিত হয়েছে",
+  "Failed to save the changes": "পরিবর্তন সংরক্ষণ করা যায়নি",
+  Corrected: "সংশোধিত",
+  "Use Edit to fix the amount, category, wallet, date or note. The original is kept in History, marked as corrected, so your records stay honest.":
+    "অঙ্ক, ক্যাটাগরি, ওয়ালেট, তারিখ বা নোট ঠিক করতে সম্পাদনা চাপুন। মূলটি ইতিহাসে সংশোধিত হিসেবে থেকে যায়, তাই আপনার হিসাব সৎ থাকে।",
+  "Void removes it from your balances when it should never have been added.": "যেটা কখনো যোগ হওয়ারই কথা ছিল না, বাতিল করলে সেটা ব্যালেন্স থেকে সরে যায়।",
   "Void it and add the right one. Voiding keeps this record in your history, crossed out, so the books still add up.":
     "এটি বাতিল করে সঠিকটি যোগ করুন। বাতিল করলে রেকর্ডটি কাটা অবস্থায় ইতিহাসে থাকে, তাই খাতার হিসাব মেলে।",
   Liability: "দায়",
@@ -196,7 +215,7 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "add one under Budget": "বাজেটে একটি যোগ করুন",
   "Weekly groceries": "সাপ্তাহিক বাজার",
   "Save & add another": "সংরক্ষণ করে আরেকটি",
-  "after this": "এটির পর",
+  "{amount} after this": "এটির পর {amount}",
   "No wallet yet": "এখনো ওয়ালেট নেই",
   "Failed to add income": "আয় যোগ করতে ব্যর্থ হয়েছে",
 

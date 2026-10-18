@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Briefcase, Check, Lock, LogOut, Plus, User } from "lucide-react";
+import { ArrowRight, Check, Lock, LogOut, Plus, Store, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { logoutAction } from "@/app/-actions/authActions";
@@ -12,13 +12,18 @@ import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import Logo from "@/components/smartly/Logo";
+import type { WorkspaceFigure } from "@/lib/customer/accounts";
 import type { CurrentUser, UserBusiness, WorkspaceListItem } from "@/lib/customer/api";
 import { switchWorkspaceAction } from "@/lib/customer/businessActions";
+import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface ChooseWorkspaceClientProps {
   user: CurrentUser;
+  // What each workspace's wallets hold, by workspace id; null when it
+  // couldn't be read (a PIN-locked one isn't asked).
+  figures: Record<string, WorkspaceFigure | null>;
 }
 
 // null means no trial at all (trialEndsAt was null, caller never invokes
@@ -37,7 +42,7 @@ const ROLE_LABEL: Record<UserBusiness["role"], string> = { OWNER: "Owner", ACCOU
 // user with more than one workspace, every time they log in. Pick a card,
 // then Open; a PIN-locked one asks for its PIN first. Deliberately does NOT
 // use useAuth()/AuthProvider: this page sits outside the customer shell.
-export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
+export function ChooseWorkspaceClient({ user, figures }: ChooseWorkspaceClientProps) {
   const router = useRouter();
   const { t } = useLocale();
   const [isPending, startTransition] = useTransition();
@@ -84,7 +89,7 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
 
       <div className="mt-12 flex flex-col items-center gap-2 text-center md:mt-18">
         <h1 className="text-h1 text-ink md:text-display">{t("Which workspace?")}</h1>
-        <p className="max-w-2xl text-body-lg text-ink-muted">{t("Each workspace keeps its own money and books. You can come back here any time from your name at the top right.")}</p>
+        <p className="text-body-lg text-ink-muted">{t("Each workspace keeps its own money and books. You can come back here any time from your name at the top right.")}</p>
       </div>
 
       <div className="mt-10 grid w-full max-w-[880px] grid-cols-1 justify-center gap-5 sm:grid-cols-[repeat(auto-fit,280px)]">
@@ -93,6 +98,7 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
           const on = business.id === selectedId;
           const displayName = business.isDefault ? user.name : business.name;
           const trial = business.trialEndsAt ? trialLabel(business.trialEndsAt, t) : null;
+          const figure = figures[business.id];
           return (
             <button
               key={business.id}
@@ -108,7 +114,7 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
             >
               <div className="flex items-center justify-between">
                 <IconTile tone={isBusiness ? "loans" : "money"} size={44} className="rounded-md">
-                  {isBusiness ? <Briefcase /> : <User />}
+                  {isBusiness ? <Store /> : <User />}
                 </IconTile>
                 <span className="flex items-center gap-3">
                   {business.hasPinLock && (
@@ -138,8 +144,10 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
                 <span className="text-small text-ink-muted">{t(isBusiness ? "Business workspace" : "Personal workspace")}</span>
               </div>
               <div className="flex flex-col gap-0.5 border-t border-surface-sunken pt-4">
-                <span className={cn("text-title font-bold", trial?.expired && "text-expense")}>{trial ? trial.text : t(ROLE_LABEL[business.role])}</span>
-                <span className="text-caption font-normal text-ink-muted">{business.currency}</span>
+                <span className="text-title font-bold tabular-nums">{figure ? formatCurrency(figure.balance, business.currency) : t(ROLE_LABEL[business.role])}</span>
+                <span className={cn("text-caption font-normal text-ink-muted", trial?.expired && "text-expense")}>
+                  {trial ? trial.text : figure ? `${figure.wallets} ${t(figure.wallets === 1 ? "wallet" : "wallets")}` : business.currency}
+                </span>
               </div>
             </button>
           );

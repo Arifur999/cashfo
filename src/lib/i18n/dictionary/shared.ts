@@ -49,10 +49,8 @@ export const sharedDictionary: Record<string, string> = {
   Close: "বন্ধ করুন",
   Submit: "জমা দিন",
   "Loading...": "লোড হচ্ছে...",
-  // app/(customerLayout)/error.tsx
+  // A failed action or a section that couldn't load (ErrorState)
   "Something went wrong": "কিছু একটা সমস্যা হয়েছে",
-  "We couldn't load this page. Check your connection and try again.": "পেজটি লোড করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।",
-  "Reference:": "রেফারেন্স:",
   "Try again": "আবার চেষ্টা করুন",
   "Check your internet and try again. Nothing was lost.": "ইন্টারনেট দেখে আবার চেষ্টা করুন। কিছুই হারায়নি।",
   // The message pages: error.tsx, not-found.tsx, maintenance
@@ -63,13 +61,14 @@ export const sharedDictionary: Record<string, string> = {
   "Go to Home": "হোমে যান",
   "Saved transactions stay saved. Anything you were typing may need to be entered again.": "সংরক্ষিত লেনদেন সংরক্ষিতই থাকে। যা লিখছিলেন তা আবার লিখতে হতে পারে।",
   "We can't find that page": "পেজটি খুঁজে পাচ্ছি না",
+  "Page not found": "পেজ পাওয়া যায়নি",
   "It may have moved, or the link was typed wrong.": "এটি সরে গেছে, অথবা লিংকটি ভুল লেখা হয়েছে।",
   "It may have moved, or the link was typed wrong. If it was a transaction or a goal, it may have been deleted from another device.":
     "এটি সরে গেছে, অথবা লিংকটি ভুল লেখা হয়েছে। লেনদেন বা লক্ষ্য হলে অন্য ডিভাইস থেকে মুছে ফেলা হয়ে থাকতে পারে।",
   "Scheduled maintenance": "নির্ধারিত রক্ষণাবেক্ষণ",
   "is getting an upgrade": "আপগ্রেড হচ্ছে",
-  "Your data is safe and you can still read everything. Changes are paused for a short while so nothing gets lost.":
-    "আপনার তথ্য নিরাপদ এবং সবকিছু দেখতে পারবেন। কিছু যেন না হারায় সেজন্য অল্প সময়ের জন্য পরিবর্তন বন্ধ আছে।",
+  "Your data is safe. Everything is paused for a short while so nothing gets lost.":
+    "আপনার তথ্য নিরাপদ আছে। কিছু যেন না হারায় সেজন্য অল্প সময়ের জন্য সবকিছু বন্ধ আছে।",
   "Write to support": "সাপোর্টকে লিখুন",
   "Message from the team": "টিমের বার্তা",
   // app/error.tsx
@@ -79,6 +78,8 @@ export const sharedDictionary: Record<string, string> = {
   Phone: "ফোন",
   Amount: "পরিমাণ",
   Date: "তারিখ",
+  // The end of a date range ("From … To …").
+  "To@@date": "পর্যন্ত",
   Description: "বিবরণ",
   Notes: "নোট",
   "Notes (optional)": "নোট (ঐচ্ছিক)",

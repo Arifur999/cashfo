@@ -12,10 +12,15 @@ import { cn } from "@/lib/utils";
 
 export interface WalletPickerProps {
   label: string;
-  // 56px in the transaction drawer, 52px in the loan one; "compact" is the
-  // phone sheet's half-width picker (52px, the icon and the name only,
-  // under a 13px label).
-  size?: "lg" | "xl" | "compact";
+  // 56px in the transaction drawer, 52px in the loan one, 64px with a 36px
+  // tile in the transfer drawer; "compact" is the phone sheet's half-width
+  // picker (52px, the icon and the name only, under a 13px label).
+  size?: "lg" | "xl" | "2xl" | "compact";
+  // The word before the balance: "Balance", or "Available" on the side the
+  // money leaves.
+  balanceLabel?: string;
+  // The tile: mint, or sand on the side the money leaves.
+  tone?: "mint" | "sand";
   // Money wallets, or the savings wallets a goal is kept in.
   variant?: "money" | "savings";
   wallets: Account[];
@@ -24,8 +29,10 @@ export interface WalletPickerProps {
   savingsWallets?: Account[];
   value: string;
   onChange: (id: string) => void;
-  // The wallet's balance once this entry is saved.
+  // The wallet's balance once this entry is saved: "→ ৳ 7,200", or in
+  // words ("· ৳ 7,200 after this") where the board writes it so.
   after: number | null;
+  afterInWords?: boolean;
   // Wallets holding less than this are greyed out ("not enough").
   minBalance?: number;
   currency: string;
@@ -35,15 +42,15 @@ export interface WalletPickerProps {
 }
 
 // The wallet to pay from or into: its icon, name, balance now and after.
-export function WalletPicker({ label, size = "xl", variant = "money", wallets, savingsWallets = [], value, onChange, after, minBalance = 0, currency, loading, error, onClose }: WalletPickerProps) {
+export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, afterInWords = false, minBalance = 0, currency, loading, error, onClose }: WalletPickerProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const all = [...wallets, ...savingsWallets];
   const selected = all.find((w) => w.id === value);
   const id = useId();
   const isSavings = (wallet: Account) => variant === "savings" || savingsWallets.includes(wallet);
-  const tile = (wallet: Account) => (
-    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md", isSavings(wallet) ? "bg-pillar-habits-soft text-pillar-habits" : "bg-mint-50 text-emerald")}>
+  const tile = (wallet: Account, big = false) => (
+    <span className={cn("flex shrink-0 items-center justify-center rounded-md", big ? "size-9" : "size-8", isSavings(wallet) ? "bg-pillar-habits-soft text-pillar-habits" : tone === "sand" ? "bg-surface-sunken text-ink-2" : "bg-mint-50 text-emerald")}>
       {isSavings(wallet) ? <PiggyBank className="size-4" aria-hidden="true" /> : createElement(walletIcon(wallet), { className: "size-4", "aria-hidden": true })}
     </span>
   );
@@ -78,7 +85,7 @@ export function WalletPicker({ label, size = "xl", variant = "money", wallets, s
 
   return (
     <div className="flex flex-col gap-2">
-      <label id={`${id}-label`} className={size === "compact" ? "text-small font-semibold text-ink-2" : "text-body font-medium text-ink"}>
+      <label id={`${id}-label`} className={cn(size === "compact" ? "text-small font-semibold text-ink-2" : "text-body font-medium text-ink", "leading-[normal]")}>
         {label}
       </label>
       <Popover open={open} onOpenChange={setOpen}>
@@ -88,7 +95,7 @@ export function WalletPicker({ label, size = "xl", variant = "money", wallets, s
             aria-labelledby={`${id}-label`}
             aria-haspopup="listbox"
             disabled={loading || all.length === 0}
-            className={cn("flex min-w-0 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 text-left disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]", size === "xl" ? "h-14" : "h-13")}
+            className={cn("flex min-w-0 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 text-left disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : "h-13")}
           >
             {selected && size === "compact" ? (
               <>
@@ -97,13 +104,13 @@ export function WalletPicker({ label, size = "xl", variant = "money", wallets, s
               </>
             ) : selected ? (
               <>
-                {tile(selected)}
+                {tile(selected, size === "2xl")}
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="truncate text-body font-semibold text-ink">{selected.name}</span>
                   <span className="truncate text-caption font-normal text-ink-muted tabular-nums">
-                    {isSavings(selected) ? `${t("Savings wallet")} · ` : `${t("Balance")} `}
+                    {isSavings(selected) ? `${t("Savings wallet")} · ` : `${t(balanceLabel)} `}
                     {formatCurrency(selected.currentBalance, currency)}
-                    {after !== null && ` → ${formatCurrency(after, currency)}`}
+                    {after !== null && (afterInWords ? ` · ${t("{amount} after this", { amount: formatCurrency(after, currency) })}` : ` → ${formatCurrency(after, currency)}`)}
                   </span>
                 </span>
               </>

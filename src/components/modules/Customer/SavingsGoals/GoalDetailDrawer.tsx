@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Minus, Pause, Pencil, Play, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeftRight, Minus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -170,13 +170,12 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
         {canManage && (
           <div className={cn("flex items-center gap-2 border-t border-line bg-surface", wide ? "px-6 py-4" : "flex-wrap px-4 pt-3 pb-6")}>
             {!closed && Number(goal.currentAmount) > 0 && (
-              <Button variant="secondary" onClick={() => onWithdraw(goal)} className="border-[#F2C9C0] px-3 text-small text-expense hover:bg-expense-soft dark:border-expense/40">
+              <Button variant="secondary" onClick={() => onWithdraw(goal)} className="border-expense-line px-3 text-small text-expense hover:bg-expense-soft">
                 {t("Withdraw")}
               </Button>
             )}
             {(active || paused) && (
               <Button variant="secondary" onClick={() => onTogglePause(goal)} className="px-3 text-small">
-                {paused ? <Play /> : <Pause />}
                 {paused ? t("Resume") : t("Pause")}
               </Button>
             )}
@@ -187,7 +186,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
             )}
             <span className="flex-1" />
             {!closed && (
-              <Button onClick={() => onAddMoney(goal)} disabled={!canAddMoney || paused} title={canAddMoney ? undefined : t("Add a savings wallet first")}>
+              <Button variant="action" onClick={() => onAddMoney(goal)} disabled={!canAddMoney || paused} title={canAddMoney ? undefined : t("Add a savings wallet first")}>
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("Add money")}
               </Button>

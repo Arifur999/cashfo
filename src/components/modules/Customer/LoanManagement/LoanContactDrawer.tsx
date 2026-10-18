@@ -10,12 +10,12 @@ import Chip from "@/components/smartly/Chip";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
 import { createContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { DIRECTION_META, LOAN_KIND_LABELS } from "@/lib/customer/loanDisplay";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +54,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
   const [address, setAddress] = useState("");
   const [balanceKind, setBalanceKind] = useState<BalanceKind>("ZERO");
   const [openingBalance, setOpeningBalance] = useState("");
+  const openingBalanceField = useAmountField(openingBalance, setOpeningBalance, currency);
   const [isPending, startTransition] = useTransition();
 
   // Populate the instant the drawer opens, or switches to another contact.
@@ -134,7 +135,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit contact") : t("Add contact")}</SheetTitle>
-            <p className="text-small text-ink-muted">{t("A person, bank or NGO you lend to or borrow from.")}</p>
+            <p className="text-small leading-[normal] text-ink-muted">{t("A person, bank or NGO you lend to or borrow from.")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -171,7 +172,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
             </div>
 
             <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Who is this?")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Who is this?")}</legend>
               <div className="flex flex-wrap gap-2">
                 {KINDS.map((kind) => {
                   const on = kind === type;
@@ -185,7 +186,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
             </fieldset>
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("What do you do with them?")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("What do you do with them?")}</legend>
               <div className="grid grid-cols-2 gap-2">
                 {(
                   [
@@ -216,7 +217,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
 
             {!editing && (
               <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-                <legend className="mb-2 text-body font-medium text-ink">
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">
                   {t("Balance right now")} <span className="font-normal text-ink-muted">({t("optional")})</span>
                 </legend>
                 <div role="group" aria-label={t("Who owes whom")} className="grid grid-cols-3 gap-1 rounded-md bg-surface-sunken p-1">
@@ -235,8 +236,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
                       size="xl"
                       type="text"
                       inputMode="decimal"
-                      value={openingBalance}
-                      onChange={(event) => setOpeningBalance(normalizeMoneyInput(event.target.value))}
+                      {...openingBalanceField}
                       placeholder="0"
                       aria-label={t("Opening balance")}
                       autoFocus

@@ -9,6 +9,7 @@ import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
+import Kbd from "@/components/smartly/Kbd";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Account, Transaction } from "@/lib/customer/api";
@@ -17,6 +18,7 @@ import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone
 import { formatSignedCurrency } from "@/lib/customer/currency";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { categoryIndex, dayHeading, describeTransaction, groupByDay, type TransactionRow } from "@/lib/customer/transactionRows";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { TransactionFilters } from "./TransactionFilters";
@@ -50,7 +52,7 @@ const GRID = "md:grid-cols-[minmax(0,1fr)_190px_160px_140px_80px]";
 // Transactions: the filters, the totals strip, and the list grouped by
 // day with each day's net, newest first.
 export function TransactionsPageClient({ businessId, transactions, accounts, categories, meta, currency, today, totals, canManage }: TransactionsPageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [addOpen, setAddOpen] = useState(false);
@@ -59,6 +61,9 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   const categoriesById = categoryIndex(categories);
   const groups = groupByDay(transactions.map((transaction) => describeTransaction(transaction, categoriesById)));
   const filtered = searchParams.toString().replace(/page=\d+&?/, "") !== "";
+
+  // A new account: nothing to filter or total yet, so only the empty card.
+  const blank = !filtered && meta.total === 0;
 
   function goToPage(page: number) {
     const next = new URLSearchParams(searchParams.toString());
@@ -87,44 +92,46 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         className="md:mb-1"
       />
 
-      <TransactionFilters accounts={accounts} categories={categories} />
+      {!blank && <TransactionFilters accounts={accounts} categories={categories} />}
 
       {/* Two small cards on a phone; one strip of four on wider screens. */}
-      <Card padding="none" className="grid grid-cols-2 max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4">
-        <TotalCell label={t("Income")} phoneLabel={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
-          <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className={PHONE_FIGURE} />
-        </TotalCell>
-        <TotalCell label={t("Expense")} phoneLabel={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
-          <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className={PHONE_FIGURE} />
-        </TotalCell>
-        <TotalCell label={t("Net")} divided className="max-md:hidden">
-          <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-h2" />
-        </TotalCell>
-        <TotalCell label={t("Transactions")} divided className="max-md:hidden">
-          <span className="text-h3 text-ink tabular-nums md:text-h2">
-            {totals.count}
-            {totals.voided > 0 && (
-              <span className="text-small font-medium text-ink-muted">
-                {" "}
-                · {totals.voided} {t("voided")}
-              </span>
-            )}
-            {totals.scope === "page" && <span className="text-small font-medium text-ink-muted"> · {t("this page")}</span>}
-          </span>
-        </TotalCell>
-      </Card>
+      {!blank && (
+        <Card padding="none" className="grid grid-cols-2 max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4">
+          <TotalCell label={t("Income")} phoneLabel={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
+            <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className={PHONE_FIGURE} />
+          </TotalCell>
+          <TotalCell label={t("Expense")} phoneLabel={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
+            <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className={PHONE_FIGURE} />
+          </TotalCell>
+          <TotalCell label={t("Net")} divided className="max-md:hidden">
+            <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-h2" />
+          </TotalCell>
+          <TotalCell label={t("Transactions")} divided className="max-md:hidden">
+            <span className="text-h3 text-ink tabular-nums md:text-h2">
+              {totals.count}
+              {totals.voided > 0 && (
+                <span className="text-small font-medium text-ink-muted">
+                  {" "}
+                  · {totals.voided} {t("voided")}
+                </span>
+              )}
+              {totals.scope === "page" && <span className="text-small font-medium text-ink-muted"> · {t("this page")}</span>}
+            </span>
+          </TotalCell>
+        </Card>
+      )}
 
       {transactions.length === 0 ? (
-        <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-3 p-10 text-center">
+        <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-3 p-10 text-center md:min-h-160.5">
           <EmptyIllustration />
-          <h2 className="text-h3 text-ink">{filtered ? t("Nothing matches these filters") : t("No transactions yet")}</h2>
-          <p className="max-w-105 text-body leading-relaxed text-ink-muted">
+          <h2 className="text-h3 leading-[normal] tracking-normal text-ink">{filtered ? t("Nothing matches these filters") : t("No transactions yet")}</h2>
+          <p className="max-w-105 text-body leading-[1.55] text-ink-muted">
             {filtered ? t("Try a wider date range, or clear the filters.") : t("Add your first income or expense. It takes a few seconds, and your dashboard, budget and reports fill in from here.")}
           </p>
           <div className="mt-3 flex gap-3">
             <Button variant="action" onClick={() => setAddOpen(true)}>
-              <Plus strokeWidth={2.5} className="size-4" />
-              {t("New transaction")}
+              <Plus strokeWidth={2.5} className="size-3.75" />
+              {filtered ? t("New transaction") : t("Add first transaction")}
             </Button>
             {filtered ? (
               <Button variant="secondary" asChild>
@@ -132,10 +139,18 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
               </Button>
             ) : (
               <Button variant="secondary" asChild>
-                <Link href="/balance/wallet">{t("Add a wallet first")}</Link>
+                <Link href="/categories">{t("Set up categories first")}</Link>
               </Button>
             )}
           </div>
+          {/* The N key opens the Add menu; phones have no keyboard to press it on. */}
+          {!filtered && (
+            <p className="mt-4 hidden items-center gap-2 text-caption leading-[normal] font-normal text-ink-muted md:flex">
+              {fillNodes(t("Tip: press {key} anywhere to add a transaction"), {
+                key: <Kbd className="rounded-[4px] bg-cream py-px font-sans text-caption leading-[normal] font-semibold text-ink-2">N</Kbd>,
+              })}
+            </p>
+          )}
         </Card>
       ) : (
         <>
@@ -151,7 +166,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             {groups.map((group) => (
               <div key={group.day}>
                 <div className="flex h-9.5 items-center justify-between border-b border-surface-sunken bg-cream px-6 text-caption font-semibold">
-                  <span className="text-ink-2">{dayHeading(group.day, today, t)}</span>
+                  <span className="text-ink-2">{dayHeading(group.day, today, t, locale)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>
                 {group.rows.map((row) => (
@@ -167,7 +182,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             {groups.map((group) => (
               <div key={group.day}>
                 <div className="flex justify-between px-1 pt-4 pb-2 text-small leading-[normal] font-semibold text-ink-2">
-                  <span>{dayHeading(group.day, today, t)}</span>
+                  <span>{dayHeading(group.day, today, t, locale)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>
                 <Card padding="none" elevated={false} className="overflow-hidden">
@@ -294,7 +309,7 @@ function Pagination({ page, totalPages, rangeStart, rangeEnd, total, onPage, cla
   return (
     <div className={cn("flex items-center justify-between px-6 py-3 text-small text-ink-muted", className)}>
       <span>
-        {t("Showing")} {rangeStart}–{rangeEnd} {t("of")} {total}
+        {t("Showing {from}–{to} of {total}", { from: rangeStart, to: rangeEnd, total })}
       </span>
       <div className="flex items-center gap-2">
         <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label={t("Previous page")} className="flex size-8 items-center justify-center rounded-md border border-line bg-surface text-ink-2 disabled:opacity-50">

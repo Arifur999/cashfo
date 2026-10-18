@@ -9,11 +9,11 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { createAccountAction, updateAccountAction } from "@/lib/customer/accountActions";
 import type { Account } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { savingsPalette } from "@/lib/customer/savingsDisplay";
 import { maskAccountNumber, WALLET_TYPE_META, WALLET_TYPES, walletPalette, walletType, type WalletType } from "@/lib/customer/walletVisuals";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -44,6 +44,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
   const [name, setName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [openingBalance, setOpeningBalance] = useState("");
+  const openingBalanceField = useAmountField(openingBalance, setOpeningBalance, currency);
   const [isPending, startTransition] = useTransition();
 
   // Populate the instant the drawer opens, or switches to another wallet.
@@ -99,7 +100,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-6" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{savings ? (editing ? t("Edit savings wallet") : t("Add savings wallet")) : editing ? t("Edit wallet") : t("Add wallet")}</SheetTitle>
-            <p className="text-small text-ink-muted">{savings ? t("Where does your saved money sit?") : t("Where do you keep this money?")}</p>
+            <p className="text-small leading-[normal] text-ink-muted">{savings ? t("Where does your saved money sit?") : t("Where do you keep this money?")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -125,7 +126,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
 
             {!savings && (
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Type")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Type")}</legend>
               <div className="grid grid-cols-3 gap-2">
                 {WALLET_TYPES.map((option) => {
                   const on = option === type;
@@ -176,8 +177,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
                   size="xl"
                   type="text"
                   inputMode="decimal"
-                  value={openingBalance}
-                  onChange={(event) => setOpeningBalance(normalizeMoneyInput(event.target.value))}
+                  {...openingBalanceField}
                   placeholder="0"
                   aria-describedby="wallet-opening-hint"
                   leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}

@@ -124,12 +124,13 @@ export const vaultDictionary: Record<string, string> = {
   "Start with the accounts you open most. Pick one and the name and website are filled in for you.": "যে অ্যাকাউন্টগুলো সবচেয়ে বেশি খোলেন সেগুলো দিয়ে শুরু করুন। একটি বাছলে নাম আর ওয়েবসাইট আপনার জন্য ভরে যাবে।",
   "Something else": "অন্য কিছু",
   "Start blank": "খালি থেকে শুরু",
+  "Wi-Fi": "ওয়াই-ফাই",
   "Copy in one tap": "এক চাপে কপি",
   "Copy a username or password straight from the list, no need to open it.": "লিস্ট থেকেই সরাসরি ইউজারনেম বা পাসওয়ার্ড কপি করুন, খোলার দরকার নেই।",
   "Strong passwords for you": "আপনার জন্য শক্তিশালী পাসওয়ার্ড",
   "Generate makes a long random password, so you never reuse one.": "Generate একটি লম্বা এলোমেলো পাসওয়ার্ড বানায়, তাই একই পাসওয়ার্ড আর ব্যবহার করতে হয় না।",
   "Locked and encrypted": "লক আর এনক্রিপ্ট করা",
-  "Every password is encrypted before it is stored, and the vault locks itself after 10 minutes.": "প্রতিটি পাসওয়ার্ড সংরক্ষণের আগে এনক্রিপ্ট হয়, আর ভল্ট ১০ মিনিট পর নিজেই লক হয়।",
+  "Passwords are stored encrypted, and the vault locks itself after 10 minutes.": "পাসওয়ার্ড এনক্রিপ্ট করে রাখা হয়, আর ভল্ট ১০ মিনিট পর নিজেই লক হয়।",
 
   // Add / edit
   "Edit login": "লগইন সম্পাদনা",

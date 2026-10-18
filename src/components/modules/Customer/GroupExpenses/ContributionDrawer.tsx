@@ -9,13 +9,13 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupContribution, GroupMember } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import type { MonthRange } from "@/lib/customer/groupDisplay";
 import { createGroupContributionAction, updateGroupContributionAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { MemberPicker } from "./MemberPicker";
@@ -56,6 +56,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
   const [memberId, setMemberId] = useState("");
   const [kind, setKind] = useState<Kind>("DEPOSIT");
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [date, setDate] = useState(today);
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -140,7 +141,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
             </Field>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Type")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Type")}</legend>
               <div role="radiogroup" className="grid grid-cols-2 gap-2">
                 {kinds.map((option) => {
                   const on = kind === option.value;
@@ -163,8 +164,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
                   id="con-amount"
                   size="lg"
                   inputMode="decimal"
-                  value={amount}
-                  onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+                  {...amountField}
                   placeholder="0"
                   className="text-h3 font-bold tabular-nums"
                   leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}

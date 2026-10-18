@@ -1,6 +1,10 @@
 "use client";
 
-import { AlertTriangle, RotateCcw } from "lucide-react";
+import { CircleAlert, House, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import Button from "@/components/smartly/Button";
+import StatePage from "@/components/smartly/StatePage";
+import { CUSTOMER_HOME_ROUTE } from "@/lib/authUtils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface CustomerErrorProps {
@@ -10,31 +14,35 @@ interface CustomerErrorProps {
 }
 
 // A customer page couldn't load -- most often the API was unreachable (see
-// lib/customer/readFallback.ts). The sidebar and top bar stay up; only the
-// content area is replaced.
+// lib/customer/readFallback.ts). The sidebar and top bar stay up; the content
+// area says what the full-page error does, with its reference and buttons.
 export default function CustomerError({ error, retry }: CustomerErrorProps) {
   const { t } = useLocale();
 
   return (
-    <div className="flex h-full items-center justify-center bg-brand-content px-6 py-16">
-      <div className="w-full max-w-md rounded-2xl bg-surface p-8 text-center shadow-sm shadow-black/5">
-        <AlertTriangle className="mx-auto h-10 w-10 text-brand-danger" aria-hidden="true" />
-        <h1 className="mt-4 text-lg font-semibold text-neutral-900">{t("Something went wrong")}</h1>
-        <p className="mt-2 text-sm text-neutral-500">{t("We couldn't load this page. Check your connection and try again.")}</p>
-        {error.digest && (
-          <p className="mt-3 font-mono text-xs text-neutral-400">
-            {t("Reference:")} {error.digest}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={() => retry()}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-primary-hover"
-        >
-          <RotateCcw className="h-4 w-4" aria-hidden="true" />
-          {t("Try again")}
-        </button>
-      </div>
-    </div>
+    <StatePage
+      standalone={false}
+      icon={<CircleAlert />}
+      tone="expense"
+      reference={error.digest ? `${t("Error reference")}: ${error.digest}` : undefined}
+      title={t("Something went wrong on our side")}
+      description={t("Nothing you entered was lost. Try again in a moment; if it keeps happening, send us the reference above and we will look into it.")}
+      actions={
+        <>
+          <Button size="lg" onClick={() => retry()}>
+            <RefreshCw />
+            {t("Try again")}
+          </Button>
+          <Button size="lg" variant="secondary" asChild>
+            <Link href={CUSTOMER_HOME_ROUTE}>
+              <House />
+              {t("Go to Home")}
+            </Link>
+          </Button>
+        </>
+      }
+    >
+      <span className="text-small text-ink-muted">{t("Saved transactions stay saved. Anything you were typing may need to be entered again.")}</span>
+    </StatePage>
   );
 }

@@ -44,6 +44,8 @@
   --expense: #b42a2a;
   --expense-fill: #c63a32;
   --expense-soft: #fbeae6;
+  /* The border of an over-budget card or a red outline button. */
+  --expense-line: #f2c9c0;
   --warning: #8f5600;
   --warning-fill: #e8a317;
   --warning-soft: #fbf0d9;
@@ -88,6 +90,8 @@
   --elevation-float: 0 10px 28px -8px rgba(11, 61, 46, 0.18), 0 2px 6px rgba(14, 26, 22, 0.06);
   --elevation-overlay: 0 28px 60px -16px rgba(11, 61, 46, 0.3);
   --elevation-button: 0 8px 18px -8px rgba(11, 61, 46, 0.55);
+  /* The wash behind dialogs and drawers. */
+  --scrim: rgba(14, 26, 22, 0.48);
 
   /* shadcn's tokens, mapped onto the palette above so its primitives and
      the design's own components agree. */
@@ -151,6 +155,7 @@
   --expense: #f08080;
   --expense-fill: #e5484d;
   --expense-soft: #3a1715;
+  --expense-line: rgba(240, 128, 128, 0.4);
   --warning: #f2b84b;
   --warning-fill: #f2b84b;
   --warning-soft: #33240a;
@@ -177,11 +182,14 @@
   --cat-4: #86abf2;
   --cat-5: #5cccdb;
   --cat-6: #f08fbf;
+  --rose: #f08fbf;
+  --rose-soft: #3a1528;
 
   --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --elevation-float: 0 10px 28px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
   --elevation-overlay: 0 28px 60px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
   --elevation-button: 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+  --scrim: rgba(0, 0, 0, 0.6);
 
   /* The main button turns emerald with deep-forest text in the dark theme. */
   --primary: var(--emerald);
@@ -301,6 +309,7 @@
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-surface-sunken: var(--surface-sunken);
+  --color-scrim: var(--scrim);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-ink: var(--ink);
@@ -313,6 +322,7 @@
   --color-expense: var(--expense);
   --color-expense-fill: var(--expense-fill);
   --color-expense-soft: var(--expense-soft);
+  --color-expense-line: var(--expense-line);
   --color-warning: var(--warning);
   --color-warning-fill: var(--warning-fill);
   --color-warning-soft: var(--warning-soft);
@@ -503,6 +513,40 @@
     --loader-color-1: #ffffff;
     --loader-color-2: rgb(255 255 255 / 0.3);
   }
+}
+
+/* The design's scrim behind every dialog and drawer: a 48% ink wash with no
+   blur. Unlayered, so it outranks the bg-black/80 and backdrop blur of the
+   generated primitives in components/ui, which are not edited by hand. */
+[data-slot="dialog-overlay"],
+[data-slot="sheet-overlay"],
+[data-slot="alert-dialog-overlay"] {
+  background-color: var(--scrim);
+  backdrop-filter: none;
+}
+
+/* An alert dialog is as wide as its w-* class says (every one sets it), up
+   to the screen less 16px a side. The primitive's own caps -- 320px, then
+   448px from sm -- sit on a data-size selector that outranks max-w-*, so
+   wider dialogs were cut to 448px and every phone dialog to 320px. */
+[data-slot="alert-dialog-content"][data-size="default"] {
+  max-width: calc(100vw - 32px);
+}
+
+/* A drawer is edged by its shadow alone: the sheet's side border outranks
+   the border-0 every drawer passes. */
+[data-slot="sheet-content"] {
+  border-width: 0;
+}
+
+/* Dialog and drawer titles in the design's h3: semibold on a normal line.
+   The primitives' font-medium (and the dialog's leading-none) would win
+   over the text-h3 every title is given. */
+[data-slot="sheet-title"],
+[data-slot="dialog-title"],
+[data-slot="alert-dialog-title"] {
+  font-weight: 600;
+  line-height: normal;
 }
 
 @keyframes app-loader-spin {

@@ -93,7 +93,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
         ))}
       </NativeSelect>
       <NativeSelect size="sm" value={accountId} onChange={(event) => update({ accountId: event.target.value })} aria-label={t("Account")} className="font-medium">
-        <option value="">{t("All accounts")}</option>
+        <option value="">{t("All accounts@@wallets")}</option>
         {accounts.map((account) => (
           <option key={account.id} value={account.id}>
             {account.name}
@@ -150,7 +150,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
           <Field htmlFor="filter-from" label={t("From")}>
             <Input id="filter-from" type="date" size="sm" value={dateFrom ?? ""} onChange={(event) => update({ dateFrom: event.target.value || undefined })} />
           </Field>
-          <Field htmlFor="filter-to" label={t("To")}>
+          <Field htmlFor="filter-to" label={t("To@@date")}>
             <Input id="filter-to" type="date" size="sm" value={dateTo ?? ""} onChange={(event) => update({ dateTo: event.target.value || undefined })} />
           </Field>
         </div>
@@ -226,7 +226,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
                 <Field htmlFor="sheet-from" label={t("From")}>
                   <Input id="sheet-from" type="date" size="md" value={dateFrom ?? ""} onChange={(event) => update({ dateFrom: event.target.value || undefined })} />
                 </Field>
-                <Field htmlFor="sheet-to" label={t("To")}>
+                <Field htmlFor="sheet-to" label={t("To@@date")}>
                   <Input id="sheet-to" type="date" size="md" value={dateTo ?? ""} onChange={(event) => update({ dateTo: event.target.value || undefined })} />
                 </Field>
               </div>

@@ -11,11 +11,11 @@ import Input from "@/components/smartly/form/Input";
 import Textarea from "@/components/smartly/form/Textarea";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { SavingsGoal, SavingsReminderChannel } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { createSavingsGoalAction, updateSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
 import { monthsLeft } from "@/lib/customer/savingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -39,6 +39,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
   const wide = useMediaQuery("(min-width: 768px)");
   const [name, setName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
+  const targetAmountField = useAmountField(targetAmount, setTargetAmount, currency);
   const [targetDate, setTargetDate] = useState("");
   const [reminderDate, setReminderDate] = useState("");
   const [reminderChannel, setReminderChannel] = useState<SavingsReminderChannel>("EMAIL");
@@ -106,7 +107,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit goal") : t("New savings goal")}</SheetTitle>
-            <p className="text-small text-ink-muted">{t("What are you saving for, and by when?")}</p>
+            <p className="text-small leading-[normal] text-ink-muted">{t("What are you saving for, and by when?")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -126,8 +127,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
                   type="text"
                   inputMode="decimal"
                   size="lg"
-                  value={targetAmount}
-                  onChange={(event) => setTargetAmount(normalizeMoneyInput(event.target.value))}
+                  {...targetAmountField}
                   placeholder="0"
                   leading={<span className="flex h-12 w-11 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                   frameClassName="gap-0 overflow-hidden pl-0"
@@ -156,7 +156,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
             )}
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">
                 {t("Reminder")} <span className="font-normal text-ink-muted">({t("optional")})</span>
               </legend>
               <div className="grid gap-3 md:grid-cols-[170px_minmax(0,1fr)]">

@@ -12,10 +12,10 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import { useAmountField } from "@/hooks/useAmountField";
 import type { SavingsGoal, SavingsTransferRow } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { createSavingsTransferAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -40,6 +40,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
   const [fromId, setFromId] = useState("");
   const [toId, setToId] = useState("");
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [isPending, startTransition] = useTransition();
 
   // A withdrawn goal was paid out and is closed: it can't take money and
@@ -143,8 +144,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                   type="text"
                   inputMode="decimal"
                   size="lg"
-                  value={amount}
-                  onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+                  {...amountField}
                   placeholder="0"
                   disabled={open.length < 2}
                   invalid={!!from && value > Number(from.currentAmount)}

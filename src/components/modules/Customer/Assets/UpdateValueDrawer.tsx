@@ -13,13 +13,13 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { updateAssetValueAction } from "@/lib/customer/assetActions";
 import { categoryVisual, gainChip, lastValued } from "@/lib/customer/assetDisplay";
-import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import DayInput from "@/components/smartly/form/DayInput";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 
 interface UpdateValueDrawerProps {
   open: boolean;
@@ -98,7 +98,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
           <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
           <span className="flex min-w-0 flex-1 flex-col gap-px">
             <SheetTitle className="text-h3 text-ink">{t("Update value")}</SheetTitle>
-            <span className="truncate text-small text-ink-muted">
+            <span className="truncate text-small leading-[normal] text-ink-muted">
               {asset.name} · {asset.category}
             </span>
           </span>
@@ -110,12 +110,12 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <div className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-cream p-4 tabular-nums">
-              <span className="flex flex-col gap-0.5">
+              <span className="flex flex-col gap-0.5 [&>*]:leading-[normal]">
                 <span className="text-caption font-normal text-ink-muted">{t("Current value")}</span>
                 <span className="text-title text-ink">{formatCurrency(current, currency)}</span>
                 <span className="text-caption font-normal text-ink-muted">{since ? `${t("since")} ${formatDate(since)}` : t("never checked")}</span>
               </span>
-              <span className="flex flex-col gap-0.5">
+              <span className="flex flex-col gap-0.5 [&>*]:leading-[normal]">
                 <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
                 <span className="text-title text-ink">{formatCurrency(paid, currency)}</span>
                 <span className="text-caption font-normal text-ink-muted">
@@ -125,19 +125,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
             </div>
 
             <Field htmlFor="upd-value" label={label(t("New value"))}>
-              <Input
-                id="upd-value"
-                type="text"
-                inputMode="decimal"
-                size="xl"
-                value={value}
-                onChange={(event) => setValue(normalizeMoneyInput(event.target.value))}
-                placeholder="0"
-                autoFocus
-                leading={<span className="flex h-14 w-13 items-center justify-center border-r border-line bg-cream text-h2 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                frameClassName="h-14 gap-0 overflow-hidden pl-0"
-                className="pl-4 text-h2 tabular-nums"
-              />
+              <AmountInput id="upd-value" value={value} onChange={setValue} currency={currency} autoFocus />
               {next > 0 && (
                 <div className="flex flex-wrap gap-2">
                   <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-caption font-semibold tabular-nums", CHIP[sinceLast.tone])}>

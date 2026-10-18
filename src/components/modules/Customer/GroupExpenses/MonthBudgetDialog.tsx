@@ -10,12 +10,12 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupMonthlyBudget } from "@/lib/customer/api";
 import { currencySymbol } from "@/lib/customer/currency";
 import { monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
 import { createGroupMonthBudgetAction, deleteGroupMonthBudgetAction, updateGroupMonthBudgetAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface MonthBudgetDialogProps {
@@ -37,6 +37,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
   const router = useRouter();
   const [month, setMonth] = useState(monthKey);
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -112,8 +113,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
                 id="bud-amount"
                 size="lg"
                 inputMode="decimal"
-                value={amount}
-                onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+                {...amountField}
                 autoFocus
                 placeholder="65,000"
                 className="text-h3 font-bold tabular-nums"

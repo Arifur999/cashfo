@@ -2,6 +2,8 @@ import { ArrowLeft, Receipt } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createElement } from "react";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
+import { EditTransactionButton } from "@/components/modules/Customer/Transactions/EditTransactionButton";
 import { VoidTransactionButton } from "@/components/modules/Customer/Transactions/VoidTransactionButton";
 import AmountText from "@/components/smartly/AmountText";
 import Card from "@/components/smartly/Card";
@@ -15,11 +17,10 @@ import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDateTime } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { categoryIndex, describeTransaction, reversalTitle } from "@/lib/customer/transactionRows";
+import { categoryIndex, describeTransaction, editableEntry, reversalTitle } from "@/lib/customer/transactionRows";
 import { getTransaction } from "@/lib/customer/transactions";
 import { getTranslator } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
-import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 
 const ACCOUNT_KIND: Record<string, string> = {
   ASSET: "Wallet",
@@ -57,6 +58,9 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
   const typeTone = transaction.transactionType === "INCOME" ? "income" : transaction.transactionType === "EXPENSE" ? "expense" : "neutral";
   const debitTotal = transaction.entries.filter((e) => e.entryType === "DEBIT").reduce((sum, e) => sum + Number(e.amount), 0);
   const isBusiness = activeBusiness?.type === "BUSINESS";
+  // A plain income, expense or transfer can be edited (decision D2); other
+  // voidable entries can only be voided.
+  const editable = canManage && !row.cancelled ? editableEntry(transaction, title, row.category?.name ?? null) : null;
 
   type Fact = { label: string; value: React.ReactNode };
   const candidates: (Fact | null)[] = [
@@ -86,7 +90,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
               <Chip tone="expense" className="mr-2 font-semibold">
                 {t(row.cancelled)}
               </Chip>
-              {transaction.voidedReason}
+              {transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}
               {transaction.reversalOfId && (
                 <Link href={`/transactions/${transaction.reversalOfId}`} className="font-semibold text-emerald hover:underline">
                   {t("See the original")}
@@ -113,6 +117,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
         {canManage && transaction.voidable && !row.cancelled && (
           <div className="flex shrink-0 items-center gap-3">
             <VoidTransactionButton businessId={activeBusinessId} transactionId={transaction.id} title={title} />
+            {editable && <EditTransactionButton businessId={activeBusinessId} currency={currency} entry={editable} />}
           </div>
         )}
       </div>
@@ -190,12 +195,19 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
           <Card className="flex flex-col gap-2">
             <h3 className="text-h3 text-ink">{t("History")}</h3>
             <HistoryRow tone="bg-emerald" title={t("Added")} when={formatDateTime(transaction.createdAt)} />
-            {transaction.voidedAt && <HistoryRow tone="bg-expense-fill" title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason}` : ""}`} when={formatDateTime(transaction.voidedAt)} />}
+            {transaction.voidedAt && <HistoryRow tone="bg-expense-fill" title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}` : ""}`} when={formatDateTime(transaction.voidedAt)} />}
           </Card>
           {canManage && transaction.voidable && !row.cancelled && (
             <Card className="flex flex-col gap-3">
               <h3 className="text-h3 text-ink">{t("Made a mistake?")}</h3>
-              <p className="text-body leading-[21px] text-ink-2">{t("Void it and add the right one. Voiding keeps this record in your history, crossed out, so the books still add up.")}</p>
+              {editable ? (
+                <>
+                  <p className="text-body leading-[21px] text-ink-2">{t("Use Edit to fix the amount, category, wallet, date or note. The original is kept in History, marked as corrected, so your records stay honest.")}</p>
+                  <p className="text-body leading-[21px] text-ink-2">{t("Void removes it from your balances when it should never have been added.")}</p>
+                </>
+              ) : (
+                <p className="text-body leading-[21px] text-ink-2">{t("Void it and add the right one. Voiding keeps this record in your history, crossed out, so the books still add up.")}</p>
+              )}
             </Card>
           )}
         </div>

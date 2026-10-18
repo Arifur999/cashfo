@@ -5,6 +5,8 @@
 // shown under it.
 export const chromeDictionary: Record<string, string> = {
   "Money Tracker": "মানি ট্র্যাকার",
+  // OfflineBanner.tsx
+  "You are offline. Showing what was loaded at {time}; changes are paused.": "আপনি অফলাইনে আছেন। {time}-এ লোড হওয়া তথ্য দেখানো হচ্ছে; পরিবর্তন আপাতত বন্ধ।",
   // Sidebar top-level items
   Dashboard: "ড্যাশবোর্ড",
   Balance: "ব্যালেন্স",

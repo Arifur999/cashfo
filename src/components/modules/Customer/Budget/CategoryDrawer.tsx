@@ -10,6 +10,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { BudgetCategorySummary, BudgetCategoryType } from "@/lib/customer/api";
 import { createAssetCategoryAction, updateAssetCategoryAction } from "@/lib/customer/assetActions";
@@ -18,7 +19,6 @@ import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction } fr
 import { budgetCategoryHex, budgetCategoryIcon, budgetCategoryIconLabel, BUDGET_CATEGORY_COLORS, BUDGET_CATEGORY_ICONS, INCOME_CATEGORY_ICONS, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
   const [icon, setIcon] = useState<IconKey | null>(null);
   const [color, setColor] = useState<ColorKey>(BUDGET_CATEGORY_COLORS[0]);
   const [limit, setLimit] = useState("");
+  const limitField = useAmountField(limit, setLimit, currency);
   const [iconSearch, setIconSearch] = useState("");
   // Once an icon is picked by hand, typing a name never swaps it.
   const [iconTouched, setIconTouched] = useState(false);
@@ -140,7 +141,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{title}</SheetTitle>
-            <p className="text-small text-ink-muted">{t(isAsset ? "Group what you own." : isGroup ? "What an expense can be filed under." : isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
+            <p className="text-small leading-[normal] text-ink-muted">{t(isAsset ? "Group what you own." : isGroup ? "What an expense can be filed under." : isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -166,9 +167,9 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             </Field>
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Icon")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Icon")}</legend>
               <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t("Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} />
-              <div className="grid max-h-56 grid-cols-8 gap-2 overflow-y-auto">
+              <div className="grid max-h-23 grid-cols-8 gap-2 overflow-y-auto">
                 {icons.length === 0 ? (
                   <p className="col-span-8 py-4 text-center text-small text-ink-muted">{t("No matching icon")}</p>
                 ) : (
@@ -198,7 +199,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             </fieldset>
 
             <fieldset className="m-0 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Colour")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Colour")}</legend>
               <div className="flex flex-wrap gap-1 pt-1 pl-1">
                 {BUDGET_CATEGORY_COLORS.map((key) => {
                   const on = color === key;
@@ -231,8 +232,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                     id="cat-limit"
                     type="text"
                     inputMode="decimal"
-                    value={limit}
-                    onChange={(event) => setLimit(normalizeMoneyInput(event.target.value))}
+                    {...limitField}
                     aria-describedby={over > 0 ? "cat-limit-help" : undefined}
                     className="min-w-0 flex-1 bg-transparent px-4 text-h2 font-semibold text-ink tabular-nums outline-none placeholder:text-ink-faint"
                     placeholder="0"

@@ -98,7 +98,7 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit book") : t("Add a book")}</SheetTitle>
-            <span className="text-small text-ink-muted">{t("Title, author and how many pages. The cover colour is yours to pick.")}</span>
+            <span className="text-small leading-[normal] text-ink-muted">{t("Title, author and how many pages. The cover colour is yours to pick.")}</span>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -119,7 +119,7 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
 
             {!editing && (
               <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body font-medium text-ink">{t("Shelf")}</legend>
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Shelf")}</legend>
                 <SegmentedControl label={t("Shelf")} variant="soft" stretch value={status} onChange={setStatus} options={SHELF_OPTIONS.map((value) => ({ value, label: t(SHELF_LABEL[value]) }))} />
                 {status === "READING" && (
                   <Field htmlFor="bk-read" label={<span className="text-small font-medium text-ink-2">{t("Pages read so far")}</span>} error={readTooHigh ? t("That's more than the total pages.") : undefined} className="mt-2">
@@ -132,7 +132,7 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
             <fieldset className="grid grid-cols-[72px_minmax(0,1fr)] gap-4">
               <Cover size="card" title={title.trim() || t("Your book title")} author={author.trim()} color={color} />
               <div className="flex flex-col gap-2">
-                <legend className="mb-2 text-body font-medium text-ink">{t("Cover colour")}</legend>
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Cover colour")}</legend>
                 <div role="radiogroup" aria-label={t("Cover colour")} className="grid grid-cols-[repeat(5,28px)] gap-x-3 gap-y-2">
                   {BOOK_PALETTE.map((option) => {
                     const on = option.key === color;

@@ -12,6 +12,9 @@ export interface TopbarExtrasValue {
   // A page whose name differs from its menu entry ("New journal entry"
   // under Journal entry) puts its own in the breadcrumb.
   heading?: string;
+  // A page outside the menu ("Page not found") names itself alone, with no
+  // trail before it.
+  title?: string;
   subtitle?: React.ReactNode;
   // Takes the account menu's place on a phone.
   action?: React.ReactNode;
@@ -29,12 +32,12 @@ export function TopbarProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TopbarExtras({ record, heading, subtitle, action }: TopbarExtrasValue) {
+export function TopbarExtras({ record, heading, title, subtitle, action }: TopbarExtrasValue) {
   const setExtras = useContext(SetExtrasContext);
   // Before paint, so the bar never shows a stale part from the last page.
   useLayoutEffect(() => {
-    setExtras({ record, heading, subtitle, action });
-  }, [record, heading, subtitle, action, setExtras]);
+    setExtras({ record, heading, title, subtitle, action });
+  }, [record, heading, title, subtitle, action, setExtras]);
   useLayoutEffect(() => () => setExtras(null), [setExtras]);
   return null;
 }

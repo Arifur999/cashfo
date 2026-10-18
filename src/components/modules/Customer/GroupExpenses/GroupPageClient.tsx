@@ -205,7 +205,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
         monthKey={data.range.key}
         months={data.months}
         closed={view.closed}
-        setup={view.setup && view.activeMembers.length === 0}
+        setup={view.setup}
         onMonthChange={goToMonth}
         onAddMember={() => setMember({ open: true, editing: null })}
         onAddContribution={() => openContribution()}
@@ -216,7 +216,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       <MemberDrawer open={member.open} onClose={() => setMember({ open: false, editing: null })} businessId={data.businessId} editing={member.editing} />
       <ContributionDrawer open={contribution.open} onClose={() => setContribution({ open: false, editing: null, memberId: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} cashInHand={view.cash} range={data.range} today={data.today} editing={contribution.editing} presetMemberId={contribution.memberId} />
       <ExpenseDrawer open={expense.open} onClose={() => setExpense({ open: false, editing: null })} businessId={data.businessId} currency={data.currency} members={data.members} categories={data.categories} cashInHand={view.cash} range={data.range} today={data.today} editing={expense.editing} />
-      <RecordPaymentDialog open={payment.open} onClose={() => setPayment({ open: false, preset: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} range={data.range} today={data.today} preset={payment.preset} />
+      <RecordPaymentDialog open={payment.open} onClose={() => setPayment({ open: false, preset: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} cashInHand={view.cash} range={data.range} today={data.today} preset={payment.preset} />
       <MemberStatementDrawer
         open={statement !== null}
         onClose={() => setStatement(null)}

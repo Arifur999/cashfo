@@ -60,6 +60,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
         tone="insights"
         title={t("What your numbers say")}
         description={`${labels.period}, ${t("compared with")} ${comparedWith}.`}
+        looseDescription
         hideDescriptionOnPhone
         actions={
           <>

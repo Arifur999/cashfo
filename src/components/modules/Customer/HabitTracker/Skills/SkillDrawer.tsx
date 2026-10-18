@@ -111,7 +111,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit skill") : t("Add a skill")}</SheetTitle>
-            <span className="text-small text-ink-muted">{t("A course counted in lessons, or any skill counted in hours.")}</span>
+            <span className="text-small leading-[normal] text-ink-muted">{t("A course counted in lessons, or any skill counted in hours.")}</span>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -129,7 +129,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
 
             <div className="grid grid-cols-2 gap-4">
               <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body font-medium text-ink">{t("Counted in")}</legend>
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Counted in")}</legend>
                 {editing ? <span className="flex h-11 items-center text-body text-ink-2">{t(UNIT_LABEL[editing.unit])}</span> : <SegmentedControl label={t("Counted in")} variant="soft" stretch value={unit} onChange={setUnit} options={UNITS.map((value) => ({ value, label: t(UNIT_LABEL[value]) }))} />}
               </fieldset>
               <Field htmlFor="sk-target" label={label(t(isHours ? "Goal (hours)" : "Total lessons"))} error={targetError}>
@@ -139,7 +139,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
 
             {!editing && (
               <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body font-medium text-ink">{t("Status")}</legend>
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Status")}</legend>
                 <SegmentedControl label={t("Status")} variant="soft" stretch value={status} onChange={setStatus} options={STATUSES.map((value) => ({ value, label: t(STATUS_LABEL[value]) }))} />
                 {status === "LEARNING" && (
                   <Field htmlFor="sk-done" label={<span className="text-small font-medium text-ink-2">{t(isHours ? "Hours done so far" : "Lessons done so far")}</span>} error={doneError} className="mt-2">
@@ -151,7 +151,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
 
             <div className="grid grid-cols-[minmax(0,1fr)_150px] gap-5">
               <fieldset className="flex min-w-0 flex-col gap-2">
-                <legend className="mb-2 text-body font-medium text-ink">{t("Icon")}</legend>
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Icon")}</legend>
                 <div role="radiogroup" aria-label={t("Icon")} className="grid grid-cols-[repeat(6,36px)] gap-2">
                   {SKILL_ICONS.map((option) => {
                     const on = option.key === icon;
@@ -164,7 +164,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
                 </div>
               </fieldset>
               <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body font-medium text-ink">{t("Colour")}</legend>
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Colour")}</legend>
                 <div className="flex items-start gap-3">
                   <SkillTile icon={icon} color={color} />
                   <div role="radiogroup" aria-label={t("Colour")} className="grid grid-cols-[repeat(4,24px)] gap-2">

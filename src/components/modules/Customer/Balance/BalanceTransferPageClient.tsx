@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createElement, useState } from "react";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
-import { TransactionDrawer } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
 import AmountText from "@/components/smartly/AmountText";
 import Banner from "@/components/smartly/Banner";
@@ -24,6 +23,7 @@ import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { cancelledLabel, isCancelled } from "@/lib/customer/transactionDisplay";
 import { transferAmount, transferParties, transferTotals } from "@/lib/customer/transfers";
 import { walletIcon, walletPalette } from "@/lib/customer/walletVisuals";
+import { TransferDrawer } from "./TransferDrawer";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -205,7 +205,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
         )}
       </Card>
 
-      <TransactionDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} businessId={businessId} currency={currency} initialKind="TRANSFER" />
+      <TransferDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} businessId={businessId} currency={currency} />
       {voiding && voidingParties && (
         <VoidTransactionDialog
           open
@@ -217,6 +217,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
           description={t("Both wallets go back to their balances from before this transfer. It stays in your history, marked as voided.")}
           confirmLabel="Void transfer"
           doneLabel="Transfer voided"
+          reasonHint="At least {count} characters. It's saved with the transfer."
           detail={
             <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-4 py-3 text-body">
               <span className="flex min-w-0 items-center gap-2 font-medium text-ink">

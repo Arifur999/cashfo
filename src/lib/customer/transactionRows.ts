@@ -2,6 +2,7 @@ import type { Transaction } from "./api";
 import { formatDate } from "./date";
 import { cancelledLabel } from "./transactionDisplay";
 import { toDateInputValue } from "@/lib/date";
+import { banglaShortDay } from "@/lib/i18n/banglaDates";
 
 export interface CategoryMeta {
   name: string;
@@ -115,8 +116,43 @@ export function relativeDayKey(day: string, today: string): "Today" | "Yesterday
 }
 
 // "Yesterday · Thu, 1 Oct" or "Wed, 30 Sep", the way the list heads a day.
-export function dayHeading(day: string, today: string, t: (key: string) => string): string {
-  const short = formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM");
+export function dayHeading(day: string, today: string, t: (key: string) => string, locale: "en" | "bn" = "en"): string {
+  // "Wed, 30 Sep", or "বুধ, ৩০ সেপ্টে" in the Bangla board's own words.
+  const short = locale === "bn" ? banglaShortDay(day) : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM");
   const relative = relativeDayKey(day, today);
   return relative ? `${t(relative)} · ${short}` : short;
+}
+
+// What Edit opens a saved entry with (decision D2): the wallet the money
+// left or came into (and, for a transfer, the one it went to), the
+// category on the other side, the amount, the day and the note. Saving
+// voids the entry and posts the corrected one.
+export interface EditableEntry {
+  id: string;
+  kind: "INCOME" | "EXPENSE" | "TRANSFER";
+  // The entry's name and day, under the drawer's title.
+  title: string;
+  day: string;
+  amount: number;
+  accountId: string;
+  toAccountId: string;
+  // The income or expense account on the other side, kept while the
+  // category stays the same.
+  otherAccountId: string;
+  category: string;
+  note: string;
+}
+
+// null for anything Edit can't take: a book entry, a reversal, a voided
+// entry, or one a feature keeps (the API says so through `voidable`).
+export function editableEntry(transaction: Transaction, title: string, categoryName: string | null): EditableEntry | null {
+  const kind = transaction.transactionType;
+  if ((kind !== "INCOME" && kind !== "EXPENSE" && kind !== "TRANSFER") || !transaction.voidable || transaction.entries.length !== 2) return null;
+  const debit = transaction.entries.find((entry) => entry.entryType === "DEBIT");
+  const credit = transaction.entries.find((entry) => entry.entryType === "CREDIT");
+  if (!debit || !credit) return null;
+  const base = { id: transaction.id, kind, title, day: toDateInputValue(transaction.transactionDate), amount: Number(debit.amount), category: categoryName ?? "" };
+  if (kind === "INCOME") return { ...base, accountId: debit.accountId, toAccountId: "", otherAccountId: credit.accountId, note: credit.note ?? transaction.description ?? "" };
+  if (kind === "EXPENSE") return { ...base, accountId: credit.accountId, toAccountId: "", otherAccountId: debit.accountId, note: debit.note ?? transaction.description ?? "" };
+  return { ...base, accountId: credit.accountId, toAccountId: debit.accountId, otherAccountId: "", note: transaction.description ?? "" };
 }

@@ -73,7 +73,7 @@ export function Modal({ open, onClose, title, children, size = "md" }: ModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim px-4" role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <div
         ref={panelRef}
         tabIndex={-1}

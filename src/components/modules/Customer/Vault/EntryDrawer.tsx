@@ -127,7 +127,7 @@ export function EntryDrawer({ open, editing, preset, token, onClose, onSaved, on
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col" autoComplete="off">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-4" : "px-4 py-3")}>
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Category")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Category")}</legend>
               <div role="radiogroup" aria-label={t("Category")} className="flex flex-wrap gap-2">
                 {VAULT_CATEGORIES.map((value) => {
                   const Icon = VAULT_CATEGORY_ICONS[value];

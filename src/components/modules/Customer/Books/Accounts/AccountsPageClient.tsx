@@ -48,6 +48,7 @@ export function AccountsPageClient({ businessId, businessName, groups, income, e
         tone="neutral"
         title={t("Accounts")}
         description={`${t("Every account in")} ${businessName}, ${t("grouped the way an accountant would read them.")}`}
+        looseDescription
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv} disabled={accounts.length === 0}>

@@ -89,8 +89,8 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
         description={t("Every movement through one account, with a running balance.")}
         actions={
           pdfExportOn && (
-            <Button variant="secondary" onClick={() => window.print()} disabled={!ready} title={ready ? undefined : t("Pick an account first")} className="print:hidden">
-              <Printer className="text-ink-2" />
+            <Button variant="secondary" onClick={() => window.print()} disabled={!ready} title={ready ? undefined : t("Pick an account first")} className="disabled:border-line disabled:text-ink-muted disabled:opacity-100 print:hidden">
+              <Printer className={cn("size-4", ready ? "text-ink-2" : "text-line-strong")} />
               {t("Print / PDF")}
             </Button>
           )
@@ -99,48 +99,48 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
 
       <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-end print:hidden">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <label htmlFor="ledger-account" className="text-small font-medium text-ink-2">
+          <label htmlFor="ledger-account" className="text-small leading-[normal] font-medium text-ink-2">
             {t("Account")}
           </label>
           <AccountPicker wallets={wallets} others={others} value={accountId} onChange={(id) => updateParams({ accountId: id })} preferredLanguage={preferredLanguage} currency={currency} />
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-small font-medium text-ink-2">{t("Period")}</span>
+          <span className="text-small leading-[normal] font-medium text-ink-2">{t("Period")}</span>
           <SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={setRange} label={t("Period")} size="lg" className="max-md:w-full max-md:overflow-x-auto" />
         </div>
         {range === "custom" && (
           <div className="flex items-center gap-2">
             <Input size="md" type="date" value={customFrom ?? ""} onChange={(event) => updateParams({ dateFrom: event.target.value })} aria-label={t("From")} max={customTo} />
             <span className="text-small text-ink-muted">{t("to")}</span>
-            <Input size="md" type="date" value={customTo ?? ""} onChange={(event) => updateParams({ dateTo: event.target.value })} aria-label={t("To")} min={customFrom} />
+            <Input size="md" type="date" value={customTo ?? ""} onChange={(event) => updateParams({ dateTo: event.target.value })} aria-label={t("To@@date")} min={customFrom} />
           </div>
         )}
       </Card>
 
       {!ready ? (
-        <Card padding="none" className="flex min-h-130 flex-col items-center justify-center gap-3 p-10 text-center">
+        <Card padding="none" className="flex flex-col items-center gap-3 p-10 text-center">
           <span className="flex size-14 items-center justify-center rounded-lg bg-mint-50 text-emerald">
             <ScrollText className="size-6" aria-hidden="true" />
           </span>
-          <h2 className="mt-2 text-h3 text-ink">{t("Pick an account to see its ledger")}</h2>
-          <p className="max-w-115 text-body leading-relaxed text-ink-muted">{t("You'll see its opening balance, every movement and the running balance, ready to print.")}</p>
+          <h2 className="mt-2 text-h3 leading-[normal] tracking-normal text-ink">{t("Pick an account to see its ledger")}</h2>
+          <p className="max-w-115 text-body leading-[1.55] text-ink-muted">{t("You'll see its opening balance, every movement and the running balance, ready to print.")}</p>
           {wallets.length > 0 && (
             <>
-              <span className="mt-4 text-caption font-semibold text-ink-muted">{t("Your wallets")}</span>
+              <span className="mt-4 text-caption leading-[normal] font-semibold text-ink-muted">{t("Your wallets")}</span>
               <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-auto md:grid-cols-4">
                 {wallets.map((wallet, index) => (
                   <button key={wallet.id} type="button" onClick={() => updateParams({ accountId: wallet.id })} className="flex h-16 items-center gap-3 rounded-md border border-line bg-surface px-4 text-left shadow-card transition-colors hover:border-line-strong md:w-50">
                     <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", walletPalette(index).tile)}>{createElement(walletIcon(wallet), { "aria-hidden": true })}</span>
                     <span className="flex min-w-0 flex-col gap-px">
-                      <span className="truncate text-body font-semibold text-ink">{accountDisplayName(wallet, preferredLanguage)}</span>
-                      <span className="text-caption font-normal text-ink-muted tabular-nums">{formatCurrency(wallet.currentBalance, currency)}</span>
+                      <span className="truncate text-body leading-[normal] font-semibold text-ink">{accountDisplayName(wallet, preferredLanguage)}</span>
+                      <span className="text-caption leading-[normal] font-normal text-ink-muted tabular-nums">{formatCurrency(wallet.currentBalance, currency)}</span>
                     </span>
                   </button>
                 ))}
               </div>
             </>
           )}
-          <span className="mt-2 text-caption font-normal text-ink-muted">{t("Income, expense and other accounts are in the search above.")}</span>
+          <span className="mt-2 text-caption leading-[normal] font-normal text-ink-muted">{t("Income, expense and other accounts are in the search above.")}</span>
         </Card>
       ) : (
         <>

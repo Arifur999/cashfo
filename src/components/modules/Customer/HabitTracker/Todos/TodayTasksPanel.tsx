@@ -3,7 +3,7 @@
 import { ArrowRight, ArrowRightToLine, Check, ListChecks, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/modules/Customer/Shared/ConfirmModal";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
@@ -63,6 +63,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
   const { list, loaded, setList, reload } = useTodayTasks();
   const [text, setText] = useState("");
   const [adding, setAdding] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<Set<string>>(new Set());
   const [showDone, setShowDone] = useState(true);
   const [removeTarget, setRemoveTarget] = useState<TodoItem | null>(null);
@@ -86,7 +87,13 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
   async function add(event: React.FormEvent) {
     event.preventDefault();
     const value = text.trim();
-    if (!value || adding) return;
+    if (adding) return;
+    // Add stays live, as the board draws it; with nothing typed it sends
+    // you back to the field.
+    if (!value) {
+      inputRef.current?.focus();
+      return;
+    }
     setAdding(true);
     try {
       let target = list;
@@ -164,8 +171,8 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
     <div className="flex flex-col text-ink">
       <div className={cn("flex items-start justify-between gap-3 pl-4.5", sheet ? "p-3 pl-4.5" : "pt-4 pr-3 pb-3")}>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <h2 className={cn("font-semibold", sheet ? "text-h3" : "text-title")}>{t("Today’s tasks")}</h2>
-          <span className="flex items-center gap-3 text-small text-ink-muted">
+          <h2 className={cn("font-semibold", sheet ? "text-h3" : "text-title leading-[normal]")}>{t("Today’s tasks")}</h2>
+          <span className={cn("flex items-center gap-3 text-small text-ink-muted", !sheet && "leading-[normal]")}>
             <span className="whitespace-nowrap">
               {dayLabel(today, "EEEE, d MMM")}
               {items.length > 0 && ` · ${done} ${t("of")} ${items.length} ${t("done")}`}
@@ -183,6 +190,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
           {t("New task for today")}
         </label>
         <input
+          ref={inputRef}
           id="today-task-new"
           value={text}
           onChange={(event) => setText(event.target.value)}
@@ -194,8 +202,8 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
             sheet ? "h-11 text-body-lg" : "h-9.5 text-body",
           )}
         />
-        <Button type="submit" size={sheet ? "lg" : "sm"} disabled={!text.trim() || adding} className={cn(sheet && "h-11", "px-4")}>
-          <Plus strokeWidth={2.5} className="size-4" />
+        <Button type="submit" size={sheet ? "lg" : "sm"} disabled={adding} className={cn(sheet ? "h-11" : "h-9.5 text-body", "px-4")}>
+          <Plus strokeWidth={2.5} className={sheet ? "size-4" : "size-3.75"} />
           {t("Add")}
         </Button>
       </form>
@@ -265,7 +273,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
           <span className="flex size-12 items-center justify-center rounded-full bg-mint-50 text-emerald">
             <ListChecks className="size-5.5" aria-hidden="true" />
           </span>
-          <span className="text-title font-semibold">{loaded ? t("Nothing planned for today") : t("Loading...")}</span>
+          <span className={cn("text-title font-semibold", !sheet && "leading-[normal]")}>{loaded ? t("Nothing planned for today") : t("Loading...")}</span>
           <span className="text-small leading-normal text-ink-muted">{t("Type a task above and press Enter. It goes straight onto today's list.")}</span>
         </div>
       )}
@@ -277,9 +285,9 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
             {t("Move")} {openItems.length} {t("to tomorrow")}
           </Button>
         ) : (
-          <span className="text-caption font-normal text-ink-muted">{t("Enter adds · Esc closes")}</span>
+          <span className="text-caption leading-[normal] font-normal text-ink-muted">{t("Enter adds · Esc closes")}</span>
         )}
-        <Link href="/habit-tracker/todos" onClick={onClose} className="flex items-center gap-1 text-small font-semibold whitespace-nowrap text-emerald hover:text-emerald-hover">
+        <Link href="/habit-tracker/todos" onClick={onClose} className={cn("flex items-center gap-1 text-small font-semibold whitespace-nowrap text-emerald hover:text-emerald-hover", !sheet && "leading-[normal]")}>
           {t(fullLink)}
           <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
         </Link>

@@ -10,11 +10,11 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, Contact } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { balanceAfterEntry, DIRECTION_META, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, type LoanEntryKind } from "@/lib/customer/loanDisplay";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
@@ -48,6 +48,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const [accountId, setAccountId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [note, setNote] = useState("");
   const [wallets, setWallets] = useState<Account[]>([]);
   const [walletsError, setWalletsError] = useState<string | null>(null);
@@ -153,7 +154,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             </div>
 
             <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("What happened?")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("What happened?")}</legend>
               <div role="radiogroup" className="grid grid-cols-2 gap-2">
                 {LOAN_ENTRY_KINDS.map((option) => {
                   const on = option === kind;
@@ -174,7 +175,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px]">
               <WalletPicker label={t(meta.walletLabel)} size="lg" wallets={wallets} value={accountId} onChange={setAccountId} after={walletAfter} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
               <Field htmlFor="loan-date" label={label(t("Date"))}>
-                <DayInput id="loan-date" size="xl" value={date} onChange={setDate} max={getAppToday()} />
+                <DayInput id="loan-date" size="xl" value={date} onChange={setDate} max={getAppToday()} className="gap-2 text-body" />
               </Field>
             </div>
 
@@ -185,16 +186,15 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                   type="text"
                   inputMode="decimal"
                   size="lg"
-                  value={amount}
-                  onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+                  {...amountField}
                   placeholder="0"
                   autoFocus
                   leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                  frameClassName="gap-0 overflow-hidden pl-0"
+                  frameClassName="h-12.5 gap-0 overflow-hidden pl-0"
                   className="pl-3 text-h3 font-bold tabular-nums"
                 />
               </Field>
-              <Field htmlFor="loan-note" label={label(t("Note"), true)}>
+              <Field htmlFor="loan-note" label={label(t("Reference"), true)}>
                 <Input id="loan-note" size="lg" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Loan no. BL-2231")} className="px-0" frameClassName="px-3" />
               </Field>
             </div>

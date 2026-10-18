@@ -84,6 +84,7 @@ export function AccountDetailPageClient({ businessId, account, accounts, ledger,
           tone="neutral"
           title={name}
           description={[t(meta.singular), account.accountNumber ? `${t("code")} ${account.accountNumber}` : null, kind ? t(kind) : null, account.status === "ARCHIVED" ? t("Archived") : null].filter(Boolean).join(" · ")}
+          looseDescription
           actions={
             <>
               <Button variant="secondary" onClick={exportCsv} disabled={ledger.entries.length === 0} className="print:hidden">

@@ -34,7 +34,7 @@ const PinBoxes = ({ value, onChange, onSubmit, maxLength = 6, label, autoFocus, 
             key={index}
             aria-hidden="true"
             className={cn(
-              "flex h-15 w-13 items-center justify-center rounded-md border bg-surface text-h1 text-ink transition-[border-color,box-shadow]",
+              "flex h-15 w-13 items-center justify-center rounded-md border bg-surface text-h1 font-normal text-ink transition-[border-color,box-shadow]",
               invalid ? "border-expense" : active ? "border-emerald shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]" : "border-line-strong",
             )}
           >

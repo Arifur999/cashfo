@@ -1,5 +1,6 @@
 "use client";
 
+import ByWidth from "@/components/smartly/ByWidth";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { useLocale, type Locale } from "@/lib/i18n/LocaleProvider";
 
@@ -10,9 +11,9 @@ const OPTIONS = [
 
 interface LocalePillProps {
   onDark?: boolean;
-  // The sign-in pages' header: "EN | বাং" on 36px buttons on a phone and
-  // "English | বাংলা" wider, as their boards draw it.
-  authHeader?: boolean;
+  // The sign-in and legal pages' headers: "EN | বাং" on 36px buttons on a
+  // phone and "English | বাংলা" wider, as their boards draw it.
+  fullNames?: boolean;
   // Runs after the language changes (the customer app saves the choice to
   // the account).
   onChange?: (locale: Locale) => void;
@@ -20,7 +21,7 @@ interface LocalePillProps {
 
 // The EN / বাংলা pill in the top bars. The screen switches at once through
 // the cookie; Server Components follow on the refresh.
-const LocalePill = ({ onDark = false, authHeader = false, onChange }: LocalePillProps) => {
+const LocalePill = ({ onDark = false, fullNames = false, onChange }: LocalePillProps) => {
   const { locale, toggleLocale, t } = useLocale();
 
   function choose(next: Locale) {
@@ -29,22 +30,13 @@ const LocalePill = ({ onDark = false, authHeader = false, onChange }: LocalePill
     onChange?.(next);
   }
 
-  const options = authHeader
+  const options = fullNames
     ? [
         { ...OPTIONS[0], label: <ByWidth phone="EN" wide="English" /> },
         { ...OPTIONS[1], label: <ByWidth phone="বাং" wide="বাংলা" /> },
       ]
     : OPTIONS;
-  return <SegmentedControl options={options} value={locale} onChange={choose} label={t("Language")} variant={onDark ? "onDark" : "pill"} className={authHeader ? "max-md:[&>button]:h-9 max-md:[&>button]:min-w-11" : undefined} />;
+  return <SegmentedControl options={options} value={locale} onChange={choose} label={t("Language")} variant={onDark ? "onDark" : "pill"} className={fullNames ? "max-md:[&>button]:h-9 max-md:[&>button]:min-w-11 md:[&>button]:px-4" : undefined} />;
 };
-
-function ByWidth({ phone, wide }: { phone: string; wide: string }) {
-  return (
-    <>
-      <span className="md:hidden">{phone}</span>
-      <span className="hidden md:inline">{wide}</span>
-    </>
-  );
-}
 
 export default LocalePill;

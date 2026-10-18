@@ -88,7 +88,7 @@ export function RamadanSetupDialog({ open, onClose, existing, defaultYear }: Ram
               </NativeSelect>
             </Field>
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Number of days")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Number of days")}</legend>
               <div role="radiogroup" className="grid grid-cols-2 gap-2">
                 {([29, 30] as const).map((option) => (
                   <button key={option} type="button" role="radio" aria-checked={days === option} onClick={() => setDays(option)} className={cn("flex h-12 items-center justify-center rounded-md border text-body-lg font-bold transition-colors", days === option ? "border-[1.5px] border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>

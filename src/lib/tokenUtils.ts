@@ -9,6 +9,10 @@ import { jwtUtils } from "./jwtUtils";
 // Keep every cookie/token touchpoint in this file.
 export const ACCESS_TOKEN_COOKIE = "accessToken";
 export const REFRESH_TOKEN_COOKIE = "refreshToken";
+// Set while a sign-in chose not to stay signed in on this device: the
+// tokens then live in browser-session cookies, refreshes included
+// (proxy.ts), and are gone once the browser closes.
+export const SESSION_ONLY_COOKIE = "sessionOnly";
 
 // Fallback lifetimes, used only when a token carries no readable `exp`. They
 // must match the backend's JWT_ACCESS_EXPIRES_IN / JWT_REFRESH_EXPIRES_IN.
@@ -32,14 +36,17 @@ export const isTokenExpiringSoon = (token: string, thresholdInSeconds = REFRESH_
 // Derives maxAge from the JWT itself so the cookie and the token it holds
 // expire together, instead of the cookie outliving (or vanishing well before)
 // the token.
-export const setTokenInCookies = async (name: string, token: string, fallbackMaxAgeInSeconds: number) => {
+export const setTokenInCookies = async (name: string, token: string, fallbackMaxAgeInSeconds: number, persist = true) => {
   const remaining = getTokenSecondsRemaining(token);
-  await setCookie(name, token, remaining > 0 ? remaining : fallbackMaxAgeInSeconds);
+  await setCookie(name, token, persist ? (remaining > 0 ? remaining : fallbackMaxAgeInSeconds) : null);
 };
 
-export const setAuthCookies = async (accessToken: string, refreshToken: string) => {
-  await setTokenInCookies(ACCESS_TOKEN_COOKIE, accessToken, ACCESS_TOKEN_MAX_AGE_SECONDS);
-  await setTokenInCookies(REFRESH_TOKEN_COOKIE, refreshToken, REFRESH_TOKEN_MAX_AGE_SECONDS);
+// `persist` false: "Keep me signed in on this device" was left unticked.
+export const setAuthCookies = async (accessToken: string, refreshToken: string, persist = true) => {
+  await setTokenInCookies(ACCESS_TOKEN_COOKIE, accessToken, ACCESS_TOKEN_MAX_AGE_SECONDS, persist);
+  await setTokenInCookies(REFRESH_TOKEN_COOKIE, refreshToken, REFRESH_TOKEN_MAX_AGE_SECONDS, persist);
+  if (persist) await deleteCookie(SESSION_ONLY_COOKIE);
+  else await setCookie(SESSION_ONLY_COOKIE, "1", null);
 };
 
 // Also better-auth's own cookies from a Google sign-in, the workspace
@@ -48,6 +55,7 @@ export const setAuthCookies = async (accessToken: string, refreshToken: string) 
 export const clearAuthCookies = async () => {
   await deleteCookie(ACCESS_TOKEN_COOKIE);
   await deleteCookie(REFRESH_TOKEN_COOKIE);
+  await deleteCookie(SESSION_ONLY_COOKIE);
   await deleteCookiesWhere((name) => isBetterAuthCookie(name) || isWorkspaceUnlockCookie(name));
   await clearStashedAdminSession();
 };

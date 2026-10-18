@@ -104,9 +104,11 @@ export const bnAuthDictionary: Record<string, string> = {
   "Refund Policy": "রিফান্ড নীতি",
   FAQ: "সাধারণ জিজ্ঞাসা",
   Legal: "আইনি তথ্য",
-  "Last updated": "সর্বশেষ হালনাগাদ",
   Version: "সংস্করণ",
+  // A saved version is live at once, so it is in effect from when it was saved.
+  "in effect from {date}": "{date} থেকে কার্যকর",
   "This page isn't available right now. Please check back later.": "পৃষ্ঠাটি এখন পাওয়া যাচ্ছে না। একটু পরে আবার দেখুন।",
+  "On this page": "এই পৃষ্ঠায়",
   "By creating an account, you agree to our Terms of Service and Privacy Policy.":
     "অ্যাকাউন্ট খোলার মাধ্যমে আপনি আমাদের সেবার শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত হচ্ছেন।",
   "Under maintenance": "রক্ষণাবেক্ষণ চলছে",
@@ -175,4 +177,5 @@ export const bnAuthDictionary: Record<string, string> = {
   "A vault for every password": "প্রতিটি পাসওয়ার্ডের জন্য একটি ভল্ট",
   "Its own password, and it locks itself after a few minutes.": "আলাদা পাসওয়ার্ড, আর কয়েক মিনিট পর নিজেই লক হয়ে যায়।",
   "Sign in again": "আবার সাইন ইন করুন",
+  "Keep me signed in on this device": "এই ডিভাইসে সাইন ইন থাকুন",
 };

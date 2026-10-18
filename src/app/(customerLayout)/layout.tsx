@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AnnouncementBanner } from "@/components/modules/Customer/Layout/AnnouncementBanner";
 import { AppSidebar } from "@/components/modules/Customer/Layout/AppSidebar";
 import { AppTopbar } from "@/components/modules/Customer/Layout/AppTopbar";
+import { OfflineBanner } from "@/components/modules/Customer/Layout/OfflineBanner";
 import { OwnerViewBanner } from "@/components/modules/Customer/Layout/OwnerViewBanner";
 import { TopbarProvider } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { QuickAddFab } from "@/components/modules/Customer/Layout/QuickAddFab";
@@ -75,6 +76,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                     <AppTopbar />
                     {/* id + tabIndex give the root layout's skip link a target. */}
                     <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
+                      <OfflineBanner />
                       <AnnouncementBanner announcements={platform.announcements} />
                       {children}
                     </main>
