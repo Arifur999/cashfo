@@ -90,13 +90,18 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
   }
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="md:gap-5">
       <PageHeader
         eyebrow={t("Money")}
         title={t("Budget")}
-        description={t("Set a monthly limit for each kind of spending.")}
+        description={
+          <>
+            <span className="md:hidden">{t("Monthly limits for what you spend.")}</span>
+            <span className="hidden md:inline">{t("Set a monthly limit for each kind of spending.")}</span>
+          </>
+        }
         actions={
-          <div className="hidden items-center gap-3 md:flex">
+          <>
             <MonthSwitcher month={month} year={year} onChange={goToMonth} />
             {canManage && (
               <Button onClick={() => setDrawer("create")}>
@@ -104,28 +109,29 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
                 {t("Add expense category")}
               </Button>
             )}
-          </div>
+          </>
         }
+        hideActionsOnPhone
       />
 
       {/* Phone: the month, then one card for the month's spending. */}
       <div className="flex flex-col gap-4 md:hidden">
         <MonthSwitcher month={month} year={year} onChange={goToMonth} stretch />
-        <Card padding="sm" className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between text-small text-ink-muted">
+        <Card padding="sm" elevated={false} className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between text-small leading-[normal] text-ink-muted">
             <span>{t("Spent")}</span>
             <span className="flex items-center gap-2">
               {reference > 0 && `${t("of")} ${formatCurrency(reference, currency)}`}
               {canManage && (
-                <button type="button" onClick={() => setTargetOpen(true)} aria-label={t("Edit monthly budget")} className="flex size-7 items-center justify-center rounded-md border border-line bg-surface text-ink-2">
+                <button type="button" onClick={() => setTargetOpen(true)} aria-label={t("Edit monthly budget")} className="flex size-6 items-center justify-center rounded-md border border-line bg-surface text-ink-2">
                   <Pencil className="size-3.5" aria-hidden="true" />
                 </button>
               )}
             </span>
           </div>
-          <AmountText value={spent} currency={currency} size="h2" className="text-h1" />
+          <AmountText value={spent} currency={currency} size="h2" className="text-h1 leading-[normal] font-extrabold" />
           <ProgressBar value={referencePercent} tone="budget" label={t("Spent so far")} className="h-2.5" />
-          <span className={cn("text-small font-semibold", reference > 0 ? TONE_TEXT[budgetTone(referencePercent)] : "text-ink-muted")}>
+          <span className={cn("text-small leading-[normal] font-semibold", reference > 0 ? TONE_TEXT[budgetTone(referencePercent)] : "text-ink-muted")}>
             {reference > 0 ? `${referencePercent}% ${t("used")} · ${formatCurrency(reference - spent, currency)} ${t("left")}` : t("Set a monthly budget to see what is still free")}
             {reference > 0 && isCurrentMonth && ` ${t("for")} ${daysLeft} ${t(daysLeft === 1 ? "day" : "days")}`}
           </span>
@@ -213,7 +219,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
       </Card>
 
       {/* Phone: one card of rows; a row opens its actions. */}
-      <Card padding="none" className="overflow-hidden md:hidden">
+      <Card padding="none" elevated={false} className="overflow-hidden md:hidden">
         {overview.categories.length === 0 && <p className="px-4 py-8 text-center text-body text-ink-muted">{t("No expense categories yet.")}</p>}
         {overview.categories.map((category, index) => {
           const limit = Number(category.monthlyLimit ?? 0);
@@ -227,14 +233,14 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
               <span className="flex items-center gap-3">
                 <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.25", visual.bg, visual.fg)}>{createElement(categoryIconFor(category), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <b className="truncate text-body-lg font-semibold text-ink">{category.name}</b>
-                  <span className="text-caption text-ink-muted tabular-nums">
+                  <b className="truncate text-body-lg leading-[normal] font-semibold text-ink">{category.name}</b>
+                  <span className="text-caption leading-[normal] font-normal text-ink-muted tabular-nums">
                     {formatCurrency(used, currency)} {t("of")} {formatCurrency(limit, currency)}
                   </span>
                 </span>
                 <span className="flex shrink-0 flex-col items-end">
-                  <b className={cn("text-body font-bold tabular-nums", TONE_TEXT[tone])}>{Math.round(category.percent)}%</b>
-                  <span className="text-caption text-ink-muted">{status}</span>
+                  <b className={cn("text-body leading-[normal] font-bold tabular-nums", TONE_TEXT[tone])}>{Math.round(category.percent)}%</b>
+                  <span className="text-caption leading-[normal] font-normal text-ink-muted">{status}</span>
                 </span>
               </span>
               <ProgressBar value={category.percent} tone="budget" size="sm" label={category.name} />

@@ -292,4 +292,5 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "No expense categories yet.": "এখনো কোনো খরচের খাত নেই।",
   "Account@@wallet": "ওয়ালেট",
   "Search notes": "নোট খুঁজুন",
+  "Monthly limits for what you spend.": "যা খরচ করেন তার মাসিক সীমা।",
 };
