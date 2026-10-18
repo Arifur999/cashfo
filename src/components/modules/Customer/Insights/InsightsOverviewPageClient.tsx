@@ -24,6 +24,13 @@ import { SayCard } from "./SayCard";
 
 // How the period reads inside a sentence: "Salary is 80% of your income
 // this year."
+// The phone board offers three periods, the last three months as "3 months".
+const PHONE_PERIODS: [InsightPeriod, string][] = [
+  ["this-month", "This month"],
+  ["last-3-months", "3 months"],
+  ["this-year", "This year"],
+];
+
 const PERIOD_PHRASE: Record<InsightPeriod, string> = {
   "this-month": "this month",
   "last-month": "last month",
@@ -44,16 +51,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
   // A rise is only news when there was spending before to rise from.
   const rise = previous.expense > 0 && data.biggestMove && data.biggestMove.change > 0 ? data.biggestMove : null;
 
-  const periodControl = (
-    <SegmentedControl
-      label={t("Period")}
-      variant="pill"
-      value={data.period}
-      onChange={(period) => router.push(`/reports/overview?period=${period}`)}
-      options={INSIGHT_PERIODS.map((period) => ({ value: period, label: t(INSIGHT_PERIOD_LABELS[period]) }))}
-      className="max-md:w-full max-md:rounded-md max-md:[&>button]:flex-1 max-md:[&>button]:rounded-sm max-md:[&>button]:px-2"
-    />
-  );
+  const goToPeriod = (period: InsightPeriod) => router.push(`/reports/overview?period=${period}`);
 
   return (
     <PageFrame className="gap-4 md:gap-8">
@@ -61,15 +59,12 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
         eyebrow={t("Insights")}
         tone="insights"
         title={t("What your numbers say")}
-        description={
-          <span className="hidden md:inline">
-            {labels.period}, {t("compared with")} {comparedWith}.
-          </span>
-        }
+        description={`${labels.period}, ${t("compared with")} ${comparedWith}.`}
+        hideDescriptionOnPhone
         actions={
           <>
-            <span className="hidden md:inline-flex">{periodControl}</span>
-            <Button variant="secondary" size="lg" asChild className="hidden md:inline-flex">
+            <SegmentedControl label={t("Period")} variant="pill" value={data.period} onChange={goToPeriod} options={INSIGHT_PERIODS.map((period) => ({ value: period, label: t(INSIGHT_PERIOD_LABELS[period]) }))} />
+            <Button variant="secondary" size="lg" asChild>
               <Link href="/reports/detailed">
                 <FileText />
                 {t("Detailed reports")}
@@ -77,8 +72,17 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
             </Button>
           </>
         }
+        hideActionsOnPhone
       />
-      <div className="md:hidden">{periodControl}</div>
+      <SegmentedControl
+        label={t("Period")}
+        size="touch"
+        stretch
+        value={data.period}
+        onChange={goToPeriod}
+        options={PHONE_PERIODS.map(([period, label]) => ({ value: period, label: t(label) }))}
+        className="md:hidden"
+      />
 
       {!data.hasData ? (
         <>
@@ -118,18 +122,40 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
             <SayCard
               icon={<PiggyBank />}
               tone="money"
+              className="max-md:order-first"
               say={totals.rate !== null ? `${t("You kept")} ${totals.rate}% ${t("of what you earned.")}` : t("Nothing earned yet.")}
               why={
-                totals.rate !== null
-                  ? `${t("That is")} ${formatCurrency(Math.max(0, totals.left), currency)}${previous.rate !== null ? `, ${t(totals.rate >= previous.rate ? "up from" : "down from")} ${previous.rate}% ${labels.previousIsYear ? `${t("in")} ${labels.previous}` : `${t("in")} ${labels.previous}`}` : ""}.`
-                  : t("Once money comes in, this shows the share you kept.")
+                totals.rate !== null ? (
+                  <>
+                    {t("That is")} {formatCurrency(Math.max(0, totals.left), currency)}
+                    <span className="md:hidden"> {t(PERIOD_PHRASE[data.period])}</span>
+                    {previous.rate !== null && `, ${t(totals.rate >= previous.rate ? "up from" : "down from")} ${previous.rate}% ${t("in")} ${labels.previous}`}.
+                  </>
+                ) : (
+                  t("Once money comes in, this shows the share you kept.")
+                )
               }
             />
             <SayCard
               icon={<Utensils />}
               tone="loans"
               say={topSpend ? `${topSpend.name} ${t("is your biggest spend.")}` : t("No spending recorded.")}
-              why={topSpend ? `${Math.round(topSpend.share)}% ${t("of spending")} · ${formatCurrency(topSpend.amount / data.months, currency)} ${t("a month on average")}.` : t("Your expenses show up here.")}
+              why={
+                topSpend ? (
+                  <>
+                    {Math.round(topSpend.share)}% {t("of spending")}
+                    <span className="md:hidden">
+                      , {t("about")} {formatCurrency(topSpend.amount / data.months, currency)} {t("a month")}.
+                    </span>
+                    <span className="hidden md:inline">
+                      {" "}
+                      · {formatCurrency(topSpend.amount / data.months, currency)} {t("a month on average")}.
+                    </span>
+                  </>
+                ) : (
+                  t("Your expenses show up here.")
+                )
+              }
             />
           </section>
 

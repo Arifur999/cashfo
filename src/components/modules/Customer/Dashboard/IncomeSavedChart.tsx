@@ -23,19 +23,20 @@ interface IncomeSavedChartProps {
   points: IncomeVsSavingsPoint[];
   currency: string;
   monthName: string;
+  className?: string;
 }
 
 // "Income and what you kept": two bars a month for the last six months,
 // the current month on a cream band, and a line under it that says how
 // this month compares.
-export function IncomeSavedChart({ points, currency, monthName }: IncomeSavedChartProps) {
+export function IncomeSavedChart({ points, currency, monthName, className }: IncomeSavedChartProps) {
   const { t } = useLocale();
   const max = niceMax(Math.max(...points.map((p) => Math.max(Number(p.income), Number(p.savings))), 0));
   const current = points[points.length - 1];
   const note = bestMonthNote(points);
 
   return (
-    <Card className="flex flex-col gap-4 p-5">
+    <Card className={cn("flex flex-col gap-4 p-5", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-h3 text-ink">{t("Income and what you kept")}</h3>

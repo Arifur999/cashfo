@@ -21,7 +21,7 @@ interface FriendsTableProps {
 const ROW = "md:grid md:grid-cols-[minmax(0,1fr)_120px_190px] md:items-center md:gap-x-4";
 
 // Everyone who joined with the link, with what each one earns and where
-// that reward stands.
+// that reward stands. Phones get the board's one-line rows and no filter.
 export function FriendsTable({ entries, currency }: FriendsTableProps) {
   const { t } = useLocale();
   const [filter, setFilter] = useState<ReferralFilter>("ALL");
@@ -32,9 +32,15 @@ export function FriendsTable({ entries, currency }: FriendsTableProps) {
   return (
     <Card padding="none" className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-        <h2 className="text-title font-semibold text-ink">{t("Friends who joined with your link")}</h2>
+        <h2 className="text-title font-semibold text-ink">
+          <span className="md:hidden">
+            {t("Friends")} · {entries.length} {t("joined")}
+          </span>
+          <span className="hidden md:inline">{t("Friends who joined with your link")}</span>
+        </h2>
         {entries.length > 0 && (
           <SegmentedControl
+            className="max-md:hidden"
             label={t("Filter friends")}
             variant="soft"
             value={filter}
@@ -63,8 +69,8 @@ export function FriendsTable({ entries, currency }: FriendsTableProps) {
           {rows.map((entry) => {
             const meta = STATUS_META[entry.status];
             return (
-              <div key={entry.id} className={cn("flex flex-col gap-2 border-b border-surface-sunken px-5 py-3 text-body last:border-b-0 md:min-h-13 md:py-0", ROW)}>
-                <span className="flex min-w-0 items-center gap-3">
+              <div key={entry.id} className={cn("flex min-h-14.5 items-center gap-3 border-b border-surface-sunken px-4 text-body last:border-b-0 md:min-h-13 md:px-5", ROW)}>
+                <span className="flex min-w-0 flex-1 items-center gap-3">
                   <PersonAvatar name={entry.name} size={32} coloured />
                   <span className="flex min-w-0 flex-col gap-px">
                     <span className="truncate font-medium text-ink">{entry.name}</span>
@@ -73,8 +79,15 @@ export function FriendsTable({ entries, currency }: FriendsTableProps) {
                     </span>
                   </span>
                 </span>
-                <span className={cn("font-bold tabular-nums md:text-right", entry.status === "PENDING" ? "text-ink-muted" : "text-ink")}>{formatCurrency(entry.rewardAmount, currency)}</span>
-                <span className="flex flex-col items-start gap-0.5">
+                {/* Phones: the reward over its status, on the right. */}
+                <span className="flex flex-col items-end gap-0.75 md:hidden">
+                  <span className={cn("font-bold tabular-nums", entry.status === "PENDING" ? "text-ink-muted" : "text-ink")}>{formatCurrency(entry.rewardAmount, currency)}</span>
+                  <Chip tone={STATUS_META[entry.status].tone} size="sm">
+                    {t(STATUS_META[entry.status].label)}
+                  </Chip>
+                </span>
+                <span className={cn("font-bold tabular-nums max-md:hidden md:text-right", entry.status === "PENDING" ? "text-ink-muted" : "text-ink")}>{formatCurrency(entry.rewardAmount, currency)}</span>
+                <span className="flex flex-col items-start gap-0.5 max-md:hidden">
                   <Chip tone={meta.tone} size="sm" className="gap-1">
                     <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
                     {t(meta.label)}

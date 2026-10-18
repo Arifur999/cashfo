@@ -136,4 +136,6 @@ export const reportsDictionary: Record<string, string> = {
   // transactions/[id]/page.tsx's ledger entry table.
   Debit: "ডেবিট",
   Credit: "ক্রেডিট",
+  "3 months": "৩ মাস",
+  about: "প্রায়",
 };

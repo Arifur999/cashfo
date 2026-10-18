@@ -8,7 +8,7 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import type { Transaction } from "@/lib/customer/api";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
@@ -25,14 +25,18 @@ interface RecentTransactionsCardProps {
 }
 
 // The latest transactions, one row each: the category's tile, what it
-// was, where and when, and the amount in its colour.
+// was, where and when, and the amount in its colour. Phones show four rows
+// under Home's own "Recent transactions" heading, without the category. A
+// row is 64px tall plus its divider (box-content), as the boards draw it.
+const PHONE_ROWS = 4;
+
 export function RecentTransactionsCard({ transactions, categoriesById, currency, today }: RecentTransactionsCardProps) {
   const { t } = useLocale();
   const oldest = transactions[transactions.length - 1];
 
   return (
-    <Card padding="none" className="flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-5 pt-5 pb-3">
+    <Card padding="none" className="flex flex-col overflow-hidden max-md:shadow-none">
+      <div className="hidden items-center justify-between px-5 pt-5 pb-3 md:flex">
         <h3 className="text-h3 text-ink">{t("Recent transactions")}</h3>
         {oldest && (
           <span className="text-small text-ink-muted">
@@ -41,20 +45,24 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
         )}
       </div>
       {transactions.length === 0 ? (
-        <p className="border-t border-line px-5 py-10 text-center text-body text-ink-muted">{t("No transactions yet.")}</p>
+        <p className="px-5 py-10 text-center text-body text-ink-muted md:border-t md:border-line">{t("No transactions yet.")}</p>
       ) : (
-        transactions.map((transaction) => {
+        transactions.map((transaction, index) => {
           const row = describeTransaction(transaction, categoriesById);
           const isTransfer = transaction.transactionType === "TRANSFER";
           const tone = isTransfer ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
-          const icon = isTransfer ? ArrowLeftRight : row.category?.icon ? budgetCategoryIcon(row.category.icon) : Receipt;
+          const icon = isTransfer ? ArrowLeftRight : row.category ? categoryIconFor(row.category) : Receipt;
           const when = relativeDayKey(toDateInputValue(transaction.transactionDate), today);
-          const meta = [row.category?.name, row.wallet, when ? t(when) : formatDate(transaction.transactionDate, "EEE, d MMM")].filter(Boolean).join(" · ");
+          const whereAndWhen = [row.wallet, when ? t(when) : formatDate(transaction.transactionDate, "EEE, d MMM")].filter(Boolean).join(" · ");
           return (
             <Link
               key={transaction.id}
               href={`/transactions/${transaction.id}`}
-              className={cn("grid min-h-16 grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3 border-t border-line px-5 transition-colors hover:bg-cream", row.cancelled && "opacity-60")}
+              className={cn(
+                "box-content grid min-h-16 grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3 border-t border-line px-4 transition-colors hover:bg-cream max-md:first-of-type:border-t-0 md:px-5",
+                row.cancelled && "opacity-60",
+                index >= PHONE_ROWS && "hidden md:grid",
+              )}
             >
               <IconTile tone="neutral" className={cn(tone.bg, tone.fg)}>
                 {createElement(icon)}
@@ -68,7 +76,10 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
                     </Chip>
                   )}
                 </span>
-                <span className="truncate text-small text-ink-muted">{meta}</span>
+                <span className="truncate text-small text-ink-muted">
+                  {row.category && <span className="hidden md:inline">{row.category.name} · </span>}
+                  {whereAndWhen}
+                </span>
               </span>
               <AmountText value={row.signedAmount} currency={currency} signed={!isTransfer} tone={isTransfer ? "neutral" : "auto"} size="md" className={cn("text-right font-bold", row.cancelled && "line-through")} />
             </Link>

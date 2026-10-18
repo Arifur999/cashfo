@@ -17,13 +17,21 @@ import { AccountMenu } from "./AccountMenu";
 import { AddMenu } from "./AddMenu";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { NavDrawer } from "./NavDrawer";
+import { usePhoneTopbarExtras } from "./PhoneTopbarExtras";
 import { useNavSections } from "./SidebarNav";
 import { ThemeToggle } from "./ThemeToggle";
 
+// The phone boards name these pages in the top bar instead of showing the
+// logo (the pages leave out their own heading there). Settings drops the
+// avatar too: its profile card comes first on the page.
+const TITLED_ON_PHONE = new Set(["/referrals", "/settings", "/password-manager"]);
+const NO_AVATAR_ON_PHONE = new Set(["/settings"]);
+
 // The top bar: 64px on desktop with the breadcrumb, Add, Today's tasks,
 // language, theme and the account menu; 56px on phones with the menu
-// button, the logo, the tasks icon and the avatar (language and theme live
-// in the drawer there, and Add is the floating button).
+// button, the logo (or the page's name), the tasks icon and the avatar
+// (language and theme live in the drawer there, and Add is the floating
+// button).
 export function AppTopbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -34,13 +42,21 @@ export function AppTopbar() {
   const location = findNavLocation(pathname, searchParams, sections);
   const crumb = location ? breadcrumbFor(location) : null;
   const [tasksOpen, setTasksOpen] = useState(false);
+  const extras = usePhoneTopbarExtras();
+  const titled = TITLED_ON_PHONE.has(pathname);
 
   const tasksLabel = openCount > 0 ? `${t("Today’s tasks")}, ${openCount} ${t("left")}` : t("Today’s tasks");
 
   return (
     <header className="flex h-topbar-mobile shrink-0 items-center gap-1 border-b border-line bg-surface px-2 md:h-topbar md:gap-3 md:px-8 print:hidden">
       <NavDrawer />
-      <Link href={CUSTOMER_HOME_ROUTE} aria-label={`${t("Home")}`} className="flex items-center rounded-md lg:hidden">
+      {titled && crumb && (
+        <span className="flex min-w-0 flex-1 flex-col md:hidden">
+          <span className="truncate text-title font-semibold text-ink">{t(crumb.heading)}</span>
+          {extras?.subtitle}
+        </span>
+      )}
+      <Link href={CUSTOMER_HOME_ROUTE} aria-label={`${t("Home")}`} className={cn("flex items-center rounded-md lg:hidden", titled && "max-md:hidden")}>
         <Logo height={38} alt="" className="dark:hidden" />
         <Logo height={38} alt="" onDark className="hidden dark:block" />
       </Link>
@@ -57,7 +73,7 @@ export function AppTopbar() {
           {crumb ? t(crumb.heading) : ""}
         </span>
       </nav>
-      <span className="flex-1 lg:hidden" />
+      <span className={cn("flex-1 lg:hidden", titled && "max-md:hidden")} />
 
       <div className="hidden md:block">
         <AddMenu onAddTask={() => setTasksOpen(true)} />
@@ -91,7 +107,10 @@ export function AppTopbar() {
           <ThemeToggle />
         </div>
       )}
-      <AccountMenu />
+      {extras?.action && <div className="md:hidden">{extras.action}</div>}
+      <div className={cn((NO_AVATAR_ON_PHONE.has(pathname) || extras?.action) && "max-md:hidden")}>
+        <AccountMenu />
+      </div>
     </header>
   );
 }

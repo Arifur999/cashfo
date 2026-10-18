@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArchiveRestore, ArrowRight, Ellipsis, Pencil, PiggyBank, ScrollText, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowRight, ChevronRight, Ellipsis, Pencil, PiggyBank, ScrollText, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { createElement } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -28,7 +28,9 @@ const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 te
 
 // One wallet as a bank card: its kind, name and number, what it holds now
 // and held at the start, a link to its statement, and the actions menu.
-// Phones get the shorter card from the phone board.
+// Phones get the shorter card from the phone board: the whole card opens
+// the statement, a chevron (or the actions menu, for a manager) on the
+// right, and the board's natural line heights.
 export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggleArchive, onRemove, savings = false }: WalletCardProps) {
   const { t } = useLocale();
   const palette = savings ? savingsPalette(index) : walletPalette(index);
@@ -50,9 +52,9 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
       <div className="relative flex items-center justify-between gap-3">
         <span className="flex min-w-0 items-center gap-3 md:hidden">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/14 [&_svg]:size-4.5">{createElement(meta.icon, { "aria-hidden": true })}</span>
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate text-title">{wallet.name}</span>
-            <span className="text-caption font-normal text-white/80">{archived ? t("Archived") : t(meta.label)}</span>
+          <span className="flex min-w-0 flex-col leading-[normal]">
+            <span className="truncate text-body leading-[normal] font-bold">{wallet.name}</span>
+            <span className="text-caption leading-[normal] font-normal text-white/75">{archived ? t("Archived") : t(meta.label)}</span>
           </span>
         </span>
         <span className="hidden items-center gap-2 rounded-full bg-white/16 px-3 py-1 text-caption font-semibold md:inline-flex [&_svg]:size-3.5">
@@ -60,9 +62,13 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
           {t(meta.label)}
           {archived && ` · ${t("Archived")}`}
         </span>
+        {!canManage && <ChevronRight className="size-4.5 shrink-0 text-white/70 md:hidden" aria-hidden="true" />}
         {canManage && (
           <DropdownMenu>
-            <DropdownMenuTrigger aria-label={`${t("Actions for")} ${wallet.name}`} className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/12 text-white hover:bg-white/20 data-open:bg-white/28">
+            <DropdownMenuTrigger
+              aria-label={`${t("Actions for")} ${wallet.name}`}
+              className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-md bg-white/12 text-white hover:bg-white/20 data-open:bg-white/28 max-md:bg-transparent max-md:text-white/70"
+            >
               <Ellipsis className="size-4.5" aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={6} className="w-49 rounded-md border border-line bg-surface p-2 shadow-overlay ring-0">
@@ -96,18 +102,21 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
       </div>
 
       <div className="relative flex items-end justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="flex min-w-0 flex-col gap-3 md:gap-0.5">
           <span className="hidden text-caption font-normal text-white/78 md:block">{savings ? t("Balance") : t("Current balance")}</span>
-          <span className="truncate text-h1 font-extrabold tabular-nums md:font-bold">{formatCurrency(wallet.currentBalance, currency)}</span>
-          <span className="text-caption font-normal text-white/78 tabular-nums">
+          <span className="truncate text-h1 font-extrabold tabular-nums max-md:leading-[normal] md:font-bold">{formatCurrency(wallet.currentBalance, currency)}</span>
+          <span className="text-caption font-normal text-white/78 tabular-nums max-md:leading-[normal]">
             {t("Opening")} {formatCurrency(wallet.openingBalance, currency)}
           </span>
         </div>
-        <Link href={ledgerHref} className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/16 px-3 py-2 text-caption font-semibold text-white hover:bg-white/24">
+        <Link href={ledgerHref} className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/16 px-3 py-2 text-caption font-semibold text-white hover:bg-white/24 max-md:hidden">
           {t("Ledger")}
           <ArrowRight className="size-3" strokeWidth={2.5} aria-hidden="true" />
         </Link>
       </div>
+
+      {/* Phones: the whole card opens the statement; the menu sits above. */}
+      <Link href={ledgerHref} aria-label={`${wallet.name}: ${t("View ledger")}`} className="absolute inset-0 md:hidden" />
     </div>
   );
 }

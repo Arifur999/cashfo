@@ -9,6 +9,8 @@ import { customerApi } from "./apiClient";
 
 export interface VaultStatus {
   hasVaultPassword: boolean;
+  // How many logins it holds; missing from a backend older than the count.
+  entryCount?: number;
 }
 
 export const getVaultStatus = cache(async (): Promise<VaultStatus | null> => {

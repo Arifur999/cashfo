@@ -10,7 +10,8 @@ import IconTile from "@/components/smartly/IconTile";
 import { Switch } from "@/components/ui/switch";
 import type { LoginHistoryEntry, UserSessionSummary } from "@/lib/customer/api";
 import { revokeSessionAction } from "@/lib/customer/authActions";
-import { formatDateTime } from "@/lib/customer/date";
+import { formatTimeAgo } from "@/lib/customer/date";
+import { formatRelativeDateTime } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
@@ -151,7 +152,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
                   )}
                 </span>
                 <span className="text-small text-ink-muted tabular-nums">
-                  {session.isCurrent ? t("Active now") : `${t("Last active")} ${formatDateTime(session.lastUsedAt)}`} · IP {session.ipAddress}
+                  {session.isCurrent ? t("Active now") : `${t("Last active")} ${formatTimeAgo(session.lastUsedAt, t)}`} · IP {session.ipAddress}
                 </span>
               </span>
               {!session.isCurrent && (
@@ -190,7 +191,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
               )}
             </span>
             <span className="truncate text-ink-2">{entry.deviceLabel}</span>
-            <span className="text-small whitespace-nowrap text-ink-muted md:text-right">{formatDateTime(entry.createdAt)}</span>
+            <span className="text-small whitespace-nowrap text-ink-muted md:text-right">{formatRelativeDateTime(entry.createdAt, { t })}</span>
           </div>
         ))}
         {history.length === 0 && <div className="border-t border-surface-sunken px-6 py-6 text-small text-ink-muted">{t("No login history yet.")}</div>}

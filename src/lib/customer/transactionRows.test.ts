@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Transaction, TransactionEntry } from "./api";
-import { dayHeading, describeTransaction, groupByDay, relativeDayKey } from "./transactionRows";
+import { dayHeading, describeTransaction, groupByDay, relativeDayKey, reversalTitle } from "./transactionRows";
 
 const entry = (overrides: Partial<TransactionEntry>): TransactionEntry => ({
   id: Math.random().toString(36).slice(2),
@@ -105,5 +105,30 @@ describe("relativeDayKey / dayHeading", () => {
     expect(relativeDayKey("2026-09-30", "2026-10-02")).toBeNull();
     expect(dayHeading("2026-10-01", "2026-10-02", t)).toBe("Yesterday · Thu, 1 Oct");
     expect(dayHeading("2026-09-30", "2026-10-02", t)).toBe("Wed, 30 Sep");
+  });
+});
+
+describe("reversalTitle", () => {
+  it("keeps what a reversal undid", () => {
+    expect(reversalTitle("Reversal of: Lunch with team")).toBe("Lunch with team");
+  });
+
+  it("drops a bare id, so the row falls back to its category", () => {
+    expect(reversalTitle("Reversal of: d911f357-0000-459a-bfd3-a4d3c2b1e000")).toBeNull();
+    expect(reversalTitle(null)).toBeNull();
+  });
+
+  it("titles a reversal row by its category when the note was only an id", () => {
+    const reversal = transaction({
+      description: "Reversal of: d911f357-0000-459a-bfd3-a4d3c2b1e000",
+      reversalOfId: "t0",
+      entries: [
+        entry({ entryType: "DEBIT", amount: "420", account: { id: "w", name: "Cash", accountType: "ASSET", accountSubtype: "cash" } }),
+        entry({ entryType: "CREDIT", amount: "420", categoryId: "food" }),
+      ],
+    });
+    const row = describeTransaction(reversal, categories);
+    expect(row.title).toBe("Food & Dining");
+    expect(row.cancelled).toBe("Reversal");
   });
 });

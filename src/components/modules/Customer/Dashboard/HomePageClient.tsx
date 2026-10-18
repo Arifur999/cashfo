@@ -16,13 +16,14 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import SectionHeader from "@/components/smartly/SectionHeader";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
-import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { budgetCategoryIcon, categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
+import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { HomeHero } from "./HomeHero";
 import { HomeSetup } from "./HomeSetup";
 import { HomeTodoCard } from "./HomeTodoCard";
+import { PhoneLoanCards, PhoneMoneyCards, PhonePrayers, PhoneVaultInsights } from "./HomePhone";
 import type { HomeData } from "./homeTypes";
 import { IncomeSavedChart } from "./IncomeSavedChart";
 import { RecentTransactionsCard } from "./RecentTransactionsCard";
@@ -31,7 +32,8 @@ const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
 // Home: one section per feature -- this month on the hero, money, loans,
 // habits, the vault and the insights -- or the setup steps for a new
-// account.
+// account. Phones get the board's shorter version of each section
+// (HomePhone) and the floating button instead of the header's actions.
 export function HomePageClient({ data }: { data: HomeData }) {
   const { t } = useLocale();
   const loansOn = useFeature("loan_management");
@@ -53,15 +55,30 @@ export function HomePageClient({ data }: { data: HomeData }) {
 
   const prayersDone = data.namaz ? data.namaz.checks.filter((c) => c.day === data.namaz!.todayDay).map((c) => c.item) : [];
   const prayerItems = data.namaz?.items.length ? data.namaz.items : PRAYERS;
+  const prayerHref = data.namaz ? `/habit-tracker/habits/namaz/${data.namaz.id}` : "/habit-tracker/habits?category=Namaz";
+  const expenseIcon = data.topExpense ? categoryIconFor(data.categoriesById[data.topExpense.name] ?? { icon: null, name: data.topExpense.name }) : Utensils;
+  // "Locked · 14 logins" once the backend says how many there are.
+  const logins = data.vault?.entryCount;
+  const loginCount = logins === undefined ? "" : ` · ${logins} ${t(logins === 1 ? "login" : "logins")}`;
 
   return (
     <PageFrame gap="lg">
       <PageHeader
         size="display"
-        eyebrow={data.setup ? t("Welcome to Smartly") : data.dateLine}
+        eyebrow={
+          data.setup ? (
+            t("Welcome to Smartly")
+          ) : (
+            <>
+              {data.dates.day}
+              <span className="hidden md:inline"> · {data.dates.hijri}</span>
+            </>
+          )
+        }
         title={`${t(data.greeting)}, ${data.firstName}`}
         description={data.setup ? t("Three quick steps and Home fills itself in.") : t("Here is your day at a glance.")}
         actions={data.setup ? undefined : actions}
+        hideActionsOnPhone
       />
 
       {data.setup ? (
@@ -70,23 +87,19 @@ export function HomePageClient({ data }: { data: HomeData }) {
         <>
           <HomeHero {...data} />
 
-          <section aria-labelledby="h-money" className="flex flex-col gap-4">
+          <section aria-labelledby="h-money" className="flex flex-col gap-3 md:gap-4">
             <SectionHeader
               id="h-money"
               eyebrow={t("Money")}
-              title={t("Income & expense")}
-              aside={
-                <Link href="/transactions" className="flex items-center gap-1 text-body font-semibold text-emerald hover:text-emerald-hover">
-                  {t("See all transactions")}
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
-              }
+              title={<ByWidth phone={t("Recent transactions")} wide={t("Income & expense")} />}
+              aside={<SectionLink href="/transactions" phone={t("See all")} wide={t("See all transactions")} arrow />}
             />
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-              <IncomeSavedChart points={data.trend} currency={currency} monthName={data.monthName} />
+              <IncomeSavedChart points={data.trend} currency={currency} monthName={data.monthName} className="hidden md:flex" />
               <RecentTransactionsCard transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={currency} today={data.today} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            <PhoneMoneyCards data={data} />
+            <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-3 lg:gap-6">
               <Card interactive asChild className="flex flex-col gap-3">
                 <Link href="/savings-goals/dashboard">
                   <span className="flex items-center gap-3 text-small font-medium text-ink-muted">
@@ -154,7 +167,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
           </section>
 
           {loansOn && data.loans && (
-            <section aria-labelledby="h-loans" className="flex flex-col gap-4">
+            <section aria-labelledby="h-loans" className="flex flex-col gap-3 md:gap-4">
               <SectionHeader
                 id="h-loans"
                 eyebrow={t("Loans")}
@@ -162,16 +175,15 @@ export function HomePageClient({ data }: { data: HomeData }) {
                 title={t("Dena-pawna")}
                 aside={
                   <>
-                    <Link href="/loan-management/dashboard" className="text-body font-semibold text-emerald hover:text-emerald-hover">
-                      {t("Open loans")}
-                    </Link>
-                    <Button variant="action" size="lg" asChild className="hidden sm:inline-flex">
+                    <SectionLink href="/loan-management/dashboard" phone={t("Open")} wide={t("Open loans")} />
+                    <Button variant="action" size="lg" asChild className="hidden md:inline-flex">
                       <Link href="/loan-management/transactions">{t("Record a payment")}</Link>
                     </Button>
                   </>
                 }
               />
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+              <PhoneLoanCards loans={data.loans} counts={data.loanCounts} currency={currency} />
+              <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-4 lg:gap-6">
                 <KpiTile icon={<ArrowDownLeft />} tone="income" label={`${t("Owed to you")} · ${t("pawna")}`} value={<AmountText value={Number(data.loans.totalPawna)} currency={currency} size="lg" signed tone="income" />}>
                   {t("From")} {data.loanCounts.oweYou} {t(data.loanCounts.oweYou === 1 ? "person" : "people")}
                 </KpiTile>
@@ -188,20 +200,16 @@ export function HomePageClient({ data }: { data: HomeData }) {
             </section>
           )}
 
-          <section aria-labelledby="h-habits" className="flex flex-col gap-4">
+          <section aria-labelledby="h-habits" className="flex flex-col gap-3 md:gap-4">
             <SectionHeader
               id="h-habits"
               eyebrow={t("Habits")}
               tone="habits"
-              title={t("Today")}
-              aside={
-                <Link href="/habit-tracker" className="flex items-center gap-1 text-body font-semibold text-emerald hover:text-emerald-hover">
-                  {t("Open habits")}
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
-              }
+              title={<ByWidth phone={t("Today's prayers")} wide={t("Today")} />}
+              aside={<SectionLink href="/habit-tracker" phone={t("Open")} wide={t("Open habits")} arrow />}
             />
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-6">
+            <PhonePrayers data={data} prayers={prayerItems} done={prayersDone} href={prayerHref} />
+            <div className="hidden gap-4 md:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-6">
               <Card className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-0.5">
@@ -220,7 +228,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
                     return (
                       <Link
                         key={prayer}
-                        href={data.namaz ? `/habit-tracker/habits/namaz/${data.namaz.id}` : "/habit-tracker/habits?category=Namaz"}
+                        href={prayerHref}
                         className={cn("flex flex-col items-center gap-2 rounded-md border px-1 py-3", done ? "border-transparent bg-mint-50" : "border-transparent bg-cream")}
                       >
                         <span className={cn("flex size-8 items-center justify-center rounded-full text-white", done ? "bg-emerald" : "border-[1.5px] border-dashed border-line-strong bg-surface")}>
@@ -253,7 +261,8 @@ export function HomePageClient({ data }: { data: HomeData }) {
             </div>
           </section>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <PhoneVaultInsights data={data} />
+          <div className="hidden gap-6 md:grid lg:grid-cols-2">
             <section aria-labelledby="h-vault" className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <Eyebrow tone="vault">{t("Security")}</Eyebrow>
@@ -266,7 +275,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
                   <Lock className="size-6.5" strokeWidth={1.9} aria-hidden="true" />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <b className="text-title font-bold text-ink">{data.vault?.hasVaultPassword ? t("Locked") : t("Not set up yet")}</b>
+                  <b className="text-title font-bold text-ink">{data.vault?.hasVaultPassword ? `${t("Locked")}${loginCount}` : t("Not set up yet")}</b>
                   <span className="text-small text-ink-muted">{data.vault?.hasVaultPassword ? t("Your logins are behind the vault password.") : t("Keep every login behind its own vault password.")}</span>
                 </span>
                 <Button variant="action" size="lg" asChild>
@@ -294,10 +303,12 @@ export function HomePageClient({ data }: { data: HomeData }) {
                     )}
                     {data.topExpense && (
                       <InsightRow
-                        icon={<Utensils />}
+                        icon={createElement(expenseIcon)}
                         tone="loans"
                         title={`${data.topExpense.name} ${t("is your biggest spend")}: ${data.topExpense.percent}%.`}
-                        text={`${formatCurrency(data.topExpense.amount, currency)} ${t("this month")}, ${formatSignedCurrency(-Math.abs(data.topExpense.delta), currency).replace(/^[−+] /, "")} ${t(data.topExpense.delta <= 0 ? "less than" : "more than")} ${data.lastMonthName}.`}
+                        text={`${formatCurrency(data.topExpense.amount, currency)} ${t("this month")}, ${
+                          data.topExpense.delta === 0 ? t("the same as") : `${formatCurrency(Math.abs(data.topExpense.delta), currency)} ${t(data.topExpense.delta < 0 ? "less than" : "more than")}`
+                        } ${data.lastMonthName}.`}
                         divided={Boolean(data.topIncome)}
                       />
                     )}
@@ -337,6 +348,26 @@ function BudgetFocus({ focus, currency, daysLeft }: { focus: HomeData["budgetFoc
         {Math.round(focus.percent)}% {t("used")} · {left >= 0 ? `${formatCurrency(left, currency)} ${t("left for")} ${daysLeft} ${t("days")}` : `${formatCurrency(-left, currency)} ${t("over")}`}
       </span>
     </>
+  );
+}
+
+// The shorter wording phones use ("See all", "Open") beside the full one.
+function ByWidth({ phone, wide }: { phone: string; wide: string }) {
+  return (
+    <>
+      <span className="md:hidden">{phone}</span>
+      <span className="hidden md:inline">{wide}</span>
+    </>
+  );
+}
+
+// A section header's link, 44px tall on phones for the thumb.
+function SectionLink({ href, phone, wide, arrow = false }: { href: string; phone: string; wide: string; arrow?: boolean }) {
+  return (
+    <Link href={href} className="flex min-h-11 items-center gap-1 text-body font-semibold text-emerald hover:text-emerald-hover md:min-h-0">
+      <ByWidth phone={phone} wide={wide} />
+      {arrow && <ArrowRight className="hidden size-4 md:block" aria-hidden="true" />}
+    </Link>
   );
 }
 

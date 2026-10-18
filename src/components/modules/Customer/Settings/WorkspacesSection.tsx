@@ -91,7 +91,9 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
           </Button>
         </div>
         {businesses === null && <div className="border-t border-surface-sunken px-5 py-6 text-small text-ink-muted">{t("Loading...")}</div>}
-        {(businesses ?? []).map((business) => {
+        {/* Family and mess groups live in Group expenses, not here, as the
+            card below says. */}
+        {(businesses ?? []).filter((business) => business.type !== "GROUP").map((business) => {
           const personal = business.type === "PERSONAL";
           const trialActive = business.trialEndsAt ? new Date(business.trialEndsAt) > new Date() : null;
           const contact = [business.phone, business.email].filter(Boolean).join(" · ");

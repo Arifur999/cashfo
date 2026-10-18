@@ -75,4 +75,10 @@ export const referralsDictionary: Record<string, string> = {
   "moved to": "সরানো হয়েছে:",
   "your wallet": "আপনার ওয়ালেটে",
   "Failed to withdraw earnings": "আয় তুলতে ব্যর্থ হয়েছে",
+  Earned: "আয় হয়েছে",
+  Friends: "বন্ধুরা",
+  joined: "যোগ দিয়েছেন",
+  "Invite friends": "বন্ধুদের আমন্ত্রণ জানান",
+  "Share on WhatsApp": "হোয়াটসঅ্যাপে শেয়ার করুন",
+  "Paid@@payout": "তোলা হয়েছে",
 };

@@ -25,26 +25,29 @@ interface ReferralsPageClientProps {
 }
 
 // Account › Invite & earn: what is ready to withdraw, the invite link, and
-// every friend who joined with it.
+// every friend who joined with it. On a phone the top bar names the page,
+// so the heading goes, and How it works waits for a wider screen.
 export function ReferralsPageClient({ businessId, info, currency, canManage, origin }: ReferralsPageClientProps) {
   const { t } = useLocale();
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const reward = info ? formatCurrency(info.rewardAmountPerReferral, currency) : "";
 
   return (
-    <PageFrame className="gap-5">
-      <PageHeader eyebrow={t("Account")} tone="neutral" title={t("Invite & earn")} description={info ? `${t("Share Smartly with friends and family. You earn")} ${reward} ${t("for every friend who joins and stays 30 days.")}` : t("Share Smartly with friends and family and earn a reward for every friend who joins.")} />
+    <PageFrame className="max-md:pt-4 md:gap-5">
+      <PageHeader className="max-md:hidden" eyebrow={t("Account")} tone="neutral" title={t("Invite & earn")} description={info ? `${t("Share Smartly with friends and family. You earn")} ${reward} ${t("for every friend who joins and stays 30 days.")}` : t("Share Smartly with friends and family and earn a reward for every friend who joins.")} />
       {!info ? (
         <EmptyState icon={<Gift />} tone="neutral" title={t("Couldn't load your invite details")} description={t("Refresh the page to try again.")} />
       ) : (
         <>
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_470px]">
+          <div className="grid gap-4 md:gap-5 xl:grid-cols-[minmax(0,1fr)_470px]">
             <EarningsHero info={info} currency={currency} canWithdraw={canManage} onWithdraw={() => setWithdrawOpen(true)} />
             <InviteLinkCard code={info.referralCode} origin={origin} rewardPerReferral={info.rewardAmountPerReferral} currency={currency} />
           </div>
-          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid items-start gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
             <FriendsTable entries={info.recentReferrals} currency={currency} />
-            <HowItWorksCard reward={reward} />
+            <div className="hidden md:contents">
+              <HowItWorksCard reward={reward} />
+            </div>
           </div>
           <WithdrawDialog open={withdrawOpen} onClose={() => setWithdrawOpen(false)} businessId={businessId} availableBalance={info.availableBalance} currency={currency} />
         </>

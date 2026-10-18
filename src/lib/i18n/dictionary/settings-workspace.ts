@@ -118,4 +118,11 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "Privacy policy": "গোপনীয়তা নীতি",
   "Refund policy": "রিফান্ড নীতি",
   "Common questions": "সাধারণ জিজ্ঞাসা",
+  "just now": "এইমাত্র",
+  "{count} minute ago": "{count} মিনিট আগে",
+  "{count} minutes ago": "{count} মিনিট আগে",
+  "{count} hour ago": "{count} ঘণ্টা আগে",
+  "{count} hours ago": "{count} ঘণ্টা আগে",
+  "{count} day ago": "{count} দিন আগে",
+  "{count} days ago": "{count} দিন আগে",
 };

@@ -13,7 +13,8 @@ export interface HomeData {
   // "YYYY-MM-DD" today in the platform timezone.
   today: string;
   greeting: "Good morning" | "Good afternoon" | "Good evening";
-  dateLine: string;
+  // "Friday, 2 October" and its Hijri date, for the eyebrow.
+  dates: { day: string; hijri: string };
   monthName: string;
   lastMonthName: string;
 
@@ -52,7 +53,7 @@ export interface HomeData {
   readingCount: number;
   skills: Pick<SkillsOverview, "streak"> & { practisedToday: boolean } | null;
 
-  vault: { hasVaultPassword: boolean } | null;
+  vault: { hasVaultPassword: boolean; entryCount?: number } | null;
 
   topIncome: { name: string; percent: number } | null;
   topExpense: { name: string; percent: number; amount: number; delta: number } | null;

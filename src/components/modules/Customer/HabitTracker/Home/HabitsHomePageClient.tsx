@@ -28,6 +28,9 @@ interface HabitsHomePageClientProps {
 
 // Habits › Today: the day in one place -- prayers, habits, tasks, the week
 // behind, the streaks alive, and what is being read, learned and attempted.
+// Phones get the phone board: a greeting, the prayers, habits, tasks and
+// the book; the week, streaks, skills, challenges and Ramadan wait for a
+// wider screen.
 export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   const { t, locale } = useLocale();
   const { today } = data;
@@ -38,8 +41,17 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   const streaks = streakRows(data.todayRows, data.skills?.streak ?? 0, prayerStreak(data.namaz, today));
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="md:gap-5">
+      <div className="flex flex-col gap-0.5 md:hidden">
+        <h1 className="text-h2 leading-[1.3] font-semibold tracking-[-0.01em] text-ink">
+          {t(data.greeting)}, {data.firstName}
+        </h1>
+        <p className="text-small leading-[normal] text-ink-muted">
+          {dayLabel(today, "EEE, d MMM")} · {hijriDate(today, locale)}
+        </p>
+      </div>
       <PageHeader
+        className="max-md:hidden"
         eyebrow={t("Habits")}
         tone="habits"
         title={t("Today")}
@@ -64,22 +76,26 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
         }
       />
 
-      <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_372px]">
+      <div className="grid items-stretch gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_372px]">
         <PrayersCard trackers={data.namaz} today={today} />
         <DailyHabitsCard rows={data.todayRows} resting={restingToday(data.habits, today)} today={today} />
       </div>
 
-      <div className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3">
         <TodayTasksCard today={today} initial={data.todayList} inputRef={taskField} />
-        <Last7Card bars={bars} today={today} />
-        <StreaksCard rows={streaks} />
+        <div className="hidden md:contents">
+          <Last7Card bars={bars} today={today} />
+          <StreaksCard rows={streaks} />
+        </div>
       </div>
 
-      <div className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-4">
         <ReadingCard book={data.books ? nowReading(data.books.books) : null} today={today} />
-        <LearningMini overview={data.skills} today={today} />
-        <ChallengesCard trackers={data.challenges} today={today} />
-        <RamadanCard trackers={data.ramadan} today={today} />
+        <div className="hidden md:contents">
+          <LearningMini overview={data.skills} today={today} />
+          <ChallengesCard trackers={data.challenges} today={today} />
+          <RamadanCard trackers={data.ramadan} today={today} />
+        </div>
       </div>
 
       <HabitDrawer open={habitOpen} onClose={() => setHabitOpen(false)} editing={null} />

@@ -4,8 +4,9 @@
 // `style: "currency"`: that API's rendered symbol for BDT varies by
 // environment/ICU data (sometimes "BDT", sometimes "৳").
 //
-// Taka is grouped the South Asian way (lakh/crore: ৳ 12,50,000.00), other
-// currencies the international way. The locale is always explicit, never the
+// Taka is grouped the South Asian way (lakh/crore: ৳ 12,50,000), other
+// currencies the international way. Whole amounts drop the paisa, as the
+// design writes money ("৳ 85,000", "৳ 2,699.10"). The locale is always explicit, never the
 // machine default, so the server and every browser print the same text (a
 // bn-BD browser would otherwise switch to Bangla digits mid-page).
 const CURRENCIES: Record<string, { symbol: string; locale: string }> = {
@@ -16,10 +17,12 @@ const CURRENCIES: Record<string, { symbol: string; locale: string }> = {
 const formatters = new Map<string, Intl.NumberFormat>();
 
 const groupDigits = (value: number, locale: string) => {
-  let formatter = formatters.get(locale);
+  const digits = Number.isInteger(value) ? 0 : 2;
+  const key = `${locale}:${digits}`;
+  let formatter = formatters.get(key);
   if (!formatter) {
-    formatter = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    formatters.set(locale, formatter);
+    formatter = new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    formatters.set(key, formatter);
   }
   return formatter.format(value);
 };
@@ -28,14 +31,23 @@ export function formatCurrency(amount: number | string, currencyCode: string): s
   const { symbol, locale } = CURRENCIES[currencyCode] ?? { symbol: currencyCode, locale: "en-US" };
   const value = Number(amount);
   // Rounded to the paisa before the sign is chosen, so a sum that is
-  // negative only by float noise (-2.8e-17) prints "৳ 0.00", not "-৳ 0.00".
+  // negative only by float noise (-2.8e-17) prints "৳ 0", not "-৳ 0".
   const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
-  // "-৳ 1,500.00", not "৳ -1,500.00": the sign leads, as it is read. A
+  // "-৳ 1,500", not "৳ -1,500": the sign leads, as it is read. A
   // no-break space, so a narrow card never leaves "৳" alone on its line.
   return `${rounded < 0 ? "-" : ""}${symbol}\u00A0${groupDigits(Math.abs(rounded), locale)}`;
 }
 
-// "+ ৳ 85,000.00" for money in, "− ৳ 52,300.00" for money out, "৳ 0.00" for
+// "82,000": the figure alone, grouped as its currency is, for a table's
+// month cells where the symbol would only repeat (the Reports board).
+export function formatGrouped(amount: number | string, currencyCode: string): string {
+  const { locale } = CURRENCIES[currencyCode] ?? { locale: "en-US" };
+  const value = Number(amount);
+  const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+  return `${rounded < 0 ? "-" : ""}${groupDigits(Math.abs(rounded), locale)}`;
+}
+
+// "+ ৳ 85,000" for money in, "− ৳ 52,300" for money out, "৳ 0" for
 // nothing: the explicit sign the dashboards and statements show, with a real
 // minus sign and a space, as the design writes it.
 export function formatSignedCurrency(amount: number | string, currencyCode: string): string {

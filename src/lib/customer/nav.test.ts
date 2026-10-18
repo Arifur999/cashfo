@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { breadcrumbFor, findNavLocation, NAV_FOOT, visibleNavSections, type NavContext } from "./nav";
+import { breadcrumbFor, findNavLocation, movesMoney, NAV_FOOT, visibleNavSections, type NavContext } from "./nav";
 
 const personal: NavContext = { workspaceType: "PERSONAL", isFeatureOn: () => true };
 const business: NavContext = { workspaceType: "BUSINESS", isFeatureOn: () => true };
@@ -36,6 +36,15 @@ describe("findNavLocation", () => {
     expect(breadcrumbFor(location)).toEqual({ crumbs: ["Money", "Wallets"], heading: "Transfer", tone: "money" });
   });
 
+  it("puts the account's pages under Account", () => {
+    expect(breadcrumbFor(locate("/referrals")!)).toEqual({ crumbs: ["Account"], heading: "Invite & earn", tone: "money" });
+    expect(breadcrumbFor(locate("/settings/security")!)).toEqual({ crumbs: ["Account", "Settings"], heading: "Security", tone: "money" });
+  });
+
+  it("names the sub-page that shares its group's link", () => {
+    expect(breadcrumbFor(locate("/balance/overview")!)).toEqual({ crumbs: ["Money", "Wallets"], heading: "Balance", tone: "money" });
+  });
+
   it("prefers the most specific entry", () => {
     expect(locate("/transactions/advanced", personal)!.item.label).toBe("Transactions");
     expect(locate("/transactions/advanced", business)!.item.label).toBe("Journal entry");
@@ -55,11 +64,32 @@ describe("findNavLocation", () => {
   });
 
   it("finds the foot links", () => {
-    expect(breadcrumbFor(locate("/settings/workspaces")!)).toEqual({ crumbs: [], heading: "Settings", tone: "money" });
+    expect(breadcrumbFor(locate("/settings/workspaces")!)).toEqual({ crumbs: ["Account", "Settings"], heading: "Workspaces", tone: "money" });
     expect(locate("/referrals")!.item.tag).toBe("Earn ৳");
   });
 
   it("returns null for a page outside the menu", () => {
     expect(locate("/unknown-page")).toBeNull();
+  });
+});
+
+describe("movesMoney", () => {
+  it("floats the + on Home, the money pages and Books", () => {
+    expect(movesMoney(locate("/dashboard"))).toBe(true);
+    expect(movesMoney(locate("/transactions/abc"))).toBe(true);
+    expect(movesMoney(locate("/loan-management/dashboard"))).toBe(true);
+    expect(movesMoney(locate("/accounts", business))).toBe(true);
+  });
+
+  it("leaves it off habits, insights, the vault and the account pages", () => {
+    expect(movesMoney(locate("/habit-tracker"))).toBe(false);
+    expect(movesMoney(locate("/reports/overview"))).toBe(false);
+    expect(movesMoney(locate("/password-manager"))).toBe(false);
+    expect(movesMoney(locate("/settings"))).toBe(false);
+    expect(movesMoney(locate("/referrals"))).toBe(false);
+  });
+
+  it("keeps it on a page the menu doesn't know", () => {
+    expect(movesMoney(locate("/somewhere-new"))).toBe(true);
   });
 });

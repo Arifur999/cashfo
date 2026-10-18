@@ -107,7 +107,9 @@ export function countdownText(msLeft: number): string {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-export const avatarLetter = (title: string): string => (title.trim().charAt(0) || "?").toUpperCase();
+// The login's first character as it is written ("b" for bKash, "e" for
+// e-TIN portal), as the vault boards draw it.
+export const avatarLetter = (title: string): string => title.trim().charAt(0) || "?";
 
 // "https://www.dutchbanglabank.com/login" -> "dutchbanglabank.com".
 export function hostOf(url: string | null): string {

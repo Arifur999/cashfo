@@ -85,7 +85,9 @@ describe("the list", () => {
     expect(normalizeUrl("rokomari.com")).toBe("https://rokomari.com");
     expect(normalizeUrl("http://x.test")).toBe("http://x.test");
     expect(normalizeUrl("  ")).toBe("");
-    expect(avatarLetter("bKash")).toBe("B");
+    expect(avatarLetter("bKash")).toBe("b");
+    expect(avatarLetter("e-TIN portal")).toBe("e");
+    expect(avatarLetter(" Facebook")).toBe("F");
     expect(avatarLetter("  ")).toBe("?");
   });
 });

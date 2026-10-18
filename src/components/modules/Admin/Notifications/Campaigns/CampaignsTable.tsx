@@ -50,7 +50,7 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
       <DataTable
         data={data?.data}
         columns={columns}
-        layout={{ rowHeight: 62, headPadding: 12 }}
+        layout={{ rowHeight: 62, headPadding: 12, designWidth: 820 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}

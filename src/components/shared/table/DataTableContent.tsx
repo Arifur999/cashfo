@@ -31,8 +31,11 @@ const GAP_CLASS = {
   16: "[&_td]:px-2 [&_th]:px-2",
 } as const;
 const EDGE_CLASS = "[&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5";
-// Room the one flexible column keeps before the table scrolls sideways.
-const FLEX_MIN = 220;
+// The list card's width on a 1440 board: the page less the sidebar and the
+// 32px margins.
+const DESIGN_WIDTH = 1136;
+// Below this a gridded table scrolls sideways instead of crushing its columns.
+const MIN_TABLE = "min-w-180";
 
 const trackWidth = <TData,>(column: Column<TData, unknown>, layout: DataTableLayout | undefined) =>
   column.id === ACTIONS_COLUMN_ID ? (layout?.actionsWidth ?? column.columnDef.meta?.width) : column.columnDef.meta?.width;
@@ -61,7 +64,7 @@ const DataTableContent = <TData,>({
   const rows = table.getRowModel().rows;
   const columns = table.getVisibleLeafColumns();
   const columnCount = columns.length;
-  const { gap = 12, rowHeight = 54, headPadding = 8 } = layout ?? {};
+  const { gap = 12, rowHeight = 54, headPadding = 8, designWidth = DESIGN_WIDTH } = layout ?? {};
   // Widths given = the design's fixed grid; a list without any keeps the
   // browser's own column sizing.
   const widths = columns.map((column, index) => {
@@ -71,7 +74,10 @@ const DataTableContent = <TData,>({
     return track + padding;
   });
   const fixed = columns.some((column) => column.columnDef.meta?.width !== undefined && column.id !== ACTIONS_COLUMN_ID && column.id !== "select");
-  const minWidth = fixed ? widths.reduce<number>((sum, width) => sum + (width ?? FLEX_MIN), 0) : undefined;
+  // Each column's share of the board's card: exactly the board's px at
+  // 1440, in proportion at 1280 or 1920. (Tables treat a px/% mix like
+  // min() as auto, so it is a plain percentage.)
+  const colWidth = (width: number | undefined) => (width === undefined ? undefined : `${((width / designWidth) * 100).toFixed(3)}%`);
 
   return (
     // The max-height makes the table container the scroll box, which is what
@@ -82,13 +88,13 @@ const DataTableContent = <TData,>({
       )}
       <Table
         aria-busy={isLoading || isFetching}
-        className={cn(GAP_CLASS[gap], EDGE_CLASS, "[&_tbody_tr]:h-(--row-height)", fixed && "table-fixed")}
-        style={{ "--row-height": `${rowHeight}px`, minWidth } as React.CSSProperties}
+        className={cn(GAP_CLASS[gap], EDGE_CLASS, "[&_tbody_tr]:h-(--row-height)", fixed && cn("table-fixed", MIN_TABLE))}
+        style={{ "--row-height": `${rowHeight}px` } as React.CSSProperties}
       >
         {fixed && (
           <colgroup>
             {columns.map((column, index) => (
-              <col key={column.id} style={{ width: widths[index] }} />
+              <col key={column.id} style={{ width: colWidth(widths[index]) }} />
             ))}
           </colgroup>
         )}

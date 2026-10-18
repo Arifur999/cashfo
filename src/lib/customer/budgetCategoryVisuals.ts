@@ -117,6 +117,7 @@ import {
   Sun,
   Syringe,
   Target,
+  Tag,
   Tent,
   Thermometer,
   Ticket,
@@ -756,4 +757,34 @@ const INCOME_ICON_SUGGESTIONS: Record<string, (typeof BUDGET_CATEGORY_ICONS)[num
 
 export function suggestIconForCategoryName(name: string): (typeof BUDGET_CATEGORY_ICONS)[number] | null {
   return INCOME_ICON_SUGGESTIONS[name.trim().toLowerCase()] ?? null;
+}
+
+// An icon for a category that never picked one (the starting set has
+// none), guessed from its name so every tile shows something, as the
+// boards draw them. The first rule a name matches wins.
+const NAME_ICON_RULES: [RegExp, (typeof BUDGET_CATEGORY_ICONS)[number]][] = [
+  [/salary|wage/i, "salary"],
+  [/freelanc/i, "freelancing"],
+  [/business|sales/i, "business-income"],
+  [/food|dining|grocer|restaurant|meal|bazar/i, "utensils"],
+  [/rent|house|home/i, "house"],
+  [/transport|bus|ride|fuel|travel/i, "bus"],
+  [/health|medic|pharma|doctor/i, "stethoscope"],
+  [/educat|tuition|school|course/i, "graduation-cap"],
+  [/bill|utilit|electric/i, "lightbulb"],
+  [/internet|mobile|wifi|phone/i, "wifi"],
+  [/shop|cloth/i, "shopping-bag"],
+  [/gift|donat/i, "gift"],
+  [/entertain|movie|fun/i, "entertainment"],
+];
+
+export function guessCategoryIcon(name: string): (typeof BUDGET_CATEGORY_ICONS)[number] | null {
+  return NAME_ICON_RULES.find(([pattern]) => pattern.test(name))?.[1] ?? null;
+}
+
+// The icon a category's tile shows: its own, else one guessed from its
+// name, else the generic tag.
+export function categoryIconFor(category: { icon?: string | null; name: string }): LucideIcon {
+  const key = category.icon || guessCategoryIcon(category.name);
+  return key ? budgetCategoryIcon(key) : Tag;
 }

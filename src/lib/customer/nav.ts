@@ -166,9 +166,25 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
+// The sidebar's foot: the account's own pages. The top bar puts them under
+// "Account", and Settings' sections under "Account › Settings" (the
+// sidebar draws no subs for them; Settings has its own menu).
+export const NAV_FOOT_LABEL = "Account";
 export const NAV_FOOT: NavItem[] = [
   { label: "Invite & earn", href: "/referrals", icon: "gift", tag: "Earn ৳" },
-  { label: "Settings", href: "/settings", icon: "settings" },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: "settings",
+    subs: [
+      { label: "Profile", href: "/settings/profile" },
+      { label: "Security", href: "/settings/security" },
+      { label: "Workspaces", href: "/settings/workspaces" },
+      { label: "App preferences", href: "/settings/app" },
+      { label: "Help & support", href: "/settings/help" },
+      { label: "Resources & legal", href: "/settings/resources" },
+    ],
+  },
 ];
 
 export interface NavContext {
@@ -210,7 +226,12 @@ const leafScore = (leaf: NavLeaf, pathname: string, query: QueryReader): number 
 export function findNavLocation(pathname: string, query: QueryReader, sections: NavSection[], foot: NavItem[] = NAV_FOOT): NavLocation | null {
   let best: { score: number; location: NavLocation } | null = null;
   const consider = (score: number, location: NavLocation) => {
-    if (score >= 0 && (!best || score > best.score)) best = { score, location };
+    // A sub-page wins a tie with its own group, whose link it shares
+    // (Wallets and Balance both open /balance/overview), so the top bar
+    // names the page.
+    const current = best as { score: number; location: NavLocation } | null;
+    const beatsItsGroup = current !== null && score === current.score && location.sub !== null && current.location.sub === null && current.location.item === location.item;
+    if (score >= 0 && (!current || score > current.score || beatsItsGroup)) best = { score, location };
   };
   const visit = (section: NavSection | null, item: NavItem) => {
     consider(leafScore(item, pathname, query), { section, item, sub: null });
@@ -221,6 +242,14 @@ export function findNavLocation(pathname: string, query: QueryReader, sections: 
   for (const section of sections) for (const item of section.items) visit(section, item);
   for (const item of foot) visit(null, item);
   return best ? (best as { location: NavLocation }).location : null;
+}
+
+// Home, the Money pages and Books: where the phone boards float the + for a
+// new transaction. Habits, Security, Insights and the account pages don't;
+// a page the menu doesn't know keeps it.
+export function movesMoney(location: NavLocation | null): boolean {
+  if (!location) return true;
+  return location.section !== null && (location.section.tone === "money" || location.section.tone === "neutral");
 }
 
 export interface Breadcrumb {
@@ -234,7 +263,8 @@ export interface Breadcrumb {
 // the page as the heading, the pillar's colour for the dot.
 export function breadcrumbFor(location: NavLocation): Breadcrumb {
   const crumbs: string[] = [];
-  if (location.section?.label) crumbs.push(location.section.label);
+  const section = location.section?.label ?? (NAV_FOOT.includes(location.item) ? NAV_FOOT_LABEL : null);
+  if (section) crumbs.push(section);
   if (location.sub) crumbs.push(location.item.label);
   return {
     crumbs,

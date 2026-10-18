@@ -81,18 +81,27 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
   }
 
   return (
-    <PageFrame className="gap-6">
+    <PageFrame className="md:gap-6">
       <PageHeader
-        eyebrow={`${t("Money")} · ${t("Wallets")}`}
+        eyebrow={
+          <>
+            {t("Money")}
+            {/* The phone board points the way; the desktop one separates. */}
+            <span className="md:hidden"> › </span>
+            <span className="hidden md:inline"> · </span>
+            {t("Wallets")}
+          </>
+        }
         title={
           <>
             <span className="md:hidden">{t("My wallets")}</span>
             <span className="hidden md:inline">{t("Wallets")}</span>
           </>
         }
-        description={<span className="hidden md:inline">{t("The cash, bank and mobile accounts that hold your money.")}</span>}
+        description={t("The cash, bank and mobile accounts that hold your money.")}
+        hideDescriptionOnPhone
         actions={
-          <div className="hidden items-center gap-3 md:flex">
+          <>
             <Button variant="secondary" asChild>
               <Link href="/balance/transfer">
                 <ArrowLeftRight className="text-ink-2" />
@@ -105,14 +114,14 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
                 {t("Add wallet")}
               </Button>
             )}
-          </div>
+          </>
         }
-        className="max-md:gap-0"
+        hideActionsOnPhone
       />
 
       {/* Phone: the total, the share bar and the add button in one card. */}
-      <Card padding="sm" className="flex flex-col gap-3 md:hidden">
-        <span className="text-small text-ink-muted">
+      <Card padding="sm" elevated={false} className="flex flex-col gap-3 md:hidden">
+        <span className="text-small leading-[normal] text-ink-muted">
           {t("Available across")} {active.length} {t("wallets")}
         </span>
         <AmountText value={totalBalance} currency={currency} size="display" />

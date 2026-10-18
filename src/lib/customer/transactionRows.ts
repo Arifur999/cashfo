@@ -39,6 +39,17 @@ export const shiftDay = (day: string, delta: number): string => {
   return date.toISOString().slice(0, 10);
 };
 
+// A reversal's own note is "Reversal of: <what it undid>" (the backend
+// writes it). Its row already says "Reversal", so the title is what it
+// undid -- or nothing when that was only the original's id, and the row
+// falls back to its category like any other.
+const REVERSAL_PREFIX = /^Reversal of:\s*/;
+const BARE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function reversalTitle(description: string | null): string | null {
+  const undid = description?.replace(REVERSAL_PREFIX, "").trim();
+  return undid && !BARE_ID.test(undid) ? undid : null;
+}
+
 // Which entry carries the category and which the wallet: entry order
 // differs between an income and an expense, so the wallet is "the other
 // entry". A transfer has two wallets and no category.
@@ -64,7 +75,7 @@ export function describeTransaction(transaction: Transaction, categoriesById: Re
   const signedAmount = transaction.transactionType === "EXPENSE" ? -amount : amount;
   return {
     transaction,
-    title: transaction.description || category?.name || null,
+    title: (transaction.reversalOfId ? reversalTitle(transaction.description) : transaction.description) || category?.name || null,
     category,
     wallet,
     signedAmount,

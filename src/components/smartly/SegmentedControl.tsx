@@ -57,8 +57,9 @@ interface SegmentedControlProps<T extends string> {
   onChange: (value: T) => void;
   label: string;
   variant?: keyof typeof VARIANTS;
-  // "lg" stands 44px tall beside a 44px field (the Statement's Period).
-  size?: "md" | "lg";
+  // "touch" makes 34px segments for a phone page's tabs (Loans); "lg"
+  // stands 44px tall beside a 44px field (the Statement's Period).
+  size?: "md" | "touch" | "lg";
   // Fill the width, each segment equal (the drawer's Income/Expense/Transfer).
   stretch?: boolean;
   className?: string;
@@ -79,7 +80,7 @@ const SegmentedControl = <T extends string>({ options, value, onChange, label, v
             aria-pressed={on}
             lang={option.lang}
             onClick={() => onChange(option.value)}
-            className={cn("inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors", styles.item, on ? styles.on : styles.off, size === "lg" && "h-9", stretch && "flex-1")}
+            className={cn("inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors", styles.item, on ? styles.on : styles.off, size === "touch" && "h-8.5", size === "lg" && "h-9", stretch && "flex-1")}
           >
             {option.dot && <span aria-hidden="true" className="size-2 rounded-full" style={{ background: option.dot }} />}
             {option.icon}

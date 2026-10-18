@@ -12,20 +12,20 @@ type HeroProps = Pick<HomeData, "balance" | "walletCount" | "balanceChangePercen
 
 // This month on the aurora card: the balance, money in and out, what was
 // left, and the savings-rate ring on the right (phones show the left-over
-// row instead).
+// row instead, and a flatter card with one ring of light).
 export function HomeHero({ balance, walletCount, balanceChangePercent, income, expense, savingsRate, lastSavingsRate, currency, monthName, lastMonthName }: HeroProps) {
   const { t } = useLocale();
   const leftOver = income - expense;
   const change = balanceChangePercent;
 
   return (
-    <section aria-label={t("This month")} className="relative grid items-center gap-4 overflow-hidden rounded-xl bg-aurora p-5 text-white shadow-float md:grid-cols-[minmax(0,1fr)_260px] md:gap-8 md:p-8">
-      <span aria-hidden="true" className="absolute -top-35 -right-30 size-105 rounded-full border border-white/16" />
-      <span aria-hidden="true" className="absolute -top-15 -right-10 size-65 rounded-full border border-white/12" />
+    <section aria-label={t("This month")} className="relative grid items-center gap-4 overflow-hidden rounded-xl bg-aurora p-5 text-white md:grid-cols-[minmax(0,1fr)_260px] md:gap-8 md:p-8 md:shadow-float">
+      <span aria-hidden="true" className="absolute -top-22.5 -right-20 size-60 rounded-full border border-white/16 md:-top-35 md:-right-30 md:size-105" />
+      <span aria-hidden="true" className="absolute -top-15 -right-10 hidden size-65 rounded-full border border-white/12 md:block" />
 
       <div className="relative flex flex-col gap-4 md:gap-6">
-        <div className="flex flex-col gap-2">
-          <span className="flex flex-wrap items-center gap-3 text-small text-mint-200 md:text-body">
+        <div className="flex flex-col gap-4 md:gap-2">
+          <span className="flex flex-wrap items-center justify-between gap-3 text-small text-mint-200 md:justify-start md:text-body">
             {t("Total balance")} · {walletCount} {t(walletCount === 1 ? "wallet" : "wallets")}
             {change !== null && (
               <Chip tone="onDark">
@@ -36,13 +36,13 @@ export function HomeHero({ balance, walletCount, balanceChangePercent, income, e
           <AmountText value={balance} currency={currency} size="display" tone="inherit" className="md:text-display-xl" />
         </div>
         <div className="grid max-w-2xl grid-cols-2 gap-2 md:grid-cols-3 md:gap-3">
-          <HeroTile label={`${t("Money in")} · ${t("this month")}`} value={income} currency={currency} signed />
-          <HeroTile label={`${t("Money out")} · ${t("this month")}`} value={-expense} currency={currency} signed />
+          <HeroTile label={<ThisMonth label={t("Money in")} />} value={income} currency={currency} signed />
+          <HeroTile label={<ThisMonth label={t("Money out")} />} value={-expense} currency={currency} signed />
           <HeroTile label={t("Left over this month")} value={leftOver} currency={currency} className="hidden md:flex" />
         </div>
         <div className="flex items-center justify-between rounded-lg bg-surface p-3 text-body text-ink md:hidden">
-          <span>
-            <AmountText value={leftOver} currency={currency} size="md" tone="neutral" className="font-bold" /> {t("left over")}
+          <span className="leading-[normal]">
+            <AmountText value={leftOver} currency={currency} size="sm" tone="neutral" className="font-bold leading-[normal]" /> {t("left over")}
           </span>
           {savingsRate !== null && <Chip tone="mint">{savingsRate}% {t("saved")}</Chip>}
         </div>
@@ -75,11 +75,24 @@ export function HomeHero({ balance, walletCount, balanceChangePercent, income, e
   );
 }
 
-function HeroTile({ label, value, currency, signed = false, className }: { label: string; value: number; currency: string; signed?: boolean; className?: string }) {
+// "Money in · this month"; phones leave the month to the card's own label.
+function ThisMonth({ label }: { label: string }) {
+  const { t } = useLocale();
+  return (
+    <>
+      {label}
+      <span className="hidden md:inline"> · {t("this month")}</span>
+    </>
+  );
+}
+
+// The phone board leaves its line heights to the fonts ("normal"), which
+// stands a line with a taka sign taller; leading-[normal] keeps that.
+function HeroTile({ label, value, currency, signed = false, className }: { label: React.ReactNode; value: number; currency: string; signed?: boolean; className?: string }) {
   return (
     <div className={cn("flex flex-col gap-0.5 rounded-lg bg-white/10 p-3 md:gap-1 md:p-4", className)}>
-      <span className="text-caption font-normal text-mint-200 md:text-small">{label}</span>
-      <AmountText value={value} currency={currency} signed={signed} tone="inherit" size="md" className="font-bold md:text-h2" />
+      <span className="text-caption font-normal text-mint-200 max-md:leading-[normal] md:text-small">{label}</span>
+      <AmountText value={value} currency={currency} signed={signed} tone="inherit" size="md" className="font-bold max-md:leading-[normal] md:text-h2" />
     </div>
   );
 }

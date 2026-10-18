@@ -12,7 +12,7 @@ import Chip from "@/components/smartly/Chip";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Account, Transaction } from "@/lib/customer/api";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatSignedCurrency } from "@/lib/customer/currency";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
@@ -75,25 +75,27 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       <PageHeader
         eyebrow={t("Money")}
         title={t("Transactions")}
-        description={<span className="hidden md:inline">{t("Every income and expense you've added, newest first.")}</span>}
+        description={t("Every income and expense you've added, newest first.")}
+        hideDescriptionOnPhone
         actions={
-          <Button onClick={() => setAddOpen(true)} className="hidden md:inline-flex">
+          <Button onClick={() => setAddOpen(true)}>
             <Plus strokeWidth={2.5} className="size-4" />
             {t("New transaction")}
           </Button>
         }
-        className="mb-1 max-md:gap-0"
+        hideActionsOnPhone
+        className="md:mb-1"
       />
 
       <TransactionFilters accounts={accounts} categories={categories} />
 
       {/* Two small cards on a phone; one strip of four on wider screens. */}
       <Card padding="none" className="grid grid-cols-2 max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4">
-        <TotalCell label={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
-          <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className="text-h3 md:text-h2" />
+        <TotalCell label={t("Income")} phoneLabel={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
+          <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className={PHONE_FIGURE} />
         </TotalCell>
-        <TotalCell label={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
-          <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className="text-h3 md:text-h2" />
+        <TotalCell label={t("Expense")} phoneLabel={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
+          <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className={PHONE_FIGURE} />
         </TotalCell>
         <TotalCell label={t("Net")} divided className="max-md:hidden">
           <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-h2" />
@@ -142,7 +144,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             <div className={cn("grid items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
               <span>{t("Transaction")}</span>
               <span>{t("Category")}</span>
-              <span>{t("Wallet")}</span>
+              <span>{t("Account@@wallet")}</span>
               <span className="text-right">{t("Amount")}</span>
               <span />
             </div>
@@ -164,7 +166,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           <div className="flex flex-col md:hidden">
             {groups.map((group) => (
               <div key={group.day}>
-                <div className="flex justify-between px-1 pt-4 pb-2 text-small font-semibold text-ink-2">
+                <div className="flex justify-between px-1 pt-4 pb-2 text-small leading-[normal] font-semibold text-ink-2">
                   <span>{dayHeading(group.day, today, t)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>
@@ -194,10 +196,17 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   );
 }
 
-function TotalCell({ label, children, divided = false, className }: { label: string; children: React.ReactNode; divided?: boolean; className?: string }) {
+// The money in and out figures: 18px bold on a 1.2 line on phones, the
+// h2 on wider screens.
+const PHONE_FIGURE = "text-h3 max-md:leading-[1.2] max-md:font-bold md:text-h2";
+
+// The desktop board says Income and Expense; the phone board, Money in and
+// Money out (phoneLabel).
+function TotalCell({ label, phoneLabel = label, children, divided = false, className }: { label: string; phoneLabel?: string; children: React.ReactNode; divided?: boolean; className?: string }) {
   return (
     <div className={cn("flex flex-col gap-1 px-4 py-3 md:px-5 md:py-4", divided && "md:border-l md:border-line", className)}>
-      <span className="text-caption font-normal text-ink-muted md:text-small">{label}</span>
+      <span className="text-small font-normal text-ink-muted md:hidden">{phoneLabel}</span>
+      <span className="text-small font-normal text-ink-muted max-md:hidden">{label}</span>
       {children}
     </div>
   );
@@ -205,7 +214,7 @@ function TotalCell({ label, children, divided = false, className }: { label: str
 
 function CategoryTile({ row, size = 36 }: { row: TransactionRow; size?: 36 | 40 }) {
   const tone = row.transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
-  const icon = row.category?.icon ? budgetCategoryIcon(row.category.icon) : Receipt;
+  const icon = row.category ? categoryIconFor(row.category) : Receipt;
   return (
     <span className={cn("flex shrink-0 items-center justify-center", size === 40 ? "size-10 rounded-md [&_svg]:size-4.5" : "size-9 rounded-full [&_svg]:size-4.25", tone.bg, tone.fg)}>
       {createElement(icon, { "aria-hidden": true })}
@@ -262,7 +271,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
 function PhoneRow({ row, currency, divided }: { row: TransactionRow; currency: string; divided: boolean }) {
   const { t } = useLocale();
   return (
-    <Link href={`/transactions/${row.transaction.id}`} className={cn("grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4", divided && "border-t border-surface-sunken", row.cancelled && "opacity-60")}>
+    <Link href={`/transactions/${row.transaction.id}`} className={cn("box-content grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4", divided && "border-t border-surface-sunken", row.cancelled && "opacity-60")}>
       <CategoryTile row={row} size={40} />
       <span className="flex min-w-0 flex-col">
         <span className={cn("truncate text-title text-ink", row.cancelled && "line-through")}>{row.title ?? t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType])}</span>

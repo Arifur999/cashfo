@@ -8,7 +8,7 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
 import { getBudgetCategoryNames, getBudgetOverview } from "@/lib/customer/budgets";
 import { appYearMonth, resolveDateRange } from "@/lib/customer/dateRangePresets";
-import { greetingFor, homeDateLine, hourIn } from "@/lib/customer/greeting";
+import { greetingFor, homeDates, hourIn } from "@/lib/customer/greeting";
 import { getHabitTrackers } from "@/lib/customer/habits";
 import { balanceChangePercent, categoryDelta, daysLeftInMonth, loanCounts, savingsRate, topShare } from "@/lib/customer/homeInsights";
 import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
     currency,
     today,
     greeting: greetingFor(hourIn(APP_TIME_ZONE, now)),
-    dateLine: homeDateLine(now, locale),
+    dates: homeDates(now, locale),
     monthName: monthName(year, month, locale),
     lastMonthName: monthName(lastMonthYear, lastMonthNumber, locale),
     balance,

@@ -1,28 +1,42 @@
 "use client";
 
-import { ChevronRight, LogOut } from "lucide-react";
+import { ChevronRight, Languages, LogOut, Moon, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
-import { SOFT_TONE } from "@/components/smartly/tones";
-import { APP_VERSION, initialsOf, SETTINGS_GROUPS, SETTINGS_SECTIONS } from "@/lib/customer/settingsDisplay";
+import { SOFT_TONE, type Tone } from "@/components/smartly/tones";
+import { APP_VERSION, initialsOf, SETTINGS_GROUPS, SETTINGS_SECTIONS, type SettingsSection } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { SECTION_ICONS } from "./SettingsNav";
 
-// Settings on a phone: the profile card, then every section as a row.
+interface MenuRow {
+  key: string;
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  tone: Tone;
+  value?: string;
+}
+
+const TONE: Partial<Record<SettingsSection["key"], Tone>> = { security: "warning", workspaces: "money", help: "info", resources: "neutral" };
+
+// Settings on a phone: the profile card, then every section as a row. The
+// phone board splits App preferences into its Language and Theme rows.
 export function SettingsMobileMenu() {
   const { t, locale } = useLocale();
   const { user, logout } = useAuth();
   const { preference } = useTheme();
-  const workspaces = user.businesses.length;
 
-  const value: Partial<Record<string, string>> = {
-    security: "",
-    workspaces: String(workspaces),
-    app: `${locale === "bn" ? "বাংলা" : "English"} · ${t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device")}`,
-  };
-  const tone: Partial<Record<string, string>> = { profile: "money", security: "warning", workspaces: "money", app: "money", help: "info", resources: "neutral" };
+  const rowsOf = (group: SettingsSection["group"]): MenuRow[] =>
+    SETTINGS_SECTIONS.filter((section) => section.group === group && section.key !== "profile").flatMap((section): MenuRow[] =>
+      section.key === "app"
+        ? [
+            { key: "language", href: section.href, label: "Language", icon: Languages, tone: "money", value: locale === "bn" ? "বাংলা" : "English" },
+            { key: "theme", href: section.href, label: "Theme", icon: Moon, tone: "neutral", value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") },
+          ]
+        : [{ key: section.key, href: section.href, label: section.label, icon: SECTION_ICONS[section.key], tone: TONE[section.key] ?? "neutral", value: section.key === "workspaces" ? String(user.businesses.length) : undefined }],
+    );
 
   return (
     <div className="flex flex-col gap-4">
@@ -45,19 +59,17 @@ export function SettingsMobileMenu() {
         <section key={group} className="flex flex-col gap-2">
           <h2 className="px-1 text-caption font-semibold text-ink-muted">{t(group)}</h2>
           <div className="overflow-hidden rounded-lg border border-line bg-surface">
-            {SETTINGS_SECTIONS.filter((section) => section.group === group && section.key !== "profile").map((section) => {
-              const Icon = SECTION_ICONS[section.key];
-              return (
-                <Link key={section.key} href={section.href} className="flex min-h-13 items-center gap-3 border-t border-surface-sunken px-4 text-ink first:border-t-0">
-                  <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", SOFT_TONE[(tone[section.key] ?? "neutral") as keyof typeof SOFT_TONE])}>
-                    <Icon aria-hidden="true" />
-                  </span>
-                  <span className="flex-1 text-body font-medium">{t(section.label)}</span>
-                  {value[section.key] && <span className="text-body text-ink-muted">{value[section.key]}</span>}
-                  <ChevronRight className="size-4 text-ink-muted" aria-hidden="true" />
-                </Link>
-              );
-            })}
+            {rowsOf(group).map((row) => (
+              // 52px plus the divider, as the board draws a row.
+              <Link key={row.key} href={row.href} className="box-content flex min-h-13 items-center gap-3 border-t border-surface-sunken px-4 text-ink first:border-t-0">
+                <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", SOFT_TONE[row.tone])}>
+                  <row.icon aria-hidden="true" />
+                </span>
+                <span className="flex-1 text-body font-medium">{t(row.label)}</span>
+                {row.value && <span className="text-body text-ink-muted">{row.value}</span>}
+                <ChevronRight className="size-4 text-ink-muted" aria-hidden="true" />
+              </Link>
+            ))}
           </div>
         </section>
       ))}
