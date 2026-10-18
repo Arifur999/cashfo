@@ -150,11 +150,11 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
 export function AuthHeroCard() {
   const { t } = useLocale();
   return (
-    <div className="relative mx-5 flex items-end justify-between gap-4 overflow-hidden rounded-xl bg-aurora p-5 text-white lg:hidden">
+    <div className="relative mx-5 mt-2 flex items-end justify-between gap-4 overflow-hidden rounded-xl bg-aurora p-5 text-white lg:hidden">
       <span aria-hidden="true" className="absolute -top-17 -right-15 size-45 rounded-full border border-white/14" />
       <div className="relative flex max-w-47.5 flex-col gap-2">
-        <p className="text-h3 font-bold tracking-[-0.01em]">{t("Your money, habits and passwords. Smartly sorted.")}</p>
-        <p className="text-small leading-snug text-white/84">{t("Money, loans, prayers and every login in one calm place.")}</p>
+        <p className="text-h3 leading-[1.25] font-bold tracking-[-0.01em]">{t("Your money, habits and passwords. Smartly sorted.")}</p>
+        <p className="text-small leading-[1.45] text-white/84">{t("Money, loans, prayers and every login in one calm place.")}</p>
       </div>
       <div aria-hidden="true" className="relative flex h-18 items-end gap-2">
         {[
