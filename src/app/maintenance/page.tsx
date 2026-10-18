@@ -53,9 +53,9 @@ export default async function MaintenancePage() {
       }
     >
       {platform.maintenance.message && (
-        <Card className="mt-2 w-full max-w-3xl text-left">
+        <Card padding="none" elevated={false} className="mt-2 w-full max-w-190 px-5 py-4 text-left">
           <span className="text-caption font-bold text-ink-muted uppercase">{t("Message from the team")}</span>
-          <p className="mt-2 text-body leading-relaxed whitespace-pre-line text-ink-2">{platform.maintenance.message}</p>
+          <p className="mt-2 text-body leading-[21px] whitespace-pre-line text-ink-2">{platform.maintenance.message}</p>
         </Card>
       )}
     </StatePage>
