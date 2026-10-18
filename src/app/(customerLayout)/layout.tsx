@@ -3,7 +3,7 @@ import { AnnouncementBanner } from "@/components/modules/Customer/Layout/Announc
 import { AppSidebar } from "@/components/modules/Customer/Layout/AppSidebar";
 import { AppTopbar } from "@/components/modules/Customer/Layout/AppTopbar";
 import { OwnerViewBanner } from "@/components/modules/Customer/Layout/OwnerViewBanner";
-import { PhoneTopbarProvider } from "@/components/modules/Customer/Layout/PhoneTopbarExtras";
+import { TopbarProvider } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { QuickAddFab } from "@/components/modules/Customer/Layout/QuickAddFab";
 import { AuthProvider } from "@/components/modules/Customer/Providers/AuthProvider";
 import { PlatformProvider } from "@/components/modules/Customer/Providers/PlatformProvider";
@@ -65,7 +65,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
         <LocaleProvider initialLocale={locale} overrides={overrides}>
           <PlatformProvider value={{ flags: platform.flags, supportEmail: platform.supportEmail }}>
             <TodayTasksProvider>
-              <PhoneTopbarProvider>
+              <TopbarProvider>
                 {/* The Night sidebar on the left; the top bar and the one
                     scrolling region on the right. */}
                 <div className="flex h-screen overflow-hidden bg-cream print:block print:h-auto print:overflow-visible">
@@ -81,7 +81,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                   </div>
                 </div>
                 <QuickAddFab />
-              </PhoneTopbarProvider>
+              </TopbarProvider>
             </TodayTasksProvider>
           </PlatformProvider>
         </LocaleProvider>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Lock, Plus, Search } from "lucide-react";
-import { PhoneTopbarExtras } from "@/components/modules/Customer/Layout/PhoneTopbarExtras";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
@@ -111,7 +111,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
 
   return (
     <PageFrame className="gap-4">
-      <PhoneTopbarExtras
+      <TopbarExtras
         subtitle={
           <span role="timer" aria-label={`${t("Vault locks in")} ${countdownText(msLeft)}`} className="flex items-center gap-1 text-caption font-normal text-emerald tabular-nums">
             <span className="size-1.75 rounded-full bg-emerald" aria-hidden="true" />
