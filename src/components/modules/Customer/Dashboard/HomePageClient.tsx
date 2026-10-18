@@ -57,6 +57,9 @@ export function HomePageClient({ data }: { data: HomeData }) {
   const prayerItems = data.namaz?.items.length ? data.namaz.items : PRAYERS;
   const prayerHref = data.namaz ? `/habit-tracker/habits/namaz/${data.namaz.id}` : "/habit-tracker/habits?category=Namaz";
   const expenseIcon = data.topExpense ? categoryIconFor(data.categoriesById[data.topExpense.name] ?? { icon: null, name: data.topExpense.name }) : Utensils;
+  // "Locked · 14 logins" once the backend says how many there are.
+  const logins = data.vault?.entryCount;
+  const loginCount = logins === undefined ? "" : ` · ${logins} ${t(logins === 1 ? "login" : "logins")}`;
 
   return (
     <PageFrame gap="lg">
@@ -272,7 +275,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
                   <Lock className="size-6.5" strokeWidth={1.9} aria-hidden="true" />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <b className="text-title font-bold text-ink">{data.vault?.hasVaultPassword ? t("Locked") : t("Not set up yet")}</b>
+                  <b className="text-title font-bold text-ink">{data.vault?.hasVaultPassword ? `${t("Locked")}${loginCount}` : t("Not set up yet")}</b>
                   <span className="text-small text-ink-muted">{data.vault?.hasVaultPassword ? t("Your logins are behind the vault password.") : t("Keep every login behind its own vault password.")}</span>
                 </span>
                 <Button variant="action" size="lg" asChild>
