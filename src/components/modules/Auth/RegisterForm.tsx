@@ -47,17 +47,18 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-4">
       <form.Field name="name" validators={{ onChange: schema.name }}>
-        {(field) => <AppField field={field} label={translate("Full name")} prepend={<User />} autoComplete="name" placeholder={translate("Your name")} />}
+        {(field) => <AppField field={field} size="auth" label={translate("Name")} prepend={<User />} autoComplete="name" placeholder={translate("Your name")} />}
       </form.Field>
 
       <form.Field name="email" validators={{ onChange: schema.email }}>
-        {(field) => <AppField field={field} label={translate("Email")} type="email" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
+        {(field) => <AppField field={field} size="auth" label={translate("Email")} type="email" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
       </form.Field>
 
       <form.Field name="phone" validators={{ onChange: schema.phone }}>
         {(field) => (
           <AppField
             field={field}
+            size="auth"
             label={
               <>
                 {translate("Phone")} <span className="font-normal text-ink-muted">({translate("optional")})</span>
@@ -75,6 +76,7 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
         {(field) => (
           <AppPasswordField
             field={field}
+            size="auth"
             label={translate("Password")}
             prepend={<Lock />}
             autoComplete="new-password"
@@ -94,6 +96,7 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
         {(field) => (
           <AppPasswordField
             field={field}
+            size="auth"
             label={translate("Confirm password")}
             prepend={<Lock />}
             autoComplete="new-password"
@@ -116,7 +119,7 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
 
       <form.Subscribe selector={(state) => state.isSubmitting}>
         {(isSubmitting) => (
-          <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Creating account...")} size="lg" className="mt-2 text-body-lg">
+          <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Creating account...")} size="lg" className="mt-2 text-body-lg max-md:h-13">
             {translate("Create account")}
             <ArrowRight className="size-4" strokeWidth={2.25} aria-hidden="true" />
           </AppSubmitButton>
