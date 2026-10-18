@@ -290,4 +290,5 @@ export const incomeExpenseDictionary: Record<string, string> = {
   Spent: "খরচ হয়েছে",
   "Add a category": "একটি খাত যোগ করুন",
   "No expense categories yet.": "এখনো কোনো খরচের খাত নেই।",
+  "Account@@wallet": "ওয়ালেট",
 };

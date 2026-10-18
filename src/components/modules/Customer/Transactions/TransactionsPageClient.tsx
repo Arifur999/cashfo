@@ -89,10 +89,10 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
 
       {/* Two small cards on a phone; one strip of four on wider screens. */}
       <Card padding="none" className="grid grid-cols-2 max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4">
-        <TotalCell label={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
+        <TotalCell label={t("Income")} phoneLabel={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
           <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className="text-h3 md:text-h2" />
         </TotalCell>
-        <TotalCell label={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
+        <TotalCell label={t("Expense")} phoneLabel={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
           <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className="text-h3 md:text-h2" />
         </TotalCell>
         <TotalCell label={t("Net")} divided className="max-md:hidden">
@@ -142,7 +142,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             <div className={cn("grid items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
               <span>{t("Transaction")}</span>
               <span>{t("Category")}</span>
-              <span>{t("Wallet")}</span>
+              <span>{t("Account@@wallet")}</span>
               <span className="text-right">{t("Amount")}</span>
               <span />
             </div>
@@ -194,10 +194,13 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   );
 }
 
-function TotalCell({ label, children, divided = false, className }: { label: string; children: React.ReactNode; divided?: boolean; className?: string }) {
+// The desktop board says Income and Expense; the phone board, Money in and
+// Money out (phoneLabel).
+function TotalCell({ label, phoneLabel = label, children, divided = false, className }: { label: string; phoneLabel?: string; children: React.ReactNode; divided?: boolean; className?: string }) {
   return (
     <div className={cn("flex flex-col gap-1 px-4 py-3 md:px-5 md:py-4", divided && "md:border-l md:border-line", className)}>
-      <span className="text-caption font-normal text-ink-muted md:text-small">{label}</span>
+      <span className="text-caption font-normal text-ink-muted md:hidden">{phoneLabel}</span>
+      <span className="text-small font-normal text-ink-muted max-md:hidden">{label}</span>
       {children}
     </div>
   );

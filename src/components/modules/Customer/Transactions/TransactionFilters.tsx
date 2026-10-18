@@ -92,8 +92,8 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
           </option>
         ))}
       </NativeSelect>
-      <NativeSelect size="sm" value={accountId} onChange={(event) => update({ accountId: event.target.value })} aria-label={t("Wallet")} className="font-medium">
-        <option value="">{t("All wallets")}</option>
+      <NativeSelect size="sm" value={accountId} onChange={(event) => update({ accountId: event.target.value })} aria-label={t("Account")} className="font-medium">
+        <option value="">{t("All accounts")}</option>
         {accounts.map((account) => (
           <option key={account.id} value={account.id}>
             {account.name}
