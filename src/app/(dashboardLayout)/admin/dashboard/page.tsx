@@ -3,6 +3,7 @@ import { FinanceDashboard, type FinanceDashboardData } from "@/components/module
 import { SuperDashboard, type SuperDashboardData } from "@/components/modules/Admin/Dashboard/SuperDashboard";
 import { SupportDashboard, type SupportDashboardData } from "@/components/modules/Admin/Dashboard/SupportDashboard";
 import { hourIn } from "@/lib/adminDashboard";
+import { getAnalyticsSummary } from "@/services/analytics.services";
 import { getAnnouncements } from "@/services/announcement.services";
 import { getUserInfo } from "@/services/auth.services";
 import { getCategories } from "@/services/category.services";
@@ -40,8 +41,9 @@ async function countOf(call: () => Promise<{ meta?: { total: number } }>): Promi
 }
 
 async function superData(): Promise<SuperDashboardData> {
-  const [{ data: summary }, tickets, failedPayments, revenue, plans, planList, health, backup, unresolvedErrors] = await Promise.all([
+  const [{ data: summary }, activity, tickets, failedPayments, revenue, plans, planList, health, backup, unresolvedErrors] = await Promise.all([
     getDashboardSummary(),
+    maybe(getAnalyticsSummary),
     maybe(getTicketStats),
     countOf(() => getPayments("limit=1", "failed")),
     maybe(getRevenueSummary),
@@ -51,7 +53,7 @@ async function superData(): Promise<SuperDashboardData> {
     maybe(getBackupStatusSummary),
     countOf(() => getErrorLogs("resolved=false&limit=1")),
   ]);
-  return { summary, tickets, failedPayments, revenue, plans, planList, system: { healthy: health ? health.status === "ok" : health === null ? null : false, backup, unresolvedErrors } };
+  return { summary, activity, tickets, failedPayments, revenue, plans, planList, system: { healthy: health ? health.status === "ok" : health === null ? null : false, backup, unresolvedErrors } };
 }
 
 async function supportData(): Promise<SupportDashboardData> {

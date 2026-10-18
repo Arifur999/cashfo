@@ -2,16 +2,16 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { updateNotificationTemplateAction } from "@/app/(dashboardLayout)/admin/notifications/_action";
+import { setNotificationTemplateActiveAction, updateNotificationTemplateAction } from "@/app/(dashboardLayout)/admin/notifications/_action";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import AppTextareaField from "@/components/shared/form/AppTextareaField";
+import { Switch } from "@/components/ui/switch";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { firstZodError } from "@/lib/formValidators";
 import { queryKeys } from "@/lib/queryKeys";
 import { fillPlaceholders, getPlaceholderError } from "@/lib/templatePlaceholders";
-import { cn } from "@/lib/utils";
 import type { INotificationTemplate } from "@/types/notification.types";
 import { type INotificationTemplateFormValues, notificationTemplateFormZodSchema } from "@/zod/notification.validation";
 import { CHANNEL_META, SAMPLE_VALUES, templateWhen } from "../notificationOptions";
@@ -35,7 +35,7 @@ interface TemplateFormProps {
 const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
   const { translate } = useLocale();
   const isEmail = template.channel === "EMAIL";
-  const { label: channel, chip } = CHANNEL_META[template.channel];
+  const { label: channel } = CHANNEL_META[template.channel];
   // Where a tapped variable goes: the field last typed in.
   const [target, setTarget] = useState<TextField>("bodyEn");
   const checkText = (schema: typeof shape.bodyEn) => ({ value }: { value: string }) => firstZodError(schema, value) ?? getPlaceholderError(value, template.variables);
@@ -43,6 +43,14 @@ const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
   const { run, isPending } = useActionMutation({
     action: (values: INotificationTemplateFormValues) => updateNotificationTemplateAction(template.id, { ...values, isEmail }),
     successMessage: (saved) => translate("Saved {key}", { key: saved.key }),
+    invalidateKeys: [queryKeys.notificationTemplates.all],
+    refreshRoute: false,
+  });
+
+  // The On switch saves at once, apart from the wording.
+  const active = useActionMutation({
+    action: (isActive: boolean) => setNotificationTemplateActiveAction(template.id, { isActive }),
+    successMessage: (saved) => translate(saved.isActive ? "{key} is on" : "{key} is off", { key: saved.key }),
     invalidateKeys: [queryKeys.notificationTemplates.all],
     refreshRoute: false,
   });
@@ -73,12 +81,17 @@ const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
             <T>{channel}</T> · <T>{templateWhen(template.key)}</T>
           </span>
         </div>
-        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", template.isActive ? "bg-mint-50 text-emerald" : "bg-surface-sunken text-ink-2")}>
+        {/* The design's On switch: an off template can't be sent. */}
+        <label className="flex items-center gap-2 text-small font-semibold text-ink-2">
           <T>{template.isActive ? "On" : "Off"}</T>
-        </span>
-        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", chip)}>
-          <T>{channel}</T>
-        </span>
+          <Switch
+            checked={template.isActive}
+            disabled={!canManage || active.isPending}
+            onCheckedChange={(checked) => void active.run(checked)}
+            aria-label={translate("{key} is on", { key: template.key })}
+            className="data-checked:bg-emerald data-unchecked:bg-line-strong"
+          />
+        </label>
       </div>
       <div className="grid gap-4 px-5 py-4 sm:grid-cols-2">
         {isEmail && (

@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { exportTranslationsAction } from "@/app/(dashboardLayout)/admin/content/translations/_action";
 import Loader from "@/components/shared/Loader";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { downloadJson } from "@/lib/download";
 import type { ITranslationBundles, TranslationLanguage } from "@/types/translation.types";
@@ -39,8 +39,8 @@ const ExportTranslationsMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8" disabled={isExporting}>
-          {isExporting ? <Loader size={14} label="Exporting..." /> : <Download aria-hidden="true" />}
+        <Button variant="secondary" disabled={isExporting}>
+          {isExporting ? <Loader size={14} label="Exporting..." /> : <Download className="size-4 text-ink-2" aria-hidden="true" />}
           <T>Export JSON</T>
         </Button>
       </DropdownMenuTrigger>

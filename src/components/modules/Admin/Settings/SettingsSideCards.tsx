@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Construction, MessageSquareText } from "lucide-react";
+import { ChevronRight, Construction, Lock, MessageSquareText } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { platformSettingsQuery } from "@/queries/settings.queries";
@@ -26,7 +26,7 @@ const SettingsSideCards = ({ canManage }: { canManage: boolean }) => {
           // System is for super admins only, like changing settings.
           canManage && (
             <Link href="/admin/system" className={SIDE_CARD_LINK}>
-              <T>Change in System</T> <ArrowRight aria-hidden="true" className="size-3.5" />
+              <T>Change in System</T> <ChevronRight aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
             </Link>
           )
         }
@@ -40,14 +40,17 @@ const SettingsSideCards = ({ canManage }: { canManage: boolean }) => {
         title="Messages to users"
         action={
           <Link href="/admin/notifications" className={SIDE_CARD_LINK}>
-            <T>Open message templates</T> <ArrowRight aria-hidden="true" className="size-3.5" />
+            <T>Open message templates</T> <ChevronRight aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
           </Link>
         }
       >
         <T>Email, SMS and in-app message wording lives in templates, in English and Bangla.</T>
       </SettingsSideCard>
-      <p role="note" className="rounded-md border border-line bg-cream px-4 py-3 text-small leading-normal text-ink-2">
-        <T>Support, Finance and Content admins see this page with the fields locked.</T>
+      <p role="note" className="flex gap-3 rounded-md border border-line bg-cream px-4 py-3 text-small leading-normal text-ink-2">
+        <Lock className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+        <span>
+          <T>Support, Finance and Content admins see this page with the fields locked.</T>
+        </span>
       </p>
     </aside>
   );

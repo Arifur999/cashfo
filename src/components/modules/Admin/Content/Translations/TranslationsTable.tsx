@@ -8,8 +8,6 @@ import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import { translationsQuery } from "@/queries/translation.queries";
 import type { ITranslation, TranslationLanguage } from "@/types/translation.types";
-import CreateTranslationDialog from "./CreateTranslationDialog";
-import ExportTranslationsMenu from "./ExportTranslationsMenu";
 import { buildTranslationFilters } from "./translationFilters";
 import { buildTranslationsColumns, TRANSLATIONS_HIDDEN_COLUMNS } from "./translationsColumns";
 import T from "@/components/shared/T";
@@ -54,12 +52,6 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
       isFetching={isFetching}
       search={{ placeholder: "Search a key or a word", width: "sm" }}
       filters={{ configs: filters }}
-      toolbarAction={
-        <>
-          <ExportTranslationsMenu />
-          {canManage && <CreateTranslationDialog />}
-        </>
-      }
       footer={
         <T values={{ example: "{{name}}" }}>{"Changes go live in the app within a minute. Keep placeholders like {example} the same in both languages."}</T>
       }

@@ -277,4 +277,7 @@ export const adminSystemDictionary: Record<string, string> = {
   "Month {count}": "মাস {count}",
   "Not reached yet": "এখনো আসেনি",
   Unknown: "অজানা",
+  "From@@source": "কোথা থেকে",
+  Anywhere: "যেকোনো জায়গা",
+  "No errors match these filters.": "এই ফিল্টারে কোনো ত্রুটি নেই।",
 };

@@ -216,4 +216,7 @@ export const adminContentDictionary: Record<string, string> = {
   // The design notes keep দেনা-পাওনা for Loans.
   Receivable: "প্রাপ্য",
   Payable: "দেয়",
+  "New order saved": "নতুন ক্রম সংরক্ষিত হয়েছে",
+  "Failed to save the new order": "নতুন ক্রম সংরক্ষণ করা যায়নি",
+  Expenses: "খরচ",
 };

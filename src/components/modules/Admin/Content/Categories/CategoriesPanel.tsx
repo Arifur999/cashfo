@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { setCategoryActiveAction } from "@/app/(dashboardLayout)/admin/content/categories/_action";
+import { GripVertical, Plus } from "lucide-react";
+import { useOptimistic, useState, useTransition } from "react";
+import { reorderCategoriesAction, setCategoryActiveAction } from "@/app/(dashboardLayout)/admin/content/categories/_action";
 import FormDialog from "@/components/shared/dialog/FormDialog";
-import IconPreview from "@/components/shared/IconPreview";
 import Card from "@/components/smartly/Card";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { localName, type Translate } from "@/lib/i18n/message";
 import { formatNumber } from "@/lib/number";
 import { queryKeys } from "@/lib/queryKeys";
+import { changedOrder, moveItem } from "@/lib/reorder";
 import { cn } from "@/lib/utils";
 import { categoriesQuery } from "@/queries/category.queries";
 import type { CategoryDirection, ICategory } from "@/types/category.types";
@@ -37,8 +38,9 @@ const linkText = (category: ICategory, t: Translate, locale: "en" | "bn") =>
     : t("No account yet");
 
 // The design's "Starting categories": expense or income, each category with
-// its Bangla name, where its money goes, and a switch that says whether
-// new workspaces still get it. A name opens the editor.
+// a handle to drag it into place, its Bangla name, where its money goes,
+// and a switch that says whether new workspaces still get it. A name opens
+// the editor.
 const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
   const categories = useQuery(categoriesQuery()).data?.data ?? [];
   const [direction, setDirection] = useState<CategoryDirection>("EXPENSE");
@@ -52,8 +54,31 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
     refreshRoute: false,
   });
 
-  const shown = categories.filter((item) => item.type === direction).sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name));
+  const sorted = categories.filter((item) => item.type === direction).sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name));
   const total = (type: CategoryDirection) => categories.filter((item) => item.type === type).length;
+
+  // Dragging a row onto another moves it there at once; the new places are
+  // saved, and the list settles on what comes back.
+  const [shown, setShown] = useOptimistic(sorted);
+  const [, startTransition] = useTransition();
+  const [dragged, setDragged] = useState<string | null>(null);
+  const { run: saveOrder } = useActionMutation({
+    action: reorderCategoriesAction,
+    successMessage: "New order saved",
+    invalidateKeys: [queryKeys.categories.all],
+    refreshRoute: false,
+  });
+  const drop = (targetId: string) => {
+    if (!dragged) return;
+    const next = moveItem(sorted, dragged, targetId);
+    setDragged(null);
+    const orders = changedOrder(next);
+    if (orders.length === 0) return;
+    startTransition(async () => {
+      setShown(next);
+      await saveOrder(orders);
+    });
+  };
 
   return (
     <Card padding="none" className="flex flex-col overflow-hidden">
@@ -67,6 +92,7 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
             direction={direction}
             trigger={
               <Button variant="outline" size="sm" className="h-8.5 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-cream">
+                <Plus aria-hidden="true" />
                 <T>Add</T>
               </Button>
             }
@@ -88,10 +114,16 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
         <p className="border-t border-surface-sunken px-5 py-4 text-small text-ink-muted">{translate(direction === "EXPENSE" ? "No expense categories yet." : "No income categories yet.")}</p>
       )}
       {shown.map((item) => (
-        <div key={item.id} className="flex items-center gap-3 border-t border-surface-sunken px-5 py-2 text-body">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-surface-sunken text-ink-2">
-            <IconPreview name={item.icon} />
-          </span>
+        <div
+          key={item.id}
+          draggable={canManage}
+          onDragStart={() => setDragged(item.id)}
+          onDragEnd={() => setDragged(null)}
+          onDragOver={canManage ? (event) => event.preventDefault() : undefined}
+          onDrop={canManage ? () => drop(item.id) : undefined}
+          className={cn("flex min-h-14 items-center gap-3 border-t border-surface-sunken px-5 py-2 text-body", dragged === item.id && "opacity-50")}
+        >
+          {canManage && <GripVertical className="size-4 shrink-0 cursor-grab text-ink-faint" aria-hidden="true" />}
           <button
             type="button"
             onClick={canManage ? () => openDialog("edit", item) : undefined}

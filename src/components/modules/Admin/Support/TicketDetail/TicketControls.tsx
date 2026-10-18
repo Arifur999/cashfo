@@ -7,7 +7,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { asStatus } from "@/lib/i18n/message";
 import { TICKET_STATUS_LABEL } from "@/lib/tickets";
 import { TICKET_STATUSES, type IAdminOption, type TicketStatus } from "@/types/ticket.types";
-import { TICKET_PRIORITY_OPTIONS } from "../ticketOptions";
+import { TICKET_CATEGORY_OPTIONS, TICKET_PRIORITY_OPTIONS } from "../ticketOptions";
 import type { TicketControlsState } from "./useTicketControls";
 
 // Radix Select reserves "" for "no value", so unassigned needs a token.
@@ -35,9 +35,10 @@ interface TicketControlsProps {
   admins: IAdminOption[];
 }
 
-// The design's settings card beside the thread: status, priority, who has it.
+// The design's settings card beside the thread: status, priority, type and
+// who has it.
 const TicketControls = ({ controls, admins }: TicketControlsProps) => {
-  const { ticket, isPending, setStatus, setPriority, setAssignee } = controls;
+  const { ticket, isPending, setStatus, setPriority, setCategory, setAssignee } = controls;
   const [closingStatus, setClosingStatus] = useState<TicketStatus | null>(null);
   const { translate } = useLocale();
   const closingCopy = closingStatus ? CLOSING_STATUSES[closingStatus] : undefined;
@@ -65,6 +66,7 @@ const TicketControls = ({ controls, admins }: TicketControlsProps) => {
     <section aria-label={translate("Ticket settings")} className="flex flex-col gap-3 rounded-lg border border-line bg-surface px-5 py-4 shadow-card">
       <SelectControl label="Status" value={ticket.status} options={STATUS_OPTIONS} onValueChange={changeStatus} disabled={isPending} className={SELECT} />
       <SelectControl label="Priority" value={ticket.priority} options={TICKET_PRIORITY_OPTIONS} onValueChange={setPriority} disabled={isPending} className={SELECT} />
+      <SelectControl label="Type" value={ticket.category} options={TICKET_CATEGORY_OPTIONS} onValueChange={setCategory} disabled={isPending} className={SELECT} />
       <SelectControl
         label="Assigned to"
         value={ticket.assignedToAdminId ?? UNASSIGNED}

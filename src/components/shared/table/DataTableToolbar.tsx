@@ -27,7 +27,8 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
   const endConfigs = configs.filter((config) => config.align === "end");
   const startConfigs = configs.filter((config) => config.align !== "end");
   const tabConfigs = startConfigs.filter((config) => config.type === "tabs");
-  const chipConfigs = startConfigs.filter((config) => config.type !== "tabs");
+  const sortConfigs = startConfigs.filter((config) => config.type === "sort");
+  const chipConfigs = startConfigs.filter((config) => config.type !== "tabs" && config.type !== "sort");
   // Two rows (Users): the tabs and the search above, the filter chips under
   // them. Otherwise everything shares one row and wraps when it must.
   const splitRows = rows === 2 && chipConfigs.length > 0;
@@ -51,6 +52,7 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
         {!splitRows && draw(chipConfigs)}
         {!splitRows && resetButton}
         <span className="flex-1" />
+        {!splitRows && draw(sortConfigs)}
         {draw(endConfigs)}
         {search && (
           <DataTableSearch
@@ -70,6 +72,8 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {draw(chipConfigs)}
           {resetButton}
+          <span className="flex-1" />
+          {draw(sortConfigs)}
         </div>
       )}
     </div>

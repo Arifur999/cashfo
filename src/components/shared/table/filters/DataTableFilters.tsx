@@ -4,6 +4,7 @@ import type { Table } from "@tanstack/react-table";
 import type { DataTableFilterConfig, DataTableFiltersConfig, DataTableFilterValue, DateRangeValue } from "../dataTable.types";
 import DataTableDateRangeFilter from "./DataTableDateRangeFilter";
 import DataTableFacetedFilter from "./DataTableFacetedFilter";
+import DataTableSortMenu from "./DataTableSortMenu";
 import DataTableTabsFilter from "./DataTableTabsFilter";
 import DataTableTextFilter from "./DataTableTextFilter";
 import DataTableToggleFilter from "./DataTableToggleFilter";
@@ -74,6 +75,19 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
           );
         }
 
+        if (config.type === "sort") {
+          return (
+            <DataTableSortMenu
+              key={config.id}
+              label={config.label}
+              options={config.options}
+              value={toSelection(getValue(config))[0]}
+              defaultValue={config.defaultValue}
+              onChange={(value) => setSingle(config, value)}
+            />
+          );
+        }
+
         if (config.type === "toggle") {
           return <DataTableToggleFilter key={config.id} label={config.label} value={toSelection(getValue(config))[0]} onChange={(value) => setSingle(config, value)} />;
         }
@@ -94,6 +108,10 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
         }
 
         const multiple = config.type === "multi-select";
+        // A single choice with a default shows it while the URL is empty,
+        // and choosing it again empties the URL.
+        const defaultValue = config.type === "single-select" ? config.defaultValue : undefined;
+        const selected = toSelection(getValue(config));
         return (
           <DataTableFacetedFilter
             key={config.id}
@@ -101,11 +119,12 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
             options={config.options}
             emptyLabel={config.allLabel}
             multiple={multiple}
-            selected={toSelection(getValue(config))}
+            selected={selected.length === 0 && defaultValue ? [defaultValue] : selected}
+            defaultValue={defaultValue}
             facets={isServerManaged ? undefined : table.getColumn(config.id)?.getFacetedUniqueValues()}
             onChange={(values) => {
               if (!multiple) {
-                setSingle(config, values[0]);
+                setSingle(config, values[0] === defaultValue ? undefined : values[0]);
                 return;
               }
               setValue(config, values.length > 0 ? values : undefined);

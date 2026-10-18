@@ -16,8 +16,9 @@ export interface DataTableTabOption {
 }
 
 export type DataTableFilterConfig = (
-  // allLabel is what the chip says while nothing is picked ("Admin: Anyone").
-  | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[]; allLabel?: string }
+  // allLabel is what the chip says while nothing is picked ("Admin: Anyone");
+  // a defaultValue is picked while the URL names nothing ("When: Today").
+  | { id: string; type: "single-select"; label: string; options: DataTableFilterOption[]; allLabel?: string; defaultValue?: string }
   | { id: string; type: "multi-select"; label: string; options: DataTableFilterOption[]; allLabel?: string }
   // The design's status tabs: one row of exclusive choices, with counts, at
   // the front of the toolbar. The first tab (allLabel) clears the filter.
@@ -32,6 +33,9 @@ export type DataTableFilterConfig = (
   | { id: string; type: "text"; label: string; width?: "sm" | "md" }
   // A switch with its label ("Sensitive only"); on sends "true".
   | { id: string; type: "toggle"; label: string }
+  // The list's order, as plain words at the end of the filter row ("Sort:
+  // Last active, newest first").
+  | { id: string; type: "sort"; label: string; options: DataTableFilterOption[]; defaultValue?: string }
 ) & {
   // "end" puts the filter at the far right of the toolbar, beside the table
   // tools ("When: Last 24 hours", "Sensitive only").

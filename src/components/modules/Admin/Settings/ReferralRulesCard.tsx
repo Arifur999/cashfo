@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { ArrowRight, Gift } from "lucide-react";
+import { ChevronRight, Gift } from "lucide-react";
 import { useState } from "react";
 import { updateSettingsAction } from "@/app/(dashboardLayout)/admin/settings/_action";
 import FormDialog from "@/components/shared/dialog/FormDialog";
@@ -69,7 +69,7 @@ const ReferralRulesCard = ({ amount, canManage }: { amount: number; canManage: b
             size="sm"
             trigger={
               <button type="button" className={SIDE_CARD_LINK}>
-                <T>Change the reward</T> <ArrowRight aria-hidden="true" className="size-3.5" />
+                <T>Change the reward</T> <ChevronRight aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
               </button>
             }
           >

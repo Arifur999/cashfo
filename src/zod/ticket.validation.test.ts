@@ -49,6 +49,10 @@ describe("updateTicketServerZodSchema", () => {
     expect(updateTicketServerZodSchema.safeParse({ status: "RESOLVED" }).success).toBe(true);
   });
 
+  it("accepts a change of type", () => {
+    expect(updateTicketServerZodSchema.safeParse({ category: "BILLING" }).success).toBe(true);
+  });
+
   it("rejects an empty update", () => {
     expect(updateTicketServerZodSchema.safeParse({}).success).toBe(false);
   });

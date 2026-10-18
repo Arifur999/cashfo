@@ -1,10 +1,12 @@
 "use client";
 
+import { Download, RefreshCcw } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { retryPaymentAction } from "@/app/(dashboardLayout)/admin/payments/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import FormDialog from "@/components/shared/dialog/FormDialog";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatCurrency } from "@/lib/currency";
 import { shortPaymentId } from "@/lib/payments";
@@ -15,10 +17,13 @@ import RefundForm from "./RefundForm";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
-const BUTTON = "h-9.5 rounded-md border-line-strong bg-surface text-body font-semibold text-ink hover:bg-cream";
+// The design's 38px secondary buttons; Refund in red.
+const BUTTON = "h-9.5";
+const DANGER = "border-chart-expense text-expense hover:bg-expense-soft";
 
-// Retry only makes sense for a failed payment, refund only for a paid one.
-const PaymentDetailActions = ({ payment }: { payment: IPaymentDetail }) => {
+// The invoice for anyone who can see the payment; retry (a failed payment)
+// and refund (a paid one) for those who can change payments.
+const PaymentDetailActions = ({ payment, canManage }: { payment: IPaymentDetail; canManage: boolean }) => {
   const [dialog, setDialog] = useState<"retry" | "refund" | null>(null);
   const close = () => setDialog(null);
   const { translate } = useLocale();
@@ -31,13 +36,22 @@ const PaymentDetailActions = ({ payment }: { payment: IPaymentDetail }) => {
 
   return (
     <>
-      {payment.status === "FAILED" && (
-        <Button variant="outline" className={BUTTON} onClick={() => setDialog("retry")}>
+      {payment.invoice && (
+        <Button asChild variant="secondary" className={BUTTON}>
+          <Link href={`/admin/invoices/${payment.invoice.id}`}>
+            <Download className="size-3.75 text-ink-2" aria-hidden="true" />
+            <T>Invoice</T>
+          </Link>
+        </Button>
+      )}
+      {canManage && payment.status === "FAILED" && (
+        <Button variant="secondary" className={BUTTON} onClick={() => setDialog("retry")}>
           <T>Retry</T>
         </Button>
       )}
-      {payment.status === "SUCCESS" && (
-        <Button variant="outline" className={BUTTON} onClick={() => setDialog("refund")}>
+      {canManage && payment.status === "SUCCESS" && (
+        <Button variant="secondary" className={`${BUTTON} ${DANGER}`} onClick={() => setDialog("refund")}>
+          <RefreshCcw className="size-3.75" aria-hidden="true" />
           <T>Refund</T>
         </Button>
       )}
