@@ -4,17 +4,27 @@ import Button from "@/components/smartly/Button";
 import Logo from "@/components/smartly/Logo";
 import { LOGIN_ROUTE, REGISTER_ROUTE } from "@/lib/authUtils";
 import { BRAND_NAME } from "@/lib/brand";
+import { getLegalDocument } from "@/lib/customer/platform";
 import { getTranslator } from "@/lib/i18n/locale";
 import { getAccessToken } from "@/lib/tokenUtils";
 import LegalLinks from "./LegalLinks";
 import LegalNav from "./LegalNav";
+import { LEGAL_PAGES, type LegalVersions } from "./legalPages";
+
+// The policies' versions for the side menu ("v3"). The open page's own read
+// of its document is shared (getLegalDocument is cached per request).
+async function policyVersions(): Promise<LegalVersions> {
+  const policies = LEGAL_PAGES.filter((entry) => entry.versioned);
+  const docs = await Promise.all(policies.map((entry) => getLegalDocument(entry.page)));
+  return Object.fromEntries(policies.flatMap((entry, index) => (docs[index] ? [[entry.page, docs[index].version]] : [])));
+}
 
 // The frame of the legal pages, which anyone can open: the logo, the
 // language pill and the way in (or back into the app), the side menu, the
 // page, its "On this page" list on a wide screen, and the legal links at
 // the foot.
 const PublicShell = async ({ children }: { children: React.ReactNode }) => {
-  const [{ t }, signedIn] = await Promise.all([getTranslator(), getAccessToken().then(Boolean)]);
+  const [{ t }, signedIn, versions] = await Promise.all([getTranslator(), getAccessToken().then(Boolean), policyVersions()]);
 
   return (
     <div className="flex min-h-screen flex-col bg-surface">
@@ -44,7 +54,7 @@ const PublicShell = async ({ children }: { children: React.ReactNode }) => {
         tabIndex={-1}
         className="grid flex-1 content-start justify-center gap-8 px-5 py-8 outline-none md:px-12 md:py-12 lg:grid-cols-[240px_minmax(0,680px)] lg:gap-14 xl:grid-cols-[240px_minmax(0,680px)_200px]"
       >
-        <LegalNav />
+        <LegalNav versions={versions} />
         {children}
       </main>
       <footer className="border-t border-line px-5 py-6 md:px-12">
