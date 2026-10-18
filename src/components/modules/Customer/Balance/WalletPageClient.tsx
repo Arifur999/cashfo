@@ -81,9 +81,17 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
   }
 
   return (
-    <PageFrame className="gap-6">
+    <PageFrame className="md:gap-6">
       <PageHeader
-        eyebrow={`${t("Money")} · ${t("Wallets")}`}
+        eyebrow={
+          <>
+            {t("Money")}
+            {/* The phone board points the way; the desktop one separates. */}
+            <span className="md:hidden"> › </span>
+            <span className="hidden md:inline"> · </span>
+            {t("Wallets")}
+          </>
+        }
         title={
           <>
             <span className="md:hidden">{t("My wallets")}</span>
@@ -112,8 +120,8 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
       />
 
       {/* Phone: the total, the share bar and the add button in one card. */}
-      <Card padding="sm" className="flex flex-col gap-3 md:hidden">
-        <span className="text-small text-ink-muted">
+      <Card padding="sm" elevated={false} className="flex flex-col gap-3 md:hidden">
+        <span className="text-small leading-[normal] text-ink-muted">
           {t("Available across")} {active.length} {t("wallets")}
         </span>
         <AmountText value={totalBalance} currency={currency} size="display" />
