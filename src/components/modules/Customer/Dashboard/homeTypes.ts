@@ -53,7 +53,7 @@ export interface HomeData {
   readingCount: number;
   skills: Pick<SkillsOverview, "streak"> & { practisedToday: boolean } | null;
 
-  vault: { hasVaultPassword: boolean } | null;
+  vault: { hasVaultPassword: boolean; entryCount?: number } | null;
 
   topIncome: { name: string; percent: number } | null;
   topExpense: { name: string; percent: number; amount: number; delta: number } | null;
