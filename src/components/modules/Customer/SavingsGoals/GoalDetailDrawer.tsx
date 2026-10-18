@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Minus, Pause, Pencil, Play, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeftRight, Minus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
