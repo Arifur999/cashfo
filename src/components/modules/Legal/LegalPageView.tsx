@@ -4,17 +4,20 @@ import { formatDate } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
 import { translate } from "@/lib/i18n/translate";
 import { legalBlocks } from "@/lib/legalText";
+import { LEGAL_PAGES } from "./legalPages";
 
 // One legal page as the admin last saved it, in the reader's language when
 // a Bangla version exists: its "## " sections as headings, and beside them,
 // on a wide screen, the "On this page" list that jumps to each. Plain text
 // with its line breaks kept -- nothing is rendered as HTML.
-export default async function LegalPageView({ page, title }: { page: LegalPage; title: string }) {
+export default async function LegalPageView({ page }: { page: LegalPage }) {
   const [doc, locale] = await Promise.all([getLegalDocument(page), getLocale()]);
   const t = (key: string) => translate(locale, key);
   const content = doc ? (locale === "bn" && doc.contentBn ? doc.contentBn : doc.contentEn) : null;
   const blocks = content ? legalBlocks(content) : [];
   const headings = blocks.filter((block) => block.kind === "heading");
+  // Named as its side-menu entry names it.
+  const title = LEGAL_PAGES.find((entry) => entry.page === page)?.label ?? "";
 
   return (
     <>
