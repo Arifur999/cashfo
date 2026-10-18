@@ -89,7 +89,7 @@ export function NewChallengeDialog({ open, onClose, presetDays }: NewChallengeDi
               <Input id="ch-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={60} placeholder={t("No Sugar")} />
             </Field>
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-body font-medium text-ink">{t("How many days")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("How many days")}</legend>
               <div role="radiogroup" className="grid grid-cols-5 gap-2">
                 {CHALLENGE_PRESETS.map((p) => (
                   <button key={p.days} type="button" role="radio" aria-checked={days === p.days} onClick={() => setDays(p.days)} className={cn("flex h-11 items-center justify-center rounded-md border text-body font-bold transition-colors", days === p.days ? "border-[1.5px] border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>

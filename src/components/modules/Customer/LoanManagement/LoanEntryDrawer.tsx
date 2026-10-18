@@ -153,7 +153,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             </div>
 
             <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("What happened?")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("What happened?")}</legend>
               <div role="radiogroup" className="grid grid-cols-2 gap-2">
                 {LOAN_ENTRY_KINDS.map((option) => {
                   const on = option === kind;

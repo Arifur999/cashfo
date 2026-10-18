@@ -121,7 +121,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit habit") : t("New habit")}</SheetTitle>
-            <span className="text-small text-ink-muted">{t("It shows up in your daily list on the days you plan.")}</span>
+            <span className="text-small leading-[normal] text-ink-muted">{t("It shows up in your daily list on the days you plan.")}</span>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -136,7 +136,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
 
             <div className="grid grid-cols-[minmax(0,1fr)_150px] gap-5">
               <fieldset className="flex min-w-0 flex-col gap-2">
-                <legend className="mb-2 text-body font-medium text-ink">{t("Icon")}</legend>
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Icon")}</legend>
                 <div role="radiogroup" aria-label={t("Icon")} className="grid grid-cols-[repeat(6,36px)] gap-2">
                   {HABIT_ICONS.map((option) => {
                     const on = option.key === icon;
@@ -149,7 +149,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
                 </div>
               </fieldset>
               <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body font-medium text-ink">{t("Colour")}</legend>
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Colour")}</legend>
                 <div role="radiogroup" aria-label={t("Colour")} className="grid grid-cols-[repeat(4,28px)] gap-x-3 gap-y-2">
                   {HABIT_COLORS.map((option) => {
                     const on = option.key === color;
@@ -160,7 +160,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
             </div>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-body font-medium text-ink">{t("How often")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("How often")}</legend>
               {OFTEN.map((option) => {
                 const on = frequency === option.value;
                 return (

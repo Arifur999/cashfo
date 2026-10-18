@@ -98,7 +98,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
           <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
           <span className="flex min-w-0 flex-1 flex-col gap-px">
             <SheetTitle className="text-h3 text-ink">{t("Update value")}</SheetTitle>
-            <span className="truncate text-small text-ink-muted">
+            <span className="truncate text-small leading-[normal] text-ink-muted">
               {asset.name} · {asset.category}
             </span>
           </span>

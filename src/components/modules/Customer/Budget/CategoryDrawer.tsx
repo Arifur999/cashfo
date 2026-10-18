@@ -140,7 +140,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{title}</SheetTitle>
-            <p className="text-small text-ink-muted">{t(isAsset ? "Group what you own." : isGroup ? "What an expense can be filed under." : isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
+            <p className="text-small leading-[normal] text-ink-muted">{t(isAsset ? "Group what you own." : isGroup ? "What an expense can be filed under." : isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -166,7 +166,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             </Field>
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Icon")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Icon")}</legend>
               <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t("Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} />
               <div className="grid max-h-56 grid-cols-8 gap-2 overflow-y-auto">
                 {icons.length === 0 ? (
@@ -198,7 +198,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             </fieldset>
 
             <fieldset className="m-0 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Colour")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Colour")}</legend>
               <div className="flex flex-wrap gap-1 pt-1 pl-1">
                 {BUDGET_CATEGORY_COLORS.map((key) => {
                   const on = color === key;

@@ -96,7 +96,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
           {member && <PersonAvatar name={member.name} src={member.photoUrl} size={40} coloured />}
           <div className="flex min-w-0 flex-1 flex-col gap-px">
             <SheetTitle className="truncate text-h3 text-ink">{member?.name}</SheetTitle>
-            <span className="text-small text-ink-muted">
+            <span className="text-small leading-[normal] text-ink-muted">
               {data.name} · {monthLabel} {t("statement")}
             </span>
           </div>

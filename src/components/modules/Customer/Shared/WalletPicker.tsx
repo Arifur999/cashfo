@@ -78,7 +78,7 @@ export function WalletPicker({ label, size = "xl", variant = "money", wallets, s
 
   return (
     <div className="flex flex-col gap-2">
-      <label id={`${id}-label`} className={size === "compact" ? "text-small font-semibold text-ink-2" : "text-body font-medium text-ink"}>
+      <label id={`${id}-label`} className={cn(size === "compact" ? "text-small font-semibold text-ink-2" : "text-body font-medium text-ink", "leading-[normal]")}>
         {label}
       </label>
       <Popover open={open} onOpenChange={setOpen}>

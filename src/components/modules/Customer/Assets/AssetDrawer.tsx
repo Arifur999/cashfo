@@ -120,7 +120,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{t("Add an asset")}</SheetTitle>
-            <p className="text-small text-ink-muted">{t("Something you're buying now, or something you already own.")}</p>
+            <p className="text-small leading-[normal] text-ink-muted">{t("Something you're buying now, or something you already own.")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -146,7 +146,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
             </Field>
 
             <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Category")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Category")}</legend>
               {categories.length === 0 ? (
                 <p className="text-caption text-ink-muted">{t("No category yet -- add one under Categories first.")}</p>
               ) : (

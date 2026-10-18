@@ -15,11 +15,12 @@ interface FieldProps {
 }
 
 // A label, its control, and the line under it. The error says how to fix
-// the value, in the expense red, with an icon.
+// the value, in the expense red, with an icon. The label sits on a normal
+// line, as the boards set it, whatever text style it is given.
 const Field = ({ htmlFor, label, aside, hint, error, className, children }: FieldProps) => (
   <div className={cn("flex min-w-0 flex-col gap-2", className)}>
     <div className="flex items-center justify-between gap-3">
-      <label htmlFor={htmlFor} className="text-small font-semibold text-ink-2">
+      <label htmlFor={htmlFor} className="text-small leading-[normal] font-semibold text-ink-2 [&>*]:leading-[normal]">
         {label}
       </label>
       {aside}

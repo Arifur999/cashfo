@@ -106,7 +106,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit goal") : t("New savings goal")}</SheetTitle>
-            <p className="text-small text-ink-muted">{t("What are you saving for, and by when?")}</p>
+            <p className="text-small leading-[normal] text-ink-muted">{t("What are you saving for, and by when?")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -156,7 +156,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
             )}
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">
                 {t("Reminder")} <span className="font-normal text-ink-muted">({t("optional")})</span>
               </legend>
               <div className="grid gap-3 md:grid-cols-[170px_minmax(0,1fr)]">

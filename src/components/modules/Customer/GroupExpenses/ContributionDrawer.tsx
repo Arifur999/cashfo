@@ -140,7 +140,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
             </Field>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Type")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Type")}</legend>
               <div role="radiogroup" className="grid grid-cols-2 gap-2">
                 {kinds.map((option) => {
                   const on = kind === option.value;
