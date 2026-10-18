@@ -142,7 +142,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
           </div>
           {!loading && expenseAccounts.length === 0 && <p className="text-caption text-expense">{t("No expense account exists in this workspace yet -- add one in Chart of Accounts first.")}</p>}
 
-          <label className="flex cursor-pointer items-center gap-3 rounded-md border border-[#F2C9C0] bg-expense-soft px-4 py-3 text-small text-expense dark:border-expense/40">
+          <label className="flex cursor-pointer items-center gap-3 rounded-md border border-expense-line bg-expense-soft px-4 py-3 text-small text-expense">
             <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="size-4.5 shrink-0 accent-expense" />
             {t("I understand")} {goal?.name} {t("will be closed for good.")}
           </label>

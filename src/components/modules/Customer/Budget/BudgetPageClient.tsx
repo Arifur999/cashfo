@@ -302,7 +302,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
           const visual = categoryTone(category.color);
           const status = left > 0 ? `${formatCurrency(left, currency)} ${t("left")}` : left === 0 ? t("Limit reached") : `${t("Over by")} ${formatCurrency(-left, currency)}`;
           return (
-            <Card key={category.id} className={cn("flex flex-col gap-3", tone === "expense" && "border-[#F2C9C0] dark:border-expense/40")}>
+            <Card key={category.id} className={cn("flex flex-col gap-3", tone === "expense" && "border-expense-line")}>
               <div className="flex items-center gap-3">
                 <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", visual.bg, visual.fg)}>{createElement(categoryIconFor(category), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">

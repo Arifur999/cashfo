@@ -44,6 +44,8 @@
   --expense: #b42a2a;
   --expense-fill: #c63a32;
   --expense-soft: #fbeae6;
+  /* The border of an over-budget card or a red outline button. */
+  --expense-line: #f2c9c0;
   --warning: #8f5600;
   --warning-fill: #e8a317;
   --warning-soft: #fbf0d9;
@@ -153,6 +155,7 @@
   --expense: #f08080;
   --expense-fill: #e5484d;
   --expense-soft: #3a1715;
+  --expense-line: rgba(240, 128, 128, 0.4);
   --warning: #f2b84b;
   --warning-fill: #f2b84b;
   --warning-soft: #33240a;
@@ -317,6 +320,7 @@
   --color-expense: var(--expense);
   --color-expense-fill: var(--expense-fill);
   --color-expense-soft: var(--expense-soft);
+  --color-expense-line: var(--expense-line);
   --color-warning: var(--warning);
   --color-warning-fill: var(--warning-fill);
   --color-warning-soft: var(--warning-soft);
