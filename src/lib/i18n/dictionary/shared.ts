@@ -63,6 +63,7 @@ export const sharedDictionary: Record<string, string> = {
   "Go to Home": "হোমে যান",
   "Saved transactions stay saved. Anything you were typing may need to be entered again.": "সংরক্ষিত লেনদেন সংরক্ষিতই থাকে। যা লিখছিলেন তা আবার লিখতে হতে পারে।",
   "We can't find that page": "পেজটি খুঁজে পাচ্ছি না",
+  "Page not found": "পেজ পাওয়া যায়নি",
   "It may have moved, or the link was typed wrong.": "এটি সরে গেছে, অথবা লিংকটি ভুল লেখা হয়েছে।",
   "It may have moved, or the link was typed wrong. If it was a transaction or a goal, it may have been deleted from another device.":
     "এটি সরে গেছে, অথবা লিংকটি ভুল লেখা হয়েছে। লেনদেন বা লক্ষ্য হলে অন্য ডিভাইস থেকে মুছে ফেলা হয়ে থাকতে পারে।",

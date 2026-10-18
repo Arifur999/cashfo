@@ -46,7 +46,7 @@ export function AppTopbar() {
   // A record page adds its record's name as the last part, and the page's
   // own name joins the trail before it.
   const record = extras?.record;
-  const trail = crumb ? (record ? [...crumb.crumbs, crumb.heading] : crumb.crumbs) : [];
+  const trail = crumb && !extras?.title ? (record ? [...crumb.crumbs, crumb.heading] : crumb.crumbs) : [];
   const titled = TITLED_ON_PHONE.has(pathname);
 
   const tasksLabel = openCount > 0 ? `${t("Today’s tasks")}, ${openCount} ${t("left")}` : t("Today’s tasks");
@@ -74,7 +74,7 @@ export function AppTopbar() {
           </span>
         ))}
         <span aria-current="page" className="truncate text-title text-ink">
-          {record ?? extras?.heading ?? (crumb ? t(crumb.heading) : "")}
+          {extras?.title ?? record ?? extras?.heading ?? (crumb ? t(crumb.heading) : "")}
         </span>
       </nav>
       <span className={cn("flex-1 lg:hidden", titled && "max-md:hidden")} />
