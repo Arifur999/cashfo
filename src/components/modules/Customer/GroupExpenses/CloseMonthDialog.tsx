@@ -36,7 +36,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, s
   const pending = whoPaysWhom(settlement.members).length;
 
   const facts = [
-    { label: t("Period"), value: `${range.from.slice(8)} – ${range.to.slice(8)} ${monthName(range.key, locale, "short")}` },
+    { label: t("Period"), value: `${Number(range.from.slice(8))} – ${Number(range.to.slice(8))} ${monthName(range.key, locale, "short")}` },
     { label: t("Total expense"), value: formatCurrency(settlement.totalExpense, currency) },
     { label: t("Members"), value: String(settlement.memberCount) },
     { label: t("Share each"), value: formatCurrency(settlement.perMemberShare, currency) },
