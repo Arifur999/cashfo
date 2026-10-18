@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { BudgetCategorySummary, BudgetOverview } from "@/lib/customer/api";
 import { deleteBudgetCategoryAction, updateBudgetTargetAction } from "@/lib/customer/budgetActions";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { budgetTone } from "@/lib/budgetTone";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency, currencySymbol } from "@/lib/customer/currency";
@@ -225,7 +225,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
           const row = (
             <>
               <span className="flex items-center gap-3">
-                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.25", visual.bg, visual.fg)}>{category.icon && createElement(budgetCategoryIcon(category.icon), { "aria-hidden": true })}</span>
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.25", visual.bg, visual.fg)}>{createElement(categoryIconFor(category), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <b className="truncate text-body-lg font-semibold text-ink">{category.name}</b>
                   <span className="text-caption text-ink-muted tabular-nums">
@@ -298,7 +298,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
           return (
             <Card key={category.id} className={cn("flex flex-col gap-3", tone === "expense" && "border-[#F2C9C0] dark:border-expense/40")}>
               <div className="flex items-center gap-3">
-                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", visual.bg, visual.fg)}>{category.icon && createElement(budgetCategoryIcon(category.icon), { "aria-hidden": true })}</span>
+                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", visual.bg, visual.fg)}>{createElement(categoryIconFor(category), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="truncate text-title text-ink">{category.name}</span>
                   <span className="text-caption font-normal text-ink-muted tabular-nums">

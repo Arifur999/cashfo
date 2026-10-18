@@ -12,7 +12,7 @@ import Chip from "@/components/smartly/Chip";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Account, Transaction } from "@/lib/customer/api";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatSignedCurrency } from "@/lib/customer/currency";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
@@ -208,7 +208,7 @@ function TotalCell({ label, phoneLabel = label, children, divided = false, class
 
 function CategoryTile({ row, size = 36 }: { row: TransactionRow; size?: 36 | 40 }) {
   const tone = row.transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
-  const icon = row.category?.icon ? budgetCategoryIcon(row.category.icon) : Receipt;
+  const icon = row.category ? categoryIconFor(row.category) : Receipt;
   return (
     <span className={cn("flex shrink-0 items-center justify-center", size === 40 ? "size-10 rounded-md [&_svg]:size-4.5" : "size-9 rounded-full [&_svg]:size-4.25", tone.bg, tone.fg)}>
       {createElement(icon, { "aria-hidden": true })}

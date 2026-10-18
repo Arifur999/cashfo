@@ -16,7 +16,7 @@ import ProgressBar from "@/components/smartly/ProgressBar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { BudgetCategorySummary, BudgetOverview } from "@/lib/customer/api";
 import { deleteBudgetCategoryAction } from "@/lib/customer/budgetActions";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -152,21 +152,22 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
               const visual = categoryTone(source.color);
               return (
                 <div key={source.id} className="grid min-h-18 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-3 md:grid-cols-[minmax(0,1.4fr)_140px_minmax(0,1.4fr)_110px_48px] md:gap-4 md:px-6 md:py-0">
-                  <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-5", visual.bg, visual.fg)}>{source.icon && createElement(budgetCategoryIcon(source.icon), { "aria-hidden": true })}</span>
+                  {/* At md the tile and the name share the first column, the name 52px in. */}
+                  <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md md:col-start-1 md:row-start-1 [&_svg]:size-5", visual.bg, visual.fg)}>{createElement(categoryIconFor(source), { "aria-hidden": true })}</span>
                   <span className="flex min-w-0 flex-col md:col-start-1 md:row-start-1 md:ml-13">
                     <b className="truncate text-body font-semibold text-ink">{source.name}</b>
                     <span className="text-small text-ink-muted md:hidden">
                       {share}% {t("of the month")}
                     </span>
                   </span>
-                  <AmountText value={amount} currency={currency} size="sm" tone={amount > 0 ? "income" : "inherit"} signed={amount > 0} className={cn("text-right font-bold", amount === 0 && "text-ink-muted")} />
-                  <span className="col-span-3 hidden flex-col gap-2 md:flex">
+                  <AmountText value={amount} currency={currency} size="sm" tone={amount > 0 ? "income" : "inherit"} signed={amount > 0} className={cn("text-right font-bold md:col-start-2 md:row-start-1", amount === 0 && "text-ink-muted")} />
+                  <span className="hidden flex-col gap-2 md:col-start-3 md:row-start-1 md:flex">
                     <ProgressBar value={share} tone="income" label={source.name} className="[&>span]:bg-current" />
                     <span className="text-caption font-normal text-ink-muted">
                       {share}% {t("of the month")}
                     </span>
                   </span>
-                  <span className="hidden text-right text-body text-ink-2 tabular-nums md:block">{thisYear[source.name] ? formatCurrency(thisYear[source.name], currency) : "—"}</span>
+                  <span className="hidden text-right text-body text-ink-2 tabular-nums md:col-start-4 md:row-start-1 md:block">{thisYear[source.name] ? formatCurrency(thisYear[source.name], currency) : "—"}</span>
                   {canManage ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger aria-label={`${t("More for")} ${source.name}`} className="col-start-3 row-start-1 hidden size-10 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream md:col-start-5 md:flex">

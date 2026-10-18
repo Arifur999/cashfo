@@ -8,7 +8,7 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import type { Transaction } from "@/lib/customer/api";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
@@ -47,7 +47,7 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
           const row = describeTransaction(transaction, categoriesById);
           const isTransfer = transaction.transactionType === "TRANSFER";
           const tone = isTransfer ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
-          const icon = isTransfer ? ArrowLeftRight : row.category?.icon ? budgetCategoryIcon(row.category.icon) : Receipt;
+          const icon = isTransfer ? ArrowLeftRight : row.category ? categoryIconFor(row.category) : Receipt;
           const when = relativeDayKey(toDateInputValue(transaction.transactionDate), today);
           const meta = [row.category?.name, row.wallet, when ? t(when) : formatDate(transaction.transactionDate, "EEE, d MMM")].filter(Boolean).join(" · ");
           return (
