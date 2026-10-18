@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, Gift, Lock, LogOut, Settings, Store, User, Users } from "lucide-react";
+import { Check, ChevronDown, CircleHelp, Gift, Lock, LogOut, Settings, Store, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -95,6 +95,12 @@ export function AccountMenu() {
             <Link href="/referrals">
               <Gift />
               {t("Invite & earn")}
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className={ITEM}>
+            <Link href="/settings/help">
+              <CircleHelp />
+              {t("Help & support")}
             </Link>
           </DropdownMenuItem>
           {activeBusiness?.hasPinLock && (
