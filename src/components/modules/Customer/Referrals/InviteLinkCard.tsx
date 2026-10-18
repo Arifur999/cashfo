@@ -70,7 +70,7 @@ export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: In
         </span>
       </div>
       <div className="flex flex-col gap-3 md:hidden">
-        <a href={share.whatsapp} target="_blank" rel="noopener noreferrer" className="flex h-12.5 items-center justify-center gap-2 rounded-lg bg-emerald text-body-lg font-bold text-white">
+        <a href={share.whatsapp} target="_blank" rel="noopener noreferrer" className="flex h-12.5 items-center justify-center gap-2 rounded-lg bg-emerald text-body-lg font-bold text-on-action">
           <MessageCircle className="size-4.5" aria-hidden="true" />
           {t("Share on WhatsApp")}
         </a>
