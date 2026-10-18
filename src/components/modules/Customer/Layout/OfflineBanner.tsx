@@ -35,7 +35,7 @@ export function OfflineBanner() {
 
   if (online) return null;
   return (
-    <Banner tone="warning" icon={<WifiOff />} className="font-medium">
+    <Banner tone="warning" icon={<WifiOff />}>
       {t("You are offline. Showing what was loaded at {time}; changes are paused.", { time: formatDate(loaded.at, "h:mm aaa") })}
     </Banner>
   );
