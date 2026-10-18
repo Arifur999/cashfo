@@ -50,6 +50,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
   const [removing, setRemoving] = useState<VaultEntrySummary | null>(null);
   const [isRemoving, startRemove] = useTransition();
 
+  const empty = entries.length === 0 && !loading;
   const visible = sortEntries(filterEntries(entries, query, category), sort);
   const counts = categoryCounts(entries);
   const picked = entries.find((entry) => entry.id === selectedId) ?? null;
@@ -110,7 +111,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
   );
 
   return (
-    <PageFrame className="gap-4">
+    <PageFrame className={empty ? "gap-6" : "gap-4"}>
       <TopbarExtras
         subtitle={
           <span role="timer" aria-label={`${t("Vault locks in")} ${countdownText(msLeft)}`} className="flex items-center gap-1 text-caption font-normal text-emerald tabular-nums">
@@ -140,15 +141,18 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
               <Lock />
               {t("Lock now")}
             </Button>
-            <Button onClick={() => openAdd()}>
-              <Plus strokeWidth={2.25} />
-              {t("Add login")}
-            </Button>
+            {/* An empty vault adds from its own tiles. */}
+            {!empty && (
+              <Button onClick={() => openAdd()}>
+                <Plus strokeWidth={2.25} />
+                {t("Add login")}
+              </Button>
+            )}
           </>
         }
       />
 
-      {entries.length === 0 && !loading ? (
+      {empty ? (
         <VaultEmpty onPick={openAdd} />
       ) : (
         <>
