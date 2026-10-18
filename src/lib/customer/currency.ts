@@ -38,6 +38,15 @@ export function formatCurrency(amount: number | string, currencyCode: string): s
   return `${rounded < 0 ? "-" : ""}${symbol}\u00A0${groupDigits(Math.abs(rounded), locale)}`;
 }
 
+// "82,000": the figure alone, grouped as its currency is, for a table's
+// month cells where the symbol would only repeat (the Reports board).
+export function formatGrouped(amount: number | string, currencyCode: string): string {
+  const { locale } = CURRENCIES[currencyCode] ?? { locale: "en-US" };
+  const value = Number(amount);
+  const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+  return `${rounded < 0 ? "-" : ""}${groupDigits(Math.abs(rounded), locale)}`;
+}
+
 // "+ ৳ 85,000" for money in, "− ৳ 52,300" for money out, "৳ 0" for
 // nothing: the explicit sign the dashboards and statements show, with a real
 // minus sign and a space, as the design writes it.

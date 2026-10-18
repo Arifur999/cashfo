@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { currencySymbol, formatCompactAmount, formatCurrency, formatSignedCurrency } from "./currency";
+import { currencySymbol, formatCompactAmount, formatCurrency, formatGrouped, formatSignedCurrency } from "./currency";
 
 // The symbol and the digits are joined by a no-break space.
 const NBSP = " ";
@@ -63,5 +63,14 @@ describe("currencySymbol", () => {
   it("is just the symbol, for an amount input's prefix", () => {
     expect(currencySymbol("BDT")).toBe("৳");
     expect(currencySymbol("USD")).toBe("$");
+  });
+});
+
+describe("formatGrouped", () => {
+  it("groups the figure without the symbol", () => {
+    expect(formatGrouped(82000, "BDT")).toBe("82,000");
+    expect(formatGrouped(1250000, "BDT")).toBe("12,50,000");
+    expect(formatGrouped("2699.1", "BDT")).toBe("2,699.10");
+    expect(formatGrouped(-500, "BDT")).toBe("-500");
   });
 });

@@ -11,7 +11,7 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, MonthlyBreakdown } from "@/lib/customer/api";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency, formatGrouped } from "@/lib/customer/currency";
 import { monthName } from "@/lib/customer/insights";
 import { REPORT_PERIOD_LABELS, REPORT_PERIODS, reportCsv, type ReportPeriod, type ReportRow, reportRows, type ReportShow } from "@/lib/customer/reportTable";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -166,7 +166,7 @@ function TableRow({ row, currency, columns, name }: { row: ReportRow; currency: 
       </span>
       {row.amounts.map((amount, i) => (
         <span key={i} role="cell" className="text-right font-normal text-ink-2">
-          {amount === 0 ? "—" : formatCurrency(amount, currency)}
+          {amount === 0 ? "—" : formatGrouped(amount, currency)}
         </span>
       ))}
       <span role="cell" className={cn("text-right font-bold", total)}>
