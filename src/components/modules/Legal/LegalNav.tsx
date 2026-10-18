@@ -4,13 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-
-export const LEGAL_PAGES = [
-  { href: "/terms", label: "Terms of use" },
-  { href: "/privacy", label: "Privacy policy" },
-  { href: "/refund-policy", label: "Refund policy" },
-  { href: "/faq", label: "Common questions" },
-] as const;
+import { LEGAL_PAGES } from "./legalPages";
 
 // The side menu of the public legal pages.
 const LegalNav = () => {
