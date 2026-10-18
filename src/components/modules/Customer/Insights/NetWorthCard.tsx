@@ -42,11 +42,11 @@ export function NetWorthCard({ worth, currency }: NetWorthCardProps) {
   ];
 
   return (
-    <Card padding="none" className="grid items-center gap-1 p-4 md:grid-cols-[300px_minmax(0,1fr)] md:gap-8 md:p-6">
+    <Card padding="none" className="grid items-center gap-1 p-4 max-md:shadow-none md:grid-cols-[300px_minmax(0,1fr)] md:gap-8 md:p-6">
       <div className="flex flex-col gap-1 md:gap-2">
-        <h2 className="text-small text-ink-muted md:text-h3 md:text-ink">{t("Net worth today")}</h2>
-        <AmountText value={worth.total} currency={currency} size="display" className={cn("text-h1 md:text-display", worth.total < 0 && "text-expense")} />
-        <span className="text-caption font-normal text-ink-muted md:text-small">
+        <h2 className="text-small text-ink-muted max-md:leading-[normal] md:text-h3 md:text-ink">{t("Net worth today")}</h2>
+        <AmountText value={worth.total} currency={currency} size="display" className={cn("text-h1 font-extrabold max-md:leading-[normal] md:text-display", worth.total < 0 && "text-expense")} />
+        <span className="text-caption font-normal text-ink-muted max-md:leading-[normal] md:text-small">
           <span className="md:hidden">{t("Wallets, savings, assets and money owed to you, minus what you owe")}</span>
           <span className="hidden md:inline">
             {t("Everything you have and are owed, minus what you owe.")}

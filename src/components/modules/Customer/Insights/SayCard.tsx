@@ -16,13 +16,13 @@ interface SayCardProps {
 // reason under it. Three sit at the top of Insights.
 export function SayCard({ icon, tone, say, why, className }: SayCardProps) {
   return (
-    <Card padding="none" className={cn("flex items-start gap-3 p-4 md:gap-4 md:p-5", className)}>
+    <Card padding="none" className={cn("flex items-start gap-3 p-4 max-md:shadow-none md:gap-4 md:p-5", className)}>
       <IconTile tone={tone} size={40}>
         {icon}
       </IconTile>
       <span className="flex min-w-0 flex-col gap-0.5 md:gap-1">
         <b className="text-body font-bold text-ink md:text-title md:font-semibold">{say}</b>
-        <span className="text-small text-ink-muted">{why}</span>
+        <span className="text-small text-ink-muted max-md:leading-[19px]">{why}</span>
       </span>
     </Card>
   );
