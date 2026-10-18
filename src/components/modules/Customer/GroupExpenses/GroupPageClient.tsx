@@ -205,7 +205,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
         monthKey={data.range.key}
         months={data.months}
         closed={view.closed}
-        setup={view.setup && view.activeMembers.length === 0}
+        setup={view.setup}
         onMonthChange={goToMonth}
         onAddMember={() => setMember({ open: true, editing: null })}
         onAddContribution={() => openContribution()}

@@ -91,7 +91,7 @@ export function GroupHeader({ businessId, name, members, tab, monthKey, months, 
             <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
           </label>
           {setup ? (
-            <Button onClick={onAddMember}>
+            <Button variant="action" onClick={onAddMember}>
               <UserPlus />
               {t("Add member")}
             </Button>
@@ -101,7 +101,7 @@ export function GroupHeader({ businessId, name, members, tab, monthKey, months, 
                 <Wallet />
                 {t("Add contribution")}
               </Button>
-              <Button onClick={onAddExpense}>
+              <Button variant="action" onClick={onAddExpense}>
                 <Plus strokeWidth={2.25} />
                 {t("Add expense")}
               </Button>
