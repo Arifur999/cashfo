@@ -20,6 +20,10 @@ interface PrayersCardProps {
   today: string;
 }
 
+// The green card keeps its colours in dark mode, so what sits on its white
+// tiles keeps the brand green too (emerald turns light in dark mode).
+const BRAND_INK = "text-emerald dark:text-forest";
+
 const CELL: Record<PrayerMark, string> = {
   prayed: "bg-emerald",
   missed: "bg-expense-soft",
@@ -103,9 +107,9 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
                 onClick={() => toggle(item, !prayed)}
                 aria-pressed={prayed}
                 aria-label={`${t(item)}, ${t(prayed ? "prayed" : "not marked yet")}`}
-                className={cn("flex flex-col items-center gap-1 rounded-md py-2", next ? "bg-surface text-emerald" : "bg-white/12 text-white")}
+                className={cn("flex flex-col items-center gap-1 rounded-md py-2", next ? cn("bg-white", BRAND_INK) : "bg-white/12 text-white")}
               >
-                <span className={cn("flex size-6.5 items-center justify-center rounded-sm", prayed ? "bg-white/85 text-emerald" : next ? "border-[1.5px] border-dashed border-emerald" : "border-[1.5px] border-dashed border-white/60")}>
+                <span className={cn("flex size-6.5 items-center justify-center rounded-sm", prayed ? cn("bg-white/85", BRAND_INK) : next ? "border-[1.5px] border-dashed border-current" : "border-[1.5px] border-dashed border-white/60")}>
                   {prayed && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}
                 </span>
                 <span className="text-caption leading-[normal] font-semibold">{t(item)}</span>

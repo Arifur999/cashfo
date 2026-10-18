@@ -167,7 +167,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
         <Input value={text} onChange={(event) => setText(event.target.value)} maxLength={200} placeholder={t("Add a task…")} aria-label={t("New task for today")} size="md" frameClassName="flex-1 px-3 text-body-lg md:hidden" />
         <Input ref={inputRef} size="sm" value={text} onChange={(event) => setText(event.target.value)} maxLength={200} placeholder={t("Add a task for today…")} aria-label={t("New task for today")} frameClassName="flex-1 max-md:hidden" />
         {/* Phones: the board's 44px emerald Add; wider screens the soft one. */}
-        <Button type="submit" variant="soft" size="sm" className="h-9.5 max-md:h-11 max-md:bg-emerald max-md:px-4 max-md:text-white" disabled={!text.trim() || adding}>
+        <Button type="submit" variant="soft" size="sm" className="h-9.5 max-md:h-11 max-md:bg-emerald max-md:px-4 max-md:text-on-action" disabled={!text.trim() || adding}>
           {t("Add")}
         </Button>
       </form>

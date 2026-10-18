@@ -99,9 +99,9 @@ export function DailyHabitsCard({ rows: serverRows, resting, today }: DailyHabit
                   <span className="min-w-8.5 text-center text-body font-bold text-ink tabular-nums">
                     {value}/{row.targetValue}
                   </span>
-                  {/* The habit's own colour behind a white plus. */}
+                  {/* The habit's own colour behind a plus in the surface colour (white, or the night in dark mode). */}
                   <button type="button" onClick={() => count(row, value + 1)} disabled={isPending || isDone} aria-label={`${t("One more")}: ${row.name}`} className={cn("flex size-9 items-center justify-center rounded-md bg-current disabled:opacity-50", tone.fg)}>
-                    <Plus className="size-4 text-white" strokeWidth={2.5} aria-hidden="true" />
+                    <Plus className="size-4 text-surface" strokeWidth={2.5} aria-hidden="true" />
                   </button>
                 </span>
               )}

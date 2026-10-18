@@ -191,7 +191,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
 
           <TabBar options={[{ value: "ALL" as Tab, label: t("All"), count: counts.ALL }, ...STATUSES.map((status) => ({ value: status.value as Tab, label: t(status.label), count: counts[status.value] }))]} value={tab} onChange={setTab} label={t("Goal status")} className="max-md:overflow-x-auto" />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {shown.length === 0 && <p className="py-8 text-center text-body text-ink-muted md:col-span-2">{t("No goal here.")}</p>}
             {shown.map((goal) => {
               const index = goals.indexOf(goal);

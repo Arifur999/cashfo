@@ -2,6 +2,7 @@
 
 import { ArrowRight, ArrowRightToLine, Check, ListChecks, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/modules/Customer/Shared/ConfirmModal";
@@ -152,6 +153,10 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
   }
 
   const done = items.length - openItems.length;
+  // From a habits page the link opens the whole list; from anywhere else it
+  // says where it goes; with nothing today it offers the other days.
+  const inHabits = usePathname().startsWith("/habit-tracker");
+  const fullLink = items.length === 0 ? "All days" : inHabits ? "Open full list" : "Open in Habits";
   const rowH = sheet ? "min-h-15" : "min-h-13.5";
   const btn = sheet ? "size-10" : "size-7.5";
 
@@ -162,7 +167,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
           <h2 className={cn("font-semibold", sheet ? "text-h3" : "text-title")}>{t("Today’s tasks")}</h2>
           <span className="flex items-center gap-3 text-small text-ink-muted">
             <span className="whitespace-nowrap">
-              {dayLabel(today, "EEE, d MMM yyyy")}
+              {dayLabel(today, "EEEE, d MMM")}
               {items.length > 0 && ` · ${done} ${t("of")} ${items.length} ${t("done")}`}
             </span>
             {items.length > 0 && <ProgressBar value={(done / items.length) * 100} size="sm" label={t("Tasks done today")} className="w-22" />}
@@ -275,7 +280,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
           <span className="text-caption font-normal text-ink-muted">{t("Enter adds · Esc closes")}</span>
         )}
         <Link href="/habit-tracker/todos" onClick={onClose} className="flex items-center gap-1 text-small font-semibold whitespace-nowrap text-emerald hover:text-emerald-hover">
-          {t("Open full list")}
+          {t(fullLink)}
           <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
         </Link>
       </div>

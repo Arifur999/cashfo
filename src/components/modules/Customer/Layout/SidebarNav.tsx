@@ -134,11 +134,13 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
 
   return (
     <nav ref={navRef} aria-label={t("Main")} style={style} className={cn("relative min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", className)}>
-      <div className="flex flex-col gap-0.5">
+      {/* The sidebar spaces its rows 2px apart; the phone drawer stacks its
+          44px rows and sets the section names on their natural line. */}
+      <div className={cn("flex flex-col", compact && "gap-0.5")}>
         {sections.map((section) => (
-          <div key={section.label ?? "home"} className="flex flex-col gap-0.5">
+          <div key={section.label ?? "home"} className={cn("flex flex-col", compact && "gap-0.5")}>
             {section.label && (
-              <span className={cn("flex items-center gap-2 px-3 pt-4 pb-2 text-caption font-bold tracking-[0.1em] text-mint-200/62 uppercase", compact ? "h-9" : "h-10")}>
+              <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-200/62 uppercase", compact ? "h-9 pb-2" : "pb-1 leading-[normal]")}>
                 <span aria-hidden="true" className={cn("size-1.5 rounded-full", NIGHT_DOT[section.tone])} />
                 {t(section.label)}
               </span>

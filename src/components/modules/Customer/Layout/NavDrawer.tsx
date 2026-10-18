@@ -32,10 +32,11 @@ export function NavDrawer() {
           <Menu className="size-5.5" aria-hidden="true" />
         </button>
       </SheetTrigger>
+      {/* 316px, as the board draws it; the side variant outranks the sheet's own w-3/4. */}
       <SheetContent
         side="left"
         showCloseButton={false}
-        className="w-79 max-w-[85vw] gap-0 border-none bg-night-panel p-0 text-white shadow-[28px_0_60px_-16px_rgba(0,0,0,0.4)] sm:max-w-79"
+        className="max-w-[85vw] gap-0 border-none bg-night-panel p-0 text-white shadow-[28px_0_60px_-16px_rgba(0,0,0,0.4)] data-[side=left]:w-79 data-[side=left]:sm:max-w-79"
       >
         <SheetHeader className="sr-only">
           <SheetTitle>{t("Main")}</SheetTitle>

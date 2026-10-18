@@ -79,7 +79,7 @@ export function GroupListPageClient({ groups, monthKey, monthEnded }: GroupListP
           }
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {groups.map((group) => (
             <GroupCard key={group.workspace.id} group={group} monthKey={monthKey} monthEnded={monthEnded} onDelete={() => setDeleting(group)} />
           ))}

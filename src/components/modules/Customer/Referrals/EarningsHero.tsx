@@ -29,7 +29,7 @@ export function EarningsHero({ info, currency, canWithdraw, onWithdraw }: Earnin
   ];
 
   return (
-    <section aria-labelledby="earn-title" className="relative flex flex-col gap-3 overflow-hidden rounded-xl bg-[linear-gradient(135deg,var(--emerald)_0%,var(--forest)_100%)] p-5 text-white md:gap-4 md:p-6">
+    <section aria-labelledby="earn-title" className="relative flex flex-col gap-3 overflow-hidden rounded-xl bg-wallet-forest p-5 text-white md:gap-4 md:p-6">
       <span aria-hidden="true" className="absolute -top-15 -right-12.5 size-42.5 rounded-full border border-white/14 md:-top-20 md:-right-15 md:size-55" />
       <span aria-hidden="true" className="absolute -top-7.5 right-7.5 hidden size-35 rounded-full border border-white/10 md:block" />
       <div className="relative flex flex-wrap items-start justify-between gap-4">

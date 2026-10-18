@@ -94,7 +94,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
       </div>
 
       <div className="flex flex-col gap-2 px-5 py-4">
-        <div className="flex justify-between text-small">
+        <div className="flex flex-wrap justify-between gap-x-3 text-small">
           <span className="text-ink-2">{status ? `${month} ${t("budget")} ${formatCurrency(status.budget, currency)}` : t("No budget set for this month")}</span>
           {status && (
             <span className={cn("font-semibold tabular-nums", BUDGET_TONE_TEXT[status.tone])}>
@@ -123,9 +123,9 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
 
 function Stat({ label, value, tone, divided = false }: { label: string; value: string; tone?: string; divided?: boolean }) {
   return (
-    <div className={cn("flex flex-col gap-1 px-5 py-4", divided && "border-r border-surface-sunken")}>
+    <div className={cn("flex min-w-0 flex-col gap-1 px-3 py-4 md:px-5", divided && "border-r border-surface-sunken")}>
       <span className="text-caption font-normal text-ink-muted">{label}</span>
-      <span className={cn("text-h3 text-ink tabular-nums", tone)}>{value}</span>
+      <span className={cn("text-title break-words text-ink tabular-nums md:text-h3", tone)}>{value}</span>
     </div>
   );
 }

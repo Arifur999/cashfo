@@ -248,7 +248,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
       )}
 
       {entries.length > 0 && (
-        <button type="button" onClick={() => openAdd()} aria-label={t("Add login")} className="fixed right-4 bottom-6 z-30 flex size-14.5 items-center justify-center rounded-xl bg-emerald text-white shadow-[0_10px_24px_rgba(14,26,22,0.25)] md:hidden">
+        <button type="button" onClick={() => openAdd()} aria-label={t("Add login")} className="fixed right-4 bottom-6 z-30 flex size-14.5 items-center justify-center rounded-xl bg-emerald text-on-action shadow-[0_10px_24px_rgba(14,26,22,0.25)] md:hidden">
           <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
         </button>
       )}

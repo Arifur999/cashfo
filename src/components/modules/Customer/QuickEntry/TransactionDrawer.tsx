@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CalendarDays, LayoutGrid, TriangleAlert, X } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CalendarDays, Check, ChevronDown, LayoutGrid, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createElement, useEffect, useId, useState, useTransition } from "react";
@@ -15,12 +15,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, BudgetOverview } from "@/lib/customer/api";
 import { getBudgetCategoryNamesAction, getBudgetOverviewAction, type BudgetCategoryName } from "@/lib/customer/budgetActions";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
+import { formatDate } from "@/lib/customer/date";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
 import { normalizeMoneyInput } from "@/lib/customer/money";
 import { createExpenseAction, createIncomeAction, createTransferAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { relativeDayKey } from "@/lib/customer/transactionRows";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -44,10 +46,18 @@ const KIND_META: Record<EntryKind, { label: string; icon: React.ReactNode; activ
   TRANSFER: { label: "Transfer", icon: <ArrowLeftRight className="text-info" />, active: "text-ink", save: "Move money", done: "Transfer completed", failed: "Failed to create transfer" },
 };
 
+// The desktop board leads with Income; the phone board with Expense.
+const KIND_ORDER: Record<"wide" | "phone", EntryKind[]> = { wide: ["INCOME", "EXPENSE", "TRANSFER"], phone: ["EXPENSE", "INCOME", "TRANSFER"] };
+
+// A phone field's label: 13px semibold over its 52px box.
+const PHONE_LABEL = "text-small font-semibold text-ink-2";
+
 // New transaction: Income, Expense or Transfer in one drawer -- the amount
 // first, the category tiles, the wallet with what it will hold after this,
-// the date and a note. On phones it comes up from the bottom. Enter saves;
-// "Save & add another" keeps it open and clears the amount and note.
+// the date and a note. On phones it comes up from the bottom as the phone
+// board draws it: plain tabs, the amount large in the middle, the wallet and
+// the day side by side. Enter saves; "Save & add another" keeps it open and
+// clears the amount and note.
 export function TransactionDrawer({ open, onClose, businessId, currency, initialKind = "EXPENSE" }: TransactionDrawerProps) {
   const { t } = useLocale();
   const router = useRouter();
@@ -163,10 +173,26 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     });
   }
 
+  const fromLabel = kind === "INCOME" ? "Deposit to" : kind === "EXPENSE" ? "Pay from" : "From";
+  const dayWord = relativeDayKey(date, getAppToday());
+
+  // The phone's day: a 52px box saying "Today" over the real date input,
+  // which opens the phone's own picker.
+  const phoneDate = (
+    <Field htmlFor="txn-date" label={<span className={PHONE_LABEL}>{t("Date")}</span>}>
+      <span className="relative flex h-13 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]">
+        <CalendarDays className="size-4.5 shrink-0 text-ink-2" aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{dayWord ? t(dayWord) : formatDate(`${date}T00:00:00.000Z`, "d MMM")}</span>
+        <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+        <input id="txn-date" type="date" value={date} onChange={(event) => event.target.value && setDate(event.target.value)} max={getAppToday()} className="absolute inset-0 opacity-0" />
+      </span>
+    </Field>
+  );
+
   const body = (
     <>
-      <div className="grid grid-cols-3 gap-1 rounded-md bg-surface-sunken p-1">
-        {(["INCOME", "EXPENSE", "TRANSFER"] as EntryKind[]).map((option) => {
+      <div className={cn("grid grid-cols-3 rounded-md bg-surface-sunken", wide ? "gap-1 p-1" : "gap-0.5 p-0.75")}>
+        {KIND_ORDER[wide ? "wide" : "phone"].map((option) => {
           const on = option === kind;
           return (
             <button
@@ -175,9 +201,13 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
               role="tab"
               aria-selected={on}
               onClick={() => switchKind(option)}
-              className={cn("flex h-9 items-center justify-center gap-2 rounded-sm text-body transition-colors [&_svg]:size-[15px]", on ? cn("bg-surface font-semibold shadow-card", KIND_META[option].active) : "font-medium text-ink-2 hover:text-ink")}
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-sm transition-colors [&_svg]:size-[15px]",
+                wide ? "h-9 text-body" : "h-9.5 text-small",
+                on ? cn("bg-surface font-semibold shadow-card", wide ? KIND_META[option].active : "text-ink") : "font-medium text-ink-2 hover:text-ink",
+              )}
             >
-              {KIND_META[option].icon}
+              {wide && KIND_META[option].icon}
               {t(KIND_META[option].label)}
             </button>
           );
@@ -190,8 +220,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         </label>
         <div
           className={cn(
-            "flex items-center gap-3 rounded-md",
-            wide ? "h-16 border border-line-strong bg-surface px-4 focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]" : "justify-center py-2",
+            "flex items-center rounded-md",
+            wide ? "h-16 gap-3 border border-line-strong bg-surface px-4 focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]" : "justify-center gap-2 py-2",
           )}
         >
           <span className={cn("text-h1 font-semibold", kind === "INCOME" ? "text-income" : kind === "EXPENSE" ? "text-expense" : "text-ink-muted")}>{kind === "INCOME" ? "+" : kind === "EXPENSE" ? "−" : "↔"}</span>
@@ -205,7 +235,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             placeholder="0"
             autoFocus
             aria-label={t("Amount")}
-            className={cn("min-w-0 flex-1 bg-transparent font-bold text-ink tabular-nums outline-none placeholder:text-ink-faint", wide ? "text-h1 tracking-[-0.02em]" : "w-40 text-center text-display-xl")}
+            style={wide ? undefined : { width: `${Math.max(1, amount.length)}ch` }}
+            className={cn("min-w-0 bg-transparent font-bold text-ink tabular-nums outline-none placeholder:text-ink-faint", wide ? "flex-1 text-h1 tracking-[-0.02em]" : "box-content text-display-xl leading-[normal] caret-emerald")}
           />
         </div>
         {!wide && budgetRow && (
@@ -217,7 +248,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
 
       {!isTransfer && (
         <fieldset className="m-0 min-w-0 border-0 p-0">
-          <legend className="mb-2 text-body font-medium text-ink">{t("Category")}</legend>
+          <legend className={cn("text-body font-medium text-ink", wide ? "mb-2" : "sr-only")}>{t("Category")}</legend>
           {loading ? (
             <div className="grid grid-cols-4 gap-2">
               {Array.from({ length: 8 }, (_, i) => (
@@ -245,7 +276,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
                     onClick={() => setCategory(option.name)}
                     className={cn("flex h-21 flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border border-line bg-surface hover:border-line-strong")}
                   >
-                    <span className={cn("flex size-8 items-center justify-center rounded-full [&_svg]:size-4", tone.bg, tone.fg)}>{createElement(option.icon ? budgetCategoryIcon(option.icon) : LayoutGrid, { "aria-hidden": true })}</span>
+                    <span className={cn("flex size-8 items-center justify-center rounded-full [&_svg]:size-4", tone.bg, tone.fg)}>{createElement(categoryIconFor(option), { "aria-hidden": true })}</span>
                     <span className={cn("line-clamp-2 max-w-full text-center text-caption leading-4", on ? "font-semibold text-emerald" : "font-medium text-ink-2")}>{option.name}</span>
                   </button>
                 );
@@ -273,49 +304,53 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         </div>
       )}
 
-      <WalletPicker
-        label={t(kind === "INCOME" ? "Deposit to" : kind === "EXPENSE" ? "Pay from" : "From")}
-        wallets={wallets}
-        value={accountId}
-        onChange={setAccountId}
-        after={after}
-        currency={currency}
-        loading={loading}
-        error={walletsError}
-        onClose={onClose}
-      />
-      {isTransfer && <WalletPicker label={t("To")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} />}
-
-      <div className="grid gap-3 md:grid-cols-[170px_minmax(0,1fr)]">
-        <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
-          <Input id="txn-date" type="date" size="md" value={date} onChange={(event) => setDate(event.target.value)} leading={<CalendarDays />} max={getAppToday()} />
-        </Field>
-        <Field
-          htmlFor="txn-note"
-          label={
-            <span className="text-body font-medium text-ink">
-              {t("Note")} <span className="font-normal text-ink-muted">({t("optional")})</span>
-            </span>
-          }
-        >
-          <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
-        </Field>
-      </div>
+      {wide ? (
+        <>
+          <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+          {isTransfer && <WalletPicker label={t("To")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} />}
+          <div className="grid grid-cols-[170px_minmax(0,1fr)] gap-3">
+            <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
+              <Input id="txn-date" type="date" size="md" value={date} onChange={(event) => setDate(event.target.value)} leading={<CalendarDays />} max={getAppToday()} />
+            </Field>
+            <Field
+              htmlFor="txn-note"
+              label={
+                <span className="text-body font-medium text-ink">
+                  {t("Note")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+                </span>
+              }
+            >
+              <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
+            </Field>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <WalletPicker size="compact" label={t("From")} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+            {isTransfer ? <WalletPicker size="compact" label={t("To")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} /> : phoneDate}
+          </div>
+          {isTransfer && phoneDate}
+          <Field htmlFor="txn-note" label={<span className={PHONE_LABEL}>{t("Note")}</span>}>
+            <Input id="txn-note" size="xl" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
+          </Field>
+        </>
+      )}
     </>
   );
 
   const footer = (
     <div className={cn("flex items-center border-t border-line bg-surface", wide ? "gap-2 px-6 py-4" : "gap-3 px-4 pt-3 pb-8")}>
-      <Button type="button" variant="secondary" size={wide ? "md" : "xl"} onClick={() => save(true)} disabled={!valid || isPending} className={cn("px-3", !wide && "flex-1")}>
+      <Button type="button" variant="secondary" size={wide ? "md" : "xl"} onClick={() => save(true)} disabled={!valid || isPending} className={cn("px-3", !wide && "h-13 flex-1")}>
         {t("Save & add another")}
       </Button>
       <span className="hidden flex-1 md:block" />
       <Button type="button" variant="ghost" onClick={onClose} className="hidden px-3 md:inline-flex">
         {t("Cancel")}
       </Button>
-      <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={cn("px-4", !wide && "flex-1")}>
-        {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-        {t(KIND_META[kind].save)}
+      <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={cn("px-4", !wide && "h-13 flex-1")}>
+        {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : !wide && <Check strokeWidth={2.5} />}
+        {wide ? t(KIND_META[kind].save) : t("Save")}
         {wide && <Kbd className="rounded-[4px] border-0 bg-white/18 px-1 py-0 font-sans text-[11px] text-white">Enter</Kbd>}
       </Button>
     </div>
@@ -341,7 +376,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         showCloseButton={false}
         className={cn(
           "gap-0 border-0 bg-surface p-0 text-ink",
-          wide ? "w-115 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] data-[side=right]:sm:max-w-115" : "h-[92vh] rounded-t-xl shadow-[0_-20px_60px_-16px_rgba(11,61,46,0.35)]",
+          wide ? "w-115 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] data-[side=right]:sm:max-w-115" : "rounded-t-xl shadow-[0_-20px_60px_-16px_rgba(11,61,46,0.35)] data-[side=bottom]:h-[90vh]",
         )}
       >
         {!wide && <span aria-hidden="true" className="mt-2 block h-1.25 w-10 shrink-0 self-center rounded-full bg-chart-other" />}
