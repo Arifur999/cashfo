@@ -64,7 +64,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   const tabs = [{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, ...DIRECTIONS.map((direction) => ({ value: direction as Tab, label: counted(t(DIRECTION_META[direction].name), counts[direction]), dot: DOT[direction] }))];
 
   return (
-    <PageFrame className="gap-6">
+    <PageFrame className="md:gap-6">
       <PageHeader
         eyebrow={t("Loans")}
         tone="loans"
@@ -98,14 +98,14 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
       />
 
       <section className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
-        <Card padding="sm" className="flex flex-col gap-1 md:gap-2 md:p-5">
-          <span className="text-small font-medium text-ink-muted">
+        <Card padding="sm" className={PHONE_FIGURE_CARD}>
+          <span className={PHONE_FIGURE_LABEL}>
             <span className="md:hidden">{t("Owed to you")}</span>
             <span className="hidden md:inline">
               {t("You'll receive")} · <span className="font-semibold text-income">{t("Pawna")}</span>
             </span>
           </span>
-          <AmountText value={Math.abs(Number(dashboard.totalPawna))} currency={currency} size="h2" tone="income" className="text-h3 whitespace-nowrap md:text-h1" />
+          <AmountText value={Math.abs(Number(dashboard.totalPawna))} currency={currency} size="h2" tone="income" className={PHONE_FIGURE} />
           <span className="text-caption font-normal text-ink-muted">
             <span className="md:hidden">
               {t("Pawna")} · {counts.PAWNA} {t(counts.PAWNA === 1 ? "person" : "people")}
@@ -115,14 +115,14 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             </span>
           </span>
         </Card>
-        <Card padding="sm" className="flex flex-col gap-1 md:gap-2 md:p-5">
-          <span className="text-small font-medium text-ink-muted">
+        <Card padding="sm" className={PHONE_FIGURE_CARD}>
+          <span className={PHONE_FIGURE_LABEL}>
             <span className="md:hidden">{t("You owe")}</span>
             <span className="hidden md:inline">
               {t("You owe")} · <span className="font-semibold text-expense">{t("Dena")}</span>
             </span>
           </span>
-          <AmountText value={Math.abs(Number(dashboard.totalDena))} currency={currency} size="h2" tone="expense" className="text-h3 whitespace-nowrap md:text-h1" />
+          <AmountText value={Math.abs(Number(dashboard.totalDena))} currency={currency} size="h2" tone="expense" className={PHONE_FIGURE} />
           <span className="text-caption font-normal text-ink-muted">
             <span className="md:hidden">
               {t("Dena")} · {counts.DENA} {t(counts.DENA === 1 ? "person" : "people")}
@@ -196,25 +196,37 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
 
           {/* Phone: the direction switch, then one row per contact. */}
           <div className="flex flex-col gap-4 md:hidden">
-            <SegmentedControl options={[{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, { value: "PAWNA" as Tab, label: t("Owe you") }, { value: "DENA" as Tab, label: t("You owe") }, { value: "SETTLED" as Tab, label: t("Settled") }]} value={tab} onChange={setTab} label={t("Balance")} stretch />
+            <SegmentedControl
+              options={[
+                { value: "ALL" as Tab, label: `${t("All")} ${counts.ALL}` },
+                { value: "PAWNA" as Tab, label: t("Owe you") },
+                { value: "DENA" as Tab, label: t("You owe") },
+                { value: "SETTLED" as Tab, label: t("Settled") },
+              ]}
+              value={tab}
+              onChange={setTab}
+              label={t("Balance")}
+              size="touch"
+              stretch
+            />
             <Card padding="none" elevated={false} className="overflow-hidden">
               {shown.length === 0 && <p className="px-4 py-8 text-center text-body text-ink-muted">{t("No one matches")}</p>}
               {shown.map((row, index) => {
                 const meta = DIRECTION_META[row.direction];
                 const contact = contactsById.get(row.contactId);
                 return (
-                  <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-surface-sunken")}>
+                  <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("box-content flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-surface-sunken")}>
                     <PersonAvatar name={row.contactName} src={contact?.photoUrl} size={40} coloured />
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <b className="truncate text-title text-ink">{row.contactName}</b>
-                      <span className="text-caption font-normal text-ink-muted">{contact ? t(LOAN_KIND_LABELS[contact.type]) : (row.contactPhone ?? "")}</span>
+                      <b className="truncate text-title leading-[normal] text-ink">{row.contactName}</b>
+                      <span className="truncate text-caption leading-[normal] font-normal text-ink-muted">{contact ? [t(LOAN_KIND_LABELS[contact.type]), contact.notes].filter(Boolean).join(" · ") : (row.contactPhone ?? "")}</span>
                     </span>
                     {row.direction === "SETTLED" ? (
-                      <b className="text-body font-bold text-ink-muted">{t("Settled")}</b>
+                      <b className="text-body-lg leading-[normal] font-bold text-ink-muted">{t("Settled")}</b>
                     ) : (
                       <span className="flex flex-col items-end">
-                        <b className={cn("text-body font-bold tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</b>
-                        <span className="text-caption font-normal text-ink-muted">{t(meta.short)}</span>
+                        <b className={cn("text-body-lg leading-[normal] font-bold tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</b>
+                        <span className="text-caption leading-[normal] font-normal text-ink-muted">{t(meta.short)}</span>
                       </span>
                     )}
                   </Link>
@@ -223,12 +235,13 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             </Card>
             {canManage && (
               <div className="grid grid-cols-2 gap-2">
+                {/* The arrows point the way the balance goes, as the board draws them: lent comes back to you, borrowed goes out. */}
                 <Button variant="secondary" size="xl" onClick={() => setEntry({ kind: "GIVE_LOAN" })} className="font-semibold">
-                  <ArrowUpRight className="text-expense-fill" />
+                  <ArrowDownLeft />
                   {t("Gave or lent")}
                 </Button>
                 <Button variant="secondary" size="xl" onClick={() => setEntry({ kind: "TAKE_LOAN" })} className="font-semibold">
-                  <ArrowDownLeft className="text-income" />
+                  <ArrowUpRight />
                   {t("Took or borrowed")}
                 </Button>
               </div>
@@ -242,6 +255,12 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
     </PageFrame>
   );
 }
+
+// The two figures on a phone: flat cards, a 13px label, 18px bold on a
+// 1.2 line; wider screens keep the desktop tiles.
+const PHONE_FIGURE_CARD = "flex flex-col gap-1 max-md:shadow-none md:gap-2 md:p-5";
+const PHONE_FIGURE_LABEL = "text-small font-medium text-ink-muted max-md:font-normal";
+const PHONE_FIGURE = "text-h3 whitespace-nowrap max-md:leading-[1.2] max-md:font-bold md:text-h1";
 
 function counted(label: string, count: number) {
   return (
