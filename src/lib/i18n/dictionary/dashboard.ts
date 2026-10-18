@@ -127,4 +127,5 @@ export const dashboardDictionary: Record<string, string> = {
   "Tick off today's prayers and build a streak.": "আজকের নামাজে টিক দিন আর ধারাবাহিকতা গড়ুন।",
   "Open Namaz": "নামাজ খুলুন",
   "See the overview": "ওভারভিউ দেখুন",
+  "the same as": "সমান,",
 };

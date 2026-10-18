@@ -16,8 +16,8 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import SectionHeader from "@/components/smartly/SectionHeader";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
-import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { budgetCategoryIcon, categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
+import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { HomeHero } from "./HomeHero";
@@ -53,6 +53,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
 
   const prayersDone = data.namaz ? data.namaz.checks.filter((c) => c.day === data.namaz!.todayDay).map((c) => c.item) : [];
   const prayerItems = data.namaz?.items.length ? data.namaz.items : PRAYERS;
+  const expenseIcon = data.topExpense ? categoryIconFor(data.categoriesById[data.topExpense.name] ?? { icon: null, name: data.topExpense.name }) : Utensils;
 
   return (
     <PageFrame gap="lg">
@@ -303,10 +304,12 @@ export function HomePageClient({ data }: { data: HomeData }) {
                     )}
                     {data.topExpense && (
                       <InsightRow
-                        icon={<Utensils />}
+                        icon={createElement(expenseIcon)}
                         tone="loans"
                         title={`${data.topExpense.name} ${t("is your biggest spend")}: ${data.topExpense.percent}%.`}
-                        text={`${formatCurrency(data.topExpense.amount, currency)} ${t("this month")}, ${formatSignedCurrency(-Math.abs(data.topExpense.delta), currency).replace(/^[−+] /, "")} ${t(data.topExpense.delta <= 0 ? "less than" : "more than")} ${data.lastMonthName}.`}
+                        text={`${formatCurrency(data.topExpense.amount, currency)} ${t("this month")}, ${
+                          data.topExpense.delta === 0 ? t("the same as") : `${formatCurrency(Math.abs(data.topExpense.delta), currency)} ${t(data.topExpense.delta < 0 ? "less than" : "more than")}`
+                        } ${data.lastMonthName}.`}
                         divided={Boolean(data.topIncome)}
                       />
                     )}
