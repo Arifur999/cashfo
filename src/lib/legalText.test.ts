@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { legalBlocks } from "./legalText";
+import { legalBlocks, toggleHeadingLine } from "./legalText";
 
 describe("legalBlocks", () => {
   it("parts paragraphs at blank lines and keeps the line breaks inside one", () => {
@@ -32,5 +32,17 @@ describe("legalBlocks", () => {
       { kind: "paragraph", text: "Plain text only." },
     ]);
     expect(legalBlocks("   \n\n")).toEqual([]);
+  });
+});
+
+describe("toggleHeadingLine", () => {
+  it("starts the caret's line with ## and moves the caret along", () => {
+    expect(toggleHeadingLine("Intro\nWho we are\nMore", 9)).toEqual({ text: "Intro\n## Who we are\nMore", caret: 12 });
+    expect(toggleHeadingLine("", 0)).toEqual({ text: "## ", caret: 3 });
+  });
+
+  it("takes ## off a heading line again", () => {
+    expect(toggleHeadingLine("Intro\n## Who we are", 12)).toEqual({ text: "Intro\nWho we are", caret: 9 });
+    expect(toggleHeadingLine("## Title", 1)).toEqual({ text: "Title", caret: 0 });
   });
 });

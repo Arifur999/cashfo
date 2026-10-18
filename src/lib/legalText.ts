@@ -33,3 +33,13 @@ export function legalBlocks(text: string): LegalBlock[] {
   endParagraph();
   return blocks;
 }
+
+// The editor's Heading button: puts "## " at the start of the line the caret
+// is on, or takes it off again, and says where the caret lands.
+export function toggleHeadingLine(text: string, caret: number): { text: string; caret: number } {
+  const lineStart = text.lastIndexOf("\n", caret - 1) + 1;
+  if (text.startsWith("## ", lineStart)) {
+    return { text: text.slice(0, lineStart) + text.slice(lineStart + 3), caret: Math.max(lineStart, caret - 3) };
+  }
+  return { text: `${text.slice(0, lineStart)}## ${text.slice(lineStart)}`, caret: caret + 3 };
+}
