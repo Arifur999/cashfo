@@ -19,7 +19,8 @@ const defaultValues: ILoginFormValues = { email: "", password: "" };
 
 // Email and password for everyone -- admins and customers alike; the
 // account's role decides where it lands.
-const LoginForm = ({ redirectTo }: { redirectTo?: string }) => {
+// `again`: the session ended, so the button asks to sign in again.
+const LoginForm = ({ redirectTo, again = false }: { redirectTo?: string; again?: boolean }) => {
   const { translate } = useLocale();
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -74,7 +75,7 @@ const LoginForm = ({ redirectTo }: { redirectTo?: string }) => {
       <form.Subscribe selector={(state) => state.isSubmitting}>
         {(isSubmitting) => (
           <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Signing in...")} size="2xl">
-            {translate("Sign in")}
+            {translate(again ? "Sign in again" : "Sign in")}
             <ArrowRight strokeWidth={2.25} aria-hidden="true" />
           </AppSubmitButton>
         )}

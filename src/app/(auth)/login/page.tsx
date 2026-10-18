@@ -34,10 +34,10 @@ const LoginPage = async ({ searchParams }: PageProps<"/login">) => {
       )}
       <SignInNotices sessionExpired={sessionExpired} signInError={getSignInErrorMessage(param(error))} />
       {!sessionExpired && <RenameNotice />}
-      <LoginForm redirectTo={redirectTo} />
+      <LoginForm redirectTo={redirectTo} again={sessionExpired} />
       <OrDivider />
       <GoogleSignInButton redirectTo={redirectTo} />
-      <AuthFooterPrompt prompt="Don't have an account?" linkLabel="Create an account" href={REGISTER_ROUTE} />
+      {!sessionExpired && <AuthFooterPrompt prompt="Don't have an account?" linkLabel="Create an account" href={REGISTER_ROUTE} />}
     </AuthShell>
   );
 };
