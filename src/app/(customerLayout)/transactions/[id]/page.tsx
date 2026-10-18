@@ -15,7 +15,7 @@ import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDateTime } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { categoryIndex, describeTransaction } from "@/lib/customer/transactionRows";
+import { categoryIndex, describeTransaction, reversalTitle } from "@/lib/customer/transactionRows";
 import { getTransaction } from "@/lib/customer/transactions";
 import { getTranslator } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
@@ -52,6 +52,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
   const row = describeTransaction(transaction, categoryIndex([...incomeCategories, ...expenseCategories]));
   const title = row.title ?? t(TRANSACTION_TYPE_LABELS[transaction.transactionType]);
+  const note = transaction.reversalOfId ? reversalTitle(transaction.description) : transaction.description;
   const tone = transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   const typeTone = transaction.transactionType === "INCOME" ? "income" : transaction.transactionType === "EXPENSE" ? "expense" : "neutral";
   const debitTotal = transaction.entries.filter((e) => e.entryType === "DEBIT").reduce((sum, e) => sum + Number(e.amount), 0);
@@ -71,7 +72,10 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
         }
       : null,
     { label: t(transaction.transactionType === "INCOME" ? "Paid into" : transaction.transactionType === "EXPENSE" ? "Paid from" : "Between"), value: row.wallet ?? "—" },
-    transaction.description ? { label: t("Note"), value: transaction.description } : null,
+    // A reversal's own note is "Reversal of: <what it undid>"; the Status row
+    // already says Reversal and links the original, so the note shows only
+    // what it undid, and nothing when that was just the original's id.
+    note ? { label: t("Note"), value: note } : null,
     transaction.referenceNo ? { label: t("Reference"), value: <span className="font-mono text-code text-ink-2">{transaction.referenceNo}</span> } : null,
     transaction.contact ? { label: t("Contact"), value: transaction.contact.name } : null,
     row.cancelled
