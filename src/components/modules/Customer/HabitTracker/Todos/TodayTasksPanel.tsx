@@ -12,12 +12,13 @@ import ProgressBar from "@/components/smartly/ProgressBar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import type { TodoItem } from "@/lib/customer/api";
+import type { TodoItem, TodoPriority } from "@/lib/customer/api";
+import { byPriority, dayLabel } from "@/lib/customer/todoDisplay";
 import { addTodoItemAction, createTodoListAction, moveTodoItemToNextDayAction, removeTodoItemAction, updateTodoItemAction } from "@/lib/customer/todosActions";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { dayLabel } from "@/lib/customer/todoDisplay";
+import { PriorityMenu, TaskMeta } from "./TaskBits";
 
 interface TodayTasksPanelProps {
   open: boolean;
@@ -62,6 +63,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
   const { t } = useLocale();
   const { list, loaded, setList, reload } = useTodayTasks();
   const [text, setText] = useState("");
+  const [priority, setPriority] = useState<TodoPriority>("MEDIUM");
   const [adding, setAdding] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<Set<string>>(new Set());
@@ -69,7 +71,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
   const [removeTarget, setRemoveTarget] = useState<TodoItem | null>(null);
 
   const items = list?.items ?? [];
-  const openItems = [...items].reverse().filter((i) => !i.completed);
+  const openItems = byPriority(items.filter((i) => !i.completed));
   const doneItems = [...items].reverse().filter((i) => i.completed);
   const today = getAppToday();
 
@@ -106,7 +108,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         target = created.data;
         setList(target);
       }
-      const result = await addTodoItemAction(target.id, { text: value });
+      const result = await addTodoItemAction(target.id, { text: value, priority });
       if (result.success && result.data) {
         setList(result.data);
         setText("");
@@ -202,6 +204,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
             sheet ? "h-11 text-body-lg" : "h-9.5 text-body",
           )}
         />
+        <PriorityMenu value={priority} onChange={setPriority} look="flag" className={cn(sheet && "size-11")} />
         <Button type="submit" size={sheet ? "lg" : "sm"} disabled={adding} className={cn(sheet ? "h-11" : "h-9.5 text-body", "px-4")}>
           <Plus strokeWidth={2.5} className={sheet ? "size-4" : "size-3.75"} />
           {t("Add")}
@@ -225,7 +228,10 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
                 onClick={() => toggle(item)}
                 className="size-5 shrink-0 rounded-sm border-[1.5px] border-line-strong bg-surface hover:border-emerald disabled:opacity-50"
               />
-              <span className="min-w-0 flex-1 truncate text-body font-medium">{item.text}</span>
+              <span className="flex min-w-0 flex-1 flex-col gap-0.75">
+                <span className="truncate text-body font-medium">{item.text}</span>
+                <TaskMeta item={item} day={today} look="plain" />
+              </span>
               <button type="button" onClick={() => moveToTomorrow(item)} disabled={busy.has(item.id)} aria-label={`${t("Move to next day")}: ${item.text}`} title={t("Move to next day")} className={cn("flex shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken disabled:opacity-50", btn)}>
                 <ArrowRightToLine className="size-4" strokeWidth={2.25} aria-hidden="true" />
               </button>
