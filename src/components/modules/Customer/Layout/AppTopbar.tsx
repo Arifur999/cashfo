@@ -74,7 +74,7 @@ export function AppTopbar() {
           </span>
         ))}
         <span aria-current="page" className="truncate text-title text-ink">
-          {record ?? (crumb ? t(crumb.heading) : "")}
+          {record ?? extras?.heading ?? (crumb ? t(crumb.heading) : "")}
         </span>
       </nav>
       <span className={cn("flex-1 lg:hidden", titled && "max-md:hidden")} />

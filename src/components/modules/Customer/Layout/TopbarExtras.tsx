@@ -9,6 +9,9 @@ import { createContext, useContext, useLayoutEffect, useState, type Dispatch, ty
 // and the bar reads it back.
 export interface TopbarExtrasValue {
   record?: string;
+  // A page whose name differs from its menu entry ("New journal entry"
+  // under Journal entry) puts its own in the breadcrumb.
+  heading?: string;
   subtitle?: React.ReactNode;
   // Takes the account menu's place on a phone.
   action?: React.ReactNode;
@@ -26,12 +29,12 @@ export function TopbarProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TopbarExtras({ record, subtitle, action }: TopbarExtrasValue) {
+export function TopbarExtras({ record, heading, subtitle, action }: TopbarExtrasValue) {
   const setExtras = useContext(SetExtrasContext);
   // Before paint, so the bar never shows a stale part from the last page.
   useLayoutEffect(() => {
-    setExtras({ record, subtitle, action });
-  }, [record, subtitle, action, setExtras]);
+    setExtras({ record, heading, subtitle, action });
+  }, [record, heading, subtitle, action, setExtras]);
   useLayoutEffect(() => () => setExtras(null), [setExtras]);
   return null;
 }

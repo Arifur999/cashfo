@@ -13,6 +13,7 @@ import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { accountDisplayName } from "@/lib/customer/accountDisplay";
 import type { AccountGroup, LanguagePreference } from "@/lib/customer/api";
 import { ACCOUNT_TYPE_META, emptyLine, flattenAccounts, journalEntries, journalTotals, type JournalLine } from "@/lib/customer/booksDisplay";
@@ -69,6 +70,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
 
   return (
     <PageFrame className="gap-6">
+      <TopbarExtras heading={t("New journal entry")} />
       <PageHeader
         eyebrow={t("Books")}
         tone="neutral"
