@@ -12,13 +12,18 @@ import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import Logo from "@/components/smartly/Logo";
+import type { WorkspaceFigure } from "@/lib/customer/accounts";
 import type { CurrentUser, UserBusiness, WorkspaceListItem } from "@/lib/customer/api";
 import { switchWorkspaceAction } from "@/lib/customer/businessActions";
+import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface ChooseWorkspaceClientProps {
   user: CurrentUser;
+  // What each workspace's wallets hold, by workspace id; null when it
+  // couldn't be read (a PIN-locked one isn't asked).
+  figures: Record<string, WorkspaceFigure | null>;
 }
 
 // null means no trial at all (trialEndsAt was null, caller never invokes
@@ -37,7 +42,7 @@ const ROLE_LABEL: Record<UserBusiness["role"], string> = { OWNER: "Owner", ACCOU
 // user with more than one workspace, every time they log in. Pick a card,
 // then Open; a PIN-locked one asks for its PIN first. Deliberately does NOT
 // use useAuth()/AuthProvider: this page sits outside the customer shell.
-export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
+export function ChooseWorkspaceClient({ user, figures }: ChooseWorkspaceClientProps) {
   const router = useRouter();
   const { t } = useLocale();
   const [isPending, startTransition] = useTransition();
@@ -93,6 +98,7 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
           const on = business.id === selectedId;
           const displayName = business.isDefault ? user.name : business.name;
           const trial = business.trialEndsAt ? trialLabel(business.trialEndsAt, t) : null;
+          const figure = figures[business.id];
           return (
             <button
               key={business.id}
@@ -138,8 +144,10 @@ export function ChooseWorkspaceClient({ user }: ChooseWorkspaceClientProps) {
                 <span className="text-small text-ink-muted">{t(isBusiness ? "Business workspace" : "Personal workspace")}</span>
               </div>
               <div className="flex flex-col gap-0.5 border-t border-surface-sunken pt-4">
-                <span className={cn("text-title font-bold", trial?.expired && "text-expense")}>{trial ? trial.text : t(ROLE_LABEL[business.role])}</span>
-                <span className="text-caption font-normal text-ink-muted">{business.currency}</span>
+                <span className="text-title font-bold tabular-nums">{figure ? formatCurrency(figure.balance, business.currency) : t(ROLE_LABEL[business.role])}</span>
+                <span className={cn("text-caption font-normal text-ink-muted", trial?.expired && "text-expense")}>
+                  {trial ? trial.text : figure ? `${figure.wallets} ${t(figure.wallets === 1 ? "wallet" : "wallets")}` : business.currency}
+                </span>
               </div>
             </button>
           );
