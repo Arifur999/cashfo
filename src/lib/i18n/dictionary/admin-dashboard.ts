@@ -10,7 +10,6 @@ export const adminDashboardDictionary: Record<string, string> = {
   "money that needs you today.": "আজ যে টাকার দিকে নজর দরকার।",
   "words and pages that need you.": "যে শব্দ আর পাতা আপনার নজর চায়।",
   "Needs you now": "এখনই দেখুন",
-  "Tickets waiting": "অপেক্ষায় থাকা টিকিট",
   "Open inbox": "ইনবক্স খুলুন",
   "Failed payments": "ব্যর্থ পেমেন্ট",
   "See payments": "পেমেন্ট দেখুন",
@@ -21,7 +20,6 @@ export const adminDashboardDictionary: Record<string, string> = {
   "Not fixed yet": "এখনো ঠিক হয়নি",
   "The oldest has waited": "সবচেয়ে পুরোনোটা অপেক্ষা করছে",
   hours: "ঘণ্টা",
-  "marked urgent": "জরুরি চিহ্নিত",
   "Waiting for a retry or a refund": "আবার চেষ্টা বা ফেরতের অপেক্ষায়",
   "Open, waiting for review": "খোলা, যাচাইয়ের অপেক্ষায়",
   "Total users": "মোট ব্যবহারকারী",
@@ -107,4 +105,7 @@ export const adminDashboardDictionary: Record<string, string> = {
   version: "সংস্করণ",
   updated: "হালনাগাদ",
   "{missing} of {total} words missing": "{total}টির মধ্যে {missing}টি শব্দ বাকি",
+  "Tickets with no reply": "উত্তর না পাওয়া টিকিট",
+  "Active in 30 days": "৩০ দিনে সক্রিয়",
+  "{count} has no one assigned": "{count}টির দায়িত্বে কেউ নেই",
 };
