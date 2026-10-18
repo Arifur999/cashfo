@@ -33,7 +33,7 @@ const PublicShell = async ({ children }: { children: React.ReactNode }) => {
           <Logo height={36} alt="" />
         </Link>
         <span className="flex-1" />
-        <LocalePill />
+        <LocalePill fullNames />
         {signedIn ? (
           <Button asChild>
             <Link href="/">{t("Open the app")}</Link>
