@@ -11,11 +11,11 @@ import Input from "@/components/smartly/form/Input";
 import Textarea from "@/components/smartly/form/Textarea";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { SavingsGoal, SavingsReminderChannel } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { createSavingsGoalAction, updateSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
 import { monthsLeft } from "@/lib/customer/savingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -39,6 +39,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
   const wide = useMediaQuery("(min-width: 768px)");
   const [name, setName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
+  const targetAmountField = useAmountField(targetAmount, setTargetAmount, currency);
   const [targetDate, setTargetDate] = useState("");
   const [reminderDate, setReminderDate] = useState("");
   const [reminderChannel, setReminderChannel] = useState<SavingsReminderChannel>("EMAIL");
@@ -126,8 +127,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
                   type="text"
                   inputMode="decimal"
                   size="lg"
-                  value={targetAmount}
-                  onChange={(event) => setTargetAmount(normalizeMoneyInput(event.target.value))}
+                  {...targetAmountField}
                   placeholder="0"
                   leading={<span className="flex h-12 w-11 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                   frameClassName="gap-0 overflow-hidden pl-0"

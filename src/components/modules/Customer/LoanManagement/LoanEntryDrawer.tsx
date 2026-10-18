@@ -10,11 +10,11 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, Contact } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { balanceAfterEntry, DIRECTION_META, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, type LoanEntryKind } from "@/lib/customer/loanDisplay";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
@@ -48,6 +48,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const [accountId, setAccountId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [note, setNote] = useState("");
   const [wallets, setWallets] = useState<Account[]>([]);
   const [walletsError, setWalletsError] = useState<string | null>(null);
@@ -185,8 +186,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                   type="text"
                   inputMode="decimal"
                   size="lg"
-                  value={amount}
-                  onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+                  {...amountField}
                   placeholder="0"
                   autoFocus
                   leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}

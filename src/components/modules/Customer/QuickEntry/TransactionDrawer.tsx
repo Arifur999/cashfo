@@ -12,6 +12,7 @@ import Input from "@/components/smartly/form/Input";
 import Kbd from "@/components/smartly/Kbd";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, BudgetOverview } from "@/lib/customer/api";
 import { getBudgetCategoryNamesAction, getBudgetOverviewAction, type BudgetCategoryName } from "@/lib/customer/budgetActions";
@@ -26,7 +27,6 @@ import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import DayInput from "@/components/smartly/form/DayInput";
-import { useAmountField } from "@/hooks/useAmountField";
 
 export type EntryKind = "INCOME" | "EXPENSE" | "TRANSFER";
 

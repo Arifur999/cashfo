@@ -10,6 +10,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupExpense, GroupExpenseCategoryOption, GroupMember } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
@@ -18,7 +19,6 @@ import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import type { MonthRange } from "@/lib/customer/groupDisplay";
 import { createGroupExpenseAction, updateGroupExpenseAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { dayInMonth } from "./ContributionDrawer";
@@ -47,6 +47,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
   const wide = useMediaQuery("(min-width: 768px)");
   const active = members.filter((member) => member.status === "ACTIVE");
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [date, setDate] = useState(today);
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
@@ -125,8 +126,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
                   id="exp-amount"
                   size="lg"
                   inputMode="decimal"
-                  value={amount}
-                  onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+                  {...amountField}
                   autoFocus
                   placeholder="0"
                   className="text-h3 font-bold tabular-nums"

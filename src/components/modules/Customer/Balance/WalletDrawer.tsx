@@ -9,11 +9,11 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { createAccountAction, updateAccountAction } from "@/lib/customer/accountActions";
 import type { Account } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { savingsPalette } from "@/lib/customer/savingsDisplay";
 import { maskAccountNumber, WALLET_TYPE_META, WALLET_TYPES, walletPalette, walletType, type WalletType } from "@/lib/customer/walletVisuals";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -44,6 +44,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
   const [name, setName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [openingBalance, setOpeningBalance] = useState("");
+  const openingBalanceField = useAmountField(openingBalance, setOpeningBalance, currency);
   const [isPending, startTransition] = useTransition();
 
   // Populate the instant the drawer opens, or switches to another wallet.
@@ -176,8 +177,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
                   size="xl"
                   type="text"
                   inputMode="decimal"
-                  value={openingBalance}
-                  onChange={(event) => setOpeningBalance(normalizeMoneyInput(event.target.value))}
+                  {...openingBalanceField}
                   placeholder="0"
                   aria-describedby="wallet-opening-hint"
                   leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}

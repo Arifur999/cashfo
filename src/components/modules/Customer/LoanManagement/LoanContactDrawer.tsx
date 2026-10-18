@@ -10,12 +10,12 @@ import Chip from "@/components/smartly/Chip";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
 import { createContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { DIRECTION_META, LOAN_KIND_LABELS } from "@/lib/customer/loanDisplay";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +54,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
   const [address, setAddress] = useState("");
   const [balanceKind, setBalanceKind] = useState<BalanceKind>("ZERO");
   const [openingBalance, setOpeningBalance] = useState("");
+  const openingBalanceField = useAmountField(openingBalance, setOpeningBalance, currency);
   const [isPending, startTransition] = useTransition();
 
   // Populate the instant the drawer opens, or switches to another contact.
@@ -235,8 +236,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
                       size="xl"
                       type="text"
                       inputMode="decimal"
-                      value={openingBalance}
-                      onChange={(event) => setOpeningBalance(normalizeMoneyInput(event.target.value))}
+                      {...openingBalanceField}
                       placeholder="0"
                       aria-label={t("Opening balance")}
                       autoFocus

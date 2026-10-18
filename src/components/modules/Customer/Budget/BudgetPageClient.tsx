@@ -16,6 +16,7 @@ import PageHeader from "@/components/smartly/PageHeader";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useAmountField } from "@/hooks/useAmountField";
 import type { BudgetCategorySummary, BudgetOverview } from "@/lib/customer/api";
 import { deleteBudgetCategoryAction, updateBudgetTargetAction } from "@/lib/customer/budgetActions";
 import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
@@ -23,7 +24,6 @@ import { budgetTone } from "@/lib/budgetTone";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency, currencySymbol } from "@/lib/customer/currency";
 import { daysLeftInMonth } from "@/lib/customer/homeInsights";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CategoryDrawer } from "./CategoryDrawer";
@@ -368,6 +368,7 @@ function MonthlyBudgetDialog({ open, onClose, businessId, current, currency, mon
   const { t } = useLocale();
   const router = useRouter();
   const [value, setValue] = useState(current ? String(current) : "");
+  const valueField = useAmountField(value, setValue, currency);
   const [isPending, startTransition] = useTransition();
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
@@ -401,7 +402,7 @@ function MonthlyBudgetDialog({ open, onClose, businessId, current, currency, mon
               {t("How much you plan to spend in")} {monthName}. {t("Categories share it.")}
             </DialogDescription>
           </div>
-          <Input id="budget-target" type="text" inputMode="decimal" size="lg" value={value} onChange={(event) => setValue(normalizeMoneyInput(event.target.value))} leading={<span className="text-body font-semibold">{currencySymbol(currency)}</span>} autoFocus aria-label={t("Monthly budget")} className="text-h3 font-semibold tabular-nums" />
+          <Input id="budget-target" type="text" inputMode="decimal" size="lg" {...valueField} leading={<span className="text-body font-semibold">{currencySymbol(currency)}</span>} autoFocus aria-label={t("Monthly budget")} className="text-h3 font-semibold tabular-nums" />
           <div className="flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}

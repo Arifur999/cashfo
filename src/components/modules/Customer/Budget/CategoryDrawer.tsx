@@ -10,6 +10,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { BudgetCategorySummary, BudgetCategoryType } from "@/lib/customer/api";
 import { createAssetCategoryAction, updateAssetCategoryAction } from "@/lib/customer/assetActions";
@@ -18,7 +19,6 @@ import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction } fr
 import { budgetCategoryHex, budgetCategoryIcon, budgetCategoryIconLabel, BUDGET_CATEGORY_COLORS, BUDGET_CATEGORY_ICONS, INCOME_CATEGORY_ICONS, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
   const [icon, setIcon] = useState<IconKey | null>(null);
   const [color, setColor] = useState<ColorKey>(BUDGET_CATEGORY_COLORS[0]);
   const [limit, setLimit] = useState("");
+  const limitField = useAmountField(limit, setLimit, currency);
   const [iconSearch, setIconSearch] = useState("");
   // Once an icon is picked by hand, typing a name never swaps it.
   const [iconTouched, setIconTouched] = useState(false);
@@ -231,8 +232,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                     id="cat-limit"
                     type="text"
                     inputMode="decimal"
-                    value={limit}
-                    onChange={(event) => setLimit(normalizeMoneyInput(event.target.value))}
+                    {...limitField}
                     aria-describedby={over > 0 ? "cat-limit-help" : undefined}
                     className="min-w-0 flex-1 bg-transparent px-4 text-h2 font-semibold text-ink tabular-nums outline-none placeholder:text-ink-faint"
                     placeholder="0"

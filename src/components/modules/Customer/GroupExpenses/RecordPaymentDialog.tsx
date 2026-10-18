@@ -9,12 +9,12 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupMember } from "@/lib/customer/api";
 import { currencySymbol, formatSignedCurrency } from "@/lib/customer/currency";
 import type { MonthRange, Transfer } from "@/lib/customer/groupDisplay";
 import { createGroupContributionAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { dayInMonth } from "./ContributionDrawer";
@@ -43,6 +43,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
   const [fromId, setFromId] = useState("");
   const [toId, setToId] = useState("");
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -126,8 +127,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                   id="pay-amount"
                   size="lg"
                   inputMode="decimal"
-                  value={amount}
-                  onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+                  {...amountField}
                   placeholder="0"
                   className="text-h3 font-bold tabular-nums"
                   leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}

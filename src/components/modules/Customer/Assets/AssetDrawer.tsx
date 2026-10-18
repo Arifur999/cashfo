@@ -11,12 +11,12 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, AssetCategoryOption } from "@/lib/customer/api";
 import { purchaseAssetAction } from "@/lib/customer/assetActions";
 import { categoryVisual } from "@/lib/customer/assetDisplay";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
@@ -49,6 +49,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
+  const priceField = useAmountField(price, setPrice, currency);
   const [walletId, setWalletId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [note, setNote] = useState("");
@@ -171,8 +172,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
                 type="text"
                 inputMode="decimal"
                 size="xl"
-                value={price}
-                onChange={(event) => setPrice(normalizeMoneyInput(event.target.value))}
+                {...priceField}
                 placeholder="0"
                 leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                 frameClassName="gap-0 overflow-hidden pl-0"
