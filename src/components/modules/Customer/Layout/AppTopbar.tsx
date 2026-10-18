@@ -17,7 +17,7 @@ import { AccountMenu } from "./AccountMenu";
 import { AddMenu } from "./AddMenu";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { NavDrawer } from "./NavDrawer";
-import { usePhoneTopbarExtras } from "./PhoneTopbarExtras";
+import { useTopbarExtras } from "./TopbarExtras";
 import { useNavSections } from "./SidebarNav";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -42,7 +42,11 @@ export function AppTopbar() {
   const location = findNavLocation(pathname, searchParams, sections);
   const crumb = location ? breadcrumbFor(location) : null;
   const [tasksOpen, setTasksOpen] = useState(false);
-  const extras = usePhoneTopbarExtras();
+  const extras = useTopbarExtras();
+  // A record page adds its record's name as the last part, and the page's
+  // own name joins the trail before it.
+  const record = extras?.record;
+  const trail = crumb ? (record ? [...crumb.crumbs, crumb.heading] : crumb.crumbs) : [];
   const titled = TITLED_ON_PHONE.has(pathname);
 
   const tasksLabel = openCount > 0 ? `${t("Today’s tasks")}, ${openCount} ${t("left")}` : t("Today’s tasks");
@@ -62,15 +66,15 @@ export function AppTopbar() {
       </Link>
 
       <nav aria-label={t("Breadcrumb")} className="hidden min-w-0 flex-1 items-center gap-2 text-body lg:flex">
-        {crumb && crumb.crumbs.length > 0 && <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", TONE_BG[crumb.tone])} />}
-        {crumb?.crumbs.map((part) => (
+        {crumb && trail.length > 0 && <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", TONE_BG[crumb.tone])} />}
+        {trail.map((part) => (
           <span key={part} className="flex items-center gap-2">
             <span className="whitespace-nowrap text-ink-muted">{t(part)}</span>
             <ChevronRight className="size-3.5 shrink-0 text-line-strong" aria-hidden="true" />
           </span>
         ))}
         <span aria-current="page" className="truncate text-title text-ink">
-          {crumb ? t(crumb.heading) : ""}
+          {record ?? extras?.heading ?? (crumb ? t(crumb.heading) : "")}
         </span>
       </nav>
       <span className={cn("flex-1 lg:hidden", titled && "max-md:hidden")} />

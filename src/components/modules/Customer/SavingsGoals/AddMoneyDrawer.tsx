@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GoalRing } from "./GoalRing";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface AddMoneyDrawerProps {
   open: boolean;
@@ -165,7 +166,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="add-date" label={label(t("Date"))}>
-                <Input id="add-date" type="date" size="md" value={date} onChange={(event) => setDate(event.target.value)} max={getAppToday()} leading={<CalendarDays />} className="px-0" frameClassName="px-3" />
+                <DayInput id="add-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
               </Field>
               <Field htmlFor="add-note" label={label(t("Note"), true)}>
                 <Input id="add-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. October deposit")} className="px-0" frameClassName="px-3" />

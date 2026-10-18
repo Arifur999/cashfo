@@ -7,8 +7,9 @@ import { shiftDay, WEEKDAY_LONG, weekdayOf } from "./habitDisplay";
 // English, passed through t().
 export const STATUS_LABEL: Record<SkillStatus, string> = { WANT_TO_LEARN: "Want to learn", LEARNING: "Learning", COMPLETED: "Completed" };
 
-// The table's order: what is going on first, then the queue, then the done.
-export const STATUS_ORDER: SkillStatus[] = ["LEARNING", "WANT_TO_LEARN", "COMPLETED"];
+// The All skills table, as the Skills board lists it: what you're learning,
+// what you've finished, then what's waiting.
+export const STATUS_ORDER: SkillStatus[] = ["LEARNING", "COMPLETED", "WANT_TO_LEARN"];
 
 export const MAX_LESSONS = 2000;
 export const MIN_MINUTES = 30;

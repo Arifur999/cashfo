@@ -4,6 +4,7 @@ import {
   endOfDayIso,
   formatDate,
   formatDayName,
+  formDayLabel,
   formatElapsed,
   formatLogTime,
   formatRecentDateTime,
@@ -132,5 +133,18 @@ describe("formatDayName / formatLogTime / formatTimeRange", () => {
     expect(formatTimeRange("2026-10-02T05:50:00Z", "2026-10-02T06:10:00Z", { now })).toBe("11:50 am – 12:10 pm");
     expect(formatTimeRange("2026-10-01T13:30:00Z", "2026-10-01T13:42:00Z", { now })).toBe("Yesterday, 7:30 – 7:42 pm");
     expect(formatTimeRange("2026-10-02T08:43:10Z", "2026-10-02T08:43:50Z", { now })).toBe("2:43 pm");
+  });
+});
+
+describe("formDayLabel", () => {
+  it("writes today with its date, any other day in full", () => {
+    expect(formDayLabel("2026-10-02", "2026-10-02", "Today")).toBe("Today, 2 Oct");
+    expect(formDayLabel("2026-09-30", "2026-10-02", "Today")).toBe("30 Sep 2026");
+    expect(formDayLabel("2027-06-30", "2026-10-02", "আজ")).toBe("30 Jun 2027");
+    expect(formDayLabel("2026-10-02", "2026-10-02", "আজ")).toBe("আজ, 2 Oct");
+  });
+
+  it("is empty when no day is picked", () => {
+    expect(formDayLabel("", "2026-10-02", "Today")).toBe("");
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface AssetDrawerProps {
   open: boolean;
@@ -183,7 +184,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="asset-date" label={label(buying ? t("Date") : t("Bought on"))}>
-                <Input id="asset-date" type="date" size="md" value={date} onChange={(event) => setDate(event.target.value)} max={getAppToday()} leading={<CalendarDays />} className="px-0" frameClassName="px-3" />
+                <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
               </Field>
               <Field htmlFor="asset-note" label={label(t("Note"), true)}>
                 <Input id="asset-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />

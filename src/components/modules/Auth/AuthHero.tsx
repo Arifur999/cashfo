@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, CircleCheckBig, Globe, KeyRound, Landmark, Lock, TrendingUp, Wallet } from "lucide-react";
+import { Banknote, CircleCheckBig, Globe, Landmark, Lock, TrendingUp, Wallet } from "lucide-react";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import Logo from "@/components/smartly/Logo";
@@ -112,7 +112,7 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
         <div className="relative mt-auto flex flex-col gap-4">
           {[
             { icon: <Wallet />, text: "Money, loans and savings in one place" },
-            { icon: <KeyRound />, text: "A separate password for your vault" },
+            { icon: <Lock />, text: "A separate password for your vault" },
             { icon: <Globe />, text: "English and বাংলা, light and dark" },
           ].map((item) => (
             <div key={item.text} className="flex items-center gap-3 text-body text-mint-50">

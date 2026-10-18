@@ -22,6 +22,7 @@ import { AddRowDialog } from "../Tracker/AddRowDialog";
 import { DayTotal, SheetBox } from "../Tracker/SheetBox";
 import { withCheck } from "../trackerChecks";
 import { RamadanSetupDialog } from "./RamadanSetupDialog";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 
 interface RamadanSheetPageClientProps {
   tracker: HabitMonthTracker;
@@ -84,6 +85,7 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
 
   return (
     <PageFrame className="gap-4">
+      <TopbarExtras record={title} />
       <PageHeader
         eyebrow={
           <span className="flex flex-col gap-1">

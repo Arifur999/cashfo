@@ -26,6 +26,7 @@ import { relativeDayKey } from "@/lib/customer/transactionRows";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import DayInput from "@/components/smartly/form/DayInput";
 
 export type EntryKind = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -310,7 +311,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           {isTransfer && <WalletPicker label={t("To")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} />}
           <div className="grid grid-cols-[170px_minmax(0,1fr)] gap-3">
             <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
-              <Input id="txn-date" type="date" size="md" value={date} onChange={(event) => setDate(event.target.value)} leading={<CalendarDays />} max={getAppToday()} />
+              <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
             </Field>
             <Field
               htmlFor="txn-note"

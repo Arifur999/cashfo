@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, KeyRound, UserRound } from "lucide-react";
+import { KeyRound, UserRound } from "lucide-react";
 import { SOFT_TONE } from "@/components/smartly/tones";
 import type { VaultEntrySummary } from "@/lib/customer/api";
 import { avatarLetter } from "@/lib/customer/vaultDisplay";
@@ -19,8 +19,8 @@ interface EntryRowProps {
 const ICON_BUTTON = "flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-cream hover:text-ink disabled:opacity-40 md:size-8 md:text-ink-muted [&_svg]:size-4.5 md:[&_svg]:size-4";
 
 // One login in the list: a letter, the name and the username, and copy
-// buttons for the username and the password. Phones get the board's taller
-// row, a person for the username and 44px buttons.
+// buttons for the username (a person) and the password (a key). Phones get
+// the board's taller row and 44px buttons.
 export function EntryRow({ entry, selected, onSelect, onCopyUsername, onCopyPassword }: EntryRowProps) {
   const { t } = useLocale();
   return (
@@ -33,8 +33,7 @@ export function EntryRow({ entry, selected, onSelect, onCopyUsername, onCopyPass
         </span>
       </button>
       <button type="button" onClick={onCopyUsername} disabled={!entry.usernameOrEmail} aria-label={`${t("Copy username for")} ${entry.title}`} title={t("Copy username")} className={ICON_BUTTON}>
-        <UserRound className="md:hidden" aria-hidden="true" />
-        <Copy className="max-md:hidden" aria-hidden="true" />
+        <UserRound aria-hidden="true" />
       </button>
       <button type="button" onClick={onCopyPassword} aria-label={`${t("Copy password for")} ${entry.title}`} title={t("Copy password")} className={ICON_BUTTON}>
         <KeyRound aria-hidden="true" />

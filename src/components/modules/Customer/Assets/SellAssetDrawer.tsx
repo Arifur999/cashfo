@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Info, X } from "lucide-react";
+import { Info, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import DayInput from "@/components/smartly/form/DayInput";
 
 const BOX = { income: "bg-mint-50 text-income", expense: "bg-expense-soft text-expense", neutral: "bg-cream text-ink-2" } as const;
 
@@ -184,7 +185,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="sell-date" label={label(t("Date"))}>
-                <Input id="sell-date" type="date" size="md" value={date} onChange={(event) => setDate(event.target.value)} max={getAppToday()} leading={<CalendarDays />} className="px-0" frameClassName="px-3" />
+                <DayInput id="sell-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
               </Field>
               <Field htmlFor="sell-note" label={label(t("Note"), true)}>
                 <Input id="sell-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Sold to a colleague")} className="px-0" frameClassName="px-3" />

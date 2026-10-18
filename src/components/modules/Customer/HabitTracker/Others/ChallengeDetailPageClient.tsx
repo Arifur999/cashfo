@@ -20,6 +20,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AddRowDialog } from "../Tracker/AddRowDialog";
 import { withCheck } from "../trackerChecks";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 
 interface ChallengeDetailPageClientProps {
   tracker: HabitMonthTracker;
@@ -82,6 +83,7 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
 
   return (
     <PageFrame className="gap-6">
+      <TopbarExtras record={name} />
       <PageHeader
         eyebrow={
           <span className="flex flex-col gap-1">

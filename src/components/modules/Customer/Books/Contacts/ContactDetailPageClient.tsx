@@ -21,6 +21,7 @@ import { ContactDrawer } from "./ContactDrawer";
 import { PaymentDrawer } from "./PaymentDrawer";
 import { SaleDrawer } from "./SaleDrawer";
 import { StatementTable, type StatementSide } from "./StatementTable";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 
 interface ContactDetailPageClientProps {
   businessId: string;
@@ -75,6 +76,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, transacti
     <PageFrame className="gap-6">
       <div className="flex flex-col gap-1">
         <BackLink href="/contacts">{t("All customers and suppliers")}</BackLink>
+        <TopbarExtras record={contact.name} />
         <PageHeader
           eyebrow={`${t("Books")} › ${t("Customers and suppliers")}`}
           tone="neutral"

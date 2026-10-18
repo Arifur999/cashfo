@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Info, X } from "lucide-react";
+import { Info, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { dayInMonth } from "./ContributionDrawer";
 import { MemberPicker } from "./MemberPicker";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface ExpenseDrawerProps {
   open: boolean;
@@ -134,7 +135,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
                 />
               </Field>
               <Field htmlFor="exp-date" label={label(t("Date"))}>
-                <Input id="exp-date" type="date" size="lg" value={date} onChange={(event) => setDate(event.target.value)} max={today} leading={<CalendarDays />} className="px-0" frameClassName="px-3" />
+                <DayInput id="exp-date" size="lg" value={date} onChange={setDate} max={today} />
               </Field>
             </div>
 

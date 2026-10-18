@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ContactPicker } from "./ContactPicker";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface LoanEntryDrawerProps {
   open: boolean;
@@ -173,7 +174,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px]">
               <WalletPicker label={t(meta.walletLabel)} size="lg" wallets={wallets} value={accountId} onChange={setAccountId} after={walletAfter} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
               <Field htmlFor="loan-date" label={label(t("Date"))}>
-                <Input id="loan-date" type="date" size="xl" value={date} onChange={(event) => setDate(event.target.value)} leading={<CalendarDays />} max={getAppToday()} className="px-0" frameClassName="px-3" />
+                <DayInput id="loan-date" size="xl" value={date} onChange={setDate} max={getAppToday()} />
               </Field>
             </div>
 
