@@ -50,7 +50,7 @@ const GRID = "md:grid-cols-[minmax(0,1fr)_190px_160px_140px_80px]";
 // Transactions: the filters, the totals strip, and the list grouped by
 // day with each day's net, newest first.
 export function TransactionsPageClient({ businessId, transactions, accounts, categories, meta, currency, today, totals, canManage }: TransactionsPageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [addOpen, setAddOpen] = useState(false);
@@ -151,7 +151,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             {groups.map((group) => (
               <div key={group.day}>
                 <div className="flex h-9.5 items-center justify-between border-b border-surface-sunken bg-cream px-6 text-caption font-semibold">
-                  <span className="text-ink-2">{dayHeading(group.day, today, t)}</span>
+                  <span className="text-ink-2">{dayHeading(group.day, today, t, locale)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>
                 {group.rows.map((row) => (
@@ -167,7 +167,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             {groups.map((group) => (
               <div key={group.day}>
                 <div className="flex justify-between px-1 pt-4 pb-2 text-small leading-[normal] font-semibold text-ink-2">
-                  <span>{dayHeading(group.day, today, t)}</span>
+                  <span>{dayHeading(group.day, today, t, locale)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>
                 <Card padding="none" elevated={false} className="overflow-hidden">
@@ -294,7 +294,7 @@ function Pagination({ page, totalPages, rangeStart, rangeEnd, total, onPage, cla
   return (
     <div className={cn("flex items-center justify-between px-6 py-3 text-small text-ink-muted", className)}>
       <span>
-        {t("Showing")} {rangeStart}–{rangeEnd} {t("of")} {total}
+        {t("Showing {from}–{to} of {total}", { from: rangeStart, to: rangeEnd, total })}
       </span>
       <div className="flex items-center gap-2">
         <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label={t("Previous page")} className="flex size-8 items-center justify-center rounded-md border border-line bg-surface text-ink-2 disabled:opacity-50">

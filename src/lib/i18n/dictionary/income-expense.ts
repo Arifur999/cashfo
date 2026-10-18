@@ -23,6 +23,8 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Search description...": "বিবরণ খুঁজুন...",
   "All types": "সব ধরন",
   "All accounts": "সব হিসাব",
+  // The Transactions filter over wallets ("সব ওয়ালেট" on the Bangla board).
+  "All accounts@@wallets": "সব ওয়ালেট",
   "From date": "শুরুর তারিখ",
   "To date": "শেষের তারিখ",
   Icon: "আইকন",
@@ -137,7 +139,9 @@ export const incomeExpenseDictionary: Record<string, string> = {
 
   // The Smartly Transactions page, its filters, the void dialog and the detail page
   "New transaction": "নতুন লেনদেন",
-  "Every income and expense you've added, newest first.": "আপনার যোগ করা প্রতিটি আয় ও খরচ, নতুন থেকে পুরনো।",
+  "Every income and expense you've added, newest first.": "আপনার যোগ করা সব আয় ও ব্যয়, নতুনগুলো আগে।",
+  // The list's foot, as the Bangla board words it: "৮টির মধ্যে ১–৮".
+  "Showing {from}–{to} of {total}": "{total}টির মধ্যে {from}–{to}",
   Net: "নিট",
   voided: "বাতিল",
   "this page": "এই পাতা",

@@ -2,6 +2,7 @@ import type { Transaction } from "./api";
 import { formatDate } from "./date";
 import { cancelledLabel } from "./transactionDisplay";
 import { toDateInputValue } from "@/lib/date";
+import { banglaShortDay } from "@/lib/i18n/banglaDates";
 
 export interface CategoryMeta {
   name: string;
@@ -115,8 +116,9 @@ export function relativeDayKey(day: string, today: string): "Today" | "Yesterday
 }
 
 // "Yesterday · Thu, 1 Oct" or "Wed, 30 Sep", the way the list heads a day.
-export function dayHeading(day: string, today: string, t: (key: string) => string): string {
-  const short = formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM");
+export function dayHeading(day: string, today: string, t: (key: string) => string, locale: "en" | "bn" = "en"): string {
+  // "Wed, 30 Sep", or "বুধ, ৩০ সেপ্টে" in the Bangla board's own words.
+  const short = locale === "bn" ? banglaShortDay(day) : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM");
   const relative = relativeDayKey(day, today);
   return relative ? `${t(relative)} · ${short}` : short;
 }

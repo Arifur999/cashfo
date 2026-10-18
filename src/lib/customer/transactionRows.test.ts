@@ -106,6 +106,11 @@ describe("relativeDayKey / dayHeading", () => {
     expect(dayHeading("2026-10-01", "2026-10-02", t)).toBe("Yesterday · Thu, 1 Oct");
     expect(dayHeading("2026-09-30", "2026-10-02", t)).toBe("Wed, 30 Sep");
   });
+
+  it("writes the day in Bangla, as the Bangla board does", () => {
+    expect(dayHeading("2026-10-01", "2026-10-02", (key) => (key === "Yesterday" ? "গতকাল" : key), "bn")).toBe("গতকাল · বৃহস্পতি, ১ অক্টো");
+    expect(dayHeading("2026-09-30", "2026-10-02", (key) => key, "bn")).toBe("বুধ, ৩০ সেপ্টে");
+  });
 });
 
 describe("reversalTitle", () => {
