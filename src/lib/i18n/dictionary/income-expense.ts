@@ -149,7 +149,9 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Try a wider date range, or clear the filters.": "তারিখের পরিসর বাড়ান, বা ফিল্টার মুছুন।",
   "Add your first income or expense. It takes a few seconds, and your dashboard, budget and reports fill in from here.":
     "প্রথম আয় বা খরচ যোগ করুন। কয়েক সেকেন্ড লাগে, আর এখান থেকেই হোম, বাজেট ও রিপোর্ট ভরে উঠবে।",
-  "Add a wallet first": "আগে একটি ওয়ালেট যোগ করুন",
+  "Add first transaction": "প্রথম লেনদেন যোগ করুন",
+  "Set up categories first": "আগে ক্যাটাগরি সাজিয়ে নিন",
+  "Tip: press {key} anywhere to add a transaction": "টিপ: যেকোনো জায়গায় {key} চাপলেই লেনদেন যোগ করা যায়",
   "View details": "বিস্তারিত দেখুন",
   "Void transaction": "লেনদেন বাতিল করুন",
   "Previous page": "আগের পাতা",

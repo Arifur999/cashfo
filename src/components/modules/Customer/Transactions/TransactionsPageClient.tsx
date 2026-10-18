@@ -9,6 +9,7 @@ import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
+import Kbd from "@/components/smartly/Kbd";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Account, Transaction } from "@/lib/customer/api";
@@ -17,6 +18,7 @@ import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone
 import { formatSignedCurrency } from "@/lib/customer/currency";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { categoryIndex, dayHeading, describeTransaction, groupByDay, type TransactionRow } from "@/lib/customer/transactionRows";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { TransactionFilters } from "./TransactionFilters";
@@ -60,6 +62,9 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   const groups = groupByDay(transactions.map((transaction) => describeTransaction(transaction, categoriesById)));
   const filtered = searchParams.toString().replace(/page=\d+&?/, "") !== "";
 
+  // A new account: nothing to filter or total yet, so only the empty card.
+  const blank = !filtered && meta.total === 0;
+
   function goToPage(page: number) {
     const next = new URLSearchParams(searchParams.toString());
     next.set("page", String(page));
@@ -87,44 +92,46 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         className="md:mb-1"
       />
 
-      <TransactionFilters accounts={accounts} categories={categories} />
+      {!blank && <TransactionFilters accounts={accounts} categories={categories} />}
 
       {/* Two small cards on a phone; one strip of four on wider screens. */}
-      <Card padding="none" className="grid grid-cols-2 max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4">
-        <TotalCell label={t("Income")} phoneLabel={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
-          <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className={PHONE_FIGURE} />
-        </TotalCell>
-        <TotalCell label={t("Expense")} phoneLabel={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
-          <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className={PHONE_FIGURE} />
-        </TotalCell>
-        <TotalCell label={t("Net")} divided className="max-md:hidden">
-          <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-h2" />
-        </TotalCell>
-        <TotalCell label={t("Transactions")} divided className="max-md:hidden">
-          <span className="text-h3 text-ink tabular-nums md:text-h2">
-            {totals.count}
-            {totals.voided > 0 && (
-              <span className="text-small font-medium text-ink-muted">
-                {" "}
-                · {totals.voided} {t("voided")}
-              </span>
-            )}
-            {totals.scope === "page" && <span className="text-small font-medium text-ink-muted"> · {t("this page")}</span>}
-          </span>
-        </TotalCell>
-      </Card>
+      {!blank && (
+        <Card padding="none" className="grid grid-cols-2 max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4">
+          <TotalCell label={t("Income")} phoneLabel={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
+            <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className={PHONE_FIGURE} />
+          </TotalCell>
+          <TotalCell label={t("Expense")} phoneLabel={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
+            <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className={PHONE_FIGURE} />
+          </TotalCell>
+          <TotalCell label={t("Net")} divided className="max-md:hidden">
+            <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-h2" />
+          </TotalCell>
+          <TotalCell label={t("Transactions")} divided className="max-md:hidden">
+            <span className="text-h3 text-ink tabular-nums md:text-h2">
+              {totals.count}
+              {totals.voided > 0 && (
+                <span className="text-small font-medium text-ink-muted">
+                  {" "}
+                  · {totals.voided} {t("voided")}
+                </span>
+              )}
+              {totals.scope === "page" && <span className="text-small font-medium text-ink-muted"> · {t("this page")}</span>}
+            </span>
+          </TotalCell>
+        </Card>
+      )}
 
       {transactions.length === 0 ? (
-        <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-3 p-10 text-center">
+        <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-3 p-10 text-center md:min-h-160.5">
           <EmptyIllustration />
-          <h2 className="text-h3 text-ink">{filtered ? t("Nothing matches these filters") : t("No transactions yet")}</h2>
-          <p className="max-w-105 text-body leading-relaxed text-ink-muted">
+          <h2 className="text-h3 leading-[normal] tracking-normal text-ink">{filtered ? t("Nothing matches these filters") : t("No transactions yet")}</h2>
+          <p className="max-w-105 text-body leading-[1.55] text-ink-muted">
             {filtered ? t("Try a wider date range, or clear the filters.") : t("Add your first income or expense. It takes a few seconds, and your dashboard, budget and reports fill in from here.")}
           </p>
           <div className="mt-3 flex gap-3">
             <Button variant="action" onClick={() => setAddOpen(true)}>
-              <Plus strokeWidth={2.5} className="size-4" />
-              {t("New transaction")}
+              <Plus strokeWidth={2.5} className="size-3.75" />
+              {filtered ? t("New transaction") : t("Add first transaction")}
             </Button>
             {filtered ? (
               <Button variant="secondary" asChild>
@@ -132,10 +139,18 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
               </Button>
             ) : (
               <Button variant="secondary" asChild>
-                <Link href="/balance/wallet">{t("Add a wallet first")}</Link>
+                <Link href="/categories">{t("Set up categories first")}</Link>
               </Button>
             )}
           </div>
+          {/* The N key opens the Add menu; phones have no keyboard to press it on. */}
+          {!filtered && (
+            <p className="mt-4 hidden items-center gap-2 text-caption leading-[normal] font-normal text-ink-muted md:flex">
+              {fillNodes(t("Tip: press {key} anywhere to add a transaction"), {
+                key: <Kbd className="rounded-[4px] bg-cream py-px font-sans text-caption leading-[normal] font-semibold text-ink-2">N</Kbd>,
+              })}
+            </p>
+          )}
         </Card>
       ) : (
         <>
