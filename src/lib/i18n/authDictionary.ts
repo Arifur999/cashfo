@@ -170,4 +170,8 @@ export const bnAuthDictionary: Record<string, string> = {
   "Your vault password does not change.": "আপনার ভল্টের পাসওয়ার্ড বদলাবে না।",
   "Type it again": "আবার লিখুন",
   "You'll be signed out on every other device.": "অন্য সব ডিভাইস থেকে সাইন আউট হয়ে যাবেন।",
+  "Habits and prayers": "অভ্যাস ও নামাজ",
+  "Namaz, Ramadan, reading and your daily to-do list.": "নামাজ, রমজান, পড়া আর প্রতিদিনের কাজের তালিকা।",
+  "A vault for every password": "প্রতিটি পাসওয়ার্ডের জন্য একটি ভল্ট",
+  "Its own password, and it locks itself after a few minutes.": "আলাদা পাসওয়ার্ড, আর কয়েক মিনিট পর নিজেই লক হয়ে যায়।",
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, Globe, KeyRound, Landmark, Lock, PiggyBank, TrendingUp, Wallet } from "lucide-react";
+import { Banknote, CircleCheckBig, Globe, KeyRound, Landmark, Lock, TrendingUp, Wallet } from "lucide-react";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import Logo from "@/components/smartly/Logo";
@@ -18,7 +18,7 @@ const RINGS = (
 
 // The sign-in hero: what the product is, in a few lines, on the aurora
 // gradient. Login shows a few sample cards floating under the headline,
-// register three feature cards, and the narrower pages three short rows.
+// register four feature cards, and the narrower pages three short rows.
 export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
   const { t } = useLocale();
 
@@ -36,8 +36,9 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
           <ul className="relative flex max-w-130 flex-col gap-3">
             {[
               { icon: <Wallet />, color: "text-emerald", title: "Money that adds up", text: "Income, budgets that warn you early, savings goals and assets." },
-              { icon: <CreditCard />, color: "text-pillar-loans", title: "Dena-pawna, settled", text: "Know exactly who owes you, and whom you owe." },
-              { icon: <Landmark />, color: "text-pillar-habits", title: "Habits that stick", text: "Prayers, reading and daily goals, tracked in a tap." },
+              { icon: <Banknote />, color: "text-pillar-loans", title: "Dena-pawna, settled", text: "Know exactly who owes you, and whom you owe." },
+              { icon: <CircleCheckBig />, color: "text-pillar-habits", title: "Habits and prayers", text: "Namaz, Ramadan, reading and your daily to-do list." },
+              { icon: <Lock />, color: "text-info", title: "A vault for every password", text: "Its own password, and it locks itself after a few minutes." },
             ].map((item) => (
               <li key={item.title} className="flex items-start gap-4 rounded-lg bg-white/10 p-4">
                 <IconTile tone="white" className={cn("bg-surface", item.color)}>
@@ -122,7 +123,7 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
         </div>
       )}
 
-      {variant === "login" && (
+      {variant !== "narrow" && (
         <div className="relative mt-auto flex items-center gap-3 text-small text-mint-50">
           <span>
             {t("English and")}{" "}
@@ -135,12 +136,6 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
           <span aria-hidden="true">·</span>
           <span>{t("Made for Bangladesh")}</span>
         </div>
-      )}
-      {variant === "register" && (
-        <span className="relative mt-auto flex items-center gap-2 text-small text-mint-50">
-          <PiggyBank className="size-4" aria-hidden="true" />
-          {t("Free to start. Upgrade when you need more.")}
-        </span>
       )}
     </section>
   );
