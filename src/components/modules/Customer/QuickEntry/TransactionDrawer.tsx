@@ -20,13 +20,13 @@ import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
-import { normalizeMoneyInput } from "@/lib/customer/money";
 import { createExpenseAction, createIncomeAction, createTransferAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { relativeDayKey } from "@/lib/customer/transactionRows";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import DayInput from "@/components/smartly/form/DayInput";
+import { useAmountField } from "@/hooks/useAmountField";
 
 export type EntryKind = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -65,6 +65,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const wide = useMediaQuery("(min-width: 768px)");
   const [kind, setKind] = useState<EntryKind>(initialKind);
   const [amount, setAmount] = useState("");
+  const amountField = useAmountField(amount, setAmount, currency);
   const [category, setCategory] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [accountId, setAccountId] = useState("");
@@ -231,12 +232,11 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             id={amountId}
             type="text"
             inputMode="decimal"
-            value={amount}
-            onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+            {...amountField}
             placeholder="0"
             autoFocus
             aria-label={t("Amount")}
-            style={wide ? undefined : { width: `${Math.max(1, amount.length)}ch` }}
+            style={wide ? undefined : { width: `${Math.max(1, amountField.value.length)}ch` }}
             className={cn("min-w-0 bg-transparent font-bold text-ink tabular-nums outline-none placeholder:text-ink-faint", wide ? "flex-1 text-h1 tracking-[-0.02em]" : "box-content text-display-xl leading-[normal] caret-emerald")}
           />
         </div>

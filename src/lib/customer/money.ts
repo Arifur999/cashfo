@@ -1,3 +1,5 @@
+import { formatGrouped } from "./currency";
+
 // The API takes amounts with at most two decimals (0.01 up to
 // 999,999,999,999.99); a third decimal was only refused after submitting,
 // with the validator's own wording. Money inputs pass every keystroke through
@@ -20,4 +22,14 @@ export function toEnglishDigits(value: string): string {
 // anything that isn't a digit or the point dropped, two decimals at most.
 export function normalizeMoneyInput(value: string): string {
   return limitMoneyDecimals(toEnglishDigits(value).replace(/[^\d.]/g, ""));
+}
+
+// An amount as its input shows it while typing: the whole part grouped the
+// currency's way ("16,50,000" for taka), the point and decimals as typed.
+// Takes what normalizeMoneyInput leaves: digits and at most one point.
+export function groupAmountInput(raw: string, currency: string): string {
+  if (!raw) return raw;
+  const [whole, decimals] = raw.split(".");
+  const grouped = whole ? formatGrouped(whole, currency) : "";
+  return decimals === undefined ? grouped : `${grouped}.${decimals}`;
 }
