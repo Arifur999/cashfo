@@ -114,3 +114,17 @@ export async function createTransferAction(businessId: string, input: AddTransfe
     return res.data;
   }, "Failed to create transfer");
 }
+
+// Edit (decision D2): the API voids the entry ('Corrected') and posts the
+// corrected one in the same request, answering with the new transaction.
+export async function correctTransactionAction(
+  businessId: string,
+  transactionId: string,
+  kind: "INCOME" | "EXPENSE" | "TRANSFER",
+  input: AddIncomeInput | AddExpenseInput | AddTransferInput,
+): Promise<ActionResult<Transaction>> {
+  return callApi(async () => {
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${transactionId}/correct/${kind.toLowerCase()}`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the changes");
+}
