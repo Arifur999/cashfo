@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Transaction, TransactionEntry } from "./api";
-import { dayHeading, describeTransaction, groupByDay, relativeDayKey, reversalTitle } from "./transactionRows";
+import { dayHeading, describeTransaction, editableEntry, groupByDay, relativeDayKey, reversalTitle } from "./transactionRows";
 
 const entry = (overrides: Partial<TransactionEntry>): TransactionEntry => ({
   id: Math.random().toString(36).slice(2),
@@ -135,5 +135,42 @@ describe("reversalTitle", () => {
     const row = describeTransaction(reversal, categories);
     expect(row.title).toBe("Food & Dining");
     expect(row.cancelled).toBe("Reversal");
+  });
+});
+
+describe("editableEntry", () => {
+  it("opens an expense with its wallet, category, amount, day and note", () => {
+    const expense = transaction({
+      entries: [
+        entry({ accountId: "food", entryType: "DEBIT", amount: "2450.00", categoryId: "food", note: "Weekly groceries" }),
+        entry({ accountId: "cash", entryType: "CREDIT", amount: "2450.00" }),
+      ],
+    });
+    expect(editableEntry(expense, "Weekly groceries", "Food & Dining")).toEqual({
+      id: "t1",
+      kind: "EXPENSE",
+      title: "Weekly groceries",
+      day: "2026-10-01",
+      amount: 2450,
+      accountId: "cash",
+      toAccountId: "",
+      otherAccountId: "food",
+      category: "Food & Dining",
+      note: "Weekly groceries",
+    });
+  });
+
+  it("takes an income's wallet from the debit side and a transfer's note from its description", () => {
+    const income = transaction({ transactionType: "INCOME", entries: [entry({ accountId: "bank", entryType: "DEBIT", amount: "85000" }), entry({ accountId: "salary", entryType: "CREDIT", amount: "85000" })] });
+    expect(editableEntry(income, "Salary", null)).toMatchObject({ kind: "INCOME", accountId: "bank", otherAccountId: "salary", category: "" });
+    const transfer = transaction({ transactionType: "TRANSFER", description: "Card bill", entries: [entry({ accountId: "cash", entryType: "DEBIT", amount: "2000" }), entry({ accountId: "bank", entryType: "CREDIT", amount: "2000" })] });
+    expect(editableEntry(transfer, "Card bill", null)).toMatchObject({ kind: "TRANSFER", accountId: "bank", toAccountId: "cash", note: "Card bill" });
+  });
+
+  it("leaves out what Edit can't take", () => {
+    const plain = [entry({ entryType: "DEBIT", amount: "10" }), entry({ entryType: "CREDIT", amount: "10" })];
+    expect(editableEntry(transaction({ voidable: false, entries: plain }), "x", null)).toBeNull();
+    expect(editableEntry(transaction({ transactionType: "SALE", entries: plain }), "x", null)).toBeNull();
+    expect(editableEntry(transaction({ entries: [...plain, entry({ entryType: "CREDIT", amount: "0" })] }), "x", null)).toBeNull();
   });
 });
