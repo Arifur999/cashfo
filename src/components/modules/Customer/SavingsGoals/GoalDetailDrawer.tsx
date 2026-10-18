@@ -176,7 +176,6 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
             )}
             {(active || paused) && (
               <Button variant="secondary" onClick={() => onTogglePause(goal)} className="px-3 text-small">
-                {paused ? <Play /> : <Pause />}
                 {paused ? t("Resume") : t("Pause")}
               </Button>
             )}
@@ -187,7 +186,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
             )}
             <span className="flex-1" />
             {!closed && (
-              <Button onClick={() => onAddMoney(goal)} disabled={!canAddMoney || paused} title={canAddMoney ? undefined : t("Add a savings wallet first")}>
+              <Button variant="action" onClick={() => onAddMoney(goal)} disabled={!canAddMoney || paused} title={canAddMoney ? undefined : t("Add a savings wallet first")}>
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("Add money")}
               </Button>
