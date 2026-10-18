@@ -160,7 +160,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
           </Button>
           <span className="flex-1" />
           {!even && (
-            <Button type="button" onClick={onRecordPayment} className="px-5">
+            <Button type="button" variant="action" onClick={onRecordPayment} className="px-5">
               {t("Record a payment")}
             </Button>
           )}
