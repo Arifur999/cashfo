@@ -174,7 +174,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px]">
               <WalletPicker label={t(meta.walletLabel)} size="lg" wallets={wallets} value={accountId} onChange={setAccountId} after={walletAfter} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
               <Field htmlFor="loan-date" label={label(t("Date"))}>
-                <DayInput id="loan-date" size="xl" value={date} onChange={setDate} max={getAppToday()} />
+                <DayInput id="loan-date" size="xl" value={date} onChange={setDate} max={getAppToday()} className="gap-2 text-body" />
               </Field>
             </div>
 
@@ -190,11 +190,11 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                   placeholder="0"
                   autoFocus
                   leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                  frameClassName="gap-0 overflow-hidden pl-0"
+                  frameClassName="h-12.5 gap-0 overflow-hidden pl-0"
                   className="pl-3 text-h3 font-bold tabular-nums"
                 />
               </Field>
-              <Field htmlFor="loan-note" label={label(t("Note"), true)}>
+              <Field htmlFor="loan-note" label={label(t("Reference"), true)}>
                 <Input id="loan-note" size="lg" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Loan no. BL-2231")} className="px-0" frameClassName="px-3" />
               </Field>
             </div>
