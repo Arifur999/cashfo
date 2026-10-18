@@ -8,7 +8,8 @@ interface PasswordRevealButtonProps {
   visible: boolean;
   onToggle: () => void;
   // Fills the frame's height: 36 in a 44px field, 44 in a 52px one.
-  size?: "sm" | "lg";
+  // "auth" follows the sign-in fields: 44px on a phone, 36px wider.
+  size?: "sm" | "lg" | "auth";
 }
 
 // Goes in AppField's `append` slot of a password input.
@@ -21,7 +22,7 @@ const PasswordRevealButton = ({ visible, onToggle, size = "sm" }: PasswordReveal
       onClick={onToggle}
       aria-label={translate(visible ? "Hide password" : "Show password")}
       aria-pressed={visible}
-      className={cn("flex shrink-0 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink", size === "lg" ? "size-11 rounded-md" : "size-9")}
+      className={cn("flex shrink-0 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink", size === "lg" ? "size-11 rounded-md" : size === "auth" ? "size-11 rounded-md md:size-9 md:rounded-sm" : "size-9")}
     >
       {visible ? <EyeOff className="size-4.5" aria-hidden="true" /> : <Eye className="size-4.5" aria-hidden="true" />}
     </button>
