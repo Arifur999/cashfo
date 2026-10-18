@@ -163,8 +163,8 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Search transactions": "লেনদেন খুঁজুন",
   "Clear filters": "ফিল্টার মুছুন",
   Reason: "কারণ",
-  "At least": "কমপক্ষে",
-  characters: "অক্ষর",
+  "At least {count} characters. It's saved with the transaction.": "কমপক্ষে {count} অক্ষর। এটি লেনদেনের সাথে সংরক্ষিত থাকে।",
+  "At least {count} characters. It's saved with the transfer.": "কমপক্ষে {count} অক্ষর। এটি ট্রান্সফারের সাথে সংরক্ষিত থাকে।",
   "Entered twice by mistake": "ভুলে দুবার লেখা হয়েছে",
   "It stays in your history, crossed out, and the balances go back to what they were. Say why, so the record makes sense later.":
     "এটি ইতিহাসে কাটা অবস্থায় থাকবে, আর ব্যালেন্স আগের মতো হয়ে যাবে। কারণ লিখুন, যাতে পরে রেকর্ডটি বোঝা যায়।",

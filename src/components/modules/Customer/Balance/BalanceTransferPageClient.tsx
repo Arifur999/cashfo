@@ -217,6 +217,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
           description={t("Both wallets go back to their balances from before this transfer. It stays in your history, marked as voided.")}
           confirmLabel="Void transfer"
           doneLabel="Transfer voided"
+          reasonHint="At least {count} characters. It's saved with the transfer."
           detail={
             <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-4 py-3 text-body">
               <span className="flex min-w-0 items-center gap-2 font-medium text-ink">
