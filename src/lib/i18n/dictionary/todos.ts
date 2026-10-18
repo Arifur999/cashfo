@@ -62,4 +62,6 @@ export const todosDictionary: Record<string, string> = {
   "Type a task above and press Enter. It goes straight onto today's list.": "উপরে কাজটি লিখে Enter চাপুন। সরাসরি আজকের তালিকায় যোগ হবে।",
   "Enter adds · Esc closes": "Enter যোগ করে · Esc বন্ধ করে",
   "Add a task…": "একটা কাজ যোগ করুন…",
+  "Open in Habits": "অভ্যাসে খুলুন",
+  "All days": "সব দিন",
 };
