@@ -19,6 +19,7 @@ const ACTION_LABELS: Record<string, string> = {
   BUSINESS_PLAN_CHANGED: "Changed a workspace's plan",
   OWNER_DATA_RESET: "Reset an owner's workspace data",
   PASSWORD_RESET_BY_ADMIN: "Reset a password",
+  OWNER_PASSWORD_RESET: "Reset a user's password",
   PLAN_UPDATED: "Updated a subscription plan",
   PLAN_ARCHIVED: "Archived a subscription plan",
   PLAN_DELETED: "Deleted a subscription plan",

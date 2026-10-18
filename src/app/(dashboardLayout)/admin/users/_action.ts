@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { CUSTOMER_HOME_ROUTE } from "@/lib/authUtils";
 import { requireId, runAction, runValidatedAction } from "@/lib/runAction";
 import { getRefreshToken, setAuthCookies, stashAdminSession } from "@/lib/tokenUtils";
-import { activateOwner, changeOwnerPlan, suspendOwner } from "@/services/owner.services";
+import { activateOwner, changeOwnerPlan, resetOwnerPassword, suspendOwner } from "@/services/owner.services";
 import { startOwnerView } from "@/services/ownerView.services";
 import type { ApiErrorResponse } from "@/types/api.types";
 import { changeOwnerPlanServerZodSchema, suspendOwnerServerZodSchema } from "@/zod/owner.validation";
@@ -15,6 +15,9 @@ export const suspendOwnerAction = async (userId: string, values: unknown) =>
 
 export const activateOwnerAction = async (userId: string) =>
   requireId(userId, "owner") ?? runAction("Failed to activate owner", () => activateOwner(userId));
+
+export const resetOwnerPasswordAction = async (userId: string) =>
+  requireId(userId, "owner") ?? runAction("Failed to reset the password", () => resetOwnerPassword(userId));
 
 export const changeOwnerPlanAction = async (userId: string, values: unknown) =>
   requireId(userId, "owner") ??

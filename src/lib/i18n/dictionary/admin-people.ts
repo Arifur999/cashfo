@@ -105,4 +105,8 @@ export const adminPeopleDictionary: Record<string, string> = {
   "Last active, newest first": "শেষ সক্রিয়, নতুনগুলো আগে",
   "Joined, newest first": "যোগদান, নতুনরা আগে",
   "Name, A to Z": "নাম, A থেকে Z",
+  "Reset {name}'s password?": "{name}-এর পাসওয়ার্ড রিসেট করবেন?",
+  "They're signed out on every device and sign in again with a temporary password you give them. You'll see it once.": "সব ডিভাইস থেকে তাঁকে সাইন আউট করা হবে; আপনার দেওয়া অস্থায়ী পাসওয়ার্ড দিয়ে তিনি আবার সাইন ইন করবেন। পাসওয়ার্ডটি আপনি একবারই দেখবেন।",
+  "Failed to reset the password": "পাসওয়ার্ড রিসেট করা যায়নি",
+  "Reset a user's password": "ব্যবহারকারীর পাসওয়ার্ড রিসেট করেছেন",
 };
