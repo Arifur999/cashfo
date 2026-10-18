@@ -28,7 +28,7 @@ const AuthShell = ({ hero, notice, children }: AuthShellProps) => (
         <Link href="/" aria-label={`${BRAND_NAME} home`} className="rounded-md lg:hidden">
           <Logo height={38} alt="" />
         </Link>
-        <LocalePill compactOnPhone />
+        <LocalePill authHeader />
       </header>
       {hero === "login" && <AuthHeroCard />}
       {/* id + tabIndex give the root layout's skip link a focus target. */}
