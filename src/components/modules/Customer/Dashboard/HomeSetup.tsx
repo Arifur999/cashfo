@@ -52,12 +52,12 @@ export function HomeSetup({ hasWallet, hasTransaction, balance, currency, onAddT
       <section aria-labelledby="setup-title" className="relative grid items-center gap-6 overflow-hidden rounded-xl bg-aurora p-5 text-white md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:gap-8 md:p-8">
         <span aria-hidden="true" className="absolute -top-35 -right-30 size-105 rounded-full border border-white/16" />
         <div className="relative flex flex-col gap-3">
-          <span className="text-body leading-[normal] text-mint-200">{t("Total balance")}</span>
+          <span className="text-body text-mint-200">{t("Total balance")}</span>
           <span className="text-display tabular-nums md:text-display-xl">{formatCurrency(balance, currency)}</span>
-          <h2 id="setup-title" className="text-h2">
+          <h2 id="setup-title" className="text-h2 leading-7">
             {t("Let's set up your money")}
           </h2>
-          <span className="text-body text-mint-50">
+          <span className="text-body leading-5 text-mint-50">
             {done} {t("of")} 3 {t("done")} · {t("takes about two minutes")}
           </span>
           <span className="h-2 max-w-80 overflow-hidden rounded-full bg-white/18">
@@ -77,8 +77,8 @@ export function HomeSetup({ hasWallet, hasTransaction, balance, currency, onAddT
                   <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-small font-extrabold", isNext ? "bg-forest text-white" : "border-[1.5px] border-white/60")}>{index + 1}</span>
                 )}
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <b className={cn("text-body font-bold", step.done && "line-through decoration-white/50")}>{t(step.title)}</b>
-                  <span className={cn("text-small leading-[normal]", isNext ? "text-ink-muted" : "text-mint-50")}>{t(step.text)}</span>
+                  <b className={cn("text-body leading-5 font-bold", step.done && "line-through decoration-white/50")}>{t(step.title)}</b>
+                  <span className={cn("text-small", isNext ? "text-ink-muted" : "text-mint-50")}>{t(step.text)}</span>
                 </span>
                 {isNext && step.cta && (step.href ? (
                   <Button size="lg" asChild className="hidden sm:inline-flex">
@@ -103,8 +103,8 @@ export function HomeSetup({ hasWallet, hasTransaction, balance, currency, onAddT
               <IconTile tone={card.tone} size={40}>
                 {card.icon}
               </IconTile>
-              <b className="text-title font-semibold text-ink">{t(card.title)}</b>
-              <span className="text-body text-ink-muted">{t(card.text)}</span>
+              <b className="text-title leading-5.5 font-semibold text-ink">{t(card.title)}</b>
+              <span className="text-body leading-5 text-ink-muted">{t(card.text)}</span>
               <Button variant="soft" size="sm" asChild className="mt-1 px-4">
                 <Link href={card.href}>{t(card.cta)}</Link>
               </Button>
@@ -123,9 +123,9 @@ export function HomeSetup({ hasWallet, hasTransaction, balance, currency, onAddT
                 <IconTile tone={card.tone} size={40}>
                   {card.icon}
                 </IconTile>
-                <b className="text-title font-semibold text-ink">{t(card.title)}</b>
-                <span className="text-body text-ink-muted">{t(card.text)}</span>
-                <span className={cn("mt-auto text-body leading-[normal] font-semibold", TONE_TEXT.money)}>{t(card.cta)} →</span>
+                <b className="text-title leading-5.5 font-semibold text-ink">{t(card.title)}</b>
+                <span className="text-body leading-5 text-ink-muted">{t(card.text)}</span>
+                <span className={cn("mt-auto text-body font-semibold", TONE_TEXT.money)}>{t(card.cta)} →</span>
               </Link>
             </Card>
           ))}

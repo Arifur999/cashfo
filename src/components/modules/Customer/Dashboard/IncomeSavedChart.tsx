@@ -39,8 +39,8 @@ export function IncomeSavedChart({ points, currency, monthName, className }: Inc
     <Card className={cn("flex flex-col gap-4 p-5", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <h3 className="text-h3 text-ink">{t("Income and what you kept")}</h3>
-          <span className="text-small text-ink-muted">{t("Last 6 months")}</span>
+          <h3 className="text-h3 leading-6 text-ink">{t("Income and what you kept")}</h3>
+          <span className="text-small leading-4.5 text-ink-muted">{t("Last 6 months")}</span>
         </div>
         <span className="flex gap-4 text-caption text-ink-2">
           <span className="flex items-center gap-2">
@@ -95,7 +95,7 @@ export function IncomeSavedChart({ points, currency, monthName, className }: Inc
       </div>
 
       {current && Number(current.savings) > 0 && (
-        <p className="rounded-md bg-mint-50 px-4 py-3 text-body text-brand-ink">
+        <p className="rounded-md bg-mint-50 px-4 py-3 text-body leading-5 text-brand-ink">
           <b>
             {t("You kept")} {formatCurrency(current.savings, currency)} {t("in")} {monthName}
           </b>

@@ -111,7 +111,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
                     {t("Savings goals")}
                   </span>
                   <span className="flex flex-wrap items-baseline gap-2">
-                    <AmountText value={data.savingsSaved} currency={currency} size="lg" />
+                    <AmountText value={data.savingsSaved} currency={currency} size="lg" className="leading-8" />
                     {data.savingsTarget > 0 && (
                       <span className="text-small text-ink-muted">
                         {t("of")} {formatCurrency(data.savingsTarget, currency)}
@@ -132,7 +132,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
                     </IconTile>
                     {t("Assets")}
                   </span>
-                  <AmountText value={data.assetsValue} currency={currency} size="lg" />
+                  <AmountText value={data.assetsValue} currency={currency} size="lg" className="leading-8" />
                   <span className="text-small text-ink-muted">
                     {data.assetCount} {t(data.assetCount === 1 ? "asset" : "assets")}
                     {data.assetCount > 0 && (
@@ -186,16 +186,16 @@ export function HomePageClient({ data }: { data: HomeData }) {
               />
               <PhoneLoanCards loans={data.loans} counts={data.loanCounts} currency={currency} />
               <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-4 lg:gap-6">
-                <KpiTile icon={<ArrowDownLeft />} tone="income" label={`${t("Owed to you")} · ${t("pawna")}`} value={<AmountText value={Number(data.loans.totalPawna)} currency={currency} size="lg" signed tone="income" />}>
+                <KpiTile icon={<ArrowDownLeft />} tone="income" label={`${t("Owed to you")} · ${t("pawna")}`} value={<AmountText value={Number(data.loans.totalPawna)} currency={currency} size="lg" signed tone="income" className="leading-8" />}>
                   {plural(t, data.loanCounts.oweYou, "From {count} person", "From {count} people")}
                 </KpiTile>
-                <KpiTile icon={<ArrowUpRight />} tone="expense" label={`${t("You owe")} · ${t("dena")}`} value={<AmountText value={-Number(data.loans.totalDena)} currency={currency} size="lg" signed tone="expense" />}>
+                <KpiTile icon={<ArrowUpRight />} tone="expense" label={`${t("You owe")} · ${t("dena")}`} value={<AmountText value={-Number(data.loans.totalDena)} currency={currency} size="lg" signed tone="expense" className="leading-8" />}>
                   {plural(t, data.loanCounts.youOwe, "To {count} person", "To {count} people")}
                 </KpiTile>
-                <KpiTile icon={<CreditCard />} tone="loans" label={t("Net position")} value={<AmountText value={Number(data.loans.netBalance)} currency={currency} size="lg" signed />}>
+                <KpiTile icon={<CreditCard />} tone="loans" label={t("Net position")} value={<AmountText value={Number(data.loans.netBalance)} currency={currency} size="lg" signed className="leading-8" />}>
                   {Number(data.loans.netBalance) < 0 ? t("You owe more than you are owed") : Number(data.loans.netBalance) > 0 ? t("You are owed more than you owe") : t("All settled")}
                 </KpiTile>
-                <KpiTile icon={<CircleCheckBig />} tone="warning" label={t("Active loans")} value={<span className="text-amount-lg text-ink tabular-nums">{data.loans.activeAccounts}</span>}>
+                <KpiTile icon={<CircleCheckBig />} tone="warning" label={t("Active loans")} value={<span className="text-amount-lg leading-8 text-ink tabular-nums">{data.loans.activeAccounts}</span>}>
                   {t("People and banks with a balance")}
                 </KpiTile>
               </div>
@@ -215,7 +215,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
               <Card className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-0.5">
-                    <h3 className="text-h3 text-ink">{t("Today's prayers")}</h3>
+                    <h3 className="text-h3 leading-6 text-ink">{t("Today's prayers")}</h3>
                     <span className="text-small text-ink-muted">{data.namaz ? `${prayersDone.length} ${t("of")} ${prayerItems.length} ${t("ticked today")}` : t("No month tracked yet")}</span>
                   </div>
                   {data.namaz && (
@@ -245,7 +245,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
               </Card>
               <HomeTodoCard />
               <Card className="flex flex-col gap-4">
-                <h3 className="text-h3 text-ink">{t("Streaks")}</h3>
+                <h3 className="text-h3 leading-6 text-ink">{t("Streaks")}</h3>
                 <StreakRow icon={<CircleCheckBig />} title={`${t("Daily habits")} · ${data.dailyChallenges}`} text={data.dailyChallenges > 0 ? t("challenges running") : t("Start a daily habit")} href="/habit-tracker/habits?category=Others" />
                 <StreakRow
                   icon={<BookOpen />}
@@ -268,7 +268,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
             <section aria-labelledby="h-vault" className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <Eyebrow tone="vault">{t("Security")}</Eyebrow>
-                <h2 id="h-vault" className="text-h3 text-ink md:text-h2">
+                <h2 id="h-vault" className="text-h3 leading-6 text-ink md:text-h2 md:leading-7">
                   {t("Password vault")}
                 </h2>
               </div>
@@ -277,8 +277,8 @@ export function HomePageClient({ data }: { data: HomeData }) {
                   <Lock className="size-6.5" strokeWidth={1.9} aria-hidden="true" />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <b className="text-title font-bold text-ink">{data.vault?.hasVaultPassword ? `${t("Locked")}${loginCount}` : t("Not set up yet")}</b>
-                  <span className="text-small text-ink-muted">{data.vault?.hasVaultPassword ? t("Your logins are behind the vault password.") : t("Keep every login behind its own vault password.")}</span>
+                  <b className="text-title leading-5.5 font-bold text-ink">{data.vault?.hasVaultPassword ? `${t("Locked")}${loginCount}` : t("Not set up yet")}</b>
+                  <span className="text-small leading-4.5 text-ink-muted">{data.vault?.hasVaultPassword ? t("Your logins are behind the vault password.") : t("Keep every login behind its own vault password.")}</span>
                 </span>
                 <Button variant="action" size="lg" asChild>
                   <Link href="/password-manager">{data.vault?.hasVaultPassword ? t("Unlock vault") : t("Set up the vault")}</Link>
@@ -337,7 +337,7 @@ function BudgetFocus({ focus, currency, daysLeft }: { focus: HomeData["budgetFoc
   return (
     <>
       <span className="flex items-baseline justify-between gap-2">
-        <b className="flex items-center gap-2 text-title font-semibold text-ink">
+        <b className="flex items-center gap-2 text-title leading-5.5 font-semibold text-ink">
           {createElement(budgetCategoryIcon(focus.icon ?? ""), { className: "size-4 text-ink-muted", "aria-hidden": true })}
           {focus.name}
         </b>
@@ -368,7 +368,7 @@ function StreakRow({ icon, title, text, href }: { icon: React.ReactNode; title: 
     <Link href={href} className="flex items-center gap-3">
       <IconTile tone="habits">{icon}</IconTile>
       <span className="flex min-w-0 flex-col">
-        <b className="truncate text-body font-bold text-ink">{title}</b>
+        <b className="truncate text-body leading-5 font-bold text-ink">{title}</b>
         <span className="text-small text-ink-muted">{text}</span>
       </span>
     </Link>
@@ -380,8 +380,8 @@ function InsightRow({ icon, tone, title, text, divided = false }: { icon: React.
     <div className={cn("flex items-start gap-4 px-5 py-4", divided && "border-t border-line")}>
       <IconTile tone={tone}>{icon}</IconTile>
       <span className="flex flex-col gap-0.5">
-        <b className="text-title font-semibold text-ink">{title}</b>
-        <span className="text-small text-ink-muted">{text}</span>
+        <b className="text-title leading-5.5 font-semibold text-ink">{title}</b>
+        <span className="text-small leading-4.5 text-ink-muted">{text}</span>
       </span>
     </div>
   );

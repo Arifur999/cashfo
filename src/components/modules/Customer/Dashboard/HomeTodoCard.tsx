@@ -38,7 +38,7 @@ export function HomeTodoCard() {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-h3 text-ink">{t("To-do list")}</h3>
+        <h3 className="text-h3 leading-6 text-ink">{t("To-do list")}</h3>
         <span className="text-small text-ink-muted">
           {open} {t("left")}
         </span>
