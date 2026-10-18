@@ -82,7 +82,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
         }
         actions={
           canManage && (
-            <div className="hidden items-center gap-3 md:flex">
+            <>
               <Button variant="secondary" onClick={() => setContactOpen(true)}>
                 <UserPlus className="text-ink-2" />
                 {t("Add bank / person")}
@@ -91,10 +91,10 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("New loan entry")}
               </Button>
-            </div>
+            </>
           )
         }
-        className="max-md:gap-0"
+        hideActionsOnPhone
       />
 
       <section className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">

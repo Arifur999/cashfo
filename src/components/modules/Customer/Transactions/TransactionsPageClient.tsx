@@ -75,14 +75,16 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       <PageHeader
         eyebrow={t("Money")}
         title={t("Transactions")}
-        description={<span className="hidden md:inline">{t("Every income and expense you've added, newest first.")}</span>}
+        description={t("Every income and expense you've added, newest first.")}
+        hideDescriptionOnPhone
         actions={
-          <Button onClick={() => setAddOpen(true)} className="hidden md:inline-flex">
+          <Button onClick={() => setAddOpen(true)}>
             <Plus strokeWidth={2.5} className="size-4" />
             {t("New transaction")}
           </Button>
         }
-        className="mb-1 max-md:gap-0"
+        hideActionsOnPhone
+        className="md:mb-1"
       />
 
       <TransactionFilters accounts={accounts} categories={categories} />

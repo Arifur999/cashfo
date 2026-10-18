@@ -90,9 +90,10 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
             <span className="hidden md:inline">{t("Wallets")}</span>
           </>
         }
-        description={<span className="hidden md:inline">{t("The cash, bank and mobile accounts that hold your money.")}</span>}
+        description={t("The cash, bank and mobile accounts that hold your money.")}
+        hideDescriptionOnPhone
         actions={
-          <div className="hidden items-center gap-3 md:flex">
+          <>
             <Button variant="secondary" asChild>
               <Link href="/balance/transfer">
                 <ArrowLeftRight className="text-ink-2" />
@@ -105,9 +106,9 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
                 {t("Add wallet")}
               </Button>
             )}
-          </div>
+          </>
         }
-        className="max-md:gap-0"
+        hideActionsOnPhone
       />
 
       {/* Phone: the total, the share bar and the add button in one card. */}

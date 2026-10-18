@@ -61,15 +61,12 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
         eyebrow={t("Insights")}
         tone="insights"
         title={t("What your numbers say")}
-        description={
-          <span className="hidden md:inline">
-            {labels.period}, {t("compared with")} {comparedWith}.
-          </span>
-        }
+        description={`${labels.period}, ${t("compared with")} ${comparedWith}.`}
+        hideDescriptionOnPhone
         actions={
           <>
-            <span className="hidden md:inline-flex">{periodControl}</span>
-            <Button variant="secondary" size="lg" asChild className="hidden md:inline-flex">
+            {periodControl}
+            <Button variant="secondary" size="lg" asChild>
               <Link href="/reports/detailed">
                 <FileText />
                 {t("Detailed reports")}
@@ -77,6 +74,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
             </Button>
           </>
         }
+        hideActionsOnPhone
       />
       <div className="md:hidden">{periodControl}</div>
 
