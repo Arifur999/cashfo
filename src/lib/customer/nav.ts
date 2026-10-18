@@ -166,9 +166,25 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
+// The sidebar's foot: the account's own pages. The top bar puts them under
+// "Account", and Settings' sections under "Account › Settings" (the
+// sidebar draws no subs for them; Settings has its own menu).
+export const NAV_FOOT_LABEL = "Account";
 export const NAV_FOOT: NavItem[] = [
   { label: "Invite & earn", href: "/referrals", icon: "gift", tag: "Earn ৳" },
-  { label: "Settings", href: "/settings", icon: "settings" },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: "settings",
+    subs: [
+      { label: "Profile", href: "/settings/profile" },
+      { label: "Security", href: "/settings/security" },
+      { label: "Workspaces", href: "/settings/workspaces" },
+      { label: "App preferences", href: "/settings/app" },
+      { label: "Help & support", href: "/settings/help" },
+      { label: "Resources & legal", href: "/settings/resources" },
+    ],
+  },
 ];
 
 export interface NavContext {
@@ -239,7 +255,8 @@ export interface Breadcrumb {
 // the page as the heading, the pillar's colour for the dot.
 export function breadcrumbFor(location: NavLocation): Breadcrumb {
   const crumbs: string[] = [];
-  if (location.section?.label) crumbs.push(location.section.label);
+  const section = location.section?.label ?? (NAV_FOOT.includes(location.item) ? NAV_FOOT_LABEL : null);
+  if (section) crumbs.push(section);
   if (location.sub) crumbs.push(location.item.label);
   return {
     crumbs,

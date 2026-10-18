@@ -36,6 +36,11 @@ describe("findNavLocation", () => {
     expect(breadcrumbFor(location)).toEqual({ crumbs: ["Money", "Wallets"], heading: "Transfer", tone: "money" });
   });
 
+  it("puts the account's pages under Account", () => {
+    expect(breadcrumbFor(locate("/referrals")!)).toEqual({ crumbs: ["Account"], heading: "Invite & earn", tone: "money" });
+    expect(breadcrumbFor(locate("/settings/security")!)).toEqual({ crumbs: ["Account", "Settings"], heading: "Security", tone: "money" });
+  });
+
   it("names the sub-page that shares its group's link", () => {
     expect(breadcrumbFor(locate("/balance/overview")!)).toEqual({ crumbs: ["Money", "Wallets"], heading: "Balance", tone: "money" });
   });
@@ -59,7 +64,7 @@ describe("findNavLocation", () => {
   });
 
   it("finds the foot links", () => {
-    expect(breadcrumbFor(locate("/settings/workspaces")!)).toEqual({ crumbs: [], heading: "Settings", tone: "money" });
+    expect(breadcrumbFor(locate("/settings/workspaces")!)).toEqual({ crumbs: ["Account", "Settings"], heading: "Workspaces", tone: "money" });
     expect(locate("/referrals")!.item.tag).toBe("Earn ৳");
   });
 
