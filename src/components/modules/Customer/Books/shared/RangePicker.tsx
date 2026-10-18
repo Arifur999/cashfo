@@ -47,7 +47,7 @@ export function RangePicker({ value, from, to, customFrom, customTo, onChange }:
         <div className="flex items-center gap-2">
           <Input size="sm" type="date" value={customFrom ?? ""} onChange={(event) => onChange({ range: "custom", dateFrom: event.target.value || undefined })} aria-label={t("From")} max={customTo} />
           <span className="text-small text-ink-muted">{t("to")}</span>
-          <Input size="sm" type="date" value={customTo ?? ""} onChange={(event) => onChange({ range: "custom", dateTo: event.target.value || undefined })} aria-label={t("To")} min={customFrom} />
+          <Input size="sm" type="date" value={customTo ?? ""} onChange={(event) => onChange({ range: "custom", dateTo: event.target.value || undefined })} aria-label={t("To@@date")} min={customFrom} />
         </div>
       ) : (
         <span className="text-small text-ink-muted">{rangeText(from, to, t("Since the first entry"))}</span>

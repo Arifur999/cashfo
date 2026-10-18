@@ -78,6 +78,8 @@ export const sharedDictionary: Record<string, string> = {
   Phone: "ফোন",
   Amount: "পরিমাণ",
   Date: "তারিখ",
+  // The end of a date range ("From … To …").
+  "To@@date": "পর্যন্ত",
   Description: "বিবরণ",
   Notes: "নোট",
   "Notes (optional)": "নোট (ঐচ্ছিক)",

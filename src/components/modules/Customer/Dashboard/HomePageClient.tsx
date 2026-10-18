@@ -19,6 +19,7 @@ import SectionHeader from "@/components/smartly/SectionHeader";
 import { budgetCategoryIcon, categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 import { HomeHero } from "./HomeHero";
 import { HomeSetup } from "./HomeSetup";
@@ -185,10 +186,10 @@ export function HomePageClient({ data }: { data: HomeData }) {
               <PhoneLoanCards loans={data.loans} counts={data.loanCounts} currency={currency} />
               <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-4 lg:gap-6">
                 <KpiTile icon={<ArrowDownLeft />} tone="income" label={`${t("Owed to you")} · ${t("pawna")}`} value={<AmountText value={Number(data.loans.totalPawna)} currency={currency} size="lg" signed tone="income" />}>
-                  {t("From")} {data.loanCounts.oweYou} {t(data.loanCounts.oweYou === 1 ? "person" : "people")}
+                  {plural(t, data.loanCounts.oweYou, "From {count} person", "From {count} people")}
                 </KpiTile>
                 <KpiTile icon={<ArrowUpRight />} tone="expense" label={`${t("You owe")} · ${t("dena")}`} value={<AmountText value={-Number(data.loans.totalDena)} currency={currency} size="lg" signed tone="expense" />}>
-                  {t("To")} {data.loanCounts.youOwe} {t(data.loanCounts.youOwe === 1 ? "person" : "people")}
+                  {plural(t, data.loanCounts.youOwe, "To {count} person", "To {count} people")}
                 </KpiTile>
                 <KpiTile icon={<CreditCard />} tone="loans" label={t("Net position")} value={<AmountText value={Number(data.loans.netBalance)} currency={currency} size="lg" signed />}>
                   {Number(data.loans.netBalance) < 0 ? t("You owe more than you are owed") : Number(data.loans.netBalance) > 0 ? t("You are owed more than you owe") : t("All settled")}

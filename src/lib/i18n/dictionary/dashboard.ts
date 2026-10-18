@@ -64,6 +64,11 @@ export const dashboardDictionary: Record<string, string> = {
   To: "কে",
   person: "জন",
   people: "জন",
+  // Home's loan cards: Bangla puts the count first.
+  "From {count} person": "{count} জনের কাছ থেকে",
+  "From {count} people": "{count} জনের কাছ থেকে",
+  "To {count} person": "{count} জনকে",
+  "To {count} people": "{count} জনকে",
   "Net position": "নিট অবস্থা",
   "You owe more than you are owed": "পাওনার চেয়ে দেনা বেশি",
   "You are owed more than you owe": "দেনার চেয়ে পাওনা বেশি",

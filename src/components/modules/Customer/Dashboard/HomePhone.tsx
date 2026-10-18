@@ -11,6 +11,7 @@ import ProgressBar from "@/components/smartly/ProgressBar";
 import { budgetTone } from "@/lib/budgetTone";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 import type { HomeData } from "./homeTypes";
 
@@ -93,7 +94,7 @@ export function PhoneLoanCards({ loans, counts, currency }: { loans: NonNullable
         </span>
         <AmountText value={Number(loans.totalPawna)} currency={currency} signed tone="income" className={FIGURE} />
         <span className={NOTE}>
-          {t("From")} {counts.oweYou} {t(counts.oweYou === 1 ? "person" : "people")}
+          {plural(t, counts.oweYou, "From {count} person", "From {count} people")}
         </span>
       </CompactCard>
       <CompactCard tight>
@@ -102,7 +103,7 @@ export function PhoneLoanCards({ loans, counts, currency }: { loans: NonNullable
         </span>
         <AmountText value={-Number(loans.totalDena)} currency={currency} signed tone="expense" className={FIGURE} />
         <span className={NOTE}>
-          {t("To")} {counts.youOwe} {t(counts.youOwe === 1 ? "person" : "people")}
+          {plural(t, counts.youOwe, "To {count} person", "To {count} people")}
         </span>
       </CompactCard>
     </Pair>

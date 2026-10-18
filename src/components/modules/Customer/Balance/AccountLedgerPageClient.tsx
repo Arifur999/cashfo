@@ -112,7 +112,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
           <div className="flex items-center gap-2">
             <Input size="md" type="date" value={customFrom ?? ""} onChange={(event) => updateParams({ dateFrom: event.target.value })} aria-label={t("From")} max={customTo} />
             <span className="text-small text-ink-muted">{t("to")}</span>
-            <Input size="md" type="date" value={customTo ?? ""} onChange={(event) => updateParams({ dateTo: event.target.value })} aria-label={t("To")} min={customFrom} />
+            <Input size="md" type="date" value={customTo ?? ""} onChange={(event) => updateParams({ dateTo: event.target.value })} aria-label={t("To@@date")} min={customFrom} />
           </div>
         )}
       </Card>
