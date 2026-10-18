@@ -24,11 +24,11 @@ export function MonthSwitcher({ month, year, onChange, stretch = false }: MonthS
   const arrow = cn("flex items-center justify-center text-ink-2 hover:text-ink", stretch ? "size-10 rounded-md" : "h-9.5 w-9");
 
   return (
-    <div className={cn("flex items-center bg-surface", stretch ? "h-14 w-full justify-between rounded-md border border-line p-2" : "h-10 rounded-md border border-line-strong")}>
+    <div className={cn("flex items-center bg-surface", stretch ? "w-full justify-between rounded-md border border-line p-2" : "h-10 rounded-md border border-line-strong")}>
       <button type="button" onClick={previous} aria-label={t("Previous month")} className={arrow}>
         <ChevronLeft className="size-4" aria-hidden="true" />
       </button>
-      <span className={cn("text-center text-body font-semibold text-ink", !stretch && "min-w-29")}>{monthLabel(month, year, locale)}</span>
+      <span className={cn("text-center text-body text-ink", stretch ? "font-bold" : "min-w-29 font-semibold")}>{monthLabel(month, year, locale)}</span>
       <button type="button" onClick={next} aria-label={t("Next month")} className={arrow}>
         <ChevronRight className="size-4" aria-hidden="true" />
       </button>
