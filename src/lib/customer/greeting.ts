@@ -15,11 +15,16 @@ export function hourIn(zone: string, now: Date = new Date()): number {
   return Number(hour);
 }
 
-// "Friday, 2 October · 21 Rabiʻ II 1448": the day in the Gregorian and the
-// Hijri calendar, as the Home eyebrow shows it, in the reader's language.
-export function homeDateLine(now: Date, locale: Locale, zone: string = APP_TIME_ZONE): string {
+// "Friday, 2 October" and "21 Rabiʻ II 1448": the day in the Gregorian and
+// the Hijri calendar, in the reader's language, for the Home eyebrow (phones
+// show only the first).
+export function homeDates(now: Date, locale: Locale, zone: string = APP_TIME_ZONE): { day: string; hijri: string } {
   const tag = locale === "bn" ? "bn-BD" : "en-GB";
-  const gregorian = new Intl.DateTimeFormat(tag, { timeZone: zone, weekday: "long", day: "numeric", month: "long" }).format(now);
+  // Put together from its parts: ICU versions disagree about the comma
+  // after the weekday.
+  const parts = new Intl.DateTimeFormat(tag, { timeZone: zone, weekday: "long", day: "numeric", month: "long" }).formatToParts(now);
+  const piece = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
+  const day = `${piece("weekday")}, ${piece("day")} ${piece("month")}`;
   const hijri = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: zone, day: "numeric", month: "long", year: "numeric" })
     .formatToParts(now)
     .filter((part) => ["day", "month", "year", "literal"].includes(part.type))
@@ -27,5 +32,5 @@ export function homeDateLine(now: Date, locale: Locale, zone: string = APP_TIME_
     .join("")
     .replace(/\s+/g, " ")
     .trim();
-  return `${gregorian} · ${hijri}`;
+  return { day, hijri };
 }

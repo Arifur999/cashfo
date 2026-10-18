@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { greetingFor, homeDateLine, hourIn } from "./greeting";
+import { greetingFor, homeDates, hourIn } from "./greeting";
 
 describe("greetingFor", () => {
   it("follows the time of day", () => {
@@ -20,16 +20,21 @@ describe("hourIn", () => {
   });
 });
 
-describe("homeDateLine", () => {
+describe("homeDates", () => {
   it("writes the Gregorian and Hijri dates in English", () => {
-    const line = homeDateLine(new Date("2026-10-02T06:00:00Z"), "en", "Asia/Dhaka");
-    expect(line.startsWith("Friday 2 October")).toBe(true);
-    expect(line).toMatch(/· \d{1,2} .+ 1448$/);
+    const { day, hijri } = homeDates(new Date("2026-10-02T06:00:00Z"), "en", "Asia/Dhaka");
+    expect(day).toBe("Friday, 2 October");
+    expect(hijri).toMatch(/^[0-9]{1,2} .+ 1448$/);
   });
 
   it("writes them in Bangla for a Bangla reader", () => {
-    const line = homeDateLine(new Date("2026-10-02T06:00:00Z"), "bn", "Asia/Dhaka");
-    expect(line).toContain("শুক্রবার");
-    expect(line).toContain("·");
+    const { day, hijri } = homeDates(new Date("2026-10-02T06:00:00Z"), "bn", "Asia/Dhaka");
+    expect(day).toBe("শুক্রবার, ২ অক্টোবর");
+    expect(hijri).toMatch(/১৪৪৮$/);
+  });
+
+  it("takes the day in the platform's zone", () => {
+    // 20:00 UTC on the 1st is already the 2nd in Dhaka.
+    expect(homeDates(new Date("2026-10-01T20:00:00Z"), "en", "Asia/Dhaka").day).toBe("Friday, 2 October");
   });
 });

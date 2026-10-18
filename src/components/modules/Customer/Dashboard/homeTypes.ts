@@ -13,7 +13,8 @@ export interface HomeData {
   // "YYYY-MM-DD" today in the platform timezone.
   today: string;
   greeting: "Good morning" | "Good afternoon" | "Good evening";
-  dateLine: string;
+  // "Friday, 2 October" and its Hijri date, for the eyebrow.
+  dates: { day: string; hijri: string };
   monthName: string;
   lastMonthName: string;
 

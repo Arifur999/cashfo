@@ -58,7 +58,16 @@ export function HomePageClient({ data }: { data: HomeData }) {
     <PageFrame gap="lg">
       <PageHeader
         size="display"
-        eyebrow={data.setup ? t("Welcome to Smartly") : data.dateLine}
+        eyebrow={
+          data.setup ? (
+            t("Welcome to Smartly")
+          ) : (
+            <>
+              {data.dates.day}
+              <span className="hidden md:inline"> · {data.dates.hijri}</span>
+            </>
+          )
+        }
         title={`${t(data.greeting)}, ${data.firstName}`}
         description={data.setup ? t("Three quick steps and Home fills itself in.") : t("Here is your day at a glance.")}
         actions={data.setup ? undefined : actions}
