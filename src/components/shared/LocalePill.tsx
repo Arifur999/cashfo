@@ -1,5 +1,6 @@
 "use client";
 
+import ByWidth from "@/components/smartly/ByWidth";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { useLocale, type Locale } from "@/lib/i18n/LocaleProvider";
 
@@ -37,14 +38,5 @@ const LocalePill = ({ onDark = false, fullNames = false, onChange }: LocalePillP
     : OPTIONS;
   return <SegmentedControl options={options} value={locale} onChange={choose} label={t("Language")} variant={onDark ? "onDark" : "pill"} className={fullNames ? "max-md:[&>button]:h-9 max-md:[&>button]:min-w-11 md:[&>button]:px-4" : undefined} />;
 };
-
-function ByWidth({ phone, wide }: { phone: string; wide: string }) {
-  return (
-    <>
-      <span className="md:hidden">{phone}</span>
-      <span className="hidden md:inline">{wide}</span>
-    </>
-  );
-}
 
 export default LocalePill;

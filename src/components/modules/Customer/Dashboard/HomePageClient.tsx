@@ -7,6 +7,7 @@ import { useFeature } from "@/components/modules/Customer/Providers/PlatformProv
 import { TransactionDrawer, type EntryKind } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
+import ByWidth from "@/components/smartly/ByWidth";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Eyebrow from "@/components/smartly/Eyebrow";
@@ -348,16 +349,6 @@ function BudgetFocus({ focus, currency, daysLeft }: { focus: HomeData["budgetFoc
       <span className={cn("text-small", focus.percent > 90 ? "font-semibold text-expense" : focus.percent >= 70 ? "font-semibold text-warning" : "text-ink-muted")}>
         {Math.round(focus.percent)}% {t("used")} · {left >= 0 ? `${formatCurrency(left, currency)} ${t("left for")} ${daysLeft} ${t("days")}` : `${formatCurrency(-left, currency)} ${t("over")}`}
       </span>
-    </>
-  );
-}
-
-// The shorter wording phones use ("See all", "Open") beside the full one.
-function ByWidth({ phone, wide }: { phone: string; wide: string }) {
-  return (
-    <>
-      <span className="md:hidden">{phone}</span>
-      <span className="hidden md:inline">{wide}</span>
     </>
   );
 }
