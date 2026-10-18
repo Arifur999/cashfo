@@ -20,7 +20,7 @@ export function VoidTransactionButton({ businessId, transactionId, title }: Void
 
   return (
     <>
-      <Button variant="secondary" onClick={() => setOpen(true)} className="border-[#F2C9C0] text-expense hover:bg-expense-soft dark:border-expense/40">
+      <Button variant="secondary" onClick={() => setOpen(true)} className="border-expense-line text-expense hover:bg-expense-soft">
         <CircleOff />
         {t("Void")}
       </Button>
