@@ -1,9 +1,11 @@
 // The sums behind Habits › To-do list: the day strip, what a day's list
 // holds, and what is coming up after it. Pure, so the page and its tests
 // agree. A list's `date` is a plain "YYYY-MM-DD".
-import type { TodoItem, TodoList } from "./api";
+import type { Locale } from "@/lib/i18n/translate";
+import type { Translate } from "@/lib/i18n/message";
+import type { TodoItem, TodoList, TodoPriority, TodoRepeatRule } from "./api";
 import { formatDate } from "./date";
-import { shiftDay } from "./habitDisplay";
+import { shiftDay, WEEK_ORDER, WEEKDAY_LONG, WEEKDAY_SHORT } from "./habitDisplay";
 
 // Days shown on the strip before and after the one picked.
 export const STRIP_BEFORE = 2;
@@ -67,4 +69,41 @@ export function upcoming(lists: TodoList[], day: string): Upcoming {
 // The lists with one replaced (by id), or added when it is new.
 export function withList(lists: TodoList[], list: TodoList): TodoList[] {
   return lists.some((l) => l.id === list.id) ? lists.map((l) => (l.id === list.id ? list : l)) : [...lists, list];
+}
+
+// Priority, time and repeating: how a task's extras read on the board.
+export const PRIORITIES: TodoPriority[] = ["HIGH", "MEDIUM", "LOW"];
+
+// Dictionary keys.
+export const PRIORITY_LABEL: Record<TodoPriority, string> = { HIGH: "High", MEDIUM: "Medium", LOW: "Low" };
+
+const PRIORITY_RANK: Record<TodoPriority, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+
+// High priority first, then by time (a task with no time after the timed
+// ones), then in the order they were added.
+export const byPriority = (items: TodoItem[]): TodoItem[] =>
+  [...items].sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.dueTime ?? "99:99").localeCompare(b.dueTime ?? "99:99"));
+
+// "3rd" in English; Bangla writes the plain number ("৩ তারিখে").
+export function dayOfMonthWord(day: number, locale: Locale): string {
+  if (locale === "bn") return String(day);
+  const tens = day % 100;
+  const suffix = tens >= 11 && tens <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[day % 10] ?? "th";
+  return `${day}${suffix}`;
+}
+
+// "Every Friday", "Every day", "Monthly, on the 3rd" -- or, inside a line
+// of other details, "every Friday", "every month on the 3rd".
+export function repeatLabel(rule: Pick<TodoRepeatRule, "kind" | "weekdays" | "monthDay">, t: Translate, locale: Locale, inLine = false): string {
+  if (rule.kind === "DAILY") return t(inLine ? "every day" : "Every day");
+  if (rule.kind === "MONTHLY") return t(inLine ? "every month on the {day}" : "Monthly, on the {day}", { day: dayOfMonthWord(rule.monthDay ?? 1, locale) });
+  const days = WEEK_ORDER.filter((day) => rule.weekdays.includes(day));
+  if (days.length === 7) return t(inLine ? "every day" : "Every day");
+  if (days.length === 1) return t(inLine ? "every {day}" : "Every {day}", { day: t(WEEKDAY_LONG[days[0]]) });
+  return t(inLine ? "every {days}" : "Every {days}", { days: days.map((day) => t(WEEKDAY_SHORT[day])).join(", ") });
+}
+
+// "Moved from yesterday", or the day it was first planned for.
+export function movedLabel(movedFrom: string, day: string, t: Translate): string {
+  return movedFrom === shiftDay(day, -1) ? t("Moved from yesterday") : t("Moved from {date}", { date: dayLabel(movedFrom, "EEE d MMM") });
 }

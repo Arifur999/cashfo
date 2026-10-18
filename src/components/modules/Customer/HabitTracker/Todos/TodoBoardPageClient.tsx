@@ -93,7 +93,7 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
         }
         target = created.data;
       }
-      const result = await addTodoItemAction(target.id, value);
+      const result = await addTodoItemAction(target.id, { text: value });
       if (result.success && result.data) {
         absorb(result.data);
         setText("");

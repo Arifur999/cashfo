@@ -1,7 +1,7 @@
 // Server-only helpers, same shape as lib/books.ts -- User-scoped (no
 // :businessId at all, see api.ts's own comment on Habit).
 import { cache } from "react";
-import { API_BASE_URL, type TodoList } from "./api";
+import { API_BASE_URL, type TodoList, type TodoRepeat } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -17,6 +17,17 @@ export const getTodoLists = cache(async (): Promise<TodoList[]> => {
   if (!headers) return [];
   try {
     const res = await customerApi.get<TodoList[]>(`${API_BASE_URL}/api/todos`, { headers });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});
+
+export const getTodoRepeats = cache(async (): Promise<TodoRepeat[]> => {
+  const headers = await authHeaders();
+  if (!headers) return [];
+  try {
+    const res = await customerApi.get<TodoRepeat[]>(`${API_BASE_URL}/api/todos/repeats`, { headers });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);

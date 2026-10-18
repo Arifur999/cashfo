@@ -60,7 +60,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
         target = created.data;
         setList(target);
       }
-      const result = await addTodoItemAction(target.id, value);
+      const result = await addTodoItemAction(target.id, { text: value });
       if (result.success && result.data) {
         setList(result.data);
         setText("");
