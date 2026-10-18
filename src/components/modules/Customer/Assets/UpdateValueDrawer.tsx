@@ -110,12 +110,12 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <div className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-cream p-4 tabular-nums">
-              <span className="flex flex-col gap-0.5">
+              <span className="flex flex-col gap-0.5 [&>*]:leading-[normal]">
                 <span className="text-caption font-normal text-ink-muted">{t("Current value")}</span>
                 <span className="text-title text-ink">{formatCurrency(current, currency)}</span>
                 <span className="text-caption font-normal text-ink-muted">{since ? `${t("since")} ${formatDate(since)}` : t("never checked")}</span>
               </span>
-              <span className="flex flex-col gap-0.5">
+              <span className="flex flex-col gap-0.5 [&>*]:leading-[normal]">
                 <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
                 <span className="text-title text-ink">{formatCurrency(paid, currency)}</span>
                 <span className="text-caption font-normal text-ink-muted">

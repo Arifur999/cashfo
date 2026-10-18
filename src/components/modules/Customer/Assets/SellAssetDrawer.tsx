@@ -142,11 +142,11 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3 tabular-nums">
-                <span className="flex flex-col gap-0.5">
+                <span className="flex flex-col gap-0.5 [&>*]:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
                   <span className="text-title text-ink">{formatCurrency(paid, currency)}</span>
                 </span>
-                <span className="flex flex-col gap-0.5">
+                <span className="flex flex-col gap-0.5 [&>*]:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
                   <span className="text-title text-ink">{formatCurrency(today, currency)}</span>
                 </span>
