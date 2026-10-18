@@ -30,6 +30,14 @@ export const balanceDictionary: Record<string, string> = {
   "To savings": "সঞ্চয়ে",
   "Moved from this account into a savings goal": "এই হিসাব থেকে সঞ্চয় লক্ষ্যে সরানো",
   Transfers: "ট্রান্সফার",
+  // TransferDrawer.tsx (Move money)
+  "Between your own wallets": "নিজের ওয়ালেটগুলোর মধ্যে",
+  "Available@@balance": "ব্যবহারযোগ্য",
+  "To@@wallet": "যেখানে",
+  "Up to {amount} available in {wallet}": "{wallet}-এ {amount} পর্যন্ত আছে",
+  "e.g. Card bill": "যেমন কার্ডের বিল",
+  "After this transfer": "এই ট্রান্সফারের পর",
+  "Move {amount}": "{amount} সরান",
   "Balance transfers between your own wallets (+ in, − out)": "নিজের ওয়ালেটের মধ্যে ব্যালেন্স ট্রান্সফার (+ এসেছে, − গেছে)",
   "Current balance": "বর্তমান ব্যালেন্স",
 
