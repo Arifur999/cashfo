@@ -49,10 +49,8 @@ export const sharedDictionary: Record<string, string> = {
   Close: "বন্ধ করুন",
   Submit: "জমা দিন",
   "Loading...": "লোড হচ্ছে...",
-  // app/(customerLayout)/error.tsx
+  // A failed action or a section that couldn't load (ErrorState)
   "Something went wrong": "কিছু একটা সমস্যা হয়েছে",
-  "We couldn't load this page. Check your connection and try again.": "পেজটি লোড করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।",
-  "Reference:": "রেফারেন্স:",
   "Try again": "আবার চেষ্টা করুন",
   "Check your internet and try again. Nothing was lost.": "ইন্টারনেট দেখে আবার চেষ্টা করুন। কিছুই হারায়নি।",
   // The message pages: error.tsx, not-found.tsx, maintenance
