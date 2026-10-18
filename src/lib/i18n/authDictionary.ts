@@ -104,8 +104,9 @@ export const bnAuthDictionary: Record<string, string> = {
   "Refund Policy": "রিফান্ড নীতি",
   FAQ: "সাধারণ জিজ্ঞাসা",
   Legal: "আইনি তথ্য",
-  "Last updated": "সর্বশেষ হালনাগাদ",
   Version: "সংস্করণ",
+  // A saved version is live at once, so it is in effect from when it was saved.
+  "in effect from {date}": "{date} থেকে কার্যকর",
   "This page isn't available right now. Please check back later.": "পৃষ্ঠাটি এখন পাওয়া যাচ্ছে না। একটু পরে আবার দেখুন।",
   "On this page": "এই পৃষ্ঠায়",
   "By creating an account, you agree to our Terms of Service and Privacy Policy.":

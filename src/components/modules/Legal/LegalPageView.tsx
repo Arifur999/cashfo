@@ -1,8 +1,7 @@
 import Eyebrow from "@/components/smartly/Eyebrow";
 import { getLegalDocument, type LegalPage } from "@/lib/customer/platform";
 import { formatDate } from "@/lib/date";
-import { getLocale } from "@/lib/i18n/locale";
-import { translate } from "@/lib/i18n/translate";
+import { getTranslator } from "@/lib/i18n/locale";
 import { legalBlocks } from "@/lib/legalText";
 import { LEGAL_PAGES } from "./legalPages";
 
@@ -11,8 +10,7 @@ import { LEGAL_PAGES } from "./legalPages";
 // on a wide screen, the "On this page" list that jumps to each. Plain text
 // with its line breaks kept -- nothing is rendered as HTML.
 export default async function LegalPageView({ page }: { page: LegalPage }) {
-  const [doc, locale] = await Promise.all([getLegalDocument(page), getLocale()]);
-  const t = (key: string) => translate(locale, key);
+  const [doc, { locale, t }] = await Promise.all([getLegalDocument(page), getTranslator()]);
   const content = doc ? (locale === "bn" && doc.contentBn ? doc.contentBn : doc.contentEn) : null;
   const blocks = content ? legalBlocks(content) : [];
   const headings = blocks.filter((block) => block.kind === "heading");
@@ -27,7 +25,7 @@ export default async function LegalPageView({ page }: { page: LegalPage }) {
           <h1 className="text-h1 text-ink md:text-display">{t(title)}</h1>
           {doc && (
             <p className="text-body text-ink-muted">
-              {t("Version")} {doc.version} · {t("Last updated")} {formatDate(doc.updatedAt, "d MMMM yyyy")}
+              {t("Version")} {doc.version} · {t("in effect from {date}", { date: formatDate(doc.updatedAt, "d MMMM yyyy") })}
             </p>
           )}
         </header>
