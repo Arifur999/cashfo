@@ -36,6 +36,10 @@ describe("findNavLocation", () => {
     expect(breadcrumbFor(location)).toEqual({ crumbs: ["Money", "Wallets"], heading: "Transfer", tone: "money" });
   });
 
+  it("names the sub-page that shares its group's link", () => {
+    expect(breadcrumbFor(locate("/balance/overview")!)).toEqual({ crumbs: ["Money", "Wallets"], heading: "Balance", tone: "money" });
+  });
+
   it("prefers the most specific entry", () => {
     expect(locate("/transactions/advanced", personal)!.item.label).toBe("Transactions");
     expect(locate("/transactions/advanced", business)!.item.label).toBe("Journal entry");

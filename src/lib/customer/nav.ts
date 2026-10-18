@@ -210,7 +210,12 @@ const leafScore = (leaf: NavLeaf, pathname: string, query: QueryReader): number 
 export function findNavLocation(pathname: string, query: QueryReader, sections: NavSection[], foot: NavItem[] = NAV_FOOT): NavLocation | null {
   let best: { score: number; location: NavLocation } | null = null;
   const consider = (score: number, location: NavLocation) => {
-    if (score >= 0 && (!best || score > best.score)) best = { score, location };
+    // A sub-page wins a tie with its own group, whose link it shares
+    // (Wallets and Balance both open /balance/overview), so the top bar
+    // names the page.
+    const current = best as { score: number; location: NavLocation } | null;
+    const beatsItsGroup = current !== null && score === current.score && location.sub !== null && current.location.sub === null && current.location.item === location.item;
+    if (score >= 0 && (!current || score > current.score || beatsItsGroup)) best = { score, location };
   };
   const visit = (section: NavSection | null, item: NavItem) => {
     consider(leafScore(item, pathname, query), { section, item, sub: null });
