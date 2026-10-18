@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { breadcrumbFor, findNavLocation, NAV_FOOT, visibleNavSections, type NavContext } from "./nav";
+import { breadcrumbFor, findNavLocation, movesMoney, NAV_FOOT, visibleNavSections, type NavContext } from "./nav";
 
 const personal: NavContext = { workspaceType: "PERSONAL", isFeatureOn: () => true };
 const business: NavContext = { workspaceType: "BUSINESS", isFeatureOn: () => true };
@@ -70,5 +70,26 @@ describe("findNavLocation", () => {
 
   it("returns null for a page outside the menu", () => {
     expect(locate("/unknown-page")).toBeNull();
+  });
+});
+
+describe("movesMoney", () => {
+  it("floats the + on Home, the money pages and Books", () => {
+    expect(movesMoney(locate("/dashboard"))).toBe(true);
+    expect(movesMoney(locate("/transactions/abc"))).toBe(true);
+    expect(movesMoney(locate("/loan-management/dashboard"))).toBe(true);
+    expect(movesMoney(locate("/accounts", business))).toBe(true);
+  });
+
+  it("leaves it off habits, insights, the vault and the account pages", () => {
+    expect(movesMoney(locate("/habit-tracker"))).toBe(false);
+    expect(movesMoney(locate("/reports/overview"))).toBe(false);
+    expect(movesMoney(locate("/password-manager"))).toBe(false);
+    expect(movesMoney(locate("/settings"))).toBe(false);
+    expect(movesMoney(locate("/referrals"))).toBe(false);
+  });
+
+  it("keeps it on a page the menu doesn't know", () => {
+    expect(movesMoney(locate("/somewhere-new"))).toBe(true);
   });
 });

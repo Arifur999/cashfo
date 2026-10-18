@@ -244,6 +244,14 @@ export function findNavLocation(pathname: string, query: QueryReader, sections: 
   return best ? (best as { location: NavLocation }).location : null;
 }
 
+// Home, the Money pages and Books: where the phone boards float the + for a
+// new transaction. Habits, Security, Insights and the account pages don't;
+// a page the menu doesn't know keeps it.
+export function movesMoney(location: NavLocation | null): boolean {
+  if (!location) return true;
+  return location.section !== null && (location.section.tone === "money" || location.section.tone === "neutral");
+}
+
 export interface Breadcrumb {
   // The path above the heading ("Money", "Wallets"), untranslated.
   crumbs: string[];
