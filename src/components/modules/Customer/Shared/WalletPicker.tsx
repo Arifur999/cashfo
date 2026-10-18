@@ -12,8 +12,10 @@ import { cn } from "@/lib/utils";
 
 export interface WalletPickerProps {
   label: string;
-  // 56px in the transaction drawer, 52px in the loan one.
-  size?: "lg" | "xl";
+  // 56px in the transaction drawer, 52px in the loan one; "compact" is the
+  // phone sheet's half-width picker (52px, the icon and the name only,
+  // under a 13px label).
+  size?: "lg" | "xl" | "compact";
   // Money wallets, or the savings wallets a goal is kept in.
   variant?: "money" | "savings";
   wallets: Account[];
@@ -76,7 +78,7 @@ export function WalletPicker({ label, size = "xl", variant = "money", wallets, s
 
   return (
     <div className="flex flex-col gap-2">
-      <label id={`${id}-label`} className="text-body font-medium text-ink">
+      <label id={`${id}-label`} className={size === "compact" ? "text-small font-semibold text-ink-2" : "text-body font-medium text-ink"}>
         {label}
       </label>
       <Popover open={open} onOpenChange={setOpen}>
@@ -86,9 +88,14 @@ export function WalletPicker({ label, size = "xl", variant = "money", wallets, s
             aria-labelledby={`${id}-label`}
             aria-haspopup="listbox"
             disabled={loading || all.length === 0}
-            className={cn("flex items-center gap-3 rounded-md border border-line-strong bg-surface px-4 text-left disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]", size === "xl" ? "h-14" : "h-13")}
+            className={cn("flex min-w-0 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 text-left disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]", size === "xl" ? "h-14" : "h-13")}
           >
-            {selected ? (
+            {selected && size === "compact" ? (
+              <>
+                {createElement(isSavings(selected) ? PiggyBank : walletIcon(selected), { className: "size-4.5 shrink-0 text-ink-2", "aria-hidden": true })}
+                <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{selected.name}</span>
+              </>
+            ) : selected ? (
               <>
                 {tile(selected)}
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
