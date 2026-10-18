@@ -158,15 +158,29 @@ export interface QuickLogin {
   title: string;
   category: VaultEntryCategory;
   website: string;
+  // The tile's letter, the kind of account under its name (a dictionary
+  // key) and its tint, as the empty vault board draws each one.
+  letter: string;
+  kind: string;
+  tint: string;
 }
+
+const TINT = {
+  blue: "bg-info-soft text-info",
+  red: "bg-expense-soft text-expense",
+  rose: "bg-rose-soft text-rose",
+  mint: "bg-mint-50 text-emerald",
+  amber: "bg-pillar-loans-soft text-pillar-loans",
+  teal: "bg-pillar-insights-soft text-pillar-insights",
+};
 
 // The accounts people open most, offered on an empty vault.
 export const QUICK_LOGINS: QuickLogin[] = [
-  { title: "Facebook", category: "SOCIAL", website: "facebook.com" },
-  { title: "Gmail", category: "EMAIL", website: "mail.google.com" },
-  { title: "bKash", category: "BANK", website: "bkash.com" },
-  { title: "Islami Bank", category: "BANK", website: "islamibankbd.com" },
-  { title: "Daraz", category: "SHOPPING", website: "daraz.com.bd" },
-  { title: "Home Wi-Fi", category: "OTHER", website: "" },
-  { title: "Office email", category: "WORK", website: "" },
+  { title: "Facebook", category: "SOCIAL", website: "facebook.com", letter: "F", kind: "Social", tint: TINT.blue },
+  { title: "Gmail", category: "EMAIL", website: "mail.google.com", letter: "G", kind: "Email", tint: TINT.red },
+  { title: "bKash", category: "BANK", website: "bkash.com", letter: "b", kind: "Mobile banking", tint: TINT.rose },
+  { title: "Islami Bank", category: "BANK", website: "islamibankbd.com", letter: "I", kind: "Bank", tint: TINT.mint },
+  { title: "Daraz", category: "SHOPPING", website: "daraz.com.bd", letter: "D", kind: "Shopping", tint: TINT.amber },
+  { title: "Home Wi-Fi", category: "OTHER", website: "", letter: "W", kind: "Wi-Fi", tint: TINT.teal },
+  { title: "Office email", category: "WORK", website: "", letter: "O", kind: "Work", tint: TINT.blue },
 ];
