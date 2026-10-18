@@ -181,6 +181,19 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "How Smartly records this in your books. Debits always equal credits.": "Smartly আপনার খাতায় এটি যেভাবে লেখে। ডেবিট সবসময় ক্রেডিটের সমান।",
   Added: "যোগ হয়েছে",
   "Made a mistake?": "ভুল হয়ে গেছে?",
+  // Edit (decision D2): the drawer and the detail page
+  "Edit transaction": "লেনদেন সম্পাদনা",
+  "You're editing a saved transaction. When you save, the original stays in History marked as corrected, and your balances update straight away.":
+    "আপনি একটি সংরক্ষিত লেনদেন বদলাচ্ছেন। সংরক্ষণ করলে মূলটি ইতিহাসে সংশোধিত হিসেবে থেকে যাবে, আর ব্যালেন্স সঙ্গে সঙ্গে হালনাগাদ হবে।",
+  "Was {amount}": "আগে ছিল {amount}",
+  "{count} change": "{count}টি পরিবর্তন",
+  "{count} changes": "{count}টি পরিবর্তন",
+  "Changes saved": "পরিবর্তন সংরক্ষিত হয়েছে",
+  "Failed to save the changes": "পরিবর্তন সংরক্ষণ করা যায়নি",
+  Corrected: "সংশোধিত",
+  "Use Edit to fix the amount, category, wallet, date or note. The original is kept in History, marked as corrected, so your records stay honest.":
+    "অঙ্ক, ক্যাটাগরি, ওয়ালেট, তারিখ বা নোট ঠিক করতে সম্পাদনা চাপুন। মূলটি ইতিহাসে সংশোধিত হিসেবে থেকে যায়, তাই আপনার হিসাব সৎ থাকে।",
+  "Void removes it from your balances when it should never have been added.": "যেটা কখনো যোগ হওয়ারই কথা ছিল না, বাতিল করলে সেটা ব্যালেন্স থেকে সরে যায়।",
   "Void it and add the right one. Voiding keeps this record in your history, crossed out, so the books still add up.":
     "এটি বাতিল করে সঠিকটি যোগ করুন। বাতিল করলে রেকর্ডটি কাটা অবস্থায় ইতিহাসে থাকে, তাই খাতার হিসাব মেলে।",
   Liability: "দায়",
