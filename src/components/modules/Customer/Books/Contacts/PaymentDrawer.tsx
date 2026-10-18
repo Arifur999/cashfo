@@ -18,6 +18,7 @@ import { getContactBalanceDetailAction, payPaymentAction, receivePaymentAction }
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Drawer } from "../shared/Drawer";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface PaymentDrawerProps {
   open: boolean;
@@ -132,7 +133,7 @@ export function PaymentDrawer({ open, direction, contact, outstanding, businessI
         <Input id="pay-amount" size="lg" inputMode="decimal" value={amount} onChange={(event) => setAmount(limitMoneyDecimals(event.target.value))} placeholder="0.00" autoFocus className="text-h3 tabular-nums" leading={<span className="text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>} />
       </Field>
       <Field htmlFor="pay-date" label={t("Date")}>
-        <Input id="pay-date" size="md" type="date" value={date} onChange={(event) => setDate(event.target.value)} max={getAppToday()} />
+        <DayInput id="pay-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
       </Field>
       <WalletPicker label={t(receiving ? "Into" : "From")} size="lg" variant="money" wallets={wallets} value={accountId} onChange={setAccountId} after={wallet && value > 0 ? Number(wallet.currentBalance) + (receiving ? value : -value) : null} minBalance={receiving ? 0 : value} currency={currency} loading={open && loaded === null} error={loaded && wallets.length === 0 ? t("No wallet yet. Add one under Wallets first.") : null} onClose={onClose} />
       {invoices.length > 0 && (

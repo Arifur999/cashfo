@@ -18,6 +18,7 @@ import { getExpenseAccountsAction } from "@/lib/customer/quickEntryActions";
 import { getActiveSavingsWalletsAction, withdrawSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface WithdrawDialogProps {
   open: boolean;
@@ -133,7 +134,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
               </NativeSelect>
             </Field>
             <Field htmlFor="wd-date" label={label(t("Date"))}>
-              <Input id="wd-date" type="date" size="md" value={date} onChange={(event) => setDate(event.target.value)} max={getAppToday()} className="px-0" frameClassName="px-3" />
+              <DayInput id="wd-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
             </Field>
             <Field htmlFor="wd-note" label={label(t("Note"), true)}>
               <Input id="wd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Bought the laptop")} className="px-0" frameClassName="px-3" />

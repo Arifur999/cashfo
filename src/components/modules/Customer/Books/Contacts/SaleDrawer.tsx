@@ -16,6 +16,7 @@ import { recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivabl
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Drawer } from "../shared/Drawer";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface SaleDrawerProps {
   open: boolean;
@@ -118,10 +119,10 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field htmlFor="sale-date" label={t("Date")}>
-          <Input id="sale-date" size="md" type="date" value={date} onChange={(event) => setDate(event.target.value)} max={getAppToday()} />
+          <DayInput id="sale-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
         </Field>
         <Field htmlFor="sale-due" label={<>{t("Due by")}{optional}</>} hint={t("Past this day it counts as overdue.")}>
-          <Input id="sale-due" size="md" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} min={date} />
+          <DayInput id="sale-due" size="md" value={dueDate} onChange={setDueDate} min={date} />
         </Field>
       </div>
       <Field htmlFor="sale-note" label={<>{t(kind === "sale" ? "What was sold" : "What was bought")}{optional}</>}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Info, PiggyBank, X } from "lucide-react";
+import { Info, PiggyBank, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { createSavingsGoalAction, updateSavingsGoalAction } from "@/lib/customer
 import { monthsLeft } from "@/lib/customer/savingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface GoalDrawerProps {
   open: boolean;
@@ -134,7 +135,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
                 />
               </Field>
               <Field htmlFor="goal-date" label={label(t("Reach it by"))}>
-                <Input id="goal-date" type="date" size="lg" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} min={today} leading={<CalendarDays />} className="px-0" frameClassName="px-3" />
+                <DayInput id="goal-date" size="lg" value={targetDate} onChange={setTargetDate} min={today} />
               </Field>
             </div>
 
@@ -159,7 +160,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
                 {t("Reminder")} <span className="font-normal text-ink-muted">({t("optional")})</span>
               </legend>
               <div className="grid gap-3 md:grid-cols-[170px_minmax(0,1fr)]">
-                <Input type="date" size="md" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} min={today} aria-label={t("Reminder date")} leading={<CalendarDays />} className="px-0" frameClassName="px-3" />
+                <DayInput size="md" value={reminderDate} onChange={setReminderDate} min={today} aria-label={t("Reminder date")} />
                 <SegmentedControl
                   options={[
                     { value: "EMAIL", label: t("Email") },

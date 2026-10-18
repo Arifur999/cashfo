@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, TrendingDown, TrendingUp, X } from "lucide-react";
+import { TrendingDown, TrendingUp, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { normalizeMoneyInput } from "@/lib/customer/money";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface UpdateValueDrawerProps {
   open: boolean;
@@ -152,7 +153,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="upd-date" label={label(t("Date"))}>
-                <Input id="upd-date" type="date" size="md" value={date} onChange={(event) => setDate(event.target.value)} max={getAppToday()} leading={<CalendarDays />} className="px-0" frameClassName="px-3" />
+                <DayInput id="upd-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
               </Field>
               <Field htmlFor="upd-note" label={label(t("Note"), true)}>
                 <Input id="upd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Mouza rate went up")} className="px-0" frameClassName="px-3" />

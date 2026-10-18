@@ -22,6 +22,7 @@ import { createTransactionAction } from "@/lib/customer/transactionActions";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface JournalEntryPageClientProps {
   businessId: string;
@@ -90,7 +91,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
         <Card padding="none" className="overflow-hidden">
           <div className="grid gap-4 p-5 md:grid-cols-[200px_200px_minmax(0,1fr)]">
             <Field htmlFor="je-date" label={t("Date")}>
-              <Input id="je-date" size="md" type="date" value={date} onChange={(event) => setDate(event.target.value)} max={getAppToday()} />
+              <DayInput id="je-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
             </Field>
             <Field htmlFor="je-ref" label={t("Reference")}>
               <Input id="je-ref" size="md" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={40} placeholder="JV-0058" className="font-mono" />

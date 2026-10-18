@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownToLine, ArrowUpFromLine, CalendarDays, X } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { normalizeMoneyInput } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { MemberPicker } from "./MemberPicker";
+import DayInput from "@/components/smartly/form/DayInput";
 
 interface ContributionDrawerProps {
   open: boolean;
@@ -176,7 +177,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
                 )}
               </Field>
               <Field htmlFor="con-date" label={label(t("Date"))} hint={inMonth ? `${t("Counts in")} ${monthLabel}` : `${t("Counts in")} ${monthName(date.slice(0, 7) || range.key, locale)}`}>
-                <Input id="con-date" type="date" size="lg" value={date} onChange={(event) => setDate(event.target.value)} max={today} leading={<CalendarDays />} className="px-0" frameClassName="px-3" />
+                <DayInput id="con-date" size="lg" value={date} onChange={setDate} max={today} />
               </Field>
             </div>
 
