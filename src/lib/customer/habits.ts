@@ -1,8 +1,10 @@
 // Server-only helpers, same shape as lib/groupExpenses.ts -- except every
 // endpoint here is User-scoped (no :businessId at all, see api.ts's own
 // comment on Habit).
+import { isAxiosError } from "axios";
 import { cache } from "react";
 import { API_BASE_URL, type Habit, type HabitMonth, type HabitMonthTracker, type HabitStat, type HabitToday, type QazaSummary } from "./api";
+import { logServiceError } from "@/lib/axios/logServiceError";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { DEFAULT_PRAYER_SETTINGS, type PrayerSettings } from "./prayerTimes";
 import { emptyUnlessOutage } from "./readFallback";
@@ -26,7 +28,9 @@ export const getHabitTrackers = cache(async (category: string): Promise<HabitMon
 });
 
 // Where and how prayer times are worked out (the defaults before any are
-// saved, or when they can't be read).
+// saved, or when they can't be read). The customer layout reads this for
+// every page, so an outage here falls back to the defaults (and is logged)
+// instead of taking the whole app down with it.
 export const getPrayerSettings = cache(async (): Promise<PrayerSettings> => {
   const headers = await authHeaders();
   if (!headers) return DEFAULT_PRAYER_SETTINGS;
@@ -34,7 +38,9 @@ export const getPrayerSettings = cache(async (): Promise<PrayerSettings> => {
     const res = await customerApi.get<PrayerSettings>(`${API_BASE_URL}/api/namaz/settings`, { headers });
     return res.data;
   } catch (error) {
-    return emptyUnlessOutage(error, DEFAULT_PRAYER_SETTINGS);
+    const status = isAxiosError(error) ? error.response?.status : undefined;
+    if (!status || status >= 500 || status === 429) logServiceError("Error reading the prayer settings", error);
+    return DEFAULT_PRAYER_SETTINGS;
   }
 });
 
