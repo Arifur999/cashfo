@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CITIES, METHODS } from "@/lib/customer/prayerTimes";
+import { IDEA_STATUS, SUPPORT_STATUS, SUPPORT_TOPICS } from "@/lib/customer/supportDisplay";
 import { getSignInErrorMessage } from "@/lib/signInErrors";
 import { PASSWORD_STRENGTH_LABELS } from "@/lib/passwordStrength";
 import { bnAdminScopeDictionary, bnDictionary } from "./dictionary";
@@ -23,6 +24,12 @@ describe("bnDictionary", () => {
   it("names every prayer-time city and calculation method", () => {
     for (const name of [...CITIES.map((city) => city.name), ...METHODS.flatMap((method) => [method.label, method.short])]) {
       expect(bnDictionary[name], name).toBeTruthy();
+    }
+  });
+
+  it("words every support topic and conversation or idea state", () => {
+    for (const label of [...SUPPORT_TOPICS.map((topic) => topic.label), ...Object.values(SUPPORT_STATUS).map((s) => s.label), ...Object.values(IDEA_STATUS).map((s) => s.label)]) {
+      expect(bnDictionary[label], label).toBeTruthy();
     }
   });
 
