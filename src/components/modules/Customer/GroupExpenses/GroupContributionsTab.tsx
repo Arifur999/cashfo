@@ -115,8 +115,8 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
                 <span className="text-caption font-normal text-ink-muted md:hidden">· {formatDate(row.date, "dd MMM")}</span>
               </span>
               <span className="hidden md:block">
-                <Chip tone={isReturn ? "expense" : "income"} size="sm" className="font-semibold">
-                  {t(isReturn ? "Return" : "Deposit")}
+                <Chip tone={row.kind === "SETTLE" || row.kind === "CARRY" ? "neutral" : isReturn ? "expense" : "income"} size="sm" className="font-semibold">
+                  {t(row.kind === "SETTLE" ? "Settle up" : row.kind === "CARRY" ? "Carried over" : isReturn ? "Return" : "Deposit")}
                 </Chip>
               </span>
               <span className={cn("hidden truncate md:block", row.note ? "text-ink-2" : "text-ink-muted")}>{row.note || "—"}</span>
