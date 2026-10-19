@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker, type PrayerStatus, type QazaSummary } from "./api";
+import type { PrayerSettings } from "./prayerTimes";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -160,4 +161,11 @@ export async function setQazaSinceAction(since: string): Promise<ActionResult<Qa
     const res = await customerApi.put<QazaSummary>(`${API_BASE_URL}/api/namaz/qaza/since`, { since }, { headers: await authHeaders() });
     return res.data;
   }, "Failed to change the counting day");
+}
+
+export async function updatePrayerSettingsAction(input: Partial<PrayerSettings>): Promise<ActionResult<PrayerSettings>> {
+  return callApi(async () => {
+    const res = await customerApi.put<PrayerSettings>(`${API_BASE_URL}/api/namaz/settings`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the prayer settings");
 }

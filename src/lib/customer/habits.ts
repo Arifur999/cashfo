@@ -4,6 +4,7 @@
 import { cache } from "react";
 import { API_BASE_URL, type Habit, type HabitMonth, type HabitMonthTracker, type HabitStat, type HabitToday, type QazaSummary } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { DEFAULT_PRAYER_SETTINGS, type PrayerSettings } from "./prayerTimes";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
 
@@ -21,6 +22,19 @@ export const getHabitTrackers = cache(async (category: string): Promise<HabitMon
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
+  }
+});
+
+// Where and how prayer times are worked out (the defaults before any are
+// saved, or when they can't be read).
+export const getPrayerSettings = cache(async (): Promise<PrayerSettings> => {
+  const headers = await authHeaders();
+  if (!headers) return DEFAULT_PRAYER_SETTINGS;
+  try {
+    const res = await customerApi.get<PrayerSettings>(`${API_BASE_URL}/api/namaz/settings`, { headers });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, DEFAULT_PRAYER_SETTINGS);
   }
 });
 
