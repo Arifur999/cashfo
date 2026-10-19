@@ -329,7 +329,7 @@ export interface TransactionListResponse {
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
-export type ContactType = "CUSTOMER" | "SUPPLIER" | "BOTH" | "RELATIVE" | "OTHER";
+export type ContactType = "CUSTOMER" | "SUPPLIER" | "BOTH" | "RELATIVE" | "BANK" | "NGO" | "OTHER";
 export type ContactStatus = "ACTIVE" | "ARCHIVED";
 // BUSINESS (customer/supplier trade relationships, shown in Dena-Pawna) vs
 // LOAN (bank/person lending relationships, shown in Loan Management). Both

@@ -1,3 +1,4 @@
+import type { Translate } from "@/lib/i18n/message";
 import type { ContactType, LoanBalanceDirection, Transaction } from "./api";
 import { WALLET_TYPES } from "./walletVisuals";
 
@@ -6,10 +7,29 @@ import { WALLET_TYPES } from "./walletVisuals";
 export const LOAN_KIND_LABELS: Record<ContactType, string> = {
   BOTH: "Person",
   RELATIVE: "Relative",
+  BANK: "Bank",
+  NGO: "NGO",
   CUSTOMER: "Customer",
   SUPPLIER: "Supplier",
   OTHER: "Other",
 };
+
+// The kinds a loan contact can be, in the order the drawer offers them.
+export const LOAN_KINDS: ContactType[] = ["BOTH", "RELATIVE", "BANK", "NGO", "CUSTOMER", "SUPPLIER", "OTHER"];
+
+// Who a total is with, as the dashboard's cards say it: "3 contacts", or
+// "1 bank and 1 NGO" once banks and NGOs are among them.
+export function whoPhrase(kinds: (ContactType | undefined)[], t: Translate): string {
+  const banks = kinds.filter((kind) => kind === "BANK").length;
+  const ngos = kinds.filter((kind) => kind === "NGO").length;
+  const others = kinds.length - banks - ngos;
+  const parts = [
+    others > 0 || kinds.length === 0 ? t(others === 1 ? "{count} contact" : "{count} contacts", { count: others }) : null,
+    banks > 0 ? t(banks === 1 ? "{count} bank" : "{count} banks", { count: banks }) : null,
+    ngos > 0 ? t(ngos === 1 ? "{count} NGO" : "{count} NGOs", { count: ngos }) : null,
+  ].filter((part): part is string => part !== null);
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} ${t("and")} ${parts[parts.length - 1]}` : parts[0];
+}
 
 // Positive balance: they owe us (pawna). Negative: we owe them (dena).
 export function loanDirection(balance: number | string): LoanBalanceDirection {

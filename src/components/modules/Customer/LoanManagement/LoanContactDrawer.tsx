@@ -15,7 +15,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
 import { createContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { DIRECTION_META, LOAN_KIND_LABELS } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, LOAN_KIND_LABELS, LOAN_KINDS } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -28,8 +28,6 @@ interface LoanContactDrawerProps {
 }
 
 type BalanceKind = "PAWNA" | "DENA" | "ZERO";
-
-const KINDS: ContactType[] = ["BOTH", "RELATIVE", "CUSTOMER", "SUPPLIER", "OTHER"];
 
 const BALANCE_KINDS: { value: BalanceKind; label: string; on: string }[] = [
   { value: "PAWNA", label: "They owe me", on: "text-income" },
@@ -174,7 +172,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
             <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
               <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Who is this?")}</legend>
               <div className="flex flex-wrap gap-2">
-                {KINDS.map((kind) => {
+                {LOAN_KINDS.map((kind) => {
                   const on = kind === type;
                   return (
                     <button key={kind} type="button" aria-pressed={on} onClick={() => setType(kind)} className={cn("h-8.5 rounded-full border px-3 text-small transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>

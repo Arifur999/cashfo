@@ -139,7 +139,7 @@ export function filterContacts(contacts: Contact[], filter: ContactsFilter, quer
 }
 
 // English, passed through t().
-export const CONTACT_TYPE_WORD: Record<ContactType, string> = { CUSTOMER: "Customer", SUPPLIER: "Supplier", BOTH: "Customer and supplier", RELATIVE: "Relative", OTHER: "Other" };
+export const CONTACT_TYPE_WORD: Record<ContactType, string> = { CUSTOMER: "Customer", SUPPLIER: "Supplier", BOTH: "Customer and supplier", RELATIVE: "Relative", BANK: "Bank", NGO: "NGO", OTHER: "Other" };
 
 // The people as spreadsheet rows: name, type, phone, email, what they owe
 // you (negative when you owe them).
