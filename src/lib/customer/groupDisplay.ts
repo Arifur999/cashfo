@@ -232,8 +232,9 @@ export function needsSetup(contributions: GroupContribution[], expenses: GroupEx
 }
 
 // "Jan 2025" from an ISO timestamp, for "member since".
+// The month a member joined: their joining day, else when they were added.
 export function memberSince(member: GroupMember): string {
-  return member.createdAt.slice(0, 7);
+  return (member.joinedOn ?? member.createdAt).slice(0, 7);
 }
 
 // The budget bar and its figure, by status.

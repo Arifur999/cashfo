@@ -1,17 +1,19 @@
 "use client";
 
-import { Camera, Info, X } from "lucide-react";
+import { Camera, Info, Minus, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
+import DayInput from "@/components/smartly/form/DayInput";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupMember } from "@/lib/customer/api";
-import { createGroupMemberAction, updateGroupMemberAction, uploadGroupMemberPhotoAction } from "@/lib/customer/groupExpensesActions";
+import { createGroupMemberAction, updateGroupMemberAction, updateGroupSettingsAction, uploadGroupMemberPhotoAction } from "@/lib/customer/groupExpensesActions";
+import { mealText } from "@/lib/customer/groupMeals";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -20,11 +22,17 @@ interface MemberDrawerProps {
   onClose: () => void;
   businessId: string;
   editing: GroupMember | null;
+  // Who keeps the cash now (the manager).
+  cashHolderId: string | null;
+  // The day a new member starts sharing costs: today, or empty (from the
+  // start) while the group has nothing recorded yet.
+  defaultJoin: string;
 }
 
-// Add or edit a member in the design's drawer: a photo, the name and a
-// phone for sending the statement.
-export function MemberDrawer({ open, onClose, businessId, editing }: MemberDrawerProps) {
+// Add or edit a member in the design's drawer: a photo, the name, a phone
+// for sending the statement, the day they join (they share costs from then
+// on), whether they manage the cash, and their share units.
+export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId, defaultJoin }: MemberDrawerProps) {
   const { t } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -33,6 +41,9 @@ export function MemberDrawer({ open, onClose, businessId, editing }: MemberDrawe
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [joinedOn, setJoinedOn] = useState("");
+  const [manager, setManager] = useState(false);
+  const [shareUnits, setShareUnits] = useState(1);
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -43,6 +54,9 @@ export function MemberDrawer({ open, onClose, businessId, editing }: MemberDrawe
       setPhotoUrl(editing?.photoUrl ?? "");
       setName(editing?.name ?? "");
       setPhone(editing?.phone ?? "");
+      setJoinedOn(editing ? (editing.joinedOn?.slice(0, 10) ?? "") : defaultJoin);
+      setManager(!!editing && editing.id === cashHolderId);
+      setShareUnits(editing ? Number(editing.shareUnits) : 1);
     }
   }
 
@@ -70,8 +84,13 @@ export function MemberDrawer({ open, onClose, businessId, editing }: MemberDrawe
     event.preventDefault();
     if (!valid || isPending) return;
     startTransition(async () => {
-      const input = { name: name.trim(), phone: phone.trim() || undefined, photoUrl: photoUrl || undefined };
+      const input = { name: name.trim(), phone: phone.trim() || undefined, photoUrl: photoUrl || undefined, shareUnits, joinedOn: joinedOn || null };
       const result = editing ? await updateGroupMemberAction(businessId, editing.id, input) : await createGroupMemberAction(businessId, input);
+      // The manager is the one who keeps the cash.
+      const id = editing?.id ?? result.data?.id;
+      if (result.success && id && manager !== (id === cashHolderId)) {
+        await updateGroupSettingsAction(businessId, { cashHolderMemberId: manager ? id : null });
+      }
       if (result.success) {
         toast.success(editing ? t("Member updated") : t("Member added"));
         onClose();
@@ -129,9 +148,47 @@ export function MemberDrawer({ open, onClose, businessId, editing }: MemberDrawe
               <Input id="mem-phone" size="md" type="tel" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={20} placeholder="01822-907316" className="tabular-nums" />
             </Field>
 
+            <Field htmlFor="mem-join" label={label(t("Joins on"), !editing && !defaultJoin)} hint={joinedOn ? t("{name} shares costs from this date only. Earlier days stay as they are.", { name: name.trim() || t("They") }) : t("Shares every cost from the start.")}>
+              <DayInput id="mem-join" size="md" value={joinedOn} onChange={setJoinedOn} />
+            </Field>
+
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Role")}</legend>
+              <div role="radiogroup" className="grid grid-cols-2 gap-2">
+                {[
+                  { value: false, title: "Member", sub: "Shares the costs" },
+                  { value: true, title: "Manager", sub: "Also holds the cash" },
+                ].map((option) => {
+                  const on = option.value === manager;
+                  return (
+                    <button key={option.title} type="button" role="radio" aria-checked={on} onClick={() => setManager(option.value)} className={cn("flex h-13 flex-col items-start justify-center gap-px rounded-md border px-3 text-left", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
+                      <span className={cn("text-small text-ink", on ? "font-bold" : "font-semibold")}>{t(option.title)}</span>
+                      <span className={cn("text-caption", on ? "text-ink-2" : "text-ink-muted")}>{t(option.sub)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <div className="flex items-center justify-between gap-3 rounded-md border border-line px-4 py-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-body font-medium text-ink">{t("Share units")}</span>
+                <span className="text-caption leading-[1.45] text-ink-muted">{t("Only used when a cost is split by shares, for example a bigger room paying 1.5.")}</span>
+              </div>
+              <span className="flex h-9.5 shrink-0 items-center overflow-hidden rounded-md border border-line-strong">
+                <button type="button" aria-label={t("Fewer share units")} disabled={shareUnits <= 0.5} onClick={() => setShareUnits(Math.max(0.5, shareUnits - 0.5))} className="flex h-full w-8.5 items-center justify-center bg-cream disabled:opacity-40">
+                  <Minus className="size-3.5" aria-hidden="true" />
+                </button>
+                <span className="w-8.5 text-center text-body-lg font-semibold tabular-nums">{mealText(shareUnits)}</span>
+                <button type="button" aria-label={t("More share units")} disabled={shareUnits >= 100} onClick={() => setShareUnits(shareUnits + 0.5)} className="flex h-full w-8.5 items-center justify-center bg-cream disabled:opacity-40">
+                  <Plus className="size-3.5" aria-hidden="true" />
+                </button>
+              </span>
+            </div>
+
             <div className="flex items-start gap-3 rounded-md bg-cream px-4 py-3 text-small leading-relaxed text-ink-2">
               <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-              <span>{t("Members don't need their own login. You record contributions and expenses for them.")}</span>
+              <span>{t("Members don't need their own login. You record contributions, expenses and meals for them.")}</span>
             </div>
           </div>
 
