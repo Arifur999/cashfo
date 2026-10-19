@@ -161,13 +161,6 @@ export function attentionIds(checkup: VaultCheckup | null): Set<string> {
   return new Set(checkup ? [...checkup.reused, ...checkup.weak, ...checkup.old] : []);
 }
 
-// Whole months from an ISO time to `now`.
-export function monthsSince(iso: string, now: Date): number {
-  const then = new Date(iso);
-  const months = (now.getUTCFullYear() - then.getUTCFullYear()) * 12 + now.getUTCMonth() - then.getUTCMonth() - (now.getUTCDate() < then.getUTCDate() ? 1 : 0);
-  return Math.max(0, months);
-}
-
 export function categoryCounts(entries: VaultEntrySummary[]): Record<VaultEntryCategory, number> {
   const counts: Record<VaultEntryCategory, number> = { SOCIAL: 0, BANK: 0, MOBILE_BANKING: 0, EMAIL: 0, SHOPPING: 0, WORK: 0, WIFI: 0, GOVERNMENT: 0, OTHER: 0 };
   for (const entry of entries) counts[entry.category]++;

@@ -10,11 +10,12 @@ import { SOFT_TONE } from "@/components/smartly/tones";
 import type { VaultEntrySummary } from "@/lib/customer/api";
 import { formatDate } from "@/lib/customer/date";
 import { revealVaultEntryAction } from "@/lib/customer/passwordVaultActions";
-import { avatarLetter, hostOf, monthsSince, normalizeUrl, type VaultIssue } from "@/lib/customer/vaultDisplay";
+import { avatarLetter, hostOf, normalizeUrl, type VaultIssue } from "@/lib/customer/vaultDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { VAULT_CATEGORY_CHIP, VAULT_CATEGORY_LABELS, VAULT_CATEGORY_TONE } from "./vaultCategoryDisplay";
 import { isLockedMessage } from "./VaultPageClient";
+import { monthsSince } from "@/lib/customer/date";
 
 interface EntryDetailsProps {
   entry: VaultEntrySummary;

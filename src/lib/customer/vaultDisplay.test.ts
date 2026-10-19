@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { VaultEntrySummary } from "./api";
-import { attentionIds, avatarLetter, categoryCounts, countdownText, filterEntries, generatePassword, hostOf, issuesOf, monthsSince, normalizeUrl, parseExpiry, passwordStrength, rulesMet, sortEntries, vaultRules } from "./vaultDisplay";
+import { attentionIds, avatarLetter, categoryCounts, countdownText, filterEntries, generatePassword, hostOf, issuesOf, normalizeUrl, parseExpiry, passwordStrength, rulesMet, sortEntries, vaultRules } from "./vaultDisplay";
 
 const entry = (over: Partial<VaultEntrySummary> & { id: string; title: string }): VaultEntrySummary => ({ category: "OTHER", websiteUrl: null, holderName: null, usernameOrEmail: null, notes: null, createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z", ...over });
 
@@ -98,12 +98,5 @@ describe("checkup", () => {
     expect(issuesOf(checkup, "c")).toEqual(["reused", "weak"]);
     expect(issuesOf(null, "c")).toEqual([]);
     expect([...attentionIds(checkup)].sort()).toEqual(["a", "c", "d"]);
-  });
-
-  it("counts whole months since a password changed", () => {
-    const now = new Date("2026-10-02T00:00:00.000Z");
-    expect(monthsSince("2025-08-02T00:00:00.000Z", now)).toBe(14);
-    expect(monthsSince("2025-08-03T00:00:00.000Z", now)).toBe(13);
-    expect(monthsSince("2026-09-20T00:00:00.000Z", now)).toBe(0);
   });
 });

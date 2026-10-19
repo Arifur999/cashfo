@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTimeAgo } from "./date";
+import { formatTimeAgo, monthsSince } from "./date";
 
 describe("formatTimeAgo", () => {
   const now = new Date("2026-10-18T12:00:00.000Z");
@@ -14,5 +14,14 @@ describe("formatTimeAgo", () => {
 
   it("falls back to the date after a month", () => {
     expect(formatTimeAgo("2026-08-01T12:00:00.000Z", undefined, now)).toBe("1 Aug 2026");
+  });
+});
+
+describe("monthsSince", () => {
+  it("counts whole months since a password changed", () => {
+    const now = new Date("2026-10-02T00:00:00.000Z");
+    expect(monthsSince("2025-08-02T00:00:00.000Z", now)).toBe(14);
+    expect(monthsSince("2025-08-03T00:00:00.000Z", now)).toBe(13);
+    expect(monthsSince("2026-09-20T00:00:00.000Z", now)).toBe(0);
   });
 });
