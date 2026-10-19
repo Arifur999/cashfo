@@ -9,13 +9,16 @@ import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, Contact } from "@/lib/customer/api";
+import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { balanceAfterEntry, DIRECTION_META, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, type LoanEntryKind } from "@/lib/customer/loanDisplay";
-import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { formatDate } from "@/lib/customer/date";
+import { balanceAfterEntry, DIRECTION_META, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, profitCategory, type LoanEntryKind } from "@/lib/customer/loanDisplay";
+import { createExpenseAction, createIncomeAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -34,10 +37,13 @@ interface LoanEntryDrawerProps {
   initialKind?: LoanEntryKind;
 }
 
-// New loan entry: who, what happened (a loan given or taken, money back
-// or paid back), through which wallet, how much -- and what both balances
-// will be once it is saved. Every entry moves real money, so a wallet is
-// always required.
+type Purpose = "PRINCIPAL" | "PROFIT";
+
+// New loan entry: who, whether it is the loan itself or its profit, what
+// happened (a loan given or taken, money back or paid back; or profit paid
+// or received, filed under a category), through which wallet, how much --
+// and what both balances will be once it is saved. Every entry moves real
+// money, so a wallet is always required. Profit never moves the loan.
 export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency, initialContactId, initialKind }: LoanEntryDrawerProps) {
   const { t } = useLocale();
   const router = useRouter();
@@ -45,6 +51,12 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const amountId = useId();
   const [contactId, setContactId] = useState("");
   const [kind, setKind] = useState<LoanEntryKind>("GIVE_LOAN");
+  const [purpose, setPurpose] = useState<Purpose>("PRINCIPAL");
+  // Profit: I paid it (an expense) or I received it (an income).
+  const [profitPaid, setProfitPaid] = useState(true);
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<{ EXPENSE: string[]; INCOME: string[] }>({ EXPENSE: [], INCOME: [] });
+  const [expenseAccounts, setExpenseAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [amount, setAmount] = useState("");
@@ -61,6 +73,9 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
     if (open) {
       setContactId(initialContactId ?? contacts[0]?.id ?? "");
       setKind(initialKind ?? "GIVE_LOAN");
+      setPurpose("PRINCIPAL");
+      setProfitPaid(true);
+      setCategory("");
       setAmount("");
       setNote("");
       setDate(getAppToday());
@@ -70,11 +85,13 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
 
   useEffect(() => {
     if (!open) return;
-    listMoneyAccountsAction(businessId).then((money) => {
+    Promise.all([listMoneyAccountsAction(businessId), getBudgetCategoryNamesAction(businessId, "EXPENSE"), getBudgetCategoryNamesAction(businessId, "INCOME"), getExpenseAccountsAction(businessId)]).then(([money, expense, income, accounts]) => {
       const list = money.data ?? [];
       setWallets(list);
       setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
       setAccountId((current) => current || list[0]?.id || "");
+      setCategories({ EXPENSE: expense.map((c) => c.name), INCOME: income.map((c) => c.name) });
+      setExpenseAccounts(accounts);
       setLoading(false);
     });
   }, [open, businessId]);
@@ -82,11 +99,21 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const contact = contacts.find((c) => c.id === contactId);
   const wallet = wallets.find((w) => w.id === accountId);
   const meta = LOAN_ENTRY_META[kind];
+  const profit = purpose === "PROFIT";
+  const profitType = profitPaid ? "EXPENSE" : "INCOME";
+  const options = categories[profitType];
+  const picked = category && options.includes(category) ? category : profitCategory(options);
+  // An expense posts against a real expense account; the category is its
+  // label (the New transaction drawer's rule).
+  const expenseAccountId = expenseAccounts.find((a) => a.name.toLowerCase().includes(picked.toLowerCase()))?.id ?? expenseAccounts[0]?.id ?? "";
   const value = Number(amount) || 0;
-  const walletAfter = wallet ? Number(wallet.currentBalance) + (meta.flow === "in" ? value : -value) : null;
+  const flowIn = profit ? !profitPaid : meta.flow === "in";
+  const walletAfter = wallet ? Number(wallet.currentBalance) + (flowIn ? value : -value) : null;
   const balanceNow = contact ? Number(contact.currentBalance) : 0;
-  const balanceAfter = balanceAfterEntry(balanceNow, kind, value);
-  const valid = contactId.length > 0 && value > 0 && accountId.length > 0;
+  const balanceAfter = profit ? balanceNow : balanceAfterEntry(balanceNow, kind, value);
+  const valid = contactId.length > 0 && value > 0 && accountId.length > 0 && (!profit || !profitPaid || expenseAccountId.length > 0);
+  const saveLabel = profit ? (profitPaid ? "Save profit payment" : "Save profit received") : meta.save;
+  const walletLabel = profit ? (profitPaid ? "Pay from" : "Money came into") : meta.walletLabel;
 
   const directionText = (balance: number) => {
     const direction = loanDirection(balance);
@@ -97,8 +124,18 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
     if (!valid || isPending) return;
     startTransition(async () => {
       const base = { contactId, amount: value, date, description: note.trim() || undefined, moneyAccountId: accountId };
-      const result =
-        kind === "GIVE_LOAN" ? await recordSaleAction(businessId, base) : kind === "TAKE_LOAN" ? await recordPurchaseAction(businessId, base) : kind === "RECEIVE_PAYMENT" ? await receivePaymentAction(businessId, base) : await payPaymentAction(businessId, base);
+      const filed = { contactId, amount: value, date, description: note.trim() || undefined, categoryId: picked || undefined };
+      const result = profit
+        ? profitPaid
+          ? await createExpenseAction(businessId, { ...filed, fromAccountId: accountId, expenseAccountId })
+          : await createIncomeAction(businessId, { ...filed, toAccountId: accountId })
+        : kind === "GIVE_LOAN"
+          ? await recordSaleAction(businessId, base)
+          : kind === "TAKE_LOAN"
+            ? await recordPurchaseAction(businessId, base)
+            : kind === "RECEIVE_PAYMENT"
+              ? await receivePaymentAction(businessId, base)
+              : await payPaymentAction(businessId, base);
       if (!result.success) {
         toast.error(result.message ?? t("Failed to record the entry"));
         return;
@@ -154,26 +191,81 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             </div>
 
             <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("What happened?")}</legend>
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("What is this money for?")}</legend>
               <div role="radiogroup" className="grid grid-cols-2 gap-2">
-                {LOAN_ENTRY_KINDS.map((option) => {
-                  const on = option === kind;
-                  const out = LOAN_ENTRY_META[option].flow === "out";
+                {(
+                  [
+                    { value: "PRINCIPAL", title: "Principal", sub: "Changes the balance", on: "border-emerald bg-mint-50", ink: "text-emerald", subInk: "text-ink-2" },
+                    { value: "PROFIT", title: "Profit / interest", sub: "Balance stays the same", on: "border-warning-fill bg-warning-soft", ink: "text-warning", subInk: "text-warning" },
+                  ] as const
+                ).map((option) => {
+                  const on = option.value === purpose;
                   return (
-                    <button key={option} type="button" role="radio" aria-checked={on} onClick={() => setKind(option)} className={cn("flex h-14 items-center gap-3 rounded-md border px-3 text-left transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
-                      {out ? <ArrowUpRight className="size-4.5 shrink-0 text-expense-fill" aria-hidden="true" /> : <ArrowDownLeft className="size-4.5 shrink-0 text-income" aria-hidden="true" />}
-                      <span className="flex min-w-0 flex-col gap-px">
-                        <span className={cn("text-small", on ? "font-bold text-emerald" : "font-semibold text-ink")}>{t(LOAN_ENTRY_META[option].title)}</span>
-                        <span className="truncate text-caption font-normal text-ink-muted">{t(LOAN_ENTRY_META[option].sub)}</span>
-                      </span>
+                    <button key={option.value} type="button" role="radio" aria-checked={on} onClick={() => setPurpose(option.value)} className={cn("flex h-13 flex-col items-start justify-center gap-px rounded-md border px-3 text-left transition-colors", on ? cn("border-[1.5px]", option.on) : "border-line bg-surface hover:border-line-strong")}>
+                      <span className={cn("text-small", on ? cn("font-bold", option.ink) : "font-semibold text-ink")}>{t(option.title)}</span>
+                      <span className={cn("text-caption font-normal", on ? option.subInk : "text-ink-muted")}>{t(option.sub)}</span>
                     </button>
                   );
                 })}
               </div>
             </fieldset>
 
+            {profit ? (
+              <>
+                <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
+                  <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Did you pay it or receive it?")}</legend>
+                  <div role="radiogroup" className="grid grid-cols-2 gap-2">
+                    {[
+                      { paid: true, title: "I paid profit", sub: "Money went out · expense", on: "border-expense bg-expense-soft", ink: "text-expense" },
+                      { paid: false, title: "I received profit", sub: "Money came in · income", on: "border-income bg-mint-50", ink: "text-income" },
+                    ].map((option) => {
+                      const on = option.paid === profitPaid;
+                      return (
+                        <button key={option.title} type="button" role="radio" aria-checked={on} onClick={() => setProfitPaid(option.paid)} className={cn("flex h-13 items-center gap-3 rounded-md border px-3 text-left transition-colors", on ? cn("border-[1.5px]", option.on) : "border-line bg-surface hover:border-line-strong")}>
+                          {option.paid ? <ArrowUpRight className="size-4.5 shrink-0 text-expense-fill" aria-hidden="true" /> : <ArrowDownLeft className="size-4.5 shrink-0 text-income" aria-hidden="true" />}
+                          <span className="flex min-w-0 flex-col gap-px">
+                            <span className={cn("text-small", on ? cn("font-bold", option.ink) : "font-semibold text-ink")}>{t(option.title)}</span>
+                            <span className={cn("truncate text-caption font-normal", on ? option.ink : "text-ink-muted")}>{t(option.sub)}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+                <Field htmlFor="loan-category" label={label(t(profitPaid ? "Expense category" : "Income category"))} hint={t(profitPaid ? "Counted as an expense in this category. Your wallet changes once, from this entry." : "Counted as income in this category. Your wallet changes once, from this entry.")}>
+                  <NativeSelect id="loan-category" size="lg" value={picked} onChange={(event) => setCategory(event.target.value)} disabled={options.length === 0} frameClassName="w-full" className="pl-4 font-semibold">
+                    {options.length === 0 && <option value="">{t(loading ? "Loading..." : "No categories yet")}</option>}
+                    {options.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              </>
+            ) : (
+              <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("What happened?")}</legend>
+                <div role="radiogroup" className="grid grid-cols-2 gap-2">
+                  {LOAN_ENTRY_KINDS.map((option) => {
+                    const on = option === kind;
+                    const out = LOAN_ENTRY_META[option].flow === "out";
+                    return (
+                      <button key={option} type="button" role="radio" aria-checked={on} onClick={() => setKind(option)} className={cn("flex h-14 items-center gap-3 rounded-md border px-3 text-left transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
+                        {out ? <ArrowUpRight className="size-4.5 shrink-0 text-expense-fill" aria-hidden="true" /> : <ArrowDownLeft className="size-4.5 shrink-0 text-income" aria-hidden="true" />}
+                        <span className="flex min-w-0 flex-col gap-px">
+                          <span className={cn("text-small", on ? "font-bold text-emerald" : "font-semibold text-ink")}>{t(LOAN_ENTRY_META[option].title)}</span>
+                          <span className="truncate text-caption font-normal text-ink-muted">{t(LOAN_ENTRY_META[option].sub)}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            )}
+
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px]">
-              <WalletPicker label={t(meta.walletLabel)} size="lg" wallets={wallets} value={accountId} onChange={setAccountId} after={walletAfter} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+              <WalletPicker label={t(walletLabel)} size="lg" wallets={wallets} value={accountId} onChange={setAccountId} after={walletAfter} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
               <Field htmlFor="loan-date" label={label(t("Date"))}>
                 <DayInput id="loan-date" size="xl" value={date} onChange={setDate} max={getAppToday()} className="gap-2 text-body" />
               </Field>
@@ -201,13 +293,30 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
 
             {contact && (
               <div className="flex flex-col gap-2 rounded-md border border-line bg-cream px-4 py-3 text-small tabular-nums">
-                <div className="flex justify-between gap-3">
-                  <span className="truncate text-ink-2">{contact.name}</span>
-                  <span>
-                    <span className="text-ink-muted">{directionText(balanceNow)} → </span>
-                    <span className={cn("font-bold", DIRECTION_META[loanDirection(balanceAfter)].text)}>{directionText(balanceAfter)}</span>
-                  </span>
-                </div>
+                {profit ? (
+                  <>
+                    <div className="flex justify-between gap-3">
+                      <span className="truncate text-ink-2">{t("{name} loan", { name: contact.name })}</span>
+                      <span className="font-semibold text-ink">
+                        {directionText(balanceNow)} · <span className="font-medium text-ink-muted">{t("no change")}</span>
+                      </span>
+                    </div>
+                    {picked && (
+                      <div className="flex justify-between gap-3">
+                        <span className="truncate text-ink-2">{t(profitPaid ? "{category} expense, {month}" : "{category} income, {month}", { category: picked, month: formatDate(`${date}T00:00:00.000Z`, "MMM") })}</span>
+                        <span className={cn("font-semibold", profitPaid ? "text-warning" : "text-income")}>+ {formatCurrency(value, currency)}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex justify-between gap-3">
+                    <span className="truncate text-ink-2">{contact.name}</span>
+                    <span>
+                      <span className="text-ink-muted">{directionText(balanceNow)} → </span>
+                      <span className={cn("font-bold", DIRECTION_META[loanDirection(balanceAfter)].text)}>{directionText(balanceAfter)}</span>
+                    </span>
+                  </div>
+                )}
                 {wallet && walletAfter !== null && (
                   <div className="flex justify-between gap-3">
                     <span className="truncate text-ink-2">{wallet.name}</span>
@@ -231,7 +340,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className={cn("px-5", !wide && "order-1 w-full")}>
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t(meta.save)}
+              {t(saveLabel)}
             </Button>
           </div>
         </form>
