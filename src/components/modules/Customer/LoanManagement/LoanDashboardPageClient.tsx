@@ -15,7 +15,7 @@ import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Contact, LoanBalanceDirection, LoanDashboard, LoanDashboardRow } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import { DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind, whoPhrase } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
@@ -52,6 +52,8 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   const [entry, setEntry] = useState<{ kind?: LoanEntryKind } | null>(null);
 
   const contactsById = new Map(contacts.map((contact) => [contact.id, contact]));
+  // "3 contacts", "1 bank and 1 NGO": who a side's total is with.
+  const whoOf = (direction: LoanBalanceDirection) => whoPhrase(dashboard.rows.filter((row) => row.direction === direction).map((row) => contactsById.get(row.contactId)?.type), t);
   const counts = { ALL: dashboard.rows.length, ...Object.fromEntries(DIRECTIONS.map((direction) => [direction, dashboard.rows.filter((row) => row.direction === direction).length])) } as Record<Tab, number>;
   const q = search.trim().toLowerCase();
   const shown = dashboard.rows
@@ -110,9 +112,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             <span className="md:hidden">
               {t("Pawna")} · {counts.PAWNA} {t(counts.PAWNA === 1 ? "person" : "people")}
             </span>
-            <span className="hidden md:inline">
-              {counts.PAWNA} {t(counts.PAWNA === 1 ? "contact" : "contacts")}
-            </span>
+            <span className="hidden md:inline">{t("From {who}", { who: whoOf("PAWNA") })}</span>
           </span>
         </Card>
         <Card padding="sm" className={PHONE_FIGURE_CARD}>
@@ -127,9 +127,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             <span className="md:hidden">
               {t("Dena")} · {counts.DENA} {t(counts.DENA === 1 ? "person" : "people")}
             </span>
-            <span className="hidden md:inline">
-              {counts.DENA} {t(counts.DENA === 1 ? "contact" : "contacts")}
-            </span>
+            <span className="hidden md:inline">{t("To {who}", { who: whoOf("DENA") })}</span>
           </span>
         </Card>
         <Card className="hidden flex-col gap-2 md:flex">
@@ -216,7 +214,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 const contact = contactsById.get(row.contactId);
                 return (
                   <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("box-content flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-surface-sunken")}>
-                    <PersonAvatar name={row.contactName} src={contact?.photoUrl} size={40} coloured />
+                    <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={40} coloured />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <b className="truncate text-title leading-[normal] text-ink">{row.contactName}</b>
                       <span className="truncate text-caption leading-[normal] font-normal text-ink-muted">{contact ? [t(LOAN_KIND_LABELS[contact.type]), contact.notes].filter(Boolean).join(" · ") : (row.contactPhone ?? "")}</span>
@@ -276,7 +274,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
   return (
     <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink transition-colors hover:bg-cream", GRID)}>
       <span className="flex min-w-0 items-center gap-3">
-        <PersonAvatar name={row.contactName} src={contact?.photoUrl} size={36} />
+        <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="flex items-center gap-2">
             <span className="truncate font-medium">{row.contactName}</span>
