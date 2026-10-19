@@ -49,6 +49,9 @@ export const settingsDictionary: Record<string, string> = {
 
   // Security
   "Change it any time. Your other devices are signed out when you do.": "যখন খুশি বদলান। বদলালে আপনার অন্য ডিভাইসগুলো সাইন আউট হয়ে যায়।",
+  "Last changed this month": "এই মাসে বদলানো হয়েছে",
+  "Last changed {count} month ago": "শেষ বদলানো হয়েছে {count} মাস আগে",
+  "Last changed {count} months ago": "শেষ বদলানো হয়েছে {count} মাস আগে",
   "Change password": "পাসওয়ার্ড বদলান",
   "Your current password, then the new one twice.": "আপনার বর্তমান পাসওয়ার্ড, তারপর নতুনটি দুবার।",
   "Current password": "বর্তমান পাসওয়ার্ড",

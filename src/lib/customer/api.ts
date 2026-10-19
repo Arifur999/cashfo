@@ -40,6 +40,9 @@ export interface CurrentUser {
   avatarUrl: string | null;
   preferredLanguage: LanguagePreference;
   emailVerifiedAt: string | null;
+  // When the password was last set; null for an account that never set one
+  // (Google sign-in) or set it before this was recorded.
+  passwordChangedAt: string | null;
   businesses: UserBusiness[];
   // Set when this is a super admin's read-only "View as customer" session.
   impersonatedBy?: { name: string; email: string | null } | null;
