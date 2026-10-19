@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GroupContribution, GroupExpense, GroupMember, GroupSettlementMemberRow, GroupSettlementRecord } from "./api";
-import { budgetStatus, cashInHand, closedRecordFor, contributionTotals, contributionsByMember, groupMonthOf, groupTabFrom, groupTabsFor, inMonth, isDayClosed, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth, spendByCategory, spendByMonth, splitText, throughManager, whoPaysWhom } from "./groupDisplay";
+import { budgetStatus, cashInHand, closedRecordFor, contributionTotals, contributionsByMember, expenseShare, groupMonthOf, groupTabFrom, groupTabsFor, inMonth, isDayClosed, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth, spendByCategory, spendByMonth, splitText, throughManager, whoPaysWhom } from "./groupDisplay";
 
 const member = (id: string, name: string): GroupMember => ({ id, businessId: "g", name, phone: null, photoUrl: null, status: "ACTIVE", createdAt: "2025-01-05T00:00:00.000Z", updatedAt: "2025-01-05T00:00:00.000Z" });
 const row = (id: string, balance: number): GroupSettlementMemberRow => ({ groupMemberId: id, name: id, grossDeposited: "0", returned: "0", contributed: "0", share: "0", balance: balance.toFixed(2) });
@@ -124,5 +124,19 @@ describe("throughManager", () => {
       { fromId: "k", toId: "r", amount: 853, owes: false },
       { fromId: "k", toId: "s", amount: 774, owes: false },
     ]);
+  });
+});
+
+describe("expenseShare", () => {
+  const sep = { from: "2026-09-01", to: "2026-09-30" };
+  const people = [{ ...member("k", "Khaled"), shareUnits: "3.00" }, { ...member("a", "Arif"), shareUnits: "1.00", joinedOn: "2026-09-16" }, { ...member("r", "Rakib"), shareUnits: "4.00" }] as GroupMember[];
+  const cost = (amount: number, date: string, split: GroupExpense["split"] = "EQUAL", splits: GroupExpense["splits"] = []) => ({ amount: amount.toFixed(2), date, split, splits });
+  it("works out one member's part the way the settlement does", () => {
+    expect(expenseShare(cost(900, "2026-09-05"), "k", people, sep, false)).toBe(450);
+    expect(expenseShare(cost(900, "2026-09-05"), "a", people, sep, false)).toBe(0);
+    expect(expenseShare(cost(800, "2026-09-20", "SHARES"), "r", people, sep, false)).toBe(400);
+    expect(expenseShare(cost(1000, "2026-09-20", "EXACT", [{ id: "1", expenseId: "e", groupMemberId: "k", units: null, amount: "700.00" }, { id: "2", expenseId: "e", groupMemberId: "r", units: null, amount: "300.00" }]), "k", people, sep, false)).toBe(700);
+    expect(expenseShare(cost(600, "2026-09-20", "MEALS"), "k", people, sep, true)).toBe(0);
+    expect(expenseShare(cost(600, "2026-09-20", "MEALS"), "k", people, sep, false)).toBe(200);
   });
 });

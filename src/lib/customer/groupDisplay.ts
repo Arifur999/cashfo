@@ -171,6 +171,41 @@ export function whoPaysWhom(rows: GroupSettlementMemberRow[]): Transfer[] {
   return transfers;
 }
 
+// Whether a member is in the group on a day, and at all during a range --
+// the server's rule for who shares a cost (an archived member with no
+// leaving day is gone for the whole range).
+const inGroupOn = (member: GroupMember, day: string) => (member.status === "ACTIVE" || !!member.leftOn) && (!member.joinedOn || member.joinedOn.slice(0, 10) <= day) && (!member.leftOn || member.leftOn.slice(0, 10) >= day);
+const inRange = (member: GroupMember, range: Pick<MonthRange, "from" | "to">) => (member.status === "ACTIVE" || !!member.leftOn) && (!member.joinedOn || member.joinedOn.slice(0, 10) <= range.to) && (!member.leftOn || member.leftOn.slice(0, 10) >= range.from);
+
+// One member's part of one expense, as the settlement works it out: the
+// members it names (by units or exact amounts), else everyone in the group
+// that day. A by-meals expense is pooled into the meal rate instead (0
+// here) while meal counting is on, and shared equally while it is off.
+export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "split" | "splits">, memberId: string, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsOn: boolean): number {
+  const amount = Number(expense.amount);
+  if (expense.split === "MEALS" && mealsOn) return 0;
+  const sharing = members.filter((member) => inRange(member, range));
+  const thatDay = sharing.filter((member) => inGroupOn(member, expense.date.slice(0, 10)));
+  const everyone = thatDay.length > 0 ? thatDay : sharing;
+  const named = expense.splits.filter((split) => members.some((member) => member.id === split.groupMemberId));
+  if (expense.split === "EXACT" && named.length > 0) {
+    const own = Number(named.find((split) => split.groupMemberId === memberId)?.amount ?? 0);
+    const rest = amount - named.reduce((sum, split) => sum + Number(split.amount ?? 0), 0);
+    return own + (Math.abs(rest) > 0.004 && everyone.some((member) => member.id === memberId) ? rest / everyone.length : 0);
+  }
+  const weights: [string, number][] =
+    expense.split === "SHARES"
+      ? named.length > 0
+        ? named.map((split) => [split.groupMemberId, Number(split.units ?? members.find((m) => m.id === split.groupMemberId)?.shareUnits ?? 1)])
+        : everyone.map((member) => [member.id, Number(member.shareUnits)])
+      : named.length > 0
+        ? named.map((split) => [split.groupMemberId, 1])
+        : everyone.map((member) => [member.id, 1]);
+  const total = weights.reduce((sum, [, weight]) => sum + weight, 0);
+  const mine = weights.find(([id]) => id === memberId)?.[1] ?? 0;
+  return total > 0 ? (amount * mine) / total : 0;
+}
+
 // Settling through the manager: whoever owes pays the one holding the
 // cash, who returns what the others are owed. The manager's own balance
 // stays with them.
