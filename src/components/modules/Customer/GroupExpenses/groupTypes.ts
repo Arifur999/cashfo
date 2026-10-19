@@ -8,6 +8,7 @@ export interface GroupCardData {
   workspace: WorkspaceListItem;
   members: GroupMember[];
   settlement: GroupSettlementResult;
+  settings: GroupSettings;
   budget: GroupMonthlyBudget | null;
   closed: boolean;
 }

@@ -438,6 +438,7 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Save meals": "মিল সংরক্ষণ করুন",
   "Failed to save the meals": "মিল সংরক্ষণ করা যায়নি",
   "No meals marked yet": "এখনো কোনো মিল লেখা হয়নি",
+  "{meals} meals in {month}": "{month}-এ {meals} মিল",
   "Members' shares": "সদস্যদের ভাগ",
   "Used for costs shared \"by shares\". For a family this is usually how many people each brother feeds.": "\"ভাগ অনুযায়ী\" খরচে ব্যবহার হয়। পরিবারে সাধারণত প্রত্যেক ভাই কতজনকে খাওয়ান তা-ই।",
   "Fewer shares for {name}": "{name}-এর ভাগ কমান",
