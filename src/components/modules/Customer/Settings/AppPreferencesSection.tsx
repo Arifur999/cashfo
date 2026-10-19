@@ -1,13 +1,16 @@
 "use client";
 
 import { Monitor, Moon, Sun } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useTheme, type ThemePreference } from "@/components/modules/Customer/Providers/ThemeProvider";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Switch } from "@/components/ui/switch";
+import type { ReminderPreferences } from "@/lib/customer/api";
 import { saveLanguageAction } from "@/lib/customer/authActions";
+import { saveReminderPreferencesAction } from "@/lib/customer/notificationsActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { useLocale, type Locale } from "@/lib/i18n/LocaleProvider";
@@ -15,6 +18,8 @@ import { cn } from "@/lib/utils";
 
 interface AppPreferencesSectionProps {
   today: string;
+  // null when they couldn't be read: the switches then stay off and locked.
+  reminders: ReminderPreferences | null;
 }
 
 // Preferences that have no switch yet: shown as the design draws them,
@@ -26,17 +31,31 @@ const NUMBER_ROWS = [
   { title: "Week starts on", body: "For weekly budgets and the meal sheet.", options: ["Saturday", "Sunday", "Monday"] },
 ];
 
-const REMINDERS = [
-  { title: "Budget almost used", body: "When a category passes 90% of its budget." },
-  { title: "Loan payments due", body: "A day before a loan payment or profit date." },
-  { title: "Savings goal check-in", body: "On the 1st, how far each goal has come." },
-  { title: "Monthly summary by email", body: "Income, spending and savings for last month." },
+// The bell's reminders. The email summary waits for email sending.
+const REMINDERS: { key: keyof ReminderPreferences; title: string; body: string }[] = [
+  { key: "budget", title: "Budget almost used", body: "When a category passes 90% of its budget." },
+  { key: "loans", title: "Loan payments due", body: "A day before a loan payment or profit date." },
+  { key: "savings", title: "Savings goal check-in", body: "On the 1st, how far each goal has come." },
 ];
 
 // Language, theme, and how numbers and dates will look.
-export function AppPreferencesSection({ today }: AppPreferencesSectionProps) {
+export function AppPreferencesSection({ today, reminders: initialReminders }: AppPreferencesSectionProps) {
   const { t, locale, toggleLocale } = useLocale();
   const { preference, setTheme } = useTheme();
+  const [reminders, setReminders] = useState(initialReminders);
+
+  // Saved as soon as it flips; put back if the save fails.
+  function changeReminder(key: keyof ReminderPreferences, on: boolean) {
+    if (!reminders) return;
+    const before = reminders;
+    const next = { ...reminders, [key]: on };
+    setReminders(next);
+    saveReminderPreferencesAction(next).then((result) => {
+      if (result.success) return;
+      setReminders(before);
+      toast.error(result.message ?? t("Failed to save reminders"));
+    });
+  }
 
   function changeLanguage(next: Locale) {
     if (next === locale) return;
@@ -130,9 +149,10 @@ export function AppPreferencesSection({ today }: AppPreferencesSectionProps) {
       <Card padding="none" className="overflow-hidden">
         <div className="flex flex-col gap-0.5 px-6 py-4">
           <h2 className="text-title font-semibold text-ink">{t("Reminders")}</h2>
-          <span className="text-small text-ink-muted">{t("Shown inside the app once reminders are switched on.")}</span>
+          <span className="text-small text-ink-muted">{t("Shown inside the app. The email one starts once email sending is switched on.")}</span>
         </div>
-        {REMINDERS.map((item) => row(item.title, item.body, <Switch checked={false} disabled aria-label={t(item.title)} />, true))}
+        {REMINDERS.map((item) => row(item.title, item.body, <Switch checked={reminders?.[item.key] ?? false} disabled={!reminders} onCheckedChange={(on) => changeReminder(item.key, on)} aria-label={t(item.title)} />))}
+        {row("Monthly summary by email", "Income, spending and savings for last month.", <Switch checked={false} disabled aria-label={t("Monthly summary by email")} />, true)}
       </Card>
     </div>
   );
