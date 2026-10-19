@@ -460,6 +460,10 @@ export interface LoanDashboardRow {
   openingBalance: string;
   totalReceive: string;
   totalPayment: string;
+  // Profit or interest paid to them and received from them, all time. It
+  // never moves currentBalance.
+  profitPaid: string;
+  profitReceived: string;
   currentBalance: string;
   direction: LoanBalanceDirection;
 }
@@ -471,6 +475,10 @@ export interface LoanDashboard {
   totalReceived: string;
   netBalance: string;
   activeAccounts: number;
+  // Profit paid in this Asia/Dhaka year, and who most of it went to with
+  // about how much a month.
+  profitPaidThisYear: string;
+  topProfit: { contactId: string; contactName: string; monthly: string } | null;
   rows: LoanDashboardRow[];
 }
 
@@ -487,6 +495,10 @@ export interface LoanStatementRow {
   category: string;
   debit: string | null;
   credit: string | null;
+  // A Profit row ("Profit" category): what was paid or received. It leaves
+  // runningPrincipal as it was.
+  profitPaid: string | null;
+  profitReceived: string | null;
   runningPrincipal: string;
   status: TransactionStatus;
 }

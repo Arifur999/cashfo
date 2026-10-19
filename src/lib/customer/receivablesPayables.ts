@@ -93,6 +93,8 @@ const EMPTY_LOAN_DASHBOARD: LoanDashboard = {
   totalReceived: "0.00",
   netBalance: "0.00",
   activeAccounts: 0,
+  profitPaidThisYear: "0.00",
+  topProfit: null,
   rows: [],
 };
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Transaction, TransactionEntry } from "./api";
-import { avatarTone, balanceAfterEntry, loanDirection, loanEntryOf, loanTotals, whoPhrase } from "./loanDisplay";
+import type { LoanStatementRow } from "./api";
+import { avatarTone, balanceAfterEntry, foldProfitRuns, loanDirection, loanEntryOf, loanTotals, profitCategory, statementProfit, whoPhrase } from "./loanDisplay";
 
 const entry = (entryType: TransactionEntry["entryType"], subtype: string | null, amount: string, name = "Cash"): TransactionEntry => ({
   id: `${name}-${entryType}`,
@@ -57,8 +58,11 @@ describe("loanTotals", () => {
       txn("PAYMENT", [entry("DEBIT", "cash", "300")]),
       txn("PAYMENT", [entry("CREDIT", "cash", "700")], "VOIDED"),
       txn("PAYMENT", [entry("DEBIT", "cash", "700")], "POSTED", "orig"),
+      // Profit paid and received: summed apart, the loans untouched.
+      txn("EXPENSE", [entry("CREDIT", "cash", "5000")]),
+      txn("INCOME", [entry("DEBIT", "cash", "800")]),
     ]);
-    expect(totals).toEqual({ in: 2300, out: 500, count: 3 });
+    expect(totals).toEqual({ in: 2300, out: 500, profitPaid: 5000, profitReceived: 800, count: 5 });
   });
 });
 
@@ -76,5 +80,26 @@ describe("whoPhrase", () => {
     expect(whoPhrase(["BANK", "NGO"], t)).toBe("1 bank and 1 NGO");
     expect(whoPhrase(["BOTH", "BANK", "BANK", "NGO"], t)).toBe("1 contact, 2 banks and 1 NGO");
     expect(whoPhrase([], t)).toBe("0 contacts");
+  });
+});
+
+describe("loan profit", () => {
+  const row = (day: string, category: "Principal" | "Profit", paid: string | null = null, status: "POSTED" | "VOIDED" = "POSTED"): LoanStatementRow => ({ transactionId: `${category}-${day}`, date: `${day}T00:00:00.000Z`, referenceNo: null, description: null, category, debit: null, credit: category === "Principal" ? "500000.00" : null, profitPaid: paid, profitReceived: null, runningPrincipal: "-500000.00", status });
+  const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09"].map((month) => row(`2026-${month}-28`, "Profit", "5000.00"));
+
+  it("sums the profit paid and the months it was paid in, voided entries left out", () => {
+    expect(statementProfit([row("2026-01-01", "Principal"), ...months, row("2026-09-30", "Profit", "5000.00", "VOIDED")])).toEqual({ paid: 45000, received: 0, paidMonths: 9, receivedMonths: 0 });
+  });
+
+  it("folds the middle of a long run of profit rows", () => {
+    const items = foldProfitRuns([row("2026-01-01", "Principal"), ...months]);
+    expect(items.map((item) => (item.kind === "row" ? item.row.date.slice(5, 7) : `+${item.rows.length}`))).toEqual(["01", "01", "02", "+5", "08", "09"]);
+    expect(foldProfitRuns(months.slice(0, 5)).every((item) => item.kind === "row")).toBe(true);
+  });
+
+  it("files profit under a profit, interest or loan category first", () => {
+    expect(profitCategory(["Food", "Bank interest", "Rent"])).toBe("Bank interest");
+    expect(profitCategory(["Food", "Rent"])).toBe("Food");
+    expect(profitCategory([])).toBe("");
   });
 });
