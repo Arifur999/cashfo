@@ -1007,6 +1007,9 @@ export interface HabitMonthTracker {
   // status only means something on a Namaz sheet (Ramadan and challenge
   // ticks are always ON_TIME).
   checks: { day: number; item: string; status: PrayerStatus }[];
+  // Ramadan only (empty elsewhere): the paras of the Quran read each day, by
+  // day. A day with none is left out.
+  paras: { day: number; paras: number }[];
   // When the sheet was created: a challenge counts its days from here.
   createdAt: string;
 }

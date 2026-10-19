@@ -11,7 +11,7 @@ function sheet(): HabitMonthTracker {
   for (const day of [11, 12, 13, 14]) for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]) checks.push({ day, item, status: "ON_TIME" });
   for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib"]) checks.push({ day: 10, item, status: "ON_TIME" });
   checks.push({ day: 15, item: "Fajr", status: "ON_TIME" });
-  return { id: "oct", category: "Namaz", month: 10, year: 2026, name: null, items: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"], totalDays: 31, elapsedDays: 14, todayDay: 15, checks, createdAt: "2026-10-01T00:00:00.000Z" };
+  return { id: "oct", category: "Namaz", month: 10, year: 2026, name: null, items: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"], totalDays: 31, elapsedDays: 14, todayDay: 15, checks, paras: [], createdAt: "2026-10-01T00:00:00.000Z" };
 }
 
 function habit(over: Partial<Habit> & { id: string }): Habit {

@@ -75,6 +75,17 @@ export async function setHabitTrackerCheckAction(
   }, "Failed to update");
 }
 
+// Ramadan: the paras read on one day (0 clears it); the server also ticks
+// the sheet's Quran row.
+export async function setRamadanParasAction(id: string, input: { day: number; paras: number }): Promise<ActionResult<{ day: number; paras: number }>> {
+  return callApi(async () => {
+    const res = await customerApi.put<{ day: number; paras: number }>(`${API_BASE_URL}/api/habit-trackers/${id}/paras`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to save the paras");
+}
+
 export async function deleteHabitTrackerAction(id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers: await authHeaders() });

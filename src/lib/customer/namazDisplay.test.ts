@@ -15,6 +15,7 @@ const sheet = (checks: [number, string, PrayerStatus?][], overrides: Partial<Hab
   elapsedDays: 3,
   todayDay: 4,
   checks: checks.map(([day, item, status = "ON_TIME"]) => ({ day, item, status })),
+  paras: [],
   ...overrides,
 });
 
