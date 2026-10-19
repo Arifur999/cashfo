@@ -100,12 +100,38 @@ export function ashraSummary(tracker: HabitMonthTracker, window: RamadanWindow):
   });
 }
 
-// The odd nights of the last ten: which have come, and which were fully done.
-export function oddNights(tracker: HabitMonthTracker, window: RamadanWindow): { day: number; come: boolean; full: boolean }[] {
-  const counted = window.status === "completed" ? tracker.totalDays : window.todayDay ?? 0;
-  return ramadanDays(tracker)
-    .filter((d) => d.oddNight)
-    .map((d) => ({ day: d.day, come: d.day <= counted, full: tracker.items.length > 0 && tracker.checks.filter((c) => c.day === d.day).length === tracker.items.length }));
+// The paras of one khatam of the Quran.
+export const QURAN_PARAS = 30;
+
+// The row that logging paras ticks, whatever its case (the server's rule).
+export const quranItem = (items: string[]): string | undefined => items.find((item) => item.toLowerCase() === "quran");
+
+// The Quran khatam so far: the paras read, and the Ramadan day the
+// thirtieth was read on (null until then).
+export function quranKhatam(tracker: HabitMonthTracker): { read: number; finishedOn: number | null } {
+  let read = 0;
+  let finishedOn: number | null = null;
+  for (const log of [...tracker.paras].sort((a, b) => a.day - b.day)) {
+    read += log.paras;
+    if (finishedOn === null && read >= QURAN_PARAS) finishedOn = log.day;
+  }
+  return { read, finishedOn };
+}
+
+// The paras read on a day of the sheet in hand.
+export const parasOn = (tracker: HabitMonthTracker, day: number): number => tracker.paras.find((log) => log.day === day)?.paras ?? 0;
+
+// The sheet with a day's paras set, for an optimistic update: as on the
+// server, logging any also ticks the Quran row, and clearing leaves its tick.
+export function withParas(tracker: HabitMonthTracker, day: number, paras: number): HabitMonthTracker {
+  const rest = tracker.paras.filter((log) => log.day !== day);
+  const item = quranItem(tracker.items);
+  const tick = paras > 0 && item !== undefined && !tracker.checks.some((c) => c.day === day && c.item === item);
+  return {
+    ...tracker,
+    paras: paras > 0 ? [...rest, { day, paras }].sort((a, b) => a.day - b.day) : rest,
+    checks: tick ? [...tracker.checks, { day, item, status: "ON_TIME" }] : tracker.checks,
+  };
 }
 
 // How a box reads on a Ramadan sheet.
