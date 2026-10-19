@@ -149,6 +149,7 @@ export const chromeDictionary: Record<string, string> = {
   "Savings check-in for {month}": "{month}-এর সঞ্চয়ের খোঁজ",
   "{goal} is behind. Save {amount} a month to reach it by {month}.": "{goal} পিছিয়ে আছে। {month}-এর মধ্যে পৌঁছাতে মাসে {amount} করে জমান।",
   "{goal} is on track: {percent}% saved.": "{goal} ঠিক পথে আছে: {percent}% জমেছে।",
+  "Support replied to your message": "সাপোর্ট আপনার মেসেজের উত্তর দিয়েছে",
 
   // /dashboard placeholder page
   "Welcome,": "স্বাগতম,",

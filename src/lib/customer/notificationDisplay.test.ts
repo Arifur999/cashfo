@@ -33,6 +33,10 @@ describe("notificationView", () => {
     expect(notificationView(row("SAVINGS", { goal: "Hajj", behind: 0, percent: 61, perMonth: "1000.00", targetDate: "2027-06-30", month: "2026-10" }), inEnglish, "en", "BDT", now).body).toBe("Hajj is on track: 61% saved.");
   });
 
+  it("opens the conversation support answered", () => {
+    expect(notificationView(row("SUPPORT_REPLY", { ticketId: "t1", subject: "Shop money" }), inEnglish, "en")).toEqual({ kind: "support", title: "Support replied to your message", body: "Shop money", href: "/settings/help?message=t1" });
+  });
+
   it("shows an announcement in Bangla when it has Bangla", () => {
     const item = row("ANNOUNCEMENT", { title: "New", titleBn: "নতুন", body: "Body", bodyBn: null });
     expect(notificationView(item, inEnglish, "bn")).toEqual({ kind: "announcement", title: "নতুন", body: "Body", href: null });

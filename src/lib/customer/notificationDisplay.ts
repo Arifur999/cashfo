@@ -4,7 +4,7 @@ import type { UserNotification } from "./api";
 import { formatCurrency } from "./currency";
 
 // The kinds of row, each with its own icon and tile colour.
-export type NotificationKind = "budget" | "loan" | "savings" | "announcement";
+export type NotificationKind = "budget" | "loan" | "savings" | "announcement" | "support";
 
 export interface NotificationView {
   kind: NotificationKind;
@@ -67,6 +67,8 @@ export function notificationView(item: UserNotification, t: Translate, locale: "
         href: "/savings-goals/dashboard",
       };
     }
+    case "SUPPORT_REPLY":
+      return { kind: "support", title: t("Support replied to your message"), body: text(data.subject), href: `/settings/help?message=${encodeURIComponent(text(data.ticketId))}` };
     case "ANNOUNCEMENT": {
       const bangla = locale === "bn";
       return {
