@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, X } from "lucide-react";
+import { Info, Minus, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -9,14 +9,17 @@ import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
+import SegmentedControl from "@/components/smartly/SegmentedControl";
+import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import type { GroupExpense, GroupExpenseCategoryOption, GroupMember } from "@/lib/customer/api";
+import type { GroupExpense, GroupExpenseCategoryOption, GroupMember, GroupPaidFrom, GroupSplit } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import type { MonthRange } from "@/lib/customer/groupDisplay";
+import { type MonthRange, SPLIT_LABELS, SPLITS } from "@/lib/customer/groupDisplay";
+import { mealText } from "@/lib/customer/groupMeals";
 import { createGroupExpenseAction, updateGroupExpenseAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -36,12 +39,18 @@ interface ExpenseDrawerProps {
   range: MonthRange;
   today: string;
   editing: GroupExpense | null;
+  // Whether "By meals" is offered (a mess, or meal counting on).
+  meals: boolean;
 }
 
-// An expense paid from the group fund, in the design's drawer: how much
-// and when, the category and what it was, who handed the money over, and
-// what it does to each member's share.
-export function ExpenseDrawer({ open, onClose, businessId, currency, members, categories, cashInHand, range, today, editing }: ExpenseDrawerProps) {
+const paisa = (value: number | string) => Math.round(Number(value) * 100);
+
+// An expense in the design's drawer: how much and when, the category and
+// what it was, whether it came from the group fund or someone's own pocket
+// (credited to them), how it is shared -- equally among everyone or the
+// members picked, by shares, by meals, or by exact amounts -- and what it
+// does to each member's share.
+export function ExpenseDrawer({ open, onClose, businessId, currency, members, categories, cashInHand, range, today, editing, meals }: ExpenseDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -52,7 +61,15 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [paidById, setPaidById] = useState("");
+  const [paidFrom, setPaidFrom] = useState<GroupPaidFrom>("FUND");
+  const [split, setSplit] = useState<GroupSplit>("EQUAL");
+  // The split was picked by hand, so a new category doesn't reset it.
+  const [splitTouched, setSplitTouched] = useState(false);
+  const [included, setIncluded] = useState<string[]>([]);
+  const [units, setUnits] = useState<Record<string, number>>({});
+  const [exact, setExact] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const defaultUnits = Object.fromEntries(active.map((member) => [member.id, Number(member.shareUnits)]));
 
   const [prevKey, setPrevKey] = useState("closed");
   const key = open ? (editing?.id ?? "create") : "closed";
@@ -64,23 +81,58 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
       setCategory(editing?.category ?? categories[0]?.name ?? "");
       setDescription(editing?.description ?? "");
       setPaidById(editing?.paidByMemberId ?? "");
+      setPaidFrom(editing?.paidFrom ?? "FUND");
+      const startCategory = editing?.category ?? categories[0]?.name ?? "";
+      setSplit(editing?.split ?? categories.find((c) => c.name === startCategory)?.defaultSplit ?? "EQUAL");
+      setSplitTouched(!!editing);
+      const named = editing?.splits ?? [];
+      setIncluded(named.length > 0 ? named.map((s) => s.groupMemberId) : active.map((m) => m.id));
+      setUnits({ ...defaultUnits, ...Object.fromEntries(named.filter((s) => s.units !== null).map((s) => [s.groupMemberId, Number(s.units)])) });
+      setExact(Object.fromEntries(named.filter((s) => s.amount !== null).map((s) => [s.groupMemberId, String(Number(s.amount))])));
     }
   }
 
+  function pickCategory(name: string) {
+    setCategory(name);
+    const fallback = categories.find((c) => c.name === name)?.defaultSplit;
+    if (!splitTouched && fallback) setSplit(fallback);
+  }
+
+  const toggle = (id: string) => setIncluded(included.includes(id) ? included.filter((x) => x !== id) : [...included, id]);
+
   const value = Number(amount) || 0;
-  const previous = editing ? Number(editing.amount) : 0;
-  const delta = value - previous;
+  // The fund gives back what the saved entry took from it, and pays this one if it is the fund's.
+  const previousFund = editing && editing.paidFrom !== "MEMBER" ? Number(editing.amount) : 0;
   const chosen = categories.find((c) => c.name === category);
   const tone = categoryTone(chosen?.color);
-  const each = active.length > 0 ? value / active.length : 0;
-  const valid = value > 0 && date.length > 0;
+  const sharers = active.filter((member) => included.includes(member.id));
+  const each = sharers.length > 0 ? value / sharers.length : 0;
+  const unitTotal = sharers.reduce((sum, member) => sum + (units[member.id] ?? 1), 0);
+  const exactTotal = active.reduce((sum, member) => sum + paisa(exact[member.id] || 0), 0);
+  const exactLeft = paisa(value) - exactTotal;
+  const everyone = sharers.length === active.length;
+  const fromFund = paidFrom === "FUND";
+  const cashAfter = cashInHand + previousFund - (fromFund ? value : 0);
+  const payer = members.find((member) => member.id === paidById);
+  const valid = value > 0 && date.length > 0 && (fromFund || !!paidById) && (split === "MEALS" || (split === "EXACT" ? exactLeft === 0 && exactTotal > 0 : sharers.length > 0));
   const monthLabel = monthName(range.key, locale);
+  // What the splits say: none when everyone in the group shares the plain way.
+  const splits =
+    split === "EXACT"
+      ? active.filter((member) => paisa(exact[member.id] || 0) > 0).map((member) => ({ groupMemberId: member.id, amount: String(Number(exact[member.id])) }))
+      : split === "SHARES"
+        ? everyone && sharers.every((member) => (units[member.id] ?? 1) === defaultUnits[member.id])
+          ? []
+          : sharers.map((member) => ({ groupMemberId: member.id, units: units[member.id] ?? 1 }))
+        : split === "EQUAL" && !everyone
+          ? sharers.map((member) => ({ groupMemberId: member.id }))
+          : [];
 
   function save(addAnother: boolean) {
     if (!valid || isPending) return;
     startTransition(async () => {
-      const input = { amount: String(value), date, category: category || undefined, description: description.trim() || undefined, paidByMemberId: paidById || undefined };
-      const result = editing ? await updateGroupExpenseAction(businessId, editing.id, { ...input, description: description.trim() }) : await createGroupExpenseAction(businessId, input);
+      const input = { amount: String(value), date, category: category || undefined, description: description.trim() || undefined, paidByMemberId: paidById || undefined, paidFrom, split, splits };
+      const result = editing ? await updateGroupExpenseAction(businessId, editing.id, { ...input, description: description.trim(), paidByMemberId: paidById }) : await createGroupExpenseAction(businessId, input);
       if (!result.success) {
         toast.error(result.message ?? t("Failed to save the expense"));
         return;
@@ -143,7 +195,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
               <Field htmlFor="exp-category" label={label(t("Category"))} hint={categories.length === 0 ? t("Add categories under Settings.") : undefined}>
                 <span className="relative flex items-center">
                   <span className={cn("pointer-events-none absolute left-3 flex size-6.5 items-center justify-center rounded-sm [&_svg]:size-3.5", tone.bg, tone.fg)}>{chosen?.icon ? createElement(budgetCategoryIcon(chosen.icon), { "aria-hidden": true }) : null}</span>
-                  <NativeSelect id="exp-category" size="md" value={category} onChange={(event) => setCategory(event.target.value)} frameClassName="w-full" className="pl-12 font-semibold">
+                  <NativeSelect id="exp-category" size="md" value={category} onChange={(event) => pickCategory(event.target.value)} frameClassName="w-full" className="pl-12 font-semibold">
                     {categories.length === 0 && <option value="">{t("No category")}</option>}
                     {categories.map((option) => (
                       <option key={option.id} value={option.name}>
@@ -158,10 +210,24 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
               </Field>
             </div>
 
-            <Field htmlFor="exp-paid" label={label(t("Handed over by"), true)} hint={t("For the record only: every expense is paid from the group fund, so nobody is credited.")}>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Paid from")}</legend>
+              <SegmentedControl<GroupPaidFrom>
+                options={[
+                  { value: "FUND", label: "Group fund" },
+                  { value: "MEMBER", label: "Someone's own pocket" },
+                ]}
+                value={paidFrom}
+                onChange={setPaidFrom}
+                label="Paid from"
+                stretch
+                className="[&>button]:h-8.5"
+              />
+            </fieldset>
+            <Field htmlFor="exp-paid" label={label(t(fromFund ? "Handed over by" : "Whose pocket"), fromFund)} hint={fromFund ? t("For the record only: it came from the group fund, so nobody is credited.") : t("Credited to them: their balance goes up by the amount.")}>
               <div className="flex items-center gap-2">
-                <MemberPicker id="exp-paid" members={active} value={paidById} onChange={setPaidById} currency={currency} size="md" placeholder={t("Anyone")} />
-                {paidById && (
+                <MemberPicker id="exp-paid" members={active} value={paidById} onChange={setPaidById} currency={currency} size="md" placeholder={t(fromFund ? "Anyone" : "Pick a member")} />
+                {paidById && fromFund && (
                   <Button type="button" variant="ghost" size="sm" onClick={() => setPaidById("")}>
                     {t("Clear")}
                   </Button>
@@ -169,24 +235,99 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
               </div>
             </Field>
 
+            <fieldset className="flex flex-col gap-3">
+              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("How is it shared?")}</legend>
+              <SegmentedControl<GroupSplit>
+                options={SPLITS.filter((option) => option !== "MEALS" || meals || split === "MEALS").map((option) => ({ value: option, label: SPLIT_LABELS[option] }))}
+                value={split}
+                onChange={(next) => {
+                  setSplit(next);
+                  setSplitTouched(true);
+                }}
+                label="How is it shared?"
+                stretch
+                className="[&>button]:h-8.5 [&>button]:px-2"
+              />
+              {split === "MEALS" ? (
+                <span className="text-small text-ink-muted">{t("Shared by the meals each member eats this month, at the month's meal rate.")}</span>
+              ) : (
+                <div className="flex flex-col overflow-hidden rounded-md border border-line">
+                  {active.map((member) => {
+                    const on = included.includes(member.id);
+                    return (
+                      <div key={member.id} className="flex h-12 items-center gap-3 border-b border-surface-sunken px-3 last:border-b-0">
+                        {split !== "EXACT" ? (
+                          <button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(member.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                            <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-[5px] border text-[11px] font-bold", on ? "border-emerald bg-emerald text-white" : "border-line-strong bg-surface")}>
+                              {on ? "✓" : ""}
+                            </span>
+                            <PersonAvatar name={member.name} src={member.photoUrl} size={26} coloured />
+                            <span className={cn("truncate text-body font-medium", on ? "text-ink" : "text-ink-muted")}>{member.name}</span>
+                          </button>
+                        ) : (
+                          <span className="flex min-w-0 flex-1 items-center gap-2">
+                            <PersonAvatar name={member.name} src={member.photoUrl} size={26} coloured />
+                            <span className="truncate text-body font-medium text-ink">{member.name}</span>
+                          </span>
+                        )}
+                        {split === "SHARES" && on && (
+                          <span className="flex h-8 items-center overflow-hidden rounded-md border border-line-strong">
+                            <button type="button" aria-label={t("Fewer shares for {name}", { name: member.name })} disabled={(units[member.id] ?? 1) <= 0.5} onClick={() => setUnits({ ...units, [member.id]: Math.max(0.5, (units[member.id] ?? 1) - ((units[member.id] ?? 1) > 1 ? 1 : 0.5)) })} className="flex h-full w-7 items-center justify-center bg-cream disabled:opacity-40">
+                              <Minus className="size-3.5" aria-hidden="true" />
+                            </button>
+                            <span className="w-8 text-center text-body font-bold tabular-nums">{mealText(units[member.id] ?? 1)}</span>
+                            <button type="button" aria-label={t("More shares for {name}", { name: member.name })} onClick={() => setUnits({ ...units, [member.id]: (units[member.id] ?? 1) < 1 ? 1 : (units[member.id] ?? 1) + 1 })} className="flex h-full w-7 items-center justify-center bg-cream">
+                              <Plus className="size-3.5" aria-hidden="true" />
+                            </button>
+                          </span>
+                        )}
+                        {split === "EXACT" ? (
+                          <Input size="sm" inputMode="decimal" value={exact[member.id] ?? ""} onChange={(event) => setExact({ ...exact, [member.id]: event.target.value.replace(/[^\d.]/g, "") })} placeholder="0" aria-label={t("{name}'s amount", { name: member.name })} frameClassName="w-28" className="text-right tabular-nums" />
+                        ) : (
+                          <span className="w-24 text-right text-small font-semibold text-ink-2 tabular-nums">{on && value > 0 ? formatCurrency(split === "SHARES" ? (value * (units[member.id] ?? 1)) / (unitTotal || 1) : each, currency) : "—"}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {split === "EXACT" && value > 0 && exactLeft !== 0 && (
+                <span className={cn("text-small font-semibold", exactLeft > 0 ? "text-warning" : "text-expense")}>{exactLeft > 0 ? t("{amount} still to give out", { amount: formatCurrency(exactLeft / 100, currency) }) : t("{amount} more than the expense", { amount: formatCurrency(-exactLeft / 100, currency) })}</span>
+              )}
+            </fieldset>
+
             <div className="flex flex-col gap-2 rounded-md border border-line bg-cream px-4 py-3 text-small tabular-nums">
               <span className="text-caption font-semibold text-ink-muted">
                 {t("Effect on")} {monthLabel} {t("balances")}
               </span>
-              <div className="flex justify-between gap-3">
-                <span className="text-ink-2">
-                  {t("Shared equally")} · ÷ {active.length} {t(active.length === 1 ? "member" : "members")}
-                </span>
-                <b className="font-bold text-expense">{value > 0 && active.length > 0 ? `− ${formatCurrency(each, currency)} ${t("each")}` : "—"}</b>
-              </div>
+              {split === "EQUAL" && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-ink-2">
+                    {t("Shared equally")} · ÷ {sharers.length} {t(sharers.length === 1 ? "member" : "members")}
+                  </span>
+                  <b className="font-bold text-expense">{value > 0 && sharers.length > 0 ? `− ${formatCurrency(each, currency)} ${t("each")}` : "—"}</b>
+                </div>
+              )}
+              {split !== "EQUAL" && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-ink-2">{t(SPLIT_LABELS[split])}</span>
+                  <b className="font-bold text-expense">{value > 0 ? `− ${formatCurrency(value, currency)}` : "—"}</b>
+                </div>
+              )}
+              {!fromFund && payer && value > 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-ink-2">{t("Credited to {name}", { name: payer.name })}</span>
+                  <b className="font-bold text-income">+ {formatCurrency(value, currency)}</b>
+                </div>
+              )}
               <div className="flex justify-between gap-3">
                 <span className="text-ink-2">{t("Cash in hand")}</span>
                 <span>
                   <span className="text-ink-muted">{formatCurrency(cashInHand, currency)} → </span>
-                  <b className={cn("font-bold", cashInHand - delta < 0 ? "text-expense" : "text-ink")}>{formatCurrency(cashInHand - delta, currency)}</b>
+                  <b className={cn("font-bold", cashAfter < 0 ? "text-expense" : "text-ink")}>{formatCurrency(cashAfter, currency)}</b>
                 </span>
               </div>
-              {cashInHand - delta < 0 && value > 0 && (
+              {fromFund && cashAfter < 0 && value > 0 && (
                 <span className="flex items-start gap-2 text-caption font-normal text-warning">
                   <Info className="mt-px size-3.5 shrink-0" aria-hidden="true" />
                   {t("More is being spent than the fund holds. Record the contributions that covered it.")}
