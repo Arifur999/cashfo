@@ -18,7 +18,8 @@ export function hourIn(zone: string, now: Date = new Date()): number {
 // "Friday, 2 October" and "21 Rabiʻ II 1448": the day in the Gregorian and
 // the Hijri calendar, in the reader's language, for the Home eyebrow (phones
 // show only the first).
-export function homeDates(now: Date, locale: Locale, zone: string = APP_TIME_ZONE): { day: string; hijri: string } {
+// hijriAdjust shifts the Hijri date a day either way (the prayer settings).
+export function homeDates(now: Date, locale: Locale, zone: string = APP_TIME_ZONE, hijriAdjust = 0): { day: string; hijri: string } {
   const tag = locale === "bn" ? "bn-BD" : "en-GB";
   // Put together from its parts: ICU versions disagree about the comma
   // after the weekday.
@@ -26,7 +27,7 @@ export function homeDates(now: Date, locale: Locale, zone: string = APP_TIME_ZON
   const piece = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
   const day = `${piece("weekday")}, ${piece("day")} ${piece("month")}`;
   const hijri = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: zone, day: "numeric", month: "long", year: "numeric" })
-    .formatToParts(now)
+    .formatToParts(new Date(now.getTime() - hijriAdjust * 86400000))
     .filter((part) => ["day", "month", "year", "literal"].includes(part.type))
     .map((part) => (part.type === "literal" ? " " : part.value))
     .join("")

@@ -21,6 +21,7 @@ import { RamadanCard } from "./RamadanCard";
 import { ReadingCard } from "./ReadingCard";
 import { StreaksCard } from "./StreaksCard";
 import { TodayTasksCard } from "./TodayTasksCard";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface HabitsHomePageClientProps {
   data: HabitsHomeData;
@@ -33,6 +34,7 @@ interface HabitsHomePageClientProps {
 // wider screen.
 export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   const { t, locale } = useLocale();
+  const { hijriAdjust } = usePrayerSettings().settings;
   const { today } = data;
   const [habitOpen, setHabitOpen] = useState(false);
   const taskField = useRef<HTMLInputElement>(null);
@@ -47,7 +49,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
           {t(data.greeting)}, {data.firstName}
         </h1>
         <p className="text-small leading-[normal] text-ink-muted">
-          {dayLabel(today, "EEE, d MMM")} · {hijriDate(today, locale)}
+          {dayLabel(today, "EEE, d MMM")} · {hijriDate(today, locale, hijriAdjust)}
         </p>
       </div>
       <PageHeader
@@ -59,7 +61,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
           <span className="flex items-center gap-2">
             {dayLabel(today, "EEEE, d MMMM yyyy")}
             <span aria-hidden="true" className="size-1 rounded-full bg-ink-faint" />
-            {hijriDate(today, locale)}
+            {hijriDate(today, locale, hijriAdjust)}
           </span>
         }
         actions={

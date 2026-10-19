@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { withCheck } from "../trackerChecks";
 import { PrayerSheet } from "./PrayerSheet";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface NamazSheetPageClientProps {
   tracker: HabitMonthTracker;
@@ -42,6 +43,7 @@ const INSIGHT_ICON: Record<Insight["key"], React.ReactNode> = {
 // the month's figures, each prayer on its own, and what stands out.
 export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPageClientProps) {
   const { t, locale } = useLocale();
+  const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [sheet, applyMark] = useOptimistic(tracker, (current, update: { day: number; item: string; status: PrayerStatus | null }) => withCheck(current, update.day, update.item, update.status !== null, update.status ?? undefined));
@@ -106,7 +108,7 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
         }
         tone="habits"
         title={monthName(key, locale, "long", true)}
-        description={hijriRange(year, month, locale)}
+        description={hijriRange(year, month, locale, hijriAdjust)}
         actions={
           <>
             {current && (

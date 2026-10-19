@@ -7,12 +7,13 @@ import { dayKey, dayOf, hijriParts, shiftDay } from "./habitDisplay";
 // Gregorian year; 1 Ramadan is found on the Umm al-Qura calendar.
 
 // The Gregorian day 1 Ramadan falls on in a Gregorian year (the first
-// one, if the year holds two). Null when the calendar has none.
-export function ramadanStartIn(year: number): string | null {
+// one, if the year holds two). Null when the calendar has none. adjust is
+// the prayer settings' Hijri adjustment (1: the month starts a day later).
+export function ramadanStartIn(year: number, adjust = 0): string | null {
   for (let i = 0; i < 366; i++) {
     const day = dayKey(new Date(Date.UTC(year, 0, 1 + i)));
     if (day.slice(0, 4) !== String(year)) break;
-    const h = hijriParts(day);
+    const h = hijriParts(day, adjust);
     if (h.month === 9 && h.day === 1) return day;
   }
   return null;
@@ -34,8 +35,8 @@ export const ASHRAS = [
   { n: 3 as const, name: "Nijat", meaning: "safety from the Fire" },
 ];
 
-export function ramadanDays(tracker: HabitMonthTracker): RamadanDay[] {
-  const start = tracker.year ? ramadanStartIn(tracker.year) : null;
+export function ramadanDays(tracker: HabitMonthTracker, adjust = 0): RamadanDay[] {
+  const start = tracker.year ? ramadanStartIn(tracker.year, adjust) : null;
   return Array.from({ length: tracker.totalDays }, (_, i) => {
     const day = i + 1;
     const date = start ? shiftDay(start, i) : null;
@@ -57,11 +58,11 @@ export interface RamadanWindow {
   hijriYear: number | null;
 }
 
-export function ramadanWindow(tracker: HabitMonthTracker, today: string): RamadanWindow {
-  const start = tracker.year ? ramadanStartIn(tracker.year) : null;
+export function ramadanWindow(tracker: HabitMonthTracker, today: string, adjust = 0): RamadanWindow {
+  const start = tracker.year ? ramadanStartIn(tracker.year, adjust) : null;
   if (!start) return { status: "completed", todayDay: null, elapsedDays: tracker.totalDays, start: null, end: null, hijriYear: null };
   const end = shiftDay(start, tracker.totalDays - 1);
-  const hijriYear = hijriParts(start).year;
+  const hijriYear = hijriParts(start, adjust).year;
   if (today < start) return { status: "upcoming", todayDay: null, elapsedDays: 0, start, end, hijriYear };
   if (today > end) return { status: "completed", todayDay: null, elapsedDays: tracker.totalDays, start, end, hijriYear };
   const todayDay = Math.round((dayOf(today).getTime() - dayOf(start).getTime()) / 86400000) + 1;

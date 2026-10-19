@@ -23,6 +23,7 @@ import { DayTotal, SheetBox } from "../Tracker/SheetBox";
 import { withCheck } from "../trackerChecks";
 import { RamadanSetupDialog } from "./RamadanSetupDialog";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface RamadanSheetPageClientProps {
   tracker: HabitMonthTracker;
@@ -39,6 +40,7 @@ const STATUS_LABEL = { upcoming: "Coming up", going: "Going on", completed: "Com
 // last ten marked, a summary of every row, the ashras and the odd nights.
 export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPageClientProps) {
   const { t } = useLocale();
+  const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [sheet, applyCheck] = useOptimistic(tracker, (current, update: { day: number; item: string; checked: boolean }) => withCheck(current, update.day, update.item, update.checked));
@@ -47,12 +49,12 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
   const [removing, setRemoving] = useState<string | null>(null);
   const [isPending, startRemove] = useTransition();
 
-  const window = ramadanWindow(sheet, today);
-  const days = ramadanDays(sheet);
+  const window = ramadanWindow(sheet, today, hijriAdjust);
+  const days = ramadanDays(sheet, hijriAdjust);
   const summary = ramadanSummary(sheet, window);
   const ashras = ashraSummary(sheet, window);
   const nights = oddNights(sheet, window);
-  const next = nextRamadan(today);
+  const next = nextRamadan(today, hijriAdjust);
   const hasNext = all.some((tr) => tr.year === Number(next.startsOn.slice(0, 4)));
   const title = `${t("Ramadan")} ${window.hijriYear ?? sheet.year}`;
   const counted = window.status === "completed" ? sheet.totalDays : (window.todayDay ?? 0);

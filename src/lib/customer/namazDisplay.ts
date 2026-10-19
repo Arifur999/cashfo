@@ -120,16 +120,16 @@ export function weekdayOfDay(tracker: HabitMonthTracker, day: number): number {
 }
 
 // "Rabiʻ I – Rabiʻ II 1448": the Hijri months a Gregorian month spans.
-export function hijriRange(year: number, month: number, locale: "en" | "bn" = "en"): string {
+export function hijriRange(year: number, month: number, locale: "en" | "bn" = "en", adjust = 0): string {
   const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const tag = locale === "bn" ? "bn-BD" : "en-GB";
   const name = (day: string) => {
-    const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: "UTC", month: "long" }).formatToParts(new Date(`${day}T00:00:00.000Z`));
+    const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: "UTC", month: "long" }).formatToParts(new Date(new Date(`${day}T00:00:00.000Z`).getTime() - adjust * 86400000));
     return parts.find((p) => p.type === "month")?.value ?? "";
   };
   const first = name(`${year}-${pad(month)}-01`);
   const end = name(`${year}-${pad(month)}-${pad(last)}`);
-  const hy = hijriParts(`${year}-${pad(month)}-${pad(last)}`).year;
+  const hy = hijriParts(`${year}-${pad(month)}-${pad(last)}`, adjust).year;
   const yearText = new Intl.NumberFormat(tag, { useGrouping: false }).format(hy);
   return `${first === end ? first : `${first} – ${end}`} ${yearText}`;
 }

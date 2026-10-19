@@ -170,10 +170,15 @@ export function countTone(value: number, target: number): "low" | "near" | "full
   return ratio >= 1 ? "full" : ratio >= 0.75 ? "near" : "low";
 }
 
+// adjust (the prayer settings' Hijri adjustment) is -1, 0 or 1: a calendar
+// that runs a day later (the moon seen a day later) reads day N as the
+// calculated day N - 1.
+const hijriDay = (day: string, adjust: number): Date => dayOf(adjust ? shiftDay(day, -adjust) : day);
+
 // Today's Hijri date in the reader's language, built from the parts so
 // the era word Intl adds in Bangla never shows.
-export function hijriDate(day: string, locale: "en" | "bn"): string {
-  const date = dayOf(day);
+export function hijriDate(day: string, locale: "en" | "bn", adjust = 0): string {
+  const date = hijriDay(day, adjust);
   const tag = locale === "bn" ? "bn-BD" : "en-GB";
   const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }).formatToParts(date);
   const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
@@ -181,8 +186,8 @@ export function hijriDate(day: string, locale: "en" | "bn"): string {
 }
 
 // The Hijri year and month (1–12) of a day.
-export function hijriParts(day: string): { year: number; month: number; day: number } {
-  const parts = new Intl.DateTimeFormat("en-US-u-ca-islamic-umalqura-nu-latn", { timeZone: "UTC", day: "numeric", month: "numeric", year: "numeric" }).formatToParts(dayOf(day));
+export function hijriParts(day: string, adjust = 0): { year: number; month: number; day: number } {
+  const parts = new Intl.DateTimeFormat("en-US-u-ca-islamic-umalqura-nu-latn", { timeZone: "UTC", day: "numeric", month: "numeric", year: "numeric" }).formatToParts(hijriDay(day, adjust));
   const num = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
   return { year: num("year"), month: num("month"), day: num("day") };
 }
@@ -190,13 +195,13 @@ export function hijriParts(day: string): { year: number; month: number; day: num
 // When the next Ramadan starts (1 Ramadan on the Umm al-Qura calendar): the
 // day, its Hijri year and how many days away it is. Today during Ramadan
 // gives the current one with 0 days to go.
-export function nextRamadan(today: string): { startsOn: string; year: number; daysToGo: number } {
-  const now = hijriParts(today);
+export function nextRamadan(today: string, adjust = 0): { startsOn: string; year: number; daysToGo: number } {
+  const now = hijriParts(today, adjust);
   if (now.month === 9) return { startsOn: shiftDay(today, 1 - now.day), year: now.year, daysToGo: 0 };
   // Scan forward until the calendar reads 1 Ramadan (at most one lunar year).
   for (let i = 1; i <= 360; i++) {
     const day = shiftDay(today, i);
-    const h = hijriParts(day);
+    const h = hijriParts(day, adjust);
     if (h.month === 9 && h.day === 1) return { startsOn: day, year: h.year, daysToGo: i };
   }
   return { startsOn: shiftDay(today, 354), year: now.year + 1, daysToGo: 354 };
