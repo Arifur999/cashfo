@@ -110,7 +110,7 @@ export function NamazHero({ current, today, onMark, onSettings }: NamazHeroProps
           {t("Next prayer")}
         </span>
         <span className="flex items-baseline gap-3">
-          <span className="text-display font-bold tracking-[-0.02em]">{next ? t(next.prayer) : " "}</span>
+          <span className="text-display leading-[normal] font-bold tracking-[-0.02em]">{next ? t(next.prayer) : " "}</span>
           <span className="text-h2 font-semibold tabular-nums">{next ? timeLabel(clockOf(next.at), t) : ""}</span>
         </span>
         <span className={cn("flex h-7 items-center gap-2 self-start rounded-full bg-white/18 px-3 text-small font-semibold", left === null && "invisible")}>
@@ -120,7 +120,7 @@ export function NamazHero({ current, today, onMark, onSettings }: NamazHeroProps
         <span className="mt-2 flex flex-wrap items-center gap-2 text-small opacity-90">
           <MapPin className="size-4" aria-hidden="true" />
           {t(settings.city)} · {t("{method} method", { method: t(methodShort(settings.method)) })} · {t(settings.asrSchool === "HANAFI" ? "Hanafi Asr" : "Shafi'i Asr")} ·{" "}
-          <button type="button" onClick={onSettings} className="font-semibold text-white underline-offset-2 hover:underline">
+          <button type="button" onClick={onSettings} className="font-semibold text-white underline">
             {t("Change")}
           </button>
         </span>
