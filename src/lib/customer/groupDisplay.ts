@@ -27,6 +27,24 @@ export const GROUP_TAB_LABELS: Record<GroupTab, string> = {
 export const SPLITS: GroupSplit[] = ["EQUAL", "SHARES", "MEALS", "EXACT"];
 export const SPLIT_LABELS: Record<GroupSplit, string> = { EQUAL: "Equally", SHARES: "By shares", MEALS: "By meals", EXACT: "Exact amounts" };
 
+// How an expense is shared, in a few words: "Equally · ÷ 3", "By shares ·
+// 3 : 1 : 4", "Only Rakib", "By meals". Shares are the units it names, or
+// the members' own; equally counts the members it names, or everyone in.
+export function splitText(expense: Pick<GroupExpense, "split" | "splits">, members: GroupMember[]): { kind: GroupSplit; detail: string | null; only: string | null } {
+  const named = expense.splits.map((split) => ({ split, member: members.find((m) => m.id === split.groupMemberId) })).filter((row) => row.member);
+  const active = members.filter((member) => member.status === "ACTIVE");
+  const number = (value: number) => String(Math.round(value * 100) / 100);
+  if (expense.split === "SHARES") {
+    const units = named.length > 0 ? named.map((row) => Number(row.split.units ?? row.member?.shareUnits ?? 1)) : active.map((member) => Number(member.shareUnits));
+    return { kind: "SHARES", detail: units.map(number).join(" : "), only: null };
+  }
+  if (expense.split === "EQUAL") {
+    if (named.length === 1) return { kind: "EQUAL", detail: null, only: named[0].member?.name ?? null };
+    return { kind: "EQUAL", detail: `÷ ${named.length > 0 ? named.length : active.length}`, only: null };
+  }
+  return { kind: expense.split, detail: null, only: null };
+}
+
 // The old ?tab=category lived in the sidebar; categories now sit in Settings.
 export function groupTabFrom(value: unknown): GroupTab {
   if (value === "category") return "settings";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GroupContribution, GroupExpense, GroupMember, GroupSettlementMemberRow, GroupSettlementRecord } from "./api";
-import { budgetStatus, cashInHand, closedRecordFor, contributionTotals, contributionsByMember, groupMonthOf, groupTabFrom, groupTabsFor, inMonth, isDayClosed, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth, spendByCategory, spendByMonth, whoPaysWhom } from "./groupDisplay";
+import { budgetStatus, cashInHand, closedRecordFor, contributionTotals, contributionsByMember, groupMonthOf, groupTabFrom, groupTabsFor, inMonth, isDayClosed, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth, spendByCategory, spendByMonth, splitText, whoPaysWhom } from "./groupDisplay";
 
 const member = (id: string, name: string): GroupMember => ({ id, businessId: "g", name, phone: null, photoUrl: null, status: "ACTIVE", createdAt: "2025-01-05T00:00:00.000Z", updatedAt: "2025-01-05T00:00:00.000Z" });
 const row = (id: string, balance: number): GroupSettlementMemberRow => ({ groupMemberId: id, name: id, grossDeposited: "0", returned: "0", contributed: "0", share: "0", balance: balance.toFixed(2) });
@@ -100,5 +100,17 @@ describe("spend", () => {
     expect(groupTabFrom("category")).toBe("settings");
     expect(groupTabFrom("members")).toBe("members");
     expect(groupTabFrom(undefined)).toBe("dashboard");
+  });
+});
+
+describe("splitText", () => {
+  const family = [{ ...member("k", "Khaled"), shareUnits: "3.00" }, { ...member("a", "Arif"), shareUnits: "1.00" }, { ...member("r", "Rakib"), shareUnits: "4.00" }] as GroupMember[];
+  const split = (groupMemberId: string, units: string | null = null) => ({ id: groupMemberId, expenseId: "e", groupMemberId, units, amount: null });
+  it("says how an expense is shared", () => {
+    expect(splitText({ split: "SHARES", splits: [] }, family)).toEqual({ kind: "SHARES", detail: "3 : 1 : 4", only: null });
+    expect(splitText({ split: "EQUAL", splits: [] }, family)).toEqual({ kind: "EQUAL", detail: "÷ 3", only: null });
+    expect(splitText({ split: "EQUAL", splits: [split("r")] }, family)).toEqual({ kind: "EQUAL", detail: null, only: "Rakib" });
+    expect(splitText({ split: "SHARES", splits: [split("k", "2.00"), split("r", "1.00")] }, family).detail).toBe("2 : 1");
+    expect(splitText({ split: "MEALS", splits: [] }, family)).toEqual({ kind: "MEALS", detail: null, only: null });
   });
 });
