@@ -14,15 +14,18 @@ import PageHeader from "@/components/smartly/PageHeader";
 import type { HabitMonthTracker } from "@/lib/customer/api";
 import { formatDate } from "@/lib/customer/date";
 import { nextRamadan, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
-import { removeTrackerItemAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
-import { ASHRAS, ashraSummary, oddNights, ramadanCell, ramadanDays, ramadanSummary, ramadanWindow } from "@/lib/customer/ramadanDisplay";
+import { removeTrackerItemAction, setHabitTrackerCheckAction, setRamadanParasAction } from "@/lib/customer/habitsActions";
+import { ASHRAS, ashraSummary, ramadanCell, ramadanDays, ramadanSummary, ramadanWindow, type SummaryNote, summaryNote, withParas } from "@/lib/customer/ramadanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AddRowDialog } from "../Tracker/AddRowDialog";
 import { DayTotal, SheetBox } from "../Tracker/SheetBox";
 import { withCheck } from "../trackerChecks";
+import { QuranKhatamCard } from "./QuranKhatamCard";
 import { RamadanSetupDialog } from "./RamadanSetupDialog";
+import { SehriIftarCard } from "./SehriIftarCard";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface RamadanSheetPageClientProps {
   tracker: HabitMonthTracker;
@@ -35,34 +38,55 @@ const ASHRA_TONE = { 1: "bg-pillar-insights-soft text-pillar-insights", 2: "bg-i
 const STATUS_CHIP = { upcoming: "neutral", going: "mint", completed: "income" } as const;
 const STATUS_LABEL = { upcoming: "Coming up", going: "Going on", completed: "Completed" } as const;
 
+function noteText(note: SummaryNote, t: (key: string, values?: Record<string, string | number>) => string): string {
+  if (!note) return "";
+  if (note.kind === "everyDay") return t("Every day");
+  if (note.kind === "makeUp") return note.fasts === 1 ? t("1 fast to make up before next Ramadan") : t("{count} fasts to make up before next Ramadan", { count: note.fasts });
+  return t(note.nights ? "All of the last ten nights" : "Every day of the last ten");
+}
+
+// A tick, or a day's paras, layered over the server's sheet until it answers.
+type SheetUpdate = { kind: "check"; day: number; item: string; checked: boolean } | { kind: "paras"; day: number; paras: number };
+
 // One Ramadan: the sheet with its three ashras and the odd nights of the
-// last ten marked, a summary of every row, the ashras and the odd nights.
+// last ten marked, a summary of every row, the Quran khatam, and Sehri and
+// Iftar times.
 export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPageClientProps) {
   const { t } = useLocale();
+  const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [sheet, applyCheck] = useOptimistic(tracker, (current, update: { day: number; item: string; checked: boolean }) => withCheck(current, update.day, update.item, update.checked));
+  const [sheet, applyUpdate] = useOptimistic(tracker, (current, update: SheetUpdate) => (update.kind === "check" ? withCheck(current, update.day, update.item, update.checked) : withParas(current, update.day, update.paras)));
+  const [savingParas, startParas] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
   const [isPending, startRemove] = useTransition();
 
-  const window = ramadanWindow(sheet, today);
-  const days = ramadanDays(sheet);
+  const window = ramadanWindow(sheet, today, hijriAdjust);
+  const days = ramadanDays(sheet, hijriAdjust);
   const summary = ramadanSummary(sheet, window);
   const ashras = ashraSummary(sheet, window);
-  const nights = oddNights(sheet, window);
-  const next = nextRamadan(today);
+  const next = nextRamadan(today, hijriAdjust);
   const hasNext = all.some((tr) => tr.year === Number(next.startsOn.slice(0, 4)));
   const title = `${t("Ramadan")} ${window.hijriYear ?? sheet.year}`;
   const counted = window.status === "completed" ? sheet.totalDays : (window.todayDay ?? 0);
 
   function toggle(day: number, item: string, checked: boolean) {
     startTransition(async () => {
-      applyCheck({ day, item, checked });
+      applyUpdate({ kind: "check", day, item, checked });
       const result = await setHabitTrackerCheckAction(sheet.id, { day, item, checked });
       if (result.success) router.refresh();
       else toast.error(result.message ?? t("Failed to update"));
+    });
+  }
+
+  function logParas(day: number, paras: number) {
+    startParas(async () => {
+      applyUpdate({ kind: "paras", day, paras });
+      const result = await setRamadanParasAction(sheet.id, { day, paras });
+      if (result.success) router.refresh();
+      else toast.error(result.message ?? t("Failed to save the paras"));
     });
   }
 
@@ -231,7 +255,7 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
                 <span className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
                   <span className={cn("block h-full rounded-full", row.pct === 100 ? "bg-income" : "bg-emerald")} style={{ width: `${row.pct}%` }} />
                 </span>
-                <span className="text-caption font-normal text-ink-muted">{row.pct === 100 && row.of > 0 ? t("Every day") : row.of - row.done > 0 && row.item === "Roza" ? `${row.of - row.done} ${t(row.of - row.done === 1 ? "fast to make up" : "fasts to make up")}` : ""}</span>
+                <span className="text-caption font-normal text-ink-muted">{noteText(summaryNote(sheet, window, row), t)}</span>
               </span>
               <span className="text-right font-bold text-ink tabular-nums">
                 {row.done}/{row.of}
@@ -241,43 +265,8 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
           {summary.items.length === 0 && <p className="text-small text-ink-muted">{t("Add a row to start.")}</p>}
         </Card>
 
-        <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
-          <h2 className="text-title font-semibold text-ink">{t("The three ashras")}</h2>
-          {ASHRAS.map((a) => {
-            const s = ashras.find((x) => x.n === a.n);
-            return (
-              <div key={a.n} className={cn("flex flex-col gap-1 rounded-md px-3 py-2.5", ASHRA_TONE[a.n])}>
-                <span className="flex items-center justify-between text-small">
-                  <span>
-                    <b className="font-bold">{t(a.name)}</b> · {t(a.meaning)}
-                  </span>
-                  <span className="font-bold tabular-nums">{s?.pct ?? 0}%</span>
-                </span>
-                <span className="text-caption font-normal opacity-80">
-                  {t("Days")} {a.n === 1 ? "1–10" : a.n === 2 ? "11–20" : `21–${sheet.totalDays}`} · {s?.done ?? 0} {t("of")} {s?.of ?? 0} {t("done")}
-                </span>
-              </div>
-            );
-          })}
-        </Card>
-
-        <Card padding="none" className="flex flex-col gap-3 bg-[linear-gradient(160deg,var(--warning-soft)_0%,var(--surface)_75%)] px-5 py-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-title font-semibold text-ink">{t("The last ten nights")}</h2>
-            <Chip tone="neutral" size="sm">
-              {t("Odd nights")}
-            </Chip>
-          </div>
-          <div className="grid grid-cols-5 gap-2">
-            {nights.map((n) => (
-              <span key={n.day} title={`${n.day} ${t("Ramadan")}: ${t(!n.come ? "not yet" : n.full ? "everything done" : "something left")}`} className={cn("flex flex-col items-center gap-0.5 rounded-md border py-2", !n.come ? "border-line bg-surface text-ink-muted" : n.full ? "border-emerald bg-emerald text-white" : "border-warning/40 bg-warning-soft text-warning")}>
-                <Star className={cn("size-3.5", n.come && n.full ? "fill-white" : n.come ? "fill-warning" : "")} aria-hidden="true" />
-                <span className="text-body font-bold tabular-nums">{n.day}</span>
-              </span>
-            ))}
-          </div>
-          <span className="mt-auto text-small leading-relaxed text-ink-2">{t("Laylat al-Qadr is sought on these nights. A night is green when every row of that day is done.")}</span>
-        </Card>
+        <QuranKhatamCard sheet={sheet} window={window} days={days} onParas={logParas} saving={savingParas} />
+        <SehriIftarCard day={window.status === "going" ? today : window.status === "upcoming" && window.start ? window.start : next.startsOn} todayDay={window.todayDay} year={window.status === "completed" ? next.year : window.hijriYear} />
       </div>
 
       <AddRowDialog open={addOpen} onClose={() => setAddOpen(false)} trackerId={sheet.id} existing={sheet.items} suggestions={SUGGESTIONS} description={t("Something to keep up every day of Ramadan, like Taraweeh or a para of Quran.")} />

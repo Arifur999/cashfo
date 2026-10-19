@@ -193,6 +193,8 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Changes saved": "পরিবর্তন সংরক্ষিত হয়েছে",
   "Failed to save the changes": "পরিবর্তন সংরক্ষণ করা যায়নি",
   Corrected: "সংশোধিত",
+  "Corrected from {amount}": "{amount} থেকে সংশোধিত",
+  "See the corrected entry ({amount})": "সংশোধিত লেনদেন দেখুন ({amount})",
   "Use Edit to fix the amount, category, wallet, date or note. The original is kept in History, marked as corrected, so your records stay honest.":
     "অঙ্ক, ক্যাটাগরি, ওয়ালেট, তারিখ বা নোট ঠিক করতে সম্পাদনা চাপুন। মূলটি ইতিহাসে সংশোধিত হিসেবে থেকে যায়, তাই আপনার হিসাব সৎ থাকে।",
   "Void removes it from your balances when it should never have been added.": "যেটা কখনো যোগ হওয়ারই কথা ছিল না, বাতিল করলে সেটা ব্যালেন্স থেকে সরে যায়।",

@@ -12,6 +12,8 @@ import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { GroupPageData, GroupView } from "./groupTypes";
+import { expenseShare, SPLIT_LABELS, splitText } from "@/lib/customer/groupDisplay";
+import { mealText } from "@/lib/customer/groupMeals";
 
 interface MemberStatementDrawerProps {
   open: boolean;
@@ -29,8 +31,9 @@ interface Entry {
   amount: number;
 }
 
-// One member's month: what they paid in, their share of each cost, and
-// where that leaves them. Sent on WhatsApp as text, or printed.
+// One member's month: what they paid in, what they paid from their own
+// pocket, their part of each cost (as the expense is shared), their meals,
+// and where that leaves them. Sent on WhatsApp as text, or printed.
 export function MemberStatementDrawer({ open, onClose, data, view, member, onRecordPayment }: MemberStatementDrawerProps) {
   const { t, locale } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -38,11 +41,21 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
   const monthLabel = monthName(range.key, locale, "long", true);
   const row = member ? data.settlement.members.find((r) => r.groupMemberId === member.id) : undefined;
   const memberCount = data.settlement.memberCount || view.activeMembers.length || 1;
+  const mealsOn = data.settings.mealsOn;
 
   const entries: Entry[] = member
     ? [
-        ...data.contributions.filter((c) => c.groupMemberId === member.id).map((c) => ({ date: c.date.slice(0, 10), title: t(Number(c.amount) < 0 ? "Return" : "Contribution"), sub: c.note ?? t("Cash to the fund"), amount: Number(c.amount) })),
-        ...data.expenses.map((e) => ({ date: e.date.slice(0, 10), title: `${e.category} ${t("share")}`, sub: `${formatCurrency(e.amount, currency)} ÷ ${memberCount}${e.description ? ` · ${e.description}` : ""}`, amount: -Number(e.amount) / memberCount })),
+        ...data.contributions.filter((c) => c.groupMemberId === member.id).map((c) => ({ date: c.date.slice(0, 10), title: t(c.kind === "SETTLE" ? "Settle up" : c.kind === "CARRY" ? "Carried over" : Number(c.amount) < 0 ? "Return" : "Contribution"), sub: c.note ?? t("Cash to the fund"), amount: Number(c.amount) })),
+        ...data.expenses.filter((e) => e.paidFrom === "MEMBER" && e.paidByMemberId === member.id).map((e) => ({ date: e.date.slice(0, 10), title: t("Paid from own pocket"), sub: [e.category, e.description].filter(Boolean).join(" · "), amount: Number(e.amount) })),
+        ...data.expenses
+          .map((e) => ({ e, share: expenseShare(e, member.id, data.members, data.range, mealsOn) }))
+          .filter(({ share }) => Math.abs(share) > 0.004)
+          .map(({ e, share }) => {
+            const how = splitText(e, data.members);
+            return { date: e.date.slice(0, 10), title: `${e.category} ${t("share")}`, sub: `${formatCurrency(e.amount, currency)} · ${how.only ? t("Only {name}", { name: how.only }) : `${t(SPLIT_LABELS[how.kind])}${how.detail ? ` ${how.detail}` : ""}`}${e.description ? ` · ${e.description}` : ""}`, amount: -share };
+          }),
+        // Meals are charged once, at the month's rate.
+        ...(row && Number(row.mealCost) > 0 ? [{ date: range.to, title: t("Meals"), sub: `${mealText(Number(row.mealUnits))} × ${formatCurrency(data.settlement.mealRate, currency)}`, amount: -Number(row.mealCost) }] : []),
       ].sort((a, b) => a.date.localeCompare(b.date))
     : [];
   const lines = entries.reduce<(Entry & { balance: number })[]>((acc, entry) => {
@@ -61,7 +74,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
   const summary = [
     { label: t("Contributed"), value: formatCurrency(contributed + returned, currency), sub: `${deposits} ${t(deposits === 1 ? "deposit" : "deposits")}`, tone: "text-income" },
     { label: t("Returned"), value: formatCurrency(returned, currency), sub: returned > 0 ? t("paid back") : "—", tone: "text-ink" },
-    { label: t("Share of costs"), value: formatCurrency(share, currency), sub: `${formatCurrency(data.settlement.totalExpense, currency)} ÷ ${memberCount}`, tone: "text-ink" },
+    { label: t("Share of costs"), value: formatCurrency(share, currency), sub: row && Number(row.mealCost) > 0 ? t("{meals} meals + {shared} shared", { meals: formatCurrency(row.mealCost, currency), shared: formatCurrency(row.otherShare, currency) }) : row && Number(row.pocketPaid) > 0 ? t("{amount} from own pocket", { amount: formatCurrency(row.pocketPaid, currency) }) : `${formatCurrency(data.settlement.totalExpense, currency)} ÷ ${memberCount}`, tone: "text-ink" },
     { label: t("Balance"), value: formatSignedCurrency(balance, currency), sub: even ? t("Settled") : owes ? t("Has to pay") : t("Gets back"), tone: even ? "text-ink" : owes ? "text-expense" : "text-income" },
   ];
 
@@ -146,7 +159,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
               </div>
             ))}
           </div>
-          <span className="text-caption font-normal leading-relaxed text-ink-muted">{t("Each cost is shared equally among the members. The shares change if more is recorded before the month is closed.")}</span>
+          <span className="text-caption font-normal leading-relaxed text-ink-muted">{t("Each cost is shared the way its expense says, among the members there that day. The shares change if more is recorded before the month is closed.")}</span>
         </div>
 
         <div className={cn("flex items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 py-3")}>

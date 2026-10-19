@@ -25,7 +25,8 @@ export const booksDictionary: Record<string, string> = {
   "day.": "দিনে।",
   "days.": "দিনে।",
   "I'm now on page": "এখন আছি পৃষ্ঠা",
-  "Type the page you stopped at and the bar follows.": "যে পৃষ্ঠায় থেমেছেন তা লিখুন, বারটা সাথে সাথে এগোবে।",
+  "The pages you add are counted for today, which keeps your reading streak going.": "যে পৃষ্ঠাগুলো যোগ করবেন তা আজকের হিসাবে গোনা হয়, তাতে টানা পড়া চলতে থাকে।",
+  "{count} pages today": "আজকের পাতা {count}",
   "Mark as finished": "শেষ হিসেবে চিহ্নিত করুন",
   "Nothing on the nightstand": "হাতে এখন কোনো বই নেই",
   "Start one from your want-to-read shelf, or add a book.": "পড়তে-চাই তাক থেকে একটা শুরু করুন, বা নতুন বই যোগ করুন।",
@@ -105,4 +106,26 @@ export const booksDictionary: Record<string, string> = {
   "Book removed": "বই সরানো হয়েছে",
   "Failed to remove book": "বই সরাতে ব্যর্থ হয়েছে",
   "Your progress on it will be lost.": "এর অগ্রগতি মুছে যাবে।",
+
+  // The reading streak (ReadingStreakCard.tsx, and the Today page's streaks)
+  "Reading streak": "টানা পড়া",
+  "Best: {days}": "সেরা: {days}",
+  "In a row": "টানা",
+  "Pages read each day this week": "এই সপ্তাহে প্রতিদিন পড়া পৃষ্ঠা",
+  "{count}-day streak": "টানা {count} দিন",
+
+  // Notes on a book (BookNotesCard.tsx)
+  "Notes from {title}": "{title} থেকে নোট",
+  "{count} note": "{count}টি নোট",
+  "{count} notes": "{count}টি নোট",
+  "Keep the lines you like and your thoughts as you read.": "পড়তে পড়তে ভালো লাগা লাইন আর নিজের ভাবনা লিখে রাখুন।",
+  "p. {page}": "পৃ. {page}",
+  "Added today": "আজ যোগ হয়েছে",
+  "Added {date}": "{date} যোগ হয়েছে",
+  "Remove the note": "নোটটি মুছুন",
+  "Show all {count}": "সব {count}টি দেখুন",
+  "Write a note or a line you liked…": "একটা নোট বা ভালো লাগা লাইন লিখুন…",
+  "New note": "নতুন নোট",
+  "Note removed": "নোট মোছা হয়েছে",
+  "Failed to remove the note": "নোট মোছা যায়নি",
 };

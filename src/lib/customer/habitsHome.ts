@@ -3,7 +3,7 @@
 // streaks worth showing. Pure, so the page and its tests agree.
 import type { Habit, HabitMonthLog, HabitMonthTracker, HabitToday } from "./api";
 import { countsOn, dayMark, isPlannedOn, lastDays, shiftDay } from "./habitDisplay";
-import { cellState, PRAYERS, trackerFor } from "./namazDisplay";
+import { cellState, isPrayed, PRAYERS, trackerFor } from "./namazDisplay";
 
 // prayed / missed / open (today, not yet) / none (no sheet, or not reached).
 export type PrayerMark = "prayed" | "missed" | "open" | "none";
@@ -16,6 +16,7 @@ export function prayerMarks(trackers: HabitMonthTracker[], day: string, today: s
   const dayNumber = Number(day.slice(8));
   return PRAYERS.map((prayer) => {
     const state = cellState(tracker, dayNumber, prayer);
+    if (isPrayed(state)) return "prayed";
     return state === "locked" ? "none" : state;
   });
 }
@@ -70,7 +71,7 @@ export const pct = (done: number, due: number): number => (due > 0 ? Math.round(
 
 export interface StreakRow {
   key: string;
-  kind: "habit" | "skills" | "prayers";
+  kind: "habit" | "skills" | "reading" | "prayers";
   name: string;
   days: number;
   // The habit's own icon and colour keys; the other kinds have fixed looks.
@@ -79,10 +80,11 @@ export interface StreakRow {
 }
 
 // Every streak that is alive, longest first, at most `limit` of them.
-export function streakRows(rows: HabitToday[], skillsStreak: number, prayers: number, limit = 6): StreakRow[] {
+export function streakRows(rows: HabitToday[], streaks: { skills: number; reading: number; prayers: number }, limit = 6): StreakRow[] {
   const list: StreakRow[] = rows.filter((row) => row.streak > 0).map((row) => ({ key: row.id, kind: "habit", name: row.name, days: row.streak, icon: row.icon, color: row.color }));
-  if (skillsStreak > 0) list.push({ key: "skills", kind: "skills", name: "Skills practice", days: skillsStreak });
-  if (prayers > 0) list.push({ key: "prayers", kind: "prayers", name: "All five prayers", days: prayers });
+  if (streaks.reading > 0) list.push({ key: "reading", kind: "reading", name: "Reading", days: streaks.reading });
+  if (streaks.skills > 0) list.push({ key: "skills", kind: "skills", name: "Skills practice", days: streaks.skills });
+  if (streaks.prayers > 0) list.push({ key: "prayers", kind: "prayers", name: "All five prayers", days: streaks.prayers });
   return list.sort((a, b) => b.days - a.days).slice(0, limit);
 }
 

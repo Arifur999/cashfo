@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, CircleAlert, Lock, MoreVertical, Settings, Trash2, Users } from "lucide-react";
+import { ArrowRight, Building2, Check, CircleAlert, House, Lock, MoreVertical, Settings, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Card from "@/components/smartly/Card";
@@ -12,6 +12,8 @@ import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { GroupCardData } from "./groupTypes";
+import Chip from "@/components/smartly/Chip";
+import { mealText } from "@/lib/customer/groupMeals";
 
 interface GroupCardProps {
   group: GroupCardData;
@@ -26,7 +28,8 @@ interface GroupCardProps {
 // month stands.
 export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardProps) {
   const { t, locale } = useLocale();
-  const { workspace, members, settlement, budget, closed } = group;
+  const { workspace, members, settlement, settings, budget, closed } = group;
+  const mess = settings.kind === "MESS";
   const currency = workspace.currency;
   const href = `/group-expenses/${workspace.id}`;
   const active = members.filter((member) => member.status === "ACTIVE");
@@ -48,13 +51,18 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
   return (
     <Card padding="none" className="flex flex-col">
       <div className="flex items-start gap-4 px-5 pt-5 pb-4">
-        <IconTile tone="money" size={48} className="rounded-lg [&_svg]:size-6">
-          <Users strokeWidth={1.9} />
+        <IconTile tone={mess ? "warning" : "insights"} size={48} className="rounded-lg [&_svg]:size-6">
+          {mess ? <Building2 strokeWidth={1.9} /> : <House strokeWidth={1.9} />}
         </IconTile>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <Link href={href} className="truncate text-h3 text-ink hover:text-emerald">
-            {workspace.name}
-          </Link>
+          <span className="flex min-w-0 items-center gap-2">
+            <Link href={href} className="truncate text-h3 text-ink hover:text-emerald">
+              {workspace.name}
+            </Link>
+            <Chip tone={mess ? "warning" : "insights"} size="sm" className="shrink-0 font-semibold">
+              {t(mess ? "Mess" : "Family")}
+            </Chip>
+          </span>
           <div className="flex items-center gap-3 text-small text-ink-muted">
             {active.length > 0 && (
               <span className="flex">
@@ -64,7 +72,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
               </span>
             )}
             <span className={cn("truncate", active.length > 0 && "pl-1.5")}>
-              {active.length} {t(active.length === 1 ? "member" : "members")} · {month} {t(closed ? "closed" : "open")}
+              {active.length} {t(active.length === 1 ? "member" : "members")} · {mess ? t("{meals} meals in {month}", { meals: mealText(Number(settlement.mealUnits)), month }) : `${t("{count} shares", { count: mealText(active.reduce((sum, m) => sum + Number(m.shareUnits), 0)) })} · ${month} ${t(closed ? "closed" : "open")}`}
             </span>
           </div>
         </div>

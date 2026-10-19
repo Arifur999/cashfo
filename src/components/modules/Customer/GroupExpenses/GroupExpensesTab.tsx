@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { GroupExpense } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
+import { SPLIT_LABELS, splitText } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -25,20 +26,29 @@ interface GroupExpensesTabProps {
   onRemove: (row: GroupExpense) => void;
 }
 
-const ROW = "md:grid-cols-[70px_168px_minmax(0,1fr)_176px_120px_104px_40px]";
+const ROW = "md:grid-cols-[70px_168px_minmax(0,1fr)_176px_150px_104px_40px]";
 const PAGE = 10;
 
-// Money out: every cost of the month, what it was for, who handed the
-// money over, and how it is shared.
+// Money out: every cost of the month, what it was for, whether it came from
+// the group fund or someone's own pocket (credited to them), and how it is
+// shared.
 export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupExpensesTabProps) {
   const { t, locale } = useLocale();
   const { currency } = data;
   const [category, setCategory] = useState("");
+  // "": anyone; "FUND": the group fund; else a member who paid from their pocket.
   const [paidBy, setPaidBy] = useState("");
   const [showAll, setShowAll] = useState(false);
   const total = data.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const pocket = data.expenses.filter((e) => e.paidFrom === "MEMBER" && e.paidByMemberId);
+  const pocketTotal = pocket.reduce((sum, e) => sum + Number(e.amount), 0);
+  // Who paid from their own pocket, and for what: "Arif ৳ 3,200 (wifi, electricity)".
+  const pockets = [...new Set(pocket.map((e) => e.paidByMemberId as string))].map((id) => {
+    const theirs = pocket.filter((e) => e.paidByMemberId === id);
+    return { id, name: view.memberById[id]?.name ?? "—", amount: theirs.reduce((sum, e) => sum + Number(e.amount), 0), what: [...new Set(theirs.map((e) => e.category.toLowerCase()))].join(", ") };
+  });
   const rows = [...data.expenses]
-    .filter((e) => (!category || e.category === category) && (!paidBy || e.paidByMemberId === paidBy))
+    .filter((e) => (!category || e.category === category) && (!paidBy || (paidBy === "FUND" ? e.paidFrom !== "MEMBER" : e.paidFrom === "MEMBER" && e.paidByMemberId === paidBy)))
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shown = showAll ? rows : rows.slice(0, PAGE);
   const shownTotal = rows.reduce((sum, e) => sum + Number(e.amount), 0);
@@ -49,12 +59,18 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
     <div className="flex flex-col gap-4">
       <Card padding="none" className="flex flex-wrap items-center gap-5 px-5 py-3">
         <Figure label={`${t("Spent in")} ${month}`} value={formatCurrency(total, currency)} />
-        <Figure label={t("From the group fund")} value={formatCurrency(total, currency)} />
-        <Figure label={t("Share each")} value={formatCurrency(data.settlement.perMemberShare, currency)} divided={false} />
+        <Figure label={t("From the group fund")} value={formatCurrency(total - pocketTotal, currency)} />
+        <Figure label={t("From own pockets · credited back")} value={formatCurrency(pocketTotal, currency)} tone={pocketTotal ? "text-emerald" : "text-ink"} divided={false} />
         <span className="flex-1" />
-        <span className="text-small leading-relaxed text-ink-2 md:text-right">
-          {t("Shared equally among")} {data.settlement.memberCount} {t(data.settlement.memberCount === 1 ? "member" : "members")}
-        </span>
+        {pockets.length > 0 && (
+          <span className="flex flex-col text-small leading-normal text-ink-2 md:text-right">
+            {pockets.map((row) => (
+              <span key={row.id}>
+                {row.name} {formatCurrency(row.amount, currency)} ({row.what})
+              </span>
+            ))}
+          </span>
+        )}
       </Card>
 
       <Card padding="none" className="overflow-hidden">
@@ -67,8 +83,9 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
               </option>
             ))}
           </NativeSelect>
-          <NativeSelect size="sm" aria-label={t("Handed over by")} value={paidBy} onChange={(event) => setPaidBy(event.target.value)} className="font-medium">
-            <option value="">{t("Handed over by: anyone")}</option>
+          <NativeSelect size="sm" aria-label={t("Paid from")} value={paidBy} onChange={(event) => setPaidBy(event.target.value)} className="font-medium">
+            <option value="">{t("Paid from: anyone")}</option>
+            <option value="FUND">{t("Group fund")}</option>
             {data.members.map((member) => (
               <option key={member.id} value={member.id}>
                 {member.name}
@@ -92,14 +109,15 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
           <span>{t("Date")}</span>
           <span>{t("Category")}</span>
           <span>{t("Description")}</span>
-          <span>{t("Handed over by")}</span>
+          <span>{t("Paid from")}</span>
           <span>{t("Shared")}</span>
           <span className="text-right">{t("Amount")}</span>
           <span />
         </div>
         {shown.length === 0 && <p className="border-t border-line px-5 py-10 text-center text-body text-ink-muted">{data.expenses.length === 0 ? t("No expense this month yet.") : t("No entry matches.")}</p>}
         {shown.map((row) => {
-          const payer = row.paidByMemberId ? view.memberById[row.paidByMemberId] : null;
+          const payer = row.paidFrom === "MEMBER" && row.paidByMemberId ? view.memberById[row.paidByMemberId] : null;
+          const shared = splitText(row, data.members);
           return (
             <div key={row.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto_40px] items-center gap-3 border-b border-surface-sunken px-5 py-2.5 text-body tabular-nums md:min-h-12 md:gap-4 md:py-0", ROW)}>
               <span className="hidden text-ink-2 md:block">{formatDate(row.date, "dd MMM")}</span>
@@ -118,7 +136,10 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
                 {payer ? (
                   <>
                     <PersonAvatar name={payer.name} src={payer.photoUrl} size={22} coloured />
-                    <span className="truncate font-medium text-ink">{payer.name}</span>
+                    <span className="flex min-w-0 flex-col leading-tight">
+                      <span className="truncate font-medium text-ink">{payer.name}</span>
+                      <span className="text-caption font-semibold text-emerald">{t("credited {amount}", { amount: formatCurrency(row.amount, currency) })}</span>
+                    </span>
                   </>
                 ) : (
                   <span className="flex items-center gap-2 text-ink-2">
@@ -128,8 +149,8 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
                 )}
               </span>
               <span className="hidden md:block">
-                <Chip tone="neutral" size="sm" className="font-semibold">
-                  {t("Equally")} · ÷ {data.settlement.memberCount}
+                <Chip tone={shared.kind === "EQUAL" && !shared.only ? "neutral" : "mint"} size="sm" className="font-semibold whitespace-nowrap">
+                  {shared.only ? t("Only {name}", { name: shared.only }) : `${t(SPLIT_LABELS[shared.kind])}${shared.detail ? ` · ${shared.detail}` : ""}`}
                 </Chip>
               </span>
               <span className="text-right font-semibold text-ink">{formatCurrency(row.amount, currency)}</span>

@@ -141,6 +141,8 @@ export interface EditableEntry {
   otherAccountId: string;
   category: string;
   note: string;
+  // A loan's profit or interest keeps its bank or person when edited.
+  contactId: string | null;
 }
 
 // null for anything Edit can't take: a book entry, a reversal, a voided
@@ -151,7 +153,7 @@ export function editableEntry(transaction: Transaction, title: string, categoryN
   const debit = transaction.entries.find((entry) => entry.entryType === "DEBIT");
   const credit = transaction.entries.find((entry) => entry.entryType === "CREDIT");
   if (!debit || !credit) return null;
-  const base = { id: transaction.id, kind, title, day: toDateInputValue(transaction.transactionDate), amount: Number(debit.amount), category: categoryName ?? "" };
+  const base = { id: transaction.id, kind, title, day: toDateInputValue(transaction.transactionDate), amount: Number(debit.amount), category: categoryName ?? "", contactId: transaction.contactId };
   if (kind === "INCOME") return { ...base, accountId: debit.accountId, toAccountId: "", otherAccountId: credit.accountId, note: credit.note ?? transaction.description ?? "" };
   if (kind === "EXPENSE") return { ...base, accountId: credit.accountId, toAccountId: "", otherAccountId: debit.accountId, note: debit.note ?? transaction.description ?? "" };
   return { ...base, accountId: credit.accountId, toAccountId: debit.accountId, otherAccountId: "", note: transaction.description ?? "" };

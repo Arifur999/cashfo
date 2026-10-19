@@ -4,7 +4,7 @@ import type { GroupPageData } from "@/components/modules/Customer/GroupExpenses/
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getWorkspace } from "@/lib/customer/businesses";
 import { closedRecordFor, groupTabFrom, inMonth, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
-import { getGroupContributions, getGroupExpenseCategories, getGroupExpenses, getGroupMembers, getGroupMonthBudgets, getGroupSettlement, getGroupSettlementHistory } from "@/lib/customer/groupExpenses";
+import { getGroupContributions, getGroupExpenseCategories, getGroupExpenses, getGroupMeals, getGroupMembers, getGroupMonthBudgets, getGroupSettings, getGroupSettlement, getGroupSettlementHistory } from "@/lib/customer/groupExpenses";
 import { getAppToday } from "@/lib/date";
 
 // A group, one month at a time. businessId comes from the URL, not the
@@ -22,10 +22,13 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
   if (!business || business.type !== "GROUP") redirect("/group-expenses");
 
   const today = getAppToday();
-  const range = monthRangeOf(monthKeyFrom(sp.month, today));
-  const sixFrom = monthRangeOf(shiftMonth(range.key, -5)).from;
+  // The group's month starts on its own day (the 1st unless set).
+  const settings = await getGroupSettings(businessId);
+  const startDay = settings.monthStartDay;
+  const range = monthRangeOf(monthKeyFrom(sp.month, today, startDay), startDay);
+  const sixFrom = monthRangeOf(shiftMonth(range.key, -5), startDay).from;
 
-  const [members, contributions, recentExpenses, categories, settlement, history, budgets] = await Promise.all([
+  const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals] = await Promise.all([
     getGroupMembers(businessId),
     getGroupContributions(businessId, { from: range.from, to: range.to }),
     getGroupExpenses(businessId, { from: sixFrom, to: range.to }),
@@ -33,12 +36,13 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     getGroupSettlement(businessId, range.from, range.to),
     getGroupSettlementHistory(businessId),
     getGroupMonthBudgets(businessId),
+    getGroupMeals(businessId, range.from, range.to),
   ]);
 
   // The picker goes back to the earliest closed month, at least a year, and
   // always includes the month in the URL.
   const earliest = [...history.map((h) => h.periodStart.slice(0, 10)), range.from].sort()[0];
-  const months = monthChoices(today, earliest);
+  const months = monthChoices(today, earliest, startDay);
   if (!months.includes(range.key)) months.push(range.key);
 
   const data: GroupPageData = {
@@ -58,6 +62,8 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     settlement,
     history,
     budgets,
+    settings,
+    meals,
   };
 
   return <GroupPageClient data={data} />;

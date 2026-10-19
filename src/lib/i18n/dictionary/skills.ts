@@ -52,6 +52,8 @@ export const skillsDictionary: Record<string, string> = {
   // This week
   "day in a row": "দিন টানা",
   "days in a row": "দিন টানা",
+  "week in a row": "সপ্তাহ টানা",
+  "weeks in a row": "সপ্তাহ টানা",
   "Practice each day this week": "এই সপ্তাহের প্রতিদিনের অনুশীলন",
   "Start a skill and its days show up here.": "একটা দক্ষতা শুরু করুন, তার দিনগুলো এখানে দেখা যাবে।",
   "Nothing logged": "কিছু লেখা হয়নি",

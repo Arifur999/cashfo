@@ -126,9 +126,29 @@ export function dayMark(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays"
   return day === today ? "open" : "missed";
 }
 
-// The longest run of completed planned days up to `today`.
-export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays">, logs: HabitMonthLog[], today: string, lookBack = 365): number {
+// The longest streak up to `today`, by the server's rule (streak.ts): days
+// done, skipping the days a habit isn't planned -- or, for "a few times a
+// week", the weeks in a row that met the count (this week once it does).
+export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "weeklyCount">, logs: HabitMonthLog[], today: string, lookBack = 365): number {
   const done = new Set(logs.filter((l) => l.habitId === habit.id && l.completed).map((l) => l.date.slice(0, 10)));
+  if (habit.frequencyType === "WEEKLY_COUNT") {
+    const need = Math.max(1, habit.weeklyCount ?? 1);
+    const thisWeek = weekOf(today)[0];
+    // Oldest week first; a Map keeps the order its weeks were met in.
+    const weeks = new Map<string, number>();
+    for (const day of lastDays(today, lookBack)) {
+      const week = weekOf(day)[0];
+      weeks.set(week, (weeks.get(week) ?? 0) + (done.has(day) ? 1 : 0));
+    }
+    let best = 0;
+    let run = 0;
+    for (const [week, count] of weeks) {
+      if (count >= need) run++;
+      else if (week !== thisWeek) run = 0;
+      best = Math.max(best, run);
+    }
+    return best;
+  }
   let best = 0;
   let run = 0;
   for (const day of lastDays(today, lookBack)) {
@@ -137,6 +157,14 @@ export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDa
     best = Math.max(best, run);
   }
   return best;
+}
+
+// The word after a streak's number: weeks for "a few times a week", whose
+// streak counts weeks, days for the rest.
+export function streakWord(habit: Pick<Habit, "frequencyType">, count: number, inARow = false): string {
+  const weeks = habit.frequencyType === "WEEKLY_COUNT";
+  if (inARow) return weeks ? (count === 1 ? "week in a row" : "weeks in a row") : count === 1 ? "day in a row" : "days in a row";
+  return weeks ? (count === 1 ? "week" : "weeks") : count === 1 ? "day" : "days";
 }
 
 // Days where every planned habit was done.
@@ -170,10 +198,15 @@ export function countTone(value: number, target: number): "low" | "near" | "full
   return ratio >= 1 ? "full" : ratio >= 0.75 ? "near" : "low";
 }
 
+// adjust (the prayer settings' Hijri adjustment) is -1, 0 or 1: a calendar
+// that runs a day later (the moon seen a day later) reads day N as the
+// calculated day N - 1.
+const hijriDay = (day: string, adjust: number): Date => dayOf(adjust ? shiftDay(day, -adjust) : day);
+
 // Today's Hijri date in the reader's language, built from the parts so
 // the era word Intl adds in Bangla never shows.
-export function hijriDate(day: string, locale: "en" | "bn"): string {
-  const date = dayOf(day);
+export function hijriDate(day: string, locale: "en" | "bn", adjust = 0): string {
+  const date = hijriDay(day, adjust);
   const tag = locale === "bn" ? "bn-BD" : "en-GB";
   const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }).formatToParts(date);
   const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
@@ -181,8 +214,8 @@ export function hijriDate(day: string, locale: "en" | "bn"): string {
 }
 
 // The Hijri year and month (1–12) of a day.
-export function hijriParts(day: string): { year: number; month: number; day: number } {
-  const parts = new Intl.DateTimeFormat("en-US-u-ca-islamic-umalqura-nu-latn", { timeZone: "UTC", day: "numeric", month: "numeric", year: "numeric" }).formatToParts(dayOf(day));
+export function hijriParts(day: string, adjust = 0): { year: number; month: number; day: number } {
+  const parts = new Intl.DateTimeFormat("en-US-u-ca-islamic-umalqura-nu-latn", { timeZone: "UTC", day: "numeric", month: "numeric", year: "numeric" }).formatToParts(hijriDay(day, adjust));
   const num = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
   return { year: num("year"), month: num("month"), day: num("day") };
 }
@@ -190,13 +223,13 @@ export function hijriParts(day: string): { year: number; month: number; day: num
 // When the next Ramadan starts (1 Ramadan on the Umm al-Qura calendar): the
 // day, its Hijri year and how many days away it is. Today during Ramadan
 // gives the current one with 0 days to go.
-export function nextRamadan(today: string): { startsOn: string; year: number; daysToGo: number } {
-  const now = hijriParts(today);
+export function nextRamadan(today: string, adjust = 0): { startsOn: string; year: number; daysToGo: number } {
+  const now = hijriParts(today, adjust);
   if (now.month === 9) return { startsOn: shiftDay(today, 1 - now.day), year: now.year, daysToGo: 0 };
   // Scan forward until the calendar reads 1 Ramadan (at most one lunar year).
   for (let i = 1; i <= 360; i++) {
     const day = shiftDay(today, i);
-    const h = hijriParts(day);
+    const h = hijriParts(day, adjust);
     if (h.month === 9 && h.day === 1) return { startsOn: day, year: h.year, daysToGo: i };
   }
   return { startsOn: shiftDay(today, 354), year: now.year + 1, daysToGo: 354 };

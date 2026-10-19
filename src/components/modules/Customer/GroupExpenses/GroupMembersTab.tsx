@@ -16,6 +16,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { BalanceCell } from "./GroupBits";
 import type { GroupPageData, GroupView } from "./groupTypes";
+import { mealText } from "@/lib/customer/groupMeals";
 
 interface GroupMembersTabProps {
   data: GroupPageData;
@@ -29,6 +30,8 @@ interface GroupMembersTabProps {
 
 type Filter = "ACTIVE" | "ARCHIVED" | "ALL";
 const ROW = "md:grid-cols-[minmax(0,1fr)_124px_100px_110px_190px_120px]";
+// A mess also shows each member's meals this month.
+const MESS_ROW = "md:grid-cols-[minmax(0,1fr)_124px_100px_64px_100px_176px_120px]";
 
 const TIPS = [
   { icon: <UserPlus />, title: "Members don't need a login", body: "You record everything for them. Add a phone to send them their statement." },
@@ -48,6 +51,10 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
   const archived = data.members.filter((m) => m.status === "ARCHIVED");
   const paidIn = (id: string) => data.contributions.filter((c) => c.groupMemberId === id).reduce((sum, c) => sum + Number(c.amount), 0);
   const month = monthName(data.range.key, locale);
+  const meals = data.settings.kind === "MESS" || data.settings.mealsOn;
+  const row = meals ? MESS_ROW : ROW;
+  const mealsOf = (id: string) => data.settlement.members.find((m) => m.groupMemberId === id)?.mealUnits ?? "0";
+  const holder = data.settings.cashHolderMemberId;
 
   return (
     <div className="flex flex-col gap-4">
@@ -75,10 +82,11 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
             </Button>
           </div>
         </div>
-        <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
+        <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", row)}>
           <span>{t("Member")}</span>
           <span>{t("Phone")}</span>
           <span>{t("Member since")}</span>
+          {meals && <span className="text-right">{t("Meals")}</span>}
           <span className="text-right">{t("Paid in")}</span>
           <span className="text-right">
             {month} {t("balance")}
@@ -94,16 +102,17 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
         {shown.map((member) => {
           const active = member.status === "ACTIVE";
           return (
-            <div key={member.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-surface-sunken px-5 py-3 text-body tabular-nums md:min-h-15.5 md:gap-4 md:py-0", ROW)}>
+            <div key={member.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-surface-sunken px-5 py-3 text-body tabular-nums md:min-h-15.5 md:gap-4 md:py-0", row)}>
               <span className="flex min-w-0 items-center gap-3">
                 <PersonAvatar name={member.name} src={member.photoUrl} size={36} coloured className={cn(!active && "opacity-60")} />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className={cn("truncate font-semibold", active ? "text-ink" : "text-ink-muted")}>{member.name}</span>
-                  <span className="truncate text-caption font-normal text-ink-muted">{active ? t("Active member") : t("Archived")}</span>
+                  <span className="truncate text-caption font-normal text-ink-muted">{!active ? t("Archived") : member.id === holder ? t("Manager · keeps the cash") : t("Active member")}</span>
                 </span>
               </span>
               <span className="hidden text-ink-2 md:block">{member.phone ?? "—"}</span>
               <span className="hidden text-ink-2 md:block">{monthName(memberSince(member), locale, "short", true)}</span>
+              {meals && <span className="hidden text-right text-ink md:block">{mealText(Number(mealsOf(member.id)))}</span>}
               <span className="hidden text-right text-ink md:block">{formatCurrency(paidIn(member.id), data.currency)}</span>
               <BalanceCell value={view.balances[member.id] ?? 0} currency={data.currency} className="hidden md:flex" />
               <span className="flex justify-end gap-1">

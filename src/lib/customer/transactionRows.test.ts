@@ -157,6 +157,7 @@ describe("editableEntry", () => {
       otherAccountId: "food",
       category: "Food & Dining",
       note: "Weekly groceries",
+      contactId: null,
     });
   });
 

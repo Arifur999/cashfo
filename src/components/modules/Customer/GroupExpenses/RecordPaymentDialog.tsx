@@ -75,12 +75,12 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
     if (!valid || isPending || !from || !to) return;
     startTransition(async () => {
       const extra = note.trim() ? ` · ${note.trim()}` : "";
-      const deposit = await createGroupContributionAction(businessId, { groupMemberId: from.id, amount: String(value), date, note: `${t("Paid to")} ${to.name}${extra}` });
+      const deposit = await createGroupContributionAction(businessId, { groupMemberId: from.id, amount: String(value), kind: "SETTLE", date, note: `${t("Paid to")} ${to.name}${extra}` });
       if (!deposit.success) {
         toast.error(deposit.message ?? t("Failed to record the payment"));
         return;
       }
-      const back = await createGroupContributionAction(businessId, { groupMemberId: to.id, amount: String(-value), date, note: `${t("Received from")} ${from.name}${extra}` });
+      const back = await createGroupContributionAction(businessId, { groupMemberId: to.id, amount: String(-value), kind: "SETTLE", date, note: `${t("Received from")} ${from.name}${extra}` });
       if (!back.success) {
         toast.error(back.message ?? t("The payer's entry was saved, but not the receiver's. Add a return for them by hand."));
         router.refresh();

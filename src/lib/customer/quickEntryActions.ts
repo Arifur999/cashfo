@@ -74,6 +74,8 @@ export interface AddIncomeInput {
   description?: string;
   categoryId?: string;
   note?: string;
+  // A loan's profit or interest: the bank or person it came from.
+  contactId?: string;
 }
 
 export async function createIncomeAction(businessId: string, input: AddIncomeInput): Promise<ActionResult<Transaction>> {
@@ -91,6 +93,8 @@ export interface AddExpenseInput {
   description?: string;
   categoryId?: string;
   note?: string;
+  // A loan's profit or interest: the bank or person it went to.
+  contactId?: string;
 }
 
 export async function createExpenseAction(businessId: string, input: AddExpenseInput): Promise<ActionResult<Transaction>> {

@@ -14,10 +14,12 @@ import { deleteBookAction, updateBookAction } from "@/lib/customer/bookActions";
 import { applyProgress, nowReading, shelves } from "@/lib/customer/libraryDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { BookDrawer } from "./BookDrawer";
+import { BookNotesCard } from "./BookNotesCard";
 import { GoalDialog } from "./GoalDialog";
 import { NowReadingCard } from "./NowReadingCard";
 import { ProgressDialog } from "./ProgressDialog";
 import { ReadingGoalCard } from "./ReadingGoalCard";
+import { ReadingStreakCard } from "./ReadingStreakCard";
 import { ShelvesCard, type ShelfAction } from "./ShelvesCard";
 
 interface LibraryPageClientProps {
@@ -25,8 +27,8 @@ interface LibraryPageClientProps {
   today: string;
 }
 
-// Habits › My library: the book on the nightstand, this year's goal and the
-// three shelves.
+// Habits › My library: the book on the nightstand, this year's goal, the
+// reading streak, the notes on the book and the three shelves.
 export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
   const { t } = useLocale();
   const router = useRouter();
@@ -46,6 +48,10 @@ export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
   const byShelf = shelves(books);
   const featured = nowReading(books);
   const progressBook = books.find((book) => book.id === progressId) ?? null;
+  // Today's pages, moved along with an optimistic page update until the
+  // server's count comes back.
+  const served = featured ? overview.books.find((book) => book.id === featured.id) : undefined;
+  const pagesToday = featured ? Math.max(0, (overview.pagesToday[featured.id] ?? 0) + featured.pagesRead - (served?.pagesRead ?? featured.pagesRead)) : 0;
 
   function setProgress(book: Book, requested: number) {
     // Never more pages than the book has; the server rejects that.
@@ -113,8 +119,12 @@ export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
       ) : (
         <>
           <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <NowReadingCard book={featured} today={today} isPending={isProgressPending || isPending} onUpdate={setProgress} onFinish={(book) => setProgress(book, book.totalPages)} onAdd={openAdd} />
+            <NowReadingCard book={featured} pagesToday={pagesToday} today={today} isPending={isProgressPending || isPending} onUpdate={setProgress} onFinish={(book) => setProgress(book, book.totalPages)} onAdd={openAdd} />
             <ReadingGoalCard books={books} year={year} goalTarget={goalTarget} today={today} onEdit={() => setGoalOpen(true)} />
+          </div>
+          <div className="grid items-stretch gap-5 lg:grid-cols-2">
+            <ReadingStreakCard reading={overview.reading} today={today} />
+            {featured && <BookNotesCard book={featured} notes={overview.notes[featured.id] ?? []} today={today} />}
           </div>
           <ShelvesCard shelves={byShelf} onAction={onAction} />
         </>

@@ -15,7 +15,7 @@ import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Contact, LoanBalanceDirection, LoanDashboard, LoanDashboardRow } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import { DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind, whoPhrase } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
@@ -34,7 +34,7 @@ interface LoanDashboardPageClientProps {
 type Tab = "ALL" | LoanBalanceDirection;
 type Sort = "biggest" | "smallest" | "name";
 
-const GRID = "grid-cols-[minmax(0,1fr)_120px_130px_130px_170px]";
+const GRID = "grid-cols-[minmax(0,1fr)_120px_130px_130px_120px_170px]";
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
 const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-muted)" };
 
@@ -52,13 +52,15 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   const [entry, setEntry] = useState<{ kind?: LoanEntryKind } | null>(null);
 
   const contactsById = new Map(contacts.map((contact) => [contact.id, contact]));
+  // "3 contacts", "1 bank and 1 NGO": who a side's total is with.
+  const whoOf = (direction: LoanBalanceDirection) => whoPhrase(dashboard.rows.filter((row) => row.direction === direction).map((row) => contactsById.get(row.contactId)?.type), t);
   const counts = { ALL: dashboard.rows.length, ...Object.fromEntries(DIRECTIONS.map((direction) => [direction, dashboard.rows.filter((row) => row.direction === direction).length])) } as Record<Tab, number>;
   const q = search.trim().toLowerCase();
   const shown = dashboard.rows
     .filter((row) => tab === "ALL" || row.direction === tab)
     .filter((row) => !q || row.contactName.toLowerCase().includes(q) || (row.contactPhone ?? "").includes(q))
     .sort((a, b) => (sort === "name" ? a.contactName.localeCompare(b.contactName) : (Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance))) * (sort === "biggest" ? 1 : -1)));
-  const sums = shown.reduce((sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), net: sum.net + Number(row.currentBalance) }), { opening: 0, in: 0, out: 0, net: 0 });
+  const sums = shown.reduce((sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), profit: sum.profit + Number(row.profitPaid), net: sum.net + Number(row.currentBalance) }), { opening: 0, in: 0, out: 0, profit: 0, net: 0 });
   const net = Number(dashboard.netBalance);
 
   const tabs = [{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, ...DIRECTIONS.map((direction) => ({ value: direction as Tab, label: counted(t(DIRECTION_META[direction].name), counts[direction]), dot: DOT[direction] }))];
@@ -110,9 +112,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             <span className="md:hidden">
               {t("Pawna")} · {counts.PAWNA} {t(counts.PAWNA === 1 ? "person" : "people")}
             </span>
-            <span className="hidden md:inline">
-              {counts.PAWNA} {t(counts.PAWNA === 1 ? "contact" : "contacts")}
-            </span>
+            <span className="hidden md:inline">{t("From {who}", { who: whoOf("PAWNA") })}</span>
           </span>
         </Card>
         <Card padding="sm" className={PHONE_FIGURE_CARD}>
@@ -127,9 +127,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             <span className="md:hidden">
               {t("Dena")} · {counts.DENA} {t(counts.DENA === 1 ? "person" : "people")}
             </span>
-            <span className="hidden md:inline">
-              {counts.DENA} {t(counts.DENA === 1 ? "contact" : "contacts")}
-            </span>
+            <span className="hidden md:inline">{t("To {who}", { who: whoOf("DENA") })}</span>
           </span>
         </Card>
         <Card className="hidden flex-col gap-2 md:flex">
@@ -138,9 +136,11 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           <span className="text-caption font-normal text-ink-muted">{net > 0 ? t("You're owed more than you owe") : net < 0 ? t("You owe more than you're owed") : t("All square")}</span>
         </Card>
         <Card className="hidden flex-col gap-2 md:flex">
-          <span className="text-small font-medium text-ink-muted">{t("Active accounts")}</span>
-          <span className="text-h1 text-ink tabular-nums">{dashboard.activeAccounts}</span>
-          <span className="text-caption font-normal text-ink-muted">{t("People and banks with a balance")}</span>
+          <span className="text-small font-medium text-ink-muted">{t("Profit paid this year")}</span>
+          <AmountText value={Number(dashboard.profitPaidThisYear)} currency={currency} size="h2" className="text-h1" />
+          <span className="truncate text-caption font-normal text-ink-muted">
+            {dashboard.topProfit ? `${dashboard.topProfit.contactName} · ${t("{amount} a month", { amount: formatCurrency(Number(dashboard.topProfit.monthly), currency) })}` : t("No profit or interest paid yet")}
+          </span>
         </Card>
       </section>
 
@@ -179,6 +179,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               <span className="text-right">{t("Opening")}</span>
               <span className="text-right">{t("Money in")}</span>
               <span className="text-right">{t("Money out")}</span>
+              <span className="text-right">{t("Profit paid")}</span>
               <span className="text-right">{t("Balance")}</span>
             </div>
             {shown.length === 0 && <p className="px-6 py-10 text-center text-body text-ink-muted">{t("No one matches")}</p>}
@@ -190,6 +191,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               <span className="text-right">{formatCurrency(Math.abs(sums.opening), currency)}</span>
               <span className="text-right">{formatCurrency(sums.in, currency)}</span>
               <span className="text-right">{formatCurrency(sums.out, currency)}</span>
+              <span className="text-right">{formatCurrency(sums.profit, currency)}</span>
               <AmountText value={sums.net} currency={currency} signed size="sm" className="text-right text-body font-bold" />
             </div>
           </Card>
@@ -216,7 +218,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 const contact = contactsById.get(row.contactId);
                 return (
                   <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("box-content flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-surface-sunken")}>
-                    <PersonAvatar name={row.contactName} src={contact?.photoUrl} size={40} coloured />
+                    <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={40} coloured />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <b className="truncate text-title leading-[normal] text-ink">{row.contactName}</b>
                       <span className="truncate text-caption leading-[normal] font-normal text-ink-muted">{contact ? [t(LOAN_KIND_LABELS[contact.type]), contact.notes].filter(Boolean).join(" · ") : (row.contactPhone ?? "")}</span>
@@ -276,7 +278,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
   return (
     <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink transition-colors hover:bg-cream", GRID)}>
       <span className="flex min-w-0 items-center gap-3">
-        <PersonAvatar name={row.contactName} src={contact?.photoUrl} size={36} />
+        <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="flex items-center gap-2">
             <span className="truncate font-medium">{row.contactName}</span>
@@ -292,6 +294,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
       {figure(row.openingBalance, currency, "text-ink-2")}
       {figure(row.totalReceive, currency)}
       {figure(row.totalPayment, currency)}
+      {figure(row.profitPaid, currency, "text-warning")}
       <span className="flex items-center justify-end gap-2">
         <span className={cn("font-bold tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</span>
         <Chip tone={meta.chip} size="sm" className="font-semibold">

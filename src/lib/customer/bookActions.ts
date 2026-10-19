@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Book, type BookStatus } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Book, type BookNote, type BookStatus } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -59,6 +59,20 @@ export async function deleteBookAction(id: string): Promise<ActionResult<{ id: s
     const res = await customerApi.delete<{ id: string }>(`${API_BASE_URL}/api/books/${id}`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to remove book");
+}
+
+export async function addBookNoteAction(bookId: string, input: { text: string; page?: number }): Promise<ActionResult<BookNote>> {
+  return callApi(async () => {
+    const res = await customerApi.post<BookNote>(`${API_BASE_URL}/api/books/${bookId}/notes`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the note");
+}
+
+export async function removeBookNoteAction(bookId: string, noteId: string): Promise<ActionResult<{ id: string }>> {
+  return callApi(async () => {
+    const res = await customerApi.delete<{ id: string }>(`${API_BASE_URL}/api/books/${bookId}/notes/${noteId}`, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to remove the note");
 }
 
 export async function setBookGoalAction(target: number): Promise<ActionResult<{ year: number; goalTarget: number | null }>> {

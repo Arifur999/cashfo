@@ -28,6 +28,14 @@ export function formatTimeAgo(value: string | Date, t: Translate = inEnglish, no
   return formatDate(value);
 }
 
+// Whole months from an ISO time to `now` (0 within the first month): how
+// long ago a password was last changed.
+export function monthsSince(iso: string, now: Date): number {
+  const then = new Date(iso);
+  const months = (now.getUTCFullYear() - then.getUTCFullYear()) * 12 + now.getUTCMonth() - then.getUTCMonth() - (now.getUTCDate() < then.getUTCDate() ? 1 : 0);
+  return Math.max(0, months);
+}
+
 // Whole calendar months from `from` to `to`, floored -- used to auto-derive
 // SavingsGoal.durationMonths from a Target End Date (see
 // SavingsGoalFormModal) instead of asking the user to type a duration.

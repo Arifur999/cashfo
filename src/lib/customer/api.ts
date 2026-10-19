@@ -40,9 +40,38 @@ export interface CurrentUser {
   avatarUrl: string | null;
   preferredLanguage: LanguagePreference;
   emailVerifiedAt: string | null;
+  // When the password was last set; null for an account that never set one
+  // (Google sign-in) or set it before this was recorded.
+  passwordChangedAt: string | null;
   businesses: UserBusiness[];
   // Set when this is a super admin's read-only "View as customer" session.
   impersonatedBy?: { name: string; email: string | null } | null;
+}
+
+// The bell's feed (GET /api/notifications). The text is built in the app
+// from `data` (lib/customer/notificationDisplay.ts), in either language.
+export type UserNotificationType = "BUDGET" | "LOAN_DUE" | "SAVINGS" | "ANNOUNCEMENT";
+
+export interface UserNotification {
+  id: string;
+  // The workspace it is about; null for an announcement.
+  businessId: string | null;
+  type: UserNotificationType;
+  data: Record<string, string | number | null>;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationFeed {
+  data: UserNotification[];
+  unreadCount: number;
+}
+
+// Settings > App > Reminders.
+export interface ReminderPreferences {
+  budget: boolean;
+  loans: boolean;
+  savings: boolean;
 }
 
 // Settings > Security > Device Management. isCurrent is a best-effort
@@ -72,7 +101,7 @@ export interface LoginHistoryEntry {
 // Facebook/bank/etc. logins), gated by its own vault password (separate
 // from the account password) plus a short-lived unlock token. See
 // passwordVaultActions.ts and backend/src/password-vault/.
-export type VaultEntryCategory = "SOCIAL" | "BANK" | "EMAIL" | "SHOPPING" | "WORK" | "OTHER";
+export type VaultEntryCategory = "SOCIAL" | "BANK" | "MOBILE_BANKING" | "EMAIL" | "SHOPPING" | "WORK" | "WIFI" | "GOVERNMENT" | "OTHER";
 
 // Never carries the actual password -- GET /api/vault/entries omits it on
 // purpose (see PasswordVaultService.list()'s comment); revealVaultEntryAction
@@ -87,8 +116,21 @@ export interface VaultEntrySummary {
   holderName: string | null;
   usernameOrEmail: string | null;
   notes: string | null;
+  // When the password itself last changed (other edits leave it).
+  passwordChangedAt: string;
+  isFavorite: boolean;
+  // "It's fine" on the checkup's old-password warning, until it changes.
+  checkupDismissedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// The security checkup: the logins whose password is weak, used for more
+// than one login, or over a year old -- ids only, never a password.
+export interface VaultCheckup {
+  weak: string[];
+  reused: string[];
+  old: string[];
 }
 
 export interface BusinessLimits {
@@ -311,12 +353,25 @@ export interface Transaction {
   entries: TransactionEntry[];
 }
 
+// The other end of an Edit (decision D2), with its amount.
+export interface CorrectionLink {
+  id: string;
+  amount: string;
+}
+
+// One transaction as its own page reads it: also the original it corrected,
+// and the entry that corrected it.
+export interface TransactionDetail extends Transaction {
+  correctedFrom: CorrectionLink | null;
+  correctedBy: CorrectionLink | null;
+}
+
 export interface TransactionListResponse {
   data: Transaction[];
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
-export type ContactType = "CUSTOMER" | "SUPPLIER" | "BOTH" | "RELATIVE" | "OTHER";
+export type ContactType = "CUSTOMER" | "SUPPLIER" | "BOTH" | "RELATIVE" | "BANK" | "NGO" | "OTHER";
 export type ContactStatus = "ACTIVE" | "ARCHIVED";
 // BUSINESS (customer/supplier trade relationships, shown in Dena-Pawna) vs
 // LOAN (bank/person lending relationships, shown in Loan Management). Both
@@ -434,6 +489,10 @@ export interface LoanDashboardRow {
   openingBalance: string;
   totalReceive: string;
   totalPayment: string;
+  // Profit or interest paid to them and received from them, all time. It
+  // never moves currentBalance.
+  profitPaid: string;
+  profitReceived: string;
   currentBalance: string;
   direction: LoanBalanceDirection;
 }
@@ -445,6 +504,10 @@ export interface LoanDashboard {
   totalReceived: string;
   netBalance: string;
   activeAccounts: number;
+  // Profit paid in this Asia/Dhaka year, and who most of it went to with
+  // about how much a month.
+  profitPaidThisYear: string;
+  topProfit: { contactId: string; contactName: string; monthly: string } | null;
   rows: LoanDashboardRow[];
 }
 
@@ -461,6 +524,10 @@ export interface LoanStatementRow {
   category: string;
   debit: string | null;
   credit: string | null;
+  // A Profit row ("Profit" category): what was paid or received. It leaves
+  // runningPrincipal as it was.
+  profitPaid: string | null;
+  profitReceived: string | null;
   runningPrincipal: string;
   status: TransactionStatus;
 }
@@ -719,6 +786,14 @@ export type GroupMemberStatus = "ACTIVE" | "ARCHIVED";
 // AssetCategoryOption -- see the backend schema comment for why).
 export type GroupExpenseCategory = string;
 
+// How an expense is shared: equally (everyone that day, or the members it
+// names), by shares, by meals (pooled into one meal rate), or by exact
+// amounts.
+export type GroupSplit = "EQUAL" | "SHARES" | "MEALS" | "EXACT";
+export type GroupKind = "FAMILY" | "MESS";
+export type GroupPaidFrom = "FUND" | "MEMBER";
+export type GroupContributionKind = "DEPOSIT" | "RETURN" | "SETTLE" | "CARRY";
+
 export interface GroupExpenseCategoryOption {
   id: string;
   businessId: string;
@@ -726,6 +801,8 @@ export interface GroupExpenseCategoryOption {
   icon: string | null;
   color: string;
   displayOrder: number;
+  // How a new expense in it is shared, to start with.
+  defaultSplit: GroupSplit;
   createdAt: string;
   updatedAt: string;
 }
@@ -737,6 +814,11 @@ export interface GroupMember {
   phone: string | null;
   photoUrl: string | null;
   status: GroupMemberStatus;
+  // Their share of costs split by shares.
+  shareUnits: string;
+  // They share only the costs of the days from joinedOn to leftOn.
+  joinedOn: string | null;
+  leftOn: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -745,11 +827,21 @@ export interface GroupContribution {
   id: string;
   businessId: string;
   groupMemberId: string;
+  // Signed: a return is negative.
   amount: string;
+  kind: GroupContributionKind;
   date: string;
   note: string | null;
   createdAt: string;
   groupMember: GroupMember;
+}
+
+export interface GroupExpenseSplit {
+  id: string;
+  expenseId: string;
+  groupMemberId: string;
+  units: string | null;
+  amount: string | null;
 }
 
 export interface GroupExpense {
@@ -761,7 +853,34 @@ export interface GroupExpense {
   description: string | null;
   paidByMemberId: string | null;
   paidByMember: GroupMember | null;
+  // FUND: out of the group's cash. MEMBER: out of paidByMember's pocket.
+  paidFrom: GroupPaidFrom;
+  split: GroupSplit;
+  // The members it names; none: everyone in the group that day.
+  splits: GroupExpenseSplit[];
   createdAt: string;
+}
+
+// A group's settings (the defaults until first saved).
+export interface GroupSettings {
+  kind: GroupKind;
+  monthStartDay: number;
+  cashHolderMemberId: string | null;
+  mealsOn: boolean;
+  breakfastUnits: string;
+  lunchUnits: string;
+  dinnerUnits: string;
+}
+
+// One member's meals on a day.
+export interface GroupMeal {
+  id: string;
+  groupMemberId: string;
+  date: string;
+  breakfast: number;
+  lunch: number;
+  dinner: number;
+  guests: string;
 }
 
 export interface GroupSettlementMemberRow {
@@ -774,6 +893,15 @@ export interface GroupSettlementMemberRow {
   grossDeposited: string;
   returned: string;
   contributed: string;
+  // Whether they shared the period's costs (in the group during it).
+  sharing: boolean;
+  // Paid from their own pocket, credited to them.
+  pocketPaid: string;
+  mealUnits: string;
+  mealCost: string;
+  // Their share of the costs not shared by meals.
+  otherShare: string;
+  // mealCost + otherShare.
   share: string;
   balance: string;
 }
@@ -784,6 +912,11 @@ export interface GroupSettlementResult {
   totalExpense: string;
   memberCount: number;
   perMemberShare: string;
+  mealExpense: string;
+  mealUnits: string;
+  mealRate: string;
+  // Contributions less the expenses paid from the fund: every balance added up.
+  cashInHand: string;
   members: GroupSettlementMemberRow[];
 }
 
@@ -792,6 +925,9 @@ export interface GroupSettlementRecordMember {
   settlementId: string;
   groupMemberId: string;
   contributed: string;
+  pocketPaid: string;
+  mealUnits: string;
+  mealCost: string;
   share: string;
   balance: string;
   groupMember: GroupMember;
@@ -805,6 +941,11 @@ export interface GroupSettlementRecord {
   totalExpense: string;
   memberCount: number;
   perMemberShare: string;
+  mealExpense: string;
+  mealUnits: string;
+  mealRate: string;
+  cashInHand: string;
+  carriedForward: boolean;
   closedBy: string;
   closedAt: string;
   members: GroupSettlementRecordMember[];
@@ -925,10 +1066,32 @@ export interface Book {
   updatedAt: string;
 }
 
+// A note on a book, or a line the reader liked, with its page.
+export interface BookNote {
+  id: string;
+  bookId: string;
+  page: number | null;
+  text: string;
+  createdAt: string;
+}
+
+// One Asia/Dhaka day of reading, over every book.
+export interface ReadingDay {
+  date: string; // YYYY-MM-DD
+  pages: number;
+}
+
 export interface BooksOverview {
   year: number; // the current Asia/Dhaka year
   goalTarget: number | null; // this year's "finish N books" goal
   books: Book[];
+  // Days in a row with pages read (up to yesterday while today has none
+  // yet), the best run, and Saturday to Friday of this week.
+  reading: { streak: number; best: number; week: ReadingDay[] };
+  // Pages read today in each book that has any, by book id.
+  pagesToday: Record<string, number>;
+  // The notes on each book being read, oldest first, by book id.
+  notes: Record<string, BookNote[]>;
 }
 
 // Habit Tracker -> Skills (the "Course" category): something being learned,
@@ -978,6 +1141,20 @@ export interface SkillsOverview {
 // challenge has no calendar dates, so its `elapsedDays` is 0, `todayDay`
 // null, and `month`/`year` null (Others also carries a free-form `name`,
 // null for Namaz/Ramadan).
+// How a prayer was prayed; MISSED is an explicit "not prayed".
+export type PrayerStatus = "JAMAAT" | "ON_TIME" | "QAZA" | "MISSED";
+
+// The qaza a person owes (GET /api/namaz/qaza): prayers missed on their
+// Namaz sheets since the counting day, less the ones made up.
+export interface QazaSummary {
+  since: string;
+  missed: Record<string, number>;
+  madeUp: Record<string, number>;
+  left: Record<string, number>;
+  totalLeft: number;
+  recent: { id: string; prayer: string; count: number; date: string }[];
+}
+
 export interface HabitMonthTracker {
   id: string;
   category: string;
@@ -990,7 +1167,12 @@ export interface HabitMonthTracker {
   // Day-of-month that is "today" (Asia/Dhaka, server-side) when this is the
   // current month, else null -- the sheet highlights that column.
   todayDay: number | null;
-  checks: { day: number; item: string }[];
+  // status only means something on a Namaz sheet (Ramadan and challenge
+  // ticks are always ON_TIME).
+  checks: { day: number; item: string; status: PrayerStatus }[];
+  // Ramadan only (empty elsewhere): the paras of the Quran read each day, by
+  // day. A day with none is left out.
+  paras: { day: number; paras: number }[];
   // When the sheet was created: a challenge counts its days from here.
   createdAt: string;
 }

@@ -2,7 +2,7 @@
 
 import { Lock, TriangleAlert, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -14,6 +14,7 @@ import { cashInHand, type MonthRange, shiftMonth, whoPaysWhom } from "@/lib/cust
 import { closeGroupSettlementAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 
 interface CloseMonthDialogProps {
   open: boolean;
@@ -30,6 +31,13 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, s
   const { t, locale } = useLocale();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  // Carry each balance into the next month as an opening entry.
+  const [carry, setCarry] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setCarry(false);
+  }
   const monthLabel = monthName(range.key, locale, "long", true);
   const nextMonth = monthName(shiftMonth(range.key, 1), locale);
   const contributions = settlement.members.reduce((sum, row) => sum + Number(row.contributed), 0);
@@ -39,7 +47,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, s
     { label: t("Period"), value: `${Number(range.from.slice(8))} – ${Number(range.to.slice(8))} ${monthName(range.key, locale, "short")}` },
     { label: t("Total expense"), value: formatCurrency(settlement.totalExpense, currency) },
     { label: t("Members"), value: String(settlement.memberCount) },
-    { label: t("Share each"), value: formatCurrency(settlement.perMemberShare, currency) },
+    Number(settlement.mealUnits) > 0 ? { label: t("Meal rate"), value: formatCurrency(settlement.mealRate, currency) } : { label: t("Share each"), value: formatCurrency(settlement.perMemberShare, currency) },
     { label: t("Contributions"), value: formatCurrency(contributions, currency) },
     { label: t("Cash in hand"), value: formatCurrency(cashInHand(settlement), currency) },
   ];
@@ -47,7 +55,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, s
   function confirm() {
     if (isPending) return;
     startTransition(async () => {
-      const result = await closeGroupSettlementAction(businessId, { periodStart: range.from, periodEnd: range.to });
+      const result = await closeGroupSettlementAction(businessId, { periodStart: range.from, periodEnd: range.to, carryForward: carry });
       if (result.success) {
         toast.success(`${monthLabel} ${t("is closed")}`);
         onClose();
@@ -93,6 +101,18 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, s
               {pending} {t(pending === 1 ? "settle-up payment is" : "settle-up payments are")} {t("still open. Record them first so everyone starts")} {nextMonth} {t("at")} {formatCurrency(0, currency)}, {t("or close now and settle by hand.")}
             </p>
           )}
+
+          <div className="flex items-center gap-4 rounded-md border border-line px-4 py-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span id="carry-label" className="text-body font-semibold text-ink">
+                {t("Carry the balances into {month}", { month: nextMonth })}
+              </span>
+              <span className="text-small leading-normal text-ink-muted">{t("Each member starts {month} with what they are owed or still owe, instead of settling in cash now.", { month: nextMonth })}</span>
+            </div>
+            <button type="button" role="switch" aria-checked={carry} aria-labelledby="carry-label" onClick={() => setCarry(!carry)} className={cn("flex h-6.5 w-11 shrink-0 rounded-full p-0.75 transition-colors", carry ? "justify-end bg-emerald" : "justify-start bg-line-strong")}>
+              <span className="size-5 rounded-full bg-white shadow-[0_1px_2px_rgba(11,61,46,0.14)]" />
+            </button>
+          </div>
 
           <div className="flex items-start gap-3 rounded-md border border-warning/30 bg-warning-soft px-4 py-3 text-small leading-relaxed text-warning">
             <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden="true" />

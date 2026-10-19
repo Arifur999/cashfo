@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, X } from "lucide-react";
+import { Sparkles, Star, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
@@ -47,6 +47,7 @@ export function EntryDrawer({ open, editing, preset, token, onClose, onSaved, on
   const [notes, setNotes] = useState("");
   const [holder, setHolder] = useState("");
   const [holderOpen, setHolderOpen] = useState(false);
+  const [favorite, setFavorite] = useState(false);
   const [generatorOpen, setGeneratorOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -63,6 +64,7 @@ export function EntryDrawer({ open, editing, preset, token, onClose, onSaved, on
       setNotes(editing?.notes ?? "");
       setHolder(editing?.holderName ?? "");
       setHolderOpen(!!editing?.holderName);
+      setFavorite(editing?.isFavorite ?? false);
       setGeneratorOpen(false);
     }
   }
@@ -91,6 +93,7 @@ export function EntryDrawer({ open, editing, preset, token, onClose, onSaved, on
         usernameOrEmail: username.trim() || undefined,
         holderName: holderOpen ? holder.trim() || undefined : undefined,
         notes: notes.trim() || undefined,
+        isFavorite: favorite,
         ...(password ? { password } : {}),
       };
       const result = editing ? await updateVaultEntryAction(token, editing.id, input) : await createVaultEntryAction(token, input);
@@ -146,7 +149,22 @@ export function EntryDrawer({ open, editing, preset, token, onClose, onSaved, on
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Field htmlFor="ve-title" label={label(t("Title"))}>
-                <Input id="ve-title" size="md" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} autoFocus placeholder={t("e.g. Facebook, Dutch Bangla Bank")} autoComplete="off" name="vault-title" />
+                <Input
+                  id="ve-title"
+                  size="md"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  maxLength={120}
+                  autoFocus
+                  placeholder={t("e.g. Facebook, Dutch Bangla Bank")}
+                  autoComplete="off"
+                  name="vault-title"
+                  trailing={
+                    <button type="button" onClick={() => setFavorite(!favorite)} aria-pressed={favorite} aria-label={t(favorite ? "Remove from favorites" : "Add to favorites")} title={t(favorite ? "Remove from favorites" : "Add to favorites")} className="flex size-8 items-center justify-center rounded-sm hover:bg-cream">
+                      <Star className={cn("size-4.5", favorite ? "fill-warning-fill text-warning-fill" : "text-ink-muted")} aria-hidden="true" />
+                    </button>
+                  }
+                />
               </Field>
               <Field htmlFor="ve-site" label={label(t("Website"))}>
                 <Input id="ve-site" size="md" type="text" inputMode="url" value={website} onChange={(event) => setWebsite(event.target.value)} maxLength={200} placeholder="rokomari.com" autoComplete="off" name="vault-site" />

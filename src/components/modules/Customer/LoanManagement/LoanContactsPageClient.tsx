@@ -20,7 +20,7 @@ import type { Contact, ContactType, LoanBalanceDirection } from "@/lib/customer/
 import { archiveContactAction } from "@/lib/customer/contactActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { DIRECTION_META, LOAN_KIND_LABELS, loanDirection } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, LOAN_KIND_LABELS, LOAN_KINDS, loanDirection } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
@@ -36,7 +36,6 @@ interface LoanContactsPageClientProps {
 
 type Tab = "ALL" | LoanBalanceDirection;
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
-const KINDS: ContactType[] = ["BOTH", "RELATIVE", "CUSTOMER", "SUPPLIER", "OTHER"];
 const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-cream [&_svg]:size-3.75";
 
 // People & banks: everyone you have dena-pawna with, one card each with
@@ -108,7 +107,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
             <SegmentedControl variant="soft" options={[{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, ...DIRECTIONS.map((direction) => ({ value: direction as Tab, label: counted(t(DIRECTION_META[direction].name), counts[direction]) }))]} value={tab} onChange={setTab} label={t("Balance")} className="max-md:w-full max-md:overflow-x-auto" />
             <NativeSelect size="sm" value={kind} onChange={(event) => setKind(event.target.value as ContactType | "")} aria-label={t("Kind")} className="text-small">
               <option value="">{t("All types")}</option>
-              {KINDS.map((option) => (
+              {LOAN_KINDS.map((option) => (
                 <option key={option} value={option}>
                   {t(LOAN_KIND_LABELS[option])}
                 </option>
@@ -130,7 +129,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
               return (
                 <Card key={contact.id} className={cn("flex flex-col gap-4", archived && "opacity-60")}>
                   <div className="flex items-center gap-3">
-                    <PersonAvatar name={contact.name} src={contact.photoUrl} size={44} />
+                    <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={44} />
                     <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                       <span className="flex items-center gap-2">
                         <span className="truncate text-title text-ink">{contact.name}</span>

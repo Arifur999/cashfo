@@ -5,6 +5,8 @@ export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
   SUPPLIER: "Supplier",
   BOTH: "Customer & Supplier",
   RELATIVE: "Relative",
+  BANK: "Bank",
+  NGO: "NGO",
   OTHER: "Other",
 };
 

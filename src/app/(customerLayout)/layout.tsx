@@ -8,6 +8,7 @@ import { TopbarProvider } from "@/components/modules/Customer/Layout/TopbarExtra
 import { QuickAddFab } from "@/components/modules/Customer/Layout/QuickAddFab";
 import { AuthProvider } from "@/components/modules/Customer/Providers/AuthProvider";
 import { PlatformProvider } from "@/components/modules/Customer/Providers/PlatformProvider";
+import { PrayerSettingsProvider } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 import { ThemeProvider } from "@/components/modules/Customer/Providers/ThemeProvider";
 import { TodayTasksProvider } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/WorkspaceLockScreen";
@@ -15,6 +16,7 @@ import { MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils"
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { isFeatureOn } from "@/lib/customer/features";
+import { getPrayerSettings } from "@/lib/customer/habits";
 import { getPlatform } from "@/lib/customer/platform";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
@@ -40,7 +42,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
     redirect(SESSION_EXPIRED_LOGIN_ROUTE);
   }
 
-  const [activeBusinessId, locale, overrides] = await Promise.all([resolveActiveBusinessId(user.businesses), getLocale(), getTranslationOverrides()]);
+  const [activeBusinessId, locale, overrides, prayerSettings] = await Promise.all([resolveActiveBusinessId(user.businesses), getLocale(), getTranslationOverrides(), getPrayerSettings()]);
 
   // A PIN-locked workspace asks for its PIN first, on whatever page was
   // opened, and stays on it once it opens. A super admin's read-only view
@@ -65,26 +67,28 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
       <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId}>
         <LocaleProvider initialLocale={locale} overrides={overrides}>
           <PlatformProvider value={{ flags: platform.flags, supportEmail: platform.supportEmail }}>
-            <TodayTasksProvider>
-              <TopbarProvider>
-                {/* The Night sidebar on the left; the top bar and the one
-                    scrolling region on the right. */}
-                <div className="flex h-screen overflow-hidden bg-cream print:block print:h-auto print:overflow-visible">
-                  <AppSidebar />
-                  <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
-                    {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
-                    <AppTopbar />
-                    {/* id + tabIndex give the root layout's skip link a target. */}
-                    <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
-                      <OfflineBanner />
-                      <AnnouncementBanner announcements={platform.announcements} />
-                      {children}
-                    </main>
+            <PrayerSettingsProvider initial={prayerSettings}>
+              <TodayTasksProvider>
+                <TopbarProvider>
+                  {/* The Night sidebar on the left; the top bar and the one
+                      scrolling region on the right. */}
+                  <div className="flex h-screen overflow-hidden bg-cream print:block print:h-auto print:overflow-visible">
+                    <AppSidebar />
+                    <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
+                      {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
+                      <AppTopbar />
+                      {/* id + tabIndex give the root layout's skip link a target. */}
+                      <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
+                        <OfflineBanner />
+                        <AnnouncementBanner announcements={platform.announcements} />
+                        {children}
+                      </main>
+                    </div>
                   </div>
-                </div>
-                <QuickAddFab />
-              </TopbarProvider>
-            </TodayTasksProvider>
+                  <QuickAddFab />
+                </TopbarProvider>
+              </TodayTasksProvider>
+            </PrayerSettingsProvider>
           </PlatformProvider>
         </LocaleProvider>
       </AuthProvider>

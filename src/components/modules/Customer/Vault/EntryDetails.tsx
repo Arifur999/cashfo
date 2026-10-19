@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, ExternalLink, Eye, EyeOff } from "lucide-react";
+import { Copy, ExternalLink, Eye, EyeOff, Star, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
@@ -10,26 +10,36 @@ import { SOFT_TONE } from "@/components/smartly/tones";
 import type { VaultEntrySummary } from "@/lib/customer/api";
 import { formatDate } from "@/lib/customer/date";
 import { revealVaultEntryAction } from "@/lib/customer/passwordVaultActions";
-import { avatarLetter, hostOf, normalizeUrl } from "@/lib/customer/vaultDisplay";
+import { avatarLetter, hostOf, normalizeUrl, type VaultIssue } from "@/lib/customer/vaultDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { VAULT_CATEGORY_CHIP, VAULT_CATEGORY_LABELS, VAULT_CATEGORY_TONE } from "./vaultCategoryDisplay";
 import { isLockedMessage } from "./VaultPageClient";
+import { monthsSince } from "@/lib/customer/date";
 
 interface EntryDetailsProps {
   entry: VaultEntrySummary;
   token: string;
   onLocked: () => void;
+  // What the security checkup found for it.
+  issues: VaultIssue[];
   onCopy: (text: string, message: string) => void;
+  onFavorite: () => void;
   onEdit: () => void;
   onDelete: () => void;
+}
+
+// "Password changed 14 months ago", for the footer.
+function changedWord(months: number, t: (key: string, values?: Record<string, string | number>) => string): string {
+  if (months === 0) return t("Password changed this month");
+  return t(months === 1 ? "Password changed {count} month ago" : "Password changed {count} months ago", { count: months });
 }
 
 const ACTION = "flex size-8 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink";
 
 // One login in full: website, username, the password shown or copied on
 // demand, the holder's name and notes.
-export function EntryDetails({ entry, token, onLocked, onCopy, onEdit, onDelete }: EntryDetailsProps) {
+export function EntryDetails({ entry, token, issues, onLocked, onCopy, onFavorite, onEdit, onDelete }: EntryDetailsProps) {
   const { t } = useLocale();
   const [revealed, setRevealed] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -66,6 +76,11 @@ export function EntryDetails({ entry, token, onLocked, onCopy, onEdit, onDelete 
   }
 
   const host = hostOf(entry.websiteUrl);
+  const months = monthsSince(entry.passwordChangedAt, new Date());
+  // The checkup's findings, worst first, in the board's words.
+  const warnings = issues.map((issue) =>
+    issue === "reused" ? t("This password is also used for another login. If one site leaks it, both are open.") : issue === "weak" ? t("This password is weak. Change it on the website with a generated one, then update it here.") : t("Password not changed for {count} months. Change it on the website, then update it here.", { count: months }),
+  );
   const rows: { label: string; value: React.ReactNode; actions: React.ReactNode }[] = [];
   if (host) {
     rows.push({
@@ -120,12 +135,23 @@ export function EntryDetails({ entry, token, onLocked, onCopy, onEdit, onDelete 
       <div className="flex items-center gap-3 px-5 pt-5 pb-4">
         <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-lg text-h3 font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>{avatarLetter(entry.title)}</span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.75">
-          <h2 className="truncate text-h3 font-semibold text-ink">{entry.title}</h2>
+          <h2 className="flex min-w-0 items-center gap-2 text-h3 font-semibold text-ink">
+            <span className="truncate">{entry.title}</span>
+            <button type="button" onClick={onFavorite} aria-pressed={entry.isFavorite} aria-label={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} title={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} className="flex size-7 shrink-0 items-center justify-center rounded-sm hover:bg-cream">
+              <Star className={cn("size-4.5", entry.isFavorite ? "fill-warning-fill text-warning-fill" : "text-ink-muted")} aria-hidden="true" />
+            </button>
+          </h2>
           <Chip tone={VAULT_CATEGORY_CHIP[entry.category]} size="sm" className="w-fit">
             {t(VAULT_CATEGORY_LABELS[entry.category])}
           </Chip>
         </span>
       </div>
+      {warnings.length > 0 && (
+        <div role="note" className="mx-4 mb-4 flex gap-2 rounded-md border border-warning-fill/40 bg-warning-soft p-3 text-small leading-normal text-warning">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span>{warnings.join(" ")}</span>
+        </div>
+      )}
       <dl className="flex flex-col border-t border-surface-sunken">
         {rows.map((row) => (
           <div key={row.label} className="flex items-center gap-3 border-b border-surface-sunken px-5 py-3">
@@ -147,7 +173,7 @@ export function EntryDetails({ entry, token, onLocked, onCopy, onEdit, onDelete 
         <span className="flex-1 text-caption leading-normal text-ink-muted">
           {t("Added")} {formatDate(entry.createdAt, "MMM yyyy")}
           <br />
-          {t("Updated")} {formatDate(entry.updatedAt, "d MMM yyyy")}
+          {changedWord(months, t)}
         </span>
         <Button variant="outline" size="sm" onClick={onDelete} className="border-expense/40 text-expense hover:bg-expense-soft">
           {t("Delete")}

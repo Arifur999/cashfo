@@ -7,12 +7,13 @@ import { dayKey, dayOf, hijriParts, shiftDay } from "./habitDisplay";
 // Gregorian year; 1 Ramadan is found on the Umm al-Qura calendar.
 
 // The Gregorian day 1 Ramadan falls on in a Gregorian year (the first
-// one, if the year holds two). Null when the calendar has none.
-export function ramadanStartIn(year: number): string | null {
+// one, if the year holds two). Null when the calendar has none. adjust is
+// the prayer settings' Hijri adjustment (1: the month starts a day later).
+export function ramadanStartIn(year: number, adjust = 0): string | null {
   for (let i = 0; i < 366; i++) {
     const day = dayKey(new Date(Date.UTC(year, 0, 1 + i)));
     if (day.slice(0, 4) !== String(year)) break;
-    const h = hijriParts(day);
+    const h = hijriParts(day, adjust);
     if (h.month === 9 && h.day === 1) return day;
   }
   return null;
@@ -34,8 +35,8 @@ export const ASHRAS = [
   { n: 3 as const, name: "Nijat", meaning: "safety from the Fire" },
 ];
 
-export function ramadanDays(tracker: HabitMonthTracker): RamadanDay[] {
-  const start = tracker.year ? ramadanStartIn(tracker.year) : null;
+export function ramadanDays(tracker: HabitMonthTracker, adjust = 0): RamadanDay[] {
+  const start = tracker.year ? ramadanStartIn(tracker.year, adjust) : null;
   return Array.from({ length: tracker.totalDays }, (_, i) => {
     const day = i + 1;
     const date = start ? shiftDay(start, i) : null;
@@ -57,11 +58,11 @@ export interface RamadanWindow {
   hijriYear: number | null;
 }
 
-export function ramadanWindow(tracker: HabitMonthTracker, today: string): RamadanWindow {
-  const start = tracker.year ? ramadanStartIn(tracker.year) : null;
+export function ramadanWindow(tracker: HabitMonthTracker, today: string, adjust = 0): RamadanWindow {
+  const start = tracker.year ? ramadanStartIn(tracker.year, adjust) : null;
   if (!start) return { status: "completed", todayDay: null, elapsedDays: tracker.totalDays, start: null, end: null, hijriYear: null };
   const end = shiftDay(start, tracker.totalDays - 1);
-  const hijriYear = hijriParts(start).year;
+  const hijriYear = hijriParts(start, adjust).year;
   if (today < start) return { status: "upcoming", todayDay: null, elapsedDays: 0, start, end, hijriYear };
   if (today > end) return { status: "completed", todayDay: null, elapsedDays: tracker.totalDays, start, end, hijriYear };
   const todayDay = Math.round((dayOf(today).getTime() - dayOf(start).getTime()) / 86400000) + 1;
@@ -88,6 +89,22 @@ export function ramadanSummary(tracker: HabitMonthTracker, window: RamadanWindow
   return { items, done, of, pct: of > 0 ? Math.round((done / of) * 100) : 0 };
 }
 
+// Taraweeh and Tahajjud are prayed at night.
+const NIGHT_ROWS = new Set(["taraweeh", "tahajjud"]);
+
+// The line under a row of the summary: done every day so far, the fasts
+// still to make up, or (once Ramadan is over) every day of the last ten.
+export type SummaryNote = { kind: "everyDay" } | { kind: "makeUp"; fasts: number } | { kind: "lastTen"; nights: boolean } | null;
+
+export function summaryNote(tracker: HabitMonthTracker, window: RamadanWindow, row: ItemSummary): SummaryNote {
+  if (row.of > 0 && row.done === row.of) return { kind: "everyDay" };
+  if (row.item === "Roza" && row.of > row.done) return { kind: "makeUp", fasts: row.of - row.done };
+  if (window.status !== "completed" || tracker.totalDays < 21) return null;
+  const lastTen = ramadanDays(tracker).filter((d) => d.ashra === 3);
+  const all = lastTen.every((d) => tracker.checks.some((c) => c.day === d.day && c.item === row.item));
+  return all ? { kind: "lastTen", nights: NIGHT_ROWS.has(row.item.toLowerCase()) } : null;
+}
+
 // Share of everything done in each ashra, over its days that have come.
 export function ashraSummary(tracker: HabitMonthTracker, window: RamadanWindow): { n: 1 | 2 | 3; done: number; of: number; pct: number }[] {
   const counted = window.status === "completed" ? tracker.totalDays : window.todayDay ?? 0;
@@ -99,12 +116,38 @@ export function ashraSummary(tracker: HabitMonthTracker, window: RamadanWindow):
   });
 }
 
-// The odd nights of the last ten: which have come, and which were fully done.
-export function oddNights(tracker: HabitMonthTracker, window: RamadanWindow): { day: number; come: boolean; full: boolean }[] {
-  const counted = window.status === "completed" ? tracker.totalDays : window.todayDay ?? 0;
-  return ramadanDays(tracker)
-    .filter((d) => d.oddNight)
-    .map((d) => ({ day: d.day, come: d.day <= counted, full: tracker.items.length > 0 && tracker.checks.filter((c) => c.day === d.day).length === tracker.items.length }));
+// The paras of one khatam of the Quran.
+export const QURAN_PARAS = 30;
+
+// The row that logging paras ticks, whatever its case (the server's rule).
+export const quranItem = (items: string[]): string | undefined => items.find((item) => item.toLowerCase() === "quran");
+
+// The Quran khatam so far: the paras read, and the Ramadan day the
+// thirtieth was read on (null until then).
+export function quranKhatam(tracker: HabitMonthTracker): { read: number; finishedOn: number | null } {
+  let read = 0;
+  let finishedOn: number | null = null;
+  for (const log of [...tracker.paras].sort((a, b) => a.day - b.day)) {
+    read += log.paras;
+    if (finishedOn === null && read >= QURAN_PARAS) finishedOn = log.day;
+  }
+  return { read, finishedOn };
+}
+
+// The paras read on a day of the sheet in hand.
+export const parasOn = (tracker: HabitMonthTracker, day: number): number => tracker.paras.find((log) => log.day === day)?.paras ?? 0;
+
+// The sheet with a day's paras set, for an optimistic update: as on the
+// server, logging any also ticks the Quran row, and clearing leaves its tick.
+export function withParas(tracker: HabitMonthTracker, day: number, paras: number): HabitMonthTracker {
+  const rest = tracker.paras.filter((log) => log.day !== day);
+  const item = quranItem(tracker.items);
+  const tick = paras > 0 && item !== undefined && !tracker.checks.some((c) => c.day === day && c.item === item);
+  return {
+    ...tracker,
+    paras: paras > 0 ? [...rest, { day, paras }].sort((a, b) => a.day - b.day) : rest,
+    checks: tick ? [...tracker.checks, { day, item, status: "ON_TIME" }] : tracker.checks,
+  };
 }
 
 // How a box reads on a Ramadan sheet.

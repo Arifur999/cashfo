@@ -33,7 +33,8 @@ export default async function LoanTransactionsPage({ searchParams }: PageProps<"
     getAllTransactions(activeBusinessId, {
       contactId: selectedContactId || undefined,
       contactCategory: "LOAN",
-      transactionTypes: ["SALE", "PURCHASE", "PAYMENT"],
+      // Loans and repayments, and the profit or interest posted with them.
+      transactionTypes: ["SALE", "PURCHASE", "PAYMENT", "INCOME", "EXPENSE"],
       dateFrom,
       dateTo,
     }),

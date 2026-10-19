@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type VaultEntryCategory, type VaultEntrySummary } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type VaultCheckup, type VaultEntryCategory, type VaultEntrySummary } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import type { ActionResult } from "./authActions";
 import { customerApi } from "./apiClient";
@@ -98,6 +98,7 @@ export interface VaultEntryInput {
   usernameOrEmail?: string;
   password?: string;
   notes?: string;
+  isFavorite?: boolean;
 }
 
 export async function createVaultEntryAction(vaultToken: string, input: VaultEntryInput): Promise<ActionResult<VaultEntrySummary>> {
@@ -122,6 +123,22 @@ export async function deleteVaultEntryAction(vaultToken: string, id: string): Pr
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/vault/entries/${id}`, { headers: await vaultHeaders(vaultToken) });
   }, "Failed to delete vault entry");
+}
+
+export async function getVaultCheckupAction(vaultToken: string): Promise<ActionResult<VaultCheckup>> {
+  return callApi(async () => {
+    const res = await customerApi.get<VaultCheckup>(`${API_BASE_URL}/api/vault/checkup`, { headers: await vaultHeaders(vaultToken) });
+    return res.data;
+  }, "Failed to run the security checkup");
+}
+
+// "It's fine": the checkup stops calling this login's password old until it
+// changes.
+export async function dismissVaultCheckupAction(vaultToken: string, id: string): Promise<ActionResult<VaultEntrySummary>> {
+  return callApi(async () => {
+    const res = await customerApi.post<VaultEntrySummary>(`${API_BASE_URL}/api/vault/entries/${id}/checkup-dismiss`, {}, { headers: await vaultHeaders(vaultToken) });
+    return res.data;
+  }, "Failed to update vault entry");
 }
 
 export async function revealVaultEntryAction(vaultToken: string, id: string): Promise<ActionResult<{ password: string }>> {

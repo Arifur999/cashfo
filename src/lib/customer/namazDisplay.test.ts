@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { HabitMonthTracker } from "./api";
+import type { HabitMonthTracker, PrayerStatus } from "./api";
 import { canMark, cellState, dayTotals, hijriRange, monthInsights, monthSummary, prayerSummaries, PRAYERS, yearSummary } from "./namazDisplay";
 
 // September 2026, viewed on the 4th at some point during the day: three
 // days fully past, today the 4th.
-const sheet = (checks: [number, string][], overrides: Partial<HabitMonthTracker> = {}): HabitMonthTracker => ({
+const sheet = (checks: [number, string, PrayerStatus?][], overrides: Partial<HabitMonthTracker> = {}): HabitMonthTracker => ({
   id: "t",
   category: "Namaz",
   month: 9,
@@ -14,7 +14,8 @@ const sheet = (checks: [number, string][], overrides: Partial<HabitMonthTracker>
   totalDays: 30,
   elapsedDays: 3,
   todayDay: 4,
-  checks: checks.map(([day, item]) => ({ day, item })),
+  checks: checks.map(([day, item, status = "ON_TIME"]) => ({ day, item, status })),
+  paras: [],
   ...overrides,
 });
 
@@ -22,8 +23,8 @@ const fullDays = (days: number[]) => days.flatMap((day) => PRAYERS.map((p) => [d
 
 describe("cells", () => {
   const tracker = sheet([...fullDays([1, 2]), [3, "Fajr"], [4, "Fajr"]]);
-  it("reads prayed, missed, open and locked", () => {
-    expect(cellState(tracker, 1, "Isha")).toBe("prayed");
+  it("reads how each prayer went, missed, open and locked", () => {
+    expect(cellState(tracker, 1, "Isha")).toBe("onTime");
     expect(cellState(tracker, 3, "Dhuhr")).toBe("missed");
     expect(cellState(tracker, 4, "Dhuhr")).toBe("open");
     expect(cellState(tracker, 5, "Fajr")).toBe("locked");
@@ -43,7 +44,7 @@ describe("summaries", () => {
   const tracker = sheet([...fullDays([1, 2]), [3, "Fajr"], [3, "Isha"], [4, "Fajr"]]);
 
   it("counts the month over the days fully past", () => {
-    expect(monthSummary(tracker)).toEqual({ due: 15, prayed: 12, missed: 3, pct: 80, perfectDays: 2, perfectRun: 0, todayDone: 1, prayedSoFar: 13 });
+    expect(monthSummary(tracker)).toEqual({ due: 15, prayed: 12, missed: 3, pct: 80, perfectDays: 2, jamaat: 0, qaza: 0, perfectRun: 0, todayDone: 1, prayedSoFar: 13 });
     expect(monthSummary(sheet(fullDays([1, 2, 3]))).perfectRun).toBe(3);
     expect(monthSummary(sheet(fullDays([1, 2, 3, 4]))).perfectRun).toBe(4);
   });
@@ -82,5 +83,33 @@ describe("hijriRange", () => {
   it("names the Hijri months a Gregorian month spans", () => {
     expect(hijriRange(2026, 9)).toMatch(/1448$/);
     expect(hijriRange(2026, 9)).toContain("–");
+  });
+});
+
+describe("prayer statuses", () => {
+  const tracker = sheet([
+    ...PRAYERS.map((p) => [1, p, "JAMAAT"] as [number, string, PrayerStatus]),
+    [2, "Fajr", "QAZA"],
+    [2, "Dhuhr", "MISSED"],
+    ...["Asr", "Maghrib", "Isha"].map((p) => [2, p, "ON_TIME"] as [number, string, PrayerStatus]),
+    [4, "Fajr", "MISSED"],
+  ]);
+
+  it("reads each mark as its status", () => {
+    expect(cellState(tracker, 1, "Fajr")).toBe("jamaat");
+    expect(cellState(tracker, 2, "Fajr")).toBe("qaza");
+    expect(cellState(tracker, 2, "Dhuhr")).toBe("missed");
+    expect(cellState(tracker, 4, "Fajr")).toBe("missed");
+  });
+
+  it("counts a qaza as prayed but not toward a perfect day, and a 'not prayed' mark as missed", () => {
+    const s = monthSummary(tracker);
+    expect(s.prayed).toBe(9);
+    expect(s.missed).toBe(6);
+    expect(s.perfectDays).toBe(1);
+    expect(s.jamaat).toBe(5);
+    expect(s.qaza).toBe(1);
+    expect(s.todayDone).toBe(0);
+    expect(dayTotals(tracker)[1].prayed).toBe(4);
   });
 });

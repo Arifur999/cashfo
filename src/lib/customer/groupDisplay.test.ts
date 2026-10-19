@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GroupContribution, GroupExpense, GroupMember, GroupSettlementMemberRow, GroupSettlementRecord } from "./api";
-import { budgetStatus, cashInHand, closedRecordFor, contributionTotals, contributionsByMember, groupTabFrom, inMonth, isDayClosed, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth, spendByCategory, spendByMonth, whoPaysWhom } from "./groupDisplay";
+import { budgetStatus, cashInHand, closedRecordFor, contributionTotals, contributionsByMember, expenseShare, groupMonthOf, groupTabFrom, groupTabsFor, inMonth, isDayClosed, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth, spendByCategory, spendByMonth, splitText, throughManager, whoPaysWhom } from "./groupDisplay";
 
 const member = (id: string, name: string): GroupMember => ({ id, businessId: "g", name, phone: null, photoUrl: null, status: "ACTIVE", createdAt: "2025-01-05T00:00:00.000Z", updatedAt: "2025-01-05T00:00:00.000Z" });
 const row = (id: string, balance: number): GroupSettlementMemberRow => ({ groupMemberId: id, name: id, grossDeposited: "0", returned: "0", contributed: "0", share: "0", balance: balance.toFixed(2) });
@@ -14,6 +14,21 @@ describe("months", () => {
     expect(monthRangeOf("2026-02")).toEqual({ key: "2026-02", year: 2026, month: 2, from: "2026-02-01", to: "2026-02-28" });
     expect(shiftMonth("2026-01", -1)).toBe("2025-12");
     expect(shiftMonth("2026-11", 2)).toBe("2027-01");
+  });
+
+  it("starts a group month on its start day", () => {
+    expect(monthRangeOf("2026-09", 10)).toMatchObject({ from: "2026-09-10", to: "2026-10-09" });
+    expect(monthRangeOf("2026-12", 5)).toMatchObject({ from: "2026-12-05", to: "2027-01-04" });
+    expect(groupMonthOf("2026-10-05", 10)).toBe("2026-09");
+    expect(groupMonthOf("2026-10-10", 10)).toBe("2026-10");
+    expect(monthKeyFrom(undefined, "2026-10-05", 10)).toBe("2026-09");
+    expect(monthChoices("2026-10-05", "2026-09-12", 10)).toEqual(["2026-09"]);
+  });
+
+  it("shows Meals for a mess, or a family counting meals", () => {
+    expect(groupTabsFor("MESS", false)).toContain("meals");
+    expect(groupTabsFor("FAMILY", false)).not.toContain("meals");
+    expect(groupTabsFor("FAMILY", true)).toContain("meals");
   });
 
   it("offers the months back to the earliest entry, newest first", () => {
@@ -32,7 +47,7 @@ describe("months", () => {
 
 describe("money", () => {
   it("adds the balances up to the cash in hand", () => {
-    expect(cashInHand({ periodStart: "", periodEnd: "", totalExpense: "0", memberCount: 3, perMemberShare: "0", members: [row("a", 2000), row("b", -800), row("c", -400)] })).toBe(800);
+    expect(cashInHand({ periodStart: "", periodEnd: "", totalExpense: "0", memberCount: 3, perMemberShare: "0", mealExpense: "0", mealUnits: "0", mealRate: "0", cashInHand: "800.00", members: [row("a", 2000), row("b", -800), row("c", -400)] })).toBe(800);
   });
 
   it("splits deposits from returns and sums them by member", () => {
@@ -85,5 +100,43 @@ describe("spend", () => {
     expect(groupTabFrom("category")).toBe("settings");
     expect(groupTabFrom("members")).toBe("members");
     expect(groupTabFrom(undefined)).toBe("dashboard");
+  });
+});
+
+describe("splitText", () => {
+  const family = [{ ...member("k", "Khaled"), shareUnits: "3.00" }, { ...member("a", "Arif"), shareUnits: "1.00" }, { ...member("r", "Rakib"), shareUnits: "4.00" }] as GroupMember[];
+  const split = (groupMemberId: string, units: string | null = null) => ({ id: groupMemberId, expenseId: "e", groupMemberId, units, amount: null });
+  it("says how an expense is shared", () => {
+    expect(splitText({ split: "SHARES", splits: [] }, family)).toEqual({ kind: "SHARES", detail: "3 : 1 : 4", only: null });
+    expect(splitText({ split: "EQUAL", splits: [] }, family)).toEqual({ kind: "EQUAL", detail: "÷ 3", only: null });
+    expect(splitText({ split: "EQUAL", splits: [split("r")] }, family)).toEqual({ kind: "EQUAL", detail: null, only: "Rakib" });
+    expect(splitText({ split: "SHARES", splits: [split("k", "2.00"), split("r", "1.00")] }, family).detail).toBe("2 : 1");
+    expect(splitText({ split: "MEALS", splits: [] }, family)).toEqual({ kind: "MEALS", detail: null, only: null });
+  });
+});
+
+describe("throughManager", () => {
+  it("has the debtors pay the manager, who returns what others are owed", () => {
+    const rows = [row("k", 578), row("t", -1174), row("a", -351), row("s", 774), row("r", 853)];
+    expect(throughManager(rows, "k")).toEqual([
+      { fromId: "t", toId: "k", amount: 1174, owes: true },
+      { fromId: "a", toId: "k", amount: 351, owes: true },
+      { fromId: "k", toId: "r", amount: 853, owes: false },
+      { fromId: "k", toId: "s", amount: 774, owes: false },
+    ]);
+  });
+});
+
+describe("expenseShare", () => {
+  const sep = { from: "2026-09-01", to: "2026-09-30" };
+  const people = [{ ...member("k", "Khaled"), shareUnits: "3.00" }, { ...member("a", "Arif"), shareUnits: "1.00", joinedOn: "2026-09-16" }, { ...member("r", "Rakib"), shareUnits: "4.00" }] as GroupMember[];
+  const cost = (amount: number, date: string, split: GroupExpense["split"] = "EQUAL", splits: GroupExpense["splits"] = []) => ({ amount: amount.toFixed(2), date, split, splits });
+  it("works out one member's part the way the settlement does", () => {
+    expect(expenseShare(cost(900, "2026-09-05"), "k", people, sep, false)).toBe(450);
+    expect(expenseShare(cost(900, "2026-09-05"), "a", people, sep, false)).toBe(0);
+    expect(expenseShare(cost(800, "2026-09-20", "SHARES"), "r", people, sep, false)).toBe(400);
+    expect(expenseShare(cost(1000, "2026-09-20", "EXACT", [{ id: "1", expenseId: "e", groupMemberId: "k", units: null, amount: "700.00" }, { id: "2", expenseId: "e", groupMemberId: "r", units: null, amount: "300.00" }]), "k", people, sep, false)).toBe(700);
+    expect(expenseShare(cost(600, "2026-09-20", "MEALS"), "k", people, sep, true)).toBe(0);
+    expect(expenseShare(cost(600, "2026-09-20", "MEALS"), "k", people, sep, false)).toBe(200);
   });
 });

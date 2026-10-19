@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/customer/date";
 import { nextRamadan } from "@/lib/customer/habitDisplay";
 import { ramadanSummary, ramadanWindow } from "@/lib/customer/ramadanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface RamadanCardProps {
   trackers: HabitMonthTracker[];
@@ -17,10 +18,11 @@ interface RamadanCardProps {
 // How far off the next Ramadan is, and how the last one went.
 export function RamadanCard({ trackers, today }: RamadanCardProps) {
   const { t } = useLocale();
-  const next = nextRamadan(today);
+  const { hijriAdjust } = usePrayerSettings().settings;
+  const next = nextRamadan(today, hijriAdjust);
   const last = [...trackers]
     .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
-    .map((tracker) => ({ tracker, window: ramadanWindow(tracker, today) }))
+    .map((tracker) => ({ tracker, window: ramadanWindow(tracker, today, hijriAdjust) }))
     .find(({ window }) => window.status === "completed");
   const summary = last ? ramadanSummary(last.tracker, last.window) : null;
   const roza = summary?.items.find((item) => item.item === "Roza") ?? summary?.items[0] ?? null;

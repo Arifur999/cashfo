@@ -20,6 +20,7 @@ import { getTransactions } from "@/lib/customer/transactions";
 import { getVaultStatus } from "@/lib/customer/vault";
 import { APP_TIME_ZONE, getAppToday } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
+import { getPrayerSettings } from "@/lib/customer/habits";
 
 const monthName = (year: number, month: number, locale: "en" | "bn") =>
   new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-GB", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1)));
@@ -107,7 +108,7 @@ export default async function DashboardPage() {
     currency,
     today,
     greeting: greetingFor(hourIn(APP_TIME_ZONE, now)),
-    dates: homeDates(now, locale),
+    dates: homeDates(now, locale, APP_TIME_ZONE, (await getPrayerSettings()).hijriAdjust),
     monthName: monthName(year, month, locale),
     lastMonthName: monthName(lastMonthYear, lastMonthNumber, locale),
     balance,

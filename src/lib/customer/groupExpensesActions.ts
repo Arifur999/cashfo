@@ -5,13 +5,18 @@ import {
   API_BASE_URL,
   getApiErrorMessage,
   type GroupContribution,
+  type GroupContributionKind,
   type GroupExpense,
   type GroupExpenseCategory,
   type GroupExpenseCategoryOption,
+  type GroupMeal,
   type GroupMember,
   type GroupMemberStatus,
   type GroupMonthlyBudget,
+  type GroupPaidFrom,
+  type GroupSettings,
   type GroupSettlementRecord,
+  type GroupSplit,
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
@@ -45,7 +50,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 
 export async function createGroupMemberAction(
   businessId: string,
-  input: { name: string; phone?: string; photoUrl?: string },
+  input: { name: string; phone?: string; photoUrl?: string; shareUnits?: number; joinedOn?: string | null },
 ): Promise<ActionResult<GroupMember>> {
   return callApi(async () => {
     const res = await customerApi.post<GroupMember>(`${API_BASE_URL}/api/businesses/${businessId}/group/members`, input, { headers: await authHeaders() });
@@ -78,7 +83,7 @@ export async function uploadGroupMemberPhotoAction(businessId: string, formData:
 export async function updateGroupMemberAction(
   businessId: string,
   memberId: string,
-  input: { name?: string; phone?: string; photoUrl?: string; status?: GroupMemberStatus },
+  input: { name?: string; phone?: string; photoUrl?: string; status?: GroupMemberStatus; shareUnits?: number; joinedOn?: string | null; leftOn?: string | null },
 ): Promise<ActionResult<GroupMember>> {
   return callApi(async () => {
     const res = await customerApi.patch<GroupMember>(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}`, input, {
@@ -101,7 +106,7 @@ export async function deleteGroupMemberAction(businessId: string, memberId: stri
 
 export async function createGroupContributionAction(
   businessId: string,
-  input: { groupMemberId: string; amount: string; date: string; note?: string },
+  input: { groupMemberId: string; amount: string; date: string; note?: string; kind?: GroupContributionKind },
 ): Promise<ActionResult<GroupContribution>> {
   return callApi(async () => {
     const res = await customerApi.post<GroupContribution>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions`, input, {
@@ -114,7 +119,7 @@ export async function createGroupContributionAction(
 export async function updateGroupContributionAction(
   businessId: string,
   id: string,
-  input: { groupMemberId?: string; amount?: string; date?: string; note?: string },
+  input: { groupMemberId?: string; amount?: string; date?: string; note?: string; kind?: GroupContributionKind },
 ): Promise<ActionResult<GroupContribution>> {
   return callApi(async () => {
     const res = await customerApi.patch<GroupContribution>(`${API_BASE_URL}/api/businesses/${businessId}/group/contributions/${id}`, input, {
@@ -145,6 +150,7 @@ export interface GroupExpenseCategoryInput {
   name: string;
   icon?: string | null;
   color: string;
+  defaultSplit?: GroupSplit;
 }
 
 export async function createGroupExpenseCategoryAction(
@@ -180,9 +186,22 @@ export async function deleteGroupExpenseCategoryAction(businessId: string, id: s
 
 // ---- Expenses ----
 
+export interface GroupExpenseInput {
+  amount: string;
+  date: string;
+  category?: GroupExpenseCategory;
+  description?: string;
+  // "" clears who paid on an edit.
+  paidByMemberId?: string;
+  paidFrom?: GroupPaidFrom;
+  split?: GroupSplit;
+  // The members it names: units (by shares) or amounts (exact).
+  splits?: { groupMemberId: string; units?: number | null; amount?: string | null }[];
+}
+
 export async function createGroupExpenseAction(
   businessId: string,
-  input: { amount: string; date: string; category?: GroupExpenseCategory; description?: string; paidByMemberId?: string },
+  input: GroupExpenseInput,
 ): Promise<ActionResult<GroupExpense>> {
   return callApi(async () => {
     const res = await customerApi.post<GroupExpense>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses`, input, { headers: await authHeaders() });
@@ -193,7 +212,7 @@ export async function createGroupExpenseAction(
 export async function updateGroupExpenseAction(
   businessId: string,
   id: string,
-  input: { amount?: string; date?: string; category?: GroupExpenseCategory; description?: string; paidByMemberId?: string },
+  input: Partial<GroupExpenseInput>,
 ): Promise<ActionResult<GroupExpense>> {
   return callApi(async () => {
     const res = await customerApi.patch<GroupExpense>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/${id}`, input, {
@@ -245,11 +264,28 @@ export async function deleteGroupMonthBudgetAction(businessId: string, id: strin
   }, "Failed to remove month budget");
 }
 
+// ---- Settings and meals ----
+
+export async function updateGroupSettingsAction(businessId: string, input: Partial<Omit<GroupSettings, "breakfastUnits" | "lunchUnits" | "dinnerUnits">> & { breakfastUnits?: number; lunchUnits?: number; dinnerUnits?: number }): Promise<ActionResult<GroupSettings>> {
+  return callApi(async () => {
+    const res = await customerApi.put<GroupSettings>(`${API_BASE_URL}/api/businesses/${businessId}/group/settings`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the settings");
+}
+
+// A day's meals for some or all of the members; one with none clears it.
+export async function setGroupMealsAction(businessId: string, input: { date: string; entries: { groupMemberId: string; breakfast: number; lunch: number; dinner: number; guests: number }[] }): Promise<ActionResult<GroupMeal[]>> {
+  return callApi(async () => {
+    const res = await customerApi.put<GroupMeal[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/meals`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the meals");
+}
+
 // ---- Settlement ----
 
 export async function closeGroupSettlementAction(
   businessId: string,
-  input: { periodStart: string; periodEnd: string },
+  input: { periodStart: string; periodEnd: string; carryForward?: boolean },
 ): Promise<ActionResult<GroupSettlementRecord>> {
   return callApi(async () => {
     const res = await customerApi.post<GroupSettlementRecord>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/close`, input, {

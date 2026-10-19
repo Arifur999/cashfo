@@ -14,6 +14,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { BalanceCell, CategoryTile, categoryBarClass } from "./GroupBits";
 import type { GroupPageData, GroupView } from "./groupTypes";
+import { mealText } from "@/lib/customer/groupMeals";
 
 interface GroupDashboardProps {
   data: GroupPageData;
@@ -24,6 +25,8 @@ interface GroupDashboardProps {
 }
 
 const ROW = "grid-cols-[minmax(0,1fr)_120px_88px_190px]";
+// A group counting meals also shows each member's meals.
+const MEALS_ROW = "md:grid-cols-[minmax(0,1fr)_52px_84px_84px_152px]";
 
 // "Arif pays Khaled": first names keep the line short.
 const firstName = (name: string | undefined) => (name ?? "?").split(" ")[0];
@@ -46,14 +49,20 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
   const maxMonth = Math.max(...view.byMonth.map((m) => m.amount), 1);
   const lastMonth = view.byMonth[view.byMonth.length - 1];
   const lastStatus = view.budget && lastMonth ? budgetStatus(view.budget.budget, lastMonth.amount) : null;
+  const meals = data.settings.kind === "MESS" || data.settings.mealsOn;
+  const holder = data.settings.cashHolderMemberId ? view.memberById[data.settings.cashHolderMemberId] : undefined;
+  const pocket = rows.reduce((sum, r) => sum + Number(r.row.pocketPaid), 0);
+  const mealSpend = Number(settlement.mealExpense);
 
   const stats = [
-    { label: t("Total expense"), value: formatCurrency(spent, currency), sub: top.length > 0 ? top.map((c) => `${c.name} ${formatCurrency(c.amount, currency)}`).join(" · ") : t("Nothing spent yet") },
-    view.budget
+    { label: t("Total expense"), value: formatCurrency(spent, currency), sub: meals && mealSpend > 0 ? t("Bazar {bazar} · other costs {other}", { bazar: formatCurrency(mealSpend, currency), other: formatCurrency(spent - mealSpend, currency) }) : top.length > 0 ? top.map((c) => `${c.name} ${formatCurrency(c.amount, currency)}`).join(" · ") : t("Nothing spent yet") },
+    meals
+      ? { label: t("Meal rate"), value: formatCurrency(settlement.mealRate, currency), sub: Number(settlement.mealUnits) > 0 ? t("{bazar} bazar ÷ {meals} meals", { bazar: formatCurrency(mealSpend, currency), meals: mealText(Number(settlement.mealUnits)) }) : t("No meals marked yet") }
+      : view.budget
       ? { label: `${month} ${t("budget")}`, value: formatCurrency(view.budget.budget, currency), sub: `${view.budget.percent}% ${t("used")} · ${view.budget.left < 0 ? `${formatCurrency(-view.budget.left, currency)} ${t("over")}` : `${formatCurrency(view.budget.left, currency)} ${t("left")}`}`, subTone: BUDGET_TONE_TEXT[view.budget.tone], subBold: view.budget.tone !== "ok" }
       : { label: `${month} ${t("budget")}`, value: "—", sub: t("No budget set"), action: onSetBudget },
-    { label: t("Cash in hand"), value: formatCurrency(view.cash, currency), sub: t("matches all balances"), check: true, tone: view.cash < 0 ? "text-expense" : undefined },
-    { label: t("Contributions"), value: formatCurrency(contributed, currency), sub: returned > 0 ? `${formatCurrency(returned, currency)} ${t("returned")}` : `${deposits.length} ${t(deposits.length === 1 ? "deposit" : "deposits")}` },
+    { label: t("Cash in hand"), value: formatCurrency(view.cash, currency), sub: holder ? t("With {name} · matches all balances", { name: holder.name }) : t("matches all balances"), check: true, tone: view.cash < 0 ? "text-expense" : undefined },
+    { label: t("Contributions"), value: formatCurrency(contributed, currency), sub: pocket > 0 ? t("+ {amount} paid from own pockets", { amount: formatCurrency(pocket, currency) }) : returned > 0 ? `${formatCurrency(returned, currency)} ${t("returned")}` : `${deposits.length} ${t(deposits.length === 1 ? "deposit" : "deposits")}` },
   ];
 
   return (
@@ -85,35 +94,47 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
               {t("Open settlement")}
             </Link>
           </div>
-          <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
+          <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", meals ? MEALS_ROW : ROW)}>
             <span>{t("Member")}</span>
+            {meals && <span className="text-right">{t("Meals")}</span>}
             <span className="text-right">{t("Paid in")}</span>
             <span className="text-right">{t("Cost")}</span>
             <span className="text-right">{t("Balance")}</span>
           </div>
           {rows.length === 0 && <p className="border-t border-line px-5 py-8 text-center text-body text-ink-muted">{t("Add members to see their balances.")}</p>}
           {rows.map(({ row, member }) => (
-            <button key={row.groupMemberId} type="button" onClick={() => member && onStatement(member)} className={cn("grid w-full items-center gap-4 border-b border-surface-sunken px-5 py-3 text-left text-body tabular-nums hover:bg-cream md:min-h-16 md:py-0", "grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
+            <button key={row.groupMemberId} type="button" onClick={() => member && onStatement(member)} className={cn("grid w-full items-center gap-4 border-b border-surface-sunken px-5 py-3 text-left text-body tabular-nums hover:bg-cream md:min-h-16 md:py-0", "grid-cols-[minmax(0,1fr)_auto]", meals ? MEALS_ROW : "md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
               <span className="flex min-w-0 items-center gap-3">
                 <PersonAvatar name={row.name} src={member?.photoUrl} size={34} coloured />
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="truncate font-semibold text-ink">{row.name}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate font-semibold text-ink">{row.name}</span>
+                    {member && member.id === holder?.id && (
+                      <Chip tone="neutral" size="sm" className="font-semibold">
+                        {t("Manager")}
+                      </Chip>
+                    )}
+                  </span>
                   <span className="truncate text-caption font-normal text-ink-muted md:hidden">
                     {formatCurrency(row.contributed, currency)} {t("paid in")} · {formatCurrency(row.share, currency)} {t("cost")}
                   </span>
-                  <span className="hidden truncate text-caption font-normal text-ink-muted md:block">{member?.phone ?? t("Active member")}</span>
+                  <span className="hidden truncate text-caption font-normal text-ink-muted md:block">
+                    {Number(row.pocketPaid) > 0 ? t("{amount} from own pocket", { amount: formatCurrency(row.pocketPaid, currency) }) : meals ? t("{meals} meals + {shared} shared", { meals: formatCurrency(row.mealCost, currency), shared: formatCurrency(row.otherShare, currency) }) : (member?.phone ?? t("Active member"))}
+                  </span>
                 </span>
               </span>
-              <span className="hidden text-right text-ink md:block">{formatCurrency(row.contributed, currency)}</span>
+              {meals && <span className="hidden text-right text-ink-2 md:block">{mealText(Number(row.mealUnits))}</span>}
+              <span className="hidden text-right text-ink md:block">{formatCurrency(Number(row.contributed) + Number(row.pocketPaid), currency)}</span>
               <span className="hidden text-right text-ink md:block">{formatCurrency(row.share, currency)}</span>
               <BalanceCell value={Number(row.balance)} currency={currency} />
             </button>
           ))}
           {rows.length > 0 && (
             <>
-              <div className={cn("grid h-12.5 items-center gap-4 bg-cream px-5 text-body font-semibold tabular-nums", "grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
+              <div className={cn("grid h-12.5 items-center gap-4 bg-cream px-5 text-body font-semibold tabular-nums", "grid-cols-[minmax(0,1fr)_auto]", meals ? MEALS_ROW : "md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
                 <span>{t("Total")}</span>
-                <span className="hidden text-right md:block">{formatCurrency(totalPaid, currency)}</span>
+                {meals && <span className="hidden text-right md:block">{mealText(Number(settlement.mealUnits))}</span>}
+                <span className="hidden text-right md:block">{formatCurrency(totalPaid + pocket, currency)}</span>
                 <span className="hidden text-right md:block">{formatCurrency(totalCost, currency)}</span>
                 <span className={cn("text-right", view.cash < 0 ? "text-expense" : "text-income")}>{formatSignedCurrency(view.cash, currency)}</span>
               </div>

@@ -10,7 +10,7 @@ import type { HabitMonthTracker } from "@/lib/customer/api";
 import { WEEKDAY_SHORT, weekdayOf, weekOf } from "@/lib/customer/habitDisplay";
 import { prayerMarks, prayerStreak, type PrayerMark } from "@/lib/customer/habitsHome";
 import { createHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
-import { cellState, PRAYERS, trackerFor } from "@/lib/customer/namazDisplay";
+import { cellState, isPrayed as prayedState, PRAYERS, trackerFor } from "@/lib/customer/namazDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { withCheck } from "../trackerChecks";
@@ -69,7 +69,7 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
   const live = current ? trackers.map((tr) => (tr.id === current.id ? current : tr)) : trackers;
   const week = weekOf(today);
   const streak = prayerStreak(live, today);
-  const isPrayed = (item: string) => (current ? cellState(current, todayDay, item) === "prayed" : false);
+  const isPrayed = (item: string) => (current ? prayedState(cellState(current, todayDay, item)) : false);
   const prayedToday = PRAYERS.filter(isPrayed).length;
   const nextToMark = PRAYERS.find((item) => !isPrayed(item));
 

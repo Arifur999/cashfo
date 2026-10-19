@@ -176,8 +176,10 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   function save(another: boolean) {
     if (!valid || isPending) return;
     startTransition(async () => {
-      const income = { toAccountId: accountId, incomeAccountId: keptAccountId, amount: value, date, categoryId: category || undefined, note: note || undefined };
-      const expense = { fromAccountId: accountId, expenseAccountId, amount: value, date, categoryId: category || undefined, note: note || undefined };
+      // An edit keeps a loan profit's bank or person.
+      const contactId = editing?.contactId ?? undefined;
+      const income = { toAccountId: accountId, incomeAccountId: keptAccountId, amount: value, date, categoryId: category || undefined, note: note || undefined, contactId };
+      const expense = { fromAccountId: accountId, expenseAccountId, amount: value, date, categoryId: category || undefined, note: note || undefined, contactId };
       const transfer = { fromAccountId: accountId, toAccountId, amount: value, date, description: note || undefined };
       if (editing) {
         const corrected = await correctTransactionAction(businessId, editing.id, kind, kind === "INCOME" ? income : kind === "EXPENSE" ? expense : transfer);

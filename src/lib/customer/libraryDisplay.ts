@@ -2,7 +2,7 @@
 // nightstand and how fast it is going, and this year's goal against the
 // calendar. Pure, so the page and its tests agree.
 import { toDateInputValue } from "@/lib/date";
-import type { Book, BookStatus } from "./api";
+import type { Book, BookStatus, ReadingDay } from "./api";
 import { dayOf } from "./habitDisplay";
 
 // The three shelves in the order the page shows them.
@@ -81,6 +81,14 @@ export function goalPace(books: Book[], year: number, target: number, today: str
   const expected = Math.floor((target * dayOfYear) / total);
   const weeksLeft = (total - dayOfYear) / 7;
   return { finished, target, toGo, behind: expected - finished, weeksPerBook: toGo > 0 && weeksLeft > 0 ? Math.round((weeksLeft / toGo) * 10) / 10 : null };
+}
+
+// This week's pages so far, and the average a day over the days that have
+// come (today included); days still to come in the week don't count.
+export function weekPages(week: ReadingDay[], today: string): { total: number; average: number } {
+  const come = week.filter((day) => day.date <= today);
+  const total = come.reduce((sum, day) => sum + day.pages, 0);
+  return { total, average: come.length ? Math.round(total / come.length) : 0 };
 }
 
 // The optimistic twin of the server's progress rule (BooksService.settle):

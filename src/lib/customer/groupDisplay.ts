@@ -1,21 +1,49 @@
-import type { GroupContribution, GroupExpense, GroupMember, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
+import type { GroupContribution, GroupExpense, GroupKind, GroupMember, GroupSplit, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
 
 // The figures a group page derives from what the API already returns:
 // the month's range and whether it is closed, cash in hand, who pays
 // whom, the budget bar, the spend by category and by month. Pure, so the
 // server page and the tests can both use them.
 
-export const GROUP_TABS = ["dashboard", "members", "contributions", "expenses", "settlement", "settings"] as const;
+export const GROUP_TABS = ["dashboard", "meals", "members", "contributions", "expenses", "settlement", "settings"] as const;
 export type GroupTab = (typeof GROUP_TABS)[number];
+
+// The tabs a group shows: Meals only for a mess, or a family counting meals.
+export function groupTabsFor(kind: GroupKind, mealsOn: boolean): GroupTab[] {
+  return GROUP_TABS.filter((tab) => tab !== "meals" || kind === "MESS" || mealsOn);
+}
 
 export const GROUP_TAB_LABELS: Record<GroupTab, string> = {
   dashboard: "Dashboard",
+  meals: "Meals",
   members: "Members",
   contributions: "Contributions",
   expenses: "Expenses",
   settlement: "Settlement",
   settings: "Settings",
 };
+
+// The ways an expense can be shared, and their words.
+export const SPLITS: GroupSplit[] = ["EQUAL", "SHARES", "MEALS", "EXACT"];
+export const SPLIT_LABELS: Record<GroupSplit, string> = { EQUAL: "Equally", SHARES: "By shares", MEALS: "By meals", EXACT: "Exact amounts" };
+
+// How an expense is shared, in a few words: "Equally · ÷ 3", "By shares ·
+// 3 : 1 : 4", "Only Rakib", "By meals". Shares are the units it names, or
+// the members' own; equally counts the members it names, or everyone in.
+export function splitText(expense: Pick<GroupExpense, "split" | "splits">, members: GroupMember[]): { kind: GroupSplit; detail: string | null; only: string | null } {
+  const named = expense.splits.map((split) => ({ split, member: members.find((m) => m.id === split.groupMemberId) })).filter((row) => row.member);
+  const active = members.filter((member) => member.status === "ACTIVE");
+  const number = (value: number) => String(Math.round(value * 100) / 100);
+  if (expense.split === "SHARES") {
+    const units = named.length > 0 ? named.map((row) => Number(row.split.units ?? row.member?.shareUnits ?? 1)) : active.map((member) => Number(member.shareUnits));
+    return { kind: "SHARES", detail: units.map(number).join(" : "), only: null };
+  }
+  if (expense.split === "EQUAL") {
+    if (named.length === 1) return { kind: "EQUAL", detail: null, only: named[0].member?.name ?? null };
+    return { kind: "EQUAL", detail: `÷ ${named.length > 0 ? named.length : active.length}`, only: null };
+  }
+  return { kind: expense.split, detail: null, only: null };
+}
 
 // The old ?tab=category lived in the sidebar; categories now sit in Settings.
 export function groupTabFrom(value: unknown): GroupTab {
@@ -35,14 +63,24 @@ export interface MonthRange {
   to: string;
 }
 
-// A "YYYY-MM" key, or today's month when the value is not one.
-export function monthKeyFrom(value: unknown, today: string): string {
-  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : today.slice(0, 7);
+// The group month a day falls in: a month starting on the 10th runs from
+// 10 Sep to 9 Oct, keyed "2026-09".
+export function groupMonthOf(day: string, startDay = 1): string {
+  return Number(day.slice(8, 10)) >= startDay ? day.slice(0, 7) : shiftMonth(day.slice(0, 7), -1);
 }
 
-export function monthRangeOf(key: string): MonthRange {
+// A "YYYY-MM" key, or today's group month when the value is not one.
+export function monthKeyFrom(value: unknown, today: string, startDay = 1): string {
+  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : groupMonthOf(today, startDay);
+}
+
+// The days a group month covers: from its start day to the day before the
+// next month's.
+export function monthRangeOf(key: string, startDay = 1): MonthRange {
   const [year, month] = key.split("-").map(Number);
-  return { key, year, month, from: `${key}-01`, to: `${key}-${pad(lastDayOf(year, month))}` };
+  if (startDay <= 1) return { key, year, month, from: `${key}-01`, to: `${key}-${pad(lastDayOf(year, month))}` };
+  const next = shiftMonth(key, 1);
+  return { key, year, month, from: `${key}-${pad(startDay)}`, to: `${next}-${pad(startDay - 1)}` };
 }
 
 // The month `offset` months from `key` (negative for earlier).
@@ -54,8 +92,8 @@ export function shiftMonth(key: string, offset: number): string {
 
 // The months a picker offers: from the earliest entry (or a year back) to
 // this month, newest first.
-export function monthChoices(today: string, earliest?: string | null): string[] {
-  const current = today.slice(0, 7);
+export function monthChoices(today: string, earliest?: string | null, startDay = 1): string[] {
+  const current = groupMonthOf(today, startDay);
   const floor = earliest ? earliest.slice(0, 7) : shiftMonth(current, -11);
   const keys: string[] = [];
   for (let key = current; key >= floor && keys.length < 36; key = shiftMonth(key, -1)) keys.push(key);
@@ -74,10 +112,10 @@ export function isDayClosed(history: GroupSettlementRecord[], day: string): bool
   return history.some((record) => record.periodStart.slice(0, 10) <= d && record.periodEnd.slice(0, 10) >= d);
 }
 
-// Contributions − returns − expenses: what the fund should be holding for
-// the period, which is also every balance added up.
+// Contributions − returns − expenses paid from the fund: what the fund
+// should be holding for the period, which is also every balance added up.
 export function cashInHand(settlement: GroupSettlementResult): number {
-  return Math.round(settlement.members.reduce((sum, row) => sum + Number(row.balance), 0) * 100) / 100;
+  return Number(settlement.cashInHand);
 }
 
 export interface ContributionTotals {
@@ -131,6 +169,54 @@ export function whoPaysWhom(rows: GroupSettlementMemberRow[]): Transfer[] {
     if (creditors[j].left <= 0.004) j++;
   }
   return transfers;
+}
+
+// Whether a member is in the group on a day, and at all during a range --
+// the server's rule for who shares a cost (an archived member with no
+// leaving day is gone for the whole range).
+const inGroupOn = (member: GroupMember, day: string) => (member.status === "ACTIVE" || !!member.leftOn) && (!member.joinedOn || member.joinedOn.slice(0, 10) <= day) && (!member.leftOn || member.leftOn.slice(0, 10) >= day);
+const inRange = (member: GroupMember, range: Pick<MonthRange, "from" | "to">) => (member.status === "ACTIVE" || !!member.leftOn) && (!member.joinedOn || member.joinedOn.slice(0, 10) <= range.to) && (!member.leftOn || member.leftOn.slice(0, 10) >= range.from);
+
+// One member's part of one expense, as the settlement works it out: the
+// members it names (by units or exact amounts), else everyone in the group
+// that day. A by-meals expense is pooled into the meal rate instead (0
+// here) while meal counting is on, and shared equally while it is off.
+export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "split" | "splits">, memberId: string, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsOn: boolean): number {
+  const amount = Number(expense.amount);
+  if (expense.split === "MEALS" && mealsOn) return 0;
+  const sharing = members.filter((member) => inRange(member, range));
+  const thatDay = sharing.filter((member) => inGroupOn(member, expense.date.slice(0, 10)));
+  const everyone = thatDay.length > 0 ? thatDay : sharing;
+  const named = expense.splits.filter((split) => members.some((member) => member.id === split.groupMemberId));
+  if (expense.split === "EXACT" && named.length > 0) {
+    const own = Number(named.find((split) => split.groupMemberId === memberId)?.amount ?? 0);
+    const rest = amount - named.reduce((sum, split) => sum + Number(split.amount ?? 0), 0);
+    return own + (Math.abs(rest) > 0.004 && everyone.some((member) => member.id === memberId) ? rest / everyone.length : 0);
+  }
+  const weights: [string, number][] =
+    expense.split === "SHARES"
+      ? named.length > 0
+        ? named.map((split) => [split.groupMemberId, Number(split.units ?? members.find((m) => m.id === split.groupMemberId)?.shareUnits ?? 1)])
+        : everyone.map((member) => [member.id, Number(member.shareUnits)])
+      : named.length > 0
+        ? named.map((split) => [split.groupMemberId, 1])
+        : everyone.map((member) => [member.id, 1]);
+  const total = weights.reduce((sum, [, weight]) => sum + weight, 0);
+  const mine = weights.find(([id]) => id === memberId)?.[1] ?? 0;
+  return total > 0 ? (amount * mine) / total : 0;
+}
+
+// Settling through the manager: whoever owes pays the one holding the
+// cash, who returns what the others are owed. The manager's own balance
+// stays with them.
+export function throughManager(rows: GroupSettlementMemberRow[], managerId: string): (Transfer & { owes: boolean })[] {
+  return rows
+    .filter((row) => row.groupMemberId !== managerId && Math.abs(Number(row.balance)) >= 0.005)
+    .map((row) => {
+      const balance = Number(row.balance);
+      return balance < 0 ? { fromId: row.groupMemberId, toId: managerId, amount: Math.round(-balance * 100) / 100, owes: true } : { fromId: managerId, toId: row.groupMemberId, amount: Math.round(balance * 100) / 100, owes: false };
+    })
+    .sort((a, b) => Number(b.owes) - Number(a.owes) || b.amount - a.amount);
 }
 
 export type BudgetTone = "ok" | "warning" | "over";
@@ -194,8 +280,9 @@ export function needsSetup(contributions: GroupContribution[], expenses: GroupEx
 }
 
 // "Jan 2025" from an ISO timestamp, for "member since".
+// The month a member joined: their joining day, else when they were added.
 export function memberSince(member: GroupMember): string {
-  return member.createdAt.slice(0, 7);
+  return (member.joinedOn ?? member.createdAt).slice(0, 7);
 }
 
 // The budget bar and its figure, by status.

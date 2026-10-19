@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Flame } from "lucide-react";
+import { BookOpen, BookOpenCheck, Flame } from "lucide-react";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -17,6 +17,8 @@ import { Cover } from "./Cover";
 
 interface NowReadingCardProps {
   book: Book | null;
+  // Pages read in it today.
+  pagesToday: number;
   today: string;
   isPending: boolean;
   onUpdate: (book: Book, pagesRead: number) => void;
@@ -26,7 +28,7 @@ interface NowReadingCardProps {
 
 // The book on the nightstand: where the reader is, how fast it is going,
 // and a box to type the page they stopped at.
-export function NowReadingCard({ book, today, isPending, onUpdate, onFinish, onAdd }: NowReadingCardProps) {
+export function NowReadingCard({ book, pagesToday, today, isPending, onUpdate, onFinish, onAdd }: NowReadingCardProps) {
   const { t } = useLocale();
   const [page, setPage] = useState("");
 
@@ -81,11 +83,18 @@ export function NowReadingCard({ book, today, isPending, onUpdate, onFinish, onA
             <span className="line-clamp-2 text-h2 font-bold text-ink sm:truncate">{book.title}</span>
             {subtitle && <span className="text-body text-ink-2">{subtitle}</span>}
           </div>
-          {pace !== null && (
+          {pagesToday > 0 ? (
             <Chip tone="income" className="h-7 gap-2 text-small font-semibold">
-              <Flame className="size-4" aria-hidden="true" />
-              {t("About")} {pace} {t("pages a day")}
+              <BookOpenCheck className="size-4" aria-hidden="true" />
+              {t("{count} pages today", { count: pagesToday })}
             </Chip>
+          ) : (
+            pace !== null && (
+              <Chip tone="income" className="h-7 gap-2 text-small font-semibold">
+                <Flame className="size-4" aria-hidden="true" />
+                {t("About")} {pace} {t("pages a day")}
+              </Chip>
+            )
           )}
         </div>
 
@@ -112,7 +121,7 @@ export function NowReadingCard({ book, today, isPending, onUpdate, onFinish, onA
           <Button type="submit" variant="action" size="sm" className="h-9.5" disabled={!valid || isPending}>
             {t("Update")}
           </Button>
-          <span className="flex-1 basis-40 text-small leading-[1.45] text-ink-muted">{t("Type the page you stopped at and the bar follows.")}</span>
+          <span className="flex-1 basis-40 text-small leading-[1.45] text-ink-muted">{t("The pages you add are counted for today, which keeps your reading streak going.")}</span>
           <Button type="button" variant="secondary" size="sm" className="h-9.5" onClick={() => onFinish(book)} disabled={isPending}>
             {t("Mark as finished")}
           </Button>

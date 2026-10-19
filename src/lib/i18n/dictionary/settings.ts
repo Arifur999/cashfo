@@ -49,6 +49,9 @@ export const settingsDictionary: Record<string, string> = {
 
   // Security
   "Change it any time. Your other devices are signed out when you do.": "যখন খুশি বদলান। বদলালে আপনার অন্য ডিভাইসগুলো সাইন আউট হয়ে যায়।",
+  "Last changed this month": "এই মাসে বদলানো হয়েছে",
+  "Last changed {count} month ago": "শেষ বদলানো হয়েছে {count} মাস আগে",
+  "Last changed {count} months ago": "শেষ বদলানো হয়েছে {count} মাস আগে",
   "Change password": "পাসওয়ার্ড বদলান",
   "Your current password, then the new one twice.": "আপনার বর্তমান পাসওয়ার্ড, তারপর নতুনটি দুবার।",
   "Current password": "বর্তমান পাসওয়ার্ড",
@@ -109,7 +112,8 @@ export const settingsDictionary: Record<string, string> = {
   Preview: "নমুনা",
   "Weeks run Saturday to Friday": "সপ্তাহ শনি থেকে শুক্র",
   Reminders: "মনে করিয়ে দেওয়া",
-  "Shown inside the app once reminders are switched on.": "রিমাইন্ডার চালু হলে অ্যাপের ভেতরে দেখা যাবে।",
+  "Shown inside the app. The email one starts once email sending is switched on.": "অ্যাপের ভেতরে দেখা যায়। ইমেইল চালু হলে ইমেইলেরটা শুরু হবে।",
+  "Failed to save reminders": "রিমাইন্ডার সেভ করা যায়নি",
   "Budget almost used": "বাজেট প্রায় শেষ",
   "When a category passes 90% of its budget.": "কোনো ক্যাটাগরি বাজেটের ৯০% পার হলে।",
   "Loan payments due": "ঋণের কিস্তির সময়",

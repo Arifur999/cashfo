@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { VaultEntrySummary } from "./api";
-import { avatarLetter, categoryCounts, countdownText, filterEntries, generatePassword, hostOf, normalizeUrl, parseExpiry, passwordStrength, rulesMet, sortEntries, vaultRules } from "./vaultDisplay";
+import { attentionIds, avatarLetter, categoryCounts, countdownText, filterEntries, generatePassword, hostOf, issuesOf, normalizeUrl, parseExpiry, passwordStrength, rulesMet, sortEntries, vaultRules } from "./vaultDisplay";
 
 const entry = (over: Partial<VaultEntrySummary> & { id: string; title: string }): VaultEntrySummary => ({ category: "OTHER", websiteUrl: null, holderName: null, usernameOrEmail: null, notes: null, createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z", ...over });
 
@@ -89,5 +89,14 @@ describe("the list", () => {
     expect(avatarLetter("e-TIN portal")).toBe("e");
     expect(avatarLetter(" Facebook")).toBe("F");
     expect(avatarLetter("  ")).toBe("?");
+  });
+});
+
+describe("checkup", () => {
+  const checkup = { weak: ["c"], reused: ["a", "c"], old: ["d"] };
+  it("says what a login needs, worst first, and who needs anything", () => {
+    expect(issuesOf(checkup, "c")).toEqual(["reused", "weak"]);
+    expect(issuesOf(null, "c")).toEqual([]);
+    expect([...attentionIds(checkup)].sort()).toEqual(["a", "c", "d"]);
   });
 });

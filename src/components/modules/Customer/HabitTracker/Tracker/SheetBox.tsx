@@ -1,9 +1,11 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check, CheckCheck, Clock3, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type BoxState = "done" | "missed" | "open" | "locked";
+// done is a plain tick (Ramadan, challenges); a Namaz box says how the
+// prayer was prayed: with jama'at, on time, or as qaza.
+export type BoxState = "done" | "jamaat" | "onTime" | "qaza" | "missed" | "open" | "locked";
 
 interface SheetBoxProps {
   state: BoxState;
@@ -12,8 +14,9 @@ interface SheetBoxProps {
   onToggle: () => void;
 }
 
-// One 27px box of a month sheet: ticked, missed, still open today, or not
-// reached yet. Shared by the Namaz and Ramadan sheets.
+// One 27px box of a month sheet: ticked (or how a prayer was prayed),
+// missed, still open today, or not reached yet. Shared by the Namaz and
+// Ramadan sheets.
 export function SheetBox({ state, label, disabled = false, onToggle }: SheetBoxProps) {
   return (
     <button
@@ -25,13 +28,17 @@ export function SheetBox({ state, label, disabled = false, onToggle }: SheetBoxP
       onClick={onToggle}
       className={cn(
         "flex size-6.75 shrink-0 items-center justify-center rounded-sm transition-colors",
-        state === "done" && "bg-emerald text-white hover:bg-emerald-hover",
-        state === "missed" && "bg-expense-soft text-expense hover:bg-expense-soft/70",
+        (state === "done" || state === "jamaat") && "bg-emerald text-white hover:bg-emerald-hover",
+        state === "onTime" && "bg-emerald-tint text-emerald",
+        state === "qaza" && "bg-warning-soft text-warning",
+        state === "missed" && "bg-rose-soft text-rose",
         state === "open" && "border-[1.5px] border-dashed border-emerald bg-surface hover:bg-mint-50",
         state === "locked" && "cursor-not-allowed border border-surface-sunken bg-cream",
       )}
     >
-      {state === "done" && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}
+      {(state === "done" || state === "onTime") && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}
+      {state === "jamaat" && <CheckCheck className="size-3.5" strokeWidth={2.75} aria-hidden="true" />}
+      {state === "qaza" && <Clock3 className="size-3.5" strokeWidth={2.5} aria-hidden="true" />}
       {state === "missed" && <X className="size-3" strokeWidth={3} aria-hidden="true" />}
     </button>
   );

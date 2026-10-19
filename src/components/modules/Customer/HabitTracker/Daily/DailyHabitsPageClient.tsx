@@ -13,7 +13,7 @@ import type { Habit } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
-import { completionRate, countsOn, dayMark, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, shiftDay, WEEK_START, WEEKDAY_SHORT, weekOf } from "@/lib/customer/habitDisplay";
+import { completionRate, countsOn, dayMark, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, shiftDay, streakWord, WEEK_START, WEEKDAY_SHORT, weekOf } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction, removeCheckInAction, updateHabitAction } from "@/lib/customer/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
 
   const statCards = [
     { label: t("Done today"), value: `${done.length} ${t("of")} ${planned.length}`, sub: planned.length === 0 ? t("Nothing planned today") : open.length === 0 ? t("Everything planned is done") : `${open.slice(0, 2).map((h) => h.name).join(` ${t("and")} `)} ${t(open.length === 1 ? "is still open" : "are still open")}` },
-    { label: t("Longest streak now"), value: longest && longest.streak > 0 ? `${longest.streak} ${t(longest.streak === 1 ? "day" : "days")}` : "—", sub: longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running") },
+    { label: t("Longest streak now"), value: longest && longest.streak > 0 ? `${longest.streak} ${t(streakWord(longest.habit, longest.streak))}` : "—", sub: longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running") },
     { label: t("Last 30 days"), value: planned30 > 0 ? `${Math.min(100, Math.round((done30 / planned30) * 100))}%` : "—", sub: `${done30} ${t("of")} ${planned30} ${t("planned check-ins")}` },
     { label: t("Perfect days"), value: `${perfect} ${t("of")} 30`, sub: t("Every planned habit done") },
   ];
@@ -194,7 +194,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
                       <Flame className="size-3.5 text-pillar-loans" aria-hidden="true" />
                       {streak}
                     </span>
-                    <span className="text-caption font-normal text-ink-muted">{t(streak === 1 ? "day" : "days")}</span>
+                    <span className="text-caption font-normal text-ink-muted">{t(streakWord(habit, streak))}</span>
                   </span>
                   <span className={cn("hidden text-right text-body font-semibold tabular-nums md:block", rate === null ? "text-ink-muted" : rate >= 80 ? "text-income" : "text-warning")}>{rate === null ? "—" : `${rate}%`}</span>
                   <span className="flex justify-end" onClick={(event) => event.stopPropagation()}>

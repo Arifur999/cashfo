@@ -10,11 +10,12 @@ import IconTile from "@/components/smartly/IconTile";
 import { Switch } from "@/components/ui/switch";
 import type { LoginHistoryEntry, UserSessionSummary } from "@/lib/customer/api";
 import { revokeSessionAction } from "@/lib/customer/authActions";
-import { formatTimeAgo } from "@/lib/customer/date";
+import { formatTimeAgo, monthsSince } from "@/lib/customer/date";
 import { formatRelativeDateTime } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 
 const RECENT = 5;
 const SHOWN_DEVICES = 6;
@@ -30,6 +31,14 @@ const ALERTS = [
   { title: "Ask for a code before a password reset", body: "So nobody can reset your password with just your email." },
 ];
 
+// "Last changed 4 months ago", or the general advice while it is unknown.
+function passwordAge(changedAt: string | null, t: (key: string, values?: Record<string, string | number>) => string): string {
+  if (!changedAt) return t("Change it any time. Your other devices are signed out when you do.");
+  const months = monthsSince(changedAt, new Date());
+  if (months === 0) return t("Last changed this month");
+  return t(months === 1 ? "Last changed {count} month ago" : "Last changed {count} months ago", { count: months });
+}
+
 const isPhone = (label: string) => /android|iphone|ipad|mobile|phone/i.test(label);
 
 interface SecuritySectionProps {
@@ -41,6 +50,7 @@ interface SecuritySectionProps {
 // Password, two-step sign-in, the devices signed in and the last tries.
 export function SecuritySection({ initialSessions, initialHistory }: SecuritySectionProps) {
   const { t } = useLocale();
+  const { user } = useAuth();
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [sessions, setSessions] = useState<UserSessionSummary[] | null>(initialSessions);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -87,7 +97,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
         </IconTile>
         <span className="flex flex-1 flex-col gap-0.5">
           <h2 className="text-title font-semibold text-ink">{t("Password")}</h2>
-          <span className="text-small text-ink-muted">{t("Change it any time. Your other devices are signed out when you do.")}</span>
+          <span className="text-small text-ink-muted">{passwordAge(user?.passwordChangedAt ?? null, t)}</span>
         </span>
         <Button variant="secondary" size="sm" onClick={() => setPasswordOpen(true)} className="h-9.5">
           {t("Change password")}

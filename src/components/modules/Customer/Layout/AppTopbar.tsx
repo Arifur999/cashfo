@@ -17,6 +17,7 @@ import { AccountMenu } from "./AccountMenu";
 import { AddMenu } from "./AddMenu";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { NavDrawer } from "./NavDrawer";
+import { NotificationsBell } from "./NotificationsBell";
 import { useTopbarExtras } from "./TopbarExtras";
 import { useNavSections } from "./SidebarNav";
 import { ThemeToggle } from "./ThemeToggle";
@@ -28,8 +29,9 @@ const TITLED_ON_PHONE = new Set(["/referrals", "/settings", "/password-manager"]
 const NO_AVATAR_ON_PHONE = new Set(["/settings"]);
 
 // The top bar: 64px on desktop with the breadcrumb, Add, Today's tasks,
-// language, theme and the account menu; 56px on phones with the menu
-// button, the logo (or the page's name), the tasks icon and the avatar
+// language, theme, the bell and the account menu; 56px on phones with the
+// menu button, the logo (or the page's name), the tasks icon, the bell and
+// the avatar
 // (language and theme live in the drawer there, and Add is the floating
 // button).
 export function AppTopbar() {
@@ -111,6 +113,7 @@ export function AppTopbar() {
           <ThemeToggle />
         </div>
       )}
+      <NotificationsBell />
       {extras?.action && <div className="md:hidden">{extras.action}</div>}
       <div className={cn((NO_AVATAR_ON_PHONE.has(pathname) || extras?.action) && "max-md:hidden")}>
         <AccountMenu />

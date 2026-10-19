@@ -9,7 +9,7 @@ import Card from "@/components/smartly/Card";
 import type { Habit, HabitToday } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { ruleLabel } from "@/lib/customer/habitDisplay";
+import { ruleLabel, streakWord } from "@/lib/customer/habitDisplay";
 import { doneToday } from "@/lib/customer/habitsHome";
 import { checkInHabitAction, removeCheckInAction } from "@/lib/customer/habitsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -83,7 +83,7 @@ export function DailyHabitsCard({ rows: serverRows, resting, today }: DailyHabit
           const counted = !!row.targetValue;
           const isDone = !!log?.completed;
           const value = log?.value ?? 0;
-          const sub = counted ? `${value} ${t("of")} ${row.targetValue} ${row.unit ?? ""}`.trim() : row.streak > 0 ? `${row.streak} ${t(row.streak === 1 ? "day in a row" : "days in a row")}` : t(ruleLabel(row).days);
+          const sub = counted ? `${value} ${t("of")} ${row.targetValue} ${row.unit ?? ""}`.trim() : row.streak > 0 ? `${row.streak} ${t(streakWord(row, row.streak, true))}` : t(ruleLabel(row).days);
           return (
             <li key={row.id} className="box-content flex min-h-13 items-center gap-3 border-t border-surface-sunken md:h-10.5 md:min-h-0 md:border-0">
               <span className={cn("flex size-8.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-4 md:size-7.5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(row.icon), { "aria-hidden": true })}</span>

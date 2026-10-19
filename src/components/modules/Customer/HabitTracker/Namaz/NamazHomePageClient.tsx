@@ -1,45 +1,71 @@
 "use client";
 
-import { ArrowRight, Check, Info, Plus } from "lucide-react";
+import { ArrowRight, Check, CheckCheck, Clock3, Info, Plus, Settings2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
+import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import type { HabitMonthTracker } from "@/lib/customer/api";
+import type { HabitMonthTracker, PrayerStatus, QazaSummary } from "@/lib/customer/api";
 import { createHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
-import { cellState, hijriRange, MONTH_NAMES, monthSummary, prayerSummaries, PRAYERS, trackerFor, yearSummary } from "@/lib/customer/namazDisplay";
+import { type CellState, cellState, hijriRange, MONTH_NAMES, monthSummary, prayedChecks, PRAYERS, trackerFor, yearSummary } from "@/lib/customer/namazDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { withCheck } from "../trackerChecks";
 import { EarlierMonthDialog } from "./EarlierMonthDialog";
-import { PrayerIcon } from "./PrayerIcon";
+import { NamazHero } from "./NamazHero";
+import { PrayerSettingsDrawer } from "./PrayerSettingsDrawer";
+import { QazaCard } from "./QazaCard";
 
 interface NamazHomePageClientProps {
   trackers: HabitMonthTracker[];
+  // null when it could not be read.
+  qaza: QazaSummary | null;
   // "YYYY-MM-DD" today in the platform timezone.
   today: string;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+// Each state's small box on the month card.
+const MINI: Record<CellState, string> = {
+  jamaat: "bg-emerald text-white",
+  onTime: "bg-emerald-tint text-emerald",
+  qaza: "bg-warning-soft text-warning",
+  missed: "bg-rose-soft text-rose",
+  open: "border-[1.5px] border-dashed border-line-strong bg-surface",
+  locked: "border-[1.5px] border-dashed border-line-strong bg-surface",
+};
+
+function StateIcon({ state, className }: { state: CellState; className?: string }) {
+  if (state === "jamaat") return <CheckCheck className={className} strokeWidth={2.75} aria-hidden="true" />;
+  if (state === "onTime") return <Check className={className} strokeWidth={3} aria-hidden="true" />;
+  if (state === "qaza") return <Clock3 className={className} strokeWidth={2.5} aria-hidden="true" />;
+  if (state === "missed") return <X className={className} strokeWidth={3} aria-hidden="true" />;
+  return null;
+}
+
 // Habits › Namaz: today's five prayers to tap, this month at a glance, what
 // was missed so far, the year so far, and every month's sheet. The current
 // month's sheet opens on its own.
-export function NamazHomePageClient({ trackers, today }: NamazHomePageClientProps) {
+export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClientProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const [year, month] = today.split("-").map(Number);
   const todayDay = Number(today.slice(8));
   const currentKey = today.slice(0, 7);
   const server = trackerFor(trackers, year, month);
-  const [current, applyCheck] = useOptimistic(server, (tracker, update: { day: number; item: string; checked: boolean }) => (tracker ? withCheck(tracker, update.day, update.item, update.checked) : tracker));
+  const [current, applyMark] = useOptimistic(server, (tracker, update: { item: string; status: PrayerStatus | null }) => (tracker ? withCheck(tracker, todayDay, update.item, update.status !== null, update.status ?? undefined) : tracker));
   const [, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { settings } = usePrayerSettings();
   const creating = useRef(false);
 
   // No sheet for this month yet: open one, once.
@@ -52,19 +78,18 @@ export function NamazHomePageClient({ trackers, today }: NamazHomePageClientProp
     });
   }, [server, month, year, router, t]);
 
-  function toggle(item: string, checked: boolean) {
+  function mark(item: string, status: PrayerStatus | null) {
     if (!current) return;
     startTransition(async () => {
-      applyCheck({ day: todayDay, item, checked });
-      const result = await setHabitTrackerCheckAction(current.id, { day: todayDay, item, checked });
+      applyMark({ item, status });
+      const result = await setHabitTrackerCheckAction(current.id, status ? { day: todayDay, item, checked: true, status } : { day: todayDay, item, checked: false });
       if (result.success) router.refresh();
       else toast.error(result.message ?? t("Failed to update"));
     });
   }
 
   const summary = current ? monthSummary(current) : null;
-  const prayers = current ? prayerSummaries(current) : [];
-  const yesterdayDone = current && todayDay > 1 ? current.checks.filter((c) => c.day === todayDay - 1).length : null;
+  const yesterdayDone = current && todayDay > 1 ? prayedChecks(current).filter((c) => c.day === todayDay - 1).length : null;
   const yearNow = yearSummary(trackers, year);
   const months = [...trackers].sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.month ?? 0) - (a.month ?? 0));
   const bestId = yearNow.best?.tracker.id;
@@ -72,40 +97,20 @@ export function NamazHomePageClient({ trackers, today }: NamazHomePageClientProp
 
   return (
     <PageFrame className="gap-5">
-      <PageHeader eyebrow={t("Habits")} tone="habits" title={t("Namaz")} description={t("The five daily prayers, month by month. Each new month opens on its own.")} />
+      <PageHeader
+        eyebrow={t("Habits")}
+        tone="habits"
+        title={t("Namaz")}
+        description={t("The five daily prayers, month by month. Each new month opens on its own.")}
+        actions={
+          <Button variant="secondary" onClick={() => setSettingsOpen(true)}>
+            <Settings2 className="text-ink-2" />
+            {t("Prayer time settings")}
+          </Button>
+        }
+      />
 
-      <section aria-label={t("Today's prayers")} className="grid items-center gap-6 rounded-lg bg-[linear-gradient(135deg,var(--forest)_0%,var(--emerald)_100%)] p-6 text-white shadow-[0_8px_24px_rgba(31,122,90,0.25)] md:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="flex flex-col gap-2">
-          <span className="text-small font-semibold opacity-85">{t("Today")}</span>
-          <span className="flex items-baseline gap-3">
-            <span className="text-display text-white">{summary ? summary.todayDone : 0}</span>
-            <span className="text-[22px] font-semibold">{t("of")} 5 {t("prayed")}</span>
-          </span>
-          <span className="flex h-7 items-center gap-2 self-start rounded-full bg-white/18 px-3 text-small font-semibold">
-            {summary && summary.todayDone === 5 ? <Check className="size-4" aria-hidden="true" /> : <Info className="size-4" aria-hidden="true" />}
-            {summary && summary.todayDone === 5 ? t("All five prayed today") : t("Tap a prayer to mark it")}
-          </span>
-          <span className="mt-2 text-small opacity-90">
-            {monthName(currentKey, locale, "long", true)} · {hijriRange(year, month, locale)}
-          </span>
-        </div>
-        <div className="grid grid-cols-5 gap-3">
-          {PRAYERS.map((item) => {
-            const state = current ? cellState(current, todayDay, item) : "open";
-            const prayed = state === "prayed";
-            return (
-              <button key={item} type="button" disabled={!current} onClick={() => toggle(item, !prayed)} aria-pressed={prayed} aria-label={`${t(item)}, ${t(prayed ? "prayed" : "not marked yet")}`} className={cn("flex flex-col gap-2 rounded-md border p-3 text-left transition-colors", prayed ? "border-white bg-white text-forest" : "border-white/18 bg-white/12 text-white hover:bg-white/20")}>
-                <span className="flex items-center justify-between gap-2">
-                  <span className="text-small font-semibold opacity-90">{t(item)}</span>
-                  <PrayerIcon item={item} className="size-4 opacity-80" />
-                </span>
-                <span className={cn("flex size-6.5 items-center justify-center rounded-sm", prayed ? "bg-forest text-white" : "border-[1.5px] border-dashed border-white/60")}>{prayed && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}</span>
-                <span className="text-caption font-semibold whitespace-nowrap opacity-90">{t(prayed ? "Prayed" : "Not yet")}</span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      <NamazHero current={current} today={today} onMark={mark} onSettings={() => setSettingsOpen(true)} />
 
       <div className="grid gap-5 md:grid-cols-3">
         <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
@@ -123,10 +128,12 @@ export function NamazHomePageClient({ trackers, today }: NamazHomePageClientProp
           </div>
           <div className="grid grid-cols-5 gap-2">
             {PRAYERS.map((item) => {
-              const prayed = current ? cellState(current, todayDay, item) === "prayed" : false;
+              const state: CellState = current ? cellState(current, todayDay, item) : "open";
               return (
                 <span key={item} className="flex flex-col items-center gap-1 text-caption font-medium text-ink-2">
-                  <span className={cn("flex size-8.5 items-center justify-center rounded-md", prayed ? "bg-emerald text-white" : "border-[1.5px] border-dashed border-line-strong bg-surface")}>{prayed && <Check className="size-4" strokeWidth={3} aria-hidden="true" />}</span>
+                  <span className={cn("flex size-8.5 items-center justify-center rounded-md", MINI[state])}>
+                    <StateIcon state={state} className="size-4" />
+                  </span>
                   {t(item)}
                 </span>
               );
@@ -160,38 +167,7 @@ export function NamazHomePageClient({ trackers, today }: NamazHomePageClientProp
           </div>
         </Card>
 
-        <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-title font-semibold text-ink">{t("Missed so far")}</h2>
-            <span className="text-caption font-normal text-ink-muted">
-              {t("Since")} 1 {monthName(currentKey, locale, "short")}
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className={cn("text-h1 tabular-nums", (summary?.missed ?? 0) > 0 ? "text-warning" : "text-income")}>{summary?.missed ?? 0}</span>
-            <span className="text-body text-ink-2">{t((summary?.missed ?? 0) === 1 ? "prayer missed" : "prayers missed")}</span>
-          </div>
-          <div className="grid grid-cols-5 gap-2">
-            {prayers.map((p) => (
-              <span key={p.item} className={cn("flex flex-col items-center gap-0.5 rounded-md border py-2", p.missed > 0 ? "border-warning/30 bg-warning-soft text-warning" : "border-line bg-cream text-ink-muted")}>
-                <span className="text-body-lg font-bold tabular-nums">{p.missed}</span>
-                <span className="text-caption font-normal">{t(p.item)}</span>
-              </span>
-            ))}
-          </div>
-          <div className="flex flex-col gap-1">
-            <div className="flex justify-between text-small text-ink-2">
-              <span>
-                {summary?.prayed ?? 0} {t("of")} {summary?.due ?? 0} {t("prayed on past days")}
-              </span>
-              <span className="font-semibold text-ink">{summary?.pct ?? 0}%</span>
-            </div>
-            <span role="progressbar" aria-label={t("Prayed this month")} aria-valuenow={summary?.pct ?? 0} aria-valuemin={0} aria-valuemax={100} className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
-              <span className="block h-full rounded-full bg-emerald" style={{ width: `${summary?.pct ?? 0}%` }} />
-            </span>
-          </div>
-          <span className="mt-auto border-t border-surface-sunken pt-3 text-small text-ink-muted">{t("A past day with no mark counts as missed. Tap it on the sheet to fix it.")}</span>
-        </Card>
+        <QazaCard qaza={qaza} today={today} />
 
         <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
           <div className="flex items-center justify-between gap-2">
@@ -257,7 +233,7 @@ export function NamazHomePageClient({ trackers, today }: NamazHomePageClientProp
                 <span className="flex items-start justify-between gap-2">
                   <span className="flex flex-col gap-0.5">
                     <span className="text-title font-semibold">{monthName(key, locale, "long", true)}</span>
-                    <span className="text-caption font-normal text-ink-muted">{hijriRange(tracker.year as number, tracker.month as number, locale)}</span>
+                    <span className="text-caption font-normal text-ink-muted">{hijriRange(tracker.year as number, tracker.month as number, locale, settings.hijriAdjust)}</span>
                   </span>
                   {now ? (
                     <Chip tone="forest" size="sm">
@@ -281,9 +257,7 @@ export function NamazHomePageClient({ trackers, today }: NamazHomePageClientProp
                 </span>
                 <span className="flex justify-between text-caption font-normal text-ink-muted">
                   <span>{now ? `${t("Day")} ${todayDay} ${t("of")} ${tracker.totalDays}` : `${perfect} ${t(perfect === 1 ? "perfect day" : "perfect days")}`}</span>
-                  <span>
-                    {s.missed} {t("missed")}
-                  </span>
+                  <span>{t("{count} with jama'at", { count: s.jamaat })}</span>
                 </span>
               </Link>
             );
@@ -292,6 +266,7 @@ export function NamazHomePageClient({ trackers, today }: NamazHomePageClientProp
       </section>
 
       <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={currentKey} />
+      <PrayerSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} today={today} />
     </PageFrame>
   );
 }

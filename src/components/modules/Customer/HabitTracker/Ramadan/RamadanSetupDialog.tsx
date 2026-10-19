@@ -16,6 +16,7 @@ import { createRamadanTrackerAction } from "@/lib/customer/habitsActions";
 import { ramadanStartIn } from "@/lib/customer/ramadanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface RamadanSetupDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ interface RamadanSetupDialogProps {
 // on the sheet.
 export function RamadanSetupDialog({ open, onClose, existing, defaultYear }: RamadanSetupDialogProps) {
   const { t } = useLocale();
+  const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [year, setYear] = useState(defaultYear);
   const [days, setDays] = useState<29 | 30>(30);
@@ -45,8 +47,8 @@ export function RamadanSetupDialog({ open, onClose, existing, defaultYear }: Ram
     }
   }
 
-  const start = ramadanStartIn(year);
-  const hijri = start ? hijriParts(start).year : null;
+  const start = ramadanStartIn(year, hijriAdjust);
+  const hijri = start ? hijriParts(start, hijriAdjust).year : null;
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -82,7 +84,7 @@ export function RamadanSetupDialog({ open, onClose, existing, defaultYear }: Ram
                 {years.length === 0 && <option value={String(year)}>{t("Every nearby year already has a sheet")}</option>}
                 {years.map((y) => (
                   <option key={y} value={String(y)}>
-                    {y} · {t("Ramadan")} {hijriParts(ramadanStartIn(y) ?? `${y}-01-01`).year}
+                    {y} · {t("Ramadan")} {hijriParts(ramadanStartIn(y, hijriAdjust) ?? `${y}-01-01`, hijriAdjust).year}
                   </option>
                 ))}
               </NativeSelect>

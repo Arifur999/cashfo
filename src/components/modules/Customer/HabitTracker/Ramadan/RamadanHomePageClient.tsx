@@ -15,6 +15,7 @@ import { ramadanSummary, ramadanWindow } from "@/lib/customer/ramadanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { RamadanSetupDialog } from "./RamadanSetupDialog";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface RamadanHomePageClientProps {
   trackers: HabitMonthTracker[];
@@ -28,8 +29,9 @@ const STATUS_LABEL = { upcoming: "Coming up", going: "Going on", completed: "Com
 // tracked, each opening its sheet.
 export function RamadanHomePageClient({ trackers, today }: RamadanHomePageClientProps) {
   const { t } = useLocale();
+  const { hijriAdjust } = usePrayerSettings().settings;
   const [setupOpen, setSetupOpen] = useState(false);
-  const next = nextRamadan(today);
+  const next = nextRamadan(today, hijriAdjust);
   const nextYear = Number(next.startsOn.slice(0, 4));
   const hasNext = trackers.some((tr) => tr.year === nextYear);
   const cards = [...trackers].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
@@ -77,7 +79,7 @@ export function RamadanHomePageClient({ trackers, today }: RamadanHomePageClient
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {cards.map((tracker) => {
-            const window = ramadanWindow(tracker, today);
+            const window = ramadanWindow(tracker, today, hijriAdjust);
             const summary = ramadanSummary(tracker, window);
             const fasts = summary.items.find((i) => i.item === "Roza");
             return (

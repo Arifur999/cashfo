@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Book } from "./api";
-import { applyProgress, daysSince, daysToFinish, finishedIn, goalPace, nowReading, pagesLeft, progressPct, readingPace, shelves } from "./libraryDisplay";
+import { applyProgress, daysSince, daysToFinish, finishedIn, goalPace, nowReading, pagesLeft, progressPct, readingPace, shelves, weekPages } from "./libraryDisplay";
 
 function book(over: Partial<Book> & { id: string }): Book {
   return {
@@ -78,6 +78,14 @@ describe("progress", () => {
     expect(applyProgress(reading, 350, 2026).pagesRead).toBe(300);
     expect(applyProgress({ ...reading, status: "FINISHED", finishedYear: 2026 }, 0, 2026)).toMatchObject({ status: "READING", finishedYear: null });
     expect(applyProgress({ ...reading, status: "WANT_TO_READ", pagesRead: 0 }, 0, 2026).status).toBe("WANT_TO_READ");
+  });
+});
+
+describe("weekPages", () => {
+  it("sums the week so far and averages it over the days that have come", () => {
+    const week = ["2026-09-26", "2026-09-27", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02"].map((date, i) => ({ date, pages: [0, 18, 22, 25, 20, 23, 20][i] }));
+    expect(weekPages(week, "2026-10-02")).toEqual({ total: 128, average: 18 });
+    expect(weekPages(week, "2026-09-28")).toEqual({ total: 40, average: 13 });
   });
 });
 

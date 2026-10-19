@@ -1,25 +1,37 @@
-import type { HabitMonthTracker } from "./api";
+import type { HabitMonthTracker, PrayerStatus } from "./api";
 import { hijriParts, WEEKDAY_LONG } from "./habitDisplay";
 
-// The maths behind Namaz: how a month sheet reads with today's data (a
-// prayer is ticked or not), the per-prayer and per-day figures, the year
-// so far, and the sentences the sheet points out. Pure.
+// The maths behind Namaz: how a month sheet reads (each mark says how the
+// prayer was prayed), the per-prayer and per-day figures, the year so far,
+// and the sentences the sheet points out. Pure.
 
 export const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"] as const;
 export const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export type CellState = "prayed" | "missed" | "open" | "locked";
+export type CellState = "jamaat" | "onTime" | "qaza" | "missed" | "open" | "locked";
 
-// A past day's empty cell is a miss; today's is still open; a later day is
-// locked. Everything ticked is prayed.
+const STATE_OF: Record<PrayerStatus, CellState> = { JAMAAT: "jamaat", ON_TIME: "onTime", QAZA: "qaza", MISSED: "missed" };
+
+// Prayed with jama'at, on time or as qaza; a miss, open or locked is not.
+export const isPrayed = (state: CellState): state is "jamaat" | "onTime" | "qaza" => state === "jamaat" || state === "onTime" || state === "qaza";
+
+// The marks that say a prayer was prayed (an explicit "not prayed" is not).
+export const prayedChecks = (tracker: HabitMonthTracker) => tracker.checks.filter((c) => c.status !== "MISSED");
+
+// A marked cell says how it was prayed (or that it wasn't). An unmarked past
+// day is a miss; today's is still open; a later day is locked.
 export function cellState(tracker: HabitMonthTracker, day: number, item: string): CellState {
-  if (tracker.checks.some((c) => c.day === day && c.item === item)) return "prayed";
+  const mark = tracker.checks.find((c) => c.day === day && c.item === item);
+  if (mark) return STATE_OF[mark.status];
   if (tracker.todayDay !== null && day === tracker.todayDay) return "open";
   if (day <= tracker.elapsedDays) return "missed";
   return "locked";
 }
+
+// The status a state is saved as, for the cells that have one.
+export const STATUS_OF: Partial<Record<CellState, PrayerStatus>> = { jamaat: "JAMAAT", onTime: "ON_TIME", qaza: "QAZA" };
 
 // Whether a cell can be tapped: today, or any day already past (the server
 // allows the same), and anything already ticked so it can be unticked.
@@ -33,8 +45,11 @@ export interface MonthSummary {
   prayed: number;
   missed: number;
   pct: number;
-  // Days fully past where every prayer was ticked.
+  // Days fully past with all five on time or with jama'at.
   perfectDays: number;
+  // Prayed with jama'at, and as qaza, so far (today included).
+  jamaat: number;
+  qaza: number;
   // Full days in a row ending yesterday (or today, if today is full).
   perfectRun: number;
   todayDone: number;
@@ -46,18 +61,31 @@ export function monthSummary(tracker: HabitMonthTracker): MonthSummary {
   const items = tracker.items.length;
   const elapsed = tracker.elapsedDays;
   const due = elapsed * items;
-  const prayed = tracker.checks.filter((c) => c.day <= elapsed).length;
-  const fullDay = (day: number) => tracker.checks.filter((c) => c.day === day).length === items && items > 0;
+  const prayedMarks = prayedChecks(tracker);
+  const prayed = prayedMarks.filter((c) => c.day <= elapsed).length;
+  // A perfect day: every prayer on time or with jama'at (a qaza doesn't count).
+  const fullDay = (day: number) => items > 0 && tracker.checks.filter((c) => c.day === day && (c.status === "ON_TIME" || c.status === "JAMAAT")).length === items;
   let perfectDays = 0;
   for (let d = 1; d <= elapsed; d++) if (fullDay(d)) perfectDays++;
-  const todayDone = tracker.todayDay !== null ? tracker.checks.filter((c) => c.day === tracker.todayDay).length : 0;
+  const todayDone = tracker.todayDay !== null ? prayedMarks.filter((c) => c.day === tracker.todayDay).length : 0;
   let perfectRun = 0;
   let cursor = tracker.todayDay !== null && fullDay(tracker.todayDay) ? tracker.todayDay : elapsed;
   while (cursor >= 1 && fullDay(cursor)) {
     perfectRun++;
     cursor--;
   }
-  return { due, prayed, missed: Math.max(0, due - prayed), pct: due > 0 ? Math.round((prayed / due) * 100) : 0, perfectDays, perfectRun, todayDone, prayedSoFar: tracker.checks.length };
+  return {
+    due,
+    prayed,
+    missed: Math.max(0, due - prayed),
+    pct: due > 0 ? Math.round((prayed / due) * 100) : 0,
+    perfectDays,
+    jamaat: tracker.checks.filter((c) => c.status === "JAMAAT").length,
+    qaza: tracker.checks.filter((c) => c.status === "QAZA").length,
+    perfectRun,
+    todayDone,
+    prayedSoFar: prayedMarks.length,
+  };
 }
 
 export interface PrayerSummary {
@@ -71,7 +99,7 @@ export interface PrayerSummary {
 export function prayerSummaries(tracker: HabitMonthTracker): PrayerSummary[] {
   const due = tracker.elapsedDays;
   return tracker.items.map((item) => {
-    const prayed = tracker.checks.filter((c) => c.item === item && c.day <= due).length;
+    const prayed = prayedChecks(tracker).filter((c) => c.item === item && c.day <= due).length;
     return { item, prayed, missed: Math.max(0, due - prayed), due, pct: due > 0 ? Math.round((prayed / due) * 100) : 0 };
   });
 }
@@ -82,7 +110,7 @@ export function dayTotals(tracker: HabitMonthTracker): { day: number; prayed: nu
   return Array.from({ length: tracker.totalDays }, (_, i) => {
     const day = i + 1;
     const state = tracker.todayDay === day ? "open" : day <= tracker.elapsedDays ? "past" : "locked";
-    return { day, prayed: tracker.checks.filter((c) => c.day === day).length, state };
+    return { day, prayed: prayedChecks(tracker).filter((c) => c.day === day).length, state };
   });
 }
 
@@ -92,16 +120,16 @@ export function weekdayOfDay(tracker: HabitMonthTracker, day: number): number {
 }
 
 // "Rabiʻ I – Rabiʻ II 1448": the Hijri months a Gregorian month spans.
-export function hijriRange(year: number, month: number, locale: "en" | "bn" = "en"): string {
+export function hijriRange(year: number, month: number, locale: "en" | "bn" = "en", adjust = 0): string {
   const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const tag = locale === "bn" ? "bn-BD" : "en-GB";
   const name = (day: string) => {
-    const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: "UTC", month: "long" }).formatToParts(new Date(`${day}T00:00:00.000Z`));
+    const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: "UTC", month: "long" }).formatToParts(new Date(new Date(`${day}T00:00:00.000Z`).getTime() - adjust * 86400000));
     return parts.find((p) => p.type === "month")?.value ?? "";
   };
   const first = name(`${year}-${pad(month)}-01`);
   const end = name(`${year}-${pad(month)}-${pad(last)}`);
-  const hy = hijriParts(`${year}-${pad(month)}-${pad(last)}`).year;
+  const hy = hijriParts(`${year}-${pad(month)}-${pad(last)}`, adjust).year;
   const yearText = new Intl.NumberFormat(tag, { useGrouping: false }).format(hy);
   return `${first === end ? first : `${first} – ${end}`} ${yearText}`;
 }
@@ -161,7 +189,7 @@ export function monthInsights(tracker: HabitMonthTracker, previous: HabitMonthTr
     if (best.prayed > 0 && best.item !== worst.item) out.push({ tone: "money", key: "strongest", item: best.item, n: best.prayed, of: best.due });
     const byWeekday = new Map<number, number>();
     for (let d = 1; d <= tracker.elapsedDays; d++) {
-      const missed = tracker.items.length - tracker.checks.filter((c) => c.day === d).length;
+      const missed = tracker.items.length - prayedChecks(tracker).filter((c) => c.day === d).length;
       if (missed > 0) byWeekday.set(weekdayOfDay(tracker, d), (byWeekday.get(weekdayOfDay(tracker, d)) ?? 0) + missed);
     }
     const top = [...byWeekday].sort((a, b) => b[1] - a[1])[0];

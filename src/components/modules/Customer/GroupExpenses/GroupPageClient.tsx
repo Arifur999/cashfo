@@ -10,6 +10,7 @@ import PageFrame from "@/components/smartly/PageFrame";
 import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMember, GroupMonthlyBudget } from "@/lib/customer/api";
 import { deleteBusinessAction } from "@/lib/customer/businessActions";
 import { budgetFor, budgetStatus, cashInHand, isDayClosed, needsSetup, shiftMonth, spendByCategory, spendByMonth, type Transfer, whoPaysWhom } from "@/lib/customer/groupDisplay";
+import { unitsOf } from "@/lib/customer/groupMeals";
 import { deleteGroupContributionAction, deleteGroupExpenseAction, deleteGroupExpenseCategoryAction, deleteGroupMemberAction, updateGroupMemberAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -20,11 +21,13 @@ import { GroupContributionsTab } from "./GroupContributionsTab";
 import { GroupDashboard } from "./GroupDashboard";
 import { GroupExpensesTab } from "./GroupExpensesTab";
 import { GroupHeader } from "./GroupHeader";
+import { GroupMealsTab } from "./GroupMealsTab";
 import { GroupMembersTab } from "./GroupMembersTab";
 import { GroupSettingsTab } from "./GroupSettingsTab";
 import { GroupSettlementTab } from "./GroupSettlementTab";
 import { GroupSetup } from "./GroupSetup";
 import type { GroupPageData, GroupView } from "./groupTypes";
+import { MealDrawer } from "./MealDrawer";
 import { MemberDrawer } from "./MemberDrawer";
 import { MemberStatementDrawer } from "./MemberStatementDrawer";
 import { MonthBudgetDialog } from "./MonthBudgetDialog";
@@ -54,6 +57,8 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
   const [budget, setBudget] = useState<{ open: boolean; editing: GroupMonthlyBudget | null }>({ open: false, editing: null });
   const [category, setCategory] = useState<{ open: boolean; editing: GroupExpenseCategoryOption | null }>({ open: false, editing: null });
   const [confirm, setConfirm] = useState<Confirm | null>(null);
+  // The day the meal drawer shows; null when it is shut.
+  const [mealDay, setMealDay] = useState<string | null>(null);
 
   const view = useMemo<GroupView>(() => {
     const activeMembers = data.members.filter((m) => m.status === "ACTIVE");
@@ -188,11 +193,12 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     ) : (
       <GroupDashboard data={data} view={view} onRecordPayment={(preset) => setPayment({ open: true, preset })} onStatement={openStatement} onSetBudget={() => setBudget({ open: true, editing: null })} />
     ),
+    meals: <GroupMealsTab data={data} onDay={setMealDay} />,
     members: <GroupMembersTab data={data} view={view} onAdd={() => setMember({ open: true, editing: null })} onEdit={(target) => setMember({ open: true, editing: target })} onToggleStatus={toggleMember} onRemove={removeMember} onStatement={openStatement} />,
     contributions: <GroupContributionsTab data={data} view={view} onAdd={() => openContribution()} onEdit={(row) => guardClosed(row.date, () => setContribution({ open: true, editing: row, memberId: null }))} onRemove={removeContribution} />,
     expenses: <GroupExpensesTab data={data} view={view} onAdd={() => setExpense({ open: true, editing: null })} onEdit={(row) => guardClosed(row.date, () => setExpense({ open: true, editing: row }))} onRemove={removeExpense} />,
     settlement: <GroupSettlementTab data={data} view={view} onRecordPayment={(preset) => setPayment({ open: true, preset })} onCloseMonth={() => setCloseOpen(true)} />,
-    settings: <GroupSettingsTab data={data} onAddBudget={() => setBudget({ open: true, editing: null })} onEditBudget={(editing) => setBudget({ open: true, editing })} onAddCategory={() => setCategory({ open: true, editing: null })} onEditCategory={(editing) => setCategory({ open: true, editing })} onRemoveCategory={removeCategory} onDeleteGroup={deleteGroup} />,
+    settings: <GroupSettingsTab data={data} onEditBudget={() => setBudget({ open: true, editing: budgetFor(data.budgets, data.range) })} onAddCategory={() => setCategory({ open: true, editing: null })} onEditCategory={(editing) => setCategory({ open: true, editing })} onRemoveCategory={removeCategory} onDeleteGroup={deleteGroup} />,
   };
 
   return (
@@ -201,6 +207,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
         businessId={data.businessId}
         name={data.name}
         members={data.members}
+        settings={data.settings}
         tab={data.tab}
         monthKey={data.range.key}
         months={data.months}
@@ -209,13 +216,15 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
         onMonthChange={goToMonth}
         onAddMember={() => setMember({ open: true, editing: null })}
         onAddContribution={() => openContribution()}
+        onAddMeals={() => setMealDay(data.today >= data.range.from && data.today <= data.range.to ? data.today : data.range.to)}
         onAddExpense={() => setExpense({ open: true, editing: null })}
       />
       {tabs[data.tab]}
 
-      <MemberDrawer open={member.open} onClose={() => setMember({ open: false, editing: null })} businessId={data.businessId} editing={member.editing} />
+      <MealDrawer day={mealDay} onClose={() => setMealDay(null)} businessId={data.businessId} members={data.members} meals={data.meals} units={unitsOf(data.settings)} />
+      <MemberDrawer open={member.open} onClose={() => setMember({ open: false, editing: null })} businessId={data.businessId} editing={member.editing} cashHolderId={data.settings.cashHolderMemberId} defaultJoin={view.setup ? "" : data.today} />
       <ContributionDrawer open={contribution.open} onClose={() => setContribution({ open: false, editing: null, memberId: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} cashInHand={view.cash} range={data.range} today={data.today} editing={contribution.editing} presetMemberId={contribution.memberId} />
-      <ExpenseDrawer open={expense.open} onClose={() => setExpense({ open: false, editing: null })} businessId={data.businessId} currency={data.currency} members={data.members} categories={data.categories} cashInHand={view.cash} range={data.range} today={data.today} editing={expense.editing} />
+      <ExpenseDrawer open={expense.open} onClose={() => setExpense({ open: false, editing: null })} businessId={data.businessId} currency={data.currency} members={data.members} categories={data.categories} cashInHand={view.cash} range={data.range} today={data.today} editing={expense.editing} meals={data.settings.kind === "MESS" || data.settings.mealsOn} />
       <RecordPaymentDialog open={payment.open} onClose={() => setPayment({ open: false, preset: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} cashInHand={view.cash} range={data.range} today={data.today} preset={payment.preset} />
       <MemberStatementDrawer
         open={statement !== null}

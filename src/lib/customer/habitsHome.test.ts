@@ -7,11 +7,11 @@ const TODAY = "2026-10-15";
 // October's sheet: every prayer ticked on the 11th to the 14th, Fajr only on
 // the 15th so far; the 10th is missing Isha.
 function sheet(): HabitMonthTracker {
-  const checks: { day: number; item: string }[] = [];
-  for (const day of [11, 12, 13, 14]) for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]) checks.push({ day, item });
-  for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib"]) checks.push({ day: 10, item });
-  checks.push({ day: 15, item: "Fajr" });
-  return { id: "oct", category: "Namaz", month: 10, year: 2026, name: null, items: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"], totalDays: 31, elapsedDays: 14, todayDay: 15, checks, createdAt: "2026-10-01T00:00:00.000Z" };
+  const checks: HabitMonthTracker["checks"] = [];
+  for (const day of [11, 12, 13, 14]) for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]) checks.push({ day, item, status: "ON_TIME" });
+  for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib"]) checks.push({ day: 10, item, status: "ON_TIME" });
+  checks.push({ day: 15, item: "Fajr", status: "ON_TIME" });
+  return { id: "oct", category: "Namaz", month: 10, year: 2026, name: null, items: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"], totalDays: 31, elapsedDays: 14, todayDay: 15, checks, paras: [], createdAt: "2026-10-01T00:00:00.000Z" };
 }
 
 function habit(over: Partial<Habit> & { id: string }): Habit {
@@ -67,8 +67,8 @@ describe("the last seven days", () => {
 
   it("lists the streaks that are alive, longest first", () => {
     const rows = [row(water, 9, true), row(walk, 0, null)];
-    expect(streakRows(rows, 5, 4).map((s) => `${s.kind}:${s.days}`)).toEqual(["habit:9", "skills:5", "prayers:4"]);
-    expect(streakRows(rows, 0, 0)).toHaveLength(1);
+    expect(streakRows(rows, { skills: 5, reading: 6, prayers: 4 }).map((s) => `${s.kind}:${s.days}`)).toEqual(["habit:9", "reading:6", "skills:5", "prayers:4"]);
+    expect(streakRows(rows, { skills: 0, reading: 0, prayers: 0 })).toHaveLength(1);
     expect(doneToday(rows)).toBe(1);
   });
 
