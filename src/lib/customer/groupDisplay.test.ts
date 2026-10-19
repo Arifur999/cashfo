@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GroupContribution, GroupExpense, GroupMember, GroupSettlementMemberRow, GroupSettlementRecord } from "./api";
-import { budgetStatus, cashInHand, closedRecordFor, contributionTotals, contributionsByMember, groupMonthOf, groupTabFrom, groupTabsFor, inMonth, isDayClosed, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth, spendByCategory, spendByMonth, splitText, whoPaysWhom } from "./groupDisplay";
+import { budgetStatus, cashInHand, closedRecordFor, contributionTotals, contributionsByMember, groupMonthOf, groupTabFrom, groupTabsFor, inMonth, isDayClosed, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth, spendByCategory, spendByMonth, splitText, throughManager, whoPaysWhom } from "./groupDisplay";
 
 const member = (id: string, name: string): GroupMember => ({ id, businessId: "g", name, phone: null, photoUrl: null, status: "ACTIVE", createdAt: "2025-01-05T00:00:00.000Z", updatedAt: "2025-01-05T00:00:00.000Z" });
 const row = (id: string, balance: number): GroupSettlementMemberRow => ({ groupMemberId: id, name: id, grossDeposited: "0", returned: "0", contributed: "0", share: "0", balance: balance.toFixed(2) });
@@ -112,5 +112,17 @@ describe("splitText", () => {
     expect(splitText({ split: "EQUAL", splits: [split("r")] }, family)).toEqual({ kind: "EQUAL", detail: null, only: "Rakib" });
     expect(splitText({ split: "SHARES", splits: [split("k", "2.00"), split("r", "1.00")] }, family).detail).toBe("2 : 1");
     expect(splitText({ split: "MEALS", splits: [] }, family)).toEqual({ kind: "MEALS", detail: null, only: null });
+  });
+});
+
+describe("throughManager", () => {
+  it("has the debtors pay the manager, who returns what others are owed", () => {
+    const rows = [row("k", 578), row("t", -1174), row("a", -351), row("s", 774), row("r", 853)];
+    expect(throughManager(rows, "k")).toEqual([
+      { fromId: "t", toId: "k", amount: 1174, owes: true },
+      { fromId: "a", toId: "k", amount: 351, owes: true },
+      { fromId: "k", toId: "r", amount: 853, owes: false },
+      { fromId: "k", toId: "s", amount: 774, owes: false },
+    ]);
   });
 });

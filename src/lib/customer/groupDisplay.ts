@@ -171,6 +171,19 @@ export function whoPaysWhom(rows: GroupSettlementMemberRow[]): Transfer[] {
   return transfers;
 }
 
+// Settling through the manager: whoever owes pays the one holding the
+// cash, who returns what the others are owed. The manager's own balance
+// stays with them.
+export function throughManager(rows: GroupSettlementMemberRow[], managerId: string): (Transfer & { owes: boolean })[] {
+  return rows
+    .filter((row) => row.groupMemberId !== managerId && Math.abs(Number(row.balance)) >= 0.005)
+    .map((row) => {
+      const balance = Number(row.balance);
+      return balance < 0 ? { fromId: row.groupMemberId, toId: managerId, amount: Math.round(-balance * 100) / 100, owes: true } : { fromId: managerId, toId: row.groupMemberId, amount: Math.round(balance * 100) / 100, owes: false };
+    })
+    .sort((a, b) => Number(b.owes) - Number(a.owes) || b.amount - a.amount);
+}
+
 export type BudgetTone = "ok" | "warning" | "over";
 
 export interface BudgetStatus {
