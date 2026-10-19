@@ -48,6 +48,32 @@ export interface CurrentUser {
   impersonatedBy?: { name: string; email: string | null } | null;
 }
 
+// The bell's feed (GET /api/notifications). The text is built in the app
+// from `data` (lib/customer/notificationDisplay.ts), in either language.
+export type UserNotificationType = "BUDGET" | "LOAN_DUE" | "SAVINGS" | "ANNOUNCEMENT";
+
+export interface UserNotification {
+  id: string;
+  // The workspace it is about; null for an announcement.
+  businessId: string | null;
+  type: UserNotificationType;
+  data: Record<string, string | number | null>;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationFeed {
+  data: UserNotification[];
+  unreadCount: number;
+}
+
+// Settings > App > Reminders.
+export interface ReminderPreferences {
+  budget: boolean;
+  loans: boolean;
+  savings: boolean;
+}
+
 // Settings > Security > Device Management. isCurrent is a best-effort
 // match on this request's ip+userAgent (see backend UserAuthService.
 // listSessions()'s comment) -- not a cryptographic guarantee.

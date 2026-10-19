@@ -125,6 +125,31 @@ export const chromeDictionary: Record<string, string> = {
   Profile: "প্রোফাইল",
   "Log out": "লগ আউট",
 
+  // The bell and its feed
+  Notifications: "নোটিফিকেশন",
+  "{count} new": "{count}টি নতুন",
+  "Mark all as read": "সব পড়া হয়েছে",
+  Unread: "পড়া হয়নি",
+  "You're all caught up.": "নতুন কিছু নেই।",
+  "Choose what you're told about": "কী কী জানাবে বেছে নিন",
+  "{count} min ago": "{count} মিনিট আগে",
+  "{category} is at {percent}% of its limit": "{category} সীমার {percent}% খরচ হয়েছে",
+  "Only {amount} left for the rest of {month}.": "{month}-এর বাকি দিনগুলোর জন্য মাত্র {amount} বাকি।",
+  "{category} is over its limit": "{category} সীমা ছাড়িয়ে গেছে",
+  "{amount} over the limit for {month}.": "{month}-এর সীমার চেয়ে {amount} বেশি।",
+  "Payment to {name} is due in {count} days": "{count} দিন পর {name}-কে টাকা দেওয়ার তারিখ",
+  "Payment to {name} is due tomorrow": "কাল {name}-কে টাকা দেওয়ার তারিখ",
+  "Payment to {name} is due today": "আজ {name}-কে টাকা দেওয়ার তারিখ",
+  "Payment to {name} is overdue": "{name}-কে টাকা দেওয়ার তারিখ পেরিয়ে গেছে",
+  "{name} should pay you in {count} days": "{count} দিন পর {name}-এর টাকা ফেরত দেওয়ার তারিখ",
+  "{name} should pay you tomorrow": "কাল {name}-এর টাকা ফেরত দেওয়ার তারিখ",
+  "{name} should pay you today": "আজ {name}-এর টাকা ফেরত দেওয়ার তারিখ",
+  "{name}'s payment to you is overdue": "{name}-এর টাকা ফেরত দেওয়ার তারিখ পেরিয়ে গেছে",
+  "{amount} on {date}.": "{date}-এ {amount}।",
+  "Savings check-in for {month}": "{month}-এর সঞ্চয়ের খোঁজ",
+  "{goal} is behind. Save {amount} a month to reach it by {month}.": "{goal} পিছিয়ে আছে। {month}-এর মধ্যে পৌঁছাতে মাসে {amount} করে জমান।",
+  "{goal} is on track: {percent}% saved.": "{goal} ঠিক পথে আছে: {percent}% জমেছে।",
+
   // /dashboard placeholder page
   "Welcome,": "স্বাগতম,",
   "The full app (transactions, accounts, budgets) is being built next -- this page just confirms your account and workspace switching work.":
