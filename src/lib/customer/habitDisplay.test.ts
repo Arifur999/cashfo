@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Habit, HabitMonthLog } from "./api";
-import { bestStreak, completionRate, countTone, dayMark, habitStart, hijriDate, hijriParts, isPlannedOn, lastDays, monthGrid, nextRamadan, perfectDays, plannedCount, ruleLabel, weekOf } from "./habitDisplay";
+import { bestStreak, completionRate, countTone, dayMark, habitStart, hijriDate, hijriParts, isPlannedOn, lastDays, monthGrid, nextRamadan, perfectDays, plannedCount, ruleLabel, streakWord, weekOf } from "./habitDisplay";
 
 const habit = (overrides: Partial<Habit>): Habit => ({
   id: "h",
@@ -82,6 +82,16 @@ describe("rates, marks and streaks", () => {
     const weekdays = habit({ id: "w", frequencyType: "WEEKLY_DAYS", weeklyDays: [0, 1, 2, 3, 4] });
     const run = [log("w", "2026-09-30"), log("w", "2026-10-01"), log("w", "2026-10-04")]; // Fri 2, Sat 3 rest
     expect(bestStreak(weekdays, run, "2026-10-04", 10)).toBe(3);
+  });
+
+  it("counts the weeks a few-times-a-week habit met its count", () => {
+    const twice = habit({ id: "c", frequencyType: "WEEKLY_COUNT", weeklyCount: 2 });
+    // Two in each of the weeks of 12 and 19 Sep, one so far this week.
+    const run = ["2026-09-12", "2026-09-14", "2026-09-20", "2026-09-22", "2026-09-27"].map((day) => log("c", day));
+    expect(bestStreak(twice, run, "2026-10-02", 28)).toBe(2);
+    expect(bestStreak(twice, [...run, log("c", "2026-10-01")], "2026-10-02", 28)).toBe(3);
+    expect(streakWord(twice, 1)).toBe("week");
+    expect(streakWord(habit({ id: "d" }), 3, true)).toBe("days in a row");
   });
 
   it("counts perfect days", () => {

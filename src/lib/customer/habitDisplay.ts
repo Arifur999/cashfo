@@ -126,9 +126,29 @@ export function dayMark(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays"
   return day === today ? "open" : "missed";
 }
 
-// The longest run of completed planned days up to `today`.
-export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays">, logs: HabitMonthLog[], today: string, lookBack = 365): number {
+// The longest streak up to `today`, by the server's rule (streak.ts): days
+// done, skipping the days a habit isn't planned -- or, for "a few times a
+// week", the weeks in a row that met the count (this week once it does).
+export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "weeklyCount">, logs: HabitMonthLog[], today: string, lookBack = 365): number {
   const done = new Set(logs.filter((l) => l.habitId === habit.id && l.completed).map((l) => l.date.slice(0, 10)));
+  if (habit.frequencyType === "WEEKLY_COUNT") {
+    const need = Math.max(1, habit.weeklyCount ?? 1);
+    const thisWeek = weekOf(today)[0];
+    // Oldest week first; a Map keeps the order its weeks were met in.
+    const weeks = new Map<string, number>();
+    for (const day of lastDays(today, lookBack)) {
+      const week = weekOf(day)[0];
+      weeks.set(week, (weeks.get(week) ?? 0) + (done.has(day) ? 1 : 0));
+    }
+    let best = 0;
+    let run = 0;
+    for (const [week, count] of weeks) {
+      if (count >= need) run++;
+      else if (week !== thisWeek) run = 0;
+      best = Math.max(best, run);
+    }
+    return best;
+  }
   let best = 0;
   let run = 0;
   for (const day of lastDays(today, lookBack)) {
@@ -137,6 +157,14 @@ export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDa
     best = Math.max(best, run);
   }
   return best;
+}
+
+// The word after a streak's number: weeks for "a few times a week", whose
+// streak counts weeks, days for the rest.
+export function streakWord(habit: Pick<Habit, "frequencyType">, count: number, inARow = false): string {
+  const weeks = habit.frequencyType === "WEEKLY_COUNT";
+  if (inARow) return weeks ? (count === 1 ? "week in a row" : "weeks in a row") : count === 1 ? "day in a row" : "days in a row";
+  return weeks ? (count === 1 ? "week" : "weeks") : count === 1 ? "day" : "days";
 }
 
 // Days where every planned habit was done.

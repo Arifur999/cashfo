@@ -10,7 +10,7 @@ import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
-import { bestStreak, countsOn, countTone, dayMark, monthGrid, ruleLabel, WEEK_START, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
+import { bestStreak, countsOn, countTone, dayMark, monthGrid, ruleLabel, streakWord, WEEK_START, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -65,8 +65,8 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
   const rate = plannedThisMonth > 0 ? Math.round((doneThisMonth / plannedThisMonth) * 100) : null;
 
   const facts = [
-    { label: t("Current streak"), value: `${streak} ${t(streak === 1 ? "day" : "days")}` },
-    { label: t("Best streak"), value: `${best} ${t(best === 1 ? "day" : "days")}` },
+    { label: t("Current streak"), value: `${streak} ${t(streakWord(habit, streak))}` },
+    { label: t("Best streak"), value: `${best} ${t(streakWord(habit, best))}` },
     { label: monthName(month, locale), value: `${doneThisMonth} ${t("of")} ${plannedThisMonth} ${t("days")}` },
     counted ? { label: t("Daily average"), value: average === null ? "—" : `${average} ${habit.unit ?? ""}`.trim() } : { label: t("This month"), value: rate === null ? "—" : `${rate}%` },
   ];
