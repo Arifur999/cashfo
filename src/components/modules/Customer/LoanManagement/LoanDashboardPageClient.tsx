@@ -34,7 +34,7 @@ interface LoanDashboardPageClientProps {
 type Tab = "ALL" | LoanBalanceDirection;
 type Sort = "biggest" | "smallest" | "name";
 
-const GRID = "grid-cols-[minmax(0,1fr)_120px_130px_130px_170px]";
+const GRID = "grid-cols-[minmax(0,1fr)_120px_130px_130px_120px_170px]";
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
 const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-muted)" };
 
@@ -60,7 +60,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
     .filter((row) => tab === "ALL" || row.direction === tab)
     .filter((row) => !q || row.contactName.toLowerCase().includes(q) || (row.contactPhone ?? "").includes(q))
     .sort((a, b) => (sort === "name" ? a.contactName.localeCompare(b.contactName) : (Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance))) * (sort === "biggest" ? 1 : -1)));
-  const sums = shown.reduce((sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), net: sum.net + Number(row.currentBalance) }), { opening: 0, in: 0, out: 0, net: 0 });
+  const sums = shown.reduce((sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), profit: sum.profit + Number(row.profitPaid), net: sum.net + Number(row.currentBalance) }), { opening: 0, in: 0, out: 0, profit: 0, net: 0 });
   const net = Number(dashboard.netBalance);
 
   const tabs = [{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, ...DIRECTIONS.map((direction) => ({ value: direction as Tab, label: counted(t(DIRECTION_META[direction].name), counts[direction]), dot: DOT[direction] }))];
@@ -136,9 +136,11 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           <span className="text-caption font-normal text-ink-muted">{net > 0 ? t("You're owed more than you owe") : net < 0 ? t("You owe more than you're owed") : t("All square")}</span>
         </Card>
         <Card className="hidden flex-col gap-2 md:flex">
-          <span className="text-small font-medium text-ink-muted">{t("Active accounts")}</span>
-          <span className="text-h1 text-ink tabular-nums">{dashboard.activeAccounts}</span>
-          <span className="text-caption font-normal text-ink-muted">{t("People and banks with a balance")}</span>
+          <span className="text-small font-medium text-ink-muted">{t("Profit paid this year")}</span>
+          <AmountText value={Number(dashboard.profitPaidThisYear)} currency={currency} size="h2" className="text-h1" />
+          <span className="truncate text-caption font-normal text-ink-muted">
+            {dashboard.topProfit ? `${dashboard.topProfit.contactName} · ${t("{amount} a month", { amount: formatCurrency(Number(dashboard.topProfit.monthly), currency) })}` : t("No profit or interest paid yet")}
+          </span>
         </Card>
       </section>
 
@@ -177,6 +179,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               <span className="text-right">{t("Opening")}</span>
               <span className="text-right">{t("Money in")}</span>
               <span className="text-right">{t("Money out")}</span>
+              <span className="text-right">{t("Profit paid")}</span>
               <span className="text-right">{t("Balance")}</span>
             </div>
             {shown.length === 0 && <p className="px-6 py-10 text-center text-body text-ink-muted">{t("No one matches")}</p>}
@@ -188,6 +191,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               <span className="text-right">{formatCurrency(Math.abs(sums.opening), currency)}</span>
               <span className="text-right">{formatCurrency(sums.in, currency)}</span>
               <span className="text-right">{formatCurrency(sums.out, currency)}</span>
+              <span className="text-right">{formatCurrency(sums.profit, currency)}</span>
               <AmountText value={sums.net} currency={currency} signed size="sm" className="text-right text-body font-bold" />
             </div>
           </Card>
@@ -290,6 +294,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
       {figure(row.openingBalance, currency, "text-ink-2")}
       {figure(row.totalReceive, currency)}
       {figure(row.totalPayment, currency)}
+      {figure(row.profitPaid, currency, "text-warning")}
       <span className="flex items-center justify-end gap-2">
         <span className={cn("font-bold tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</span>
         <Chip tone={meta.chip} size="sm" className="font-semibold">

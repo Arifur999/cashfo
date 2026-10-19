@@ -19,7 +19,7 @@ import type { Contact, Transaction } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { DIRECTION_META, LOAN_ENTRY_META, loanEntryOf, loanTotals } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, LOAN_ENTRY_META, loanEntryOf, loanProfitOf, loanTotals } from "@/lib/customer/loanDisplay";
 import { cancelledLabel, isCancelled, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -60,7 +60,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
 
   const contactsById = new Map(loanContacts.map((contact) => [contact.id, contact]));
   const totals = loanTotals(transactions);
-  const rows = transactions.map((transaction) => ({ transaction, entry: loanEntryOf(transaction), contact: transaction.contactId ? contactsById.get(transaction.contactId) : undefined }));
+  const rows = transactions.map((transaction) => ({ transaction, entry: loanEntryOf(transaction), profit: loanProfitOf(transaction), contact: transaction.contactId ? contactsById.get(transaction.contactId) : undefined }));
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -77,7 +77,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         eyebrow={t("Loans")}
         tone="loans"
         title={t("Loan payments")}
-        description={t("Every loan you gave or took, and every repayment.")}
+        description={t("Every loan you gave or took, every repayment, and every profit payment.")}
         actions={
           <>
             {pdfExportOn && transactions.length > 0 && (
@@ -109,11 +109,11 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         <TotalCell label={`${t("Money out")} · ${t("loans given, paid back")}`} divided>
           <AmountText value={-totals.out} currency={currency} size="h2" tone="expense" signed />
         </TotalCell>
-        <TotalCell label={t("Net moved")} divided className="border-t md:border-t-0">
-          <AmountText value={totals.in - totals.out} currency={currency} size="h2" signed />
+        <TotalCell label={`${t("Profit paid")} · ${t("counted as expense")}`} divided className="border-t md:border-t-0">
+          <span className={cn("text-h2 tabular-nums", totals.profitPaid ? "text-warning" : "text-ink-muted")}>{formatCurrency(totals.profitPaid, currency)}</span>
         </TotalCell>
-        <TotalCell label={t("Entries")} divided className="border-t md:border-t-0">
-          <span className="text-h2 text-ink tabular-nums">{totals.count}</span>
+        <TotalCell label={`${t("Profit received")} · ${t("counted as income")}`} divided className="border-t md:border-t-0">
+          <span className={cn("text-h2 tabular-nums", totals.profitReceived ? "text-income" : "text-ink-muted")}>{formatCurrency(totals.profitReceived, currency)}</span>
         </TotalCell>
       </Card>
 
@@ -157,8 +157,10 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               <span>{t("Effect on balance")}</span>
               <span />
             </div>
-            {rows.map(({ transaction, entry, contact }) => {
+            {rows.map(({ transaction, entry, profit, contact }) => {
               const meta = entry ? LOAN_ENTRY_META[entry.kind] : null;
+              const title = profit ? (profit.paid ? "Paid profit" : "Received profit") : meta ? meta.title : null;
+              const amount = profit ? (profit.paid ? -profit.amount : profit.amount) : entry ? (meta?.flow === "in" ? entry.amount : -entry.amount) : 0;
               const cancelled = cancelledLabel(transaction);
               const voided = isCancelled(transaction);
               const effect = meta ? DIRECTION_META[meta.effect] : null;
@@ -170,11 +172,11 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                     <PersonAvatar name={name} src={contact?.photoUrl} kind={contact?.type} size={30} />
                     <span className="flex min-w-0 flex-col md:block">
                       <span className="truncate font-medium text-ink">{name}</span>
-                      <span className="truncate text-caption font-normal text-ink-muted md:hidden">{meta ? t(meta.title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}</span>
+                      <span className="truncate text-caption font-normal text-ink-muted md:hidden">{title ? t(title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}</span>
                     </span>
                   </Link>
                   <span className="hidden items-center gap-2 text-small text-ink-2 md:flex">
-                    <span className="truncate">{meta ? t(meta.title) : "—"}</span>
+                    <span className="truncate">{title ? t(title) : "—"}</span>
                     {cancelled && (
                       <Chip tone="expense" size="sm" className="font-semibold">
                         {t(cancelled)}
@@ -182,14 +184,22 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                     )}
                   </span>
                   <span className="hidden md:block">
-                    <Chip tone="neutral" size="sm" className="font-bold">
-                      {t("Principal")}
+                    <Chip tone={profit ? "warning" : "neutral"} size="sm" className="font-bold">
+                      {t(profit ? "Profit" : "Principal")}
                     </Chip>
                   </span>
-                  <span className="hidden truncate text-small text-ink-2 md:block">{entry?.wallet ?? "—"}</span>
-                  <AmountText value={entry ? (meta?.flow === "in" ? entry.amount : -entry.amount) : 0} currency={currency} size="sm" signed tone={voided ? "neutral" : "auto"} className={cn("row-start-1 text-right font-semibold md:row-start-auto", voided && "text-ink-muted line-through")} />
+                  <span className="hidden truncate text-small text-ink-2 md:block">{(profit ?? entry)?.wallet ?? "—"}</span>
+                  <AmountText value={amount} currency={currency} size="sm" signed tone={voided ? "neutral" : "auto"} className={cn("row-start-1 text-right font-semibold md:row-start-auto", voided && "text-ink-muted line-through")} />
                   <span className="hidden flex-col gap-px text-caption md:flex">
-                    {meta && effect ? (
+                    {profit ? (
+                      <>
+                        <span className="font-semibold text-ink-2">{t("No change")}</span>
+                        <span className="truncate font-normal text-ink-muted">
+                          {t(profit.paid ? "Expense" : "Income")}
+                          {profit.category ? ` · ${profit.category}` : ""}
+                        </span>
+                      </>
+                    ) : meta && effect ? (
                       <>
                         <span className={cn("font-semibold", effect.text)}>
                           {t(effect.name)} {meta.effectSign} {entry && formatCurrency(entry.amount, currency)}

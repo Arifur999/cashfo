@@ -1,8 +1,9 @@
 "use client";
 
-import { Printer, ScrollText } from "lucide-react";
+import { ChevronRight, Printer, ScrollText } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -15,7 +16,7 @@ import type { Contact, LoanStatement } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { DIRECTION_META, LOAN_KIND_LABELS, loanDirection } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, foldProfitRuns, LOAN_KIND_LABELS, loanDirection, statementProfit } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
@@ -41,7 +42,7 @@ const PERIODS: { value: DateRangePreset; label: string }[] = [
   { value: "custom", label: "Custom" },
 ];
 
-const GRID = "grid-cols-[100px_100px_minmax(0,1fr)_96px_110px_110px_140px]";
+const GRID = "grid-cols-[100px_100px_minmax(0,1fr)_96px_110px_110px_110px_140px]";
 
 // Loan statement: one bank or person, the period, how the balance went
 // from opening to closing, and every entry in between with the balance
@@ -50,6 +51,8 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
   const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Folded runs of profit rows the reader opened.
+  const [unfolded, setUnfolded] = useState<Set<string>>(new Set());
   // Admin > System > Feature Flags: pdf_export off hides Print / PDF.
   const pdfExportOn = useFeature("pdf_export");
 
@@ -71,6 +74,10 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
   const closing = statement ? Number(statement.closingBalance) : 0;
   const received = statement ? statement.rows.reduce((sum, row) => sum + Number(row.credit ?? 0), 0) : 0;
   const paid = statement ? statement.rows.reduce((sum, row) => sum + Number(row.debit ?? 0), 0) : 0;
+  const profit = statementProfit(statement?.rows ?? []);
+  // A profit row's amount: paid, or received (with a plus).
+  const profitCell = (paidAmount: number, receivedAmount: number) =>
+    paidAmount ? <span className="text-right text-warning">{formatCurrency(paidAmount, currency)}</span> : receivedAmount ? <span className="text-right text-income">+ {formatCurrency(receivedAmount, currency)}</span> : <span className="text-right text-ink-muted">—</span>;
   const direction = loanDirection(closing);
   const meta = DIRECTION_META[direction];
   // Read the equation from the closing side: for someone you owe, what you
@@ -150,6 +157,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
         </Card>
       ) : (
         <>
+          <div className={cn("grid gap-4", (profit.paid > 0 || profit.received > 0) && "md:grid-cols-[minmax(0,1fr)_280px]")}>
           <Card className="grid grid-cols-2 gap-3 md:flex md:items-stretch" aria-label={t("Opening balance, plus what moved one way, minus what moved the other, equals the closing balance")}>
             <EquationCell label={t("Opening")} value={amountWithSide(opening)} />
             <Operator>+</Operator>
@@ -162,10 +170,20 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
               <span className={cn("text-h2 tabular-nums", meta.text)}>{formatCurrency(Math.abs(closing), currency)}</span>
             </div>
           </Card>
+          {(profit.paid > 0 || profit.received > 0) && (
+            <div className="flex flex-col justify-center gap-1 rounded-lg border border-warning-fill/40 bg-warning-soft px-5 py-4 text-warning">
+              <span className="text-caption font-semibold">
+                {profit.paid > 0 ? t(profit.paidMonths === 1 ? "Profit paid · {count} month" : "Profit paid · {count} months", { count: profit.paidMonths }) : t(profit.receivedMonths === 1 ? "Profit received · {count} month" : "Profit received · {count} months", { count: profit.receivedMonths })}
+              </span>
+              <span className="text-h2 font-bold tabular-nums">{formatCurrency(profit.paid > 0 ? profit.paid : profit.received, currency)}</span>
+              <span className="text-caption">{profit.paid > 0 ? t("Counted as expense. Doesn't change what you owe.") : t("Counted as income. Doesn't change what they owe.")}</span>
+            </div>
+          )}
+          </div>
 
           <Card padding="none" className="overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-240">
+              <div className="min-w-270">
                 <div className={cn("grid items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
                   <span>{t("Date")}</span>
                   <span>{t("Reference")}</span>
@@ -173,17 +191,46 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                   <span>{t("Category")}</span>
                   <span className="text-right">{t("Principal in")}</span>
                   <span className="text-right">{t("Principal out")}</span>
+                  <span className="text-right">{t("Profit")}</span>
                   <span className="text-right">{t("Balance")}</span>
                 </div>
                 <div className={cn("grid h-11 items-center gap-x-4 border-b border-surface-sunken bg-cream px-6 text-body", GRID)}>
-                  <span className="col-span-6 font-semibold text-ink-2">
+                  <span className="col-span-7 font-semibold text-ink-2">
                     {t("Opening balance")}
                     {periodFrom && ` · ${formatDate(periodFrom)}`}
                   </span>
                   <span className={cn("text-right font-semibold tabular-nums", DIRECTION_META[loanDirection(opening)].text)}>{amountWithSide(opening)}</span>
                 </div>
                 {statement.rows.length === 0 && <p className="px-6 py-10 text-center text-body text-ink-muted">{t("No entries in this period.")}</p>}
-                {statement.rows.map((row) => {
+                {foldProfitRuns(statement.rows).flatMap((item) => (item.kind === "more" && unfolded.has(item.key) ? item.rows.map((row) => ({ kind: "row" as const, row })) : [item])).map((item) => {
+                  if (item.kind === "more") {
+                    const first = item.rows[0];
+                    const last = item.rows[item.rows.length - 1];
+                    const sum = statementProfit(item.rows);
+                    return (
+                      <button key={item.key} type="button" onClick={() => setUnfolded(new Set([...unfolded, item.key]))} aria-expanded={false} className={cn("grid h-13 w-full items-center gap-x-4 border-b border-surface-sunken bg-cream/60 px-6 text-left text-body text-ink tabular-nums hover:bg-cream", GRID)}>
+                        <span className="text-small text-ink-2">
+                          {formatDate(first.date, "MMM")} – {formatDate(last.date, "MMM")}
+                        </span>
+                        <span />
+                        <span className="flex min-w-0 items-center gap-2 font-medium text-ink-2">
+                          <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
+                          <span className="truncate">{t(sum.paid > 0 ? "{count} more profit payments" : "{count} more profit received", { count: item.rows.length })}</span>
+                        </span>
+                        <span>
+                          <Chip tone="warning" size="sm" className="font-bold">
+                            {t("Profit")}
+                          </Chip>
+                        </span>
+                        <span className="text-right text-ink-muted">—</span>
+                        <span className="text-right text-ink-muted">—</span>
+                        {profitCell(sum.paid, sum.received)}
+                        <span className="text-right text-ink-muted">{formatCurrency(Math.abs(Number(last.runningPrincipal)), currency)}</span>
+                      </button>
+                    );
+                  }
+                  const row = item.row;
+                  const isProfit = row.category === "Profit";
                   const voided = row.status === "VOIDED";
                   const side = DIRECTION_META[loanDirection(row.runningPrincipal)];
                   return (
@@ -199,13 +246,15 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                         )}
                       </span>
                       <span>
-                        <Chip tone="neutral" size="sm" className="font-bold">
-                          {t("Principal")}
+                        <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className="font-bold">
+                          {t(isProfit ? "Profit" : "Principal")}
                         </Chip>
                       </span>
                       <span className={cn("text-right", row.credit ? "text-ink" : "text-ink-muted")}>{row.credit ? formatCurrency(row.credit, currency) : "—"}</span>
                       <span className={cn("text-right", row.debit ? "text-ink" : "text-ink-muted")}>{row.debit ? formatCurrency(row.debit, currency) : "—"}</span>
-                      <span className={cn("text-right font-semibold", side.text)}>{formatCurrency(Math.abs(Number(row.runningPrincipal)), currency)}</span>
+                      {profitCell(Number(row.profitPaid ?? 0), Number(row.profitReceived ?? 0))}
+                      {/* Profit leaves the balance where it was. */}
+                      <span className={cn("text-right font-semibold", isProfit ? "font-normal text-ink-muted" : side.text)}>{formatCurrency(Math.abs(Number(row.runningPrincipal)), currency)}</span>
                     </Link>
                   );
                 })}
@@ -215,6 +264,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                   </span>
                   <span className="text-right text-ink">{formatCurrency(received, currency)}</span>
                   <span className={cn("text-right", paid ? "text-ink" : "text-ink-muted")}>{formatCurrency(paid, currency)}</span>
+                  {profit.paid || profit.received ? profitCell(profit.paid, profit.received) : <span className="text-right text-ink-muted">{formatCurrency(0, currency)}</span>}
                   <span className={cn("text-right text-title font-bold", meta.text)}>{amountWithSide(closing)}</span>
                 </div>
               </div>
