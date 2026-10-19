@@ -1,15 +1,21 @@
-import type { GroupContribution, GroupExpense, GroupMember, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
+import type { GroupContribution, GroupExpense, GroupKind, GroupMember, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
 
 // The figures a group page derives from what the API already returns:
 // the month's range and whether it is closed, cash in hand, who pays
 // whom, the budget bar, the spend by category and by month. Pure, so the
 // server page and the tests can both use them.
 
-export const GROUP_TABS = ["dashboard", "members", "contributions", "expenses", "settlement", "settings"] as const;
+export const GROUP_TABS = ["dashboard", "meals", "members", "contributions", "expenses", "settlement", "settings"] as const;
 export type GroupTab = (typeof GROUP_TABS)[number];
+
+// The tabs a group shows: Meals only for a mess, or a family counting meals.
+export function groupTabsFor(kind: GroupKind, mealsOn: boolean): GroupTab[] {
+  return GROUP_TABS.filter((tab) => tab !== "meals" || kind === "MESS" || mealsOn);
+}
 
 export const GROUP_TAB_LABELS: Record<GroupTab, string> = {
   dashboard: "Dashboard",
+  meals: "Meals",
   members: "Members",
   contributions: "Contributions",
   expenses: "Expenses",
@@ -35,14 +41,24 @@ export interface MonthRange {
   to: string;
 }
 
-// A "YYYY-MM" key, or today's month when the value is not one.
-export function monthKeyFrom(value: unknown, today: string): string {
-  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : today.slice(0, 7);
+// The group month a day falls in: a month starting on the 10th runs from
+// 10 Sep to 9 Oct, keyed "2026-09".
+export function groupMonthOf(day: string, startDay = 1): string {
+  return Number(day.slice(8, 10)) >= startDay ? day.slice(0, 7) : shiftMonth(day.slice(0, 7), -1);
 }
 
-export function monthRangeOf(key: string): MonthRange {
+// A "YYYY-MM" key, or today's group month when the value is not one.
+export function monthKeyFrom(value: unknown, today: string, startDay = 1): string {
+  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : groupMonthOf(today, startDay);
+}
+
+// The days a group month covers: from its start day to the day before the
+// next month's.
+export function monthRangeOf(key: string, startDay = 1): MonthRange {
   const [year, month] = key.split("-").map(Number);
-  return { key, year, month, from: `${key}-01`, to: `${key}-${pad(lastDayOf(year, month))}` };
+  if (startDay <= 1) return { key, year, month, from: `${key}-01`, to: `${key}-${pad(lastDayOf(year, month))}` };
+  const next = shiftMonth(key, 1);
+  return { key, year, month, from: `${key}-${pad(startDay)}`, to: `${next}-${pad(startDay - 1)}` };
 }
 
 // The month `offset` months from `key` (negative for earlier).
@@ -54,8 +70,8 @@ export function shiftMonth(key: string, offset: number): string {
 
 // The months a picker offers: from the earliest entry (or a year back) to
 // this month, newest first.
-export function monthChoices(today: string, earliest?: string | null): string[] {
-  const current = today.slice(0, 7);
+export function monthChoices(today: string, earliest?: string | null, startDay = 1): string[] {
+  const current = groupMonthOf(today, startDay);
   const floor = earliest ? earliest.slice(0, 7) : shiftMonth(current, -11);
   const keys: string[] = [];
   for (let key = current; key >= floor && keys.length < 36; key = shiftMonth(key, -1)) keys.push(key);
@@ -74,10 +90,10 @@ export function isDayClosed(history: GroupSettlementRecord[], day: string): bool
   return history.some((record) => record.periodStart.slice(0, 10) <= d && record.periodEnd.slice(0, 10) >= d);
 }
 
-// Contributions − returns − expenses: what the fund should be holding for
-// the period, which is also every balance added up.
+// Contributions − returns − expenses paid from the fund: what the fund
+// should be holding for the period, which is also every balance added up.
 export function cashInHand(settlement: GroupSettlementResult): number {
-  return Math.round(settlement.members.reduce((sum, row) => sum + Number(row.balance), 0) * 100) / 100;
+  return Number(settlement.cashInHand);
 }
 
 export interface ContributionTotals {

@@ -1,4 +1,4 @@
-import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMember, GroupMonthlyBudget, GroupSettlementRecord, GroupSettlementResult, WorkspaceListItem } from "@/lib/customer/api";
+import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMeal, GroupMember, GroupMonthlyBudget, GroupSettings, GroupSettlementRecord, GroupSettlementResult, WorkspaceListItem } from "@/lib/customer/api";
 import type { BudgetStatus, CategorySpend, GroupTab, MonthRange, Transfer } from "@/lib/customer/groupDisplay";
 
 // What the groups list knows about each group: the workspace, its
@@ -35,6 +35,9 @@ export interface GroupPageData {
   settlement: GroupSettlementResult;
   history: GroupSettlementRecord[];
   budgets: GroupMonthlyBudget[];
+  settings: GroupSettings;
+  // This month's meals.
+  meals: GroupMeal[];
 }
 
 // Figures every tab reads, derived once by the page client.
