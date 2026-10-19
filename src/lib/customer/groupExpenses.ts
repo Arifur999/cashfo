@@ -6,8 +6,10 @@ import {
   type GroupExpense,
   type GroupExpenseCategory,
   type GroupExpenseCategoryOption,
+  type GroupMeal,
   type GroupMember,
   type GroupMonthlyBudget,
+  type GroupSettings,
   type GroupSettlementRecord,
   type GroupSettlementResult,
 } from "./api";
@@ -89,6 +91,10 @@ const EMPTY_SETTLEMENT: GroupSettlementResult = {
   totalExpense: "0.00",
   memberCount: 0,
   perMemberShare: "0.00",
+  mealExpense: "0.00",
+  mealUnits: "0.00",
+  mealRate: "0.0000",
+  cashInHand: "0.00",
   members: [],
 };
 
@@ -111,6 +117,31 @@ export const getGroupSettlementHistory = cache(async (businessId: string): Promi
   if (!headers) return [];
   try {
     const res = await customerApi.get<GroupSettlementRecord[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/history`, { headers });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});
+
+// A group's settings before any are saved.
+export const DEFAULT_GROUP_SETTINGS: GroupSettings = { kind: "FAMILY", monthStartDay: 1, cashHolderMemberId: null, mealsOn: false, breakfastUnits: "0.50", lunchUnits: "1.00", dinnerUnits: "1.00" };
+
+export const getGroupSettings = cache(async (businessId: string): Promise<GroupSettings> => {
+  const headers = await authHeaders();
+  if (!headers) return DEFAULT_GROUP_SETTINGS;
+  try {
+    const res = await customerApi.get<GroupSettings>(`${API_BASE_URL}/api/businesses/${businessId}/group/settings`, { headers });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, DEFAULT_GROUP_SETTINGS);
+  }
+});
+
+export const getGroupMeals = cache(async (businessId: string, from: string, to: string): Promise<GroupMeal[]> => {
+  const headers = await authHeaders();
+  if (!headers) return [];
+  try {
+    const res = await customerApi.get<GroupMeal[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/meals`, { headers, params: { from, to } });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);

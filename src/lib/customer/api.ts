@@ -757,6 +757,14 @@ export type GroupMemberStatus = "ACTIVE" | "ARCHIVED";
 // AssetCategoryOption -- see the backend schema comment for why).
 export type GroupExpenseCategory = string;
 
+// How an expense is shared: equally (everyone that day, or the members it
+// names), by shares, by meals (pooled into one meal rate), or by exact
+// amounts.
+export type GroupSplit = "EQUAL" | "SHARES" | "MEALS" | "EXACT";
+export type GroupKind = "FAMILY" | "MESS";
+export type GroupPaidFrom = "FUND" | "MEMBER";
+export type GroupContributionKind = "DEPOSIT" | "RETURN" | "SETTLE" | "CARRY";
+
 export interface GroupExpenseCategoryOption {
   id: string;
   businessId: string;
@@ -764,6 +772,8 @@ export interface GroupExpenseCategoryOption {
   icon: string | null;
   color: string;
   displayOrder: number;
+  // How a new expense in it is shared, to start with.
+  defaultSplit: GroupSplit;
   createdAt: string;
   updatedAt: string;
 }
@@ -775,6 +785,11 @@ export interface GroupMember {
   phone: string | null;
   photoUrl: string | null;
   status: GroupMemberStatus;
+  // Their share of costs split by shares.
+  shareUnits: string;
+  // They share only the costs of the days from joinedOn to leftOn.
+  joinedOn: string | null;
+  leftOn: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -783,11 +798,21 @@ export interface GroupContribution {
   id: string;
   businessId: string;
   groupMemberId: string;
+  // Signed: a return is negative.
   amount: string;
+  kind: GroupContributionKind;
   date: string;
   note: string | null;
   createdAt: string;
   groupMember: GroupMember;
+}
+
+export interface GroupExpenseSplit {
+  id: string;
+  expenseId: string;
+  groupMemberId: string;
+  units: string | null;
+  amount: string | null;
 }
 
 export interface GroupExpense {
@@ -799,7 +824,34 @@ export interface GroupExpense {
   description: string | null;
   paidByMemberId: string | null;
   paidByMember: GroupMember | null;
+  // FUND: out of the group's cash. MEMBER: out of paidByMember's pocket.
+  paidFrom: GroupPaidFrom;
+  split: GroupSplit;
+  // The members it names; none: everyone in the group that day.
+  splits: GroupExpenseSplit[];
   createdAt: string;
+}
+
+// A group's settings (the defaults until first saved).
+export interface GroupSettings {
+  kind: GroupKind;
+  monthStartDay: number;
+  cashHolderMemberId: string | null;
+  mealsOn: boolean;
+  breakfastUnits: string;
+  lunchUnits: string;
+  dinnerUnits: string;
+}
+
+// One member's meals on a day.
+export interface GroupMeal {
+  id: string;
+  groupMemberId: string;
+  date: string;
+  breakfast: number;
+  lunch: number;
+  dinner: number;
+  guests: string;
 }
 
 export interface GroupSettlementMemberRow {
@@ -812,6 +864,15 @@ export interface GroupSettlementMemberRow {
   grossDeposited: string;
   returned: string;
   contributed: string;
+  // Whether they shared the period's costs (in the group during it).
+  sharing: boolean;
+  // Paid from their own pocket, credited to them.
+  pocketPaid: string;
+  mealUnits: string;
+  mealCost: string;
+  // Their share of the costs not shared by meals.
+  otherShare: string;
+  // mealCost + otherShare.
   share: string;
   balance: string;
 }
@@ -822,6 +883,11 @@ export interface GroupSettlementResult {
   totalExpense: string;
   memberCount: number;
   perMemberShare: string;
+  mealExpense: string;
+  mealUnits: string;
+  mealRate: string;
+  // Contributions less the expenses paid from the fund: every balance added up.
+  cashInHand: string;
   members: GroupSettlementMemberRow[];
 }
 
@@ -830,6 +896,9 @@ export interface GroupSettlementRecordMember {
   settlementId: string;
   groupMemberId: string;
   contributed: string;
+  pocketPaid: string;
+  mealUnits: string;
+  mealCost: string;
   share: string;
   balance: string;
   groupMember: GroupMember;
@@ -843,6 +912,11 @@ export interface GroupSettlementRecord {
   totalExpense: string;
   memberCount: number;
   perMemberShare: string;
+  mealExpense: string;
+  mealUnits: string;
+  mealRate: string;
+  cashInHand: string;
+  carriedForward: boolean;
   closedBy: string;
   closedAt: string;
   members: GroupSettlementRecordMember[];
