@@ -55,7 +55,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
     </>
   );
 
-  const prayersDone = data.namaz ? data.namaz.checks.filter((c) => c.day === data.namaz!.todayDay).map((c) => c.item) : [];
+  const prayersDone = data.namaz ? data.namaz.checks.filter((c) => c.day === data.namaz!.todayDay && c.status !== "MISSED").map((c) => c.item) : [];
   const prayerItems = data.namaz?.items.length ? data.namaz.items : PRAYERS;
   const prayerHref = data.namaz ? `/habit-tracker/habits/namaz/${data.namaz.id}` : "/habit-tracker/habits?category=Namaz";
   const expenseIcon = data.topExpense ? categoryIconFor(data.categoriesById[data.topExpense.name] ?? { icon: null, name: data.topExpense.name }) : Utensils;

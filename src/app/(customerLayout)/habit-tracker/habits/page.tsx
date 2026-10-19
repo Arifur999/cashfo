@@ -8,7 +8,7 @@ import { ChallengesHomePageClient } from "@/components/modules/Customer/HabitTra
 import { RamadanHomePageClient } from "@/components/modules/Customer/HabitTracker/Ramadan/RamadanHomePageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
-import { getHabitTrackers } from "@/lib/customer/habits";
+import { getHabitTrackers, getQaza } from "@/lib/customer/habits";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { getAppToday } from "@/lib/date";
 
@@ -24,8 +24,8 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
   // category (a stale bookmark, or the bare route) goes back to the
   // whole-account dashboard instead of rendering an orphaned page.
   if (category === "Namaz") {
-    const trackers = await getHabitTrackers("Namaz");
-    return <NamazHomePageClient trackers={trackers} today={getAppToday()} />;
+    const [trackers, qaza] = await Promise.all([getHabitTrackers("Namaz"), getQaza()]);
+    return <NamazHomePageClient trackers={trackers} qaza={qaza} today={getAppToday()} />;
   }
 
   if (category === "Ramadan") {

@@ -10,7 +10,7 @@ import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import type { HabitMonthTracker } from "@/lib/customer/api";
+import type { HabitMonthTracker, PrayerStatus } from "@/lib/customer/api";
 import { setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { hijriRange, MONTH_NAMES, monthInsights, monthSummary, prayerSummaries, type Insight } from "@/lib/customer/namazDisplay";
@@ -44,7 +44,7 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
   const { t, locale } = useLocale();
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [sheet, applyCheck] = useOptimistic(tracker, (current, update: { day: number; item: string; checked: boolean }) => withCheck(current, update.day, update.item, update.checked));
+  const [sheet, applyMark] = useOptimistic(tracker, (current, update: { day: number; item: string; status: PrayerStatus | null }) => withCheck(current, update.day, update.item, update.status !== null, update.status ?? undefined));
   const year = sheet.year as number;
   const month = sheet.month as number;
   const key = `${year}-${pad(month)}`;
@@ -56,10 +56,10 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
   const worst = [...prayers].sort((a, b) => b.missed - a.missed)[0];
   const best = [...prayers].sort((a, b) => b.prayed - a.prayed)[0];
 
-  function toggle(day: number, item: string, checked: boolean) {
+  function mark(day: number, item: string, status: PrayerStatus | null) {
     startTransition(async () => {
-      applyCheck({ day, item, checked });
-      const result = await setHabitTrackerCheckAction(sheet.id, { day, item, checked });
+      applyMark({ day, item, status });
+      const result = await setHabitTrackerCheckAction(sheet.id, status ? { day, item, checked: true, status } : { day, item, checked: false });
       if (result.success) router.refresh();
       else toast.error(result.message ?? t("Failed to update"));
     });
@@ -154,7 +154,7 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
             <span className="border-l border-line pl-4 text-ink-muted">{t("Tap a box to change it")}</span>
           </div>
         </div>
-        <PrayerSheet tracker={sheet} onToggle={toggle} totalsLabel={t("Prayed that day")} rowLabel={(item) => t(item)} />
+        <PrayerSheet tracker={sheet} onMark={mark} totalsLabel={t("Prayed that day")} rowLabel={(item) => t(item)} />
       </Card>
 
       <div className="grid gap-4 md:grid-cols-4">

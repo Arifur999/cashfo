@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker, type PrayerStatus, type QazaSummary } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -61,9 +61,10 @@ export async function createHabitTrackerAction(input: { category: string; month:
   }, "Failed to create month tracker");
 }
 
+// status: how a Namaz prayer was prayed (left out, a new mark is on time).
 export async function setHabitTrackerCheckAction(
   id: string,
-  input: { day: number; item: string; checked: boolean },
+  input: { day: number; item: string; checked: boolean; status?: PrayerStatus },
 ): Promise<ActionResult<{ day: number; item: string; checked: boolean }>> {
   return callApi(async () => {
     const res = await customerApi.put<{ day: number; item: string; checked: boolean }>(`${API_BASE_URL}/api/habit-trackers/${id}/check`, input, {
@@ -136,4 +137,27 @@ export async function updateHabitAction(id: string, input: Partial<HabitInput> &
     const res = await customerApi.patch<Habit>(`${API_BASE_URL}/api/habits/${id}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update the habit");
+}
+
+// Qaza: the prayers still owed and the ones made up.
+export async function logQazaAction(prayer: string, count = 1): Promise<ActionResult<QazaSummary>> {
+  return callApi(async () => {
+    const res = await customerApi.post<QazaSummary>(`${API_BASE_URL}/api/namaz/qaza`, { prayer, count }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the qaza");
+}
+
+export async function removeQazaAction(id: string): Promise<ActionResult<QazaSummary>> {
+  return callApi(async () => {
+    const res = await customerApi.delete<QazaSummary>(`${API_BASE_URL}/api/namaz/qaza/${id}`, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to remove the qaza");
+}
+
+// since: "YYYY-MM-DD", the day qaza counting starts from.
+export async function setQazaSinceAction(since: string): Promise<ActionResult<QazaSummary>> {
+  return callApi(async () => {
+    const res = await customerApi.put<QazaSummary>(`${API_BASE_URL}/api/namaz/qaza/since`, { since }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to change the counting day");
 }

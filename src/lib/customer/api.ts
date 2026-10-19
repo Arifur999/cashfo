@@ -978,6 +978,20 @@ export interface SkillsOverview {
 // challenge has no calendar dates, so its `elapsedDays` is 0, `todayDay`
 // null, and `month`/`year` null (Others also carries a free-form `name`,
 // null for Namaz/Ramadan).
+// How a prayer was prayed; MISSED is an explicit "not prayed".
+export type PrayerStatus = "JAMAAT" | "ON_TIME" | "QAZA" | "MISSED";
+
+// The qaza a person owes (GET /api/namaz/qaza): prayers missed on their
+// Namaz sheets since the counting day, less the ones made up.
+export interface QazaSummary {
+  since: string;
+  missed: Record<string, number>;
+  madeUp: Record<string, number>;
+  left: Record<string, number>;
+  totalLeft: number;
+  recent: { id: string; prayer: string; count: number; date: string }[];
+}
+
 export interface HabitMonthTracker {
   id: string;
   category: string;
@@ -990,7 +1004,9 @@ export interface HabitMonthTracker {
   // Day-of-month that is "today" (Asia/Dhaka, server-side) when this is the
   // current month, else null -- the sheet highlights that column.
   todayDay: number | null;
-  checks: { day: number; item: string }[];
+  // status only means something on a Namaz sheet (Ramadan and challenge
+  // ticks are always ON_TIME).
+  checks: { day: number; item: string; status: PrayerStatus }[];
   // When the sheet was created: a challenge counts its days from here.
   createdAt: string;
 }

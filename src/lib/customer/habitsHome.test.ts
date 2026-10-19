@@ -7,10 +7,10 @@ const TODAY = "2026-10-15";
 // October's sheet: every prayer ticked on the 11th to the 14th, Fajr only on
 // the 15th so far; the 10th is missing Isha.
 function sheet(): HabitMonthTracker {
-  const checks: { day: number; item: string }[] = [];
-  for (const day of [11, 12, 13, 14]) for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]) checks.push({ day, item });
-  for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib"]) checks.push({ day: 10, item });
-  checks.push({ day: 15, item: "Fajr" });
+  const checks: HabitMonthTracker["checks"] = [];
+  for (const day of [11, 12, 13, 14]) for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]) checks.push({ day, item, status: "ON_TIME" });
+  for (const item of ["Fajr", "Dhuhr", "Asr", "Maghrib"]) checks.push({ day: 10, item, status: "ON_TIME" });
+  checks.push({ day: 15, item: "Fajr", status: "ON_TIME" });
   return { id: "oct", category: "Namaz", month: 10, year: 2026, name: null, items: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"], totalDays: 31, elapsedDays: 14, todayDay: 15, checks, createdAt: "2026-10-01T00:00:00.000Z" };
 }
 

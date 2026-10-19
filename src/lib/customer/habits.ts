@@ -2,7 +2,7 @@
 // endpoint here is User-scoped (no :businessId at all, see api.ts's own
 // comment on Habit).
 import { cache } from "react";
-import { API_BASE_URL, type Habit, type HabitMonth, type HabitMonthTracker, type HabitStat, type HabitToday } from "./api";
+import { API_BASE_URL, type Habit, type HabitMonth, type HabitMonthTracker, type HabitStat, type HabitToday, type QazaSummary } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -21,6 +21,18 @@ export const getHabitTrackers = cache(async (category: string): Promise<HabitMon
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
+  }
+});
+
+// The qaza still owed, or null when it could not be read.
+export const getQaza = cache(async (): Promise<QazaSummary | null> => {
+  const headers = await authHeaders();
+  if (!headers) return null;
+  try {
+    const res = await customerApi.get<QazaSummary>(`${API_BASE_URL}/api/namaz/qaza`, { headers });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });
 

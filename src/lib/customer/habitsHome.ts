@@ -3,7 +3,7 @@
 // streaks worth showing. Pure, so the page and its tests agree.
 import type { Habit, HabitMonthLog, HabitMonthTracker, HabitToday } from "./api";
 import { countsOn, dayMark, isPlannedOn, lastDays, shiftDay } from "./habitDisplay";
-import { cellState, PRAYERS, trackerFor } from "./namazDisplay";
+import { cellState, isPrayed, PRAYERS, trackerFor } from "./namazDisplay";
 
 // prayed / missed / open (today, not yet) / none (no sheet, or not reached).
 export type PrayerMark = "prayed" | "missed" | "open" | "none";
@@ -16,6 +16,7 @@ export function prayerMarks(trackers: HabitMonthTracker[], day: string, today: s
   const dayNumber = Number(day.slice(8));
   return PRAYERS.map((prayer) => {
     const state = cellState(tracker, dayNumber, prayer);
+    if (isPrayed(state)) return "prayed";
     return state === "locked" ? "none" : state;
   });
 }

@@ -13,7 +13,7 @@ const ramadan = (checks: [number, string][], overrides: Partial<HabitMonthTracke
   totalDays: 30,
   elapsedDays: 0,
   todayDay: null,
-  checks: checks.map(([day, item]) => ({ day, item })),
+  checks: checks.map(([day, item]) => ({ day, item, status: "ON_TIME" as const })),
   createdAt: "2026-02-10T00:00:00.000Z",
   ...overrides,
 });
