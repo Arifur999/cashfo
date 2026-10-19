@@ -311,6 +311,19 @@ export interface Transaction {
   entries: TransactionEntry[];
 }
 
+// The other end of an Edit (decision D2), with its amount.
+export interface CorrectionLink {
+  id: string;
+  amount: string;
+}
+
+// One transaction as its own page reads it: also the original it corrected,
+// and the entry that corrected it.
+export interface TransactionDetail extends Transaction {
+  correctedFrom: CorrectionLink | null;
+  correctedBy: CorrectionLink | null;
+}
+
 export interface TransactionListResponse {
   data: Transaction[];
   meta: { page: number; limit: number; total: number; totalPages: number };

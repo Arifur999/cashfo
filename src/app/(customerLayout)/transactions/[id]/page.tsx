@@ -194,8 +194,24 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
         <div className="flex flex-col gap-6">
           <Card className="flex flex-col gap-2">
             <h3 className="text-h3 leading-6 text-ink">{t("History")}</h3>
-            <HistoryRow tone="bg-emerald" title={t("Added")} when={formatDateTime(transaction.createdAt)} />
-            {transaction.voidedAt && <HistoryRow tone="bg-expense-fill" title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}` : ""}`} when={formatDateTime(transaction.voidedAt)} />}
+            {transaction.correctedFrom ? (
+              <HistoryRow
+                tone="bg-info"
+                title={t("Corrected from {amount}", { amount: formatCurrency(Number(transaction.correctedFrom.amount), currency) })}
+                when={formatDateTime(transaction.createdAt)}
+                link={{ href: `/transactions/${transaction.correctedFrom.id}`, label: t("See the original") }}
+              />
+            ) : (
+              <HistoryRow tone="bg-emerald" title={t("Added")} when={formatDateTime(transaction.createdAt)} />
+            )}
+            {transaction.voidedAt && (
+              <HistoryRow
+                tone="bg-expense-fill"
+                title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}` : ""}`}
+                when={formatDateTime(transaction.voidedAt)}
+                link={transaction.correctedBy ? { href: `/transactions/${transaction.correctedBy.id}`, label: t("See the corrected entry ({amount})", { amount: formatCurrency(Number(transaction.correctedBy.amount), currency) }) } : undefined}
+              />
+            )}
           </Card>
           {canManage && transaction.voidable && !row.cancelled && (
             <Card className="flex flex-col gap-3">
@@ -216,13 +232,18 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
   );
 }
 
-function HistoryRow({ tone, title, when }: { tone: string; title: string; when: string }) {
+function HistoryRow({ tone, title, when, link }: { tone: string; title: string; when: string; link?: { href: string; label: string } }) {
   return (
     <div className="flex gap-3 py-3">
       <span className={cn("mt-1 size-2.5 shrink-0 rounded-full", tone)} aria-hidden="true" />
       <span className="flex flex-col">
         <span className="text-body font-semibold text-ink">{title}</span>
         <span className="text-caption font-normal text-ink-muted">{when}</span>
+        {link && (
+          <Link href={link.href} className="mt-1 text-small font-semibold text-emerald hover:underline">
+            {link.label}
+          </Link>
+        )}
       </span>
     </div>
   );

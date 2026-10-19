@@ -1,6 +1,6 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
 import { cache } from "react";
-import { API_BASE_URL, type ContactCategory, type Transaction, type TransactionListResponse, type TransactionType } from "./api";
+import { API_BASE_URL, type ContactCategory, type Transaction, type TransactionDetail, type TransactionListResponse, type TransactionType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -65,12 +65,12 @@ export async function getAllTransactions(
   return { data, total, complete: data.length >= total };
 }
 
-export const getTransaction = cache(async (businessId: string, id: string): Promise<Transaction | null> => {
+export const getTransaction = cache(async (businessId: string, id: string): Promise<TransactionDetail | null> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
   try {
-    const response = await customerApi.get<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}`, {
+    const response = await customerApi.get<TransactionDetail>(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
