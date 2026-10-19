@@ -925,10 +925,32 @@ export interface Book {
   updatedAt: string;
 }
 
+// A note on a book, or a line the reader liked, with its page.
+export interface BookNote {
+  id: string;
+  bookId: string;
+  page: number | null;
+  text: string;
+  createdAt: string;
+}
+
+// One Asia/Dhaka day of reading, over every book.
+export interface ReadingDay {
+  date: string; // YYYY-MM-DD
+  pages: number;
+}
+
 export interface BooksOverview {
   year: number; // the current Asia/Dhaka year
   goalTarget: number | null; // this year's "finish N books" goal
   books: Book[];
+  // Days in a row with pages read (up to yesterday while today has none
+  // yet), the best run, and Saturday to Friday of this week.
+  reading: { streak: number; best: number; week: ReadingDay[] };
+  // Pages read today in each book that has any, by book id.
+  pagesToday: Record<string, number>;
+  // The notes on each book being read, oldest first, by book id.
+  notes: Record<string, BookNote[]>;
 }
 
 // Habit Tracker -> Skills (the "Course" category): something being learned,
