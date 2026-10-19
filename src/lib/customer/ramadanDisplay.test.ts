@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { HabitMonthTracker } from "./api";
 import { challengeMark, challengeSummary, challengeWindow, dayDone } from "./challengeDisplay";
-import { ashraSummary, parasOn, quranKhatam, ramadanCell, ramadanDays, ramadanStartIn, ramadanSummary, ramadanWindow, withParas } from "./ramadanDisplay";
+import { ashraSummary, parasOn, quranKhatam, ramadanCell, ramadanDays, ramadanStartIn, ramadanSummary, ramadanWindow, summaryNote, withParas } from "./ramadanDisplay";
 
 const ramadan = (checks: [number, string][], overrides: Partial<HabitMonthTracker> = {}): HabitMonthTracker => ({
   id: "r",
@@ -47,6 +47,18 @@ describe("ramadan", () => {
     const going = ramadanWindow(tracker, ramadanStartIn(2026) as string);
     expect(ramadanCell(tracker, going, 2, "Taraweeh")).toBe("locked");
     expect(ramadanCell(tracker, going, 1, "Roza")).toBe("done");
+  });
+
+  it("notes a row done every day, fasts to make up, and the last ten", () => {
+    const lastTen = Array.from({ length: 10 }, (_, i) => [21 + i, "Tahajjud"] as [number, string]);
+    const tracker = ramadan([...lastTen, [1, "Roza"]], { items: ["Roza", "Tahajjud", "Taraweeh"] });
+    const over = ramadanWindow(tracker, "2026-10-02");
+    const [roza, tahajjud, taraweeh] = ramadanSummary(tracker, over).items;
+    expect(summaryNote(tracker, over, roza)).toEqual({ kind: "makeUp", fasts: 29 });
+    expect(summaryNote(tracker, over, tahajjud)).toEqual({ kind: "lastTen", nights: true });
+    expect(summaryNote(tracker, over, taraweeh)).toBeNull();
+    const going = ramadanWindow(tracker, ramadanStartIn(2026) as string);
+    expect(summaryNote(tracker, going, ramadanSummary(tracker, going).items[0])).toEqual({ kind: "everyDay" });
   });
 
   it("counts the paras towards a khatam, and the day it was finished", () => {

@@ -15,7 +15,7 @@ import type { HabitMonthTracker } from "@/lib/customer/api";
 import { formatDate } from "@/lib/customer/date";
 import { nextRamadan, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
 import { removeTrackerItemAction, setHabitTrackerCheckAction, setRamadanParasAction } from "@/lib/customer/habitsActions";
-import { ASHRAS, ashraSummary, ramadanCell, ramadanDays, ramadanSummary, ramadanWindow, withParas } from "@/lib/customer/ramadanDisplay";
+import { ASHRAS, ashraSummary, ramadanCell, ramadanDays, ramadanSummary, ramadanWindow, type SummaryNote, summaryNote, withParas } from "@/lib/customer/ramadanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AddRowDialog } from "../Tracker/AddRowDialog";
@@ -37,6 +37,13 @@ const SUGGESTIONS = ["Taraweeh", "Quran", "Zikr", "Sadaqah", "Tahajjud", "Dua", 
 const ASHRA_TONE = { 1: "bg-pillar-insights-soft text-pillar-insights", 2: "bg-info-soft text-info", 3: "bg-warning-soft text-warning" } as const;
 const STATUS_CHIP = { upcoming: "neutral", going: "mint", completed: "income" } as const;
 const STATUS_LABEL = { upcoming: "Coming up", going: "Going on", completed: "Completed" } as const;
+
+function noteText(note: SummaryNote, t: (key: string, values?: Record<string, string | number>) => string): string {
+  if (!note) return "";
+  if (note.kind === "everyDay") return t("Every day");
+  if (note.kind === "makeUp") return note.fasts === 1 ? t("1 fast to make up before next Ramadan") : t("{count} fasts to make up before next Ramadan", { count: note.fasts });
+  return t(note.nights ? "All of the last ten nights" : "Every day of the last ten");
+}
 
 // A tick, or a day's paras, layered over the server's sheet until it answers.
 type SheetUpdate = { kind: "check"; day: number; item: string; checked: boolean } | { kind: "paras"; day: number; paras: number };
@@ -248,7 +255,7 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
                 <span className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
                   <span className={cn("block h-full rounded-full", row.pct === 100 ? "bg-income" : "bg-emerald")} style={{ width: `${row.pct}%` }} />
                 </span>
-                <span className="text-caption font-normal text-ink-muted">{row.pct === 100 && row.of > 0 ? t("Every day") : row.of - row.done > 0 && row.item === "Roza" ? `${row.of - row.done} ${t(row.of - row.done === 1 ? "fast to make up" : "fasts to make up")}` : ""}</span>
+                <span className="text-caption font-normal text-ink-muted">{noteText(summaryNote(sheet, window, row), t)}</span>
               </span>
               <span className="text-right font-bold text-ink tabular-nums">
                 {row.done}/{row.of}

@@ -89,6 +89,22 @@ export function ramadanSummary(tracker: HabitMonthTracker, window: RamadanWindow
   return { items, done, of, pct: of > 0 ? Math.round((done / of) * 100) : 0 };
 }
 
+// Taraweeh and Tahajjud are prayed at night.
+const NIGHT_ROWS = new Set(["taraweeh", "tahajjud"]);
+
+// The line under a row of the summary: done every day so far, the fasts
+// still to make up, or (once Ramadan is over) every day of the last ten.
+export type SummaryNote = { kind: "everyDay" } | { kind: "makeUp"; fasts: number } | { kind: "lastTen"; nights: boolean } | null;
+
+export function summaryNote(tracker: HabitMonthTracker, window: RamadanWindow, row: ItemSummary): SummaryNote {
+  if (row.of > 0 && row.done === row.of) return { kind: "everyDay" };
+  if (row.item === "Roza" && row.of > row.done) return { kind: "makeUp", fasts: row.of - row.done };
+  if (window.status !== "completed" || tracker.totalDays < 21) return null;
+  const lastTen = ramadanDays(tracker).filter((d) => d.ashra === 3);
+  const all = lastTen.every((d) => tracker.checks.some((c) => c.day === d.day && c.item === row.item));
+  return all ? { kind: "lastTen", nights: NIGHT_ROWS.has(row.item.toLowerCase()) } : null;
+}
+
 // Share of everything done in each ashra, over its days that have come.
 export function ashraSummary(tracker: HabitMonthTracker, window: RamadanWindow): { n: 1 | 2 | 3; done: number; of: number; pct: number }[] {
   const counted = window.status === "completed" ? tracker.totalDays : window.todayDay ?? 0;
