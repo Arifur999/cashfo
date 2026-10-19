@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type TodoList } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type TodoList, type TodoPriority, type TodoRepeatKind } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { getAppToday } from "@/lib/date";
 import { customerApi } from "./apiClient";
@@ -56,14 +56,31 @@ export async function deleteTodoListAction(id: string): Promise<ActionResult<{ i
   }, "Failed to remove list");
 }
 
-export async function addTodoItemAction(listId: string, text: string): Promise<ActionResult<TodoList>> {
+export interface NewTodoItem {
+  text: string;
+  priority?: TodoPriority;
+  dueTime?: string | null;
+}
+
+export async function addTodoItemAction(listId: string, item: NewTodoItem): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
-    const res = await customerApi.post<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items`, { text }, { headers: await authHeaders() });
+    const res = await customerApi.post<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items`, item, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add task");
 }
 
-export async function updateTodoItemAction(listId: string, itemId: string, input: { text?: string; completed?: boolean }): Promise<ActionResult<TodoList>> {
+// What the Edit task drawer (or a tick) changes. date moves the task to
+// that day; repeat null stops it repeating.
+export interface TodoItemChanges {
+  text?: string;
+  completed?: boolean;
+  priority?: TodoPriority;
+  dueTime?: string | null;
+  date?: string;
+  repeat?: { kind: TodoRepeatKind; weekdays?: number[] } | null;
+}
+
+export async function updateTodoItemAction(listId: string, itemId: string, input: TodoItemChanges): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
     const res = await customerApi.patch<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}`, input, { headers: await authHeaders() });
     return res.data;

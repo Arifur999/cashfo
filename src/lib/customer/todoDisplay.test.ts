@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { TodoList } from "./api";
-import { dayCount, dayCountText, dayLabel, doneItems, isDayKey, listFor, openItems, relativeName, stripDays, upcoming, withList } from "./todoDisplay";
+import { inEnglish } from "@/lib/i18n/message";
+import { timeLabel } from "./date";
+import { byPriority, dayCount, dayCountText, dayLabel, dayOfMonthWord, doneItems, isDayKey, listFor, movedLabel, openItems, relativeName, repeatLabel, stripDays, upcoming, withList } from "./todoDisplay";
 
 const t = (key: string) => key;
-const list = (id: string, date: string, items: [string, boolean][]): TodoList => ({ id, date, items: items.map(([text, completed], i) => ({ id: `${id}-${i}`, text, completed })) });
+const list = (id: string, date: string, items: [string, boolean][]): TodoList => ({ id, date, items: items.map(([text, completed], i) => ({ id: `${id}-${i}`, text, completed, priority: "MEDIUM", dueTime: null, movedFrom: null, repeat: null })) });
 
 const TODAY = "2026-10-15";
 const LISTS = [
@@ -69,5 +71,38 @@ describe("a day's list", () => {
     expect(changed).toHaveLength(LISTS.length);
     expect(listFor(changed, TODAY)?.items).toHaveLength(1);
     expect(withList(LISTS, list("z", "2026-11-01", []))).toHaveLength(LISTS.length + 1);
+  });
+});
+
+describe("a task's priority, time and repeating", () => {
+  const task = (id: string, priority: "HIGH" | "MEDIUM" | "LOW", dueTime: string | null) => ({ id, text: id, completed: false, priority, dueTime, movedFrom: null, repeat: null });
+
+  it("puts high priority first, then the earlier time, then untimed tasks", () => {
+    const sorted = byPriority([task("low", "LOW", null), task("med-late", "MEDIUM", "18:00"), task("med-any", "MEDIUM", null), task("high", "HIGH", null), task("med-early", "MEDIUM", "09:30")]);
+    expect(sorted.map((item) => item.id)).toEqual(["high", "med-early", "med-late", "med-any", "low"]);
+  });
+
+  it("writes times on a 12-hour clock", () => {
+    expect(timeLabel("17:00", inEnglish)).toBe("5:00 pm");
+    expect(timeLabel("00:05", inEnglish)).toBe("12:05 am");
+    expect(timeLabel("12:30", inEnglish)).toBe("12:30 pm");
+  });
+
+  it("words the day of the month for each language", () => {
+    expect(["1", "2", "3", "4", "11", "12", "13", "21", "22", "31"].map((day) => dayOfMonthWord(Number(day), "en"))).toEqual(["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd", "31st"]);
+    expect(dayOfMonthWord(3, "bn")).toBe("3");
+  });
+
+  it("reads a repeat rule as the board does", () => {
+    expect(repeatLabel({ kind: "WEEKLY", weekdays: [5], monthDay: null }, inEnglish, "en")).toBe("Every Friday");
+    expect(repeatLabel({ kind: "WEEKLY", weekdays: [3, 0], monthDay: null }, inEnglish, "en", true)).toBe("every Sun, Wed");
+    expect(repeatLabel({ kind: "MONTHLY", weekdays: [], monthDay: 3 }, inEnglish, "en")).toBe("Monthly, on the 3rd");
+    expect(repeatLabel({ kind: "MONTHLY", weekdays: [], monthDay: 3 }, inEnglish, "en", true)).toBe("every month on the 3rd");
+    expect(repeatLabel({ kind: "DAILY", weekdays: [], monthDay: null }, inEnglish, "en")).toBe("Every day");
+  });
+
+  it("says where a moved task came from", () => {
+    expect(movedLabel("2026-10-14", TODAY, inEnglish)).toBe("Moved from yesterday");
+    expect(movedLabel("2026-10-12", TODAY, inEnglish)).toBe(`Moved from ${dayLabel("2026-10-12", "EEE d MMM")}`);
   });
 });

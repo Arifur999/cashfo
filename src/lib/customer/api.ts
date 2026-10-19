@@ -998,10 +998,36 @@ export interface HabitMonthTracker {
 // Habit Tracker -> To Do List: one list per calendar date, holding any number
 // of check-off tasks. Unlike the trackers above, a list has no calendar grid
 // and no protected-history delete rule -- see backend TodosService.
+export type TodoPriority = "HIGH" | "MEDIUM" | "LOW";
+export type TodoRepeatKind = "DAILY" | "WEEKLY" | "MONTHLY";
+
+// How a task repeats: every day, on certain weekdays (0 = Sunday), or once
+// a month on monthDay.
+export interface TodoRepeatRule {
+  id: string;
+  kind: TodoRepeatKind;
+  weekdays: number[];
+  monthDay: number | null;
+}
+
 export interface TodoItem {
   id: string;
   text: string;
   completed: boolean;
+  priority: TodoPriority;
+  // "HH:MM" on a 24-hour clock, or null for any time that day.
+  dueTime: string | null;
+  // "YYYY-MM-DD" the task was first planned for, once it has moved.
+  movedFrom: string | null;
+  repeat: TodoRepeatRule | null;
+}
+
+// A repeating task still going, for the board's "Repeating tasks" card.
+export interface TodoRepeat extends TodoRepeatRule {
+  text: string;
+  priority: TodoPriority;
+  dueTime: string | null;
+  startsOn: string;
 }
 
 export interface TodoList {

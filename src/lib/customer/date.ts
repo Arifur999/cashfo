@@ -65,3 +65,9 @@ export function formatDurationUntil(to: Date, from: Date = new Date()): string {
   if (days > 0 || parts.length === 0) parts.push(`${days} day${days !== 1 ? "s" : ""}`);
   return parts.join(", ");
 }
+
+// "17:30" -> "5:30 pm"; the am/pm word goes through `t`.
+export function timeLabel(time: string, t: Translate): string {
+  const [hours, minutes] = time.split(":").map(Number);
+  return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${t(hours < 12 ? "am" : "pm")}`;
+}

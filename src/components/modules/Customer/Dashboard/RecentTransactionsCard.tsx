@@ -37,7 +37,7 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
   return (
     <Card padding="none" className="flex flex-col overflow-hidden max-md:shadow-none">
       <div className="hidden items-center justify-between px-5 pt-5 pb-3 md:flex">
-        <h3 className="text-h3 text-ink">{t("Recent transactions")}</h3>
+        <h3 className="text-h3 leading-6 text-ink">{t("Recent transactions")}</h3>
         {oldest && (
           <span className="text-small text-ink-muted">
             {t("Since")} {formatDate(oldest.transactionDate, "d MMM")}
@@ -68,7 +68,7 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
                 {createElement(icon)}
               </IconTile>
               <span className="flex min-w-0 flex-col py-2">
-                <span className="flex items-center gap-2 truncate text-body font-semibold text-ink">
+                <span className="flex items-center gap-2 truncate text-body leading-5 font-semibold text-ink">
                   {row.title ?? t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}
                   {row.cancelled && (
                     <Chip tone="neutral" size="sm">
@@ -76,12 +76,12 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
                     </Chip>
                   )}
                 </span>
-                <span className="truncate text-small text-ink-muted">
+                <span className="truncate text-small leading-4.5 text-ink-muted">
                   {row.category && <span className="hidden md:inline">{row.category.name} · </span>}
                   {whereAndWhen}
                 </span>
               </span>
-              <AmountText value={row.signedAmount} currency={currency} signed={!isTransfer} tone={isTransfer ? "neutral" : "auto"} size="md" className={cn("text-right font-bold", row.cancelled && "line-through")} />
+              <AmountText value={row.signedAmount} currency={currency} signed={!isTransfer} tone={isTransfer ? "neutral" : "auto"} size="md" className={cn("text-right leading-5.5 font-bold", row.cancelled && "line-through")} />
             </Link>
           );
         })

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, ListChecks, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Check, ListChecks, MoreVertical, Pencil, Plus, Repeat, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -13,25 +13,28 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { TodoItem, TodoList } from "@/lib/customer/api";
+import type { TodoItem, TodoList, TodoPriority, TodoRepeat } from "@/lib/customer/api";
+import { timeLabel } from "@/lib/customer/date";
 import { shiftDay } from "@/lib/customer/habitDisplay";
-import { dayCount, dayLabel, doneItems, listFor, openItems, relativeName, upcoming, withList } from "@/lib/customer/todoDisplay";
-import { addTodoItemAction, createTodoListAction, moveTodoItemToNextDayAction, removeTodoItemAction, updateTodoItemAction } from "@/lib/customer/todosActions";
+import { byPriority, dayCount, dayLabel, doneItems, listFor, openItems, PRIORITY_LABEL, relativeName, repeatLabel, upcoming, withList } from "@/lib/customer/todoDisplay";
+import { addTodoItemAction, createTodoListAction, moveTodoItemToNextDayAction, removeTodoItemAction, type TodoItemChanges, updateTodoItemAction } from "@/lib/customer/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { DayStrip } from "./DayStrip";
-import { EditTaskDialog } from "./EditTaskDialog";
+import { PRIORITY_TONE, PriorityMenu, TaskMeta, TimeButton } from "./TaskBits";
+import { TaskDrawer } from "./TaskDrawer";
 
 interface TodoBoardPageClientProps {
   lists: TodoList[];
+  repeats: TodoRepeat[];
   day: string;
   today: string;
 }
 
 // Habits › To-do list: a strip of days, the picked day's tasks with what is
 // done and what is left, and what is coming up after it.
-export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoardPageClientProps) {
-  const { t } = useLocale();
+export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }: TodoBoardPageClientProps) {
+  const { t, locale } = useLocale();
   const router = useRouter();
   const todayTasks = useTodayTasks();
   const addField = useRef<HTMLInputElement>(null);
@@ -46,14 +49,16 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
   }
 
   const [text, setText] = useState("");
+  const [priority, setPriority] = useState<TodoPriority>("MEDIUM");
+  const [time, setTime] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<TodoItem | null>(null);
   const [removing, setRemoving] = useState<TodoItem | null>(null);
 
   const list = listFor(lists, day);
-  const open = openItems(list);
-  const done = doneItems(list);
+  const open = byPriority(openItems(list));
+  const done = byPriority(doneItems(list));
   const count = dayCount(list);
   const name = relativeName(day, today);
   const heading = name ? `${t(name)} · ${dayLabel(day)}` : dayLabel(day);
@@ -81,7 +86,13 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
   async function add(event: React.FormEvent) {
     event.preventDefault();
     const value = text.trim();
-    if (!value || adding) return;
+    if (adding) return;
+    // Add stays live, as the board draws it; with nothing typed it sends
+    // you back to the field.
+    if (!value) {
+      addField.current?.focus();
+      return;
+    }
     setAdding(true);
     try {
       let target = list;
@@ -93,10 +104,11 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
         }
         target = created.data;
       }
-      const result = await addTodoItemAction(target.id, value);
+      const result = await addTodoItemAction(target.id, { text: value, priority, dueTime: time });
       if (result.success && result.data) {
         absorb(result.data);
         setText("");
+        setTime(null);
         router.refresh();
       } else {
         toast.error(result.message ?? t("Failed to add task"));
@@ -115,18 +127,26 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
     });
   }
 
-  function rename(item: TodoItem, value: string) {
+  function save(item: TodoItem, changes: TodoItemChanges) {
     if (!list) return;
     withBusy(item.id, async () => {
-      const result = await updateTodoItemAction(list.id, item.id, { text: value });
+      const result = await updateTodoItemAction(list.id, item.id, changes);
       if (result.success && result.data) {
         absorb(result.data);
         setEditing(null);
+        toast.success(t("Task saved"));
+        // A move or a new repeat touches other days; the refresh brings them.
+        if (changes.date || changes.repeat !== undefined) router.refresh();
       } else {
         toast.error(result.message ?? t("Failed to update task"));
       }
     });
   }
+
+  // "High · 10:00 am · every Thursday" under an upcoming task, with its day
+  // first when it is later in the week.
+  const upcomingSub = (item: TodoItem, when?: string) =>
+    [when && dayLabel(when, "EEE d MMM"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t), item.repeat && repeatLabel(item.repeat, t, locale, true)].filter(Boolean).join(" · ");
 
   async function moveOn(item: TodoItem, quiet = false): Promise<boolean> {
     if (!list) return false;
@@ -199,7 +219,7 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
           <div className="flex flex-wrap items-center justify-between gap-4 px-5 pt-4 pb-3">
             <div className="flex flex-col gap-0.5">
               <h2 className="text-h3 font-semibold text-ink">{heading}</h2>
-              <span className="text-small text-ink-muted">{t("What's left first, then what's done.")}</span>
+              <span className="text-small text-ink-muted">{t("High priority first, then by time")}</span>
             </div>
             {count.total > 0 && (
               <span className="flex items-center gap-3 text-small text-ink-2">
@@ -213,7 +233,9 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
 
           <form onSubmit={add} className="flex gap-2 px-5 pb-4">
             <Input ref={addField} size="md" value={text} onChange={(event) => setText(event.target.value)} maxLength={200} placeholder={name === "Today" ? t("Add a task for today…") : t("Add a task for this day…")} aria-label={t("New task")} frameClassName="h-10 flex-1" />
-            <Button type="submit" variant="action" disabled={!text.trim() || adding}>
+            <PriorityMenu value={priority} onChange={setPriority} />
+            <TimeButton value={time} onChange={setTime} />
+            <Button type="submit" variant="action" disabled={adding}>
               {t("Add")}
             </Button>
           </form>
@@ -240,7 +262,10 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
                         <button type="button" role="checkbox" aria-checked={item.completed} aria-label={item.text} disabled={busy.has(item.id)} onClick={() => toggle(item)} className={cn("flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors disabled:opacity-50", item.completed ? "bg-emerald text-white" : "border-[1.5px] border-line-strong bg-surface hover:border-emerald")}>
                           {item.completed && <Check className="size-3.5" strokeWidth={3.5} aria-hidden="true" />}
                         </button>
-                        <span className={cn("min-w-0 flex-1 truncate text-body font-medium", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                          <span className={cn("truncate text-body font-medium", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+                          <TaskMeta item={item} day={day} />
+                        </span>
                         {!item.completed && canMoveOn && (
                           <Button type="button" variant="outline" size="sm" onClick={() => moveOne(item)} disabled={busy.has(item.id)} title={t("Move to tomorrow")} aria-label={`${t("Move to tomorrow")}: ${item.text}`} className="h-8 border-line px-2.5 text-ink-2 sm:px-3">
                             <ArrowRight className="size-3.5" strokeWidth={2.5} />
@@ -283,12 +308,26 @@ export function TodoBoardPageClient({ lists: serverLists, day, today }: TodoBoar
         </Card>
 
         <div className="flex flex-col gap-4">
-          <UpcomingCard title={`${tomorrowName ? t(tomorrowName) : dayLabel(shiftDay(day, 1), "EEEE")} · ${dayLabel(shiftDay(day, 1), "EEE d MMM")}`} rows={openItems(next.tomorrow).map((item) => ({ key: item.id, text: item.text }))} empty={t("Nothing planned yet.")} />
-          <UpcomingCard title={t("Later this week")} rows={next.later.map(({ day: when, item }) => ({ key: item.id, text: item.text, sub: dayLabel(when, "EEE d MMM") }))} empty={t("Nothing planned yet.")} />
+          <UpcomingCard title={`${tomorrowName ? t(tomorrowName) : dayLabel(shiftDay(day, 1), "EEEE")} · ${dayLabel(shiftDay(day, 1), "EEE d MMM")}`} rows={byPriority(openItems(next.tomorrow)).map((item) => ({ key: item.id, text: item.text, sub: upcomingSub(item), priority: item.priority }))} empty={t("Nothing planned yet.")} />
+          <UpcomingCard title={t("Later this week")} rows={next.later.map(({ day: when, item }) => ({ key: item.id, text: item.text, sub: upcomingSub(item, when), priority: item.priority }))} empty={t("Nothing planned yet.")} />
+          {repeats.length > 0 && (
+            <Card padding="none" className="flex flex-col gap-2 px-5 py-4">
+              <h2 className="flex items-center gap-2 text-title font-semibold text-ink">
+                <Repeat className="size-4 text-pillar-habits" aria-hidden="true" />
+                {t("Repeating tasks")}
+              </h2>
+              {repeats.map((rule) => (
+                <div key={rule.id} className="flex justify-between gap-3 text-small">
+                  <span className="min-w-0 truncate font-medium text-ink">{rule.text}</span>
+                  <span className="whitespace-nowrap text-ink-muted">{repeatLabel(rule, t, locale)}</span>
+                </div>
+              ))}
+            </Card>
+          )}
         </div>
       </div>
 
-      <EditTaskDialog item={editing} dayLabel={heading} isPending={editing !== null && busy.has(editing.id)} onClose={() => setEditing(null)} onSave={rename} onDelete={setRemoving} />
+      <TaskDrawer item={editing} day={day} today={today} isPending={editing !== null && busy.has(editing.id)} onClose={() => setEditing(null)} onSave={save} onDelete={setRemoving} />
       <ConfirmDialog open={removing !== null} onClose={() => setRemoving(null)} onConfirm={remove} isPending={removing !== null && busy.has(removing.id)} danger title={t("Delete task")} description={removing ? `${t("Delete")} "${removing.text}"? ${t("This cannot be undone.")}` : ""} confirmLabel={t("Delete")} />
     </PageFrame>
   );
@@ -298,6 +337,7 @@ interface UpcomingRow {
   key: string;
   text: string;
   sub?: string;
+  priority: TodoPriority;
 }
 
 function UpcomingCard({ title, rows, empty }: { title: string; rows: UpcomingRow[]; empty: string }) {
@@ -315,7 +355,7 @@ function UpcomingCard({ title, rows, empty }: { title: string; rows: UpcomingRow
       ) : (
         rows.map((row) => (
           <div key={row.key} className="flex items-start gap-3 py-2">
-            <span className="mt-2 size-2 shrink-0 rounded-full bg-pillar-habits" aria-hidden="true" />
+            <span className={cn("mt-2 size-2 shrink-0 rounded-full", PRIORITY_TONE[row.priority].dot)} aria-hidden="true" />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="truncate text-body font-medium text-ink">{row.text}</span>
               {row.sub && <span className="text-caption text-ink-muted">{row.sub}</span>}

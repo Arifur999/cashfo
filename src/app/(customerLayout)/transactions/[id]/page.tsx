@@ -149,7 +149,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
             </div>
             <dl className="flex flex-col px-6 pb-3">
               {facts.map((fact, index) => (
-                <div key={fact.label} className={cn("grid gap-4 py-3 text-body sm:grid-cols-[140px_minmax(0,1fr)]", index > 0 && "border-t border-surface-sunken")}>
+                <div key={fact.label} className={cn("grid gap-4 py-3 text-body leading-5 sm:grid-cols-[140px_minmax(0,1fr)]", index > 0 && "border-t border-surface-sunken")}>
                   <dt className="text-ink-muted">{fact.label}</dt>
                   <dd className="min-w-0 text-ink">{fact.value}</dd>
                 </div>
@@ -161,8 +161,8 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
             <details open={isBusiness} className="group">
               <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  <h3 className="text-h3 text-ink">{t("Behind the scenes")}</h3>
-                  <span className="text-small text-ink-muted">{t("How Smartly records this in your books. Debits always equal credits.")}</span>
+                  <h3 className="text-h3 leading-6 text-ink">{t("Behind the scenes")}</h3>
+                  <span className="text-small leading-4.5 text-ink-muted">{t("How Smartly records this in your books. Debits always equal credits.")}</span>
                 </span>
                 <span className="text-small font-semibold text-emerald group-open:hidden">{t("Show")}</span>
                 <span className="hidden text-small font-semibold text-emerald group-open:inline">{t("Hide")}</span>
@@ -193,13 +193,13 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
 
         <div className="flex flex-col gap-6">
           <Card className="flex flex-col gap-2">
-            <h3 className="text-h3 text-ink">{t("History")}</h3>
+            <h3 className="text-h3 leading-6 text-ink">{t("History")}</h3>
             <HistoryRow tone="bg-emerald" title={t("Added")} when={formatDateTime(transaction.createdAt)} />
             {transaction.voidedAt && <HistoryRow tone="bg-expense-fill" title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}` : ""}`} when={formatDateTime(transaction.voidedAt)} />}
           </Card>
           {canManage && transaction.voidable && !row.cancelled && (
             <Card className="flex flex-col gap-3">
-              <h3 className="text-h3 text-ink">{t("Made a mistake?")}</h3>
+              <h3 className="text-h3 leading-6 text-ink">{t("Made a mistake?")}</h3>
               {editable ? (
                 <>
                   <p className="text-body leading-[21px] text-ink-2">{t("Use Edit to fix the amount, category, wallet, date or note. The original is kept in History, marked as corrected, so your records stay honest.")}</p>

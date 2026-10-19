@@ -25,7 +25,7 @@ export function HomeHero({ balance, walletCount, balanceChangePercent, income, e
 
       <div className="relative flex flex-col gap-4 md:gap-6">
         <div className="flex flex-col gap-4 md:gap-2">
-          <span className="flex flex-wrap items-center justify-between gap-3 text-small text-mint-200 md:justify-start md:text-body">
+          <span className="flex flex-wrap items-center justify-between gap-3 text-small text-mint-200 md:justify-start md:text-body md:leading-5">
             {t("Total balance")} · {walletCount} {t(walletCount === 1 ? "wallet" : "wallets")}
             {change !== null && (
               <Chip tone="onDark">
@@ -55,12 +55,12 @@ export function HomeHero({ balance, walletCount, balanceChangePercent, income, e
             <circle cx="60" cy="60" r="50" fill="none" stroke="var(--emerald)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${((savingsRate ?? 0) / 100) * RING} ${RING}`} transform="rotate(-90 60 60)" />
           </svg>
           <span className="absolute inset-0 flex flex-col items-center justify-center">
-            <b className="text-amount-lg font-extrabold tabular-nums">{savingsRate ?? 0}%</b>
+            <b className="text-amount-lg leading-8 font-extrabold tabular-nums">{savingsRate ?? 0}%</b>
             <span className="text-caption font-normal text-ink-muted">{t("saved")}</span>
           </span>
         </div>
-        <span className="text-center text-body font-semibold">{t("Savings rate this month")}</span>
-        <span className="text-center text-caption font-normal text-ink-muted">
+        <span className="text-center text-body leading-5 font-semibold">{t("Savings rate this month")}</span>
+        <span className="text-center text-caption leading-4 font-normal text-ink-muted">
           {savingsRate === null
             ? t("Add an income to see it")
             : lastSavingsRate === null
@@ -86,13 +86,13 @@ function ThisMonth({ label }: { label: string }) {
   );
 }
 
-// The phone board leaves its line heights to the fonts ("normal"), which
-// stands a line with a taka sign taller; leading-[normal] keeps that.
+// The phone board leaves the tiles' lines to the fonts, which stands a line
+// with a taka sign taller; the desktop board fixes them at 13/18 and 22/28.
 function HeroTile({ label, value, currency, signed = false, className }: { label: React.ReactNode; value: number; currency: string; signed?: boolean; className?: string }) {
   return (
     <div className={cn("flex flex-col gap-0.5 rounded-lg bg-white/10 p-3 md:gap-1 md:p-4", className)}>
-      <span className="text-caption font-normal text-mint-200 max-md:leading-[normal] md:text-small">{label}</span>
-      <AmountText value={value} currency={currency} signed={signed} tone="inherit" size="md" className="font-bold max-md:leading-[normal] md:text-h2" />
+      <span className="text-caption font-normal text-mint-200 md:text-small md:leading-4.5">{label}</span>
+      <AmountText value={value} currency={currency} signed={signed} tone="inherit" size="md" className="font-bold md:text-h2 md:leading-7" />
     </div>
   );
 }

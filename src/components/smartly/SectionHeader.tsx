@@ -19,7 +19,7 @@ const SectionHeader = ({ eyebrow, tone = "money", title, aside, id, className }:
   <div className={cn("flex items-end justify-between gap-4", className)}>
     <div className="flex min-w-0 flex-col gap-0.5 md:gap-1">
       {eyebrow && <Eyebrow tone={tone}>{eyebrow}</Eyebrow>}
-      <h2 id={id} className="text-h3 font-bold text-ink md:text-h2">
+      <h2 id={id} className="text-h3 leading-6 font-bold text-ink md:text-h2 md:leading-7">
         {title}
       </h2>
     </div>
