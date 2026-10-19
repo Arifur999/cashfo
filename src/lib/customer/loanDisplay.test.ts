@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Transaction, TransactionEntry } from "./api";
-import { avatarTone, balanceAfterEntry, loanDirection, loanEntryOf, loanTotals } from "./loanDisplay";
+import { avatarTone, balanceAfterEntry, loanDirection, loanEntryOf, loanTotals, whoPhrase } from "./loanDisplay";
 
 const entry = (entryType: TransactionEntry["entryType"], subtype: string | null, amount: string, name = "Cash"): TransactionEntry => ({
   id: `${name}-${entryType}`,
@@ -66,5 +66,15 @@ describe("avatarTone", () => {
   it("is stable for a name and a valid class pair", () => {
     expect(avatarTone("Rahim Uddin")).toBe(avatarTone("Rahim Uddin"));
     expect(avatarTone("Selim")).toMatch(/^bg-\S+ text-\S+$/);
+  });
+});
+
+describe("whoPhrase", () => {
+  const t = (key: string, values?: Record<string, string | number>) => key.replace("{count}", String(values?.count ?? ""));
+  it("names banks and NGOs beside the other contacts", () => {
+    expect(whoPhrase(["BOTH", "RELATIVE", undefined], t)).toBe("3 contacts");
+    expect(whoPhrase(["BANK", "NGO"], t)).toBe("1 bank and 1 NGO");
+    expect(whoPhrase(["BOTH", "BANK", "BANK", "NGO"], t)).toBe("1 contact, 2 banks and 1 NGO");
+    expect(whoPhrase([], t)).toBe("0 contacts");
   });
 });

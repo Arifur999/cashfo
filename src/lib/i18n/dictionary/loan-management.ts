@@ -239,4 +239,15 @@ export const loanManagementDictionary: Record<string, string> = {
   "Apply to specific transaction": "নির্দিষ্ট লেনদেনে প্রয়োগ করুন",
   "General payment (applies to oldest first)": "সাধারণ পেমেন্ট (সবচেয়ে পুরোনোটিতে আগে প্রয়োগ হবে)",
   Latest: "সর্বশেষ",
+
+  // Banks and NGOs (LoanContactDrawer.tsx, the dashboard cards)
+  NGO: "এনজিও",
+  "{count} contact": "{count} জন",
+  "{count} contacts": "{count} জন",
+  "{count} bank": "{count}টি ব্যাংক",
+  "{count} banks": "{count}টি ব্যাংক",
+  "{count} NGO": "{count}টি এনজিও",
+  "{count} NGOs": "{count}টি এনজিও",
+  "From {who}": "{who} থেকে",
+  "To {who}": "{who}-কে",
 };
