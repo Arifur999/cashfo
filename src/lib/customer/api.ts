@@ -72,7 +72,7 @@ export interface LoginHistoryEntry {
 // Facebook/bank/etc. logins), gated by its own vault password (separate
 // from the account password) plus a short-lived unlock token. See
 // passwordVaultActions.ts and backend/src/password-vault/.
-export type VaultEntryCategory = "SOCIAL" | "BANK" | "EMAIL" | "SHOPPING" | "WORK" | "OTHER";
+export type VaultEntryCategory = "SOCIAL" | "BANK" | "MOBILE_BANKING" | "EMAIL" | "SHOPPING" | "WORK" | "WIFI" | "GOVERNMENT" | "OTHER";
 
 // Never carries the actual password -- GET /api/vault/entries omits it on
 // purpose (see PasswordVaultService.list()'s comment); revealVaultEntryAction
@@ -87,8 +87,21 @@ export interface VaultEntrySummary {
   holderName: string | null;
   usernameOrEmail: string | null;
   notes: string | null;
+  // When the password itself last changed (other edits leave it).
+  passwordChangedAt: string;
+  isFavorite: boolean;
+  // "It's fine" on the checkup's old-password warning, until it changes.
+  checkupDismissedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// The security checkup: the logins whose password is weak, used for more
+// than one login, or over a year old -- ids only, never a password.
+export interface VaultCheckup {
+  weak: string[];
+  reused: string[];
+  old: string[];
 }
 
 export interface BusinessLimits {

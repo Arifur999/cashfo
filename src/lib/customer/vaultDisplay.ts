@@ -1,7 +1,7 @@
 // The sums behind the password vault: how strong a password is, the rules a
 // vault password must meet, a generated password, the unlock countdown and
 // the list's search, sort and counts. Pure, so the page and its tests agree.
-import type { VaultEntryCategory, VaultEntrySummary } from "./api";
+import type { VaultCheckup, VaultEntryCategory, VaultEntrySummary } from "./api";
 
 export const MIN_VAULT_PASSWORD = 6;
 export const MAX_VAULT_PASSWORD = 128;
@@ -148,8 +148,28 @@ export function filterEntries(entries: VaultEntrySummary[], query: string, categ
   return entries.filter((entry) => (category === "" || entry.category === category) && (q === "" || entry.title.toLowerCase().includes(q) || (entry.usernameOrEmail ?? "").toLowerCase().includes(q) || hostOf(entry.websiteUrl).toLowerCase().includes(q)));
 }
 
+export type VaultIssue = "reused" | "weak" | "old";
+
+// What the checkup found for one login, worst first.
+export function issuesOf(checkup: VaultCheckup | null, id: string): VaultIssue[] {
+  if (!checkup) return [];
+  return (["reused", "weak", "old"] as const).filter((issue) => checkup[issue].includes(id));
+}
+
+// The logins with anything to fix.
+export function attentionIds(checkup: VaultCheckup | null): Set<string> {
+  return new Set(checkup ? [...checkup.reused, ...checkup.weak, ...checkup.old] : []);
+}
+
+// Whole months from an ISO time to `now`.
+export function monthsSince(iso: string, now: Date): number {
+  const then = new Date(iso);
+  const months = (now.getUTCFullYear() - then.getUTCFullYear()) * 12 + now.getUTCMonth() - then.getUTCMonth() - (now.getUTCDate() < then.getUTCDate() ? 1 : 0);
+  return Math.max(0, months);
+}
+
 export function categoryCounts(entries: VaultEntrySummary[]): Record<VaultEntryCategory, number> {
-  const counts: Record<VaultEntryCategory, number> = { SOCIAL: 0, BANK: 0, EMAIL: 0, SHOPPING: 0, WORK: 0, OTHER: 0 };
+  const counts: Record<VaultEntryCategory, number> = { SOCIAL: 0, BANK: 0, MOBILE_BANKING: 0, EMAIL: 0, SHOPPING: 0, WORK: 0, WIFI: 0, GOVERNMENT: 0, OTHER: 0 };
   for (const entry of entries) counts[entry.category]++;
   return counts;
 }
@@ -178,9 +198,9 @@ const TINT = {
 export const QUICK_LOGINS: QuickLogin[] = [
   { title: "Facebook", category: "SOCIAL", website: "facebook.com", letter: "F", kind: "Social", tint: TINT.blue },
   { title: "Gmail", category: "EMAIL", website: "mail.google.com", letter: "G", kind: "Email", tint: TINT.red },
-  { title: "bKash", category: "BANK", website: "bkash.com", letter: "b", kind: "Mobile banking", tint: TINT.rose },
+  { title: "bKash", category: "MOBILE_BANKING", website: "bkash.com", letter: "b", kind: "Mobile banking", tint: TINT.rose },
   { title: "Islami Bank", category: "BANK", website: "islamibankbd.com", letter: "I", kind: "Bank", tint: TINT.mint },
   { title: "Daraz", category: "SHOPPING", website: "daraz.com.bd", letter: "D", kind: "Shopping", tint: TINT.amber },
-  { title: "Home Wi-Fi", category: "OTHER", website: "", letter: "W", kind: "Wi-Fi", tint: TINT.teal },
+  { title: "Home Wi-Fi", category: "WIFI", website: "", letter: "W", kind: "Wi-Fi", tint: TINT.teal },
   { title: "Office email", category: "WORK", website: "", letter: "O", kind: "Work", tint: TINT.blue },
 ];
