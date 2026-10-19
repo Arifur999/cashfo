@@ -505,7 +505,7 @@ export const habitTrackerDictionary: Record<string, string> = {
   "Qaza removed": "কাজা মোছা হয়েছে",
 
   // Namaz: the next prayer and today's times (NamazHero.tsx)
-  "Next prayer": "পরের নামাজ",
+  "Next prayer": "পরের ওয়াক্ত",
   "Starts in {minutes} minutes": "{minutes} মিনিট পরে শুরু",
   "Starts in {hours} h {minutes} min": "{hours} ঘণ্টা {minutes} মিনিট পরে শুরু",
   "In {minutes} min": "{minutes} মিনিট পরে",
