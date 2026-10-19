@@ -198,7 +198,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     contributions: <GroupContributionsTab data={data} view={view} onAdd={() => openContribution()} onEdit={(row) => guardClosed(row.date, () => setContribution({ open: true, editing: row, memberId: null }))} onRemove={removeContribution} />,
     expenses: <GroupExpensesTab data={data} view={view} onAdd={() => setExpense({ open: true, editing: null })} onEdit={(row) => guardClosed(row.date, () => setExpense({ open: true, editing: row }))} onRemove={removeExpense} />,
     settlement: <GroupSettlementTab data={data} view={view} onRecordPayment={(preset) => setPayment({ open: true, preset })} onCloseMonth={() => setCloseOpen(true)} />,
-    settings: <GroupSettingsTab data={data} onAddBudget={() => setBudget({ open: true, editing: null })} onEditBudget={(editing) => setBudget({ open: true, editing })} onAddCategory={() => setCategory({ open: true, editing: null })} onEditCategory={(editing) => setCategory({ open: true, editing })} onRemoveCategory={removeCategory} onDeleteGroup={deleteGroup} />,
+    settings: <GroupSettingsTab data={data} onEditBudget={() => setBudget({ open: true, editing: budgetFor(data.budgets, data.range) })} onAddCategory={() => setCategory({ open: true, editing: null })} onEditCategory={(editing) => setCategory({ open: true, editing })} onRemoveCategory={removeCategory} onDeleteGroup={deleteGroup} />,
   };
 
   return (

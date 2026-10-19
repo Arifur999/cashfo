@@ -1,4 +1,4 @@
-import type { GroupContribution, GroupExpense, GroupKind, GroupMember, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
+import type { GroupContribution, GroupExpense, GroupKind, GroupMember, GroupSplit, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
 
 // The figures a group page derives from what the API already returns:
 // the month's range and whether it is closed, cash in hand, who pays
@@ -22,6 +22,10 @@ export const GROUP_TAB_LABELS: Record<GroupTab, string> = {
   settlement: "Settlement",
   settings: "Settings",
 };
+
+// The ways an expense can be shared, and their words.
+export const SPLITS: GroupSplit[] = ["EQUAL", "SHARES", "MEALS", "EXACT"];
+export const SPLIT_LABELS: Record<GroupSplit, string> = { EQUAL: "Equally", SHARES: "By shares", MEALS: "By meals", EXACT: "Exact amounts" };
 
 // The old ?tab=category lived in the sidebar; categories now sit in Settings.
 export function groupTabFrom(value: unknown): GroupTab {
