@@ -1,10 +1,12 @@
 "use client";
 
-import { ArrowRight, Check, CheckCheck, Clock3, Info, Plus, X } from "lucide-react";
+import { ArrowRight, Check, CheckCheck, Clock3, Info, Plus, Settings2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
+import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import PageFrame from "@/components/smartly/PageFrame";
@@ -12,13 +14,13 @@ import PageHeader from "@/components/smartly/PageHeader";
 import type { HabitMonthTracker, PrayerStatus, QazaSummary } from "@/lib/customer/api";
 import { createHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
-import { type CellState, cellState, hijriRange, isPrayed, MONTH_NAMES, monthSummary, prayedChecks, PRAYERS, trackerFor, yearSummary } from "@/lib/customer/namazDisplay";
+import { type CellState, cellState, hijriRange, MONTH_NAMES, monthSummary, prayedChecks, PRAYERS, trackerFor, yearSummary } from "@/lib/customer/namazDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { withCheck } from "../trackerChecks";
 import { EarlierMonthDialog } from "./EarlierMonthDialog";
-import { PrayerIcon } from "./PrayerIcon";
-import { PrayerStatusMenu } from "./PrayerStatusMenu";
+import { NamazHero } from "./NamazHero";
+import { PrayerSettingsDialog } from "./PrayerSettingsDialog";
 import { QazaCard } from "./QazaCard";
 
 interface NamazHomePageClientProps {
@@ -31,8 +33,7 @@ interface NamazHomePageClientProps {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-// How each state reads under a prayer, and its small box on the month card.
-const WORD: Record<CellState, string> = { jamaat: "With jama'at", onTime: "On time", qaza: "Qaza", missed: "Not prayed", open: "Not yet", locked: "Not yet" };
+// Each state's small box on the month card.
 const MINI: Record<CellState, string> = {
   jamaat: "bg-emerald text-white",
   onTime: "bg-emerald-tint text-emerald",
@@ -63,7 +64,8 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
   const [current, applyMark] = useOptimistic(server, (tracker, update: { item: string; status: PrayerStatus | null }) => (tracker ? withCheck(tracker, todayDay, update.item, update.status !== null, update.status ?? undefined) : tracker));
   const [, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
-  const [marking, setMarking] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { settings } = usePrayerSettings();
   const creating = useRef(false);
 
   // No sheet for this month yet: open one, once.
@@ -77,7 +79,6 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
   }, [server, month, year, router, t]);
 
   function mark(item: string, status: PrayerStatus | null) {
-    setMarking(null);
     if (!current) return;
     startTransition(async () => {
       applyMark({ item, status });
@@ -96,48 +97,20 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
 
   return (
     <PageFrame className="gap-5">
-      <PageHeader eyebrow={t("Habits")} tone="habits" title={t("Namaz")} description={t("The five daily prayers, month by month. Each new month opens on its own.")} />
+      <PageHeader
+        eyebrow={t("Habits")}
+        tone="habits"
+        title={t("Namaz")}
+        description={t("The five daily prayers, month by month. Each new month opens on its own.")}
+        actions={
+          <Button variant="secondary" onClick={() => setSettingsOpen(true)}>
+            <Settings2 className="text-ink-2" />
+            {t("Prayer time settings")}
+          </Button>
+        }
+      />
 
-      <section aria-label={t("Today's prayers")} className="grid items-center gap-6 rounded-lg bg-[linear-gradient(135deg,var(--forest)_0%,var(--emerald)_100%)] p-6 text-white shadow-[0_8px_24px_rgba(31,122,90,0.25)] md:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="flex flex-col gap-2">
-          <span className="text-small font-semibold opacity-85">{t("Today")}</span>
-          <span className="flex items-baseline gap-3">
-            <span className="text-display text-white">{summary ? summary.todayDone : 0}</span>
-            <span className="text-[22px] font-semibold">{t("of")} 5 {t("prayed")}</span>
-          </span>
-          <span className="flex h-7 items-center gap-2 self-start rounded-full bg-white/18 px-3 text-small font-semibold">
-            {summary && summary.todayDone === 5 ? <Check className="size-4" aria-hidden="true" /> : <Info className="size-4" aria-hidden="true" />}
-            {summary && summary.todayDone === 5 ? t("All five prayed today") : t("Tap a prayer to mark it")}
-          </span>
-          <span className="mt-2 text-small opacity-90">
-            {monthName(currentKey, locale, "long", true)} · {hijriRange(year, month, locale)}
-          </span>
-        </div>
-        <div className="grid grid-cols-5 gap-3">
-          {PRAYERS.map((item) => {
-            const state: CellState = current ? cellState(current, todayDay, item) : "open";
-            const prayed = isPrayed(state);
-            const tile = (
-              <button key={item} type="button" disabled={!current} onClick={() => setMarking(item)} aria-haspopup="dialog" aria-label={`${t(item)}, ${t(WORD[state])}`} className={cn("flex w-full flex-col gap-2 rounded-md border p-3 text-left transition-colors", prayed ? "border-white bg-white text-forest" : state === "missed" ? "border-white/30 bg-white/8 text-white" : "border-white/18 bg-white/12 text-white hover:bg-white/20")}>
-                <span className="flex items-center justify-between gap-2">
-                  <span className="text-small font-semibold opacity-90">{t(item)}</span>
-                  <PrayerIcon item={item} className="size-4 opacity-80" />
-                </span>
-                <span className={cn("flex size-6.5 items-center justify-center rounded-sm [&_svg]:size-3.5", prayed ? "bg-forest text-white" : state === "missed" ? "bg-rose-soft text-rose" : "border-[1.5px] border-dashed border-white/60")}>
-                  <StateIcon state={state} />
-                </span>
-                <span className="text-caption font-semibold whitespace-nowrap opacity-90">{t(WORD[state])}</span>
-              </button>
-            );
-            if (marking !== item || !current) return tile;
-            return (
-              <PrayerStatusMenu key={item} open onOpenChange={(open) => !open && setMarking(null)} prayer={item} day={today} state={state} marked={current.checks.some((c) => c.day === todayDay && c.item === item)} onPick={(status) => mark(item, status)}>
-                {tile}
-              </PrayerStatusMenu>
-            );
-          })}
-        </div>
-      </section>
+      <NamazHero current={current} today={today} onMark={mark} onSettings={() => setSettingsOpen(true)} />
 
       <div className="grid gap-5 md:grid-cols-3">
         <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
@@ -260,7 +233,7 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
                 <span className="flex items-start justify-between gap-2">
                   <span className="flex flex-col gap-0.5">
                     <span className="text-title font-semibold">{monthName(key, locale, "long", true)}</span>
-                    <span className="text-caption font-normal text-ink-muted">{hijriRange(tracker.year as number, tracker.month as number, locale)}</span>
+                    <span className="text-caption font-normal text-ink-muted">{hijriRange(tracker.year as number, tracker.month as number, locale, settings.hijriAdjust)}</span>
                   </span>
                   {now ? (
                     <Chip tone="forest" size="sm">
@@ -293,6 +266,7 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
       </section>
 
       <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={currentKey} />
+      <PrayerSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} today={today} />
     </PageFrame>
   );
 }
