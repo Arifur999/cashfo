@@ -1,7 +1,7 @@
 // The colour pairings the design uses for soft tiles, chips and labels: a
 // pale fill with its matching ink. One table, so a "loans" tile and a
 // "loans" chip can never drift apart.
-export type Tone = "money" | "income" | "expense" | "loans" | "habits" | "vault" | "insights" | "warning" | "info" | "neutral";
+export type Tone = "money" | "income" | "expense" | "loans" | "habits" | "vault" | "insights" | "warning" | "info" | "rose" | "neutral";
 
 export const SOFT_TONE: Record<Tone, string> = {
   money: "bg-mint-50 text-emerald",
@@ -13,6 +13,7 @@ export const SOFT_TONE: Record<Tone, string> = {
   insights: "bg-pillar-insights-soft text-pillar-insights",
   warning: "bg-warning-soft text-warning",
   info: "bg-info-soft text-info",
+  rose: "bg-rose-soft text-rose",
   neutral: "bg-surface-sunken text-ink-2",
 };
 
@@ -27,6 +28,7 @@ export const TONE_TEXT: Record<Tone, string> = {
   insights: "text-pillar-insights",
   warning: "text-warning",
   info: "text-info",
+  rose: "text-rose",
   neutral: "text-ink-muted",
 };
 
@@ -40,5 +42,6 @@ export const TONE_BG: Record<Tone, string> = {
   insights: "bg-pillar-insights",
   warning: "bg-warning-fill",
   info: "bg-info",
+  rose: "bg-rose",
   neutral: "bg-ink-muted",
 };

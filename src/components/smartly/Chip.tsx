@@ -9,6 +9,7 @@ const TONES = {
   loans: "bg-pillar-loans-soft text-pillar-loans",
   habits: "bg-pillar-habits-soft text-pillar-habits",
   insights: "bg-pillar-insights-soft text-pillar-insights",
+  rose: "bg-rose-soft text-rose",
   neutral: "bg-surface-sunken text-ink-2",
   // The "Earn ৳" tag and the balance trend on the hero.
   glow: "bg-mint-glow text-forest",
