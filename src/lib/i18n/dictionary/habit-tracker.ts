@@ -501,7 +501,7 @@ export const habitTrackerDictionary: Record<string, string> = {
   Later: "পরে",
   "Jama'at": "জামাত",
 
-  // Namaz: prayer time settings (PrayerSettingsDialog.tsx)
+  // Namaz: prayer time settings (PrayerSettingsDrawer.tsx)
   "Prayer time settings": "নামাজের সময়ের সেটিংস",
   "Used by Namaz, Ramadan and Today": "নামাজ, রমজান ও আজকের পাতায় ব্যবহৃত হয়",
   City: "শহর",

@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { withCheck } from "../trackerChecks";
 import { EarlierMonthDialog } from "./EarlierMonthDialog";
 import { NamazHero } from "./NamazHero";
-import { PrayerSettingsDialog } from "./PrayerSettingsDialog";
+import { PrayerSettingsDrawer } from "./PrayerSettingsDrawer";
 import { QazaCard } from "./QazaCard";
 
 interface NamazHomePageClientProps {
@@ -266,7 +266,7 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
       </section>
 
       <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={currentKey} />
-      <PrayerSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} today={today} />
+      <PrayerSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} today={today} />
     </PageFrame>
   );
 }
