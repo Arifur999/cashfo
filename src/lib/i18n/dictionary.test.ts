@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CITIES, METHODS } from "@/lib/customer/prayerTimes";
 import { getSignInErrorMessage } from "@/lib/signInErrors";
 import { PASSWORD_STRENGTH_LABELS } from "@/lib/passwordStrength";
 import { bnAdminScopeDictionary, bnDictionary } from "./dictionary";
@@ -16,6 +17,12 @@ describe("bnDictionary", () => {
   it("covers every password strength label", () => {
     for (const label of Object.values(PASSWORD_STRENGTH_LABELS)) {
       expect(bnDictionary[label], label).toBeTruthy();
+    }
+  });
+
+  it("names every prayer-time city and calculation method", () => {
+    for (const name of [...CITIES.map((city) => city.name), ...METHODS.flatMap((method) => [method.label, method.short])]) {
+      expect(bnDictionary[name], name).toBeTruthy();
     }
   });
 
