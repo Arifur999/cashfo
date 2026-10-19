@@ -67,8 +67,8 @@ describe("the last seven days", () => {
 
   it("lists the streaks that are alive, longest first", () => {
     const rows = [row(water, 9, true), row(walk, 0, null)];
-    expect(streakRows(rows, 5, 4).map((s) => `${s.kind}:${s.days}`)).toEqual(["habit:9", "skills:5", "prayers:4"]);
-    expect(streakRows(rows, 0, 0)).toHaveLength(1);
+    expect(streakRows(rows, { skills: 5, reading: 6, prayers: 4 }).map((s) => `${s.kind}:${s.days}`)).toEqual(["habit:9", "reading:6", "skills:5", "prayers:4"]);
+    expect(streakRows(rows, { skills: 0, reading: 0, prayers: 0 })).toHaveLength(1);
     expect(doneToday(rows)).toBe(1);
   });
 

@@ -39,8 +39,9 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   const [habitOpen, setHabitOpen] = useState(false);
   const taskField = useRef<HTMLInputElement>(null);
 
+  const reading = data.books ? nowReading(data.books.books) : null;
   const bars = last7(data.namaz, data.habits, data.logs, today);
-  const streaks = streakRows(data.todayRows, data.skills?.streak ?? 0, prayerStreak(data.namaz, today));
+  const streaks = streakRows(data.todayRows, { skills: data.skills?.streak ?? 0, reading: data.books?.reading.streak ?? 0, prayers: prayerStreak(data.namaz, today) });
 
   return (
     <PageFrame className="md:gap-5">
@@ -92,7 +93,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
       </div>
 
       <div className="grid items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-4">
-        <ReadingCard book={data.books ? nowReading(data.books.books) : null} today={today} />
+        <ReadingCard book={reading} streak={data.books?.reading.streak ?? 0} pagesToday={reading ? (data.books?.pagesToday[reading.id] ?? 0) : 0} today={today} />
         <div className="hidden md:contents">
           <LearningMini overview={data.skills} today={today} />
           <ChallengesCard trackers={data.challenges} today={today} />

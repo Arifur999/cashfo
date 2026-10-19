@@ -12,11 +12,15 @@ import { Cover } from "../Books/Cover";
 
 interface ReadingCardProps {
   book: Book | null;
+  // Days in a row with pages read, and the pages read in the book today.
+  streak: number;
+  pagesToday: number;
   today: string;
 }
 
-// The book on the nightstand, in brief; phones get the board's single row.
-export function ReadingCard({ book, today }: ReadingCardProps) {
+// The book on the nightstand, in brief, with the reading streak and today's
+// pages; phones get the board's single row.
+export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProps) {
   const { t } = useLocale();
   const pace = book ? readingPace(book, today) : null;
   const pct = book ? progressPct(book) : 0;
@@ -36,10 +40,16 @@ export function ReadingCard({ book, today }: ReadingCardProps) {
             <h2 className="truncate text-body leading-[normal] font-semibold text-ink">{book.title}</h2>
             <span className="text-caption leading-[normal] font-normal text-ink-muted tabular-nums">
               {t("Page")} {book.pagesRead} {t("of")} {book.totalPages}
-              {pace !== null && ` · ${pace} ${t("pages a day")}`}
+              {pagesToday > 0 ? ` · ${t("{count} pages today", { count: pagesToday })}` : pace !== null && ` · ${pace} ${t("pages a day")}`}
             </span>
             {bar}
           </div>
+          {streak > 0 && (
+            <span className="flex shrink-0 items-center gap-1 text-small font-bold text-ink tabular-nums" aria-label={t("{count}-day streak", { count: streak })}>
+              <Flame className="size-4 text-warning" aria-hidden="true" />
+              {streak}
+            </span>
+          )}
         </Card>
       )}
       <Card padding="none" className={cn("flex flex-col gap-3 px-5 py-4", book && "max-md:hidden")}>
@@ -64,16 +74,21 @@ export function ReadingCard({ book, today }: ReadingCardProps) {
             </div>
             <div className="mt-auto flex items-center justify-between gap-3 border-t border-surface-sunken pt-3 text-small whitespace-nowrap">
               <span className="flex items-center gap-1 font-semibold text-ink">
-                {pace !== null && (
+                {streak > 0 ? (
                   <>
                     <Flame className="size-4 text-warning" aria-hidden="true" />
-                    {pace} {t("pages a day")}
+                    {t("{count}-day streak", { count: streak })}
                   </>
+                ) : (
+                  pace !== null && (
+                    <>
+                      <Flame className="size-4 text-warning" aria-hidden="true" />
+                      {pace} {t("pages a day")}
+                    </>
+                  )
                 )}
               </span>
-              <span className="font-semibold text-income">
-                {pagesLeft(book)} {t("pages left")}
-              </span>
+              <span className="font-semibold text-income">{pagesToday > 0 ? t("{count} pages today", { count: pagesToday }) : `${pagesLeft(book)} ${t("pages left")}`}</span>
             </div>
           </>
         ) : (
