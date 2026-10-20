@@ -13,6 +13,11 @@ export const adminSharedDictionary: Record<string, string> = {
   Page: "পাতা",
   "Earlier pages": "আগের পাতাগুলো",
   "Later pages": "পরের পাতাগুলো",
+  // The shared pager's other labels, in the admin panel's পাতা so one pager
+  // never mixes it with the customer side's পৃষ্ঠা.
+  "Page {page} of {total}": "পাতা {page} / {total}",
+  "Go to page {page}": "পাতা {page}-এ যান",
+  "Rows per page": "প্রতি পাতায় সারি",
   "Clear filters": "ফিল্টার মুছুন",
   Export: "এক্সপোর্ট",
   "Download the selected rows, or all rows shown, as CSV": "বাছাই করা সারি, বা দেখানো সব সারি CSV হিসেবে নামান",

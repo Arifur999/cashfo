@@ -123,4 +123,27 @@ export const sharedDictionary: Record<string, string> = {
   Success: "সফল",
   Failed: "ব্যর্থ",
   Error: "ত্রুটি",
+
+  // The shared Pagination, LoadMore and list components. Customer pages say
+  // পৃষ্ঠা where the admin panel says পাতা, and one pager must not mix the
+  // two, so "Previous page" and "Next page" here win over income-expense.ts's
+  // পাতা. The admin scope still takes admin-shared.ts's wording for the keys
+  // it has. "Show fewer" is already worded in group-expenses.ts.
+  Pagination: "পৃষ্ঠা বদল",
+  "Previous page": "আগের পৃষ্ঠা",
+  "Next page": "পরের পৃষ্ঠা",
+  "Earlier pages": "আগের পৃষ্ঠাগুলো",
+  "Later pages": "পরের পৃষ্ঠাগুলো",
+  "Page {page} of {total}": "পৃষ্ঠা {page} / {total}",
+  "Go to page {page}": "পৃষ্ঠা {page}-এ যান",
+  "Rows per page": "প্রতি পৃষ্ঠায় সারি",
+  // The board writes a range as "54টির মধ্যে 1–20", with no verb.
+  "Showing {range} of {total}": "{total}টির মধ্যে {range}",
+  "Showing {shown} of {total}": "{total}টির মধ্যে {shown}টি দেখানো হচ্ছে",
+  "Show {count} more": "আরও {count}টি দেখান",
+  // A paged statement's first and last rows: the running balance from the
+  // pages before, and the one the next page starts from (as the loan
+  // statement words it).
+  "Brought forward": "এগিয়ে আনা ব্যালেন্স",
+  "Carried forward": "এগিয়ে নেওয়া ব্যালেন্স",
 };
