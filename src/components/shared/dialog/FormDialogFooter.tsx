@@ -22,7 +22,7 @@ interface FormDialogFooterProps {
 const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disabled, extra, pinned = false }: FormDialogFooterProps) => {
   const { translate } = useLocale();
   return (
-    // The design's dialog foot: a cream strip across the bottom of the card.
+    // The design's dialog foot: a strip across the bottom of the card.
     <DialogFooter className={cn("-mx-6 -mb-5 items-center border-t border-line bg-strip px-6 py-4 sm:justify-between", pinned ? "mt-auto" : "mt-4")}>
       <div>{extra}</div>
       <div className="flex flex-col-reverse gap-3 sm:flex-row">

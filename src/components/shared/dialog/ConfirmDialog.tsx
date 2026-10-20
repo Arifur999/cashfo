@@ -103,7 +103,7 @@ const ConfirmBody = ({
           )}
         </div>
       )}
-      {/* The design's dialog foot: a cream strip across the bottom of the card. */}
+      {/* The design's dialog foot: a strip across the bottom of the card. */}
       <AlertDialogFooter className="mt-0 flex-row items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
         <AlertDialogCancel disabled={isPending} className={cn(BUTTON, "border-line-strong bg-surface text-ink hover:bg-surface-sunken")}>
           {translate("Cancel")}
@@ -129,7 +129,7 @@ const ConfirmBody = ({
 // Accessible replacement for window.confirm(): focus-trapped, keyboard
 // friendly, and it stays open (with a spinner) until the action finishes --
 // the caller closes it on success. Drawn as the design's confirm card: an
-// icon in a circle, the question, the explanation, then the cream foot.
+// icon in a circle, the question, the explanation, then the strip foot.
 const ConfirmDialog = ({ open, onOpenChange, title, description, icon, isPending = false, ...bodyProps }: ConfirmDialogProps) => {
   const { translate } = useLocale();
   const destructive = bodyProps.variant === "destructive";

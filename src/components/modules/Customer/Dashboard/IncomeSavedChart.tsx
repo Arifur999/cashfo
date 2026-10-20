@@ -27,7 +27,7 @@ interface IncomeSavedChartProps {
 }
 
 // "Income and what you kept": two bars a month for the last six months,
-// the current month on a cream band, and a line under it that says how
+// the current month on a strip band, and a line under it that says how
 // this month compares.
 export function IncomeSavedChart({ points, currency, monthName, className }: IncomeSavedChartProps) {
   const { t } = useLocale();

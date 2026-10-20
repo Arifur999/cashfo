@@ -27,7 +27,7 @@ interface FormDrawerProps {
 }
 
 // A form that slides in from the right, as the design draws plan and coupon
-// editing: a titled head, the fields, and the cream foot pinned to the
+// editing: a titled head, the fields, and the strip foot pinned to the
 // bottom (give the form FormDialogFooter's `pinned`). Like FormDialog, a
 // stray outside click doesn't throw the form away; Escape still closes.
 const FormDrawer = ({ open, onOpenChange, title, description, trigger, width = "md", closeOnOutsideClick = false, children }: FormDrawerProps) => {

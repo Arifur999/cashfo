@@ -17,7 +17,7 @@ interface TicketConversationProps {
   onSetStatus?: (status: TicketStatus) => void;
 }
 
-// The thread on a cream ground, and the reply box under it.
+// The thread on the strip ground, and the reply box under it.
 const TicketConversation = ({ ticket, admins, currentAdminId, canReply, onSetStatus }: TicketConversationProps) => {
   // A sent reply shows at once; the refetched thread replaces it when the
   // request settles.

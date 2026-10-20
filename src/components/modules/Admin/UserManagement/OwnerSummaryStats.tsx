@@ -3,7 +3,7 @@ import { formatNumber } from "@/lib/number";
 import type { IOwnerDetail } from "@/types/owner.types";
 import { getTranslator } from "@/lib/i18n/locale";
 
-// Four small figures on cream tiles, as the design draws a person's
+// Four small figures on strip tiles, as the design draws a person's
 // overview: workspaces, plan, since when, last seen.
 const OwnerSummaryStats = async ({ owner }: { owner: IOwnerDetail }) => {
   const { t } = await getTranslator("admin");
