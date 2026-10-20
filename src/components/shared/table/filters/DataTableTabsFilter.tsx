@@ -37,7 +37,7 @@ const DataTableTabsFilter = ({ label, options, allLabel = "All", tone = "cream",
     <SegmentedControl
       label={label}
       variant="tabs"
-      className={tone === "cream" ? "border border-line bg-cream" : undefined}
+      className={tone === "cream" ? "border border-line bg-surface-sunken" : undefined}
       options={[
         ...(defaultValue ? [] : [{ value: ALL, label: tab(translate(allLabel), hasCounts ? total : undefined) }]),
         ...options.map((option) => ({ value: option.value, label: tab(translate(asStatus(option.label)), option.count) })),

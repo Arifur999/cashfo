@@ -205,7 +205,7 @@ const CommandPalette = ({
                         <b className="truncate text-body font-semibold text-ink">{item.title}</b>
                         {item.sub && <span className="truncate text-caption text-ink-muted">{item.sub}</span>}
                       </span>
-                      {item.badge && <span className="flex h-6 shrink-0 items-center rounded-full bg-cream px-3 text-caption font-semibold text-ink-2">{item.badge}</span>}
+                      {item.badge && <span className="flex h-6 shrink-0 items-center rounded-full bg-surface-sunken px-3 text-caption font-semibold text-ink-2">{item.badge}</span>}
                     </button>
                   );
                 })}

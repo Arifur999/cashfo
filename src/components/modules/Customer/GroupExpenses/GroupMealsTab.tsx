@@ -116,7 +116,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
                         role="cell"
                         onClick={() => onDay(day)}
                         title={`${member.name}, ${day}: ${mealText(value)} ${t("meals")}${cell?.guests ? ` · ${t("guest meal included")}` : ""}`}
-                        className={cn("relative flex items-center justify-center hover:bg-mint-50", day === data.today ? "bg-mint-50" : weekend(day) && "bg-cream", value === 0 ? "text-ink-muted" : value >= units.breakfast + units.lunch + units.dinner ? "text-ink" : "text-ink-muted", cell?.guests ? "font-bold" : "font-medium")}
+                        className={cn("relative flex items-center justify-center hover:bg-mint-50", day === data.today ? "bg-mint-50" : weekend(day) && "bg-surface-sunken", value === 0 ? "text-ink-muted" : value >= units.breakfast + units.lunch + units.dinner ? "text-ink" : "text-ink-muted", cell?.guests ? "font-bold" : "font-medium")}
                       >
                         {value === 0 ? "–" : mealText(value)}
                         {!!cell?.guests && <span className="absolute top-1.75 right-0.75 size-1.25 rounded-full bg-warning-fill" aria-hidden="true" />}

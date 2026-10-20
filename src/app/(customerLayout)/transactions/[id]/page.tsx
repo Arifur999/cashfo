@@ -68,7 +68,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
       ? {
           label: t("Category"),
           value: (
-            <span className="inline-flex items-center gap-2 rounded-full bg-cream px-3 py-1 text-caption font-semibold text-ink-2">
+            <span className="inline-flex items-center gap-2 rounded-full bg-surface-sunken px-3 py-1 text-caption font-semibold text-ink-2">
               <span className={cn("size-[7px] rounded-full bg-current", tone.fg)} aria-hidden="true" />
               {row.category.name}
             </span>

@@ -231,7 +231,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
                       <Link
                         key={prayer}
                         href={prayerHref}
-                        className={cn("flex flex-col items-center gap-2 rounded-md border px-1 py-3", done ? "border-transparent bg-mint-50" : "border-transparent bg-cream")}
+                        className={cn("flex flex-col items-center gap-2 rounded-md border px-1 py-3", done ? "border-transparent bg-mint-50" : "border-transparent bg-surface-sunken")}
                       >
                         <span className={cn("flex size-8 items-center justify-center rounded-full text-white", done ? "bg-emerald" : "border-[1.5px] border-dashed border-line-strong bg-surface")}>
                           {done && <CircleCheckBig className="size-4" strokeWidth={2.5} aria-hidden="true" />}

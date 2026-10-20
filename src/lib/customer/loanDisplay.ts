@@ -52,7 +52,7 @@ export interface DirectionMeta {
 export const DIRECTION_META: Record<LoanBalanceDirection, DirectionMeta> = {
   PAWNA: { name: "Pawna", label: "They owe you", short: "owes you", chip: "income", text: "text-income", box: "bg-mint-50" },
   DENA: { name: "Dena", label: "You owe them", short: "you owe", chip: "expense", text: "text-expense", box: "bg-expense-soft" },
-  SETTLED: { name: "Settled", label: "Nothing outstanding", short: "Settled", chip: "neutral", text: "text-ink-muted", box: "bg-cream" },
+  SETTLED: { name: "Settled", label: "Nothing outstanding", short: "Settled", chip: "neutral", text: "text-ink-muted", box: "bg-surface-sunken" },
 };
 
 // The four principal entries, as the API records them: a loan given is a
@@ -201,7 +201,7 @@ export function loanTotals(transactions: Pick<Transaction, "transactionType" | "
 
 // The soft colours a phone list gives its avatars, picked by name so one
 // person always gets the same one.
-const AVATAR_TONES = ["bg-info-soft text-info", "bg-pillar-insights-soft text-pillar-insights", "bg-pillar-loans-soft text-pillar-loans", "bg-pillar-habits-soft text-pillar-habits", "bg-mint-50 text-income", "bg-cream text-ink-muted"];
+const AVATAR_TONES = ["bg-info-soft text-info", "bg-pillar-insights-soft text-pillar-insights", "bg-pillar-loans-soft text-pillar-loans", "bg-pillar-habits-soft text-pillar-habits", "bg-mint-50 text-income", "bg-surface-sunken text-ink-muted"];
 
 export function avatarTone(name: string): string {
   let hash = 0;

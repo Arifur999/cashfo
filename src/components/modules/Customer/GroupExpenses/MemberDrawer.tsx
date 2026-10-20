@@ -124,7 +124,7 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <div className="flex items-center gap-4">
-              <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} aria-label={t("Add a photo (optional)")} className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-dashed border-line-strong bg-cream text-ink-muted hover:border-emerald hover:text-emerald disabled:opacity-60">
+              <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} aria-label={t("Add a photo (optional)")} className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-dashed border-line-strong bg-surface-sunken text-ink-muted hover:border-emerald hover:text-emerald disabled:opacity-60">
                 {uploading ? <Loader size={20} /> : photoUrl ? photo : <Camera className="size-5.5" aria-hidden="true" />}
               </button>
               <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} className="hidden" />

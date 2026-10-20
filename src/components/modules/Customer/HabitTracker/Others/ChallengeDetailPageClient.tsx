@@ -170,7 +170,7 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
               const mark = challengeMark(sheet, window, day);
               const past = day <= window.today && day <= sheet.totalDays;
               return (
-                <button key={day} type="button" disabled={!past} onClick={() => toggleDay(day)} title={`${t("Day")} ${day}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "later")}`} className={cn("flex size-11 items-center justify-center rounded-md text-body font-bold transition-colors", mark === "done" && "bg-emerald text-white", mark === "missed" && "bg-expense-soft text-expense", mark === "today" && "border-[3px] border-pillar-habits bg-surface text-ink", mark === "later" && "cursor-not-allowed bg-cream text-ink-muted", day === window.today && mark === "done" && "ring-[3px] ring-pillar-habits ring-inset")}>
+                <button key={day} type="button" disabled={!past} onClick={() => toggleDay(day)} title={`${t("Day")} ${day}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "later")}`} className={cn("flex size-11 items-center justify-center rounded-md text-body font-bold transition-colors", mark === "done" && "bg-emerald text-white", mark === "missed" && "bg-expense-soft text-expense", mark === "today" && "border-[3px] border-pillar-habits bg-surface text-ink", mark === "later" && "cursor-not-allowed bg-surface-sunken text-ink-muted", day === window.today && mark === "done" && "ring-[3px] ring-pillar-habits ring-inset")}>
                   {mark === "done" ? <Check className="size-4.5" strokeWidth={3} aria-hidden="true" /> : day}
                 </button>
               );
@@ -187,7 +187,7 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
               <span className="size-3 rounded-[4px] border-2 border-pillar-habits bg-surface" /> {t("Today")}
             </span>
             <span className="flex items-center gap-2">
-              <span className="size-3 rounded-[4px] border border-line bg-cream" /> {t("Still to come")}
+              <span className="size-3 rounded-[4px] border border-line bg-surface-sunken" /> {t("Still to come")}
             </span>
           </div>
         </Card>

@@ -33,7 +33,7 @@ export function SheetBox({ state, label, disabled = false, onToggle }: SheetBoxP
         state === "qaza" && "bg-warning-soft text-warning",
         state === "missed" && "bg-rose-soft text-rose",
         state === "open" && "border-[1.5px] border-dashed border-emerald bg-surface hover:bg-mint-50",
-        state === "locked" && "cursor-not-allowed border border-surface-sunken bg-cream",
+        state === "locked" && "cursor-not-allowed border border-surface-sunken bg-surface-sunken",
       )}
     >
       {(state === "done" || state === "onTime") && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}

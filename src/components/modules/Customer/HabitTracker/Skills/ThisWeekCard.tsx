@@ -58,7 +58,7 @@ export function ThisWeekCard({ skills, week, streak, today }: ThisWeekCardProps)
               {week.map((day) => {
                 const amount = day.bySkill[skill.id] ?? 0;
                 return (
-                  <span key={day.date} role="cell" title={amount > 0 ? `${amountText(skill.unit, amount, t)} · ${skill.name}` : t("Nothing logged")} className={cn("flex h-7.5 items-center justify-center rounded-sm text-caption font-bold tabular-nums", amount > 0 ? "bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)" : "bg-cream")}>
+                  <span key={day.date} role="cell" title={amount > 0 ? `${amountText(skill.unit, amount, t)} · ${skill.name}` : t("Nothing logged")} className={cn("flex h-7.5 items-center justify-center rounded-sm text-caption font-bold tabular-nums", amount > 0 ? "bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)" : "bg-surface-sunken")}>
                     {cellText(skill.unit, amount)}
                   </span>
                 );

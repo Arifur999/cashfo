@@ -254,7 +254,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
       </Link>
       <span className="min-w-0">
         {row.category && (
-          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-cream px-3 py-0.75 text-caption text-ink-2">
+          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-surface-sunken px-3 py-0.75 text-caption text-ink-2">
             <span className={cn("size-2 shrink-0 rounded-full bg-current", tone.fg)} />
             <span className="truncate">{row.category.name}</span>
           </span>
