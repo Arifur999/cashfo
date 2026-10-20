@@ -269,7 +269,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                 </span>
               </div>
               <div role="table" aria-label={`${labels.now} ${t("against")} ${labels.before}`}>
-                <div role="row" className="grid grid-cols-[minmax(0,1fr)_100px_100px_72px] gap-2 bg-cream px-6 py-3 text-caption font-semibold text-ink-muted">
+                <div role="row" className="grid grid-cols-[minmax(0,1fr)_100px_100px_72px] gap-2 bg-table-head px-6 py-3 text-caption font-semibold text-ink-muted">
                   <span role="columnheader" />
                   <span role="columnheader" className="text-right">
                     {labels.before}

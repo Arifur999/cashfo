@@ -94,7 +94,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
               {t("Open settlement")}
             </Link>
           </div>
-          <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", meals ? MEALS_ROW : ROW)}>
+          <div className={cn("hidden items-center gap-4 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", meals ? MEALS_ROW : ROW)}>
             <span>{t("Member")}</span>
             {meals && <span className="text-right">{t("Meals")}</span>}
             <span className="text-right">{t("Paid in")}</span>
@@ -131,7 +131,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
           ))}
           {rows.length > 0 && (
             <>
-              <div className={cn("grid h-12.5 items-center gap-4 bg-cream px-5 text-body font-semibold tabular-nums", "grid-cols-[minmax(0,1fr)_auto]", meals ? MEALS_ROW : "md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
+              <div className={cn("grid h-12.5 items-center gap-4 bg-table-head px-5 text-body font-semibold tabular-nums", "grid-cols-[minmax(0,1fr)_auto]", meals ? MEALS_ROW : "md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
                 <span>{t("Total")}</span>
                 {meals && <span className="hidden text-right md:block">{mealText(Number(settlement.mealUnits))}</span>}
                 <span className="hidden text-right md:block">{formatCurrency(totalPaid + pocket, currency)}</span>

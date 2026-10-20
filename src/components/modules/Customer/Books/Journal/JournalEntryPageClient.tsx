@@ -104,7 +104,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
             </Field>
           </div>
 
-          <div className={cn("hidden border-t border-line bg-cream px-5 py-3 text-caption font-semibold text-ink-muted", LINE)}>
+          <div className={cn("hidden border-t border-line bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", LINE)}>
             <span>{t("Account")}</span>
             <span>{t("Line note")}</span>
             <span className="text-right">{t("Debit")}</span>

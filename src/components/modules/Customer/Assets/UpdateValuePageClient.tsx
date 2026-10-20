@@ -62,7 +62,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
         <EmptyState icon={<Package />} title={t("Nothing owned yet")} description={t("Add what you own first, then keep its value up to date here.")} className="min-h-80" />
       ) : (
         <Card padding="none" className="overflow-hidden">
-          <div className={cn("hidden items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+          <div className={cn("hidden items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
             <span>{t("Asset")}</span>
             <span className="text-right">{t("Paid")}</span>
             <span className="text-right">{t("Value today")}</span>

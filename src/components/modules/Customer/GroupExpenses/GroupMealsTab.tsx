@@ -81,7 +81,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
       <Card padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
           <div role="table" aria-label={t("Meal sheet for {month}", { month: monthName(data.range.key, locale, "long", true) })} className="w-max min-w-full">
-            <div role="row" className="grid h-11.5 items-stretch border-b border-line bg-cream text-caption text-ink-muted" style={grid}>
+            <div role="row" className="grid h-11.5 items-stretch border-b border-line bg-table-head text-caption text-ink-muted" style={grid}>
               <span role="columnheader" className="flex items-center pl-4 font-medium">
                 {t("Member")}
               </span>
@@ -132,7 +132,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
                 </div>
               );
             })}
-            <div role="row" className="grid h-11 items-stretch bg-cream text-caption tabular-nums" style={grid}>
+            <div role="row" className="grid h-11 items-stretch bg-table-head text-caption tabular-nums" style={grid}>
               <span role="rowheader" className="flex items-center pl-4 text-small font-semibold text-ink">
                 {t("Day total")}
               </span>

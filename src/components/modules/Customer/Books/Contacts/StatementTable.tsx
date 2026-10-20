@@ -56,7 +56,7 @@ export function StatementTable({ rows, side, currency, onPrint }: StatementTable
           </Button>
         )}
       </div>
-      <div className={cn("hidden border-t border-line bg-cream px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
+      <div className={cn("hidden border-t border-line bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
         <span>{t("Date")}</span>
         <span>{t("What")}</span>
         <span className="text-right">{t(columns.credit)}</span>

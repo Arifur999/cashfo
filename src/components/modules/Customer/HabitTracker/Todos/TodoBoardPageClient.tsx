@@ -253,7 +253,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
               (group) =>
                 group.items.length > 0 && (
                   <div key={group.key} className="flex flex-col">
-                    <div className="flex items-center gap-2 border-y border-line bg-cream px-5 py-2 text-caption font-semibold text-ink-muted">
+                    <div className="flex items-center gap-2 border-y border-line bg-table-head px-5 py-2 text-caption font-semibold text-ink-muted">
                       {group.title}
                       <span className="rounded-full bg-surface-sunken px-2 text-ink-2 tabular-nums">{group.items.length}</span>
                     </div>

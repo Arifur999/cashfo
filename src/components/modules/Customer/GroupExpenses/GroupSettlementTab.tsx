@@ -94,7 +94,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
         </div>
         <div className="overflow-x-auto">
           <div className={meals ? "md:min-w-237" : undefined}>
-            <div className={cn("hidden items-end gap-3 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
+            <div className={cn("hidden items-end gap-3 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
               <span>{t("Member")}</span>
               {meals && (
                 <>
@@ -136,7 +136,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
               </div>
             ))}
             {rows.length > 0 && (
-              <div className={cn("grid h-12.5 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-cream px-5 text-body font-semibold tabular-nums", ROW)}>
+              <div className={cn("grid h-12.5 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-table-head px-5 text-body font-semibold tabular-nums", ROW)}>
                 <span>{t("Total")}</span>
                 {meals && (
                   <>

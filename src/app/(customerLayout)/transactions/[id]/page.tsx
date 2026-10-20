@@ -167,7 +167,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
                 <span className="text-small font-semibold text-emerald group-open:hidden">{t("Show")}</span>
                 <span className="hidden text-small font-semibold text-emerald group-open:inline">{t("Hide")}</span>
               </summary>
-              <div className="grid grid-cols-[minmax(0,1fr)_120px_120px] items-center gap-x-4 border-t border-line bg-cream px-5 py-3 text-caption font-semibold text-ink-muted">
+              <div className="grid grid-cols-[minmax(0,1fr)_120px_120px] items-center gap-x-4 border-t border-line bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted">
                 <span>{t("Account")}</span>
                 <span className="text-right">{t("Debit")}</span>
                 <span className="text-right">{t("Credit")}</span>
@@ -182,7 +182,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
                   <span className="text-right text-body font-bold text-ink tabular-nums">{entry.entryType === "CREDIT" ? formatCurrency(entry.amount, currency) : <span className="font-normal text-ink-muted">—</span>}</span>
                 </div>
               ))}
-              <div className="grid grid-cols-[minmax(0,1fr)_120px_120px] items-center gap-x-4 border-t border-line bg-cream px-5 py-3 text-small font-semibold text-ink">
+              <div className="grid grid-cols-[minmax(0,1fr)_120px_120px] items-center gap-x-4 border-t border-line bg-table-head px-5 py-3 text-small font-semibold text-ink">
                 <span>{t("Total")}</span>
                 <span className="text-right tabular-nums">{formatCurrency(debitTotal, currency)}</span>
                 <span className="text-right tabular-nums">{formatCurrency(debitTotal, currency)}</span>

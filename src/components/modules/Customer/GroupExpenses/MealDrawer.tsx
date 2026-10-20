@@ -145,7 +145,7 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
           </div>
 
           <div className="flex flex-col overflow-hidden rounded-lg border border-line">
-            <div className={cn(grid, "border-b border-line bg-cream px-3 py-2 text-center text-caption font-semibold text-ink-muted")}>
+            <div className={cn(grid, "border-b border-line bg-table-head px-3 py-2 text-center text-caption font-semibold text-ink-muted")}>
               <span className="text-left">{t("Member")}</span>
               {SLOTS.map((slot) => (
                 <span key={slot.key} className="flex flex-col leading-tight">
@@ -193,7 +193,7 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
               );
             })}
             {shown.length === 0 && <p className="px-3 py-6 text-center text-small text-ink-muted">{t("No one was in the group on this day.")}</p>}
-            <div className={cn(grid, "h-11.5 bg-cream px-3 text-center text-small font-semibold tabular-nums")}>
+            <div className={cn(grid, "h-11.5 bg-table-head px-3 text-center text-small font-semibold tabular-nums")}>
               <span className="text-left">{t("{day} total", { day: short(day || "2026-01-01") })}</span>
               {counts.map((count, index) => (
                 <span key={SLOTS[index].key}>{count}</span>

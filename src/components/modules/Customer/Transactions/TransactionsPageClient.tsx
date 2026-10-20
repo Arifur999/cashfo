@@ -156,7 +156,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         <>
           {/* Desktop: one card with the column heads and the day groups. */}
           <Card padding="none" className="hidden overflow-hidden md:block">
-            <div className={cn("grid items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+            <div className={cn("grid items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
               <span>{t("Transaction")}</span>
               <span>{t("Category")}</span>
               <span>{t("Account@@wallet")}</span>
@@ -165,7 +165,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             </div>
             {groups.map((group) => (
               <div key={group.day}>
-                <div className="flex h-9.5 items-center justify-between border-b border-surface-sunken bg-cream px-6 text-caption font-semibold">
+                <div className="flex h-9.5 items-center justify-between border-b border-surface-sunken bg-table-head px-6 text-caption font-semibold">
                   <span className="text-ink-2">{dayHeading(group.day, today, t, locale)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>

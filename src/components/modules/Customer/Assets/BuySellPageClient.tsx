@@ -67,7 +67,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
             <EmptyState bordered={false} icon={<Package />} title={t("Nothing to sell yet")} description={t("Buy or add an asset first, and it shows up here.")} action={canManage && <Button onClick={() => setBuyOpen(true)}>{t("Buy asset")}</Button>} className="border-t border-line" />
           ) : (
             <>
-              <div className={cn("hidden items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+              <div className={cn("hidden items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
                 <span>{t("Asset")}</span>
                 <span className="text-right">{t("Paid")}</span>
                 <span className="text-right">{t("Value today")}</span>

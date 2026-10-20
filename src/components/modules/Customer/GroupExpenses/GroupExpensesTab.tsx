@@ -105,7 +105,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
             {t("Add expense")}
           </Button>
         </div>
-        <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
+        <div className={cn("hidden items-center gap-4 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
           <span>{t("Date")}</span>
           <span>{t("Category")}</span>
           <span>{t("Description")}</span>

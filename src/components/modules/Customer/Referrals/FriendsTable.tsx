@@ -60,7 +60,7 @@ export function FriendsTable({ entries, currency }: FriendsTableProps) {
         <div className="border-t border-surface-sunken px-5 py-10 text-center text-small text-ink-muted">{t("No one has joined with your link yet. Share it and they show up here.")}</div>
       ) : (
         <>
-          <div className={cn("hidden border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted", ROW)}>
+          <div className={cn("hidden border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted", ROW)}>
             <span>{t("Friend")}</span>
             <span className="text-right">{t("You earn")}</span>
             <span>{t("Status")}</span>

@@ -140,7 +140,7 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
           />
         ) : (
           <>
-            <div className="hidden grid-cols-[minmax(0,1.4fr)_140px_minmax(0,1.4fr)_110px_48px] gap-4 border-t border-line bg-cream px-6 py-3 text-caption font-semibold text-ink-muted md:grid">
+            <div className="hidden grid-cols-[minmax(0,1.4fr)_140px_minmax(0,1.4fr)_110px_48px] gap-4 border-t border-line bg-table-head px-6 py-3 text-caption font-semibold text-ink-muted md:grid">
               <span>{t("Source")}</span>
               <span className="text-right">{t("This month")}</span>
               <span>{t("Share of the month")}</span>

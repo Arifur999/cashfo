@@ -6,7 +6,7 @@ import { type AuditDiffRow, diffAuditValues } from "@/lib/auditDiff";
 import { cn } from "@/lib/utils";
 import T from "@/components/shared/T";
 
-const HEAD = "bg-cream px-3 py-2 text-left font-semibold text-ink-muted";
+const HEAD = "bg-table-head px-3 py-2 text-left font-semibold text-ink-muted";
 const CELL = "border-t border-line px-3 py-3 align-top break-all";
 
 // Added and removed fields count as changes too.

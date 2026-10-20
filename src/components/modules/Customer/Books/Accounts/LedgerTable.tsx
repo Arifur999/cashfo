@@ -35,7 +35,7 @@ export function LedgerTable({ account, ledger, summary, currency, from, onPage }
 
   return (
     <Card padding="none" className="overflow-hidden">
-      <div className={cn("hidden bg-cream px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
+      <div className={cn("hidden bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
         <span>{t("Date")}</span>
         <span>{t("Description")}</span>
         <span>{t("Reference")}</span>
@@ -43,7 +43,7 @@ export function LedgerTable({ account, ledger, summary, currency, from, onPage }
         <span className="text-right">{t("Money out")}</span>
         <span className="text-right">{t("Balance")}</span>
       </div>
-      <div className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken bg-cream px-5 py-2 text-body", GRID)}>
+      <div className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken bg-table-head px-5 py-2 text-body", GRID)}>
         <span className="hidden text-small whitespace-nowrap text-ink-2 md:block">{from ? formatDate(from, "EEE, d MMM") : ""}</span>
         <span className="font-medium text-ink-muted">{t("Opening balance")}</span>
         <span className="hidden md:block" />

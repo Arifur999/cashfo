@@ -79,7 +79,7 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
           </button>
         </span>
       </div>
-      <div className={cn("hidden border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted", ROW)}>
+      <div className={cn("hidden border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted", ROW)}>
         <span>{t("Skill")}</span>
         <span>{t("Where")}</span>
         <span>{t("Progress")}</span>

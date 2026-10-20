@@ -179,7 +179,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
             </div>
             <div className="overflow-x-auto">
               <div className="min-w-220">
-                <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+                <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
                   <span>{t("Asset")}</span>
                   <span>{t("Bought")}</span>
                   <span className="text-right">{t("Paid")}</span>

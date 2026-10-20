@@ -67,7 +67,7 @@ export function ContactsTable({ contacts, currency, canManage, onAdd, onEdit }: 
       </div>
 
       <Card padding="none" className="overflow-hidden">
-        <div className={cn("hidden bg-cream px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
+        <div className={cn("hidden bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
           <span>{t("Name")}</span>
           <span>{t("Type")}</span>
           <span>{t("Phone")}</span>

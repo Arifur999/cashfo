@@ -184,7 +184,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
           <Card padding="none" className="overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-270">
-                <div className={cn("grid items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+                <div className={cn("grid items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
                   <span>{t("Date")}</span>
                   <span>{t("Reference")}</span>
                   <span>{t("Description")}</span>
@@ -194,7 +194,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                   <span className="text-right">{t("Profit")}</span>
                   <span className="text-right">{t("Balance")}</span>
                 </div>
-                <div className={cn("grid h-11 items-center gap-x-4 border-b border-surface-sunken bg-cream px-6 text-body", GRID)}>
+                <div className={cn("grid h-11 items-center gap-x-4 border-b border-surface-sunken bg-table-head px-6 text-body", GRID)}>
                   <span className="col-span-7 font-semibold text-ink-2">
                     {t("Opening balance")}
                     {periodFrom && ` · ${formatDate(periodFrom)}`}
@@ -258,7 +258,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                     </Link>
                   );
                 })}
-                <div className={cn("grid h-13 items-center gap-x-4 bg-cream px-6 text-body font-semibold tabular-nums", GRID)}>
+                <div className={cn("grid h-13 items-center gap-x-4 bg-table-head px-6 text-body font-semibold tabular-nums", GRID)}>
                   <span className="col-span-4 font-bold text-ink">
                     {t("Closing balance")} · {formatDate(periodTo)}
                   </span>

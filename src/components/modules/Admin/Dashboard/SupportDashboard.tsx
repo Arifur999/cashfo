@@ -48,7 +48,7 @@ export function SupportDashboard({ adminName, hour, stats, queue, requests }: Su
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Section title={translate("Your queue")} aside={<SectionLink href="/admin/support">{translate("All tickets")}</SectionLink>}>
           <div className="-mx-5 -mb-4 flex flex-col">
-          <div className={cn("hidden border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted", GRID)}>
+          <div className={cn("hidden border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted", GRID)}>
             <span>{translate("Ticket")}</span>
             <span>{translate("Subject")}</span>
             <span>{translate("User")}</span>

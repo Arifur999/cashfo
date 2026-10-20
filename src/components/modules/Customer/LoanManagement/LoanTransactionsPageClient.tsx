@@ -147,7 +147,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           />
         ) : (
           <>
-            <div className={cn("hidden items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+            <div className={cn("hidden items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
               <span>{t("Date")}</span>
               <span>{t("Bank / person")}</span>
               <span>{t("Entry")}</span>

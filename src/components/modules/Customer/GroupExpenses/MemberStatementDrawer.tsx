@@ -140,7 +140,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
           </div>
 
           <div className="flex shrink-0 flex-col overflow-hidden rounded-lg border border-line">
-            <div className="grid grid-cols-[56px_minmax(0,1fr)_86px_86px] gap-3 border-b border-line bg-cream px-4 py-2 text-caption font-medium text-ink-muted">
+            <div className="grid grid-cols-[56px_minmax(0,1fr)_86px_86px] gap-3 border-b border-line bg-table-head px-4 py-2 text-caption font-medium text-ink-muted">
               <span>{t("Date")}</span>
               <span>{t("Entry")}</span>
               <span className="text-right">{t("Amount")}</span>

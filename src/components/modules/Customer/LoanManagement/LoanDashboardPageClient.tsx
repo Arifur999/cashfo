@@ -174,7 +174,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 </NativeSelect>
               </div>
             </div>
-            <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+            <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
               <span>{t("Bank / person")}</span>
               <span className="text-right">{t("Opening")}</span>
               <span className="text-right">{t("Money in")}</span>
@@ -186,7 +186,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             {shown.map((row) => (
               <DashboardRow key={row.contactId} row={row} contact={contactsById.get(row.contactId)} currency={currency} />
             ))}
-            <div className={cn("grid h-13 items-center gap-x-4 bg-cream px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
+            <div className={cn("grid h-13 items-center gap-x-4 bg-table-head px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
               <span>{t("Net")}</span>
               <span className="text-right">{formatCurrency(Math.abs(sums.opening), currency)}</span>
               <span className="text-right">{formatCurrency(sums.in, currency)}</span>

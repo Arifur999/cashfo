@@ -82,7 +82,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
             </Button>
           </div>
         </div>
-        <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", row)}>
+        <div className={cn("hidden items-center gap-4 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", row)}>
           <span>{t("Member")}</span>
           <span>{t("Phone")}</span>
           <span>{t("Member since")}</span>

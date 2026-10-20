@@ -90,7 +90,7 @@ export default async function SavingsOverviewPage() {
             </div>
             <div className="overflow-x-auto">
               <div className="min-w-220">
-                <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+                <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
                   <span>{t("Wallet")}</span>
                   <span className="text-right">{t("Opening")}</span>
                   <span className="text-right">{t("Added")}</span>
@@ -114,7 +114,7 @@ export default async function SavingsOverviewPage() {
                     <span className="text-right font-bold">{formatCurrency(row.currentBalance, currency)}</span>
                   </Link>
                 ))}
-                <div className={cn("grid h-14 items-center gap-x-4 bg-cream px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
+                <div className={cn("grid h-14 items-center gap-x-4 bg-table-head px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
                   <span>{t("Total")}</span>
                   <span className="text-right">{formatCurrency(totals.opening, currency)}</span>
                   {inFigure(totals.in)}

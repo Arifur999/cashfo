@@ -76,7 +76,7 @@ export function AccountsTable({ groups, preferredLanguage, currency, hasCodes }:
           const Icon = ACCOUNT_TYPE_ICONS[type];
           return (
             <section key={type} aria-label={t(meta.label)}>
-              <div className={cn("flex items-center justify-between gap-3 border-t border-line bg-cream px-5 py-3", grid)}>
+              <div className={cn("flex items-center justify-between gap-3 border-t border-line bg-table-head px-5 py-3", grid)}>
                 <span className={cn("flex min-w-0 items-center gap-3", hasCodes && "md:col-span-2")}>
                   <IconTile size={32} tone={meta.tone}>
                     <Icon />

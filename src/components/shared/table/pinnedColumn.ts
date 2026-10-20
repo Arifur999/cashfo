@@ -14,7 +14,7 @@ export const getPinnedClassName = <TData,>(column: Column<TData, unknown>, isHea
 
   return cn(
     "sticky z-[1]",
-    isHeader ? "bg-cream" : "bg-inherit",
+    isHeader ? "bg-table-head" : "bg-inherit",
     pinned === "left" ? "left-0" : "right-0",
   );
 };

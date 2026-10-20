@@ -54,7 +54,7 @@ const RolesMatrix = () => {
         </ul>
       </div>
       <div role="table" aria-labelledby="roles-title" className="overflow-x-auto">
-        <div role="row" className={cn(GRID, "border-y border-line bg-cream py-3 text-small font-semibold text-ink-2")}>
+        <div role="row" className={cn(GRID, "border-y border-line bg-table-head py-3 text-small font-semibold text-ink-2")}>
           <span role="columnheader"><T>Area</T></span>
           {ADMIN_ROLES.map((role) => (
             <span role="columnheader" key={role} className="text-center">

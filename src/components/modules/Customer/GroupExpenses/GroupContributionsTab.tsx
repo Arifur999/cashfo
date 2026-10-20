@@ -92,7 +92,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
             {t("Add contribution")}
           </Button>
         </div>
-        <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
+        <div className={cn("hidden items-center gap-4 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
           <span>{t("Date")}</span>
           <span>{t("Member")}</span>
           <span>{t("Type")}</span>
@@ -140,7 +140,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
           );
         })}
         {rows.length > 0 && (
-          <div className={cn("grid h-11.5 grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 bg-cream px-5 text-body font-semibold tabular-nums md:gap-4", ROW)}>
+          <div className={cn("grid h-11.5 grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 bg-table-head px-5 text-body font-semibold tabular-nums md:gap-4", ROW)}>
             <span className="md:col-span-4">{t("Total")}</span>
             <span className={cn("text-right", shownTotal < 0 ? "text-expense" : "text-income")}>{formatSignedCurrency(shownTotal, currency)}</span>
             <span />

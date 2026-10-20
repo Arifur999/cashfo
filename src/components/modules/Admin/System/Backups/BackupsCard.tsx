@@ -92,7 +92,7 @@ const BackupsCard = () => {
           <col />
           <col className="w-24" />
         </colgroup>
-        <thead className="bg-cream text-caption font-medium text-ink-muted">
+        <thead className="bg-table-head text-caption font-medium text-ink-muted">
           <tr className="border-b border-line">
             <th scope="col" className="px-5 py-2 text-left font-medium">
               <T>Started</T>

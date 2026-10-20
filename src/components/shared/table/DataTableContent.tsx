@@ -99,7 +99,7 @@ const DataTableContent = <TData,>({
           </colgroup>
         )}
         {/* The design's column heads: a cream strip, 12px, no capitals. */}
-        <TableHeader className="sticky top-0 z-10 bg-cream [&_tr]:border-line">
+        <TableHeader className="sticky top-0 z-10 bg-table-head [&_tr]:border-line">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (

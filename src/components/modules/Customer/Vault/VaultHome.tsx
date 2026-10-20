@@ -301,7 +301,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
             </nav>
 
             <Card padding="none" className="overflow-hidden max-md:rounded-none max-md:border-0 max-md:shadow-none">
-              <div className="flex items-center justify-between border-b border-line bg-cream px-4 py-3 text-caption font-medium text-ink-muted max-md:hidden">
+              <div className="flex items-center justify-between border-b border-line bg-table-head px-4 py-3 text-caption font-medium text-ink-muted max-md:hidden">
                 <span>
                   {listLabel} · {visible.length}
                 </span>
