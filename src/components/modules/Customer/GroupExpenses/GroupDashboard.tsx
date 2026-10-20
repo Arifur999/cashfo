@@ -103,7 +103,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
           </div>
           {rows.length === 0 && <p className="border-t border-line px-5 py-8 text-center text-body text-ink-muted">{t("Add members to see their balances.")}</p>}
           {rows.map(({ row, member }) => (
-            <button key={row.groupMemberId} type="button" onClick={() => member && onStatement(member)} className={cn("grid w-full items-center gap-4 border-b border-surface-sunken px-5 py-3 text-left text-body tabular-nums hover:bg-cream md:min-h-16 md:py-0", "grid-cols-[minmax(0,1fr)_auto]", meals ? MEALS_ROW : "md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
+            <button key={row.groupMemberId} type="button" onClick={() => member && onStatement(member)} className={cn("grid w-full items-center gap-4 border-b border-surface-sunken px-5 py-3 text-left text-body tabular-nums hover:bg-hover md:min-h-16 md:py-0", "grid-cols-[minmax(0,1fr)_auto]", meals ? MEALS_ROW : "md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
               <span className="flex min-w-0 items-center gap-3">
                 <PersonAvatar name={row.name} src={member?.photoUrl} size={34} coloured />
                 <span className="flex min-w-0 flex-col gap-0.5">

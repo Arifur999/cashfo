@@ -59,7 +59,7 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
               key={transaction.id}
               href={`/transactions/${transaction.id}`}
               className={cn(
-                "box-content grid min-h-16 grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3 border-t border-line px-4 transition-colors hover:bg-cream max-md:first-of-type:border-t-0 md:px-5",
+                "box-content grid min-h-16 grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3 border-t border-line px-4 transition-colors hover:bg-hover max-md:first-of-type:border-t-0 md:px-5",
                 row.cancelled && "opacity-60",
                 index >= PHONE_ROWS && "hidden md:grid",
               )}

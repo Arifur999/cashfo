@@ -49,7 +49,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
         {LEGAL_LINKS.map((link) => {
           const updated = legalUpdated[link.page];
           return (
-            <a key={link.page} href={`/${link.page}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 border-t border-surface-sunken px-5 py-3 text-ink hover:bg-cream/60">
+            <a key={link.page} href={`/${link.page}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 border-t border-surface-sunken px-5 py-3 text-ink hover:bg-hover">
               <FileText className="size-4.5 text-ink-muted" aria-hidden="true" />
               <span className="flex-1 text-body font-medium">{t(link.title)}</span>
               {updated && <span className="text-small text-ink-muted">{t("Updated {date}", { date: formatDate(updated) })}</span>}

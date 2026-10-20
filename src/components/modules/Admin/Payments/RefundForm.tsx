@@ -78,7 +78,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
               role="radio"
               aria-checked={on}
               onClick={() => choose(option.value)}
-              className={cn("flex items-center gap-3 rounded-md border px-4 py-3 text-left transition-colors", on ? "border-emerald bg-mint-50" : "border-line hover:bg-cream")}
+              className={cn("flex items-center gap-3 rounded-md border px-4 py-3 text-left transition-colors", on ? "border-emerald bg-mint-50" : "border-line hover:bg-hover")}
             >
               <span className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full border-2", on ? "border-emerald" : "border-line-strong")} aria-hidden="true">
                 {on && <span className="size-2 rounded-full bg-emerald" />}

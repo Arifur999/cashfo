@@ -17,7 +17,7 @@ const OtherPaymentsCard = ({ payments }: { payments: IOtherPayment[] }) => {
         <p className="border-t border-surface-sunken px-5 py-3 text-small text-ink-muted"><T>This is their only payment.</T></p>
       ) : (
         payments.map((payment) => (
-          <Link key={payment.id} href={`/admin/payments/${payment.id}`} className="flex items-center gap-3 border-t border-surface-sunken px-5 py-3 text-small hover:bg-cream/60">
+          <Link key={payment.id} href={`/admin/payments/${payment.id}`} className="flex items-center gap-3 border-t border-surface-sunken px-5 py-3 text-small hover:bg-hover">
             <code className="font-mono font-semibold text-ink">{shortPaymentId(payment.id)}</code>
             <span className="grow text-ink-muted">
               {formatDate(payment.createdAt, "d MMM yyyy")}

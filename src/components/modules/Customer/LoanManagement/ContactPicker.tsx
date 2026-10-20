@@ -92,7 +92,7 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
             const on = contact.id === value;
             return (
               <li key={contact.id} role="option" aria-selected={on}>
-                <button type="button" onClick={() => pick(contact.id)} className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-cream", on && "bg-mint-50")}>
+                <button type="button" onClick={() => pick(contact.id)} className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-hover", on && "bg-mint-50")}>
                   <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={30} />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-body font-semibold text-ink">

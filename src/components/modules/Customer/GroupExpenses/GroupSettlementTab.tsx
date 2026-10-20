@@ -235,7 +235,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
             const key = record.periodStart.slice(0, 7);
             const people = `${record.memberCount} ${t(record.memberCount === 1 ? "member" : "members")}`;
             return (
-              <Link key={record.id} href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: key } }} className="flex items-center gap-3 border-b border-surface-sunken px-5 py-3 text-ink last:border-b-0 hover:bg-cream">
+              <Link key={record.id} href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: key } }} className="flex items-center gap-3 border-b border-surface-sunken px-5 py-3 text-ink last:border-b-0 hover:bg-hover">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink-2">
                   <Lock className="size-4" aria-hidden="true" />
                 </span>

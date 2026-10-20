@@ -23,7 +23,7 @@ interface AccountPickerProps {
   currency: string;
 }
 
-const OPTION = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-cream";
+const OPTION = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-hover";
 
 // The Statement's account field: a wallet with its tile and type, or any
 // other account found by typing. Clearing it goes back to the wallet picks.

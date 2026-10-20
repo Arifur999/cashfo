@@ -26,7 +26,7 @@ const ICON_BUTTON = "flex size-11 shrink-0 items-center justify-center rounded-m
 export function EntryRow({ entry, selected, attention, onSelect, onCopyUsername, onCopyPassword }: EntryRowProps) {
   const { t } = useLocale();
   return (
-    <div className={cn("box-content flex min-h-16 items-center gap-3 border-b border-surface-sunken pr-2 pl-4 max-md:bg-surface md:box-border md:min-h-12.5 md:py-1 md:pr-3 md:last:border-b-0", selected ? "bg-mint-50 shadow-[inset_3px_0_0_var(--emerald)]" : "hover:bg-cream/60")}>
+    <div className={cn("box-content flex min-h-16 items-center gap-3 border-b border-surface-sunken pr-2 pl-4 max-md:bg-surface md:box-border md:min-h-12.5 md:py-1 md:pr-3 md:last:border-b-0", selected ? "bg-mint-50 shadow-[inset_3px_0_0_var(--emerald)]" : "hover:bg-hover")}>
       <button type="button" onClick={onSelect} aria-current={selected || undefined} className="flex min-w-0 flex-1 items-center gap-3 text-left">
         <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-md text-body-lg font-bold md:size-8 md:text-body", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>{avatarLetter(entry.title)}</span>
         <span className="flex min-w-0 flex-col gap-0.5 md:gap-px">

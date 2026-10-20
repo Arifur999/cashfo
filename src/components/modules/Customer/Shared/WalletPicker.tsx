@@ -67,7 +67,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
             onChange(wallet.id);
             setOpen(false);
           }}
-          className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-cream disabled:opacity-55 disabled:hover:bg-transparent", on && "bg-mint-50")}
+          className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-hover disabled:opacity-55 disabled:hover:bg-transparent", on && "bg-mint-50")}
         >
           {tile(wallet)}
           <span className="flex min-w-0 flex-1 flex-col">

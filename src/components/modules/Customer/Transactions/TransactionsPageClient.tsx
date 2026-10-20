@@ -242,7 +242,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
   const href = `/transactions/${row.transaction.id}`;
   const tone = row.transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   return (
-    <div className={cn("group grid h-14 items-center gap-x-4 border-b border-surface-sunken px-6 transition-colors hover:bg-cream", GRID, row.cancelled && "opacity-60")}>
+    <div className={cn("group grid h-14 items-center gap-x-4 border-b border-surface-sunken px-6 transition-colors hover:bg-hover", GRID, row.cancelled && "opacity-60")}>
       <Link href={href} className="flex min-w-0 items-center gap-3">
         <CategoryTile row={row} />
         <span className={cn("truncate text-body font-medium text-ink", row.cancelled && "line-through")}>{row.title ?? t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType])}</span>

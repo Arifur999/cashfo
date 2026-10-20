@@ -115,7 +115,7 @@ const AdminNotificationsBell = () => {
             const Icon = KIND_ICON[item.kind];
             return (
               <li key={item.id}>
-                <Link href={item.href} onClick={() => setOpen(false)} className="flex gap-3 border-t border-surface-sunken p-4 hover:bg-cream">
+                <Link href={item.href} onClick={() => setOpen(false)} className="flex gap-3 border-t border-surface-sunken p-4 hover:bg-hover">
                   <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", TONE_TILE[row.tone])}>
                     <Icon className="size-4.25" aria-hidden="true" />
                   </span>

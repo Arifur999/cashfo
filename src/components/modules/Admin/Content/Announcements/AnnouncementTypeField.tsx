@@ -28,7 +28,7 @@ const AnnouncementTypeField = ({ field }: { field: AnyFieldApi }) => {
             }}
             className={cn(
               "flex flex-col items-center gap-1 rounded-md border px-2 py-3 text-small font-semibold transition-colors",
-              on ? "border-emerald bg-mint-50 text-ink" : "border-line bg-surface text-ink-2 hover:bg-cream",
+              on ? "border-emerald bg-mint-50 text-ink" : "border-line bg-surface text-ink-2 hover:bg-hover",
             )}
           >
             <span className={cn("flex size-7 items-center justify-center rounded-full", chip)}>

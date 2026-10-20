@@ -57,7 +57,7 @@ export function LedgerTable({ account, ledger, summary, currency, from, onPage }
         const voided = row.transactionStatus === "VOIDED";
         const amount = direction === "in" ? <span className="font-bold text-income tabular-nums whitespace-nowrap">{formatSignedCurrency(row.amount, currency)}</span> : <span className="font-bold text-expense tabular-nums whitespace-nowrap">{formatSignedCurrency(-Number(row.amount), currency)}</span>;
         return (
-          <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 text-body transition-colors hover:bg-cream/60", GRID, voided && "opacity-60")}>
+          <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 text-body transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
             <span className="flex min-w-0 flex-col md:contents">
               <span className="text-small whitespace-nowrap text-ink-2 max-md:text-caption max-md:text-ink-muted">{formatDate(row.date, "EEE, d MMM")}</span>
               <span className="flex min-w-0 items-center gap-2">

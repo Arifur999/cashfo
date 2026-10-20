@@ -157,7 +157,7 @@ export function NotificationsBell() {
                 {!item.readAt && <span aria-label={t("Unread")} className="mt-2 size-2 shrink-0 rounded-full bg-emerald" />}
               </>
             );
-            const rowClass = cn("flex w-full gap-3 border-t border-surface-sunken p-4 text-left", item.readAt ? "bg-surface hover:bg-cream" : "bg-mint-50 hover:bg-mint-200/40");
+            const rowClass = cn("flex w-full gap-3 border-t border-surface-sunken p-4 text-left", item.readAt ? "bg-surface hover:bg-hover" : "bg-mint-50 hover:bg-mint-200/40");
             return (
               <li key={item.id}>
                 {view.href ? (

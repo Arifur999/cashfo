@@ -98,7 +98,7 @@ export default async function SavingsOverviewPage() {
                   <span className="text-right">{t("Balance")}</span>
                 </div>
                 {rows.map((row, index) => (
-                  <Link key={row.id} href={`/balance/ledger?accountId=${row.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-cream", GRID, row.status === "ARCHIVED" && "opacity-60")}>
+                  <Link key={row.id} href={`/balance/ledger?accountId=${row.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, row.status === "ARCHIVED" && "opacity-60")}>
                     <span className="flex min-w-0 items-center gap-3">
                       <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", savingsPalette(index).tile)}>
                         <PiggyBank className="size-4.5" aria-hidden="true" />

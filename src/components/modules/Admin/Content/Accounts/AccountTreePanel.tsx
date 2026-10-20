@@ -133,7 +133,7 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
           const Icon = isOpen ? FolderOpen : Folder;
           return (
             <li key={group.type}>
-              <button type="button" aria-expanded={isOpen} onClick={() => toggle(group.type)} className={cn(ROW, "w-full font-semibold hover:bg-cream")}>
+              <button type="button" aria-expanded={isOpen} onClick={() => toggle(group.type)} className={cn(ROW, "w-full font-semibold hover:bg-hover")}>
                 <Icon className="size-3.5 text-emerald" aria-hidden="true" />
                 <T>{group.label}</T>
               </button>

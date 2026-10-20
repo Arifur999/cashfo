@@ -222,7 +222,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                       {row}
                     </div>
                   ) : (
-                    <button key={asset.id} type="button" onClick={() => setValuing(asset)} className={cn(rowClass, "transition-colors hover:bg-cream")}>
+                    <button key={asset.id} type="button" onClick={() => setValuing(asset)} className={cn(rowClass, "transition-colors hover:bg-hover")}>
                       {row}
                     </button>
                   );

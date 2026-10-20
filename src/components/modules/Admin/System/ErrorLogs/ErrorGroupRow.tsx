@@ -26,7 +26,7 @@ const ErrorGroupRow = ({ group, selected, onSelect }: ErrorGroupRowProps) => {
       onClick={onSelect}
       className={cn(
         "grid w-full grid-cols-[minmax(0,1fr)_70px] gap-3 border-b border-l-3 border-b-surface-sunken px-5 py-4 text-left transition-colors last:border-b-0",
-        selected ? "border-l-emerald bg-mint-50" : "border-l-transparent bg-surface hover:bg-cream",
+        selected ? "border-l-emerald bg-mint-50" : "border-l-transparent bg-surface hover:bg-hover",
       )}
     >
       <span className="flex min-w-0 flex-col gap-1">

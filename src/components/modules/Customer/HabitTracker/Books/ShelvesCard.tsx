@@ -92,7 +92,7 @@ function ShelfRow({ book, status, onAction }: { book: Book; status: BookStatus; 
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger aria-label={`${book.title}: ${t("actions")}`} className="-mx-2 flex h-11 items-center gap-3 rounded-md px-2 text-left transition-colors hover:bg-cream data-open:bg-cream">
+      <DropdownMenuTrigger aria-label={`${book.title}: ${t("actions")}`} className="-mx-2 flex h-11 items-center gap-3 rounded-md px-2 text-left transition-colors hover:bg-hover data-open:bg-cream">
         <Cover size="spine" title={book.title} color={book.color} />
         <span className="flex min-w-0 flex-1 flex-col gap-px">
           <span className="truncate text-body font-medium text-ink">{book.title}</span>

@@ -175,7 +175,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
         })}
         {sessions !== null && sessions.length === 0 && <div className="border-t border-surface-sunken px-6 py-6 text-small text-ink-muted">{t("No active sessions found.")}</div>}
         {ordered.length > SHOWN_DEVICES && (
-          <button type="button" onClick={() => setShowAll((v) => !v)} className="w-full border-t border-surface-sunken px-6 py-3 text-left text-small font-semibold text-emerald hover:bg-cream/60">
+          <button type="button" onClick={() => setShowAll((v) => !v)} className="w-full border-t border-surface-sunken px-6 py-3 text-left text-small font-semibold text-emerald hover:bg-hover">
             {showAll ? t("Show fewer") : `${t("Show all")} ${ordered.length}`}
           </button>
         )}

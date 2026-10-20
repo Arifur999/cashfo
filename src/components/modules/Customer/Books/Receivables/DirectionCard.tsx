@@ -58,7 +58,7 @@ export function DirectionCard({ direction, aging, overdue, currency }: Direction
         <span className="pb-1 text-small font-semibold text-ink-2">{t("Over 30 days")}</span>
         {over30.length === 0 && <p className="border-t border-surface-sunken py-3 text-small text-ink-muted">{t("Nothing is more than 30 days late.")}</p>}
         {over30.map((row) => (
-          <Link key={row.contactId} href={`/contacts/${row.contactId}`} className="-mx-2 flex items-center gap-3 rounded-md border-t border-surface-sunken px-2 py-3 transition-colors hover:bg-cream/60">
+          <Link key={row.contactId} href={`/contacts/${row.contactId}`} className="-mx-2 flex items-center gap-3 rounded-md border-t border-surface-sunken px-2 py-3 transition-colors hover:bg-hover">
             <PersonAvatar name={row.contactName} size={36} coloured />
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-body font-semibold text-ink">{row.contactName}</span>

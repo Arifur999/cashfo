@@ -208,7 +208,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                     const last = item.rows[item.rows.length - 1];
                     const sum = statementProfit(item.rows);
                     return (
-                      <button key={item.key} type="button" onClick={() => setUnfolded(new Set([...unfolded, item.key]))} aria-expanded={false} className={cn("grid h-13 w-full items-center gap-x-4 border-b border-surface-sunken bg-strip px-6 text-left text-body text-ink tabular-nums hover:bg-cream", GRID)}>
+                      <button key={item.key} type="button" onClick={() => setUnfolded(new Set([...unfolded, item.key]))} aria-expanded={false} className={cn("grid h-13 w-full items-center gap-x-4 border-b border-surface-sunken bg-strip px-6 text-left text-body text-ink tabular-nums hover:bg-hover", GRID)}>
                         <span className="text-small text-ink-2">
                           {formatDate(first.date, "MMM")} – {formatDate(last.date, "MMM")}
                         </span>
@@ -234,7 +234,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                   const voided = row.status === "VOIDED";
                   const side = DIRECTION_META[loanDirection(row.runningPrincipal)];
                   return (
-                    <Link key={row.transactionId} href={`/transactions/${row.transactionId}`} className={cn("grid h-13 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-cream", GRID, voided && "opacity-60")}>
+                    <Link key={row.transactionId} href={`/transactions/${row.transactionId}`} className={cn("grid h-13 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
                       <span className="text-small text-ink-2">{formatDate(row.date)}</span>
                       <span className={cn("truncate text-small", row.referenceNo ? "text-ink-2" : "text-ink-muted")}>{row.referenceNo ?? "—"}</span>
                       <span className="flex min-w-0 items-center gap-2">

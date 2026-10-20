@@ -68,7 +68,7 @@ export function GoalPicker({ goals, options, value, onChange, currency, id, disa
                     onChange(goal.id);
                     setOpen(false);
                   }}
-                  className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-cream", on && "bg-mint-50")}
+                  className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-hover", on && "bg-mint-50")}
                 >
                   {ring(goal)}
                   <span className="flex min-w-0 flex-1 flex-col">

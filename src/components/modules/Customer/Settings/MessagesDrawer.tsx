@@ -82,7 +82,7 @@ export function MessagesDrawer({ open, conversations, selectedId, onSelect, onCl
             const status = answered ? ANSWERED : SUPPORT_STATUS[conversation.status];
             return (
               <li key={conversation.id}>
-                <button type="button" onClick={() => onSelect(conversation.id)} className="flex w-full items-center gap-3 rounded-md px-2 py-3 text-left hover:bg-cream">
+                <button type="button" onClick={() => onSelect(conversation.id)} className="flex w-full items-center gap-3 rounded-md px-2 py-3 text-left hover:bg-hover">
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="truncate text-body font-semibold text-ink">{conversation.subject}</span>
                     <span className="flex flex-wrap items-center gap-2 text-caption text-ink-muted">

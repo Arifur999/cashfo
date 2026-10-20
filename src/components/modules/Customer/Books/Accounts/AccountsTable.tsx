@@ -96,7 +96,7 @@ export function AccountsTable({ groups, preferredLanguage, currency, hasCodes }:
                 const name = accountDisplayName(account, preferredLanguage);
                 const sub = notes(account);
                 return (
-                  <Link key={account.id} href={`/accounts/${account.id}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 transition-colors hover:bg-cream/60", grid, archived && "opacity-60")}>
+                  <Link key={account.id} href={`/accounts/${account.id}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 transition-colors hover:bg-hover", grid, archived && "opacity-60")}>
                     {hasCodes && <span className="hidden font-mono text-small text-ink-muted md:block">{account.accountNumber}</span>}
                     <span className="flex min-w-0 flex-col" style={depth > 0 ? { paddingLeft: depth * 16 } : undefined}>
                       <span className="flex min-w-0 items-center gap-2">
