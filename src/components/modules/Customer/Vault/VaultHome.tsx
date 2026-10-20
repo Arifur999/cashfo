@@ -229,7 +229,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
               aria-label={t("Search logins")}
               leading={<Search />}
               size="md"
-              frameClassName="h-11.5 rounded-lg bg-cream text-body-lg md:hidden"
+              frameClassName="h-11.5 rounded-lg bg-strip text-body-lg md:hidden"
             />
             <div className="flex flex-col gap-3 max-md:hidden sm:flex-row">
               <Input size="md" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${t("Search")} ${entries.length} ${t(entries.length === 1 ? "login by name, username or website" : "logins by name, username or website")}`} aria-label={t("Search logins")} leading={<Search />} frameClassName="flex-1" />

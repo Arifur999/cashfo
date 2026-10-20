@@ -109,7 +109,7 @@ export function ChangeAvatarDialog({ open, onClose }: ChangeAvatarDialogProps) {
             {t(file ? "Pick another" : "Choose a photo")}
           </Button>
         </div>
-        <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
             {t("Cancel")}
           </Button>

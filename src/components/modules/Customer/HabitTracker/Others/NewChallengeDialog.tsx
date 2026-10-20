@@ -120,7 +120,7 @@ export function NewChallengeDialog({ open, onClose, presetDays }: NewChallengeDi
               <span className="text-caption font-normal text-ink-muted">{t("A day counts as done when every item is ticked. With no items, you tick the day itself.")}</span>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>

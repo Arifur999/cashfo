@@ -134,12 +134,12 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                   {...amountField}
                   placeholder="0"
                   className="text-h3 font-bold tabular-nums"
-                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                   frameClassName="overflow-hidden pl-0"
                 />
               </Field>
               <Field htmlFor="pay-month" label={label(t("Settles"))}>
-                <span id="pay-month" className="flex h-12 items-center rounded-md border border-line-strong bg-cream px-3 text-body font-medium text-ink">
+                <span id="pay-month" className="flex h-12 items-center rounded-md border border-line-strong bg-strip px-3 text-body font-medium text-ink">
                   {monthLabel}
                 </span>
               </Field>
@@ -150,7 +150,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
             </Field>
 
             {from && to && (
-              <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4 text-small tabular-nums">
+              <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4 text-small tabular-nums">
                 <span className="text-caption font-semibold text-ink-muted">
                   {t("Saved as two entries dated")} {locale === "bn" ? banglaDayMonth(date) : formatDate(`${date}T00:00:00.000Z`, "d MMM")}, {t("so")} {monthLabel} {t("evens out")}
                 </span>
@@ -199,7 +199,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>

@@ -113,7 +113,7 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
             {SHORTCUTS.map((shortcut) => (
               <span key={shortcut.key} className="flex items-center justify-between text-small text-ink-2">
                 {t(shortcut.what)}
-                <kbd className="rounded-sm border border-b-2 border-line bg-cream px-2 py-0.5 font-sans text-caption font-semibold text-ink">{shortcut.key}</kbd>
+                <kbd className="rounded-sm border border-b-2 border-line bg-strip px-2 py-0.5 font-sans text-caption font-semibold text-ink">{shortcut.key}</kbd>
               </span>
             ))}
           </Card>

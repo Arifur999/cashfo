@@ -75,7 +75,7 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
       </div>
       <div className="grid grid-cols-5 gap-2">
         {PRAYERS.map((prayer) => (
-          <span key={prayer} className={cn("flex flex-col items-center gap-0.5 rounded-md border py-2", qaza.left[prayer] > 0 ? "border-warning/30 bg-warning-soft text-warning" : "border-line bg-cream text-ink-muted")}>
+          <span key={prayer} className={cn("flex flex-col items-center gap-0.5 rounded-md border py-2", qaza.left[prayer] > 0 ? "border-warning/30 bg-warning-soft text-warning" : "border-line bg-strip text-ink-muted")}>
             <span className="text-title font-bold tabular-nums">{qaza.left[prayer] ?? 0}</span>
             <span className="text-caption">{t(prayer)}</span>
           </span>

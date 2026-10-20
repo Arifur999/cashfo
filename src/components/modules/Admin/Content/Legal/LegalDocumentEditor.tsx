@@ -127,7 +127,7 @@ const LegalDocumentEditor = ({ document, canManage }: LegalDocumentEditorProps) 
       {canManage && (
         <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting, state.values.contentBn] as const}>
           {([isDirty, isSubmitting, contentBn]) => (
-            <div className="flex flex-wrap items-center gap-3 border-t border-line bg-cream px-5 py-3">
+            <div className="flex flex-wrap items-center gap-3 border-t border-line bg-strip px-5 py-3">
               <span className={cn("text-small", contentBn.trim() ? "text-emerald" : "text-warning")}>
                 <T>{contentBn.trim() ? "Both languages are written" : "The Bangla version is empty"}</T>
                 {isDirty && (

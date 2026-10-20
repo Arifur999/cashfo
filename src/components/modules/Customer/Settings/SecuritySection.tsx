@@ -121,7 +121,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
         </div>
         {METHODS.map((method) => (
           <div key={method.title} className="flex items-center gap-4 border-t border-surface-sunken px-6 py-4 opacity-60">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-cream text-ink-2">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-strip text-ink-2">
               <method.icon className="size-4" aria-hidden="true" />
             </span>
             <span className="flex flex-1 flex-col gap-0.5">
@@ -223,7 +223,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
             <Switch checked={false} disabled aria-label={t(alert.title)} />
           </div>
         ))}
-        <p className="border-t border-surface-sunken bg-cream px-6 py-3 text-small text-ink-muted">{t("These switch on once Smartly can send email.")}</p>
+        <p className="border-t border-surface-sunken bg-strip px-6 py-3 text-small text-ink-muted">{t("These switch on once Smartly can send email.")}</p>
       </Card>
 
       <ChangePasswordDialog open={passwordOpen} onClose={() => setPasswordOpen(false)} />

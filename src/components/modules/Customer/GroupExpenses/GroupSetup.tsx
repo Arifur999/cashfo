@@ -89,7 +89,7 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
 
       <Card padding="none" className="flex flex-col gap-4 p-5">
         <h2 className="text-title font-semibold text-ink">{t("How each balance is worked out")}</h2>
-        <div className="flex flex-col gap-2 rounded-md bg-cream p-4 text-small leading-relaxed">
+        <div className="flex flex-col gap-2 rounded-md bg-strip p-4 text-small leading-relaxed">
           <span className="flex justify-between">
             <span className="text-ink-2">{t("Contributions")}</span>
             <span className="font-semibold text-income">+</span>

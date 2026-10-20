@@ -167,7 +167,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
                   {...amountField}
                   placeholder="0"
                   className="text-h3 font-bold tabular-nums"
-                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                   frameClassName="overflow-hidden pl-0"
                 />
                 {kind === "DEPOSIT" && dues > 0 && member && (
@@ -186,7 +186,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
             </Field>
 
             {member && value > 0 && (
-              <div className="flex flex-col gap-2 rounded-md border border-line bg-cream px-4 py-3 text-small tabular-nums">
+              <div className="flex flex-col gap-2 rounded-md border border-line bg-strip px-4 py-3 text-small tabular-nums">
                 <span className="text-caption font-semibold text-ink-muted">{t("After saving")}</span>
                 <div className="flex justify-between gap-3">
                   <span className="text-ink-2">

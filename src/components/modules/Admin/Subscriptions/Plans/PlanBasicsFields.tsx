@@ -36,7 +36,7 @@ const PlanBasicsFields = ({ form, plan }: PlanBasicsFieldsProps) => {
         {plan ? (
           <div className="flex flex-col gap-2">
             <span className="text-small font-semibold text-ink-2"><T>Billing</T></span>
-            <span className="flex h-11 items-center rounded-md border border-line bg-cream px-4 text-body text-ink-muted">
+            <span className="flex h-11 items-center rounded-md border border-line bg-strip px-4 text-body text-ink-muted">
               <T>{humanizeEnum(plan.billingCycle)}</T>
             </span>
           </div>

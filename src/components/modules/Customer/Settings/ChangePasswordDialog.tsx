@@ -90,12 +90,12 @@ export function ChangePasswordDialog({ open, onClose }: ChangePasswordDialogProp
             <Field htmlFor="cp-confirm" label={label(t("Type the new password again"))} hint={confirm.length > 0 ? <span className={cn("flex items-center gap-2", match.ok ? "text-income" : "text-expense")}>{match.ok ? <Check className="size-4" strokeWidth={2.5} aria-hidden="true" /> : <Circle className="size-4" aria-hidden="true" />}{t(match.ok ? "Both match" : "They don't match yet")}</span> : undefined}>
               <PasswordField id="cp-confirm" size="md" value={confirm} onChange={setConfirm} autoComplete="new-password" />
             </Field>
-            <div className="flex items-start gap-3 rounded-md border border-line bg-cream px-4 py-3 text-small leading-normal text-ink-2">
+            <div className="flex items-start gap-3 rounded-md border border-line bg-strip px-4 py-3 text-small leading-normal text-ink-2">
               <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
               <span>{t("Your other devices are signed out when the password changes, so anyone who knew the old one is out.")}</span>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>

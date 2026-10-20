@@ -214,7 +214,7 @@ const CommandPalette = ({
           </div>
         </div>
 
-        {footer && <div className="hidden gap-4 border-t border-line bg-cream px-4 py-3 text-caption text-ink-muted sm:flex">{footer}</div>}
+        {footer && <div className="hidden gap-4 border-t border-line bg-strip px-4 py-3 text-caption text-ink-muted sm:flex">{footer}</div>}
       </DialogContent>
     </Dialog>
   );

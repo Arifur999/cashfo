@@ -219,7 +219,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
           doneLabel="Transfer voided"
           reasonHint="At least {count} characters. It's saved with the transfer."
           detail={
-            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-4 py-3 text-body">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body">
               <span className="flex min-w-0 items-center gap-2 font-medium text-ink">
                 <span className="truncate">{voidingParties.from}</span>
                 <ArrowRight className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />

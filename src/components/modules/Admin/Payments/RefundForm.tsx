@@ -111,7 +111,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
       <form.Field name="reason" validators={{ onChange: schema.shape.reason }}>
         {(field) => <AppTextareaField field={field} label="Reason" rows={2} placeholder="Why the money is going back" />}
       </form.Field>
-      <p className="rounded-md border border-line bg-cream px-4 py-3 text-small leading-relaxed text-ink-2">
+      <p className="rounded-md border border-line bg-strip px-4 py-3 text-small leading-relaxed text-ink-2">
         <T>The refund and the reason go into the audit log. Nothing is sent to the gateway from here: send the money back there, then record it.</T>
       </p>
       <form.Subscribe selector={(state) => state.values.amount}>

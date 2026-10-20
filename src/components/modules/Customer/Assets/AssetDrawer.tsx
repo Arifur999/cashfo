@@ -174,7 +174,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
                 size="xl"
                 {...priceField}
                 placeholder="0"
-                leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                 frameClassName="gap-0 overflow-hidden pl-0"
                 className="pl-4 text-h2 tabular-nums"
               />
@@ -192,7 +192,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
             </div>
 
             {value > 0 && (
-              <div className="flex flex-col gap-2 rounded-md border border-line bg-cream p-4 text-small tabular-nums">
+              <div className="flex flex-col gap-2 rounded-md border border-line bg-strip p-4 text-small tabular-nums">
                 {buying && wallet && (
                   <div className="flex justify-between gap-3">
                     <span className="truncate text-ink-2">{wallet.name}</span>

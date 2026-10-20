@@ -162,7 +162,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
             </div>
 
             {goal && value > 0 && (
-              <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4 text-small tabular-nums">
+              <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4 text-small tabular-nums">
                 <span className="text-caption font-semibold text-ink-muted">{t("After this")}</span>
                 <div className="flex justify-between gap-3">
                   <span className="truncate text-ink-2">{goal.name}</span>

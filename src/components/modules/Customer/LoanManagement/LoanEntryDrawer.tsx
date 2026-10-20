@@ -281,7 +281,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                   {...amountField}
                   placeholder="0"
                   autoFocus
-                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                   frameClassName="h-12.5 gap-0 overflow-hidden pl-0"
                   className="pl-3 text-h3 font-bold tabular-nums"
                 />
@@ -292,7 +292,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             </div>
 
             {contact && (
-              <div className="flex flex-col gap-2 rounded-md border border-line bg-cream px-4 py-3 text-small tabular-nums">
+              <div className="flex flex-col gap-2 rounded-md border border-line bg-strip px-4 py-3 text-small tabular-nums">
                 {profit ? (
                   <>
                     <div className="flex justify-between gap-3">

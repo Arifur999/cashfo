@@ -147,7 +147,7 @@ export function VaultPasswordForm({ mode, onDone, onBack }: VaultPasswordFormPro
             {t("Why a second password?")}
           </h3>
           <p className="text-small leading-relaxed text-ink-2">{t("Your vault holds the keys to your other accounts. A separate password means someone using your phone or laptop while you're logged in still can't open it.")}</p>
-          <div className="flex flex-col gap-3 rounded-lg bg-cream p-4">
+          <div className="flex flex-col gap-3 rounded-lg bg-strip p-4">
             <span className="text-small font-semibold text-ink">{t("A good vault password")}</span>
             {TIPS.map((tip) => (
               <span key={tip} className="flex gap-2 text-small leading-normal text-ink-2">

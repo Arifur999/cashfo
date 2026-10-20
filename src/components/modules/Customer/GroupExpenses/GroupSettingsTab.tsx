@@ -136,11 +136,11 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
                   {member.phone && <span className="truncate text-caption text-ink-muted">{member.phone}</span>}
                 </span>
                 <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong">
-                  <button type="button" aria-label={t("Fewer shares for {name}", { name: member.name })} disabled={isPending || shares <= 0.5} onClick={() => setShares(Math.max(0.5, shares - (shares > 1 ? 1 : 0.5)))} className="flex h-full w-8 items-center justify-center bg-cream disabled:opacity-40">
+                  <button type="button" aria-label={t("Fewer shares for {name}", { name: member.name })} disabled={isPending || shares <= 0.5} onClick={() => setShares(Math.max(0.5, shares - (shares > 1 ? 1 : 0.5)))} className="flex h-full w-8 items-center justify-center bg-strip disabled:opacity-40">
                     <Minus className="size-3.5" aria-hidden="true" />
                   </button>
                   <span className="w-8.5 text-center text-body-lg font-bold tabular-nums">{mealText(shares)}</span>
-                  <button type="button" aria-label={t("More shares for {name}", { name: member.name })} disabled={isPending || shares >= 100} onClick={() => setShares(shares < 1 ? 1 : shares + 1)} className="flex h-full w-8 items-center justify-center bg-cream disabled:opacity-40">
+                  <button type="button" aria-label={t("More shares for {name}", { name: member.name })} disabled={isPending || shares >= 100} onClick={() => setShares(shares < 1 ? 1 : shares + 1)} className="flex h-full w-8 items-center justify-center bg-strip disabled:opacity-40">
                     <Plus className="size-3.5" aria-hidden="true" />
                   </button>
                 </span>
@@ -148,7 +148,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
               </div>
             );
           })}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-cream px-5 py-3 text-small">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-strip px-5 py-3 text-small">
             <span className="font-semibold text-ink">{t("{count} shares in total", { count: mealText(totalShares) })}</span>
             {byShares > 0 && totalShares > 0 && (
               <span className="text-ink-2 tabular-nums">

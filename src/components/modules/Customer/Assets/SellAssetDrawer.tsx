@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import DayInput from "@/components/smartly/form/DayInput";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 
-const BOX = { income: "bg-mint-50 text-income", expense: "bg-expense-soft text-expense", neutral: "bg-cream text-ink-2" } as const;
+const BOX = { income: "bg-mint-50 text-income", expense: "bg-expense-soft text-expense", neutral: "bg-strip text-ink-2" } as const;
 
 interface SellAssetDrawerProps {
   open: boolean;
@@ -131,7 +131,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-            <div className="flex flex-col gap-4 rounded-lg border border-line bg-cream p-4">
+            <div className="flex flex-col gap-4 rounded-lg border border-line bg-strip p-4">
               <div className="flex items-center gap-3">
                 <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-col gap-px">

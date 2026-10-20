@@ -148,7 +148,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                   placeholder="0"
                   disabled={open.length < 2}
                   invalid={!!from && value > Number(from.currentAmount)}
-                  leading={<span className="flex h-12 w-11 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                  leading={<span className="flex h-12 w-11 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                   frameClassName="gap-0 overflow-hidden pl-0"
                   className="pl-3 text-h3 font-bold tabular-nums"
                 />

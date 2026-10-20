@@ -59,7 +59,7 @@ const ProfileCard = ({ me }: { me: IAdminUser }) => {
           <label htmlFor="my-email" className="text-body font-medium text-ink">
             <T>Email</T>
           </label>
-          <Input id="my-email" size="md" value={me.email} readOnly frameClassName="bg-cream text-ink-muted" className="text-ink-muted" />
+          <Input id="my-email" size="md" value={me.email} readOnly frameClassName="bg-strip text-ink-muted" className="text-ink-muted" />
           <span className="text-small text-ink-muted"><T>Only another super admin can change an admin&apos;s email.</T></span>
         </div>
         <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>

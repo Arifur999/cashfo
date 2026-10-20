@@ -297,7 +297,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                         </Button>
                       )}
                       {locked && (
-                        <Button variant="secondary" size="sm" disabled title={t("Add a savings wallet first")} className="h-8.5 border-line bg-cream px-3 text-small text-ink-muted disabled:opacity-100">
+                        <Button variant="secondary" size="sm" disabled title={t("Add a savings wallet first")} className="h-8.5 border-line bg-strip px-3 text-small text-ink-muted disabled:opacity-100">
                           <Lock className="size-3.5 text-line-strong" strokeWidth={2.5} />
                           {t("Add money")}
                         </Button>

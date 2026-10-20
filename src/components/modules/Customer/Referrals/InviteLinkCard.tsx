@@ -94,7 +94,7 @@ export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: In
         </div>
       </div>
       <div className="hidden gap-2 md:flex">
-        <input type="text" readOnly value={linkText(link)} aria-label={t("Invite link")} onFocus={(event) => event.target.select()} className="h-11 min-w-0 flex-1 rounded-md border border-line-strong bg-cream px-3 text-body text-ink-2 outline-none" />
+        <input type="text" readOnly value={linkText(link)} aria-label={t("Invite link")} onFocus={(event) => event.target.select()} className="h-11 min-w-0 flex-1 rounded-md border border-line-strong bg-strip px-3 text-body text-ink-2 outline-none" />
         <Button variant="action" onClick={() => copy(link, t("Link copied"))}>
           <Copy />
           {t("Copy")}

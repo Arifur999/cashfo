@@ -179,7 +179,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
               </div>
             );
           })}
-          <div className="flex flex-1 items-start gap-2 bg-cream px-5 py-4 text-small leading-relaxed text-ink-2">
+          <div className="flex flex-1 items-start gap-2 bg-strip px-5 py-4 text-small leading-relaxed text-ink-2">
             <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
             <span>{view.transfers.length === 0 ? (spent > 0 ? t("Everyone is even. Nothing to settle.") : t("Record contributions and expenses, and the payments that settle the month show up here.")) : `${t("After")} ${view.transfers.length === 1 ? t("this payment") : `${t("these")} ${view.transfers.length} ${t("payments")}`} ${t("everyone is even. Or carry the balances into next month when you close.")}`}</span>
           </div>

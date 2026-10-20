@@ -103,7 +103,7 @@ const AdminSearch = () => {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden h-10 w-92 shrink-0 items-center gap-3 rounded-md border border-line bg-cream pr-2 pl-4 text-body text-ink-muted hover:border-line-strong md:flex"
+        className="hidden h-10 w-92 shrink-0 items-center gap-3 rounded-md border border-line bg-strip pr-2 pl-4 text-body text-ink-muted hover:border-line-strong md:flex"
       >
         <Search className="size-4 shrink-0" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate text-left">{t("Search people, payments, tickets…")}</span>

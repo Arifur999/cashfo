@@ -81,7 +81,7 @@ const ErrorDetailPanel = ({ group }: { group: ErrorGroup }) => {
           {latest.stackTrace ?? translate("No stack trace was saved with this error.")}
         </pre>
       </div>
-      <div className="mt-auto flex flex-wrap justify-end gap-2 border-t border-line bg-cream px-5 py-3">
+      <div className="mt-auto flex flex-wrap justify-end gap-2 border-t border-line bg-strip px-5 py-3">
         <CopyButton value={detailsText(group)} label="the error details" text="Copy details" size="md" />
         {open.length > 0 && (
           <Button type="button" disabled={isPending} className="h-10 bg-emerald px-4 font-semibold hover:bg-emerald/90" onClick={() => void run(open.map((log) => log.id))}>

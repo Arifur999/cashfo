@@ -204,7 +204,7 @@ export function NewGroupDrawer({ open, onClose }: NewGroupDrawerProps) {
               </Field>
             </div>
 
-            <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4">
+            <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
               <span className="text-small font-semibold text-ink-2">{t(kind === "MESS" ? "A mess group starts with" : "A family group starts with")}</span>
               {STARTS[kind].map((line) => (
                 <span key={line} className="flex items-start gap-2 text-small text-ink-2">

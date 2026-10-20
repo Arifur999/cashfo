@@ -295,7 +295,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
           )}
 
           {count.total > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-cream px-5 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-strip px-5 py-3">
               <span className="text-small text-ink-2">{open.length === 0 ? t("Everything is done for this day.") : `${open.length} ${t(open.length === 1 ? "task is still open." : "tasks are still open.")}`}</span>
               {open.length > 0 && canMoveOn && (
                 <Button variant="secondary" size="sm" onClick={moveAll} disabled={busy.has("all")}>

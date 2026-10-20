@@ -101,7 +101,7 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
 
       <div className="grid grid-cols-2 gap-3">
         {facts.map((fact) => (
-          <div key={fact.label} className="flex flex-col gap-0.5 rounded-md bg-cream px-3 py-3">
+          <div key={fact.label} className="flex flex-col gap-0.5 rounded-md bg-strip px-3 py-3">
             <span className="text-caption font-normal text-ink-muted">{fact.label}</span>
             <span className="text-title font-bold text-ink tabular-nums">{fact.value}</span>
           </div>

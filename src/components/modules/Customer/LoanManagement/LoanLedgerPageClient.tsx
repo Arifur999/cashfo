@@ -208,7 +208,7 @@ export function LoanLedgerPageClient({ contacts, currency, range, selectedContac
                     const last = item.rows[item.rows.length - 1];
                     const sum = statementProfit(item.rows);
                     return (
-                      <button key={item.key} type="button" onClick={() => setUnfolded(new Set([...unfolded, item.key]))} aria-expanded={false} className={cn("grid h-13 w-full items-center gap-x-4 border-b border-surface-sunken bg-cream/60 px-6 text-left text-body text-ink tabular-nums hover:bg-cream", GRID)}>
+                      <button key={item.key} type="button" onClick={() => setUnfolded(new Set([...unfolded, item.key]))} aria-expanded={false} className={cn("grid h-13 w-full items-center gap-x-4 border-b border-surface-sunken bg-strip px-6 text-left text-body text-ink tabular-nums hover:bg-cream", GRID)}>
                         <span className="text-small text-ink-2">
                           {formatDate(first.date, "MMM")} – {formatDate(last.date, "MMM")}
                         </span>

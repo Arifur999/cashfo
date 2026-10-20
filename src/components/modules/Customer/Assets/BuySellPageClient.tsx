@@ -121,7 +121,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                 </span>
                 <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(lastSold.soldPrice ?? 0, currency)}</span>
               </div>
-              <div className={cn("flex items-center justify-between rounded-md p-3 text-caption", lastChip.tone === "income" ? "bg-mint-50 text-income" : lastChip.tone === "expense" ? "bg-expense-soft text-expense" : "bg-cream text-ink-2")}>
+              <div className={cn("flex items-center justify-between rounded-md p-3 text-caption", lastChip.tone === "income" ? "bg-mint-50 text-income" : lastChip.tone === "expense" ? "bg-expense-soft text-expense" : "bg-strip text-ink-2")}>
                 <span className="font-normal">
                   {t("Paid")} {formatCurrency(lastSold.purchasePrice, currency)} {t("in")} {formatDate(lastSold.purchaseDate, "MMM yyyy")}
                 </span>

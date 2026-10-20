@@ -59,7 +59,7 @@ export function Last7Card({ bars, today }: Last7CardProps) {
         })}
       </div>
       <div className="mt-auto grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-0.5 rounded-md bg-cream p-3">
+        <div className="flex flex-col gap-0.5 rounded-md bg-strip p-3">
           <span className="text-caption text-ink-muted">
             {t("Prayers")}, {sums.days} {t("full days")}
           </span>
@@ -67,7 +67,7 @@ export function Last7Card({ bars, today }: Last7CardProps) {
             {sums.prayed} {t("of")} {sums.prayersDue} · {pct(sums.prayed, sums.prayersDue)}%
           </span>
         </div>
-        <div className="flex flex-col gap-0.5 rounded-md bg-cream p-3">
+        <div className="flex flex-col gap-0.5 rounded-md bg-strip p-3">
           <span className="text-caption text-ink-muted">
             {t("Habits")}, {sums.days} {t("full days")}
           </span>

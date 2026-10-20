@@ -129,7 +129,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
             ))}
           </div>
 
-          <div className={cn("flex shrink-0 items-center justify-between rounded-lg border px-4 py-3", even ? "border-line bg-cream" : owes ? "border-expense/25 bg-expense-soft" : "border-mint-200 bg-mint-50")}>
+          <div className={cn("flex shrink-0 items-center justify-between rounded-lg border px-4 py-3", even ? "border-line bg-strip" : owes ? "border-expense/25 bg-expense-soft" : "border-mint-200 bg-mint-50")}>
             <div className="flex flex-col gap-0.5">
               <span className={cn("text-small font-semibold", even ? "text-ink" : owes ? "text-expense" : "text-income")}>{even ? t("Settled") : owes ? t("Has to pay") : t("Gets back")}</span>
               <span className={cn("text-caption font-normal tabular-nums", even ? "text-ink-muted" : owes ? "text-expense" : "text-income")}>

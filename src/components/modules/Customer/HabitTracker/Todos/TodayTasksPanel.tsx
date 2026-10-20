@@ -284,7 +284,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         </div>
       )}
 
-      <div className={cn("flex items-center justify-between gap-3 border-t border-line bg-cream px-4.5", sheet ? "pt-3 pb-6" : "py-2.5")}>
+      <div className={cn("flex items-center justify-between gap-3 border-t border-line bg-strip px-4.5", sheet ? "pt-3 pb-6" : "py-2.5")}>
         {openItems.length > 0 ? (
           <Button variant="outline" size="sm" onClick={moveAllToTomorrow} className="h-8 px-3">
             <ArrowRightToLine className="size-3.5" strokeWidth={2.25} />

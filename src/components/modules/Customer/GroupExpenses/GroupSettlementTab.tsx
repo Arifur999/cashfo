@@ -213,7 +213,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
               </div>
             );
           })}
-          <div className="flex items-start gap-2 bg-cream px-5 py-3 text-small leading-relaxed text-ink-2">
+          <div className="flex items-start gap-2 bg-strip px-5 py-3 text-small leading-relaxed text-ink-2">
             <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
             <span>
               {payments.length === 0

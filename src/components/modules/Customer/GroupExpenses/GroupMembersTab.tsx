@@ -144,7 +144,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
           );
         })}
         {archived.length > 0 && filter !== "ARCHIVED" && (
-          <div className="flex items-start gap-3 bg-cream px-5 py-3 text-small text-ink-2">
+          <div className="flex items-start gap-3 bg-strip px-5 py-3 text-small text-ink-2">
             <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
             <span>
               <b className="font-semibold text-ink">{archived.map((m) => m.name).join(", ")}</b> {t(archived.length === 1 ? "is archived. Their past months still count; from now on they are left out of every split." : "are archived. Their past months still count; from now on they are left out of every split.")}

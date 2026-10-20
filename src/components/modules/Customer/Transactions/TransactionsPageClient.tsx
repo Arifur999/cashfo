@@ -147,7 +147,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           {!filtered && (
             <p className="mt-4 hidden items-center gap-2 text-caption leading-[normal] font-normal text-ink-muted md:flex">
               {fillNodes(t("Tip: press {key} anywhere to add a transaction"), {
-                key: <Kbd className="rounded-[4px] bg-cream py-px font-sans text-caption leading-[normal] font-semibold text-ink-2">N</Kbd>,
+                key: <Kbd className="rounded-[4px] bg-strip py-px font-sans text-caption leading-[normal] font-semibold text-ink-2">N</Kbd>,
               })}
             </p>
           )}

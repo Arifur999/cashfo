@@ -180,7 +180,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
               ))}
             </fieldset>
 
-            <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4">
+            <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="flex flex-col gap-px">
                   <span className="text-body font-semibold text-ink">{t("Count an amount")}</span>
@@ -221,7 +221,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
             </span>
           </div>
 
-          <div className={cn("flex items-center gap-3 border-t border-line bg-cream", wide ? "px-6 py-4" : "px-4 py-3")}>
+          <div className={cn("flex items-center gap-3 border-t border-line bg-strip", wide ? "px-6 py-4" : "px-4 py-3")}>
             {editing && !editing.isArchived && (
               <Button type="button" variant="ghost" onClick={archive} disabled={isPending}>
                 <Archive />

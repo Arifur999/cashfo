@@ -145,7 +145,7 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
             </fieldset>
           </div>
 
-          <div className={cn("flex items-center gap-3 border-t border-line bg-cream", wide ? "px-6 py-4" : "px-4 py-3")}>
+          <div className={cn("flex items-center gap-3 border-t border-line bg-strip", wide ? "px-6 py-4" : "px-4 py-3")}>
             {editing && (
               <Button type="button" variant="ghost" className="text-expense hover:bg-expense-soft hover:text-expense" onClick={() => onRemove(editing)} disabled={isPending}>
                 <Trash2 />

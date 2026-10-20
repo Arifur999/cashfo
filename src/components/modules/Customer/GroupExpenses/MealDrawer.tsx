@@ -180,11 +180,11 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
                     );
                   })}
                   <span className="flex h-9 items-center justify-between overflow-hidden rounded-md border border-line">
-                    <button type="button" aria-label={t("One guest less for {name}", { name: member.name })} disabled={entry.guests === 0} onClick={() => change(member.id, { guests: entry.guests - 1 })} className="flex h-full w-7 items-center justify-center bg-cream disabled:opacity-40">
+                    <button type="button" aria-label={t("One guest less for {name}", { name: member.name })} disabled={entry.guests === 0} onClick={() => change(member.id, { guests: entry.guests - 1 })} className="flex h-full w-7 items-center justify-center bg-strip disabled:opacity-40">
                       <Minus className="size-3.5" aria-hidden="true" />
                     </button>
                     <span className={cn("text-body font-semibold tabular-nums", entry.guests ? "text-ink" : "text-ink-muted")}>{entry.guests}</span>
-                    <button type="button" aria-label={t("One more guest for {name}", { name: member.name })} disabled={entry.guests >= 20} onClick={() => change(member.id, { guests: entry.guests + 1 })} className="flex h-full w-7 items-center justify-center bg-cream disabled:opacity-40">
+                    <button type="button" aria-label={t("One more guest for {name}", { name: member.name })} disabled={entry.guests >= 20} onClick={() => change(member.id, { guests: entry.guests + 1 })} className="flex h-full w-7 items-center justify-center bg-strip disabled:opacity-40">
                       <Plus className="size-3.5" aria-hidden="true" />
                     </button>
                   </span>

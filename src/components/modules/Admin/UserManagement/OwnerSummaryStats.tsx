@@ -21,7 +21,7 @@ const OwnerSummaryStats = async ({ owner }: { owner: IOwnerDetail }) => {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {tiles.map((tile) => (
-        <div key={tile.label} className="flex flex-col gap-0.5 rounded-md border border-surface-sunken bg-cream px-4 py-3">
+        <div key={tile.label} className="flex flex-col gap-0.5 rounded-md border border-surface-sunken bg-strip px-4 py-3">
           <span className="text-caption text-ink-muted">{t(tile.label)}</span>
           <span className="truncate text-h3 text-ink tabular-nums">{tile.value}</span>
           <span className="truncate text-caption text-ink-muted">{tile.sub}</span>

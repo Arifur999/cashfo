@@ -245,7 +245,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           confirmLabel="Void entry"
           doneLabel="Entry voided"
           detail={
-            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-4 py-3 text-body">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body">
               <span className="flex min-w-0 flex-col">
                 <span className="truncate font-medium text-ink">{voiding.contact?.name ?? "—"}</span>
                 <span className="text-caption font-normal text-ink-muted">{voidingEntry ? t(LOAN_ENTRY_META[voidingEntry.kind].title) : ""}</span>

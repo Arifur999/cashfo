@@ -176,7 +176,7 @@ export function NotificationsBell() {
         <Link
           href="/settings/app"
           onClick={() => setOpen(false)}
-          className="flex h-12 items-center justify-center gap-2 border-t border-line bg-cream text-small font-semibold text-ink-2 hover:text-ink"
+          className="flex h-12 items-center justify-center gap-2 border-t border-line bg-strip text-small font-semibold text-ink-2 hover:text-ink"
         >
           <Settings className="size-4" aria-hidden="true" />
           {t("Choose what you're told about")}

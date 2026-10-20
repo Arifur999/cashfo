@@ -58,7 +58,7 @@ export function QuranKhatamCard({ sheet, window, days, onParas, saving }: QuranK
       </div>
 
       {day !== null && (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-3 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-3 py-2">
           <label className="flex min-w-0 items-center gap-2 text-small font-semibold text-ink-2">
             {t("Paras on")}
             <NativeSelect size="sm" value={day} onChange={(event) => setPicked(Number(event.target.value))} aria-label={t("Day")}>

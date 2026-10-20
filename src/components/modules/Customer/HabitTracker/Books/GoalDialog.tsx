@@ -87,7 +87,7 @@ export function GoalDialog({ open, onClose, year, current }: GoalDialogProps) {
               <Input id="bk-goal" size="md" inputMode="numeric" value={text} onChange={(event) => setText(event.target.value.replace(/\D/g, "").slice(0, 4))} invalid={text !== "" && !valid} frameClassName="w-40" />
             </Field>
           </div>
-          <div className="flex items-center gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center gap-3 border-t border-line bg-strip px-6 py-4">
             {current !== null && (
               <Button type="button" variant="ghost" className="text-expense hover:bg-expense-soft hover:text-expense" onClick={() => run(clearBookGoalAction, "Goal removed")} disabled={isPending}>
                 {t("Remove goal")}

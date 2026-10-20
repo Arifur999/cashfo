@@ -54,7 +54,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
           <div className="flex flex-wrap items-center gap-2">
             <span className="mr-1 text-small text-ink-muted">{t("By member")}</span>
             {perMember.map(({ member, amount }) => (
-              <button key={member.id} type="button" onClick={() => setMemberId(memberId === member.id ? "" : member.id)} aria-pressed={memberId === member.id} className={cn("flex h-7.5 items-center gap-2 rounded-full border py-0 pr-3 pl-1 text-small tabular-nums transition-colors", memberId === member.id ? "border-emerald bg-mint-50 text-ink" : "border-line bg-cream text-ink-2 hover:border-line-strong")}>
+              <button key={member.id} type="button" onClick={() => setMemberId(memberId === member.id ? "" : member.id)} aria-pressed={memberId === member.id} className={cn("flex h-7.5 items-center gap-2 rounded-full border py-0 pr-3 pl-1 text-small tabular-nums transition-colors", memberId === member.id ? "border-emerald bg-mint-50 text-ink" : "border-line bg-strip text-ink-2 hover:border-line-strong")}>
                 <PersonAvatar name={member.name} src={member.photoUrl} size={22} coloured />
                 {member.name}
                 <b className="text-ink">{formatCurrency(amount, currency)}</b>

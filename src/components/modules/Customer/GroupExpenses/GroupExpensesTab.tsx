@@ -173,7 +173,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
           );
         })}
         {rows.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-cream px-5 py-3 text-small">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-strip px-5 py-3 text-small">
             {rows.length > PAGE ? (
               <Button variant="secondary" size="sm" onClick={() => setShowAll(!showAll)}>
                 {showAll ? t("Show fewer") : `${t("Show")} ${rows.length - PAGE} ${t("older entries")}`}

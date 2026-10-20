@@ -130,7 +130,7 @@ const AdminNotificationsBell = () => {
             );
           })}
         </ul>
-        <p className="border-t border-line bg-cream px-4 py-3 text-caption text-ink-muted">{t("Only what your role can act on is shown here.")}</p>
+        <p className="border-t border-line bg-strip px-4 py-3 text-caption text-ink-muted">{t("Only what your role can act on is shown here.")}</p>
       </PopoverContent>
     </Popover>
   );

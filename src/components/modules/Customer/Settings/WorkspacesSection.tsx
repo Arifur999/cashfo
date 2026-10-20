@@ -163,7 +163,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
         </div>
         <div className="grid gap-3 md:grid-cols-3">
           {TIPS.map((tip) => (
-            <div key={tip.text} className="flex gap-3 rounded-md bg-cream px-4 py-3">
+            <div key={tip.text} className="flex gap-3 rounded-md bg-strip px-4 py-3">
               <tip.icon className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
               <span className="text-small leading-normal text-ink-2">{t(tip.text)}</span>
             </div>

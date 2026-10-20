@@ -102,14 +102,14 @@ export function ProfileSection() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field htmlFor="pf-email" label={label(t("Email"), <Chip tone={user.emailVerifiedAt ? "income" : "warning"} size="sm">{t(user.emailVerifiedAt ? "Verified" : "Not verified")}</Chip>)} hint={t("To change it, contact support.")}>
-                <Input id="pf-email" size="md" value={user.email} readOnly className="text-ink-2" frameClassName="border-line bg-cream" />
+                <Input id="pf-email" size="md" value={user.email} readOnly className="text-ink-2" frameClassName="border-line bg-strip" />
               </Field>
               <Field htmlFor="pf-phone" label={label(t("Phone"), <span className="font-normal text-ink-muted">({t("optional")})</span>)} hint={t("Used for group statements.")}>
-                <Input id="pf-phone" size="md" type="tel" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value.replace(/[^\d-]/g, "").slice(0, 14))} leading={<span className="-ml-3 flex h-full items-center border-r border-line bg-cream px-3 text-body font-medium text-ink-2">+880</span>} className="tabular-nums" autoComplete="tel-national" />
+                <Input id="pf-phone" size="md" type="tel" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value.replace(/[^\d-]/g, "").slice(0, 14))} leading={<span className="-ml-3 flex h-full items-center border-r border-line bg-strip px-3 text-body font-medium text-ink-2">+880</span>} className="tabular-nums" autoComplete="tel-national" />
               </Field>
             </div>
           </div>
-          <div className="flex items-center gap-3 border-t border-surface-sunken bg-cream px-6 py-4">
+          <div className="flex items-center gap-3 border-t border-surface-sunken bg-strip px-6 py-4">
             <span className="flex-1 text-small text-ink-muted">{!dirty ? t("Nothing changed yet.") : nameChanged && phoneChanged ? t("You changed your name and phone.") : nameChanged ? t("You changed your name.") : t("You changed your phone.")}</span>
             <Button type="button" variant="secondary" onClick={discard} disabled={!dirty || isPending}>
               {t("Discard")}

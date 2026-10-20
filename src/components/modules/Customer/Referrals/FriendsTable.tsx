@@ -98,7 +98,7 @@ export function FriendsTable({ entries, currency }: FriendsTableProps) {
             );
           })}
           {pending > 0 && (
-            <div className="flex items-center gap-3 bg-cream px-5 py-3 text-small text-ink-2">
+            <div className="flex items-center gap-3 bg-strip px-5 py-3 text-small text-ink-2">
               <Info className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
               <span>
                 {pending} {t(pending === 1 ? "reward is still pending. It becomes available 30 days after your friend joined." : "rewards are still pending. They become available 30 days after each friend joined.")}

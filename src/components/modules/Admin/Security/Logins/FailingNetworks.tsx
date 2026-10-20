@@ -50,7 +50,7 @@ const FailingNetworks = () => {
           </ul>
         )}
       </Card>
-      <div role="note" className="flex gap-3 rounded-md border border-line bg-cream px-4 py-3 text-small leading-relaxed text-ink-2">
+      <div role="note" className="flex gap-3 rounded-md border border-line bg-strip px-4 py-3 text-small leading-relaxed text-ink-2">
         <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-ink-muted" />
         <span><T>After 5 tries in 15 minutes on one account from one network, sign-in pauses there for 15 minutes; 30 tries pause the whole network. This list covers the admin panel and the app.</T></span>
       </div>

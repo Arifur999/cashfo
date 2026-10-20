@@ -171,13 +171,13 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
               ))}
             </fieldset>
 
-            <p className="flex gap-3 rounded-md border border-line bg-cream px-4 py-3 text-small leading-normal text-ink-2">
+            <p className="flex gap-3 rounded-md border border-line bg-strip px-4 py-3 text-small leading-normal text-ink-2">
               <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
               {t("A repeating task shows up on its days by itself. Ticking it off finishes only that day.")}
             </p>
           </div>
 
-          <div className={cn("flex items-center gap-3 border-t border-line bg-cream", wide ? "px-6 py-4" : "px-4 py-3")}>
+          <div className={cn("flex items-center gap-3 border-t border-line bg-strip", wide ? "px-6 py-4" : "px-4 py-3")}>
             {item && (
               <Button type="button" variant="ghost" onClick={() => onDelete(item)} disabled={isPending} className="px-3 text-expense hover:bg-expense-soft hover:text-expense">
                 <Trash2 />

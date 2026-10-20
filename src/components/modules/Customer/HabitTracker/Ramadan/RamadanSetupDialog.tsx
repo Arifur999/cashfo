@@ -101,7 +101,7 @@ export function RamadanSetupDialog({ open, onClose, existing, defaultYear }: Ram
               <span className="text-caption font-normal text-ink-muted">{t("Ramadan is 29 or 30 days, depending on the moon sighting.")}</span>
             </fieldset>
           </div>
-          <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>

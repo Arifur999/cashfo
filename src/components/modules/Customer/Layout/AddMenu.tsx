@@ -137,7 +137,7 @@ export function AddMenu({ onAddTask }: AddMenuProps) {
               </div>
             ))}
           </div>
-          <div className="border-t border-line bg-cream px-4 py-3 text-caption font-normal text-ink-muted">
+          <div className="border-t border-line bg-strip px-4 py-3 text-caption font-normal text-ink-muted">
             {t("Press N anywhere to open this menu").split("N").length === 2 ? (
               <>
                 {t("Press N anywhere to open this menu").split("N")[0]}

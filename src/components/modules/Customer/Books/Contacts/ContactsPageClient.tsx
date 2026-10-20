@@ -85,7 +85,7 @@ export function ContactsPageClient({ businessId, contacts, receivableAging, canM
 
       <ContactsTable contacts={contacts} currency={currency} canManage={canManage} onAdd={() => setDrawer({ open: true, editing: null })} onEdit={(contact) => setDrawer({ open: true, editing: contact })} />
 
-      <p className="flex items-start gap-3 rounded-md bg-cream px-4 py-3 text-small leading-relaxed text-ink-2">
+      <p className="flex items-start gap-3 rounded-md bg-strip px-4 py-3 text-small leading-relaxed text-ink-2">
         <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         <span>
           {t("Loans with friends, family, banks and NGOs stay in")}{" "}

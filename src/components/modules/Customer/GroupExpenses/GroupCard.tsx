@@ -115,7 +115,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
         </span>
       </div>
 
-      <div className="flex items-center gap-3 rounded-b-lg border-t border-surface-sunken bg-cream px-5 py-3 text-small">
+      <div className="flex items-center gap-3 rounded-b-lg border-t border-surface-sunken bg-strip px-5 py-3 text-small">
         <span className={cn("flex min-w-0 items-center gap-2 font-medium [&_svg]:size-4 [&_svg]:shrink-0", note.tone)}>
           {note.icon}
           <span className="truncate">{note.text}</span>

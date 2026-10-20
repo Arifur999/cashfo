@@ -123,7 +123,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, s
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
             {t("Not yet")}
           </Button>

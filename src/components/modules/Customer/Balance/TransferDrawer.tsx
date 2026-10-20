@@ -194,7 +194,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
             </div>
 
             {from && to && value > 0 && (
-              <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4 text-body tabular-nums">
+              <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4 text-body tabular-nums">
                 <span className="text-caption font-semibold text-ink-muted">{t("After this transfer")}</span>
                 {afterRow(from, -value)}
                 {afterRow(to, value)}

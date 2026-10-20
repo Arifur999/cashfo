@@ -50,7 +50,7 @@ const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, o
         <span className="text-small text-ink-muted">{trialLine(plan, translate)}</span>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-md bg-cream p-3">
+      <div className="flex flex-col gap-2 rounded-md bg-strip p-3">
         <span className="flex justify-between text-small">
           <b className="font-semibold text-ink">
             <T values={{ count: formatNumber(people) }}>{"{count} people"}</T>

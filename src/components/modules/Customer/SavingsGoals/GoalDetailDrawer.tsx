@@ -200,7 +200,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
 
 function Fact({ label, value, sub, className }: { label: string; value: string; sub: string; className?: string }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-md border border-line bg-cream p-3">
+    <div className="flex flex-col gap-0.5 rounded-md border border-line bg-strip p-3">
       <span className="text-caption font-normal text-ink-muted">{label}</span>
       <span className={cn("text-body font-semibold text-ink tabular-nums", className)}>{value}</span>
       <span className="text-caption font-normal text-ink-muted">{sub}</span>
