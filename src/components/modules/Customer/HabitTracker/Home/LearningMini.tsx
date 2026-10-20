@@ -46,7 +46,7 @@ export function LearningMini({ overview, today }: LearningMiniProps) {
           );
         })
       )}
-      <div className="mt-auto flex items-center gap-1 border-t border-surface-sunken pt-3 text-small font-semibold text-ink">
+      <div className="mt-auto flex items-center gap-1 border-t border-divider pt-3 text-small font-semibold text-ink">
         <Flame className={streak > 0 ? "size-4 text-warning" : "size-4 text-ink-muted"} aria-hidden="true" />
         {streak > 0 ? `${t("Practice streak")}: ${streak} ${t(streak === 1 ? "day" : "days")}` : t("No practice streak yet")}
       </div>

@@ -241,7 +241,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
           </form>
 
           {count.total === 0 ? (
-            <div className="flex flex-col items-center gap-2 border-t border-surface-sunken px-8 py-10 text-center">
+            <div className="flex flex-col items-center gap-2 border-t border-divider px-8 py-10 text-center">
               <span className="flex size-12 items-center justify-center rounded-full bg-pillar-habits-soft text-pillar-habits">
                 <ListChecks className="size-5.5" aria-hidden="true" />
               </span>
@@ -258,7 +258,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
                       <span className="rounded-full bg-surface-sunken px-2 text-ink-2 tabular-nums">{group.items.length}</span>
                     </div>
                     {group.items.map((item) => (
-                      <div key={item.id} className="flex min-h-15 items-center gap-3 border-b border-surface-sunken px-5 py-2 last:border-b-0">
+                      <div key={item.id} className="flex min-h-15 items-center gap-3 border-b border-divider px-5 py-2 last:border-b-0">
                         <button type="button" role="checkbox" aria-checked={item.completed} aria-label={item.text} disabled={busy.has(item.id)} onClick={() => toggle(item)} className={cn("flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors disabled:opacity-50", item.completed ? "bg-emerald text-white" : "border-[1.5px] border-line-strong bg-surface hover:border-emerald")}>
                           {item.completed && <Check className="size-3.5" strokeWidth={3.5} aria-hidden="true" />}
                         </button>

@@ -35,11 +35,11 @@ const RateLimitsCard = () => {
       )}
       <p className="px-5 pb-2 text-caption font-medium text-ink-muted"><T>Busiest endpoints, requests so far</T></p>
       {busiest.length === 0 ? (
-        <p className="border-t border-surface-sunken px-5 py-3 text-small text-ink-muted"><T>No requests recorded yet.</T></p>
+        <p className="border-t border-divider px-5 py-3 text-small text-ink-muted"><T>No requests recorded yet.</T></p>
       ) : (
         <ul>
           {busiest.map((entry) => (
-            <li key={entry.endpoint} className="flex items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 text-small">
+            <li key={entry.endpoint} className="flex items-center justify-between gap-3 border-t border-divider px-5 py-2 text-small">
               <code className="truncate font-mono text-ink-2">{entry.endpoint}</code>
               <span className="shrink-0 font-semibold text-ink tabular-nums">{formatNumber(entry.requestCount)}</span>
             </li>

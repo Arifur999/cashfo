@@ -255,7 +255,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
                   {active.map((member) => {
                     const on = included.includes(member.id);
                     return (
-                      <div key={member.id} className="flex h-12 items-center gap-3 border-b border-surface-sunken px-3 last:border-b-0">
+                      <div key={member.id} className="flex h-12 items-center gap-3 border-b border-divider px-3 last:border-b-0">
                         {split !== "EXACT" ? (
                           <button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(member.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                             <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-[5px] border text-[11px] font-bold", on ? "border-emerald bg-emerald text-white" : "border-line-strong bg-surface")}>

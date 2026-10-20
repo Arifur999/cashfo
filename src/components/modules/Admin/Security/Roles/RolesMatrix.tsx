@@ -63,7 +63,7 @@ const RolesMatrix = () => {
           ))}
         </div>
         {ROLE_PERMISSIONS.map((row) => (
-          <div role="row" key={row.area} className={cn(GRID, "min-h-11.5 border-b border-surface-sunken py-1 text-body last:border-b-0")}>
+          <div role="row" key={row.area} className={cn(GRID, "min-h-11.5 border-b border-divider py-1 text-body last:border-b-0")}>
             <span role="rowheader" className="flex flex-col">
               <span className="font-medium text-ink">
                 <T>{row.area}</T>

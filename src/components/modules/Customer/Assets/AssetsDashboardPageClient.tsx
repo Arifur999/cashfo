@@ -216,7 +216,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                       </span>
                     </>
                   );
-                  const rowClass = cn("grid h-14.5 w-full items-center gap-x-4 border-b border-surface-sunken px-6 text-left text-body", GRID, sold && "opacity-70");
+                  const rowClass = cn("grid h-14.5 w-full items-center gap-x-4 border-b border-divider px-6 text-left text-body", GRID, sold && "opacity-70");
                   return sold || !canManage ? (
                     <div key={asset.id} className={rowClass}>
                       {row}

@@ -80,7 +80,7 @@ export function VaultCheckup({ entries, checkup, busy, onBack, onChange, onFine 
         if (items.length === 0) return null;
         return (
           <Card key={group.issue} padding="none" className="overflow-hidden">
-            <div className="flex items-start gap-3 border-b border-surface-sunken px-5 py-4">
+            <div className="flex items-start gap-3 border-b border-divider px-5 py-4">
               <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", group.tile)}>
                 <group.icon aria-hidden="true" />
               </span>

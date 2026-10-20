@@ -17,7 +17,7 @@ const OwnerActivityTimeline = async ({ entries }: { entries: IOwnerActivityLogEn
       ) : (
         <ol className="flex flex-col">
           {entries.map((entry) => (
-            <li key={entry.id} className="flex gap-3 border-b border-surface-sunken py-2 text-body last:border-b-0">
+            <li key={entry.id} className="flex gap-3 border-b border-divider py-2 text-body last:border-b-0">
               <span aria-hidden="true" className="mt-2 size-2 shrink-0 rounded-full bg-emerald" />
               <span className="flex-1 leading-snug text-ink">
                 <b className="font-semibold">{entry.adminName}</b> <span className="text-ink-2">{t(auditActionLabel(entry.action)).toLowerCase()}</span>

@@ -124,7 +124,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
           <ul role="listbox" aria-labelledby={`${id}-label`} className="flex max-h-72 flex-col overflow-y-auto">
             {savingsWallets.length > 0 && wallets.length > 0 && <li className="px-3 pt-1 pb-1 text-caption font-semibold text-ink-muted">{t("Wallets")}</li>}
             {wallets.map(option)}
-            {savingsWallets.length > 0 && <li className={cn("px-3 pt-2 pb-1 text-caption font-semibold text-ink-muted", wallets.length > 0 && "mt-1 border-t border-surface-sunken")}>{t("Savings wallets")}</li>}
+            {savingsWallets.length > 0 && <li className={cn("px-3 pt-2 pb-1 text-caption font-semibold text-ink-muted", wallets.length > 0 && "mt-1 border-t border-divider")}>{t("Savings wallets")}</li>}
             {savingsWallets.map(option)}
           </ul>
         </PopoverContent>

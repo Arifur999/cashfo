@@ -43,7 +43,7 @@ export function LedgerTable({ account, ledger, summary, currency, from, onPage }
         <span className="text-right">{t("Money out")}</span>
         <span className="text-right">{t("Balance")}</span>
       </div>
-      <div className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken bg-table-head px-5 py-2 text-body", GRID)}>
+      <div className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-divider bg-table-head px-5 py-2 text-body", GRID)}>
         <span className="hidden text-small whitespace-nowrap text-ink-2 md:block">{from ? formatDate(from, "EEE, d MMM") : ""}</span>
         <span className="font-medium text-ink-muted">{t("Opening balance")}</span>
         <span className="hidden md:block" />
@@ -51,13 +51,13 @@ export function LedgerTable({ account, ledger, summary, currency, from, onPage }
         <span className="hidden text-right md:block">{dash}</span>
         <BalanceText value={ledger.balanceBroughtForward} currency={currency} className="font-semibold md:text-right" />
       </div>
-      {ledger.entries.length === 0 && <p className="border-t border-surface-sunken px-5 py-10 text-center text-body text-ink-muted">{t("No entries in this period.")}</p>}
+      {ledger.entries.length === 0 && <p className="border-t border-divider px-5 py-10 text-center text-body text-ink-muted">{t("No entries in this period.")}</p>}
       {ledger.entries.map((row) => {
         const direction = ledgerDirection(row.entryType, account.accountType);
         const voided = row.transactionStatus === "VOIDED";
         const amount = direction === "in" ? <span className="font-bold text-income tabular-nums whitespace-nowrap">{formatSignedCurrency(row.amount, currency)}</span> : <span className="font-bold text-expense tabular-nums whitespace-nowrap">{formatSignedCurrency(-Number(row.amount), currency)}</span>;
         return (
-          <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 text-body transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
+          <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-divider px-5 py-2 text-body transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
             <span className="flex min-w-0 flex-col md:contents">
               <span className="text-small whitespace-nowrap text-ink-2 max-md:text-caption max-md:text-ink-muted">{formatDate(row.date, "EEE, d MMM")}</span>
               <span className="flex min-w-0 items-center gap-2">

@@ -49,7 +49,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
         {LEGAL_LINKS.map((link) => {
           const updated = legalUpdated[link.page];
           return (
-            <a key={link.page} href={`/${link.page}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 border-t border-surface-sunken px-5 py-3 text-ink hover:bg-hover">
+            <a key={link.page} href={`/${link.page}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 border-t border-divider px-5 py-3 text-ink hover:bg-hover">
               <FileText className="size-4.5 text-ink-muted" aria-hidden="true" />
               <span className="flex-1 text-body font-medium">{t(link.title)}</span>
               {updated && <span className="text-small text-ink-muted">{t("Updated {date}", { date: formatDate(updated) })}</span>}
@@ -61,7 +61,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
 
       <Card padding="none" className="overflow-hidden">
         <h2 className="px-5 py-4 text-title font-semibold text-ink">{t("Your data")}</h2>
-        <div className="flex flex-col gap-3 border-t border-surface-sunken px-5 py-4 sm:flex-row sm:items-center sm:gap-5">
+        <div className="flex flex-col gap-3 border-t border-divider px-5 py-4 sm:flex-row sm:items-center sm:gap-5">
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-body font-semibold text-ink">{t("Download my data")}</span>
             <span className="text-small leading-normal text-ink-muted">{t("Wallets, transactions, budgets, savings, assets, loans and groups as spreadsheet files. Saved passwords are left out.")}</span>
@@ -73,7 +73,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
             </a>
           </Button>
         </div>
-        <div className="flex flex-col gap-3 border-t border-surface-sunken bg-expense-soft/60 px-5 py-4 sm:flex-row sm:items-center sm:gap-5">
+        <div className="flex flex-col gap-3 border-t border-divider bg-expense-soft/60 px-5 py-4 sm:flex-row sm:items-center sm:gap-5">
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="flex items-center gap-2 text-body font-semibold text-expense">
               {t("Delete my account")}

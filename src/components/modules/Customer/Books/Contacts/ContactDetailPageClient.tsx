@@ -154,7 +154,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, transacti
               {details
                 .filter(([, value]) => value)
                 .map(([label, value], index) => (
-                  <div key={label} className={cn("grid grid-cols-[110px_minmax(0,1fr)] gap-4 py-3 text-body", index > 0 && "border-t border-surface-sunken")}>
+                  <div key={label} className={cn("grid grid-cols-[110px_minmax(0,1fr)] gap-4 py-3 text-body", index > 0 && "border-t border-divider")}>
                     <span className="text-ink-muted">{label}</span>
                     <span className="min-w-0 break-words text-ink">{value}</span>
                   </div>

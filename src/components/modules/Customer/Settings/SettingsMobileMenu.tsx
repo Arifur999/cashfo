@@ -61,7 +61,7 @@ export function SettingsMobileMenu() {
           <div className="overflow-hidden rounded-lg border border-line bg-surface">
             {rowsOf(group).map((row) => (
               // 52px plus the divider, as the board draws a row.
-              <Link key={row.key} href={row.href} className="box-content flex min-h-13 items-center gap-3 border-t border-surface-sunken px-4 text-ink first:border-t-0">
+              <Link key={row.key} href={row.href} className="box-content flex min-h-13 items-center gap-3 border-t border-divider px-4 text-ink first:border-t-0">
                 <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", SOFT_TONE[row.tone])}>
                   <row.icon aria-hidden="true" />
                 </span>

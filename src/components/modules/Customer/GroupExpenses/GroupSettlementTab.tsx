@@ -111,7 +111,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
             </div>
             {rows.length === 0 && <p className="border-t border-line px-5 py-8 text-center text-body text-ink-muted">{t("Add members to see the settlement.")}</p>}
             {rows.map(({ row, member }) => (
-              <div key={row.groupMemberId} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-surface-sunken px-5 py-3 text-body tabular-nums md:min-h-13 md:py-0", ROW)}>
+              <div key={row.groupMemberId} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-divider px-5 py-3 text-body tabular-nums md:min-h-13 md:py-0", ROW)}>
                 <span className="flex min-w-0 items-center gap-3 font-medium text-ink">
                   <PersonAvatar name={row.name} src={member?.photoUrl} size={30} coloured />
                   <span className="flex min-w-0 flex-col">
@@ -172,7 +172,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
         <Card padding="none" className="overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-sunken px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-divider px-5 py-4">
             <h2 className="text-title font-semibold text-ink">{t("Settle up")}</h2>
             {holder ? (
               <SegmentedControl<Route>
@@ -195,7 +195,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
             const to = view.memberById[payment.toId];
             const note = route === "manager" ? (payment.owes ? "pays the manager" : "returns from the cash") : "pays directly";
             return (
-              <div key={`${payment.fromId}-${payment.toId}`} className="flex min-h-13.5 items-center gap-3 border-b border-surface-sunken px-5 py-2 text-body">
+              <div key={`${payment.fromId}-${payment.toId}`} className="flex min-h-13.5 items-center gap-3 border-b border-divider px-5 py-2 text-body">
                 <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                   <PersonAvatar name={from?.name ?? "?"} src={from?.photoUrl} size={28} coloured />
                   <span className="font-medium text-ink">{from?.name}</span>
@@ -226,7 +226,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
         </Card>
 
         <Card padding="none" className="overflow-hidden">
-          <div className="flex items-center justify-between border-b border-surface-sunken px-5 py-4">
+          <div className="flex items-center justify-between border-b border-divider px-5 py-4">
             <h2 className="text-title font-semibold text-ink">{t("Closed months")}</h2>
             <span className="text-caption font-normal text-ink-muted">{t("Locked, they never change")}</span>
           </div>
@@ -235,7 +235,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
             const key = record.periodStart.slice(0, 7);
             const people = `${record.memberCount} ${t(record.memberCount === 1 ? "member" : "members")}`;
             return (
-              <Link key={record.id} href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: key } }} className="flex items-center gap-3 border-b border-surface-sunken px-5 py-3 text-ink last:border-b-0 hover:bg-hover">
+              <Link key={record.id} href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: key } }} className="flex items-center gap-3 border-b border-divider px-5 py-3 text-ink last:border-b-0 hover:bg-hover">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink-2">
                   <Lock className="size-4" aria-hidden="true" />
                 </span>

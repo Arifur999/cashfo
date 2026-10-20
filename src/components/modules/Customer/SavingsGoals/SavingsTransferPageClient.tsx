@@ -95,7 +95,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                 <span className="text-right">{t("Amount")}</span>
               </div>
               {transfers.map((transfer) => (
-                <div key={transfer.id} className={cn("grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-surface-sunken px-4 py-3 text-body md:px-6", GRID)}>
+                <div key={transfer.id} className={cn("grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-divider px-4 py-3 text-body md:px-6", GRID)}>
                   <span className="order-3 text-caption text-ink-2 md:order-0 md:text-body">{formatDate(transfer.date)}</span>
                   <span className="flex min-w-0 flex-col gap-0.75">
                     <span className="flex items-center gap-2 font-medium text-ink">

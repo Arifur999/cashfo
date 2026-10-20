@@ -120,7 +120,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
           </span>
         </div>
         {METHODS.map((method) => (
-          <div key={method.title} className="flex items-center gap-4 border-t border-surface-sunken px-6 py-4 opacity-60">
+          <div key={method.title} className="flex items-center gap-4 border-t border-divider px-6 py-4 opacity-60">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-strip text-ink-2">
               <method.icon className="size-4" aria-hidden="true" />
             </span>
@@ -148,7 +148,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
         {shownSessions.map((session) => {
           const Icon = isPhone(session.deviceLabel) ? Smartphone : Laptop;
           return (
-            <div key={session.id} className="flex items-center gap-4 border-t border-surface-sunken px-6 py-3">
+            <div key={session.id} className="flex items-center gap-4 border-t border-divider px-6 py-3">
               <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-md", session.isCurrent ? "bg-mint-50 text-emerald" : "bg-surface-sunken text-ink-2")}>
                 <Icon className="size-4.5" aria-hidden="true" />
               </span>
@@ -173,9 +173,9 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
             </div>
           );
         })}
-        {sessions !== null && sessions.length === 0 && <div className="border-t border-surface-sunken px-6 py-6 text-small text-ink-muted">{t("No active sessions found.")}</div>}
+        {sessions !== null && sessions.length === 0 && <div className="border-t border-divider px-6 py-6 text-small text-ink-muted">{t("No active sessions found.")}</div>}
         {ordered.length > SHOWN_DEVICES && (
-          <button type="button" onClick={() => setShowAll((v) => !v)} className="w-full border-t border-surface-sunken px-6 py-3 text-left text-small font-semibold text-emerald hover:bg-hover">
+          <button type="button" onClick={() => setShowAll((v) => !v)} className="w-full border-t border-divider px-6 py-3 text-left text-small font-semibold text-emerald hover:bg-hover">
             {showAll ? t("Show fewer") : `${t("Show all")} ${ordered.length}`}
           </button>
         )}
@@ -187,7 +187,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
           <span className="text-small text-ink-muted">{t("The last 5 tries to sign in to your account.")}</span>
         </div>
         {history.slice(0, RECENT).map((entry) => (
-          <div key={entry.id} className={cn("grid min-h-11.5 items-center gap-x-3 border-t border-surface-sunken px-6 py-2 text-body tabular-nums md:grid-cols-[26px_minmax(0,1fr)_160px_150px]", !entry.success && "bg-warning-soft/60")}>
+          <div key={entry.id} className={cn("grid min-h-11.5 items-center gap-x-3 border-t border-divider px-6 py-2 text-body tabular-nums md:grid-cols-[26px_minmax(0,1fr)_160px_150px]", !entry.success && "bg-warning-soft/60")}>
             <span className={cn("flex size-5.5 items-center justify-center rounded-full", entry.success ? "bg-mint-50 text-emerald" : "bg-expense-soft text-expense")}>{entry.success ? <Check className="size-3" strokeWidth={3} aria-hidden="true" /> : <X className="size-3" strokeWidth={3} aria-hidden="true" />}</span>
             <span className="flex min-w-0 flex-col gap-px">
               <span className={cn("font-semibold", entry.success ? "text-ink" : "text-expense")}>{entry.success ? t("Signed in") : t("Wrong password")}</span>
@@ -204,7 +204,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
             <span className="text-small whitespace-nowrap text-ink-muted md:text-right">{formatRelativeDateTime(entry.createdAt, { t })}</span>
           </div>
         ))}
-        {history.length === 0 && <div className="border-t border-surface-sunken px-6 py-6 text-small text-ink-muted">{t("No login history yet.")}</div>}
+        {history.length === 0 && <div className="border-t border-divider px-6 py-6 text-small text-ink-muted">{t("No login history yet.")}</div>}
       </Card>
 
       <Card padding="none" className="overflow-hidden">
@@ -215,7 +215,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
           </Chip>
         </div>
         {ALERTS.map((alert) => (
-          <div key={alert.title} className="flex items-center gap-4 border-t border-surface-sunken px-6 py-3">
+          <div key={alert.title} className="flex items-center gap-4 border-t border-divider px-6 py-3">
             <span className="flex flex-1 flex-col gap-0.5">
               <span className="text-body font-medium text-ink-2">{t(alert.title)}</span>
               <span className="text-small text-ink-muted">{t(alert.body)}</span>
@@ -223,7 +223,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
             <Switch checked={false} disabled aria-label={t(alert.title)} />
           </div>
         ))}
-        <p className="border-t border-surface-sunken bg-strip px-6 py-3 text-small text-ink-muted">{t("These switch on once Smartly can send email.")}</p>
+        <p className="border-t border-divider bg-strip px-6 py-3 text-small text-ink-muted">{t("These switch on once Smartly can send email.")}</p>
       </Card>
 
       <ChangePasswordDialog open={passwordOpen} onClose={() => setPasswordOpen(false)} />

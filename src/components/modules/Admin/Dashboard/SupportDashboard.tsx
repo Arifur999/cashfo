@@ -59,7 +59,7 @@ export function SupportDashboard({ adminName, hour, stats, queue, requests }: Su
           {queue.map((ticket) => {
             const waited = hoursSince(ticket.createdAt, now);
             return (
-              <Link key={ticket.id} href={`/admin/support/${ticket.id}`} className={cn("flex min-h-14 flex-col gap-1 border-b border-surface-sunken px-5 py-2 text-body transition-colors last:border-b-0 hover:bg-hover", GRID)}>
+              <Link key={ticket.id} href={`/admin/support/${ticket.id}`} className={cn("flex min-h-14 flex-col gap-1 border-b border-divider px-5 py-2 text-body transition-colors last:border-b-0 hover:bg-hover", GRID)}>
                 <span className="font-mono text-small font-semibold text-ink-2">#{ticket.id.slice(0, 6)}</span>
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-semibold text-ink">{ticket.subject}</span>

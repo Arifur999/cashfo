@@ -114,7 +114,7 @@ export function NowReadingCard({ book, pagesToday, today, isPending, onUpdate, o
           </span>
         </div>
 
-        <form onSubmit={submit} className="mt-auto flex flex-wrap items-end gap-3 border-t border-surface-sunken pt-3">
+        <form onSubmit={submit} className="mt-auto flex flex-wrap items-end gap-3 border-t border-divider pt-3">
           <Field htmlFor="lib-page" label={<span className="text-small font-medium text-ink-2">{t("I'm now on page")}</span>} className="gap-1">
             <Input id="lib-page" size="sm" inputMode="numeric" value={page} onChange={(event) => setPage(event.target.value.replace(/\D/g, "").slice(0, 5))} aria-invalid={page !== "" && pageNumber > book.totalPages} className="text-body-lg font-semibold" frameClassName="w-27.5" />
           </Field>

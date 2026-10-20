@@ -43,7 +43,7 @@ export function SettingsNav() {
         </div>
       ))}
       <span className="flex-1" />
-      <div className="flex flex-col gap-2 border-t border-surface-sunken pt-3">
+      <div className="flex flex-col gap-2 border-t border-divider pt-3">
         <button type="button" onClick={logout} className="flex h-9.5 items-center gap-3 rounded-md px-3 text-left text-body font-semibold text-expense hover:bg-expense-soft">
           <LogOut className="size-4.5" aria-hidden="true" />
           {t("Sign out")}

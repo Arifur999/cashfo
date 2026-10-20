@@ -93,7 +93,7 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
                   {owned.length} {t(owned.length === 1 ? "asset" : "assets")}
                 </span>
               </Link>
-              <div className="flex items-baseline justify-between border-t border-surface-sunken pt-3">
+              <div className="flex items-baseline justify-between border-t border-divider pt-3">
                 <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
                 <span className={cn("text-title font-bold tabular-nums", value > 0 ? "text-ink" : "text-ink-muted")}>{formatCurrency(value, currency)}</span>
               </div>

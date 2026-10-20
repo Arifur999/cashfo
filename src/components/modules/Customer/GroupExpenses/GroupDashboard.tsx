@@ -103,7 +103,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
           </div>
           {rows.length === 0 && <p className="border-t border-line px-5 py-8 text-center text-body text-ink-muted">{t("Add members to see their balances.")}</p>}
           {rows.map(({ row, member }) => (
-            <button key={row.groupMemberId} type="button" onClick={() => member && onStatement(member)} className={cn("grid w-full items-center gap-4 border-b border-surface-sunken px-5 py-3 text-left text-body tabular-nums hover:bg-hover md:min-h-16 md:py-0", "grid-cols-[minmax(0,1fr)_auto]", meals ? MEALS_ROW : "md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
+            <button key={row.groupMemberId} type="button" onClick={() => member && onStatement(member)} className={cn("grid w-full items-center gap-4 border-b border-divider px-5 py-3 text-left text-body tabular-nums hover:bg-hover md:min-h-16 md:py-0", "grid-cols-[minmax(0,1fr)_auto]", meals ? MEALS_ROW : "md:grid-cols-[minmax(0,1fr)_120px_88px_190px]")}>
               <span className="flex min-w-0 items-center gap-3">
                 <PersonAvatar name={row.name} src={member?.photoUrl} size={34} coloured />
                 <span className="flex min-w-0 flex-col gap-0.5">
@@ -138,7 +138,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                 <span className="hidden text-right md:block">{formatCurrency(totalCost, currency)}</span>
                 <span className={cn("text-right", view.cash < 0 ? "text-expense" : "text-income")}>{formatSignedCurrency(view.cash, currency)}</span>
               </div>
-              <div className="flex items-center gap-2 border-t border-surface-sunken px-5 py-3 text-small text-ink-2">
+              <div className="flex items-center gap-2 border-t border-divider px-5 py-3 text-small text-ink-2">
                 <Check className="size-4 shrink-0 text-income" aria-hidden="true" />
                 {t("Balances add up to")} {formatCurrency(view.cash, currency)}, {t("the cash in hand. The account checks out.")}
               </div>
@@ -147,7 +147,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
         </Card>
 
         <Card padding="none" className="flex flex-col overflow-hidden">
-          <div className="flex flex-col gap-0.5 border-b border-surface-sunken px-5 py-4">
+          <div className="flex flex-col gap-0.5 border-b border-divider px-5 py-4">
             <h2 className="text-title font-semibold text-ink">{t("Who pays whom")}</h2>
             <span className="text-small text-ink-muted">
               {t("The fewest payments that make")} {month} {t("even")}
@@ -157,7 +157,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
             const from = view.memberById[transfer.fromId];
             const to = view.memberById[transfer.toId];
             return (
-              <div key={`${transfer.fromId}-${transfer.toId}`} className="flex flex-col gap-3 border-b border-surface-sunken px-5 py-4">
+              <div key={`${transfer.fromId}-${transfer.toId}`} className="flex flex-col gap-3 border-b border-divider px-5 py-4">
                 <div className="flex items-center gap-3">
                   <PersonAvatar name={from?.name ?? "?"} src={from?.photoUrl} size={34} coloured />
                   <ArrowRight className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />

@@ -165,7 +165,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               const on = selected?.id === habit.id;
               const value = log?.value ?? 0;
               return (
-                <div key={habit.id} role="button" tabIndex={0} onClick={() => setSelectedId(habit.id)} onKeyDown={(event) => event.key === "Enter" && setSelectedId(habit.id)} className={cn("relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-surface-sunken px-5 py-3 text-left transition-colors last:border-b-0 md:min-h-17 md:gap-4 md:py-0", ROW, on ? "bg-mint-50/60" : "hover:bg-hover", habit.isArchived && "opacity-60")}>
+                <div key={habit.id} role="button" tabIndex={0} onClick={() => setSelectedId(habit.id)} onKeyDown={(event) => event.key === "Enter" && setSelectedId(habit.id)} className={cn("relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-divider px-5 py-3 text-left transition-colors last:border-b-0 md:min-h-17 md:gap-4 md:py-0", ROW, on ? "bg-mint-50/60" : "hover:bg-hover", habit.isArchived && "opacity-60")}>
                   {on && <span aria-hidden="true" className="absolute top-2.5 bottom-2.5 left-0 w-0.75 rounded-r-[3px] bg-emerald" />}
                   <span className="flex min-w-0 items-center gap-3">
                     <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>

@@ -90,7 +90,7 @@ const LegalDocumentEditor = ({ document, canManage }: LegalDocumentEditorProps) 
         <SegmentedControl label="Language" variant="tabs" options={LANGUAGE_OPTIONS} value={language} onChange={setLanguage} />
       </div>
       {canManage && (
-        <div role="toolbar" aria-label={translate("Formatting")} className="flex gap-0.5 border-b border-surface-sunken px-3 py-2">
+        <div role="toolbar" aria-label={translate("Formatting")} className="flex gap-0.5 border-b border-divider px-3 py-2">
           <button
             type="button"
             aria-label={translate("Heading")}

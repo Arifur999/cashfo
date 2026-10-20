@@ -33,7 +33,7 @@ const resultNote = (backup: IBackupRecord, t: Translate) => {
 };
 
 const SummaryCell = ({ label, value, sub }: { label: string; value: string; sub: string }) => (
-  <div className="flex flex-col gap-0.5 border-r border-surface-sunken px-5 py-3 last:border-r-0">
+  <div className="flex flex-col gap-0.5 border-r border-divider px-5 py-3 last:border-r-0">
     <span className="text-small text-ink-muted">
       <T>{label}</T>
     </span>
@@ -68,7 +68,7 @@ const BackupsCard = () => {
           <T>Back up now</T>
         </Button>
       </div>
-      <div className="grid grid-cols-1 border-y border-surface-sunken sm:grid-cols-3">
+      <div className="grid grid-cols-1 border-y border-divider sm:grid-cols-3">
         <SummaryCell
           label="Last good backup"
           value={summary?.lastSuccessfulBackupAt ? formatRelativeDateTime(summary.lastSuccessfulBackupAt, { t: translate }) : translate("Never")}
@@ -120,7 +120,7 @@ const BackupsCard = () => {
               const by = backup.type === "MANUAL" ? nameById.get(backup.triggeredBy) : null;
               const note = resultNote(backup, translate);
               return (
-                <tr key={backup.id} className="h-11.5 border-b border-surface-sunken last:border-b-0">
+                <tr key={backup.id} className="h-11.5 border-b border-divider last:border-b-0">
                   <td className="px-5 text-ink-2" title={formatDateTime(backup.startedAt)}>
                     {formatRelativeDateTime(backup.startedAt, { t: translate })}
                   </td>

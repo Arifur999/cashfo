@@ -246,7 +246,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
               <ProgressBar value={category.percent} tone="budget" size="sm" label={category.name} />
             </>
           );
-          const rowClass = cn("flex w-full flex-col gap-2 px-4 py-4 text-left", index > 0 && "border-t border-surface-sunken");
+          const rowClass = cn("flex w-full flex-col gap-2 px-4 py-4 text-left", index > 0 && "border-t border-divider");
           return canManage ? (
             <DropdownMenu key={category.id}>
               <DropdownMenuTrigger aria-label={`${category.name}: ${t("actions")}`} className={cn(rowClass, "data-open:bg-hover")}>

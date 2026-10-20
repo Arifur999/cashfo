@@ -75,12 +75,12 @@ export function ContactsTable({ contacts, currency, canManage, onAdd, onEdit }: 
           <span className="text-right">{t("Balance")}</span>
           <span />
         </div>
-        {rows.length === 0 && <p className="border-t border-surface-sunken px-5 py-10 text-center text-body text-ink-muted">{t("No one matches.")}</p>}
+        {rows.length === 0 && <p className="border-t border-divider px-5 py-10 text-center text-body text-ink-muted">{t("No one matches.")}</p>}
         {rows.map((contact) => {
           const due = balance(contact);
           const archived = contact.status === "ARCHIVED";
           return (
-            <div key={contact.id} className={cn("flex min-h-16 items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 text-body", GRID, archived && "opacity-60")}>
+            <div key={contact.id} className={cn("flex min-h-16 items-center justify-between gap-3 border-t border-divider px-5 py-2 text-body", GRID, archived && "opacity-60")}>
               <Link href={`/contacts/${contact.id}`} className="flex min-w-0 items-center gap-3 hover:underline">
                 <PersonAvatar name={contact.name} src={contact.photoUrl} size={36} coloured />
                 <span className="flex min-w-0 flex-col">

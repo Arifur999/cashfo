@@ -148,7 +148,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
             </div>
             {lines.length === 0 && <p className="px-4 py-6 text-center text-small text-ink-muted">{t("Nothing recorded for this member yet.")}</p>}
             {lines.map((line, i) => (
-              <div key={i} className="grid min-h-9 grid-cols-[56px_minmax(0,1fr)_86px_86px] items-center gap-3 border-b border-surface-sunken px-4 py-1 text-small tabular-nums last:border-b-0">
+              <div key={i} className="grid min-h-9 grid-cols-[56px_minmax(0,1fr)_86px_86px] items-center gap-3 border-b border-divider px-4 py-1 text-small tabular-nums last:border-b-0">
                 <span className="text-ink-muted">{formatDate(line.date, "dd MMM")}</span>
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-medium text-ink">{line.title}</span>

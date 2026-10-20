@@ -32,7 +32,7 @@ const InvoiceSidebar = async ({ invoice, recent }: InvoiceSidebarProps) => {
         {recent.map((item) => {
           const current = item.id === invoice.id;
           return (
-            <Link key={item.id} href={`/admin/invoices/${item.id}`} className="flex justify-between gap-2 border-t border-surface-sunken py-2 text-small text-ink hover:text-emerald">
+            <Link key={item.id} href={`/admin/invoices/${item.id}`} className="flex justify-between gap-2 border-t border-divider py-2 text-small text-ink hover:text-emerald">
               <span className="flex min-w-0 flex-col">
                 <code className={cn("font-mono", current ? "font-bold" : "font-medium")}>{item.invoiceNumber}</code>
                 <span className="truncate text-ink-muted">{item.issuedTo}</span>

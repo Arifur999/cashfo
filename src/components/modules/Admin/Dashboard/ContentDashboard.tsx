@@ -60,7 +60,7 @@ export function ContentDashboard({ adminName, hour, translations, announcements,
           ) : (
             <div className="flex flex-col">
               {todo.map((item, index) => (
-                <div key={item.key} className={`flex items-center gap-3 py-3 ${index > 0 ? "border-t border-surface-sunken" : ""}`}>
+                <div key={item.key} className={`flex items-center gap-3 py-3 ${index > 0 ? "border-t border-divider" : ""}`}>
                   <IconTile size={36} tone="insights">
                     {item.icon}
                   </IconTile>
@@ -82,7 +82,7 @@ export function ContentDashboard({ adminName, hour, translations, announcements,
           ) : (
             <div className="flex flex-col">
               {latest.map((announcement, index) => (
-                <div key={announcement.id} className={`flex items-center gap-3 py-2.5 ${index > 0 ? "border-t border-surface-sunken" : ""}`}>
+                <div key={announcement.id} className={`flex items-center gap-3 py-2.5 ${index > 0 ? "border-t border-divider" : ""}`}>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-body font-semibold text-ink">{announcement.title}</span>
                     <span className="text-caption text-ink-muted">{formatDate(announcement.startAt, "d MMM")}</span>

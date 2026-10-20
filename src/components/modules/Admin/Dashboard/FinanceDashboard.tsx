@@ -58,7 +58,7 @@ export function FinanceDashboard({ adminName, hour, revenue, churn, plans, planL
           ) : (
             <div className="flex flex-col">
               {failed.map((payment, index) => (
-                <Link key={payment.id} href={`/admin/payments/${payment.id}`} className={`flex items-center gap-3 py-3 ${index > 0 ? "border-t border-surface-sunken" : ""}`}>
+                <Link key={payment.id} href={`/admin/payments/${payment.id}`} className={`flex items-center gap-3 py-3 ${index > 0 ? "border-t border-divider" : ""}`}>
                   <IconTile size={36} tone="expense">
                     <CreditCard />
                   </IconTile>
@@ -84,7 +84,7 @@ export function FinanceDashboard({ adminName, hour, revenue, churn, plans, planL
           ) : (
             <div className="flex flex-col">
               {revenue.revenueByPlan.map((entry, index) => (
-                <div key={entry.planId} className={`flex items-center justify-between gap-3 py-2.5 text-body ${index > 0 ? "border-t border-surface-sunken" : ""}`}>
+                <div key={entry.planId} className={`flex items-center justify-between gap-3 py-2.5 text-body ${index > 0 ? "border-t border-divider" : ""}`}>
                   <span className="text-ink">{entry.planName}</span>
                   <b className="text-ink tabular-nums">{money(entry.amount)}</b>
                 </div>

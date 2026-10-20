@@ -149,7 +149,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
             </div>
             <dl className="flex flex-col px-6 pb-3">
               {facts.map((fact, index) => (
-                <div key={fact.label} className={cn("grid gap-4 py-3 text-body leading-5 sm:grid-cols-[140px_minmax(0,1fr)]", index > 0 && "border-t border-surface-sunken")}>
+                <div key={fact.label} className={cn("grid gap-4 py-3 text-body leading-5 sm:grid-cols-[140px_minmax(0,1fr)]", index > 0 && "border-t border-divider")}>
                   <dt className="text-ink-muted">{fact.label}</dt>
                   <dd className="min-w-0 text-ink">{fact.value}</dd>
                 </div>
@@ -173,7 +173,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
                 <span className="text-right">{t("Credit")}</span>
               </div>
               {transaction.entries.map((entry) => (
-                <div key={entry.id} className="grid min-h-13 grid-cols-[minmax(0,1fr)_120px_120px] items-center gap-x-4 border-t border-surface-sunken px-5 py-2 text-body">
+                <div key={entry.id} className="grid min-h-13 grid-cols-[minmax(0,1fr)_120px_120px] items-center gap-x-4 border-t border-divider px-5 py-2 text-body">
                   <span className="flex min-w-0 flex-col">
                     <b className="truncate font-semibold text-ink">{entry.account?.name ?? entry.accountId}</b>
                     <span className="text-caption font-normal text-ink-muted">{t(ACCOUNT_KIND[entry.account?.accountType ?? ""] ?? "Account")}</span>

@@ -53,7 +53,7 @@ export const DevicesCard = () => {
         {sessions.slice(0, DEVICES_SHOWN).map((session) => {
           const Icon = isPhone(session.deviceLabel) ? Smartphone : Monitor;
           return (
-            <li key={session.id} className="flex items-center gap-3 border-t border-surface-sunken px-5 py-3">
+            <li key={session.id} className="flex items-center gap-3 border-t border-divider px-5 py-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink-2">
                 <Icon aria-hidden="true" className="size-4.5" />
               </span>
@@ -73,7 +73,7 @@ export const DevicesCard = () => {
           );
         })}
         {sessions.length > DEVICES_SHOWN && (
-          <li className="border-t border-surface-sunken px-5 py-3 text-small text-ink-muted">
+          <li className="border-t border-divider px-5 py-3 text-small text-ink-muted">
             {plural(translate, sessions.length - DEVICES_SHOWN, "And {count} more device still signed in.", "And {count} more devices still signed in.")}
           </li>
         )}
@@ -92,11 +92,11 @@ export const RecentSignInsCard = () => {
     <Card padding="none" className="overflow-hidden">
       <h2 className="px-5 pt-4 pb-3 text-title text-ink"><T>Recent sign-ins</T></h2>
       {signIns.length === 0 ? (
-        <p className="border-t border-surface-sunken px-5 py-3 text-small text-ink-muted"><T>No sign-ins recorded yet.</T></p>
+        <p className="border-t border-divider px-5 py-3 text-small text-ink-muted"><T>No sign-ins recorded yet.</T></p>
       ) : (
         <ul>
           {signIns.map((attempt) => (
-            <li key={attempt.id} className="flex items-center gap-3 border-t border-surface-sunken px-5 py-2.5 text-small">
+            <li key={attempt.id} className="flex items-center gap-3 border-t border-divider px-5 py-2.5 text-small">
               <span
                 aria-hidden="true"
                 className={cn("flex size-5.5 shrink-0 items-center justify-center rounded-full", attempt.success ? "bg-mint-50 text-emerald" : "bg-expense-soft text-expense")}

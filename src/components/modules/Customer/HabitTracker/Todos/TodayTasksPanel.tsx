@@ -212,7 +212,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
       </form>
 
       {items.length > 0 ? (
-        <div className="flex flex-col border-t border-surface-sunken">
+        <div className="flex flex-col border-t border-divider">
           <div className="flex items-center gap-2 px-5 pt-3 pb-1 text-caption font-semibold text-ink-muted">
             {t("To do")}
             <span className="rounded-full bg-surface-sunken px-2 text-ink-2 tabular-nums">{openItems.length}</span>
@@ -275,7 +275,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2 border-t border-surface-sunken px-8 py-6 text-center">
+        <div className="flex flex-col items-center gap-2 border-t border-divider px-8 py-6 text-center">
           <span className="flex size-12 items-center justify-center rounded-full bg-mint-50 text-emerald">
             <ListChecks className="size-5.5" aria-hidden="true" />
           </span>

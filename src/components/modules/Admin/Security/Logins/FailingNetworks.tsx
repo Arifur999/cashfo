@@ -29,13 +29,13 @@ const FailingNetworks = () => {
           <span className="text-small text-ink-muted"><T>By network, last 7 days</T></span>
         </div>
         {networks.length === 0 ? (
-          <p className="border-t border-surface-sunken px-5 py-4 text-small text-ink-muted"><T>No failed sign-ins in the last 7 days.</T></p>
+          <p className="border-t border-divider px-5 py-4 text-small text-ink-muted"><T>No failed sign-ins in the last 7 days.</T></p>
         ) : (
           <ul>
             {networks.map((network) => {
               const tone = networkTone(network);
               return (
-                <li key={network.ipAddress} className="flex flex-col gap-2 border-t border-surface-sunken px-5 py-2">
+                <li key={network.ipAddress} className="flex flex-col gap-2 border-t border-divider px-5 py-2">
                   <span className="flex items-baseline justify-between gap-2">
                     <code className="font-mono text-small font-semibold text-ink">{network.ipAddress}</code>
                     <span className={cn("text-small font-bold tabular-nums", COUNT_TONE[tone])}>{formatNumber(network.count)}</span>

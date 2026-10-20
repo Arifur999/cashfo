@@ -150,7 +150,7 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
               {t("Today, not marked yet")}
             </span>
             <span className="flex items-center gap-2">
-              <span className="size-4.5 rounded-[5px] border border-surface-sunken bg-surface-sunken" />
+              <span className="size-4.5 rounded-[5px] border border-divider bg-surface-sunken" />
               {t("Not yet")}
             </span>
             <span className="border-l border-line pl-4 text-ink-muted">{t("Tap a box to change it")}</span>

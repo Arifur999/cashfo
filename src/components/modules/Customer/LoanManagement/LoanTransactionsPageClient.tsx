@@ -166,7 +166,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               const effect = meta ? DIRECTION_META[meta.effect] : null;
               const name = transaction.contact?.name ?? contact?.name ?? "—";
               return (
-                <div key={transaction.id} className={cn("group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-surface-sunken px-4 py-3 text-body md:h-14.5 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
+                <div key={transaction.id} className={cn("group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-divider px-4 py-3 text-body md:h-14.5 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
                   <span className="order-3 text-caption text-ink-2 md:order-0 md:text-small">{formatDate(transaction.transactionDate)}</span>
                   <Link href={`/transactions/${transaction.id}`} className="flex min-w-0 items-center gap-3">
                     <PersonAvatar name={name} src={contact?.photoUrl} kind={contact?.type} size={30} />

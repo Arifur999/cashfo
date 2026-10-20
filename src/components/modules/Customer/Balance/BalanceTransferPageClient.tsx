@@ -166,7 +166,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
               const cancelled = cancelledLabel(transfer);
               const voided = isCancelled(transfer);
               return (
-                <div key={transfer.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-surface-sunken px-4 py-3 text-body md:h-15 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
+                <div key={transfer.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-divider px-4 py-3 text-body md:h-15 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
                   <span className="order-3 text-caption text-ink-2 md:order-none md:text-body">{formatDate(transfer.transactionDate)}</span>
                   <Link href={`/transactions/${transfer.id}`} className="flex min-w-0 items-center gap-3">
                     <Party id={fromId} name={from} />

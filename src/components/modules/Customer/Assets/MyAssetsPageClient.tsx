@@ -109,7 +109,7 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
                     </span>
                     <Sparkline values={valueTrail(asset)} label={t("Value over time")} />
                   </div>
-                  <div className="flex justify-between gap-3 border-t border-surface-sunken pt-3 text-caption font-normal text-ink-muted">
+                  <div className="flex justify-between gap-3 border-t border-divider pt-3 text-caption font-normal text-ink-muted">
                     <span>
                       {t("Paid")} <b className="font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency)}</b> · {formatDate(asset.purchaseDate, "MMM yyyy")}
                     </span>

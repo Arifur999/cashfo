@@ -217,7 +217,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 const meta = DIRECTION_META[row.direction];
                 const contact = contactsById.get(row.contactId);
                 return (
-                  <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("box-content flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-surface-sunken")}>
+                  <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("box-content flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-divider")}>
                     <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={40} coloured />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <b className="truncate text-title leading-[normal] text-ink">{row.contactName}</b>
@@ -276,7 +276,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
   const { t } = useLocale();
   const meta = DIRECTION_META[row.direction];
   return (
-    <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink transition-colors hover:bg-hover", GRID)}>
+    <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-divider px-6 text-body text-ink transition-colors hover:bg-hover", GRID)}>
       <span className="flex min-w-0 items-center gap-3">
         <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} />
         <span className="flex min-w-0 flex-col gap-0.5">

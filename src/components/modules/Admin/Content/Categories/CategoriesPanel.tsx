@@ -111,7 +111,7 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
         onChange={setDirection}
       />
       {shown.length === 0 && (
-        <p className="border-t border-surface-sunken px-5 py-4 text-small text-ink-muted">{translate(direction === "EXPENSE" ? "No expense categories yet." : "No income categories yet.")}</p>
+        <p className="border-t border-divider px-5 py-4 text-small text-ink-muted">{translate(direction === "EXPENSE" ? "No expense categories yet." : "No income categories yet.")}</p>
       )}
       {shown.map((item) => (
         <div
@@ -121,7 +121,7 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
           onDragEnd={() => setDragged(null)}
           onDragOver={canManage ? (event) => event.preventDefault() : undefined}
           onDrop={canManage ? () => drop(item.id) : undefined}
-          className={cn("flex min-h-14 items-center gap-3 border-t border-surface-sunken px-5 py-2 text-body", dragged === item.id && "opacity-50")}
+          className={cn("flex min-h-14 items-center gap-3 border-t border-divider px-5 py-2 text-body", dragged === item.id && "opacity-50")}
         >
           {canManage && <GripVertical className="size-4 shrink-0 cursor-grab text-ink-faint" aria-hidden="true" />}
           <button

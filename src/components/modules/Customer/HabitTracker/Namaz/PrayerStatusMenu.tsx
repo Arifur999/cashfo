@@ -77,7 +77,7 @@ export function PrayerStatusMenu({ children, open, onOpenChange, prayer, day, st
             );
           })}
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-surface-sunken px-4 py-3 text-small">
+        <div className="flex items-center justify-between gap-3 border-t border-divider px-4 py-3 text-small">
           <button type="button" disabled={!marked} onClick={() => onPick(null)} className="font-semibold text-ink-2 hover:text-ink disabled:opacity-50">
             {t("Clear the mark")}
           </button>

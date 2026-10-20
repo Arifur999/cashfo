@@ -166,7 +166,7 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
       </div>
 
       {day === today && (
-        <div className="flex flex-col gap-2 border-t border-surface-sunken pt-4">
+        <div className="flex flex-col gap-2 border-t border-divider pt-4">
           <label htmlFor="hb-note" className="text-small font-semibold text-ink">
             {t("Note for today")} <span className="font-normal text-ink-muted">({t("optional")})</span>
           </label>

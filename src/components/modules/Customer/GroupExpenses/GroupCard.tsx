@@ -95,7 +95,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
         </DropdownMenu>
       </div>
 
-      <div className="grid grid-cols-3 border-y border-surface-sunken">
+      <div className="grid grid-cols-3 border-y border-divider">
         <Stat label={`${t("Spent in")} ${month}`} value={formatCurrency(spent, currency)} divided />
         <Stat label={t("Cash in hand")} value={formatCurrency(cash, currency)} tone={cash < 0 ? "text-expense" : undefined} divided />
         <Stat label={t("To settle")} value={transfers.length === 0 ? t("Even") : `${transfers.length} ${t(transfers.length === 1 ? "payment" : "payments")}`} tone={transfers.length > 0 ? "text-warning" : undefined} />
@@ -115,7 +115,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
         </span>
       </div>
 
-      <div className="flex items-center gap-3 rounded-b-lg border-t border-surface-sunken bg-strip px-5 py-3 text-small">
+      <div className="flex items-center gap-3 rounded-b-lg border-t border-divider bg-strip px-5 py-3 text-small">
         <span className={cn("flex min-w-0 items-center gap-2 font-medium [&_svg]:size-4 [&_svg]:shrink-0", note.tone)}>
           {note.icon}
           <span className="truncate">{note.text}</span>
@@ -131,7 +131,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
 
 function Stat({ label, value, tone, divided = false }: { label: string; value: string; tone?: string; divided?: boolean }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1 px-3 py-4 md:px-5", divided && "border-r border-surface-sunken")}>
+    <div className={cn("flex min-w-0 flex-col gap-1 px-3 py-4 md:px-5", divided && "border-r border-divider")}>
       <span className="text-caption font-normal text-ink-muted">{label}</span>
       <span className={cn("text-title break-words text-ink tabular-nums md:text-h3", tone)}>{value}</span>
     </div>

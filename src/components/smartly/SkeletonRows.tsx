@@ -26,7 +26,7 @@ const SkeletonRows = ({ rows = 4, avatar = true, className }: SkeletonRowsProps)
       return (
         <div
           key={index}
-          className={cn("grid items-center gap-3 px-5 py-4", avatar ? "grid-cols-[36px_minmax(0,1fr)_90px]" : "grid-cols-[minmax(0,1fr)_90px]", index > 0 && "border-t border-surface-sunken")}
+          className={cn("grid items-center gap-3 px-5 py-4", avatar ? "grid-cols-[36px_minmax(0,1fr)_90px]" : "grid-cols-[minmax(0,1fr)_90px]", index > 0 && "border-t border-divider")}
         >
           {avatar && <span className="size-9 rounded-full bg-surface-sunken" />}
           <span className="flex flex-col gap-2">

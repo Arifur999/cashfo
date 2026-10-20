@@ -86,7 +86,7 @@ const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, o
       </ul>
 
       {canManage && (
-        <div className="mt-auto flex gap-2 border-t border-surface-sunken pt-3">
+        <div className="mt-auto flex gap-2 border-t border-divider pt-3">
           <Button variant="outline" size="sm" className="h-9 flex-1 border-line-strong bg-surface text-small font-semibold text-ink hover:bg-surface-sunken" onClick={onEdit}>
             <T>Edit plan</T>
           </Button>

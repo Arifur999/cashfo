@@ -165,7 +165,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             </div>
             {groups.map((group) => (
               <div key={group.day}>
-                <div className="flex h-9.5 items-center justify-between border-b border-surface-sunken bg-table-head px-6 text-caption font-semibold">
+                <div className="flex h-9.5 items-center justify-between border-b border-divider bg-table-head px-6 text-caption font-semibold">
                   <span className="text-ink-2">{dayHeading(group.day, today, t, locale)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>
@@ -242,7 +242,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
   const href = `/transactions/${row.transaction.id}`;
   const tone = row.transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   return (
-    <div className={cn("group grid h-14 items-center gap-x-4 border-b border-surface-sunken px-6 transition-colors hover:bg-hover", GRID, row.cancelled && "opacity-60")}>
+    <div className={cn("group grid h-14 items-center gap-x-4 border-b border-divider px-6 transition-colors hover:bg-hover", GRID, row.cancelled && "opacity-60")}>
       <Link href={href} className="flex min-w-0 items-center gap-3">
         <CategoryTile row={row} />
         <span className={cn("truncate text-body font-medium text-ink", row.cancelled && "line-through")}>{row.title ?? t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType])}</span>
@@ -286,7 +286,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
 function PhoneRow({ row, currency, divided }: { row: TransactionRow; currency: string; divided: boolean }) {
   const { t } = useLocale();
   return (
-    <Link href={`/transactions/${row.transaction.id}`} className={cn("box-content grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4", divided && "border-t border-surface-sunken", row.cancelled && "opacity-60")}>
+    <Link href={`/transactions/${row.transaction.id}`} className={cn("box-content grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4", divided && "border-t border-divider", row.cancelled && "opacity-60")}>
       <CategoryTile row={row} size={40} />
       <span className="flex min-w-0 flex-col">
         <span className={cn("truncate text-title text-ink", row.cancelled && "line-through")}>{row.title ?? t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType])}</span>

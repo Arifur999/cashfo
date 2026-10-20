@@ -101,7 +101,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
             {members.map((member) => {
               const total = sheet.memberTotals[member.id] ?? 0;
               return (
-                <div key={member.id} role="row" className="grid h-11.5 items-stretch border-b border-surface-sunken text-caption tabular-nums" style={grid}>
+                <div key={member.id} role="row" className="grid h-11.5 items-stretch border-b border-divider text-caption tabular-nums" style={grid}>
                   <span role="rowheader" className="flex min-w-0 items-center gap-2 pl-4 text-body font-medium text-ink">
                     <PersonAvatar name={member.name} src={member.photoUrl} size={26} coloured />
                     <span className="truncate">{member.name}</span>

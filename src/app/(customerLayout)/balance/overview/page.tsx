@@ -175,7 +175,7 @@ interface OverviewRowProps {
 function OverviewRow({ account, index, currency, figure, typeLabel, archivedLabel }: OverviewRowProps) {
   const archived = account.status === "ARCHIVED";
   return (
-    <Link href={`/balance/ledger?accountId=${account.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, archived && "opacity-60")}>
+    <Link href={`/balance/ledger?accountId=${account.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-divider px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, archived && "opacity-60")}>
       <span className="flex min-w-0 items-center gap-3">
         <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.25", walletPalette(index).tile)}>{createElement(walletIcon(account), { "aria-hidden": true })}</span>
         <span className="flex min-w-0 flex-col gap-px">

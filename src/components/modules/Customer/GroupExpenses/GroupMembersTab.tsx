@@ -102,7 +102,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
         {shown.map((member) => {
           const active = member.status === "ACTIVE";
           return (
-            <div key={member.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-surface-sunken px-5 py-3 text-body tabular-nums md:min-h-15.5 md:gap-4 md:py-0", row)}>
+            <div key={member.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-divider px-5 py-3 text-body tabular-nums md:min-h-15.5 md:gap-4 md:py-0", row)}>
               <span className="flex min-w-0 items-center gap-3">
                 <PersonAvatar name={member.name} src={member.photoUrl} size={36} coloured className={cn(!active && "opacity-60")} />
                 <span className="flex min-w-0 flex-col gap-0.5">

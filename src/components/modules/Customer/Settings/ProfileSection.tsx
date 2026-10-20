@@ -109,7 +109,7 @@ export function ProfileSection() {
               </Field>
             </div>
           </div>
-          <div className="flex items-center gap-3 border-t border-surface-sunken bg-strip px-6 py-4">
+          <div className="flex items-center gap-3 border-t border-divider bg-strip px-6 py-4">
             <span className="flex-1 text-small text-ink-muted">{!dirty ? t("Nothing changed yet.") : nameChanged && phoneChanged ? t("You changed your name and phone.") : nameChanged ? t("You changed your name.") : t("You changed your phone.")}</span>
             <Button type="button" variant="secondary" onClick={discard} disabled={!dirty || isPending}>
               {t("Discard")}

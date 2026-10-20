@@ -262,11 +262,11 @@ export function ChallengesHomePageClient({ trackers, today }: ChallengesHomePage
             {finished.length} {t(finished.length === 1 ? "challenge" : "challenges")}
           </span>
         </div>
-        {finished.length === 0 && <p className="border-t border-surface-sunken px-5 py-6 text-center text-small text-ink-muted">{t("Nothing finished yet.")}</p>}
+        {finished.length === 0 && <p className="border-t border-divider px-5 py-6 text-center text-small text-ink-muted">{t("Nothing finished yet.")}</p>}
         {finished.map(({ tracker, window }) => {
           const summary = challengeSummary(tracker, window);
           return (
-            <Link key={tracker.id} href={`/habit-tracker/habits/others/${tracker.id}`} className="grid min-h-15.5 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 border-t border-surface-sunken px-5 py-2 text-ink hover:bg-hover md:grid-cols-[minmax(0,1fr)_220px_260px_90px]">
+            <Link key={tracker.id} href={`/habit-tracker/habits/others/${tracker.id}`} className="grid min-h-15.5 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 border-t border-divider px-5 py-2 text-ink hover:bg-hover md:grid-cols-[minmax(0,1fr)_220px_260px_90px]">
               <span className="flex min-w-0 items-center gap-3">
                 <IconTile tone="habits" size={32}>
                   <Target />

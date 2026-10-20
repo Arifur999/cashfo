@@ -143,7 +143,7 @@ export function ChooseWorkspaceClient({ user, figures }: ChooseWorkspaceClientPr
                 </span>
                 <span className="text-small text-ink-muted">{t(isBusiness ? "Business workspace" : "Personal workspace")}</span>
               </div>
-              <div className="flex flex-col gap-0.5 border-t border-surface-sunken pt-4">
+              <div className="flex flex-col gap-0.5 border-t border-divider pt-4">
                 <span className="text-title font-bold tabular-nums">{figure ? formatCurrency(figure.balance, business.currency) : t(ROLE_LABEL[business.role])}</span>
                 <span className={cn("text-caption font-normal text-ink-muted", trial?.expired && "text-expense")}>
                   {trial ? trial.text : figure ? `${figure.wallets} ${t(figure.wallets === 1 ? "wallet" : "wallets")}` : business.currency}

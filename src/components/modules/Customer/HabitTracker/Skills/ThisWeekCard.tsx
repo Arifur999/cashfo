@@ -69,7 +69,7 @@ export function ThisWeekCard({ skills, week, streak, today }: ThisWeekCardProps)
       </div>
 
       {skills.length > 0 && (
-        <div className="mt-auto flex flex-wrap justify-between gap-x-3 gap-y-1 border-t border-surface-sunken pt-3 text-small text-ink-2">
+        <div className="mt-auto flex flex-wrap justify-between gap-x-3 gap-y-1 border-t border-divider pt-3 text-small text-ink-2">
           {skills.map((skill) => (
             <span key={skill.id}>
               {skill.name}: <b className="font-semibold text-ink">{amountText(skill.unit, weekTotal(week, skill.id), t)}</b>

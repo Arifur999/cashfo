@@ -34,7 +34,7 @@ export function DueSoonCard({ items, currency, canManage, onPay }: DueSoonCardPr
       {items.map((item, index) => {
         const receivable = item.direction === "RECEIVABLE";
         return (
-          <div key={item.transactionId} className={cn("flex items-center gap-3 py-3", index > 0 && "border-t border-surface-sunken")}>
+          <div key={item.transactionId} className={cn("flex items-center gap-3 py-3", index > 0 && "border-t border-divider")}>
             <PersonAvatar name={item.contactName} size={36} coloured />
             <Link href={`/contacts/${item.contactId}`} className="flex min-w-0 flex-1 flex-col hover:underline">
               <span className="truncate text-body font-semibold text-ink">{item.contactName}</span>

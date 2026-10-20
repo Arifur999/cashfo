@@ -35,7 +35,7 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
               type="button"
               aria-current={on ? "page" : undefined}
               onClick={() => setSelected(template.id)}
-              className={cn("flex w-full flex-col gap-1 border-b border-surface-sunken border-l-3 px-4 py-3 text-left last:border-b-0", on ? "border-l-emerald bg-mint-50" : "border-l-transparent hover:bg-hover")}
+              className={cn("flex w-full flex-col gap-1 border-b border-divider border-l-3 px-4 py-3 text-left last:border-b-0", on ? "border-l-emerald bg-mint-50" : "border-l-transparent hover:bg-hover")}
             >
               <span className="flex items-center justify-between gap-2">
                 <code className="font-mono text-small font-semibold text-ink">{template.key}</code>

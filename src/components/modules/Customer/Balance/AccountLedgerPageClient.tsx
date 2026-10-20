@@ -172,7 +172,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                   <span className="text-right">{t("Out")}</span>
                   <span className="text-right">{t("Balance")}</span>
                 </div>
-                <div className={cn("grid h-12 items-center gap-x-4 border-b border-surface-sunken bg-table-head px-6 text-body", GRID)}>
+                <div className={cn("grid h-12 items-center gap-x-4 border-b border-divider bg-table-head px-6 text-body", GRID)}>
                   <span />
                   <span className="col-span-6 font-semibold text-ink-2">{t("Opening balance")}</span>
                   <span className="text-right font-semibold text-ink tabular-nums">{formatCurrency(ledger.balanceBroughtForward, currency)}</span>
@@ -183,7 +183,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                   const voided = row.transactionStatus === "VOIDED";
                   const inTone = row.transactionType === "TRANSFER" ? "text-info" : "text-income";
                   return (
-                    <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("grid h-14 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
+                    <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("grid h-14 items-center gap-x-4 border-b border-divider px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
                       <span className="text-ink-muted">{pageStart + index + 1}</span>
                       <span className="text-ink-2">{formatDate(row.date)}</span>
                       <span>

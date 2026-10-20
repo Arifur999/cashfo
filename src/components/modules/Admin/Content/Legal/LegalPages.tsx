@@ -36,7 +36,7 @@ const LegalPages = ({ canManage }: { canManage: boolean }) => {
               type="button"
               aria-current={on ? "page" : undefined}
               onClick={() => setSelected(document.type)}
-              className={cn("flex w-full flex-col gap-0.75 border-b border-surface-sunken border-l-3 px-4 py-4 text-left last:border-b-0", on ? "border-l-emerald bg-mint-50" : "border-l-transparent hover:bg-hover")}
+              className={cn("flex w-full flex-col gap-0.75 border-b border-divider border-l-3 px-4 py-4 text-left last:border-b-0", on ? "border-l-emerald bg-mint-50" : "border-l-transparent hover:bg-hover")}
             >
               <span className="flex items-center justify-between gap-2">
                 <b className="text-body font-semibold text-ink"><T>{LEGAL_DOC_LABELS[document.type]}</T></b>

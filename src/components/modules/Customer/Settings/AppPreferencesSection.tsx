@@ -66,7 +66,7 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
   }
 
   const row = (title: string, body: string, control: React.ReactNode, soon = false) => (
-    <div key={title} className={cn("flex flex-col gap-3 border-t border-surface-sunken px-6 py-4 sm:flex-row sm:items-center sm:gap-5", soon && "opacity-60")}>
+    <div key={title} className={cn("flex flex-col gap-3 border-t border-divider px-6 py-4 sm:flex-row sm:items-center sm:gap-5", soon && "opacity-60")}>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-2 text-body font-semibold text-ink">
           {t(title)}
@@ -136,7 +136,7 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
             true,
           ),
         )}
-        <div className="flex flex-wrap items-center gap-3 border-t border-surface-sunken bg-mint-50 px-6 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-divider bg-mint-50 px-6 py-3">
           <span className="text-small font-semibold text-emerald">{t("Preview")}</span>
           <span className="text-body-lg font-semibold text-ink tabular-nums">{formatCurrency(123456, "BDT")}</span>
           <span className="text-ink-muted">·</span>

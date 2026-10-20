@@ -60,7 +60,7 @@ export function ShelvesCard({ shelves, onAction }: ShelvesCardProps) {
           const shown = open ? books : books.slice(0, SHOWN);
           return (
             <div key={status} className="flex min-w-0 flex-col gap-2">
-              <div className="flex items-center justify-between border-b border-surface-sunken pb-2">
+              <div className="flex items-center justify-between border-b border-divider pb-2">
                 <span className="text-body font-semibold text-ink">{t(SHELF_LABEL[status])}</span>
                 <Chip tone="neutral" size="sm">
                   {books.length}

@@ -51,12 +51,12 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
         <Card padding="none" className="overflow-hidden">
           <h2 className="px-5 py-4 text-title font-semibold text-ink">{t("Common questions")}</h2>
-          {shown.length === 0 && <div className="border-t border-surface-sunken px-5 py-6 text-small text-ink-muted">{t("Nothing matches. Try other words.")}</div>}
+          {shown.length === 0 && <div className="border-t border-divider px-5 py-6 text-small text-ink-muted">{t("Nothing matches. Try other words.")}</div>}
           {shown.map((faq) => {
             const expanded = open === faq.id;
             const answer = helped[faq.id];
             return (
-              <div key={faq.id} className={cn("border-t border-surface-sunken", expanded && "bg-mint-50/50")}>
+              <div key={faq.id} className={cn("border-t border-divider", expanded && "bg-mint-50/50")}>
                 <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : faq.id)} className="flex min-h-13 w-full items-center gap-3 px-5 text-left">
                   <span className={cn("flex-1 text-body font-semibold", expanded ? "text-emerald" : "text-ink")}>{t(faq.question)}</span>
                   <ChevronDown className={cn("size-4.5 shrink-0 text-ink-muted transition-transform", expanded && "rotate-180")} aria-hidden="true" />

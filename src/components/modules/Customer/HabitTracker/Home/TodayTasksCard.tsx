@@ -104,7 +104,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
   );
 
   const phoneRow = (item: TodoItem) => (
-    <li key={item.id} className="box-content flex min-h-13 items-center gap-3 border-t border-surface-sunken">
+    <li key={item.id} className="box-content flex min-h-13 items-center gap-3 border-t border-divider">
       {checkbox(item, "size-5.5 rounded-sm")}
       <span className={cn("min-w-0 flex-1 truncate text-body font-medium", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
     </li>
@@ -137,7 +137,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
             <ul className="flex flex-col gap-1">{open.map(phoneRow)}</ul>
             {done.length > 0 && (
               <>
-                <button type="button" aria-expanded={showDone} onClick={() => setShowDone((value) => !value)} className="flex h-11 items-center justify-between border-t border-surface-sunken px-0.5 text-small font-semibold text-ink-2">
+                <button type="button" aria-expanded={showDone} onClick={() => setShowDone((value) => !value)} className="flex h-11 items-center justify-between border-t border-divider px-0.5 text-small font-semibold text-ink-2">
                   {done.length} {t("done")}
                   <ChevronDown className={cn("size-4 transition-transform", showDone && "rotate-180")} aria-hidden="true" />
                 </button>
@@ -147,7 +147,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
           </div>
           <ul className="flex flex-col max-md:hidden">
             {shown.map((item) => (
-              <li key={item.id} className="flex items-start gap-3 border-b border-surface-sunken py-2">
+              <li key={item.id} className="flex items-start gap-3 border-b border-divider py-2">
                 {checkbox(item, "mt-px size-4.5 rounded-[5px]")}
                 <span className={cn("min-w-0 flex-1 truncate text-body", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
               </li>

@@ -159,7 +159,7 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
             {shown.map((member) => {
               const entry = entryOf(member.id);
               return (
-                <div key={member.id} className={cn(grid, "h-14 border-b border-surface-sunken px-3")}>
+                <div key={member.id} className={cn(grid, "h-14 border-b border-divider px-3")}>
                   <span className="flex min-w-0 items-center gap-2 text-body font-medium">
                     <PersonAvatar name={member.name} src={member.photoUrl} size={28} coloured />
                     <span className="truncate">{member.name}</span>

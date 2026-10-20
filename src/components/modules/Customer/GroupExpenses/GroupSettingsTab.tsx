@@ -129,7 +129,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
             const shares = Number(member.shareUnits);
             const setShares = (next: number) => run(() => updateGroupMemberAction(data.businessId, member.id, { shareUnits: next }), t("Failed to update member"));
             return (
-              <div key={member.id} className="flex h-14 items-center gap-3 border-t border-surface-sunken px-5">
+              <div key={member.id} className="flex h-14 items-center gap-3 border-t border-divider px-5">
                 <PersonAvatar name={member.name} src={member.photoUrl} size={32} coloured />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-body font-semibold text-ink">{member.name}</span>
@@ -181,9 +181,9 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
               {t("Add")}
             </Button>
           </div>
-          {data.categories.length === 0 && <p className="border-t border-surface-sunken px-5 py-5 text-center text-small text-ink-muted">{t("No category yet. Bazar, rent, bills… add the ones this group uses.")}</p>}
+          {data.categories.length === 0 && <p className="border-t border-divider px-5 py-5 text-center text-small text-ink-muted">{t("No category yet. Bazar, rent, bills… add the ones this group uses.")}</p>}
           {data.categories.map((category) => (
-            <div key={category.id} className="flex h-12 items-center gap-3 border-t border-surface-sunken px-5">
+            <div key={category.id} className="flex h-12 items-center gap-3 border-t border-divider px-5">
               <CategoryTile name={category.name} categories={data.categories} size={28} />
               <span className="flex-1 truncate text-body font-medium text-ink">{category.name}</span>
               <NativeSelect
@@ -222,7 +222,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
             </button>
           </div>
           {settings.mealsOn && (
-            <div className="flex flex-wrap items-center gap-3 border-t border-surface-sunken pt-4 text-small text-ink-2">
+            <div className="flex flex-wrap items-center gap-3 border-t border-divider pt-4 text-small text-ink-2">
               <span>{t("One meal counts as")}</span>
               {(
                 [

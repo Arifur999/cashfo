@@ -107,7 +107,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
           const member = view.memberById[row.groupMemberId] ?? row.groupMember;
           const locked = view.closed;
           return (
-            <div key={row.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 border-b border-surface-sunken px-5 py-2.5 text-body tabular-nums md:min-h-11 md:gap-4 md:py-0", ROW)}>
+            <div key={row.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 border-b border-divider px-5 py-2.5 text-body tabular-nums md:min-h-11 md:gap-4 md:py-0", ROW)}>
               <span className="hidden text-ink-2 md:block">{formatDate(row.date, "dd MMM")}</span>
               <span className="flex min-w-0 items-center gap-2 font-medium text-ink">
                 <PersonAvatar name={member.name} src={member.photoUrl} size={26} coloured />
