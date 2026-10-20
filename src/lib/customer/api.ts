@@ -290,10 +290,60 @@ export interface AccountLedger {
   accountId: string;
   accountName: string;
   openingBalance: string;
+  // The balance before the period (dateFrom), the same on every page.
   balanceBroughtForward: string;
   entries: LedgerRow[];
+  // The whole period's closing balance, the same on every page.
   closingBalance: string;
+  // The running balance before this page's first row and after its last:
+  // the "brought forward" and "carried forward" lines between pages.
+  // Missing from a backend older than the paged-ledger fix.
+  pageOpeningBalance?: string;
+  pageClosingBalance?: string;
   meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+// GET .../contacts/:id/statement: a business contact's sales, purchases and
+// payments oldest first, with what they owe after each row worked out over
+// their whole history (positive: they owe the business).
+export type ContactStatementKind = "sale" | "purchase" | "received" | "paid";
+
+export interface ContactStatementEntry {
+  transactionId: string;
+  date: string;
+  kind: ContactStatementKind;
+  referenceNo: string | null;
+  description: string | null;
+  // The wallet a payment went through; null for a sale or a purchase.
+  wallet: string | null;
+  amount: string;
+  runningBalance: string;
+  // Voided, or the reversal that voided it: shown, but not counted.
+  cancelled: boolean;
+}
+
+export interface ContactStatement {
+  contactId: string;
+  contactName: string;
+  openingBalance: string;
+  balanceBroughtForward: string;
+  entries: ContactStatementEntry[];
+  closingBalance: string;
+  pageOpeningBalance: string;
+  pageClosingBalance: string;
+  lastSale: ContactStatementEntry | null;
+  lastPayment: ContactStatementEntry | null;
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+// GET .../transactions/summary: every transaction matching the list's
+// filters, across all pages.
+export interface TransactionsSummary {
+  count: number;
+  // Voided originals among them.
+  voided: number;
+  // Debit totals of the standing ones (POSTED, not a reversal), 2dp strings.
+  totals: { INCOME: string; EXPENSE: string; TRANSFER: string };
 }
 
 export interface AccountSummary {
