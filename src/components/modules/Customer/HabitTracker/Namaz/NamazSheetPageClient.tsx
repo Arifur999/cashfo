@@ -118,10 +118,10 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
               </Chip>
             )}
             <div role="group" aria-label={t("Month")} className="flex overflow-hidden rounded-md border border-line-strong bg-surface">
-              <Link href={previous ? `/habit-tracker/habits/namaz/${previous.id}` : "#"} aria-disabled={!previous} aria-label={t(MONTH_NAMES[(month + 10) % 12])} className={cn("flex size-9.5 items-center justify-center border-r border-line text-ink-2 hover:bg-cream", !previous && "pointer-events-none opacity-40")}>
+              <Link href={previous ? `/habit-tracker/habits/namaz/${previous.id}` : "#"} aria-disabled={!previous} aria-label={t(MONTH_NAMES[(month + 10) % 12])} className={cn("flex size-9.5 items-center justify-center border-r border-line text-ink-2 hover:bg-surface-sunken", !previous && "pointer-events-none opacity-40")}>
                 <ChevronLeft className="size-4" aria-hidden="true" />
               </Link>
-              <Link href={next ? `/habit-tracker/habits/namaz/${next.id}` : "#"} aria-disabled={!next} aria-label={t(MONTH_NAMES[month % 12])} className={cn("flex size-9.5 items-center justify-center text-ink-2 hover:bg-cream", !next && "pointer-events-none opacity-40")}>
+              <Link href={next ? `/habit-tracker/habits/namaz/${next.id}` : "#"} aria-disabled={!next} aria-label={t(MONTH_NAMES[month % 12])} className={cn("flex size-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken", !next && "pointer-events-none opacity-40")}>
                 <ChevronRight className="size-4" aria-hidden="true" />
               </Link>
             </div>
@@ -150,7 +150,7 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
               {t("Today, not marked yet")}
             </span>
             <span className="flex items-center gap-2">
-              <span className="size-4.5 rounded-[5px] border border-surface-sunken bg-cream" />
+              <span className="size-4.5 rounded-[5px] border border-divider bg-surface-sunken" />
               {t("Not yet")}
             </span>
             <span className="border-l border-line pl-4 text-ink-muted">{t("Tap a box to change it")}</span>

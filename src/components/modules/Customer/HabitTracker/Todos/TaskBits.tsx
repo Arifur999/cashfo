@@ -53,7 +53,7 @@ export function PriorityMenu({ value, onChange, look = "label", className }: Pri
         aria-label={name}
         title={name}
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-cream data-open:bg-cream",
+          "flex shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken",
           look === "label" ? "h-10 gap-2 px-3 text-small font-semibold" : "size-9.5",
           className,
         )}
@@ -70,7 +70,7 @@ export function PriorityMenu({ value, onChange, look = "label", className }: Pri
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="w-40 rounded-md border border-line bg-surface p-1.5 shadow-overlay ring-0">
         {PRIORITIES.map((priority) => (
-          <DropdownMenuItem key={priority} onSelect={() => onChange(priority)} className="flex h-9 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-small font-medium text-ink focus:bg-cream">
+          <DropdownMenuItem key={priority} onSelect={() => onChange(priority)} className="flex h-9 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-small font-medium text-ink focus:bg-surface-sunken">
             <PriorityDot priority={priority} className="size-2" />
             <span className="flex-1">{t(PRIORITY_LABEL[priority])}</span>
             {priority === value && <Check className="size-3.5 text-emerald" strokeWidth={2.5} aria-hidden="true" />}
@@ -101,7 +101,7 @@ export function TimeButton({ value, onChange, className }: TimeButtonProps) {
   }
   return (
     <span className={cn("relative flex shrink-0", className)}>
-      <button type="button" onClick={open} className={cn("flex h-10 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-small font-semibold hover:bg-cream", value ? "text-ink tabular-nums" : "text-ink-2")}>
+      <button type="button" onClick={open} className={cn("flex h-10 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-small font-semibold hover:bg-surface-sunken", value ? "text-ink tabular-nums" : "text-ink-2")}>
         <Clock className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
         {value ? timeLabel(value, t) : t("Time")}
       </button>

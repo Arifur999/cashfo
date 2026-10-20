@@ -122,7 +122,7 @@ export function IdeasDrawer({ open, onClose }: IdeasDrawerProps) {
                   onClick={() => vote(idea)}
                   className={cn(
                     "flex h-12 w-11 shrink-0 flex-col items-center justify-center rounded-md border text-small font-bold tabular-nums",
-                    idea.voted ? "border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:bg-cream",
+                    idea.voted ? "border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:bg-surface-sunken",
                   )}
                 >
                   <ChevronUp className="size-4" aria-hidden="true" />

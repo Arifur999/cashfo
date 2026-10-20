@@ -229,7 +229,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
               aria-label={t("Search logins")}
               leading={<Search />}
               size="md"
-              frameClassName="h-11.5 rounded-lg bg-cream text-body-lg md:hidden"
+              frameClassName="h-11.5 rounded-lg bg-strip text-body-lg md:hidden"
             />
             <div className="flex flex-col gap-3 max-md:hidden sm:flex-row">
               <Input size="md" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${t("Search")} ${entries.length} ${t(entries.length === 1 ? "login by name, username or website" : "logins by name, username or website")}`} aria-label={t("Search logins")} leading={<Search />} frameClassName="flex-1" />
@@ -268,7 +268,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
               {VIEWS.map((item) => {
                 const on = view === item.value;
                 return (
-                  <button key={item.value || "all"} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(item.value)} className={cn("flex h-9.5 items-center gap-3 rounded-md px-3 text-body", on ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-cream")}>
+                  <button key={item.value || "all"} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(item.value)} className={cn("flex h-9.5 items-center gap-3 rounded-md px-3 text-body", on ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken")}>
                     <item.icon className={cn("size-4", !on && (item.warn ? "text-warning" : "text-ink-muted"))} aria-hidden="true" />
                     <span className="flex-1 text-left">{t(item.label)}</span>
                     <span className={cn("min-w-5.5 rounded-full px-2 text-center text-caption font-semibold", on ? "bg-surface text-emerald" : item.warn ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}>{item.count}</span>
@@ -280,7 +280,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
                 const Icon = VAULT_CATEGORY_ICONS[value];
                 const on = view === value;
                 return (
-                  <button key={value} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(on ? "" : value)} className={cn("flex h-9 items-center gap-3 rounded-md px-3 text-body font-medium", on ? "bg-mint-50 text-emerald" : "text-ink-2 hover:bg-cream")}>
+                  <button key={value} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(on ? "" : value)} className={cn("flex h-9 items-center gap-3 rounded-md px-3 text-body font-medium", on ? "bg-mint-50 text-emerald" : "text-ink-2 hover:bg-surface-sunken")}>
                     <span className={cn("flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5", SOFT_TONE[VAULT_CATEGORY_TONE[value]])}>
                       <Icon aria-hidden="true" />
                     </span>
@@ -301,7 +301,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
             </nav>
 
             <Card padding="none" className="overflow-hidden max-md:rounded-none max-md:border-0 max-md:shadow-none">
-              <div className="flex items-center justify-between border-b border-line bg-cream px-4 py-3 text-caption font-medium text-ink-muted max-md:hidden">
+              <div className="flex items-center justify-between border-b border-line bg-table-head px-4 py-3 text-caption font-medium text-ink-muted max-md:hidden">
                 <span>
                   {listLabel} · {visible.length}
                 </span>

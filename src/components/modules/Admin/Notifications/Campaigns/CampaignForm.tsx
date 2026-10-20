@@ -44,7 +44,7 @@ const ChoiceCard = <TValue extends string>({ value, on, title, sub, onPick }: { 
     role="radio"
     aria-checked={on}
     onClick={() => onPick(value)}
-    className={cn("flex flex-col gap-0.5 rounded-md border px-3 py-3 text-left transition-colors", on ? "border-emerald bg-mint-50" : "border-line bg-surface hover:bg-cream")}
+    className={cn("flex flex-col gap-0.5 rounded-md border px-3 py-3 text-left transition-colors", on ? "border-emerald bg-mint-50" : "border-line bg-surface hover:bg-hover")}
   >
     <span className="flex items-center gap-2">
       <span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border-2", on ? "border-emerald" : "border-line-strong")} aria-hidden="true">

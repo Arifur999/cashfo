@@ -67,7 +67,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
             <EmptyState bordered={false} icon={<Package />} title={t("Nothing to sell yet")} description={t("Buy or add an asset first, and it shows up here.")} action={canManage && <Button onClick={() => setBuyOpen(true)}>{t("Buy asset")}</Button>} className="border-t border-line" />
           ) : (
             <>
-              <div className={cn("hidden items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+              <div className={cn("hidden items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
                 <span>{t("Asset")}</span>
                 <span className="text-right">{t("Paid")}</span>
                 <span className="text-right">{t("Value today")}</span>
@@ -76,7 +76,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
               {summary.owned.map((asset) => {
                 const visual = categoryVisual(categories, asset.category);
                 return (
-                  <div key={asset.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-surface-sunken px-4 py-3 text-body md:h-15 md:px-6 md:py-0", GRID)}>
+                  <div key={asset.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-divider px-4 py-3 text-body md:h-15 md:px-6 md:py-0", GRID)}>
                     <span className="flex min-w-0 items-center gap-3">
                       <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
                       <span className="flex min-w-0 flex-col gap-px">
@@ -121,7 +121,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                 </span>
                 <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(lastSold.soldPrice ?? 0, currency)}</span>
               </div>
-              <div className={cn("flex items-center justify-between rounded-md p-3 text-caption", lastChip.tone === "income" ? "bg-mint-50 text-income" : lastChip.tone === "expense" ? "bg-expense-soft text-expense" : "bg-cream text-ink-2")}>
+              <div className={cn("flex items-center justify-between rounded-md p-3 text-caption", lastChip.tone === "income" ? "bg-mint-50 text-income" : lastChip.tone === "expense" ? "bg-expense-soft text-expense" : "bg-strip text-ink-2")}>
                 <span className="font-normal">
                   {t("Paid")} {formatCurrency(lastSold.purchasePrice, currency)} {t("in")} {formatDate(lastSold.purchaseDate, "MMM yyyy")}
                 </span>

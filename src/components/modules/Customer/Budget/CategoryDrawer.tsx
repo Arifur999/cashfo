@@ -150,7 +150,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-            <div aria-label={t("Preview")} className="flex flex-col gap-3 rounded-lg border border-line bg-cream p-4">
+            <div aria-label={t("Preview")} className="flex flex-col gap-3 rounded-lg border border-line bg-strip p-4">
               <div className="flex items-center gap-3">
                 <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
@@ -227,7 +227,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                   {t("Monthly limit")}
                 </label>
                 <div className="flex h-13 items-stretch overflow-hidden rounded-md border border-line-strong bg-surface focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]">
-                  <span className="flex w-12 shrink-0 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>
+                  <span className="flex w-12 shrink-0 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>
                   <input
                     id="cat-limit"
                     type="text"

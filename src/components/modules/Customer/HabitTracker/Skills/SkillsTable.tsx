@@ -79,7 +79,7 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
           </button>
         </span>
       </div>
-      <div className={cn("hidden border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted", ROW)}>
+      <div className={cn("hidden border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted", ROW)}>
         <span>{t("Skill")}</span>
         <span>{t("Where")}</span>
         <span>{t("Progress")}</span>
@@ -90,7 +90,7 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
         const palette = paletteFor(skill.color);
         return (
           <DropdownMenu key={skill.id}>
-            <DropdownMenuTrigger aria-label={`${skill.name}: ${t("actions")}`} className={cn("flex w-full flex-col gap-2 border-b border-surface-sunken px-5 py-3 text-left text-body text-ink transition-colors last:border-b-0 hover:bg-cream/60 data-open:bg-cream/60 md:min-h-13.5 md:py-0", ROW)}>
+            <DropdownMenuTrigger aria-label={`${skill.name}: ${t("actions")}`} className={cn("flex w-full flex-col gap-2 border-b border-divider px-5 py-3 text-left text-body text-ink transition-colors last:border-b-0 hover:bg-hover data-open:bg-hover md:min-h-13.5 md:py-0", ROW)}>
               <span className="flex min-w-0 items-center gap-3">
                 <SkillTile icon={skill.icon} color={skill.color} size={30} />
                 <span className="truncate font-semibold">{skill.name}</span>
@@ -112,7 +112,7 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
               {MENU[skill.status].map((item) => (
-                <DropdownMenuItem key={item.action} onSelect={() => onAction(skill, item.action)} className={item.action === "remove" ? "rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense" : "rounded-md px-3 py-2 text-body text-ink focus:bg-cream"}>
+                <DropdownMenuItem key={item.action} onSelect={() => onAction(skill, item.action)} className={item.action === "remove" ? "rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense" : "rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken"}>
                   <item.icon className="size-4" aria-hidden="true" />
                   {t(item.label)}
                 </DropdownMenuItem>

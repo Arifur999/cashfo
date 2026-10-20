@@ -26,7 +26,7 @@ const DataTableSelectionBar = <TData,>({ table, bulkActions }: DataTableSelectio
     <div
       role="status"
       aria-live="polite"
-      className="mx-5 mb-3 flex flex-wrap items-center gap-2 rounded-md border border-line bg-cream px-3 py-2 text-small"
+      className="mx-5 mb-3 flex flex-wrap items-center gap-2 rounded-md border border-line bg-strip px-3 py-2 text-small"
     >
       <span className="font-medium">
         {plural(translate, selectedRows.length, "{count} row selected", "{count} rows selected")}

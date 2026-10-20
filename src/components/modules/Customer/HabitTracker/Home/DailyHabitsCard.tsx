@@ -75,7 +75,7 @@ export function DailyHabitsCard({ rows: serverRows, resting, today }: DailyHabit
           </span>
         )}
       </div>
-      {rows.length === 0 && <span className="border-t border-surface-sunken py-3 text-small text-ink-muted md:hidden">{t("Nothing planned for today")}</span>}
+      {rows.length === 0 && <span className="border-t border-divider py-3 text-small text-ink-muted md:hidden">{t("Nothing planned for today")}</span>}
       <ul className="flex flex-col gap-1 md:gap-0.5">
         {rows.map((row) => {
           const tone = categoryTone(row.color);
@@ -85,7 +85,7 @@ export function DailyHabitsCard({ rows: serverRows, resting, today }: DailyHabit
           const value = log?.value ?? 0;
           const sub = counted ? `${value} ${t("of")} ${row.targetValue} ${row.unit ?? ""}`.trim() : row.streak > 0 ? `${row.streak} ${t(streakWord(row, row.streak, true))}` : t(ruleLabel(row).days);
           return (
-            <li key={row.id} className="box-content flex min-h-13 items-center gap-3 border-t border-surface-sunken md:h-10.5 md:min-h-0 md:border-0">
+            <li key={row.id} className="box-content flex min-h-13 items-center gap-3 border-t border-divider md:h-10.5 md:min-h-0 md:border-0">
               <span className={cn("flex size-8.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-4 md:size-7.5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(row.icon), { "aria-hidden": true })}</span>
               <span className="flex min-w-0 flex-1 flex-col gap-px">
                 <span className="truncate text-body font-medium text-ink">{row.name}</span>
@@ -123,7 +123,7 @@ export function DailyHabitsCard({ rows: serverRows, resting, today }: DailyHabit
           );
         })}
       </ul>
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-surface-sunken px-0.5 pt-2 pb-1 text-small text-ink-muted md:px-0 md:pt-3 md:pb-0">
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-divider px-0.5 pt-2 pb-1 text-small text-ink-muted md:px-0 md:pt-3 md:pb-0">
         <span className="md:truncate">
           {restLine}
           {resting.length === 1 && <span className="md:hidden"> ({t(ruleLabel(resting[0]).days)})</span>}

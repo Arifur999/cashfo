@@ -62,7 +62,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
         <EmptyState icon={<Package />} title={t("Nothing owned yet")} description={t("Add what you own first, then keep its value up to date here.")} className="min-h-80" />
       ) : (
         <Card padding="none" className="overflow-hidden">
-          <div className={cn("hidden items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+          <div className={cn("hidden items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
             <span>{t("Asset")}</span>
             <span className="text-right">{t("Paid")}</span>
             <span className="text-right">{t("Value today")}</span>
@@ -77,7 +77,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
             const updates = updateCount(asset);
             const old = isStale(asset, today);
             return (
-              <div key={asset.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-surface-sunken px-4 py-3 text-body md:h-16 md:px-6 md:py-0", GRID)}>
+              <div key={asset.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-divider px-4 py-3 text-body md:h-16 md:px-6 md:py-0", GRID)}>
                 <span className="flex min-w-0 items-center gap-3">
                   <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
                   <span className="flex min-w-0 flex-col gap-px">

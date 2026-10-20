@@ -57,10 +57,10 @@ export function FriendsTable({ entries, currency }: FriendsTableProps) {
         )}
       </div>
       {entries.length === 0 ? (
-        <div className="border-t border-surface-sunken px-5 py-10 text-center text-small text-ink-muted">{t("No one has joined with your link yet. Share it and they show up here.")}</div>
+        <div className="border-t border-divider px-5 py-10 text-center text-small text-ink-muted">{t("No one has joined with your link yet. Share it and they show up here.")}</div>
       ) : (
         <>
-          <div className={cn("hidden border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted", ROW)}>
+          <div className={cn("hidden border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted", ROW)}>
             <span>{t("Friend")}</span>
             <span className="text-right">{t("You earn")}</span>
             <span>{t("Status")}</span>
@@ -69,7 +69,7 @@ export function FriendsTable({ entries, currency }: FriendsTableProps) {
           {rows.map((entry) => {
             const meta = STATUS_META[entry.status];
             return (
-              <div key={entry.id} className={cn("flex min-h-14.5 items-center gap-3 border-b border-surface-sunken px-4 text-body last:border-b-0 md:min-h-13 md:px-5", ROW)}>
+              <div key={entry.id} className={cn("flex min-h-14.5 items-center gap-3 border-b border-divider px-4 text-body last:border-b-0 md:min-h-13 md:px-5", ROW)}>
                 <span className="flex min-w-0 flex-1 items-center gap-3">
                   <PersonAvatar name={entry.name} size={32} coloured />
                   <span className="flex min-w-0 flex-col gap-px">
@@ -98,7 +98,7 @@ export function FriendsTable({ entries, currency }: FriendsTableProps) {
             );
           })}
           {pending > 0 && (
-            <div className="flex items-center gap-3 bg-cream px-5 py-3 text-small text-ink-2">
+            <div className="flex items-center gap-3 bg-strip px-5 py-3 text-small text-ink-2">
               <Info className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
               <span>
                 {pending} {t(pending === 1 ? "reward is still pending. It becomes available 30 days after your friend joined." : "rewards are still pending. They become available 30 days after each friend joined.")}

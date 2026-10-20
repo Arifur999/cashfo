@@ -179,7 +179,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
             </div>
             <div className="overflow-x-auto">
               <div className="min-w-220">
-                <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+                <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
                   <span>{t("Asset")}</span>
                   <span>{t("Bought")}</span>
                   <span className="text-right">{t("Paid")}</span>
@@ -216,13 +216,13 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                       </span>
                     </>
                   );
-                  const rowClass = cn("grid h-14.5 w-full items-center gap-x-4 border-b border-surface-sunken px-6 text-left text-body", GRID, sold && "opacity-70");
+                  const rowClass = cn("grid h-14.5 w-full items-center gap-x-4 border-b border-divider px-6 text-left text-body", GRID, sold && "opacity-70");
                   return sold || !canManage ? (
                     <div key={asset.id} className={rowClass}>
                       {row}
                     </div>
                   ) : (
-                    <button key={asset.id} type="button" onClick={() => setValuing(asset)} className={cn(rowClass, "transition-colors hover:bg-cream")}>
+                    <button key={asset.id} type="button" onClick={() => setValuing(asset)} className={cn(rowClass, "transition-colors hover:bg-hover")}>
                       {row}
                     </button>
                   );

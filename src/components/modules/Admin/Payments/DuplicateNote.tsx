@@ -30,7 +30,7 @@ const DuplicateNote = async ({ payment }: { payment: IPaymentDetail }) => {
         </span>
       </div>
       {payment.duplicateOfId && (
-        <Button asChild variant="outline" size="sm" className="h-8.5 shrink-0 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-cream">
+        <Button asChild variant="outline" size="sm" className="h-8.5 shrink-0 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-surface-sunken">
           <Link href={`/admin/payments/${payment.duplicateOfId}`}>{t("Open {name}", { name: shortPaymentId(payment.duplicateOfId) })}</Link>
         </Button>
       )}

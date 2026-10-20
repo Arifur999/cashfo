@@ -90,7 +90,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
             {t("New workspace")}
           </Button>
         </div>
-        {businesses === null && <div className="border-t border-surface-sunken px-5 py-6 text-small text-ink-muted">{t("Loading...")}</div>}
+        {businesses === null && <div className="border-t border-divider px-5 py-6 text-small text-ink-muted">{t("Loading...")}</div>}
         {/* Family and mess groups live in Group expenses, not here, as the
             card below says. */}
         {(businesses ?? []).filter((business) => business.type !== "GROUP").map((business) => {
@@ -98,7 +98,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
           const trialActive = business.trialEndsAt ? new Date(business.trialEndsAt) > new Date() : null;
           const contact = [business.phone, business.email].filter(Boolean).join(" · ");
           return (
-            <div key={business.id} className="flex flex-col gap-3 border-t border-surface-sunken p-5 sm:flex-row sm:items-center sm:gap-4">
+            <div key={business.id} className="flex flex-col gap-3 border-t border-divider p-5 sm:flex-row sm:items-center sm:gap-4">
               <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md", personal ? "bg-mint-50 text-emerald" : "bg-pillar-loans-soft text-pillar-loans")}>{personal ? <UserRound className="size-5" aria-hidden="true" /> : <Building2 className="size-5" aria-hidden="true" />}</span>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-2">
@@ -163,7 +163,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
         </div>
         <div className="grid gap-3 md:grid-cols-3">
           {TIPS.map((tip) => (
-            <div key={tip.text} className="flex gap-3 rounded-md bg-cream px-4 py-3">
+            <div key={tip.text} className="flex gap-3 rounded-md bg-strip px-4 py-3">
               <tip.icon className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
               <span className="text-small leading-normal text-ink-2">{t(tip.text)}</span>
             </div>

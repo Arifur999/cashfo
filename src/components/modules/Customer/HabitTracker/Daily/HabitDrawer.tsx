@@ -165,11 +165,11 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
                   {option.value === "WEEKLY_COUNT" && (
                     <span className="flex items-center gap-3 pl-8">
                       <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface">
-                        <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-cream">
+                        <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken">
                           <Minus className="size-4" aria-hidden="true" />
                         </button>
                         <span className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">{count}</span>
-                        <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-cream">
+                        <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken">
                           <Plus className="size-4" aria-hidden="true" />
                         </button>
                       </span>
@@ -180,7 +180,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
               ))}
             </fieldset>
 
-            <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4">
+            <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="flex flex-col gap-px">
                   <span className="text-body font-semibold text-ink">{t("Count an amount")}</span>
@@ -221,7 +221,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
             </span>
           </div>
 
-          <div className={cn("flex items-center gap-3 border-t border-line bg-cream", wide ? "px-6 py-4" : "px-4 py-3")}>
+          <div className={cn("flex items-center gap-3 border-t border-line bg-strip", wide ? "px-6 py-4" : "px-4 py-3")}>
             {editing && !editing.isArchived && (
               <Button type="button" variant="ghost" onClick={archive} disabled={isPending}>
                 <Archive />

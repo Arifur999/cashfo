@@ -212,7 +212,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
       </form>
 
       {items.length > 0 ? (
-        <div className="flex flex-col border-t border-surface-sunken">
+        <div className="flex flex-col border-t border-divider">
           <div className="flex items-center gap-2 px-5 pt-3 pb-1 text-caption font-semibold text-ink-muted">
             {t("To do")}
             <span className="rounded-full bg-surface-sunken px-2 text-ink-2 tabular-nums">{openItems.length}</span>
@@ -275,7 +275,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2 border-t border-surface-sunken px-8 py-6 text-center">
+        <div className="flex flex-col items-center gap-2 border-t border-divider px-8 py-6 text-center">
           <span className="flex size-12 items-center justify-center rounded-full bg-mint-50 text-emerald">
             <ListChecks className="size-5.5" aria-hidden="true" />
           </span>
@@ -284,7 +284,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         </div>
       )}
 
-      <div className={cn("flex items-center justify-between gap-3 border-t border-line bg-cream px-4.5", sheet ? "pt-3 pb-6" : "py-2.5")}>
+      <div className={cn("flex items-center justify-between gap-3 border-t border-line bg-strip px-4.5", sheet ? "pt-3 pb-6" : "py-2.5")}>
         {openItems.length > 0 ? (
           <Button variant="outline" size="sm" onClick={moveAllToTomorrow} className="h-8 px-3">
             <ArrowRightToLine className="size-3.5" strokeWidth={2.25} />

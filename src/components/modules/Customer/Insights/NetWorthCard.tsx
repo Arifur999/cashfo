@@ -57,7 +57,7 @@ export function NetWorthCard({ worth, currency }: NetWorthCardProps) {
       <div className="hidden flex-col gap-3 md:flex">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(128px,1fr))] gap-3">
           {parts.map((part) => (
-            <span key={part.key} className="flex flex-col gap-1 rounded-md bg-cream px-4 py-3">
+            <span key={part.key} className="flex flex-col gap-1 rounded-md bg-strip px-4 py-3">
               <span className="text-caption font-normal text-ink-muted">{t(PART_LABELS[part.key])}</span>
               <AmountText value={part.key === "youOwe" ? -part.value : part.value} currency={currency} size="sm" tone={part.key === "youOwe" ? "expense" : "income"} signed className="font-bold" />
             </span>

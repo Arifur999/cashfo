@@ -182,7 +182,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
                   autoFocus
                   placeholder="0"
                   className="text-h3 font-bold tabular-nums"
-                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                   frameClassName="overflow-hidden pl-0"
                 />
               </Field>
@@ -255,7 +255,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
                   {active.map((member) => {
                     const on = included.includes(member.id);
                     return (
-                      <div key={member.id} className="flex h-12 items-center gap-3 border-b border-surface-sunken px-3 last:border-b-0">
+                      <div key={member.id} className="flex h-12 items-center gap-3 border-b border-divider px-3 last:border-b-0">
                         {split !== "EXACT" ? (
                           <button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(member.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                             <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-[5px] border text-[11px] font-bold", on ? "border-emerald bg-emerald text-white" : "border-line-strong bg-surface")}>
@@ -272,11 +272,11 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
                         )}
                         {split === "SHARES" && on && (
                           <span className="flex h-8 items-center overflow-hidden rounded-md border border-line-strong">
-                            <button type="button" aria-label={t("Fewer shares for {name}", { name: member.name })} disabled={(units[member.id] ?? 1) <= 0.5} onClick={() => setUnits({ ...units, [member.id]: Math.max(0.5, (units[member.id] ?? 1) - ((units[member.id] ?? 1) > 1 ? 1 : 0.5)) })} className="flex h-full w-7 items-center justify-center bg-cream disabled:opacity-40">
+                            <button type="button" aria-label={t("Fewer shares for {name}", { name: member.name })} disabled={(units[member.id] ?? 1) <= 0.5} onClick={() => setUnits({ ...units, [member.id]: Math.max(0.5, (units[member.id] ?? 1) - ((units[member.id] ?? 1) > 1 ? 1 : 0.5)) })} className="flex h-full w-7 items-center justify-center bg-strip disabled:opacity-40">
                               <Minus className="size-3.5" aria-hidden="true" />
                             </button>
                             <span className="w-8 text-center text-body font-bold tabular-nums">{mealText(units[member.id] ?? 1)}</span>
-                            <button type="button" aria-label={t("More shares for {name}", { name: member.name })} onClick={() => setUnits({ ...units, [member.id]: (units[member.id] ?? 1) < 1 ? 1 : (units[member.id] ?? 1) + 1 })} className="flex h-full w-7 items-center justify-center bg-cream">
+                            <button type="button" aria-label={t("More shares for {name}", { name: member.name })} onClick={() => setUnits({ ...units, [member.id]: (units[member.id] ?? 1) < 1 ? 1 : (units[member.id] ?? 1) + 1 })} className="flex h-full w-7 items-center justify-center bg-strip">
                               <Plus className="size-3.5" aria-hidden="true" />
                             </button>
                           </span>
@@ -296,7 +296,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
               )}
             </fieldset>
 
-            <div className="flex flex-col gap-2 rounded-md border border-line bg-cream px-4 py-3 text-small tabular-nums">
+            <div className="flex flex-col gap-2 rounded-md border border-line bg-strip px-4 py-3 text-small tabular-nums">
               <span className="text-caption font-semibold text-ink-muted">
                 {t("Effect on")} {monthLabel} {t("balances")}
               </span>

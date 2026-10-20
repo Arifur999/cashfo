@@ -24,7 +24,7 @@ interface WalletCardProps {
   savings?: boolean;
 }
 
-const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-cream [&_svg]:size-3.75";
+const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75";
 
 // One wallet as a bank card: its kind, name and number, what it holds now
 // and held at the start, a link to its statement, and the actions menu.

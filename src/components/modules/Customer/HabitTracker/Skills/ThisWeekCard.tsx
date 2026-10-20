@@ -58,7 +58,7 @@ export function ThisWeekCard({ skills, week, streak, today }: ThisWeekCardProps)
               {week.map((day) => {
                 const amount = day.bySkill[skill.id] ?? 0;
                 return (
-                  <span key={day.date} role="cell" title={amount > 0 ? `${amountText(skill.unit, amount, t)} · ${skill.name}` : t("Nothing logged")} className={cn("flex h-7.5 items-center justify-center rounded-sm text-caption font-bold tabular-nums", amount > 0 ? "bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)" : "bg-cream")}>
+                  <span key={day.date} role="cell" title={amount > 0 ? `${amountText(skill.unit, amount, t)} · ${skill.name}` : t("Nothing logged")} className={cn("flex h-7.5 items-center justify-center rounded-sm text-caption font-bold tabular-nums", amount > 0 ? "bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)" : "bg-surface-sunken")}>
                     {cellText(skill.unit, amount)}
                   </span>
                 );
@@ -69,7 +69,7 @@ export function ThisWeekCard({ skills, week, streak, today }: ThisWeekCardProps)
       </div>
 
       {skills.length > 0 && (
-        <div className="mt-auto flex flex-wrap justify-between gap-x-3 gap-y-1 border-t border-surface-sunken pt-3 text-small text-ink-2">
+        <div className="mt-auto flex flex-wrap justify-between gap-x-3 gap-y-1 border-t border-divider pt-3 text-small text-ink-2">
           {skills.map((skill) => (
             <span key={skill.id}>
               {skill.name}: <b className="font-semibold text-ink">{amountText(skill.unit, weekTotal(week, skill.id), t)}</b>

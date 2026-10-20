@@ -75,7 +75,7 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
       </div>
       <div className="grid grid-cols-5 gap-2">
         {PRAYERS.map((prayer) => (
-          <span key={prayer} className={cn("flex flex-col items-center gap-0.5 rounded-md border py-2", qaza.left[prayer] > 0 ? "border-warning/30 bg-warning-soft text-warning" : "border-line bg-cream text-ink-muted")}>
+          <span key={prayer} className={cn("flex flex-col items-center gap-0.5 rounded-md border py-2", qaza.left[prayer] > 0 ? "border-warning/30 bg-warning-soft text-warning" : "border-line bg-strip text-ink-muted")}>
             <span className="text-title font-bold tabular-nums">{qaza.left[prayer] ?? 0}</span>
             <span className="text-caption">{t(prayer)}</span>
           </span>
@@ -90,7 +90,7 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
           <span className="block h-full rounded-full bg-warning-fill" style={{ width: `${share}%` }} />
         </span>
       </div>
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-surface-sunken pt-3">
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-divider pt-3">
         <button type="button" onClick={() => setHistoryOpen(true)} className="text-small font-semibold text-ink-2 hover:text-ink">
           {t("History")}
         </button>
@@ -101,7 +101,7 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={6} className="w-48 rounded-md border border-line bg-surface p-1.5 shadow-overlay ring-0">
             {PRAYERS.map((prayer) => (
-              <DropdownMenuItem key={prayer} onSelect={() => log(prayer)} className="flex h-9 cursor-pointer items-center justify-between gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-cream">
+              <DropdownMenuItem key={prayer} onSelect={() => log(prayer)} className="flex h-9 cursor-pointer items-center justify-between gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken">
                 {t(prayer)}
                 <span className="text-caption text-ink-muted tabular-nums">{t("{count} left", { count: qaza.left[prayer] ?? 0 })}</span>
               </DropdownMenuItem>
@@ -169,7 +169,7 @@ function QazaHistoryDialog({ open, onClose, qaza, today, onChange }: QazaHistory
             <p className="px-6 py-6 text-center text-small text-ink-muted">{t("No qaza made up yet.")}</p>
           ) : (
             qaza.recent.map((entry) => (
-              <div key={entry.id} className="flex items-center gap-3 border-b border-surface-sunken px-6 py-3 last:border-b-0">
+              <div key={entry.id} className="flex items-center gap-3 border-b border-divider px-6 py-3 last:border-b-0">
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="text-body font-semibold text-ink">{entry.count > 1 ? `${t(entry.prayer)} × ${entry.count}` : t(entry.prayer)}</span>
                   <span className="text-caption text-ink-muted">{day(entry.date, "EEE d MMM yyyy")}</span>

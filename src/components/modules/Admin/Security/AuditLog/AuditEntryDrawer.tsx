@@ -111,7 +111,7 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
         <pre className="max-h-64 overflow-auto rounded-md bg-ink px-4 py-3 font-mono text-caption leading-relaxed whitespace-pre-wrap text-line-strong">{saved}</pre>
       </section>
 
-      <div className="-mx-6 mt-auto -mb-5 flex flex-wrap justify-end gap-3 border-t border-line bg-cream px-6 py-4">
+      <div className="-mx-6 mt-auto -mb-5 flex flex-wrap justify-end gap-3 border-t border-line bg-strip px-6 py-4">
         <CopyButton value={saved} label="the entry as JSON" text="Copy as JSON" size="md" />
         {href && (
           <Button asChild>

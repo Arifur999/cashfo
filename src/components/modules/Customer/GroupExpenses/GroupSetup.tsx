@@ -53,7 +53,7 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
   return (
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
       <Card padding="none" className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-4 border-b border-surface-sunken px-6 py-5">
+        <div className="flex flex-wrap items-center gap-4 border-b border-divider px-6 py-5">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <h2 className="text-h3 text-ink">
               {t("Set up")} {data.name}
@@ -69,7 +69,7 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
         </div>
         <ol className="flex flex-col">
           {steps.map((step, i) => (
-            <li key={step.title} className="flex gap-4 border-b border-surface-sunken px-6 py-5 last:border-b-0">
+            <li key={step.title} className="flex gap-4 border-b border-divider px-6 py-5 last:border-b-0">
               <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-full text-small font-bold", step.done ? "bg-emerald text-white" : "border-[1.5px] border-line-strong bg-surface text-ink-2")}>{step.done ? <Check className="size-4" strokeWidth={3} aria-hidden="true" /> : i + 1}</span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className={cn("text-body-lg font-semibold", step.done ? "text-ink-muted line-through" : "text-ink")}>{step.title}</span>
@@ -89,7 +89,7 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
 
       <Card padding="none" className="flex flex-col gap-4 p-5">
         <h2 className="text-title font-semibold text-ink">{t("How each balance is worked out")}</h2>
-        <div className="flex flex-col gap-2 rounded-md bg-cream p-4 text-small leading-relaxed">
+        <div className="flex flex-col gap-2 rounded-md bg-strip p-4 text-small leading-relaxed">
           <span className="flex justify-between">
             <span className="text-ink-2">{t("Contributions")}</span>
             <span className="font-semibold text-income">+</span>

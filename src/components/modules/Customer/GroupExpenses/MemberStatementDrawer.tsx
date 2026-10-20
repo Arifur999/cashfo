@@ -129,7 +129,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
             ))}
           </div>
 
-          <div className={cn("flex shrink-0 items-center justify-between rounded-lg border px-4 py-3", even ? "border-line bg-cream" : owes ? "border-expense/25 bg-expense-soft" : "border-mint-200 bg-mint-50")}>
+          <div className={cn("flex shrink-0 items-center justify-between rounded-lg border px-4 py-3", even ? "border-line bg-strip" : owes ? "border-expense/25 bg-expense-soft" : "border-mint-200 bg-mint-50")}>
             <div className="flex flex-col gap-0.5">
               <span className={cn("text-small font-semibold", even ? "text-ink" : owes ? "text-expense" : "text-income")}>{even ? t("Settled") : owes ? t("Has to pay") : t("Gets back")}</span>
               <span className={cn("text-caption font-normal tabular-nums", even ? "text-ink-muted" : owes ? "text-expense" : "text-income")}>
@@ -140,7 +140,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
           </div>
 
           <div className="flex shrink-0 flex-col overflow-hidden rounded-lg border border-line">
-            <div className="grid grid-cols-[56px_minmax(0,1fr)_86px_86px] gap-3 border-b border-line bg-cream px-4 py-2 text-caption font-medium text-ink-muted">
+            <div className="grid grid-cols-[56px_minmax(0,1fr)_86px_86px] gap-3 border-b border-line bg-table-head px-4 py-2 text-caption font-medium text-ink-muted">
               <span>{t("Date")}</span>
               <span>{t("Entry")}</span>
               <span className="text-right">{t("Amount")}</span>
@@ -148,7 +148,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
             </div>
             {lines.length === 0 && <p className="px-4 py-6 text-center text-small text-ink-muted">{t("Nothing recorded for this member yet.")}</p>}
             {lines.map((line, i) => (
-              <div key={i} className="grid min-h-9 grid-cols-[56px_minmax(0,1fr)_86px_86px] items-center gap-3 border-b border-surface-sunken px-4 py-1 text-small tabular-nums last:border-b-0">
+              <div key={i} className="grid min-h-9 grid-cols-[56px_minmax(0,1fr)_86px_86px] items-center gap-3 border-b border-divider px-4 py-1 text-small tabular-nums last:border-b-0">
                 <span className="text-ink-muted">{formatDate(line.date, "dd MMM")}</span>
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-medium text-ink">{line.title}</span>

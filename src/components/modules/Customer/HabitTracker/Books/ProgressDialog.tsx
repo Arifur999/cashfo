@@ -52,7 +52,7 @@ export function ProgressDialog({ book, onClose, onSave }: ProgressDialogProps) {
               <Input id="bk-progress" size="lg" inputMode="numeric" autoFocus value={page} onChange={(event) => setPage(event.target.value.replace(/\D/g, "").slice(0, 5))} invalid={page !== "" && !valid} className="text-body-lg font-semibold" frameClassName="w-40" />
             </Field>
           </div>
-          <div className="flex items-center gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center gap-3 border-t border-line bg-strip px-6 py-4">
             <Button type="button" variant="ghost" onClick={() => book && onSave(book, book.totalPages)}>
               {t("Mark as finished")}
             </Button>

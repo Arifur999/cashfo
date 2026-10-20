@@ -109,13 +109,13 @@ const AdminNotificationsBell = () => {
           </div>
         )}
         <ul className="max-h-[min(30rem,calc(100vh-14rem))] overflow-y-auto">
-          {shown.length === 0 && <li className="border-t border-surface-sunken px-4 py-8 text-center text-small text-ink-muted">{t("Nothing needs you right now.")}</li>}
+          {shown.length === 0 && <li className="border-t border-divider px-4 py-8 text-center text-small text-ink-muted">{t("Nothing needs you right now.")}</li>}
           {shown.map(({ item, unread: isNew }) => {
             const row = adminFeedRow(item, t);
             const Icon = KIND_ICON[item.kind];
             return (
               <li key={item.id}>
-                <Link href={item.href} onClick={() => setOpen(false)} className="flex gap-3 border-t border-surface-sunken p-4 hover:bg-cream">
+                <Link href={item.href} onClick={() => setOpen(false)} className="flex gap-3 border-t border-divider p-4 hover:bg-hover">
                   <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", TONE_TILE[row.tone])}>
                     <Icon className="size-4.25" aria-hidden="true" />
                   </span>
@@ -130,7 +130,7 @@ const AdminNotificationsBell = () => {
             );
           })}
         </ul>
-        <p className="border-t border-line bg-cream px-4 py-3 text-caption text-ink-muted">{t("Only what your role can act on is shown here.")}</p>
+        <p className="border-t border-line bg-strip px-4 py-3 text-caption text-ink-muted">{t("Only what your role can act on is shown here.")}</p>
       </PopoverContent>
     </Popover>
   );

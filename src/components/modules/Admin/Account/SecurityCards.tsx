@@ -82,7 +82,7 @@ export const LanguageCard = () => {
 export const TwoStepCard = ({ me }: { me: IAdminUser }) => {
   const { translate } = useLocale();
   return (
-  <Card className="flex flex-col gap-3 bg-cream">
+  <Card className="flex flex-col gap-3 bg-strip">
     <div className="flex flex-wrap items-center gap-3">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-warning-soft text-warning">
         <ShieldCheck aria-hidden="true" className="size-4.5" />

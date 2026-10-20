@@ -43,7 +43,7 @@ export function ReadingStreakCard({ reading, today }: ReadingStreakCardProps) {
           { label: "This week", value: pages(total) },
           { label: "Daily average", value: pages(average) },
         ].map((tile) => (
-          <div key={tile.label} className="flex flex-col gap-0.5 rounded-md bg-cream p-3">
+          <div key={tile.label} className="flex flex-col gap-0.5 rounded-md bg-strip p-3">
             <span className="text-caption text-ink-muted">{t(tile.label)}</span>
             <span className="text-h3 font-bold text-ink tabular-nums">{tile.value}</span>
           </div>

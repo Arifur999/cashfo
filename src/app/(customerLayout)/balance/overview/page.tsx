@@ -125,7 +125,7 @@ export default async function BalanceOverviewPage() {
         ) : (
           <div className="overflow-x-auto">
             <div className="min-w-260">
-              <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+              <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
                 <span>{t("Account")}</span>
                 <span className="text-right">{t("Opening")}</span>
                 <span className="text-right">{t("Money in")}</span>
@@ -137,7 +137,7 @@ export default async function BalanceOverviewPage() {
               {rows.map((account, index) => (
                 <OverviewRow key={account.id} account={account} index={index} currency={currency} figure={figure} typeLabel={t(WALLET_TYPE_META[walletType(account)].label)} archivedLabel={t("Archived")} />
               ))}
-              <div className={cn("grid h-14 items-center gap-x-4 bg-cream px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
+              <div className={cn("grid h-14 items-center gap-x-4 bg-table-head px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
                 <span>{t("Total")}</span>
                 <span className="text-right">{formatCurrency(totals.opening, currency)}</span>
                 {figure(totals.in, "in")}
@@ -175,7 +175,7 @@ interface OverviewRowProps {
 function OverviewRow({ account, index, currency, figure, typeLabel, archivedLabel }: OverviewRowProps) {
   const archived = account.status === "ARCHIVED";
   return (
-    <Link href={`/balance/ledger?accountId=${account.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-cream", GRID, archived && "opacity-60")}>
+    <Link href={`/balance/ledger?accountId=${account.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-divider px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, archived && "opacity-60")}>
       <span className="flex min-w-0 items-center gap-3">
         <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.25", walletPalette(index).tile)}>{createElement(walletIcon(account), { "aria-hidden": true })}</span>
         <span className="flex min-w-0 flex-col gap-px">

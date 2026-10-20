@@ -44,7 +44,7 @@ const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationPr
               aria-label={translate("Page {page}", { page: item })}
               aria-current={item === currentPage ? "page" : undefined}
               onClick={() => goToPage(item)}
-              className={cn(PAGE_BUTTON, item === currentPage ? "border-forest bg-forest text-white dark:border-emerald dark:bg-emerald dark:text-on-action" : "border-line bg-surface text-ink-2 hover:bg-cream")}
+              className={cn(PAGE_BUTTON, item === currentPage ? "border-forest bg-forest text-white dark:border-emerald dark:bg-emerald dark:text-on-action" : "border-line bg-surface text-ink-2 hover:bg-surface-sunken")}
             >
               {item}
             </button>
@@ -54,7 +54,7 @@ const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationPr
               type="button"
               aria-label={translate(item === "ellipsis-start" ? "Earlier pages" : "Later pages")}
               onClick={() => goToPage(item === "ellipsis-start" ? currentPage - ELLIPSIS_JUMP : currentPage + ELLIPSIS_JUMP)}
-              className={cn(PAGE_BUTTON, "border-transparent text-ink-muted hover:bg-cream")}
+              className={cn(PAGE_BUTTON, "border-transparent text-ink-muted hover:bg-surface-sunken")}
             >
               <MoreHorizontal className="size-4" aria-hidden="true" />
             </button>

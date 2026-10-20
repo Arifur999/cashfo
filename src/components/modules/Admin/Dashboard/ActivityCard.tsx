@@ -25,7 +25,7 @@ export function ActivityCard({ logs }: ActivityCardProps) {
       ) : (
         <ul className="flex flex-col">
           {logs.map((log) => (
-            <li key={log.id} className="flex items-center gap-3 border-b border-surface-sunken py-2 text-small last:border-b-0">
+            <li key={log.id} className="flex items-center gap-3 border-b border-divider py-2 text-small last:border-b-0">
               <Avatar name={log.adminName} size={32} tone="mint" />
               <span className="min-w-0 flex-1 leading-snug">
                 <b className="font-semibold text-ink">{log.adminName}</b> <span className="text-ink-2">{translate(auditActionLabel(log.action))}</span>

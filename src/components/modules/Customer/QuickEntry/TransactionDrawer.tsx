@@ -454,7 +454,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             <SheetTitle className={cn("text-ink", wide ? "text-h3" : "text-h3 font-bold")}>{t("New transaction")}</SheetTitle>
           )}
           <span className="flex items-center gap-2">
-            {wide && !editing && <Kbd className="rounded-[4px] bg-cream font-sans text-caption font-semibold text-ink-muted">Esc</Kbd>}
+            {wide && !editing && <Kbd className="rounded-[4px] bg-strip font-sans text-caption font-semibold text-ink-muted">Esc</Kbd>}
             <button type="button" onClick={onClose} aria-label={t("Close")} className={cn("flex items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken", wide ? "size-9" : "size-11")}>
               <X className={wide ? "size-4.5" : "size-5"} aria-hidden="true" />
             </button>

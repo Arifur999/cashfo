@@ -93,7 +93,7 @@ export function WithdrawDialog({ open, onClose, businessId, availableBalance, cu
             </div>
             <WalletPicker label={t("Into")} variant="money" wallets={wallets} savingsWallets={savings} value={accountId} onChange={setAccountId} after={target ? Number(target.currentBalance) + amount : null} currency={currency} loading={loading} error={!loading && wallets.length === 0 && savings.length === 0 ? t("No wallet yet. Add one under Wallets first.") : null} onClose={onClose} />
           </div>
-          <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>

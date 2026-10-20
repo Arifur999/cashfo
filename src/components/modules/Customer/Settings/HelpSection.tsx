@@ -22,7 +22,7 @@ interface HelpSectionProps {
   conversations: SupportConversation[];
 }
 
-const PILL = "h-7.5 rounded-full border border-line-strong bg-surface px-3 text-small font-semibold text-ink-2 hover:bg-cream";
+const PILL = "h-7.5 rounded-full border border-line-strong bg-surface px-3 text-small font-semibold text-ink-2 hover:bg-surface-sunken";
 
 // The questions people ask most, searchable; a message to support with a
 // screenshot; ideas to vote on; and the shortcuts.
@@ -51,12 +51,12 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
         <Card padding="none" className="overflow-hidden">
           <h2 className="px-5 py-4 text-title font-semibold text-ink">{t("Common questions")}</h2>
-          {shown.length === 0 && <div className="border-t border-surface-sunken px-5 py-6 text-small text-ink-muted">{t("Nothing matches. Try other words.")}</div>}
+          {shown.length === 0 && <div className="border-t border-divider px-5 py-6 text-small text-ink-muted">{t("Nothing matches. Try other words.")}</div>}
           {shown.map((faq) => {
             const expanded = open === faq.id;
             const answer = helped[faq.id];
             return (
-              <div key={faq.id} className={cn("border-t border-surface-sunken", expanded && "bg-mint-50/50")}>
+              <div key={faq.id} className={cn("border-t border-divider", expanded && "bg-mint-50/50")}>
                 <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : faq.id)} className="flex min-h-13 w-full items-center gap-3 px-5 text-left">
                   <span className={cn("flex-1 text-body font-semibold", expanded ? "text-emerald" : "text-ink")}>{t(faq.question)}</span>
                   <ChevronDown className={cn("size-4.5 shrink-0 text-ink-muted transition-transform", expanded && "rotate-180")} aria-hidden="true" />
@@ -113,7 +113,7 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
             {SHORTCUTS.map((shortcut) => (
               <span key={shortcut.key} className="flex items-center justify-between text-small text-ink-2">
                 {t(shortcut.what)}
-                <kbd className="rounded-sm border border-b-2 border-line bg-cream px-2 py-0.5 font-sans text-caption font-semibold text-ink">{shortcut.key}</kbd>
+                <kbd className="rounded-sm border border-b-2 border-line bg-strip px-2 py-0.5 font-sans text-caption font-semibold text-ink">{shortcut.key}</kbd>
               </span>
             ))}
           </Card>

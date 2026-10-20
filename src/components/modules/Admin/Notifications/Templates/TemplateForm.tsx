@@ -134,7 +134,7 @@ const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
       )}
       <form.Subscribe selector={(state) => [state.values.subjectEn, state.values.bodyEn] as const}>
         {([subjectEn, bodyEn]) => (
-          <div className="mx-4 mb-4 flex flex-col gap-2 rounded-md border border-line bg-cream p-4">
+          <div className="mx-4 mb-4 flex flex-col gap-2 rounded-md border border-line bg-strip p-4">
             <span className="text-caption font-semibold text-ink-muted"><T>Preview with a real user</T></span>
             {isEmail && <b className="text-body font-semibold text-ink">{fillPlaceholders(subjectEn, SAMPLE_VALUES) || <T>No subject yet</T>}</b>}
             <span className="text-body leading-relaxed whitespace-pre-wrap text-ink-2">{fillPlaceholders(bodyEn, SAMPLE_VALUES) || <T>No message yet</T>}</span>
@@ -144,7 +144,7 @@ const TemplateForm = ({ template, canManage }: TemplateFormProps) => {
       {canManage && (
         <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>
           {([isDirty, isSubmitting]) => (
-            <div className="flex items-center justify-end gap-3 border-t border-line bg-cream px-5 py-3">
+            <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-5 py-3">
               {isDirty && <span className="mr-auto text-small text-warning"><T>Unsaved changes</T></span>}
               <AppSubmitButton isPending={isPending || isSubmitting} disabled={!isDirty} pendingLabel="Saving..." className="h-9 w-auto rounded-md bg-emerald px-4 text-small font-semibold text-white hover:bg-forest">
                 <T>Save template</T>

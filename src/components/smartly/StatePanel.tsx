@@ -8,7 +8,7 @@ interface StatePanelProps {
   title: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactNode;
-  // Empty states sit on the fresh cream→mint wash; errors on plain white.
+  // Empty states sit on the fresh page→mint wash; errors on plain white.
   background?: "fresh" | "plain";
   // Draws the card border around it; off when it fills a card already.
   bordered?: boolean;

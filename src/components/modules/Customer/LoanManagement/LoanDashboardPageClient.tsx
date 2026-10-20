@@ -174,7 +174,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 </NativeSelect>
               </div>
             </div>
-            <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+            <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
               <span>{t("Bank / person")}</span>
               <span className="text-right">{t("Opening")}</span>
               <span className="text-right">{t("Money in")}</span>
@@ -186,7 +186,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             {shown.map((row) => (
               <DashboardRow key={row.contactId} row={row} contact={contactsById.get(row.contactId)} currency={currency} />
             ))}
-            <div className={cn("grid h-13 items-center gap-x-4 bg-cream px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
+            <div className={cn("grid h-13 items-center gap-x-4 bg-table-head px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
               <span>{t("Net")}</span>
               <span className="text-right">{formatCurrency(Math.abs(sums.opening), currency)}</span>
               <span className="text-right">{formatCurrency(sums.in, currency)}</span>
@@ -217,7 +217,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 const meta = DIRECTION_META[row.direction];
                 const contact = contactsById.get(row.contactId);
                 return (
-                  <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("box-content flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-surface-sunken")}>
+                  <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("box-content flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-divider")}>
                     <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={40} coloured />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <b className="truncate text-title leading-[normal] text-ink">{row.contactName}</b>
@@ -276,7 +276,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
   const { t } = useLocale();
   const meta = DIRECTION_META[row.direction];
   return (
-    <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink transition-colors hover:bg-cream", GRID)}>
+    <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-divider px-6 text-body text-ink transition-colors hover:bg-hover", GRID)}>
       <span className="flex min-w-0 items-center gap-3">
         <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} />
         <span className="flex min-w-0 flex-col gap-0.5">

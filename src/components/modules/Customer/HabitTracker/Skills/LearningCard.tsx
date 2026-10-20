@@ -52,7 +52,7 @@ export function LearningCard({ skill, week, today, isPending, onQuickAdd, onLog 
         <span className="text-small text-ink-muted">{lastLine}</span>
       </div>
 
-      <div className="mt-auto flex gap-2 border-t border-surface-sunken pt-3">
+      <div className="mt-auto flex gap-2 border-t border-divider pt-3">
         <Button type="button" variant="soft" size="sm" onClick={() => onQuickAdd(skill, quick.amount)} disabled={isPending} className="bg-(--sk-ink)/12 text-(--sk-ink) hover:bg-(--sk-ink)/20 dark:bg-(--sk-light)/16 dark:text-(--sk-light)" style={{ "--sk-ink": palette.to, "--sk-light": palette.from } as React.CSSProperties}>
           <Plus strokeWidth={2.25} />
           {t(quick.label)}

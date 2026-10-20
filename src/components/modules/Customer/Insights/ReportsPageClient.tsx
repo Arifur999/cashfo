@@ -30,7 +30,7 @@ interface ReportsPageClientProps {
 }
 
 const ROW_STYLE: Record<ReportRow["kind"], string> = {
-  block: "min-h-13 bg-cream font-bold",
+  block: "min-h-13 bg-table-head font-bold",
   category: "min-h-12 bg-surface font-semibold",
   left: "min-h-14 bg-mint-50 font-bold text-brand-ink",
 };
@@ -129,7 +129,7 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
         </h2>
         <div className="overflow-x-auto">
           <div role="table" aria-label={`${t("Income and expense by category")}, ${rangeLabel}`} className="min-w-160">
-            <div role="row" className="grid gap-2 border-t border-line bg-cream px-6 py-3 text-caption font-semibold text-ink-muted" style={columns}>
+            <div role="row" className="grid gap-2 border-t border-line bg-table-head px-6 py-3 text-caption font-semibold text-ink-muted" style={columns}>
               <span role="columnheader">{t("Category")}</span>
               {monthLabels.map((label) => (
                 <span key={label} role="columnheader" className="text-right">

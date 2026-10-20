@@ -67,7 +67,7 @@ export function ContactsTable({ contacts, currency, canManage, onAdd, onEdit }: 
       </div>
 
       <Card padding="none" className="overflow-hidden">
-        <div className={cn("hidden bg-cream px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
+        <div className={cn("hidden bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
           <span>{t("Name")}</span>
           <span>{t("Type")}</span>
           <span>{t("Phone")}</span>
@@ -75,12 +75,12 @@ export function ContactsTable({ contacts, currency, canManage, onAdd, onEdit }: 
           <span className="text-right">{t("Balance")}</span>
           <span />
         </div>
-        {rows.length === 0 && <p className="border-t border-surface-sunken px-5 py-10 text-center text-body text-ink-muted">{t("No one matches.")}</p>}
+        {rows.length === 0 && <p className="border-t border-divider px-5 py-10 text-center text-body text-ink-muted">{t("No one matches.")}</p>}
         {rows.map((contact) => {
           const due = balance(contact);
           const archived = contact.status === "ARCHIVED";
           return (
-            <div key={contact.id} className={cn("flex min-h-16 items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 text-body", GRID, archived && "opacity-60")}>
+            <div key={contact.id} className={cn("flex min-h-16 items-center justify-between gap-3 border-t border-divider px-5 py-2 text-body", GRID, archived && "opacity-60")}>
               <Link href={`/contacts/${contact.id}`} className="flex min-w-0 items-center gap-3 hover:underline">
                 <PersonAvatar name={contact.name} src={contact.photoUrl} size={36} coloured />
                 <span className="flex min-w-0 flex-col">
@@ -112,14 +112,14 @@ export function ContactsTable({ contacts, currency, canManage, onAdd, onEdit }: 
                     <MoreHorizontal className="size-4.5" aria-hidden="true" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                    <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                    <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                       <Link href={`/contacts/${contact.id}`}>
                         <SquareArrowOutUpRight className="size-4" aria-hidden="true" />
                         {t("Open")}
                       </Link>
                     </DropdownMenuItem>
                     {canManage && (
-                      <DropdownMenuItem onSelect={() => onEdit(contact)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                      <DropdownMenuItem onSelect={() => onEdit(contact)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                         <Pencil className="size-4" aria-hidden="true" />
                         {t("Edit")}
                       </DropdownMenuItem>

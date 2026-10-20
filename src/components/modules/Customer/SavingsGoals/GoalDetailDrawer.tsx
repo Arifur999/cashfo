@@ -146,7 +146,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
                 const meta = ENTRY_META[entry.type];
                 const Icon = ENTRY_ICON[entry.type];
                 return (
-                  <div key={entry.id} className="flex items-center gap-3 border-b border-surface-sunken py-3">
+                  <div key={entry.id} className="flex items-center gap-3 border-b border-divider py-3">
                     <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", ENTRY_TILE[meta.tone])}>
                       <Icon className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
                     </span>
@@ -200,7 +200,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
 
 function Fact({ label, value, sub, className }: { label: string; value: string; sub: string; className?: string }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-md border border-line bg-cream p-3">
+    <div className="flex flex-col gap-0.5 rounded-md border border-line bg-strip p-3">
       <span className="text-caption font-normal text-ink-muted">{label}</span>
       <span className={cn("text-body font-semibold text-ink tabular-nums", className)}>{value}</span>
       <span className="text-caption font-normal text-ink-muted">{sub}</span>

@@ -77,11 +77,11 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
           </div>
         </div>
         <DropdownMenu>
-          <DropdownMenuTrigger aria-label={`${t("More actions for")} ${workspace.name}`} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+          <DropdownMenuTrigger aria-label={`${t("More actions for")} ${workspace.name}`} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
             <MoreVertical className="size-4.5" aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-            <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+            <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
               <Link href={{ pathname: href, query: { tab: "settings" } }}>
                 <Settings className="size-4" aria-hidden="true" />
                 {t("Settings")}
@@ -95,7 +95,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
         </DropdownMenu>
       </div>
 
-      <div className="grid grid-cols-3 border-y border-surface-sunken">
+      <div className="grid grid-cols-3 border-y border-divider">
         <Stat label={`${t("Spent in")} ${month}`} value={formatCurrency(spent, currency)} divided />
         <Stat label={t("Cash in hand")} value={formatCurrency(cash, currency)} tone={cash < 0 ? "text-expense" : undefined} divided />
         <Stat label={t("To settle")} value={transfers.length === 0 ? t("Even") : `${transfers.length} ${t(transfers.length === 1 ? "payment" : "payments")}`} tone={transfers.length > 0 ? "text-warning" : undefined} />
@@ -115,7 +115,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
         </span>
       </div>
 
-      <div className="flex items-center gap-3 rounded-b-lg border-t border-surface-sunken bg-cream px-5 py-3 text-small">
+      <div className="flex items-center gap-3 rounded-b-lg border-t border-divider bg-strip px-5 py-3 text-small">
         <span className={cn("flex min-w-0 items-center gap-2 font-medium [&_svg]:size-4 [&_svg]:shrink-0", note.tone)}>
           {note.icon}
           <span className="truncate">{note.text}</span>
@@ -131,7 +131,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
 
 function Stat({ label, value, tone, divided = false }: { label: string; value: string; tone?: string; divided?: boolean }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1 px-3 py-4 md:px-5", divided && "border-r border-surface-sunken")}>
+    <div className={cn("flex min-w-0 flex-col gap-1 px-3 py-4 md:px-5", divided && "border-r border-divider")}>
       <span className="text-caption font-normal text-ink-muted">{label}</span>
       <span className={cn("text-title break-words text-ink tabular-nums md:text-h3", tone)}>{value}</span>
     </div>

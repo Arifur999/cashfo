@@ -50,7 +50,7 @@ const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, o
         <span className="text-small text-ink-muted">{trialLine(plan, translate)}</span>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-md bg-cream p-3">
+      <div className="flex flex-col gap-2 rounded-md bg-strip p-3">
         <span className="flex justify-between text-small">
           <b className="font-semibold text-ink">
             <T values={{ count: formatNumber(people) }}>{"{count} people"}</T>
@@ -86,13 +86,13 @@ const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, o
       </ul>
 
       {canManage && (
-        <div className="mt-auto flex gap-2 border-t border-surface-sunken pt-3">
-          <Button variant="outline" size="sm" className="h-9 flex-1 border-line-strong bg-surface text-small font-semibold text-ink hover:bg-cream" onClick={onEdit}>
+        <div className="mt-auto flex gap-2 border-t border-divider pt-3">
+          <Button variant="outline" size="sm" className="h-9 flex-1 border-line-strong bg-surface text-small font-semibold text-ink hover:bg-surface-sunken" onClick={onEdit}>
             <T>Edit plan</T>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon-sm" className="size-9 border-line-strong bg-surface text-ink hover:bg-cream data-[state=open]:bg-cream" aria-label={translate("More for {name}", { name: plan.name })}>
+              <Button variant="outline" size="icon-sm" className="size-9 border-line-strong bg-surface text-ink hover:bg-surface-sunken data-[state=open]:bg-surface-sunken" aria-label={translate("More for {name}", { name: plan.name })}>
                 <MoreHorizontal aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>

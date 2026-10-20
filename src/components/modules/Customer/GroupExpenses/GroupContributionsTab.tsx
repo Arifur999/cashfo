@@ -54,7 +54,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
           <div className="flex flex-wrap items-center gap-2">
             <span className="mr-1 text-small text-ink-muted">{t("By member")}</span>
             {perMember.map(({ member, amount }) => (
-              <button key={member.id} type="button" onClick={() => setMemberId(memberId === member.id ? "" : member.id)} aria-pressed={memberId === member.id} className={cn("flex h-7.5 items-center gap-2 rounded-full border py-0 pr-3 pl-1 text-small tabular-nums transition-colors", memberId === member.id ? "border-emerald bg-mint-50 text-ink" : "border-line bg-cream text-ink-2 hover:border-line-strong")}>
+              <button key={member.id} type="button" onClick={() => setMemberId(memberId === member.id ? "" : member.id)} aria-pressed={memberId === member.id} className={cn("flex h-7.5 items-center gap-2 rounded-full border py-0 pr-3 pl-1 text-small tabular-nums transition-colors", memberId === member.id ? "border-emerald bg-mint-50 text-ink" : "border-line bg-strip text-ink-2 hover:border-line-strong")}>
                 <PersonAvatar name={member.name} src={member.photoUrl} size={22} coloured />
                 {member.name}
                 <b className="text-ink">{formatCurrency(amount, currency)}</b>
@@ -92,7 +92,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
             {t("Add contribution")}
           </Button>
         </div>
-        <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
+        <div className={cn("hidden items-center gap-4 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
           <span>{t("Date")}</span>
           <span>{t("Member")}</span>
           <span>{t("Type")}</span>
@@ -107,7 +107,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
           const member = view.memberById[row.groupMemberId] ?? row.groupMember;
           const locked = view.closed;
           return (
-            <div key={row.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 border-b border-surface-sunken px-5 py-2.5 text-body tabular-nums md:min-h-11 md:gap-4 md:py-0", ROW)}>
+            <div key={row.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 border-b border-divider px-5 py-2.5 text-body tabular-nums md:min-h-11 md:gap-4 md:py-0", ROW)}>
               <span className="hidden text-ink-2 md:block">{formatDate(row.date, "dd MMM")}</span>
               <span className="flex min-w-0 items-center gap-2 font-medium text-ink">
                 <PersonAvatar name={member.name} src={member.photoUrl} size={26} coloured />
@@ -122,11 +122,11 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
               <span className={cn("hidden truncate md:block", row.note ? "text-ink-2" : "text-ink-muted")}>{row.note || "—"}</span>
               <span className={cn("text-right font-semibold", isReturn ? "text-expense" : "text-income")}>{formatSignedCurrency(amount, currency)}</span>
               <DropdownMenu>
-                <DropdownMenuTrigger aria-label={t("Actions for this entry")} className="flex size-8 items-center justify-center justify-self-end rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+                <DropdownMenuTrigger aria-label={t("Actions for this entry")} className="flex size-8 items-center justify-center justify-self-end rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
                   {locked ? <Lock className="size-4" aria-hidden="true" /> : <MoreVertical className="size-4.5" aria-hidden="true" />}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                  <DropdownMenuItem onSelect={() => onEdit(row)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                  <DropdownMenuItem onSelect={() => onEdit(row)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                     <Pencil className="size-4" aria-hidden="true" />
                     {t("Edit")}
                   </DropdownMenuItem>
@@ -140,7 +140,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
           );
         })}
         {rows.length > 0 && (
-          <div className={cn("grid h-11.5 grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 bg-cream px-5 text-body font-semibold tabular-nums md:gap-4", ROW)}>
+          <div className={cn("grid h-11.5 grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 bg-table-head px-5 text-body font-semibold tabular-nums md:gap-4", ROW)}>
             <span className="md:col-span-4">{t("Total")}</span>
             <span className={cn("text-right", shownTotal < 0 ? "text-expense" : "text-income")}>{formatSignedCurrency(shownTotal, currency)}</span>
             <span />

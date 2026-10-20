@@ -139,9 +139,9 @@ export function PrayerSettingsDrawer({ open, onClose, today }: PrayerSettingsDra
               </span>
             </fieldset>
 
-            <dl className="flex flex-col rounded-lg bg-cream px-4 py-1">
+            <dl className="flex flex-col rounded-lg bg-strip px-4 py-1">
               {PREVIEW.map((prayer, index) => (
-                <div key={prayer} className={cn("grid grid-cols-[120px_minmax(0,1fr)] gap-4 py-3 text-body leading-5", index > 0 && "border-t border-surface-sunken")}>
+                <div key={prayer} className={cn("grid grid-cols-[120px_minmax(0,1fr)] gap-4 py-3 text-body leading-5", index > 0 && "border-t border-divider")}>
                   <dt className="text-ink-muted">{t(prayer)}</dt>
                   <dd className="min-w-0 tabular-nums">{timeLabel(clockOf(times[prayer]), t)}</dd>
                 </div>

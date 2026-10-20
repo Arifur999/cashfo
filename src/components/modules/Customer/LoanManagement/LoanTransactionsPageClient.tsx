@@ -147,7 +147,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           />
         ) : (
           <>
-            <div className={cn("hidden items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+            <div className={cn("hidden items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
               <span>{t("Date")}</span>
               <span>{t("Bank / person")}</span>
               <span>{t("Entry")}</span>
@@ -166,7 +166,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               const effect = meta ? DIRECTION_META[meta.effect] : null;
               const name = transaction.contact?.name ?? contact?.name ?? "—";
               return (
-                <div key={transaction.id} className={cn("group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-surface-sunken px-4 py-3 text-body md:h-14.5 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
+                <div key={transaction.id} className={cn("group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-divider px-4 py-3 text-body md:h-14.5 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
                   <span className="order-3 text-caption text-ink-2 md:order-0 md:text-small">{formatDate(transaction.transactionDate)}</span>
                   <Link href={`/transactions/${transaction.id}`} className="flex min-w-0 items-center gap-3">
                     <PersonAvatar name={name} src={contact?.photoUrl} kind={contact?.type} size={30} />
@@ -211,7 +211,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                     )}
                   </span>
                   <span className="hidden justify-end gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 md:flex print:hidden">
-                    <Link href={`/transactions/${transaction.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-7.5 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-cream">
+                    <Link href={`/transactions/${transaction.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-7.5 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-surface-sunken">
                       <Eye className="size-3.75" aria-hidden="true" />
                     </Link>
                     {canManage && transaction.voidable && (
@@ -245,7 +245,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           confirmLabel="Void entry"
           doneLabel="Entry voided"
           detail={
-            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-4 py-3 text-body">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body">
               <span className="flex min-w-0 flex-col">
                 <span className="truncate font-medium text-ink">{voiding.contact?.name ?? "—"}</span>
                 <span className="text-caption font-normal text-ink-muted">{voidingEntry ? t(LOAN_ENTRY_META[voidingEntry.kind].title) : ""}</span>

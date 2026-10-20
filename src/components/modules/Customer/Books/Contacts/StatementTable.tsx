@@ -56,19 +56,19 @@ export function StatementTable({ rows, side, currency, onPrint }: StatementTable
           </Button>
         )}
       </div>
-      <div className={cn("hidden border-t border-line bg-cream px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
+      <div className={cn("hidden border-t border-line bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
         <span>{t("Date")}</span>
         <span>{t("What")}</span>
         <span className="text-right">{t(columns.credit)}</span>
         <span className="text-right">{t("Paid")}</span>
         <span className="text-right">{t(columns.balance)}</span>
       </div>
-      {rows.length === 0 && <p className="border-t border-surface-sunken px-5 py-10 text-center text-body text-ink-muted">{t("No sales or payments yet.")}</p>}
+      {rows.length === 0 && <p className="border-t border-divider px-5 py-10 text-center text-body text-ink-muted">{t("No sales or payments yet.")}</p>}
       {rows.map((row) => {
         const credit = row.kind === "sale" || row.kind === "purchase";
         const sub = credit ? row.note : [row.wallet, row.note].filter(Boolean).join(" · ");
         return (
-          <Link key={row.id} href={`/transactions/${row.id}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-surface-sunken px-5 py-2 text-body transition-colors hover:bg-cream/60", GRID, row.cancelled && "opacity-60")}>
+          <Link key={row.id} href={`/transactions/${row.id}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-divider px-5 py-2 text-body transition-colors hover:bg-hover", GRID, row.cancelled && "opacity-60")}>
             <span className="flex min-w-0 flex-col md:contents">
               <span className="text-small text-ink-2 max-md:text-caption max-md:text-ink-muted">{formatDate(row.date, "EEE, d MMM")}</span>
               <span className="flex min-w-0 flex-col">

@@ -105,12 +105,12 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
               {t("Add a row")}
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger aria-label={t("More")} className="flex size-10 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-cream data-open:bg-cream">
+              <DropdownMenuTrigger aria-label={t("More")} className="flex size-10 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken">
                 <MoreVertical className="size-4.5" aria-hidden="true" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
                 {sheet.items.map((item) => (
-                  <DropdownMenuItem key={item} onSelect={() => setConfirm({ kind: "remove-row", item })} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                  <DropdownMenuItem key={item} onSelect={() => setConfirm({ kind: "remove-row", item })} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                     <Trash2 className="size-4" aria-hidden="true" />
                     {t("Remove")} {item}
                   </DropdownMenuItem>
@@ -170,7 +170,7 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
               const mark = challengeMark(sheet, window, day);
               const past = day <= window.today && day <= sheet.totalDays;
               return (
-                <button key={day} type="button" disabled={!past} onClick={() => toggleDay(day)} title={`${t("Day")} ${day}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "later")}`} className={cn("flex size-11 items-center justify-center rounded-md text-body font-bold transition-colors", mark === "done" && "bg-emerald text-white", mark === "missed" && "bg-expense-soft text-expense", mark === "today" && "border-[3px] border-pillar-habits bg-surface text-ink", mark === "later" && "cursor-not-allowed bg-cream text-ink-muted", day === window.today && mark === "done" && "ring-[3px] ring-pillar-habits ring-inset")}>
+                <button key={day} type="button" disabled={!past} onClick={() => toggleDay(day)} title={`${t("Day")} ${day}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "later")}`} className={cn("flex size-11 items-center justify-center rounded-md text-body font-bold transition-colors", mark === "done" && "bg-emerald text-white", mark === "missed" && "bg-expense-soft text-expense", mark === "today" && "border-[3px] border-pillar-habits bg-surface text-ink", mark === "later" && "cursor-not-allowed bg-surface-sunken text-ink-muted", day === window.today && mark === "done" && "ring-[3px] ring-pillar-habits ring-inset")}>
                   {mark === "done" ? <Check className="size-4.5" strokeWidth={3} aria-hidden="true" /> : day}
                 </button>
               );
@@ -187,7 +187,7 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
               <span className="size-3 rounded-[4px] border-2 border-pillar-habits bg-surface" /> {t("Today")}
             </span>
             <span className="flex items-center gap-2">
-              <span className="size-3 rounded-[4px] border border-line bg-cream" /> {t("Still to come")}
+              <span className="size-3 rounded-[4px] border border-line bg-surface-sunken" /> {t("Still to come")}
             </span>
           </div>
         </Card>

@@ -154,7 +154,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
           <div className="flex items-center justify-between">
             <span className="text-small font-medium text-ink-muted">{t("Monthly budget")}</span>
             {canManage && (
-              <button type="button" onClick={() => setTargetOpen(true)} aria-label={t("Edit monthly budget")} title={t("Edit monthly budget")} className="flex size-7.5 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-cream">
+              <button type="button" onClick={() => setTargetOpen(true)} aria-label={t("Edit monthly budget")} title={t("Edit monthly budget")} className="flex size-7.5 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken">
                 <Pencil className="size-3.5" aria-hidden="true" />
               </button>
             )}
@@ -246,17 +246,17 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
               <ProgressBar value={category.percent} tone="budget" size="sm" label={category.name} />
             </>
           );
-          const rowClass = cn("flex w-full flex-col gap-2 px-4 py-4 text-left", index > 0 && "border-t border-surface-sunken");
+          const rowClass = cn("flex w-full flex-col gap-2 px-4 py-4 text-left", index > 0 && "border-t border-divider");
           return canManage ? (
             <DropdownMenu key={category.id}>
-              <DropdownMenuTrigger aria-label={`${category.name}: ${t("actions")}`} className={cn(rowClass, "data-open:bg-cream/60")}>
+              <DropdownMenuTrigger aria-label={`${category.name}: ${t("actions")}`} className={cn(rowClass, "data-open:bg-hover")}>
                 {row}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                   {t("Edit")}
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                   <Link href={`/transactions?type=EXPENSE&categoryId=${encodeURIComponent(category.name)}&dateFrom=${year}-${String(month).padStart(2, "0")}-01&dateTo=${year}-${String(month).padStart(2, "0")}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}`}>{t("See transactions")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => remove(category)} disabled={deleting} className="cursor-pointer rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">
@@ -313,14 +313,14 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
                 </span>
                 {canManage && (
                   <DropdownMenu>
-                    <DropdownMenuTrigger aria-label={`${t("More for")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+                    <DropdownMenuTrigger aria-label={`${t("More for")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
                       <MoreHorizontal className="size-4.5" aria-hidden="true" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                      <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                      <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                         {t("Edit")}
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                      <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                         <Link href={`/transactions?type=EXPENSE&categoryId=${encodeURIComponent(category.name)}&dateFrom=${year}-${String(month).padStart(2, "0")}-01&dateTo=${year}-${String(month).padStart(2, "0")}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}`}>{t("See transactions")}</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => remove(category)} disabled={deleting} className="cursor-pointer rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">

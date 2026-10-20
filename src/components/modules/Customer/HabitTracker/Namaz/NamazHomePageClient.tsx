@@ -151,7 +151,7 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
               {t("Each month opens on the 1st. Nothing to set up.")}
             </li>
           </ul>
-          <div className="mt-auto flex items-center justify-between gap-3 border-t border-surface-sunken pt-3">
+          <div className="mt-auto flex items-center justify-between gap-3 border-t border-divider pt-3">
             <span className="text-small text-ink-2">
               <b className="font-bold text-ink">
                 {summary?.prayedSoFar ?? 0} {t("of")} {(current?.elapsedDays ?? 0) * 5 + 5}

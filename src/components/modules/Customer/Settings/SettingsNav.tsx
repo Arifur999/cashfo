@@ -33,7 +33,7 @@ export function SettingsNav() {
             const on = section.key === current;
             const Icon = SECTION_ICONS[section.key];
             return (
-              <Link key={section.key} href={section.href} aria-current={on ? "page" : undefined} className={cn("relative flex h-9.5 items-center gap-3 rounded-md px-3 text-body", on ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-cream")}>
+              <Link key={section.key} href={section.href} aria-current={on ? "page" : undefined} className={cn("relative flex h-9.5 items-center gap-3 rounded-md px-3 text-body", on ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-hover")}>
                 {on && <span aria-hidden="true" className="absolute top-2 -left-2.5 h-5.5 w-0.75 rounded-r-[3px] bg-emerald" />}
                 <Icon className={cn("size-4.5", on ? "text-emerald" : "text-ink-muted")} aria-hidden="true" />
                 {t(section.label)}
@@ -43,7 +43,7 @@ export function SettingsNav() {
         </div>
       ))}
       <span className="flex-1" />
-      <div className="flex flex-col gap-2 border-t border-surface-sunken pt-3">
+      <div className="flex flex-col gap-2 border-t border-divider pt-3">
         <button type="button" onClick={logout} className="flex h-9.5 items-center gap-3 rounded-md px-3 text-left text-body font-semibold text-expense hover:bg-expense-soft">
           <LogOut className="size-4.5" aria-hidden="true" />
           {t("Sign out")}

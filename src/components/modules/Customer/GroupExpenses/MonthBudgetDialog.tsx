@@ -117,13 +117,13 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
                 autoFocus
                 placeholder="65,000"
                 className="text-h3 font-bold tabular-nums"
-                leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-cream text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                 frameClassName="overflow-hidden pl-0"
               />
             </Field>
           </div>
 
-          <div className="flex items-center gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center gap-3 border-t border-line bg-strip px-6 py-4">
             {editing && (
               <Button type="button" variant="ghost" onClick={remove} disabled={isPending} className="text-expense hover:bg-expense-soft hover:text-expense">
                 {t("Remove")}

@@ -105,7 +105,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
             {t("Add expense")}
           </Button>
         </div>
-        <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
+        <div className={cn("hidden items-center gap-4 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
           <span>{t("Date")}</span>
           <span>{t("Category")}</span>
           <span>{t("Description")}</span>
@@ -119,7 +119,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
           const payer = row.paidFrom === "MEMBER" && row.paidByMemberId ? view.memberById[row.paidByMemberId] : null;
           const shared = splitText(row, data.members);
           return (
-            <div key={row.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto_40px] items-center gap-3 border-b border-surface-sunken px-5 py-2.5 text-body tabular-nums md:min-h-12 md:gap-4 md:py-0", ROW)}>
+            <div key={row.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto_40px] items-center gap-3 border-b border-divider px-5 py-2.5 text-body tabular-nums md:min-h-12 md:gap-4 md:py-0", ROW)}>
               <span className="hidden text-ink-2 md:block">{formatDate(row.date, "dd MMM")}</span>
               <span className="flex min-w-0 items-center gap-2">
                 <CategoryTile name={row.category} categories={data.categories} />
@@ -155,11 +155,11 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
               </span>
               <span className="text-right font-semibold text-ink">{formatCurrency(row.amount, currency)}</span>
               <DropdownMenu>
-                <DropdownMenuTrigger aria-label={t("Actions for this expense")} className="flex size-8 items-center justify-center justify-self-end rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+                <DropdownMenuTrigger aria-label={t("Actions for this expense")} className="flex size-8 items-center justify-center justify-self-end rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
                   {view.closed ? <Lock className="size-4" aria-hidden="true" /> : <MoreVertical className="size-4.5" aria-hidden="true" />}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                  <DropdownMenuItem onSelect={() => onEdit(row)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                  <DropdownMenuItem onSelect={() => onEdit(row)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                     <Pencil className="size-4" aria-hidden="true" />
                     {t("Edit")}
                   </DropdownMenuItem>
@@ -173,7 +173,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
           );
         })}
         {rows.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-cream px-5 py-3 text-small">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-strip px-5 py-3 text-small">
             {rows.length > PAGE ? (
               <Button variant="secondary" size="sm" onClick={() => setShowAll(!showAll)}>
                 {showAll ? t("Show fewer") : `${t("Show")} ${rows.length - PAGE} ${t("older entries")}`}

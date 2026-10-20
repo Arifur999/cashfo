@@ -22,9 +22,9 @@ export type DataTableFilterConfig = (
   | { id: string; type: "multi-select"; label: string; options: DataTableFilterOption[]; allLabel?: string }
   // The design's status tabs: one row of exclusive choices, with counts, at
   // the front of the toolbar. The first tab (allLabel) clears the filter.
-  // "sunken" drops the cream border for the plainer pill some lists use.
+  // "sunken" drops the outline for the plainer pill some lists use.
   // defaultValue: the tab an empty URL means, with no All tab (Owners).
-  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string; tone?: "cream" | "sunken"; defaultValue?: string }
+  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string; tone?: "bordered" | "sunken"; defaultValue?: string }
   // Server-managed date ranges map onto two URL params, dateFrom/dateTo by
   // default (the convention every list endpoint uses).
   | { id: string; type: "date-range"; label: string; fromKey?: string; toKey?: string }

@@ -90,7 +90,7 @@ export default async function SavingsOverviewPage() {
             </div>
             <div className="overflow-x-auto">
               <div className="min-w-220">
-                <div className={cn("grid items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+                <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
                   <span>{t("Wallet")}</span>
                   <span className="text-right">{t("Opening")}</span>
                   <span className="text-right">{t("Added")}</span>
@@ -98,7 +98,7 @@ export default async function SavingsOverviewPage() {
                   <span className="text-right">{t("Balance")}</span>
                 </div>
                 {rows.map((row, index) => (
-                  <Link key={row.id} href={`/balance/ledger?accountId=${row.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-cream", GRID, row.status === "ARCHIVED" && "opacity-60")}>
+                  <Link key={row.id} href={`/balance/ledger?accountId=${row.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-divider px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, row.status === "ARCHIVED" && "opacity-60")}>
                     <span className="flex min-w-0 items-center gap-3">
                       <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", savingsPalette(index).tile)}>
                         <PiggyBank className="size-4.5" aria-hidden="true" />
@@ -114,7 +114,7 @@ export default async function SavingsOverviewPage() {
                     <span className="text-right font-bold">{formatCurrency(row.currentBalance, currency)}</span>
                   </Link>
                 ))}
-                <div className={cn("grid h-14 items-center gap-x-4 bg-cream px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
+                <div className={cn("grid h-14 items-center gap-x-4 bg-table-head px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
                   <span>{t("Total")}</span>
                   <span className="text-right">{formatCurrency(totals.opening, currency)}</span>
                   {inFigure(totals.in)}

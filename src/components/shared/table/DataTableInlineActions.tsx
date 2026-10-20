@@ -18,7 +18,7 @@ interface InlineButton<TData> {
 }
 
 const BUTTON = "h-8 rounded-md border bg-surface px-3 text-small font-semibold";
-const SAFE = "border-line-strong text-ink hover:bg-cream";
+const SAFE = "border-line-strong text-ink hover:bg-surface-sunken";
 const DANGER = "border-expense/40 text-expense hover:bg-expense-soft";
 
 // The row's actions as the design's small buttons (View, Reset data): the

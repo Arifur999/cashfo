@@ -41,7 +41,7 @@ export function PasswordGenerator({ onGenerate }: PasswordGeneratorProps) {
   }
 
   return (
-    <section aria-label={t("Password generator")} className="flex flex-col gap-3 rounded-md border border-line bg-cream px-4 py-3">
+    <section aria-label={t("Password generator")} className="flex flex-col gap-3 rounded-md border border-line bg-strip px-4 py-3">
       <div className="flex items-center gap-3">
         <label htmlFor="vault-length" className="text-small font-semibold whitespace-nowrap text-ink-2">
           {t("Length")} {length}

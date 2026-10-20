@@ -82,7 +82,7 @@ const ForgotPasswordForm = () => {
           )}
         </form.Subscribe>
       </AppForm>
-      <Banner tone="cream" inline icon={<Clock />} className="font-normal">
+      <Banner tone="neutral" inline icon={<Clock />} className="font-normal">
         {translate("The link works for 30 minutes and only once. Check spam if it hasn't arrived in 2 minutes.")}
       </Banner>
       <AuthLink href={LOGIN_ROUTE} className="flex items-center justify-center gap-2 text-body">

@@ -72,7 +72,7 @@ export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProp
                 <span className="mt-0.75">{bar}</span>
               </div>
             </div>
-            <div className="mt-auto flex items-center justify-between gap-3 border-t border-surface-sunken pt-3 text-small whitespace-nowrap">
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-divider pt-3 text-small whitespace-nowrap">
               <span className="flex items-center gap-1 font-semibold text-ink">
                 {streak > 0 ? (
                   <>

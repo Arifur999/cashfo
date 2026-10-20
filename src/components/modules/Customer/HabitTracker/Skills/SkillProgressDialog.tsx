@@ -57,7 +57,7 @@ export function SkillProgressDialog({ skill, onClose, onSave, onComplete }: Skil
               <Input id="sk-progress" size="lg" inputMode={isHours ? "decimal" : "numeric"} autoFocus value={text} onChange={(event) => setText(isHours ? event.target.value.replace(/[^\d.]/g, "").slice(0, 7) : event.target.value.replace(/\D/g, "").slice(0, 4))} invalid={error !== undefined} className="text-body-lg font-semibold" frameClassName="w-40" />
             </Field>
           </div>
-          <div className="flex items-center gap-3 border-t border-line bg-cream px-6 py-4">
+          <div className="flex items-center gap-3 border-t border-line bg-strip px-6 py-4">
             <Button type="button" variant="ghost" onClick={() => skill && onComplete(skill)}>
               {t("Mark as completed")}
             </Button>

@@ -18,7 +18,7 @@ import type { DataTableFilterOption } from "../dataTable.types";
 import { asStatus } from "@/lib/i18n/message";
 
 // The chip the design draws for a filter: "Plan: All plans".
-export const FILTER_CHIP_CLASS = "h-8 gap-2 rounded-md border-line-strong bg-surface px-3 text-small font-normal text-ink-2 hover:bg-cream data-[state=open]:bg-cream";
+export const FILTER_CHIP_CLASS = "h-8 gap-2 rounded-md border-line-strong bg-surface px-3 text-small font-normal text-ink-2 hover:bg-surface-sunken data-[state=open]:bg-surface-sunken";
 
 interface DataTableFacetedFilterProps {
   title: string;

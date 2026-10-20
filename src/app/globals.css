@@ -16,19 +16,34 @@
   --forest-hover: #145a43;
   --emerald: #1f7a5a;
   --emerald-hover: #17664a;
+  /* Emerald and income text (both #1f7a5a) is 4.35:1 on sunken, under AA:
+     text on a sunken fill uses brand-ink (src/app/tokens.contrast.test.ts). */
   --brand-ink: #17664a;
   --jade: #14b57a;
   --mint-50: #e7f5ee;
   --mint-200: #bfebd7;
   --mint-300: #7bd3a8;
-  --cream: #f6f1e7;
   --on-action: #ffffff;
 
-  /* Grounds and lines */
+  /* Grounds and lines (Cool mist, 20 Oct 2026). One job each, so a table
+     head never matches the page behind its card. */
+  /* The shell behind the cards. */
+  --page: #f3f6f4;
+  /* Column heads, and the group, opening and total rows of a list. */
+  --table-head: #e9efec;
+  /* Bands inside a card: footers, notes, stat tiles, input addons and
+     read-only fields. */
+  --strip: #f7f9f8;
+  /* A row or list item under the pointer. */
+  --hover: #f1f5f3;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-sunken: #efe9dc;
-  --line: #e6dfcf;
+  /* Tracks, button and icon hovers, the menu highlight and neutral chips. */
+  --surface-sunken: #e4ebe7;
+  /* The edge of a card or control. */
+  --line: #dce4e0;
+  /* The separator between rows inside a card. */
+  --divider: #e6ece9;
   --line-strong: #7c8882;
 
   /* Ink */
@@ -71,8 +86,8 @@
   --chart-income: #1f7a5a;
   --chart-expense: #e8857a;
   --chart-savings: #7bd3a8;
-  --chart-grid: #e6dfcf;
-  --chart-other: #cfc8b8;
+  --chart-grid: #dce4e0;
+  --chart-other: #c4cec9;
   --cat-1: #1f7a5a;
   --cat-2: #a04f14;
   --cat-3: #6244c4;
@@ -86,12 +101,15 @@
   --rose: #b0477a;
   --rose-soft: #f9e6ef;
 
-  /* Elevation (exposed as shadow-card/float/overlay/button below; the raw
-     values use another prefix so they don't collide with Tailwind's
+  /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
+     raw values use another prefix so they don't collide with Tailwind's
      --shadow-* namespace) */
   --elevation-card: 0 1px 2px rgba(14, 26, 22, 0.06), 0 1px 1px rgba(14, 26, 22, 0.04);
   --elevation-float: 0 10px 28px -8px rgba(11, 61, 46, 0.18), 0 2px 6px rgba(14, 26, 22, 0.06);
   --elevation-overlay: 0 28px 60px -16px rgba(11, 61, 46, 0.3);
+  /* The overlay's shadow turned on its side: a right-hand drawer casts it
+     left, over the page. Dark keeps this value, as the drawers always had. */
+  --elevation-drawer: -28px 0 60px -16px rgba(11, 61, 46, 0.3);
   --elevation-button: 0 8px 18px -8px rgba(11, 61, 46, 0.55);
   /* The wash behind dialogs and drawers. */
   --scrim: rgba(14, 26, 22, 0.48);
@@ -99,7 +117,7 @@
   /* shadcn's tokens, mapped onto the palette above so its primitives and
      the design's own components agree. */
   --radius: 12px;
-  --background: var(--cream);
+  --background: var(--page);
   --foreground: var(--ink);
   --card: var(--surface);
   --card-foreground: var(--ink);
@@ -111,8 +129,10 @@
   --secondary-foreground: var(--ink);
   --muted: var(--surface-sunken);
   --muted-foreground: var(--ink-muted);
-  --accent: var(--mint-50);
-  --accent-foreground: var(--brand-ink);
+  /* shadcn's menu and select highlight: the sunken fill the app's own menus
+     use, with ink on it. */
+  --accent: var(--surface-sunken);
+  --accent-foreground: var(--ink);
   --destructive: var(--expense-fill);
   --border: var(--line);
   --input: var(--line-strong);
@@ -138,13 +158,20 @@
   --brand-ink: #7bd3a8;
   --jade: #2fd6a0;
   --mint-50: #0f2a20;
-  --cream: #08120e;
   --on-action: #04140e;
 
+  /* The split grounds are only split in light: here every band keeps the
+     night ground the old cream token had and a divider the old sunken, so
+     the dark theme looks as it did. */
+  --page: #08120e;
+  --table-head: #08120e;
+  --strip: #08120e;
+  --hover: #08120e;
   --surface: #0f1c17;
   --surface-raised: #15251f;
   --surface-sunken: #0b1712;
   --line: #20332b;
+  --divider: #0b1712;
   --line-strong: #56706a;
 
   --ink: #eaf2ee;
@@ -192,6 +219,8 @@
   --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --elevation-float: 0 10px 28px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
   --elevation-overlay: 0 28px 60px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  /* No --elevation-drawer: the drawers cast the light forest shadow in dark
+     too, so moving them onto shadow-drawer changes no pixel. */
   --elevation-button: 0 8px 18px -8px rgba(0, 0, 0, 0.6);
   --scrim: rgba(0, 0, 0, 0.6);
 
@@ -297,9 +326,24 @@
   --color-night-amber: #f2b84b;
   --color-night-coral: #f08080;
   --color-night-ink: #0e1a16;
-  /* A list row under the pointer: the cream at 60% on the card, opaque so a
-     pinned cell can take it too. */
-  --color-row-hover: color-mix(in oklab, var(--cream) 60%, var(--surface));
+  /* The night sidebar's pillar dots and active-row marker: the dark
+     palette's pillar colours, fixed for the same reason. */
+  --color-night-money: #4cc995;
+  --color-night-loans: #f0a46a;
+  --color-night-habits: #b6a2ff;
+  --color-night-vault: #86abf2;
+  --color-night-insights: #5cccdb;
+  --color-night-neutral: #c3d2ca;
+  --color-night-marker: #14b57a;
+  /* The grounds and divider: bg-page, bg-table-head, bg-strip, bg-hover,
+     border-divider (their jobs are on :root). */
+  --color-page: var(--page);
+  --color-table-head: var(--table-head);
+  --color-strip: var(--strip);
+  --color-hover: var(--hover);
+  --color-divider: var(--divider);
+  /* The old name for bg-hover; opaque, so a pinned cell can take it too. */
+  --color-row-hover: var(--hover);
   --color-forest-hover: var(--forest-hover);
   --color-emerald: var(--emerald);
   --color-emerald-hover: var(--emerald-hover);
@@ -308,7 +352,6 @@
   --color-mint-50: var(--mint-50);
   --color-mint-200: var(--mint-200);
   --color-mint-300: var(--mint-300);
-  --color-cream: var(--cream);
   --color-on-action: var(--on-action);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
@@ -368,7 +411,6 @@
   --color-brand-primary-hover: var(--emerald-hover);
   --color-brand-danger: var(--expense-fill);
   --color-brand-danger-hover: var(--expense);
-  --color-brand-content: var(--cream);
 
   /* shadcn */
   --color-background: var(--background);
@@ -413,12 +455,14 @@
   --radius-3xl: 32px;
   --radius-4xl: 12px;
 
-  /* Shadows: shadow-card on cream, shadow-float for menus and the hero,
-     shadow-overlay for drawers and dialogs, shadow-button under the main
-     button. shadow-sm/md/lg stay usable for the same three depths. */
+  /* Shadows: shadow-card on the page, shadow-float for menus and the hero,
+     shadow-overlay for dialogs and bottom sheets, shadow-drawer for a
+     right-hand drawer, shadow-button under the main button.
+     shadow-sm/md/lg stay usable for the card, float and overlay depths. */
   --shadow-card: var(--elevation-card);
   --shadow-float: var(--elevation-float);
   --shadow-overlay: var(--elevation-overlay);
+  --shadow-drawer: var(--elevation-drawer);
   --shadow-button: var(--elevation-button);
   --shadow-sm: var(--elevation-card);
   --shadow-md: var(--elevation-float);
@@ -450,7 +494,7 @@
   background-image: linear-gradient(180deg, #0e1a16 0px, #0b3d2e 900px);
 }
 @utility bg-fresh {
-  background-image: linear-gradient(135deg, var(--cream) 0%, var(--mint-50) 100%);
+  background-image: linear-gradient(135deg, var(--page) 0%, var(--mint-50) 100%);
 }
 @utility bg-mint-glow {
   background-image: linear-gradient(135deg, #bfebd7 0%, #7bd3a8 100%);

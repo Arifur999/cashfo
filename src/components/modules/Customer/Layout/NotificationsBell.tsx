@@ -135,7 +135,7 @@ export function NotificationsBell() {
           />
         </div>
         <ul className="max-h-[min(30rem,calc(100vh-14rem))] overflow-y-auto">
-          {shown.length === 0 && <li className="border-t border-surface-sunken px-4 py-8 text-center text-small text-ink-muted">{t("You're all caught up.")}</li>}
+          {shown.length === 0 && <li className="border-t border-divider px-4 py-8 text-center text-small text-ink-muted">{t("You're all caught up.")}</li>}
           {shown.map((item) => {
             const business = item.businessId ? user.businesses.find((b) => b.id === item.businessId) : undefined;
             const view = notificationView(item, t, locale, business?.currency);
@@ -157,7 +157,7 @@ export function NotificationsBell() {
                 {!item.readAt && <span aria-label={t("Unread")} className="mt-2 size-2 shrink-0 rounded-full bg-emerald" />}
               </>
             );
-            const rowClass = cn("flex w-full gap-3 border-t border-surface-sunken p-4 text-left", item.readAt ? "bg-surface hover:bg-cream" : "bg-mint-50 hover:bg-mint-200/40");
+            const rowClass = cn("flex w-full gap-3 border-t border-divider p-4 text-left", item.readAt ? "bg-surface hover:bg-hover" : "bg-mint-50 hover:bg-mint-200/40");
             return (
               <li key={item.id}>
                 {view.href ? (
@@ -176,7 +176,7 @@ export function NotificationsBell() {
         <Link
           href="/settings/app"
           onClick={() => setOpen(false)}
-          className="flex h-12 items-center justify-center gap-2 border-t border-line bg-cream text-small font-semibold text-ink-2 hover:text-ink"
+          className="flex h-12 items-center justify-center gap-2 border-t border-line bg-strip text-small font-semibold text-ink-2 hover:text-ink"
         >
           <Settings className="size-4" aria-hidden="true" />
           {t("Choose what you're told about")}

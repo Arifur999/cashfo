@@ -140,7 +140,7 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
           />
         ) : (
           <>
-            <div className="hidden grid-cols-[minmax(0,1.4fr)_140px_minmax(0,1.4fr)_110px_48px] gap-4 border-t border-line bg-cream px-6 py-3 text-caption font-semibold text-ink-muted md:grid">
+            <div className="hidden grid-cols-[minmax(0,1.4fr)_140px_minmax(0,1.4fr)_110px_48px] gap-4 border-t border-line bg-table-head px-6 py-3 text-caption font-semibold text-ink-muted md:grid">
               <span>{t("Source")}</span>
               <span className="text-right">{t("This month")}</span>
               <span>{t("Share of the month")}</span>
@@ -171,14 +171,14 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
                   <span className="hidden text-right text-body text-ink-2 tabular-nums md:col-start-4 md:row-start-1 md:block">{thisYear[source.name] ? formatCurrency(thisYear[source.name], currency) : "—"}</span>
                   {canManage ? (
                     <DropdownMenu>
-                      <DropdownMenuTrigger aria-label={`${t("More for")} ${source.name}`} className="col-start-3 row-start-1 hidden size-10 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream md:col-start-5 md:flex">
+                      <DropdownMenuTrigger aria-label={`${t("More for")} ${source.name}`} className="col-start-3 row-start-1 hidden size-10 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken md:col-start-5 md:flex">
                         <MoreVertical className="size-4.5" aria-hidden="true" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                        <DropdownMenuItem onSelect={() => setDrawer(source)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                        <DropdownMenuItem onSelect={() => setDrawer(source)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                           {t("Edit")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                        <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                           <Link href={`/transactions?type=INCOME&categoryId=${encodeURIComponent(source.name)}`}>{t("See transactions")}</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => remove(source)} className="cursor-pointer rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">

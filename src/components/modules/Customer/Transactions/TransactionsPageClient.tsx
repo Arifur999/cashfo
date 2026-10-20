@@ -147,7 +147,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           {!filtered && (
             <p className="mt-4 hidden items-center gap-2 text-caption leading-[normal] font-normal text-ink-muted md:flex">
               {fillNodes(t("Tip: press {key} anywhere to add a transaction"), {
-                key: <Kbd className="rounded-[4px] bg-cream py-px font-sans text-caption leading-[normal] font-semibold text-ink-2">N</Kbd>,
+                key: <Kbd className="rounded-[4px] bg-strip py-px font-sans text-caption leading-[normal] font-semibold text-ink-2">N</Kbd>,
               })}
             </p>
           )}
@@ -156,7 +156,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         <>
           {/* Desktop: one card with the column heads and the day groups. */}
           <Card padding="none" className="hidden overflow-hidden md:block">
-            <div className={cn("grid items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+            <div className={cn("grid items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
               <span>{t("Transaction")}</span>
               <span>{t("Category")}</span>
               <span>{t("Account@@wallet")}</span>
@@ -165,7 +165,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             </div>
             {groups.map((group) => (
               <div key={group.day}>
-                <div className="flex h-9.5 items-center justify-between border-b border-surface-sunken bg-cream px-6 text-caption font-semibold">
+                <div className="flex h-9.5 items-center justify-between border-b border-divider bg-table-head px-6 text-caption font-semibold">
                   <span className="text-ink-2">{dayHeading(group.day, today, t, locale)}</span>
                   <span className={cn("tabular-nums", group.net >= 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(group.net, currency)}</span>
                 </div>
@@ -242,7 +242,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
   const href = `/transactions/${row.transaction.id}`;
   const tone = row.transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   return (
-    <div className={cn("group grid h-14 items-center gap-x-4 border-b border-surface-sunken px-6 transition-colors hover:bg-cream", GRID, row.cancelled && "opacity-60")}>
+    <div className={cn("group grid h-14 items-center gap-x-4 border-b border-divider px-6 transition-colors hover:bg-hover", GRID, row.cancelled && "opacity-60")}>
       <Link href={href} className="flex min-w-0 items-center gap-3">
         <CategoryTile row={row} />
         <span className={cn("truncate text-body font-medium text-ink", row.cancelled && "line-through")}>{row.title ?? t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType])}</span>
@@ -254,7 +254,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
       </Link>
       <span className="min-w-0">
         {row.category && (
-          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-cream px-3 py-0.75 text-caption text-ink-2">
+          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-surface-sunken px-3 py-0.75 text-caption text-ink-2">
             <span className={cn("size-2 shrink-0 rounded-full bg-current", tone.fg)} />
             <span className="truncate">{row.category.name}</span>
           </span>
@@ -270,7 +270,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
         className={cn("text-right", row.cancelled && "text-ink-muted line-through")}
       />
       <span className="flex justify-end gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-        <Link href={href} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-cream">
+        <Link href={href} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-surface-sunken">
           <Eye className="size-3.75" aria-hidden="true" />
         </Link>
         {canManage && row.transaction.voidable && (
@@ -286,7 +286,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
 function PhoneRow({ row, currency, divided }: { row: TransactionRow; currency: string; divided: boolean }) {
   const { t } = useLocale();
   return (
-    <Link href={`/transactions/${row.transaction.id}`} className={cn("box-content grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4", divided && "border-t border-surface-sunken", row.cancelled && "opacity-60")}>
+    <Link href={`/transactions/${row.transaction.id}`} className={cn("box-content grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4", divided && "border-t border-divider", row.cancelled && "opacity-60")}>
       <CategoryTile row={row} size={40} />
       <span className="flex min-w-0 flex-col">
         <span className={cn("truncate text-title text-ink", row.cancelled && "line-through")}>{row.title ?? t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType])}</span>

@@ -145,7 +145,7 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
           </div>
 
           <div className="flex flex-col overflow-hidden rounded-lg border border-line">
-            <div className={cn(grid, "border-b border-line bg-cream px-3 py-2 text-center text-caption font-semibold text-ink-muted")}>
+            <div className={cn(grid, "border-b border-line bg-table-head px-3 py-2 text-center text-caption font-semibold text-ink-muted")}>
               <span className="text-left">{t("Member")}</span>
               {SLOTS.map((slot) => (
                 <span key={slot.key} className="flex flex-col leading-tight">
@@ -159,7 +159,7 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
             {shown.map((member) => {
               const entry = entryOf(member.id);
               return (
-                <div key={member.id} className={cn(grid, "h-14 border-b border-surface-sunken px-3")}>
+                <div key={member.id} className={cn(grid, "h-14 border-b border-divider px-3")}>
                   <span className="flex min-w-0 items-center gap-2 text-body font-medium">
                     <PersonAvatar name={member.name} src={member.photoUrl} size={28} coloured />
                     <span className="truncate">{member.name}</span>
@@ -180,11 +180,11 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
                     );
                   })}
                   <span className="flex h-9 items-center justify-between overflow-hidden rounded-md border border-line">
-                    <button type="button" aria-label={t("One guest less for {name}", { name: member.name })} disabled={entry.guests === 0} onClick={() => change(member.id, { guests: entry.guests - 1 })} className="flex h-full w-7 items-center justify-center bg-cream disabled:opacity-40">
+                    <button type="button" aria-label={t("One guest less for {name}", { name: member.name })} disabled={entry.guests === 0} onClick={() => change(member.id, { guests: entry.guests - 1 })} className="flex h-full w-7 items-center justify-center bg-strip disabled:opacity-40">
                       <Minus className="size-3.5" aria-hidden="true" />
                     </button>
                     <span className={cn("text-body font-semibold tabular-nums", entry.guests ? "text-ink" : "text-ink-muted")}>{entry.guests}</span>
-                    <button type="button" aria-label={t("One more guest for {name}", { name: member.name })} disabled={entry.guests >= 20} onClick={() => change(member.id, { guests: entry.guests + 1 })} className="flex h-full w-7 items-center justify-center bg-cream disabled:opacity-40">
+                    <button type="button" aria-label={t("One more guest for {name}", { name: member.name })} disabled={entry.guests >= 20} onClick={() => change(member.id, { guests: entry.guests + 1 })} className="flex h-full w-7 items-center justify-center bg-strip disabled:opacity-40">
                       <Plus className="size-3.5" aria-hidden="true" />
                     </button>
                   </span>
@@ -193,7 +193,7 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
               );
             })}
             {shown.length === 0 && <p className="px-3 py-6 text-center text-small text-ink-muted">{t("No one was in the group on this day.")}</p>}
-            <div className={cn(grid, "h-11.5 bg-cream px-3 text-center text-small font-semibold tabular-nums")}>
+            <div className={cn(grid, "h-11.5 bg-table-head px-3 text-center text-small font-semibold tabular-nums")}>
               <span className="text-left">{t("{day} total", { day: short(day || "2026-01-01") })}</span>
               {counts.map((count, index) => (
                 <span key={SLOTS[index].key}>{count}</span>

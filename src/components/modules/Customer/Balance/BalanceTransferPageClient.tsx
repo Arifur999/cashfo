@@ -154,7 +154,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
           />
         ) : (
           <>
-            <div className={cn("hidden items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+            <div className={cn("hidden items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
               <span>{t("Date")}</span>
               <span>{t("From → To")}</span>
               <span>{t("Note")}</span>
@@ -166,7 +166,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
               const cancelled = cancelledLabel(transfer);
               const voided = isCancelled(transfer);
               return (
-                <div key={transfer.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-surface-sunken px-4 py-3 text-body md:h-15 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
+                <div key={transfer.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-divider px-4 py-3 text-body md:h-15 md:px-6 md:py-0", GRID, voided && "opacity-60")}>
                   <span className="order-3 text-caption text-ink-2 md:order-none md:text-body">{formatDate(transfer.transactionDate)}</span>
                   <Link href={`/transactions/${transfer.id}`} className="flex min-w-0 items-center gap-3">
                     <Party id={fromId} name={from} />
@@ -183,7 +183,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
                   </span>
                   <span className={cn("row-start-1 text-right font-semibold text-info tabular-nums md:row-start-auto", voided && "line-through")}>{formatCurrency(transferAmount(transfer), currency)}</span>
                   <span className="hidden justify-end gap-1 md:flex print:hidden">
-                    <Link href={`/transactions/${transfer.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md text-ink-2 hover:bg-cream">
+                    <Link href={`/transactions/${transfer.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken">
                       <Eye className="size-4" aria-hidden="true" />
                     </Link>
                     {canManage && transfer.voidable && (
@@ -219,7 +219,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
           doneLabel="Transfer voided"
           reasonHint="At least {count} characters. It's saved with the transfer."
           detail={
-            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-4 py-3 text-body">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body">
               <span className="flex min-w-0 items-center gap-2 font-medium text-ink">
                 <span className="truncate">{voidingParties.from}</span>
                 <ArrowRight className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />

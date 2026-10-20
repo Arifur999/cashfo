@@ -58,7 +58,7 @@ export function ChallengesCard({ trackers, today }: ChallengesCardProps) {
           );
         })
       )}
-      <Link href="/habit-tracker/habits?category=Others" className="mt-auto flex items-center gap-2 border-t border-surface-sunken pt-3 text-small font-semibold text-emerald hover:underline">
+      <Link href="/habit-tracker/habits?category=Others" className="mt-auto flex items-center gap-2 border-t border-divider pt-3 text-small font-semibold text-emerald hover:underline">
         <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
         {t("Start a challenge")}
       </Link>

@@ -87,7 +87,7 @@ export function SupportMessageCard({ email, conversations, onSent, onOpenMessage
         <Textarea rows={4} aria-label={t("Your message")} value={message} maxLength={5000} onChange={(event) => setMessage(event.target.value)} placeholder={t("Tell us what happened, or what you'd like to do.")} className="resize-none px-3 leading-normal" />
         <input ref={fileRef} type="file" accept={SCREENSHOT_ACCEPT} onChange={pick} className="hidden" tabIndex={-1} aria-hidden="true" />
         {screenshot ? (
-          <span className="flex h-9.5 items-center gap-2 rounded-md border border-line bg-cream px-3 text-small text-ink-2">
+          <span className="flex h-9.5 items-center gap-2 rounded-md border border-line bg-strip px-3 text-small text-ink-2">
             <Paperclip className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate">{screenshot.name}</span>
             <button type="button" onClick={() => setScreenshot(null)} aria-label={t("Remove the screenshot")} className="flex size-6 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink">
@@ -95,7 +95,7 @@ export function SupportMessageCard({ email, conversations, onSent, onOpenMessage
             </button>
           </span>
         ) : (
-          <button type="button" onClick={() => fileRef.current?.click()} className="flex h-9.5 items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-line-strong bg-surface text-small font-semibold text-ink-2 hover:bg-cream">
+          <button type="button" onClick={() => fileRef.current?.click()} className="flex h-9.5 items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-line-strong bg-surface text-small font-semibold text-ink-2 hover:bg-surface-sunken">
             <Paperclip className="size-3.5" aria-hidden="true" />
             {t("Attach a screenshot")}
           </button>

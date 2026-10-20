@@ -162,7 +162,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
           <Card padding="none" className="overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-240">
-                <div className={cn("grid items-center gap-x-4 border-b border-line bg-cream px-6 py-3 text-caption text-ink-muted", GRID)}>
+                <div className={cn("grid items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
                   <span>#</span>
                   <span>{t("Date")}</span>
                   <span>{t("Type")}</span>
@@ -172,7 +172,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                   <span className="text-right">{t("Out")}</span>
                   <span className="text-right">{t("Balance")}</span>
                 </div>
-                <div className={cn("grid h-12 items-center gap-x-4 border-b border-surface-sunken bg-cream px-6 text-body", GRID)}>
+                <div className={cn("grid h-12 items-center gap-x-4 border-b border-divider bg-table-head px-6 text-body", GRID)}>
                   <span />
                   <span className="col-span-6 font-semibold text-ink-2">{t("Opening balance")}</span>
                   <span className="text-right font-semibold text-ink tabular-nums">{formatCurrency(ledger.balanceBroughtForward, currency)}</span>
@@ -183,7 +183,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                   const voided = row.transactionStatus === "VOIDED";
                   const inTone = row.transactionType === "TRANSFER" ? "text-info" : "text-income";
                   return (
-                    <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("grid h-14 items-center gap-x-4 border-b border-surface-sunken px-6 text-body text-ink tabular-nums transition-colors hover:bg-cream", GRID, voided && "opacity-60")}>
+                    <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("grid h-14 items-center gap-x-4 border-b border-divider px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
                       <span className="text-ink-muted">{pageStart + index + 1}</span>
                       <span className="text-ink-2">{formatDate(row.date)}</span>
                       <span>
@@ -206,7 +206,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                     </Link>
                   );
                 })}
-                <div className={cn("grid h-13 items-center gap-x-4 bg-cream px-6 text-body tabular-nums", GRID)}>
+                <div className={cn("grid h-13 items-center gap-x-4 bg-table-head px-6 text-body tabular-nums", GRID)}>
                   <span />
                   <span className="col-span-4 font-bold text-ink">{t("Closing balance")}</span>
                   <span className="text-right font-semibold text-income">{formatCurrency(summary.totalIn, currency)}</span>

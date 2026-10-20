@@ -48,7 +48,7 @@ const STATUSES: { value: SavingsGoalStatus; label: string }[] = [
   { value: "COMPLETED", label: "Completed" },
   { value: "WITHDRAWN", label: "Withdrawn" },
 ];
-const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-cream [&_svg]:size-3.75";
+const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75";
 
 // Savings goals: how all of them are doing together, then one card per
 // goal with its ring, pace, monthly amount and the next thing to do.
@@ -236,7 +236,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                       <span className="flex-1" />
                       {canManage && (
                         <DropdownMenu>
-                          <DropdownMenuTrigger aria-label={`${t("Actions for")} ${goal.name}`} className="flex size-7.5 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-cream data-open:bg-cream">
+                          <DropdownMenuTrigger aria-label={`${t("Actions for")} ${goal.name}`} className="flex size-7.5 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken data-open:bg-surface-sunken">
                             <Ellipsis className="size-4.5" aria-hidden="true" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" sideOffset={6} className="w-49 rounded-md border border-line bg-surface p-2 shadow-overlay ring-0">
@@ -297,7 +297,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                         </Button>
                       )}
                       {locked && (
-                        <Button variant="secondary" size="sm" disabled title={t("Add a savings wallet first")} className="h-8.5 border-line bg-cream px-3 text-small text-ink-muted disabled:opacity-100">
+                        <Button variant="secondary" size="sm" disabled title={t("Add a savings wallet first")} className="h-8.5 border-line bg-strip px-3 text-small text-ink-muted disabled:opacity-100">
                           <Lock className="size-3.5 text-line-strong" strokeWidth={2.5} />
                           {t("Add money")}
                         </Button>

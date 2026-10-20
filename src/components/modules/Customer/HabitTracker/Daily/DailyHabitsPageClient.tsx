@@ -103,11 +103,11 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         actions={
           <>
             <div role="group" aria-label={t("Day")} className="flex h-10 items-center overflow-hidden rounded-md border border-line-strong bg-surface">
-              <button type="button" onClick={() => goTo(shiftDay(day, -1))} aria-label={t("Previous day")} className="flex size-9.5 items-center justify-center text-ink-2 hover:bg-cream">
+              <button type="button" onClick={() => goTo(shiftDay(day, -1))} aria-label={t("Previous day")} className="flex size-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken">
                 <ChevronLeft className="size-4" aria-hidden="true" />
               </button>
               <span className="px-3 text-body font-semibold whitespace-nowrap text-ink">{isToday ? `${t("Today")}, ` : ""}{formatDate(day, "EEE d MMM")}</span>
-              <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex size-9.5 items-center justify-center text-ink-2 hover:bg-cream disabled:cursor-not-allowed disabled:opacity-40">
+              <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex size-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40">
                 <ChevronRight className="size-4" aria-hidden="true" />
               </button>
             </div>
@@ -141,7 +141,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
                 {resting > 0 ? ` · ${resting} ${t("resting")}` : ""}
               </span>
             </div>
-            <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
+            <div className={cn("hidden items-center gap-4 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
               <span>{t("Habit")}</span>
               <span className="flex justify-between px-0.5">
                 {week.map((d) => (
@@ -165,7 +165,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               const on = selected?.id === habit.id;
               const value = log?.value ?? 0;
               return (
-                <div key={habit.id} role="button" tabIndex={0} onClick={() => setSelectedId(habit.id)} onKeyDown={(event) => event.key === "Enter" && setSelectedId(habit.id)} className={cn("relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-surface-sunken px-5 py-3 text-left transition-colors last:border-b-0 md:min-h-17 md:gap-4 md:py-0", ROW, on ? "bg-mint-50/60" : "hover:bg-cream/60", habit.isArchived && "opacity-60")}>
+                <div key={habit.id} role="button" tabIndex={0} onClick={() => setSelectedId(habit.id)} onKeyDown={(event) => event.key === "Enter" && setSelectedId(habit.id)} className={cn("relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-divider px-5 py-3 text-left transition-colors last:border-b-0 md:min-h-17 md:gap-4 md:py-0", ROW, on ? "bg-mint-50/60" : "hover:bg-hover", habit.isArchived && "opacity-60")}>
                   {on && <span aria-hidden="true" className="absolute top-2.5 bottom-2.5 left-0 w-0.75 rounded-r-[3px] bg-emerald" />}
                   <span className="flex min-w-0 items-center gap-3">
                     <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
@@ -211,7 +211,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
                     ) : counted ? (
                       <span className="flex flex-col items-end gap-1">
                         <span className="flex items-center gap-2">
-                          <button type="button" onClick={() => count(habit, -1)} disabled={isPending || value === 0} aria-label={`${t("One less")} ${habit.unit ?? ""}`} className="flex size-7.5 items-center justify-center rounded-md border border-line-strong bg-surface text-ink-2 hover:bg-cream disabled:opacity-40">
+                          <button type="button" onClick={() => count(habit, -1)} disabled={isPending || value === 0} aria-label={`${t("One less")} ${habit.unit ?? ""}`} className="flex size-7.5 items-center justify-center rounded-md border border-line-strong bg-surface text-ink-2 hover:bg-surface-sunken disabled:opacity-40">
                             <Minus className="size-3.5" aria-hidden="true" />
                           </button>
                           <span className="min-w-11 text-center text-body font-bold text-ink tabular-nums">

@@ -65,7 +65,7 @@ const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSetti
             )}
           </form.Field>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-cream px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-strip px-5 py-3">
           <span className="text-small text-ink-muted">
             {lastChangeText(settings, translate)} <T>{canManage ? "Every save goes to the audit log." : "Only super admins can change these."}</T>
           </span>

@@ -98,8 +98,8 @@ const DataTableContent = <TData,>({
             ))}
           </colgroup>
         )}
-        {/* The design's column heads: a cream strip, 12px, no capitals. */}
-        <TableHeader className="sticky top-0 z-10 bg-cream [&_tr]:border-line">
+        {/* The design's column heads: the table-head band, 12px, no capitals. */}
+        <TableHeader className="sticky top-0 z-10 bg-table-head [&_tr]:border-line">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (
@@ -137,7 +137,7 @@ const DataTableContent = <TData,>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() ? "selected" : undefined}
-                className={cn("group/row border-surface-sunken bg-surface hover:bg-row-hover", onRowClick && "cursor-pointer", rowClassName?.(row.original))}
+                className={cn("group/row border-divider bg-surface hover:bg-row-hover", onRowClick && "cursor-pointer", rowClassName?.(row.original))}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 onKeyDown={
                   onRowClick

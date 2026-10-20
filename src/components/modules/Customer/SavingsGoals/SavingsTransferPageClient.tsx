@@ -89,13 +89,13 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
             <EmptyState bordered={false} tone="info" icon={<ArrowLeftRight />} title={t("Nothing moved yet")} description={t("Shift money from one goal to another and it shows up here.")} className="border-t border-line" />
           ) : (
             <>
-              <div className={cn("hidden items-center gap-x-4 border-y border-line bg-cream px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
+              <div className={cn("hidden items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted md:grid", GRID)}>
                 <span>{t("Date")}</span>
                 <span>{t("From → To")}</span>
                 <span className="text-right">{t("Amount")}</span>
               </div>
               {transfers.map((transfer) => (
-                <div key={transfer.id} className={cn("grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-surface-sunken px-4 py-3 text-body md:px-6", GRID)}>
+                <div key={transfer.id} className={cn("grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-divider px-4 py-3 text-body md:px-6", GRID)}>
                   <span className="order-3 text-caption text-ink-2 md:order-0 md:text-body">{formatDate(transfer.date)}</span>
                   <span className="flex min-w-0 flex-col gap-0.75">
                     <span className="flex items-center gap-2 font-medium text-ink">
@@ -124,7 +124,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                 <GoalPicker id="st-from" goals={goals} options={open.filter((goal) => Number(goal.currentAmount) > 0)} value={fromId} onChange={setFromId} currency={currency} disabled={open.length < 2} />
               </div>
               <div className="-my-3.5 flex justify-center">
-                <button type="button" onClick={swap} aria-label={t("Swap From and To")} title={t("Swap")} className="relative z-10 flex size-8 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-cream">
+                <button type="button" onClick={swap} aria-label={t("Swap From and To")} title={t("Swap")} className="relative z-10 flex size-8 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-surface-sunken">
                   <ArrowUpDown className="size-3.5" aria-hidden="true" />
                 </button>
               </div>
@@ -148,7 +148,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                   placeholder="0"
                   disabled={open.length < 2}
                   invalid={!!from && value > Number(from.currentAmount)}
-                  leading={<span className="flex h-12 w-11 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                  leading={<span className="flex h-12 w-11 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                   frameClassName="gap-0 overflow-hidden pl-0"
                   className="pl-3 text-h3 font-bold tabular-nums"
                 />

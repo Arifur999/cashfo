@@ -81,7 +81,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
       <Card padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
           <div role="table" aria-label={t("Meal sheet for {month}", { month: monthName(data.range.key, locale, "long", true) })} className="w-max min-w-full">
-            <div role="row" className="grid h-11.5 items-stretch border-b border-line bg-cream text-caption text-ink-muted" style={grid}>
+            <div role="row" className="grid h-11.5 items-stretch border-b border-line bg-table-head text-caption text-ink-muted" style={grid}>
               <span role="columnheader" className="flex items-center pl-4 font-medium">
                 {t("Member")}
               </span>
@@ -101,7 +101,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
             {members.map((member) => {
               const total = sheet.memberTotals[member.id] ?? 0;
               return (
-                <div key={member.id} role="row" className="grid h-11.5 items-stretch border-b border-surface-sunken text-caption tabular-nums" style={grid}>
+                <div key={member.id} role="row" className="grid h-11.5 items-stretch border-b border-divider text-caption tabular-nums" style={grid}>
                   <span role="rowheader" className="flex min-w-0 items-center gap-2 pl-4 text-body font-medium text-ink">
                     <PersonAvatar name={member.name} src={member.photoUrl} size={26} coloured />
                     <span className="truncate">{member.name}</span>
@@ -116,7 +116,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
                         role="cell"
                         onClick={() => onDay(day)}
                         title={`${member.name}, ${day}: ${mealText(value)} ${t("meals")}${cell?.guests ? ` · ${t("guest meal included")}` : ""}`}
-                        className={cn("relative flex items-center justify-center hover:bg-mint-50", day === data.today ? "bg-mint-50" : weekend(day) && "bg-cream", value === 0 ? "text-ink-muted" : value >= units.breakfast + units.lunch + units.dinner ? "text-ink" : "text-ink-muted", cell?.guests ? "font-bold" : "font-medium")}
+                        className={cn("relative flex items-center justify-center hover:bg-mint-50", day === data.today ? "bg-mint-50" : weekend(day) && "bg-surface-sunken", value === 0 ? "text-ink-muted" : value >= units.breakfast + units.lunch + units.dinner ? "text-ink" : "text-ink-muted", cell?.guests ? "font-bold" : "font-medium")}
                       >
                         {value === 0 ? "–" : mealText(value)}
                         {!!cell?.guests && <span className="absolute top-1.75 right-0.75 size-1.25 rounded-full bg-warning-fill" aria-hidden="true" />}
@@ -132,7 +132,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
                 </div>
               );
             })}
-            <div role="row" className="grid h-11 items-stretch bg-cream text-caption tabular-nums" style={grid}>
+            <div role="row" className="grid h-11 items-stretch bg-table-head text-caption tabular-nums" style={grid}>
               <span role="rowheader" className="flex items-center pl-4 text-small font-semibold text-ink">
                 {t("Day total")}
               </span>

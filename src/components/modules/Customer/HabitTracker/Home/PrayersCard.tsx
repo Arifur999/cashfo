@@ -149,7 +149,7 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
           })}
         </div>
 
-        <div className="mt-auto grid items-end gap-x-8 gap-y-3 border-t border-surface-sunken pt-4 md:grid-cols-[auto_auto_minmax(0,1fr)]">
+        <div className="mt-auto grid items-end gap-x-8 gap-y-3 border-t border-divider pt-4 md:grid-cols-[auto_auto_minmax(0,1fr)]">
           <div className="flex flex-col gap-2">
             <span className="text-caption font-semibold text-ink-muted">{t("This week")}</span>
             <div role="img" aria-label={t("Prayer marks from Saturday to today")} className="flex gap-2">

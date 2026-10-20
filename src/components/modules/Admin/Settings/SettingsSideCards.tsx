@@ -46,7 +46,7 @@ const SettingsSideCards = ({ canManage }: { canManage: boolean }) => {
       >
         <T>Email, SMS and in-app message wording lives in templates, in English and Bangla.</T>
       </SettingsSideCard>
-      <p role="note" className="flex gap-3 rounded-md border border-line bg-cream px-4 py-3 text-small leading-normal text-ink-2">
+      <p role="note" className="flex gap-3 rounded-md border border-line bg-strip px-4 py-3 text-small leading-normal text-ink-2">
         <Lock className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         <span>
           <T>Support, Finance and Content admins see this page with the fields locked.</T>

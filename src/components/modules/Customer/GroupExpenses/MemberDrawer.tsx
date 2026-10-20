@@ -124,7 +124,7 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <div className="flex items-center gap-4">
-              <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} aria-label={t("Add a photo (optional)")} className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-dashed border-line-strong bg-cream text-ink-muted hover:border-emerald hover:text-emerald disabled:opacity-60">
+              <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} aria-label={t("Add a photo (optional)")} className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-dashed border-line-strong bg-surface-sunken text-ink-muted hover:border-emerald hover:text-emerald disabled:opacity-60">
                 {uploading ? <Loader size={20} /> : photoUrl ? photo : <Camera className="size-5.5" aria-hidden="true" />}
               </button>
               <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} className="hidden" />
@@ -176,17 +176,17 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
                 <span className="text-caption leading-[1.45] text-ink-muted">{t("Only used when a cost is split by shares, for example a bigger room paying 1.5.")}</span>
               </div>
               <span className="flex h-9.5 shrink-0 items-center overflow-hidden rounded-md border border-line-strong">
-                <button type="button" aria-label={t("Fewer share units")} disabled={shareUnits <= 0.5} onClick={() => setShareUnits(Math.max(0.5, shareUnits - 0.5))} className="flex h-full w-8.5 items-center justify-center bg-cream disabled:opacity-40">
+                <button type="button" aria-label={t("Fewer share units")} disabled={shareUnits <= 0.5} onClick={() => setShareUnits(Math.max(0.5, shareUnits - 0.5))} className="flex h-full w-8.5 items-center justify-center bg-strip disabled:opacity-40">
                   <Minus className="size-3.5" aria-hidden="true" />
                 </button>
                 <span className="w-8.5 text-center text-body-lg font-semibold tabular-nums">{mealText(shareUnits)}</span>
-                <button type="button" aria-label={t("More share units")} disabled={shareUnits >= 100} onClick={() => setShareUnits(shareUnits + 0.5)} className="flex h-full w-8.5 items-center justify-center bg-cream disabled:opacity-40">
+                <button type="button" aria-label={t("More share units")} disabled={shareUnits >= 100} onClick={() => setShareUnits(shareUnits + 0.5)} className="flex h-full w-8.5 items-center justify-center bg-strip disabled:opacity-40">
                   <Plus className="size-3.5" aria-hidden="true" />
                 </button>
               </span>
             </div>
 
-            <div className="flex items-start gap-3 rounded-md bg-cream px-4 py-3 text-small leading-relaxed text-ink-2">
+            <div className="flex items-start gap-3 rounded-md bg-strip px-4 py-3 text-small leading-relaxed text-ink-2">
               <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
               <span>{t("Members don't need their own login. You record contributions, expenses and meals for them.")}</span>
             </div>

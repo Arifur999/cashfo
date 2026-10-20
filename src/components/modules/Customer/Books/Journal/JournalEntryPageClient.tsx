@@ -104,7 +104,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
             </Field>
           </div>
 
-          <div className={cn("hidden border-t border-line bg-cream px-5 py-3 text-caption font-semibold text-ink-muted", LINE)}>
+          <div className={cn("hidden border-t border-line bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", LINE)}>
             <span>{t("Account")}</span>
             <span>{t("Line note")}</span>
             <span className="text-right">{t("Debit")}</span>
@@ -112,7 +112,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
             <span />
           </div>
           {lines.map((line, index) => (
-            <div key={index} className={cn("flex flex-col gap-2 border-t border-surface-sunken px-5 py-3", LINE)}>
+            <div key={index} className={cn("flex flex-col gap-2 border-t border-divider px-5 py-3", LINE)}>
               <NativeSelect size="sm" value={line.accountId} onChange={(event) => update(index, { accountId: event.target.value })} aria-label={`${t("Line")} ${index + 1} ${t("account")}`} className="h-10.5">
                 <option value="">{t("Pick an account")}</option>
                 {groups.map((group) => (
@@ -144,7 +144,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
               )}
             </div>
           ))}
-          <div className="border-t border-surface-sunken px-5 py-3">
+          <div className="border-t border-divider px-5 py-3">
             <Button variant="ghost" size="sm" onClick={() => setLines((current) => [...current, emptyLine()])}>
               <Plus />
               {t("Add line")}

@@ -39,7 +39,7 @@ export function AgingLegend({ shares, currency, variant = "rows" }: AgingLegendP
     return (
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {shares.map((share) => (
-          <div key={share.key} className="flex min-w-0 flex-col gap-0.5 rounded-md bg-cream px-3 py-2.5 sm:px-4 sm:py-3">
+          <div key={share.key} className="flex min-w-0 flex-col gap-0.5 rounded-md bg-strip px-3 py-2.5 sm:px-4 sm:py-3">
             <span className="flex items-center gap-2 text-caption text-ink-muted">
               <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-xs", TONE_BG[share.tone])} />
               {t(share.label)}

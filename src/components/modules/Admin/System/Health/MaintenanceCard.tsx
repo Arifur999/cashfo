@@ -15,7 +15,7 @@ import { platformSettingsQuery } from "@/queries/settings.queries";
 import type { IUpdatePlatformSettingsPayload } from "@/types/settings.types";
 import T from "@/components/shared/T";
 
-const OUTLINE = "h-9.5 border-line-strong bg-surface font-semibold text-ink hover:bg-cream";
+const OUTLINE = "h-9.5 border-line-strong bg-surface font-semibold text-ink hover:bg-surface-sunken";
 
 // Maintenance mode from the System page: the same setting as in Settings.
 // While it is on, customers see the message and can't use the app; admins

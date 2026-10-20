@@ -94,14 +94,14 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
             {rule.amount && rule.days !== "Every day" ? ` · ${t(rule.days)}` : ""} · {t("added")} {formatDate(habit.createdAt, "d MMM")}
           </span>
         </span>
-        <button type="button" onClick={onEdit} aria-label={`${t("Edit")} ${habit.name}`} className="flex size-8.5 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-cream hover:text-ink">
+        <button type="button" onClick={onEdit} aria-label={`${t("Edit")} ${habit.name}`} className="flex size-8.5 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink">
           <Pencil className="size-4" aria-hidden="true" />
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         {facts.map((fact) => (
-          <div key={fact.label} className="flex flex-col gap-0.5 rounded-md bg-cream px-3 py-3">
+          <div key={fact.label} className="flex flex-col gap-0.5 rounded-md bg-strip px-3 py-3">
             <span className="text-caption font-normal text-ink-muted">{fact.label}</span>
             <span className="text-title font-bold text-ink tabular-nums">{fact.value}</span>
           </div>
@@ -110,11 +110,11 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <button type="button" onClick={() => onMonthChange(`${shiftMonth(month, -1)}-01`)} aria-label={monthName(shiftMonth(month, -1), locale)} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-cream">
+          <button type="button" onClick={() => onMonthChange(`${shiftMonth(month, -1)}-01`)} aria-label={monthName(shiftMonth(month, -1), locale)} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken">
             <ChevronLeft className="size-4" aria-hidden="true" />
           </button>
           <span className="text-body font-semibold text-ink">{monthName(month, locale, "long", true)}</span>
-          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(`${shiftMonth(month, 1)}-01`)} aria-label={monthName(shiftMonth(month, 1), locale)} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-cream disabled:opacity-40">
+          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(`${shiftMonth(month, 1)}-01`)} aria-label={monthName(shiftMonth(month, 1), locale)} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken disabled:opacity-40">
             <ChevronRight className="size-4" aria-hidden="true" />
           </button>
         </div>
@@ -166,7 +166,7 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
       </div>
 
       {day === today && (
-        <div className="flex flex-col gap-2 border-t border-surface-sunken pt-4">
+        <div className="flex flex-col gap-2 border-t border-divider pt-4">
           <label htmlFor="hb-note" className="text-small font-semibold text-ink">
             {t("Note for today")} <span className="font-normal text-ink-muted">({t("optional")})</span>
           </label>

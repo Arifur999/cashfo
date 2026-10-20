@@ -215,7 +215,7 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
         )}
 
         {editing && (
-          <div className="mt-2 flex flex-col gap-3 rounded-md border border-line bg-cream p-4">
+          <div className="mt-2 flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
             <span className="flex flex-col gap-0.5">
               <b className="text-body font-semibold text-ink">{t("Archive or remove")}</b>
               <span className="text-small text-ink-muted">{t("Archiving keeps their history but hides them from the lists. Removing is only possible while there are no entries with them.")}</span>

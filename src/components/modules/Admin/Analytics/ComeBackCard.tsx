@@ -55,7 +55,7 @@ const ComeBackCard = ({ rows, currentMonth }: { rows: ICohortRow[]; currentMonth
         <p className="border-t border-line px-5 py-8 text-center text-small text-ink-muted"><T>Nobody has joined yet.</T></p>
       ) : (
         <div role="table" aria-label={translate("Monthly groups of new people")} className="overflow-x-auto pb-3">
-          <div role="row" className={cn(GRID, "bg-cream py-2 text-caption font-medium text-ink-muted")}>
+          <div role="row" className={cn(GRID, "bg-table-head py-2 text-caption font-medium text-ink-muted")}>
             <span role="columnheader"><T>Joined in</T></span>
             <span role="columnheader"><T>People</T></span>
             {Array.from({ length: columns }, (_, month) => (

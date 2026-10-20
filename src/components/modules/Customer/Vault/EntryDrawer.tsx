@@ -160,7 +160,7 @@ export function EntryDrawer({ open, editing, preset, token, onClose, onSaved, on
                   autoComplete="off"
                   name="vault-title"
                   trailing={
-                    <button type="button" onClick={() => setFavorite(!favorite)} aria-pressed={favorite} aria-label={t(favorite ? "Remove from favorites" : "Add to favorites")} title={t(favorite ? "Remove from favorites" : "Add to favorites")} className="flex size-8 items-center justify-center rounded-sm hover:bg-cream">
+                    <button type="button" onClick={() => setFavorite(!favorite)} aria-pressed={favorite} aria-label={t(favorite ? "Remove from favorites" : "Add to favorites")} title={t(favorite ? "Remove from favorites" : "Add to favorites")} className="flex size-8 items-center justify-center rounded-sm hover:bg-surface-sunken">
                       <Star className={cn("size-4.5", favorite ? "fill-warning-fill text-warning-fill" : "text-ink-muted")} aria-hidden="true" />
                     </button>
                   }

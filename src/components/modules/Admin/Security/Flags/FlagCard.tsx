@@ -92,7 +92,7 @@ const FlagCard = ({ flag }: { flag: ISecurityFlag }) => {
               variant="outline"
               size="sm"
               disabled={isPending}
-              className={cn(SMALL_BUTTON, "border-line-strong bg-surface text-ink hover:bg-cream")}
+              className={cn(SMALL_BUTTON, "border-line-strong bg-surface text-ink hover:bg-surface-sunken")}
               onClick={() => void run("FALSE_POSITIVE")}
             >
               <T>False alarm</T>

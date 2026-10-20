@@ -123,7 +123,7 @@ export function AddMenu({ onAddTask }: AddMenuProps) {
               <div key={index}>
                 {index > 0 && <DropdownMenuSeparator className="mx-3 my-2 bg-line" />}
                 {group.map((row) => (
-                  <DropdownMenuItem key={row.choice} onSelect={() => choose(row.choice)} className="cursor-pointer gap-3 rounded-md px-3 py-2 focus:bg-cream">
+                  <DropdownMenuItem key={row.choice} onSelect={() => choose(row.choice)} className="cursor-pointer gap-3 rounded-md px-3 py-2 focus:bg-surface-sunken">
                     <IconTile tone={row.tone} size={36}>
                       {row.icon}
                     </IconTile>
@@ -137,7 +137,7 @@ export function AddMenu({ onAddTask }: AddMenuProps) {
               </div>
             ))}
           </div>
-          <div className="border-t border-line bg-cream px-4 py-3 text-caption font-normal text-ink-muted">
+          <div className="border-t border-line bg-strip px-4 py-3 text-caption font-normal text-ink-muted">
             {t("Press N anywhere to open this menu").split("N").length === 2 ? (
               <>
                 {t("Press N anywhere to open this menu").split("N")[0]}

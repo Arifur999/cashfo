@@ -64,7 +64,7 @@ export function PrayerStatusMenu({ children, open, onOpenChange, prayer, day, st
           {OPTIONS.map((option, index) => {
             const on = marked && state === option.state;
             return (
-              <button key={option.status} type="button" role="radio" aria-checked={on} onClick={() => onPick(option.status)} className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors", on ? "bg-mint-50" : "hover:bg-cream")}>
+              <button key={option.status} type="button" role="radio" aria-checked={on} onClick={() => onPick(option.status)} className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors", on ? "bg-mint-50" : "hover:bg-hover")}>
                 <span aria-hidden="true" className={cn("flex size-7 shrink-0 items-center justify-center rounded-sm", option.tile)}>
                   {option.icon}
                 </span>
@@ -77,7 +77,7 @@ export function PrayerStatusMenu({ children, open, onOpenChange, prayer, day, st
             );
           })}
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-surface-sunken px-4 py-3 text-small">
+        <div className="flex items-center justify-between gap-3 border-t border-divider px-4 py-3 text-small">
           <button type="button" disabled={!marked} onClick={() => onPick(null)} className="font-semibold text-ink-2 hover:text-ink disabled:opacity-50">
             {t("Clear the mark")}
           </button>

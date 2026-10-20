@@ -29,7 +29,7 @@ export function YearSummaryCard({ title, description, rows, total, currency }: Y
       ) : (
         <div className="flex flex-col">
           {rows.map((row) => (
-            <div key={row.name} className={`${line} border-b border-surface-sunken`}>
+            <div key={row.name} className={`${line} border-b border-divider`}>
               <span className="truncate text-ink-muted">{row.name}</span>
               <span className="tabular-nums text-ink">{formatCurrency(row.total, currency)}</span>
             </div>

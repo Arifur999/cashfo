@@ -119,7 +119,7 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
         {canManage && (
           <CreateAccountTemplateDialog
             trigger={
-              <Button variant="outline" size="sm" className="h-8.5 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-cream">
+              <Button variant="outline" size="sm" className="h-8.5 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-surface-sunken">
                 <Plus aria-hidden="true" />
                 <T>Add</T>
               </Button>
@@ -133,7 +133,7 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
           const Icon = isOpen ? FolderOpen : Folder;
           return (
             <li key={group.type}>
-              <button type="button" aria-expanded={isOpen} onClick={() => toggle(group.type)} className={cn(ROW, "w-full font-semibold hover:bg-cream")}>
+              <button type="button" aria-expanded={isOpen} onClick={() => toggle(group.type)} className={cn(ROW, "w-full font-semibold hover:bg-hover")}>
                 <Icon className="size-3.5 text-emerald" aria-hidden="true" />
                 <T>{group.label}</T>
               </button>

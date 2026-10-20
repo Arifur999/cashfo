@@ -53,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           attributes like cz-shortcut-listen onto <body> after the server HTML
           is sent, which otherwise trips React's hydration mismatch check even
           though nothing is actually wrong. */}
-      <body className="flex min-h-full flex-col bg-cream text-ink" suppressHydrationWarning>
+      <body className="flex min-h-full flex-col bg-page text-ink" suppressHydrationWarning>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:rounded-md focus:bg-surface focus:p-4 focus:text-ink focus:shadow-lg"

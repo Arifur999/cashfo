@@ -45,7 +45,7 @@ const AppChipsField = ({ field, label, options, description }: AppChipsFieldProp
                 onClick={() => toggle(option.value)}
                 className={cn(
                   "h-8.5 rounded-full border px-3 text-small font-semibold transition-colors",
-                  isSelected ? "border-emerald bg-mint-50 text-brand-ink" : "border-line-strong bg-surface text-ink-2 hover:bg-cream",
+                  isSelected ? "border-emerald bg-mint-50 text-brand-ink" : "border-line-strong bg-surface text-ink-2 hover:bg-surface-sunken",
                 )}
               >
                 {typeof option.label === "string" ? translate(option.label) : option.label}

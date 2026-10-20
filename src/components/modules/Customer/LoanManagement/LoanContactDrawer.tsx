@@ -238,7 +238,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
                       placeholder="0"
                       aria-label={t("Opening balance")}
                       autoFocus
-                      leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-cream text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                      leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
                       frameClassName="gap-0 overflow-hidden pl-0"
                       className="pl-4 text-h2 font-bold tabular-nums"
                     />

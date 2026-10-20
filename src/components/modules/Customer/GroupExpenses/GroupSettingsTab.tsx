@@ -129,18 +129,18 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
             const shares = Number(member.shareUnits);
             const setShares = (next: number) => run(() => updateGroupMemberAction(data.businessId, member.id, { shareUnits: next }), t("Failed to update member"));
             return (
-              <div key={member.id} className="flex h-14 items-center gap-3 border-t border-surface-sunken px-5">
+              <div key={member.id} className="flex h-14 items-center gap-3 border-t border-divider px-5">
                 <PersonAvatar name={member.name} src={member.photoUrl} size={32} coloured />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-body font-semibold text-ink">{member.name}</span>
                   {member.phone && <span className="truncate text-caption text-ink-muted">{member.phone}</span>}
                 </span>
                 <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong">
-                  <button type="button" aria-label={t("Fewer shares for {name}", { name: member.name })} disabled={isPending || shares <= 0.5} onClick={() => setShares(Math.max(0.5, shares - (shares > 1 ? 1 : 0.5)))} className="flex h-full w-8 items-center justify-center bg-cream disabled:opacity-40">
+                  <button type="button" aria-label={t("Fewer shares for {name}", { name: member.name })} disabled={isPending || shares <= 0.5} onClick={() => setShares(Math.max(0.5, shares - (shares > 1 ? 1 : 0.5)))} className="flex h-full w-8 items-center justify-center bg-strip disabled:opacity-40">
                     <Minus className="size-3.5" aria-hidden="true" />
                   </button>
                   <span className="w-8.5 text-center text-body-lg font-bold tabular-nums">{mealText(shares)}</span>
-                  <button type="button" aria-label={t("More shares for {name}", { name: member.name })} disabled={isPending || shares >= 100} onClick={() => setShares(shares < 1 ? 1 : shares + 1)} className="flex h-full w-8 items-center justify-center bg-cream disabled:opacity-40">
+                  <button type="button" aria-label={t("More shares for {name}", { name: member.name })} disabled={isPending || shares >= 100} onClick={() => setShares(shares < 1 ? 1 : shares + 1)} className="flex h-full w-8 items-center justify-center bg-strip disabled:opacity-40">
                     <Plus className="size-3.5" aria-hidden="true" />
                   </button>
                 </span>
@@ -148,7 +148,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
               </div>
             );
           })}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-cream px-5 py-3 text-small">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-strip px-5 py-3 text-small">
             <span className="font-semibold text-ink">{t("{count} shares in total", { count: mealText(totalShares) })}</span>
             {byShares > 0 && totalShares > 0 && (
               <span className="text-ink-2 tabular-nums">
@@ -181,9 +181,9 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
               {t("Add")}
             </Button>
           </div>
-          {data.categories.length === 0 && <p className="border-t border-surface-sunken px-5 py-5 text-center text-small text-ink-muted">{t("No category yet. Bazar, rent, bills… add the ones this group uses.")}</p>}
+          {data.categories.length === 0 && <p className="border-t border-divider px-5 py-5 text-center text-small text-ink-muted">{t("No category yet. Bazar, rent, bills… add the ones this group uses.")}</p>}
           {data.categories.map((category) => (
-            <div key={category.id} className="flex h-12 items-center gap-3 border-t border-surface-sunken px-5">
+            <div key={category.id} className="flex h-12 items-center gap-3 border-t border-divider px-5">
               <CategoryTile name={category.name} categories={data.categories} size={28} />
               <span className="flex-1 truncate text-body font-medium text-ink">{category.name}</span>
               <NativeSelect
@@ -199,7 +199,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
                   </option>
                 ))}
               </NativeSelect>
-              <button type="button" onClick={() => onEditCategory(category)} aria-label={`${t("Edit")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-cream hover:text-ink">
+              <button type="button" onClick={() => onEditCategory(category)} aria-label={`${t("Edit")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink">
                 <Pencil className="size-4" aria-hidden="true" />
               </button>
               <button type="button" onClick={() => onRemoveCategory(category)} aria-label={`${t("Delete")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-expense-soft hover:text-expense">
@@ -222,7 +222,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
             </button>
           </div>
           {settings.mealsOn && (
-            <div className="flex flex-wrap items-center gap-3 border-t border-surface-sunken pt-4 text-small text-ink-2">
+            <div className="flex flex-wrap items-center gap-3 border-t border-divider pt-4 text-small text-ink-2">
               <span>{t("One meal counts as")}</span>
               {(
                 [

@@ -24,7 +24,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   return (
     <LocaleProvider initialLocale={locale} overrides={overrides} scope="admin">
       <BreadcrumbProvider>
-        <div className="flex h-screen overflow-hidden bg-cream print:block print:h-auto print:overflow-visible">
+        <div className="flex h-screen overflow-hidden bg-page print:block print:h-auto print:overflow-visible">
           <DashboardSidebar />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
             <DashboardNavbar />

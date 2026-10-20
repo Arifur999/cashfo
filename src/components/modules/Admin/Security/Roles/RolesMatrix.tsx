@@ -54,7 +54,7 @@ const RolesMatrix = () => {
         </ul>
       </div>
       <div role="table" aria-labelledby="roles-title" className="overflow-x-auto">
-        <div role="row" className={cn(GRID, "border-y border-line bg-cream py-3 text-small font-semibold text-ink-2")}>
+        <div role="row" className={cn(GRID, "border-y border-line bg-table-head py-3 text-small font-semibold text-ink-2")}>
           <span role="columnheader"><T>Area</T></span>
           {ADMIN_ROLES.map((role) => (
             <span role="columnheader" key={role} className="text-center">
@@ -63,7 +63,7 @@ const RolesMatrix = () => {
           ))}
         </div>
         {ROLE_PERMISSIONS.map((row) => (
-          <div role="row" key={row.area} className={cn(GRID, "min-h-11.5 border-b border-surface-sunken py-1 text-body last:border-b-0")}>
+          <div role="row" key={row.area} className={cn(GRID, "min-h-11.5 border-b border-divider py-1 text-body last:border-b-0")}>
             <span role="rowheader" className="flex flex-col">
               <span className="font-medium text-ink">
                 <T>{row.area}</T>

@@ -48,7 +48,7 @@ export function SupportDashboard({ adminName, hour, stats, queue, requests }: Su
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Section title={translate("Your queue")} aside={<SectionLink href="/admin/support">{translate("All tickets")}</SectionLink>}>
           <div className="-mx-5 -mb-4 flex flex-col">
-          <div className={cn("hidden border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted", GRID)}>
+          <div className={cn("hidden border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted", GRID)}>
             <span>{translate("Ticket")}</span>
             <span>{translate("Subject")}</span>
             <span>{translate("User")}</span>
@@ -59,7 +59,7 @@ export function SupportDashboard({ adminName, hour, stats, queue, requests }: Su
           {queue.map((ticket) => {
             const waited = hoursSince(ticket.createdAt, now);
             return (
-              <Link key={ticket.id} href={`/admin/support/${ticket.id}`} className={cn("flex min-h-14 flex-col gap-1 border-b border-surface-sunken px-5 py-2 text-body transition-colors last:border-b-0 hover:bg-cream/60", GRID)}>
+              <Link key={ticket.id} href={`/admin/support/${ticket.id}`} className={cn("flex min-h-14 flex-col gap-1 border-b border-divider px-5 py-2 text-body transition-colors last:border-b-0 hover:bg-hover", GRID)}>
                 <span className="font-mono text-small font-semibold text-ink-2">#{ticket.id.slice(0, 6)}</span>
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-semibold text-ink">{ticket.subject}</span>

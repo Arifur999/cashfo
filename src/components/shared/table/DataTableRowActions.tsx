@@ -40,7 +40,7 @@ const DataTableRowActions = <TData,>({ row, actions, variant = "ghost" }: DataTa
         <Button
           variant={variant}
           size="icon-sm"
-          className={variant === "outline" ? "rounded-md border-line-strong bg-surface text-ink hover:bg-cream data-[state=open]:bg-cream" : "data-[state=open]:bg-muted"}
+          className={variant === "outline" ? "rounded-md border-line-strong bg-surface text-ink hover:bg-surface-sunken data-[state=open]:bg-surface-sunken" : "data-[state=open]:bg-muted"}
           aria-label={translate("Open row actions")}
           // Keeps a row-level onRowClick from firing as well.
           onClick={(event) => event.stopPropagation()}

@@ -89,7 +89,7 @@ export function MemberPicker({ members, value, onChange, currency, balances, exc
             const line = balanceLine(member);
             return (
               <li key={member.id} role="option" aria-selected={on}>
-                <button type="button" onClick={() => pick(member.id)} className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-cream", on && "bg-mint-50")}>
+                <button type="button" onClick={() => pick(member.id)} className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-hover", on && "bg-mint-50")}>
                   <PersonAvatar name={member.name} src={member.photoUrl} size={30} coloured />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-body font-semibold text-ink">{member.name}</span>

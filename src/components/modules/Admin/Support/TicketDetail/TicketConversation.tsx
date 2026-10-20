@@ -17,7 +17,7 @@ interface TicketConversationProps {
   onSetStatus?: (status: TicketStatus) => void;
 }
 
-// The thread on a cream ground, and the reply box under it.
+// The thread on the strip ground, and the reply box under it.
 const TicketConversation = ({ ticket, admins, currentAdminId, canReply, onSetStatus }: TicketConversationProps) => {
   // A sent reply shows at once; the refetched thread replaces it when the
   // request settles.
@@ -33,7 +33,7 @@ const TicketConversation = ({ ticket, admins, currentAdminId, canReply, onSetSta
 
   return (
     <>
-      <div className="flex flex-col gap-4 bg-cream p-5">
+      <div className="flex flex-col gap-4 bg-strip p-5">
         {messages.length === 0 ? (
           <p className="py-8 text-center text-small text-ink-muted"><T>No messages yet.</T></p>
         ) : (

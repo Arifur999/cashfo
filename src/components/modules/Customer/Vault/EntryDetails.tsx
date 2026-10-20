@@ -137,7 +137,7 @@ export function EntryDetails({ entry, token, issues, onLocked, onCopy, onFavorit
         <span className="flex min-w-0 flex-1 flex-col gap-0.75">
           <h2 className="flex min-w-0 items-center gap-2 text-h3 font-semibold text-ink">
             <span className="truncate">{entry.title}</span>
-            <button type="button" onClick={onFavorite} aria-pressed={entry.isFavorite} aria-label={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} title={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} className="flex size-7 shrink-0 items-center justify-center rounded-sm hover:bg-cream">
+            <button type="button" onClick={onFavorite} aria-pressed={entry.isFavorite} aria-label={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} title={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} className="flex size-7 shrink-0 items-center justify-center rounded-sm hover:bg-surface-sunken">
               <Star className={cn("size-4.5", entry.isFavorite ? "fill-warning-fill text-warning-fill" : "text-ink-muted")} aria-hidden="true" />
             </button>
           </h2>
@@ -152,9 +152,9 @@ export function EntryDetails({ entry, token, issues, onLocked, onCopy, onFavorit
           <span>{warnings.join(" ")}</span>
         </div>
       )}
-      <dl className="flex flex-col border-t border-surface-sunken">
+      <dl className="flex flex-col border-t border-divider">
         {rows.map((row) => (
-          <div key={row.label} className="flex items-center gap-3 border-b border-surface-sunken px-5 py-3">
+          <div key={row.label} className="flex items-center gap-3 border-b border-divider px-5 py-3">
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <dt className="text-caption text-ink-muted">{row.label}</dt>
               <dd className="truncate text-body font-medium text-ink">{row.value}</dd>
@@ -164,7 +164,7 @@ export function EntryDetails({ entry, token, issues, onLocked, onCopy, onFavorit
         ))}
       </dl>
       {entry.notes && (
-        <div className="flex flex-col gap-2 border-b border-surface-sunken px-5 py-3">
+        <div className="flex flex-col gap-2 border-b border-divider px-5 py-3">
           <span className="text-caption text-ink-muted">{t("Notes")}</span>
           <span className="text-body leading-normal whitespace-pre-wrap text-ink-2">{entry.notes}</span>
         </div>

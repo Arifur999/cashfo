@@ -241,7 +241,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
           </form>
 
           {count.total === 0 ? (
-            <div className="flex flex-col items-center gap-2 border-t border-surface-sunken px-8 py-10 text-center">
+            <div className="flex flex-col items-center gap-2 border-t border-divider px-8 py-10 text-center">
               <span className="flex size-12 items-center justify-center rounded-full bg-pillar-habits-soft text-pillar-habits">
                 <ListChecks className="size-5.5" aria-hidden="true" />
               </span>
@@ -253,12 +253,12 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
               (group) =>
                 group.items.length > 0 && (
                   <div key={group.key} className="flex flex-col">
-                    <div className="flex items-center gap-2 border-y border-line bg-cream px-5 py-2 text-caption font-semibold text-ink-muted">
+                    <div className="flex items-center gap-2 border-y border-line bg-table-head px-5 py-2 text-caption font-semibold text-ink-muted">
                       {group.title}
                       <span className="rounded-full bg-surface-sunken px-2 text-ink-2 tabular-nums">{group.items.length}</span>
                     </div>
                     {group.items.map((item) => (
-                      <div key={item.id} className="flex min-h-15 items-center gap-3 border-b border-surface-sunken px-5 py-2 last:border-b-0">
+                      <div key={item.id} className="flex min-h-15 items-center gap-3 border-b border-divider px-5 py-2 last:border-b-0">
                         <button type="button" role="checkbox" aria-checked={item.completed} aria-label={item.text} disabled={busy.has(item.id)} onClick={() => toggle(item)} className={cn("flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors disabled:opacity-50", item.completed ? "bg-emerald text-white" : "border-[1.5px] border-line-strong bg-surface hover:border-emerald")}>
                           {item.completed && <Check className="size-3.5" strokeWidth={3.5} aria-hidden="true" />}
                         </button>
@@ -273,11 +273,11 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
                           </Button>
                         )}
                         <DropdownMenu>
-                          <DropdownMenuTrigger aria-label={`${t("More for")} ${item.text}`} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+                          <DropdownMenuTrigger aria-label={`${t("More for")} ${item.text}`} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
                             <MoreVertical className="size-4" aria-hidden="true" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                            <DropdownMenuItem onSelect={() => setEditing(item)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                            <DropdownMenuItem onSelect={() => setEditing(item)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                               <Pencil className="size-4" aria-hidden="true" />
                               {t("Edit")}
                             </DropdownMenuItem>
@@ -295,7 +295,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
           )}
 
           {count.total > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-cream px-5 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-strip px-5 py-3">
               <span className="text-small text-ink-2">{open.length === 0 ? t("Everything is done for this day.") : `${open.length} ${t(open.length === 1 ? "task is still open." : "tasks are still open.")}`}</span>
               {open.length > 0 && canMoveOn && (
                 <Button variant="secondary" size="sm" onClick={moveAll} disabled={busy.has("all")}>

@@ -3,7 +3,7 @@ import { formatNumber } from "@/lib/number";
 import type { IOwnerDetail } from "@/types/owner.types";
 import { getTranslator } from "@/lib/i18n/locale";
 
-// Four small figures on cream tiles, as the design draws a person's
+// Four small figures on strip tiles, as the design draws a person's
 // overview: workspaces, plan, since when, last seen.
 const OwnerSummaryStats = async ({ owner }: { owner: IOwnerDetail }) => {
   const { t } = await getTranslator("admin");
@@ -21,7 +21,7 @@ const OwnerSummaryStats = async ({ owner }: { owner: IOwnerDetail }) => {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {tiles.map((tile) => (
-        <div key={tile.label} className="flex flex-col gap-0.5 rounded-md border border-surface-sunken bg-cream px-4 py-3">
+        <div key={tile.label} className="flex flex-col gap-0.5 rounded-md border border-divider bg-strip px-4 py-3">
           <span className="text-caption text-ink-muted">{t(tile.label)}</span>
           <span className="truncate text-h3 text-ink tabular-nums">{tile.value}</span>
           <span className="truncate text-caption text-ink-muted">{tile.sub}</span>

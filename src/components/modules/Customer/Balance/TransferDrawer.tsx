@@ -153,7 +153,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
                   disabled={!from || !to}
                   aria-label={t("Swap From and To")}
                   title={t("Swap")}
-                  className="relative z-10 flex size-9 items-center justify-center rounded-full border border-line-strong bg-surface text-emerald shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-cream disabled:opacity-60"
+                  className="relative z-10 flex size-9 items-center justify-center rounded-full border border-line-strong bg-surface text-emerald shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-surface-sunken disabled:opacity-60"
                 >
                   <ArrowUpDown className="size-4" strokeWidth={2.25} aria-hidden="true" />
                 </button>
@@ -194,7 +194,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
             </div>
 
             {from && to && value > 0 && (
-              <div className="flex flex-col gap-3 rounded-md border border-line bg-cream p-4 text-body tabular-nums">
+              <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4 text-body tabular-nums">
                 <span className="text-caption font-semibold text-ink-muted">{t("After this transfer")}</span>
                 {afterRow(from, -value)}
                 {afterRow(to, value)}

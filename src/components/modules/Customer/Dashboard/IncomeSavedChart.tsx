@@ -27,7 +27,7 @@ interface IncomeSavedChartProps {
 }
 
 // "Income and what you kept": two bars a month for the last six months,
-// the current month on a cream band, and a line under it that says how
+// the current month on a strip band, and a line under it that says how
 // this month compares.
 export function IncomeSavedChart({ points, currency, monthName, className }: IncomeSavedChartProps) {
   const { t } = useLocale();
@@ -76,7 +76,7 @@ export function IncomeSavedChart({ points, currency, monthName, className }: Inc
               <div
                 key={point.month}
                 title={`${point.month}: ${t("income")} ${formatCurrency(point.income, currency)}, ${t("saved")} ${formatCurrency(point.savings, currency)}`}
-                className={cn("flex h-full items-end justify-center gap-2 rounded-t-md", isCurrent && "bg-cream")}
+                className={cn("flex h-full items-end justify-center gap-2 rounded-t-md", isCurrent && "bg-strip")}
               >
                 <span className="w-5.5 rounded-t-sm bg-chart-income" style={{ height: income }} />
                 <span className="w-5.5 rounded-t-sm bg-chart-savings" style={{ height: saved }} />

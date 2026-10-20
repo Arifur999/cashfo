@@ -82,7 +82,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
             </Button>
           </div>
         </div>
-        <div className={cn("hidden items-center gap-4 border-y border-line bg-cream px-5 py-2 text-caption font-medium text-ink-muted md:grid", row)}>
+        <div className={cn("hidden items-center gap-4 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", row)}>
           <span>{t("Member")}</span>
           <span>{t("Phone")}</span>
           <span>{t("Member since")}</span>
@@ -102,7 +102,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
         {shown.map((member) => {
           const active = member.status === "ACTIVE";
           return (
-            <div key={member.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-surface-sunken px-5 py-3 text-body tabular-nums md:min-h-15.5 md:gap-4 md:py-0", row)}>
+            <div key={member.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-divider px-5 py-3 text-body tabular-nums md:min-h-15.5 md:gap-4 md:py-0", row)}>
               <span className="flex min-w-0 items-center gap-3">
                 <PersonAvatar name={member.name} src={member.photoUrl} size={36} coloured className={cn(!active && "opacity-60")} />
                 <span className="flex min-w-0 flex-col gap-0.5">
@@ -121,15 +121,15 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                   {t("Statement")}
                 </Button>
                 <DropdownMenu>
-                  <DropdownMenuTrigger aria-label={`${t("More actions for")} ${member.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+                  <DropdownMenuTrigger aria-label={`${t("More actions for")} ${member.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
                     <MoreVertical className="size-4.5" aria-hidden="true" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                    <DropdownMenuItem onSelect={() => onEdit(member)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                    <DropdownMenuItem onSelect={() => onEdit(member)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                       <Pencil className="size-4" aria-hidden="true" />
                       {t("Edit")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => onToggleStatus(member)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                    <DropdownMenuItem onSelect={() => onToggleStatus(member)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                       {active ? <Archive className="size-4" aria-hidden="true" /> : <ArchiveRestore className="size-4" aria-hidden="true" />}
                       {t(active ? "Archive" : "Bring back")}
                     </DropdownMenuItem>
@@ -144,7 +144,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
           );
         })}
         {archived.length > 0 && filter !== "ARCHIVED" && (
-          <div className="flex items-start gap-3 bg-cream px-5 py-3 text-small text-ink-2">
+          <div className="flex items-start gap-3 bg-strip px-5 py-3 text-small text-ink-2">
             <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
             <span>
               <b className="font-semibold text-ink">{archived.map((m) => m.name).join(", ")}</b> {t(archived.length === 1 ? "is archived. Their past months still count; from now on they are left out of every split." : "are archived. Their past months still count; from now on they are left out of every split.")}

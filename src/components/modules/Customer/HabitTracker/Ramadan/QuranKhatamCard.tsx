@@ -58,7 +58,7 @@ export function QuranKhatamCard({ sheet, window, days, onParas, saving }: QuranK
       </div>
 
       {day !== null && (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-cream px-3 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-3 py-2">
           <label className="flex min-w-0 items-center gap-2 text-small font-semibold text-ink-2">
             {t("Paras on")}
             <NativeSelect size="sm" value={day} onChange={(event) => setPicked(Number(event.target.value))} aria-label={t("Day")}>
@@ -73,13 +73,13 @@ export function QuranKhatamCard({ sheet, window, days, onParas, saving }: QuranK
             </NativeSelect>
           </label>
           <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface">
-            <button type="button" aria-label={t("One para less")} disabled={saving || paras === 0} onClick={() => onParas(day, paras - 1)} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-cream disabled:opacity-40">
+            <button type="button" aria-label={t("One para less")} disabled={saving || paras === 0} onClick={() => onParas(day, paras - 1)} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken disabled:opacity-40">
               <Minus className="size-4" aria-hidden="true" />
             </button>
             <span aria-live="polite" className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">
               {paras}
             </span>
-            <button type="button" aria-label={t("One para more")} disabled={saving || paras === QURAN_PARAS} onClick={() => onParas(day, paras + 1)} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-cream disabled:opacity-40">
+            <button type="button" aria-label={t("One para more")} disabled={saving || paras === QURAN_PARAS} onClick={() => onParas(day, paras + 1)} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken disabled:opacity-40">
               <Plus className="size-4" aria-hidden="true" />
             </button>
           </span>

@@ -19,7 +19,7 @@ const VariableChips = ({ variables, onPick }: { variables: string[]; onPick: (pl
             key={name}
             type="button"
             onClick={() => onPick(placeholder)}
-            className="h-7 rounded-full border border-line-strong bg-cream px-3 font-mono text-caption text-ink-2 hover:bg-surface-sunken"
+            className="h-7 rounded-full border border-line-strong bg-strip px-3 font-mono text-caption text-ink-2 hover:bg-surface-sunken"
           >
             {placeholder}
           </button>

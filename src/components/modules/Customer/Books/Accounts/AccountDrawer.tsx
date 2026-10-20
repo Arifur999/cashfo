@@ -210,7 +210,7 @@ export function AccountDrawer({ open, editing, accounts, businessId, preferredLa
         )}
 
         {editing && !reserved && (
-          <div className="mt-2 flex flex-col gap-3 rounded-md border border-line bg-cream p-4">
+          <div className="mt-2 flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
             <span className="flex flex-col gap-0.5">
               <b className="text-body font-semibold text-ink">{t(editing.status === "ARCHIVED" ? "This account is archived" : "Archive or remove")}</b>
               <span className="text-small text-ink-muted">{t(editing.status === "ARCHIVED" ? "It stays in the books but can't take new entries. Bring it back any time." : "An archived account keeps its history but takes no new entries. Removing is only possible while it has none.")}</span>
