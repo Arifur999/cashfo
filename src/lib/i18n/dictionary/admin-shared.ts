@@ -141,4 +141,31 @@ export const adminSharedDictionary: Record<string, string> = {
   "Copy {label}": "{label} কপি করুন",
   "Page {page}": "পাতা {page}",
   "Export CSV": "CSV এক্সপোর্ট",
+
+  // The top bar's search (Ctrl K)
+  "Search people, payments, tickets": "মানুষ, পেমেন্ট, টিকেট খুঁজুন",
+  "Search people, payments, tickets…": "মানুষ, পেমেন্ট, টিকেট খুঁজুন…",
+  "Searches names, emails, phone numbers, payment and ticket IDs": "নাম, ইমেইল, ফোন নম্বর, পেমেন্ট আর টিকেটের আইডিতে খোঁজে",
+  "Type a name, email, phone, payment or ticket ID.": "নাম, ইমেইল, ফোন, পেমেন্ট বা টিকেটের আইডি লিখুন।",
+  "Nothing found for “{query}”.": "“{query}”-এর জন্য কিছু পাওয়া যায়নি।",
+  "↑ ↓ to move": "↑ ↓ দিয়ে সরুন",
+  "Enter to open": "Enter চেপে খুলুন",
+  "trial ends {date}": "ট্রায়াল শেষ {date}",
+
+  // The top bar's bell
+  "Nothing needs you right now.": "এখন আপনার কিছু করার নেই।",
+  "Only what your role can act on is shown here.": "এখানে শুধু আপনার রোল যা করতে পারে তা-ই দেখায়।",
+  "Payment failed: {name}": "পেমেন্ট ব্যর্থ: {name}",
+  "a customer": "একজন গ্রাহক",
+  "Ticket {id} waiting {count} hour": "টিকেট {id} {count} ঘণ্টা ধরে অপেক্ষায়",
+  "Ticket {id} waiting {count} hours": "টিকেট {id} {count} ঘণ্টা ধরে অপেক্ষায়",
+  "Ticket {id} waiting {count} day": "টিকেট {id} {count} দিন ধরে অপেক্ষায়",
+  "Ticket {id} waiting {count} days": "টিকেট {id} {count} দিন ধরে অপেক্ষায়",
+  "Security flag: {what}": "নিরাপত্তা সতর্কতা: {what}",
+  "Sign-ins paused for {email}": "{email}-এর সাইন ইন থামানো আছে",
+  "Too many tries from {ip}; open again at {time}": "{ip} থেকে অনেকবার চেষ্টা; {time}-এ আবার খুলবে",
+  "{count} new error in 24 hours": "২৪ ঘণ্টায় {count}টি নতুন এরর",
+  "{count} new errors in 24 hours": "২৪ ঘণ্টায় {count}টি নতুন এরর",
+  "{count} high": "{count}টি গুরুতর",
+  "most from {source}": "বেশিরভাগ {source} থেকে",
 };
