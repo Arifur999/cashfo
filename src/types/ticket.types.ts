@@ -18,6 +18,9 @@ export interface ITicketMessage {
   senderId: string;
   message: string;
   attachmentUrl: string | null;
+  // A screenshot the customer attached in the app, opened through
+  // /api/support-attachments/<id>.
+  attachment?: { id: string; mimeType: string; size: number } | null;
   createdAt: string;
 }
 

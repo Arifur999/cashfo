@@ -50,7 +50,7 @@ export interface CurrentUser {
 
 // The bell's feed (GET /api/notifications). The text is built in the app
 // from `data` (lib/customer/notificationDisplay.ts), in either language.
-export type UserNotificationType = "BUDGET" | "LOAN_DUE" | "SAVINGS" | "ANNOUNCEMENT";
+export type UserNotificationType = "BUDGET" | "LOAN_DUE" | "SAVINGS" | "ANNOUNCEMENT" | "SUPPORT_REPLY";
 
 export interface UserNotification {
   id: string;
@@ -72,6 +72,44 @@ export interface ReminderPreferences {
   budget: boolean;
   loans: boolean;
   savings: boolean;
+}
+
+// Settings > Help: messages to the support team (/api/support/messages).
+export type SupportTopic = "TECHNICAL" | "BUG_REPORT" | "ACCOUNT" | "BILLING" | "OTHER";
+export type SupportStatus = "OPEN" | "IN_PROGRESS" | "WAITING_ON_USER" | "RESOLVED" | "CLOSED";
+
+export interface SupportMessage {
+  id: string;
+  senderType: "USER" | "ADMIN";
+  message: string;
+  // A screenshot, opened through /api/support-attachments/<id>.
+  attachmentId: string | null;
+  createdAt: string;
+}
+
+export interface SupportConversation {
+  id: string;
+  subject: string;
+  category: SupportTopic | "FEATURE_REQUEST";
+  status: SupportStatus;
+  createdAt: string;
+  updatedAt: string;
+  messages: SupportMessage[];
+}
+
+// Settings > Help > Have an idea? (/api/support/ideas).
+export type IdeaStatus = "SUBMITTED" | "UNDER_REVIEW" | "PLANNED" | "IN_PROGRESS" | "SHIPPED" | "DECLINED";
+
+export interface FeatureIdea {
+  id: string;
+  title: string;
+  description: string;
+  status: IdeaStatus;
+  voteCount: number;
+  voted: boolean;
+  // The customer suggested it.
+  mine: boolean;
+  createdAt: string;
 }
 
 // Settings > Security > Device Management. isCurrent is a best-effort

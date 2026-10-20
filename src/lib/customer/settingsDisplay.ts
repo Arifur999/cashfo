@@ -95,18 +95,20 @@ export interface Guide {
   title: string;
   body: string;
   faqId: string;
-  tone: "money" | "income" | "warning" | "loans";
+  tone: "money" | "warning" | "rose";
+  // How long it takes to read.
+  minutes: number;
 }
 
 export const GUIDES: Guide[] = [
-  { title: "Getting started", body: "Add your wallets, record a transaction and read the dashboard.", faqId: "transfer", tone: "money" },
-  { title: "Budgets that work", body: "Set a limit for each category and see what is left.", faqId: "void", tone: "income" },
-  { title: "Group expenses for families and messes", body: "Shares, settling up and closing the month.", faqId: "group", tone: "warning" },
-  { title: "Keeping your passwords safe", body: "The vault password, Generate and one-tap copy.", faqId: "vault", tone: "loans" },
+  { title: "Getting started", body: "Add your wallets, record a transaction and read the dashboard.", faqId: "transfer", tone: "money", minutes: 4 },
+  { title: "Budgets that work", body: "Set a limit for each category and see what is left.", faqId: "void", tone: "money", minutes: 3 },
+  { title: "Group expenses for families and messes", body: "Shares, meals, settling up and closing the month.", faqId: "group", tone: "warning", minutes: 6 },
+  { title: "Keeping your passwords safe", body: "The vault password, Generate and the security checkup.", faqId: "vault", tone: "rose", minutes: 3 },
 ];
 
-export const LEGAL_LINKS: { title: string; href: string }[] = [
-  { title: "Terms of service", href: "/terms" },
-  { title: "Privacy policy", href: "/privacy" },
-  { title: "Refund policy", href: "/refund-policy" },
+export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" }[] = [
+  { title: "Terms of service", page: "terms" },
+  { title: "Privacy policy", page: "privacy" },
+  { title: "Refund policy", page: "refund-policy" },
 ];

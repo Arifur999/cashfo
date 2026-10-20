@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChartPie, Banknote, Megaphone, PiggyBank, Settings } from "lucide-react";
+import { Banknote, Bell, ChartPie, Megaphone, MessageCircle, PiggyBank, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useState, useTransition } from "react";
@@ -21,6 +21,7 @@ const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
   loan: { icon: Banknote, tone: "loans" },
   savings: { icon: PiggyBank, tone: "money" },
   announcement: { icon: Megaphone, tone: "info" },
+  support: { icon: MessageCircle, tone: "money" },
 };
 
 type Filter = "all" | "unread";
