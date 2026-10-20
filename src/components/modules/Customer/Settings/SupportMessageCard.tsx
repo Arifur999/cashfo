@@ -95,7 +95,7 @@ export function SupportMessageCard({ email, conversations, onSent, onOpenMessage
             </button>
           </span>
         ) : (
-          <button type="button" onClick={() => fileRef.current?.click()} className="flex h-9.5 items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-line-strong bg-surface text-small font-semibold text-ink-2 hover:bg-cream">
+          <button type="button" onClick={() => fileRef.current?.click()} className="flex h-9.5 items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-line-strong bg-surface text-small font-semibold text-ink-2 hover:bg-surface-sunken">
             <Paperclip className="size-3.5" aria-hidden="true" />
             {t("Attach a screenshot")}
           </button>

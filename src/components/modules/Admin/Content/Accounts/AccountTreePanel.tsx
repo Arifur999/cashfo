@@ -119,7 +119,7 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
         {canManage && (
           <CreateAccountTemplateDialog
             trigger={
-              <Button variant="outline" size="sm" className="h-8.5 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-cream">
+              <Button variant="outline" size="sm" className="h-8.5 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-surface-sunken">
                 <Plus aria-hidden="true" />
                 <T>Add</T>
               </Button>

@@ -103,11 +103,11 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         actions={
           <>
             <div role="group" aria-label={t("Day")} className="flex h-10 items-center overflow-hidden rounded-md border border-line-strong bg-surface">
-              <button type="button" onClick={() => goTo(shiftDay(day, -1))} aria-label={t("Previous day")} className="flex size-9.5 items-center justify-center text-ink-2 hover:bg-cream">
+              <button type="button" onClick={() => goTo(shiftDay(day, -1))} aria-label={t("Previous day")} className="flex size-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken">
                 <ChevronLeft className="size-4" aria-hidden="true" />
               </button>
               <span className="px-3 text-body font-semibold whitespace-nowrap text-ink">{isToday ? `${t("Today")}, ` : ""}{formatDate(day, "EEE d MMM")}</span>
-              <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex size-9.5 items-center justify-center text-ink-2 hover:bg-cream disabled:cursor-not-allowed disabled:opacity-40">
+              <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex size-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40">
                 <ChevronRight className="size-4" aria-hidden="true" />
               </button>
             </div>
@@ -211,7 +211,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
                     ) : counted ? (
                       <span className="flex flex-col items-end gap-1">
                         <span className="flex items-center gap-2">
-                          <button type="button" onClick={() => count(habit, -1)} disabled={isPending || value === 0} aria-label={`${t("One less")} ${habit.unit ?? ""}`} className="flex size-7.5 items-center justify-center rounded-md border border-line-strong bg-surface text-ink-2 hover:bg-cream disabled:opacity-40">
+                          <button type="button" onClick={() => count(habit, -1)} disabled={isPending || value === 0} aria-label={`${t("One less")} ${habit.unit ?? ""}`} className="flex size-7.5 items-center justify-center rounded-md border border-line-strong bg-surface text-ink-2 hover:bg-surface-sunken disabled:opacity-40">
                             <Minus className="size-3.5" aria-hidden="true" />
                           </button>
                           <span className="min-w-11 text-center text-body font-bold text-ink tabular-nums">

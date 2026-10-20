@@ -18,7 +18,7 @@ const CreateTicketDialog = () => {
       title="New ticket"
       description="Log an issue on a user's behalf -- from a call or an email, say."
       trigger={
-        <Button variant="outline" size="lg" className="border-line-strong bg-surface font-semibold text-ink hover:bg-cream">
+        <Button variant="outline" size="lg" className="border-line-strong bg-surface font-semibold text-ink hover:bg-surface-sunken">
           <T>New ticket</T>
         </Button>
       }

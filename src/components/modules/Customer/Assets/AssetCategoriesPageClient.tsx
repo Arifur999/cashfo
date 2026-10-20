@@ -78,7 +78,7 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
                 </span>
                 {canManage && (
                   <span className="flex gap-0.5">
-                    <button type="button" onClick={() => setDrawer(category)} aria-label={`${t("Edit")} ${category.name}`} title={t("Edit")} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-cream">
+                    <button type="button" onClick={() => setDrawer(category)} aria-label={`${t("Edit")} ${category.name}`} title={t("Edit")} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken">
                       <Pencil className="size-3.75" aria-hidden="true" />
                     </button>
                     <button type="button" onClick={() => remove(category)} aria-label={`${t("Delete")} ${category.name}`} title={t("Delete")} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-expense-soft hover:text-expense">

@@ -124,7 +124,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                 <GoalPicker id="st-from" goals={goals} options={open.filter((goal) => Number(goal.currentAmount) > 0)} value={fromId} onChange={setFromId} currency={currency} disabled={open.length < 2} />
               </div>
               <div className="-my-3.5 flex justify-center">
-                <button type="button" onClick={swap} aria-label={t("Swap From and To")} title={t("Swap")} className="relative z-10 flex size-8 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-cream">
+                <button type="button" onClick={swap} aria-label={t("Swap From and To")} title={t("Swap")} className="relative z-10 flex size-8 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-surface-sunken">
                   <ArrowUpDown className="size-3.5" aria-hidden="true" />
                 </button>
               </div>

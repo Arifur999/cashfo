@@ -109,7 +109,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold text-ink hover:bg-cream"
+          className="h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold text-ink hover:bg-surface-sunken"
           onClick={() => onEdit(row.original)}
         >
           <T>Edit</T>

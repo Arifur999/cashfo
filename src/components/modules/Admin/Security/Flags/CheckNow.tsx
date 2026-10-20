@@ -39,7 +39,7 @@ const CheckNow = () => {
         type="button"
         variant="outline"
         size="lg"
-        className="border-line-strong bg-surface font-semibold text-ink hover:bg-cream"
+        className="border-line-strong bg-surface font-semibold text-ink hover:bg-surface-sunken"
         disabled={isPending}
         onClick={() => void run(undefined)}
       >

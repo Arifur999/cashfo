@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { DataTableSimplePager as SimplePagerConfig } from "./dataTable.types";
 
-const BUTTON = "h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold text-ink hover:bg-cream disabled:text-ink-muted disabled:opacity-100";
+const BUTTON = "h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold text-ink hover:bg-surface-sunken disabled:text-ink-muted disabled:opacity-100";
 
 interface DataTableSimplePagerProps<TData> {
   table: Table<TData>;

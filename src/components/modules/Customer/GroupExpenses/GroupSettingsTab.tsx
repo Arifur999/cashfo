@@ -199,7 +199,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
                   </option>
                 ))}
               </NativeSelect>
-              <button type="button" onClick={() => onEditCategory(category)} aria-label={`${t("Edit")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-cream hover:text-ink">
+              <button type="button" onClick={() => onEditCategory(category)} aria-label={`${t("Edit")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink">
                 <Pencil className="size-4" aria-hidden="true" />
               </button>
               <button type="button" onClick={() => onRemoveCategory(category)} aria-label={`${t("Delete")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-expense-soft hover:text-expense">

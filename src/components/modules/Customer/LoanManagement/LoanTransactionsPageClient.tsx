@@ -211,7 +211,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                     )}
                   </span>
                   <span className="hidden justify-end gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 md:flex print:hidden">
-                    <Link href={`/transactions/${transaction.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-7.5 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-cream">
+                    <Link href={`/transactions/${transaction.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-7.5 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-surface-sunken">
                       <Eye className="size-3.75" aria-hidden="true" />
                     </Link>
                     {canManage && transaction.voidable && (

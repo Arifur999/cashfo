@@ -105,7 +105,7 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
               {t("Add a row")}
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger aria-label={t("More")} className="flex size-10 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-cream data-open:bg-cream">
+              <DropdownMenuTrigger aria-label={t("More")} className="flex size-10 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-surface-sunken data-open:bg-cream">
                 <MoreVertical className="size-4.5" aria-hidden="true" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">

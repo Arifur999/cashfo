@@ -154,7 +154,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
           <div className="flex items-center justify-between">
             <span className="text-small font-medium text-ink-muted">{t("Monthly budget")}</span>
             {canManage && (
-              <button type="button" onClick={() => setTargetOpen(true)} aria-label={t("Edit monthly budget")} title={t("Edit monthly budget")} className="flex size-7.5 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-cream">
+              <button type="button" onClick={() => setTargetOpen(true)} aria-label={t("Edit monthly budget")} title={t("Edit monthly budget")} className="flex size-7.5 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken">
                 <Pencil className="size-3.5" aria-hidden="true" />
               </button>
             )}
@@ -313,7 +313,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
                 </span>
                 {canManage && (
                   <DropdownMenu>
-                    <DropdownMenuTrigger aria-label={`${t("More for")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+                    <DropdownMenuTrigger aria-label={`${t("More for")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-cream">
                       <MoreHorizontal className="size-4.5" aria-hidden="true" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">

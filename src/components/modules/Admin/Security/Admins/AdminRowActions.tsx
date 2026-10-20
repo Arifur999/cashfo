@@ -29,7 +29,7 @@ const AdminRowActions = ({ admin, isSelf, onOpen }: AdminRowActionsProps) => {
         type="button"
         variant="outline"
         size="sm"
-        className="h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold whitespace-nowrap text-ink hover:bg-cream"
+        className="h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken"
         onClick={() => onOpen(primary.dialog, admin)}
       >
         <T>{primary.label}</T>

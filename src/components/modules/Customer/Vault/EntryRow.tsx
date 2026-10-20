@@ -18,7 +18,7 @@ interface EntryRowProps {
   onCopyPassword: () => void;
 }
 
-const ICON_BUTTON = "flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-cream hover:text-ink disabled:opacity-40 md:size-8 md:text-ink-muted [&_svg]:size-4.5 md:[&_svg]:size-4";
+const ICON_BUTTON = "flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken hover:text-ink disabled:opacity-40 md:size-8 md:text-ink-muted [&_svg]:size-4.5 md:[&_svg]:size-4";
 
 // One login in the list: a letter, the name and the username, and copy
 // buttons for the username (a person) and the password (a key). Phones get

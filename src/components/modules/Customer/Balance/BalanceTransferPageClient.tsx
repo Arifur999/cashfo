@@ -183,7 +183,7 @@ export function BalanceTransferPageClient({ businessId, transfers, complete, wal
                   </span>
                   <span className={cn("row-start-1 text-right font-semibold text-info tabular-nums md:row-start-auto", voided && "line-through")}>{formatCurrency(transferAmount(transfer), currency)}</span>
                   <span className="hidden justify-end gap-1 md:flex print:hidden">
-                    <Link href={`/transactions/${transfer.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md text-ink-2 hover:bg-cream">
+                    <Link href={`/transactions/${transfer.id}`} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken">
                       <Eye className="size-4" aria-hidden="true" />
                     </Link>
                     {canManage && transfer.voidable && (

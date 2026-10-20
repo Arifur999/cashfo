@@ -22,7 +22,7 @@ interface HelpSectionProps {
   conversations: SupportConversation[];
 }
 
-const PILL = "h-7.5 rounded-full border border-line-strong bg-surface px-3 text-small font-semibold text-ink-2 hover:bg-cream";
+const PILL = "h-7.5 rounded-full border border-line-strong bg-surface px-3 text-small font-semibold text-ink-2 hover:bg-surface-sunken";
 
 // The questions people ask most, searchable; a message to support with a
 // screenshot; ideas to vote on; and the shortcuts.

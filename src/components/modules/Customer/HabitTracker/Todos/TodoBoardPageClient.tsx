@@ -273,7 +273,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
                           </Button>
                         )}
                         <DropdownMenu>
-                          <DropdownMenuTrigger aria-label={`${t("More for")} ${item.text}`} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+                          <DropdownMenuTrigger aria-label={`${t("More for")} ${item.text}`} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-cream">
                             <MoreVertical className="size-4" aria-hidden="true" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">

@@ -268,7 +268,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
               {VIEWS.map((item) => {
                 const on = view === item.value;
                 return (
-                  <button key={item.value || "all"} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(item.value)} className={cn("flex h-9.5 items-center gap-3 rounded-md px-3 text-body", on ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-cream")}>
+                  <button key={item.value || "all"} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(item.value)} className={cn("flex h-9.5 items-center gap-3 rounded-md px-3 text-body", on ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken")}>
                     <item.icon className={cn("size-4", !on && (item.warn ? "text-warning" : "text-ink-muted"))} aria-hidden="true" />
                     <span className="flex-1 text-left">{t(item.label)}</span>
                     <span className={cn("min-w-5.5 rounded-full px-2 text-center text-caption font-semibold", on ? "bg-surface text-emerald" : item.warn ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}>{item.count}</span>
@@ -280,7 +280,7 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
                 const Icon = VAULT_CATEGORY_ICONS[value];
                 const on = view === value;
                 return (
-                  <button key={value} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(on ? "" : value)} className={cn("flex h-9 items-center gap-3 rounded-md px-3 text-body font-medium", on ? "bg-mint-50 text-emerald" : "text-ink-2 hover:bg-cream")}>
+                  <button key={value} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(on ? "" : value)} className={cn("flex h-9 items-center gap-3 rounded-md px-3 text-body font-medium", on ? "bg-mint-50 text-emerald" : "text-ink-2 hover:bg-surface-sunken")}>
                     <span className={cn("flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5", SOFT_TONE[VAULT_CATEGORY_TONE[value]])}>
                       <Icon aria-hidden="true" />
                     </span>

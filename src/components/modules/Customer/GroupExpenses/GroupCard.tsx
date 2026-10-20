@@ -77,7 +77,7 @@ export function GroupCard({ group, monthKey, monthEnded, onDelete }: GroupCardPr
           </div>
         </div>
         <DropdownMenu>
-          <DropdownMenuTrigger aria-label={`${t("More actions for")} ${workspace.name}`} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+          <DropdownMenuTrigger aria-label={`${t("More actions for")} ${workspace.name}`} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-cream">
             <MoreVertical className="size-4.5" aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">

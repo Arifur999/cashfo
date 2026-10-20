@@ -270,7 +270,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
         className={cn("text-right", row.cancelled && "text-ink-muted line-through")}
       />
       <span className="flex justify-end gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-        <Link href={href} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-cream">
+        <Link href={href} aria-label={t("View details")} title={t("View details")} className="flex size-8 items-center justify-center rounded-md bg-surface text-ink-2 shadow-[0_0_0_1px_var(--line)] hover:bg-surface-sunken">
           <Eye className="size-3.75" aria-hidden="true" />
         </Link>
         {canManage && row.transaction.voidable && (

@@ -105,7 +105,7 @@ const ConfirmBody = ({
       )}
       {/* The design's dialog foot: a cream strip across the bottom of the card. */}
       <AlertDialogFooter className="mt-0 flex-row items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
-        <AlertDialogCancel disabled={isPending} className={cn(BUTTON, "border-line-strong bg-surface text-ink hover:bg-cream")}>
+        <AlertDialogCancel disabled={isPending} className={cn(BUTTON, "border-line-strong bg-surface text-ink hover:bg-surface-sunken")}>
           {translate("Cancel")}
         </AlertDialogCancel>
         <AlertDialogAction

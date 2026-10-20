@@ -87,12 +87,12 @@ const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, o
 
       {canManage && (
         <div className="mt-auto flex gap-2 border-t border-surface-sunken pt-3">
-          <Button variant="outline" size="sm" className="h-9 flex-1 border-line-strong bg-surface text-small font-semibold text-ink hover:bg-cream" onClick={onEdit}>
+          <Button variant="outline" size="sm" className="h-9 flex-1 border-line-strong bg-surface text-small font-semibold text-ink hover:bg-surface-sunken" onClick={onEdit}>
             <T>Edit plan</T>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon-sm" className="size-9 border-line-strong bg-surface text-ink hover:bg-cream data-[state=open]:bg-cream" aria-label={translate("More for {name}", { name: plan.name })}>
+              <Button variant="outline" size="icon-sm" className="size-9 border-line-strong bg-surface text-ink hover:bg-surface-sunken data-[state=open]:bg-cream" aria-label={translate("More for {name}", { name: plan.name })}>
                 <MoreHorizontal aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>

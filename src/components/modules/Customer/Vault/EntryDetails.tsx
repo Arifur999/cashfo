@@ -137,7 +137,7 @@ export function EntryDetails({ entry, token, issues, onLocked, onCopy, onFavorit
         <span className="flex min-w-0 flex-1 flex-col gap-0.75">
           <h2 className="flex min-w-0 items-center gap-2 text-h3 font-semibold text-ink">
             <span className="truncate">{entry.title}</span>
-            <button type="button" onClick={onFavorite} aria-pressed={entry.isFavorite} aria-label={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} title={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} className="flex size-7 shrink-0 items-center justify-center rounded-sm hover:bg-cream">
+            <button type="button" onClick={onFavorite} aria-pressed={entry.isFavorite} aria-label={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} title={t(entry.isFavorite ? "Remove from favorites" : "Add to favorites")} className="flex size-7 shrink-0 items-center justify-center rounded-sm hover:bg-surface-sunken">
               <Star className={cn("size-4.5", entry.isFavorite ? "fill-warning-fill text-warning-fill" : "text-ink-muted")} aria-hidden="true" />
             </button>
           </h2>

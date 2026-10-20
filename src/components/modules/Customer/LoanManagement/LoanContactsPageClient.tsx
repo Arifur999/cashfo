@@ -141,7 +141,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                     </span>
                     {canManage && (
                       <DropdownMenu>
-                        <DropdownMenuTrigger aria-label={`${t("Actions for")} ${contact.name}`} className="flex size-7.5 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-cream data-open:bg-cream">
+                        <DropdownMenuTrigger aria-label={`${t("Actions for")} ${contact.name}`} className="flex size-7.5 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken data-open:bg-cream">
                           <Ellipsis className="size-4.5" aria-hidden="true" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" sideOffset={6} className="w-49 rounded-md border border-line bg-surface p-2 shadow-overlay ring-0">

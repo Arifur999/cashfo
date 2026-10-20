@@ -171,7 +171,7 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
                   <span className="hidden text-right text-body text-ink-2 tabular-nums md:col-start-4 md:row-start-1 md:block">{thisYear[source.name] ? formatCurrency(thisYear[source.name], currency) : "—"}</span>
                   {canManage ? (
                     <DropdownMenu>
-                      <DropdownMenuTrigger aria-label={`${t("More for")} ${source.name}`} className="col-start-3 row-start-1 hidden size-10 items-center justify-center rounded-md text-ink-muted hover:bg-cream data-open:bg-cream md:col-start-5 md:flex">
+                      <DropdownMenuTrigger aria-label={`${t("More for")} ${source.name}`} className="col-start-3 row-start-1 hidden size-10 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-cream md:col-start-5 md:flex">
                         <MoreVertical className="size-4.5" aria-hidden="true" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">

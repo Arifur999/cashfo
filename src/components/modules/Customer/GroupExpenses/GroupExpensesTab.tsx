@@ -155,7 +155,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
               </span>
               <span className="text-right font-semibold text-ink">{formatCurrency(row.amount, currency)}</span>
               <DropdownMenu>
-                <DropdownMenuTrigger aria-label={t("Actions for this expense")} className="flex size-8 items-center justify-center justify-self-end rounded-md text-ink-muted hover:bg-cream data-open:bg-cream">
+                <DropdownMenuTrigger aria-label={t("Actions for this expense")} className="flex size-8 items-center justify-center justify-self-end rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-cream">
                   {view.closed ? <Lock className="size-4" aria-hidden="true" /> : <MoreVertical className="size-4.5" aria-hidden="true" />}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">

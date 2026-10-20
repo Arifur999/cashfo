@@ -23,7 +23,7 @@ interface EditableTextCellProps {
 }
 
 const TONE_CLASS = {
-  plain: "rounded-md px-2 py-1 hover:bg-cream",
+  plain: "rounded-md px-2 py-1 hover:bg-surface-sunken",
   box: "min-h-9 rounded-md border border-transparent bg-surface px-3 py-1.5 hover:border-line-strong",
   missing: "min-h-9 rounded-md border border-dashed border-warning-fill bg-warning-soft px-3 py-1.5 text-warning",
 } as const;
