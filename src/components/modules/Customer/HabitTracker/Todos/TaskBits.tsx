@@ -53,7 +53,7 @@ export function PriorityMenu({ value, onChange, look = "label", className }: Pri
         aria-label={name}
         title={name}
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-surface-sunken data-open:bg-cream",
+          "flex shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken",
           look === "label" ? "h-10 gap-2 px-3 text-small font-semibold" : "size-9.5",
           className,
         )}

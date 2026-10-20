@@ -249,7 +249,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
           const rowClass = cn("flex w-full flex-col gap-2 px-4 py-4 text-left", index > 0 && "border-t border-surface-sunken");
           return canManage ? (
             <DropdownMenu key={category.id}>
-              <DropdownMenuTrigger aria-label={`${category.name}: ${t("actions")}`} className={cn(rowClass, "data-open:bg-cream/60")}>
+              <DropdownMenuTrigger aria-label={`${category.name}: ${t("actions")}`} className={cn(rowClass, "data-open:bg-hover")}>
                 {row}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
@@ -313,7 +313,7 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
                 </span>
                 {canManage && (
                   <DropdownMenu>
-                    <DropdownMenuTrigger aria-label={`${t("More for")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-cream">
+                    <DropdownMenuTrigger aria-label={`${t("More for")} ${category.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
                       <MoreHorizontal className="size-4.5" aria-hidden="true" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">

@@ -236,7 +236,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                       <span className="flex-1" />
                       {canManage && (
                         <DropdownMenu>
-                          <DropdownMenuTrigger aria-label={`${t("Actions for")} ${goal.name}`} className="flex size-7.5 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken data-open:bg-cream">
+                          <DropdownMenuTrigger aria-label={`${t("Actions for")} ${goal.name}`} className="flex size-7.5 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken data-open:bg-surface-sunken">
                             <Ellipsis className="size-4.5" aria-hidden="true" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" sideOffset={6} className="w-49 rounded-md border border-line bg-surface p-2 shadow-overlay ring-0">

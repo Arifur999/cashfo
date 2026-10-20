@@ -122,7 +122,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
               <span className={cn("hidden truncate md:block", row.note ? "text-ink-2" : "text-ink-muted")}>{row.note || "—"}</span>
               <span className={cn("text-right font-semibold", isReturn ? "text-expense" : "text-income")}>{formatSignedCurrency(amount, currency)}</span>
               <DropdownMenu>
-                <DropdownMenuTrigger aria-label={t("Actions for this entry")} className="flex size-8 items-center justify-center justify-self-end rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-cream">
+                <DropdownMenuTrigger aria-label={t("Actions for this entry")} className="flex size-8 items-center justify-center justify-self-end rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
                   {locked ? <Lock className="size-4" aria-hidden="true" /> : <MoreVertical className="size-4.5" aria-hidden="true" />}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">

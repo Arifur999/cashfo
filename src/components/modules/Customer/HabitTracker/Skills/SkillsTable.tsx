@@ -90,7 +90,7 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
         const palette = paletteFor(skill.color);
         return (
           <DropdownMenu key={skill.id}>
-            <DropdownMenuTrigger aria-label={`${skill.name}: ${t("actions")}`} className={cn("flex w-full flex-col gap-2 border-b border-surface-sunken px-5 py-3 text-left text-body text-ink transition-colors last:border-b-0 hover:bg-hover data-open:bg-cream/60 md:min-h-13.5 md:py-0", ROW)}>
+            <DropdownMenuTrigger aria-label={`${skill.name}: ${t("actions")}`} className={cn("flex w-full flex-col gap-2 border-b border-surface-sunken px-5 py-3 text-left text-body text-ink transition-colors last:border-b-0 hover:bg-hover data-open:bg-hover md:min-h-13.5 md:py-0", ROW)}>
               <span className="flex min-w-0 items-center gap-3">
                 <SkillTile icon={skill.icon} color={skill.color} size={30} />
                 <span className="truncate font-semibold">{skill.name}</span>

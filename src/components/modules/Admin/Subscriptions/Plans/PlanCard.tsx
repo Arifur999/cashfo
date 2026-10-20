@@ -92,7 +92,7 @@ const PlanCard = ({ plan, analytics, totalUsers, canManage, onEdit, onArchive, o
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon-sm" className="size-9 border-line-strong bg-surface text-ink hover:bg-surface-sunken data-[state=open]:bg-cream" aria-label={translate("More for {name}", { name: plan.name })}>
+              <Button variant="outline" size="icon-sm" className="size-9 border-line-strong bg-surface text-ink hover:bg-surface-sunken data-[state=open]:bg-surface-sunken" aria-label={translate("More for {name}", { name: plan.name })}>
                 <MoreHorizontal aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
