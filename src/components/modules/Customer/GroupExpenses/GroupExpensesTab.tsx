@@ -159,7 +159,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
                   {view.closed ? <Lock className="size-4" aria-hidden="true" /> : <MoreVertical className="size-4.5" aria-hidden="true" />}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                  <DropdownMenuItem onSelect={() => onEdit(row)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                  <DropdownMenuItem onSelect={() => onEdit(row)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                     <Pencil className="size-4" aria-hidden="true" />
                     {t("Edit")}
                   </DropdownMenuItem>

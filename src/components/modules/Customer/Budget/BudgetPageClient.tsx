@@ -253,10 +253,10 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
                 {row}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                   {t("Edit")}
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                   <Link href={`/transactions?type=EXPENSE&categoryId=${encodeURIComponent(category.name)}&dateFrom=${year}-${String(month).padStart(2, "0")}-01&dateTo=${year}-${String(month).padStart(2, "0")}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}`}>{t("See transactions")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => remove(category)} disabled={deleting} className="cursor-pointer rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">
@@ -317,10 +317,10 @@ export function BudgetPageClient({ businessId, overview, currency, canManage, op
                       <MoreHorizontal className="size-4.5" aria-hidden="true" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                      <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                      <DropdownMenuItem onSelect={() => setDrawer(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                         {t("Edit")}
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                      <DropdownMenuItem asChild className="cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                         <Link href={`/transactions?type=EXPENSE&categoryId=${encodeURIComponent(category.name)}&dateFrom=${year}-${String(month).padStart(2, "0")}-01&dateTo=${year}-${String(month).padStart(2, "0")}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}`}>{t("See transactions")}</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => remove(category)} disabled={deleting} className="cursor-pointer rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">

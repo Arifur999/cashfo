@@ -112,14 +112,14 @@ export function ContactsTable({ contacts, currency, canManage, onAdd, onEdit }: 
                     <MoreHorizontal className="size-4.5" aria-hidden="true" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                    <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                    <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                       <Link href={`/contacts/${contact.id}`}>
                         <SquareArrowOutUpRight className="size-4" aria-hidden="true" />
                         {t("Open")}
                       </Link>
                     </DropdownMenuItem>
                     {canManage && (
-                      <DropdownMenuItem onSelect={() => onEdit(contact)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-cream">
+                      <DropdownMenuItem onSelect={() => onEdit(contact)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
                         <Pencil className="size-4" aria-hidden="true" />
                         {t("Edit")}
                       </DropdownMenuItem>

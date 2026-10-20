@@ -101,7 +101,7 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={6} className="w-48 rounded-md border border-line bg-surface p-1.5 shadow-overlay ring-0">
             {PRAYERS.map((prayer) => (
-              <DropdownMenuItem key={prayer} onSelect={() => log(prayer)} className="flex h-9 cursor-pointer items-center justify-between gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-cream">
+              <DropdownMenuItem key={prayer} onSelect={() => log(prayer)} className="flex h-9 cursor-pointer items-center justify-between gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken">
                 {t(prayer)}
                 <span className="text-caption text-ink-muted tabular-nums">{t("{count} left", { count: qaza.left[prayer] ?? 0 })}</span>
               </DropdownMenuItem>

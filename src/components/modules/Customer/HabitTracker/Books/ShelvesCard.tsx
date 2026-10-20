@@ -106,7 +106,7 @@ function ShelfRow({ book, status, onAction }: { book: Book; status: BookStatus; 
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
         {MENU[status].map((item) => (
-          <DropdownMenuItem key={item.action} onSelect={() => onAction(book, item.action)} className={item.action === "remove" ? "rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense" : "rounded-md px-3 py-2 text-body text-ink focus:bg-cream"}>
+          <DropdownMenuItem key={item.action} onSelect={() => onAction(book, item.action)} className={item.action === "remove" ? "rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense" : "rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken"}>
             <item.icon className="size-4" aria-hidden="true" />
             {t(item.label)}
           </DropdownMenuItem>

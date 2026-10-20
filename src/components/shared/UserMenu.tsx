@@ -21,7 +21,7 @@ interface UserMenuProps {
   role?: AdminRole;
 }
 
-const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 py-2 text-body font-medium text-ink focus:bg-cream [&_svg]:size-4.5 [&_svg]:text-ink-2";
+const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 py-2 text-body font-medium text-ink focus:bg-surface-sunken [&_svg]:size-4.5 [&_svg]:text-ink-2";
 
 // The signed-in account in the top bar, with Log out -- for admins and
 // customers alike -- and, for admins (who have a role), Change password.

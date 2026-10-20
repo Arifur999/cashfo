@@ -112,7 +112,7 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
               {MENU[skill.status].map((item) => (
-                <DropdownMenuItem key={item.action} onSelect={() => onAction(skill, item.action)} className={item.action === "remove" ? "rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense" : "rounded-md px-3 py-2 text-body text-ink focus:bg-cream"}>
+                <DropdownMenuItem key={item.action} onSelect={() => onAction(skill, item.action)} className={item.action === "remove" ? "rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense" : "rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken"}>
                   <item.icon className="size-4" aria-hidden="true" />
                   {t(item.label)}
                 </DropdownMenuItem>

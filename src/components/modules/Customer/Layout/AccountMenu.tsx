@@ -23,7 +23,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { workspaceKind } from "./workspaceKind";
 
-const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 py-2 text-body font-medium text-ink focus:bg-cream [&_svg]:size-4.5 [&_svg]:text-ink-2";
+const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 py-2 text-body font-medium text-ink focus:bg-surface-sunken [&_svg]:size-4.5 [&_svg]:text-ink-2";
 
 // The top bar's account button and its menu: who is signed in, the open
 // workspace, the links to settings, referrals (with what is ready to

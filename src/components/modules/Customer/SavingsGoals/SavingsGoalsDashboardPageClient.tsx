@@ -48,7 +48,7 @@ const STATUSES: { value: SavingsGoalStatus; label: string }[] = [
   { value: "COMPLETED", label: "Completed" },
   { value: "WITHDRAWN", label: "Withdrawn" },
 ];
-const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-cream [&_svg]:size-3.75";
+const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75";
 
 // Savings goals: how all of them are doing together, then one card per
 // goal with its ring, pace, monthly amount and the next thing to do.

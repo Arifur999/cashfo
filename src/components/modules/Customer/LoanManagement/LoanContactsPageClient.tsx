@@ -36,7 +36,7 @@ interface LoanContactsPageClientProps {
 
 type Tab = "ALL" | LoanBalanceDirection;
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
-const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-cream [&_svg]:size-3.75";
+const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75";
 
 // People & banks: everyone you have dena-pawna with, one card each with
 // where the balance stands and the two things you do next.

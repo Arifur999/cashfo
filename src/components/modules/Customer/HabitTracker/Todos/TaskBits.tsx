@@ -70,7 +70,7 @@ export function PriorityMenu({ value, onChange, look = "label", className }: Pri
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="w-40 rounded-md border border-line bg-surface p-1.5 shadow-overlay ring-0">
         {PRIORITIES.map((priority) => (
-          <DropdownMenuItem key={priority} onSelect={() => onChange(priority)} className="flex h-9 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-small font-medium text-ink focus:bg-cream">
+          <DropdownMenuItem key={priority} onSelect={() => onChange(priority)} className="flex h-9 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-small font-medium text-ink focus:bg-surface-sunken">
             <PriorityDot priority={priority} className="size-2" />
             <span className="flex-1">{t(PRIORITY_LABEL[priority])}</span>
             {priority === value && <Check className="size-3.5 text-emerald" strokeWidth={2.5} aria-hidden="true" />}
