@@ -42,7 +42,7 @@ function resolve(raw: Record<string, string>): Palette {
 
 const light = declarations(":root");
 // .dark sits on <html> beside :root, so it overrides what it names and a
-// var() on :root (--cream: var(--page)) picks up the dark value.
+// var() on :root (--background: var(--page)) picks up the dark value.
 const THEMES: Record<string, Palette> = {
   light: resolve(light),
   dark: resolve({ ...light, ...declarations("\\.dark") }),

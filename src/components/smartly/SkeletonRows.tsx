@@ -8,7 +8,7 @@ const WIDTHS = [
   [36, 50],
 ];
 
-const bar = "block animate-pulse rounded-sm bg-[linear-gradient(90deg,var(--surface-sunken)_0%,var(--cream)_50%,var(--surface-sunken)_100%)]";
+const bar = "block animate-pulse rounded-sm bg-[linear-gradient(90deg,var(--surface-sunken)_0%,var(--strip)_50%,var(--surface-sunken)_100%)]";
 
 interface SkeletonRowsProps {
   rows?: number;

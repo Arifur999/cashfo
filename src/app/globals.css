@@ -23,9 +23,6 @@
   --mint-50: #e7f5ee;
   --mint-200: #bfebd7;
   --mint-300: #7bd3a8;
-  /* The old name for the page ground, so every bg-cream is Cool mist until
-     the codemod moves it to bg-page. */
-  --cream: var(--page);
   --on-action: #ffffff;
 
   /* Grounds and lines (Cool mist, 20 Oct 2026). One job each, so a table
@@ -161,11 +158,11 @@
   --brand-ink: #7bd3a8;
   --jade: #2fd6a0;
   --mint-50: #0f2a20;
-  --cream: var(--page);
   --on-action: #04140e;
 
-  /* The split grounds are only split in light: here every band is the old
-     cream and a divider the old sunken, so the dark theme looks as it did. */
+  /* The split grounds are only split in light: here every band keeps the
+     night ground the old cream token had and a divider the old sunken, so
+     the dark theme looks as it did. */
   --page: #08120e;
   --table-head: #08120e;
   --strip: #08120e;
@@ -355,7 +352,6 @@
   --color-mint-50: var(--mint-50);
   --color-mint-200: var(--mint-200);
   --color-mint-300: var(--mint-300);
-  --color-cream: var(--cream);
   --color-on-action: var(--on-action);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
@@ -415,7 +411,6 @@
   --color-brand-primary-hover: var(--emerald-hover);
   --color-brand-danger: var(--expense-fill);
   --color-brand-danger-hover: var(--expense);
-  --color-brand-content: var(--cream);
 
   /* shadcn */
   --color-background: var(--background);
