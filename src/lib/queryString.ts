@@ -19,7 +19,7 @@ const readAll = (source: ParamsSource, key: string): string[] => {
 
 const MAX_LIMIT = 100;
 
-const toPositiveInt = (raw: string | undefined, fallback: number) => {
+export const toPositiveInt = (raw: string | undefined, fallback: number) => {
   const value = Math.floor(Number(raw));
   return Number.isFinite(value) && value > 0 ? value : fallback;
 };
