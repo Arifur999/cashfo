@@ -3,7 +3,7 @@
 import { ArrowLeftRight,BookOpen,BookText,Box,CalendarCheck,ChartColumn,ChartPie,ChevronDown,ChevronRight,CircleCheckBig,Clock,CreditCard,Gift,GraduationCap,House,KeyRound,ListChecks,type LucideProps,Moon,PenLine,PiggyBank,Settings,Table2,Target,TrendingUp,Users,UsersRound,Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useId, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useSyncExternalStore } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
@@ -157,6 +157,16 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
   const groups = useOpenGroups();
   const baseId = useId();
 
+  // The menu scrolls, and a page low in it (Habits on a laptop, Vault) sat
+  // out of sight: bring the open page's row into view when the menu mounts
+  // (the phone drawer opening too) and after each navigation. "nearest"
+  // leaves a row already in view where it is.
+  const rows = useRef<HTMLDivElement>(null);
+  const searchKey = searchParams.toString();
+  useEffect(() => {
+    rows.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: "nearest" });
+  }, [pathname, searchKey]);
+
   const renderItem = (item: NavItem) => {
     const Icon = ICONS[item.icon];
     const self = location?.item === item && !location.sub;
@@ -241,7 +251,7 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
     <nav ref={navRef} aria-label={t("Main")} style={style} className={cn("relative min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", className)}>
       {/* The sidebar spaces its rows 2px apart; the phone drawer stacks its
           44px rows and sets the section names on their natural line. */}
-      <div className={cn("flex flex-col", compact && "gap-0.5")}>
+      <div ref={rows} className={cn("flex flex-col", compact && "gap-0.5")}>
         {sections.map((section) => (
           <div key={section.label ?? "home"} className={cn("flex flex-col", compact && "gap-0.5")}>
             {section.label && (
