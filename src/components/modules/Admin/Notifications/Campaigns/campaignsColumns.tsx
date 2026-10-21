@@ -1,21 +1,23 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import T from "@/components/shared/T";
+import Chip from "@/components/smartly/Chip";
 import { formatDate, formatRelativeDateTime } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { Translate } from "@/lib/i18n/message";
-import { formatNumber } from "@/lib/number";
-import { cn } from "@/lib/utils";
+import type { Locale } from "@/lib/i18n/translate";
 import type { ICampaign } from "@/types/notification.types";
 import { CAMPAIGN_STATUS_LABEL, CHANNEL_META } from "../notificationOptions";
-import { describeAudience } from "./campaignOptions";
+import { describeAudience, isPastDue } from "./campaignOptions";
 import { inEnglish } from "@/lib/i18n/message";
 
 // "5 of 8 sent", "1,251 sent · 0 failed", or nothing before it starts.
-const progressText = (campaign: ICampaign, t: Translate) => {
+const progressText = (campaign: ICampaign, t: Translate, locale: Locale) => {
+  const count = (value: number) => formatCount(value, locale);
   const done = campaign.sentCount + campaign.failedCount;
-  if (campaign.status === "SENDING") return t("{done} of {total} sent", { done: formatNumber(done), total: formatNumber(campaign.audienceCount) });
-  if (campaign.status === "SENT") return t("{sent} sent · {failed} failed", { sent: formatNumber(campaign.sentCount), failed: formatNumber(campaign.failedCount) });
+  if (campaign.status === "SENDING") return t("{done} of {total} sent", { done: count(done), total: count(campaign.audienceCount) });
+  if (campaign.status === "SENT") return t("{sent} sent · {failed} failed", { sent: count(campaign.sentCount), failed: count(campaign.failedCount) });
   return null;
 };
 
@@ -25,22 +27,35 @@ const whenText = (campaign: ICampaign, t: Translate) => {
   return campaign.status === "DRAFT" ? t("Not scheduled") : formatDate(campaign.createdAt, "d MMM");
 };
 
+// Who gets it, wrapping onto two lines rather than into the next column.
+// It can be Bangla, so it keeps the face's own line height.
 const AudienceCell = ({ campaign, planNames }: { campaign: ICampaign; planNames: Map<string, string> }) => {
   const { translate } = useLocale();
-  return <span className="text-small leading-snug text-ink-2">{describeAudience(campaign.targetFilter, planNames, translate)}</span>;
+  return <span className="text-small whitespace-normal text-ink-2">{describeAudience(campaign.targetFilter, planNames, translate)}</span>;
 };
 
-// The status, then when and how far it got.
+// The status, then when and how far it got. A scheduled campaign whose time
+// has passed hasn't gone (nothing sends them yet), and says so.
 const StatusCell = ({ campaign }: { campaign: ICampaign }) => {
-  const { translate } = useLocale();
-  const progress = progressText(campaign, translate);
+  const { locale, translate } = useLocale();
+  const progress = progressText(campaign, translate, locale);
+  const pastDue = isPastDue(campaign);
   return (
     <span className="flex flex-col items-start gap-0.75">
       <StatusBadgeCell status={campaign.status} label={CAMPAIGN_STATUS_LABEL[campaign.status]} />
-      <span className="text-caption text-ink-muted">{whenText(campaign, translate)}</span>
+      {pastDue ? (
+        <span className="text-caption font-semibold whitespace-normal text-warning">{translate("Due {time} · not sent", { time: whenText(campaign, translate) })}</span>
+      ) : (
+        <span className="text-caption text-ink-muted">{whenText(campaign, translate)}</span>
+      )}
       {progress && <span className="text-caption text-ink-muted">{progress}</span>}
     </span>
   );
+};
+
+const PeopleCell = ({ count }: { count: number }) => {
+  const { locale } = useLocale();
+  return <span className="font-semibold tabular-nums">{formatCount(count, locale)}</span>;
 };
 
 // The design's campaigns list: the campaign over its template, who gets
@@ -68,7 +83,7 @@ export const buildCampaignsColumns = (planNames: Map<string, string>): ColumnDef
     id: "audienceCount",
     accessorKey: "audienceCount",
     header: "People",
-    cell: ({ row }) => <span className="font-semibold tabular-nums">{formatNumber(row.original.audienceCount)}</span>,
+    cell: ({ row }) => <PeopleCell count={row.original.audienceCount} />,
     meta: { width: 60, align: "right" },
   },
   {
@@ -76,9 +91,9 @@ export const buildCampaignsColumns = (planNames: Map<string, string>): ColumnDef
     accessorKey: "channel",
     header: "Channel",
     cell: ({ row }) => (
-      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-caption font-semibold", CHANNEL_META[row.original.channel].chip)}>
+      <Chip tone={CHANNEL_META[row.original.channel].tone} size="sm" className="font-semibold">
         <T>{CHANNEL_META[row.original.channel].label}</T>
-      </span>
+      </Chip>
     ),
     meta: { width: 76, exportValue: (row) => CHANNEL_META[row.channel].label },
   },

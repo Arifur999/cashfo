@@ -1,60 +1,106 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { revealEditor, useUnsavedGuard } from "@/components/modules/Admin/Content/editorList";
 import Callout from "@/components/shared/Callout";
+import Chip from "@/components/smartly/Chip";
+import ErrorState from "@/components/smartly/ErrorState";
 import { cn } from "@/lib/utils";
 import { notificationTemplatesQuery } from "@/queries/notification.queries";
+import type { INotificationTemplateFormValues } from "@/zod/notification.validation";
 import { CHANNEL_META, templateWhen } from "../notificationOptions";
 import TemplateForm from "./TemplateForm";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
+const HEADING_ID = "template-editor-heading";
+
+type Drafts = Readonly<Record<string, INotificationTemplateFormValues>>;
+const NO_DRAFTS: Drafts = {};
+
 // The design's Templates tab: every template down the left with its
-// channel and when it goes out, the one being edited on the right. Every
-// editor stays mounted (just hidden), so unsaved edits survive switching.
+// channel, when it goes out and whether it is off, the one being edited on
+// the right. Only that one's form is mounted (so its fields' ids and
+// labels are its own); unsaved wording is kept here while another template
+// is open, marked in the list, and leaving the tab with any asks first.
 const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
   const { translate } = useLocale();
-  const templates = useQuery(notificationTemplatesQuery()).data?.data ?? [];
+  const query = useQuery(notificationTemplatesQuery());
+  const templates = query.data?.data;
   const [selected, setSelected] = useState<string | null>(null);
-  const current = selected ?? templates[0]?.id ?? null;
+  const [drafts, setDrafts] = useState(NO_DRAFTS);
+  const current = templates?.find((template) => template.id === selected) ?? templates?.[0];
 
-  if (templates.length === 0) {
-    return <Callout><T>No notification templates exist yet -- they&apos;re created by the database seed.</T></Callout>;
+  const keepDraft = useCallback((templateId: string, draft: INotificationTemplateFormValues | null) => {
+    setDrafts((was) => {
+      if ((was[templateId] ?? null) === draft) return was;
+      const next: Record<string, INotificationTemplateFormValues> = { ...was };
+      if (draft) next[templateId] = draft;
+      else delete next[templateId];
+      return next;
+    });
+  }, []);
+  useUnsavedGuard(Object.keys(drafts).length > 0);
+
+  // An outage isn't "the seed made none": say they didn't load.
+  if (query.isError && !templates) {
+    return <ErrorState title={translate("Couldn't load the templates")} description={translate("Try again in a moment.")} onRetry={() => void query.refetch()} />;
+  }
+  if (!templates || !current) {
+    return templates ? <Callout><T>No notification templates exist yet -- they&apos;re created by the database seed.</T></Callout> : null;
   }
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-      <nav aria-label={translate("Templates")} className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
-        {templates.map((template) => {
-          const on = template.id === current;
-          const { label, chip } = CHANNEL_META[template.channel];
-          return (
-            <button
-              key={template.id}
-              type="button"
-              aria-current={on ? "page" : undefined}
-              onClick={() => setSelected(template.id)}
-              className={cn("flex w-full flex-col gap-1 border-b border-divider border-l-3 px-4 py-3 text-left last:border-b-0", on ? "border-l-emerald bg-mint-50" : "border-l-transparent hover:bg-hover")}
-            >
-              <span className="flex items-center justify-between gap-2">
-                <code className="font-mono text-small font-semibold text-ink">{template.key}</code>
-                <span className={cn("rounded-full px-2 text-caption font-semibold", chip)}>
-                  <T>{label}</T>
+    <div className="flex flex-col gap-4">
+      {!canManage && <Callout><T>Only super and content admins can change templates.</T></Callout>}
+      <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <nav aria-label={translate("Templates")} className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+          {templates.map((template) => {
+            const on = template.id === current.id;
+            const { label, tone } = CHANNEL_META[template.channel];
+            const unsaved = template.id in drafts;
+            return (
+              <button
+                key={template.id}
+                type="button"
+                // Picks the template in the editor beside it; not a page of its own.
+                aria-pressed={on}
+                onClick={() => {
+                  setSelected(template.id);
+                  requestAnimationFrame(() => revealEditor(document.getElementById(HEADING_ID)));
+                }}
+                className={cn("flex w-full flex-col gap-1 border-b border-divider border-l-3 px-4 py-3 text-left last:border-b-0", on ? "border-l-emerald bg-mint-50" : "border-l-transparent hover:bg-hover")}
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <code className="truncate font-mono text-small font-semibold text-ink">{template.key}</code>
+                    {unsaved && (
+                      <span title={translate("Unsaved changes")} className="size-2 shrink-0 rounded-full bg-warning-fill">
+                        <span className="sr-only">{translate("Unsaved changes")}</span>
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1">
+                    {!template.isActive && (
+                      <Chip tone="neutral" size="sm">
+                        <T>Off</T>
+                      </Chip>
+                    )}
+                    <Chip tone={tone} size="sm">
+                      <T>{label}</T>
+                    </Chip>
+                  </span>
                 </span>
-              </span>
-              <span className="text-small text-ink-muted">
-                <T>{templateWhen(template.key)}</T>
-              </span>
-            </button>
-          );
-        })}
-      </nav>
-      {templates.map((template) => (
-        <div key={template.id} className={cn(template.id !== current && "hidden")}>
-          <TemplateForm template={template} canManage={canManage} />
-        </div>
-      ))}
+                <span className="text-small text-ink-muted">
+                  <T>{templateWhen(template.key)}</T>
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+        <TemplateForm key={current.id} template={current} canManage={canManage} draft={drafts[current.id]} onDraftChange={keepDraft} headingId={HEADING_ID} />
+      </div>
     </div>
   );
 };

@@ -5,7 +5,8 @@ import { notificationTemplatesQuery } from "@/queries/notification.queries";
 import { getUserInfo } from "@/services/auth.services";
 import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const generateMetadata = adminPageTitle("Message templates");
+// Named like its tab.
+export const generateMetadata = adminPageTitle("Templates");
 
 const NotificationTemplatesPage = async () => {
   const admin = await getUserInfo();

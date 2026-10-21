@@ -1,10 +1,10 @@
 import type { CampaignStatus, NotificationChannel, NotificationLogStatus } from "@/types/notification.types";
 
-// How each channel reads, and the colour of its chip.
-export const CHANNEL_META: Record<NotificationChannel, { label: string; chip: string; note: string }> = {
-  EMAIL: { label: "Email", chip: "bg-info-soft text-info", note: "Free to send" },
-  SMS: { label: "SMS", chip: "bg-warning-soft text-warning", note: "Costs per message" },
-  IN_APP_PUSH: { label: "In-app", chip: "bg-pillar-habits-soft text-pillar-habits", note: "Next time they open the app" },
+// How each channel reads, and the tone of its chip.
+export const CHANNEL_META: Record<NotificationChannel, { label: string; tone: "info" | "warning" | "habits"; note: string }> = {
+  EMAIL: { label: "Email", tone: "info", note: "Free to send" },
+  SMS: { label: "SMS", tone: "warning", note: "Costs per message" },
+  IN_APP_PUSH: { label: "In-app", tone: "habits", note: "Next time they open the app" },
 };
 
 export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
@@ -21,18 +21,20 @@ export const LOG_STATUS_LABEL: Record<NotificationLogStatus, string> = {
   FAILED: "Failed",
 };
 
-// When the platform sends each built-in template, for the templates list.
+// What each built-in template is for, for the templates list. None is read
+// by a sender yet: the welcome and support-reply emails and the bell go out
+// with the backend's own wording, and campaigns don't send yet.
 const TEMPLATE_WHEN: Record<string, string> = {
-  welcome: "When someone signs up",
-  subscription_expiring: "3 days before a paid plan ends",
-  payment_successful: "After each successful payment",
-  payment_failed: "When a payment fails",
-  ticket_reply: "When support replies to a ticket",
-  feature_announcement: "Sent by hand for big new features",
-  promo_offer: "Made for campaigns",
+  welcome: "Not used yet: the built-in welcome email goes out at sign-up",
+  subscription_expiring: "Not used yet: meant for 3 days before a paid plan ends",
+  payment_successful: "Not used yet: meant for after each successful payment",
+  payment_failed: "Not used yet: meant for when a payment fails",
+  ticket_reply: "Not used yet: the built-in support-reply email and the bell go out when support replies",
+  feature_announcement: "For campaigns, which don't send yet",
+  promo_offer: "For campaigns, which don't send yet",
 };
 
-export const templateWhen = (key: string) => TEMPLATE_WHEN[key] ?? "Sent by the platform";
+export const templateWhen = (key: string) => TEMPLATE_WHEN[key] ?? "Not used for sending yet";
 
 // What a preview puts in each placeholder.
 export const SAMPLE_VALUES: Record<string, string> = {

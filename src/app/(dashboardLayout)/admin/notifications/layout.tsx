@@ -12,8 +12,10 @@ const NotificationsLayout = ({ children }: LayoutProps<"/admin/notifications">) 
     <div className="space-y-4">
       <PageHeader {...NOTIFICATIONS_PAGE} actions={<NotificationsHeaderAction />} />
       <NotificationTabs />
+      {/* What really reaches users today, so editing here isn't mistaken
+          for changing it (the backend sends with its own wording). */}
       <Callout variant="warning" role="status">
-        <T>No email, SMS or push provider is connected yet, so templates and campaigns are saved here but nothing goes out to users.</T>
+        <T>These templates and campaigns aren&apos;t used for sending yet. The welcome, password-reset and support-reply emails and the in-app bell go out with built-in wording and don&apos;t appear in Send history.</T>
       </Callout>
       {children}
     </div>
