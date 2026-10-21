@@ -2,31 +2,37 @@ import { PiggyBank } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { WalletShareBar } from "@/components/modules/Customer/Balance/WalletShareBar";
+import { RestoreWalletButton } from "@/components/modules/Customer/SavingsGoals/RestoreWalletButton";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import EmptyState from "@/components/smartly/EmptyState";
+import { ListCard, ListCell, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import { getSavingsWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { formatCurrency } from "@/lib/customer/currency";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { savingsPalette } from "@/lib/customer/savingsDisplay";
+import { summaryPalette } from "@/lib/customer/savingsDisplay";
 import { getSavingsAccountOverview } from "@/lib/customer/savingsGoals";
 import { walletShares } from "@/lib/customer/walletShares";
+import { formatCount } from "@/lib/i18n/digits";
 import { getTranslator } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
 
 export const generateMetadata = () => customerPageMetadata("/savings-goals/overview");
 
-const GRID = "grid-cols-[minmax(0,1fr)_repeat(3,140px)_160px]";
+// Five money columns need about 880px, so narrower screens scroll the table
+// sideways (heads included) rather than squeeze the wallet names away.
+const COLUMNS = "grid-cols-[minmax(0,1fr)_repeat(3,140px)_160px]";
 
 // Savings summary: what sits in the savings wallets altogether, how it is
 // spread, and what went in and out of each one. Goals are targets; this is
 // the money.
 export default async function SavingsOverviewPage() {
-  const { t } = await getTranslator();
+  const { locale, t } = await getTranslator();
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -35,16 +41,23 @@ export default async function SavingsOverviewPage() {
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const currency = activeBusiness?.currency ?? "BDT";
-  const overview = await getSavingsAccountOverview(activeBusinessId);
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
+  // The wallets Savings wallets lists, so each row here takes the colour
+  // its wallet has there.
+  const [overview, activeWallets] = await Promise.all([getSavingsAccountOverview(activeBusinessId), getSavingsWallets(activeBusinessId)]);
+  const activeIds = activeWallets.map((wallet) => wallet.id);
   const rows = overview.accounts;
+  // Every wallet counts in every figure here, archived ones too, as the
+  // Total row adds them.
   const totals = rows.reduce(
     (sum, a) => ({ opening: sum.opening + Number(a.openingBalance), in: sum.in + Number(a.totalIn), out: sum.out + Number(a.totalOut), current: sum.current + Number(a.currentBalance) }),
     { opening: 0, in: 0, out: 0, current: 0 },
   );
   const archived = rows.filter((row) => row.status === "ARCHIVED").length;
 
-  const outFigure = (value: number, className?: string) => <span className={cn("text-right tabular-nums", value > 0 ? "text-expense" : "text-ink-muted", className)}>{value > 0 ? `− ${formatCurrency(value, currency)}` : "—"}</span>;
-  const inFigure = (value: number, className?: string) => <span className={cn("text-right tabular-nums", value > 0 ? "text-income" : "text-ink-muted", className)}>{value > 0 ? `+ ${formatCurrency(value, currency)}` : "—"}</span>;
+  // An archived wallet's figures go grey rather than green and red.
+  const outFigure = (value: number, muted = false) => <span className={cn("tabular-nums", value > 0 && !muted ? "text-expense" : "text-ink-muted")}>{value > 0 ? `− ${formatCurrency(value, currency)}` : "—"}</span>;
+  const inFigure = (value: number, muted = false) => <span className={cn("tabular-nums", value > 0 && !muted ? "text-income" : "text-ink-muted")}>{value > 0 ? `+ ${formatCurrency(value, currency)}` : "—"}</span>;
 
   return (
     <PageFrame className="gap-6">
@@ -54,90 +67,137 @@ export default async function SavingsOverviewPage() {
         <EmptyState
           icon={<PiggyBank />}
           title={t("No savings wallet yet")}
-          description={t("Add the DPS, FDR or other account you save in, and your saved money shows up here.")}
+          description={canManage ? t("Add the DPS, FDR or other account you save in, and your saved money shows up here.") : t("Ask the workspace owner to add a savings wallet.")}
           action={
-            <Button asChild>
-              <Link href="/savings-goals/wallet">{t("Add savings wallet")}</Link>
-            </Button>
+            canManage && (
+              <Button asChild>
+                <Link href="/savings-goals/wallet?add=1">{t("Add savings wallet")}</Link>
+              </Button>
+            )
           }
           className="min-h-80"
         />
       ) : (
         <>
           <Card padding="lg" className="flex flex-col gap-4">
-            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-              <div className="flex flex-col gap-2">
+            {/* Side by side from xl only: below it a lakh-sized balance and
+                three figures don't fit on one line, so md and lg keep the
+                full-width strip under the balance, as sm does. From xl the
+                balance gives way first (its second line wraps), and the
+                figures drop under it only when the balance alone leaves
+                them no room. */}
+            <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-end xl:justify-between">
+              <div className="flex flex-col gap-2 xl:flex-1">
                 <span className="text-small font-medium text-ink-muted">{t("In your savings wallets")}</span>
                 <AmountText value={overview.totalBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em]" />
                 <span className="text-small text-ink-muted tabular-nums">
-                  {t("Available")} {formatCurrency(overview.availableBalance, currency)} · {formatCurrency(overview.inactiveAmount, currency)} {t("in archived wallets")}
+                  {t("Available {amount}", { amount: formatCurrency(overview.availableBalance, currency) })}
+                  {archived > 0 && ` · ${t("{amount} in archived wallets", { amount: formatCurrency(overview.inactiveAmount, currency) })}`}
                 </span>
               </div>
-              <div className="grid grid-cols-3">
-                <Stat label={t("Wallets")}>{rows.length - archived}</Stat>
-                <Stat label={t("Added")}>{inFigure(totals.in, "text-left")}</Stat>
+              {/* Rows on a phone (label left, figure right); three columns from sm. */}
+              <div className="grid grid-cols-1 sm:grid-cols-3">
+                <Stat label={t("Wallets")} first>
+                  {formatCount(rows.length, locale)}
+                  {archived > 0 && <span className="text-small font-medium text-ink-muted"> · {t("{count} archived", { count: formatCount(archived, locale) })}</span>}
+                </Stat>
+                <Stat label={t("Added")}>{inFigure(totals.in)}</Stat>
                 <Stat label={t("Taken out")} last>
-                  {outFigure(totals.out, "text-left")}
+                  {outFigure(totals.out)}
                 </Stat>
               </div>
             </div>
-            <WalletShareBar slices={walletShares(rows, savingsPalette)} label={t("Share of savings by wallet")} legend currency={currency} />
+            <WalletShareBar slices={walletShares(rows, (index) => summaryPalette(rows[index].id, activeIds))} label={t("Share of savings by wallet")} legend currency={currency} />
           </Card>
 
-          <Card padding="none" className="overflow-hidden">
-            <div className="flex items-center justify-between gap-4 px-6 py-5">
-              <h2 className="text-title text-ink">{t("Savings wallets")}</h2>
-              <Link href="/savings-goals/wallet" className="text-small font-semibold text-emerald hover:text-emerald-hover">
-                {t("Manage wallets")}
-              </Link>
-            </div>
-            <div className="overflow-x-auto">
-              <div className="min-w-220">
-                <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
-                  <span>{t("Wallet")}</span>
-                  <span className="text-right">{t("Opening")}</span>
-                  <span className="text-right">{t("Added")}</span>
-                  <span className="text-right">{t("Taken out")}</span>
-                  <span className="text-right">{t("Balance")}</span>
-                </div>
-                {rows.map((row, index) => (
-                  <Link key={row.id} href={`/balance/ledger?accountId=${row.id}`} className={cn("grid h-15 items-center gap-x-4 border-b border-divider px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, row.status === "ARCHIVED" && "opacity-60")}>
-                    <span className="flex min-w-0 items-center gap-3">
-                      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", savingsPalette(index).tile)}>
+          <ListCard
+            label={t("Savings wallets")}
+            // The link stays beside the title on a phone too.
+            header={
+              <div className="flex items-center justify-between gap-4 border-b border-line px-4 py-4 md:px-6 md:py-5">
+                <h2 className="text-title text-ink">{t("Savings wallets")}</h2>
+                <Link href="/savings-goals/wallet" className="inline-flex shrink-0 items-center text-small font-semibold text-emerald hover:text-emerald-hover pointer-coarse:min-h-11">
+                  {t("Manage wallets")}
+                </Link>
+              </div>
+            }
+            tableClassName="overflow-x-auto"
+            // Narrower than the five columns it scrolls sideways: in the tab
+            // order, the keyboard can reach Opening through Balance too.
+            scrollable
+          >
+            <div role="rowgroup" className="min-w-220">
+              <ListHead columns={COLUMNS} showOnPhone>
+                <ListHeadCell>{t("Wallet")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Opening")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Added")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Taken out")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
+              </ListHead>
+              {rows.map((row) => {
+                const isArchived = row.status === "ARCHIVED";
+                // Set back by colour, not by fading the row: a faded row
+                // would fade its Restore button into looking disabled.
+                return (
+                  <ListRow key={row.id} columns={COLUMNS} density="relaxed" className="tabular-nums">
+                    <ListCell className="flex items-center gap-3">
+                      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", summaryPalette(row.id, activeIds).tile)}>
                         <PiggyBank className="size-4.5" aria-hidden="true" />
                       </span>
                       <span className="flex min-w-0 flex-col gap-px">
-                        <span className={cn("truncate font-medium", row.status === "ARCHIVED" && "line-through")}>{row.name}</span>
-                        <span className="text-caption font-normal text-ink-muted">{row.status === "ARCHIVED" ? t("Archived") : t("Savings wallet")}</span>
+                        {/* Opens the wallet's statement; the whole row is the target. */}
+                        <ListRowLink href={`/balance/ledger?accountId=${row.id}`} className={cn("truncate font-medium", isArchived ? "text-ink-muted line-through" : "text-ink")}>
+                          {row.name}
+                        </ListRowLink>
+                        <span className="flex items-center gap-2">
+                          <span className="text-caption font-normal text-ink-muted">{isArchived ? t("Archived") : t("Savings wallet")}</span>
+                          {/* Above the row's link, so it restores rather than opens. */}
+                          {isArchived && canManage && <RestoreWalletButton businessId={activeBusinessId} walletId={row.id} walletName={row.name} className="relative z-10 -my-1" />}
+                        </span>
                       </span>
-                    </span>
-                    <span className="text-right text-ink-2">{formatCurrency(row.openingBalance, currency)}</span>
-                    {inFigure(Number(row.totalIn))}
-                    {outFigure(Number(row.totalOut))}
-                    <span className="text-right font-bold">{formatCurrency(row.currentBalance, currency)}</span>
-                  </Link>
-                ))}
-                <div className={cn("grid h-14 items-center gap-x-4 bg-table-head px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
-                  <span>{t("Total")}</span>
-                  <span className="text-right">{formatCurrency(totals.opening, currency)}</span>
-                  {inFigure(totals.in)}
-                  {outFigure(totals.out)}
-                  <span className="text-right text-title font-bold">{formatCurrency(totals.current, currency)}</span>
-                </div>
-              </div>
+                    </ListCell>
+                    <ListCell align="end" className={isArchived ? "text-ink-muted" : "text-ink-2"}>
+                      {formatCurrency(row.openingBalance, currency)}
+                    </ListCell>
+                    <ListCell align="end">{inFigure(Number(row.totalIn), isArchived)}</ListCell>
+                    <ListCell align="end">{outFigure(Number(row.totalOut), isArchived)}</ListCell>
+                    <ListCell align="end" className={cn("font-bold", isArchived && "text-ink-muted")}>
+                      {formatCurrency(row.currentBalance, currency)}
+                    </ListCell>
+                  </ListRow>
+                );
+              })}
+              <ListTotalRow columns={COLUMNS} className="tabular-nums">
+                <ListCell>{t("Total")}</ListCell>
+                <ListCell align="end">{formatCurrency(totals.opening, currency)}</ListCell>
+                <ListCell align="end">{inFigure(totals.in)}</ListCell>
+                <ListCell align="end">{outFigure(totals.out)}</ListCell>
+                <ListCell align="end" className="text-title font-bold">
+                  {formatCurrency(totals.current, currency)}
+                </ListCell>
+              </ListTotalRow>
             </div>
-          </Card>
+          </ListCard>
         </>
       )}
     </PageFrame>
   );
 }
 
-function Stat({ label, last = false, children }: { label: string; last?: boolean; children: React.ReactNode }) {
+// One figure of the hero strip: a row with the figure on the right on a
+// phone, a column with a line before it from sm. Before the first one there
+// is only a line from xl, where the strip sits beside the balance.
+function Stat({ label, first = false, last = false, children }: { label: string; first?: boolean; last?: boolean; children: React.ReactNode }) {
   return (
-    <div className={cn("flex flex-col gap-1 border-l border-line pl-6", !last && "pr-6")}>
+    <div
+      className={cn(
+        "flex items-baseline justify-between gap-4 py-2.5 sm:flex-col sm:items-start sm:justify-start sm:gap-1 sm:border-l sm:border-line sm:py-0 sm:pl-6",
+        first ? "sm:border-l-0 sm:pl-0 xl:border-l xl:pl-6" : "border-t border-divider sm:border-t-0",
+        !last && "sm:pr-6",
+      )}
+    >
       <span className="text-caption font-normal text-ink-muted">{label}</span>
-      <span className="text-h3 font-bold text-ink tabular-nums">{children}</span>
+      <span className="text-h3 font-bold whitespace-nowrap text-ink tabular-nums">{children}</span>
     </div>
   );
 }
