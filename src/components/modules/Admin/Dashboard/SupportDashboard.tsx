@@ -75,7 +75,7 @@ export function SupportDashboard({ adminName, hour, stats, queue, requests, now 
             <span className="flex flex-wrap items-center gap-x-3">
               {queue && queue.total > queue.tickets.length && <span>{translate("{shown} of {total} waiting", { shown: count(queue.tickets.length), total: count(queue.total) })}</span>}
               {/* The inbox's "Need a reply" tab: the same tickets the count beside it counts. */}
-              <SectionLink href="/admin/support?status=OPEN">{translate("All tickets")}</SectionLink>
+              <SectionLink href="/admin/support?status=OPEN">{translate("Open inbox")}</SectionLink>
             </span>
           }
         >

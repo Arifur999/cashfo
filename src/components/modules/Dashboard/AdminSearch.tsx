@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { adminSearchAction } from "@/app/-actions/adminFeedActions";
 import CommandPalette, { CommandMark, useCommandShortcut, type CommandGroup } from "@/components/smartly/CommandPalette";
 import Kbd from "@/components/smartly/Kbd";
+import { dayLabel } from "@/components/modules/Admin/Dashboard/dashboardDates";
 import { formatAmount } from "@/lib/currency";
-import { formatDate } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { shortPaymentId } from "@/lib/payments";
 import { humanizeEnum } from "@/lib/statusBadge";
@@ -20,7 +20,7 @@ const KBD = "shrink-0 text-caption font-medium";
 // The admin top bar's search: a field that opens a palette (also on Ctrl K
 // or ⌘K) finding customers, payments and tickets. ↑ ↓ move, Enter opens.
 const AdminSearch = () => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<IAdminSearchResult | null>(null);
@@ -52,7 +52,7 @@ const AdminSearch = () => {
               key: `u:${person.id}`,
               badge: t("User"),
               title: person.name,
-              sub: [person.email, person.plan ?? (person.trialEndsAt ? t("trial ends {date}", { date: formatDate(person.trialEndsAt, "d MMM") }) : null)].filter(Boolean).join(" · "),
+              sub: [person.email, person.plan ?? (person.trialEndsAt ? t("trial ends {date}", { date: dayLabel(person.trialEndsAt, locale) }) : null)].filter(Boolean).join(" · "),
               mark: <CommandMark tone="forest">{getInitials(person.name) || "?"}</CommandMark>,
               href: `/admin/users/${person.id}`,
             })),
