@@ -20,14 +20,18 @@ export const switchTarget = <T extends Pick<UserBusiness, "id" | "type">>(busine
   typeof businessId === "string" ? switchableWorkspaces(businesses).find((business) => business.id === businessId) : undefined;
 
 // The personal workspace is literally named "Personal" in the database; it
-// reads as the account holder's name wherever it is shown.
-export const workspaceName = (business: Pick<UserBusiness, "isDefault" | "name">, userName: string): string => (business.isDefault ? userName : business.name);
+// reads as the account holder's name wherever it is shown. Its kind decides,
+// not isDefault: a business can be the one that opens by default, and it
+// keeps its own name.
+export const workspaceName = (business: Pick<UserBusiness, "type" | "name">, userName: string): string => (business.type === "PERSONAL" ? userName : business.name);
+
+const isPersonal = (business: Pick<UserBusiness, "type">) => Number(business.type === "PERSONAL");
 
 // How every switcher lists them: the account's own personal workspace
 // first, then the rest A to Z. One fixed collation, so the server and the
 // browser put them in the same order.
-export function orderWorkspaces<T extends Pick<UserBusiness, "isDefault" | "name">>(businesses: T[]): T[] {
-  return [...businesses].sort((a, b) => Number(b.isDefault) - Number(a.isDefault) || a.name.localeCompare(b.name, "en", { sensitivity: "base", numeric: true }));
+export function orderWorkspaces<T extends Pick<UserBusiness, "type" | "name">>(businesses: T[]): T[] {
+  return [...businesses].sort((a, b) => isPersonal(b) - isPersonal(a) || a.name.localeCompare(b.name, "en", { sensitivity: "base", numeric: true }));
 }
 
 // The Books pages, which only a business workspace has.
