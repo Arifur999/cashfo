@@ -1,21 +1,29 @@
 "use client";
 
-import { Calendar, Check, ChevronLeft, ChevronRight, Flame, Sunrise, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Calendar, Check, ChevronLeft, ChevronRight, Flame, Sunrise, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
+import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
+import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import IconTile from "@/components/smartly/IconTile";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { HabitMonthTracker, PrayerStatus } from "@/lib/customer/api";
-import { setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
+import { actionError, WEEKDAY_PLURAL } from "@/lib/customer/habitDisplay";
+import { deleteHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { hijriRange, MONTH_NAMES, monthInsights, monthSummary, prayerSummaries, type Insight } from "@/lib/customer/namazDisplay";
+import { formatCount } from "@/lib/i18n/digits";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { RecordEyebrow } from "../Tracker/RecordEyebrow";
+import { type BoxState, BoxSwatch } from "../Tracker/SheetBox";
+import { StatCard } from "../Tracker/StatCard";
 import { withCheck } from "../trackerChecks";
 import { PrayerSheet } from "./PrayerSheet";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
@@ -39,14 +47,29 @@ const INSIGHT_ICON: Record<Insight["key"], React.ReactNode> = {
   downFrom: <TrendingDown />,
 };
 
+// What each box means, in the order the menu offers them, drawn by the boxes'
+// own looks.
+const LEGEND: { state: BoxState; label: string }[] = [
+  { state: "jamaat", label: "Jama'at" },
+  { state: "onTime", label: "On time" },
+  { state: "qaza", label: "Qaza" },
+  { state: "missed", label: "Not prayed" },
+  { state: "open", label: "Today, not marked yet" },
+  { state: "locked", label: "Later" },
+];
+
 // One month of the five prayers: the sheet with a box per prayer per day,
-// the month's figures, each prayer on its own, and what stands out.
+// the month's figures, each prayer on its own, and what stands out. An
+// earlier month with nothing marked (added by mistake) can be deleted.
 export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPageClientProps) {
   const { t, locale } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [isDeleting, startDelete] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [sheet, applyMark] = useOptimistic(tracker, (current, update: { day: number; item: string; status: PrayerStatus | null }) => withCheck(current, update.day, update.item, update.status !== null, update.status ?? undefined));
+  const count = (n: number) => formatCount(n, locale);
   const year = sheet.year as number;
   const month = sheet.month as number;
   const key = `${year}-${pad(month)}`;
@@ -57,55 +80,74 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
   const insights = monthInsights(sheet, previous);
   const worst = [...prayers].sort((a, b) => b.missed - a.missed)[0];
   const best = [...prayers].sort((a, b) => b.prayed - a.prayed)[0];
+  const deletable = !current && sheet.checks.length === 0;
+  const monthWord = (n: number | undefined) => t(MONTH_NAMES[(n ?? 1) - 1]);
 
   function mark(day: number, item: string, status: PrayerStatus | null) {
     startTransition(async () => {
       applyMark({ day, item, status });
       const result = await setHabitTrackerCheckAction(sheet.id, status ? { day, item, checked: true, status } : { day, item, checked: false });
       if (result.success) router.refresh();
-      else toast.error(result.message ?? t("Failed to update"));
+      else toast.error(actionError(result.message, "Failed to update", t, locale));
     });
   }
 
-  const insightText = (i: Insight) => {
+  function remove() {
+    startDelete(async () => {
+      const result = await deleteHabitTrackerAction(sheet.id);
+      if (result.success) {
+        toast.success(t("Sheet deleted"));
+        setConfirmDelete(false);
+        router.push("/habit-tracker/habits?category=Namaz");
+      } else {
+        toast.error(actionError(result.message, "Failed to remove month tracker", t, locale));
+      }
+    });
+  }
+
+  const insightText = (i: Insight): string => {
     switch (i.key) {
       case "nothingMissed":
-        return `${i.n} ${t(i.n === 1 ? "day in and nothing missed." : "days in and nothing missed.")}`;
+        return t(i.n === 1 ? "{count} day in and nothing missed." : "{count} days in and nothing missed.", { count: count(i.n ?? 0) });
       case "mostMissed":
-        return `${t(i.item ?? "")} ${t("was missed most")}: ${i.n} ${t(i.n === 1 ? "time." : "times.")}`;
+        return t(i.n === 1 ? "{prayer} was missed most: {count} time." : "{prayer} was missed most: {count} times.", { prayer: t(i.item ?? ""), count: count(i.n ?? 0) });
       case "strongest":
-        return `${t(i.item ?? "")} ${t("was the strongest")}: ${i.n} ${t("of")} ${i.of}.`;
+        return t("{prayer} was the strongest: {done} of {total}.", { prayer: t(i.item ?? ""), done: count(i.n ?? 0), total: count(i.of ?? 0) });
       case "weekday":
-        return `${i.n} ${t("of the")} ${i.of} ${t("missed prayers were on")} ${t(`${i.weekday}s`)}.`;
+        return t("{count} of the {total} missed prayers were on {weekday}.", { count: count(i.n ?? 0), total: count(i.of ?? 0), weekday: t(WEEKDAY_PLURAL[i.weekdayIndex ?? 0]) });
       case "run":
-        return `${i.n} ${t("days in a row now with all five prayed.")}`;
+        return t("{count} days in a row now with all five prayed.", { count: count(i.n ?? 0) });
       case "upFrom":
-        return `${t("Up from")} ${i.previousPct}% ${t("in")} ${previous ? t(MONTH_NAMES[(previous.month ?? 1) - 1]) : ""}.`;
+        return t("Up from {pct}% in {month}.", { pct: count(i.previousPct ?? 0), month: monthWord(i.previousMonth) });
       case "downFrom":
-        return `${t("Down from")} ${i.previousPct}% ${t("in")} ${previous ? t(MONTH_NAMES[(previous.month ?? 1) - 1]) : ""}.`;
+        return t("Down from {pct}% in {month}.", { pct: count(i.previousPct ?? 0), month: monthWord(i.previousMonth) });
     }
   };
 
-  const stats = [
-    { label: t("Prayed"), value: `${summary.prayed} ${t("of")} ${summary.due}`, sub: previousSummary && previousSummary.due > 0 ? `${summary.pct}% ${t("of the month")} · ${t(summary.pct >= previousSummary.pct ? "up from" : "down from")} ${previousSummary.pct}% ${t("in")} ${t(MONTH_NAMES[(previous?.month ?? 1) - 1])}` : current ? t("Every prayer on the days past") : `${summary.pct}% ${t("of the month")}`, tone: "text-ink" },
-    { label: t("Perfect days"), value: String(summary.perfectDays), sub: t("All five prayed"), tone: "text-ink" },
-    { label: t("Full days in a row"), value: String(summary.perfectRun), sub: current ? t("Counting up to today") : t("At the end of the month"), tone: "text-ink" },
-    { label: t("Missed"), value: String(summary.missed), sub: summary.missed === 0 ? t("Nothing to make up") : t("Tap a pink box to fix a wrong mark"), tone: summary.missed === 0 ? "text-income" : "text-expense" },
-  ];
+  const prayedSub =
+    previousSummary && previousSummary.due > 0
+      ? t(summary.pct >= previousSummary.pct ? "{pct}% of the month, up from {previous}% in {month}" : "{pct}% of the month, down from {previous}% in {month}", { pct: count(summary.pct), previous: count(previousSummary.pct), month: monthWord(previous?.month ?? undefined) })
+      : current
+        ? t("Every prayer on the days past")
+        : t("{pct}% of the month", { pct: count(summary.pct) });
+
+  const monthLink = (target: HabitMonthTracker | null, label: string, icon: React.ReactNode, edge: boolean) =>
+    target ? (
+      <Link href={`/habit-tracker/habits/namaz/${target.id}`} aria-label={label} className={cn("flex size-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:size-11", edge && "border-r border-line")}>
+        {icon}
+      </Link>
+    ) : (
+      // No sheet that way: a dead button, out of the Tab order.
+      <button type="button" disabled aria-label={label} className={cn("flex size-9.5 items-center justify-center text-ink-faint pointer-coarse:size-11", edge && "border-r border-line")}>
+        {icon}
+      </button>
+    );
 
   return (
     <PageFrame className="gap-5">
       <TopbarExtras record={monthName(key, locale, "long", true)} />
       <PageHeader
-        eyebrow={
-          <span className="flex flex-col gap-1">
-            <Link href="/habit-tracker/habits?category=Namaz" className="flex items-center gap-1 text-small font-semibold text-ink-2 normal-case tracking-normal hover:text-ink">
-              <ChevronLeft className="size-4" aria-hidden="true" />
-              {t("All months")}
-            </Link>
-            <span>{t("Habits")}</span>
-          </span>
-        }
+        eyebrow={<RecordEyebrow href="/habit-tracker/habits?category=Namaz" back={t("All months")} pillar={t("Habits")} />}
         tone="habits"
         title={monthName(key, locale, "long", true)}
         description={hijriRange(year, month, locale, hijriAdjust)}
@@ -117,67 +159,52 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
                 {t("This month, opened automatically")}
               </Chip>
             )}
+            {deletable && (
+              <Button variant="secondary" onClick={() => setConfirmDelete(true)} className="text-expense hover:text-expense">
+                <Trash2 />
+                {t("Delete this sheet")}
+              </Button>
+            )}
             <div role="group" aria-label={t("Month")} className="flex overflow-hidden rounded-md border border-line-strong bg-surface">
-              <Link href={previous ? `/habit-tracker/habits/namaz/${previous.id}` : "#"} aria-disabled={!previous} aria-label={t(MONTH_NAMES[(month + 10) % 12])} className={cn("flex size-9.5 items-center justify-center border-r border-line text-ink-2 hover:bg-surface-sunken", !previous && "pointer-events-none opacity-40")}>
-                <ChevronLeft className="size-4" aria-hidden="true" />
-              </Link>
-              <Link href={next ? `/habit-tracker/habits/namaz/${next.id}` : "#"} aria-disabled={!next} aria-label={t(MONTH_NAMES[month % 12])} className={cn("flex size-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken", !next && "pointer-events-none opacity-40")}>
-                <ChevronRight className="size-4" aria-hidden="true" />
-              </Link>
+              {monthLink(previous, t(MONTH_NAMES[(month + 10) % 12]), <ChevronLeft className="size-4" aria-hidden="true" />, true)}
+              {monthLink(next, t(MONTH_NAMES[month % 12]), <ChevronRight className="size-4" aria-hidden="true" />, false)}
             </div>
           </>
         }
       />
 
-      <Card padding="none" className="flex flex-col gap-4 px-5 pt-4 pb-5">
+      <Card padding="none" className="flex min-w-0 flex-col gap-4 px-5 pt-4 pb-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-title font-semibold text-ink">{t("Prayer sheet")}</h2>
-          <div className="flex flex-wrap items-center gap-4 text-small text-ink-2">
-            <span className="flex items-center gap-2">
-              <span className="flex size-4.5 items-center justify-center rounded-[5px] bg-emerald text-white">
-                <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-small text-ink-2">
+            {LEGEND.map((entry) => (
+              <span key={entry.state} className="flex items-center gap-2">
+                <BoxSwatch state={entry.state} />
+                {t(entry.label)}
               </span>
-              {t("Prayed")}
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="flex size-4.5 items-center justify-center rounded-[5px] bg-expense-soft text-expense">
-                <X className="size-2.5" strokeWidth={3} aria-hidden="true" />
-              </span>
-              {t("Missed")}
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="size-4.5 rounded-[5px] border-[1.5px] border-dashed border-emerald bg-surface" />
-              {t("Today, not marked yet")}
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="size-4.5 rounded-[5px] border border-divider bg-surface-sunken" />
-              {t("Not yet")}
-            </span>
-            <span className="border-l border-line pl-4 text-ink-muted">{t("Tap a box to change it")}</span>
+            ))}
+            <span className="text-ink-muted sm:border-l sm:border-line sm:pl-4">{t("Tap a box to change it")}</span>
           </div>
         </div>
         <PrayerSheet tracker={sheet} onMark={mark} totalsLabel={t("Prayed that day")} rowLabel={(item) => t(item)} />
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} padding="none" className="flex flex-col gap-1 px-5 py-4">
-            <span className="text-small font-medium text-ink-muted">{stat.label}</span>
-            <span className={cn("text-[22px] leading-7 font-bold tracking-tight tabular-nums", stat.tone)}>{stat.value}</span>
-            <span className="text-caption font-normal text-ink-muted">{stat.sub}</span>
-          </Card>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label={t("Prayed")} value={t("{done} of {total}", { done: count(summary.prayed), total: count(summary.due) })} sub={prayedSub} />
+        <StatCard label={t("Perfect days")} value={count(summary.perfectDays)} sub={t("All five on time")} />
+        <StatCard label={t("Full days in a row")} value={count(summary.perfectRun)} sub={current ? t("All five prayed, counting up to today") : t("All five prayed, at the end of the month")} />
+        <StatCard label={t("Missed")} value={count(summary.missed)} sub={summary.missed === 0 ? t("Nothing to make up") : t("Tap a missed box to fix a wrong mark")} tone={summary.missed === 0 ? "text-income" : "text-expense"} />
       </div>
 
       <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+        <Card padding="none" className="flex min-w-0 flex-col gap-3 px-5 py-4">
           <h2 className="text-title font-semibold text-ink">{t("Each prayer")}</h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
             {prayers.map((p) => {
               const tag = summary.due > 0 && p.missed > 0 && p.item === worst?.item ? "most-missed" : summary.due > 0 && p.item === best?.item && p.prayed > 0 && best.item !== worst?.item ? "strongest" : null;
               return (
-                <div key={p.item} className={cn("flex flex-col gap-2 rounded-md border bg-surface p-3", tag === "most-missed" ? "border-expense/25" : "border-line")}>
-                  <div className="flex items-center justify-between gap-2">
+                <div key={p.item} className={cn("flex min-w-0 flex-col gap-2 rounded-md border bg-surface p-3", tag === "most-missed" ? "border-expense/25" : "border-line")}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-body font-semibold text-ink">{t(p.item)}</span>
                     {tag && (
                       <Chip tone={tag === "most-missed" ? "expense" : "mint"} size="sm">
@@ -185,19 +212,16 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
                       </Chip>
                     )}
                   </div>
-                  <span className="text-[22px] leading-7 font-bold text-ink tabular-nums">
-                    {p.prayed}
-                    <span className="text-small font-medium text-ink-muted"> {t("of")} {p.due}</span>
-                  </span>
+                  <span className="text-small font-medium text-ink-muted tabular-nums">{fillNodes(t("{done} of {total}"), { done: <span className="text-h2 text-ink">{count(p.prayed)}</span>, total: count(p.due) })}</span>
                   <span className="flex h-2 overflow-hidden rounded-full bg-surface-sunken">
                     <span className="bg-emerald" style={{ width: `${p.due ? (p.prayed / p.due) * 100 : 0}%` }} />
                     <span className="bg-expense-soft" style={{ width: `${p.due ? (p.missed / p.due) * 100 : 0}%` }} />
                   </span>
                   <span className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-0.75 text-caption font-normal text-ink-2 tabular-nums">
                     <span>{t("Prayed")}</span>
-                    <span className="font-semibold text-ink">{p.prayed}</span>
+                    <span className="font-semibold text-ink">{count(p.prayed)}</span>
                     <span>{t("Missed")}</span>
-                    <span className="font-semibold text-ink">{p.missed}</span>
+                    <span className="font-semibold text-ink">{count(p.missed)}</span>
                   </span>
                 </div>
               );
@@ -220,6 +244,16 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
           </ul>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onClose={() => !isDeleting && setConfirmDelete(false)}
+        onConfirm={remove}
+        isPending={isDeleting}
+        title={t("Delete {name}'s sheet?", { name: monthName(key, locale, "long", true) })}
+        description={t("Nothing is marked on it, so nothing is lost. You can add the month again later.")}
+        confirmLabel={t("Delete sheet")}
+      />
     </PageFrame>
   );
 }

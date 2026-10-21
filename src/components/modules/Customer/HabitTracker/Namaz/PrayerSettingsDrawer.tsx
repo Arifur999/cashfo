@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -12,12 +12,14 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { formatDate, timeLabel } from "@/lib/customer/date";
-import { hijriDate } from "@/lib/customer/habitDisplay";
+import { timeLabel } from "@/lib/customer/date";
+import { actionError, dayText, hijriDate } from "@/lib/customer/habitDisplay";
 import { updatePrayerSettingsAction } from "@/lib/customer/habitsActions";
 import { type AsrSchool, CITIES, clockOf, METHODS, type PrayerSettings, prayerTimesFor } from "@/lib/customer/prayerTimes";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 
 interface PrayerSettingsDrawerProps {
   open: boolean;
@@ -65,22 +67,20 @@ export function PrayerSettingsDrawer({ open, onClose, today }: PrayerSettingsDra
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to save the prayer settings"));
+        toast.error(actionError(result.message, "Failed to save the prayer settings", t, locale));
       }
     });
   }
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
+      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:max-h-[92dvh]")}>
         <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="text-h3 leading-6 text-ink">{t("Prayer time settings")}</SheetTitle>
             <SheetDescription className="text-small leading-[normal] text-ink-muted">{t("Used by Namaz, Ramadan and Today")}</SheetDescription>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
+          <CloseButton onClick={onClose} label={t("Close")} />
         </SheetHeader>
 
         <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
@@ -134,9 +134,7 @@ export function PrayerSettingsDrawer({ open, onClose, today }: PrayerSettingsDra
                 stretch
                 className={SEGMENTS}
               />
-              <span className="text-caption text-ink-muted">
-                {t("The moon is often seen a day later in Bangladesh. Today shows as")} <b className="font-bold text-ink">{hijriDate(today, locale, draft.hijriAdjust)}</b>.
-              </span>
+              <span className="text-caption text-ink-muted">{fillNodes(t("The moon is often seen a day later in Bangladesh. Today shows as {date}."), { date: <b className="font-bold text-ink">{hijriDate(today, locale, draft.hijriAdjust)}</b> })}</span>
             </fieldset>
 
             <dl className="flex flex-col rounded-lg bg-strip px-4 py-1">
@@ -147,18 +145,18 @@ export function PrayerSettingsDrawer({ open, onClose, today }: PrayerSettingsDra
                 </div>
               ))}
             </dl>
-            <span className="text-caption text-ink-muted">{t("Preview for {date} with these settings.", { date: formatDate(`${today}T00:00:00.000Z`, "EEE, d MMM") })}</span>
+            <span className="text-caption text-ink-muted">{t("Preview for {date} with these settings.", { date: dayText(today, locale, "short") })}</span>
           </div>
 
-          <div className={cn("flex items-center justify-end gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 py-3")}>
+          <PanelFooter drawer>
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? <Loader /> : <Check strokeWidth={2.5} />}
-              {t("Save")}
+              {t("Save changes")}
             </Button>
-          </div>
+          </PanelFooter>
         </form>
       </SheetContent>
     </Sheet>
