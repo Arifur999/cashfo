@@ -18,15 +18,17 @@ async function authHeaders() {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
+// The API's own words when it sent some, else nothing: the caller then shows
+// its fallback ("Failed to update contact") through t(), in the reader's
+// language, where a fallback filled in here would always reach it in English.
+const apiMessage = (body: unknown): string | undefined => getApiErrorMessage(body, "") || undefined;
+
+async function callApi<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
   try {
     const data = await fn();
     return { success: true, data };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage) };
-    }
-    return { success: false, message: fallbackMessage };
+    return { success: false, message: axios.isAxiosError(error) ? apiMessage(error.response?.data) : undefined };
   }
 }
 
@@ -46,7 +48,7 @@ export async function createContactAction(businessId: string, input: ContactForm
   return callApi(async () => {
     const res = await customerApi.post<Contact>(`${API_BASE_URL}/api/businesses/${businessId}/contacts`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to create contact");
+  });
 }
 
 export async function updateContactAction(
@@ -57,7 +59,7 @@ export async function updateContactAction(
   return callApi(async () => {
     const res = await customerApi.patch<Contact>(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to update contact");
+  });
 }
 
 // Uses fetch(), not axios, specifically for this call -- axios's Node
@@ -76,18 +78,18 @@ export async function uploadContactPhotoAction(businessId: string, formData: For
     });
     if (!response.ok) {
       const body = await response.json().catch(() => null);
-      return { success: false, message: getApiErrorMessage(body, "Failed to upload photo") };
+      return { success: false, message: apiMessage(body) };
     }
     return { success: true, data: await response.json() };
   } catch {
-    return { success: false, message: "Failed to upload photo" };
+    return { success: false };
   }
 }
 
 export async function archiveContactAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}/archive`, {}, { headers: await authHeaders() });
-  }, "Failed to archive contact");
+  });
 }
 
 export interface DeleteContactResult {
@@ -105,5 +107,5 @@ export async function deleteContactAction(businessId: string, id: string): Promi
       headers: await authHeaders(),
     });
     return res.data;
-  }, "Failed to remove contact");
+  });
 }

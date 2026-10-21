@@ -2,6 +2,9 @@
 // nightstand and how fast it is going, and this year's goal against the
 // calendar. Pure, so the page and its tests agree.
 import { toDateInputValue } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
+import { inEnglish, type Translate } from "@/lib/i18n/message";
+import type { Locale } from "@/lib/i18n/translate";
 import type { Book, BookStatus, ReadingDay } from "./api";
 import { dayOf } from "./habitDisplay";
 
@@ -82,6 +85,22 @@ export function goalPace(books: Book[], year: number, target: number, today: str
   const weeksLeft = (total - dayOfYear) / 7;
   return { finished, target, toGo, behind: expected - finished, weeksPerBook: toGo > 0 && weeksLeft > 0 ? Math.round((weeksLeft / toGo) * 10) / 10 : null };
 }
+
+// How often a book has to be finished to reach the goal by the year's end,
+// in whole weeks (or days, under a week): "About one book every 2 weeks to
+// finish by December."
+export function paceSentence(weeksPerBook: number, t: Translate = inEnglish, locale: Locale = "en"): string {
+  if (weeksPerBook < 1) {
+    const days = Math.max(1, Math.round(weeksPerBook * 7));
+    return days === 1 ? t("About one book a day to finish by December.") : t("About one book every {count} days to finish by December.", { count: formatCount(days, locale) });
+  }
+  const weeks = Math.round(weeksPerBook);
+  return weeks === 1 ? t("About one book a week to finish by December.") : t("About one book every {count} weeks to finish by December.", { count: formatCount(weeks, locale) });
+}
+
+// "Page 120 of 320".
+export const pageOfText = (book: Pick<Book, "pagesRead" | "totalPages">, t: Translate = inEnglish, locale: Locale = "en"): string =>
+  t("Page {page} of {total}", { page: formatCount(book.pagesRead, locale), total: formatCount(book.totalPages, locale) });
 
 // This week's pages so far, and the average a day over the days that have
 // come (today included); days still to come in the week don't count.

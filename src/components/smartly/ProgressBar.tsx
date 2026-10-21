@@ -11,10 +11,13 @@ interface ProgressBarProps {
   size?: "sm" | "md";
   // What the bar measures, for screen readers.
   label: string;
+  // The value in words, read instead of the number: a bar past 100% stops
+  // aria-valuenow at 100, so a budget says "140% used" here.
+  valueText?: string;
   className?: string;
 }
 
-const ProgressBar = ({ value, tone = "money", size = "md", label, className }: ProgressBarProps) => {
+const ProgressBar = ({ value, tone = "money", size = "md", label, valueText, className }: ProgressBarProps) => {
   const clamped = Math.max(0, Math.min(100, value));
   const fill = tone === "budget" ? BUDGET_TONE_BAR[budgetTone(value)] : TONE_BG[tone];
   return (
@@ -22,6 +25,7 @@ const ProgressBar = ({ value, tone = "money", size = "md", label, className }: P
       role="progressbar"
       aria-label={label}
       aria-valuenow={Math.round(clamped)}
+      aria-valuetext={valueText}
       aria-valuemin={0}
       aria-valuemax={100}
       className={cn("block w-full overflow-hidden rounded-full bg-surface-sunken", size === "sm" ? "h-1.5" : "h-2", className)}

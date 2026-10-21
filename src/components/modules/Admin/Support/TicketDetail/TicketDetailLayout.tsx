@@ -14,11 +14,15 @@ interface TicketDetailLayoutProps {
   admins: IAdminOption[];
   currentAdminId: string | null;
   canManage: boolean;
+  // The queue this ticket was opened from, with its tab, filters and page.
+  backHref: string;
 }
 
 // The design's ticket page: the conversation card on the left, the
-// settings and the person on the right.
-const TicketDetailLayout = ({ ticket, admins, currentAdminId, canManage }: TicketDetailLayoutProps) => {
+// settings and the person on the right. On a phone the settings and the
+// person come first, so the status and the assignee aren't below the whole
+// thread.
+const TicketDetailLayout = ({ ticket, admins, currentAdminId, canManage, backHref }: TicketDetailLayoutProps) => {
   // Every card renders the optimistic view, so a status or assignee change
   // shows everywhere on the page at once.
   const controls = useTicketControls(ticket);
@@ -26,14 +30,14 @@ const TicketDetailLayout = ({ ticket, admins, currentAdminId, canManage }: Ticke
 
   return (
     <div className="flex flex-col gap-4">
-      <BackLink href="/admin/support"><T>All tickets</T></BackLink>
+      <BackLink href={backHref}><T>All tickets</T></BackLink>
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section aria-labelledby="ticket-subject" className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-card">
           <TicketHeader ticket={view} />
           <TicketConversation ticket={view} admins={admins} currentAdminId={currentAdminId} canReply={canManage} onSetStatus={canManage ? controls.setStatus : undefined} />
         </section>
-        <aside className="flex flex-col gap-4">
-          {canManage && <TicketControls controls={controls} admins={admins} />}
+        <aside className="order-first flex flex-col gap-4 lg:order-0">
+          {canManage && <TicketControls controls={controls} admins={admins} currentAdminId={currentAdminId} />}
           <TicketRequesterCard ticket={view} />
         </aside>
       </div>

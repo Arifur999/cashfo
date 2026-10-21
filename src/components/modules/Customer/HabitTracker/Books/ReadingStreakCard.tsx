@@ -3,8 +3,9 @@
 import { Flame } from "lucide-react";
 import Card from "@/components/smartly/Card";
 import type { BooksOverview } from "@/lib/customer/api";
-import { dayOf, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
+import { daysText, dayOf, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
 import { weekPages } from "@/lib/customer/libraryDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +20,11 @@ const BAR_MAX = 86;
 // The board's reading streak: days in a row, this week's pages and the daily
 // average, then a bar for each day of the week (Saturday first).
 export function ReadingStreakCard({ reading, today }: ReadingStreakCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { total, average } = weekPages(reading.week, today);
   const most = Math.max(0, ...reading.week.map((day) => day.pages));
-  const days = (n: number) => `${n} ${t(n === 1 ? "day" : "days")}`;
-  const pages = (n: number) => `${n} ${t("pages")}`;
+  const days = (n: number) => daysText(n, t, locale);
+  const pages = (n: number) => t("{count} pages", { count: formatCount(n, locale) });
 
   return (
     <Card padding="none" className="flex flex-col gap-4 p-5">
@@ -31,7 +32,7 @@ export function ReadingStreakCard({ reading, today }: ReadingStreakCardProps) {
         <h2 className="text-title font-semibold text-ink">{t("Reading streak")}</h2>
         <span className="text-small text-ink-muted">{t("Best: {days}", { days: days(reading.best) })}</span>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 max-[400px]:grid-cols-1">
         <div className="flex flex-col gap-0.5 rounded-md bg-pillar-loans-soft p-3">
           <span className="text-caption text-pillar-loans">{t("In a row")}</span>
           <span className="flex items-center gap-1 text-h3 font-bold text-ink">
@@ -52,7 +53,7 @@ export function ReadingStreakCard({ reading, today }: ReadingStreakCardProps) {
       <div role="img" aria-label={t("Pages read each day this week")} className="flex h-30 items-end justify-between gap-3 border-b border-line px-1">
         {reading.week.map((day) => (
           <span key={day.date} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-            <span className={cn("text-caption font-bold tabular-nums", day.pages ? "text-ink-2" : "text-ink-muted")}>{day.pages}</span>
+            <span className={cn("text-caption font-bold tabular-nums", day.pages ? "text-ink-2" : "text-ink-muted")}>{formatCount(day.pages, locale)}</span>
             {/* The other days are the board's lighter loans orange: the night
                 palette's loans colour, as no light token carries it. */}
             <span

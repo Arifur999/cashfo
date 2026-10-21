@@ -1,3 +1,8 @@
+import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { formatCount } from "@/lib/i18n/digits";
+import type { FillValues } from "@/lib/i18n/fill";
+import type { Translate } from "@/lib/i18n/message";
+import type { Locale } from "@/lib/i18n/translate";
 import type { GroupContribution, GroupExpense, GroupKind, GroupMember, GroupSplit, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
 
 // The figures a group page derives from what the API already returns:
@@ -83,6 +88,9 @@ export function monthRangeOf(key: string, startDay = 1): MonthRange {
   return { key, year, month, from: `${key}-${pad(startDay)}`, to: `${next}-${pad(startDay - 1)}` };
 }
 
+// The day a range's months start on: the 10th for 10 Sep – 9 Oct.
+export const startDayOf = (range: Pick<MonthRange, "from">): number => Number(range.from.slice(8, 10));
+
 // The month `offset` months from `key` (negative for earlier).
 export function shiftMonth(key: string, offset: number): string {
   const [year, month] = key.split("-").map(Number);
@@ -100,6 +108,18 @@ export function monthChoices(today: string, earliest?: string | null, startDay =
   return keys;
 }
 
+// The months a group's picker offers, newest first: a year back at least,
+// further to the earliest closed month or the month on show, and always
+// that month (one typed in from the future too). A group that never closed
+// a month can still open the ones before this.
+export function groupPickerMonths(today: string, history: Pick<GroupSettlementRecord, "periodStart">[], range: Pick<MonthRange, "key" | "from">, startDay = 1): string[] {
+  const yearBack = monthRangeOf(shiftMonth(groupMonthOf(today, startDay), -11), startDay).from;
+  const earliest = [...history.map((record) => record.periodStart.slice(0, 10)), range.from, yearBack].sort()[0];
+  const months = monthChoices(today, earliest, startDay);
+  if (!months.includes(range.key)) months.push(range.key);
+  return months.sort().reverse();
+}
+
 // A month is closed once a settlement record covers it.
 export function closedRecordFor(history: GroupSettlementRecord[], range: MonthRange): GroupSettlementRecord | null {
   return history.find((record) => record.periodStart.slice(0, 10) <= range.from && record.periodEnd.slice(0, 10) >= range.to) ?? null;
@@ -112,11 +132,40 @@ export function isDayClosed(history: GroupSettlementRecord[], day: string): bool
   return history.some((record) => record.periodStart.slice(0, 10) <= d && record.periodEnd.slice(0, 10) >= d);
 }
 
+// Whether anything was recorded in a month: a cost, money in or out, a meal.
+export function hasActivity(settlement: GroupSettlementResult): boolean {
+  return Number(settlement.totalExpense) > 0 || settlement.members.some((row) => Number(row.grossDeposited) > 0 || Number(row.returned) > 0 || Number(row.mealUnits) > 0);
+}
+
+// The group month before `range`, when it was never closed though the group
+// was already running then (a member was added before it ended): the list
+// reminds the reader to close it.
+export function unclosedPreviousMonth(history: GroupSettlementRecord[], members: Pick<GroupMember, "createdAt">[], range: MonthRange): MonthRange | null {
+  const previous = monthRangeOf(shiftMonth(range.key, -1), startDayOf(range));
+  if (closedRecordFor(history, previous)) return null;
+  return members.some((member) => member.createdAt.slice(0, 10) <= previous.to) ? previous : null;
+}
+
+// Whether the live figures have moved away from a closed month's record:
+// an entry dated inside it changed after closing.
+export function recordDiffers(record: GroupSettlementRecord, live: GroupSettlementResult): boolean {
+  const apart = (a: string | number, b: string | number) => Math.abs(Number(a) - Number(b)) >= 0.005;
+  if (apart(record.totalExpense, live.totalExpense) || apart(record.cashInHand, live.cashInHand)) return true;
+  const recorded = new Map(record.members.map((row) => [row.groupMemberId, Number(row.balance)]));
+  const current = new Map(live.members.map((row) => [row.groupMemberId, Number(row.balance)]));
+  return [...new Set([...recorded.keys(), ...current.keys()])].some((id) => apart(recorded.get(id) ?? 0, current.get(id) ?? 0));
+}
+
 // Contributions − returns − expenses paid from the fund: what the fund
 // should be holding for the period, which is also every balance added up.
 export function cashInHand(settlement: GroupSettlementResult): number {
   return Number(settlement.cashInHand);
 }
+
+// What a member put in for the month: their contributions (returns taken
+// off) and what they paid for the group from their own pocket. Their
+// balance is this less their share of the costs.
+export const paidIn = (row: Pick<GroupSettlementMemberRow, "contributed" | "pocketPaid">): number => Number(row.contributed) + Number(row.pocketPaid);
 
 export interface ContributionTotals {
   deposited: number;
@@ -177,13 +226,18 @@ export function whoPaysWhom(rows: GroupSettlementMemberRow[]): Transfer[] {
 const inGroupOn = (member: GroupMember, day: string) => (member.status === "ACTIVE" || !!member.leftOn) && (!member.joinedOn || member.joinedOn.slice(0, 10) <= day) && (!member.leftOn || member.leftOn.slice(0, 10) >= day);
 const inRange = (member: GroupMember, range: Pick<MonthRange, "from" | "to">) => (member.status === "ACTIVE" || !!member.leftOn) && (!member.joinedOn || member.joinedOn.slice(0, 10) <= range.to) && (!member.leftOn || member.leftOn.slice(0, 10) >= range.from);
 
+// Whether by-meals costs go into a meal rate: meal counting is on and some
+// meals were marked. Otherwise the server shares them equally, as the day's
+// other costs.
+export const poolsMeals = (mealsOn: boolean, settlement: Pick<GroupSettlementResult, "mealUnits">): boolean => mealsOn && Number(settlement.mealUnits) > 0;
+
 // One member's part of one expense, as the settlement works it out: the
 // members it names (by units or exact amounts), else everyone in the group
 // that day. A by-meals expense is pooled into the meal rate instead (0
-// here) while meal counting is on, and shared equally while it is off.
-export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "split" | "splits">, memberId: string, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsOn: boolean): number {
+// here) while meals are pooled, and shared equally otherwise.
+export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "split" | "splits">, memberId: string, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsPooled: boolean): number {
   const amount = Number(expense.amount);
-  if (expense.split === "MEALS" && mealsOn) return 0;
+  if (expense.split === "MEALS" && mealsPooled) return 0;
   const sharing = members.filter((member) => inRange(member, range));
   const thatDay = sharing.filter((member) => inGroupOn(member, expense.date.slice(0, 10)));
   const everyone = thatDay.length > 0 ? thatDay : sharing;
@@ -204,6 +258,47 @@ export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "sp
   const total = weights.reduce((sum, [, weight]) => sum + weight, 0);
   const mine = weights.find(([id]) => id === memberId)?.[1] ?? 0;
   return total > 0 ? (amount * mine) / total : 0;
+}
+
+// What each member pays of the month's costs shared one way ("by shares"),
+// added up expense by expense, so a cost with its own units counts as it
+// was saved.
+export function splitTotals(expenses: GroupExpense[], split: GroupSplit, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsPooled: boolean): Record<string, number> {
+  const totals: Record<string, number> = {};
+  for (const expense of expenses.filter((e) => e.split === split)) {
+    for (const member of members) {
+      const part = expenseShare(expense, member.id, members, range, mealsPooled);
+      if (Math.abs(part) > 0.004) totals[member.id] = (totals[member.id] ?? 0) + part;
+    }
+  }
+  return totals;
+}
+
+// Whether "shared cost each" is one figure everybody pays: every cost
+// outside the meal pool is split equally among everyone, and nobody joined
+// or left during the month.
+export function sharedEqually(expenses: Pick<GroupExpense, "split" | "splits">[], mealsPooled: boolean, members: GroupMember[], range: Pick<MonthRange, "from" | "to">): boolean {
+  const plain = expenses.every((e) => (e.split === "MEALS" && mealsPooled) || ((e.split === "EQUAL" || e.split === "MEALS") && e.splits.length === 0));
+  const wholeMonth = members.filter((member) => inRange(member, range)).every((member) => (!member.joinedOn || member.joinedOn.slice(0, 10) <= range.from) && (!member.leftOn || member.leftOn.slice(0, 10) >= range.to));
+  return plain && wholeMonth;
+}
+
+// What each member pays of the costs outside the meal pool (all of them when
+// no meals are pooled), when sharedEqually says it is one figure for all:
+// the Settlement tab and the close dialog show the same one.
+export const sharedCostEach = (settlement: Pick<GroupSettlementResult, "totalExpense" | "mealExpense" | "memberCount">): number =>
+  settlement.memberCount > 0 ? (Number(settlement.totalExpense) - Number(settlement.mealExpense)) / settlement.memberCount : 0;
+
+// How each category's costs this month were shared: the one way they all
+// used, or MIXED. A by-meals cost counts as equal while meals aren't pooled,
+// as the server shares it.
+export function categorySplits(expenses: Pick<GroupExpense, "category" | "split">[], mealsPooled: boolean): Record<string, GroupSplit | "MIXED"> {
+  const used = new Map<string, Set<GroupSplit>>();
+  for (const expense of expenses) {
+    const split: GroupSplit = expense.split === "MEALS" && !mealsPooled ? "EQUAL" : expense.split;
+    used.set(expense.category, (used.get(expense.category) ?? new Set<GroupSplit>()).add(split));
+  }
+  return Object.fromEntries([...used].map(([name, splits]) => [name, splits.size === 1 ? [...splits][0] : "MIXED"]));
 }
 
 // Settling through the manager: whoever owes pays the one holding the
@@ -256,11 +351,12 @@ export function spendByCategory(expenses: GroupExpense[]): CategorySpend[] {
     .sort((a, b) => b.amount - a.amount);
 }
 
-// What was spent in each of the given months.
-export function spendByMonth(expenses: GroupExpense[], months: string[]): { month: string; amount: number }[] {
+// What was spent in each of the given group months: a month starting on
+// the 10th counts 10 Sep – 9 Oct as "2026-09", as its budget does.
+export function spendByMonth(expenses: GroupExpense[], months: string[], startDay = 1): { month: string; amount: number }[] {
   const byMonth = new Map(months.map((m) => [m, 0]));
   for (const e of expenses) {
-    const key = e.date.slice(0, 7);
+    const key = groupMonthOf(e.date.slice(0, 10), startDay);
     if (byMonth.has(key)) byMonth.set(key, (byMonth.get(key) ?? 0) + Number(e.amount));
   }
   return months.map((month) => ({ month, amount: byMonth.get(month) ?? 0 }));
@@ -274,17 +370,56 @@ export function inMonth<T extends { date: string }>(rows: T[], range: MonthRange
   });
 }
 
-// A new group has nothing recorded yet: the page shows the setup steps.
-export function needsSetup(contributions: GroupContribution[], expenses: GroupExpense[]): boolean {
-  return contributions.length === 0 && expenses.length === 0;
+// A group that has never recorded anything: no closed month, no expense in
+// the six months up to the one on show, and no contribution or meal in it.
+// Only then does the page show the setup steps; an established group's
+// empty month keeps its dashboard (and new members their joining day).
+export function isNewGroup(recorded: { history: unknown[]; recentExpenses: unknown[]; contributions: unknown[]; meals: unknown[] }): boolean {
+  return recorded.history.length === 0 && recorded.recentExpenses.length === 0 && recorded.contributions.length === 0 && recorded.meals.length === 0;
 }
 
-// "Jan 2025" from an ISO timestamp, for "member since".
 // The month a member joined: their joining day, else when they were added.
 export function memberSince(member: GroupMember): string {
   return (member.joinedOn ?? member.createdAt).slice(0, 7);
 }
 
+// Titles a Bangladeshi name often starts with: "Md. Arif Hossain" is Arif.
+const NAME_PREFIX = /^(?:md|mohd|mohammad|mohammed|mohamed|muhammad|মো|মোহাম্মদ|মুহাম্মদ)[.:ঃ]*$/i;
+
+// A short name for a line that names two people ("Arif pays Khaled"): the
+// first word that isn't such a title.
+export function shortName(name: string | undefined): string {
+  const words = (name ?? "")
+    .trim()
+    .replace(/^(md|mohd)\.(?=\S)/i, "$1. ")
+    .split(/\s+/)
+    .filter(Boolean);
+  return words.find((word) => !NAME_PREFIX.test(word)) ?? words[0] ?? "?";
+}
+
+const EN_MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// A "YYYY-MM-DD" day as the group pages write it: "5 Oct" (or "5 Oct 2026"),
+// "৫ অক্টো" in Bangla. Calendar days, so no time zone moves them.
+export function dayLabel(day: string, locale: Locale, withYear = false): string {
+  const key = day.slice(0, 10);
+  const [year, month, date] = key.split("-").map(Number);
+  if (locale === "bn") return `${banglaDayMonth(key)}${withYear ? ` ${toBanglaDigits(year)}` : ""}`;
+  return `${date} ${EN_MONTHS_SHORT[month - 1] ?? ""}${withYear ? ` ${year}` : ""}`;
+}
+
+// A month's days: "1 Oct – 31 Oct 2026", "10 Dec 2026 – 9 Jan 2027".
+export function rangeLabel(range: Pick<MonthRange, "from" | "to">, locale: Locale): string {
+  const sameYear = range.from.slice(0, 4) === range.to.slice(0, 4);
+  return `${dayLabel(range.from, locale, !sameYear)} – ${dayLabel(range.to, locale, true)}`;
+}
+
+// "1 member" or "3 members", the count in the reader's digits. Bangla words
+// both keys alike.
+export const countLabel = (t: Translate, locale: Locale, count: number, one: string, many: string, values?: FillValues): string => t(count === 1 ? one : many, { ...values, count: formatCount(count, locale) });
+
 // The budget bar and its figure, by status.
 export const BUDGET_TONE_BAR: Record<BudgetTone, string> = { ok: "bg-emerald", warning: "bg-warning-fill", over: "bg-expense-fill" };
 export const BUDGET_TONE_TEXT: Record<BudgetTone, string> = { ok: "text-ink", warning: "text-warning", over: "text-expense" };
+// The same status on the shared ProgressBar.
+export const BUDGET_TONE_PROGRESS = { ok: "money", warning: "warning", over: "expense" } as const satisfies Record<BudgetTone, string>;

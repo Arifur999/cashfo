@@ -1,6 +1,5 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -10,9 +9,11 @@ import Field from "@/components/smartly/form/Field";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { HabitMonthTracker } from "@/lib/customer/api";
+import { actionError } from "@/lib/customer/habitDisplay";
 import { createHabitTrackerAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 
 interface EarlierMonthDialogProps {
   open: boolean;
@@ -51,11 +52,11 @@ export function EarlierMonthDialog({ open, onClose, existing, currentMonth }: Ea
     startTransition(async () => {
       const result = await createHabitTrackerAction({ category: "Namaz", month: m, year: y });
       if (result.success && result.data) {
-        toast.success(`${monthName(choice, locale, "long", true)} ${t("added")}`);
+        toast.success(t("{month} added", { month: monthName(choice, locale, "long", true) }));
         onClose();
         router.push(`/habit-tracker/habits/namaz/${result.data.id}`);
       } else {
-        toast.error(result.message ?? t("Failed to add the month"));
+        toast.error(actionError(result.message, "Failed to add the month", t, locale));
       }
     });
   }
@@ -66,9 +67,7 @@ export function EarlierMonthDialog({ open, onClose, existing, currentMonth }: Ea
         <form onSubmit={submit} className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
             <AlertDialogTitle className="text-h3 text-ink">{t("Add an earlier month")}</AlertDialogTitle>
-            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-              <X className="size-4.5" aria-hidden="true" />
-            </button>
+            <CloseButton onClick={onClose} label={t("Close")} />
           </div>
           <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{t("This month opens on its own. Add a past month to fill in its prayers.")}</AlertDialogDescription>
           <div className="px-6 py-4">
@@ -83,7 +82,7 @@ export function EarlierMonthDialog({ open, onClose, existing, currentMonth }: Ea
               </NativeSelect>
             </Field>
           </div>
-          <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
+          <PanelFooter>
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
@@ -91,7 +90,7 @@ export function EarlierMonthDialog({ open, onClose, existing, currentMonth }: Ea
               {isPending && <Loader />}
               {t("Add month")}
             </Button>
-          </div>
+          </PanelFooter>
         </form>
       </AlertDialogContent>
     </AlertDialog>

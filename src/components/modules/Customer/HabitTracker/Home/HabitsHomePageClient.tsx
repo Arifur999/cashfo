@@ -5,10 +5,9 @@ import { useRef, useState } from "react";
 import Button from "@/components/smartly/Button";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import { hijriDate } from "@/lib/customer/habitDisplay";
+import { dayText, hijriDate } from "@/lib/customer/habitDisplay";
 import { last7, prayerStreak, restingToday, streakRows } from "@/lib/customer/habitsHome";
 import { nowReading } from "@/lib/customer/libraryDisplay";
-import { dayLabel } from "@/lib/customer/todoDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { HabitDrawer } from "../Daily/HabitDrawer";
 import { ChallengesCard } from "./ChallengesCard";
@@ -30,8 +29,8 @@ interface HabitsHomePageClientProps {
 // Habits › Today: the day in one place -- prayers, habits, tasks, the week
 // behind, the streaks alive, and what is being read, learned and attempted.
 // Phones get the phone board: a greeting, the prayers, habits, tasks and
-// the book; the week, streaks, skills, challenges and Ramadan wait for a
-// wider screen.
+// the book (and Ramadan while it is going on); the week, streaks, skills and
+// challenges wait for a wider screen.
 export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   const { t, locale } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
@@ -46,11 +45,9 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   return (
     <PageFrame className="md:gap-5">
       <div className="flex flex-col gap-0.5 md:hidden">
-        <h1 className="text-h2 leading-[1.3] font-semibold tracking-[-0.01em] text-ink">
-          {t(data.greeting)}, {data.firstName}
-        </h1>
+        <h1 className="text-h2 leading-[1.3] font-semibold tracking-[-0.01em] text-ink">{t("{greeting}, {name}", { greeting: t(data.greeting), name: data.firstName })}</h1>
         <p className="text-small leading-[normal] text-ink-muted">
-          {dayLabel(today, "EEE, d MMM")} · {hijriDate(today, locale, hijriAdjust)}
+          {dayText(today, locale, "short")} · {hijriDate(today, locale, hijriAdjust)}
         </p>
       </div>
       <PageHeader
@@ -59,8 +56,8 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
         tone="habits"
         title={t("Today")}
         description={
-          <span className="flex items-center gap-2">
-            {dayLabel(today, "EEEE, d MMMM yyyy")}
+          <span className="flex flex-wrap items-center gap-x-2">
+            {dayText(today, locale, "full")}
             <span aria-hidden="true" className="size-1 rounded-full bg-ink-faint" />
             {hijriDate(today, locale, hijriAdjust)}
           </span>
@@ -79,9 +76,12 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
         }
       />
 
-      <div className="grid items-stretch gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_372px]">
+      {/* The habits sit beside the prayers from 1400px. Narrower, next to the
+          372px habits card the five prayer tiles get too thin for their
+          status chips ("Not prayed", "Jama'at"), so the habits go under. */}
+      <div className="grid items-stretch gap-4 md:gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_372px]">
         <PrayersCard trackers={data.namaz} today={today} />
-        <DailyHabitsCard rows={data.todayRows} resting={restingToday(data.habits, today)} today={today} />
+        <DailyHabitsCard rows={data.todayRows} resting={restingToday(data.habits, today)} today={today} onAddHabit={() => setHabitOpen(true)} />
       </div>
 
       <div className="grid items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3">
@@ -97,8 +97,9 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
         <div className="hidden md:contents">
           <LearningMini overview={data.skills} today={today} />
           <ChallengesCard trackers={data.challenges} today={today} />
-          <RamadanCard trackers={data.ramadan} today={today} />
         </div>
+        {/* Phones see it only while Ramadan is going on (the card decides). */}
+        <RamadanCard trackers={data.ramadan} today={today} />
       </div>
 
       <HabitDrawer open={habitOpen} onClose={() => setHabitOpen(false)} editing={null} />

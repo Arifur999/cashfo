@@ -40,6 +40,16 @@ export const sharedDictionary: Record<string, string> = {
   // don't redefine with different Bangla wording.
   Save: "সংরক্ষণ",
   "Save Changes": "পরিবর্তন সংরক্ষণ করুন",
+  // Every customer drawer's submit while editing; the admin panel keeps
+  // admin-shared.ts's পরিবর্তন সংরক্ষণ.
+  "Save changes": "পরিবর্তন সংরক্ষণ করুন",
+  // A save confirmation beside a form. The plain "Saved" is money put by
+  // (জমা) in Savings.
+  "Saved@@status": "সংরক্ষিত",
+  // The button that opens something locked (the vault).
+  Unlock: "আনলক করুন",
+  // A card's preview in a drawer (the Wallet and Category drawers).
+  Preview: "নমুনা",
   Delete: "মুছুন",
   Edit: "সম্পাদনা",
   Add: "যোগ করুন",
@@ -66,7 +76,6 @@ export const sharedDictionary: Record<string, string> = {
   "It may have moved, or the link was typed wrong. If it was a transaction or a goal, it may have been deleted from another device.":
     "এটি সরে গেছে, অথবা লিংকটি ভুল লেখা হয়েছে। লেনদেন বা লক্ষ্য হলে অন্য ডিভাইস থেকে মুছে ফেলা হয়ে থাকতে পারে।",
   "Scheduled maintenance": "নির্ধারিত রক্ষণাবেক্ষণ",
-  "is getting an upgrade": "আপগ্রেড হচ্ছে",
   "Your data is safe. Everything is paused for a short while so nothing gets lost.":
     "আপনার তথ্য নিরাপদ আছে। কিছু যেন না হারায় সেজন্য অল্প সময়ের জন্য সবকিছু বন্ধ আছে।",
   "Write to support": "সাপোর্টকে লিখুন",
@@ -128,7 +137,7 @@ export const sharedDictionary: Record<string, string> = {
   // পৃষ্ঠা where the admin panel says পাতা, and one pager must not mix the
   // two, so "Previous page" and "Next page" here win over income-expense.ts's
   // পাতা. The admin scope still takes admin-shared.ts's wording for the keys
-  // it has. "Show fewer" is already worded in group-expenses.ts.
+  // it has.
   Pagination: "পৃষ্ঠা বদল",
   "Previous page": "আগের পৃষ্ঠা",
   "Next page": "পরের পৃষ্ঠা",
@@ -141,6 +150,10 @@ export const sharedDictionary: Record<string, string> = {
   "Showing {range} of {total}": "{total}টির মধ্যে {range}",
   "Showing {shown} of {total}": "{total}টির মধ্যে {shown}টি দেখানো হচ্ছে",
   "Show {count} more": "আরও {count}টি দেখান",
+  "Show fewer": "কম দেখান",
+  // A list's order, as a sort choice or a note under its title, the way
+  // the pages' sentences say it ("…, নতুনগুলো আগে").
+  "Newest first": "নতুনগুলো আগে",
   // A paged statement's first and last rows: the running balance from the
   // pages before, and the one the next page starts from (as the loan
   // statement words it).
@@ -172,4 +185,11 @@ export const sharedDictionary: Record<string, string> = {
   "To-do list": "করণীয় তালিকা",
   // Loans › Payments; the admin panel keeps its own পেমেন্ট.
   Payments: "পরিশোধ",
+
+  // The error pages' reference line, as one sentence.
+  "Error reference: {digest}": "এরর রেফারেন্স: {digest}",
+  // The root layout's skip link; <html lang> follows the locale cookie.
+  "Skip to main content": "মূল অংশে যান",
+  // attempt()'s answer when a server action belongs to an older build.
+  "Smartly was just updated. Reload the page and try again.": "Smartly এইমাত্র আপডেট হয়েছে। পেজটি আবার লোড করে চেষ্টা করুন।",
 };

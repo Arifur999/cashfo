@@ -1,16 +1,23 @@
 "use client";
 
 import { Check, Eye } from "lucide-react";
-import Card from "@/components/smartly/Card";
+import T from "@/components/shared/T";
+import { ListCard, ListCell, ListHead, ListHeadCell, ListRow } from "@/components/smartly/list";
 import { ADMIN_ROLE_CHIP, ADMIN_ROLE_SHORT_LABELS } from "@/lib/adminRoles";
-import { ROLE_ACCESS_LABEL, ROLE_PERMISSIONS, type RoleAccess } from "@/lib/rolePermissions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { ROLE_ACCESS_LABEL, ROLE_PERMISSIONS, type RoleAccess } from "@/lib/rolePermissions";
 import { upperFirst } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { ADMIN_ROLES } from "@/types/adminAccount.types";
-import T from "@/components/shared/T";
 
-const GRID = "grid min-w-180 grid-cols-[minmax(0,1fr)_repeat(4,130px)] items-center px-5";
+// Area, then a column per role. The matrix scrolls sideways where it can't
+// fit, so the grid isn't md-only (the heads show on phones too), and its
+// rows hold their width.
+const COLUMNS = "grid-cols-[minmax(11rem,1fr)_repeat(4,7.5rem)] min-w-180";
+// The Area column stays put while the marks scroll under it. The row's left
+// inset moves into these cells, so a stuck cell keeps its padding, and they
+// fill the row's height, so the divider beside them runs top to bottom.
+const STICKY = "sticky left-0 z-1 flex self-stretch border-r border-divider pr-3 pl-4 md:pl-6";
 const KEY: RoleAccess[] = ["do", "look", "none"];
 
 // A tick on mint (can do it), an eye on sand (can only look), or an empty
@@ -32,18 +39,16 @@ const AccessMark = ({ access, size = "md" }: { access: RoleAccess; size?: "sm" |
 );
 
 // Security > Roles: what each admin role may do, area by area, as the panel
-// and the API enforce it today.
+// and the API enforce it today. Built on the list recipes; the table is a
+// scroll box that takes focus, so the keyboard can scroll it too.
 const RolesMatrix = () => {
   const { translate } = useLocale();
   return (
-    <Card padding="none" className="overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
-        <div className="flex flex-col gap-0.5">
-          <h2 id="roles-title" className="text-title text-ink">
-            <T>What each role can do</T>
-          </h2>
-          <p className="text-small text-ink-muted"><T>This is what the server allows today. Changing it needs a code change for now.</T></p>
-        </div>
+    <ListCard
+      label={translate("What each role can do")}
+      title={<T>What each role can do</T>}
+      description={<T>This is what the server allows today. Changing it needs a code change for now.</T>}
+      actions={
         <ul aria-label={translate("Key@@legend")} className="flex flex-wrap gap-4 text-small whitespace-nowrap text-ink-2">
           {KEY.map((access) => (
             <li key={access} className="flex items-center gap-1">
@@ -52,38 +57,45 @@ const RolesMatrix = () => {
             </li>
           ))}
         </ul>
-      </div>
-      <div role="table" aria-labelledby="roles-title" className="overflow-x-auto">
-        <div role="row" className={cn(GRID, "border-y border-line bg-table-head py-3 text-small font-semibold text-ink-2")}>
-          <span role="columnheader"><T>Area</T></span>
-          {ADMIN_ROLES.map((role) => (
-            <span role="columnheader" key={role} className="text-center">
-              <span className={cn("rounded-full px-2 py-0.5", ADMIN_ROLE_CHIP[role])}><T>{ADMIN_ROLE_SHORT_LABELS[role]}</T></span>
+      }
+      tableClassName="overflow-x-auto"
+      scrollable
+    >
+      <ListHead columns={COLUMNS} showOnPhone className="pl-0 md:pl-0">
+        <ListHeadCell className={cn(STICKY, "items-center bg-table-head")}>
+          <T>Area</T>
+        </ListHeadCell>
+        {ADMIN_ROLES.map((role) => (
+          <ListHeadCell key={role} align="center">
+            <span className={cn("rounded-full px-2 py-0.5 font-semibold", ADMIN_ROLE_CHIP[role])}>
+              <T>{ADMIN_ROLE_SHORT_LABELS[role]}</T>
             </span>
-          ))}
-        </div>
-        {ROLE_PERMISSIONS.map((row) => (
-          <div role="row" key={row.area} className={cn(GRID, "min-h-11.5 border-b border-divider py-1 text-body last:border-b-0")}>
-            <span role="rowheader" className="flex flex-col">
-              <span className="font-medium text-ink">
-                <T>{row.area}</T>
-              </span>
-              {row.note && (
-                <span className="text-caption text-ink-muted">
-                  <T>{row.note}</T>
-                </span>
-              )}
-            </span>
-            {ADMIN_ROLES.map((role) => (
-              <span role="cell" key={role} className="flex justify-center" title={`${translate(ADMIN_ROLE_SHORT_LABELS[role])}: ${translate(ROLE_ACCESS_LABEL[row.access[role]])}`}>
-                <AccessMark access={row.access[role]} />
-                <span className="sr-only"><T>{ROLE_ACCESS_LABEL[row.access[role]]}</T></span>
-              </span>
-            ))}
-          </div>
+          </ListHeadCell>
         ))}
-      </div>
-    </Card>
+      </ListHead>
+      {ROLE_PERMISSIONS.map((row) => (
+        <ListRow key={row.area} columns={COLUMNS} density="dense" className="py-0 pl-0 md:py-0 md:pl-0">
+          <ListCell role="rowheader" className={cn(STICKY, "flex-col justify-center gap-px bg-surface py-2")}>
+            <span className="font-medium text-ink">
+              <T>{row.area}</T>
+            </span>
+            {row.note && (
+              <span className="text-caption text-ink-muted">
+                <T>{row.note}</T>
+              </span>
+            )}
+          </ListCell>
+          {ADMIN_ROLES.map((role) => (
+            <ListCell key={role} className="flex justify-center" title={`${translate(ADMIN_ROLE_SHORT_LABELS[role])}: ${translate(ROLE_ACCESS_LABEL[row.access[role]])}`}>
+              <AccessMark access={row.access[role]} />
+              <span className="sr-only">
+                <T>{ROLE_ACCESS_LABEL[row.access[role]]}</T>
+              </span>
+            </ListCell>
+          ))}
+        </ListRow>
+      ))}
+    </ListCard>
   );
 };
 

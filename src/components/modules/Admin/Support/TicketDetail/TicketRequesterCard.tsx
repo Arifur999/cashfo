@@ -2,21 +2,35 @@
 
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { getInitials } from "@/lib/text";
 import { earlierTicketsText } from "@/lib/tickets";
 import type { ISupportTicketDetail } from "@/types/ticket.types";
 import T from "@/components/shared/T";
+import { requesterTicketsHref } from "../ticketLinks";
 
-// Who wrote: the person, their plan, their history with support, and a
-// way to their page (found by email, since older tickets keep their own
-// record of the person).
+// Who wrote: the person, their plan, their history with support (a link to
+// those tickets), and a way to find them in Users (by email, since older
+// tickets keep their own record of the person).
 const TicketRequesterCard = ({ ticket }: { ticket: ISupportTicketDetail }) => {
   const user = ticket.platformUser;
-  const { translate } = useLocale();
-  const facts = [
+  const { locale, translate } = useLocale();
+  const history = ticket.requesterTickets;
+  const earlier = toLocaleDigits(earlierTicketsText(history, translate), locale);
+  const facts: { label: string; value: React.ReactNode }[] = [
     { label: "Plan", value: user?.plan?.name ?? translate("No plan") },
-    { label: "Earlier tickets", value: earlierTicketsText(ticket.requesterTickets, translate) },
+    {
+      label: "Earlier tickets",
+      value:
+        user && history.total > 0 ? (
+          <Link href={requesterTicketsHref(user.email, history)} className="text-emerald hover:underline">
+            {earlier}
+          </Link>
+        ) : (
+          earlier
+        ),
+    },
   ];
 
   return (
@@ -45,8 +59,10 @@ const TicketRequesterCard = ({ ticket }: { ticket: ISupportTicketDetail }) => {
               </div>
             ))}
           </dl>
+          {/* A search of Users, not the person's own page: the ticket doesn't
+              say whether its requester is a customer account. */}
           <Link href={`/admin/users?search=${encodeURIComponent(user.email)}`} className="text-small font-semibold text-emerald hover:underline">
-            <T>Open the user&apos;s page</T>
+            <T>Find in Users</T>
           </Link>
         </>
       ) : (

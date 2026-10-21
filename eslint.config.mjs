@@ -11,9 +11,11 @@ const classRule = (pattern, message) => [
 
 // Colour classes retired by the Cool mist palette (src/app/globals.css
 // says which ground does which job). Tailwind drops a class it doesn't
-// know without a word, so a leftover would just lose its colour.
+// know without a word, so a leftover would just lose its colour. The
+// sunken ground as a line is retired on every side (border-b-surface-sunken)
+// and between rows (divide-surface-sunken) alike.
 const RETIRED = classRule(
-  /bg-cream|var\(--cream\)|border-surface-sunken/,
+  /bg-cream|var\(--cream\)|(?:border(?:-[trblxyse])?|divide)-surface-sunken/,
   "Retired colour: use bg-page (shell), bg-table-head (column heads, group and total rows), bg-strip (footers, notes, tiles), bg-hover (row hover), bg-surface-sunken (tracks, chips, control hover) or border-divider (row separators).",
 );
 

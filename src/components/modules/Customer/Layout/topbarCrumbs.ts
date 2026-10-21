@@ -71,11 +71,23 @@ export function restoredListUrl(list: NavLeaf, saved: string | null): string {
   return `${url.pathname}${url.search}`;
 }
 
+// Where the list crumb leads while a page shows a record. From a record
+// page under the list (`visitUrl` null), back to the list as it was left
+// (`listUrl`, its restored address) or else its plain address. From a
+// record shown on the list's own page (the vault's security checkup at
+// ?checkup=1), to the plain list, which closes it; the page itself stays,
+// with its state, since only the query changes. At the plain list's own
+// address there is nothing to close: null, and the crumb stays text.
+export function recordListHref(location: NavLocation, visitUrl: string | null, listUrl?: string): string | null {
+  const plain = leafHref(listOf(location));
+  if (visitUrl === null) return listUrl ?? plain;
+  return visitUrl === plain ? null : plain;
+}
+
 // The parts before the page's own name. `listUrl` is where a record page's
-// list crumb goes (its restored address); without a record the trail is
-// the section and group alone. `linkList: false` is for a record shown on
-// its list's own page (the vault's security checkup): a link there would
-// open the page already open and change nothing, so the list stays text.
+// list crumb goes (recordListHref); without a record the trail is the
+// section and group alone. `linkList: false` leaves the list as text, for
+// a record whose list crumb has nowhere to go (recordListHref's null).
 export function topbarTrail(location: NavLocation, record: boolean, listUrl?: string, { linkList = true }: { linkList?: boolean } = {}): TopbarCrumb[] {
   const { crumbs, heading } = breadcrumbFor(location);
   const trail: TopbarCrumb[] = crumbs.map((label) => (location.sub && label === location.item.label ? { label, href: leafHref(location.item) } : { label }));

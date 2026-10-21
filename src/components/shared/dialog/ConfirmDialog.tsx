@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -33,11 +34,12 @@ interface ConfirmDialogProps {
   isPending?: boolean;
   confirmDisabled?: boolean;
   // For irreversible actions: the admin must type this exact text (e.g. the
-  // workspace name) before the confirm button enables.
+  // owner's email) before the confirm button enables.
   confirmationText?: string;
-  // "Type the workspace name to confirm:" -- defaults to naming the text.
+  // "Type their email to confirm:" -- defaults to "Type {text} to confirm",
+  // naming the text.
   confirmationLabel?: React.ReactNode;
-  // Shown in green once the typed text matches ("Matches the workspace name").
+  // Shown in green once the typed text matches ("Matches their email").
   confirmationMatchedText?: string;
   // Extra content between the description and the buttons.
   children?: React.ReactNode;
@@ -77,11 +79,7 @@ const ConfirmBody = ({
           {confirmationText && (
             <div className="flex flex-col gap-2">
               <Label htmlFor={inputId} className="text-body font-medium text-ink">
-                {confirmationLabel ?? (
-                  <>
-                    {translate("To confirm, type")} <span className="font-semibold">{confirmationText}</span>
-                  </>
-                )}
+                {confirmationLabel ?? fillNodes(translate("Type {text} to confirm"), { text: <span className="font-semibold">{confirmationText}</span> })}
               </Label>
               <Input
                 id={inputId}

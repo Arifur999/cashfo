@@ -1,36 +1,47 @@
 "use client";
 
-import { ChartColumn, FileText, Landmark, PiggyBank, TrendingDown, TrendingUp, TriangleAlert, Utensils } from "lucide-react";
+import { ChartColumn, FileText, PiggyBank, ShoppingBag, TrendingDown, TrendingUp, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
 import AmountText from "@/components/smartly/AmountText";
 import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import EmptyState from "@/components/smartly/EmptyState";
+import KpiTile from "@/components/smartly/KpiTile";
+import { ListCard, ListCell, ListHead, ListHeadCell, ListRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
+import type { Tone } from "@/components/smartly/tones";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { formatCurrency } from "@/lib/customer/currency";
-import { INSIGHT_PERIOD_LABELS, INSIGHT_PERIODS, percentChange, type InsightPeriod, type RankedRow } from "@/lib/customer/insights";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { INSIGHT_PERIOD_LABELS, INSIGHT_PERIODS, monthlyAverage, movement, type InsightPeriod, type Movement, type RankedRow } from "@/lib/customer/insights";
+import { formatCount } from "@/lib/i18n/digits";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural, type Translate } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 import type { InsightsData } from "./insightsTypes";
+import { useInsightsSlots } from "./InsightsSlots";
 import { KeptChart } from "./KeptChart";
-import { NetWorthCard } from "./NetWorthCard";
 import { SavingsRateChart } from "./SavingsRateChart";
 import { SayCard } from "./SayCard";
 
-// How the period reads inside a sentence: "Salary is 80% of your income
-// this year."
-// The phone board offers three periods, the last three months as "3 months".
+// The phone board's period switch, with "Last month" too, so a link to it
+// still shows a pressed segment. The group scrolls sideways rather than
+// the page should a narrow phone not fit all four, and its segments grow
+// to 44px under a finger.
 const PHONE_PERIODS: [InsightPeriod, string][] = [
   ["this-month", "This month"],
+  ["last-month", "Last month"],
   ["last-3-months", "3 months"],
   ["this-year", "This year"],
 ];
 
+// How the period reads inside a sentence: "Salary is 80% of your income
+// this year."
 const PERIOD_PHRASE: Record<InsightPeriod, string> = {
   "this-month": "this month",
   "last-month": "last month",
@@ -38,35 +49,59 @@ const PERIOD_PHRASE: Record<InsightPeriod, string> = {
   "this-year": "this year",
 };
 
+// What Changed's rows share the table's columns, so the figure columns
+// size to the widest figure and the names keep the rest.
+const CHANGE_ROW = "col-span-full grid-cols-subgrid";
+
 // Insights: what the numbers say, in plain sentences, for one period --
 // the three claims, net worth, the four totals, where money comes from
 // and goes, whether more is being kept, and what changed.
 export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
+  const { netWorth, loansNote } = useInsightsSlots();
+  const [isPending, startTransition] = useTransition();
+  // The switch moves at once; the figures follow when the new period's
+  // render arrives, dimmed until then.
+  const [period, setPeriod] = useOptimistic(data.period);
   const { currency, totals, previous, labels } = data;
-  const comparedWith = labels.previousIsYear ? `${t("the same months of")} ${labels.previous}` : labels.previous;
+  const when = t(PERIOD_PHRASE[data.period]);
   const topSource = data.sources[0];
   const topSpend = data.spend[0];
   // A rise is only news when there was spending before to rise from.
   const rise = previous.expense > 0 && data.biggestMove && data.biggestMove.change > 0 ? data.biggestMove : null;
+  const reportsHref = `/reports/detailed?period=${period}`;
+  const hadBefore = previous.income > 0 || previous.expense > 0;
+  const kept = keptSay(data, when, t);
 
-  const goToPeriod = (period: InsightPeriod) => router.push(`/reports/overview?period=${period}`);
+  function goToPeriod(next: InsightPeriod) {
+    startTransition(() => {
+      setPeriod(next);
+      router.push(`/reports/overview?period=${next}`);
+    });
+  }
+
+  // The transactions behind a figure: one category, this period.
+  const transactionsHref = (type: "INCOME" | "EXPENSE", categoryId: string) =>
+    `/transactions?${new URLSearchParams({ type, categoryId, dateFrom: data.range.dateFrom, dateTo: data.range.dateTo }).toString()}`;
 
   return (
     <PageFrame className="gap-4 md:gap-8">
       <PageHeader
-        eyebrow={t("Insights")}
+        eyebrow={`${t("Insights")} · ${t("Overview")}`}
         tone="insights"
         title={t("What your numbers say")}
-        description={`${labels.period}, ${t("compared with")} ${comparedWith}.`}
+        description={t("{period}, compared with {previous}.", { period: labels.period, previous: labels.previous })}
         looseDescription
         hideDescriptionOnPhone
+        // The period switch and the reports button wrap under the title
+        // when they don't fit beside it (tablets, small laptops).
+        className="md:flex-wrap"
         actions={
           <>
-            <SegmentedControl label={t("Period")} variant="pill" value={data.period} onChange={goToPeriod} options={INSIGHT_PERIODS.map((period) => ({ value: period, label: t(INSIGHT_PERIOD_LABELS[period]) }))} />
+            <SegmentedControl label={t("Period")} value={period} onChange={goToPeriod} options={INSIGHT_PERIODS.map((value) => ({ value, label: t(INSIGHT_PERIOD_LABELS[value]) }))} />
             <Button variant="secondary" size="lg" asChild>
-              <Link href="/reports/detailed">
+              <Link href={reportsHref}>
                 <FileText />
                 {t("Detailed reports")}
               </Link>
@@ -77,262 +112,296 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
       />
       <SegmentedControl
         label={t("Period")}
-        size="touch"
+        size="coarse"
         stretch
-        value={data.period}
+        value={period}
         onChange={goToPeriod}
-        options={PHONE_PERIODS.map(([period, label]) => ({ value: period, label: t(label) }))}
-        className="md:hidden"
+        options={PHONE_PERIODS.map(([value, label]) => ({ value, label: t(label) }))}
+        className="overflow-x-auto md:hidden"
       />
 
-      {!data.hasData ? (
-        <>
-          {(data.worth.have > 0 || data.worth.youOwe > 0) && <NetWorthCard worth={data.worth} currency={currency} />}
-          <EmptyState
-            icon={<ChartColumn />}
-            tone="insights"
-            title={t("Nothing to read yet")}
-            description={t("After a few transactions, Smartly explains them here.")}
-            action={
-              <Button asChild>
-                <Link href="/transactions">{t("Go to transactions")}</Link>
-              </Button>
-            }
-          />
-        </>
-      ) : (
-        <>
-          {/* Phones lead with net worth; desktops with the three sentences. */}
-          <div className="md:hidden">
-            <NetWorthCard worth={data.worth} currency={currency} />
-          </div>
-
-          <section aria-label={t("The short version")} className="grid gap-3 md:grid-cols-3 md:gap-6">
-            <SayCard
-              icon={<TrendingUp />}
+      <div data-pending={isPending ? "" : undefined} aria-busy={isPending || undefined} className="flex flex-col gap-4 transition-opacity data-pending:opacity-60 motion-reduce:transition-none md:gap-8">
+        {!data.hasData ? (
+          <>
+            {/* Net worth only when there is some: the card marks itself empty. */}
+            <div className="has-data-[net-worth=empty]:hidden">{netWorth}</div>
+            <EmptyState
+              icon={<ChartColumn />}
               tone="insights"
-              say={
-                topSource
-                  ? data.concentration
-                    ? `${topSource.name} ${t("is more than")} 60% ${t("of your income.")}`
-                    : `${topSource.name} ${t("is")} ${Math.round(topSource.share)}% ${t("of your income")} ${t(PERIOD_PHRASE[data.period])}.`
-                  : t("No money in yet.")
-              }
-              why={topSource ? secondSourceLine(data, t) : t("Record an income and this fills in.")}
-            />
-            <SayCard
-              icon={<PiggyBank />}
-              tone="money"
-              className="max-md:order-first"
-              say={totals.rate !== null ? `${t("You kept")} ${totals.rate}% ${t("of what you earned.")}` : t("Nothing earned yet.")}
-              why={
-                totals.rate !== null ? (
-                  <>
-                    {t("That is")} {formatCurrency(Math.max(0, totals.left), currency)}
-                    <span className="md:hidden"> {t(PERIOD_PHRASE[data.period])}</span>
-                    {previous.rate !== null && `, ${t(totals.rate >= previous.rate ? "up from" : "down from")} ${previous.rate}% ${t("in")} ${labels.previous}`}.
-                  </>
-                ) : (
-                  t("Once money comes in, this shows the share you kept.")
-                )
+              title={t("Nothing to read yet")}
+              description={t("After a few transactions, Smartly explains them here.")}
+              action={
+                <Button asChild>
+                  <Link href="/transactions">{t("Go to transactions")}</Link>
+                </Button>
               }
             />
-            <SayCard
-              icon={<Utensils />}
-              tone="loans"
-              say={topSpend ? `${topSpend.name} ${t("is your biggest spend.")}` : t("No spending recorded.")}
-              why={
-                topSpend ? (
-                  <>
-                    {Math.round(topSpend.share)}% {t("of spending")}
-                    <span className="md:hidden">
-                      , {t("about")} {formatCurrency(topSpend.amount / data.months, currency)} {t("a month")}.
+          </>
+        ) : (
+          <>
+            <section aria-label={t("The short version")} className="grid gap-3 md:grid-cols-3 md:gap-6">
+              <SayCard
+                icon={<TrendingUp />}
+                tone="insights"
+                say={topSource ? t("{name} is {percent} of your income {period}.", { name: topSource.name, percent: `${Math.round(topSource.share)}%`, period: when }) : t("No money in yet.")}
+                why={topSource ? secondSourceLine(data, t) : t("Record an income and this fills in.")}
+              />
+              <SayCard icon={kept.icon} tone={kept.tone} className="max-md:order-first" say={kept.say} why={kept.why} />
+              <SayCard
+                icon={<ShoppingBag />}
+                tone="loans"
+                say={topSpend ? t("{name} is your biggest spend.", { name: topSpend.name }) : t("No spending recorded.")}
+                why={topSpend ? <SpendWhy data={data} row={topSpend} /> : t("Your expenses show up here.")}
+              />
+            </section>
+
+            {/* Phones lead with net worth; desktops with the three sentences. */}
+            <div className="max-md:order-first">{netWorth}</div>
+
+            <section aria-label={t("Totals")} className="hidden gap-6 md:grid md:grid-cols-2 xl:grid-cols-4">
+              <KpiTile label={t("Money in")} value={<AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className="font-bold" />}>
+                <DeltaLine move={movement(totals.income, previous.income)} good={(d) => d >= 0} vs={labels.before} currency={currency} />
+              </KpiTile>
+              <KpiTile label={t("Money out")} value={<AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className="font-bold" />}>
+                <DeltaLine move={movement(totals.expense, previous.expense)} good={(d) => d <= 0} vs={labels.before} currency={currency} />
+              </KpiTile>
+              <KpiTile label={t("Left over")} value={<AmountText value={totals.left} currency={currency} size="h2" tone={totals.left < 0 ? "expense" : "neutral"} className="font-bold" />}>
+                <DeltaLine move={movement(totals.left, previous.left, { hadBefore })} good={(d) => d >= 0} vs={labels.before} currency={currency} />
+              </KpiTile>
+              <KpiTile label={t("Savings rate")} value={<b className="text-h2 text-ink tabular-nums">{totals.rate === null ? "—" : `${totals.rate}%`}</b>}>
+                {totals.rate !== null && previous.rate !== null ? <PointsLine points={totals.rate - previous.rate} vs={labels.before} /> : <span>{t("Nothing before to compare with")}</span>}
+              </KpiTile>
+            </section>
+
+            <div className="grid gap-4 max-md:order-1 md:gap-6 xl:grid-cols-2">
+              <Card padding="lg" className="flex flex-col gap-4 max-md:hidden">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-0.5">
+                    <h2 className="text-h3 text-ink">{t("Where your money comes from")}</h2>
+                    <span className="text-small text-ink-muted">
+                      {t(data.sources.length === 1 ? "{count} income source · {amount}" : "{count} income sources · {amount}", { count: formatCount(data.sources.length, locale), amount: formatCurrency(totals.income, currency) })}
                     </span>
-                    <span className="hidden md:inline">
-                      {" "}
-                      · {formatCurrency(topSpend.amount / data.months, currency)} {t("a month on average")}.
-                    </span>
-                  </>
+                  </div>
+                  <CardLink href="/income-category">{t("Income sources")}</CardLink>
+                </div>
+                {data.sources.length === 0 ? (
+                  <p className="text-body text-ink-muted">{t("No money came in {period}.", { period: when })}</p>
                 ) : (
-                  t("Your expenses show up here.")
-                )
-              }
-            />
-          </section>
-
-          <div className="hidden md:block">
-            <NetWorthCard worth={data.worth} currency={currency} />
-          </div>
-
-          <section aria-label={t("Totals")} className="hidden gap-6 md:grid md:grid-cols-4">
-            <Kpi label={t("Money in")} value={<AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className="font-bold" />} delta={percentChange(totals.income, previous.income)} good={(d) => d >= 0} vs={labels.before} />
-            <Kpi label={t("Money out")} value={<AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className="font-bold" />} delta={percentChange(totals.expense, previous.expense)} good={(d) => d <= 0} vs={labels.before} />
-            <Kpi label={t("Left over")} value={<AmountText value={totals.left} currency={currency} size="h2" tone={totals.left < 0 ? "expense" : "neutral"} className="font-bold" />} delta={percentChange(totals.left, previous.left)} good={(d) => d >= 0} vs={labels.before} />
-            <Kpi
-              label={t("Savings rate")}
-              value={<b className="text-h2 text-ink tabular-nums">{totals.rate === null ? "—" : `${totals.rate}%`}</b>}
-              delta={totals.rate !== null && previous.rate !== null ? totals.rate - previous.rate : null}
-              unit="points"
-              good={(d) => d >= 0}
-              vs={labels.before}
-            />
-          </section>
-
-          <div className="hidden gap-6 md:grid md:grid-cols-2">
-            <Card padding="lg" className="flex flex-col gap-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-0.5">
-                  <h2 className="text-h3 text-ink">{t("Where your money comes from")}</h2>
-                  <span className="text-small text-ink-muted">
-                    {data.sources.length} {t(data.sources.length === 1 ? "income source" : "income sources")} · {formatCurrency(totals.income, currency)}
-                  </span>
-                </div>
-                <Link href="/income-category" className="text-body font-semibold text-emerald hover:text-emerald-hover">
-                  {t("Income sources")}
-                </Link>
-              </div>
-              {data.sources.length === 0 ? (
-                <p className="text-body text-ink-muted">{t("No money came in")} {t(PERIOD_PHRASE[data.period])}.</p>
-              ) : (
-                data.sources.map((row) => <SourceRow key={row.name} row={row} currency={currency} />)
-              )}
-              {data.concentration && (
-                <Banner tone="warning" inline icon={<TriangleAlert />}>
-                  <b>
-                    {data.concentration.name} {t("is more than")} 60% {t("of your income.")}
-                  </b>{" "}
-                  {secondSourceLine(data, t)}
-                </Banner>
-              )}
-            </Card>
-
-            <Card padding="lg" className="flex flex-col gap-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-0.5">
-                  <h2 className="text-h3 text-ink">{t("Where it goes")}</h2>
-                  <span className="text-small text-ink-muted">
-                    {data.spend.length} {t(data.spend.length === 1 ? "category" : "categories")} · {formatCurrency(totals.expense, currency)}
-                  </span>
-                </div>
-                <Link href="/categories" className="text-body font-semibold text-emerald hover:text-emerald-hover">
-                  {t("Budget")}
-                </Link>
-              </div>
-              {data.spend.length === 0 ? (
-                <p className="text-body text-ink-muted">{t("Nothing went out")} {t(PERIOD_PHRASE[data.period])}.</p>
-              ) : (
-                <>
-                  <div role="img" aria-label={t("Spending split by category")} className="flex h-4 gap-0.5 overflow-hidden rounded-full">
-                    {data.spend.map((row) => (
-                      <span key={row.name} className={cn("bg-current", categoryTone(row.color).fg)} style={{ width: `${row.share}%` }} />
+                  <div className="grid gap-1">
+                    {data.sources.map((row) => (
+                      <SourceRow key={row.name} row={row} currency={currency} href={transactionsHref("INCOME", row.name)} />
                     ))}
                   </div>
-                  <div className="grid gap-3">
-                    {data.spend.map((row) => (
-                      <span key={row.name} className="flex items-center gap-3 text-body">
-                        <span className={cn("size-2.5 shrink-0 rounded-[3px] bg-current", categoryTone(row.color).fg)} />
-                        <span className="flex-1 truncate text-ink">{row.name}</span>
-                        <b className="text-ink tabular-nums">{formatCurrency(row.amount, currency)}</b>
-                        <span className="w-10 text-right text-ink-muted tabular-nums">{Math.round(row.share)}%</span>
-                      </span>
-                    ))}
-                  </div>
-                </>
-              )}
-              {data.drop ? (
-                <Banner tone="mint" inline icon={<TrendingDown />}>
-                  <b>
-                    {data.drop.name} {t("fell by")} {formatCurrency(-data.drop.change, currency)}
-                  </b>{" "}
-                  {t("against")} {comparedWith}.
-                </Banner>
-              ) : (
-                rise && (
-                  <Banner tone="warning" inline icon={<TrendingUp />}>
-                    <b>
-                      {rise.name} {t("rose by")} {formatCurrency(rise.change, currency)}
-                    </b>{" "}
-                    {t("against")} {comparedWith}.
+                )}
+                {data.concentration && (
+                  <Banner tone="warning" inline icon={<TriangleAlert />}>
+                    <b>{t("{percent} of your income comes from {name} alone.", { percent: `${data.concentration.percent}%`, name: data.concentration.name })}</b> {secondSourceLine(data, t)}
                   </Banner>
-                )
-              )}
-            </Card>
-          </div>
+                )}
+              </Card>
 
-          <div className="hidden gap-6 md:grid md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-            <SavingsRateChart rates={data.rates} trend={data.trend} />
-            <Card padding="none" className="flex flex-col overflow-hidden">
-              <div className="flex flex-col gap-0.5 px-6 pt-6 pb-3">
-                <h2 className="text-h3 text-ink">{t("What changed")}</h2>
-                <span className="text-small text-ink-muted">
-                  {labels.now} {t("against")} {labels.before}
-                </span>
-              </div>
-              <div role="table" aria-label={`${labels.now} ${t("against")} ${labels.before}`}>
-                <div role="row" className="grid grid-cols-[minmax(0,1fr)_100px_100px_72px] gap-2 bg-table-head px-6 py-3 text-caption font-semibold text-ink-muted">
-                  <span role="columnheader" />
-                  <span role="columnheader" className="text-right">
-                    {labels.before}
-                  </span>
-                  <span role="columnheader" className="text-right">
-                    {labels.now}
-                  </span>
-                  <span role="columnheader" className="text-right">
-                    {t("Change")}
-                  </span>
+              <Card padding="lg" className="flex flex-col gap-4 max-md:p-4 max-md:shadow-none">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-0.5">
+                    <h2 className="text-h3 text-ink">{t("Where it goes")}</h2>
+                    <span className="text-small text-ink-muted">
+                      {t(data.spend.length === 1 ? "{count} category · {amount}" : "{count} categories · {amount}", { count: formatCount(data.spend.length, locale), amount: formatCurrency(totals.expense, currency) })}
+                    </span>
+                  </div>
+                  <CardLink href="/categories">{t("Budget")}</CardLink>
                 </div>
-                <ChangeRow name={t("Money in")} before={previous.income} now={totals.income} currency={currency} good={(d) => d >= 0} />
-                <ChangeRow name={t("Money out")} before={previous.expense} now={totals.expense} currency={currency} good={(d) => d <= 0} />
-                <ChangeRow name={t("Left over")} before={previous.left} now={totals.left} currency={currency} good={(d) => d >= 0} />
-                {data.biggestMove && <ChangeRow name={data.biggestMove.name} before={data.biggestMove.before} now={data.biggestMove.now} currency={currency} good={(d) => d <= 0} />}
-              </div>
-              <LoansNote data={data} />
-            </Card>
-          </div>
+                {data.spend.length === 0 ? (
+                  <p className="text-body text-ink-muted">{t("Nothing went out {period}.", { period: when })}</p>
+                ) : (
+                  <>
+                    <div role="img" aria-label={t("Spending split by category")} className="flex h-4 gap-0.5 overflow-hidden rounded-full">
+                      {data.spend.map((row) => (
+                        <span key={row.name} className={cn("bg-current", categoryTone(row.color).fg)} style={{ width: `${row.share}%` }} />
+                      ))}
+                    </div>
+                    <div className="grid gap-1">
+                      {data.spend.map((row) => (
+                        <Link
+                          key={row.name}
+                          href={transactionsHref("EXPENSE", row.name)}
+                          className="-mx-2 flex items-center gap-3 rounded-md px-2 py-1 text-body transition-colors hover:bg-hover max-md:min-h-11"
+                        >
+                          <span className={cn("size-2.5 shrink-0 rounded-[3px] bg-current", categoryTone(row.color).fg)} />
+                          <span className="flex-1 truncate text-ink">{row.name}</span>
+                          <b className="text-ink tabular-nums">{formatCurrency(row.amount, currency)}</b>
+                          <span className="w-10 text-right text-ink-muted tabular-nums">{Math.round(row.share)}%</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {data.drop ? (
+                  <Banner tone="mint" inline icon={<TrendingDown />}>
+                    {fillNodes(t("{name} fell by {amount} against {previous}."), { name: <b>{data.drop.name}</b>, amount: <b>{formatCurrency(-data.drop.change, currency)}</b>, previous: labels.previous })}
+                  </Banner>
+                ) : (
+                  rise && (
+                    <Banner tone="warning" inline icon={<TrendingUp />}>
+                      {fillNodes(t("{name} rose by {amount} against {previous}."), { name: <b>{rise.name}</b>, amount: <b>{formatCurrency(rise.change, currency)}</b>, previous: labels.previous })}
+                    </Banner>
+                  )
+                )}
+              </Card>
+            </div>
 
-          <div className="md:hidden">
-            <KeptChart rates={data.rates} currency={currency} />
-          </div>
-        </>
-      )}
+            <div className="hidden gap-6 md:grid xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+              <SavingsRateChart rates={data.rates} trend={data.trend} partialMonth={data.partialMonth} />
+              <ListCard
+                label={t("{now} against {before}", { now: labels.now, before: labels.before })}
+                header={
+                  <div className="flex flex-col gap-0.5 px-6 pt-6 pb-3">
+                    <h2 className="text-h3 text-ink">{t("What changed")}</h2>
+                    <span className="text-small text-ink-muted">{t("{now} against {before}", { now: labels.now, before: labels.before })}</span>
+                  </div>
+                }
+                footer={loansNote}
+                tableClassName="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-x-4"
+              >
+                <ListHead columns={CHANGE_ROW}>
+                  <ListHeadCell>
+                    <span className="sr-only">{t("What changed")}</span>
+                  </ListHeadCell>
+                  <ListHeadCell align="end">{labels.heads[0]}</ListHeadCell>
+                  <ListHeadCell align="end">{labels.heads[1]}</ListHeadCell>
+                  <ListHeadCell align="end">{t("Change@@delta")}</ListHeadCell>
+                </ListHead>
+                <ChangeRow name={t("Money in")} before={previous.income} now={totals.income} move={movement(totals.income, previous.income)} currency={currency} good={(d) => d >= 0} />
+                <ChangeRow name={t("Money out")} before={previous.expense} now={totals.expense} move={movement(totals.expense, previous.expense)} currency={currency} good={(d) => d <= 0} />
+                <ChangeRow name={t("Left over")} before={previous.left} now={totals.left} move={movement(totals.left, previous.left, { hadBefore })} currency={currency} good={(d) => d >= 0} />
+                {data.biggestMove && (
+                  <ChangeRow name={data.biggestMove.name} before={data.biggestMove.before} now={data.biggestMove.now} move={movement(data.biggestMove.now, data.biggestMove.before)} currency={currency} good={(d) => d <= 0} />
+                )}
+              </ListCard>
+            </div>
+
+            <div className="md:hidden">
+              <KeptChart rates={data.rates} currency={currency} partialMonth={data.partialMonth} />
+            </div>
+            {/* Phones reach the category figures from here too. */}
+            <Button variant="secondary" size="lg" asChild className="max-md:order-2 md:hidden">
+              <Link href={reportsHref}>
+                <FileText />
+                {t("Detailed reports")}
+              </Link>
+            </Button>
+          </>
+        )}
+      </div>
     </PageFrame>
+  );
+}
+
+// The middle card: the share kept, or that more went out than came in.
+function keptSay(data: InsightsData, when: string, t: Translate): { tone: Tone; icon: React.ReactNode; say: string; why: string } {
+  const { totals, previous, labels, currency } = data;
+  const spent = formatCurrency(totals.expense, currency);
+  if (totals.income > 0 && totals.left < 0) {
+    return {
+      tone: "expense",
+      icon: <TriangleAlert />,
+      say: t("You spent {amount} more than you earned.", { amount: formatCurrency(-totals.left, currency) }),
+      why: t("{spent} went out against {earned} {period}.", { spent, earned: formatCurrency(totals.income, currency), period: when }),
+    };
+  }
+  if (totals.rate === null) {
+    return { tone: "money", icon: <PiggyBank />, say: t("Nothing earned yet."), why: totals.expense > 0 ? t("{spent} went out {period}.", { spent, period: when }) : t("Once money comes in, this shows the share you kept.") };
+  }
+  const values = { amount: formatCurrency(totals.left, currency), period: when, before: `${previous.rate}%`, previous: labels.previous };
+  const why =
+    previous.rate === null
+      ? t("That is {amount} {period}.", values)
+      : totals.rate > previous.rate
+        ? t("That is {amount} {period}, up from {before} in {previous}.", values)
+        : totals.rate < previous.rate
+          ? t("That is {amount} {period}, down from {before} in {previous}.", values)
+          : t("That is {amount} {period}, the same share as in {previous}.", values);
+  return { tone: "money", icon: <PiggyBank />, say: t("You kept {percent} of what you earned.", { percent: `${totals.rate}%` }), why };
+}
+
+// The biggest spend's line: its share and a month's worth of it, in whole
+// taka. Last month says what it came to; a month or less still under way
+// (this month, this year in January) what it has come to so far, as there
+// is nothing to average yet.
+function SpendWhy({ data, row }: { data: InsightsData; row: RankedRow }) {
+  const { t } = useLocale();
+  const percent = `${Math.round(row.share)}%`;
+  const total = { percent, amount: formatCurrency(row.amount, data.currency) };
+  if (data.period === "last-month") return t("{percent} of spending · {amount} in all.", total);
+  const perMonth = monthlyAverage(row.amount, data.months);
+  if (perMonth === null) return t("{percent} of spending · {amount} so far.", total);
+  const average = { percent, amount: formatCurrency(perMonth, data.currency) };
+  return (
+    <>
+      <span className="md:hidden">{t("{percent} of spending, about {amount} a month.", average)}</span>
+      <span className="hidden md:inline">{t("{percent} of spending · {amount} a month on average.", average)}</span>
+    </>
   );
 }
 
 // "Freelance went from ৳ 8,000 to ৳ 12,000." -- how the runner-up moved,
 // or that there is none.
-function secondSourceLine(data: InsightsData, t: (key: string) => string): string {
-  const second = data.concentration?.second ?? (data.sources[1] ? { name: data.sources[1].name, before: null, now: data.sources[1].amount } : null);
+function secondSourceLine(data: InsightsData, t: Translate): string {
+  const second = data.concentration?.second ?? (data.sources[1] ? { name: data.sources[1].name, before: 0, now: data.sources[1].amount } : null);
   if (!second) return t("It is your only source so far.");
-  if (second.before === null || second.before === 0) return `${second.name} ${t("brought")} ${formatCurrency(second.now, data.currency)}.`;
-  return `${second.name} ${t("went from")} ${formatCurrency(second.before, data.currency)} ${t("to")} ${formatCurrency(second.now, data.currency)}.`;
+  if (!second.before) return t("{name} brought {amount}.", { name: second.name, amount: formatCurrency(second.now, data.currency) });
+  return t("{name} went from {before} to {now}.", { name: second.name, before: formatCurrency(second.before, data.currency), now: formatCurrency(second.now, data.currency) });
 }
 
-function Kpi({ label, value, delta, unit = "percent", good, vs }: { label: string; value: React.ReactNode; delta: number | null; unit?: "percent" | "points"; good: (delta: number) => boolean; vs: string }) {
-  const { t } = useLocale();
+// A card header's link: a 44px target that keeps the header's height.
+function CardLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Card className="flex flex-col gap-2">
-      <span className="text-small font-medium text-ink-muted">{label}</span>
-      {value}
-      <span className="text-caption font-normal text-ink-muted">
-        {delta === null ? (
-          t("Nothing before to compare with")
-        ) : (
-          <>
-            <b className={good(delta) ? "text-income" : "text-expense"}>
-              {delta > 0 ? "↑" : delta < 0 ? "↓" : "="} {unit === "points" ? `${Math.abs(delta)} ${t(Math.abs(delta) === 1 ? "point" : "points")}` : `${Math.abs(delta)}%`}
-            </b>{" "}
-            {t("vs")} {vs}
-          </>
-        )}
-      </span>
-    </Card>
+    <Button variant="link" asChild className="-my-3 h-auto min-h-11 shrink-0 px-0 text-body">
+      <Link href={href}>{children}</Link>
+    </Button>
   );
 }
 
-function SourceRow({ row, currency }: { row: RankedRow; currency: string }) {
+// A total's line under its figure: "↑ 6.3% vs 1–21 Sep", "↑ ৳ 7,000 vs …".
+function DeltaLine({ move, good, vs, currency }: { move: Movement; good: (change: number) => boolean; vs: string; currency: string }) {
+  const { t } = useLocale();
+  if (move.kind === "new" || move.kind === "same") return <span>{t("Nothing before to compare with")}</span>;
+  const arrow = move.change > 0 ? "↑" : move.change < 0 ? "↓" : "=";
+  const figure = move.kind === "percent" ? `${Math.abs(move.percent)}%` : formatCurrency(Math.abs(move.change), currency);
   return (
-    <div className="grid grid-cols-[24px_minmax(0,1fr)_110px_56px] items-center gap-3 text-body">
+    <span>
+      {fillNodes(t("{change} vs {previous}"), {
+        change: (
+          <b className={good(move.change) ? "text-income" : "text-expense"}>
+            {arrow} {figure}
+          </b>
+        ),
+        previous: vs,
+      })}
+    </span>
+  );
+}
+
+// The savings rate's line: how many points it moved.
+function PointsLine({ points, vs }: { points: number; vs: string }) {
+  const { t } = useLocale();
+  const arrow = points > 0 ? "↑" : points < 0 ? "↓" : "=";
+  return (
+    <span>
+      {fillNodes(t("{change} vs {previous}"), {
+        change: (
+          <b className={points >= 0 ? "text-income" : "text-expense"}>
+            {arrow} {plural(t, Math.abs(points), "{count} point", "{count} points")}
+          </b>
+        ),
+        previous: vs,
+      })}
+    </span>
+  );
+}
+
+function SourceRow({ row, currency, href }: { row: RankedRow; currency: string; href: string }) {
+  return (
+    <Link href={href} className="-mx-2 grid grid-cols-[24px_minmax(0,1fr)_110px_56px] items-center gap-3 rounded-md px-2 py-1.5 text-body transition-colors hover:bg-hover">
       <span className="text-small font-bold text-ink-muted tabular-nums">{row.rank}</span>
       <span className="flex min-w-0 flex-col gap-2">
         <span className="truncate font-semibold text-ink">{row.name}</span>
@@ -341,60 +410,38 @@ function SourceRow({ row, currency }: { row: RankedRow; currency: string }) {
         </span>
       </span>
       <span className="text-right font-semibold text-ink tabular-nums">{formatCurrency(row.amount, currency)}</span>
-      <span className="text-right text-ink-muted tabular-nums">{row.share}%</span>
-    </div>
+      <span className="text-right text-ink-muted tabular-nums">{Math.round(row.share)}%</span>
+    </Link>
   );
 }
 
-function ChangeRow({ name, before, now, currency, good }: { name: string; before: number; now: number; currency: string; good: (delta: number) => boolean }) {
+// One line of What changed: before, now, and the move as a percent, an
+// amount (Left over after an overspent period), "new" or a dash.
+function ChangeRow({ name, before, now, move, currency, good }: { name: string; before: number; now: number; move: Movement; currency: string; good: (change: number) => boolean }) {
   const { t } = useLocale();
-  const delta = percentChange(now, before);
-  const change = now - before;
+  const text =
+    move.kind === "percent"
+      ? `${move.percent > 0 ? "+ " : move.percent < 0 ? "− " : ""}${Math.abs(move.percent)}%`
+      : move.kind === "amount"
+        ? formatSignedCurrency(move.change, currency)
+        : move.kind === "new"
+          ? t("new")
+          : "—";
+  const tone = move.kind === "same" || (move.kind === "percent" && move.change === 0) ? "text-ink-muted" : good(move.change) ? "text-income" : "text-expense";
   return (
-    <div role="row" className="grid min-h-13 grid-cols-[minmax(0,1fr)_100px_100px_72px] items-center gap-2 border-t border-line px-6 text-body tabular-nums">
-      <span role="cell" className="truncate font-semibold text-ink">
+    <ListRow columns={CHANGE_ROW} className="tabular-nums">
+      <ListCell className="truncate font-semibold text-ink" title={name}>
         {name}
-      </span>
-      <span role="cell" className="text-right text-ink-muted">
+      </ListCell>
+      <ListCell align="end" className="whitespace-nowrap text-ink-muted">
         {formatCurrency(before, currency)}
-      </span>
-      <span role="cell" className="text-right font-semibold text-ink">
+      </ListCell>
+      <ListCell align="end" className="whitespace-nowrap font-semibold text-ink">
         {formatCurrency(now, currency)}
-      </span>
-      <span role="cell" className={cn("text-right font-bold", change === 0 ? "text-ink-muted" : good(change) ? "text-income" : "text-expense")}>
-        {delta === null ? (change === 0 ? "—" : t("new")) : `${delta > 0 ? "+" : delta < 0 ? "−" : ""} ${Math.abs(delta)}%`}
-      </span>
-    </div>
-  );
-}
-
-// The orange note under the changes: what the loans mean for the figures.
-function LoansNote({ data }: { data: InsightsData }) {
-  const { t } = useLocale();
-  const { worth, currency } = data;
-  if (worth.youOwe <= 0 && worth.owedToYou <= 0) return null;
-  return (
-    <div className="mx-6 mt-4 mb-6 flex items-center gap-3 rounded-md bg-pillar-loans-soft p-4 text-small text-pillar-loans">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface">
-        <Landmark className="size-4.5" aria-hidden="true" />
-      </span>
-      <span>
-        {worth.youOwe > 0 ? (
-          <>
-            <b>
-              {t("You owe")} {formatCurrency(worth.youOwe, currency)} {t("across")} {data.youOweCount} {t(data.youOweCount === 1 ? "contact" : "contacts")}.
-            </b>{" "}
-            {t("Clearing it would lift your net worth by the same amount.")}
-          </>
-        ) : (
-          <>
-            <b>
-              {formatCurrency(worth.owedToYou, currency)} {t("is owed to you.")}
-            </b>{" "}
-            {t("Collecting it would move that into your wallets.")}
-          </>
-        )}
-      </span>
-    </div>
+      </ListCell>
+      <ListCell align="end" className={cn("whitespace-nowrap font-bold", tone)}>
+        {text}
+      </ListCell>
+    </ListRow>
   );
 }

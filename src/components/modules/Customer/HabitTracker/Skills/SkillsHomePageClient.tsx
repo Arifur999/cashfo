@@ -11,10 +11,12 @@ import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Skill, SkillStatus, SkillsOverview } from "@/lib/customer/api";
-import { WEEKDAY_LONG, weekdayOf } from "@/lib/customer/habitDisplay";
+import { actionError, daysText } from "@/lib/customer/habitDisplay";
 import { deleteSkillAction, updateSkillAction } from "@/lib/customer/skillActions";
-import { amountText, applyProgress, byStatus, completedIn, namesLine, streakStart, weekSums } from "@/lib/customer/skillsDisplay";
+import { amountText, applyProgress, byStatus, completedIn, namesLine, streakSince, streakStart, weekSums } from "@/lib/customer/skillsDisplay";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { StatCard } from "../Tracker/StatCard";
 import { LearningCard } from "./LearningCard";
 import { SkillDrawer } from "./SkillDrawer";
 import { SkillGoalDialog } from "./SkillGoalDialog";
@@ -34,9 +36,10 @@ const CARDS = 2;
 // Habits › Skills: four numbers, the skills being learned with a quick-add,
 // this week's practice and every skill in a table.
 export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const { year, goalTarget, streak, week } = overview;
+  const count = (n: number) => formatCount(n, locale);
 
   // Server props stay the source of truth; a progress change is layered on
   // top optimistically and gives way once the PATCH and refresh land.
@@ -80,7 +83,7 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
     withPending(skill.id, async () => {
       applyOptimisticProgress({ id: skill.id, progress });
       const result = await updateSkillAction(skill.id, { progress });
-      if (!result.success) toast.error(result.message ?? t("Failed to update"));
+      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, locale));
       else if (result.data?.status === "COMPLETED" && skill.status !== "COMPLETED") toast.success(t("Completed! Well done."));
       router.refresh();
     });
@@ -93,7 +96,7 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
       applyOptimisticProgress({ id: skill.id, progress: skill.target });
       const result = await updateSkillAction(skill.id, { status: "COMPLETED" });
       if (result.success) toast.success(t("Completed! Well done."));
-      else toast.error(result.message ?? t("Failed to update"));
+      else toast.error(actionError(result.message, "Failed to update", t, locale));
       router.refresh();
     });
   }
@@ -102,7 +105,7 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
     startTransition(async () => {
       const result = await updateSkillAction(skill.id, { status });
       if (result.success) toast.success(t(successMessage));
-      else toast.error(result.message ?? t("Failed to update"));
+      else toast.error(actionError(result.message, "Failed to update", t, locale));
       router.refresh();
     });
   }
@@ -116,7 +119,7 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
         toast.success(t("Skill removed"));
         setRemoving(null);
       } else {
-        toast.error(result.message ?? t("Failed to remove skill"));
+        toast.error(actionError(result.message, "Failed to remove skill", t, locale));
       }
       router.refresh();
     });
@@ -133,14 +136,14 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
   }
 
   const stats = [
-    { label: t("Learning now"), value: String(learning.length), sub: learning.length > 0 ? namesLine(learning.map((skill) => skill.name), t("and"), t("more")) : t("Nothing on the go yet") },
-    { label: t("Practice streak"), value: `${streak} ${t(streak === 1 ? "day" : "days")}`, sub: since ? `${t("Logged every day since")} ${t(WEEKDAY_LONG[weekdayOf(since)])}` : t("Log something today to start one") },
+    { label: t("Learning now"), value: count(learning.length), sub: learning.length > 0 ? namesLine(learning.map((skill) => skill.name), t, locale) : t("Nothing on the go yet") },
+    { label: t("Practice streak"), value: daysText(streak, t, locale), sub: since ? streakSince(since, streak, t, locale) : t("Log something today to start one") },
     {
       label: t("This week"),
-      value: sums.lessons > 0 || sums.minutes === 0 ? amountText("LESSONS", sums.lessons, t) : amountText("HOURS", sums.minutes, t),
-      sub: sums.lessons > 0 && sums.minutes > 0 ? `${t("and")} ${amountText("HOURS", sums.minutes, t)} ${t("of practice")}` : sums.lessons + sums.minutes === 0 ? t("Nothing logged yet") : t("across every skill"),
+      value: sums.lessons > 0 || sums.minutes === 0 ? amountText("LESSONS", sums.lessons, t, locale) : amountText("HOURS", sums.minutes, t, locale),
+      sub: sums.lessons > 0 && sums.minutes > 0 ? t("and {amount} of practice", { amount: amountText("HOURS", sums.minutes, t, locale) }) : sums.lessons + sums.minutes === 0 ? t("Nothing logged yet") : t("across every skill"),
     },
-    { label: `${year} ${t("goal")}`, value: goalTarget ? `${completedThisYear} ${t("of")} ${goalTarget}` : String(completedThisYear), sub: goalTarget ? t("Skills completed this year") : t("Completed this year. Set a goal below.") },
+    { label: t("{year} goal", { year: toLocaleDigits(String(year), locale) }), value: goalTarget ? t("{done} of {total}", { done: count(completedThisYear), total: count(goalTarget) }) : count(completedThisYear), sub: goalTarget ? t("Skills completed this year") : t("Completed this year. Set a goal below.") },
   ];
 
   return (
@@ -164,11 +167,7 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {stats.map((stat) => (
-              <Card key={stat.label} padding="none" className="flex flex-col gap-1 px-5 py-4">
-                <span className="text-small font-medium text-ink-muted">{stat.label}</span>
-                <span className="text-h2 font-bold tracking-tight text-ink tabular-nums">{stat.value}</span>
-                <span className="truncate text-caption text-ink-muted">{stat.sub}</span>
-              </Card>
+              <StatCard key={stat.label} label={stat.label} value={stat.value} sub={<span className="block truncate">{stat.sub}</span>} />
             ))}
           </div>
 
@@ -214,7 +213,7 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
           complete(skill);
         }}
       />
-      <ConfirmDialog open={removing !== null} onClose={() => setRemoving(null)} onConfirm={remove} isPending={isPending} danger title={t("Remove skill")} description={removing ? `${t("Remove")} "${removing.name}"? ${t("Your progress on it will be lost.")}` : ""} confirmLabel={t("Remove")} />
+      <ConfirmDialog open={removing !== null} onClose={() => setRemoving(null)} onConfirm={remove} isPending={isPending} danger title={t("Remove skill")} description={removing ? t("Remove \"{name}\"? Your progress on it will be lost.", { name: removing.name }) : ""} confirmLabel={t("Remove")} />
     </PageFrame>
   );
 }

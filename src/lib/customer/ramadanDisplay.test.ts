@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { HabitMonthTracker } from "./api";
 import { challengeMark, challengeSummary, challengeWindow, dayDone } from "./challengeDisplay";
-import { ashraSummary, parasOn, quranKhatam, ramadanCell, ramadanDays, ramadanStartIn, ramadanSummary, ramadanWindow, summaryNote, withParas } from "./ramadanDisplay";
+import { ashraSummary, parasOn, quranKhatam, ramadanCell, ramadanDays, ramadanStartIn, ramadanSummary, ramadanWindow, setupYears, summaryNote, withParas } from "./ramadanDisplay";
 
 const ramadan = (checks: [number, string][], overrides: Partial<HabitMonthTracker> = {}): HabitMonthTracker => ({
   id: "r",
@@ -61,6 +61,24 @@ describe("ramadan", () => {
     expect(summaryNote(tracker, going, ramadanSummary(tracker, going).items[0])).toEqual({ kind: "everyDay" });
   });
 
+  // From sehri until Roza is ticked, today is no fast owed yet.
+  it("counts today only once its box is ticked while Ramadan is going", () => {
+    const start = ramadanStartIn(2026) as string;
+    const fifth = new Date(Date.UTC(Number(start.slice(0, 4)), Number(start.slice(5, 7)) - 1, Number(start.slice(8)) + 4)).toISOString().slice(0, 10);
+    const fourFasts = ramadan([[1, "Roza"], [2, "Roza"], [3, "Roza"], [4, "Roza"]]);
+    const day5 = ramadanWindow(fourFasts, fifth);
+    expect(day5).toMatchObject({ status: "going", todayDay: 5, elapsedDays: 4 });
+    const [roza] = ramadanSummary(fourFasts, day5).items;
+    expect(roza).toMatchObject({ done: 4, of: 4, pct: 100 });
+    expect(summaryNote(fourFasts, day5, roza)).toEqual({ kind: "everyDay" });
+    const ticked = ramadan([[1, "Roza"], [2, "Roza"], [3, "Roza"], [4, "Roza"], [5, "Roza"]]);
+    expect(ramadanSummary(ticked, day5).items[0]).toMatchObject({ done: 5, of: 5 });
+    // A fast really missed on a past day still owes one.
+    const missedThird = ramadan([[1, "Roza"], [2, "Roza"], [4, "Roza"]]);
+    expect(summaryNote(missedThird, day5, ramadanSummary(missedThird, day5).items[0])).toEqual({ kind: "makeUp", fasts: 1 });
+    expect(ashraSummary(fourFasts, day5)[0]).toMatchObject({ done: 4, of: 8 });
+  });
+
   it("counts the paras towards a khatam, and the day it was finished", () => {
     const tracker = ramadan([], { paras: [{ day: 20, paras: 2 }, { day: 1, paras: 25 }, { day: 27, paras: 3 }, { day: 28, paras: 1 }] });
     expect(quranKhatam(tracker)).toEqual({ read: 31, finishedOn: 27 });
@@ -79,6 +97,14 @@ describe("ramadan", () => {
     expect(cleared.paras).toEqual([]);
     expect(cleared.checks).toHaveLength(1);
     expect(withParas(ramadan([]), 4, 2).checks).toEqual([]);
+  });
+
+  it("offers the years with no sheet: around the next Ramadan, or the six up to an earlier one", () => {
+    const sheets = [{ year: 2026 }, { year: 2027 }];
+    expect(setupYears(sheets, 2027)).toEqual([2025, 2028, 2029, 2030]);
+    expect(setupYears(sheets, 2026, true)).toEqual([2021, 2022, 2023, 2024, 2025]);
+    // Every one of them taken: nothing earlier left to add.
+    expect(setupYears([...sheets, ...[2021, 2022, 2023, 2024, 2025].map((year) => ({ year }))], 2026, true)).toEqual([]);
   });
 });
 

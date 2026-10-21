@@ -26,6 +26,10 @@ type AppFieldProps = {
   size?: FieldSize;
   className?: string;
   disabled?: boolean;
+  readOnly?: boolean;
+  // The language of what's typed ("bn" for a Bangla title), so a screen
+  // reader says it right.
+  lang?: string;
 };
 
 // Single-line inputs. Selects, textareas, switches and chip groups have their
@@ -44,6 +48,8 @@ const AppField = ({
   size = "md",
   className,
   disabled,
+  readOnly,
+  lang,
 }: AppFieldProps) => {
   const { translate } = useLocale();
   return (
@@ -64,6 +70,8 @@ const AppField = ({
           autoComplete={autoComplete}
           inputMode={inputMode}
           disabled={disabled}
+          readOnly={readOnly}
+          lang={lang}
           className={className}
         />
       )}

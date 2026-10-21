@@ -11,6 +11,11 @@ export const updateCouponAction = async (id: string, values: unknown) =>
   requireId(id, "coupon") ??
   runValidatedAction(updateCouponServerZodSchema, values, "Failed to update coupon", (payload) => updateCoupon(id, payload));
 
+// Stops a coupon working without deleting it: the way out for one that has
+// been used, which can't be deleted. Edit turns it back on.
+export const turnOffCouponAction = async (id: string) =>
+  requireId(id, "coupon") ?? runAction("Failed to turn the coupon off", () => updateCoupon(id, { isActive: false }));
+
 // The API refuses once a coupon has been redeemed.
 export const deleteCouponAction = async (id: string) =>
   requireId(id, "coupon") ?? runAction("Failed to delete coupon", () => deleteCoupon(id));

@@ -1,9 +1,11 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AnnouncementBanner } from "@/components/modules/Customer/Layout/AnnouncementBanner";
 import { AppSidebar } from "@/components/modules/Customer/Layout/AppSidebar";
 import { AppTopbar } from "@/components/modules/Customer/Layout/AppTopbar";
 import { OfflineBanner } from "@/components/modules/Customer/Layout/OfflineBanner";
 import { OwnerViewBanner } from "@/components/modules/Customer/Layout/OwnerViewBanner";
+import { ShellNotice } from "@/components/modules/Customer/Layout/ShellNotice";
 import { TopbarProvider } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { QuickAddFab } from "@/components/modules/Customer/Layout/QuickAddFab";
 import { AuthProvider } from "@/components/modules/Customer/Providers/AuthProvider";
@@ -13,7 +15,7 @@ import { ThemeProvider } from "@/components/modules/Customer/Providers/ThemeProv
 import { TodayTasksProvider } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { ChooseWorkspaceRedirect } from "@/components/modules/Customer/Workspace/ChooseWorkspaceRedirect";
 import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/WorkspaceLockScreen";
-import { MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
+import { CUSTOMER_HOME_ROUTE, MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { resolveActiveWorkspace } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { isFeatureOn } from "@/lib/customer/features";
@@ -30,6 +32,15 @@ import { AddActionsProvider } from "@/components/modules/Customer/Layout/AddActi
 // dynamic -- otherwise it gets statically cached for every customer.
 export const dynamic = "force-dynamic";
 
+// Where a session the backend refused goes: sign in again, then back to
+// the page asked for. A layout can't see the URL, so proxy.ts names it in
+// x-pathname; Home needs no way back, a sign-in lands there anyway.
+async function signInAgainRoute(): Promise<string> {
+  const asked = (await headers()).get("x-pathname");
+  if (!asked?.startsWith("/") || asked.split("?")[0] === CUSTOMER_HOME_ROUTE) return SESSION_EXPIRED_LOGIN_ROUTE;
+  return `${SESSION_EXPIRED_LOGIN_ROUTE}&redirect=${encodeURIComponent(asked)}`;
+}
+
 // The customer app. proxy.ts already sent everyone else elsewhere; this
 // catches a token the backend itself no longer accepts, and fetches the
 // customer every page under it reads through useAuth().
@@ -42,7 +53,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
 
   const user = await getCurrentUser();
   if (!user) {
-    redirect(SESSION_EXPIRED_LOGIN_ROUTE);
+    redirect(await signInAgainRoute());
   }
 
   const [workspace, locale, overrides, prayerSettings] = await Promise.all([resolveActiveWorkspace(user.businesses), getLocale(), getTranslationOverrides(), getPrayerSettings()]);
@@ -113,6 +124,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                       </div>
                     </div>
                     <QuickAddFab />
+                    <ShellNotice />
                   </AddActionsProvider>
                 </TopbarProvider>
               </TodayTasksProvider>

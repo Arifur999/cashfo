@@ -1,25 +1,15 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { getAdminAccounts } from "@/services/adminAccount.services";
-import {
-  getAuditLogById,
-  getAuditLogs,
-  getLoginAttempts,
-  getLoginAttemptsSummary,
-  getSecurityFlags,
-  getSecurityFlagsSummary,
-} from "@/services/security.services";
+import { getAuditLogs, getLoginAttempts, getLoginAttemptsSummary, getSecurityFlags, getSecurityFlagsSummary } from "@/services/security.services";
 
+// The log, a page at a time. A single entry is read through
+// lookupAuditEntryAction (security/(sections)/_action.ts), which tells "no
+// such entry" (a 404) from a call that failed.
 export const auditLogsListQuery = (queryString: string) =>
   queryOptions({
     queryKey: queryKeys.auditLogs.list(queryString),
     queryFn: () => getAuditLogs(queryString),
-  });
-
-export const auditLogDetailQuery = (id: string) =>
-  queryOptions({
-    queryKey: queryKeys.auditLogs.detail(id),
-    queryFn: () => getAuditLogById(id),
   });
 
 export const loginAttemptsListQuery = (queryString: string) =>

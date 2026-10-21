@@ -2,6 +2,8 @@ import {
   ADMIN_USERS_ROUTE,
   adminNavSections,
   findAdminNavLocation,
+  LIST_PAGE_KEYS,
+  listBackHref,
   navItemHref,
   recordIdUnder,
   trimTrailingSlash,
@@ -64,14 +66,31 @@ const decodeId = (id: string) => {
   }
 };
 
-const recordCrumb = (path: string, from: string | null | undefined, sections: NavSection[]): AdminCrumb | null => {
+// What each record list keeps in its URL besides the page and rows per page
+// (its table config's queryKeys), by the list's href. A record page's
+// ?back= is read against it, so the parent link returns to the same rows.
+export type ListQueryKeys = Readonly<Partial<Record<string, readonly string[]>>>;
+
+// Where a record page was opened from: its ?from= and ?back=.
+export interface RecordOrigin {
+  from?: string | null;
+  back?: string | null;
+  listKeys?: ListQueryKeys;
+}
+
+const recordCrumb = (path: string, { from, back, listKeys }: RecordOrigin, sections: NavSection[]): AdminCrumb | null => {
   for (const { href, name } of RECORD_LISTS) {
     const id = recordIdUnder(path, href);
     if (id === null) continue;
     // A user's page sits under the list it was opened from.
     const listHref = href === ADMIN_USERS_ROUTE ? userListFor(from).href : href;
     const list = titleAt(listHref, sections);
-    return list === null ? null : { parent: list, parentHref: listHref, page: name ? name(decodeId(id)) : null, record: true };
+    if (list === null) return null;
+    // The list as it was left, the same way the page's own way back reads
+    // ?back=; a list whose keys aren't given opens plain.
+    const keys = listKeys?.[listHref];
+    const parentHref = back && keys ? listBackHref(listHref, back, [...keys, ...LIST_PAGE_KEYS]) : listHref;
+    return { parent: list, parentHref, page: name ? name(decodeId(id)) : null, record: true };
   }
   return null;
 };
@@ -85,15 +104,21 @@ const pageCrumb = ({ section, item, tab }: NavLocation): AdminCrumb => {
 };
 
 // The crumb for a path in this role's menu. `from` is the page's ?from=,
-// which says where a user's page was opened from.
-export const adminCrumb = (pathname: string, { from, sections = adminNavSections }: { from?: string | null; sections?: NavSection[] } = {}): AdminCrumb | null => {
-  const path = trimTrailingSlash(pathname);
+// which says where a user's page was opened from; `back` its ?back=, the
+// list's query it was opened with, kept on the parent link for the lists
+// `listKeys` names. A link with a query or a hash (an audit entry's "Go
+// to") is named by its path.
+export const adminCrumb = (
+  pathname: string,
+  { from, back, listKeys, sections = adminNavSections }: RecordOrigin & { sections?: NavSection[] } = {},
+): AdminCrumb | null => {
+  const path = trimTrailingSlash(pathname.replace(/[?#].*$/, ""));
   if (path === ACCOUNT_ROUTE) return { parent: null, page: "My account" };
 
   const location = findAdminNavLocation(path, sections);
   // A path the menu names itself is that page, never a record of a list.
   const named = location !== null && (location.tab?.href ?? location.item.href) === path;
-  const record = named ? null : recordCrumb(path, from, sections);
+  const record = named ? null : recordCrumb(path, { from, back, listKeys }, sections);
   // Anything else under a menu entry (a page that doesn't exist) still says
   // where in the menu it is.
   return record ?? (location && pageCrumb(location));

@@ -5,6 +5,8 @@ import { Circle, CirclePlus, Folder, FolderOpen, MoreHorizontal, Pencil, Plus, P
 import { useState } from "react";
 import { reactivateAccountTemplateAction } from "@/app/(dashboardLayout)/admin/content/_action";
 import Card from "@/components/smartly/Card";
+import ErrorState from "@/components/smartly/ErrorState";
+import SmartlyButton from "@/components/smartly/Button";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useActionMutation } from "@/hooks/useActionMutation";
@@ -33,6 +35,8 @@ const GROUPS: { type: AccountType; label: string }[] = [
 // Wallets and debts start open; the long income and expense lists folded.
 const OPEN_AT_FIRST: AccountType[] = ["ASSET", "LIABILITY"];
 
+const NO_TEMPLATES: IAccountTemplate[] = [];
+
 // A row of the tree: 32px tall, 22px further in for each level.
 const ROW = "flex min-h-8 items-center gap-2 rounded-sm text-body text-ink";
 
@@ -41,7 +45,8 @@ const ROW = "flex min-h-8 items-center gap-2 rounded-sm text-body text-ink";
 // it or retire it.
 const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
   const [open, setOpen] = useState<AccountType[]>(OPEN_AT_FIRST);
-  const templates = useQuery(accountTemplatesQuery()).data?.data ?? [];
+  const query = useQuery(accountTemplatesQuery());
+  const templates = query.data?.data ?? NO_TEMPLATES;
   const { locale, translate } = useLocale();
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IAccountTemplate, AccountTemplateDialog>();
 
@@ -58,8 +63,9 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
   );
 
   // An account: a folder when it holds sub-accounts, a dot otherwise, its
-  // kind on the right and its menu on hover. (A function returning a row,
-  // not a component, so the rows keep their state between renders.)
+  // kind on the right and its menu on hover -- and always on keyboard focus
+  // and under a finger, at 44px there. (A function returning a row, not a
+  // component, so the rows keep their state between renders.)
   const renderAccount = (template: IAccountTemplate, depth: 1 | 2) => {
     const Icon = template.children?.length ? Folder : Circle;
     return (
@@ -73,7 +79,7 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
               <Button
                 variant="ghost"
                 size="icon-xs"
-                className="text-ink-muted opacity-0 group-hover/row:opacity-100 hover:text-ink data-[state=open]:opacity-100"
+                className="text-ink-muted opacity-0 group-hover/row:opacity-100 hover:text-ink focus-visible:opacity-100 data-[state=open]:opacity-100 pointer-coarse:size-11 pointer-coarse:opacity-100"
                 aria-label={translate("More for {name}", { name: localName(locale, template) })}
               >
                 <MoreHorizontal aria-hidden="true" />
@@ -119,34 +125,39 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
         {canManage && (
           <CreateAccountTemplateDialog
             trigger={
-              <Button variant="outline" size="sm" className="h-8.5 rounded-md border-line-strong bg-surface text-small font-semibold text-ink hover:bg-surface-sunken">
+              <SmartlyButton variant="secondary" size="sm" className="pointer-coarse:h-11">
                 <Plus aria-hidden="true" />
                 <T>Add</T>
-              </Button>
+              </SmartlyButton>
             }
           />
         )}
       </div>
-      <ul className="flex flex-col gap-0.5">
-        {groups.map((group) => {
-          const isOpen = open.includes(group.type);
-          const Icon = isOpen ? FolderOpen : Folder;
-          return (
-            <li key={group.type}>
-              <button type="button" aria-expanded={isOpen} onClick={() => toggle(group.type)} className={cn(ROW, "w-full font-semibold hover:bg-hover")}>
-                <Icon className="size-3.5 text-emerald" aria-hidden="true" />
-                <T>{group.label}</T>
-              </button>
-              {isOpen && (
-                <ul className="flex flex-col gap-0.5">
-                  {group.templates.flatMap((template) => [renderAccount(template, 1), ...(template.children ?? []).map((child) => renderAccount(child, 2))])}
-                </ul>
-              )}
-            </li>
-          );
-        })}
-        {groups.length === 0 && <li className="text-small text-ink-muted"><T>No starting accounts yet.</T></li>}
-      </ul>
+      {query.isError && !query.data ? (
+        // An outage isn't "no starting accounts yet": say they didn't load.
+        <ErrorState bordered={false} title={translate("Couldn't load the starting accounts")} description={translate("Try again in a moment.")} onRetry={() => void query.refetch()} />
+      ) : (
+        <ul className="flex flex-col gap-0.5">
+          {groups.map((group) => {
+            const isOpen = open.includes(group.type);
+            const Icon = isOpen ? FolderOpen : Folder;
+            return (
+              <li key={group.type}>
+                <button type="button" aria-expanded={isOpen} onClick={() => toggle(group.type)} className={cn(ROW, "w-full font-semibold hover:bg-hover")}>
+                  <Icon className="size-3.5 text-emerald" aria-hidden="true" />
+                  <T>{group.label}</T>
+                </button>
+                {isOpen && (
+                  <ul className="flex flex-col gap-0.5">
+                    {group.templates.flatMap((template) => [renderAccount(template, 1), ...(template.children ?? []).map((child) => renderAccount(child, 2))])}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+          {query.data && groups.length === 0 && <li className="text-small text-ink-muted"><T>No starting accounts yet.</T></li>}
+        </ul>
+      )}
       <AccountTemplateDialogs template={activeRow} activeDialog={activeDialog} onClose={closeDialog} />
     </Card>
   );

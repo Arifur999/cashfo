@@ -1,27 +1,32 @@
 "use client";
 
 import { CreditCard } from "lucide-react";
-import Link from "next/link";
 import IconTile from "@/components/smartly/IconTile";
-import { changePercent, monthKeyLabel } from "@/lib/adminDashboard";
-import { formatCurrency } from "@/lib/currency";
-import { formatDate } from "@/lib/date";
+import { ListCell, ListRow, ListRowLink } from "@/components/smartly/list";
+import { formatAmount } from "@/lib/currency";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { formatNumber } from "@/lib/number";
+import { plural } from "@/lib/i18n/message";
+import { cn } from "@/lib/utils";
 import type { IPayment } from "@/types/payment.types";
 import type { IPlanAnalytics, ISubscriptionPlan } from "@/types/plan.types";
-import type { IChurnData, IRevenueSummary } from "@/types/revenue.types";
-import { Greeting, Kpi, MiniBars, Section, SectionLink, Unavailable } from "./pieces";
+import type { IChurnData, IRevenueOverview, IRevenueSummary } from "@/types/revenue.types";
+import { dayLabel, monthLabel, shortMonth } from "./dashboardDates";
+import { allZero, compactAmount } from "./dashboardFigures";
+import { COULD_NOT_LOAD, Greeting, Kpi, LoadFailed, MiniBars, SECTION_ROW, Section, SectionLink, SectionTable, Unavailable } from "./pieces";
 import { PlanShareCard } from "./PlanShareCard";
 
+// Every null below is a call that failed: the card says so rather than
+// showing an empty or all-clear state.
 export interface FinanceDashboardData {
   revenue: IRevenueSummary | null;
+  // MRR at each month end, and its change on the month end before.
+  overview: IRevenueOverview | null;
   churn: IChurnData | null;
   plans: IPlanAnalytics | null;
   planList: ISubscriptionPlan[] | null;
   // The newest failed payments, and how many there are in all.
-  failed: IPayment[];
-  failedTotal: number;
+  failed: { rows: IPayment[]; total: number } | null;
 }
 
 interface FinanceDashboardProps extends FinanceDashboardData {
@@ -29,67 +34,119 @@ interface FinanceDashboardProps extends FinanceDashboardData {
   hour: number;
 }
 
+const ROW = cn(SECTION_ROW, "grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3");
+
 // The finance admin's dashboard: recurring revenue, what failed, and the
 // plans the money comes from.
-export function FinanceDashboard({ adminName, hour, revenue, churn, plans, planList, failed, failedTotal }: FinanceDashboardProps) {
-  const { translate } = useLocale();
-  const change = revenue ? changePercent(revenue.thisMonthRevenue, revenue.lastMonthRevenue) : null;
-  const trend = revenue ? revenue.revenueTrend.slice(-6) : [];
-  const money = (value: number | string) => formatCurrency(value, undefined, 0);
+export function FinanceDashboard({ adminName, hour, revenue, overview, churn, plans, planList, failed }: FinanceDashboardProps) {
+  const { translate, locale } = useLocale();
+  const change = overview?.mrrChangePct ?? null;
+  // Both answers carry the same live MRR, so either one can show it.
+  const mrr = revenue?.mrr ?? overview?.mrr ?? null;
+  const history = overview?.mrrHistory ?? [];
+  // The biggest earner first; the API lists them by their first payment.
+  const byPlan = revenue ? [...revenue.revenueByPlan].sort((a, b) => b.amount - a.amount) : [];
+  const barsLabel = translate("MRR each month: {values}", {
+    values: history.map((point) => `${monthLabel(point.month, locale, translate)} ${formatAmount(point.mrr)}`).join(", "),
+  });
 
   return (
     <div className="flex flex-col gap-4">
       <Greeting name={adminName} hour={hour} line={translate("money that needs you today.")} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label={translate("MRR")} value={revenue ? money(revenue.mrr) : "—"} chip={change !== null ? { text: `${change >= 0 ? "+" : ""}${change}%`, tone: change >= 0 ? "income" : "expense" } : null} note={change !== null ? translate("vs last month") : undefined} />
-        <Kpi label={translate("This month")} value={revenue ? money(revenue.thisMonthRevenue) : "—"} note={revenue ? `${translate("Last month")} ${money(revenue.lastMonthRevenue)}` : undefined} />
-        <Kpi label={translate("Failed payments")} value={formatNumber(failedTotal)} chip={failedTotal > 0 ? { text: translate("Needs a look"), tone: "warning" } : null} note={translate("Waiting for a retry or a refund")} />
-        <Kpi label={translate("Churn")} value={churn ? `${churn.churnRatePercent}%` : "—"} note={churn ? `${formatNumber(churn.churnedThisMonth)} ${translate("paid accounts lost this month")}` : undefined} />
+        <Kpi
+          label="MRR"
+          value={mrr !== null ? formatAmount(mrr) : "—"}
+          chip={change !== null ? { text: `${change >= 0 ? "+" : ""}${toLocaleDigits(`${change}%`, locale)}`, tone: change >= 0 ? "income" : "expense" } : null}
+          note={change !== null ? "vs last month" : mrr !== null ? undefined : COULD_NOT_LOAD}
+        />
+        {/* Only part of the month is in, so it gets no change on the last. */}
+        <Kpi
+          label="This month so far"
+          value={revenue ? formatAmount(revenue.thisMonthRevenue) : "—"}
+          note={revenue ? translate("{amount} last month", { amount: formatAmount(revenue.lastMonthRevenue) }) : COULD_NOT_LOAD}
+        />
+        <Kpi
+          label="Failed payments"
+          value={failed ? formatCount(failed.total, locale) : "—"}
+          chip={failed && failed.total > 0 ? { text: translate("Needs a look"), tone: "warning" } : null}
+          note={failed ? "Waiting for a retry" : COULD_NOT_LOAD}
+        />
+        <Kpi
+          label="Churn"
+          value={churn ? toLocaleDigits(`${churn.churnRatePercent}%`, locale) : "—"}
+          note={
+            churn
+              ? plural(translate, churn.churnedThisMonth, "{count} paid workspace lost this month", "{count} paid workspaces lost this month", { count: formatCount(churn.churnedThisMonth, locale) })
+              : COULD_NOT_LOAD
+          }
+        />
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Section title={translate("MRR, last 6 months")} aside={translate("Recurring revenue from paid plans")}>
-          {revenue === null ? <Unavailable>{translate("Money cards show once payments come in.")}</Unavailable> : trend.length === 0 ? <Unavailable>{translate("No revenue yet.")}</Unavailable> : <MiniBars label={translate("Revenue each month")} height={190} bars={trend.map((point, index) => ({ label: monthKeyLabel(point.month), value: point.amount, short: money(point.amount), highlight: index === trend.length - 1 }))} />}
+          {overview === null ? (
+            <LoadFailed />
+          ) : allZero(history.map((point) => point.mrr)) ? (
+            <Unavailable>{translate("No revenue yet.")}</Unavailable>
+          ) : (
+            <MiniBars
+              label={barsLabel}
+              height={190}
+              bars={history.map((point, index) => ({ label: shortMonth(point.month, locale), value: point.mrr, short: compactAmount(point.mrr), highlight: index === history.length - 1 }))}
+            />
+          )}
         </Section>
-        <Section title={translate("Needs you now")} aside={<SectionLink href="/admin/payments?view=failed">{translate("All failed payments")}</SectionLink>}>
-          {failed.length === 0 ? (
+        <Section title={translate("Needs you now")} aside={<SectionLink href="/admin/payments?status=FAILED">{translate("All failed payments")}</SectionLink>} flush={Boolean(failed && failed.rows.length > 0)}>
+          {failed === null ? (
+            <LoadFailed />
+          ) : failed.rows.length === 0 ? (
             <Unavailable>{translate("No failed payment. Good.")}</Unavailable>
           ) : (
-            <div className="flex flex-col">
-              {failed.map((payment, index) => (
-                <Link key={payment.id} href={`/admin/payments/${payment.id}`} className={`flex items-center gap-3 py-3 ${index > 0 ? "border-t border-divider" : ""}`}>
-                  <IconTile size={36} tone="expense">
-                    <CreditCard />
-                  </IconTile>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-body font-semibold text-ink">{payment.platformUser?.name ?? payment.platformUserId}</span>
+            <SectionTable label={translate("Failed payments")}>
+              {failed.rows.map((payment) => (
+                <ListRow key={payment.id} className={ROW}>
+                  <ListCell>
+                    <IconTile size={36} tone="expense">
+                      <CreditCard />
+                    </IconTile>
+                  </ListCell>
+                  <ListCell className="flex flex-col">
+                    <ListRowLink href={`/admin/payments/${payment.id}`} className="truncate text-body font-semibold text-ink">
+                      {payment.platformUser?.name ?? payment.platformUserId}
+                    </ListRowLink>
                     <span className="truncate text-small text-ink-muted">
-                      {payment.plan.name} · {formatDate(payment.createdAt, "d MMM")}
-                      {payment.failureReason ? ` · ${payment.failureReason}` : ""}
+                      {[payment.plan.name, dayLabel(payment.createdAt, locale), payment.failureReason].filter(Boolean).join(" · ")}
                     </span>
-                  </span>
-                  <b className="text-expense tabular-nums">{formatCurrency(payment.amount, payment.currency)}</b>
-                </Link>
+                  </ListCell>
+                  <ListCell align="end" className="font-bold text-expense tabular-nums">
+                    {formatAmount(payment.amount, payment.currency)}
+                  </ListCell>
+                </ListRow>
               ))}
-            </div>
+            </SectionTable>
           )}
         </Section>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section title={translate("Revenue by plan")}>
-          {!revenue || revenue.revenueByPlan.length === 0 ? (
+        <Section title={translate("Revenue by plan")} aside={translate("Last 12 months")} flush={byPlan.length > 0}>
+          {revenue === null ? (
+            <LoadFailed />
+          ) : byPlan.length === 0 ? (
             <Unavailable>{translate("No revenue yet.")}</Unavailable>
           ) : (
-            <div className="flex flex-col">
-              {revenue.revenueByPlan.map((entry, index) => (
-                <div key={entry.planId} className={`flex items-center justify-between gap-3 py-2.5 text-body ${index > 0 ? "border-t border-divider" : ""}`}>
-                  <span className="text-ink">{entry.planName}</span>
-                  <b className="text-ink tabular-nums">{money(entry.amount)}</b>
-                </div>
+            <SectionTable label={translate("Revenue by plan")}>
+              {byPlan.map((entry) => (
+                <ListRow key={entry.planId} density="dense" className={cn(SECTION_ROW, "py-2")}>
+                  <ListCell className="text-ink">{entry.planName}</ListCell>
+                  <ListCell align="end" className="font-bold text-ink tabular-nums">
+                    {formatAmount(entry.amount)}
+                  </ListCell>
+                </ListRow>
               ))}
-            </div>
+            </SectionTable>
           )}
         </Section>
         <PlanShareCard analytics={plans} plans={planList} />

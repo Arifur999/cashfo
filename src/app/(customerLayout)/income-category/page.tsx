@@ -1,16 +1,15 @@
 import { redirect } from "next/navigation";
+import { hrefWithout, monthBounds, readBudgetMonth, sourceHistory, sourceHistoryRange } from "@/components/modules/Customer/Budget/budgetFigures";
 import { IncomeSourcesPageClient } from "@/components/modules/Customer/Budget/IncomeSourcesPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBudgetOverview } from "@/lib/customer/budgets";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { getCategoryBreakdown } from "@/lib/customer/reports";
+import { getMonthlyBreakdown } from "@/lib/customer/reports";
+import { getTransactionsSummary } from "@/lib/customer/transactions";
 
 export const generateMetadata = () => customerPageMetadata("/income-category");
-
-const pad = (n: number) => String(n).padStart(2, "0");
-const lastDayOf = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
 
 // Income sources: the income categories and what each brought in.
 export default async function IncomeSourcesPage({ searchParams }: PageProps<"/income-category">) {
@@ -21,29 +20,38 @@ export default async function IncomeSourcesPage({ searchParams }: PageProps<"/in
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
 
-  const { year: thisYear, month: thisMonth } = appYearMonth();
-  const month = typeof params.month === "string" ? Number(params.month) || thisMonth : thisMonth;
-  const year = typeof params.year === "string" ? Number(params.year) || thisYear : thisYear;
-  const previousYear = month === 1 ? year - 1 : year;
-  const previousMonth = month === 1 ? 12 : month - 1;
+  // A month the API can't read (a hand-edited ?month=13) opens this one.
+  const current = appYearMonth();
+  const picked = readBudgetMonth(params.month ?? String(current.month), params.year ?? String(current.year));
+  if (!picked) redirect(hrefWithout("/income-category", params, ["month", "year"]));
+  const { month, year } = picked;
+  const { dateFrom, dateTo } = monthBounds(year, month);
+  // One read of every source by month, uncapped: the month before (for
+  // "Growing fastest") and the year so far (its column).
+  const history = sourceHistoryRange(year, month, current);
 
-  const [overview, lastMonth, thisYearBreakdown] = await Promise.all([
+  const [overview, breakdown, summary] = await Promise.all([
     getBudgetOverview(activeBusinessId, month, year, "INCOME"),
-    getCategoryBreakdown(activeBusinessId, "INCOME", `${previousYear}-${pad(previousMonth)}-01`, `${previousYear}-${pad(previousMonth)}-${pad(lastDayOf(previousYear, previousMonth))}`),
-    getCategoryBreakdown(activeBusinessId, "INCOME", `${year}-01-01`, `${year}-${pad(month)}-${pad(lastDayOf(year, month))}`),
+    getMonthlyBreakdown(activeBusinessId, "INCOME", history.dateFrom, history.dateTo),
+    // Every income of the month, whatever its source: the sources' own sums
+    // leave out entries with none, a deleted one's, an asset sale's.
+    getTransactionsSummary(activeBusinessId, { transactionType: "INCOME", dateFrom, dateTo }),
   ]);
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
-  const byName = (rows: { name: string; amount: string }[]) => Object.fromEntries(rows.map((row) => [row.name, Number(row.amount)]));
+  const { lastMonth, thisYear } = sourceHistory(breakdown, year, month);
 
   return (
     <IncomeSourcesPageClient
       businessId={activeBusinessId}
       overview={overview}
-      lastMonth={byName(lastMonth.categories)}
-      thisYear={byName(thisYearBreakdown.categories)}
+      lastMonth={lastMonth}
+      thisYear={thisYear}
+      monthTotal={summary ? Number(summary.totals.INCOME) : null}
       currency={activeBusiness?.currency ?? "BDT"}
       canManage={canManage}
+      openAdd={params.addType === "INCOME" && canManage}
+      today={current}
     />
   );
 }

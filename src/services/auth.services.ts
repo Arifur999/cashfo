@@ -25,10 +25,13 @@ const SESSION_ENDPOINTS: Record<TokenAudience, string> = {
 };
 
 // One sign-in for everyone: the answer's audience says which side it is.
+// It gives up after 30 seconds, like every other call to the API, so a
+// wedged API ends in "Unable to reach the server" instead of a button that
+// stays busy for good.
 export const signIn = async (payload: ISignInPayload): Promise<ISignInResponse> => {
   try {
     // The login throttle is per client IP, so this call above all must carry it.
-    const response = await axios.post<ISignInResponse>(`${API_BASE_URL}/api/auth/sign-in`, payload, { headers: await getClientHeaders() });
+    const response = await axios.post<ISignInResponse>(`${API_BASE_URL}/api/auth/sign-in`, payload, { headers: await getClientHeaders(), timeout: 30_000 });
     return response.data;
   } catch (error) {
     logServiceError("Error signing in", error);

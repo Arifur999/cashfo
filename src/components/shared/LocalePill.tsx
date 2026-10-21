@@ -11,8 +11,9 @@ const OPTIONS = [
 
 interface LocalePillProps {
   onDark?: boolean;
-  // The sign-in and legal pages' headers: "EN | বাং" on 36px buttons on a
-  // phone and "English | বাংলা" wider, as their boards draw it.
+  // The sign-in and legal pages' headers: "EN | বাং" on 44px buttons on a
+  // phone (the headers' other targets are 44px too) and "English | বাংলা"
+  // wider, as their boards draw it.
   fullNames?: boolean;
   // Runs after the language changes (the customer app saves the choice to
   // the account).
@@ -36,7 +37,7 @@ const LocalePill = ({ onDark = false, fullNames = false, onChange }: LocalePillP
         { ...OPTIONS[1], label: <ByWidth phone="বাং" wide="বাংলা" /> },
       ]
     : OPTIONS;
-  return <SegmentedControl options={options} value={locale} onChange={choose} label={t("Language")} variant={onDark ? "onDark" : "pill"} className={fullNames ? "max-md:[&>button]:h-9 max-md:[&>button]:min-w-11 md:[&>button]:px-4" : undefined} />;
+  return <SegmentedControl options={options} value={locale} onChange={choose} label={t("Language")} variant={onDark ? "onDark" : "pill"} className={fullNames ? "max-md:[&>button]:h-11 max-md:[&>button]:min-w-11 md:[&>button]:px-4" : undefined} />;
 };
 
 export default LocalePill;

@@ -1,7 +1,8 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import DashboardNavbar from "@/components/modules/Dashboard/DashboardNavbar";
 import DashboardSidebar from "@/components/modules/Dashboard/DashboardSidebar";
-import { SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
+import { ADMIN_HOME_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { getTranslationOverrides } from "@/lib/i18n/overrides";
@@ -12,13 +13,22 @@ import { BreadcrumbProvider } from "@/components/modules/Dashboard/BreadcrumbTit
 // otherwise it gets statically cached and every admin sees the first render.
 export const dynamic = "force-dynamic";
 
+// Where a session the backend refused goes: sign in again, then back to
+// the page asked for. A layout can't see the URL, so proxy.ts names it in
+// x-pathname; the dashboard needs no way back, a sign-in lands there anyway.
+async function signInAgainRoute(): Promise<string> {
+  const asked = (await headers()).get("x-pathname");
+  if (!asked?.startsWith("/") || asked.split("?")[0] === ADMIN_HOME_ROUTE) return SESSION_EXPIRED_LOGIN_ROUTE;
+  return `${SESSION_EXPIRED_LOGIN_ROUTE}&redirect=${encodeURIComponent(asked)}`;
+}
+
 export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   // proxy.ts already bounced anyone without a session. This catches a token
   // the backend itself no longer accepts; getUserInfo is request-cached, so
   // the sidebar and navbar reuse this same round trip.
   const [admin, locale, overrides] = await Promise.all([getUserInfo(), getLocale(), getTranslationOverrides()]);
   if (!admin) {
-    redirect(SESSION_EXPIRED_LOGIN_ROUTE);
+    redirect(await signInAgainRoute());
   }
 
   return (

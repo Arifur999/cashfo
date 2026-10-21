@@ -1,4 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import RelativeTime from "@/components/shared/RelativeTime";
@@ -10,11 +12,38 @@ import { getInitials } from "@/lib/text";
 import { awaitingReply, isLate, shortTicketId, TICKET_STATUS_LABEL } from "@/lib/tickets";
 import { cn } from "@/lib/utils";
 import type { ISupportTicket } from "@/types/ticket.types";
+import { ticketHref } from "../ticketLinks";
 
-// The dot beside a ticket the user wrote in last.
+// The dot beside a ticket the user wrote in last, said out loud too: the
+// colour and the bold subject only reach the eye.
 const NewReplyDot = () => {
   const { translate } = useLocale();
-  return <span title={translate("New reply from the user")} className="size-1.75 shrink-0 rounded-full bg-info" />;
+  const label = translate("New reply from the user");
+  return (
+    <>
+      <span title={label} aria-hidden="true" className="size-1.75 shrink-0 rounded-full bg-info" />
+      <span className="sr-only">{label}</span>
+    </>
+  );
+};
+
+// The subject is a real link (a new tab, a middle-click, a screen reader's
+// list of links); the row's own click stays for the rest of the row.
+const SubjectCell = ({ ticket }: { ticket: ISupportTicket }) => {
+  const listQuery = useSearchParams().toString();
+  return (
+    <span className="flex min-w-0 flex-col gap-px">
+      <Link
+        href={ticketHref(ticket.id, listQuery)}
+        onClick={(event) => event.stopPropagation()}
+        title={ticket.subject}
+        className={cn("truncate text-ink hover:underline", awaitingReply(ticket) ? "font-bold" : "font-medium")}
+      >
+        {ticket.subject}
+      </Link>
+      <span className="truncate text-small text-ink-muted">{ticket.platformUser?.name ?? <T>Unknown person</T>}</span>
+    </span>
+  );
 };
 
 // The design's queue: the ticket's number with a dot when the user is
@@ -38,14 +67,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     id: "subject",
     accessorKey: "subject",
     header: "Subject",
-    cell: ({ row }) => (
-      <span className="flex min-w-0 flex-col gap-px">
-        <span className={cn("truncate text-ink", awaitingReply(row.original) ? "font-bold" : "font-medium")} title={row.original.subject}>
-          {row.original.subject}
-        </span>
-        <span className="truncate text-small text-ink-muted">{row.original.platformUser?.name ?? <T>Unknown person</T>}</span>
-      </span>
-    ),
+    cell: ({ row }) => <SubjectCell ticket={row.original} />,
     meta: { exportValue: (row) => `${row.subject} (${row.platformUser?.name ?? "Unknown"})` },
   },
   {
@@ -69,7 +91,8 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={TICKET_STATUS_LABEL[row.original.status]} />,
-    meta: { width: 130, exportValue: (row) => TICKET_STATUS_LABEL[row.status] },
+    // Room for "Waiting on user" in either language.
+    meta: { width: 150, exportValue: (row) => TICKET_STATUS_LABEL[row.status] },
   },
   {
     id: "assignee",

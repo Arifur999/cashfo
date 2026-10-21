@@ -1,6 +1,8 @@
 // The sums behind a mess's meal sheet: what each meal counts for, a
 // member's meals on a day in meal units, and the month's grid with its
 // member and day totals. Pure, so the sheet, the drawer and the tests agree.
+import { toLocaleDigits } from "@/lib/i18n/digits";
+import type { Locale } from "@/lib/i18n/translate";
 import type { GroupMeal, GroupSettings } from "./api";
 
 export interface MealUnits {
@@ -51,5 +53,29 @@ export function mealSheet(meals: GroupMeal[], units: MealUnits): MealSheet {
   return sheet;
 }
 
-// A meal count as the sheet writes it: "2.5", "3", "½".
-export const mealText = (value: number): string => (value === 0.5 ? "½" : String(round2(value)));
+// A meal count (or a member's share units) as the sheet writes it: "2.5",
+// "3", "½", in the reader's digits ("২.৫").
+export const mealText = (value: number, locale: Locale = "en"): string => (value === 0.5 ? "½" : toLocaleDigits(String(round2(value)), locale));
+
+// One member's meals on a day, as the day's drawer edits them.
+export interface MealEntry {
+  breakfast: number;
+  lunch: number;
+  dinner: number;
+  guests: number;
+}
+
+export const NO_MEALS: MealEntry = { breakfast: 0, lunch: 0, dinner: 0, guests: 0 };
+
+// Each member's saved meals on a day, from the month's meals.
+export function mealsOnDay(meals: GroupMeal[], day: string): Record<string, MealEntry> {
+  return Object.fromEntries(meals.filter((meal) => meal.date.slice(0, 10) === day).map((meal) => [meal.groupMemberId, { breakfast: meal.breakfast, lunch: meal.lunch, dinner: meal.dinner, guests: Number(meal.guests) }]));
+}
+
+const sameEntry = (a: MealEntry, b: MealEntry) => a.breakfast === b.breakfast && a.lunch === b.lunch && a.dinner === b.dinner && a.guests === b.guests;
+
+// The members whose day differs from what is saved: only they are sent, so
+// a save never writes zeros over the members nobody touched.
+export function changedMeals(memberIds: string[], entries: Record<string, MealEntry>, saved: Record<string, MealEntry>): (MealEntry & { groupMemberId: string })[] {
+  return memberIds.filter((id) => !sameEntry(entries[id] ?? NO_MEALS, saved[id] ?? NO_MEALS)).map((id) => ({ groupMemberId: id, ...(entries[id] ?? NO_MEALS) }));
+}

@@ -18,31 +18,37 @@ async function policyVersions(): Promise<LegalVersions> {
   return Object.fromEntries(policies.flatMap((entry, index) => (docs[index] ? [[entry.page, docs[index].version]] : [])));
 }
 
+// 44px to tap on a phone, the board's 40px from md up.
+const HEADER_BUTTON = "max-md:h-11";
+
 // The frame of the legal pages, which anyone can open: the logo, the
 // language pill and the way in (or back into the app), the side menu, the
 // page, and its "On this page" list on a wide screen. No footer: the side
-// menu already links every legal page.
+// menu already links every legal page. A phone header has room for the
+// mark and one button: Sign in, for the customer who came back to read the
+// FAQ (sign-in links on to sign-up).
 const PublicShell = async ({ children }: { children: React.ReactNode }) => {
   const [{ t }, signedIn, versions] = await Promise.all([getTranslator(), getAccessToken().then(Boolean), policyVersions()]);
 
   return (
     <div className="flex min-h-screen flex-col bg-surface">
       <header className="flex h-18 shrink-0 items-center gap-3 border-b border-line px-5 md:gap-6 md:px-12">
-        <Link href="/" aria-label={`${BRAND_NAME} home`} className="rounded-md">
-          <Logo height={36} alt="" />
+        <Link href="/" aria-label={t("{brand} home", { brand: BRAND_NAME })} className="min-w-0 rounded-md">
+          <Logo variant="mark" height={32} alt="" className="sm:hidden" />
+          <Logo height={36} alt="" className="hidden sm:block" />
         </Link>
         <span className="flex-1" />
         <LocalePill fullNames />
         {signedIn ? (
-          <Button asChild>
+          <Button asChild className={HEADER_BUTTON}>
             <Link href="/">{t("Open the app")}</Link>
           </Button>
         ) : (
           <>
-            <Button variant="secondary" asChild className="hidden sm:inline-flex">
+            <Button variant="secondary" asChild className={HEADER_BUTTON}>
               <Link href={LOGIN_ROUTE}>{t("Sign in")}</Link>
             </Button>
-            <Button asChild>
+            <Button asChild className={`${HEADER_BUTTON} hidden sm:inline-flex`}>
               <Link href={REGISTER_ROUTE}>{t("Create an account")}</Link>
             </Button>
           </>

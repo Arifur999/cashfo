@@ -1,8 +1,11 @@
 // The sums behind Habits › Skills: units (lessons, or hours stored as
 // minutes), the week of practice per skill, the streak and this year's
 // goal. Pure, so the page and its tests agree.
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { inEnglish, type Translate } from "@/lib/i18n/message";
+import type { Locale } from "@/lib/i18n/translate";
 import type { Skill, SkillStatus, SkillUnit, SkillWeekDay } from "./api";
-import { shiftDay, WEEKDAY_LONG, weekdayOf } from "./habitDisplay";
+import { dayText, shiftDay, WEEKDAY_LONG, weekdayOf } from "./habitDisplay";
 
 // English, passed through t().
 export const STATUS_LABEL: Record<SkillStatus, string> = { WANT_TO_LEARN: "Want to learn", LEARNING: "Learning", COMPLETED: "Completed" };
@@ -53,26 +56,27 @@ export const QUICK_ADD: Record<SkillUnit, { amount: number; label: string }> = {
   HOURS: { amount: 30, label: "+30 min" },
 };
 
-type T = (key: string) => string;
-
-// "2 lessons", "1 lesson", "1.5 hours", "1 hour", "30 min".
-export function amountText(unit: SkillUnit, amount: number, t: T): string {
-  if (unit === "LESSONS") return `${amount} ${t(amount === 1 ? "lesson" : "lessons")}`;
-  if (amount < 60) return `${amount} ${t("min")}`;
+// "2 lessons", "1 lesson", "1.5 hours", "1 hour", "30 min", each one
+// sentence with the number in the reader's digits.
+export function amountText(unit: SkillUnit, amount: number, t: Translate = inEnglish, locale: Locale = "en"): string {
+  if (unit === "LESSONS") return t(amount === 1 ? "{count} lesson" : "{count} lessons", { count: formatCount(amount, locale) });
+  if (amount < 60) return t("{count} min", { count: formatCount(amount, locale) });
   const hours = hoursText(amount);
-  return `${hours} ${t(hours === "1" ? "hour" : "hours")}`;
+  return t(hours === "1" ? "{count} hour" : "{count} hours", { count: toLocaleDigits(hours, locale) });
 }
 
 // What a week cell says: "2", "1.5h", "30m", or nothing for an empty day.
-export function cellText(unit: SkillUnit, amount: number): string {
+export function cellText(unit: SkillUnit, amount: number, t: Translate = inEnglish, locale: Locale = "en"): string {
   if (amount <= 0) return "";
-  if (unit === "LESSONS") return String(amount);
-  return amount >= 60 ? `${hoursText(amount)}h` : `${amount}m`;
+  if (unit === "LESSONS") return formatCount(amount, locale);
+  return amount >= 60 ? t("{count}h", { count: toLocaleDigits(hoursText(amount), locale) }) : t("{count}m", { count: formatCount(amount, locale) });
 }
 
 // "18 of 40 lessons", "12 of 30 hours".
-export function progressText(skill: Pick<Skill, "unit" | "progress" | "target">, t: T): string {
-  return skill.unit === "LESSONS" ? `${skill.progress} ${t("of")} ${skill.target} ${t("lessons")}` : `${hoursText(skill.progress)} ${t("of")} ${hoursText(skill.target)} ${t("hours")}`;
+export function progressText(skill: Pick<Skill, "unit" | "progress" | "target">, t: Translate = inEnglish, locale: Locale = "en"): string {
+  return skill.unit === "LESSONS"
+    ? t("{done} of {total} lessons", { done: formatCount(skill.progress, locale), total: formatCount(skill.target, locale) })
+    : t("{done} of {total} hours", { done: toLocaleDigits(hoursText(skill.progress), locale), total: toLocaleDigits(hoursText(skill.target), locale) });
 }
 
 export const weekTotal = (week: SkillWeekDay[], skillId: string): number => week.reduce((sum, day) => sum + (day.bySkill[skillId] ?? 0), 0);
@@ -98,14 +102,16 @@ export function relativeDay(date: string, today: string): "today" | "yesterday" 
   return "earlier";
 }
 
-// "2 lessons today", "1.5 hours yesterday", "30 min · Sunday"; null when
+// "2 lessons today", "1.5 hours yesterday", "30 min on Sunday"; null when
 // nothing was logged this week.
-export function practiceLine(skill: Pick<Skill, "id" | "unit">, week: SkillWeekDay[], today: string, t: T): string | null {
+export function practiceLine(skill: Pick<Skill, "id" | "unit">, week: SkillWeekDay[], today: string, t: Translate = inEnglish, locale: Locale = "en"): string | null {
   const last = lastActivity(week, skill.id);
   if (!last) return null;
+  const amount = amountText(skill.unit, last.amount, t, locale);
   const when = relativeDay(last.date, today);
-  const day = when === "today" ? t("today") : when === "yesterday" ? t("yesterday") : `· ${t(WEEKDAY_LONG[weekdayOf(last.date)])}`;
-  return `${amountText(skill.unit, last.amount, t)} ${day}`;
+  if (when === "today") return t("{amount} today", { amount });
+  if (when === "yesterday") return t("{amount} yesterday", { amount });
+  return t("{amount} on {day}", { amount, day: t(WEEKDAY_LONG[weekdayOf(last.date)]) });
 }
 
 // The first day of the current streak, so the page can say "since Monday".
@@ -115,6 +121,13 @@ export function streakStart(streak: number, week: SkillWeekDay[], today: string)
   const last = week[week.length - 1];
   const todayActive = last?.date === today && last.minutes + last.lessons > 0;
   return shiftDay(today, todayActive ? -(streak - 1) : -streak);
+}
+
+// "Logged every day since Thursday" while the run is under a week, so the
+// weekday can only be this week's; a longer run names the date.
+export function streakSince(since: string, streak: number, t: Translate = inEnglish, locale: Locale = "en"): string {
+  const day = streak <= 6 ? t(WEEKDAY_LONG[weekdayOf(since)]) : dayText(since, locale, "dayMonth");
+  return t("Logged every day since {day}", { day });
 }
 
 export interface WeekSums {
@@ -129,8 +142,8 @@ export const byStatus = (skills: Skill[], status: SkillStatus): Skill[] => skill
 export const completedIn = (skills: Skill[], year: number): Skill[] => skills.filter((skill) => skill.status === "COMPLETED" && skill.completedYear === year);
 
 // "React", "React and Spoken English", "React, Python and 2 more".
-export function namesLine(names: string[], and: string, more: string): string {
+export function namesLine(names: string[], t: Translate = inEnglish, locale: Locale = "en"): string {
   if (names.length <= 1) return names[0] ?? "";
-  if (names.length === 2) return `${names[0]} ${and} ${names[1]}`;
-  return `${names[0]}, ${names[1]} ${and} ${names.length - 2} ${more}`;
+  if (names.length === 2) return t("{first} and {second}", { first: names[0], second: names[1] });
+  return t("{first}, {second} and {count} more", { first: names[0], second: names[1], count: formatCount(names.length - 2, locale) });
 }

@@ -2,27 +2,28 @@
 
 import { Info, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createElement, useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
+import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import type { Account, Asset, AssetCategoryOption } from "@/lib/customer/api";
+import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { sellAssetAction } from "@/lib/customer/assetActions";
 import { categoryVisual } from "@/lib/customer/assetDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
-import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
 import { getAppToday } from "@/lib/date";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import DayInput from "@/components/smartly/form/DayInput";
-import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
+import { AssetTypeTile } from "./AssetTypeTile";
+import { useDrawerWallets } from "./useDrawerWallets";
 
 const BOX = { income: "bg-mint-50 text-income", expense: "bg-expense-soft text-expense", neutral: "bg-strip text-ink-2" } as const;
 
@@ -43,13 +44,11 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const [price, setPrice] = useState("");
-  const [walletId, setWalletId] = useState("");
+  // A wallet picked by hand; until then the first one.
+  const [pickedWalletId, setPickedWalletId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [note, setNote] = useState("");
-  const [wallets, setWallets] = useState<Account[]>([]);
-  const [savingsWallets, setSavingsWallets] = useState<Account[]>([]);
-  const [walletsError, setWalletsError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { wallets, savingsWallets, loading, error: walletsError } = useDrawerWallets(open, businessId);
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -60,29 +59,22 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
       setPrice(String(Number(asset.currentValue)));
       setDate(getAppToday());
       setNote("");
-      setLoading(true);
     }
   }
-
-  useEffect(() => {
-    if (!open) return;
-    Promise.all([listMoneyAccountsAction(businessId), getActiveSavingsWalletsAction(businessId)]).then(([money, savings]) => {
-      const list = money.data ?? [];
-      setWallets(list);
-      setSavingsWallets(savings);
-      setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
-      setWalletId((current) => current || list[0]?.id || savings[0]?.id || "");
-      setLoading(false);
-    });
-  }, [open, businessId]);
 
   if (!asset) return null;
   const value = Number(price) || 0;
   const paid = Number(asset.purchasePrice);
   const today = Number(asset.currentValue);
-  const wallet = [...wallets, ...savingsWallets].find((w) => w.id === walletId);
+  const all = [...wallets, ...savingsWallets];
+  // The hand-picked wallet while this workspace still has it, else the first.
+  const wallet = all.find((candidate) => candidate.id === pickedWalletId) ?? all[0];
   const visual = categoryVisual(categories, asset.category);
-  const valid = value > 0 && walletId.length > 0;
+  // Nothing is sold before it was bought; a typed date can still fall
+  // outside the picker's range.
+  const bought = asset.purchaseDate.slice(0, 10);
+  const lastDay = getAppToday();
+  const valid = value > 0 && wallet !== undefined && date >= bought && date <= lastDay;
 
   // "− ৳ 2,50,000 · −15.2%" against a reference figure.
   const diff = (against: number): { amount: number; text: string; tone: keyof typeof BOX } => {
@@ -96,15 +88,15 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid || isPending || !asset) return;
+    if (!valid || isPending || !asset || !wallet) return;
     startTransition(async () => {
-      const result = await sellAssetAction(businessId, asset.id, { soldPrice: value, soldAccountId: walletId, date, notes: note.trim() || undefined });
+      const result = await sellAssetAction(businessId, asset.id, { soldPrice: value, soldAccountId: wallet.id, date, notes: note.trim() || undefined });
       if (result.success) {
         toast.success(t("Sold and recorded as income"));
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to record the sale"));
+        toast.error(t(result.message ?? "Failed to record the sale"));
       }
     });
   }
@@ -124,6 +116,10 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
       >
         <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <SheetTitle className="text-h3 text-ink">{t("Sell asset")}</SheetTitle>
+          {/* The asset is named in the box below; a screen reader hears it with the title. */}
+          <SheetDescription className="sr-only">
+            {asset.name} · {t(asset.category)}
+          </SheetDescription>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
           </button>
@@ -133,20 +129,20 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <div className="flex flex-col gap-4 rounded-lg border border-line bg-strip p-4">
               <div className="flex items-center gap-3">
-                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
+                <AssetTypeTile visual={visual} size="lg" />
                 <span className="flex min-w-0 flex-col gap-px">
                   <span className="truncate text-title text-ink">{asset.name}</span>
                   <span className="text-caption font-normal text-ink-muted">
-                    {asset.category} · {t("bought")} {formatDate(asset.purchaseDate)}
+                    {t(asset.category)} · {t("Bought on {date}", { date: formatDate(asset.purchaseDate) })}
                   </span>
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3 tabular-nums">
-                <span className="flex flex-col gap-0.5 [&>*]:leading-[normal]">
+                <span className="flex flex-col gap-0.5 *:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
                   <span className="text-title text-ink">{formatCurrency(paid, currency)}</span>
                 </span>
-                <span className="flex flex-col gap-0.5 [&>*]:leading-[normal]">
+                <span className="flex flex-col gap-0.5 *:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
                   <span className="text-title text-ink">{formatCurrency(today, currency)}</span>
                 </span>
@@ -169,11 +165,11 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
               )}
             </Field>
 
-            <WalletPicker label={t("Receive into")} wallets={wallets} savingsWallets={savingsWallets} value={walletId} onChange={setWalletId} after={wallet && value > 0 ? Number(wallet.currentBalance) + value : null} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+            <WalletPicker label={t("Receive into")} wallets={wallets} savingsWallets={savingsWallets} value={wallet?.id ?? ""} onChange={setPickedWalletId} after={wallet && value > 0 ? Number(wallet.currentBalance) + value : null} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="sell-date" label={label(t("Date"))}>
-                <DayInput id="sell-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
+                <DayInput id="sell-date" size="md" value={date} onChange={setDate} min={bought} max={lastDay} />
               </Field>
               <Field htmlFor="sell-note" label={label(t("Note"), true)}>
                 <Input id="sell-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Sold to a colleague")} className="px-0" frameClassName="px-3" />
@@ -184,7 +180,11 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
               <div className="flex gap-3 rounded-md border border-info/25 bg-info-soft px-4 py-3 text-small leading-relaxed text-info">
                 <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <span>
-                  {t("The full")} <b className="font-semibold">{formatCurrency(value, currency)}</b> {t("is recorded as income in")} {wallet.name}, {t("and")} {asset.name} {t("moves to Sold.")}
+                  {fillNodes(t("The full {amount} is recorded as income in {wallet}, and {asset} moves to Sold."), {
+                    amount: <b className="font-semibold">{formatCurrency(value, currency)}</b>,
+                    wallet: wallet.name,
+                    asset: asset.name,
+                  })}
                 </span>
               </div>
             )}
@@ -196,7 +196,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t("Sell for")} {formatCurrency(value, currency)}
+              {value > 0 ? t("Sell for {amount}", { amount: formatCurrency(value, currency) }) : t("Sell asset")}
             </Button>
           </div>
         </form>

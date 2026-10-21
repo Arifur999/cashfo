@@ -4,15 +4,14 @@ import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras"
 import Button from "@/components/smartly/Button";
 import StatePage from "@/components/smartly/StatePage";
 import { CUSTOMER_HOME_ROUTE } from "@/lib/authUtils";
-import { getLocale } from "@/lib/i18n/locale";
-import { translate } from "@/lib/i18n/translate";
+import { getTranslator } from "@/lib/i18n/locale";
 
 // A missing page inside the app keeps the sidebar and top bar, so the
 // customer is never stranded. The bar says "Page not found" rather than the
-// menu entry the broken link sat under.
+// menu entry the broken link sat under. With the admin-edited Bangla, like
+// every other customer page.
 export default async function CustomerNotFound() {
-  const locale = await getLocale();
-  const t = (key: string) => translate(locale, key);
+  const { t } = await getTranslator();
 
   return (
     <>

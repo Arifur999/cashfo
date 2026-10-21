@@ -5,6 +5,10 @@ const SIZES = {
   32: "size-8 text-caption",
   36: "size-9 text-small",
   44: "size-11 text-body-lg",
+  // Settings: the phone menu's card, the profile, the photo dialog's preview.
+  48: "size-12 text-body-lg",
+  72: "size-18 text-h2",
+  120: "size-30 text-display",
 } as const;
 
 const TONES = {
@@ -21,16 +25,19 @@ interface AvatarProps {
   src?: string | null;
   size?: keyof typeof SIZES;
   tone?: keyof typeof TONES;
+  // The photo's text, the name by default; "" when the name is written
+  // beside it, so it isn't read out twice.
+  alt?: string;
   className?: string;
 }
 
 // A person's photo, or their initials on a brand circle.
-const Avatar = ({ name, src, size = 36, tone = "forest", className }: AvatarProps) => {
+const Avatar = ({ name, src, size = 36, tone = "forest", alt, className }: AvatarProps) => {
   if (src) {
     // A backend-served upload, so a plain <img> (next/image would need the
     // API host allow-listed for a 36px picture).
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={name} className={cn("shrink-0 rounded-full object-cover", SIZES[size], className)} />;
+    return <img src={src} alt={alt ?? name} className={cn("shrink-0 rounded-full object-cover", SIZES[size], className)} />;
   }
   return (
     <span aria-hidden="true" className={cn("inline-flex shrink-0 items-center justify-center rounded-full", SIZES[size], TONES[tone], className)}>

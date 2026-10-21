@@ -1,11 +1,15 @@
 "use client";
 
 import { Banknote, CircleCheckBig, Globe, Landmark, Lock, TrendingUp, Wallet } from "lucide-react";
+import Link from "next/link";
+import T from "@/components/shared/T";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import Logo from "@/components/smartly/Logo";
+import { BRAND_NAME } from "@/lib/brand";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { bnHeading } from "./bnType";
 
 export type AuthHeroVariant = "login" | "register" | "narrow";
 
@@ -16,21 +20,27 @@ const RINGS = (
   </>
 );
 
-// The sign-in hero: what the product is, in a few lines, on the aurora
+// The sign-in hero: what the product is, in a few lines, on the forest
 // gradient. Login shows a few sample cards floating under the headline,
 // register four feature cards, and the narrower pages three short rows.
+// Forest to emerald rather than the aurora, whose mint end left the text
+// low in the panel under 3:1; the darker feature cards keep it at AA too.
 export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
 
   return (
-    <section aria-label={t("About Smartly")} className="relative m-4 hidden flex-col gap-8 overflow-hidden rounded-xl bg-aurora p-10 px-12 text-white lg:flex">
+    <section aria-label={t("About Smartly")} className="relative m-4 hidden flex-col gap-8 overflow-hidden rounded-xl bg-forest-depth p-10 px-12 text-white lg:flex">
       {RINGS}
-      <Logo onDark height={44} alt="" className="relative self-start" />
+      {/* The way out of a page opened from an email; mint, as the green
+          focus ring hardly shows on forest. */}
+      <Link href="/" aria-label={t("{brand} home", { brand: BRAND_NAME })} className="relative self-start rounded-md focus-visible:outline-mint-200">
+        <Logo onDark height={44} alt="" />
+      </Link>
 
       {variant === "register" ? (
         <>
           <div className="relative flex max-w-lg flex-col gap-4">
-            <p className="text-display tracking-[-0.03em]">{t("Grow smarter, every day.")}</p>
+            <p className={cn("text-display tracking-[-0.03em]", bnHeading(locale))}>{t("Grow smarter, every day.")}</p>
             <p className="text-body-lg text-mint-200">{t("Set up your wallets, add your first transaction and see where every taka goes. Habits and passwords come along too.")}</p>
           </div>
           <ul className="relative flex max-w-130 flex-col gap-3">
@@ -40,7 +50,7 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
               { icon: <CircleCheckBig />, color: "text-pillar-habits", title: "Habits and prayers", text: "Namaz, Ramadan, reading and your daily to-do list." },
               { icon: <Lock />, color: "text-info", title: "A vault for every password", text: "Its own password, and it locks itself after a few minutes." },
             ].map((item) => (
-              <li key={item.title} className="flex items-start gap-4 rounded-lg bg-white/10 p-4">
+              <li key={item.title} className="flex items-start gap-4 rounded-lg bg-forest/30 p-4 ring-1 ring-white/10 ring-inset">
                 <IconTile tone="white" className={cn("bg-surface", item.color)}>
                   {item.icon}
                 </IconTile>
@@ -54,13 +64,15 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
         </>
       ) : (
         <div className="relative flex max-w-130 flex-col gap-4">
-          <p className={cn("tracking-[-0.03em]", variant === "login" ? "text-display xl:text-display-xl" : "text-display")}>{t("Your money, habits and passwords. Smartly sorted.")}</p>
+          <p className={cn("tracking-[-0.03em]", variant === "login" ? "text-display xl:text-display-xl" : "text-display", bnHeading(locale))}>{t("Your money, habits and passwords. Smartly sorted.")}</p>
           <p className="text-body-lg text-mint-200">{t("Income, loans, savings, prayers and every login, in one calm place that tells you what matters.")}</p>
         </div>
       )}
 
+      {/* An illustration of the app, not the reader's own figures: hidden
+          from screen readers. */}
       {variant === "login" && (
-        <div className="relative hidden flex-1 xl:block">
+        <div aria-hidden="true" className="relative hidden flex-1 xl:block">
           <div className="absolute top-2 left-0 flex w-85 flex-col gap-3 rounded-xl bg-surface p-5 text-ink shadow-[0_28px_60px_-16px_rgba(11,61,46,0.45)]">
             <div className="flex items-center justify-between">
               <span className="text-small text-ink-muted">{t("Total balance")}</span>
@@ -84,7 +96,7 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
             </IconTile>
             <span className="flex flex-col">
               <span className="text-caption font-normal text-ink-muted">{t("Next prayer")}</span>
-              <span className="text-title font-bold">Asr · 4:05 pm</span>
+              <span className="text-title font-bold">{t("Asr · 4:05 pm")}</span>
             </span>
           </div>
           <div className="absolute top-49 left-75 flex w-80 items-start gap-3 rounded-lg bg-surface p-4 text-ink shadow-[0_28px_60px_-16px_rgba(11,61,46,0.45)]">
@@ -126,10 +138,17 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
       {variant !== "narrow" && (
         <div className="relative mt-auto flex items-center gap-3 text-small text-mint-50">
           <span>
-            {t("English and")}{" "}
-            <span lang="bn" className="font-bn">
-              বাংলা
-            </span>
+            <T
+              values={{
+                bangla: (
+                  <span lang="bn" className="font-bn">
+                    বাংলা
+                  </span>
+                ),
+              }}
+            >
+              {"English and {bangla}"}
+            </T>
           </span>
           <span aria-hidden="true">·</span>
           <span>{t("Light and dark")}</span>
@@ -141,15 +160,17 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
   );
 }
 
-// The small aurora card phones get above the form instead of the hero.
+// The small hero card phones get above the form instead of the hero. It
+// steps aside while a notice is up (maintenance, a Google sign-in that
+// didn't finish), so the form stays within the first screen.
 export function AuthHeroCard() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   return (
-    <div className="relative mx-5 mt-2 flex items-end justify-between gap-4 overflow-hidden rounded-xl bg-aurora p-5 text-white lg:hidden">
+    <div className="relative mx-5 mt-2 flex items-end justify-between gap-4 overflow-hidden rounded-xl bg-forest-depth p-5 text-white group-has-[[data-auth-notice]]/auth:hidden lg:hidden">
       <span aria-hidden="true" className="absolute -top-17 -right-15 size-45 rounded-full border border-white/14" />
       <div className="relative flex max-w-47.5 flex-col gap-2">
-        <p className="text-h3 leading-[1.25] font-bold tracking-[-0.01em]">{t("Your money, habits and passwords. Smartly sorted.")}</p>
-        <p className="text-small leading-[1.45] text-white/84">{t("Money, loans, prayers and every login in one calm place.")}</p>
+        <p className={cn("text-h3 leading-[1.25] font-bold tracking-[-0.01em]", bnHeading(locale))}>{t("Your money, habits and passwords. Smartly sorted.")}</p>
+        <p className="text-small leading-[1.45] text-white">{t("Money, loans, prayers and every login in one calm place.")}</p>
       </div>
       <div aria-hidden="true" className="relative flex h-18 items-end gap-2">
         {[

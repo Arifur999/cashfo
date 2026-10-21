@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { createFeatureFlagAction } from "@/app/(dashboardLayout)/admin/system/feature-flags/_action";
 import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
 import AppChipsField from "@/components/shared/form/AppChipsField";
@@ -50,6 +50,8 @@ const FeatureFlagForm = ({ planOptions, onDone }: FeatureFlagFormProps) => {
       }
     },
   });
+  // Switched on at 0%, a flag is on for nobody: say so under the switch.
+  const onForNobody = useStore(form.store, (state) => state.values.isEnabled && state.values.rolloutPercent === 0);
 
   return (
     <AppForm onSubmit={form.handleSubmit}>
@@ -71,7 +73,15 @@ const FeatureFlagForm = ({ planOptions, onDone }: FeatureFlagFormProps) => {
         {(field) => <AppChipsField field={field} label="Limit to plans" options={planOptions} description="None selected means every plan." />}
       </form.Field>
       <form.Field name="isEnabled">
-        {(field) => <AppSwitchField field={field} label="Enable now" description="Leave off to configure first and switch on later." />}
+        {(field) => (
+          <AppSwitchField
+            field={field}
+            label="Enable now"
+            description={
+              onForNobody ? <span className="text-warning">{translate("At 0%, nobody gets it yet. Raise the rollout.")}</span> : "Leave off to configure first and switch on later."
+            }
+          />
+        )}
       </form.Field>
       <FormDialogFooter isPending={isPending} submitLabel="Create flag" pendingLabel="Creating..." />
     </AppForm>

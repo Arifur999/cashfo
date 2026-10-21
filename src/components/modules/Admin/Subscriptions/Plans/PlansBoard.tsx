@@ -2,12 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { archivePlanAction, deletePlanAction, putPlanOnSaleAction } from "@/app/(dashboardLayout)/admin/plans/_action";
+import LoadError from "@/components/modules/Admin/Payments/LoadError";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
 import { queryKeys } from "@/lib/queryKeys";
 import { planAnalyticsQuery, plansQuery } from "@/queries/plan.queries";
 import type { ISubscriptionPlan } from "@/types/plan.types";
+import { useHeld } from "../useHeld";
 import PaidPeopleChart from "./PaidPeopleChart";
 import PlanCard from "./PlanCard";
 import PlanDrawer from "./PlanDrawer";
@@ -15,9 +17,12 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const PlansBoard = ({ canManage }: { canManage: boolean }) => {
   const { translate } = useLocale();
-  const { data: plansResponse } = useQuery(plansQuery());
-  const { data: analyticsResponse } = useQuery(planAnalyticsQuery());
-  const { activeRow: plan, openDialog, closeDialog, getDialogProps } = useRowDialogs<ISubscriptionPlan, "edit" | "archive" | "delete">();
+  const plansRead = useQuery(plansQuery());
+  const analyticsRead = useQuery(planAnalyticsQuery());
+  const { activeRow, openDialog, closeDialog, getDialogProps } = useRowDialogs<ISubscriptionPlan, "edit" | "archive" | "delete">();
+  // Kept while a drawer or dialog closes, so it doesn't turn into "New plan"
+  // or "Delete ?" on its way out.
+  const plan = useHeld(activeRow);
 
   const archive = useActionMutation({
     action: archivePlanAction,
@@ -35,10 +40,17 @@ const PlansBoard = ({ canManage }: { canManage: boolean }) => {
     invalidateKeys: [queryKeys.plans.all],
   });
 
-  const plans = plansResponse?.data ?? [];
-  const analytics = analyticsResponse?.data;
+  // An outage is never an empty board: it says the plans couldn't load.
+  if (plansRead.isError && !plansRead.data) {
+    return <LoadError title="Couldn't load plans" onRetry={() => void plansRead.refetch()} />;
+  }
+
+  const plans = plansRead.data?.data ?? [];
+  const analytics = analyticsRead.data?.data;
+  // Without the figures the cards show "—", not "0 people".
+  const analyticsFailed = analyticsRead.isError && !analytics;
   const analyticsByPlanId = new Map(analytics?.perPlan.map((entry) => [entry.planId, entry]) ?? []);
-  const peopleOn = (item: ISubscriptionPlan | null) => (item ? (analyticsByPlanId.get(item.id)?.totalUsers ?? 0) : 0);
+  const peopleOn = (item: ISubscriptionPlan | null) => (item && analytics ? (analyticsByPlanId.get(item.id)?.totalUsers ?? 0) : undefined);
 
   return (
     <div className="space-y-4">
@@ -48,6 +60,7 @@ const PlansBoard = ({ canManage }: { canManage: boolean }) => {
             key={item.id}
             plan={item}
             analytics={analyticsByPlanId.get(item.id)}
+            figuresKnown={Boolean(analytics)}
             totalUsers={analytics?.summary.totalUsers ?? 0}
             canManage={canManage}
             onEdit={() => openDialog("edit", item)}
@@ -59,6 +72,7 @@ const PlansBoard = ({ canManage }: { canManage: boolean }) => {
       </div>
 
       {analytics && <PaidPeopleChart analytics={analytics} />}
+      {analyticsFailed && <LoadError title="Couldn't load who is on each plan" onRetry={() => void analyticsRead.refetch()} />}
 
       <PlanDrawer plan={plan} people={peopleOn(plan)} {...getDialogProps("edit")} />
 

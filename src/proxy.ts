@@ -12,6 +12,11 @@
 //   5. an admin role that can't open this section -> the admin dashboard,
 //      never a 403 page
 //
+// A page it lets through learns its own address (REQUESTED_PATH_HEADER),
+// which a layout can't see: when the backend refuses a token this proxy
+// accepted, the dashboard layouts send the visitor to sign in again and
+// then back to it.
+//
 // Proactive refresh lives here because Server Components can only READ
 // cookies; proxy can set the refreshed token on the outgoing response, and
 // cookies() sees it for the rest of the request.
@@ -44,6 +49,10 @@ import {
 } from "./lib/tokenUtils";
 import { refreshAccessToken } from "./services/auth.services";
 import type { IAccessTokenPayload } from "./types/auth.types";
+
+// The path and query asked for, as the layouts read it. Set on every page
+// this proxy lets through, over any the visitor sent.
+const REQUESTED_PATH_HEADER = "x-pathname";
 
 const withoutAuthCookies = (response: NextResponse) => {
   response.cookies.delete(ACCESS_TOKEN_COOKIE);
@@ -133,7 +142,11 @@ export async function proxy(request: NextRequest) {
     return redirectTo(ADMIN_HOME_ROUTE);
   }
 
-  return withRefreshedCookie(NextResponse.next());
+  // The request goes on with every header it came with (Next adds back the
+  // RSC ones it hid from this function), plus the address asked for.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(REQUESTED_PATH_HEADER, `${pathname}${search}`);
+  return withRefreshedCookie(NextResponse.next({ request: { headers: requestHeaders } }));
 }
 
 export const config = {

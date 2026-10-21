@@ -7,7 +7,7 @@ import { customerPageMetadata } from "@/lib/customer/pageTitle";
 
 export const generateMetadata = () => customerPageMetadata("/assets-management/category");
 
-// Asset categories, with what each one holds today.
+// Asset types, with what each one holds today.
 export default async function AssetCategoriesPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -19,5 +19,7 @@ export default async function AssetCategoriesPage() {
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  return <AssetCategoriesPageClient businessId={activeBusinessId} categories={categories} assets={assets.filter((a) => a.status === "ACTIVE")} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
+  // Keyed by workspace: a switch lands on this same page, and its drawer
+  // must not carry the other workspace's type over.
+  return <AssetCategoriesPageClient key={activeBusinessId} businessId={activeBusinessId} categories={categories} assets={assets.filter((a) => a.status === "ACTIVE")} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
 }

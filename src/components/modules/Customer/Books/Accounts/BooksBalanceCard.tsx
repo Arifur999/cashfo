@@ -15,14 +15,16 @@ interface BooksBalanceCardProps {
 }
 
 // The accounting equation as a sentence: what the business owns equals what
-// it owes plus the owner's share, and whether the two sides agree.
+// it owes plus the owner's share, and whether the two sides agree. The
+// opening balances accounts started with count in the owner's share, so a
+// wallet opened with money in it never reads as a missing entry.
 export function BooksBalanceCard({ balance, currency }: BooksBalanceCardProps) {
   const { t } = useLocale();
-  const gap = balance.owns - (balance.owes + balance.share);
-  const term = (label: string, value: number) => (
+  const term = (label: string, value: number, note?: string) => (
     <span className="flex min-w-0 flex-col gap-1">
       <span className="text-small text-ink-muted">{label}</span>
       <BalanceText value={value} currency={currency} className="text-h2" />
+      {note && <span className="text-caption whitespace-normal text-ink-muted">{note}</span>}
     </span>
   );
   // The = and + read as a sentence only when the three sit in one row.
@@ -46,10 +48,10 @@ export function BooksBalanceCard({ balance, currency }: BooksBalanceCardProps) {
         {sign("=")}
         {term(t("Owes"), balance.owes)}
         {sign("+")}
-        {term(t("Your share"), balance.share)}
-        <Chip tone={balance.balanced ? "income" : "warning"} size="md" className="gap-2 self-center">
+        {term(t("Your share"), balance.share, balance.opening !== 0 ? t("incl. {amount} opening balances", { amount: formatCurrency(balance.opening, currency) }) : undefined)}
+        <Chip tone={balance.balanced ? "income" : "warning"} size="md" className="gap-2 self-start sm:self-center">
           <span className="size-1.75 rounded-full bg-current" aria-hidden="true" />
-          {balance.balanced ? t("Balanced") : `${t("Off by")} ${formatCurrency(Math.abs(gap), currency)}`}
+          {balance.balanced ? t("Balanced") : t("Off by {amount}", { amount: formatCurrency(Math.abs(balance.gap), currency) })}
         </Chip>
       </span>
     </Card>

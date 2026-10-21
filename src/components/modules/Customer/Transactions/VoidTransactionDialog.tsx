@@ -11,6 +11,7 @@ import Textarea from "@/components/smartly/form/Textarea";
 import IconTile from "@/components/smartly/IconTile";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { voidTransactionAction } from "@/lib/customer/transactionActions";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface VoidTransactionDialogProps {
@@ -54,7 +55,7 @@ export function VoidTransactionDialog({
   reasonHint = "At least {count} characters. It's saved with the transaction.",
   onVoided,
 }: VoidTransactionDialogProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -72,7 +73,7 @@ export function VoidTransactionDialog({
         onVoided?.();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to void transaction"));
+        toast.error(t(result.message ?? "Failed to void transaction"));
       }
     });
   }
@@ -86,12 +87,12 @@ export function VoidTransactionDialog({
               <CircleOff />
             </IconTile>
             <div className="flex min-w-0 flex-col gap-2">
-              <DialogTitle className="text-h3 text-ink">{heading ?? `${t("Void")} ${title}?`}</DialogTitle>
-              <DialogDescription className="text-body leading-[1.55] text-ink-2">{description ?? t("It stays in your history, crossed out, and the balances go back to what they were. Say why, so the record makes sense later.")}</DialogDescription>
+              <DialogTitle className="text-h3 text-ink">{heading ?? t("Void {name}?", { name: title })}</DialogTitle>
+              <DialogDescription className="text-body text-ink-2">{description ?? t("It stays in your history, crossed out, and the balances go back to what they were. Say why, so the record makes sense later.")}</DialogDescription>
             </div>
           </div>
           {detail}
-          <Field htmlFor="void-reason" label={t("Reason")} hint={t(reasonHint, { count: MIN_REASON })}>
+          <Field htmlFor="void-reason" label={t("Reason")} hint={t(reasonHint, { count: formatCount(MIN_REASON, locale) })}>
             <Textarea
               id="void-reason"
               rows={3}
@@ -104,8 +105,9 @@ export function VoidTransactionDialog({
             />
           </Field>
           <div className="flex justify-end gap-3">
+            {/* Not the plain Cancel: in Bangla it is the same word as Void. */}
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-              {t("Cancel")}
+              {t("Cancel@@void")}
             </Button>
             <Button type="submit" variant="danger" disabled={tooShort || isPending}>
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}

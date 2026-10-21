@@ -3,13 +3,18 @@ import { LoanLedgerPageClient } from "@/components/modules/Customer/LoanManageme
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import type { LoanStatement } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { getContacts } from "@/lib/customer/contacts";
+import { getAllContacts } from "@/lib/customer/contacts";
 import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getLoanStatement } from "@/lib/customer/receivablesPayables";
 import { getAppToday } from "@/lib/date";
 
-export const generateMetadata = () => customerPageMetadata("/loan-management/ledger");
+const PAGE = "/loan-management/ledger";
+
+// The route's name only: Next runs a page's metadata for every <Link>
+// prefetch, so reading the contact here would cost API calls for each
+// person on screen.
+export const generateMetadata = () => customerPageMetadata(PAGE);
 
 const PRESETS: DateRangePreset[] = ["all", "this-year", "last-year", "custom"];
 
@@ -22,14 +27,15 @@ export default async function LoanLedgerPage({ searchParams }: PageProps<"/loan-
   if (!activeBusinessId) redirect("/dashboard");
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
   const range = PRESETS.find((preset) => preset === params.range) ?? "all";
   const customFrom = isIsoDay(params.dateFrom) ? params.dateFrom : undefined;
   const customTo = isIsoDay(params.dateTo) ? params.dateTo : undefined;
   const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
 
-  // Bank/person contacts, up to the API's 100 (it stopped at the default 20).
-  const { data: contacts } = await getContacts(activeBusinessId, { category: "LOAN", limit: 100 });
+  // Every bank/person contact, however many pages the API needs.
+  const contacts = await getAllContacts(activeBusinessId, "LOAN");
 
   // A running balance only means something for one account at a time, so
   // nothing loads until a bank or person is picked.
@@ -41,8 +47,11 @@ export default async function LoanLedgerPage({ searchParams }: PageProps<"/loan-
 
   return (
     <LoanLedgerPageClient
+      businessId={activeBusinessId}
       contacts={contacts}
       currency={activeBusiness?.currency ?? "BDT"}
+      canManage={canManage}
+      canTrade={activeBusiness?.type === "BUSINESS"}
       range={range}
       selectedContactId={selectedContactId}
       statement={statement}

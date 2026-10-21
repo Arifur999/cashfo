@@ -1,10 +1,14 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type VaultCheckup, type VaultEntryCategory, type VaultEntrySummary } from "./api";
+import { TOO_MANY_ATTEMPTS_MESSAGE } from "@/lib/actionError";
 import { getAccessToken } from "@/lib/tokenUtils";
+import { requestPasswordReset } from "@/services/passwordReset.services";
+import { API_BASE_URL, getApiErrorMessage, type VaultCheckup, type VaultEntryCategory, type VaultEntrySummary } from "./api";
+import { getCurrentUser } from "./auth";
 import type { ActionResult } from "./authActions";
 import { customerApi } from "./apiClient";
+import type { VaultStatus } from "./vault";
 
 async function authHeaders() {
   const accessToken = await getAccessToken();
@@ -30,10 +34,9 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
       // NestJS's ThrottlerException carries the literal string
       // "ThrottlerException: Too Many Requests" as its message -- surfacing
       // that raw to a user reads as a crash, not a rate limit, so it gets
-      // its own friendly copy instead of falling through to
-      // getApiErrorMessage() below.
+      // the app's one friendly (and translated) wording instead.
       if (error.response?.status === 429) {
-        return { success: false, message: "Too many attempts -- please wait a few minutes and try again." };
+        return { success: false, message: TOO_MANY_ATTEMPTS_MESSAGE };
       }
       return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage) };
     }
@@ -41,9 +44,9 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
   }
 }
 
-export async function getVaultStatusAction(): Promise<ActionResult<{ hasVaultPassword: boolean }>> {
+export async function getVaultStatusAction(): Promise<ActionResult<VaultStatus>> {
   return callApi(async () => {
-    const res = await customerApi.get(`${API_BASE_URL}/api/vault/status`, { headers: await authHeaders() });
+    const res = await customerApi.get<VaultStatus>(`${API_BASE_URL}/api/vault/status`, { headers: await authHeaders() });
     return res.data;
   }, "Failed to check vault status");
 }
@@ -76,11 +79,13 @@ export async function setVaultPasswordAction(input: SetVaultPasswordInput): Prom
   }, "Failed to set vault password");
 }
 
+// A wrong password comes back as the API's own "Incorrect vault password";
+// the fallback is for an answer that never came, which is no wrong password.
 export async function unlockVaultAction(vaultPassword: string): Promise<ActionResult<{ vaultToken: string; expiresIn: string }>> {
   return callApi(async () => {
     const res = await customerApi.post(`${API_BASE_URL}/api/vault/unlock`, { vaultPassword }, { headers: await authHeaders() });
     return res.data;
-  }, "Incorrect vault password");
+  }, "Couldn't open the vault. Please try again.");
 }
 
 export async function listVaultEntriesAction(vaultToken: string): Promise<ActionResult<VaultEntrySummary[]>> {
@@ -90,14 +95,17 @@ export async function listVaultEntriesAction(vaultToken: string): Promise<Action
   }, "Failed to load vault entries");
 }
 
+// The optional texts take null on an edit: it clears the field, where
+// leaving the key out keeps what was saved (see entryInput in
+// vaultDisplay.ts).
 export interface VaultEntryInput {
   title: string;
   category: VaultEntryCategory;
-  websiteUrl?: string;
-  holderName?: string;
-  usernameOrEmail?: string;
+  websiteUrl?: string | null;
+  holderName?: string | null;
+  usernameOrEmail?: string | null;
   password?: string;
-  notes?: string;
+  notes?: string | null;
   isFavorite?: boolean;
 }
 
@@ -146,4 +154,25 @@ export async function revealVaultEntryAction(vaultToken: string, id: string): Pr
     const res = await customerApi.get(`${API_BASE_URL}/api/vault/entries/${id}/reveal`, { headers: await vaultHeaders(vaultToken) });
     return res.data;
   }, "Failed to reveal password");
+}
+
+// Setting up, changing or resetting the vault asks for the account
+// password, which a Google-only account doesn't have. This mails the
+// signed-in customer -- at their own address, never one sent from the page --
+// the link the sign-in page's "Forgot password?" sends, so they can set one
+// without signing out first. A support view changes nothing, so it sends
+// nothing either.
+export async function sendSetPasswordLinkAction(): Promise<ActionResult<{ email: string }>> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, message: "Your session has ended. Sign in again first." };
+    if (user.impersonatedBy) return { success: false, message: "This is a read-only support view of the account. Nothing can be changed from it." };
+    await requestPasswordReset(user.email);
+    return { success: true, data: { email: user.email } };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 429) {
+      return { success: false, message: TOO_MANY_ATTEMPTS_MESSAGE };
+    }
+    return { success: false, message: "We couldn't send the link. Please try again." };
+  }
 }

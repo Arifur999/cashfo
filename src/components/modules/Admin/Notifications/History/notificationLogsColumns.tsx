@@ -3,8 +3,8 @@ import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import RelativeTime from "@/components/shared/RelativeTime";
 import T from "@/components/shared/T";
+import Chip from "@/components/smartly/Chip";
 import { formatDateTime } from "@/lib/date";
-import { cn } from "@/lib/utils";
 import type { INotificationLog } from "@/types/notification.types";
 import { CHANNEL_META, LOG_STATUS_LABEL } from "../notificationOptions";
 
@@ -38,9 +38,9 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     accessorKey: "channel",
     header: "Channel",
     cell: ({ row }) => (
-      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-caption font-semibold", CHANNEL_META[row.original.channel].chip)}>
+      <Chip tone={CHANNEL_META[row.original.channel].tone} size="sm" className="font-semibold">
         <T>{CHANNEL_META[row.original.channel].label}</T>
-      </span>
+      </Chip>
     ),
     meta: { exportValue: (row) => CHANNEL_META[row.channel].label },
   },

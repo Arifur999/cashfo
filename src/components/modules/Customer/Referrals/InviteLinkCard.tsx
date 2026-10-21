@@ -1,11 +1,14 @@
 "use client";
 
-import { Copy, Gift, Link2, Mail, MessageCircle, Send, Share2 } from "lucide-react";
+import { Copy, Gift, Link2, Mail, MessageCircle, Send, Share2, ThumbsUp } from "lucide-react";
+import { useRef } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import Input from "@/components/smartly/form/Input";
 import { formatCurrency } from "@/lib/customer/currency";
 import { inviteLink, linkText, shareLinks } from "@/lib/customer/referralDisplay";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface InviteLinkCardProps {
@@ -16,20 +19,28 @@ interface InviteLinkCardProps {
   currency: string;
 }
 
-// The invite link and code, each copied in a tap, with WhatsApp, Messenger
-// and email a tap away. Phones get the board's card: the code, one big
-// WhatsApp button and four square shares (Email where the board has a QR
-// code, which isn't built; More opens the phone's own share sheet).
+// How long the page waits for the Messenger app to take over before it
+// offers another way to share.
+const MESSENGER_WAIT_MS = 2000;
+
+// The invite link and code, each copied in a tap, with WhatsApp, Facebook
+// (Messenger on phones) and email a tap away. Phones get the board's card:
+// the code, one big WhatsApp button and four square shares (Email where the
+// board has a QR code, which isn't built; More opens the phone's own share
+// sheet).
 export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: InviteLinkCardProps) {
   const { t } = useLocale();
   const link = inviteLink(origin, code);
   const reward = formatCurrency(rewardPerReferral, currency);
-  const share = shareLinks(link, t("Join me on Smartly, the money and habits app. Sign up with my link:"), t("Try Smartly"));
+  const message = t("Join me on Smartly, the money and habits app. Sign up with my link:");
+  const share = shareLinks(link, message, t("Try Smartly"));
+  // A second tap while the first still waits shouldn't stack a second toast.
+  const watching = useRef(false);
 
-  async function copy(text: string, message: string) {
+  async function copy(text: string, done: string) {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(message);
+      toast.success(done);
     } catch {
       toast.error(t("Couldn't copy. Select the text and copy it yourself."));
     }
@@ -41,22 +52,52 @@ export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: In
       return;
     }
     try {
-      await navigator.share({ title: t("Try Smartly"), text: t("Join me on Smartly, the money and habits app. Sign up with my link:"), url: link });
+      await navigator.share({ title: t("Try Smartly"), text: message, url: link });
     } catch {
       // Closing the share sheet is not an error worth a message.
     }
   }
 
-  const SQUARE = "flex h-15 flex-col items-center justify-center gap-1 rounded-lg border border-line bg-surface text-caption font-semibold text-ink-2";
+  // The tile's own link opens the Messenger app. Without the app the page
+  // simply stays in front, so after a moment a toast offers the phone's
+  // share sheet: from the toast's button, since the sheet needs a fresh tap.
+  // The page losing focus counts as leaving too: iOS first asks "Open in
+  // 'Messenger'?" and Android may offer a chooser, with the page still
+  // showing, and a slow answer there mustn't bring the toast.
+  function watchMessenger() {
+    if (watching.current) return;
+    watching.current = true;
+    let left = false;
+    const onLeave = () => {
+      left = true;
+    };
+    const onHide = () => {
+      if (document.visibilityState === "hidden") left = true;
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("blur", onLeave);
+    window.addEventListener("pagehide", onLeave);
+    window.setTimeout(() => {
+      watching.current = false;
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("blur", onLeave);
+      window.removeEventListener("pagehide", onLeave);
+      if (!left) toast(t("Messenger didn't open."), { action: { label: t("Share another way"), onClick: () => void shareNatively() } });
+    }, MESSENGER_WAIT_MS);
+  }
+
+  // Centred and allowed to wrap, so a two-line Bangla label stays tidy.
+  const SQUARE = "flex h-15 flex-col items-center justify-center gap-1 rounded-lg border border-line bg-surface px-1 text-center text-caption leading-tight font-semibold text-ink-2";
+  const WIDE = "flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-surface text-small font-semibold text-ink hover:border-line-strong";
 
   const shares = [
     { label: "WhatsApp", href: share.whatsapp, icon: MessageCircle, className: "text-emerald" },
-    { label: "Messenger", href: share.messenger, icon: Send, className: "text-info" },
+    { label: "Facebook", href: share.facebook, icon: ThumbsUp, className: "text-info" },
     { label: t("Email"), href: share.email, icon: Mail, className: "text-ink-2" },
   ];
 
   return (
-    <Card padding="none" elevated={false} className="flex flex-col gap-3 rounded-lg p-4 md:gap-4 md:rounded-xl md:p-5 md:shadow-card">
+    <Card padding="none" className="flex flex-col gap-3 rounded-lg p-4 md:gap-4 md:rounded-xl md:p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-title font-semibold text-ink">
           <span className="md:hidden">{t("Invite friends")}</span>
@@ -75,7 +116,7 @@ export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: In
           {t("Share on WhatsApp")}
         </a>
         <div className="grid grid-cols-4 gap-2">
-          <a href={share.messenger} target="_blank" rel="noopener noreferrer" className={SQUARE}>
+          <a href={share.messenger} onClick={watchMessenger} className={SQUARE}>
             <Send className="size-4.5 text-info" aria-hidden="true" />
             Messenger
           </a>
@@ -87,40 +128,35 @@ export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: In
             <Mail className="size-4.5 text-ink-2" aria-hidden="true" />
             {t("Email")}
           </a>
-          <button type="button" onClick={shareNatively} className={SQUARE}>
+          <button type="button" onClick={shareNatively} aria-label={t("More ways to share")} className={SQUARE}>
             <Share2 className="size-4.5 text-ink-2" aria-hidden="true" />
             {t("More")}
           </button>
         </div>
       </div>
       <div className="hidden gap-2 md:flex">
-        <input type="text" readOnly value={linkText(link)} aria-label={t("Invite link")} onFocus={(event) => event.target.select()} className="h-11 min-w-0 flex-1 rounded-md border border-line-strong bg-strip px-3 text-body text-ink-2 outline-none" />
-        <Button variant="action" onClick={() => copy(link, t("Link copied"))}>
+        <Input size="md" readOnly value={linkText(link)} aria-label={t("Invite link")} onFocus={(event) => event.target.select()} className="text-ink-2" frameClassName="min-w-0 flex-1 bg-strip px-3" />
+        <Button variant="action" size="lg" onClick={() => copy(link, t("Link copied"))}>
           <Copy />
           {t("Copy")}
         </Button>
       </div>
       <div className="hidden grid-cols-4 gap-2 md:grid">
         {shares.map((item) => (
-          <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-surface text-small font-semibold text-ink hover:border-line-strong">
+          <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer" className={WIDE}>
             <item.icon className={`size-4 ${item.className}`} aria-hidden="true" />
             {item.label}
           </a>
         ))}
-        <button type="button" onClick={() => copy(link, t("Link copied"))} className="flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-surface text-small font-semibold text-ink hover:border-line-strong">
+        <button type="button" onClick={() => copy(link, t("Link copied"))} className={WIDE}>
           <Link2 className="size-4 text-ink-2" aria-hidden="true" />
           {t("Copy link")}
         </button>
       </div>
-      <div className="flex items-start gap-2 rounded-md bg-mint-50 p-3 text-small leading-[1.45] text-ink md:gap-3 md:leading-normal">
+      <p className="flex items-start gap-2 rounded-md bg-mint-50 p-3 text-small leading-[1.45] text-ink md:gap-3 md:leading-normal">
         <Gift className="mt-0.5 size-4 shrink-0 text-emerald" aria-hidden="true" />
-        <span>
-          <b className="font-semibold">
-            {t("You get")} {reward}
-          </b>{" "}
-          {t("for every friend who signs up with your link and stays 30 days.")}
-        </span>
-      </div>
+        <span>{fillNodes(t("You get {reward} for every friend who signs up with your link. It's ready 30 days later."), { reward: <b className="font-semibold whitespace-nowrap">{reward}</b> })}</span>
+      </p>
     </Card>
   );
 }

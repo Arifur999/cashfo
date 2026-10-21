@@ -7,6 +7,9 @@ import StatePage from "@/components/smartly/StatePage";
 import { CUSTOMER_HOME_ROUTE } from "@/lib/authUtils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
+// Settings › Help & support (lib/customer/nav.ts).
+const HELP_ROUTE = "/settings/help";
+
 interface CustomerErrorProps {
   error: Error & { digest?: string };
   // Next 16.3+: re-renders the segment and re-fetches its data.
@@ -15,7 +18,8 @@ interface CustomerErrorProps {
 
 // A customer page couldn't load -- most often the API was unreachable (see
 // lib/customer/readFallback.ts). The sidebar and top bar stay up; the content
-// area says what the full-page error does, with its reference and buttons.
+// area says what the full-page error does, with its reference and buttons,
+// and where to ask for help.
 export default function CustomerError({ error, retry }: CustomerErrorProps) {
   const { t } = useLocale();
 
@@ -26,7 +30,13 @@ export default function CustomerError({ error, retry }: CustomerErrorProps) {
       tone="expense"
       reference={error.digest ? `${t("Error reference")}: ${error.digest}` : undefined}
       title={t("Something went wrong on our side")}
-      description={t("Nothing you entered was lost. Try again in a moment; if it keeps happening, send us the reference above and we will look into it.")}
+      // Errors raised in the browser carry no reference, so only ask for one
+      // when there is one to send.
+      description={t(
+        error.digest
+          ? "Nothing you entered was lost. Try again in a moment; if it keeps happening, send us the reference above and we will look into it."
+          : "Try again in a moment; if it keeps happening, tell us what you were doing.",
+      )}
       actions={
         <>
           <Button size="lg" onClick={() => retry()}>
@@ -43,6 +53,9 @@ export default function CustomerError({ error, retry }: CustomerErrorProps) {
       }
     >
       <span className="text-small text-ink-muted">{t("Saved transactions stay saved. Anything you were typing may need to be entered again.")}</span>
+      <Link href={HELP_ROUTE} className="inline-flex min-h-11 items-center rounded-sm text-body font-semibold text-emerald hover:text-emerald-hover hover:underline">
+        {t("Contact support")}
+      </Link>
     </StatePage>
   );
 }

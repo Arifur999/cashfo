@@ -8,6 +8,16 @@ import { hijriParts, WEEKDAY_LONG } from "./habitDisplay";
 export const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"] as const;
 export const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+// Dictionary keys for each prayer's first letter, as the week grid heads its
+// rows: F, D, A, M, I and ফ, যো, আ, মা, এ (a cut word could split a vowel sign).
+export const PRAYER_INITIAL: Record<string, string> = {
+  Fajr: "F@@Fajr initial",
+  Dhuhr: "D@@Dhuhr initial",
+  Asr: "A@@Asr initial",
+  Maghrib: "M@@Maghrib initial",
+  Isha: "I@@Isha initial",
+};
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export type CellState = "jamaat" | "onTime" | "qaza" | "missed" | "open" | "locked";
@@ -39,6 +49,19 @@ export function canMark(tracker: HabitMonthTracker, day: number): boolean {
   return day <= (tracker.todayDay ?? tracker.elapsedDays);
 }
 
+// "All five prayed": every prayer of the day marked as prayed, with jama'at,
+// on time or as qaza. Today's prayer streak and a sheet's full days in a
+// row both count by this one rule.
+export function allPrayed(tracker: HabitMonthTracker, day: number): boolean {
+  return tracker.items.length > 0 && tracker.items.every((item) => isPrayed(cellState(tracker, day, item)));
+}
+
+// "All five on time": every prayer with jama'at or on time (a qaza doesn't
+// count), what a perfect day means.
+export function allOnTime(tracker: HabitMonthTracker, day: number): boolean {
+  return tracker.items.length > 0 && tracker.checks.filter((c) => c.day === day && (c.status === "ON_TIME" || c.status === "JAMAAT")).length === tracker.items.length;
+}
+
 export interface MonthSummary {
   // Prayers that were due on the days fully past.
   due: number;
@@ -50,7 +73,8 @@ export interface MonthSummary {
   // Prayed with jama'at, and as qaza, so far (today included).
   jamaat: number;
   qaza: number;
-  // Full days in a row ending yesterday (or today, if today is full).
+  // Days in a row with all five prayed (qaza counts), ending yesterday, or
+  // today once today has all five.
   perfectRun: number;
   todayDone: number;
   // Ticks so far, today included.
@@ -63,14 +87,12 @@ export function monthSummary(tracker: HabitMonthTracker): MonthSummary {
   const due = elapsed * items;
   const prayedMarks = prayedChecks(tracker);
   const prayed = prayedMarks.filter((c) => c.day <= elapsed).length;
-  // A perfect day: every prayer on time or with jama'at (a qaza doesn't count).
-  const fullDay = (day: number) => items > 0 && tracker.checks.filter((c) => c.day === day && (c.status === "ON_TIME" || c.status === "JAMAAT")).length === items;
   let perfectDays = 0;
-  for (let d = 1; d <= elapsed; d++) if (fullDay(d)) perfectDays++;
+  for (let d = 1; d <= elapsed; d++) if (allOnTime(tracker, d)) perfectDays++;
   const todayDone = tracker.todayDay !== null ? prayedMarks.filter((c) => c.day === tracker.todayDay).length : 0;
   let perfectRun = 0;
-  let cursor = tracker.todayDay !== null && fullDay(tracker.todayDay) ? tracker.todayDay : elapsed;
-  while (cursor >= 1 && fullDay(cursor)) {
+  let cursor = tracker.todayDay !== null && allPrayed(tracker, tracker.todayDay) ? tracker.todayDay : elapsed;
+  while (cursor >= 1 && allPrayed(tracker, cursor)) {
     perfectRun++;
     cursor--;
   }
@@ -170,6 +192,10 @@ export interface Insight {
   n?: number;
   of?: number;
   weekday?: string;
+  // 0 = Sunday … 6 = Saturday, the weekday named above.
+  weekdayIndex?: number;
+  // The month compared with (1–12).
+  previousMonth?: number;
   pct?: number;
   previousPct?: number;
 }
@@ -193,12 +219,12 @@ export function monthInsights(tracker: HabitMonthTracker, previous: HabitMonthTr
       if (missed > 0) byWeekday.set(weekdayOfDay(tracker, d), (byWeekday.get(weekdayOfDay(tracker, d)) ?? 0) + missed);
     }
     const top = [...byWeekday].sort((a, b) => b[1] - a[1])[0];
-    if (top && top[1] >= Math.max(3, s.missed / 3)) out.push({ tone: "warning", key: "weekday", weekday: WEEKDAY_LONG[top[0]], n: top[1], of: s.missed });
+    if (top && top[1] >= Math.max(3, s.missed / 3)) out.push({ tone: "warning", key: "weekday", weekday: WEEKDAY_LONG[top[0]], weekdayIndex: top[0], n: top[1], of: s.missed });
   }
   if (s.perfectRun >= 2) out.push({ tone: "insights", key: "run", n: s.perfectRun });
   if (previous) {
     const p = monthSummary(previous);
-    if (p.due > 0 && s.due > 0) out.push({ tone: s.pct >= p.pct ? "money" : "warning", key: s.pct >= p.pct ? "upFrom" : "downFrom", pct: s.pct, previousPct: p.pct });
+    if (p.due > 0 && s.due > 0) out.push({ tone: s.pct >= p.pct ? "money" : "warning", key: s.pct >= p.pct ? "upFrom" : "downFrom", pct: s.pct, previousPct: p.pct, previousMonth: previous.month ?? undefined });
   }
   return out.slice(0, 4);
 }

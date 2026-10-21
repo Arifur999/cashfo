@@ -5,49 +5,75 @@ import Link from "next/link";
 import { useState } from "react";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import EmptyState from "@/components/smartly/EmptyState";
 import Input from "@/components/smartly/form/Input";
+import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
+import Pagination from "@/components/smartly/Pagination";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { usePageParam } from "@/hooks/usePageParam";
 import type { Contact } from "@/lib/customer/api";
-import { CONTACT_TYPE_WORD, contactStats, filterContacts, owedByYou, owedToYou, type ContactsFilter } from "@/lib/customer/booksDisplay";
+import { booksDate, CONTACT_TYPE_WORD, contactStats, filterContacts, owedByYou, owedToYou, type ContactsFilter } from "@/lib/customer/booksDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { paginate } from "@/lib/table/paginate";
 import { cn } from "@/lib/utils";
 
 interface ContactsTableProps {
   contacts: Contact[];
   currency: string;
   canManage: boolean;
+  today: string;
   onAdd: () => void;
   onEdit: (contact: Contact) => void;
 }
 
-const GRID = "md:grid md:grid-cols-[minmax(0,1fr)_180px_140px_120px_120px_40px] md:items-center md:gap-x-4";
+const PAGE_SIZE = 25;
+const LIST_ID = "contacts-list";
+
+// Name, type, balance and the menu until xl, so the name keeps its room at
+// 768px and beside the sidebar; phone and last activity sit under the name
+// until then, and get their own columns from xl.
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_110px_120px_40px] xl:grid-cols-[minmax(0,1fr)_180px_140px_120px_120px_40px]";
 
 // Everyone the business trades with: a filter by role and by who owes whom,
-// a search, and a row per person with what is due.
-export function ContactsTable({ contacts, currency, canManage, onAdd, onEdit }: ContactsTableProps) {
-  const { t } = useLocale();
+// a search, and a row per person with what is due, 25 a page.
+export function ContactsTable({ contacts, currency, canManage, today, onAdd, onEdit }: ContactsTableProps) {
+  const { t, locale } = useLocale();
   const [filter, setFilter] = useState<ContactsFilter>("ALL");
   const [query, setQuery] = useState("");
+  const { page, setPage } = usePageParam();
   const stats = contactStats(contacts);
-  const rows = filterContacts(contacts, filter, query).sort((a, b) => a.name.localeCompare(b.name));
-  const count = (n: number) => <span className="text-ink-muted">{n}</span>;
+  // One fixed locale, so the server and every browser sort alike.
+  const rows = filterContacts(contacts, filter, query).sort((a, b) => a.name.localeCompare(b.name, "en"));
+  const list = paginate(rows, page, PAGE_SIZE);
+  const count = (n: number) => <span className="text-ink-muted">{formatCount(n, locale)}</span>;
   const filters: { value: ContactsFilter; label: React.ReactNode }[] = [
     { value: "ALL", label: <>{t("All")} {count(stats.total)}</> },
-    { value: "CUSTOMER", label: <>{t("Customers")} {count(stats.customers)}</> },
+    { value: "CUSTOMER", label: <>{t("Customers@@books")} {count(stats.customers)}</> },
     { value: "SUPPLIER", label: <>{t("Suppliers")} {count(stats.suppliers)}</> },
     { value: "OWE_YOU", label: t("Owe you") },
     { value: "YOU_OWE", label: t("You owe") },
   ];
 
+  // A new filter or search starts from its first page.
+  function narrow(next: { filter?: ContactsFilter; query?: string }) {
+    if (next.filter !== undefined) setFilter(next.filter);
+    if (next.query !== undefined) setQuery(next.query);
+    setPage(1);
+  }
+
   if (contacts.length === 0) {
     return (
-      <EmptyState icon={<UserRoundPlus />} tone="neutral" title={t("No customers or suppliers yet")} description={t("Add the people and shops you sell to or buy from. Sales on credit and payments are recorded against them.")} action={canManage && <Button onClick={onAdd}>{t("Add person or shop")}</Button>} />
+      <EmptyState
+        icon={<UserRoundPlus />}
+        tone="neutral"
+        title={t("No customers or suppliers yet")}
+        description={canManage ? t("Add the people and shops you sell to or buy from. Sales on credit and payments are recorded against them.") : t("The people and shops this business trades with show up here once the owner or an accountant adds them.")}
+        action={canManage && <Button onClick={onAdd}>{t("Add person or shop")}</Button>}
+      />
     );
   }
 
@@ -62,75 +88,107 @@ export function ContactsTable({ contacts, currency, canManage, onAdd, onEdit }: 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <SegmentedControl label={t("Show some of the people")} value={filter} onChange={setFilter} options={filters} className="max-sm:w-full max-sm:overflow-x-auto" />
-        <Input size="sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Search by name or phone")} aria-label={t("Search by name or phone")} leading={<Search />} frameClassName="sm:ml-auto sm:w-65" />
+        {/* Wraps onto a second row on a phone rather than hiding "You owe" off screen. */}
+        <SegmentedControl label={t("Show some of the people")} value={filter} onChange={(value) => narrow({ filter: value })} options={filters} className="max-sm:flex max-sm:w-full max-sm:flex-wrap" />
+        <Input size="sm" value={query} onChange={(event) => narrow({ query: event.target.value })} placeholder={t("Search by name or phone")} aria-label={t("Search by name or phone")} leading={<Search />} frameClassName="sm:ml-auto sm:w-65" />
       </div>
 
-      <Card padding="none" className="overflow-hidden">
-        <div className={cn("hidden bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
-          <span>{t("Name")}</span>
-          <span>{t("Type")}</span>
-          <span>{t("Phone")}</span>
-          <span>{t("Last activity")}</span>
-          <span className="text-right">{t("Balance")}</span>
-          <span />
-        </div>
-        {rows.length === 0 && <p className="border-t border-divider px-5 py-10 text-center text-body text-ink-muted">{t("No one matches.")}</p>}
-        {rows.map((contact) => {
-          const due = balance(contact);
-          const archived = contact.status === "ARCHIVED";
-          return (
-            <div key={contact.id} className={cn("flex min-h-16 items-center justify-between gap-3 border-t border-divider px-5 py-2 text-body", GRID, archived && "opacity-60")}>
-              <Link href={`/contacts/${contact.id}`} className="flex min-w-0 items-center gap-3 hover:underline">
-                <PersonAvatar name={contact.name} src={contact.photoUrl} size={36} coloured />
-                <span className="flex min-w-0 flex-col">
-                  <span className="flex items-center gap-2">
-                    <span className="truncate font-semibold text-ink">{contact.name}</span>
-                    {archived && (
-                      <Chip tone="neutral" size="sm">
-                        {t("Archived")}
-                      </Chip>
-                    )}
-                  </span>
-                  <span className="truncate text-caption text-ink-muted md:hidden">{[t(CONTACT_TYPE_WORD[contact.type]), contact.phone].filter(Boolean).join(" · ")}</span>
-                </span>
-              </Link>
-              <span className="hidden md:block">
-                <Chip tone="neutral" size="sm">
-                  {t(CONTACT_TYPE_WORD[contact.type])}
-                </Chip>
-              </span>
-              <span className="hidden font-mono text-small text-ink-2 md:block">{contact.phone || "—"}</span>
-              <span className="hidden text-small text-ink-2 md:block">{contact.lastActivityAt ? formatDate(contact.lastActivityAt, "EEE, d MMM") : "—"}</span>
-              <span className="flex shrink-0 flex-col items-end">
-                <b className={cn("tabular-nums", due.className)}>{due.amount}</b>
-                <span className="text-caption text-ink-muted">{due.note}</span>
-              </span>
-              <span className="hidden justify-end md:flex">
-                <DropdownMenu>
-                  <DropdownMenuTrigger aria-label={`${t("More for")} ${contact.name}`} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken">
-                    <MoreHorizontal className="size-4.5" aria-hidden="true" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                    <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
-                      <Link href={`/contacts/${contact.id}`}>
-                        <SquareArrowOutUpRight className="size-4" aria-hidden="true" />
-                        {t("Open")}
-                      </Link>
-                    </DropdownMenuItem>
-                    {canManage && (
-                      <DropdownMenuItem onSelect={() => onEdit(contact)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
-                        <Pencil className="size-4" aria-hidden="true" />
-                        {t("Edit")}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </span>
-            </div>
-          );
-        })}
-      </Card>
+      <ListCard
+        id={LIST_ID}
+        label={t("Customers & suppliers")}
+        footer={
+          list.total > 0 && (
+            <ListFooter>
+              <Pagination page={list.page} totalPages={list.totalPages} total={list.total} pageSize={PAGE_SIZE} onPageChange={setPage} focusTargetId={LIST_ID} />
+            </ListFooter>
+          )
+        }
+      >
+        {rows.length === 0 ? (
+          <ListEmpty
+            icon={<Search />}
+            tone="neutral"
+            title={t("No one matches.")}
+            action={query.trim() ? <Button variant="secondary" onClick={() => narrow({ query: "" })}>{t("Clear search")}</Button> : <Button variant="secondary" onClick={() => narrow({ filter: "ALL" })}>{t("Show everyone")}</Button>}
+          />
+        ) : (
+          <>
+            <ListHead columns={COLUMNS}>
+              <ListHeadCell>{t("Name")}</ListHeadCell>
+              <ListHeadCell>{t("Type")}</ListHeadCell>
+              <ListHeadCell className="hidden xl:block">{t("Phone")}</ListHeadCell>
+              <ListHeadCell className="hidden xl:block">{t("Last activity")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
+              <ListHeadCell>
+                <span className="sr-only">{t("Actions")}</span>
+              </ListHeadCell>
+            </ListHead>
+            {list.rows.map((contact) => {
+              const due = balance(contact);
+              const archived = contact.status === "ARCHIVED";
+              return (
+                <ListRow key={contact.id} columns={COLUMNS} density="relaxed" muted={archived}>
+                  <ListCell className="flex min-w-0 items-center gap-3">
+                    <PersonAvatar name={contact.name} src={contact.photoUrl} size={36} coloured />
+                    <span className="flex min-w-0 flex-col">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <ListRowLink href={`/contacts/${contact.id}`} className="truncate font-semibold text-ink">
+                          {contact.name}
+                        </ListRowLink>
+                        {archived && (
+                          <Chip tone="neutral" size="sm">
+                            {t("Archived")}
+                          </Chip>
+                        )}
+                      </span>
+                      <span className="truncate text-caption text-ink-muted md:hidden">{[t(CONTACT_TYPE_WORD[contact.type]), contact.phone].filter(Boolean).join(" · ")}</span>
+                      {(contact.phone || contact.lastActivityAt) && (
+                        <span className="hidden truncate text-caption text-ink-muted md:block xl:hidden">
+                          {contact.phone && <span className="font-mono">{contact.phone}</span>}
+                          {contact.phone && contact.lastActivityAt && " · "}
+                          {contact.lastActivityAt && t("Last activity {date}", { date: booksDate(contact.lastActivityAt, locale, { today, weekday: true }) })}
+                        </span>
+                      )}
+                    </span>
+                  </ListCell>
+                  <ListCell className="hidden md:block">
+                    <Chip tone="neutral" size="sm" className="max-w-full truncate">
+                      {t(CONTACT_TYPE_WORD[contact.type])}
+                    </Chip>
+                  </ListCell>
+                  <ListCell className="hidden truncate font-mono text-small text-ink-2 xl:block">{contact.phone || "—"}</ListCell>
+                  <ListCell className="hidden text-small text-ink-2 xl:block">{contact.lastActivityAt ? booksDate(contact.lastActivityAt, locale, { today, weekday: true }) : "—"}</ListCell>
+                  <ListCell align="end" className="flex shrink-0 flex-col items-end">
+                    <b className={cn("tabular-nums whitespace-nowrap", due.className)}>{due.amount}</b>
+                    <span className="text-caption text-ink-muted">{due.note}</span>
+                  </ListCell>
+                  <ListRowActions className="hidden md:flex">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger aria-label={t("More for {name}", { name: contact.name })} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
+                        <MoreHorizontal className="size-4.5" aria-hidden="true" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
+                        <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
+                          <Link href={`/contacts/${contact.id}`}>
+                            <SquareArrowOutUpRight className="size-4" aria-hidden="true" />
+                            {t("Open")}
+                          </Link>
+                        </DropdownMenuItem>
+                        {canManage && (
+                          <DropdownMenuItem onSelect={() => onEdit(contact)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
+                            <Pencil className="size-4" aria-hidden="true" />
+                            {t("Edit")}
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </ListRowActions>
+                </ListRow>
+              );
+            })}
+          </>
+        )}
+      </ListCard>
     </div>
   );
 }

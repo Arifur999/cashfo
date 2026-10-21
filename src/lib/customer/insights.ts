@@ -1,10 +1,11 @@
 import type { CategoryBreakdown, MonthlyBreakdown } from "./api";
 import type { DateRangePreset } from "./dateRangePresets";
 import { savingsRate } from "./homeInsights";
+import { toBanglaDigits } from "@/lib/i18n/banglaDates";
 
-// The maths behind Insights: plain sentences built from the category
-// breakdowns and the monthly breakdown the Reports page already calls. Pure,
-// so the page derives everything on the server and the tests pin it down.
+// The maths behind Insights: plain sentences built from the monthly
+// breakdowns the Reports page also calls. Pure, so the page derives
+// everything on the server and the tests pin it down.
 
 export const INSIGHT_PERIODS = ["this-month", "last-month", "last-3-months", "this-year"] as const;
 export type InsightPeriod = (typeof INSIGHT_PERIODS)[number];
@@ -25,33 +26,69 @@ export interface DayRange {
   dateTo: string;
 }
 
+type Locale = "en" | "bn";
+
 const pad = (n: number) => String(n).padStart(2, "0");
 const ymd = (year: number, month: number, day: number) => `${year}-${pad(month)}-${pad(day)}`;
 const lastDayOf = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
-const monthOf = (day: string) => ({ year: Number(day.slice(0, 4)), month: Number(day.slice(5, 7)) });
-// Whole months from `from`'s month to `to`'s month, inclusive.
+const partsOf = (day: string) => ({ year: Number(day.slice(0, 4)), month: Number(day.slice(5, 7)), date: Number(day.slice(8, 10)) });
+
+// Whole calendar months from `from`'s month to `to`'s month, inclusive.
 export function monthSpan(range: DayRange): number {
-  const a = monthOf(range.dateFrom);
-  const b = monthOf(range.dateTo);
+  const a = partsOf(range.dateFrom);
+  const b = partsOf(range.dateTo);
   return (b.year - a.year) * 12 + (b.month - a.month) + 1;
 }
 
-// The period to compare with: the same calendar months one step back.
-// This month → last month; the last 3 months → the 3 before them; this
-// year → the same months of last year.
-export function previousRange(range: DayRange, period: InsightPeriod): DayRange {
-  const { year, month } = monthOf(range.dateFrom);
-  if (period === "this-year") {
-    const end = monthOf(range.dateTo);
-    return { dateFrom: ymd(year - 1, 1, 1), dateTo: ymd(end.year - 1, end.month, lastDayOf(end.year - 1, end.month)) };
+// How many months the range covers, a part-month counted by its share of
+// days: 1–21 October is 0.68 of a month, 1 January to 21 October 9.68.
+// What "a month on average" divides by, so the month under way doesn't
+// count as a whole one.
+export function monthsElapsed(range: DayRange): number {
+  const from = partsOf(range.dateFrom);
+  const to = partsOf(range.dateTo);
+  const first = from.year * 12 + from.month - 1;
+  const last = to.year * 12 + to.month - 1;
+  let total = 0;
+  for (let index = first; index <= last; index++) {
+    const year = Math.floor(index / 12);
+    const month = (index % 12) + 1;
+    const days = lastDayOf(year, month);
+    const start = index === first ? from.date : 1;
+    const end = index === last ? to.date : days;
+    total += (end - start + 1) / days;
   }
-  const span = monthSpan(range);
-  const start = new Date(Date.UTC(year, month - 1 - span, 1));
-  const endMonth = new Date(Date.UTC(year, month - 2, 1));
-  return {
-    dateFrom: ymd(start.getUTCFullYear(), start.getUTCMonth() + 1, 1),
-    dateTo: ymd(endMonth.getUTCFullYear(), endMonth.getUTCMonth() + 1, lastDayOf(endMonth.getUTCFullYear(), endMonth.getUTCMonth() + 1)),
-  };
+  return total;
+}
+
+// A month's worth of `amount` over `months` (as monthsElapsed counts them),
+// in whole taka. Null for a month or less, which has nothing to average:
+// this month, or this year all through January, where dividing by 3/31 of
+// a month (on 3 January) would turn a ৳ 15,000 rent into ৳ 1,55,000 a month.
+export function monthlyAverage(amount: number, months: number): number | null {
+  if (!(months > 1)) return null;
+  return Math.round(amount / months);
+}
+
+// `day` moved `months` calendar months back, on the same day of the month,
+// or on that month's last day when it is shorter or `day` was a last day.
+function monthsBack(day: string, months: number): string {
+  const { year, month, date } = partsOf(day);
+  const target = new Date(Date.UTC(year, month - 1 - months, 1));
+  const targetYear = target.getUTCFullYear();
+  const targetMonth = target.getUTCMonth() + 1;
+  const last = lastDayOf(targetYear, targetMonth);
+  return ymd(targetYear, targetMonth, date === lastDayOf(year, month) ? last : Math.min(date, last));
+}
+
+// The period to compare with: the same stretch of days one step back, so a
+// month 21 days in meets the first 21 days of the month before, never the
+// whole of it. This month 1–21 Oct → 1–21 Sep; the last 3 months 1 Aug–21
+// Oct → 1 May–21 Jul; this year → the same days of last year. A whole month
+// (last month) meets the whole month before it.
+export function previousRange(range: DayRange, period: InsightPeriod): DayRange {
+  const step = period === "this-year" ? 12 : monthSpan(range);
+  return { dateFrom: monthsBack(range.dateFrom, step), dateTo: monthsBack(range.dateTo, step) };
 }
 
 // Percent change from `before` to `now`, one decimal; null when there was
@@ -59,6 +96,22 @@ export function previousRange(range: DayRange, period: InsightPeriod): DayRange 
 export function percentChange(now: number, before: number): number | null {
   if (!(before > 0)) return null;
   return Math.round(((now - before) / before) * 1000) / 10;
+}
+
+// How a figure moved against the period before: a percent when there was
+// something above zero to measure from; for a figure that can go below zero
+// (Left over), the amount when the period before had money in or out but
+// ended at zero or under; "new" when nothing came before; "same" when
+// nothing moved at all.
+export type Movement = { kind: "percent"; percent: number; change: number } | { kind: "amount"; change: number } | { kind: "new"; change: number } | { kind: "same" };
+
+export function movement(now: number, before: number, signed?: { hadBefore: boolean }): Movement {
+  const change = Math.round((now - before) * 100) / 100;
+  const percent = percentChange(now, before);
+  if (percent !== null) return { kind: "percent", percent, change };
+  if (change === 0) return { kind: "same" };
+  if (signed?.hadBefore) return { kind: "amount", change };
+  return { kind: "new", change };
 }
 
 export interface PeriodTotals {
@@ -72,6 +125,18 @@ export function periodTotals(income: CategoryBreakdown, expense: CategoryBreakdo
   const moneyIn = Number(income.total);
   const moneyOut = Number(expense.total);
   return { income: moneyIn, expense: moneyOut, left: moneyIn - moneyOut, rate: savingsRate(moneyIn, moneyOut) };
+}
+
+// A monthly breakdown read as one category breakdown: every category with
+// its total over the months. The category-breakdown endpoint lists only the
+// ten biggest, which left the rest out of the counts, the split bar and
+// what changed.
+export function categoryTotals(monthly: MonthlyBreakdown): CategoryBreakdown {
+  return {
+    type: monthly.type,
+    total: monthly.total,
+    categories: monthly.rows.map((row) => ({ name: row.name, amount: row.total, percent: 0, color: row.color })),
+  };
 }
 
 export interface RankedRow {
@@ -155,6 +220,7 @@ export interface MonthRate {
   month: string;
   income: number;
   expense: number;
+  // Below zero when more went out than came in.
   kept: number;
   rate: number | null;
 }
@@ -169,15 +235,40 @@ export function monthRates(income: MonthlyBreakdown, expense: MonthlyBreakdown):
   });
 }
 
+// The months a trend can be read from: the one under way only once it is
+// over, since 21 days in it has its salary but not all of its spending.
+export function completeMonths(rates: MonthRate[], today: string): MonthRate[] {
+  const current = today.slice(0, 7);
+  const { year, month, date } = partsOf(today);
+  const over = date === lastDayOf(year, month);
+  return rates.filter((r) => r.month < current || (r.month === current && over));
+}
+
+// The month under way ("YYYY-MM") while the rates reach it and it isn't
+// over: the month completeMonths leaves out, which the charts draw apart and
+// call "so far". Null once it is over.
+export function monthUnderWay(rates: MonthRate[], today: string): string | null {
+  const finished = new Set(completeMonths(rates, today).map((r) => r.month));
+  return rates.find((r) => !finished.has(r.month))?.month ?? null;
+}
+
+export interface RateTrend {
+  direction: "up" | "down" | "same";
+  // How far, in points; 0 when the direction is "same".
+  points: number;
+  // "YYYY-MM": the first month it is measured from.
+  since: string;
+}
+
 // Whether the share kept is rising: the latest month's rate against the
 // first month that has one, in points.
-export function rateTrend(rates: MonthRate[]): { up: boolean; points: number; since: string } | null {
+export function rateTrend(rates: MonthRate[]): RateTrend | null {
   const known = rates.filter((r) => r.rate !== null);
   if (known.length < 2) return null;
   const first = known[0];
   const last = known[known.length - 1];
   const points = (last.rate ?? 0) - (first.rate ?? 0);
-  return { up: points >= 0, points: Math.abs(points), since: first.month };
+  return { direction: points > 0 ? "up" : points < 0 ? "down" : "same", points: Math.abs(points), since: first.month };
 }
 
 export interface NetWorthParts {
@@ -210,47 +301,81 @@ export function biggestPart(parts: NetWorthParts): Exclude<keyof NetWorthParts, 
   return positive.sort((a, b) => parts[b] - parts[a])[0];
 }
 
-// "2026-10" → "October" / "Oct" in the reader's language. Server and client
-// format the same way, so the month names never mismatch on hydration.
-export function monthName(key: string, locale: "en" | "bn", style: "long" | "short" = "long", withYear = false): string {
+// Month names written out rather than taken from the runtime's ICU data:
+// Node and each browser abbreviate Bangla months differently ("সেপ্ট",
+// "সেপ্টে"), and the server's text must match the hydrating browser's. The
+// Bangla short names are the board's (lib/i18n/banglaDates.ts).
+const MONTH_NAMES: Record<Locale, Record<"long" | "short", string[]>> = {
+  en: {
+    long: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    short: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  },
+  bn: {
+    long: ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"],
+    short: ["জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টে", "অক্টো", "নভে", "ডিসে"],
+  },
+};
+
+const localDigits = (value: number, locale: Locale) => (locale === "bn" ? toBanglaDigits(value) : String(value));
+
+// "2026-10" → "October" / "Oct" in the reader's language, "October 2026"
+// with the year. Server and client print the very same text.
+export function monthName(key: string, locale: Locale, style: "long" | "short" = "long", withYear = false): string {
   const [year, month] = key.split("-").map(Number);
-  return new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-US", { month: style, ...(withYear && { year: "numeric" }), timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1)));
+  const name = MONTH_NAMES[locale]?.[style][month - 1] ?? key;
+  return withYear ? `${name} ${localDigits(year, locale)}` : name;
+}
+
+// A stretch of days, day first as the app writes dates: "1–21 October
+// 2026", "1 August – 21 October 2026", "August–October 2026" for whole
+// months. A range across a new year names both years ("November 2026 –
+// January 2027"), whatever `withYear` says. "short" writes "Oct" and drops
+// the spaces round the dash, for a column head.
+export function rangeLabel(dateFrom: string, dateTo: string, locale: Locale, style: "long" | "short" = "long", withYear = true): string {
+  const a = partsOf(dateFrom);
+  const b = partsOf(dateTo);
+  const names = MONTH_NAMES[locale][style];
+  const month = (p: typeof a) => names[p.month - 1];
+  const day = (p: typeof a) => localDigits(p.date, locale);
+  const year = (p: typeof a) => localDigits(p.year, locale);
+  const dash = style === "long" ? " – " : "–";
+  const crossesYear = a.year !== b.year;
+  const tail = withYear && !crossesYear ? ` ${year(b)}` : "";
+  if (a.date === 1 && b.date === lastDayOf(b.year, b.month)) {
+    if (crossesYear) return `${month(a)} ${year(a)}${dash}${month(b)} ${year(b)}`;
+    return a.month === b.month ? `${month(a)}${tail}` : `${month(a)}–${month(b)}${tail}`;
+  }
+  if (crossesYear) return `${day(a)} ${month(a)} ${year(a)}${dash}${day(b)} ${month(b)} ${year(b)}`;
+  if (a.month === b.month) return `${a.date === b.date ? day(a) : `${day(a)}–${day(b)}`} ${month(a)}${tail}`;
+  return `${day(a)} ${month(a)}${dash}${day(b)} ${month(b)}${tail}`;
 }
 
 export interface PeriodLabels {
-  // "October 2026", "August–October 2026", "January–October 2026".
+  // What the page covers: "1–21 October 2026", "September 2026".
   period: string;
-  // What it is compared with: "September", "May–July", "2025".
+  // What it is compared with, inside a sentence: "1–21 September",
+  // "August", "1 January – 21 October 2025".
   previous: string;
-  // True when `previous` is a year, so the sentence says "the same months of".
-  previousIsYear: boolean;
-  // Short column headings for the changes table: "Sep" / "Oct", "2025" / "2026".
+  // The two, short, for the totals' "vs" line and the changes table's
+  // caption: "1–21 Sep" / "1–21 Oct"; for the year "1 Jan–21 Oct 2025".
   before: string;
   now: string;
+  // The changes table's column heads: the short labels, or the two years
+  // alone when both periods are the same days of a year.
+  heads: [string, string];
 }
 
-const monthKey = (day: string) => day.slice(0, 7);
-const span = (from: string, to: string, locale: "en" | "bn", style: "long" | "short", withYear: boolean) => {
-  const a = monthName(from, locale, style);
-  const b = monthName(to, locale, style, withYear);
-  return from === to ? b : `${a}–${b}`;
-};
-
-export function periodLabels(range: DayRange, previous: DayRange, period: InsightPeriod, locale: "en" | "bn"): PeriodLabels {
-  const from = monthKey(range.dateFrom);
-  const to = monthKey(range.dateTo);
-  const prevFrom = monthKey(previous.dateFrom);
-  const prevTo = monthKey(previous.dateTo);
-  if (period === "this-year") {
-    const year = (key: string) => new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-US", { year: "numeric", timeZone: "UTC" }).format(new Date(`${key}-01T00:00:00.000Z`));
-    return { period: span(from, to, locale, "long", true), previous: year(prevFrom), previousIsYear: true, before: year(prevFrom), now: year(from) };
-  }
+export function periodLabels(range: DayRange, previous: DayRange, period: InsightPeriod, locale: Locale): PeriodLabels {
+  const sameDays = period === "this-year";
+  const otherYear = previous.dateTo.slice(0, 4) !== range.dateTo.slice(0, 4);
+  const before = rangeLabel(previous.dateFrom, previous.dateTo, locale, "short", sameDays);
+  const now = rangeLabel(range.dateFrom, range.dateTo, locale, "short", sameDays);
   return {
-    period: span(from, to, locale, "long", true),
-    previous: span(prevFrom, prevTo, locale, "long", false),
-    previousIsYear: false,
-    before: span(prevFrom, prevTo, locale, "short", false),
-    now: span(from, to, locale, "short", false),
+    period: rangeLabel(range.dateFrom, range.dateTo, locale, "long", true),
+    previous: rangeLabel(previous.dateFrom, previous.dateTo, locale, "long", otherYear),
+    before,
+    now,
+    heads: sameDays ? [localDigits(partsOf(previous.dateFrom).year, locale), localDigits(partsOf(range.dateFrom).year, locale)] : [before, now],
   };
 }
 

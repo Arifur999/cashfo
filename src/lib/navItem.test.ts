@@ -7,6 +7,7 @@ import {
   getNavSectionsByRole,
   isNavItemActive,
   isNavItemViewOnly,
+  listBackHref,
   menuPathFor,
   navBadgesFor,
   navItemHref,
@@ -147,6 +148,12 @@ describe("userRecordHref", () => {
     expect(userRecordHref("u-1", "workspaces")).toBe("/admin/users/u-1?from=workspaces");
   });
 
+  it("carries the list's own query in ?back=", () => {
+    expect(userRecordHref("u-1", undefined, "status=SUSPENDED&page=2")).toBe("/admin/users/u-1?back=status%3DSUSPENDED%26page%3D2");
+    expect(userRecordHref("u-1", "owners", "search=rahim")).toBe("/admin/users/u-1?from=owners&back=search%3Drahim");
+    expect(userRecordHref("u 1", "owners", "")).toBe("/admin/users/u%201?from=owners");
+  });
+
   it("names the way back after that list", () => {
     expect(userListFor("owners")).toEqual({ href: "/admin/manage-owners", back: "All owners" });
     expect(userListFor("workspaces")).toEqual({ href: "/admin/workspaces", back: "All workspaces" });
@@ -182,6 +189,26 @@ describe("navItemHref", () => {
     expect(navItemHref(item("Content"))).toBe("/admin/content/announcements");
     expect(navItemHref(item("Payments"))).toBe("/admin/payments");
     expect(navItemHref(item("Users"))).toBe("/admin/users");
+  });
+});
+
+describe("listBackHref", () => {
+  const keys = ["search", "status", "page", "limit"];
+
+  it("returns to the list with its own params", () => {
+    expect(listBackHref("/admin/users", "search=rahim&status=ACTIVE&page=2", keys)).toBe("/admin/users?search=rahim&status=ACTIVE&page=2");
+    expect(listBackHref("/admin/users", ["status=BANNED", "status=ACTIVE"], keys)).toBe("/admin/users?status=BANNED");
+  });
+
+  it("drops anything that isn't the list's, and empty values", () => {
+    expect(listBackHref("/admin/users", "redirect=%2F%2Fevil.com&search=&page=3", keys)).toBe("/admin/users?page=3");
+    expect(listBackHref("/admin/users", "redirect=x", keys)).toBe("/admin/users");
+  });
+
+  it("is the bare list without ?back=", () => {
+    expect(listBackHref("/admin/users", undefined, keys)).toBe("/admin/users");
+    expect(listBackHref("/admin/users", null, keys)).toBe("/admin/users");
+    expect(listBackHref("/admin/users", "", keys)).toBe("/admin/users");
   });
 });
 

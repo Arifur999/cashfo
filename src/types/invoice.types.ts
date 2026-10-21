@@ -1,4 +1,4 @@
-import type { PaymentGateway } from "./payment.types";
+import type { IRefundSummary, PaymentGateway, PaymentStatus } from "./payment.types";
 
 export interface IInvoiceLineItem {
   description: string;
@@ -26,6 +26,17 @@ export interface IInvoiceListItem extends IInvoice {
   payment: { id: string; platformUserId: string; planId: string };
 }
 
+// The API sends every column of the payment with the invoice, its status
+// among them, and what went back on it (null when nothing did; absent from
+// an API older than the field), so the sheet can stamp PAID, REFUNDED or
+// PARTLY REFUNDED without reading the payment again.
 export interface IInvoiceDetail extends IInvoice {
-  payment: { id: string; currency?: string; gateway?: PaymentGateway; plan: { id: string; name: string } };
+  payment: {
+    id: string;
+    currency?: string;
+    gateway?: PaymentGateway;
+    status: PaymentStatus;
+    refund?: IRefundSummary | null;
+    plan: { id: string; name: string };
+  };
 }

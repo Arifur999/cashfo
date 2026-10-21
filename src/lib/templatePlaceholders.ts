@@ -1,3 +1,5 @@
+import { inEnglish, type Translate } from "./i18n/message";
+
 // Notification templates use {{name}} placeholders the backend fills in at
 // send time. A typo'd placeholder would reach users verbatim, so edits are
 // checked against the template's declared variables (unit-tested).
@@ -15,12 +17,13 @@ export const findUnknownPlaceholders = (text: string, allowed: readonly string[]
 export const fillPlaceholders = (text: string, values: Record<string, string>): string =>
   text.replace(PLACEHOLDER_PATTERN, (match, name: string) => values[name] ?? match);
 
-// The error for a field, or undefined when every placeholder is declared.
-export const getPlaceholderError = (text: string, allowed: readonly string[]): string | undefined => {
+// The error for a field, or undefined when every placeholder is declared:
+// one sentence with the names filled in after translating, so a field
+// validator hands the reader's language on as it is. Without `t`, English.
+export const getPlaceholderError = (text: string, allowed: readonly string[], t: Translate = inEnglish): string | undefined => {
   const unknown = findUnknownPlaceholders(text, allowed);
   if (unknown.length === 0) {
     return undefined;
   }
-  const listed = unknown.map((name) => `{{${name}}}`).join(", ");
-  return `Not a variable of this template: ${listed}`;
+  return t("Not a variable of this template: {names}", { names: unknown.map((name) => `{{${name}}}`).join(", ") });
 };

@@ -1,6 +1,7 @@
 import type { Severity } from "@/types/securityFlag.types";
 import type { ErrorSource, IErrorLog } from "@/types/system.types";
 import { formatLogTime, type RelativeDateOptions } from "./date";
+import { formatCount } from "./i18n/digits";
 import { inEnglish } from "./i18n/message";
 
 export const ERROR_SOURCE_LABEL: Record<ErrorSource, string> = {
@@ -59,12 +60,13 @@ export const errorRequest = (log: IErrorLog, keep = 0): string | null => {
   return `${method}${shortenIds(path, keep)}`;
 };
 
-// "5 times · first 8:14 am, last 12:40 pm", or "Once · 3:02 am".
-export const errorFrequency = (group: ErrorGroup, { now = new Date(), t = inEnglish }: Pick<RelativeDateOptions, "now" | "t"> = {}): string =>
+// "5 times · first 8:14 am, last 12:40 pm", or "Once · 3:02 am". `locale`
+// puts the count and the times in the reader's digits.
+export const errorFrequency = (group: ErrorGroup, { now = new Date(), t = inEnglish, locale }: Pick<RelativeDateOptions, "now" | "t" | "locale"> = {}): string =>
   group.logs.length === 1
-    ? t("Once · {time}", { time: formatLogTime(group.lastAt, { now, t }) })
+    ? t("Once · {time}", { time: formatLogTime(group.lastAt, { now, t, locale }) })
     : t("{count} times · first {first}, last {last}", {
-        count: group.logs.length,
-        first: formatLogTime(group.firstAt, { now, t }),
-        last: formatLogTime(group.lastAt, { now, t }),
+        count: formatCount(group.logs.length, locale ?? "en"),
+        first: formatLogTime(group.firstAt, { now, t, locale }),
+        last: formatLogTime(group.lastAt, { now, t, locale }),
       });

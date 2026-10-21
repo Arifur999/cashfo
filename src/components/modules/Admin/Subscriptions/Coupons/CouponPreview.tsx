@@ -13,7 +13,8 @@ interface CouponPreviewProps {
 }
 
 // "With PUJA15: Monthly Pro ৳ 299 → ৳ 254.15": what each plan would cost,
-// worked out as the admin types.
+// worked out as the admin types. Not a live region: it would read every
+// price out again on each letter typed into the code.
 const CouponPreview = ({ code, discountType, discountValue, applicablePlans, plans }: CouponPreviewProps) => {
   const value = Number(discountValue);
   const rows = plans.filter((plan) => plan.billingCycle !== "FREE" && (applicablePlans.length === 0 || applicablePlans.includes(plan.id)));
@@ -22,7 +23,7 @@ const CouponPreview = ({ code, discountType, discountValue, applicablePlans, pla
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-mint-200 bg-mint-50 px-4 py-3" aria-live="polite">
+    <div className="flex flex-col gap-2 rounded-md border border-mint-200 bg-mint-50 px-4 py-3">
       <span className="text-caption font-semibold text-emerald">
         <T values={{ code: code.trim().toUpperCase() || <T>this coupon</T> }}>{"With {code}"}</T>
       </span>

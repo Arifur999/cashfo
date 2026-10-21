@@ -112,7 +112,7 @@ export const adminNavSections: NavSection[] = [
           { title: "Announcements", href: "/admin/content/announcements" },
           { title: "Legal pages", href: "/admin/content/legal" },
           { title: "Translations", href: "/admin/content/translations" },
-          { title: "Categories", href: "/admin/content/categories" },
+          { title: "Categories & accounts", href: "/admin/content/categories" },
         ],
       },
       // No lock: any admin can draft or schedule a campaign here (the API
@@ -227,6 +227,31 @@ export const recordIdUnder = (pathname: string, listHref: string): string | null
   return rest && !rest.includes("/") ? rest : null;
 };
 
+// A record's page reads the list it was opened from (its tab, filters and
+// page) from this param, so its way back -- and the breadcrumb's parent --
+// returns to the same rows. Users, Owners, Workspaces, Payments and the
+// ticket queue all carry it.
+export const LIST_BACK_PARAM = "back";
+
+// The page and rows per page, which every server-paged list keeps in its URL
+// beside its own filters.
+export const LIST_PAGE_KEYS: readonly string[] = ["page", "limit"];
+
+// The way back from a record's page: the list, with whatever of ?back= is
+// that list's own (`keys`: its filters, page and rows per page). It is only
+// ever read as a query, so it can't lead anywhere but this list. Next hands
+// a repeated param over as an array; the first one counts.
+export const listBackHref = (listHref: string, back: string | readonly string[] | null | undefined, keys: readonly string[]): string => {
+  const raw = typeof back === "string" ? back : back?.[0];
+  if (!raw) return listHref;
+  const kept = new URLSearchParams();
+  new URLSearchParams(raw).forEach((value, key) => {
+    if (value !== "" && keys.includes(key)) kept.append(key, value);
+  });
+  const query = kept.toString();
+  return query ? `${listHref}?${query}` : listHref;
+};
+
 export interface UserList {
   href: string;
   // The way back, on the user's page.
@@ -248,7 +273,16 @@ export type UserOrigin = Exclude<keyof typeof USER_LISTS, "users">;
 export const userListFor = (from: string | null | undefined): UserList =>
   from && Object.hasOwn(USER_LISTS, from) ? USER_LISTS[from as keyof typeof USER_LISTS] : USER_LISTS.users;
 
-export const userRecordHref = (userId: string, from?: UserOrigin) => `${ADMIN_USERS_ROUTE}/${encodeURIComponent(userId)}${from ? `?from=${from}` : ""}`;
+// A user's page. Opened from a list, it carries that list's own query
+// (`listQuery`, its filters and page) in ?back=, so the way back returns to
+// the same rows.
+export const userRecordHref = (userId: string, from?: UserOrigin, listQuery = "") => {
+  const params = new URLSearchParams();
+  if (from) params.set("from", from);
+  if (listQuery) params.set(LIST_BACK_PARAM, listQuery);
+  const query = params.toString();
+  return `${ADMIN_USERS_ROUTE}/${encodeURIComponent(userId)}${query ? `?${query}` : ""}`;
+};
 
 // The path the menu lights up for: a user's page counts as the list it was
 // opened from.

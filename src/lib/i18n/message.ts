@@ -1,5 +1,6 @@
-import { formatNumber } from "@/lib/number";
+import { formatCount } from "./digits";
 import { type FillValues, fillText } from "./fill";
+import type { Locale } from "./translate";
 
 // How code outside React (lib/ helpers that build a sentence) gets its words:
 // a component passes useLocale().translate, and everything else gets English.
@@ -31,6 +32,9 @@ export const inEnglish: Translate = (key, values) => {
 };
 
 // "{count} entry" or "{count} entries": English picks the form by count and
-// Bangla words both keys alike. The count arrives formatted ("1,234").
-export const plural = (t: Translate, count: number, one: string, many: string, values?: FillValues) =>
-  t(count === 1 ? one : many, { count: formatNumber(count), ...values });
+// Bangla words both keys alike. The count arrives formatted ("1,234"), in
+// the reader's digits when their locale is passed ("১,২৩৪"):
+// plural(t, n, "{count} entry", "{count} entries", undefined, locale).
+// A count the caller wrote in values wins.
+export const plural = (t: Translate, count: number, one: string, many: string, values?: FillValues, locale: Locale = "en") =>
+  t(count === 1 ? one : many, { count: formatCount(count, locale), ...values });

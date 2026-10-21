@@ -11,6 +11,10 @@ export interface VaultStatus {
   hasVaultPassword: boolean;
   // How many logins it holds; missing from a backend older than the count.
   entryCount?: number;
+  // False for a Google-only account, which has no account password for
+  // setting up, changing or resetting the vault; missing from an older
+  // backend.
+  hasAccountPassword?: boolean;
 }
 
 export const getVaultStatus = cache(async (): Promise<VaultStatus | null> => {

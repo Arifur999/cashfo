@@ -2,10 +2,12 @@ import { cn } from "@/lib/utils";
 
 export const INPUT_HEIGHTS = {
   // 38 in toolbars, 44 in drawers, 48 in settings forms, 52 on sign-in and
-  // every phone sheet (16px text there, so phones don't zoom).
+  // every phone sheet (16px text there, so phones don't zoom). Drawers and
+  // settings open on phones too, so their text is 16px below md as well:
+  // iOS zooms into a field set smaller than that.
   sm: "h-9.5 text-body",
-  md: "h-11 text-body",
-  lg: "h-12 text-body",
+  md: "h-11 text-body max-md:text-body-lg",
+  lg: "h-12 text-body max-md:text-body-lg",
   xl: "h-13 text-body-lg",
   // The sign-up forms: 48px with 16px text on a phone, 44px on wider
   // screens, as RegisterMobile and Register draw them.

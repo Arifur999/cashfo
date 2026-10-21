@@ -1,4 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import RelativeTime from "@/components/shared/RelativeTime";
+import T from "@/components/shared/T";
 import { auditActionLabel } from "@/lib/auditActionLabels";
 import { isSensitiveAuditEntry } from "@/lib/auditDiff";
 import { auditOnText } from "@/lib/auditRecords";
@@ -8,8 +10,6 @@ import { cn } from "@/lib/utils";
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import AdminAvatar from "../AdminAvatar";
 import SensitiveMarker from "./SensitiveMarker";
-import T from "@/components/shared/T";
-import RelativeTime from "@/components/shared/RelativeTime";
 
 // The record and what changed, in the reader's language.
 const OnCell = ({ entry }: { entry: IAuditLogEntry }) => {
@@ -18,6 +18,27 @@ const OnCell = ({ entry }: { entry: IAuditLogEntry }) => {
   return (
     <span className="block max-w-100 truncate text-ink-2" title={text}>
       {text}
+    </span>
+  );
+};
+
+// "Open", named for its row ("Open entry: Suspended a user"), so a screen
+// reader's list of buttons isn't "Open, Open, Open".
+const OpenCell = ({ entry, onOpen }: { entry: IAuditLogEntry; onOpen: (entry: IAuditLogEntry) => void }) => {
+  const { translate } = useLocale();
+  return (
+    <span className="flex justify-end">
+      <button
+        type="button"
+        aria-label={translate("Open entry: {action}", { action: translate(auditActionLabel(entry.action)) })}
+        className="text-small font-semibold text-emerald hover:underline"
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen(entry);
+        }}
+      >
+        <T>Open</T>
+      </button>
     </span>
   );
 };
@@ -78,21 +99,12 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
   },
   {
     id: "open",
-    header: () => <span className="sr-only"><T>Open</T></span>,
-    cell: ({ row }) => (
-      <span className="flex justify-end">
-        <button
-          type="button"
-          className="text-small font-semibold text-emerald hover:underline"
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpen(row.original);
-          }}
-        >
-          <T>Open</T>
-        </button>
+    header: () => (
+      <span className="sr-only">
+        <T>Open</T>
       </span>
     ),
+    cell: ({ row }) => <OpenCell entry={row.original} onOpen={onOpen} />,
     enableSorting: false,
     enableHiding: false,
     meta: { width: 50 },

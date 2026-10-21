@@ -14,6 +14,10 @@ export interface ApiResponse<TData = unknown> {
 export interface ApiErrorResponse {
   success: false;
   message: string;
+  // The message's {placeholders}, for a refusal that carries a figure
+  // ("Try again in {minutes} minutes."): the message stays a dictionary key,
+  // and the reader fills these in after translating it.
+  values?: Record<string, string | number>;
 }
 
 export type ApiResult<TData = unknown> = ApiResponse<TData> | ApiErrorResponse;

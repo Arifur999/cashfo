@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import CreateButton from "@/components/shared/CreateButton";
 import FormDialog from "@/components/shared/dialog/FormDialog";
-import { Button } from "@/components/ui/button";
 import CreateTicketForm from "./CreateTicketForm";
-import T from "@/components/shared/T";
 
-// In the page header, beside the title, as the design places its one
-// header button.
+// In the page header, beside the title, as every admin page's create
+// button sits there.
 const CreateTicketDialog = () => {
   const [open, setOpen] = useState(false);
 
@@ -17,11 +16,7 @@ const CreateTicketDialog = () => {
       onOpenChange={setOpen}
       title="New ticket"
       description="Log an issue on a user's behalf -- from a call or an email, say."
-      trigger={
-        <Button variant="outline" size="lg" className="border-line-strong bg-surface font-semibold text-ink hover:bg-surface-sunken">
-          <T>New ticket</T>
-        </Button>
-      }
+      trigger={<CreateButton>New ticket</CreateButton>}
     >
       <CreateTicketForm onDone={() => setOpen(false)} />
     </FormDialog>

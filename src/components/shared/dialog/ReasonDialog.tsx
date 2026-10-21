@@ -4,6 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import Callout from "@/components/shared/Callout";
 import AppForm from "@/components/shared/form/AppForm";
 import AppTextareaField from "@/components/shared/form/AppTextareaField";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { reasonFormZodSchema, REASON_MIN_LENGTH, type IReasonFormValues } from "@/zod/common.validation";
 import FormDialog from "./FormDialog";
@@ -25,7 +26,7 @@ const defaultValues: IReasonFormValues = { reason: "" };
 // Lives inside the dialog content, which Radix unmounts on close -- so every
 // open starts from an empty form without any reset effect.
 const ReasonForm = ({ warning, confirmLabel, pendingLabel, variant, isPending, onSubmit, onDone }: ReasonFormProps) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
@@ -45,7 +46,7 @@ const ReasonForm = ({ warning, confirmLabel, pendingLabel, variant, isPending, o
             label="Reason"
             rows={3}
             placeholder="Explain why"
-            description={translate("At least {count} characters. It goes into the audit log, and only admins can see it.", { count: REASON_MIN_LENGTH })}
+            description={translate("At least {count} characters. It goes into the audit log, and only admins can see it.", { count: formatCount(REASON_MIN_LENGTH, locale) })}
           />
         )}
       </form.Field>

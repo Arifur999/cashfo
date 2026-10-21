@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveAnalyticsRange, shiftDay, toAnalyticsRangeQuery } from "./analyticsRange";
+import { MAX_RANGE_DAYS, rangeDays, resolveAnalyticsRange, shiftDay, toAnalyticsRangeQuery } from "./analyticsRange";
 
 const TODAY = "2026-10-11";
 
@@ -38,6 +38,21 @@ describe("resolveAnalyticsRange", () => {
 
   it("ignores an unknown preset", () => {
     expect(resolveAnalyticsRange({ range: "365" }, TODAY).preset).toBe("30");
+  });
+
+  it("keeps a custom window the API takes and drops a longer one for the last 30 days", () => {
+    expect(rangeDays("2025-10-11", TODAY)).toBe(MAX_RANGE_DAYS);
+    expect(resolveAnalyticsRange({ range: "custom", from: "2025-10-11", to: TODAY }, TODAY)).toEqual({ preset: "custom", from: "2025-10-11", to: TODAY });
+    expect(resolveAnalyticsRange({ range: "custom", from: "2025-10-10", to: TODAY }, TODAY)).toEqual({ preset: "30", from: "2026-09-12", to: TODAY });
+  });
+});
+
+describe("rangeDays", () => {
+  it("counts both ends, across months and leap years", () => {
+    expect(rangeDays(TODAY, TODAY)).toBe(1);
+    expect(rangeDays("2026-09-12", TODAY)).toBe(30);
+    expect(rangeDays("2026-01-01", "2026-12-31")).toBe(365);
+    expect(rangeDays("2024-01-01", "2024-12-31")).toBe(366);
   });
 });
 

@@ -26,4 +26,12 @@ describe("adminFeedRow", () => {
     expect(adminFeedRow(row("ERRORS", { count: 12, high: 9, top: "/api/reports" }))).toEqual({ title: "12 new errors in 24 hours", body: "9 high · most from /api/reports", tone: "neutral" });
     expect(adminFeedRow(row("ERRORS", { count: 1, high: 0, top: "BACKEND_API" })).body).toBe("most from Backend API");
   });
+
+  it("writes counts and times in Bangla digits for a Bangla reader", () => {
+    const bn = (kind: IAdminFeedItem["kind"], data: IAdminFeedItem["data"]) => adminFeedRow(row(kind, data), undefined, now, "bn");
+    expect(bn("TICKET_WAITING", { ticketId: "4f2a1abc", subject: "Charged twice", category: "BILLING", since: "2026-10-02T04:00:00.000Z" }).title).toBe("Ticket #4F2A1 waiting ৬ hours");
+    expect(bn("TICKET_WAITING", { ticketId: "4f2a1abc", subject: "Charged twice", category: "BILLING", since: "2026-09-29T09:00:00.000Z" }).title).toBe("Ticket #4F2A1 waiting ৩ days");
+    expect(bn("SIGN_INS_PAUSED", { email: "admin@example.com", ipAddress: "10.0.0.7", until: "2026-10-02T07:20:00.000Z" }).body).toBe("Too many tries from 10.0.0.7; open again at ১:২০ অপরাহ্ণ");
+    expect(bn("ERRORS", { count: 12, high: 9, top: "/api/reports" })).toEqual({ title: "১২ new errors in 24 hours", body: "৯ high · most from /api/reports", tone: "neutral" });
+  });
 });

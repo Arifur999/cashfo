@@ -1,13 +1,15 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { Book } from "@/lib/customer/api";
+import { latinDigits } from "@/lib/customer/habitDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 
 interface ProgressDialogProps {
   // The book whose page is being updated; null keeps the dialog closed.
@@ -18,7 +20,7 @@ interface ProgressDialogProps {
 
 // "Which page are you on?" for a book that is not on the nightstand.
 export function ProgressDialog({ book, onClose, onSave }: ProgressDialogProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [page, setPage] = useState("");
 
   const [prevId, setPrevId] = useState<string | null>(null);
@@ -42,29 +44,28 @@ export function ProgressDialog({ book, onClose, onSave }: ProgressDialogProps) {
         <form onSubmit={submit} className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
             <AlertDialogTitle className="text-h3 text-ink">{t("Which page are you on?")}</AlertDialogTitle>
-            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-              <X className="size-4.5" aria-hidden="true" />
-            </button>
+            <CloseButton onClick={onClose} label={t("Close")} />
           </div>
-          <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{book ? `${book.title} · ${book.totalPages} ${t("pages")}` : ""}</AlertDialogDescription>
+          <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{book ? `${book.title} · ${t("{count} pages", { count: formatCount(book.totalPages, locale) })}` : ""}</AlertDialogDescription>
           <div className="px-6 py-4">
             <Field htmlFor="bk-progress" label={<span className="text-body font-medium text-ink">{t("I'm now on page")}</span>} error={page !== "" && !valid ? t("That's more than the total pages.") : undefined}>
-              <Input id="bk-progress" size="lg" inputMode="numeric" autoFocus value={page} onChange={(event) => setPage(event.target.value.replace(/\D/g, "").slice(0, 5))} invalid={page !== "" && !valid} className="text-body-lg font-semibold" frameClassName="w-40" />
+              <Input id="bk-progress" size="lg" inputMode="numeric" autoFocus value={page} onChange={(event) => setPage(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 5))} invalid={page !== "" && !valid} className="text-body-lg font-semibold" frameClassName="w-40" />
             </Field>
           </div>
-          <div className="flex items-center gap-3 border-t border-line bg-strip px-6 py-4">
-            <Button type="button" variant="ghost" onClick={() => book && onSave(book, book.totalPages)}>
-              {t("Mark as finished")}
+          <PanelFooter
+            aside={
+              <Button type="button" variant="ghost" onClick={() => book && onSave(book, book.totalPages)}>
+                {t("Mark as finished")}
+              </Button>
+            }
+          >
+            <Button type="button" variant="secondary" onClick={onClose}>
+              {t("Cancel")}
             </Button>
-            <div className="ml-auto flex items-center gap-3">
-              <Button type="button" variant="secondary" onClick={onClose}>
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" disabled={!valid} className="px-5">
-                {t("Save")}
-              </Button>
-            </div>
-          </div>
+            <Button type="submit" disabled={!valid} className="px-5">
+              {t("Save")}
+            </Button>
+          </PanelFooter>
         </form>
       </AlertDialogContent>
     </AlertDialog>

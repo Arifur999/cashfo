@@ -1,13 +1,10 @@
 import type { LucideIcon } from "lucide-react";
-import Card from "@/components/smartly/Card";
 import T from "@/components/shared/T";
-import { cn } from "@/lib/utils";
+import Card from "@/components/smartly/Card";
+import IconTile from "@/components/smartly/IconTile";
 
-const TONES = {
-  mint: "bg-mint-50 text-emerald",
-  warning: "bg-warning-soft text-warning",
-  info: "bg-info-soft text-info",
-} as const;
+// The card's tint, as IconTile names it.
+const TONES = { mint: "money", warning: "warning", info: "info" } as const;
 
 interface SettingsSideCardProps {
   icon: LucideIcon;
@@ -23,9 +20,9 @@ interface SettingsSideCardProps {
 const SettingsSideCard = ({ icon: Icon, tone, title, children, action }: SettingsSideCardProps) => (
   <Card className="flex flex-col gap-2">
     <div className="flex items-center gap-3">
-      <span className={cn("flex size-8.5 shrink-0 items-center justify-center rounded-md", TONES[tone])}>
-        <Icon aria-hidden="true" className="size-4.5" />
-      </span>
+      <IconTile size={36} tone={TONES[tone]}>
+        <Icon />
+      </IconTile>
       <h2 className="text-title text-ink">
         <T>{title}</T>
       </h2>
@@ -35,6 +32,7 @@ const SettingsSideCard = ({ icon: Icon, tone, title, children, action }: Setting
   </Card>
 );
 
-export const SIDE_CARD_LINK = "inline-flex items-center gap-1 self-start text-small font-semibold text-emerald hover:underline";
+// 44px tall under a finger, like every other control.
+export const SIDE_CARD_LINK = "inline-flex items-center gap-1 self-start text-small font-semibold text-emerald hover:underline pointer-coarse:min-h-11";
 
 export default SettingsSideCard;

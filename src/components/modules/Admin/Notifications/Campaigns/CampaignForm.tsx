@@ -2,19 +2,20 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
+import { AlertTriangle } from "lucide-react";
+import { RadioGroup } from "radix-ui";
 import { useMemo, useState } from "react";
 import { createCampaignAction } from "@/app/(dashboardLayout)/admin/notifications/campaigns/_action";
 import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSelectField from "@/components/shared/form/AppSelectField";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatRelativeDateTime, toDateTimeInputValue } from "@/lib/date";
 import { firstZodError } from "@/lib/formValidators";
-import { formatNumber } from "@/lib/number";
+import { formatCount } from "@/lib/i18n/digits";
 import { queryKeys } from "@/lib/queryKeys";
-import { cn } from "@/lib/utils";
 import { campaignAudienceQuery, notificationTemplatesQuery } from "@/queries/notification.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import { NOTIFICATION_CHANNELS, type AudienceUserStatus, type NotificationChannel } from "@/types/notification.types";
@@ -26,7 +27,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const { shape } = campaignFormZodSchema;
 
-const DEFAULT_VALUES: ICampaignFormValues = {
+export const NEW_CAMPAIGN_DEFAULTS: ICampaignFormValues = {
   title: "",
   templateKey: "",
   channel: "EMAIL",
@@ -36,19 +37,20 @@ const DEFAULT_VALUES: ICampaignFormValues = {
 };
 
 type When = "now" | "later";
+type SubmitMode = When | "draft";
 
-// A choice drawn as a card with a radio dot, a name and a line under it.
-const ChoiceCard = <TValue extends string>({ value, on, title, sub, onPick }: { value: TValue; on: boolean; title: string; sub: string; onPick: (value: TValue) => void }) => (
-  <button
-    type="button"
-    role="radio"
-    aria-checked={on}
-    onClick={() => onPick(value)}
-    className={cn("flex flex-col gap-0.5 rounded-md border px-3 py-3 text-left transition-colors", on ? "border-emerald bg-mint-50" : "border-line bg-surface hover:bg-hover")}
+const isChannel = (value: string): value is NotificationChannel => (NOTIFICATION_CHANNELS as readonly string[]).includes(value);
+
+// A choice drawn as a card with a radio dot, a name and a line under it,
+// in a radio group: one tab stop, the arrow keys move the choice.
+const ChoiceCard = ({ value, title, sub }: { value: string; title: string; sub: string }) => (
+  <RadioGroup.Item
+    value={value}
+    className="group flex flex-col gap-0.5 rounded-md border border-line bg-surface px-3 py-3 text-left transition-colors data-[state=checked]:border-emerald data-[state=checked]:bg-mint-50 data-[state=unchecked]:hover:bg-hover"
   >
     <span className="flex items-center gap-2">
-      <span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border-2", on ? "border-emerald" : "border-line-strong")} aria-hidden="true">
-        {on && <span className="size-1.5 rounded-full bg-emerald" />}
+      <span className="flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-line-strong group-data-[state=checked]:border-emerald" aria-hidden="true">
+        <span className="size-1.5 rounded-full bg-emerald opacity-0 group-data-[state=checked]:opacity-100" />
       </span>
       <b className="text-body font-semibold text-ink">
         <T>{title}</T>
@@ -57,13 +59,23 @@ const ChoiceCard = <TValue extends string>({ value, on, title, sub, onPick }: { 
     <span className="pl-6 text-caption text-ink-muted">
       <T>{sub}</T>
     </span>
-  </button>
+  </RadioGroup.Item>
 );
+
+interface CampaignFormProps {
+  // A draft's name, message, channel and audience, when the campaign starts
+  // from one; absent starts empty.
+  defaultValues?: ICampaignFormValues;
+  // Why the audience below isn't the draft's own, when it can't be.
+  audienceNote?: string;
+  onDone: () => void;
+}
 
 // The design's campaign drawer: a name for admins, the message, how it is
 // sent, who gets it with how many that is, and when. Mounted inside the
-// drawer, so each open starts empty.
-const CampaignForm = ({ onDone }: { onDone: () => void }) => {
+// drawer, so each open starts from defaultValues. "Later" needs a date;
+// only "Save as draft" saves one without.
+const CampaignForm = ({ defaultValues = NEW_CAMPAIGN_DEFAULTS, audienceNote, onDone }: CampaignFormProps) => {
   const templates = useQuery(notificationTemplatesQuery()).data?.data;
   const plans = useQuery(plansQuery()).data?.data;
   const templateOptions = useMemo(() => buildTemplateOptions(templates ?? []), [templates]);
@@ -79,8 +91,14 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
   });
 
   const form = useForm({
-    defaultValues: DEFAULT_VALUES,
-    onSubmit: async ({ value }) => {
+    defaultValues,
+    onSubmitMeta: { mode: "later" } as { mode: SubmitMode },
+    onSubmit: async ({ value, meta, formApi }) => {
+      // "Schedule campaign" with no date would quietly save a draft.
+      if (meta.mode === "later" && !value.scheduledFor) {
+        formApi.setFieldMeta("scheduledFor", (fieldMeta) => ({ ...fieldMeta, errorMap: { ...fieldMeta.errorMap, onSubmit: "Pick a date and time" } }));
+        return;
+      }
       if (await run(value)) {
         onDone();
       }
@@ -88,10 +106,10 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
   });
 
   // "Send now" means a couple of minutes from now; a draft has no time.
-  const submitAs = (mode: When | "draft") => {
+  const submitAs = (mode: SubmitMode) => {
     if (mode === "draft") form.setFieldValue("scheduledFor", "");
     if (mode === "now") form.setFieldValue("scheduledFor", toDateTimeInputValue(new Date(Date.now() + 2 * 60_000)));
-    void form.handleSubmit();
+    void form.handleSubmit({ mode });
   };
 
   return (
@@ -116,22 +134,31 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
         {(field) => (
           <div className="flex flex-col gap-2">
             <span className="text-small font-semibold text-ink-2"><T>Send by</T></span>
-            <div role="radiogroup" aria-label={translate("Channel")} className="grid gap-2 sm:grid-cols-3">
+            <RadioGroup.Root
+              value={field.state.value}
+              onValueChange={(value) => {
+                if (isChannel(value)) field.handleChange(value);
+              }}
+              aria-label={translate("Channel")}
+              className="grid gap-2 sm:grid-cols-3"
+            >
               {NOTIFICATION_CHANNELS.map((channel) => (
-                <ChoiceCard<NotificationChannel>
-                  key={channel}
-                  value={channel}
-                  on={field.state.value === channel}
-                  title={CHANNEL_META[channel].label}
-                  sub={CHANNEL_META[channel].note}
-                  onPick={(value) => field.handleChange(value)}
-                />
+                <ChoiceCard key={channel} value={channel} title={CHANNEL_META[channel].label} sub={CHANNEL_META[channel].note} />
               ))}
-            </div>
+            </RadioGroup.Root>
+            <form.Subscribe selector={(state) => state.values.templateKey}>
+              {(templateKey) => <ChannelMismatch template={templates?.find((item) => item.key === templateKey)} picked={field.state.value} />}
+            </form.Subscribe>
           </div>
         )}
       </form.Field>
       <div className="flex flex-col gap-2">
+        {audienceNote && (
+          <p className="flex items-start gap-2 text-small text-warning">
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            {audienceNote}
+          </p>
+        )}
         <span className="text-small font-semibold text-ink-2"><T>Who gets it</T></span>
         <div className="grid gap-3 sm:grid-cols-2">
           <form.Field name="planId" validators={{ onChange: shape.planId }}>
@@ -151,31 +178,35 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
         <span className="text-small font-semibold text-ink-2"><T>When</T></span>
         <form.Subscribe selector={(state) => state.values.scheduledFor}>
           {(scheduledFor) => (
-            <div role="radiogroup" aria-label={translate("When")} className="grid gap-2 sm:grid-cols-2">
-              <ChoiceCard<When> value="now" on={when === "now"} title="Send now" sub="Starts in a minute" onPick={setWhen} />
-              <ChoiceCard<When>
-                value="later"
-                on={when === "later"}
-                title="Later"
-                sub={scheduledFor ? formatRelativeDateTime(scheduledFor, { t: translate }) : "Pick a date and time"}
-                onPick={setWhen}
-              />
-            </div>
+            <RadioGroup.Root
+              value={when}
+              onValueChange={(value) => {
+                if (value === "now" || value === "later") setWhen(value);
+              }}
+              aria-label={translate("When")}
+              className="grid gap-2 sm:grid-cols-2"
+            >
+              <ChoiceCard value="now" title="Send now" sub="Starts in about 2 minutes" />
+              <ChoiceCard value="later" title="Later" sub={scheduledFor ? formatRelativeDateTime(scheduledFor, { t: translate }) : "Pick a date and time"} />
+            </RadioGroup.Root>
           )}
         </form.Subscribe>
         {when === "later" && (
           <form.Field name="scheduledFor" validators={{ onChange: ({ value }) => firstZodError(shape.scheduledFor, value) ?? getScheduleInPastError(value) }}>
-            {(field) => <AppField field={field} label={<span className="sr-only"><T>Date and time</T></span>} type="datetime-local" size="sm" />}
+            {(field) => <AppField field={field} label={<span className="sr-only"><T>Date and time</T></span>} type="datetime-local" />}
           </form.Field>
         )}
       </div>
+      <p className="text-caption text-ink-muted">
+        <T>A draft can&apos;t be edited yet. To change one later, start a new campaign from it.</T>
+      </p>
       <FormDialogFooter
         pinned
         isPending={isPending}
         submitLabel={when === "now" ? "Send now" : "Schedule campaign"}
         pendingLabel="Saving..."
         extra={
-          <Button type="button" variant="outline" disabled={isPending} className="h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken" onClick={() => submitAs("draft")}>
+          <Button variant="secondary" size="md" disabled={isPending} onClick={() => submitAs("draft")}>
             <T>Save as draft</T>
           </Button>
         }
@@ -184,9 +215,40 @@ const CampaignForm = ({ onDone }: { onDone: () => void }) => {
   );
 };
 
+// A message written for one channel, sent by another, may not read right:
+// an email's subject is left out of an SMS, and long text splits.
+const ChannelMismatch = ({ template, picked }: { template?: { key: string; channel: NotificationChannel }; picked: NotificationChannel }) => {
+  const { translate } = useLocale();
+  if (!template || template.channel === picked) return null;
+  const values = { template: template.key, written: translate(CHANNEL_META[template.channel].label), picked: translate(CHANNEL_META[picked].label) };
+  return (
+    <p className="flex items-start gap-2 text-small text-warning">
+      <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+      {picked === "SMS"
+        ? translate("{template} is written for {written}. As an SMS its subject is left out, and long text goes as several paid messages.", values)
+        : translate("{template} is written for {written}, not {picked}. Check that it reads right.", values)}
+    </p>
+  );
+};
+
 // "About 612 people match right now."
 const AudienceLine = ({ planId, status }: { planId?: string; status?: AudienceUserStatus }) => {
-  const count = useQuery(campaignAudienceQuery({ planId, status })).data?.data.count;
+  const query = useQuery(campaignAudienceQuery({ planId, status }));
+  const count = query.data?.data.count;
+  const { locale, translate } = useLocale();
+
+  // A count that failed says so, rather than "Counting..." for ever.
+  if (count === undefined && query.isError) {
+    return (
+      <div className="flex flex-wrap items-center gap-3 rounded-md border border-line bg-strip px-3 py-3 text-body text-ink-2">
+        <span className="grow">{translate("Couldn't count who matches.")}</span>
+        <Button variant="link" size="sm" onClick={() => void query.refetch()}>
+          {translate("Try again")}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-md border border-mint-200 bg-mint-50 px-3 py-3 text-body text-forest">
       {count === undefined ? (
@@ -196,7 +258,7 @@ const AudienceLine = ({ planId, status }: { planId?: string; status?: AudienceUs
           values={{
             people: (
               <b className="font-semibold">
-                <T values={{ count: formatNumber(count) }}>{"{count} people"}</T>
+                <T values={{ count: formatCount(count, locale) }}>{"{count} people"}</T>
               </b>
             ),
           }}

@@ -9,18 +9,19 @@ import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
 import { useActionMutation } from "@/hooks/useActionMutation";
-import { formatCurrency } from "@/lib/currency";
+import { formatAmount } from "@/lib/currency";
 import { queryKeys } from "@/lib/queryKeys";
 import { type IReferralRewardFormValues, referralRewardFormZodSchema as schema } from "@/zod/settings.validation";
 import SettingsSideCard, { SIDE_CARD_LINK } from "./SettingsSideCard";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
+// The reward can carry paisa (৳ 49.99): formatAmount shows them only then.
 const RewardForm = ({ amount, onDone }: { amount: number; onDone: () => void }) => {
   const { translate } = useLocale();
   const { run, isPending } = useActionMutation({
     action: updateSettingsAction,
-    successMessage: (updated) => translate("Referrers now earn {amount}", { amount: formatCurrency(updated.referralRewardAmount, undefined, 0) }),
+    successMessage: (updated) => translate("Referrers now earn {amount}", { amount: formatAmount(updated.referralRewardAmount) }),
     invalidateKeys: [queryKeys.settings.all],
     refreshRoute: false,
   });
@@ -78,7 +79,7 @@ const ReferralRulesCard = ({ amount, canManage }: { amount: number; canManage: b
         )
       }
     >
-      <T values={{ amount: <b className="font-semibold text-ink">{formatCurrency(amount, undefined, 0)}</b> }}>{"Referrers earn {amount} for each friend who signs up with their link."}</T>
+      <T values={{ amount: <b className="font-semibold text-ink">{formatAmount(amount)}</b> }}>{"Referrers earn {amount} for each friend who signs up with their link."}</T>
     </SettingsSideCard>
   );
 };

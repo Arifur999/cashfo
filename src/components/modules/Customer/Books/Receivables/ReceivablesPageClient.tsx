@@ -27,13 +27,14 @@ interface ReceivablesPageClientProps {
   today: string;
 }
 
-// Books › Receivables and payables: what customers still owe and what is
-// still owed to suppliers, by age, and what falls due this week.
+// Books › Receivables & payables: what customers still owe and what is
+// still owed to suppliers, by age, and what falls due in the next 7 days.
 export function ReceivablesPageClient({ businessId, receivableAging, payableAging, receivableOverdue, payableOverdue, receivableDueSoon, payableDueSoon, canManage, currency, today }: ReceivablesPageClientProps) {
   const { t } = useLocale();
   const [paying, setPaying] = useState<DueSoonItem | null>(null);
-  const dueSoon: DueSoonItem[] = [...receivableDueSoon.map((row) => ({ ...row, direction: "RECEIVABLE" as const })), ...payableDueSoon.map((row) => ({ ...row, direction: "PAYABLE" as const }))].sort((a, b) => a.daysUntilDue - b.daysUntilDue || a.contactName.localeCompare(b.contactName));
+  const dueSoon: DueSoonItem[] = [...receivableDueSoon.map((row) => ({ ...row, direction: "RECEIVABLE" as const })), ...payableDueSoon.map((row) => ({ ...row, direction: "PAYABLE" as const }))].sort((a, b) => a.daysUntilDue - b.daysUntilDue || a.contactName.localeCompare(b.contactName, "en"));
 
+  // Only what is overdue, as its label says.
   function exportCsv() {
     const rows = [...lateByContact(receivableOverdue).map((row) => [row.contactName, t("Owes you"), row.oldestDescription ?? "", row.oldestDueDate.slice(0, 10), row.daysLate, row.amount]), ...lateByContact(payableOverdue).map((row) => [row.contactName, t("You owe"), row.oldestDescription ?? "", row.oldestDueDate.slice(0, 10), row.daysLate, row.amount])];
     downloadCsv(toCsv([t("Who"), t("Direction"), t("Oldest"), t("Due"), t("Days late"), t("Amount")], rows), `overdue-${today}`);
@@ -44,22 +45,24 @@ export function ReceivablesPageClient({ businessId, receivableAging, payableAgin
       <PageHeader
         eyebrow={t("Books")}
         tone="neutral"
-        title={t("Receivables and payables")}
+        title={t("Receivables & payables")}
         description={t("Money customers still owe the business, and money the business still owes suppliers, by age.")}
         looseDescription
         actions={
           <Button variant="secondary" onClick={exportCsv} disabled={receivableOverdue.length === 0 && payableOverdue.length === 0}>
             <Download className="text-ink-2" />
-            {t("Export")}
+            {t("Export overdue")}
           </Button>
         }
       />
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        <DirectionCard direction="RECEIVABLE" aging={receivableAging} overdue={receivableOverdue} currency={currency} />
-        <DirectionCard direction="PAYABLE" aging={payableAging} overdue={payableOverdue} currency={currency} />
+        <DirectionCard direction="RECEIVABLE" aging={receivableAging} overdue={receivableOverdue} currency={currency} today={today} />
+        <DirectionCard direction="PAYABLE" aging={payableAging} overdue={payableOverdue} currency={currency} today={today} />
       </div>
-      <DueSoonCard items={dueSoon} currency={currency} canManage={canManage} onPay={setPaying} />
-      {paying && <PaymentDrawer open direction="PAYABLE" contact={{ id: paying.contactId, name: paying.contactName }} businessId={businessId} currency={currency} onClose={() => setPaying(null)} />}
+      <DueSoonCard items={dueSoon} currency={currency} canManage={canManage} today={today} onPay={setPaying} />
+      {/* Opened on the bill pressed, so the payment settles that one and not
+          an older bill first. */}
+      {paying && <PaymentDrawer open direction="PAYABLE" contact={{ id: paying.contactId, name: paying.contactName }} settles={paying.transactionId} amount={paying.remainingAmount} businessId={businessId} currency={currency} onClose={() => setPaying(null)} />}
     </PageFrame>
   );
 }

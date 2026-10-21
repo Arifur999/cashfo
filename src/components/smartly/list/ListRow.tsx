@@ -79,19 +79,21 @@ export const ListCell = ({ align = "start", className, ...props }: ListCellProps
 
 // The row's link, stretched over the whole row by its ::after, so the row is
 // one big target while the text stays a real link (middle-click, copy link).
-// The row draws its focus ring.
+// The row draws its focus ring. Its data-slot comes after the props, so a
+// Radix asChild trigger around it (DropdownMenuTrigger passes its own) can't
+// take away the row's hover and ring, which look for this one.
 export const ListRowLink = ({ className, ...props }: React.ComponentProps<typeof Link>) => (
-  <Link data-slot="list-row-link" className={cn("min-w-0 after:absolute after:inset-0 focus-visible:outline-none", className)} {...props} />
+  <Link className={cn("min-w-0 after:absolute after:inset-0 focus-visible:outline-none", className)} {...props} data-slot="list-row-link" />
 );
 
-// The same for a row that opens something in place (a drawer, a dialog): a
-// real button, so Tab and screen readers reach the row's action too.
+// The same for a row that opens something in place (a drawer, a dialog, a
+// menu): a real button, so Tab and screen readers reach the row's action too.
 export const ListRowButton = ({ className, ...props }: React.ComponentProps<"button">) => (
   <button
     type="button"
-    data-slot="list-row-button"
     className={cn("min-w-0 cursor-pointer text-left after:absolute after:inset-0 focus-visible:outline-none", className)}
     {...props}
+    data-slot="list-row-button"
   />
 );
 

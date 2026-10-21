@@ -1,17 +1,16 @@
 import Card from "@/components/smartly/Card";
+import { countPhrase } from "@/components/modules/Admin/Payments/paymentsDisplay";
 import { formatCurrency } from "@/lib/currency";
 import { formatMonthName } from "@/lib/date";
-import { formatNumber } from "@/lib/number";
 import { planAccentClass } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
 import type { IRevenueOverview } from "@/types/revenue.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
-import { plural } from "@/lib/i18n/message";
 
 // This month's takings by plan: how many payments, how much, what share.
 const ByPlanCard = async ({ overview }: { overview: IRevenueOverview }) => {
-  const { t } = await getTranslator("admin");
+  const { t, locale } = await getTranslator("admin");
   const total = Number(overview.thisMonthTotal);
   const refunds = overview.refundsThisMonth;
 
@@ -32,9 +31,7 @@ const ByPlanCard = async ({ overview }: { overview: IRevenueOverview }) => {
               <div className="flex justify-between gap-3 text-body">
                 <span>
                   <b className="font-semibold text-ink">{plan.planName}</b>{" "}
-                  <span className="text-ink-muted">
-                    {plural(t, plan.payments, "{count} payment", "{count} payments")}
-                  </span>
+                  <span className="text-ink-muted">{countPhrase(t, locale, plan.payments, "{count} payment", "{count} payments")}</span>
                 </span>
                 <span className="tabular-nums">
                   <b className="font-semibold text-ink">{formatCurrency(amount, undefined, 0)}</b> <span className="text-ink-muted">{Math.round(share)}%</span>
@@ -47,9 +44,11 @@ const ByPlanCard = async ({ overview }: { overview: IRevenueOverview }) => {
           );
         })
       )}
+      {/* Every refund made this month, on this month's payments or older ones:
+          the total above only nets the ones on this month's payments. */}
       {refunds.count > 0 && (
         <span className="text-small text-ink-muted">
-          {t(refunds.count === 1 ? "After {count} refund of {amount}." : "After {count} refunds of {amount}.", { count: formatNumber(refunds.count), amount: formatCurrency(refunds.amount, undefined, 0) })}
+          {countPhrase(t, locale, refunds.count, "{count} refund this month: {amount}", "{count} refunds this month: {amount}", { amount: formatCurrency(refunds.amount, undefined, 0) })}
         </span>
       )}
     </Card>

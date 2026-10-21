@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { useFieldControlId } from "./FormFieldShell";
 
 interface AppSwitchFieldProps {
   field: AnyFieldApi;
@@ -20,11 +21,13 @@ interface AppSwitchFieldProps {
 // area isn't just the switch.
 const AppSwitchField = ({ field, label, description, disabled, className }: AppSwitchFieldProps) => {
   const { translate } = useLocale();
-  const descriptionId = description ? `${field.name}-description` : undefined;
+  // The field's name, or an id of its own inside AppForm's uniqueIds.
+  const controlId = useFieldControlId(field);
+  const descriptionId = description ? `${controlId}-description` : undefined;
 
   return (
     <div className={cn("flex items-center justify-between gap-3 border-b border-divider py-3", className)}>
-      <Label htmlFor={field.name} className="flex grow cursor-pointer flex-col items-start gap-px">
+      <Label htmlFor={controlId} className="flex grow cursor-pointer flex-col items-start gap-px">
         <span className="text-body font-medium text-ink">{translate(label)}</span>
         {description && (
           <span id={descriptionId} className="text-small font-normal text-ink-muted">
@@ -33,7 +36,7 @@ const AppSwitchField = ({ field, label, description, disabled, className }: AppS
         )}
       </Label>
       <Switch
-        id={field.name}
+        id={controlId}
         name={field.name}
         checked={Boolean(field.state.value)}
         onCheckedChange={(checked) => field.handleChange(checked)}

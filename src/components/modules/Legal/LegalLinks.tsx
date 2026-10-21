@@ -1,25 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import type { LegalPage } from "@/lib/customer/platform";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
+import { LEGAL_PAGES, legalPageEntry } from "./legalPages";
 
-export const LEGAL_LINKS = [
-  { href: "/terms", label: "Terms of Service" },
-  { href: "/privacy", label: "Privacy Policy" },
-  { href: "/refund-policy", label: "Refund Policy" },
-  { href: "/faq", label: "FAQ" },
-] as const;
+interface LegalPageLinkProps {
+  page: LegalPage;
+  // In a new tab, so the page it was opened from keeps what was typed.
+  newTab?: boolean;
+  className?: string;
+}
 
-// The admin-maintained legal pages (Admin > Content > Legal), linked from
-// the sign-in pages and every public page.
-const LegalLinks = ({ className = "" }: { className?: string }) => {
+// One legal page, named as the page itself is named (legalPages.ts).
+export const LegalPageLink = ({ page, newTab = false, className }: LegalPageLinkProps) => {
+  const { t } = useLocale();
+  const entry = legalPageEntry(page);
+  return (
+    <Link href={entry.href} target={newTab ? "_blank" : undefined} rel={newTab ? "noopener noreferrer" : undefined} className={className}>
+      {t(entry.label)}
+      {newTab && <span className="sr-only"> {t("(opens in a new tab)")}</span>}
+    </Link>
+  );
+};
+
+// The admin-maintained legal pages (Admin > Content > Legal), at the foot of
+// the sign-in pages: each 44px tall to tap.
+const LegalLinks = ({ newTab = false, className }: { newTab?: boolean; className?: string }) => {
   const { t } = useLocale();
   return (
-    <nav aria-label={t("Legal")} className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground ${className}`}>
-      {LEGAL_LINKS.map((link) => (
-        <Link key={link.href} href={link.href} className="hover:text-foreground hover:underline">
-          {t(link.label)}
-        </Link>
+    <nav aria-label={t("Legal")} className={cn("flex flex-wrap items-center justify-center gap-x-3 text-caption text-ink-muted", className)}>
+      {LEGAL_PAGES.map((entry) => (
+        <LegalPageLink key={entry.page} page={entry.page} newTab={newTab} className="inline-flex min-h-11 items-center rounded-sm px-1 hover:text-ink hover:underline" />
       ))}
     </nav>
   );

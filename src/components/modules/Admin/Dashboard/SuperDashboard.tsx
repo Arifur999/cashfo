@@ -1,21 +1,24 @@
 "use client";
 
 import { Bug, CreditCard, MessageCircle, ShieldAlert } from "lucide-react";
-import { changePercent, monthKeyLabel } from "@/lib/adminDashboard";
-import { formatCurrency } from "@/lib/currency";
+import T from "@/components/shared/T";
+import { formatAmount } from "@/lib/currency";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { formatNumber } from "@/lib/number";
-import { plural } from "@/lib/i18n/message";
 import type { IAnalyticsSummary } from "@/types/analytics.types";
 import type { IDashboardSummary } from "@/types/dashboard.types";
 import type { IPlanAnalytics, ISubscriptionPlan } from "@/types/plan.types";
-import type { IRevenueSummary } from "@/types/revenue.types";
+import type { IRevenueOverview, IRevenueSummary } from "@/types/revenue.types";
 import type { ITicketStats } from "@/types/ticket.types";
 import { ActivityCard } from "./ActivityCard";
-import { Greeting, Kpi, MiniBars, NeedsYou, Section, Unavailable, type Attention } from "./pieces";
+import { monthLabel, shortMonth } from "./dashboardDates";
+import { allZero, compactAmount } from "./dashboardFigures";
+import { COULD_NOT_LOAD, Greeting, Kpi, LoadFailed, MiniBars, NeedsYou, Section, Unavailable, type Attention } from "./pieces";
 import { PlanShareCard } from "./PlanShareCard";
 import { SystemCard, type SystemState } from "./SystemCard";
 
+// Every null below is a call that failed: the card says so rather than
+// showing an empty or all-clear state.
 export interface SuperDashboardData {
   summary: IDashboardSummary;
   // Who used the app lately, from the analytics summary.
@@ -23,6 +26,8 @@ export interface SuperDashboardData {
   tickets: ITicketStats | null;
   failedPayments: number | null;
   revenue: IRevenueSummary | null;
+  // For the MRR's change: month end against the month end before.
+  overview: IRevenueOverview | null;
   plans: IPlanAnalytics | null;
   planList: ISubscriptionPlan[] | null;
   system: SystemState | null;
@@ -35,24 +40,32 @@ interface SuperDashboardProps extends SuperDashboardData {
 
 // The super admin's dashboard: what needs action first, then users, money
 // and system health.
-export function SuperDashboard({ adminName, hour, summary, activity, tickets, failedPayments, revenue, plans, planList, system }: SuperDashboardProps) {
-  const { translate } = useLocale();
-  const change = revenue ? changePercent(revenue.thisMonthRevenue, revenue.lastMonthRevenue) : null;
+export function SuperDashboard({ adminName, hour, summary, activity, tickets, failedPayments, revenue, overview, plans, planList, system }: SuperDashboardProps) {
+  const { translate, locale } = useLocale();
+  const count = (value: number) => formatCount(value, locale);
+  const percent = (value: number) => toLocaleDigits(`${value}%`, locale);
+  const change = overview?.mrrChangePct ?? null;
   const trend = revenue ? revenue.revenueTrend.slice(-6) : [];
   const attention: Attention[] = [
     {
-      count: tickets?.openCount ?? summary.openTickets,
+      count: tickets ? tickets.openCount : null,
       title: translate("Tickets with no reply"),
-      sub: tickets ? plural(translate, tickets.unassignedOpenCount, "{count} has no one assigned", "{count} have no one assigned") : translate("Open, waiting for review"),
+      sub: tickets ? translate("{count} with no one assigned", { count: count(tickets.unassignedOpenCount) }) : "",
       link: translate("Open inbox"),
       href: "/admin/support?status=OPEN",
       icon: <MessageCircle />,
       tone: "info",
     },
-    ...(failedPayments !== null ? [{ count: failedPayments, title: translate("Failed payments"), sub: translate("Waiting for a retry or a refund"), link: translate("See payments"), href: "/admin/payments?view=failed", icon: <CreditCard />, tone: "expense" as const }] : []),
-    ...(summary.pendingFlags !== null ? [{ count: summary.pendingFlags, title: translate("Security flags"), sub: translate("Open, waiting for review"), link: translate("Review flags"), href: "/admin/security/flags", icon: <ShieldAlert />, tone: "expense" as const }] : []),
-    ...(system?.unresolvedErrors !== null && system?.unresolvedErrors !== undefined ? [{ count: system.unresolvedErrors, title: translate("New errors"), sub: translate("Not fixed yet"), link: translate("Error log"), href: "/admin/system/errors", icon: <Bug />, tone: "neutral" as const }] : []),
+    { count: failedPayments, title: translate("Failed payments"), sub: translate("Waiting for a retry"), link: translate("See payments"), href: "/admin/payments?status=FAILED", icon: <CreditCard />, tone: "expense" },
+    // The summary leaves flags out (null) for a role that can't review them.
+    ...(summary.pendingFlags !== null
+      ? [{ count: summary.pendingFlags, title: translate("Security flags"), sub: translate("Open, waiting for review"), link: translate("Review flags"), href: "/admin/security/flags", icon: <ShieldAlert />, tone: "expense" as const }]
+      : []),
+    { count: system ? system.unresolvedErrors : null, title: translate("New errors"), sub: translate("Last 24 hours, not fixed yet"), link: translate("Error log"), href: "/admin/system/errors?within=24h", icon: <Bug />, tone: "neutral" },
   ];
+  const barsLabel = translate("Revenue each month: {values}", {
+    values: trend.map((point) => `${monthLabel(point.month, locale, translate)} ${formatAmount(point.amount)}`).join(", "),
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -60,20 +73,41 @@ export function SuperDashboard({ adminName, hour, summary, activity, tickets, fa
       <NeedsYou items={attention} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label={translate("Total users")} value={formatNumber(summary.totalUsers)} chip={{ text: `+${formatNumber(summary.newUsersLast30d)}`, tone: "income" }} note={translate("in 30 days")} />
+        <Kpi label="Total users" value={count(summary.totalUsers)} chip={{ text: `+${count(summary.newUsersLast30d)}`, tone: "income" }} note="in 30 days" />
+        {/* Each share names what it is a share of: the totals come from different counts. */}
         <Kpi
-          label={translate("Active in 30 days")}
-          value={activity ? formatNumber(activity.activeLast30d) : "—"}
-          chip={activity && activity.totalAccounts > 0 ? { text: `${Math.round((activity.activeLast30d / activity.totalAccounts) * 100)}%`, tone: "neutral" } : null}
-          note={activity ? translate("of accounts") : undefined}
+          label="Active in 30 days"
+          value={activity ? count(activity.activeLast30d) : "—"}
+          chip={activity && activity.totalAccounts > 0 ? { text: percent(Math.round((activity.activeLast30d / activity.totalAccounts) * 100)), tone: "neutral" } : null}
+          note={activity ? translate("of {total} accounts", { total: count(activity.totalAccounts) }) : COULD_NOT_LOAD}
         />
-        <Kpi label={translate("Paid users")} value={plans ? formatNumber(plans.summary.paidUsers) : "—"} chip={plans ? { text: `${plans.summary.paidPercentage}%`, tone: "neutral" } : null} note={plans ? translate("of accounts") : translate("Money cards show once payments come in.")} />
-        <Kpi label={translate("MRR")} value={summary.mrr !== null ? formatCurrency(summary.mrr, undefined, 0) : "—"} chip={change !== null ? { text: `${change >= 0 ? "+" : ""}${change}%`, tone: change >= 0 ? "income" : "expense" } : null} note={change !== null ? translate("vs last month") : undefined} />
+        <Kpi
+          label="Paid users"
+          value={plans ? count(plans.summary.paidUsers) : "—"}
+          chip={plans ? { text: percent(plans.summary.paidPercentage), tone: "neutral" } : null}
+          note={plans ? translate("of {total} accounts", { total: count(plans.summary.totalUsers) }) : COULD_NOT_LOAD}
+        />
+        <Kpi
+          label="MRR"
+          value={summary.mrr !== null ? formatAmount(summary.mrr) : "—"}
+          chip={change !== null ? { text: `${change >= 0 ? "+" : ""}${percent(change)}`, tone: change >= 0 ? "income" : "expense" } : null}
+          note={change !== null ? "vs last month" : undefined}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <Section title={translate("Revenue, last 6 months")} aside={revenue && <>{translate("This month")} <b className="text-ink">{formatCurrency(revenue.thisMonthRevenue, undefined, 0)}</b>{change !== null && <span className={change >= 0 ? "font-semibold text-emerald" : "font-semibold text-expense"}> {change >= 0 ? "+" : ""}{change}%</span>}</>}>
-          {revenue === null ? <Unavailable>{translate("Money cards show once payments come in.")}</Unavailable> : trend.length === 0 ? <Unavailable>{translate("No revenue yet.")}</Unavailable> : <MiniBars label={translate("Revenue each month")} bars={trend.map((point, index) => ({ label: monthKeyLabel(point.month), value: point.amount, short: formatCurrency(point.amount, undefined, 0), highlight: index === trend.length - 1 }))} />}
+        {/* The month still running is only part of a month, so it gets no change on the last. */}
+        <Section title={translate("Revenue, last 6 months")} aside={revenue && <T values={{ amount: <b className="text-ink">{formatAmount(revenue.thisMonthRevenue)}</b> }}>{"So far this month {amount}"}</T>}>
+          {revenue === null ? (
+            <LoadFailed />
+          ) : allZero(trend.map((point) => point.amount)) ? (
+            <Unavailable>{translate("No revenue yet.")}</Unavailable>
+          ) : (
+            <MiniBars
+              label={barsLabel}
+              bars={trend.map((point, index) => ({ label: shortMonth(point.month, locale), value: point.amount, short: compactAmount(point.amount), highlight: index === trend.length - 1 }))}
+            />
+          )}
         </Section>
         <PlanShareCard analytics={plans} plans={planList} />
       </div>

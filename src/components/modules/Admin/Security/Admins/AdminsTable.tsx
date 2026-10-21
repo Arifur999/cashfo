@@ -3,7 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import DataTable from "@/components/shared/table/DataTable";
+import ErrorState from "@/components/smartly/ErrorState";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { adminAccountsQuery } from "@/queries/security.queries";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import AdminDialogs, { type AdminDialog } from "./AdminDialogs";
@@ -18,17 +20,25 @@ const teamOrder = (admins: IAdminAccount[], currentAdminId: string | null) =>
 
 // The whole team fits on one card, so there is nothing to search or page.
 const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
-  const { data, isLoading, isFetching } = useQuery(adminAccountsQuery());
+  const { translate } = useLocale();
+  const query = useQuery(adminAccountsQuery());
+  const { data, isLoading, isFetching } = query;
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IAdminAccount, AdminDialog>();
   const columns = useMemo(() => buildAdminsColumns(currentAdminId, openDialog), [currentAdminId, openDialog]);
   const rows = useMemo(() => (data?.data ? teamOrder(data.data, currentAdminId) : undefined), [data, currentAdminId]);
+
+  // The viewer is an admin, so an empty team can only mean the read failed.
+  if (query.isError && !data) {
+    return <ErrorState title={translate("Couldn't load the admin team")} onRetry={() => void query.refetch()} className="shadow-card" />;
+  }
 
   return (
     <>
       <DataTable
         data={rows}
         columns={columns}
-        layout={{ rowHeight: 60, headPadding: 12 }}
+        // The density scale's relaxed row: a name over an email.
+        layout={{ rowHeight: 64, headPadding: 12 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}

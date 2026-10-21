@@ -3,7 +3,7 @@
 // streaks worth showing. Pure, so the page and its tests agree.
 import type { Habit, HabitMonthLog, HabitMonthTracker, HabitToday } from "./api";
 import { countsOn, dayMark, isPlannedOn, lastDays, shiftDay } from "./habitDisplay";
-import { cellState, isPrayed, PRAYERS, trackerFor } from "./namazDisplay";
+import { allPrayed, cellState, isPrayed, PRAYERS, trackerFor } from "./namazDisplay";
 
 // prayed / missed / open (today, not yet) / none (no sheet, or not reached).
 export type PrayerMark = "prayed" | "missed" | "open" | "none";
@@ -23,12 +23,21 @@ export function prayerMarks(trackers: HabitMonthTracker[], day: string, today: s
 
 export const prayedOn = (trackers: HabitMonthTracker[], day: string, today: string): number => prayerMarks(trackers, day, today).filter((mark) => mark === "prayed").length;
 
+// Whether a day had all five prayed, by the same rule as a sheet's full days
+// in a row (namazDisplay's allPrayed: a qaza counts).
+const allFiveOn = (trackers: HabitMonthTracker[], day: string, today: string): boolean => {
+  if (day > today) return false;
+  const [year, month] = day.split("-").map(Number);
+  const tracker = trackerFor(trackers, year, month);
+  return tracker !== null && allPrayed(tracker, Number(day.slice(8)));
+};
+
 // Days in a row with all five prayed: through today when today is complete,
 // otherwise through yesterday.
 export function prayerStreak(trackers: HabitMonthTracker[], today: string, lookBack = 365): number {
-  let day = prayedOn(trackers, today, today) === PRAYERS.length ? today : shiftDay(today, -1);
+  let day = allFiveOn(trackers, today, today) ? today : shiftDay(today, -1);
   let streak = 0;
-  while (streak < lookBack && prayedOn(trackers, day, today) === PRAYERS.length) {
+  while (streak < lookBack && allFiveOn(trackers, day, today)) {
     streak++;
     day = shiftDay(day, -1);
   }

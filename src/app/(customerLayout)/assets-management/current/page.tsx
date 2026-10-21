@@ -19,5 +19,7 @@ export default async function MyAssetsPage() {
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  return <MyAssetsPageClient businessId={activeBusinessId} assets={assets.filter((a) => a.status === "ACTIVE")} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
+  // Keyed by workspace: a switch lands on this same page, and its drawers
+  // and filters must not carry the other workspace's choices over.
+  return <MyAssetsPageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets.filter((a) => a.status === "ACTIVE")} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
 }

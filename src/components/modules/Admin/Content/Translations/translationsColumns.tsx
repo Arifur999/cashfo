@@ -36,7 +36,12 @@ export const buildTranslationsColumns = (saveText: SaveTranslationText | null): 
     id: "key",
     accessorKey: "key",
     header: "Key",
-    cell: ({ row }) => <code className="block truncate font-mono text-small text-ink-2">{row.original.key}</code>,
+    // A long dotted key is cut to the column; the whole of it shows on hover.
+    cell: ({ row }) => (
+      <code title={row.original.key} className="block truncate font-mono text-small text-ink-2">
+        {row.original.key}
+      </code>
+    ),
     meta: { width: 230 },
   },
   {

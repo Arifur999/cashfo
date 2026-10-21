@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -13,9 +13,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Book, BookStatus } from "@/lib/customer/api";
 import { createBookAction, updateBookAction } from "@/lib/customer/bookActions";
+import { actionError, latinDigits } from "@/lib/customer/habitDisplay";
 import { SHELF_LABEL } from "@/lib/customer/libraryDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 import { BOOK_PALETTE, suggestColor } from "./bookPalette";
 import { Cover } from "./Cover";
 
@@ -33,7 +35,7 @@ const MAX_PAGES = 20000;
 // Add or edit a book: title, author, how many pages, which shelf it starts
 // on, and the cover colour.
 export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const [title, setTitle] = useState("");
@@ -67,7 +69,7 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
   // is exempt, its pages simply follow the new total.
   const shrinksBelowProgress = editing !== null && editing.status !== "FINISHED" && totalOk && total < editing.pagesRead;
   const valid = title.trim().length > 0 && totalOk && !readTooHigh && !shrinksBelowProgress;
-  const digits = (value: string) => value.replace(/\D/g, "").slice(0, 5);
+  const digits = (value: string) => latinDigits(value).replace(/\D/g, "").slice(0, 5);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -80,7 +82,7 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to save book"));
+        toast.error(actionError(result.message, "Failed to save book", t, locale));
       }
     });
   }
@@ -88,21 +90,19 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
   const label = (text: string, optional = false) => (
     <span className="text-body font-medium text-ink">
       {text}
-      {optional && <span className="font-normal text-ink-muted"> ({t("Optional")})</span>}
+      {optional && <span className="font-normal text-ink-muted"> ({t("optional")})</span>}
     </span>
   );
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
+      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:max-h-[92dvh]")}>
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit book") : t("Add a book")}</SheetTitle>
             <span className="text-small leading-[normal] text-ink-muted">{t("Title, author and how many pages. The cover colour is yours to pick.")}</span>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
+          <CloseButton onClick={onClose} label={t("Close")} />
         </SheetHeader>
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
@@ -133,11 +133,11 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
               <Cover size="card" title={title.trim() || t("Your book title")} author={author.trim()} color={color} />
               <div className="flex flex-col gap-2">
                 <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Cover colour")}</legend>
-                <div role="radiogroup" aria-label={t("Cover colour")} className="grid grid-cols-[repeat(5,28px)] gap-x-3 gap-y-2">
+                <div role="radiogroup" aria-label={t("Cover colour")} className="grid grid-cols-[repeat(auto-fill,28px)] gap-x-3 gap-y-2">
                   {BOOK_PALETTE.map((option) => {
                     const on = option.key === color;
                     return (
-                      <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} title={t(option.label)} onClick={() => setPickedColor(option.key)} className="size-7 rounded-full transition-shadow" style={{ backgroundImage: `linear-gradient(135deg, ${option.from}, ${option.to})`, ...(on && { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${option.from}` }) }} />
+                      <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} title={t(option.label)} onClick={() => setPickedColor(option.key)} className="relative size-7 rounded-full transition-shadow after:absolute after:-inset-1.5" style={{ backgroundImage: `linear-gradient(135deg, ${option.from}, ${option.to})`, ...(on && { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${option.from}` }) }} />
                     );
                   })}
                 </div>
@@ -145,23 +145,25 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
             </fieldset>
           </div>
 
-          <div className={cn("flex items-center gap-3 border-t border-line bg-strip", wide ? "px-6 py-4" : "px-4 py-3")}>
-            {editing && (
-              <Button type="button" variant="ghost" className="text-expense hover:bg-expense-soft hover:text-expense" onClick={() => onRemove(editing)} disabled={isPending}>
-                <Trash2 />
-                {t("Remove")}
-              </Button>
-            )}
-            <div className="ml-auto flex items-center gap-3">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" disabled={!valid || isPending} className="px-5">
-                {isPending && <Loader />}
-                {t(editing ? "Save" : "Add book")}
-              </Button>
-            </div>
-          </div>
+          <PanelFooter
+            drawer
+            aside={
+              editing && (
+                <Button type="button" variant="ghost" className="text-expense hover:bg-expense-soft hover:text-expense" onClick={() => onRemove(editing)} disabled={isPending}>
+                  <Trash2 />
+                  {t("Remove")}
+                </Button>
+              )
+            }
+          >
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" disabled={!valid || isPending} className="px-5">
+              {isPending && <Loader />}
+              {t(editing ? "Save changes" : "Add book")}
+            </Button>
+          </PanelFooter>
         </form>
       </SheetContent>
     </Sheet>

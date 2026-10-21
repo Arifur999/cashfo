@@ -41,7 +41,7 @@ const TranslationForm = ({ onDone }: { onDone: () => void }) => {
           {(field) => <AppField field={field} label="Key" placeholder="dashboard.total_income" description="A name to find the string by here." />}
         </form.Field>
         <form.Field name="context" validators={{ onChange: shape.context }}>
-          {(field) => <AppField field={field} label="Context" placeholder="dashboard" description="Optional group." />}
+          {(field) => <AppField field={field} label="Area" placeholder="dashboard" description="Optional group." />}
         </form.Field>
       </div>
       <form.Field name="en" validators={{ onChange: shape.en }}>

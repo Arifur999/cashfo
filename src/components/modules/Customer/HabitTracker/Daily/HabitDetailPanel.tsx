@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Card from "@/components/smartly/Card";
@@ -8,39 +9,53 @@ import Textarea from "@/components/smartly/form/Textarea";
 import type { Habit, HabitMonthLog } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { formatDate } from "@/lib/customer/date";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
-import { bestStreak, countsOn, countTone, dayMark, monthGrid, ruleLabel, streakWord, WEEK_START, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
+import { actionError, amountLabel, bestStreak, countsOn, countTone, dayMark, dayText, instantText, monthGrid, ruleLabel, streakText, unitLabel, WEEK_START, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface HabitDetailPanelProps {
   habit: Habit;
   today: string;
+  // The day the page shows.
   day: string;
-  logs: HabitMonthLog[];
+  // "YYYY-MM": the month this panel shows, which can differ from the day's.
+  month: string;
+  // The logs of the 60 days up to today (for the best streak), whatever
+  // day the page shows, and the shown month's.
+  bestLogs: HabitMonthLog[];
+  monthLogs: HabitMonthLog[];
   streak: number;
   // Today's note, when the viewed day is today.
   note: string | null;
   todayLog: { completed: boolean; value: number | null } | null;
   onEdit: () => void;
-  onMonthChange: (day: string) => void;
+  onMonthChange: (month: string) => void;
+  // The panel sits in a bottom sheet (below 1400px), which has a title of its own.
+  inSheet?: boolean;
 }
 
 const MARK_CLASS = {
-  done: "text-white",
+  done: "text-surface",
   missed: "bg-expense-soft text-expense",
   open: "border-[1.5px] border-dashed border-line-strong text-ink-2",
   rest: "bg-surface text-ink-muted",
   future: "bg-surface text-ink-muted/60",
 } as const;
 
+// How far back the best streak looks: the 60 days up to today, whose months
+// the page loads for it (daily/page.tsx).
+const BEST_LOOK_BACK = 60;
+
 // One habit's month: its streaks, every day of the month coloured, and a
-// note for today.
-export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayLog, onEdit, onMonthChange }: HabitDetailPanelProps) {
+// note for today. The month arrows leaf through the habit's months alone;
+// the day's list stays where it is.
+export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs: shownLogs, streak, note, todayLog, onEdit, onMonthChange, inSheet = false }: HabitDetailPanelProps) {
   const { t, locale } = useLocale();
+  const router = useRouter();
   const [draft, setDraft] = useState(note ?? "");
   const [savedFor, setSavedFor] = useState(`${habit.id}:${note ?? ""}`);
   const [isPending, startTransition] = useTransition();
@@ -49,59 +64,72 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
     setDraft(note ?? "");
   }
 
+  const count = (n: number) => formatCount(n, locale);
   const tone = categoryTone(habit.color);
-  const rule = ruleLabel(habit);
-  const month = day.slice(0, 7);
+  const rule = ruleLabel(habit, t, locale);
   const [year, monthNumber] = month.split("-").map(Number);
   const cells = monthGrid(year, monthNumber);
   const monthDays = cells.filter((c): c is string => c !== null && c <= today);
-  const monthLogs = logs.filter((l) => l.habitId === habit.id && l.date.slice(0, 7) === month);
+  const monthLogs = shownLogs.filter((l) => l.habitId === habit.id && l.date.slice(0, 7) === month);
   const doneThisMonth = monthDays.filter((d) => monthLogs.some((l) => l.completed && l.date.slice(0, 10) === d)).length;
-  const plannedThisMonth = monthDays.filter((d) => countsOn(habit, logs, d)).length;
+  const plannedThisMonth = monthDays.filter((d) => countsOn(habit, shownLogs, d)).length;
   const counted = !!habit.targetValue;
-  const values = monthLogs.filter((l) => l.value !== null).map((l) => l.value as number);
-  const average = values.length ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10 : null;
-  const best = Math.max(streak, bestStreak(habit, logs, today, 60));
+  const target = habit.targetValue ?? 0;
+  // Over the planned days, so a missed day counts as nothing rather than not at all.
+  const total = monthLogs.reduce((sum, l) => sum + (l.value ?? 0), 0);
+  const average = plannedThisMonth > 0 ? Math.round((total / plannedThisMonth) * 10) / 10 : null;
+  const best = Math.max(streak, bestStreak(habit, bestLogs, today, BEST_LOOK_BACK));
   const rate = plannedThisMonth > 0 ? Math.round((doneThisMonth / plannedThisMonth) * 100) : null;
+  const thisMonth = month === today.slice(0, 7);
+  const name = monthName(month, locale);
+  // The goal's middle band (close, not yet there) only when it has room.
+  const near = Math.ceil(target * 0.75);
 
   const facts = [
-    { label: t("Current streak"), value: `${streak} ${t(streakWord(habit, streak))}` },
-    { label: t("Best streak"), value: `${best} ${t(streakWord(habit, best))}` },
-    { label: monthName(month, locale), value: `${doneThisMonth} ${t("of")} ${plannedThisMonth} ${t("days")}` },
-    counted ? { label: t("Daily average"), value: average === null ? "—" : `${average} ${habit.unit ?? ""}`.trim() } : { label: t("This month"), value: rate === null ? "—" : `${rate}%` },
+    { label: t("Current streak"), value: streakText(habit, streak, t, locale) },
+    { label: t("Best, last 60 days"), value: streakText(habit, best, t, locale) },
+    { label: name, value: t("{done} of {total} days", { done: count(doneThisMonth), total: count(plannedThisMonth) }) },
+    counted
+      ? { label: t("Daily average"), value: average === null ? "—" : amountLabel(average, habit.unit, t, locale) }
+      : { label: thisMonth ? t("This month") : t("Rate in {month}", { month: name }), value: rate === null ? "—" : `${count(rate)}%` },
   ];
 
   const canGoNext = month < today.slice(0, 7);
-  const target = habit.targetValue ?? 0;
+  const subtitle = [rule.amount ? (habit.frequencyType === "DAILY" ? t("{amount} a day", { amount: rule.amount }) : `${rule.amount} · ${rule.days}`) : rule.days, t("Added {date}", { date: instantText(habit.createdAt, locale) })].join(" · ");
 
   function saveNote() {
     if (day !== today || draft === (note ?? "") || isPending) return;
     startTransition(async () => {
       const result = await checkInHabitAction(habit.id, { date: today, completed: todayLog?.completed ?? false, value: todayLog?.value ?? undefined, note: draft.trim() });
-      if (result.success) toast.success(t("Note saved"));
-      else toast.error(result.message ?? t("Failed to save the note"));
+      if (result.success) {
+        toast.success(t("Note saved"));
+        // The page's copy of today's log carries the note; without this,
+        // coming back to the habit would show the old one.
+        router.refresh();
+      } else {
+        toast.error(actionError(result.message, "Failed to save the note", t, locale));
+      }
     });
   }
 
+  const Heading = inSheet ? "h3" : "h2";
+
   return (
-    <Card padding="none" className="flex flex-col gap-4 p-5">
+    <Card padding="none" elevated={!inSheet} className={cn("flex flex-col gap-4 p-5", inSheet && "border-0")}>
       <div className="flex items-center gap-3">
         <span className={cn("flex size-10.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h2 className="truncate text-title font-semibold text-ink">{habit.name}</h2>
-          <span className="truncate text-small text-ink-muted">
-            {rule.amount ? `${rule.amount} ${t(rule.days === "Every day" ? "a day" : "")}`.trim() : t(rule.days)}
-            {rule.amount && rule.days !== "Every day" ? ` · ${t(rule.days)}` : ""} · {t("added")} {formatDate(habit.createdAt, "d MMM")}
-          </span>
+          <Heading className="truncate text-title font-semibold text-ink">{habit.name}</Heading>
+          <span className="truncate text-small text-ink-muted">{subtitle}</span>
         </span>
-        <button type="button" onClick={onEdit} aria-label={`${t("Edit")} ${habit.name}`} className="flex size-8.5 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink">
+        <button type="button" onClick={onEdit} aria-label={t("Edit {name}", { name: habit.name })} className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
           <Pencil className="size-4" aria-hidden="true" />
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         {facts.map((fact) => (
-          <div key={fact.label} className="flex flex-col gap-0.5 rounded-md bg-strip px-3 py-3">
+          <div key={fact.label} className="flex min-w-0 flex-col gap-0.5 rounded-md bg-strip px-3 py-3">
             <span className="text-caption font-normal text-ink-muted">{fact.label}</span>
             <span className="text-title font-bold text-ink tabular-nums">{fact.value}</span>
           </div>
@@ -110,56 +138,68 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <button type="button" onClick={() => onMonthChange(`${shiftMonth(month, -1)}-01`)} aria-label={monthName(shiftMonth(month, -1), locale)} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken">
+          <button type="button" onClick={() => onMonthChange(shiftMonth(month, -1))} aria-label={monthName(shiftMonth(month, -1), locale, "long", true)} className="flex size-9 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken pointer-coarse:size-11">
             <ChevronLeft className="size-4" aria-hidden="true" />
           </button>
           <span className="text-body font-semibold text-ink">{monthName(month, locale, "long", true)}</span>
-          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(`${shiftMonth(month, 1)}-01`)} aria-label={monthName(shiftMonth(month, 1), locale)} className="flex size-7.5 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken disabled:opacity-40">
+          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(shiftMonth(month, 1))} aria-label={monthName(shiftMonth(month, 1), locale, "long", true)} className="flex size-9 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
             <ChevronRight className="size-4" aria-hidden="true" />
           </button>
         </div>
-        <div className="grid grid-cols-7 gap-1 text-center text-caption font-semibold text-ink-muted">
+        <div aria-hidden="true" className="grid grid-cols-7 gap-1 text-center text-caption font-semibold text-ink-muted">
           {Array.from({ length: 7 }, (_, i) => (WEEK_START + i) % 7).map((d) => (
             <span key={d} className={cn(d === 5 && "text-warning")}>
-              {t(WEEKDAY_SHORT[d]).slice(0, 2)}
+              {t(WEEKDAY_MIN[d])}
             </span>
           ))}
         </div>
-        <div role="grid" aria-label={`${habit.name}, ${monthName(month, locale)}`} className="grid grid-cols-7 gap-1">
+        {/* One picture with a summary; each day's state is in its title. */}
+        <div role="img" aria-label={t("{month}: {done} of {total} planned days done", { month: monthName(month, locale, "long", true), done: count(doneThisMonth), total: count(plannedThisMonth) })} className="grid grid-cols-7 gap-1">
           {cells.map((cell, i) => {
-            if (!cell) return <span key={i} aria-hidden="true" className="h-9.5" />;
-            const mark = dayMark(habit, logs, cell, today);
+            if (!cell) return <span key={i} className="h-9.5" />;
+            const mark = dayMark(habit, shownLogs, cell, today);
             const log = monthLogs.find((l) => l.date.slice(0, 10) === cell);
             const value = log?.value ?? null;
             const fill = counted && value !== null ? countTone(value, target) : null;
             const current = cell === day;
+            const strong = fill === "full" || (!fill && mark === "done");
             return (
               <span
                 key={cell}
-                title={`${formatDate(cell, "d MMM")}: ${counted && value !== null ? `${value} ${habit.unit ?? ""}` : t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "rest" ? "not planned" : mark === "open" ? "still open" : "not yet")}`}
+                title={`${dayText(cell, locale, "dayMonth")}: ${counted && value !== null ? amountLabel(value, habit.unit, t, locale) : t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "rest" ? "not planned" : mark === "open" ? "still open" : "not yet")}`}
                 className={cn(
                   "flex h-9.5 flex-col items-center justify-center rounded-md text-caption font-semibold tabular-nums",
-                  fill ? cn(tone.fg, fill === "full" ? "bg-current text-white" : fill === "near" ? "bg-current/45 text-white" : tone.bg) : mark === "done" ? cn("bg-current", tone.fg, MARK_CLASS.done) : MARK_CLASS[mark],
+                  fill ? cn(tone.fg, fill === "full" ? "bg-current" : fill === "near" ? "bg-current/45" : tone.bg) : mark === "done" ? cn("bg-current", tone.fg) : MARK_CLASS[mark],
                   current && "ring-2 ring-emerald ring-offset-1 ring-offset-surface",
                 )}
               >
-                <span className={cn(fill === "full" || mark === "done" ? "text-white" : "")}>{Number(cell.slice(8))}</span>
-                {counted && value !== null && <span className={cn("text-[11px] font-medium opacity-85", fill === "full" || fill === "near" ? "text-white" : "")}>{value}</span>}
+                {/* Ink in the surface colour on a filled day: white, or the night in dark mode. */}
+                <span className={cn(strong ? "text-surface" : fill === "near" ? "text-ink" : "")}>{count(Number(cell.slice(8)))}</span>
+                {counted && value !== null && <span className={cn("text-caption leading-none font-medium opacity-85", strong ? "text-surface" : fill === "near" ? "text-ink" : "")}>{count(value)}</span>}
               </span>
             );
           })}
         </div>
-        {counted && (
-          <div className="flex items-center justify-end gap-2 text-caption font-normal text-ink-muted">
-            <span>{habit.unit ? `${habit.unit}:` : t("Amount:")}</span>
+        {counted && target > 0 && (
+          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-caption font-normal text-ink-muted">
+            <span>{habit.unit ? `${unitLabel(habit.unit, t)}:` : t("Amount:")}</span>
+            {near < target && (
+              <>
+                <span className="flex items-center gap-1">
+                  <span className={cn("size-3 rounded-[3px]", tone.bg)} /> {t("under {count}", { count: count(near) })}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className={cn("size-3 rounded-[3px] bg-current/45", tone.fg)} /> {near === target - 1 ? count(near) : `${count(near)}–${count(target - 1)}`}
+                </span>
+              </>
+            )}
+            {near >= target && (
+              <span className="flex items-center gap-1">
+                <span className={cn("size-3 rounded-[3px]", tone.bg)} /> {t("under {count}", { count: count(target) })}
+              </span>
+            )}
             <span className="flex items-center gap-1">
-              <span className={cn("size-3 rounded-[3px]", tone.bg)} /> {t("under")} {Math.ceil(target * 0.75)}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className={cn("size-3 rounded-[3px] bg-current/45", tone.fg)} /> {Math.ceil(target * 0.75)}–{target - 1}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className={cn("size-3 rounded-[3px] bg-current", tone.fg)} /> {target} {t("or more")}
+              <span className={cn("size-3 rounded-[3px] bg-current", tone.fg)} /> {t("{count} or more", { count: count(target) })}
             </span>
           </div>
         )}
@@ -167,10 +207,10 @@ export function HabitDetailPanel({ habit, today, day, logs, streak, note, todayL
 
       {day === today && (
         <div className="flex flex-col gap-2 border-t border-divider pt-4">
-          <label htmlFor="hb-note" className="text-small font-semibold text-ink">
+          <label htmlFor={inSheet ? "hb-note-sheet" : "hb-note"} className="text-small font-semibold text-ink">
             {t("Note for today")} <span className="font-normal text-ink-muted">({t("optional")})</span>
           </label>
-          <Textarea id="hb-note" rows={2} value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={saveNote} maxLength={200} placeholder={t("How did it go?")} disabled={isPending} className="resize-none" />
+          <Textarea id={inSheet ? "hb-note-sheet" : "hb-note"} rows={2} value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={saveNote} maxLength={200} placeholder={t("How did it go?")} disabled={isPending} className="resize-none" />
         </div>
       )}
     </Card>

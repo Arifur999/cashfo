@@ -6,7 +6,8 @@ interface ListHeadProps extends React.ComponentProps<"div"> {
   // "md:grid-cols-[minmax(0,1fr)_130px_120px]" (unprefixed with
   // showOnPhone, for a table that scrolls sideways instead).
   columns: string;
-  // Stays at the top of the page while a long list scrolls under it.
+  // Stays at the top of the page while a long list scrolls under it, above
+  // the rows' ListRowActions (z-10), so their buttons pass under it.
   sticky?: boolean;
   // Phones stack each row as a card, so the heads hide there unless asked.
   showOnPhone?: boolean;
@@ -22,7 +23,7 @@ const ListHead = ({ columns, sticky = false, showOnPhone = false, className, ...
       showOnPhone ? "grid" : "hidden md:grid",
       LIST_HEAD,
       columns,
-      sticky && "sticky top-0 z-10",
+      sticky && "sticky top-0 z-20",
       className,
     )}
     {...props}

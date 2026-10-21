@@ -28,6 +28,15 @@ describe("ticket words", () => {
     expect(earlierTicketsText({ total: 3, solved: 3 })).toBe("3, all solved");
     expect(earlierTicketsText({ total: 2, solved: 1 })).toBe("2, 1 still open");
   });
+
+  it("puts the figures in the reader's digits", () => {
+    // Bangla's units, as admin-support's dictionary words them.
+    const bangla: Record<string, string> = { "{h}h {m}m": "{h} ঘ {m} মি", "{total}, {open} still open": "{total}টি, {open}টি এখনো খোলা" };
+    const t = (key: string, values: Record<string, string | number> = {}) => (bangla[key] ?? key).replace(/\{(\w+)\}/g, (_, name: string) => String(values[name]));
+    expect(hoursText(3.33, t, "bn")).toBe("৩ ঘ ২০ মি");
+    expect(earlierTicketsText({ total: 12, solved: 1 }, t, "bn")).toBe("১২টি, ১১টি এখনো খোলা");
+    expect(hoursText(0, t, "bn")).toBe("—");
+  });
 });
 
 describe("openTicketCount", () => {
@@ -49,7 +58,7 @@ describe("TICKET_TABS", () => {
       ["Need a reply", 8],
       ["In progress", 6],
       ["Waiting on user", 4],
-      ["Resolved", 23],
+      ["Resolved or closed", 23],
     ]);
   });
 });

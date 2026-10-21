@@ -6,6 +6,7 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import { timeLabel } from "@/lib/customer/date";
 import { clockOf, prayerTimesFor } from "@/lib/customer/prayerTimes";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface SehriIftarCardProps {
@@ -21,7 +22,7 @@ interface SehriIftarCardProps {
 // The board's Sehri and Iftar card: when Sehri ends (Fajr) and Iftar
 // (Maghrib) for the person's city, from the same settings as the prayer times.
 export function SehriIftarCard({ day, todayDay, year }: SehriIftarCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { settings } = usePrayerSettings();
   const times = prayerTimesFor(settings, day);
   const tiles = [
@@ -38,9 +39,9 @@ export function SehriIftarCard({ day, todayDay, year }: SehriIftarCardProps) {
         </Chip>
       </div>
       <span className="text-small text-ink-2">
-        {todayDay !== null ? t("For {city}, day {day} of Ramadan:", { city: t(settings.city), day: todayDay }) : t("For your city, every day of Ramadan. A preview for the first day of Ramadan {year} in {city}:", { year: year ?? "", city: t(settings.city) })}
+        {todayDay !== null ? t("For {city}, day {day} of Ramadan:", { city: t(settings.city), day: formatCount(todayDay, locale) }) : t("For your city, every day of Ramadan. A preview for the first day of Ramadan {year} in {city}:", { year: toLocaleDigits(String(year ?? ""), locale), city: t(settings.city) })}
       </span>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 max-[360px]:grid-cols-1">
         {tiles.map((tile) => (
           <div key={tile.label} className="flex flex-col gap-0.75 rounded-md border border-warning-fill/40 bg-surface p-3">
             <span className="flex items-center gap-2 text-small font-semibold text-warning">

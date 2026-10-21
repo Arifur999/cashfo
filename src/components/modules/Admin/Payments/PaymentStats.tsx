@@ -1,31 +1,48 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import Kpi from "@/components/shared/Kpi";
 import { formatCurrency } from "@/lib/currency";
 import { formatMonthName } from "@/lib/date";
-import { formatNumber } from "@/lib/number";
+import { formatCount } from "@/lib/i18n/digits";
 import { GATEWAY_BAR_CLASS } from "@/lib/payments";
 import { humanizeEnum } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 import { paymentStatsQuery } from "@/queries/payment.queries";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { plural } from "@/lib/i18n/message";
+import LoadError from "./LoadError";
+import { countPhrase, PAYMENTS_LIST_HREF } from "./paymentsDisplay";
 
+// Totals over many payments, in whole taka.
 const money = (value: string) => formatCurrency(value, undefined, 0);
 
+// A figure that opens the payments behind it: the link fills its grid
+// cell, and the card's border darkens on hover as an interactive card's does.
+const TILE_LINK = "group/tile rounded-lg";
+const TILE_CARD = "h-full transition-colors group-hover/tile:border-line-strong";
+
+interface PaymentStatsProps {
+  // The day the "last 7 days" start (yyyy-MM-dd), read by the page.
+  failedSince: string;
+}
+
 // The design's four figures over the list, and how people paid last month.
-const PaymentStats = () => {
-  const stats = useQuery(paymentStatsQuery()).data?.data;
-  const { translate } = useLocale();
+const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
+  const query = useQuery(paymentStatsQuery());
+  const stats = query.data?.data;
+  const { translate, locale } = useLocale();
   if (!stats) {
-    return null;
+    // Never a blank where the figures were: say they couldn't load.
+    return query.isError ? <LoadError title="Couldn't load these figures" onRetry={() => void query.refetch()} /> : null;
   }
 
+  const count = (value: number) => formatCount(value, locale);
+  const payments = (value: number) => countPhrase(translate, locale, value, "{count} payment", "{count} payments");
   const last = translate(formatMonthName(stats.lastMonth.month));
-  const lastPayments = plural(translate, stats.lastMonth.payments, "{count} payment", "{count} payments");
+  const lastPayments = payments(stats.lastMonth.payments);
   const change = stats.lastMonth.changePct;
   const gatewayTotal = stats.gatewaysLastMonth.reduce((sum, row) => sum + row.count, 0);
 
@@ -52,20 +69,26 @@ const PaymentStats = () => {
           label={translate("{month} so far", { month: translate(formatMonthName(stats.thisMonth.month)) })}
           value={money(stats.thisMonth.collected)}
           note={translate("{payments} in {days}", {
-            payments: plural(translate, stats.thisMonth.payments, "{count} payment", "{count} payments"),
-            days: plural(translate, stats.thisMonth.days, "{count} day", "{count} days"),
+            payments: payments(stats.thisMonth.payments),
+            days: countPhrase(translate, locale, stats.thisMonth.days, "{count} day", "{count} days"),
           })}
         />
-        <Kpi
-          size="sm"
-          label="Failed, last 7 days"
-          value={formatNumber(stats.failedLast7Days.count)}
-          note={<span className={stats.failedLast7Days.count > 0 ? "text-expense" : undefined}>{translate("{amount} not collected yet", { amount: money(stats.failedLast7Days.amount) })}</span>}
-        />
+        {/* The failures open the failed payments of those days. */}
+        <Link href={`${PAYMENTS_LIST_HREF}?status=FAILED&dateFrom=${failedSince}`} className={TILE_LINK}>
+          <Kpi
+            size="sm"
+            className={TILE_CARD}
+            label="Failed, last 7 days"
+            value={count(stats.failedLast7Days.count)}
+            note={<span className={stats.failedLast7Days.count > 0 ? "text-expense" : undefined}>{translate("{amount} not collected yet", { amount: money(stats.failedLast7Days.amount) })}</span>}
+          />
+        </Link>
+        {/* No link: the list goes by the day a payment was made, not the
+            day it was refunded, so no filter shows a month's refunds. */}
         <Kpi
           size="sm"
           label={translate("Refunds in {month}", { month: last })}
-          value={formatNumber(stats.refundsLastMonth.count)}
+          value={count(stats.refundsLastMonth.count)}
           note={<span className={stats.refundsLastMonth.count > 0 ? "text-warning" : undefined}>{translate("{amount} sent back", { amount: money(stats.refundsLastMonth.amount) })}</span>}
         />
       </div>
@@ -75,7 +98,7 @@ const PaymentStats = () => {
           <span className="text-small text-ink-muted"><T>No payments came in.</T></span>
         ) : (
           <>
-            <div role="img" aria-label={stats.gatewaysLastMonth.map((row) => `${translate(humanizeEnum(row.gateway))} ${row.count}`).join(", ")} className="flex h-3 grow overflow-hidden rounded-full">
+            <div role="img" aria-label={stats.gatewaysLastMonth.map((row) => `${translate(humanizeEnum(row.gateway))} ${count(row.count)}`).join(", ")} className="flex h-3 grow overflow-hidden rounded-full">
               {stats.gatewaysLastMonth.map((row) => (
                 <span key={row.gateway} className={GATEWAY_BAR_CLASS[row.gateway]} style={{ width: `${(row.count / gatewayTotal) * 100}%` }} />
               ))}
@@ -84,7 +107,7 @@ const PaymentStats = () => {
               {stats.gatewaysLastMonth.map((row) => (
                 <span key={row.gateway} className="flex items-center gap-1 whitespace-nowrap">
                   <span className={cn("size-2.25 rounded-[3px]", GATEWAY_BAR_CLASS[row.gateway])} aria-hidden="true" />
-                  {translate(humanizeEnum(row.gateway))} <b className="font-semibold text-ink">{formatNumber(row.count)}</b>
+                  {translate(humanizeEnum(row.gateway))} <b className="font-semibold text-ink">{count(row.count)}</b>
                 </span>
               ))}
             </div>

@@ -6,8 +6,12 @@
 // "Statement", "Cancel", "Edit", "Close", "Date", "Amount", "Note",
 // "Balance", "Category", "Account", "Reference", "Description", "Voided",
 // "Reversal", "Showing", "entries", "people", "Type to search", "Actions
-// for", "Save changes", "Save & add another", "View details") are not
-// repeated.
+// for", "Actions for {name}", "Archive {name}?", "Remove {name}?",
+// "Added {date}", "Remove photo", "From", "To@@date", "Custom", "Brought
+// forward", "Carried forward", "Save changes", "Save & add another", "View
+// details") are not repeated. Words another area spells differently carry
+// their meaning after "@@" ("Money in@@loan" is money that came in, not
+// income).
 export const loanManagementDictionary: Record<string, string> = {
   // Shared across several components in this area
   "(optional)": "(ঐচ্ছিক)",
@@ -46,6 +50,20 @@ export const loanManagementDictionary: Record<string, string> = {
   "New entry": "নতুন এন্ট্রি",
   Principal: "আসল",
   Entry: "এন্ট্রি",
+  // Money that came in or went out through a wallet: not income or expense.
+  "Money in@@loan": "টাকা এসেছে",
+  "Money out@@loan": "টাকা গেছে",
+  "Banks and people": "ব্যাংক ও ব্যক্তি",
+  "Couldn't save. Check your connection and try again.": "সংরক্ষণ করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।",
+  "You're offline. Saving waits until the internet is back.": "আপনি অফলাইনে আছেন। ইন্টারনেট ফিরলে সংরক্ষণ করা যাবে।",
+  "{from} – {to}": "{from} – {to}",
+  // The API's own messages, as the loan pages meet them
+  "That's more than is owed. It can be {amount} at most.": "এটি বকেয়ার চেয়ে বেশি। সর্বোচ্চ {amount} হতে পারে।",
+  "This contact still has a balance of {amount}. Settle it before archiving.": "এই পরিচিতির এখনো {amount} ব্যালেন্স আছে। আর্কাইভ করার আগে মিটিয়ে নিন।",
+  "A loan with this kind of contact can't be saved yet. Change them to Person, then try again.": "এই ধরনের পরিচিতির সাথে ঋণ এখনো সংরক্ষণ করা যাচ্ছে না। ধরন বদলে ব্যক্তি করুন, তারপর আবার চেষ্টা করুন।",
+  "Provide at least a phone number or an email so this contact can be reached": "যোগাযোগের জন্য অন্তত একটি ফোন নম্বর বা ইমেইল দিন",
+  "Contact not found": "পরিচিতি পাওয়া যায়নি",
+  "Couldn't load your wallets. Check your connection and try again.": "আপনার ওয়ালেট লোড করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।",
 
   // Loans (LoanDashboardPageClient.tsx)
   "Dena-pawna": "দেনা-পাওনা",
@@ -70,6 +88,11 @@ export const loanManagementDictionary: Record<string, string> = {
   "Owe you": "আপনার পাওনা",
   "Gave or lent": "দিয়েছি বা ধার দিয়েছি",
   "Took or borrowed": "নিয়েছি বা ধার নিয়েছি",
+  "{side} · {who}": "{side} · {who}",
+  "No one owes you": "কারও কাছে আপনার পাওনা নেই",
+  "You owe no one": "আপনার কারও কাছে দেনা নেই",
+  "No loans recorded yet": "এখনো কোনো ঋণ লেখা হয়নি",
+  "Record the loan you gave or took, and everyone with a balance shows up here.": "দেওয়া বা নেওয়া ঋণ লিখুন, যাদের সাথে ব্যালেন্স আছে তারা এখানে দেখা যাবে।",
 
   // People & banks (LoanContactsPageClient.tsx)
   "Everyone you have dena-pawna with: people, banks, NGOs, customers and suppliers.": "যাদের সাথে আপনার দেনা-পাওনা: মানুষ, ব্যাংক, এনজিও, গ্রাহক ও সরবরাহকারী।",
@@ -78,18 +101,27 @@ export const loanManagementDictionary: Record<string, string> = {
   "Add the people, banks and NGOs you lend to or borrow from.": "যাদের ধার দেন বা যাদের কাছ থেকে ধার নেন, সেই মানুষ, ব্যাংক ও এনজিও যোগ করুন।",
   Kind: "ধরন",
   "All types": "সব ধরন",
-  "Search name, phone…": "নাম, ফোন খুঁজুন…",
   "No contact info": "কোনো যোগাযোগের তথ্য নেই",
   Added: "যোগ হয়েছে",
-  "They leave the lists; their entries and statement stay.": "তালিকা থেকে সরে যাবে; এন্ট্রি ও স্টেটমেন্ট থেকে যাবে।",
+  // The tab archived contacts wait in (the chip on a card says "Archived").
+  "Archived@@tab": "আর্কাইভ করা",
+  "They move to the Archived tab and leave the entry form. Their entries and statement stay.": "তারা আর্কাইভ ট্যাবে চলে যাবে, এন্ট্রি ফর্মে আর থাকবে না। তাদের এন্ট্রি ও স্টেটমেন্ট থেকে যাবে।",
   "Archive contact": "পরিচিতি আর্কাইভ করুন",
   "Contact archived": "পরিচিতি আর্কাইভ করা হয়েছে",
   "Failed to archive contact": "পরিচিতি আর্কাইভ করতে ব্যর্থ",
+  "Settle the balance first": "আগে ব্যালেন্স মিটিয়ে নিন",
+  "Clear search and filters": "খোঁজ ও ফিল্টার মুছুন",
+  "Last entry {date}": "শেষ এন্ট্রি {date}",
+  "No entries yet": "এখনো কোনো এন্ট্রি নেই",
+  // Removing someone never used who was added with a balance.
+  "{name} still owes you {amount}. Removing them deletes that balance too, for good.": "{name}-এর কাছে এখনো আপনার {amount} পাওনা। সরালে এই পাওনাও স্থায়ীভাবে মুছে যাবে।",
+  "You still owe {name} {amount}. Removing them deletes that balance too, for good.": "{name}-কে এখনো আপনার {amount} দেওয়ার আছে। সরালে এই দেনাও স্থায়ীভাবে মুছে যাবে।",
 
   // Add / edit contact (LoanContactDrawer.tsx)
   "Edit contact": "পরিচিতি সম্পাদনা",
   "A person, bank or NGO you lend to or borrow from.": "যাকে ধার দেন বা যার কাছ থেকে ধার নেন: ব্যক্তি, ব্যাংক বা এনজিও।",
   "Upload photo or logo": "ছবি বা লোগো আপলোড করুন",
+  "Change photo or logo": "ছবি বা লোগো বদলান",
   "e.g. Arif, or Islami Bank": "যেমন: আরিফ, বা ইসলামী ব্যাংক",
   "Who is this?": "ইনি কে?",
   "What do you do with them?": "তাদের সাথে কী করেন?",
@@ -97,7 +129,15 @@ export const loanManagementDictionary: Record<string, string> = {
   Trade: "ব্যবসা",
   "Lend or borrow money": "টাকা ধার দেওয়া বা নেওয়া",
   "Sell or buy on credit": "বাকিতে বিক্রি বা কেনা",
-  'They appear in every list either way. This only changes the wording, e.g. "Give a loan" vs "Record a sale".': 'যেভাবেই হোক তারা প্রতিটি তালিকায় থাকবে। এটি শুধু ভাষা বদলায়, যেমন "ঋণ দিন" বনাম "বিক্রয় লিখুন"।',
+  "Trade contacts are kept in Books › Customers & suppliers, not in Loans.": "ব্যবসার পরিচিতিরা থাকে খাতা › ক্রেতা ও সরবরাহকারীতে, দেনা-পাওনায় নয়।",
+  "Saved in Books › Customers & suppliers": "খাতা › ক্রেতা ও সরবরাহকারীতে সংরক্ষিত",
+  "Open Books": "খাতা খুলুন",
+  "Move {name} to Books?": "{name}-কে খাতায় সরাবেন?",
+  "They and their entries leave Loans and show in Books › Customers & suppliers instead.": "তারা ও তাদের এন্ট্রি দেনা-পাওনা থেকে সরে খাতা › ক্রেতা ও সরবরাহকারীতে দেখা যাবে।",
+  "Move to Books": "খাতায় সরান",
+  "A phone or an email is needed, so they can be reached.": "যোগাযোগের জন্য একটি ফোন বা ইমেইল লাগবে।",
+  "Add a phone or an email, so they can be reached.": "যোগাযোগের জন্য একটি ফোন বা ইমেইল দিন।",
+  "Enter a valid email": "সঠিক ইমেইল দিন",
   "Motijheel branch": "মতিঝিল শাখা",
   "Balance right now": "এখনকার ব্যালেন্স",
   "Who owes whom": "কে কাকে দেবে",
@@ -105,9 +145,8 @@ export const loanManagementDictionary: Record<string, string> = {
   "I owe them": "আমি তাদের কাছে দেব",
   "Nothing yet": "এখনো কিছু নেই",
   "This contact": "এই পরিচিতি",
-  "starts with": "শুরু হচ্ছে",
-  "you owe them.": "আপনার দেনা নিয়ে।",
-  "they owe you.": "আপনার পাওনা নিয়ে।",
+  "{name} starts with {amount} you owe them.": "শুরুতে {name}-কে আপনার {amount} দেওয়ার আছে।",
+  "{name} starts with {amount} they owe you.": "শুরুতে {name}-এর কাছে আপনার {amount} পাওনা।",
   "Contact added": "পরিচিতি যোগ হয়েছে",
   "Contact updated": "পরিচিতি আপডেট হয়েছে",
   "Failed to update contact": "পরিচিতি আপডেট করতে ব্যর্থ",
@@ -116,7 +155,8 @@ export const loanManagementDictionary: Record<string, string> = {
   "Failed to create contact": "পরিচিতি তৈরি করতে ব্যর্থ",
 
   // New loan entry (LoanEntryDrawer.tsx, lib/customer/loanDisplay.ts)
-  "Add a bank or person first, from People & banks.": "আগে মানুষ ও ব্যাংক থেকে একটি ব্যাংক বা ব্যক্তি যোগ করুন।",
+  "A loan given or taken, a repayment, or the profit on a loan, with what it does to both balances.": "দেওয়া বা নেওয়া ঋণ, পরিশোধ, বা ঋণের লাভ, আর তাতে দুই ব্যালেন্সে কী বদলায়।",
+  "Add a bank or person first, from {page}.": "আগে {page} থেকে একটি ব্যাংক বা ব্যক্তি যোগ করুন।",
   "What happened?": "কী হয়েছে?",
   "Gave a loan": "ঋণ দিয়েছি",
   "Took a loan": "ঋণ নিয়েছি",
@@ -126,9 +166,10 @@ export const loanManagementDictionary: Record<string, string> = {
   "Money in · you owe them": "টাকা এসেছে · আপনি তাদের দেবেন",
   "Money in · they owe less": "টাকা এসেছে · তাদের দেনা কমল",
   "Money out · you owe less": "টাকা গেছে · আপনার দেনা কমল",
-  "Paid from": "যেখান থেকে দিলেন",
+  // The wallet a loan or repayment left; another area's "Paid from" is a status.
+  "Paid from@@loan": "যেখান থেকে দিলেন",
   "Money came into": "টাকা যেখানে এলো",
-  "Loan no. BL-2231": "ঋণ নং BL-2231",
+  "e.g. House loan, BL-2231": "যেমন: বাড়ির ঋণ, BL-2231",
   "Save loan": "ঋণ সংরক্ষণ",
   "Save payment": "পরিশোধ সংরক্ষণ",
   "They owe you more": "তাদের দেনা বাড়ল",
@@ -136,7 +177,15 @@ export const loanManagementDictionary: Record<string, string> = {
   "They owe you less": "তাদের দেনা কমল",
   "You owe less": "আপনার দেনা কমল",
   "Entry saved": "এন্ট্রি সংরক্ষিত",
-  "Failed to record the entry": "এন্ট্রি লিখতে ব্যর্থ",
+  "Couldn't save the loan": "ঋণ সংরক্ষণ করা যায়নি",
+  "Couldn't save the payment": "পরিশোধ সংরক্ষণ করা যায়নি",
+  "Couldn't save the profit entry": "লাভের এন্ট্রি সংরক্ষণ করা যায়নি",
+  "They owe you {amount} at most": "তারা আপনাকে সর্বোচ্চ {amount} দেবে",
+  "You owe them {amount} at most": "আপনি তাদের সর্বোচ্চ {amount} দেবেন",
+  "Nothing to get back": "ফেরত পাওয়ার কিছু নেই",
+  "Nothing to pay back": "ফেরত দেওয়ার কিছু নেই",
+  "Nothing to get back: they don't owe you anything right now.": "ফেরত পাওয়ার কিছু নেই: এখন তারা আপনাকে কিছু দেবে না।",
+  "Nothing to pay back: you don't owe them anything right now.": "ফেরত দেওয়ার কিছু নেই: এখন আপনি তাদের কিছু দেবেন না।",
 
   // Loan payments (LoanTransactionsPageClient.tsx)
   "Loan payments": "ঋণ পরিশোধ",
@@ -149,9 +198,16 @@ export const loanManagementDictionary: Record<string, string> = {
   "Effect on balance": "ব্যালেন্সে প্রভাব",
   "Void entry": "এন্ট্রি বাতিল করুন",
   "Entry voided": "এন্ট্রি বাতিল হয়েছে",
-  "newest first": "নতুনটি আগে",
+  "Showing {range} of {total}, newest first": "{total}টির মধ্যে {range}, নতুনটি আগে",
+  "No entries match these filters": "এই ফিল্টারে কোনো এন্ট্রি মেলেনি",
+  "Try another bank or person, or a longer period.": "অন্য ব্যাংক বা ব্যক্তি, অথবা আরও লম্বা সময়কাল বেছে দেখুন।",
+  "Show all entries": "সব এন্ট্রি দেখান",
   "Void this entry?": "এই এন্ট্রি বাতিল করবেন?",
   "The balance goes back to what it was before this entry. It stays in your history, marked as voided.": "ব্যালেন্স এই এন্ট্রির আগের অবস্থায় ফিরে যাবে। এটি বাতিল চিহ্নসহ ইতিহাসে থেকে যাবে।",
+  // Voiding profit: only the wallet and the expense or income change back.
+  "The money goes back to {wallet} and the expense is removed. The loan balance doesn't change.": "টাকা {wallet}-এ ফিরে যাবে আর খরচটি মুছে যাবে। ঋণের ব্যালেন্স বদলাবে না।",
+  "The money comes out of {wallet} again and the income is removed. The loan balance doesn't change.": "টাকা আবার {wallet} থেকে বেরিয়ে যাবে আর আয়টি মুছে যাবে। ঋণের ব্যালেন্স বদলাবে না।",
+  "your wallet": "আপনার ওয়ালেট",
   Void: "বাতিল",
   "Transaction voided": "লেনদেন বাতিল হয়েছে",
   "Failed to void transaction": "লেনদেন বাতিল করতে ব্যর্থ",
@@ -161,10 +217,17 @@ export const loanManagementDictionary: Record<string, string> = {
   "Loan statement": "ঋণ স্টেটমেন্ট",
   "One bank or person, every entry, with the balance carried forward.": "একটি ব্যাংক বা ব্যক্তি, প্রতিটি এন্ট্রি, এগিয়ে নেওয়া ব্যালেন্সসহ।",
   "Print / PDF": "প্রিন্ট / পিডিএফ",
-  "Pick a bank or person first": "আগে একটি ব্যাংক বা ব্যক্তি বেছে নিন",
   "Pick a bank or person to see their statement": "স্টেটমেন্ট দেখতে একটি ব্যাংক বা ব্যক্তি বেছে নিন",
   "You'll see the opening balance, every loan and repayment, and the running balance, ready to print.": "দেখবেন প্রারম্ভিক ব্যালেন্স, প্রতিটি ঋণ ও পরিশোধ, আর চলমান ব্যালেন্স, প্রিন্টের জন্য প্রস্তুত।",
+  "Add the people, banks and NGOs you lend to or borrow from, and their statements show here.": "যাদের ধার দেন বা যাদের কাছ থেকে ধার নেন, সেই মানুষ, ব্যাংক ও এনজিও যোগ করুন; তাদের স্টেটমেন্ট এখানে দেখা যাবে।",
+  "All time, up to {date}": "শুরু থেকে {date} পর্যন্ত",
+  "{count} entry": "{count}টি এন্ট্রি",
+  "{count} entries": "{count}টি এন্ট্রি",
   "Opening balance, plus what moved one way, minus what moved the other, equals the closing balance": "প্রারম্ভিক ব্যালেন্স, যোগ একদিকে যা গেছে, বিয়োগ অন্যদিকে যা গেছে, সমান সমাপনী ব্যালেন্স",
+  // The equation's operators, read aloud.
+  plus: "যোগ",
+  minus: "বিয়োগ",
+  equals: "সমান",
   "Loan taken / got back": "ঋণ নেওয়া / ফেরত পাওয়া",
   "Loan given / paid back": "ঋণ দেওয়া / ফেরত দেওয়া",
   "Principal in": "আসল এসেছে",
@@ -279,6 +342,8 @@ export const loanManagementDictionary: Record<string, string> = {
   "Counted as income. Doesn't change what they owe.": "আয় হিসেবে গোনা হয়। তাদের দেনা বদলায় না।",
   "{count} more profit payments": "আরও {count}টি লাভ দেওয়া",
   "{count} more profit received": "আরও {count}টি লাভ পাওয়া",
+  "Hide {count} profit payments": "{count}টি লাভ দেওয়া লুকান",
+  "Hide {count} profit received": "{count}টি লাভ পাওয়া লুকান",
   "Every loan you gave or took, every repayment, and every profit payment.": "আপনার দেওয়া বা নেওয়া প্রতিটি ঋণ, প্রতিটি পরিশোধ, আর প্রতিটি লাভের লেনদেন।",
   "Profit received": "পাওয়া লাভ",
   "counted as expense": "খরচ হিসেবে গোনা",

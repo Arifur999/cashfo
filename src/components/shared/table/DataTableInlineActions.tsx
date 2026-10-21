@@ -17,9 +17,10 @@ interface InlineButton<TData> {
   destructive?: boolean;
 }
 
-// The smartly secondary button at the row's 32px.
+// The smartly secondary button at the row's 32px; a destructive one in the
+// person page's red outline.
 const BUTTON = "h-8 px-3";
-const DANGER = "border-expense/40 text-expense hover:bg-expense-soft";
+const DANGER = "border-expense-line text-expense hover:bg-expense-soft";
 
 // The row's actions as the design's small buttons (View, Reset data): the
 // safe ones first, the destructive ones outlined in red. In "split" mode
@@ -27,6 +28,8 @@ const DANGER = "border-expense/40 text-expense hover:bg-expense-soft";
 // never reaches the row's own onRowClick.
 const DataTableInlineActions = <TData,>({ row, actions }: DataTableInlineActionsProps<TData>) => {
   const { translate } = useLocale();
+  // Whose row a button acts on, for a screen reader's list of buttons.
+  const name = actions.rowLabel?.(row);
   const split = actions.display === "split";
   const extras = (actions.extra ?? []).filter((action) => !action.hidden?.(row));
   const buttons: InlineButton<TData>[] = [];
@@ -44,7 +47,14 @@ const DataTableInlineActions = <TData,>({ row, actions }: DataTableInlineActions
   return (
     <div className="flex justify-end gap-2" onClick={(event) => event.stopPropagation()}>
       {buttons.map(({ label, onClick, destructive }) => (
-        <Button key={label} variant="secondary" size="sm" className={cn(BUTTON, destructive && DANGER)} onClick={() => onClick(row)}>
+        <Button
+          key={label}
+          variant="secondary"
+          size="sm"
+          className={cn(BUTTON, destructive && DANGER)}
+          aria-label={name ? translate("{action} for {name}", { action: translate(label), name }) : undefined}
+          onClick={() => onClick(row)}
+        >
           {translate(label)}
         </Button>
       ))}

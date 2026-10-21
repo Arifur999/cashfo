@@ -1,20 +1,34 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import { RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { lookupAuditEntryAction } from "@/app/(dashboardLayout)/admin/security/(sections)/_action";
 import CopyButton from "@/components/shared/CopyButton";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
-import { Button } from "@/components/ui/button";
+import T from "@/components/shared/T";
+import Button from "@/components/smartly/Button";
+import { adminCrumb } from "@/lib/adminBreadcrumb";
+import { ADMIN_ROLE_LABELS } from "@/lib/adminRoles";
 import { auditActionLabel } from "@/lib/auditActionLabels";
 import { auditRecordHref, auditRecordName, auditRecordTypeLabel, namesNoRecord } from "@/lib/auditRecords";
-import { ADMIN_ROLE_LABELS } from "@/lib/adminRoles";
 import { formatRelativeDateTime } from "@/lib/date";
-import { auditLogDetailQuery } from "@/queries/security.queries";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { queryKeys } from "@/lib/queryKeys";
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import AuditValueDiff from "./AuditValueDiff";
-import T from "@/components/shared/T";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
 
+// One entry by its id: the entry, or null when there is none. An API that
+// didn't answer throws, so the query retries before the drawer says so.
+const auditEntryQuery = (id: string) =>
+  queryOptions({
+    queryKey: [...queryKeys.auditLogs.detail(id), "lookup"] as const,
+    queryFn: async () => {
+      const result = await lookupAuditEntryAction(id);
+      if (result.status === "failed") throw new Error("The audit entry didn't load");
+      return result.status === "found" ? result.entry : null;
+    },
+  });
 
 interface AuditEntryDrawerProps {
   entryId: string | null;
@@ -28,8 +42,12 @@ interface AuditEntryDrawerProps {
 // the whole saved record to copy.
 const AuditEntryDrawer = ({ entryId, listEntry, onClose }: AuditEntryDrawerProps) => {
   const { translate } = useLocale();
-  const detail = useQuery({ ...auditLogDetailQuery(entryId ?? ""), enabled: Boolean(entryId) });
-  const entry = detail.data?.data ?? listEntry;
+  const detail = useQuery({ ...auditEntryQuery(entryId ?? ""), enabled: Boolean(entryId) });
+  const entry = detail.data ?? listEntry;
+  // Only the API's own "no such entry" reads as a wrong link; anything else
+  // that went wrong can be tried again.
+  const missing = detail.data === null && !entry;
+  const failed = detail.isError && !entry;
 
   return (
     <FormDrawer
@@ -39,7 +57,7 @@ const AuditEntryDrawer = ({ entryId, listEntry, onClose }: AuditEntryDrawerProps
       }}
       width="lg"
       closeOnOutsideClick
-      title={entry ? auditActionLabel(entry.action) : detail.isError ? "Entry not found" : "Loading entry..."}
+      title={entry ? auditActionLabel(entry.action) : missing ? "Entry not found" : failed ? "Couldn't load this entry" : "Loading entry..."}
       description={
         entry ? (
           <>
@@ -48,7 +66,23 @@ const AuditEntryDrawer = ({ entryId, listEntry, onClose }: AuditEntryDrawerProps
         ) : undefined
       }
     >
-      {entry ? <EntryBody entry={entry} /> : <p className="text-small text-ink-muted"><T>{detail.isFetching ? "Loading..." : "This entry may have been removed, or the link is wrong."}</T></p>}
+      {entry ? (
+        <EntryBody entry={entry} />
+      ) : failed ? (
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-small text-ink-muted">
+            <T>Check your internet and try again. Nothing was lost.</T>
+          </p>
+          <Button variant="secondary" size="sm" disabled={detail.isFetching} onClick={() => void detail.refetch()}>
+            <RefreshCw aria-hidden="true" />
+            <T>Try again</T>
+          </Button>
+        </div>
+      ) : (
+        <p className="text-small text-ink-muted">
+          <T>{missing ? "This entry may have been removed, or the link is wrong." : "Loading..."}</T>
+        </p>
+      )}
     </FormDrawer>
   );
 };
@@ -58,6 +92,12 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
   const recordName = auditRecordName(entry, translate);
   const typeLabel = auditRecordTypeLabel(entry.entityType, translate);
   const href = auditRecordHref(entry);
+  // A record with a page of its own is opened ("Open Yearly Pro"); the rest
+  // live in a list, and the button names that list ("Go to Workspaces"), so
+  // it never promises the record itself.
+  const ownPage = Boolean(href && entry.entityId && href.endsWith(`/${entry.entityId}`));
+  const listName = href && !ownPage ? adminCrumb(href)?.page : null;
+  const linkLabel = ownPage ? translate("Open {name}", { name: recordName }) : translate("Go to {page}", { page: listName ? translate(listName) : typeLabel });
   const saved = JSON.stringify(
     {
       action: entry.action,
@@ -75,22 +115,29 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
   return (
     <div className="flex flex-1 flex-col gap-4">
       <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-3 text-body">
-        <dt className="text-ink-muted"><T>Admin</T></dt>
+        <dt className="text-ink-muted">
+          <T>Admin</T>
+        </dt>
         <dd className="font-semibold text-ink">
           {entry.adminUser.name} · <T>{ADMIN_ROLE_LABELS[entry.adminUser.role]}</T>
         </dd>
         {!namesNoRecord(entry.action) && (
           <>
-            <dt className="text-ink-muted"><T>Changed</T></dt>
+            {/* "On", as the log's column and its filter call it. */}
+            <dt className="text-ink-muted">
+              <T>On@@record</T>
+            </dt>
             <dd className="font-semibold text-ink">
               {typeLabel}
               {recordName !== typeLabel && ` · ${recordName}`}
             </dd>
           </>
         )}
-        <dt className="text-ink-muted"><T>IP address</T></dt>
+        <dt className="text-ink-muted">
+          <T>IP address</T>
+        </dt>
         <dd>
-          <code className="font-mono text-ink">{entry.ipAddress ?? "—"}</code>
+          <code className="font-mono wrap-anywhere text-ink">{entry.ipAddress ?? "—"}</code>
         </dd>
       </dl>
 
@@ -106,7 +153,9 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
           <h3 id="audit-saved" className="text-body font-semibold text-ink">
             <T>Saved record</T>
           </h3>
-          <span className="text-caption text-ink-muted"><T>The whole entry, as it was saved</T></span>
+          <span className="text-caption text-ink-muted">
+            <T>The whole entry, as it was saved</T>
+          </span>
         </span>
         <pre className="max-h-64 overflow-auto rounded-md bg-ink px-4 py-3 font-mono text-caption leading-relaxed whitespace-pre-wrap text-line-strong">{saved}</pre>
       </section>
@@ -114,10 +163,8 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
       <div className="-mx-6 mt-auto -mb-5 flex flex-wrap justify-end gap-3 border-t border-line bg-strip px-6 py-4">
         <CopyButton value={saved} label="the entry as JSON" text="Copy as JSON" size="md" />
         {href && (
-          <Button asChild>
-            <Link href={href}>
-              <T values={{ name: recordName }}>{"Open {name}"}</T>
-            </Link>
+          <Button asChild size="md">
+            <Link href={href}>{linkLabel}</Link>
           </Button>
         )}
       </div>

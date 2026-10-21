@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { hrefWithoutUnknownWithin } from "@/components/modules/Admin/Security/knownWithin";
 import FailingNetworks from "@/components/modules/Admin/Security/Logins/FailingNetworks";
 import LoginAttemptsTable from "@/components/modules/Admin/Security/Logins/LoginAttemptsTable";
 import { LOGIN_ATTEMPTS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Security/Logins/loginAttemptsTable.config";
@@ -10,7 +12,11 @@ import { adminPageTitle } from "@/lib/i18n/locale";
 export const generateMetadata = adminPageTitle("Sign-ins");
 
 const SignInsPage = async ({ searchParams }: PageProps<"/admin/security/logins">) => {
-  const queryString = buildTableQueryString(await searchParams, LOGIN_ATTEMPTS_TABLE_BASE_CONFIG);
+  const params = await searchParams;
+  // A window the API refuses would fail every read: open on the default instead.
+  const fixed = hrefWithoutUnknownWithin("/admin/security/logins", params);
+  if (fixed !== null) redirect(fixed);
+  const queryString = buildTableQueryString(params, LOGIN_ATTEMPTS_TABLE_BASE_CONFIG);
 
   return (
     <QueryPrefetch

@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Skill, SkillWeekDay } from "./api";
-import { amountText, applyProgress, cellText, hoursInput, hoursText, lastActivity, namesLine, parseHours, progressPct, progressText, relativeDay, streakStart, weekSums, weekTotal } from "./skillsDisplay";
+import { fillText } from "@/lib/i18n/fill";
+import { inEnglish, type Translate } from "@/lib/i18n/message";
+import { translate } from "@/lib/i18n/translate";
+import { amountText, applyProgress, cellText, hoursInput, hoursText, lastActivity, namesLine, parseHours, practiceLine, progressPct, progressText, relativeDay, streakSince, streakStart, weekSums, weekTotal } from "./skillsDisplay";
 
-const t = (key: string) => key;
+const t = inEnglish;
+// The Bangla dictionary, the way useLocale().t reads it.
+const bn: Translate = (key, values) => fillText(translate("bn", key), values ?? {});
 
 function skill(over: Partial<Skill> & { id: string }): Skill {
   return {
@@ -54,6 +59,14 @@ describe("units", () => {
     expect(progressText({ unit: "HOURS", progress: 720, target: 1800 }, t)).toBe("12 of 30 hours");
   });
 
+  // One sentence per figure, so Bangla keeps its own order ("40টি পাঠের মধ্যে ১৮টি").
+  it("says an amount and progress in Bangla", () => {
+    expect(amountText("LESSONS", 2, bn, "bn")).toBe("২টি পাঠ");
+    expect(amountText("HOURS", 90, bn, "bn")).toBe("১.৫ ঘণ্টা");
+    expect(cellText("HOURS", 90, bn, "bn")).toBe("১.৫ঘ");
+    expect(progressText({ unit: "LESSONS", progress: 18, target: 40 }, bn, "bn")).toBe("৪০টি পাঠের মধ্যে ১৮টি");
+  });
+
   it("clamps the percentage", () => {
     expect(progressPct({ progress: 18, target: 40 })).toBe(45);
     expect(progressPct({ progress: 1, target: 0 })).toBe(0);
@@ -94,9 +107,23 @@ describe("the week", () => {
   });
 
   it("joins names the way people say them", () => {
-    expect(namesLine([], "and", "more")).toBe("");
-    expect(namesLine(["React"], "and", "more")).toBe("React");
-    expect(namesLine(["React", "English"], "and", "more")).toBe("React and English");
-    expect(namesLine(["React", "English", "Python", "Canva"], "and", "more")).toBe("React, English and 2 more");
+    expect(namesLine([], t)).toBe("");
+    expect(namesLine(["React"], t)).toBe("React");
+    expect(namesLine(["React", "English"], t)).toBe("React and English");
+    expect(namesLine(["React", "English", "Python", "Canva"], t)).toBe("React, English and 2 more");
+    expect(namesLine(["React", "English", "Python", "Canva"], bn, "bn")).toBe("React, English ও আরও ২টি");
+  });
+
+  it("says when a skill was last practised", () => {
+    expect(practiceLine({ id: "react", unit: "LESSONS" }, WEEK, TODAY, t)).toBe("2 lessons today");
+    expect(practiceLine({ id: "english", unit: "HOURS" }, WEEK, TODAY, t)).toBe("1.5 hours yesterday");
+    expect(practiceLine({ id: "nothing", unit: "HOURS" }, WEEK, TODAY, t)).toBeNull();
+  });
+
+  // A weekday only while the run is under a week, so it can only be this week's.
+  it("names the start of a streak by weekday, then by date", () => {
+    expect(streakSince("2026-10-11", 5, t)).toBe("Logged every day since Sunday");
+    expect(streakSince("2026-10-01", 15, t)).toBe("Logged every day since 1 Oct");
+    expect(streakSince("2026-10-01", 15, bn, "bn")).toBe("১ অক্টো থেকে প্রতিদিন লেখা হয়েছে");
   });
 });

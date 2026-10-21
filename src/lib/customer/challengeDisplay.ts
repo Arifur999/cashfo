@@ -32,11 +32,49 @@ export function challengeWindow(tracker: HabitMonthTracker, today: string): Chal
   return { start, end, today: Math.min(todayN, tracker.totalDays + 1), status, daysLeft: Math.max(0, tracker.totalDays - todayN) };
 }
 
+// The hidden item a challenge with no daily items of its own is ticked
+// through: the day itself. The server only ticks an item the sheet has, so
+// it is added to the sheet before its first tick (habitsActions).
+export const DAY_ITEM = "done";
+
+// What is ticked each day: the challenge's items, or the day itself.
+export const dailyItems = (tracker: Pick<HabitMonthTracker, "items">): string[] => (tracker.items.length > 0 ? tracker.items : [DAY_ITEM]);
+
+// Whether the day itself is what gets ticked (no items, or only the hidden one).
+export const ticksTheDay = (tracker: Pick<HabitMonthTracker, "items">): boolean => tracker.items.every((item) => item === DAY_ITEM);
+
 // A day is done when every item of the challenge is ticked; a challenge
 // with no items ticks the day itself (one hidden item).
 export function dayDone(tracker: HabitMonthTracker, day: number): boolean {
-  const items = tracker.items.length > 0 ? tracker.items : ["done"];
-  return items.every((item) => tracker.checks.some((c) => c.day === day && c.item === item));
+  return dailyItems(tracker).every((item) => tracker.checks.some((c) => c.day === day && c.item === item));
+}
+
+// The days so far (up to and including `upTo`) that are done: the ones a
+// new item is ticked on too, so adding it never turns a done day missed.
+export function doneDays(tracker: HabitMonthTracker, upTo: number): number[] {
+  return Array.from({ length: Math.min(upTo, tracker.totalDays) }, (_, i) => i + 1).filter((day) => dayDone(tracker, day));
+}
+
+// The most done days a new item can be ticked on when it is added. Each
+// tick is a request of its own, and the server takes 100 a minute from one
+// address, page loads included; past this a new row would be refused
+// halfway. Until the server can tick an item on many days at once, a
+// challenge with more done days takes no new row.
+export const MAX_BACKFILL_DAYS = 60;
+
+// Past this many days a strip of one segment a day gets too thin to read,
+// so the card draws one bar of done, missed and still to come instead.
+export const MAX_STRIP_DAYS = 60;
+
+export function stripTotals(tracker: HabitMonthTracker, window: ChallengeWindow): { done: number; missed: number; toCome: number } {
+  let done = 0;
+  let missed = 0;
+  for (let day = 1; day <= tracker.totalDays; day++) {
+    const mark = challengeMark(tracker, window, day);
+    if (mark === "done") done++;
+    else if (mark === "missed") missed++;
+  }
+  return { done, missed, toCome: tracker.totalDays - done - missed };
 }
 
 export type ChallengeMark = "done" | "missed" | "today" | "later";

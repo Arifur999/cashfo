@@ -34,6 +34,15 @@ describe("tableCsv", () => {
     expect(tableCsv(columns, rows)).toBe("ID,Trend\r\np1,\r\np2,");
   });
 
+  it("adds the CSV-only columns after the table's own, under their English heading", () => {
+    const columns = [column("name", { header: "User" }, (row) => row.name)];
+    const extra = [
+      { label: "Email", value: (row: Payment) => row.email },
+      { label: "Open@@status", value: (row: Payment) => (row.amount < 0 ? "-refund" : null) },
+    ];
+    expect(tableCsv(columns, rows, extra)).toBe("User,Email,Open\r\nRahim,rahim@example.com,\r\n\"Karim, Jr.\",karim@example.com,'-refund");
+  });
+
   it("heads a column with its label, its plain header, or its id, in English", () => {
     const columns = [
       column("status", { header: () => null, meta: { label: "Open@@status" } }, () => "x"),

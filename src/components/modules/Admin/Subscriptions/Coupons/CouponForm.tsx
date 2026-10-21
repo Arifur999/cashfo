@@ -46,9 +46,10 @@ const CouponForm = ({ coupon, defaultValues, plans, onDone }: CouponFormProps) =
           <CouponPreview code={code} discountType={discountType} discountValue={discountValue} applicablePlans={applicablePlans} plans={paidPlans} />
         )}
       </form.Subscribe>
+      {/* Named after what it controls, not after one of its own states. */}
       {coupon && (
         <form.Field name="isActive">
-          {(field) => <AppSwitchField field={field} label="On" description="Turn off to stop it working without deleting it." />}
+          {(field) => <AppSwitchField field={field} label="Works at checkout" description="Turn off to stop it working without deleting it." />}
         </form.Field>
       )}
       <FormDialogFooter pinned isPending={isPending} submitLabel={coupon ? "Save changes" : "Create coupon"} pendingLabel="Saving..." />

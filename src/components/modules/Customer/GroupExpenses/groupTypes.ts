@@ -2,15 +2,21 @@ import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, Group
 import type { BudgetStatus, CategorySpend, GroupTab, MonthRange, Transfer } from "@/lib/customer/groupDisplay";
 
 // What the groups list knows about each group: the workspace, its
-// members, and this month's settlement and budget, so a card can show the
-// month's figures without opening the group.
+// members, and its own month's settlement and budget (a group's month can
+// start after the 1st), so a card can show the month's figures without
+// opening the group.
 export interface GroupCardData {
   workspace: WorkspaceListItem;
   members: GroupMember[];
+  // The group month on show: today's, by the group's start day.
+  range: MonthRange;
   settlement: GroupSettlementResult;
   settings: GroupSettings;
   budget: GroupMonthlyBudget | null;
   closed: boolean;
+  // Last month, when it was never closed though something was recorded in
+  // it: the card asks for it to be closed.
+  openMonth: MonthRange | null;
 }
 
 // What a group's page is told by its server page: the month being viewed
@@ -26,6 +32,8 @@ export interface GroupPageData {
   // The months the picker offers, newest first.
   months: string[];
   closedRecord: GroupSettlementRecord | null;
+  // Nothing was ever recorded: the dashboard shows the first steps.
+  isNew: boolean;
   members: GroupMember[];
   // This month's entries.
   contributions: GroupContribution[];
@@ -52,6 +60,21 @@ export interface GroupView {
   byCategory: CategorySpend[];
   byMonth: { month: string; amount: number }[];
   closed: boolean;
-  // Nothing recorded yet: the dashboard shows the first steps instead.
+  // A brand-new group: the dashboard shows the first steps instead.
   setup: boolean;
+  // An established group with nothing in the month on show yet.
+  empty: boolean;
+  // By-meals costs go into a meal rate (meal counting on, meals marked).
+  mealsPooled: boolean;
+  // Every cost outside the meal pool is shared equally by everyone, all
+  // month long: only then is "shared cost each" one figure for all.
+  sharedEqually: boolean;
+}
+
+// Entries on a day inside a closed month leave its record as it is, so a
+// drawer asks before saving one there (once, while it stays open).
+export interface ClosedGuard {
+  isClosed: (day: string) => boolean;
+  // Resolves true to go ahead (at once for an open day).
+  ask: (day: string) => Promise<boolean>;
 }

@@ -4,8 +4,9 @@ import { customerPageMetadata } from "@/lib/customer/pageTitle";
 
 export const generateMetadata = () => customerPageMetadata("/settings/workspaces");
 
-// The list is read here so the page arrives filled in.
+// The list is read here so the page arrives filled in. A failed read is
+// passed as null: an empty list would hide even the personal workspace.
 export default async function SettingsWorkspacesPage() {
   const result = await listBusinessesAction();
-  return <WorkspacesSection initialBusinesses={result.success && result.data ? result.data : []} />;
+  return <WorkspacesSection initialBusinesses={result.success ? (result.data ?? []) : null} />;
 }

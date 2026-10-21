@@ -7,12 +7,14 @@ import { biggestPart, type NetWorth, type NetWorthParts } from "@/lib/customer/i
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
+// "@@networth": loans words a plain "You owe" as a promise to pay (আপনি
+// দেবেন); here it names a balance.
 const PART_LABELS: Record<keyof NetWorthParts, string> = {
   wallets: "Wallets",
   savings: "Savings goals",
   assets: "Assets",
   owedToYou: "Owed to you",
-  youOwe: "You owe",
+  youOwe: "You owe@@networth",
 };
 
 const PART_SENTENCE: Record<Exclude<keyof NetWorthParts, "youOwe">, string> = {
@@ -29,10 +31,12 @@ interface NetWorthCardProps {
 
 // "Net worth today": the one figure, what makes it up, and a bar that shows
 // how much of the whole is yours against what you owe. Phones get the
-// figure and its sentence alone.
+// figure and its sentence alone. With nothing to show it marks itself
+// empty, so a page with no figures yet can leave it out.
 export function NetWorthCard({ worth, currency }: NetWorthCardProps) {
   const { t } = useLocale();
   const biggest = biggestPart(worth);
+  const empty = !(worth.have > 0 || worth.youOwe > 0);
   const parts: { key: keyof NetWorthParts; value: number }[] = [
     { key: "wallets", value: worth.wallets },
     { key: "savings", value: worth.savings },
@@ -42,7 +46,7 @@ export function NetWorthCard({ worth, currency }: NetWorthCardProps) {
   ];
 
   return (
-    <Card padding="none" className="grid items-center gap-1 p-4 max-md:shadow-none md:grid-cols-[300px_minmax(0,1fr)] md:gap-8 md:p-6">
+    <Card padding="none" data-net-worth={empty ? "empty" : undefined} className="grid items-center gap-1 p-4 max-md:shadow-none md:grid-cols-[300px_minmax(0,1fr)] md:gap-8 md:p-6">
       <div className="flex flex-col gap-1 md:gap-2">
         <h2 className="text-small text-ink-muted max-md:leading-[normal] md:text-h3 md:text-ink">{t("Net worth today")}</h2>
         <AmountText value={worth.total} currency={currency} size="display" className={cn("text-h1 font-extrabold max-md:leading-[normal] md:text-display", worth.total < 0 && "text-expense")} />
@@ -63,12 +67,12 @@ export function NetWorthCard({ worth, currency }: NetWorthCardProps) {
             </span>
           ))}
         </div>
-        <div role="img" aria-label={`${t("What you have")} ${worth.haveShare}%, ${t("what you owe")} ${100 - worth.haveShare}%`} className="flex h-2.5 overflow-hidden rounded-full bg-surface-sunken">
+        <div role="img" aria-label={t("What you have {have}, what you owe {owe}", { have: `${worth.haveShare}%`, owe: `${100 - worth.haveShare}%` })} className="flex h-2.5 overflow-hidden rounded-full bg-surface-sunken">
           <span className="bg-emerald" style={{ width: `${worth.haveShare}%` }} />
           <span className="bg-expense-fill" style={{ width: `${100 - worth.haveShare}%` }} />
         </div>
         <span className="text-caption font-normal text-ink-muted">
-          {t("Green: what you have and are owed")}, {formatCurrency(worth.have, currency)} · {t("Red: what you owe")}, {formatCurrency(worth.youOwe, currency)}
+          {t("Green: what you have and are owed, {have} · Red: what you owe, {owe}", { have: formatCurrency(worth.have, currency), owe: formatCurrency(worth.youOwe, currency) })}
         </span>
       </div>
     </Card>

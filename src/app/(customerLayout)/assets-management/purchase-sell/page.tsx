@@ -18,5 +18,7 @@ export default async function BuySellAssetPage() {
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  return <BuySellPageClient businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
+  // Keyed by workspace: a switch lands on this same page, and its drawers
+  // must not carry the other workspace's wallet over.
+  return <BuySellPageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
 }

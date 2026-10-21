@@ -23,7 +23,7 @@ import { NavDrawer } from "./NavDrawer";
 import { NotificationsBell } from "./NotificationsBell";
 import { useNavSections } from "./SidebarNav";
 import { ThemeToggle } from "./ThemeToggle";
-import { listOf, listUrlKey, listVisitUrl, restoredListUrl, savedListUrl, savedListValue, topbarTrail } from "./topbarCrumbs";
+import { listOf, listUrlKey, listVisitUrl, recordListHref, restoredListUrl, savedListUrl, savedListValue, topbarTrail } from "./topbarCrumbs";
 import { useTopbarExtras } from "./TopbarExtras";
 import { formatCount } from "@/lib/i18n/digits";
 
@@ -67,7 +67,9 @@ function Topbar() {
   const darkModeOn = useFeature("dark_mode");
   const { openCount } = useTodayTasks();
   const { tasksOpen, setTasksOpen, attachTasksPanel } = useAddActions();
-  const sections = useNavSections();
+  // Every item this workspace has, the ones hidden from a staff member too:
+  // Journal entry opened by its address is still Books' Journal entry.
+  const sections = useNavSections({ allRoles: true });
   // A page the menu hides here (Books outside a business workspace, which
   // shows its notice; Loans while switched off) still has a name.
   const location = findNavLocation(pathname, searchParams, sections) ?? findNavLocation(pathname, searchParams, NAV_SECTIONS);
@@ -94,15 +96,16 @@ function Topbar() {
     }
   }, [visitKey, visitUrl, activeBusinessId]);
 
-  // A record on its list's own page (the vault's checkup) has no list to
-  // go back to, so that part stays text. Read in the browser only; the
-  // server (and hydration) link the plain list.
-  const linkList = visitUrl === null;
-  const recordList = location && record && linkList ? listOf(location) : null;
+  // A record page leads back to its list as it was left, read in the
+  // browser only (the server, and hydration, link the plain list). A record
+  // on its list's own page (the vault's checkup) leads to the plain list,
+  // which closes it (recordListHref).
+  const recordList = location && record && visitUrl === null ? listOf(location) : null;
   const stored = useSyncExternalStore(subscribeNowhere, () => (recordList ? readSaved(listUrlKey(recordList)) : null), () => null);
   const listUrl = recordList ? restoredListUrl(recordList, savedListUrl(stored, activeBusinessId)) : undefined;
+  const listHref = location && record ? recordListHref(location, visitUrl, listUrl) : null;
 
-  const trail = location && !extras?.title ? topbarTrail(location, !!record, listUrl, { linkList }) : [];
+  const trail = location && !extras?.title ? topbarTrail(location, !!record, listHref ?? undefined, { linkList: listHref !== null }) : [];
   const current = extras?.title ?? record ?? extras?.heading ?? (crumb ? t(crumb.heading) : "");
 
   const tasksLabel = openCount > 0 ? t("Today’s tasks, {count} left", { count: formatCount(openCount, locale) }) : t("Today’s tasks");

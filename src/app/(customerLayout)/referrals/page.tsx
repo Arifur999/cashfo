@@ -5,6 +5,8 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getReferralInfo } from "@/lib/customer/referrals";
+import { workspaceName } from "@/lib/customer/workspaceSwitch";
+import { getAppToday } from "@/lib/date";
 
 export const generateMetadata = () => customerPageMetadata("/referrals");
 
@@ -19,6 +21,9 @@ export default async function ReferralsPage() {
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
+  // The withdrawal lands in this workspace's wallet: worth saying when it is
+  // a business, not the reader's own personal one.
+  const businessName = activeBusiness && activeBusiness.type !== "PERSONAL" ? workspaceName(activeBusiness, user.name) : null;
 
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
@@ -27,5 +32,5 @@ export default async function ReferralsPage() {
 
   const info = await getReferralInfo();
 
-  return <ReferralsPageClient businessId={activeBusinessId} info={info} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} origin={origin} />;
+  return <ReferralsPageClient businessId={activeBusinessId} info={info} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} workspaceName={businessName} origin={origin} today={getAppToday()} />;
 }

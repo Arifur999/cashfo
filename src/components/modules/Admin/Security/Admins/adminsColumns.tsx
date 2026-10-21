@@ -27,13 +27,14 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
         <span className="flex min-w-0 items-center gap-3">
           <AdminAvatar name={admin.name} role={admin.role} muted={suspended} />
           <span className="flex min-w-0 flex-col gap-px">
-            <span className={cn("truncate font-semibold", suspended ? "text-ink-muted" : "text-ink")}>
-              {admin.name}
+            {/* "(you)" sits after the name, not inside it, so a long name
+                truncates without cutting it off. */}
+            <span className="flex min-w-0 items-baseline gap-1">
+              <span className={cn("min-w-0 truncate font-semibold", suspended ? "text-ink-muted" : "text-ink")}>{admin.name}</span>
               {admin.id === currentAdminId && (
-                <>
-                  {" "}
+                <span className="shrink-0 font-semibold text-ink-muted">
                   <T>(you)</T>
-                </>
+                </span>
               )}
             </span>
             <span className="truncate text-small text-ink-muted">{admin.email}</span>
@@ -76,7 +77,12 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
   },
   {
     id: "actions",
-    header: "Actions",
+    // Named for screen readers only, as the other lists keep it.
+    header: () => (
+      <span className="sr-only">
+        <T>Actions</T>
+      </span>
+    ),
     cell: ({ row }) => <AdminRowActions admin={row.original} isSelf={row.original.id === currentAdminId} onOpen={onOpen} />,
     enableSorting: false,
     enableHiding: false,

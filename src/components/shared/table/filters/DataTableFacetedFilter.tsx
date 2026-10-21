@@ -12,6 +12,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { DataTableFilterOption } from "../dataTable.types";
@@ -36,7 +37,9 @@ interface DataTableFacetedFilterProps {
 }
 
 const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple = false, emptyLabel = "All", facets, defaultValue }: DataTableFacetedFilterProps) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
+  // A status word in the reader's language; a record's own name as it is.
+  const optionLabel = (option: DataTableFilterOption) => (option.raw ? option.label : translate(asStatus(option.label)));
   const toggle = (value: string) => {
     const isSelected = selected.includes(value);
     if (multiple) {
@@ -56,10 +59,10 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
             {selected.length === 0
               ? translate(emptyLabel)
               : selected.length > 2
-                ? translate("{count} selected", { count: selected.length })
+                ? translate("{count} selected", { count: formatCount(selected.length, locale) })
                 : options
                     .filter((option) => selected.includes(option.value))
-                    .map((option) => translate(asStatus(option.label)))
+                    .map(optionLabel)
                     .join(", ")}
           </b>
           <ChevronDown className="size-3.5 text-ink-muted" aria-hidden="true" />
@@ -86,8 +89,8 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
                       <Check className="size-3" aria-hidden="true" />
                     </span>
                     {option.icon && <option.icon className="size-4 text-ink-muted" aria-hidden="true" />}
-                    <span>{translate(asStatus(option.label))}</span>
-                    {count !== undefined && <span className="ml-auto font-mono text-caption text-ink-muted">{count}</span>}
+                    <span>{optionLabel(option)}</span>
+                    {count !== undefined && <span className="ml-auto font-mono text-caption text-ink-muted">{formatCount(count, locale)}</span>}
                   </CommandItem>
                 );
               })}

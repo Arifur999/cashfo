@@ -31,9 +31,26 @@ describe("flagNextStep", () => {
 
 describe("flagTriesLink", () => {
   it("links an open failed-sign-ins flag to that network's tries", () => {
-    expect(flagTriesLink(flag())).toEqual({ href: "/admin/security/logins?ipAddress=198.51.100.77&success=false", label: "See the 9 tries" });
-    expect(flagTriesLink(flag({ status: "FALSE_POSITIVE" }))).toBeNull();
-    expect(flagTriesLink(flag({ type: "OTHER" }))).toBeNull();
+    expect(flagTriesLink(flag(), undefined, { now })).toEqual({ href: "/admin/security/logins?ipAddress=198.51.100.77&success=false&within=7d", label: "See the 9 tries" });
+    expect(flagTriesLink(flag({ status: "FALSE_POSITIVE" }), undefined, { now })).toBeNull();
+    expect(flagTriesLink(flag({ type: "OTHER" }), undefined, { now })).toBeNull();
+  });
+
+  it("opens Sign-ins on a window that still holds the tries", () => {
+    const within = (createdAt: string | undefined) => new URLSearchParams(flagTriesLink(flag({ createdAt }), undefined, { now })?.href.split("?")[1]).get("within");
+    // The tries are the 15 minutes before the flag, so a flag just inside
+    // 7 days needs the 30.
+    expect(within("2026-09-25T09:20:00Z")).toBe("7d");
+    expect(within("2026-09-25T09:05:00Z")).toBe("30d");
+    expect(within("2026-09-10T09:00:00Z")).toBe("30d");
+    expect(within("2026-08-20T09:00:00Z")).toBe("all");
+    expect(within("not a date")).toBe("all");
+    expect(within(undefined)).toBe("all");
+  });
+
+  it("counts the tries in the reader's digits", () => {
+    const t = (key: string, values?: Record<string, string | number>) => `${key}|${values?.count ?? ""}`;
+    expect(flagTriesLink(flag(), t, { now, locale: "bn" })?.label).toBe("See the {count} tries|৯");
   });
 });
 

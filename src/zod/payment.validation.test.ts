@@ -8,8 +8,11 @@ describe("buildRefundFormZodSchema", () => {
     expect(schema.safeParse({ amount: "300", reason: "Partial goodwill refund" }).success).toBe(true);
   });
 
-  it("rejects more than was paid", () => {
-    expect(schema.safeParse({ amount: "800", reason: "Full refund please" }).success).toBe(false);
+  it("rejects more than was paid, in words the dictionary knows", () => {
+    const result = schema.safeParse({ amount: "800", reason: "Full refund please" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("More than this payment");
+    expect(schema.safeParse({ amount: "799", reason: "Full refund please" }).success).toBe(true);
   });
 
   it("requires a reason of at least 5 characters", () => {

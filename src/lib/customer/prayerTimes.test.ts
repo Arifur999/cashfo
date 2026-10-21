@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockOf, DEFAULT_PRAYER_SETTINGS, minutesUntil, nextPrayer, prayerTimesFor } from "./prayerTimes";
+import { clockOf, clockParts, DEFAULT_PRAYER_SETTINGS, minutesUntil, nextPrayer, prayerTimesFor } from "./prayerTimes";
 
 describe("prayer times", () => {
   // Dhaka on 2 Oct 2026, Karachi method, Hanafi Asr -- the board's own day.
@@ -18,6 +18,13 @@ describe("prayer times", () => {
     near(times.Asr, "16:05");
     near(times.Maghrib, "17:46");
     near(times.Isha, "19:00");
+  });
+
+  // A narrow tile sets the clock large and the am/pm word under it.
+  it("splits a time into its clock and its am/pm", () => {
+    // 17:46 UTC+6 is 11:46 UTC.
+    expect(clockParts(new Date("2026-10-02T11:46:00.000Z"))).toEqual({ clock: "5:46", meridiem: "pm" });
+    expect(clockParts(new Date("2026-10-01T18:05:00.000Z"))).toEqual({ clock: "12:05", meridiem: "am" });
   });
 
   it("puts Hanafi Asr later than Shafi'i", () => {

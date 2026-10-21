@@ -1,24 +1,28 @@
 "use client";
 
-import { Archive, Check, Info, Minus, Plus, X } from "lucide-react";
+import { Archive, Check, Info, Minus, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import ChoiceCard from "@/components/smartly/ChoiceCard";
+import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import WeekdayPicker from "@/components/smartly/WeekdayPicker";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Habit, HabitFrequency } from "@/lib/customer/api";
 import { budgetCategoryHex, budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { ruleLabel } from "@/lib/customer/habitDisplay";
+import { actionError, latinDigits, ruleLabel, unitKey, unitLabel } from "@/lib/customer/habitDisplay";
 import { createHabitAction, deleteHabitAction, updateHabitAction } from "@/lib/customer/habitsActions";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 import { HABIT_COLORS, HABIT_ICONS, HABIT_UNITS, type HabitColorKey, type HabitIconKey } from "./habitVisuals";
 
 interface HabitDrawerProps {
@@ -34,9 +38,10 @@ const OFTEN: { value: HabitFrequency; title: string; sub: string }[] = [
 ];
 
 // A new or edited habit in the design's drawer: its name, icon and colour,
-// how often, and whether an amount is counted each time.
+// how often, and whether an amount is counted each time. Archive keeps it
+// (and its history) to bring back later; Delete asks first.
 export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const [name, setName] = useState("");
@@ -47,7 +52,10 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
   const [count, setCount] = useState(3);
   const [counted, setCounted] = useState(false);
   const [target, setTarget] = useState("");
+  // The unit as shown in the field, in the reader's language; saved as its
+  // chip's key when it is one (unitKey).
   const [unit, setUnit] = useState("minutes");
+  const [deleting, setDeleting] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -63,13 +71,17 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
       setCount(editing?.weeklyCount ?? 3);
       setCounted(!!editing?.targetValue);
       setTarget(editing?.targetValue ? String(editing.targetValue) : "");
-      setUnit(editing?.unit ?? "minutes");
+      setUnit(unitLabel(editing?.unit ?? "minutes", t));
+      setDeleting(false);
     }
   }
 
   const targetValue = Number(target) || 0;
-  const valid = name.trim().length > 0 && (frequency !== "WEEKLY_DAYS" || days.length > 0) && (!counted || targetValue > 0);
-  const preview = ruleLabel({ frequencyType: frequency, weeklyDays: days, weeklyCount: count, targetValue: counted ? targetValue : null, unit: counted ? unit.trim() : null });
+  const noDays = frequency === "WEEKLY_DAYS" && days.length === 0;
+  const noGoal = counted && targetValue <= 0;
+  const valid = name.trim().length > 0 && !noDays && !noGoal;
+  const savedUnit = unitKey(unit, t);
+  const preview = ruleLabel({ frequencyType: frequency, weeklyDays: days, weeklyCount: count, targetValue: counted ? targetValue : null, unit: counted ? savedUnit : null }, t, locale);
   const tone = categoryTone(color);
 
   function submit(event: React.FormEvent) {
@@ -84,7 +96,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
         weeklyDays: frequency === "WEEKLY_DAYS" ? [...days].sort((a, b) => a - b) : [],
         weeklyCount: frequency === "WEEKLY_COUNT" ? count : undefined,
         targetValue: counted ? targetValue : null,
-        unit: counted ? unit.trim() || null : null,
+        unit: counted ? savedUnit || null : null,
       };
       const result = editing ? await updateHabitAction(editing.id, input) : await createHabitAction(input);
       if (result.success) {
@@ -92,38 +104,55 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to save the habit"));
+        toast.error(actionError(result.message, editing ? "Failed to update the habit" : "Failed to add the habit", t, locale));
       }
     });
   }
 
+  // Archiving always keeps the habit and its days, to bring back later.
   function archive() {
+    if (!editing || isPending) return;
+    startTransition(async () => {
+      const result = await updateHabitAction(editing.id, { isArchived: true });
+      if (result.success) {
+        toast.success(t("Habit archived"));
+        onClose();
+        router.refresh();
+      } else {
+        toast.error(actionError(result.message, "Failed to archive the habit", t, locale));
+      }
+    });
+  }
+
+  // Deleting removes a habit that was never ticked; one with history is
+  // archived instead, so its days stay (the server decides).
+  function remove() {
     if (!editing || isPending) return;
     startTransition(async () => {
       const result = await deleteHabitAction(editing.id);
       if (result.success) {
-        toast.success(result.data?.action === "deleted" ? t("Habit removed") : t("Habit archived"));
+        toast.success(result.data?.action === "deleted" ? t("Habit removed") : t("It has days ticked, so it was archived instead"));
+        setDeleting(false);
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to archive the habit"));
+        toast.error(actionError(result.message, "Failed to remove habit", t, locale));
       }
     });
   }
 
   const label = (text: string) => <span className="text-body font-medium text-ink">{text}</span>;
+  const chip = "h-7 rounded-full border px-3 text-caption font-semibold transition-colors pointer-coarse:h-11";
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
+      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:max-h-[92dvh]")}>
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit habit") : t("New habit")}</SheetTitle>
             <span className="text-small leading-[normal] text-ink-muted">{t("It shows up in your daily list on the days you plan.")}</span>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
+          <CloseButton onClick={onClose} label={t("Close")} />
         </SheetHeader>
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
@@ -132,10 +161,11 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
               <Input id="hb-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={t("Morning walk")} />
             </Field>
 
-            <div className="grid grid-cols-[minmax(0,1fr)_150px] gap-5">
+            {/* Stacked on a phone, side by side from sm up; the icons wrap to fit. */}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_auto]">
               <fieldset className="flex min-w-0 flex-col gap-2">
                 <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Icon")}</legend>
-                <div role="radiogroup" aria-label={t("Icon")} className="grid grid-cols-[repeat(6,36px)] gap-2">
+                <div role="radiogroup" aria-label={t("Icon")} className="grid grid-cols-[repeat(auto-fill,36px)] gap-2">
                   {HABIT_ICONS.map((option) => {
                     const on = option.key === icon;
                     return (
@@ -148,10 +178,10 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
               </fieldset>
               <fieldset className="flex flex-col gap-2">
                 <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Colour")}</legend>
-                <div role="radiogroup" aria-label={t("Colour")} className="grid grid-cols-[repeat(4,28px)] gap-x-3 gap-y-2">
+                <div role="radiogroup" aria-label={t("Colour")} className="grid grid-cols-[repeat(8,28px)] gap-x-3 gap-y-2 sm:grid-cols-[repeat(4,28px)]">
                   {HABIT_COLORS.map((option) => {
                     const on = option.key === color;
-                    return <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} onClick={() => setColor(option.key)} className={cn("size-7 rounded-full transition-shadow", on && "ring-2 ring-offset-2 ring-offset-surface")} style={{ background: budgetCategoryHex(option.key), ...(on && { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${budgetCategoryHex(option.key)}` }) }} />;
+                    return <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} onClick={() => setColor(option.key)} className="relative size-7 rounded-full transition-shadow after:absolute after:-inset-1.5" style={{ background: budgetCategoryHex(option.key), ...(on && { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${budgetCategoryHex(option.key)}` }) }} />;
                   })}
                 </div>
               </fieldset>
@@ -161,15 +191,20 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
               <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("How often")}</legend>
               {OFTEN.map((option) => (
                 <ChoiceCard key={option.value} checked={frequency === option.value} onSelect={() => setFrequency(option.value)} title={t(option.title)} sub={t(option.sub)}>
-                  {option.value === "WEEKLY_DAYS" && <WeekdayPicker value={days} onChange={setDays} className="pl-8" />}
+                  {option.value === "WEEKLY_DAYS" && (
+                    <span className="flex flex-col gap-2 pl-8">
+                      <WeekdayPicker value={days} onChange={setDays} />
+                      {noDays && <span className="text-caption text-expense">{t("Pick at least one day.")}</span>}
+                    </span>
+                  )}
                   {option.value === "WEEKLY_COUNT" && (
-                    <span className="flex items-center gap-3 pl-8">
-                      <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface">
-                        <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken">
+                    <span className="flex flex-wrap items-center gap-3 pl-8">
+                      <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface pointer-coarse:h-11">
+                        <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
                           <Minus className="size-4" aria-hidden="true" />
                         </button>
-                        <span className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">{count}</span>
-                        <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex size-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken">
+                        <span className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">{formatCount(count, locale)}</span>
+                        <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
                           <Plus className="size-4" aria-hidden="true" />
                         </button>
                       </span>
@@ -182,19 +217,21 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
 
             <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
               <div className="flex items-center justify-between gap-3">
-                <span className="flex flex-col gap-px">
-                  <span className="text-body font-semibold text-ink">{t("Count an amount")}</span>
-                  <span className="text-small text-ink-muted">{t("Like 8 glasses or 30 minutes. Leave off for a simple tick.")}</span>
-                </span>
-                <button type="button" role="switch" aria-checked={counted} aria-label={t("Count an amount")} onClick={() => setCounted(!counted)} className={cn("relative h-5.5 w-10 shrink-0 rounded-full transition-colors", counted ? "bg-emerald" : "bg-line-strong")}>
-                  <span className={cn("absolute top-0.75 size-4 rounded-full bg-white transition-[left]", counted ? "left-5.25" : "left-0.75")} />
-                </button>
+                <label htmlFor="hb-counted" className="flex cursor-pointer flex-col gap-px">
+                  <span id="hb-counted-title" className="text-body font-semibold text-ink">
+                    {t("Count an amount")}
+                  </span>
+                  <span id="hb-counted-sub" className="text-small text-ink-muted">
+                    {t("Like 8 glasses or 30 minutes. Leave off for a simple tick.")}
+                  </span>
+                </label>
+                <Switch id="hb-counted" checked={counted} onCheckedChange={setCounted} aria-labelledby="hb-counted-title" aria-describedby="hb-counted-sub" />
               </div>
               {counted && (
                 <>
                   <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3">
-                    <Field htmlFor="hb-target" label={<span className="text-small font-medium text-ink-2">{t("Goal each time")}</span>}>
-                      <Input id="hb-target" size="sm" inputMode="numeric" value={target} onChange={(event) => setTarget(event.target.value.replace(/\D/g, ""))} placeholder="30" />
+                    <Field htmlFor="hb-target" label={<span className="text-small font-medium text-ink-2">{t("Goal each time")}</span>} error={noGoal && target !== "" ? t("Enter a goal of 1 or more.") : undefined}>
+                      <Input id="hb-target" size="sm" inputMode="numeric" value={target} onChange={(event) => setTarget(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 6))} invalid={noGoal && target !== ""} placeholder="30" />
                     </Field>
                     <Field htmlFor="hb-unit" label={<span className="text-small font-medium text-ink-2">{t("Unit")}</span>}>
                       <Input id="hb-unit" size="sm" value={unit} onChange={(event) => setUnit(event.target.value)} maxLength={20} placeholder={t("minutes")} />
@@ -202,44 +239,64 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {HABIT_UNITS.map((option) => (
-                      <button key={option} type="button" onClick={() => setUnit(option)} className={cn("h-6.5 rounded-full border px-3 text-caption font-semibold transition-colors", unit === option ? "border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
+                      <button key={option} type="button" aria-pressed={savedUnit === option} onClick={() => setUnit(t(option))} className={cn(chip, savedUnit === option ? "border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
                         {t(option)}
                       </button>
                     ))}
                   </div>
+                  {noGoal && target === "" && <span className="text-caption text-ink-muted">{t("Enter a goal to save the habit.")}</span>}
                 </>
               )}
             </div>
 
-            <span className="flex items-center gap-2 text-small text-ink-2">
-              <Info className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-              {t("Shows as")}{" "}
-              <b className="font-semibold text-ink">
-                {name.trim() || t("Habit")} · {t(preview.days)}
-                {preview.amount ? ` · ${preview.amount} ${t("each time")}` : ""}
-              </b>
+            <span className="flex items-start gap-2 text-small text-ink-2">
+              <Info className="mt-px size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+              <span>
+                {t("Shows as")}{" "}
+                <b className="font-semibold text-ink">{[name.trim() || t("Habit"), preview.days, preview.amount ? t("{amount} each time", { amount: preview.amount }) : null].filter(Boolean).join(" · ")}</b>
+              </span>
             </span>
           </div>
 
-          <div className={cn("flex items-center gap-3 border-t border-line bg-strip", wide ? "px-6 py-4" : "px-4 py-3")}>
-            {editing && !editing.isArchived && (
-              <Button type="button" variant="ghost" onClick={archive} disabled={isPending}>
-                <Archive />
-                {t("Archive")}
-              </Button>
-            )}
-            <span className="flex-1" />
+          <PanelFooter
+            drawer
+            aside={
+              editing &&
+              !editing.isArchived && (
+                <>
+                  <Button type="button" variant="ghost" onClick={archive} disabled={isPending}>
+                    <Archive />
+                    {t("Archive")}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => setDeleting(true)} disabled={isPending} className="text-expense hover:bg-expense-soft hover:text-expense">
+                    <Trash2 />
+                    {t("Delete")}
+                  </Button>
+                </>
+              )
+            }
+          >
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
             <Button type="submit" disabled={!valid || isPending} className="px-5">
-              {isPending && <Loader />}
-              {editing ? <Check /> : null}
+              {isPending ? <Loader /> : editing ? <Check /> : null}
               {editing ? t("Save changes") : t("Add habit")}
             </Button>
-          </div>
+          </PanelFooter>
         </form>
       </SheetContent>
+      {editing && (
+        <ConfirmDialog
+          open={deleting}
+          onClose={() => !isPending && setDeleting(false)}
+          onConfirm={remove}
+          isPending={isPending}
+          title={t("Delete {name}?", { name: editing.name })}
+          description={t("A habit you never ticked is deleted for good. One with days ticked is archived instead, so its history stays.")}
+          confirmLabel={t("Delete habit")}
+        />
+      )}
     </Sheet>
   );
 }

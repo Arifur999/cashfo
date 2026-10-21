@@ -127,8 +127,10 @@ export function AccountMenu() {
               <Link href="/referrals">
                 <Gift />
                 <span className="flex-1">{t("Invite & earn")}</span>
-                {/* brand-ink: the focused row turns sunken, where emerald text is too faint. */}
-                {earnings !== null && Number(earnings) > 0 && <span className="text-small font-bold text-brand-ink tabular-nums">{formatCurrency(earnings, "BDT")}</span>}
+                {/* brand-ink: the focused row turns sunken, where emerald text is too faint.
+                    In the open workspace's currency, as Invite & earn shows it: a
+                    withdrawal lands in its wallet. */}
+                {earnings !== null && Number(earnings) > 0 && <span className="text-small font-bold text-brand-ink tabular-nums">{formatCurrency(earnings, activeBusiness?.currency ?? "BDT")}</span>}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild className={ITEM}>

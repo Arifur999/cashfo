@@ -417,7 +417,9 @@ export interface TransactionEntry {
   amount: string;
   categoryId: string | null;
   note: string | null;
-  account?: { id: string; name: string; accountType: AccountType; accountSubtype: string | null };
+  // nameBn: the account's Bangla name, null where it has none; missing from
+  // a backend older than it.
+  account?: { id: string; name: string; nameBn?: string | null; accountType: AccountType; accountSubtype: string | null };
 }
 
 export interface Transaction {
@@ -521,7 +523,16 @@ export interface InvoiceBreakdown {
 export interface DirectionBreakdown {
   totalInvoiced: string;
   totalPaid: string;
+  // What the invoices still owe, once general payments settled the opening
+  // balance first (it is the oldest amount owed). Negative when overpaid.
   remaining: string;
+  // The opening balance owed on this side, and what of it is still unpaid.
+  // Missing from a backend older than the fix that settles it first.
+  openingOwed?: string;
+  openingRemaining?: string;
+  // Invoices less payments: this side's change to the contact's balance,
+  // which adds the opening balance once on top. Missing alike.
+  balance?: string;
   transactions: InvoiceBreakdown[];
 }
 

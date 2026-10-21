@@ -1,10 +1,11 @@
 "use client";
 
-import { Flame } from "lucide-react";
+import { ChevronRight, Flame, Gauge } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import type { Book } from "@/lib/customer/api";
-import { pagesLeft, progressPct, readingPace } from "@/lib/customer/libraryDisplay";
+import { pageOfText, pagesLeft, progressPct, readingPace } from "@/lib/customer/libraryDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { paletteFor } from "../Books/bookPalette";
@@ -18,12 +19,15 @@ interface ReadingCardProps {
   today: string;
 }
 
+const LIBRARY = "/habit-tracker/habits?category=Book";
+
 // The book on the nightstand, in brief, with the reading streak and today's
-// pages; phones get the board's single row.
+// pages; phones get the board's single row, which opens the library.
 export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const pace = book ? readingPace(book, today) : null;
   const pct = book ? progressPct(book) : 0;
+  const count = (n: number) => formatCount(n, locale);
 
   const bar = book && (
     <span role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${book.title}: ${t("read")}`} className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
@@ -34,29 +38,32 @@ export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProp
   return (
     <>
       {book && (
-        <Card padding="none" className="flex items-center gap-3 p-4 md:hidden">
-          <Cover size="thumb" title={book.title} color={book.color} />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <h2 className="truncate text-body leading-[normal] font-semibold text-ink">{book.title}</h2>
-            <span className="text-caption leading-[normal] font-normal text-ink-muted tabular-nums">
-              {t("Page")} {book.pagesRead} {t("of")} {book.totalPages}
-              {pagesToday > 0 ? ` · ${t("{count} pages today", { count: pagesToday })}` : pace !== null && ` · ${pace} ${t("pages a day")}`}
+        <Card asChild padding="none" interactive className="flex items-center gap-3 p-4 md:hidden">
+          <Link href={LIBRARY}>
+            <Cover size="thumb" title={book.title} color={book.color} />
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="truncate text-body leading-[normal] font-semibold text-ink">{book.title}</span>
+              <span className="text-caption leading-[normal] font-normal text-ink-muted tabular-nums">
+                {pageOfText(book, t, locale)}
+                {pagesToday > 0 ? ` · ${t("{count} pages today", { count: count(pagesToday) })}` : pace !== null && ` · ${t("{count} pages a day", { count: count(pace) })}`}
+              </span>
+              {bar}
             </span>
-            {bar}
-          </div>
-          {streak > 0 && (
-            <span className="flex shrink-0 items-center gap-1 text-small font-bold text-ink tabular-nums" aria-label={t("{count}-day streak", { count: streak })}>
-              <Flame className="size-4 text-warning" aria-hidden="true" />
-              {streak}
-            </span>
-          )}
+            {streak > 0 && (
+              <span className="flex shrink-0 items-center gap-1 text-small font-bold text-ink tabular-nums" aria-label={t("{count}-day streak", { count: count(streak) })}>
+                <Flame className="size-4 text-warning" aria-hidden="true" />
+                {count(streak)}
+              </span>
+            )}
+            <ChevronRight className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+          </Link>
         </Card>
       )}
       <Card padding="none" className={cn("flex flex-col gap-3 px-5 py-4", book && "max-md:hidden")}>
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-title font-semibold text-ink">{t("Now reading")}</h2>
-          <Link href="/habit-tracker/habits?category=Book" className="text-small font-semibold text-emerald hover:underline">
-            {t("Library")}
+          <Link href={LIBRARY} className="flex items-center text-small font-semibold text-emerald hover:underline max-md:min-h-11">
+            {t("My library")}
           </Link>
         </div>
         {book ? (
@@ -67,28 +74,28 @@ export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProp
                 <span className="truncate text-body font-semibold text-ink">{book.title}</span>
                 {book.author && <span className="truncate text-small text-ink-muted">{book.author}</span>}
                 <span className="text-small text-ink-2 tabular-nums">
-                  {t("Page")} {book.pagesRead} {t("of")} {book.totalPages} · {pct}%
+                  {pageOfText(book, t, locale)} · {count(pct)}%
                 </span>
                 <span className="mt-0.75">{bar}</span>
               </div>
             </div>
-            <div className="mt-auto flex items-center justify-between gap-3 border-t border-divider pt-3 text-small whitespace-nowrap">
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-divider pt-3 text-small">
               <span className="flex items-center gap-1 font-semibold text-ink">
                 {streak > 0 ? (
                   <>
                     <Flame className="size-4 text-warning" aria-hidden="true" />
-                    {t("{count}-day streak", { count: streak })}
+                    {t("{count}-day streak", { count: count(streak) })}
                   </>
                 ) : (
                   pace !== null && (
                     <>
-                      <Flame className="size-4 text-warning" aria-hidden="true" />
-                      {pace} {t("pages a day")}
+                      <Gauge className="size-4 text-ink-muted" aria-hidden="true" />
+                      {t("{count} pages a day", { count: count(pace) })}
                     </>
                   )
                 )}
               </span>
-              <span className="font-semibold text-income">{pagesToday > 0 ? t("{count} pages today", { count: pagesToday }) : `${pagesLeft(book)} ${t("pages left")}`}</span>
+              <span className="font-semibold text-income">{pagesToday > 0 ? t("{count} pages today", { count: count(pagesToday) }) : t("{count} pages left", { count: count(pagesLeft(book)) })}</span>
             </div>
           </>
         ) : (

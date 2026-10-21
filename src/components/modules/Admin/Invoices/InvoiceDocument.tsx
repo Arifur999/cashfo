@@ -1,24 +1,52 @@
 import Logo from "@/components/smartly/Logo";
-import { formatCurrency } from "@/lib/currency";
+import { formatAmount } from "@/lib/currency";
 import { formatDate } from "@/lib/date";
 import { shortPaymentId } from "@/lib/payments";
 import { humanizeEnum } from "@/lib/statusBadge";
+import { cn } from "@/lib/utils";
 import type { IInvoiceDetail } from "@/types/invoice.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
+import { invoiceStamp, splitIssuedTo, type InvoiceStamp } from "./invoiceDisplay";
+
+// The stamp's words and tone: mint once paid, neutral when it all went
+// back, amber when part of it did.
+const STAMP: Record<InvoiceStamp, { label: string; className: string }> = {
+  paid: { label: "PAID", className: "bg-mint-50 text-emerald" },
+  refunded: { label: "REFUNDED", className: "bg-surface-sunken text-ink-2" },
+  "partly-refunded": { label: "PARTLY REFUNDED", className: "bg-warning-soft text-warning" },
+};
+
+// One line of the totals: the label, then the amount under the Amount column.
+const TOTAL_ROW = "grid grid-cols-[auto_120px] gap-x-4 text-right";
+
+interface InvoiceDocumentProps {
+  invoice: IInvoiceDetail;
+  // The payment went back: its refund, when it could be read.
+  refunded?: boolean;
+  refund?: { amount: string; createdAt: string } | null;
+}
 
 // The invoice as a printable sheet, drawn as the design draws it: Smartly
-// at the top left, the number and PAID at the right, who it went to, the
-// lines, and the totals. The dashboard chrome is print:hidden.
-const InvoiceDocument = async ({ invoice }: { invoice: IInvoiceDetail }) => {
+// at the top left, the number and its stamp at the right, who it went to,
+// the lines, and the totals. The dashboard chrome is print:hidden. A
+// refunded payment's sheet says so, and how much went back, so a printed
+// copy never claims it was all kept.
+const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: InvoiceDocumentProps) => {
   const { t } = await getTranslator("admin");
   const currency = invoice.payment?.currency;
   const subtotal = invoice.lineItems.reduce((sum, item) => sum + item.amount, 0);
   const discount = Math.max(0, Math.round((subtotal - Number(invoice.totalAmount)) * 100) / 100);
+  const stamp = STAMP[invoiceStamp(invoice.totalAmount, refunded, refund)];
+  const issuedTo = splitIssuedTo(invoice.issuedTo);
 
   return (
-    <article aria-label={t("Invoice {number}", { number: invoice.invoiceNumber })} className="flex flex-col gap-8 rounded-sm border border-line bg-surface px-12 py-10 shadow-float print:border-0 print:shadow-none">
-      <div className="flex items-start justify-between gap-6">
+    <article
+      aria-labelledby="invoice-title"
+      // Room for the sheet's content on a phone, the design's wide margins from sm up.
+      className="flex flex-col gap-8 rounded-sm border border-line bg-surface px-5 py-6 shadow-float sm:px-12 sm:py-10 print:border-0 print:shadow-none"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-6">
         <div className="flex items-center gap-3">
           <Logo variant="icon" height={36} alt="" />
           <span className="flex flex-col">
@@ -26,17 +54,22 @@ const InvoiceDocument = async ({ invoice }: { invoice: IInvoiceDetail }) => {
             <span className="text-small text-ink-muted"><T>Dhaka, Bangladesh</T></span>
           </span>
         </div>
-        <div className="flex flex-col items-end gap-1 text-right">
-          <span className="text-h1 text-ink"><T>Invoice</T></span>
-          <code className="font-mono text-small text-ink-2">{invoice.invoiceNumber}</code>
-          <span className="rounded-full bg-mint-50 px-3 py-0.5 text-caption font-bold text-emerald"><T>PAID</T></span>
+        {/* At the right, on its own line too when a phone wraps the header. */}
+        <div className="ml-auto flex flex-col items-end gap-1 text-right">
+          {/* The page's heading: the invoice and its number. */}
+          <h1 id="invoice-title" className="flex flex-col items-end gap-1">
+            <span className="text-h1 text-ink"><T>Invoice</T></span>
+            <code className="font-mono text-small font-normal text-ink-2">{invoice.invoiceNumber}</code>
+          </h1>
+          <span className={cn("rounded-full px-3 py-0.5 text-caption font-bold", stamp.className)}>{t(stamp.label)}</span>
         </div>
       </div>
 
       <div className="grid gap-5 text-body leading-relaxed sm:grid-cols-3">
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col">
           <span className="text-caption font-semibold text-ink-muted"><T>Issued to</T></span>
-          <b className="font-semibold text-ink">{invoice.issuedTo}</b>
+          <b className="font-semibold wrap-break-word text-ink">{issuedTo.name}</b>
+          {issuedTo.email && <span className="break-all text-ink-2">{issuedTo.email}</span>}
         </div>
         <div className="flex flex-col">
           <span className="text-caption font-semibold text-ink-muted"><T>Date</T></span>
@@ -56,24 +89,29 @@ const InvoiceDocument = async ({ invoice }: { invoice: IInvoiceDetail }) => {
           <span className="text-right"><T>Amount</T></span>
         </div>
         {invoice.lineItems.map((item, index) => (
-          <div key={`${item.description}-${index}`} className="grid grid-cols-[minmax(0,1fr)_120px] border-b border-line py-4 text-body">
+          <div key={`${item.description}-${index}`} className="grid grid-cols-[minmax(0,1fr)_120px] gap-x-3 border-b border-line py-4 text-body">
             <span className="font-semibold text-ink">{item.description}</span>
-            <span className="text-right text-ink tabular-nums">{formatCurrency(item.amount, currency)}</span>
+            <span className="text-right text-ink tabular-nums">{formatAmount(item.amount, currency)}</span>
           </div>
         ))}
         <div className="flex flex-col items-end gap-2 pt-4 text-body tabular-nums">
-          <span className="grid grid-cols-[140px_120px] text-right">
+          <span className={TOTAL_ROW}>
             <span className="text-ink-muted"><T>Subtotal</T></span>
-            <span className="text-ink">{formatCurrency(subtotal, currency)}</span>
+            <span className="text-ink">{formatAmount(subtotal, currency)}</span>
           </span>
-          <span className="grid grid-cols-[140px_120px] text-right">
+          <span className={TOTAL_ROW}>
             <span className="text-ink-muted"><T>Discount</T></span>
-            <span className="text-ink">{formatCurrency(discount, currency)}</span>
+            <span className="text-ink">{formatAmount(discount, currency)}</span>
           </span>
-          <span className="grid grid-cols-[140px_120px] border-t border-line pt-2 text-right text-h3 text-ink">
+          <span className={cn(TOTAL_ROW, "border-t border-line pt-2 text-h3 text-ink")}>
             <span><T>Total paid</T></span>
-            <span>{formatCurrency(invoice.totalAmount, currency)}</span>
+            <span>{formatAmount(invoice.totalAmount, currency)}</span>
           </span>
+          {refund && (
+            <span className="text-small text-ink-2">
+              {t("Refunded {amount} on {date}.", { amount: formatAmount(refund.amount, currency), date: formatDate(refund.createdAt, "d MMM yyyy") })}
+            </span>
+          )}
         </div>
       </div>
 

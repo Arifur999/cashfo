@@ -1,6 +1,7 @@
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import { diffAuditValues } from "./auditDiff";
 import { inEnglish, type Translate } from "./i18n/message";
+import { userRecordHref } from "./navItem";
 import { shortPaymentId } from "./payments";
 import { humanizeEnum } from "./statusBadge";
 import { shortTicketId } from "./tickets";
@@ -39,16 +40,23 @@ export const auditRecordTypeLabel = (entityType: string, t: Translate = inEnglis
 // other record to name or open.
 const SELF_ACTIONS = new Set(["ADMIN_LOGIN", "ADMIN_PASSWORD_CHANGED", "SECURITY_CHECK_RUN"]);
 export const namesNoRecord = (action: string) => SELF_ACTIONS.has(action);
-// Bookkeeping fields that say nothing about what changed.
-const QUIET_FIELDS = new Set(["sensitive", "updatedAt", "createdAt"]);
+// Bookkeeping fields that say nothing about what changed: the On column
+// leaves them out, and an entry's own page folds them away.
+export const QUIET_FIELDS: ReadonlySet<string> = new Set(["sensitive", "updatedAt", "createdAt"]);
 const NAME_FIELDS = ["name", "title", "code", "key", "subject", "email"] as const;
+
+// A text field of a saved snapshot, if it holds one.
+const snapshotText = (value: unknown, field: string): string | null => {
+  if (!value || typeof value !== "object") return null;
+  const found = (value as Record<string, unknown>)[field];
+  return typeof found === "string" && found.trim() ? found : null;
+};
 
 // A deleted record can't be looked up, but its snapshot still has a name.
 const snapshotName = (value: unknown): string | null => {
-  if (!value || typeof value !== "object") return null;
   for (const field of NAME_FIELDS) {
-    const found = (value as Record<string, unknown>)[field];
-    if (typeof found === "string" && found.trim()) return found;
+    const found = snapshotText(value, field);
+    if (found) return found;
   }
   return null;
 };
@@ -120,9 +128,36 @@ const RECORD_PAGES: Record<string, (id: string) => string> = {
   SuspiciousActivityFlag: () => "/admin/security/flags",
 };
 
-export const auditRecordHref = (entry: Pick<IAuditLogEntry, "action" | "entityType" | "entityId">): string | null => {
+// The lists that find a record from ?search= (the box on their toolbar):
+// where a record with a page of its own goes when the entry has no id.
+const SEARCH_LISTS: Record<string, string> = {
+  User: "/admin/users",
+  Payment: "/admin/payments",
+};
+
+const searchHref = (list: string, search: string) => `${list}?${new URLSearchParams({ search: search.trim() }).toString()}`;
+
+// Where "Open" or "Go to" leads from an entry. The record's name and its
+// snapshots, when given, point at the record: an owner's reset data opens the
+// owner's own page from the id the entry saved, or finds them on Users by the
+// saved email (a workspace has no page, and Workspaces lists only the
+// biggest), and an entry without an id searches its list for the record's name.
+export const auditRecordHref = (
+  entry: Pick<IAuditLogEntry, "action" | "entityType" | "entityId"> & Partial<Pick<IAuditLogEntry, "entityLabel" | "oldValue" | "newValue">>,
+): string | null => {
   const page = RECORD_PAGES[entry.entityType];
   if (!page || SELF_ACTIONS.has(entry.action)) return null;
+  if (entry.entityType === "Business") {
+    const owner = (field: string) => snapshotText(entry.oldValue, field) ?? snapshotText(entry.newValue, field);
+    const ownerId = owner("ownerId");
+    if (ownerId) return userRecordHref(ownerId);
+    const ownerEmail = owner("ownerEmail");
+    if (ownerEmail) return searchHref(SEARCH_LISTS.User, ownerEmail);
+  }
   // A detail page needs the id; a list page ignores it.
-  return page(entry.entityId ?? "");
+  if (entry.entityId) return page(entry.entityId);
+  const list = SEARCH_LISTS[entry.entityType];
+  if (!list) return page("");
+  const name = entry.entityLabel ?? snapshotName(entry.newValue) ?? snapshotName(entry.oldValue);
+  return name ? searchHref(list, name) : list;
 };

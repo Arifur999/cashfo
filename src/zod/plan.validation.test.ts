@@ -49,6 +49,17 @@ describe("planServerZodSchema", () => {
   it("rejects a slug with uppercase letters or spaces", () => {
     expect(planServerZodSchema.safeParse({ ...validPayload, slug: "Monthly Pro" }).success).toBe(false);
   });
+
+  it("sends a place in the order only when one is given, never a blank as 0", () => {
+    const placed = planServerZodSchema.safeParse({ ...validPayload, displayOrder: "3" });
+    expect(placed.success && placed.data.displayOrder).toBe(3);
+    const blank = planServerZodSchema.safeParse({ ...validPayload, displayOrder: "" });
+    expect(blank.success && blank.data.displayOrder).toBeUndefined();
+    const left = planServerZodSchema.safeParse(validPayload);
+    expect(left.success && left.data.displayOrder).toBeUndefined();
+    expect(planServerZodSchema.safeParse({ ...validPayload, displayOrder: "-1" }).success).toBe(false);
+    expect(planServerZodSchema.safeParse({ ...validPayload, displayOrder: "1.5" }).success).toBe(false);
+  });
 });
 
 describe("planFormZodSchema", () => {
@@ -58,6 +69,15 @@ describe("planFormZodSchema", () => {
 
   it("rejects -2 for the monthly transaction cap", () => {
     expect(planFormZodSchema.shape.featureLimits.shape.maxTransactionsPerMonth.safeParse("-2").success).toBe(false);
+  });
+
+  it("takes a place in the order, or a blank for last", () => {
+    const order = planFormZodSchema.shape.displayOrder;
+    expect(order.safeParse("").success).toBe(true);
+    expect(order.safeParse(" 12 ").success).toBe(true);
+    expect(order.safeParse(undefined).success).toBe(true);
+    expect(order.safeParse("first").error?.issues[0]?.message).toBe("A whole number from 0 to 9999");
+    expect(order.safeParse("10000").success).toBe(false);
   });
 });
 

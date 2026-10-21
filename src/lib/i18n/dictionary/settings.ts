@@ -1,32 +1,38 @@
 // Settings (components/modules/Customer/Settings/): the rail, profile,
 // security, app preferences, help, resources and the workspaces list.
-// Settings / Sign out / Edit / Delete / Cancel / Email / Phone / Language /
-// Password / New password / Both match / Letters and numbers / Rules /
-// Coming soon / Loading... / Default / Trial / New workspace / Owner /
-// Accountant / Staff / Personal / Business / Set up reuse existing keys.
-// The workspace modals and the lock screen keep settings-workspace.ts.
+// Settings / Sign out / Signing out... / Edit / Delete / Cancel / Email /
+// Phone / Language / Password / New password / Both match / Letters and
+// numbers / Rules / Coming soon / Loading... / Try again / Default / Trial /
+// New workspace / Owner / Accountant / Staff / Personal / Business / Set up /
+// Save changes / Enter your name / Edit {name} / Open {name} /
+// Updated {date} / IP {ip} / You / Send reply /
+// Sending... / Full name / At least 8 characters / Legal reuse existing keys:
+// a key defined here wins everywhere, so the words other areas already have
+// are left to them. The workspace modals and the lock screen keep
+// settings-workspace.ts.
 export const settingsDictionary: Record<string, string> = {
   // Rail and phone menu
   "Settings sections": "সেটিংসের অংশ",
   "Your account, your security and how the app looks.": "আপনার অ্যাকাউন্ট, নিরাপত্তা আর অ্যাপ দেখতে কেমন।",
-  Account: "অ্যাকাউন্ট",
   Support: "সহায়তা",
   Profile: "প্রোফাইল",
   Workspaces: "ওয়ার্কস্পেস",
   "App preferences": "অ্যাপের পছন্দ",
   "Help & support": "সাহায্য ও সহায়তা",
   "Resources & legal": "রিসোর্স ও আইনি",
-  version: "সংস্করণ",
-  "for web": "ওয়েবের জন্য",
+  "Smartly · version {version}": "Smartly · সংস্করণ {version}",
+  "Smartly for web · version {version}": "ওয়েবের জন্য Smartly · সংস্করণ {version}",
+  // After a link that opens elsewhere, for screen readers.
+  "opens in a new tab": "নতুন ট্যাবে খোলে",
 
   // Profile
+  // The first card's title: the page's own h1 already says "Profile".
+  "Your details": "আপনার তথ্য",
   "How you appear in Smartly and in the groups you run.": "Smartly-তে আর আপনার চালানো গ্রুপে আপনাকে যেভাবে দেখা যায়।",
   "Change photo": "ছবি বদলান",
   "JPG, PNG, WEBP or GIF, up to 5 MB. A square photo looks best.": "JPG, PNG, WEBP বা GIF, সর্বোচ্চ ৫ MB। চৌকো ছবিই সবচেয়ে ভালো দেখায়।",
-  "Full name": "পুরো নাম",
   "Shown on your groups, statements and invites.": "আপনার গ্রুপ, স্টেটমেন্ট আর আমন্ত্রণে দেখা যায়।",
   Verified: "যাচাই করা",
-  "Not verified": "যাচাই হয়নি",
   "To change it, contact support.": "বদলাতে সহায়তায় যোগাযোগ করুন।",
   "Used for group statements.": "গ্রুপ স্টেটমেন্টে ব্যবহার হয়।",
   "Nothing changed yet.": "এখনো কিছু বদলায়নি।",
@@ -34,7 +40,6 @@ export const settingsDictionary: Record<string, string> = {
   "You changed your name.": "আপনি নাম বদলেছেন।",
   "You changed your phone.": "আপনি ফোন বদলেছেন।",
   Discard: "বাতিল",
-  "Save changes": "পরিবর্তন সংরক্ষণ করুন",
   "Your account": "আপনার অ্যাকাউন্ট",
   "change in App preferences": "অ্যাপের পছন্দে বদলান",
   "Profile updated": "প্রোফাইল আপডেট হয়েছে",
@@ -52,10 +57,10 @@ export const settingsDictionary: Record<string, string> = {
   "Last changed this month": "এই মাসে বদলানো হয়েছে",
   "Last changed {count} month ago": "শেষ বদলানো হয়েছে {count} মাস আগে",
   "Last changed {count} months ago": "শেষ বদলানো হয়েছে {count} মাস আগে",
+  "You sign in with Google, so there is no password to change.": "আপনি Google দিয়ে সাইন ইন করেন, তাই বদলানোর মতো কোনো পাসওয়ার্ড নেই।",
   "Change password": "পাসওয়ার্ড বদলান",
   "Your current password, then the new one twice.": "আপনার বর্তমান পাসওয়ার্ড, তারপর নতুনটি দুবার।",
   "Current password": "বর্তমান পাসওয়ার্ড",
-  "At least 8 characters": "অন্তত ৮ অক্ষর",
   "Not your old password": "আপনার পুরোনো পাসওয়ার্ড নয়",
   "Type the new password again": "নতুন পাসওয়ার্ডটি আবার লিখুন",
   "Your other devices are signed out when the password changes, so anyone who knew the old one is out.": "পাসওয়ার্ড বদলালে আপনার অন্য ডিভাইসগুলো সাইন আউট হয়, তাই পুরোনোটি যে জানত সে আর ঢুকতে পারবে না।",
@@ -69,16 +74,28 @@ export const settingsDictionary: Record<string, string> = {
   "Code by email": "ইমেইলে কোড",
   "A code is sent to your email each time you sign in.": "প্রতিবার সাইন ইনে আপনার ইমেইলে একটি কোড পাঠানো হয়।",
   "Where you're signed in": "আপনি যেখানে সাইন ইন আছেন",
-  "device. Sign out of any you don't recognise.": "টি ডিভাইস। চিনতে না পারলে সাইন আউট করুন।",
-  "devices. Sign out of any you don't recognise.": "টি ডিভাইস। চিনতে না পারলে সাইন আউট করুন।",
+  "{count} device. Sign out of any you don't recognise.": "{count}টি ডিভাইস। চিনতে না পারলে সাইন আউট করুন।",
+  "{count} devices. Sign out of any you don't recognise.": "{count}টি ডিভাইস। চিনতে না পারলে সাইন আউট করুন।",
   "Sign out everywhere else": "বাকি সব জায়গা থেকে সাইন আউট",
   "This device": "এই ডিভাইস",
-  "device signed out": "টি ডিভাইস সাইন আউট হয়েছে",
-  "devices signed out": "টি ডিভাইস সাইন আউট হয়েছে",
+  "Last active {when}": "সর্বশেষ সক্রিয় {when}",
+  "IP unknown": "আইপি জানা নেই",
+  "Sign out of {device}": "{device} থেকে সাইন আউট করুন",
+  "{count} device signed out": "{count}টি ডিভাইস সাইন আউট হয়েছে",
+  "{count} devices signed out": "{count}টি ডিভাইস সাইন আউট হয়েছে",
+  "{count} device couldn't be signed out. Try again.": "{count}টি ডিভাইস সাইন আউট করা যায়নি। আবার চেষ্টা করুন।",
+  "{count} devices couldn't be signed out. Try again.": "{count}টি ডিভাইস সাইন আউট করা যায়নি। আবার চেষ্টা করুন।",
+  "Couldn't load your devices": "আপনার ডিভাইসের তালিকা লোড করা যায়নি",
   "Recent sign-in activity": "সাম্প্রতিক সাইন ইন",
-  "The last 5 tries to sign in to your account.": "আপনার অ্যাকাউন্টে সাইন ইনের শেষ ৫টি চেষ্টা।",
+  "The latest tries to sign in to your account, newest first.": "আপনার অ্যাকাউন্টে সাইন ইনের সাম্প্রতিক চেষ্টাগুলো, নতুনগুলো আগে।",
+  // The API sends at most the newest 50.
+  "Only the newest {count} tries are listed.": "শুধু সবচেয়ে নতুন {count}টি চেষ্টা দেখানো হয়।",
+  "Couldn't load your sign-in activity": "আপনার সাইন ইনের তালিকা লোড করা যায়নি",
   "Signed in": "সাইন ইন হয়েছে",
   "Wrong password": "ভুল পাসওয়ার্ড",
+  "Blocked after too many tries": "অনেকবার চেষ্টার পর আটকানো হয়েছে",
+  "Account was suspended": "অ্যাকাউন্ট স্থগিত ছিল",
+  "Couldn't sign in": "সাইন ইন হয়নি",
   "Wasn't you?": "আপনি ছিলেন না?",
   "Change your password": "পাসওয়ার্ড বদলান",
   Alerts: "সতর্কতা",
@@ -88,7 +105,6 @@ export const settingsDictionary: Record<string, string> = {
   "For example, many wrong passwords in a row.": "যেমন পরপর অনেকবার ভুল পাসওয়ার্ড।",
   "Ask for a code before a password reset": "পাসওয়ার্ড রিসেটের আগে কোড চাও",
   "So nobody can reset your password with just your email.": "যাতে শুধু ইমেইল দিয়ে কেউ আপনার পাসওয়ার্ড রিসেট করতে না পারে।",
-  "These switch on once Smartly can send email.": "Smartly ইমেইল পাঠাতে পারলে এগুলো চালু হবে।",
 
   // App preferences
   "Language and look": "ভাষা আর চেহারা",
@@ -109,10 +125,15 @@ export const settingsDictionary: Record<string, string> = {
   "Used in lists, reports and statements.": "তালিকা, রিপোর্ট আর স্টেটমেন্টে ব্যবহার হয়।",
   "Week starts on": "সপ্তাহ শুরু",
   "For weekly budgets and the meal sheet.": "সাপ্তাহিক বাজেট আর মিল শিটের জন্য।",
+  // The sample amount and date under Numbers and dates.
+  "Preview@@format": "নমুনা",
+  // Also the Wallet and Category drawers' card preview, which have no word
+  // of their own for it yet.
   Preview: "নমুনা",
   "Weeks run Saturday to Friday": "সপ্তাহ শনি থেকে শুক্র",
   Reminders: "মনে করিয়ে দেওয়া",
-  "Shown inside the app. The email one starts once email sending is switched on.": "অ্যাপের ভেতরে দেখা যায়। ইমেইল চালু হলে ইমেইলেরটা শুরু হবে।",
+  "Shown in the bell, inside the app.": "অ্যাপের ভেতরে, নোটিফিকেশনে দেখা যায়।",
+  "Couldn't load your reminders.": "রিমাইন্ডারগুলো লোড করা যায়নি।",
   "Failed to save reminders": "রিমাইন্ডার সেভ করা যায়নি",
   "Budget almost used": "বাজেট প্রায় শেষ",
   "When a category passes 90% of its budget.": "কোনো ক্যাটাগরি বাজেটের ৯০% পার হলে।",
@@ -125,10 +146,12 @@ export const settingsDictionary: Record<string, string> = {
 
   // Help: a message to support, the conversations, ideas
   "Send us a message": "আমাদের মেসেজ পাঠান",
-  "We reply by email to {email}": "আমরা {email}-এ ইমেইলে উত্তর দিই",
+  "We answer here and in the bell.": "আমরা এখানে আর নোটিফিকেশনে উত্তর দিই।",
   Topic: "বিষয়",
   "Your message": "আপনার মেসেজ",
   "Tell us what happened, or what you'd like to do.": "কী হয়েছে, বা কী করতে চান, লিখুন।",
+  // The start of a message written from an answer that didn't help.
+  "About: {question}": "বিষয়: {question}",
   "Attach a screenshot": "স্ক্রিনশট যোগ করুন",
   "Remove the screenshot": "স্ক্রিনশট সরান",
   "Hide any passwords or card numbers before you attach a screenshot.": "স্ক্রিনশট যোগ করার আগে পাসওয়ার্ড বা কার্ড নম্বর ঢেকে দিন।",
@@ -137,7 +160,7 @@ export const settingsDictionary: Record<string, string> = {
   "Only JPEG, PNG or WEBP screenshots are allowed": "শুধু JPEG, PNG বা WEBP স্ক্রিনশট দেওয়া যায়",
   "The screenshot is larger than 5 MB.": "স্ক্রিনশটটি ৫ MB-এর বেশি।",
   "Write your message first.": "আগে মেসেজটি লিখুন।",
-  "Message sent. We'll answer by email and in the app.": "মেসেজ পাঠানো হয়েছে। আমরা ইমেইলে আর অ্যাপে উত্তর দেব।",
+  "Message sent. We'll answer here and in the bell.": "মেসেজ পাঠানো হয়েছে। আমরা এখানে আর নোটিফিকেশনে উত্তর দেব।",
   "Failed to send your message": "মেসেজ পাঠানো যায়নি",
   "A question about using the app": "অ্যাপ ব্যবহার নিয়ে প্রশ্ন",
   "Something isn't working": "কিছু কাজ করছে না",
@@ -150,6 +173,8 @@ export const settingsDictionary: Record<string, string> = {
   "Your messages": "আপনার মেসেজ",
   "All messages": "সব মেসেজ",
   "You haven't written to us yet.": "আপনি এখনো আমাদের কিছু লেখেননি।",
+  "Couldn't load your messages": "আপনার মেসেজগুলো লোড করা যায়নি",
+  "That conversation couldn't be opened": "কথোপকথনটি খোলা যায়নি",
   "Smartly support": "Smartly সাপোর্ট",
   Screenshot: "স্ক্রিনশট",
   "This conversation is closed. Send a new message instead.": "এই কথোপকথন বন্ধ হয়ে গেছে। নতুন মেসেজ পাঠান।",
@@ -177,26 +202,37 @@ export const settingsDictionary: Record<string, string> = {
   "Failed to add your idea": "আইডিয়া যোগ করা যায়নি",
   "Failed to save your vote": "ভোট সেভ করা যায়নি",
   "Failed to load ideas": "আইডিয়াগুলো আনা যায়নি",
+  "Couldn't load ideas": "আইডিয়াগুলো লোড করা যায়নি",
   "Did this help?": "এতে কাজ হলো?",
-  "Thanks for telling us.": "জানানোর জন্য ধন্যবাদ।",
-  "Sorry about that. Send us a message and we'll help.": "দুঃখিত। আমাদের মেসেজ পাঠান, আমরা সাহায্য করব।",
+  // The answer to "Did this help?" stays on the page; nothing is recorded.
+  "Glad it helped.": "কাজে লেগেছে জেনে ভালো লাগল।",
+  "Sorry about that.": "দুঃখিত।",
 
   // Help
   "Search help, for example: void a transaction": "সাহায্য খুঁজুন, যেমন: লেনদেন বাতিল",
   "Search help": "সাহায্য খুঁজুন",
   "Nothing matches. Try other words.": "কিছু মেলেনি। অন্য শব্দে চেষ্টা করুন।",
-  "Why can't I edit or delete a transaction?": "লেনদেন সম্পাদনা বা মুছতে পারছি না কেন?",
-  "So your balances always add up, a saved transaction stays as it is. To fix a mistake, void it: its effect on your wallets is reversed, and it stays in your history, crossed out. Then add the right one.": "যাতে ব্যালেন্স সবসময় মেলে, সংরক্ষিত লেনদেন যেমন আছে তেমনই থাকে। ভুল শুধরাতে এটি বাতিল করুন: ওয়ালেটে এর প্রভাব উল্টে যায় আর এটি কাটা অবস্থায় ইতিহাসে থাকে। তারপর সঠিকটি যোগ করুন।",
+  "How do I fix or cancel a transaction?": "লেনদেন ঠিক বা বাতিল করব কীভাবে?",
+  "Open it from Transactions. Edit fixes the amount, category, wallet, date or note: the original stays in its history, crossed out and marked as corrected, so your balances always add up. Void cancels one that should never have been added.":
+    "লেনদেন থেকে এটি খুলুন। সম্পাদনা দিয়ে পরিমাণ, ক্যাটাগরি, ওয়ালেট, তারিখ বা নোট ঠিক করা যায়: আসলটি কাটা অবস্থায়, সংশোধিত লেখা নিয়ে ইতিহাসে থাকে, তাই আপনার ব্যালেন্স সবসময় মেলে। যেটি যোগ করাই উচিত ছিল না, বাতিল করুন দিয়ে সেটি বাদ দিন।",
   "How do I move money between my wallets?": "এক ওয়ালেট থেকে অন্য ওয়ালেটে টাকা সরাব কীভাবে?",
-  "Open Add at the top and pick Transfer. Choose the wallet the money leaves and the one it goes to, and the amount. Both balances change at once and nothing counts as income or spending.": "উপরে Add খুলে Transfer বাছুন। যে ওয়ালেট থেকে টাকা যাবে আর যেটায় যাবে তা বাছুন, আর পরিমাণ দিন। দুটো ব্যালেন্সই একসাথে বদলায়, আয় বা খরচে কিছু গোনা হয় না।",
+  "Open Add at the top (the + button on a phone) and pick Transfer. Choose the wallet the money leaves and the one it goes to, and the amount. Both balances change at once and nothing counts as income or spending.":
+    "উপরে যোগ করুন খুলুন (ফোনে + বোতাম) আর ট্রান্সফার বাছুন। যে ওয়ালেট থেকে টাকা যাবে আর যেটায় যাবে তা বাছুন, আর পরিমাণ দিন। দুটো ব্যালেন্সই একসাথে বদলায়, আয় বা খরচে কিছু গোনা হয় না।",
+  "Where do I start?": "কোথা থেকে শুরু করব?",
+  "Add your wallets first, under Wallets: cash, a bank account, bKash or Nagad, each with what it holds today. Then record each income and expense with Add as it happens. Home sums it up: what you have, and what came in and went out this month.":
+    "প্রথমে ওয়ালেট অংশে আপনার ওয়ালেটগুলো যোগ করুন: নগদ টাকা, ব্যাংক অ্যাকাউন্ট, বিকাশ বা নগদ, প্রতিটিতে আজ যা আছে তা দিয়ে। তারপর প্রতিটি আয় আর খরচ হওয়ামাত্র যোগ করুন দিয়ে লিখে রাখুন। হোম সব মিলিয়ে দেখায়: আপনার কাছে কত আছে, আর এ মাসে কত এল আর গেল।",
+  "How do budgets work?": "বাজেট কীভাবে কাজ করে?",
+  "Open Budget and give each kind of spending a monthly limit. Each category then shows what is left, or how far over it went. When one passes 90% of its limit, the bell tells you; you can turn that off under App preferences, Reminders.":
+    "বাজেট খুলে প্রতিটি খরচের খাতে মাসিক সীমা দিন। তারপর প্রতিটি ক্যাটাগরি দেখায় কত বাকি, বা সীমা কতটা ছাড়িয়েছে। কোনোটি সীমার ৯০% পার হলে নোটিফিকেশনে জানানো হয়; অ্যাপের পছন্দের মনে করিয়ে দেওয়া অংশে এটি বন্ধ করা যায়।",
   "How is my share worked out in Group expenses?": "গ্রুপ খরচে আমার ভাগ কীভাবে হিসাব হয়?",
-  "Every expense in a group is split equally between the members who were in the group that month. Your balance is what you put in minus your share of what was spent, and Settle up shows who pays whom.": "গ্রুপের প্রতিটি খরচ সেই মাসে গ্রুপে থাকা সদস্যদের মধ্যে সমান ভাগ হয়। আপনি যা দিয়েছেন তা থেকে খরচে আপনার ভাগ বাদ দিলে আপনার ব্যালেন্স, আর Settle up দেখায় কে কাকে দেবে।",
+  "Each expense is shared the way it was added: equally, by shares, by meals or in exact amounts, among the members in the group that day. Your balance is what you put in minus your share of what was spent, and Settle up shows who pays whom.":
+    "প্রতিটি খরচ যেভাবে যোগ করা হয়েছে সেভাবেই ভাগ হয়: সমান ভাগে, ভাগ অনুযায়ী, মিল অনুযায়ী বা নির্দিষ্ট টাকায়, সেদিন গ্রুপে থাকা সদস্যদের মধ্যে। আপনি যা দিয়েছেন তা থেকে খরচে আপনার ভাগ বাদ দিলে আপনার ব্যালেন্স, আর হিসাব মেটান দেখায় কে কাকে দেবে।",
   "I forgot my vault password. Are my saved logins gone?": "ভল্ট পাসওয়ার্ড ভুলে গেছি। সংরক্ষিত লগইনগুলো কি চলে গেছে?",
   "Yes. The logins are locked with the vault password itself, so a reset can only start over: you set a new vault password with your account password and the old entries are deleted.": "হ্যাঁ। লগইনগুলো ভল্ট পাসওয়ার্ড দিয়েই লক করা, তাই রিসেট মানে নতুন করে শুরু: অ্যাকাউন্ট পাসওয়ার্ড দিয়ে নতুন ভল্ট পাসওয়ার্ড সেট করবেন আর পুরোনো এন্ট্রিগুলো মুছে যাবে।",
   "When can I withdraw referral earnings?": "রেফারেলের আয় কখন তুলতে পারব?",
   "A reward counts 30 days after your friend joined, as long as their account is still active. Everything counted so far can be withdrawn in one go into any of your wallets or savings pots.": "বন্ধু যোগ দেওয়ার ৩০ দিন পর পুরস্কার গোনা হয়, যদি তাদের অ্যাকাউন্ট সচল থাকে। এ পর্যন্ত গোনা সব একবারে আপনার যেকোনো ওয়ালেট বা সঞ্চয়ে তোলা যায়।",
   "Can I use the app in Bangla?": "অ্যাপটি কি বাংলায় ব্যবহার করা যায়?",
-  "Yes. Tap বাংলা at the top of any page, or pick it under App preferences so every device opens in Bangla.": "হ্যাঁ। যেকোনো পাতার উপরে বাংলা চাপুন, বা অ্যাপের পছন্দে বেছে নিন যাতে প্রতিটি ডিভাইস বাংলায় খোলে।",
+  "Yes. Tap বাংলা at the top of any page (in the menu on a phone), or pick it under App preferences so every device opens in Bangla.": "হ্যাঁ। যেকোনো পাতার উপরে (ফোনে মেনুতে) বাংলা চাপুন, বা অ্যাপের পছন্দে বেছে নিন যাতে প্রতিটি ডিভাইস বাংলায় খোলে।",
   "More answers": "আরও উত্তর",
   "Every question we have answered, kept up to date.": "আমাদের দেওয়া প্রতিটি উত্তর, হালনাগাদ রাখা।",
   "Open the FAQ": "FAQ খুলুন",
@@ -213,32 +249,36 @@ export const settingsDictionary: Record<string, string> = {
   "Shares, meals, settling up and closing the month.": "ভাগ, মিল, হিসাব মেটানো আর মাস বন্ধ করা।",
   "Keeping your passwords safe": "পাসওয়ার্ড নিরাপদ রাখা",
   "The vault password, Generate and the security checkup.": "ভল্ট পাসওয়ার্ড, Generate আর নিরাপত্তা যাচাই।",
-  "{count} min read": "{count} মিনিটে পড়া যায়",
   "Your data": "আপনার ডেটা",
   "Download my data": "আমার ডেটা ডাউনলোড",
   "Wallets, transactions, budgets, savings, assets, loans and groups as spreadsheet files. Saved passwords are left out.": "ওয়ালেট, লেনদেন, বাজেট, সঞ্চয়, সম্পদ, ঋণ আর গ্রুপ — স্প্রেডশিট ফাইল হিসেবে। সেভ করা পাসওয়ার্ড বাদ থাকে।",
   Download: "ডাউনলোড",
+  "Preparing your file...": "ফাইল তৈরি হচ্ছে...",
+  "You just downloaded your data. Try again in a minute.": "আপনি এইমাত্র ডেটা ডাউনলোড করেছেন। এক মিনিট পর আবার চেষ্টা করুন।",
+  "Couldn't prepare your file. Try again.": "ফাইলটি তৈরি করা যায়নি। আবার চেষ্টা করুন।",
   "Delete my account": "অ্যাকাউন্ট মুছে ফেলুন",
   "Removes your account and everything in it. You have 7 days to change your mind.": "আপনার অ্যাকাউন্ট আর এর সবকিছু মুছে যাবে। মত বদলাতে ৭ দিন সময় পাবেন।",
   "Delete account": "অ্যাকাউন্ট মুছুন",
-  Legal: "আইনি",
   "Terms of service": "সেবার শর্তাবলি",
 
   // Workspaces
+  // The first card's title: the page's own h1 already says "Workspaces".
+  "Your workspaces": "আপনার ওয়ার্কস্পেস",
   "Manage your personal and business workspaces.": "আপনার ব্যক্তিগত ও ব্যবসায়িক ওয়ার্কস্পেস সামলান।",
+  "Couldn't load your workspaces": "আপনার ওয়ার্কস্পেসগুলো লোড করা যায়নি",
   "PIN lock on": "পিন লক চালু",
-  "Extra workspace fee:": "অতিরিক্ত ওয়ার্কস্পেস ফি:",
-  "a month, half your plan": "প্রতি মাসে, আপনার প্ল্যানের অর্ধেক",
-  "Your personal workspace can't be deleted. Every account always has one.": "আপনার ব্যক্তিগত ওয়ার্কস্পেস মোছা যায় না। প্রতিটি অ্যাকাউন্টে সবসময় একটি থাকে।",
-  "Can't delete": "মোছা যাবে না",
+  "Extra workspace fee: {amount} a month, half your plan": "অতিরিক্ত ওয়ার্কস্পেস ফি: প্রতি মাসে {amount}, আপনার প্ল্যানের অর্ধেক",
+  "Your personal workspace always stays.": "আপনার ব্যক্তিগত ওয়ার্কস্পেস সবসময় থাকে।",
   "Editing a workspace": "ওয়ার্কস্পেস সম্পাদনা",
   "Edit changes the name, phone, email and PIN lock.": "সম্পাদনায় নাম, ফোন, ইমেইল আর পিন লক বদলানো যায়।",
   "A PIN asks for 4 to 6 digits before the workspace opens on this device.": "পিন থাকলে এই ডিভাইসে ওয়ার্কস্পেস খোলার আগে ৪ থেকে ৬ অঙ্ক চাওয়া হয়।",
   "Every extra business workspace adds half your plan price.": "প্রতিটি অতিরিক্ত ব্যবসায়িক ওয়ার্কস্পেসে আপনার প্ল্যানের অর্ধেক দাম যোগ হয়।",
   "Mess and family groups live in Group expenses, not here.": "মেস আর পরিবারের গ্রুপ থাকে গ্রুপ খরচে, এখানে নয়।",
   "Deleting a workspace removes its wallets, transactions and books for good.": "ওয়ার্কস্পেস মুছলে এর ওয়ালেট, লেনদেন আর খাতা চিরতরে মুছে যায়।",
+  // A row's Delete, named for its workspace (as Assets words it).
+  "Delete {name}": "{name} মুছুন",
   "Delete this workspace?": "এই ওয়ার্কস্পেসটি মুছবেন?",
-  "and everything in it will be removed. This cannot be undone.": "আর এর ভেতরের সবকিছু মুছে যাবে। এটি আর ফেরানো যাবে না।",
+  "{name} and everything in it will be removed. This cannot be undone.": "{name} আর এর ভেতরের সবকিছু মুছে যাবে। এটি আর ফেরানো যাবে না।",
   "Workspace deleted": "ওয়ার্কস্পেস মোছা হয়েছে",
   "Failed to delete workspace": "ওয়ার্কস্পেস মুছতে ব্যর্থ হয়েছে",
   Group: "গ্রুপ",

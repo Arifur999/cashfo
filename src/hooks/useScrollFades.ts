@@ -2,27 +2,55 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 
-interface ScrollFades {
-  top: boolean;
-  bottom: boolean;
+// "y" for a menu that scrolls down, "x" for a bar that scrolls sideways.
+export type ScrollAxis = "x" | "y";
+
+// Whether there is more content past each end: the top or left ("start"),
+// the bottom or right ("end").
+export interface ScrollFades {
+  start: boolean;
+  end: boolean;
+}
+
+type ScrollBox = Pick<HTMLElement, "scrollTop" | "scrollLeft" | "scrollHeight" | "scrollWidth" | "clientHeight" | "clientWidth">;
+
+interface ScrollFadesOptions {
+  axis?: ScrollAxis;
+  // How far the fade reaches in, in px.
+  fade?: number;
 }
 
 const FADE = 40;
 
-// A long menu scrolls; its edges fade to say so. Returns the ref for the
-// scrolling element and a mask style that fades whichever edge has more
-// content beyond it.
-export function useScrollFades<T extends HTMLElement>() {
+// Which ends of the box have content beyond them. 4px of slack, so a fade
+// doesn't stay on for a part-pixel scroll.
+export function scrollFadesOf(box: ScrollBox, axis: ScrollAxis = "y"): ScrollFades {
+  const offset = axis === "x" ? box.scrollLeft : box.scrollTop;
+  const size = axis === "x" ? box.scrollWidth : box.scrollHeight;
+  const shown = axis === "x" ? box.clientWidth : box.clientHeight;
+  return { start: offset > 4, end: size - offset - shown > 4 };
+}
+
+// The mask that fades whichever ends have more beyond them.
+export function scrollFadeMask({ start, end }: ScrollFades, axis: ScrollAxis = "y", fade = FADE): string {
+  const from = start ? `transparent 0, #000 ${fade}px` : "#000 0";
+  const to = end ? `#000 calc(100% - ${fade}px), transparent 100%` : "#000 100%";
+  return `linear-gradient(to ${axis === "x" ? "right" : "bottom"}, ${from}, ${to})`;
+}
+
+// A long menu scrolls; its edges fade to say so (a sideways bar's too, with
+// axis "x"). Returns the ref for the scrolling element and a mask style that
+// fades whichever edge has more content beyond it.
+export function useScrollFades<T extends HTMLElement>({ axis = "y", fade = FADE }: ScrollFadesOptions = {}) {
   const ref = useRef<T>(null);
-  const [fades, setFades] = useState<ScrollFades>({ top: false, bottom: false });
+  const [fades, setFades] = useState<ScrollFades>({ start: false, end: false });
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const update = () => {
-      const top = el.scrollTop > 4;
-      const bottom = el.scrollHeight - el.scrollTop - el.clientHeight > 4;
-      setFades((prev) => (prev.top === top && prev.bottom === bottom ? prev : { top, bottom }));
+      const next = scrollFadesOf(el, axis);
+      setFades((prev) => (prev.start === next.start && prev.end === next.end ? prev : next));
     };
     update();
     el.addEventListener("scroll", update, { passive: true });
@@ -34,11 +62,9 @@ export function useScrollFades<T extends HTMLElement>() {
       el.removeEventListener("scroll", update);
       observer.disconnect();
     };
-  }, []);
+  }, [axis]);
 
-  const top = fades.top ? `transparent 0, #000 ${FADE}px` : "#000 0";
-  const bottom = fades.bottom ? `#000 calc(100% - ${FADE}px), transparent 100%` : "#000 100%";
-  const mask = `linear-gradient(to bottom, ${top}, ${bottom})`;
+  const mask = scrollFadeMask(fades, axis, fade);
   const style: CSSProperties = { maskImage: mask, WebkitMaskImage: mask };
 
   return { ref, style };

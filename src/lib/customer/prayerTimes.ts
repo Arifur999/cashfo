@@ -74,6 +74,13 @@ export function prayerTimesFor(settings: PrayerSettings, day: string): Record<Ti
 // "HH:MM" of a time in the app's timezone, for timeLabel().
 export const clockOf = (time: Date): string => formatDate(time, "HH:mm");
 
+// The same time in two parts, so a narrow tile can set "5:42" large and its
+// "pm" (a dictionary key) small under it: timeLabel()'s words, split.
+export function clockParts(time: Date): { clock: string; meridiem: "am" | "pm" } {
+  const [hours, minutes] = clockOf(time).split(":").map(Number);
+  return { clock: `${hours % 12 || 12}:${String(minutes).padStart(2, "0")}`, meridiem: hours < 12 ? "am" : "pm" };
+}
+
 // The next of the five prayers after `now` (tomorrow's Fajr after Isha).
 export function nextPrayer(settings: PrayerSettings, today: string, tomorrow: string, now: Date): { prayer: TimeName; at: Date } {
   const times = prayerTimesFor(settings, today);

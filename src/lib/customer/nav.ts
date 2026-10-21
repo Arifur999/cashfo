@@ -59,6 +59,10 @@ export interface NavItem extends NavLeaf {
   tone?: NavTone;
   // Hidden while this feature flag is off (Admin > System > Feature flags).
   feature?: FeatureKey;
+  // A page only for posting to the open workspace's books (Journal entry),
+  // which only its owner or an accountant may do: a staff member isn't
+  // shown it.
+  workspaceWrite?: boolean;
   // "todayTasks": the count of open tasks today, shown as a badge.
   badge?: "todayTasks";
   // A small tag after the label ("Earn ৳" on Invite & earn).
@@ -91,8 +95,9 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: "Statement", href: "/balance/ledger" },
         ],
       },
-      { label: "Budget", href: "/categories", icon: "budget", match: ["/budget-planning", "/income-planning"] },
-      { label: "Income sources", href: "/income-category", icon: "income" },
+      { label: "Budget", href: "/categories", icon: "budget", match: ["/budget-planning"] },
+      // Income planning became Income sources; its old address forwards here.
+      { label: "Income sources", href: "/income-category", icon: "income", match: ["/income-planning"] },
       {
         label: "Loans",
         href: "/loan-management/dashboard",
@@ -143,7 +148,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Customers & suppliers", href: "/contacts", icon: "people" },
       { label: "Receivables & payables", href: "/dena-pawna", icon: "clock" },
       { label: "Accounts", href: "/accounts", icon: "ledger" },
-      { label: "Journal entry", href: "/transactions/advanced", icon: "journal" },
+      { label: "Journal entry", href: "/transactions/advanced", icon: "journal", workspaceWrite: true },
     ],
   },
   {
@@ -197,13 +202,18 @@ export const NAV_FOOT: NavItem[] = [
 export interface NavContext {
   workspaceType: WorkspaceType | undefined;
   isFeatureOn: (key: FeatureKey) => boolean;
+  // The open workspace's owner or an accountant (the default); false for a
+  // staff member, who can't post to its books.
+  canManage?: boolean;
 }
 
 // The sections this customer sees: Books only in a business workspace,
-// Loans only while its flag is on.
+// Loans only while its flag is on, Journal entry only to those who may
+// post one.
 export function visibleNavSections(ctx: NavContext): NavSection[] {
+  const shown = (item: NavItem) => (!item.feature || ctx.isFeatureOn(item.feature)) && (ctx.canManage !== false || !item.workspaceWrite);
   return NAV_SECTIONS.filter((section) => !section.businessOnly || ctx.workspaceType === "BUSINESS")
-    .map((section) => ({ ...section, items: section.items.filter((item) => !item.feature || ctx.isFeatureOn(item.feature)) }))
+    .map((section) => ({ ...section, items: section.items.filter(shown) }))
     .filter((section) => section.items.length > 0);
 }
 
@@ -240,8 +250,9 @@ const leafScore = (leaf: NavLeaf, pathname: string, query: QueryReader): number 
 };
 
 // Which menu entry the URL is on. The most specific prefix wins, so
-// /transactions/advanced is Journal entry when Books is shown and
-// Transactions when it isn't.
+// /transactions/advanced is Journal entry when the menu shows it and
+// Transactions when it doesn't (outside a business workspace, or to a
+// staff member).
 export function findNavLocation(pathname: string, query: QueryReader, sections: NavSection[], foot: NavItem[] = NAV_FOOT): NavLocation | null {
   let best: { score: number; location: NavLocation } | null = null;
   const consider = (score: number, location: NavLocation) => {

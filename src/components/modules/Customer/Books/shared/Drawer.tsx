@@ -28,7 +28,9 @@ export function Drawer({ open, title, busy = false, onClose, onSubmit, footer, c
       <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
         <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-4" : "px-4 pt-4 pb-2")}>
           <SheetTitle className="text-h3 text-ink">{title}</SheetTitle>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
+          {/* Like Escape and a click outside, refused mid-save: closing then
+              would lose what is being saved (a photo half uploaded). */}
+          <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:size-11">
             <X className="size-4.5" aria-hidden="true" />
           </button>
         </SheetHeader>

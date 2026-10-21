@@ -1,6 +1,29 @@
 import { describe, expect, it } from "vitest";
 import type { CategoryBreakdown, MonthlyBreakdown } from "./api";
-import { biggestDrop, biggestPart, categoryMoves, concentrationNote, insightPeriodFrom, monthName, monthRates, monthSpan, netWorth, percentChange, periodLabels, periodTotals, previousRange, rankedRows, rateTrend } from "./insights";
+import {
+  biggestDrop,
+  biggestPart,
+  categoryMoves,
+  categoryTotals,
+  completeMonths,
+  concentrationNote,
+  insightPeriodFrom,
+  monthlyAverage,
+  monthName,
+  monthRates,
+  monthsElapsed,
+  monthSpan,
+  monthUnderWay,
+  movement,
+  netWorth,
+  percentChange,
+  periodLabels,
+  periodTotals,
+  previousRange,
+  rangeLabel,
+  rankedRows,
+  rateTrend,
+} from "./insights";
 
 const breakdown = (type: "INCOME" | "EXPENSE", rows: [string, number][]): CategoryBreakdown => ({
   type,
@@ -17,16 +40,48 @@ const monthly = (type: "INCOME" | "EXPENSE", months: string[], totals: number[])
 });
 
 describe("previousRange", () => {
-  it("steps whole months back by the length of the range", () => {
-    expect(previousRange({ dateFrom: "2026-10-01", dateTo: "2026-10-15" }, "this-month")).toEqual({ dateFrom: "2026-09-01", dateTo: "2026-09-30" });
-    expect(previousRange({ dateFrom: "2026-09-01", dateTo: "2026-09-30" }, "last-month")).toEqual({ dateFrom: "2026-08-01", dateTo: "2026-08-31" });
-    expect(previousRange({ dateFrom: "2026-08-01", dateTo: "2026-10-15" }, "last-3-months")).toEqual({ dateFrom: "2026-05-01", dateTo: "2026-07-31" });
-    expect(previousRange({ dateFrom: "2026-01-01", dateTo: "2026-02-10" }, "last-3-months")).toEqual({ dateFrom: "2025-11-01", dateTo: "2025-12-31" });
+  it("compares the same stretch of days one step back", () => {
+    expect(previousRange({ dateFrom: "2026-10-01", dateTo: "2026-10-21" }, "this-month")).toEqual({ dateFrom: "2026-09-01", dateTo: "2026-09-21" });
+    expect(previousRange({ dateFrom: "2026-08-01", dateTo: "2026-10-21" }, "last-3-months")).toEqual({ dateFrom: "2026-05-01", dateTo: "2026-07-21" });
+    expect(previousRange({ dateFrom: "2026-01-01", dateTo: "2026-02-10" }, "last-3-months")).toEqual({ dateFrom: "2025-11-01", dateTo: "2025-12-10" });
   });
 
-  it("compares this year with the same months of last year", () => {
-    expect(previousRange({ dateFrom: "2026-01-01", dateTo: "2026-10-15" }, "this-year")).toEqual({ dateFrom: "2025-01-01", dateTo: "2025-10-31" });
-    expect(monthSpan({ dateFrom: "2026-01-01", dateTo: "2026-10-15" })).toBe(10);
+  it("keeps whole months whole and clamps to a shorter month", () => {
+    expect(previousRange({ dateFrom: "2026-09-01", dateTo: "2026-09-30" }, "last-month")).toEqual({ dateFrom: "2026-08-01", dateTo: "2026-08-31" });
+    expect(previousRange({ dateFrom: "2026-03-01", dateTo: "2026-03-30" }, "this-month")).toEqual({ dateFrom: "2026-02-01", dateTo: "2026-02-28" });
+    expect(previousRange({ dateFrom: "2026-10-01", dateTo: "2026-10-31" }, "this-month")).toEqual({ dateFrom: "2026-09-01", dateTo: "2026-09-30" });
+  });
+
+  it("compares this year with the same days of last year", () => {
+    expect(previousRange({ dateFrom: "2026-01-01", dateTo: "2026-10-21" }, "this-year")).toEqual({ dateFrom: "2025-01-01", dateTo: "2025-10-21" });
+    expect(previousRange({ dateFrom: "2028-01-01", dateTo: "2028-02-29" }, "this-year")).toEqual({ dateFrom: "2027-01-01", dateTo: "2027-02-28" });
+    expect(monthSpan({ dateFrom: "2026-01-01", dateTo: "2026-10-21" })).toBe(10);
+  });
+});
+
+describe("monthsElapsed", () => {
+  it("counts the month under way by its share of days", () => {
+    expect(monthsElapsed({ dateFrom: "2026-09-01", dateTo: "2026-09-30" })).toBe(1);
+    expect(monthsElapsed({ dateFrom: "2026-01-01", dateTo: "2026-10-21" })).toBeCloseTo(9 + 21 / 31, 5);
+    expect(monthsElapsed({ dateFrom: "2026-08-01", dateTo: "2026-10-21" })).toBeCloseTo(2 + 21 / 31, 5);
+    expect(monthsElapsed({ dateFrom: "2025-11-01", dateTo: "2026-01-15" })).toBeCloseTo(2 + 15 / 31, 5);
+  });
+});
+
+describe("monthlyAverage", () => {
+  // This year in January is under a month: 3 days are 3/31 of one, and a
+  // ৳ 15,000 rent divided by that came to ৳ 1,55,000 a month.
+  it("has nothing to average over a month or less", () => {
+    expect(monthlyAverage(15000, monthsElapsed({ dateFrom: "2027-01-01", dateTo: "2027-01-01" }))).toBeNull();
+    expect(monthlyAverage(15000, monthsElapsed({ dateFrom: "2027-01-01", dateTo: "2027-01-03" }))).toBeNull();
+    expect(monthlyAverage(15000, monthsElapsed({ dateFrom: "2027-01-01", dateTo: "2027-01-31" }))).toBeNull();
+  });
+
+  it("divides by the months so far, in whole taka", () => {
+    // 1 January to 3 February is 1 + 3/28 months.
+    expect(monthlyAverage(15000, monthsElapsed({ dateFrom: "2027-01-01", dateTo: "2027-02-03" }))).toBe(13548);
+    // 4,456.33 a month, written without the paisa.
+    expect(monthlyAverage(43125.75, monthsElapsed({ dateFrom: "2026-01-01", dateTo: "2026-10-21" }))).toBe(4456);
   });
 });
 
@@ -40,6 +95,27 @@ describe("totals and changes", () => {
     expect(percentChange(85000, 80000)).toBe(6.3);
     expect(percentChange(52300, 54500)).toBe(-4);
     expect(percentChange(100, 0)).toBeNull();
+  });
+
+  it("words a move as a percent, an amount, new or the same", () => {
+    expect(movement(85000, 80000)).toEqual({ kind: "percent", percent: 6.3, change: 5000 });
+    expect(movement(100, 0)).toEqual({ kind: "new", change: 100 });
+    expect(movement(0, 0)).toEqual({ kind: "same" });
+    // Left over after an overspent period: the amount, not "new".
+    expect(movement(2000, -5000, { hadBefore: true })).toEqual({ kind: "amount", change: 7000 });
+    expect(movement(2000, 0, { hadBefore: false })).toEqual({ kind: "new", change: 2000 });
+  });
+});
+
+describe("categoryTotals", () => {
+  it("reads every category of a monthly breakdown, not just ten", () => {
+    const rows = Array.from({ length: 14 }, (_, i) => ({ name: `Cat ${i + 1}`, color: "green", amounts: ["10.00", "5.00"], total: "15.00" }));
+    const reading = categoryTotals({ type: "EXPENSE", months: ["2026-09", "2026-10"], rows, totals: ["140.00", "70.00"], total: "210.00" });
+    expect(reading.categories).toHaveLength(14);
+    expect(reading.total).toBe("210.00");
+    // The rows add up to the total, so the split bar ends where it should.
+    expect(reading.categories.reduce((sum, row) => sum + Number(row.amount), 0)).toBe(210);
+    expect(rankedRows(reading).at(-1)?.share).toBe(7.1);
   });
 });
 
@@ -98,8 +174,26 @@ describe("monthRates and rateTrend", () => {
   });
 
   it("says whether the share kept went up since the first month", () => {
-    expect(rateTrend(monthRates(income, expense))).toEqual({ up: false, points: 5, since: "2026-05" });
+    expect(rateTrend(monthRates(income, expense))).toEqual({ direction: "down", points: 5, since: "2026-05" });
     expect(rateTrend(monthRates(monthly("INCOME", ["2026-07"], [100]), monthly("EXPENSE", ["2026-07"], [50])))).toBeNull();
+  });
+
+  it("calls a flat rate the same, not up by nothing", () => {
+    const flat = monthRates(monthly("INCOME", ["2026-05", "2026-06"], [100, 200]), monthly("EXPENSE", ["2026-05", "2026-06"], [50, 100]));
+    expect(rateTrend(flat)).toEqual({ direction: "same", points: 0, since: "2026-05" });
+  });
+
+  it("leaves the month under way out of a trend until it is over", () => {
+    const rates = monthRates(monthly("INCOME", ["2026-09", "2026-10"], [100, 100]), monthly("EXPENSE", ["2026-09", "2026-10"], [50, 10]));
+    expect(completeMonths(rates, "2026-10-21").map((r) => r.month)).toEqual(["2026-09"]);
+    expect(completeMonths(rates, "2026-10-31").map((r) => r.month)).toEqual(["2026-09", "2026-10"]);
+  });
+
+  it("names the month under way until it is over", () => {
+    const rates = monthRates(monthly("INCOME", ["2026-09", "2026-10"], [100, 100]), monthly("EXPENSE", ["2026-09", "2026-10"], [50, 10]));
+    expect(monthUnderWay(rates, "2026-10-21")).toBe("2026-10");
+    expect(monthUnderWay(rates, "2026-10-31")).toBeNull();
+    expect(monthUnderWay([], "2026-10-21")).toBeNull();
   });
 });
 
@@ -119,34 +213,55 @@ describe("netWorth", () => {
   });
 });
 
-describe("periodLabels and monthName", () => {
-  it("names the period, what it is compared with, and the two columns", () => {
-    expect(periodLabels({ dateFrom: "2026-10-01", dateTo: "2026-10-15" }, { dateFrom: "2026-09-01", dateTo: "2026-09-30" }, "this-month", "en")).toEqual({
-      period: "October 2026",
-      previous: "September",
-      previousIsYear: false,
-      before: "Sep",
-      now: "Oct",
+describe("periodLabels, rangeLabel and monthName", () => {
+  it("names what is compared, down to the day", () => {
+    expect(periodLabels({ dateFrom: "2026-10-01", dateTo: "2026-10-21" }, { dateFrom: "2026-09-01", dateTo: "2026-09-21" }, "this-month", "en")).toEqual({
+      period: "1–21 October 2026",
+      previous: "1–21 September",
+      before: "1–21 Sep",
+      now: "1–21 Oct",
+      heads: ["1–21 Sep", "1–21 Oct"],
     });
-    expect(periodLabels({ dateFrom: "2026-08-01", dateTo: "2026-10-15" }, { dateFrom: "2026-05-01", dateTo: "2026-07-31" }, "last-3-months", "en")).toEqual({
-      period: "August–October 2026",
-      previous: "May–July",
-      previousIsYear: false,
-      before: "May–Jul",
-      now: "Aug–Oct",
+    expect(periodLabels({ dateFrom: "2026-09-01", dateTo: "2026-09-30" }, { dateFrom: "2026-08-01", dateTo: "2026-08-31" }, "last-month", "en")).toEqual({
+      period: "September 2026",
+      previous: "August",
+      before: "Aug",
+      now: "Sep",
+      heads: ["Aug", "Sep"],
     });
-    expect(periodLabels({ dateFrom: "2026-01-01", dateTo: "2026-10-15" }, { dateFrom: "2025-01-01", dateTo: "2025-10-31" }, "this-year", "en")).toEqual({
-      period: "January–October 2026",
-      previous: "2025",
-      previousIsYear: true,
-      before: "2025",
-      now: "2026",
+    expect(periodLabels({ dateFrom: "2026-08-01", dateTo: "2026-10-21" }, { dateFrom: "2026-05-01", dateTo: "2026-07-21" }, "last-3-months", "en")).toEqual({
+      period: "1 August – 21 October 2026",
+      previous: "1 May – 21 July",
+      before: "1 May–21 Jul",
+      now: "1 Aug–21 Oct",
+      heads: ["1 May–21 Jul", "1 Aug–21 Oct"],
     });
   });
 
-  it("speaks Bangla when asked", () => {
+  it("gives the year its days in the sentences and the years as column heads", () => {
+    expect(periodLabels({ dateFrom: "2026-01-01", dateTo: "2026-10-21" }, { dateFrom: "2025-01-01", dateTo: "2025-10-21" }, "this-year", "en")).toEqual({
+      period: "1 January – 21 October 2026",
+      previous: "1 January – 21 October 2025",
+      before: "1 Jan–21 Oct 2025",
+      now: "1 Jan–21 Oct 2026",
+      heads: ["2025", "2026"],
+    });
+  });
+
+  it("names both years when a range crosses New Year", () => {
+    expect(rangeLabel("2026-11-01", "2027-01-31", "en")).toBe("November 2026 – January 2027");
+    expect(rangeLabel("2026-11-01", "2027-01-21", "en")).toBe("1 November 2026 – 21 January 2027");
+    expect(rangeLabel("2025-07-01", "2026-06-30", "en", "short")).toBe("Jul 2025–Jun 2026");
+    expect(periodLabels({ dateFrom: "2027-01-01", dateTo: "2027-01-21" }, { dateFrom: "2026-12-01", dateTo: "2026-12-21" }, "this-month", "en").previous).toBe("1–21 December 2026");
+  });
+
+  it("speaks Bangla, with Bangla digits and the board's month names", () => {
     expect(monthName("2026-10", "bn")).toBe("অক্টোবর");
+    expect(monthName("2026-09", "bn", "short")).toBe("সেপ্টে");
     expect(monthName("2026-10", "en", "short", true)).toBe("Oct 2026");
+    expect(monthName("2026-10", "bn", "long", true)).toBe("অক্টোবর ২০২৬");
+    expect(rangeLabel("2026-10-01", "2026-10-21", "bn")).toBe("১–২১ অক্টোবর ২০২৬");
+    expect(periodLabels({ dateFrom: "2026-01-01", dateTo: "2026-10-21" }, { dateFrom: "2025-01-01", dateTo: "2025-10-21" }, "this-year", "bn").heads).toEqual(["২০২৫", "২০২৬"]);
   });
 });
 

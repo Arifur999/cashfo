@@ -24,11 +24,25 @@ export const shiftDay = (day: string, deltaDays: number): string => {
   return new Date(Date.UTC(year, month - 1, date + deltaDays)).toISOString().slice(0, 10);
 };
 
+const utcDay = (day: string): number => {
+  const [year, month, date] = day.split("-").map(Number);
+  return Date.UTC(year, month - 1, date);
+};
+
+// How many days a range covers, both ends included.
+export const rangeDays = (from: string, to: string): number => Math.round((utcDay(to) - utcDay(from)) / 86_400_000) + 1;
+
+// The API answers a custom range of more than a year with an error (every
+// day in it is a row in the response), counting both ends, as here.
+export const MAX_RANGE_DAYS = 366;
+
 // `today` is passed in (from the server render) so resolving never reads the
-// clock and the server prefetch and the client agree on the window.
+// clock and the server prefetch and the client agree on the window. A custom
+// range the API wouldn't take (an old or hand-made link) is the last 30
+// days instead, rather than every chart failing.
 export const resolveAnalyticsRange = (params: RangeParams, today: string): AnalyticsRange => {
   const { range, from, to } = params;
-  if (range === "custom" && isValidDay(from) && isValidDay(to) && from <= to && to <= today) {
+  if (range === "custom" && isValidDay(from) && isValidDay(to) && from <= to && to <= today && rangeDays(from, to) <= MAX_RANGE_DAYS) {
     return { preset: "custom", from, to };
   }
 

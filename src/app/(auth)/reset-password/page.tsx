@@ -1,32 +1,31 @@
-import type { Metadata } from "next";
 import AuthFooterPrompt from "@/components/modules/Auth/AuthFooterPrompt";
 import AuthHeading from "@/components/modules/Auth/AuthHeading";
-import AuthShell from "@/components/modules/Auth/AuthShell";
-import IncompleteResetLink from "@/components/modules/Auth/IncompleteResetLink";
-import MaintenanceNotice from "@/components/modules/Auth/MaintenanceNotice";
+import ResetLinkProblem from "@/components/modules/Auth/ResetLinkProblem";
 import ResetPasswordForm from "@/components/modules/Auth/ResetPasswordForm";
+import { publicPageTitle } from "@/components/modules/Legal/publicPageTitle";
 import { LOGIN_ROUTE } from "@/lib/authUtils";
+import { getResetLinkStatus } from "./resetLinkStatus";
 
-export const metadata: Metadata = {
-  title: "Choose a new password",
-};
+export const generateMetadata = publicPageTitle("Choose a new password");
 
-// Opened from the reset email: /reset-password?token=...
+// Opened from the reset email: /reset-password?token=... A link that can no
+// longer work says so first, before the new password is typed twice.
 const ResetPasswordPage = async ({ searchParams }: PageProps<"/reset-password">) => {
   const { token } = await searchParams;
+  const resetToken = typeof token === "string" ? token.trim() : "";
+  if (!resetToken) {
+    return <ResetLinkProblem reason="incomplete" />;
+  }
+  if ((await getResetLinkStatus(resetToken)) === "invalid") {
+    return <ResetLinkProblem reason="expired" />;
+  }
 
   return (
-    <AuthShell hero="narrow" notice={<MaintenanceNotice />}>
-      {typeof token !== "string" || !token.trim() ? (
-        <IncompleteResetLink />
-      ) : (
-        <>
-          <AuthHeading title="Choose a new password" subtitle="Pick something you have not used on Smartly before." />
-          <ResetPasswordForm token={token.trim()} />
-          <AuthFooterPrompt prompt="Remembered it?" linkLabel="Back to sign in" href={LOGIN_ROUTE} />
-        </>
-      )}
-    </AuthShell>
+    <>
+      <AuthHeading title="Choose a new password" subtitle="Pick something you have not used on Smartly before." />
+      <ResetPasswordForm token={resetToken} />
+      <AuthFooterPrompt prompt="Remembered it?" linkLabel="Back to sign in" href={LOGIN_ROUTE} />
+    </>
   );
 };
 

@@ -2,10 +2,11 @@
 
 import { KeyRound, ShieldOff } from "lucide-react";
 import DataTableRowActions from "@/components/shared/table/DataTableRowActions";
-import { Button } from "@/components/ui/button";
+import T from "@/components/shared/T";
+import Button from "@/components/smartly/Button";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import type { AdminDialog } from "./AdminDialogs";
-import T from "@/components/shared/T";
 
 interface AdminRowActionsProps {
   admin: IAdminAccount;
@@ -13,25 +14,24 @@ interface AdminRowActionsProps {
   onOpen: (dialog: AdminDialog, admin: IAdminAccount) => void;
 }
 
-// "Change role" (or "Turn back on" for a suspended admin) as a button, and
-// Reset password / Suspend behind the "..." menu. Nobody resets their own
+// "Edit" (or "Turn back on" for a suspended admin) as a button, and Reset
+// password / Suspend behind the "..." menu. Edit changes another admin's
+// name and role, so it isn't called "Change role". Nobody resets their own
 // password here (that's My account) or suspends themselves -- the API
-// refuses that too -- so your own row only edits your name.
+// refuses that too -- so your own row only edits your name. Each button is
+// named for its row, so a screen reader's list of buttons tells them apart.
 const AdminRowActions = ({ admin, isSelf, onOpen }: AdminRowActionsProps) => {
+  const { translate } = useLocale();
   const suspended = admin.status === "SUSPENDED";
-  const primary: { label: string; dialog: AdminDialog } = suspended
-    ? { label: "Turn back on", dialog: "activate" }
-    : { label: isSelf ? "Edit name" : "Change role", dialog: "edit" };
+  const primary: { label: string; ariaLabel?: string; dialog: AdminDialog } = suspended
+    ? { label: "Turn back on", ariaLabel: translate("Turn back on: {name}", { name: admin.name }), dialog: "activate" }
+    : isSelf
+      ? { label: "Edit name", dialog: "edit" }
+      : { label: "Edit", ariaLabel: translate("Edit {name}", { name: admin.name }), dialog: "edit" };
 
   return (
     <div className="flex justify-end gap-2" onClick={(event) => event.stopPropagation()}>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken"
-        onClick={() => onOpen(primary.dialog, admin)}
-      >
+      <Button variant="secondary" size="sm" aria-label={primary.ariaLabel} onClick={() => onOpen(primary.dialog, admin)}>
         <T>{primary.label}</T>
       </Button>
       {!isSelf && !suspended && (

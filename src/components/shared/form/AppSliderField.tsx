@@ -3,7 +3,7 @@
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Slider } from "@/components/ui/slider";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import FormFieldShell from "./FormFieldShell";
+import FormFieldShell, { fieldLabelId } from "./FormFieldShell";
 
 interface AppSliderFieldProps {
   // Holds a number.
@@ -37,7 +37,7 @@ const AppSliderField = ({ field, label, min = 0, max = 100, step = 1, formatValu
         <Slider
           id={control.id}
           thumbProps={{
-            "aria-labelledby": `${field.name}-label`,
+            "aria-labelledby": fieldLabelId(control.id),
             "aria-describedby": control["aria-describedby"],
             "aria-valuetext": formatValue(value),
           }}

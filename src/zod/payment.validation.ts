@@ -4,14 +4,15 @@ import type { IRefundPayload } from "@/types/payment.types";
 import { reasonSchema } from "./common.validation";
 
 // A. Form schema -- built per payment, since a refund can't exceed what was
-// actually paid.
+// actually paid. The ceiling's message is a fixed key, so it reads in
+// Bangla too; the field's own "Up to {amount}." says where the ceiling is.
 export const buildRefundFormZodSchema = (maxAmount: number) =>
   z.object({
     amount: z
       .string()
       .regex(MONEY_PATTERN, "Enter an amount like 499 or 499.50")
       .refine((value) => Number(value) > 0, "Must be greater than zero")
-      .refine((value) => Number(value) <= maxAmount, `Can't exceed the payment amount (${maxAmount})`),
+      .refine((value) => Number(value) <= maxAmount, "More than this payment"),
     reason: reasonSchema,
   });
 

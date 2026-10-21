@@ -7,6 +7,9 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   Coupons: "কুপন",
   "Loading plans...": "প্ল্যান লোড হচ্ছে...",
   "Loading coupons...": "কুপন লোড হচ্ছে...",
+  "Couldn't load plans": "প্ল্যান লোড করা যায়নি",
+  "Couldn't load who is on each plan": "কোন প্ল্যানে কে আছেন, লোড করা যায়নি",
+  "Couldn't load coupons": "কুপন লোড করা যায়নি",
 
   // Plans
   "New plan": "নতুন প্ল্যান",
@@ -36,10 +39,15 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "Share a workspace with family or staff": "পরিবার বা কর্মীদের সঙ্গে ওয়ার্কস্পেস ভাগ করুন",
   "Income goals": "আয়ের লক্ষ্য",
   "Set and track income targets": "আয়ের লক্ষ্য ঠিক করে নজর রাখুন",
+  // Who is on a plan now (its workspaces), on its card.
+  "{count} person on it now": "এখন {count} জন আছেন",
+  "{count} people on it now": "এখন {count} জন আছেন",
   "Edit plan": "প্ল্যান সম্পাদনা",
   "Take off sale": "বিক্রি বন্ধ করুন",
   "Put back on sale": "আবার বিক্রি চালু করুন",
   "Delete plan": "প্ল্যান মুছুন",
+  "{count} person is on it. Take it off sale instead.": "এতে {count} জন আছেন। এর বদলে বিক্রি বন্ধ করুন।",
+  "{count} people are on it. Take it off sale instead.": "এতে {count} জন আছেন। এর বদলে বিক্রি বন্ধ করুন।",
   "{count} person is on this plan": "এই প্ল্যানে {count} জন আছেন",
   "{count} people are on this plan": "এই প্ল্যানে {count} জন আছেন",
   "Pricing, trial and what the plan allows.": "দাম, ট্রায়াল আর প্ল্যানে যা যা পাওয়া যায়।",
@@ -56,6 +64,8 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
     "নতুন দাম প্রত্যেকের পরের পেমেন্ট থেকে প্রযোজ্য। এখন এই প্ল্যানে থাকা {count} জন নবায়ন পর্যন্ত {price}-ই দেবেন।",
   "A new price applies from each person's next payment. The {count} people on it now keep {price} until they renew.":
     "নতুন দাম প্রত্যেকের পরের পেমেন্ট থেকে প্রযোজ্য। এখন এই প্ল্যানে থাকা {count} জন নবায়ন পর্যন্ত {price}-ই দেবেন।",
+  "A new price applies from each person's next payment. Everyone on it now keeps {price} until they renew.":
+    "নতুন দাম প্রত্যেকের পরের পেমেন্ট থেকে প্রযোজ্য। এখন এই প্ল্যানে যাঁরা আছেন, তাঁরা নবায়ন পর্যন্ত {price}-ই দেবেন।",
   "On sale to new buyers": "নতুন ক্রেতাদের জন্য বিক্রি চালু",
   "Turn off to hide it without moving anyone off it": "কাউকে না সরিয়ে লুকাতে বন্ধ করুন",
   "Create plan": "প্ল্যান তৈরি করুন",
@@ -72,12 +82,16 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
     "এটি ফেরানো যায় না, আর শুধু তখনই কাজ করে যখন প্ল্যানে কেউ নেই এবং কোনো পেমেন্ট বা কুপন এটির উল্লেখ করে না। সাধারণত বিক্রি বন্ধ করাই যথেষ্ট।",
   "Deleting...": "মুছে ফেলা হচ্ছে...",
   "Paid people at the end of each month": "প্রতি মাসের শেষে পেইড মানুষ",
-  "Paid people per plan at the end of each month": "প্রতি মাসের শেষে প্ল্যান অনুযায়ী পেইড মানুষ",
+  "Paid people per plan at the end of each month: {months}": "প্রতি মাসের শেষে প্ল্যান অনুযায়ী পেইড মানুষ: {months}",
+  "Counted from payments": "পেমেন্ট থেকে গোনা",
   "Nobody has paid for a plan in these months yet.": "এই মাসগুলোতে এখনো কেউ কোনো প্ল্যানের জন্য টাকা দেননি।",
   "Name is required": "নাম দিতে হবে",
+  "Use at least one English letter or number": "অন্তত একটি ইংরেজি অক্ষর বা সংখ্যা দিন",
+  "Another plan already has this name": "এই নামে আরেকটি প্ল্যান আগে থেকেই আছে",
   "Choose a billing cycle": "বিলিং চক্র বাছুন",
   "Enter whole days, e.g. 14": "পূর্ণ দিন লিখুন, যেমন 14",
   "Enter a whole amount, e.g. 499": "পূর্ণ পরিমাণ লিখুন, যেমন 499",
+  "Must be 0 or more": "0 বা তার বেশি হতে হবে",
   "Use -1 for unlimited, or 0 and up": "সীমাহীনের জন্য -1, নইলে 0 বা তার বেশি",
   "Enter a whole number": "একটি পূর্ণ সংখ্যা লিখুন",
   "Failed to create plan": "প্ল্যান তৈরি করা যায়নি",
@@ -85,6 +99,10 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "Failed to archive plan": "প্ল্যানের বিক্রি বন্ধ করা যায়নি",
   "Failed to put the plan on sale": "প্ল্যান আবার বিক্রিতে আনা যায়নি",
   "Failed to delete plan": "প্ল্যান মুছে ফেলা যায়নি",
+  // The API's answers about a plan or coupon (plans/_action.ts words the
+  // delete refusal, whose counts can't be a key).
+  "Payments, coupons or workspaces still use this plan. Take it off sale instead.": "পেমেন্ট, কুপন বা ওয়ার্কস্পেস এখনো এই প্ল্যান ব্যবহার করে। এর বদলে বিক্রি বন্ধ করুন।",
+  "Plan not found": "প্ল্যান পাওয়া যায়নি",
 
   // Coupons
   "New coupon": "নতুন কুপন",
@@ -93,6 +111,7 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "{first} and {second}": "{first} ও {second}",
   "{first}, {second} and {count} more": "{first}, {second} ও আরও {count}টি",
   "Used in {month}": "{month}-এ ব্যবহার",
+  "Out of {count} payment": "{count}টি পেমেন্টের মধ্যে",
   "Out of {count} payments": "{count}টি পেমেন্টের মধ্যে",
   "Money taken off": "যত টাকা কমেছে",
   "In {month}": "{month}-এ",
@@ -126,9 +145,17 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "Nobody has used it yet.": "এখনো কেউ ব্যবহার করেননি।",
   "Delete coupon": "কুপন মুছুন",
   "Nobody has used it, so it can go. This can't be undone.": "কেউ ব্যবহার করেননি, তাই মুছে ফেলা যায়। এটি ফেরানো যাবে না।",
+  // A used coupon can't be deleted, only turned off.
+  "Turn {code} off?": "{code} বন্ধ করবেন?",
+  "It stops working at checkout. The payments that used it keep it, and you can turn it back on from Edit.":
+    "পেমেন্টের সময় এটি আর কাজ করবে না। যে পেমেন্টগুলোতে এটি ব্যবহার হয়েছে সেগুলোতে থাকবে, আর সম্পাদনা থেকে আবার চালু করতে পারবেন।",
+  "Coupon turned off": "কুপন বন্ধ হয়েছে",
+  "Failed to turn the coupon off": "কুপন বন্ধ করা যায়নি",
   "Coupon created": "কুপন তৈরি হয়েছে",
   "Coupon updated": "কুপন হালনাগাদ হয়েছে",
   "Coupon deleted": "কুপন মুছে ফেলা হয়েছে",
+  "A coupon with this code already exists": "এই কোডের একটি কুপন আগে থেকেই আছে",
+  "Coupon not found": "কুপন পাওয়া যায়নি",
   "Letters and numbers, no spaces. People type it at checkout.": "অক্ষর ও সংখ্যা, ফাঁকা ছাড়া। পেমেন্টের সময় মানুষ এটি লেখেন।",
   "Make one up": "একটি বানিয়ে দিন",
   "Discount type": "ছাড়ের ধরন",
@@ -137,6 +164,7 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "Percent off": "শতাংশ ছাড়",
   "Taka off": "টাকা ছাড়",
   "Pick none and it works on every plan.": "কোনোটি না বাছলে সব প্ল্যানে চলবে।",
+  "Works at checkout": "পেমেন্টের সময় কাজ করে",
   "Turn off to stop it working without deleting it.": "না মুছে কাজ বন্ধ করতে বন্ধ করুন।",
   "Through the end of that day.": "সেই দিনের শেষ পর্যন্ত।",
   "Most uses": "সর্বোচ্চ ব্যবহার",

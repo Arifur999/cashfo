@@ -1,5 +1,5 @@
-// The sums behind the admin dashboard: the greeting, the change chips, the
-// plan shares and the content checks. Pure, so the page and its tests agree.
+// The sums behind the admin dashboard: the greeting, the plan shares and
+// the content checks. Pure, so the page and its tests agree.
 import { APP_TIME_ZONE } from "./date";
 
 export type DayPart = "morning" | "afternoon" | "evening";
@@ -13,19 +13,6 @@ export const dayPart = (hour: number): DayPart => (hour < 12 ? "morning" : hour 
 
 // "Good afternoon, Nadia": the first word of the admin's name.
 export const firstName = (name: string): string => name.trim().split(/\s+/)[0] || name;
-
-// Percent change from one period to the next; null when there was nothing
-// before, since "up from zero" is not a percentage.
-export function changePercent(current: number, previous: number): number | null {
-  if (previous === 0) return null;
-  return Math.round(((current - previous) / previous) * 1000) / 10;
-}
-
-// "2026-10" → "Oct".
-export function monthKeyLabel(key: string): string {
-  const [year, month] = key.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1)));
-}
 
 export interface Share {
   name: string;
@@ -45,9 +32,6 @@ export function planShares(perPlan: { planName: string; totalUsers: number }[]):
     .sort((a, b) => b.totalUsers - a.totalUsers)
     .map((plan, index) => ({ name: plan.planName, count: plan.totalUsers, pct: total > 0 ? Math.round((plan.totalUsers / total) * 1000) / 10 : 0, color: SHARE_COLORS[index % SHARE_COLORS.length] }));
 }
-
-// Whole hours between a moment and now.
-export const hoursSince = (iso: string, now = new Date()): number => Math.max(0, Math.floor((now.getTime() - new Date(iso).getTime()) / 3_600_000));
 
 // How many of the app's words still have no Bangla.
 export function translationCoverage(list: { bn: string }[]): { total: number; missing: number; pct: number } {

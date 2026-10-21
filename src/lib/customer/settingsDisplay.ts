@@ -1,6 +1,8 @@
 // The lists behind Settings: the sections, the account password rules,
 // the help questions and the shortcuts. Pure data, so the nav, the phone
 // menu and the pages agree.
+import type { LoginHistoryEntry } from "./api";
+import { toEnglishDigits } from "./money";
 import type { Rule } from "./vaultDisplay";
 
 export const APP_VERSION = "0.1.0";
@@ -16,8 +18,10 @@ export interface SettingsSection {
   group: "Account@@user" | "App" | "Support";
 }
 
+// Profile has its own address, as the sidebar's Settings › Profile does;
+// /settings itself is the menu on a phone and the profile on a wide screen.
 export const SETTINGS_SECTIONS: SettingsSection[] = [
-  { key: "profile", href: "/settings", label: "Profile", group: "Account@@user" },
+  { key: "profile", href: "/settings/profile", label: "Profile", group: "Account@@user" },
   { key: "security", href: "/settings/security", label: "Security", group: "Account@@user" },
   { key: "workspaces", href: "/settings/workspaces", label: "Workspaces", group: "Account@@user" },
   { key: "app", href: "/settings/app", label: "App preferences", group: "App" },
@@ -27,10 +31,18 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
 
 export const SETTINGS_GROUPS: SettingsSection["group"][] = ["Account@@user", "App", "Support"];
 
+// The section a path belongs to; /settings (and anything unknown) is the
+// profile, which the index shows on a wide screen.
 export function sectionFor(pathname: string): SettingsSectionKey {
   const match = SETTINGS_SECTIONS.filter((section) => pathname === section.href || pathname.startsWith(`${section.href}/`)).sort((a, b) => b.href.length - a.href.length)[0];
   return match?.key ?? "profile";
 }
+
+export const sectionOf = (key: SettingsSectionKey): SettingsSection => SETTINGS_SECTIONS.find((section) => section.key === key) ?? SETTINGS_SECTIONS[0];
+
+// App preferences' Reminders card, which the phone menu's Reminders row
+// opens (/settings/app#reminders).
+export const REMINDERS_ANCHOR = "reminders";
 
 export const MIN_ACCOUNT_PASSWORD = 8;
 export const MAX_ACCOUNT_PASSWORD = 128;
@@ -45,24 +57,83 @@ export function accountPasswordRules(password: string, confirm: string, currentP
   ];
 }
 
-// "Khaled Mahmud" -> "KM".
-export function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  return parts
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
-}
+// The workspaces Settings › Workspaces lists and counts: mess and family
+// groups live in Group expenses, not there.
+export const ownWorkspaces = <T extends { type: string }>(businesses: T[]): T[] => businesses.filter((business) => business.type !== "GROUP");
 
-// A Bangladeshi number as "+880" + the rest: "01711-482915" -> "1711-482915".
+// A Bangladeshi number as "+880" + the rest: "01711-482915" and
+// "+880 1711-482915" -> "1711-482915". The country code goes only when
+// something follows it, so a field that holds just "880" keeps it.
 export function localPhone(phone: string): string {
-  const trimmed = phone.trim();
-  if (trimmed.startsWith("+880")) return trimmed.slice(4).replace(/^0/, "");
-  if (trimmed.startsWith("880")) return trimmed.slice(3).replace(/^0/, "");
-  return trimmed.replace(/^0/, "");
+  return phone
+    .trim()
+    .replace(/^\+?880(?=[\s\d-])/, "")
+    .replace(/^[\s-]+/, "")
+    .replace(/^0/, "");
 }
 
-export const fullPhone = (local: string): string => (local.trim() ? `+880${local.trim().replace(/^0/, "")}` : "");
+// What the phone field keeps of a keystroke or a paste: Bangla digits as
+// English ones, only digits and hyphens, and no +880 or leading 0 the
+// field's own +880 already stands for. "+8801711482915" and
+// "০১৭১১৪৮২৯১৫" both become "1711482915".
+export const cleanLocalPhone = (raw: string): string => localPhone(toEnglishDigits(raw).replace(/[^\d-]/g, "")).slice(0, 14);
+
+export const fullPhone = (local: string): string => {
+  const rest = cleanLocalPhone(local);
+  return rest ? `+880${rest}` : "";
+};
+
+// A number reduced to the digits after the country code, so the ways one
+// number is written ("01711-482915", "+880 1711 482915") compare equal.
+const phoneKey = (phone: string): string =>
+  toEnglishDigits(phone)
+    .replace(/\D/g, "")
+    .replace(/^880(?=\d)/, "")
+    .replace(/^0/, "");
+
+export const samePhone = (a: string, b: string): boolean => phoneKey(a) === phoneKey(b);
+
+// What a try to sign in came to, in the history's words (dictionary keys).
+// The backend records why one failed: a wrong password, a try blocked by
+// the rate limit, or a suspended account.
+export function signInResult(entry: Pick<LoginHistoryEntry, "success" | "failureReason">): string {
+  if (entry.success) return "Signed in";
+  switch (entry.failureReason) {
+    case "invalid_password":
+      return "Wrong password";
+    case "rate_limited":
+      return "Blocked after too many tries";
+    case "account_suspended":
+      return "Account was suspended";
+    default:
+      return "Couldn't sign in";
+  }
+}
+
+// Someone else may have tried the password: the history then offers to
+// change it.
+export const triedThePassword = (entry: Pick<LoginHistoryEntry, "success" | "failureReason">): boolean => !entry.success && (entry.failureReason === "invalid_password" || entry.failureReason === "rate_limited");
+
+// A device's or a try's address; the API stores "unknown" when a request
+// came without one.
+export const knownIp = (ip: string | null | undefined): string | null => (ip && ip.trim() && ip !== "unknown" ? ip.trim() : null);
+
+// The file name in a Content-Disposition header ("attachment;
+// filename="smartly-data.zip""), the RFC 5987 form first.
+export function fileNameFrom(disposition: string | null): string | null {
+  if (!disposition) return null;
+  const encoded = /filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/.exec(disposition);
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded[1].trim().replace(/^"|"$/g, ""));
+    } catch {
+      // A broken encoding falls back to the plain name below.
+    }
+  }
+  const plain = /filename\s*=\s*("([^"]*)"|[^;]+)/.exec(disposition);
+  const name = (plain?.[2] ?? plain?.[1] ?? "").trim();
+  return name || null;
+}
 
 export interface Faq {
   id: string;
@@ -72,12 +143,14 @@ export interface Faq {
 }
 
 export const FAQS: Faq[] = [
-  { id: "void", question: "Why can't I edit or delete a transaction?", answer: "So your balances always add up, a saved transaction stays as it is. To fix a mistake, void it: its effect on your wallets is reversed, and it stays in your history, crossed out. Then add the right one." },
-  { id: "transfer", question: "How do I move money between my wallets?", answer: "Open Add at the top and pick Transfer. Choose the wallet the money leaves and the one it goes to, and the amount. Both balances change at once and nothing counts as income or spending." },
-  { id: "group", question: "How is my share worked out in Group expenses?", answer: "Every expense in a group is split equally between the members who were in the group that month. Your balance is what you put in minus your share of what was spent, and Settle up shows who pays whom." },
+  { id: "void", question: "How do I fix or cancel a transaction?", answer: "Open it from Transactions. Edit fixes the amount, category, wallet, date or note: the original stays in its history, crossed out and marked as corrected, so your balances always add up. Void cancels one that should never have been added." },
+  { id: "transfer", question: "How do I move money between my wallets?", answer: "Open Add at the top (the + button on a phone) and pick Transfer. Choose the wallet the money leaves and the one it goes to, and the amount. Both balances change at once and nothing counts as income or spending." },
+  { id: "start", question: "Where do I start?", answer: "Add your wallets first, under Wallets: cash, a bank account, bKash or Nagad, each with what it holds today. Then record each income and expense with Add as it happens. Home sums it up: what you have, and what came in and went out this month." },
+  { id: "budget", question: "How do budgets work?", answer: "Open Budget and give each kind of spending a monthly limit. Each category then shows what is left, or how far over it went. When one passes 90% of its limit, the bell tells you; you can turn that off under App preferences, Reminders." },
+  { id: "group", question: "How is my share worked out in Group expenses?", answer: "Each expense is shared the way it was added: equally, by shares, by meals or in exact amounts, among the members in the group that day. Your balance is what you put in minus your share of what was spent, and Settle up shows who pays whom." },
   { id: "vault", question: "I forgot my vault password. Are my saved logins gone?", answer: "Yes. The logins are locked with the vault password itself, so a reset can only start over: you set a new vault password with your account password and the old entries are deleted." },
   { id: "referral", question: "When can I withdraw referral earnings?", answer: "A reward counts 30 days after your friend joined, as long as their account is still active. Everything counted so far can be withdrawn in one go into any of your wallets or savings pots." },
-  { id: "bangla", question: "Can I use the app in Bangla?", answer: "Yes. Tap বাংলা at the top of any page, or pick it under App preferences so every device opens in Bangla." },
+  { id: "bangla", question: "Can I use the app in Bangla?", answer: "Yes. Tap বাংলা at the top of any page (in the menu on a phone), or pick it under App preferences so every device opens in Bangla." },
 ];
 
 export function searchFaqs(faqs: Faq[], query: string, t: (key: string) => string): Faq[] {
@@ -99,17 +172,16 @@ export interface Guide {
   // Dictionary keys, and the help question it opens.
   title: string;
   body: string;
-  faqId: string;
+  faqId: "start" | "budget" | "group" | "vault";
   tone: "money" | "warning" | "rose";
-  // How long it takes to read.
-  minutes: number;
 }
 
+// Each guide opens the Help answer it is about.
 export const GUIDES: Guide[] = [
-  { title: "Getting started", body: "Add your wallets, record a transaction and read the dashboard.", faqId: "transfer", tone: "money", minutes: 4 },
-  { title: "Budgets that work", body: "Set a limit for each category and see what is left.", faqId: "void", tone: "money", minutes: 3 },
-  { title: "Group expenses for families and messes", body: "Shares, meals, settling up and closing the month.", faqId: "group", tone: "warning", minutes: 6 },
-  { title: "Keeping your passwords safe", body: "The vault password, Generate and the security checkup.", faqId: "vault", tone: "rose", minutes: 3 },
+  { title: "Getting started", body: "Add your wallets, record a transaction and read the dashboard.", faqId: "start", tone: "money" },
+  { title: "Budgets that work", body: "Set a limit for each category and see what is left.", faqId: "budget", tone: "money" },
+  { title: "Group expenses for families and messes", body: "Shares, meals, settling up and closing the month.", faqId: "group", tone: "warning" },
+  { title: "Keeping your passwords safe", body: "The vault password, Generate and the security checkup.", faqId: "vault", tone: "rose" },
 ];
 
 export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" }[] = [

@@ -16,12 +16,24 @@ interface PasswordFieldProps extends Omit<React.ComponentProps<"input">, "size" 
   // Copies the current text; shown only when given.
   onCopy?: () => void;
   frameClassName?: string;
+  // Shown as text to start with; the eye still hides it.
+  defaultVisible?: boolean;
+  // Shown or hidden by the caller instead (a password Generate just filled
+  // reads in the open); onVisibleChange hears the eye.
+  visible?: boolean;
+  onVisibleChange?: (visible: boolean) => void;
 }
 
-// A password box with a show/hide eye, hidden to start with.
-export function PasswordField({ value, onChange, size = "lg", invalid, mono = false, onCopy, frameClassName, className, ...props }: PasswordFieldProps) {
+// A password box with a show/hide eye, hidden to start with unless the
+// caller says otherwise.
+export function PasswordField({ value, onChange, size = "lg", invalid, mono = false, onCopy, frameClassName, className, defaultVisible = false, visible: shown, onVisibleChange, ...props }: PasswordFieldProps) {
   const { t } = useLocale();
-  const [visible, setVisible] = useState(false);
+  const [shownHere, setShownHere] = useState(defaultVisible);
+  const visible = shown ?? shownHere;
+  const toggle = () => {
+    setShownHere(!visible);
+    onVisibleChange?.(!visible);
+  };
   const button = "flex size-8 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink";
 
   return (
@@ -36,7 +48,7 @@ export function PasswordField({ value, onChange, size = "lg", invalid, mono = fa
       frameClassName={frameClassName}
       trailing={
         <span className="flex items-center">
-          <button type="button" onClick={() => setVisible((v) => !v)} aria-label={t(visible ? "Hide password" : "Show password")} aria-pressed={visible} className={button}>
+          <button type="button" onClick={toggle} aria-label={t(visible ? "Hide password" : "Show password")} aria-pressed={visible} className={button}>
             {visible ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
           </button>
           {onCopy && (
