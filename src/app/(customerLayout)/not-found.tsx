@@ -11,13 +11,14 @@ import { getTranslator } from "@/lib/i18n/locale";
 // menu entry the broken link sat under. With the admin-edited Bangla, like
 // every other customer page.
 export default async function CustomerNotFound() {
-  const { t } = await getTranslator();
+  const { locale, t } = await getTranslator();
 
   return (
     <>
       <TopbarExtras title={t("Page not found")} />
       <StatePage
         standalone={false}
+        locale={locale}
         icon={<Compass />}
         tone="insights"
         reference="404"

@@ -10,8 +10,9 @@ const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin
 const anekBangla = Anek_Bangla({ variable: "--font-anek-bangla", subsets: ["bengali", "latin"] });
 
 // globals.css may not be there, so the palette's light values are written
-// out: page, ink, ink-muted, emerald (the button, forest under the pointer),
-// line-strong and sunken (the secondary link), and the focus ring.
+// out: page, ink, ink-muted, forest (the button, forest-hover under the pointer),
+// line-strong and sunken (the secondary link), and the focus ring. The
+// button's shadow is shadow-button's.
 const STYLES = `
   .ge-body { margin: 0; min-height: 100vh; display: flex; background: #f3f6f4; color: #0e1a16;
     font-family: var(--font-jakarta, system-ui), var(--font-anek-bangla, system-ui), system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -24,8 +25,8 @@ const STYLES = `
   .ge-actions { margin-top: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
   .ge-button, .ge-link { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border-radius: 12px;
     font: inherit; font-size: 16px; font-weight: 600; text-decoration: none; cursor: pointer; }
-  .ge-button { border: 0; background: #1f7a5a; color: #ffffff; }
-  .ge-button:hover { background: #0b3d2e; }
+  .ge-button { border: 0; background: #0b3d2e; color: #ffffff; box-shadow: 0 8px 18px -8px rgba(11, 61, 46, 0.55); }
+  .ge-button:hover { background: #145a43; }
   .ge-link { border: 1px solid #7c8882; background: #ffffff; color: #0e1a16; }
   .ge-link:hover { background: #e4ebe7; }
   .ge-button:focus-visible, .ge-link:focus-visible { outline: 2px solid #1f7a5a; outline-offset: 2px; }

@@ -37,26 +37,29 @@ export default async function MaintenancePage() {
 
   return (
     <LocaleProvider initialLocale={locale} overrides={overrides}>
-      {/* The skip link's target and the page's main landmark. */}
-      <main id="main-content" tabIndex={-1} lang={locale} className="flex flex-1 flex-col outline-none">
-        <StatePage
-          icon={<Wrench />}
-          tone="warning"
-          reference={t("Scheduled maintenance")}
-          title={t("{brand} is getting an upgrade", { brand: BRAND_NAME })}
-          description={t("Your data is safe. Everything is paused for a short while so nothing gets lost.")}
-          actions={<MaintenanceActions supportEmail={platform.supportEmail} signedIn={signedIn} />}
-        >
-          {platform.maintenance.message && (
-            <Card padding="none" elevated={false} className="mt-2 w-full max-w-190 px-5 py-4 text-left">
-              <Eyebrow tone="neutral" className={bnOverline(locale)}>
-                {t("Message from the team")}
-              </Eyebrow>
-              <p className="mt-2 text-body leading-[21px] whitespace-pre-line text-ink-2">{platform.maintenance.message}</p>
-            </Card>
-          )}
-        </StatePage>
-      </main>
+      {/* Its own main landmark, the skip link's target, in the page's
+          language. */}
+      <StatePage
+        main
+        locale={locale}
+        homeLabel={t("{brand} home", { brand: BRAND_NAME })}
+        icon={<Wrench />}
+        tone="warning"
+        // Words, so the page's face (the mono one has no Bangla).
+        reference={<span className={locale === "bn" ? "font-bn" : undefined}>{t("Scheduled maintenance")}</span>}
+        title={t("{brand} is getting an upgrade", { brand: BRAND_NAME })}
+        description={t("Your data is safe. Everything is paused for a short while so nothing gets lost.")}
+        actions={<MaintenanceActions supportEmail={platform.supportEmail} signedIn={signedIn} />}
+      >
+        {platform.maintenance.message && (
+          <Card padding="none" elevated={false} className="mt-2 w-full max-w-190 px-5 py-4 text-left">
+            <Eyebrow tone="neutral" className={bnOverline(locale)}>
+              {t("Message from the team")}
+            </Eyebrow>
+            <p className="mt-2 text-body leading-[21px] whitespace-pre-line text-ink-2">{platform.maintenance.message}</p>
+          </Card>
+        )}
+      </StatePage>
     </LocaleProvider>
   );
 }
