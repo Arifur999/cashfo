@@ -3,7 +3,7 @@ import { GroupPageClient } from "@/components/modules/Customer/GroupExpenses/Gro
 import type { GroupPageData } from "@/components/modules/Customer/GroupExpenses/groupTypes";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getWorkspace } from "@/lib/customer/businesses";
-import { closedRecordFor, groupTabFrom, inMonth, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
+import { closedRecordFor, groupPickerMonths, groupTabFrom, inMonth, isNewGroup, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
 import { getGroupContributions, getGroupExpenseCategories, getGroupExpenses, getGroupMeals, getGroupMembers, getGroupMonthBudgets, getGroupSettings, getGroupSettlement, getGroupSettlementHistory } from "@/lib/customer/groupExpenses";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
@@ -48,12 +48,6 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     getGroupMeals(businessId, range.from, range.to),
   ]);
 
-  // The picker goes back to the earliest closed month, at least a year, and
-  // always includes the month in the URL.
-  const earliest = [...history.map((h) => h.periodStart.slice(0, 10)), range.from].sort()[0];
-  const months = monthChoices(today, earliest, startDay);
-  if (!months.includes(range.key)) months.push(range.key);
-
   const data: GroupPageData = {
     businessId,
     name: business.name,
@@ -61,8 +55,13 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     today,
     tab: groupTabFrom(sp.tab),
     range,
-    months,
+    // A year back at least, so a group that never closed a month can still
+    // open the months before this one.
+    months: groupPickerMonths(today, history, range, startDay),
     closedRecord: closedRecordFor(history, range),
+    // Only a group that never recorded anything is new: an empty month in
+    // a running group keeps its dashboard.
+    isNew: isNewGroup({ history, recentExpenses, contributions, meals }),
     members,
     contributions,
     expenses: inMonth(recentExpenses, range),

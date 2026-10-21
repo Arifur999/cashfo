@@ -1,20 +1,23 @@
 "use client";
 
-import { ArrowRight, Check, ChevronRight, Info, Lock } from "lucide-react";
-import Link from "next/link";
+import { ArrowRight, Check, ChevronRight, Info, Lock, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
+import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
+import LoadMore from "@/components/smartly/LoadMore";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { shiftMonth, throughManager, type Transfer } from "@/lib/customer/groupDisplay";
+import { countLabel, dayLabel, paidIn, rangeLabel, recordDiffers, sharedCostEach, shiftMonth, throughManager, type Transfer } from "@/lib/customer/groupDisplay";
 import { mealText } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { BalanceCell, Figure } from "./GroupBits";
+import { BalanceCell, Figure, SETTLE_UP_ID } from "./GroupBits";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 interface GroupSettlementTabProps {
@@ -24,11 +27,35 @@ interface GroupSettlementTabProps {
   onCloseMonth: () => void;
 }
 
-// A mess adds each member's meals and meal cost; a family shows the costs.
-const MESS_ROW = "md:grid-cols-[minmax(0,1fr)_56px_92px_92px_96px_100px_92px_80px_150px]";
-const FAMILY_ROW = "md:grid-cols-[minmax(0,1fr)_110px_100px_92px_80px_170px]";
+// A mess shows each member's meals, meal cost and shared cost; a family the
+// costs. What each paid in is one "Paid in" column until the page is wide
+// enough to split it into contributed, own pocket and returned.
+const MESS_COLUMNS = "md:grid-cols-[minmax(0,1fr)_48px_92px_92px_100px_104px_112px]";
+const MESS_WIDE = "2xl:grid-cols-[minmax(0,1fr)_48px_92px_92px_100px_96px_88px_88px_112px]";
+const FAMILY_COLUMNS = "md:grid-cols-[minmax(0,1fr)_100px_104px_112px]";
+const FAMILY_WIDE = "xl:grid-cols-[minmax(0,1fr)_100px_104px_96px_88px_112px]";
+// Closed months shown before "Show more".
+const HISTORY_PAGE = 6;
+const HISTORY_ID = "group-closed-months";
 
 type Route = "manager" | "direct";
+
+// One member's line of the reckoning, live or from the closed record (which
+// keeps no gross deposits or returns, only what was paid in).
+interface Line {
+  id: string;
+  name: string;
+  photoUrl: string | null | undefined;
+  mealUnits: number;
+  mealCost: number;
+  otherShare: number;
+  share: number;
+  gross: number;
+  pocket: number;
+  returned: number;
+  paidIn: number;
+  balance: number;
+}
 
 // The board's month reckoning: who spent what -- meals, meal cost, shared
 // cost, what each put in and paid from their pocket -- whether the account
@@ -40,19 +67,64 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
   const month = monthName(range.key, locale);
   const nextMonth = monthName(shiftMonth(range.key, 1), locale);
   const meals = settings.kind === "MESS" || settings.mealsOn;
-  const ROW = meals ? MESS_ROW : FAMILY_ROW;
   const holder = settings.cashHolderMemberId ? view.memberById[settings.cashHolderMemberId] : undefined;
   const [route, setRoute] = useState<Route>(holder ? "manager" : "direct");
-  const rows = settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId] }));
-  const sum = (pick: (row: (typeof settlement.members)[number]) => string) => rows.reduce((total, { row }) => total + Number(pick(row)), 0);
-  const totals = { meals: sum((r) => r.mealUnits), mealCost: sum((r) => r.mealCost), shared: sum((r) => r.otherShare), cost: sum((r) => r.share), gross: sum((r) => r.grossDeposited), pocket: sum((r) => r.pocketPaid), returned: sum((r) => r.returned) };
-  const sharedEach = settlement.memberCount > 0 ? (Number(settlement.totalExpense) - Number(settlement.mealExpense)) / settlement.memberCount : 0;
-  const allEqual = data.expenses.every((expense) => expense.split === "EQUAL" && expense.splits.length === 0);
+  const [historyLimit, setHistoryLimit] = useState(HISTORY_PAGE);
+  const money = (value: number | string) => formatCurrency(value, currency);
+  const dash = (value: number) => (Math.abs(value) < 0.005 ? <span className="text-ink-muted">—</span> : money(value));
+
+  // A closed month whose entries changed since: its record and the live
+  // figures no longer agree, and either can be shown.
+  const record = data.closedRecord;
+  const sameDays = !!record && record.periodStart.slice(0, 10) === range.from && record.periodEnd.slice(0, 10) === range.to;
+  const differs = !!record && sameDays && recordDiffers(record, settlement);
+  const [figures, setFigures] = useState<"live" | "record">("live");
+  const lockedRecord = differs && figures === "record" ? record : null;
+  const locked = lockedRecord !== null;
+
+  const lines: Line[] = lockedRecord
+    ? lockedRecord.members.map((row) => ({
+        id: row.groupMemberId,
+        name: row.groupMember?.name ?? view.memberById[row.groupMemberId]?.name ?? "—",
+        photoUrl: row.groupMember?.photoUrl ?? view.memberById[row.groupMemberId]?.photoUrl,
+        mealUnits: Number(row.mealUnits),
+        mealCost: Number(row.mealCost),
+        otherShare: Number(row.share) - Number(row.mealCost),
+        share: Number(row.share),
+        gross: Number(row.contributed),
+        pocket: Number(row.pocketPaid),
+        returned: 0,
+        paidIn: paidIn(row),
+        balance: Number(row.balance),
+      }))
+    : settlement.members.map((row) => ({
+        id: row.groupMemberId,
+        name: row.name,
+        photoUrl: view.memberById[row.groupMemberId]?.photoUrl,
+        mealUnits: Number(row.mealUnits),
+        mealCost: Number(row.mealCost),
+        otherShare: Number(row.otherShare),
+        share: Number(row.share),
+        gross: Number(row.grossDeposited),
+        pocket: Number(row.pocketPaid),
+        returned: Number(row.returned),
+        paidIn: paidIn(row),
+        balance: Number(row.balance),
+      }));
+  const sum = (pick: (line: Line) => number) => lines.reduce((total, line) => total + pick(line), 0);
+  const totals = { meals: sum((l) => l.mealUnits), mealCost: sum((l) => l.mealCost), shared: sum((l) => l.otherShare), cost: sum((l) => l.share), gross: sum((l) => l.gross), pocket: sum((l) => l.pocket), returned: sum((l) => l.returned), paidIn: sum((l) => l.paidIn), balance: sum((l) => l.balance) };
+  // The record keeps no split of what was paid in, so it always shows the one column.
+  const split = !locked;
+  const columns = cn(meals ? MESS_COLUMNS : FAMILY_COLUMNS, split && (meals ? MESS_WIDE : FAMILY_WIDE));
+  const paidInCell = !split ? "hidden md:block" : meals ? "hidden md:block 2xl:hidden" : "hidden md:block xl:hidden";
+  const splitCell = meals ? "hidden 2xl:block" : "hidden xl:block";
+
+  const sharedCost = Number(settlement.totalExpense) - Number(settlement.mealExpense);
+  // One figure only when everyone pays it: costs split equally, nobody joining mid-month.
+  const equal = view.sharedEqually;
   const payments = route === "manager" && holder ? throughManager(settlement.members, holder.id) : view.transfers.map((transfer) => ({ ...transfer, owes: false }));
   const managerLeft = holder ? Number(settlement.members.find((r) => r.groupMemberId === holder.id)?.balance ?? 0) : 0;
   const history = [...data.history].sort((a, b) => b.periodStart.localeCompare(a.periodStart));
-  const money = (value: number | string) => formatCurrency(value, currency);
-  const dash = (value: number) => (Math.abs(value) < 0.005 ? <span className="text-ink-muted">—</span> : money(value));
 
   return (
     <div className="flex flex-col gap-5">
@@ -60,120 +132,216 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
         <Figure label={t("Total expense")} value={money(settlement.totalExpense)} />
         {meals ? (
           <>
-            <Figure label={t("Meals")} value={mealText(Number(settlement.mealUnits))} />
+            <Figure label={t("Meals")} value={mealText(Number(settlement.mealUnits), locale)} />
             <Figure label={t("Meal rate")} value={money(settlement.mealRate)} tone="text-emerald" />
           </>
         ) : (
-          <Figure label={t("Members")} value={String(settlement.memberCount)} />
+          <Figure label={t("Members")} value={formatCount(settlement.memberCount, locale)} />
         )}
-        <Figure label={t("Shared cost each")} value={allEqual || meals ? money(sharedEach) : "—"} tone={meals ? "text-ink" : "text-emerald"} />
+        <Figure label={t("Shared cost each")} value={equal ? money(sharedCostEach(settlement)) : "—"} tone={equal && !meals ? "text-emerald" : "text-ink"} />
         <Figure label={t("Cash in hand")} value={money(view.cash)} tone={view.cash < 0 ? "text-expense" : "text-ink"} divided={false} />
         <span className="flex-1" />
         {view.closed ? (
           <span className="flex items-center gap-2 text-small font-semibold text-ink-2">
             <Lock className="size-4" aria-hidden="true" />
-            {month} {t("is closed")}
+            {t("{month} is closed", { month })}
           </span>
         ) : (
-          <Button variant="action" onClick={onCloseMonth} disabled={rows.length === 0}>
+          <Button variant="action" onClick={onCloseMonth} disabled={settlement.members.length === 0}>
             <Lock />
-            {t("Close")} {month}
+            {t("Close {month}", { month })}
           </Button>
         )}
       </Card>
 
-      <Card padding="none" className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
-          <h2 className="text-title font-semibold text-ink">
-            {t("Who spent what")} · {formatDate(range.from, "d")}–{formatDate(range.to, "d MMMM yyyy")}
-          </h2>
-          <span className="text-small text-ink-muted">
-            {meals && `${t("Meal cost = meals × {rate}", { rate: money(settlement.mealRate) })} · `}
-            {allEqual || meals ? `${t("shared cost")} = ${money(Number(settlement.totalExpense) - Number(settlement.mealExpense))} ÷ ${settlement.memberCount}` : t("Each cost is shared the way its expense says.")}
-          </span>
-        </div>
-        <div className="overflow-x-auto">
-          <div className={meals ? "md:min-w-237" : undefined}>
-            <div className={cn("hidden items-end gap-3 border-y border-line bg-table-head px-5 py-2 text-caption font-medium text-ink-muted md:grid", ROW)}>
-              <span>{t("Member")}</span>
-              {meals && (
-                <>
-                  <span className="text-right">{t("Meals")}</span>
-                  <span className="text-right">{t("Meal cost")}</span>
-                  <span className="text-right">{t("Shared cost")}</span>
-                </>
-              )}
-              <span className="text-right font-semibold text-ink-2">{t("Total cost")}</span>
-              <span className="text-right">{t("Contributed")}</span>
-              <span className="text-right">{t("Own pocket")}</span>
-              <span className="text-right">{t("Returned")}</span>
-              <span className="text-right">{t("Balance")}</span>
+      {differs && record && (
+        <Banner tone="warning" inline icon={<TriangleAlert />}>
+          {t("Changed since {month} was closed: the locked record says {spent} spent, {cash} cash.", { month, spent: money(record.totalExpense), cash: money(record.cashInHand) })}
+        </Banner>
+      )}
+
+      {/* A mess's table scrolls sideways, so it is a tab stop: the arrow keys reach its clipped columns. */}
+      <ListCard
+        label={t("Who spent what")}
+        tableClassName={meals ? "overflow-x-auto" : undefined}
+        scrollable={meals}
+        header={
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-4 md:px-6">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <h2 className="text-title font-semibold text-ink">
+                {t("Who spent what")} · {rangeLabel(range, locale)}
+              </h2>
+              <span className="text-small text-ink-muted">
+                {meals && `${t("Meal cost = meals × {rate}", { rate: money(settlement.mealRate) })} · `}
+                {equal ? t("shared cost = {amount} ÷ {count}", { amount: money(sharedCost), count: formatCount(settlement.memberCount, locale) }) : t("Each cost is shared the way its expense says.")}
+              </span>
             </div>
-            {rows.length === 0 && <p className="border-t border-line px-5 py-8 text-center text-body text-ink-muted">{t("Add members to see the settlement.")}</p>}
-            {rows.map(({ row, member }) => (
-              <div key={row.groupMemberId} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-divider px-5 py-3 text-body tabular-nums md:min-h-13 md:py-0", ROW)}>
-                <span className="flex min-w-0 items-center gap-3 font-medium text-ink">
-                  <PersonAvatar name={row.name} src={member?.photoUrl} size={30} coloured />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate">{row.name}</span>
-                    <span className="truncate text-caption font-normal text-ink-muted md:hidden">
-                      {money(row.contributed)} {t("paid in")} · {money(row.share)} {t("cost")}
-                    </span>
-                  </span>
-                </span>
-                {meals && (
-                  <>
-                    <span className="hidden text-right text-ink-2 md:block">{mealText(Number(row.mealUnits))}</span>
-                    <span className="hidden text-right text-ink-2 md:block">{money(row.mealCost)}</span>
-                    <span className="hidden text-right text-ink-2 md:block">{money(row.otherShare)}</span>
-                  </>
-                )}
-                <span className="hidden text-right font-semibold text-ink md:block">{money(row.share)}</span>
-                <span className="hidden text-right text-ink md:block">{money(row.grossDeposited)}</span>
-                <span className={cn("hidden text-right md:block", Number(row.pocketPaid) > 0 ? "text-income" : "text-ink-muted")}>{dash(Number(row.pocketPaid))}</span>
-                <span className="hidden text-right text-ink-muted md:block">{dash(Number(row.returned))}</span>
-                <BalanceCell value={Number(row.balance)} currency={currency} />
-              </div>
-            ))}
-            {rows.length > 0 && (
-              <div className={cn("grid h-12.5 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-table-head px-5 text-body font-semibold tabular-nums", ROW)}>
-                <span>{t("Total")}</span>
-                {meals && (
-                  <>
-                    <span className="hidden text-right md:block">{mealText(totals.meals)}</span>
-                    <span className="hidden text-right md:block">{money(totals.mealCost)}</span>
-                    <span className="hidden text-right md:block">{money(totals.shared)}</span>
-                  </>
-                )}
-                <span className="hidden text-right md:block">{money(totals.cost)}</span>
-                <span className="hidden text-right md:block">{money(totals.gross)}</span>
-                <span className="hidden text-right md:block">{money(totals.pocket)}</span>
-                <span className="hidden text-right md:block">{money(totals.returned)}</span>
-                <span className={cn("text-right", view.cash < 0 ? "text-expense" : "text-income")}>{formatSignedCurrency(view.cash, currency)}</span>
-              </div>
+            {differs && (
+              <SegmentedControl<"live" | "record">
+                options={[
+                  { value: "live", label: "Live figures" },
+                  { value: "record", label: "Closed record" },
+                ]}
+                value={figures}
+                onChange={setFigures}
+                label="Figures to show"
+                variant="soft"
+              />
             )}
           </div>
+        }
+        footer={
+          lines.length > 0 &&
+          (lockedRecord ? (
+            <ListFooter className="flex-row items-center gap-3 text-ink-2">
+              <Lock className="size-4 shrink-0" aria-hidden="true" />
+              <span>{t("The record as {month} was closed on {date}.", { month, date: dayLabel(formatDate(lockedRecord.closedAt, "yyyy-MM-dd"), locale, true) })}</span>
+            </ListFooter>
+          ) : (
+            <div className={cn("flex items-center gap-3 border-t px-4 py-3 text-small md:px-6", view.cash < 0 ? "border-expense-soft bg-expense-soft text-expense" : "border-mint-50 bg-mint-50 text-brand-ink")}>
+              {view.cash < 0 ? <Info className="size-4 shrink-0" aria-hidden="true" /> : <Check className="size-4 shrink-0" aria-hidden="true" />}
+              <span>
+                <b className="font-semibold">{view.cash < 0 ? t("More was spent than came in.") : t("The account checks out.")}</b>{" "}
+                {t("Balances add up to {cash}, exactly the cash {holder} should hold: {contributed} contributed − {spent} spent from the fund.", {
+                  cash: formatSignedCurrency(view.cash, currency),
+                  holder: holder?.name ?? t("the fund"),
+                  contributed: money(totals.gross - totals.returned),
+                  spent: money(Number(settlement.totalExpense) - totals.pocket),
+                })}
+              </span>
+            </div>
+          ))
+        }
+      >
+        {/* Wide enough that a sideways-scrolling mess table still gives the name 140px. */}
+        <div role="rowgroup" className={cn(meals && "md:min-w-202", meals && split && "2xl:min-w-250")}>
+          <ListHead columns={columns} className={cn("items-end", meals && "gap-x-3")}>
+            <ListHeadCell>{t("Member")}</ListHeadCell>
+            {meals && (
+              <>
+                <ListHeadCell align="end">{t("Meals")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Meal cost")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Shared cost")}</ListHeadCell>
+              </>
+            )}
+            <ListHeadCell align="end" className="font-semibold text-ink-2">
+              {t("Total cost")}
+            </ListHeadCell>
+            <ListHeadCell align="end" className={paidInCell}>
+              {t("Paid in")}
+            </ListHeadCell>
+            {split && (
+              <>
+                <ListHeadCell align="end" className={splitCell}>
+                  {t("Contributed")}
+                </ListHeadCell>
+                <ListHeadCell align="end" className={splitCell}>
+                  {t("Own pocket")}
+                </ListHeadCell>
+                <ListHeadCell align="end" className={splitCell}>
+                  {t("Returned")}
+                </ListHeadCell>
+              </>
+            )}
+            <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
+          </ListHead>
+          {lines.length === 0 && <ListEmpty title={t("Add members to see the settlement.")} />}
+          {lines.map((line) => (
+            <ListRow key={line.id} columns={columns} className={cn("tabular-nums", meals && "gap-x-3")}>
+              <ListCell className="flex items-center gap-3 font-medium text-ink">
+                <PersonAvatar name={line.name} src={line.photoUrl} size={30} coloured />
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate">{line.name}</span>
+                  <span className="truncate text-caption font-normal text-ink-muted md:hidden">{t("{paid} paid in · {cost} cost", { paid: money(line.paidIn), cost: money(line.share) })}</span>
+                </span>
+              </ListCell>
+              {meals && (
+                <>
+                  <ListCell align="end" className="hidden text-ink-2 md:block">
+                    {mealText(line.mealUnits, locale)}
+                  </ListCell>
+                  <ListCell align="end" className="hidden text-ink-2 md:block">
+                    {money(line.mealCost)}
+                  </ListCell>
+                  <ListCell align="end" className="hidden text-ink-2 md:block">
+                    {money(line.otherShare)}
+                  </ListCell>
+                </>
+              )}
+              <ListCell align="end" className="hidden font-semibold text-ink md:block">
+                {money(line.share)}
+              </ListCell>
+              <ListCell align="end" className={cn(paidInCell, "text-ink")}>
+                {money(line.paidIn)}
+              </ListCell>
+              {split && (
+                <>
+                  <ListCell align="end" className={cn(splitCell, "text-ink")}>
+                    {money(line.gross)}
+                  </ListCell>
+                  <ListCell align="end" className={cn(splitCell, line.pocket > 0 ? "text-income" : "text-ink-muted")}>
+                    {dash(line.pocket)}
+                  </ListCell>
+                  <ListCell align="end" className={cn(splitCell, "text-ink-muted")}>
+                    {dash(line.returned)}
+                  </ListCell>
+                </>
+              )}
+              <ListCell>
+                <BalanceCell stacked value={line.balance} currency={currency} />
+              </ListCell>
+            </ListRow>
+          ))}
+          {lines.length > 0 && (
+            <ListTotalRow columns={columns} className={cn("tabular-nums", meals && "gap-x-3")}>
+              <span role="cell">{t("Total")}</span>
+              {meals && (
+                <>
+                  <span role="cell" className="hidden text-right md:block">
+                    {mealText(totals.meals, locale)}
+                  </span>
+                  <span role="cell" className="hidden text-right md:block">
+                    {money(totals.mealCost)}
+                  </span>
+                  <span role="cell" className="hidden text-right md:block">
+                    {money(totals.shared)}
+                  </span>
+                </>
+              )}
+              <span role="cell" className="hidden text-right md:block">
+                {money(totals.cost)}
+              </span>
+              <span role="cell" className={cn(paidInCell, "text-right")}>
+                {money(totals.paidIn)}
+              </span>
+              {split && (
+                <>
+                  <span role="cell" className={cn(splitCell, "text-right")}>
+                    {money(totals.gross)}
+                  </span>
+                  <span role="cell" className={cn(splitCell, "text-right")}>
+                    {money(totals.pocket)}
+                  </span>
+                  <span role="cell" className={cn(splitCell, "text-right")}>
+                    {money(totals.returned)}
+                  </span>
+                </>
+              )}
+              <span role="cell" className={cn("text-right", totals.balance < 0 ? "text-expense" : "text-income")}>
+                {formatSignedCurrency(locked ? totals.balance : view.cash, currency)}
+              </span>
+            </ListTotalRow>
+          )}
         </div>
-        {rows.length > 0 && (
-          <div className={cn("flex items-center gap-3 border-t px-5 py-3 text-small", view.cash < 0 ? "border-expense-soft bg-expense-soft text-expense" : "border-mint-50 bg-mint-50 text-brand-ink")}>
-            {view.cash < 0 ? <Info className="size-4 shrink-0" aria-hidden="true" /> : <Check className="size-4 shrink-0" aria-hidden="true" />}
-            <span>
-              <b className="font-semibold">{view.cash < 0 ? t("More was spent than came in.") : t("The account checks out.")}</b>{" "}
-              {t("Balances add up to {cash}, exactly the cash {holder} should hold: {contributed} contributed − {spent} spent from the fund.", {
-                cash: formatSignedCurrency(view.cash, currency),
-                holder: holder?.name ?? t("the fund"),
-                contributed: money(totals.gross - totals.returned),
-                spent: money(Number(settlement.totalExpense) - totals.pocket),
-              })}
-            </span>
-          </div>
-        )}
-      </Card>
+      </ListCard>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card padding="none" className="overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-divider px-5 py-4">
-            <h2 className="text-title font-semibold text-ink">{t("Settle up")}</h2>
+            {/* "Record payments first" in the close dialog brings focus here. */}
+            <h2 id={SETTLE_UP_ID} tabIndex={-1} className="scroll-mt-4 rounded-sm text-title font-semibold text-ink">
+              {t("Settle up")}
+            </h2>
             {holder ? (
               <SegmentedControl<Route>
                 options={[
@@ -189,13 +357,13 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
               <span className="text-small text-ink-muted">{t("Member to member")}</span>
             )}
           </div>
-          {payments.length === 0 && <p className="px-5 py-6 text-center text-small text-ink-muted">{rows.length === 0 ? t("Nothing to settle yet.") : t("Everyone is even. Nothing to settle.")}</p>}
+          {payments.length === 0 && <p className="px-5 py-6 text-center text-small text-ink-muted">{settlement.members.length === 0 ? t("Nothing to settle yet.") : t("Everyone is even. Nothing to settle.")}</p>}
           {payments.map((payment) => {
             const from = view.memberById[payment.fromId];
             const to = view.memberById[payment.toId];
             const note = route === "manager" ? (payment.owes ? "pays the manager" : "returns from the cash") : "pays directly";
             return (
-              <div key={`${payment.fromId}-${payment.toId}`} className="flex min-h-13.5 items-center gap-3 border-b border-divider px-5 py-2 text-body">
+              <div key={`${payment.fromId}-${payment.toId}`} className="flex min-h-13.5 flex-wrap items-center gap-x-3 gap-y-2 border-b border-divider px-5 py-2 text-body">
                 <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                   <PersonAvatar name={from?.name ?? "?"} src={from?.photoUrl} size={28} coloured />
                   <span className="font-medium text-ink">{from?.name}</span>
@@ -206,8 +374,8 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
                 </span>
                 <span className="font-bold text-ink tabular-nums">{money(payment.amount)}</span>
                 {!view.closed && (
-                  <Button variant="secondary" size="sm" onClick={() => onRecordPayment({ fromId: payment.fromId, toId: payment.toId, amount: payment.amount })} className="h-8 px-3">
-                    {t("Record")}
+                  <Button variant="secondary" size="sm" onClick={() => onRecordPayment({ fromId: payment.fromId, toId: payment.toId, amount: payment.amount })} className="h-8 px-3 pointer-coarse:h-11">
+                    {t("Record payment")}
                   </Button>
                 )}
               </div>
@@ -225,38 +393,57 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
           </div>
         </Card>
 
-        <Card padding="none" className="overflow-hidden">
-          <div className="flex items-center justify-between border-b border-divider px-5 py-4">
-            <h2 className="text-title font-semibold text-ink">{t("Closed months")}</h2>
-            <span className="text-caption font-normal text-ink-muted">{t("Locked, they never change")}</span>
-          </div>
-          {history.length === 0 && <p className="px-5 py-6 text-center text-small text-ink-muted">{t("No month closed yet.")}</p>}
-          {history.map((record) => {
-            const key = record.periodStart.slice(0, 7);
-            const people = `${record.memberCount} ${t(record.memberCount === 1 ? "member" : "members")}`;
+        <ListCard
+          id={HISTORY_ID}
+          label={t("Closed months")}
+          header={
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-4 py-4 md:px-6">
+              <h2 className="text-title font-semibold text-ink">{t("Closed months")}</h2>
+              <span className="text-caption font-normal text-ink-muted">{t("Locked, they never change")}</span>
+            </div>
+          }
+          footer={
+            history.length > HISTORY_PAGE && (
+              <ListFooter>
+                <LoadMore shown={Math.min(historyLimit, history.length)} total={history.length} step={HISTORY_PAGE} onMore={() => setHistoryLimit(historyLimit + HISTORY_PAGE)} onLess={historyLimit > HISTORY_PAGE ? () => setHistoryLimit(HISTORY_PAGE) : undefined} focusTargetId={HISTORY_ID} />
+              </ListFooter>
+            )
+          }
+        >
+          {history.length === 0 && <ListEmpty title={t("No month closed yet.")} className="py-6 text-small" />}
+          {history.slice(0, historyLimit).map((closed) => {
+            const key = closed.periodStart.slice(0, 7);
+            const people = countLabel(t, locale, closed.memberCount, "{count} member", "{count} members");
             return (
-              <Link key={record.id} href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: key } }} className="flex items-center gap-3 border-b border-divider px-5 py-3 text-ink last:border-b-0 hover:bg-hover">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink-2">
-                  <Lock className="size-4" aria-hidden="true" />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <ListRow key={closed.id} className="grid-cols-[32px_minmax(0,1fr)_16px] gap-x-3 md:grid-cols-[32px_minmax(0,1fr)_16px]">
+                <ListCell>
+                  <span className="flex size-8 items-center justify-center rounded-md bg-surface-sunken text-ink-2">
+                    <Lock className="size-4" aria-hidden="true" />
+                  </span>
+                </ListCell>
+                <ListCell className="flex flex-col gap-0.5">
                   <span className="flex justify-between gap-3 text-body font-semibold">
-                    <span>{monthName(key, locale, "long", true)}</span>
-                    <span className="tabular-nums">{money(record.totalExpense)}</span>
+                    <ListRowLink href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: key } }} className="truncate">
+                      {monthName(key, locale, "long", true)}
+                    </ListRowLink>
+                    <span className="shrink-0 tabular-nums">{money(closed.totalExpense)}</span>
                   </span>
                   <span className="text-caption font-normal text-ink-muted">
-                    {t("Closed")} {formatDate(record.closedAt, "d MMM yyyy")}
-                    {record.carriedForward ? ` · ${t("balances carried forward")}` : ""}
+                    {t("Closed {date}", { date: dayLabel(formatDate(closed.closedAt, "yyyy-MM-dd"), locale, true) })}
+                    {closed.carriedForward ? ` · ${t("balances carried forward")}` : ""}
                   </span>
+                  {/* No "each" figure: the record can't tell whether that month's costs were shared equally. */}
                   <span className="text-caption font-normal text-ink-2 tabular-nums">
-                    {Number(record.mealUnits) > 0 ? `${mealText(Number(record.mealUnits))} ${t("meals")} · ${t("{rate} a meal", { rate: money(record.mealRate) })} · ${people}` : `${people} · ${money(record.perMemberShare)} ${t("each")}`}
+                    {Number(closed.mealUnits) > 0 ? `${t("{meals} meals", { meals: mealText(Number(closed.mealUnits), locale) })} · ${t("{rate} a meal", { rate: money(closed.mealRate) })} · ${people}` : people}
                   </span>
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-              </Link>
+                </ListCell>
+                <ListCell>
+                  <ChevronRight className="size-4 text-ink-muted" aria-hidden="true" />
+                </ListCell>
+              </ListRow>
             );
           })}
-        </Card>
+        </ListCard>
       </div>
     </div>
   );

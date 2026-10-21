@@ -3,7 +3,10 @@
 import { Check } from "lucide-react";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import ProgressBar from "@/components/smartly/ProgressBar";
 import { formatCurrency } from "@/lib/customer/currency";
+import { formatCount } from "@/lib/i18n/digits";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { GroupPageData, GroupView } from "./groupTypes";
@@ -17,22 +20,45 @@ interface GroupSetupProps {
   onAddExpense: () => void;
 }
 
+// How the group's bazar is shared, as its category says: at the meal rate,
+// by each member's shares, or (like everything else) equally.
+type BazarRule = "MEALS" | "SHARES" | "EQUAL";
+
+const EXPENSE_STEP: Record<BazarRule, string> = {
+  MEALS: "Bazar is shared at the meal rate and the rest equally. Whoever pays from their own pocket gets it credited.",
+  SHARES: "Bazar is shared by each member's shares and the rest equally. Whoever pays from their own pocket gets it credited.",
+  EQUAL: "Every cost is shared equally unless you choose otherwise. Whoever pays from their own pocket gets it credited.",
+};
+
+const SHARE_OF_COSTS: Record<BazarRule, string> = {
+  MEALS: "your meals × the meal rate (bazar ÷ all meals), plus an equal part of the other costs. If bazar comes to ৳ 30,000 over 600 meals, the rate is ৳ 50, so 60 meals cost ৳ 3,000.",
+  SHARES: "the bazar split by each member's shares, plus an equal part of the other costs. With ৳ 12,000 of bazar and shares of 3, 1 and 4, they pay ৳ 4,500, ৳ 1,500 and ৳ 6,000.",
+  EQUAL: "everything spent in the month ÷ the members. If the month costs ৳ 40,000 and five people share it, each owes ৳ 8,000.",
+};
+
 // A brand-new group: four short steps, and how a balance is worked out.
 // The dashboard takes over as soon as money is recorded.
 export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribution, onAddExpense }: GroupSetupProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const names = view.activeMembers.map((m) => m.name);
+  const listed = names.length > 3 ? t("{names} and {count} more", { names: names.slice(0, 3).join(", "), count: formatCount(names.length - 3, locale) }) : names.join(", ");
+  // New groups get their bazar rule when created (NewGroupDrawer); say the one it has.
+  const bazar = data.categories.find((c) => /bazar|grocery/i.test(c.name))?.defaultSplit;
+  const rule: BazarRule = bazar === "MEALS" && data.settings.mealsOn ? "MEALS" : bazar === "SHARES" ? "SHARES" : "EQUAL";
   const steps = [
     {
       done: names.length > 0,
       title: t("Add the members"),
-      body: names.length > 0 ? `${names.slice(0, 3).join(", ")}${names.length > 3 ? ` ${t("and")} ${names.length - 3} ${t("more")}` : ""} ${t(names.length === 1 ? "is in." : "are in.")} ${t("Add phone numbers to send each one a statement later.")}` : t("Brothers, flatmates or mess members. They don't need a login; you record for them."),
+      body:
+        names.length > 0
+          ? t(names.length === 1 ? "{names} is in. Add phone numbers to send each one a statement later." : "{names} are in. Add phone numbers to send each one a statement later.", { names: listed })
+          : t("Brothers, flatmates or mess members. They don't need a login; you record for them."),
       actions: [{ label: names.length > 0 ? t("Add more") : t("Add members"), onClick: onAddMember, primary: names.length === 0 }],
     },
     {
       done: view.budget !== null,
       title: t("Set this month's budget"),
-      body: view.budget ? `${formatCurrency(view.budget.budget, data.currency)} ${t("for this month. The group is warned at 90%.")}` : t("What the group plans to spend this month. The bar on every page turns amber at 90% and red when over."),
+      body: view.budget ? t("{amount} for this month. The group is warned at 90%.", { amount: formatCurrency(view.budget.budget, data.currency) }) : t("What the group plans to spend this month. The bar on every page turns amber at 90% and red when over."),
       actions: [{ label: view.budget ? t("Change") : t("Set budget"), onClick: onSetBudget, primary: false }],
     },
     {
@@ -44,7 +70,7 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
     {
       done: false,
       title: t("Add the first expense"),
-      body: t("Bazar, rent, bills: every cost is paid from the fund and shared equally."),
+      body: t(EXPENSE_STEP[rule]),
       actions: [{ label: t("Add expense"), onClick: onAddExpense, primary: false }],
     },
   ];
@@ -55,27 +81,22 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
       <Card padding="none" className="overflow-hidden">
         <div className="flex flex-wrap items-center gap-4 border-b border-divider px-6 py-5">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <h2 className="text-h3 text-ink">
-              {t("Set up")} {data.name}
-            </h2>
+            <h2 className="text-h3 text-ink">{t("Set up {name}", { name: data.name })}</h2>
             <span className="text-small text-ink-muted">{t("Four short steps. The dashboard fills in as soon as money is recorded.")}</span>
           </div>
-          <span className="text-small font-semibold text-ink-2">
-            {doneCount} {t("of")} 4 {t("done")}
-          </span>
-          <span role="progressbar" aria-label={t("Setup progress")} aria-valuenow={doneCount * 25} aria-valuemin={0} aria-valuemax={100} className="block h-2 w-30 overflow-hidden rounded-full bg-surface-sunken">
-            <span className="block h-full rounded-full bg-emerald" style={{ width: `${doneCount * 25}%` }} />
-          </span>
+          <span className="text-small font-semibold text-ink-2">{t("{done} of {total} done", { done: formatCount(doneCount, locale), total: formatCount(steps.length, locale) })}</span>
+          <ProgressBar value={(doneCount / steps.length) * 100} label={t("Setup progress")} className="w-30" />
         </div>
         <ol className="flex flex-col">
           {steps.map((step, i) => (
-            <li key={step.title} className="flex gap-4 border-b border-divider px-6 py-5 last:border-b-0">
-              <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-full text-small font-bold", step.done ? "bg-emerald text-white" : "border-[1.5px] border-line-strong bg-surface text-ink-2")}>{step.done ? <Check className="size-4" strokeWidth={3} aria-hidden="true" /> : i + 1}</span>
+            <li key={step.title} className="flex flex-wrap gap-4 border-b border-divider px-6 py-5 last:border-b-0 sm:flex-nowrap">
+              <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-full text-small font-bold", step.done ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface text-ink-2")}>{step.done ? <Check className="size-4" strokeWidth={3} aria-hidden="true" /> : formatCount(i + 1, locale)}</span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className={cn("text-body-lg font-semibold", step.done ? "text-ink-muted line-through" : "text-ink")}>{step.title}</span>
                 <span className="text-small leading-relaxed text-ink-muted">{step.body}</span>
               </div>
-              <div className="flex shrink-0 gap-2">
+              {/* Under the text on a phone, in line with it. */}
+              <div className="flex shrink-0 gap-2 max-sm:basis-full max-sm:pl-11.5">
                 {step.actions.map((action) => (
                   <Button key={action.label} variant={action.primary ? "primary" : "secondary"} size="sm" onClick={action.onClick}>
                     {action.label}
@@ -95,6 +116,10 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
             <span className="font-semibold text-income">+</span>
           </span>
           <span className="flex justify-between">
+            <span className="text-ink-2">{t("Paid from own pocket")}</span>
+            <span className="font-semibold text-income">+</span>
+          </span>
+          <span className="flex justify-between">
             <span className="text-ink-2">{t("Share of the month's costs")}</span>
             <span className="font-semibold text-expense">−</span>
           </span>
@@ -105,10 +130,10 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
           </span>
         </div>
         <p className="text-small leading-relaxed text-ink-2">
-          <b className="font-semibold text-ink">{t("Share of costs")}</b> = {t("everything spent in the month ÷ the members. If the month costs ৳ 40,000 and five people share it, each owes ৳ 8,000.")}
+          <b className="font-semibold text-ink">{t("Share of costs")}</b> = {t(SHARE_OF_COSTS[rule])}
         </p>
         <p className="text-small leading-relaxed text-ink-2">
-          <b className="font-semibold text-ink">{t("Cash in hand")}</b> {t("is what the fund should be holding. It always equals all balances added together, so the account checks itself.")}
+          {fillNodes(t("{term} is what the fund should be holding. It always equals all balances added together, so the account checks itself."), { term: <b className="font-semibold text-ink">{t("Cash in hand")}</b> })}
         </p>
       </Card>
     </div>
