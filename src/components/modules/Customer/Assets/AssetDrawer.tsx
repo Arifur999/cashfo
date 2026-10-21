@@ -14,6 +14,7 @@ import Input from "@/components/smartly/form/Input";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, AssetCategoryOption } from "@/lib/customer/api";
 import { addOwnedAssetAction, purchaseAssetAction } from "@/lib/customer/assetActions";
 import { formatCurrency } from "@/lib/customer/currency";
@@ -44,7 +45,7 @@ type Mode = "buy" | "own";
 // is worth today). Name, type, price, the wallet for a purchase, the date
 // and a note.
 export function AssetDrawer({ open, onClose, businessId, categories, totalValue, currency, initialMode = "buy", initialCategory }: AssetDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -83,6 +84,8 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
   // The hand-picked wallet while this workspace still has it (a switch or a
   // deleted wallet drops it), else the first that covers the price.
   const wallet = all.find((candidate) => candidate.id === pickedWalletId) ?? all.find(covers) ?? all[0];
+  // As the picker names it, in the language on screen.
+  const walletName = wallet ? accountDisplayName(wallet, displayLanguage(locale)) : "";
   const short = buying && wallet !== undefined && value > 0 && !covers(wallet);
   // An emptied "Value today" means the price again.
   const worthValue = worth === null || worth.trim() === "" ? value : Number(worth) || 0;
@@ -191,7 +194,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
                 {!loading && short && wallet && (
                   <p role="alert" className="flex items-center gap-2 text-caption text-expense">
                     <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
-                    {all.some(covers) ? t("Not enough in {wallet}. Pick another wallet.", { wallet: wallet.name }) : t("None of your wallets has that much.")}
+                    {all.some(covers) ? t("Not enough in {wallet}. Pick another wallet.", { wallet: walletName }) : t("None of your wallets has that much.")}
                   </p>
                 )}
               </div>
@@ -210,7 +213,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
               <div className="flex flex-col gap-2 rounded-md border border-line bg-strip p-4 text-small tabular-nums">
                 {buying && wallet && (
                   <div className="flex justify-between gap-3">
-                    <span className="truncate text-ink-2">{wallet.name}</span>
+                    <span className="truncate text-ink-2">{walletName}</span>
                     <span>
                       <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency)} → </span>
                       <span className={cn("font-semibold", short ? "text-expense" : "text-ink")}>{formatCurrency(Number(wallet.currentBalance) - value, currency)}</span>

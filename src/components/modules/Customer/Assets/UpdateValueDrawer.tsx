@@ -46,7 +46,7 @@ const CHIP = { income: "bg-mint-50 text-emerald", expense: "bg-expense-soft text
 // purchase date set right, or the asset deleted when it was entered by
 // mistake.
 export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency }: UpdateValueDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -196,12 +196,12 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
                 <span className="flex flex-col gap-0.5 *:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("Current value")}</span>
                   <span className="text-title text-ink">{formatCurrency(current, currency)}</span>
-                  <span className="text-caption font-normal text-ink-muted">{since ? t("since {date}", { date: formatDate(since) }) : t("Not checked since bought")}</span>
+                  <span className="text-caption font-normal text-ink-muted">{since ? t("since {date}", { date: formatDate(since, "d MMM yyyy", locale) }) : t("Not checked since bought")}</span>
                 </span>
                 <span className="flex flex-col gap-0.5 *:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
                   <span className="text-title text-ink">{formatCurrency(paid, currency)}</span>
-                  <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate) })}</span>
+                  <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}</span>
                 </span>
               </div>
 
@@ -254,7 +254,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
                 {redate ? (
                   <DayInput id="upd-bought" size="md" value={bought} onChange={setBought} max={today} />
                 ) : (
-                  <Input id="upd-bought" size="md" value={formatDate(asset.purchaseDate)} readOnly aria-describedby="upd-bought-hint" className="text-ink-2" frameClassName="border-line bg-strip px-3" />
+                  <Input id="upd-bought" size="md" value={formatDate(asset.purchaseDate, "d MMM yyyy", locale)} readOnly aria-describedby="upd-bought-hint" className="text-ink-2" frameClassName="border-line bg-strip px-3" />
                 )}
               </Field>
 

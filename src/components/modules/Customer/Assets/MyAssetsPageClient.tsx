@@ -75,7 +75,7 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
         })}
         actions={
           <>
-            {assets.length > 0 && <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search assets…")} aria-label={t("Search assets")} frameClassName="h-10 w-60" />}
+            {assets.length > 0 && <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search assets…")} aria-label={t("Search assets")} frameClassName="h-10 min-w-0 flex-1 md:w-60 md:flex-none" />}
             {canManage && (
               <Button onClick={() => setAddOpen(true)}>
                 <Plus strokeWidth={2.5} className="size-4" />
@@ -149,13 +149,14 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
                       <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
                       <span className="text-h2 tracking-[-0.01em] text-ink tabular-nums">{formatCurrency(asset.currentValue, currency)}</span>
                     </span>
-                    <Sparkline values={trail} label={t("Value over time: {first} to {last}", { first: formatCurrency(trail[0], currency), last: formatCurrency(trail[trail.length - 1], currency) })} />
+                    {/* In its type's colour, like the tile and the filter dot; the chip above says up or down. */}
+                    <Sparkline values={trail} color={visual.color} label={t("Value over time: {first} to {last}", { first: formatCurrency(trail[0], currency), last: formatCurrency(trail[trail.length - 1], currency) })} />
                   </div>
-                  <div className="flex justify-between gap-3 border-t border-divider pt-3 text-caption font-normal text-ink-muted">
+                  <div className="flex items-baseline justify-between gap-3 border-t border-divider pt-3 text-caption font-normal text-ink-muted">
                     <span>
                       {fillNodes(t("Paid {amount} · {month}"), {
                         amount: <b className="font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency)}</b>,
-                        month: formatDate(asset.purchaseDate, "MMM yyyy"),
+                        month: formatDate(asset.purchaseDate, "MMM yyyy", locale),
                       })}
                     </span>
                     <span className="text-right">{updates === 0 ? t("Not checked since bought") : t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, locale) })}</span>

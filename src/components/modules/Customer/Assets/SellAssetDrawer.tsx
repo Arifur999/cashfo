@@ -13,6 +13,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { sellAssetAction } from "@/lib/customer/assetActions";
 import { categoryVisual } from "@/lib/customer/assetDisplay";
@@ -40,7 +41,7 @@ interface SellAssetDrawerProps {
 // the wallet it lands in, and the note that the whole price counts as
 // income and the asset moves to Sold.
 export function SellAssetDrawer({ open, onClose, businessId, asset, categories, currency }: SellAssetDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const [price, setPrice] = useState("");
@@ -133,7 +134,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
                 <span className="flex min-w-0 flex-col gap-px">
                   <span className="truncate text-title text-ink">{asset.name}</span>
                   <span className="text-caption font-normal text-ink-muted">
-                    {t(asset.category)} · {t("Bought on {date}", { date: formatDate(asset.purchaseDate) })}
+                    {t(asset.category)} · {t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}
                   </span>
                 </span>
               </div>
@@ -182,7 +183,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
                 <span>
                   {fillNodes(t("The full {amount} is recorded as income in {wallet}, and {asset} moves to Sold."), {
                     amount: <b className="font-semibold">{formatCurrency(value, currency)}</b>,
-                    wallet: wallet.name,
+                    wallet: accountDisplayName(wallet, displayLanguage(locale)),
                     asset: asset.name,
                   })}
                 </span>

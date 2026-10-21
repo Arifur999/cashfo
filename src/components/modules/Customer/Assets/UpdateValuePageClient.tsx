@@ -131,7 +131,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
                   {/* Out of date shows as an icon and words, not colour alone. */}
                   <span className={cn("flex items-center gap-1.5 text-small", old ? "font-semibold text-warning" : "text-ink-2")}>
                     {old && <TriangleAlert className="size-3.5 shrink-0" aria-hidden="true" />}
-                    {last ? formatDate(last) : t("Not checked since bought")}
+                    {last ? formatDate(last, "d MMM yyyy", locale) : t("Not checked since bought")}
                     {old && <span className="sr-only">({t("Not checked in over 6 months")})</span>}
                   </span>
                   {last && <span className="text-caption font-normal text-ink-muted">{t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, locale) })}</span>}

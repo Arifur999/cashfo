@@ -8,6 +8,7 @@ import Button from "@/components/smartly/Button";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { undoAssetSaleAction } from "@/lib/customer/assetActions";
 import { assetGain, categoryVisual, gainChip, valueTimeline } from "@/lib/customer/assetDisplay";
@@ -38,7 +39,7 @@ interface SoldAssetDrawerProps {
 // dates, the wallets the money left and reached, its note and its value
 // history. Those who can manage assets may undo a sale recorded by mistake.
 export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, currency, canManage }: SoldAssetDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   // Only for the wallets' names.
@@ -49,11 +50,14 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
 
   if (!asset) return null;
   const all = [...wallets, ...savingsWallets];
-  const walletName = (id: string | null) => (id ? all.find((wallet) => wallet.id === id)?.name : undefined);
+  const walletName = (id: string | null) => {
+    const wallet = id ? all.find((candidate) => candidate.id === id) : undefined;
+    return wallet ? accountDisplayName(wallet, displayLanguage(locale)) : undefined;
+  };
   const gain = assetGain(asset);
   const chip = gainChip(gain.percent);
   const visual = categoryVisual(categories, asset.category);
-  const soldOn = asset.soldAt ? formatDate(asset.soldAt) : null;
+  const soldOn = asset.soldAt ? formatDate(asset.soldAt, "d MMM yyyy", locale) : null;
   // A purchase from a wallet, where the sale went, and the note; each only
   // when there is one (an asset added as already owned left no wallet).
   const details = [
@@ -109,7 +113,7 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
             <span className="flex flex-col gap-0.5 *:leading-[normal]">
               <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
               <span className="text-title text-ink">{formatCurrency(asset.purchasePrice, currency)}</span>
-              <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate) })}</span>
+              <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}</span>
             </span>
             <span className="flex flex-col gap-0.5 *:leading-[normal]">
               <span className="text-caption font-normal text-ink-muted">{t("Sale price")}</span>
