@@ -82,6 +82,10 @@ export const adminPeopleDictionary: Record<string, string> = {
   "Nobody has an extra workspace yet.": "এখনো কারও বাড়তি ওয়ার্কস্পেস নেই।",
   "{count} workspaces": "{count}টি ওয়ার্কস্পেস",
   "Biggest add-on first": "সবচেয়ে বড় অ্যাড-অন আগে",
+  // The Workspaces list's other orders, beside "Name, A to Z".
+  "Most workspaces first": "সবচেয়ে বেশি ওয়ার্কস্পেস আগে",
+  "Most extra workspaces first": "সবচেয়ে বেশি বাড়তি ওয়ার্কস্পেস আগে",
+  "Plan, A to Z": "প্ল্যান, A থেকে Z",
   "No users own more than one workspace yet.": "এখনো কারও একাধিক ওয়ার্কস্পেস নেই।",
   "Add-on = extra business workspaces × the plan's monthly price × 50% (a yearly plan counts as a twelfth of its price). Group workspaces and the Free plan add nothing. This is an estimate; nobody is charged for it yet.":
     "অ্যাড-অন = বাড়তি ব্যবসার ওয়ার্কস্পেস × প্ল্যানের মাসিক দাম × ৫০% (বার্ষিক প্ল্যানে দামের বারো ভাগের এক ভাগ ধরা হয়)। গ্রুপ ওয়ার্কস্পেস আর Free প্ল্যানে কিছু যোগ হয় না। এটি একটি অনুমান; এখনো কারও কাছ থেকে টাকা নেওয়া হয় না।",
