@@ -48,6 +48,10 @@ const FALLBACK_PUBLIC: PublicPlatformInfo = {
 };
 const FALLBACK: PlatformInfo = { ...FALLBACK_PUBLIC, flags: {}, announcements: [] };
 
+// The sign-up, maintenance and legal pages wait for the public reads below,
+// so a slow API gets this long before the read's fallback is used.
+const PUBLIC_READ_TIMEOUT_MS = 3000;
+
 // What Admin > Settings, Feature Flags and Announcements say for the signed-in
 // customer (GET /api/platform). One read per request, shared by the layout
 // and any page that asks.
@@ -64,7 +68,7 @@ export const getPlatform = cache(async (): Promise<PlatformInfo> => {
 // is asking). Plain fetch -- there is no token to send.
 export const getPublicPlatform = cache(async (): Promise<PublicPlatformInfo> => {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/platform/public`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE_URL}/api/platform/public`, { cache: "no-store", signal: AbortSignal.timeout(PUBLIC_READ_TIMEOUT_MS) });
     if (!res.ok) return FALLBACK_PUBLIC;
     return (await res.json()) as PublicPlatformInfo;
   } catch {
@@ -76,7 +80,7 @@ export const getPublicPlatform = cache(async (): Promise<PublicPlatformInfo> => 
 // when there isn't one.
 export const getLegalDocument = cache(async (page: LegalPage): Promise<LegalDocument | null> => {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/platform/legal/${page}`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE_URL}/api/platform/legal/${page}`, { cache: "no-store", signal: AbortSignal.timeout(PUBLIC_READ_TIMEOUT_MS) });
     if (!res.ok) return null;
     return (await res.json()) as LegalDocument;
   } catch {

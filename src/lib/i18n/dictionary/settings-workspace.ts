@@ -1,20 +1,12 @@
 // Bangla translations for: /settings, /settings/workspaces, and their
 // components under src/components/settings/ and src/components/workspace/.
+// The profile, photo and password messages, "Workspaces" and the workspace
+// delete messages are worded in settings.ts alone.
 export const settingsWorkspaceDictionary: Record<string, string> = {
   // src/components/settings/SettingsPageClient.tsx
   Security: "নিরাপত্তা",
   App: "অ্যাপ",
   "Coming soon": "শীঘ্রই আসছে",
-
-  // src/components/settings/ProfileTab.tsx
-  "Profile updated": "প্রোফাইল আপডেট হয়েছে",
-  "Failed to update profile": "প্রোফাইল আপডেট করতে ব্যর্থ হয়েছে",
-  "Failed to update password": "পাসওয়ার্ড আপডেট করতে ব্যর্থ হয়েছে",
-
-  // src/components/settings/ChangeAvatarModal.tsx
-  "Only JPG, PNG, WEBP, or GIF images are allowed": "শুধুমাত্র JPG, PNG, WEBP, বা GIF ছবি অনুমোদিত",
-  "Image must be 5MB or smaller": "ছবিটি অবশ্যই 5MB বা তার কম হতে হবে",
-  "Failed to upload avatar": "অ্যাভাটার আপলোড করতে ব্যর্থ হয়েছে",
 
   // src/components/settings/SecurityTab.tsx
   "Sign out": "সাইন আউট",
@@ -79,9 +71,6 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
 
   // src/components/workspace/WorkspaceSettingsPage.tsx
   "This cannot be undone.": "এটি পূর্বাবস্থায় ফেরানো যাবে না।",
-  "Workspace deleted": "ওয়ার্কস্পেস মুছে ফেলা হয়েছে",
-  "Failed to delete workspace": "ওয়ার্কস্পেস মুছতে ব্যর্থ হয়েছে",
-  Workspaces: "ওয়ার্কস্পেসসমূহ",
   Default: "ডিফল্ট",
   Trial: "ট্রায়াল",
   "Trial expired": "ট্রায়াল মেয়াদ শেষ",

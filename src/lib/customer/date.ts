@@ -1,5 +1,8 @@
 import { formatDate as formatInAppTimeZone } from "@/lib/date";
+import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { inEnglish, plural, type Translate } from "@/lib/i18n/message";
+import type { Locale } from "@/lib/i18n/translate";
 
 // Shared date-display utility -- a compact "14 Sep 2026" style for table
 // cells, distinct from DatePicker's own longer "September 14th, 2026" (too
@@ -17,14 +20,20 @@ export function formatDateTime(value: string | Date): string {
 
 // "5 minutes ago", "2 hours ago", "3 days ago", then the date: how long
 // ago something last happened, as the Security board says it of a device.
-export function formatTimeAgo(value: string | Date, t: Translate = inEnglish, now: Date = new Date()): string {
+// Counts and the date are in the reader's digits ("৫ মিনিট আগে").
+export function formatTimeAgo(value: string | Date, t: Translate = inEnglish, locale: Locale = "en", now: Date = new Date()): string {
   const minutes = Math.max(0, Math.floor((now.getTime() - new Date(value).getTime()) / 60_000));
+  const ago = (count: number, one: string, many: string) => plural(t, count, one, many, { count: formatCount(count, locale) });
   if (minutes < 1) return t("just now");
-  if (minutes < 60) return plural(t, minutes, "{count} minute ago", "{count} minutes ago");
+  if (minutes < 60) return ago(minutes, "{count} minute ago", "{count} minutes ago");
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return plural(t, hours, "{count} hour ago", "{count} hours ago");
+  if (hours < 24) return ago(hours, "{count} hour ago", "{count} hours ago");
   const days = Math.floor(hours / 24);
-  if (days < 30) return plural(t, days, "{count} day ago", "{count} days ago");
+  if (days < 30) return ago(days, "{count} day ago", "{count} days ago");
+  if (locale === "bn") {
+    const day = formatDate(value, "yyyy-MM-dd");
+    return `${banglaDayMonth(day)} ${toBanglaDigits(day.slice(0, 4))}`;
+  }
   return formatDate(value);
 }
 
@@ -74,8 +83,9 @@ export function formatDurationUntil(to: Date, from: Date = new Date()): string {
   return parts.join(", ");
 }
 
-// "17:30" -> "5:30 pm"; the am/pm word goes through `t`.
-export function timeLabel(time: string, t: Translate): string {
+// "17:30" -> "5:30 pm"; the am/pm word goes through `t`, and the clock is in
+// the reader's digits ("৫:৩০" in Bangla).
+export function timeLabel(time: string, t: Translate, locale: Locale = "en"): string {
   const [hours, minutes] = time.split(":").map(Number);
-  return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${t(hours < 12 ? "am" : "pm")}`;
+  return `${toLocaleDigits(`${hours % 12 || 12}:${String(minutes).padStart(2, "0")}`, locale)} ${t(hours < 12 ? "am" : "pm")}`;
 }

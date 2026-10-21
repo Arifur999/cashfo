@@ -4,6 +4,7 @@ import { Check, ChevronDown, PiggyBank } from "lucide-react";
 import Link from "next/link";
 import { createElement, useId, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { walletIcon } from "@/lib/customer/walletVisuals";
@@ -46,11 +47,13 @@ export interface WalletPickerProps {
 
 // The wallet to pay from or into: its icon, name, balance now and after.
 export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, afterInWords = false, minBalance = 0, currency, loading, error, onClose, emptyMessage }: WalletPickerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const all = [...wallets, ...savingsWallets];
   const selected = all.find((w) => w.id === value);
   const id = useId();
+  // The name the reader sees: "নগদ" for Cash in Bangla.
+  const nameOf = (wallet: Account) => accountDisplayName(wallet, displayLanguage(locale));
   const isSavings = (wallet: Account) => variant === "savings" || savingsWallets.includes(wallet);
   const tile = (wallet: Account, big = false) => (
     <span className={cn("flex shrink-0 items-center justify-center rounded-md", big ? "size-9" : "size-8", isSavings(wallet) ? "bg-pillar-habits-soft text-pillar-habits" : tone === "sand" ? "bg-surface-sunken text-ink-2" : "bg-mint-50 text-emerald")}>
@@ -74,7 +77,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
         >
           {tile(wallet)}
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-body font-semibold text-ink">{wallet.name}</span>
+            <span className="truncate text-body font-semibold text-ink">{nameOf(wallet)}</span>
             <span className={cn("text-caption font-normal tabular-nums", short ? "text-warning" : "text-ink-muted")}>
               {formatCurrency(wallet.currentBalance, currency)}
               {short && ` · ${t("not enough")}`}
@@ -95,7 +98,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
         <PopoverTrigger asChild>
           <button
             type="button"
-            aria-labelledby={`${id}-label`}
+            aria-labelledby={`${id}-label ${id}-value`}
             aria-haspopup="listbox"
             disabled={loading || all.length === 0}
             className={cn("flex min-w-0 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 text-left disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : "h-13")}
@@ -103,13 +106,13 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
             {selected && size === "compact" ? (
               <>
                 {createElement(isSavings(selected) ? PiggyBank : walletIcon(selected), { className: "size-4.5 shrink-0 text-ink-2", "aria-hidden": true })}
-                <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{selected.name}</span>
+                <span id={`${id}-value`} className="min-w-0 flex-1 truncate text-body-lg text-ink">{nameOf(selected)}</span>
               </>
             ) : selected ? (
               <>
                 {tile(selected, size === "2xl")}
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
-                  <span className="truncate text-body font-semibold text-ink">{selected.name}</span>
+                  <span id={`${id}-value`} className="truncate text-body font-semibold text-ink">{nameOf(selected)}</span>
                   <span className="truncate text-caption font-normal text-ink-muted tabular-nums">
                     {isSavings(selected) ? `${t("Savings wallet")} · ` : `${t(balanceLabel)} `}
                     {formatCurrency(selected.currentBalance, currency)}
