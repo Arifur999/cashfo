@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 import { ReferralsPageClient } from "@/components/modules/Customer/Referrals/ReferralsPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getReferralInfo } from "@/lib/customer/referrals";
+
+export const generateMetadata = () => customerPageMetadata("/referrals");
 
 // Account › Invite & earn. The invite link is built from the host this
 // request came in on, so it is right on the server render too.

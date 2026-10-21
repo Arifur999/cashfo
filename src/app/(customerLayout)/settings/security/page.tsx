@@ -1,5 +1,8 @@
 import { SecuritySection } from "@/components/modules/Customer/Settings/SecuritySection";
 import { getLoginHistoryAction, getSessionsAction } from "@/lib/customer/authActions";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+
+export const generateMetadata = () => customerPageMetadata("/settings/security");
 
 // The devices and the sign-in history are read here so the page arrives
 // filled in.

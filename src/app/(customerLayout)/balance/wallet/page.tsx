@@ -3,6 +3,9 @@ import { WalletPageClient } from "@/components/modules/Customer/Balance/WalletPa
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getWallets } from "@/lib/customer/accounts";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+
+export const generateMetadata = () => customerPageMetadata("/balance/wallet");
 
 export default async function WalletPage() {
   const user = await getCurrentUser();

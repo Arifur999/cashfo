@@ -1,6 +1,9 @@
 import { AppPreferencesSection } from "@/components/modules/Customer/Settings/AppPreferencesSection";
 import { getReminderPreferencesAction } from "@/lib/customer/notificationsActions";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/settings/app");
 
 // The reminder switches are read here so they show their real state at once.
 export default async function SettingsAppPage() {

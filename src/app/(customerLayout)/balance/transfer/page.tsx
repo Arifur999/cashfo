@@ -4,7 +4,10 @@ import { getWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAllTransactions } from "@/lib/customer/transactions";
+
+export const generateMetadata = () => customerPageMetadata("/balance/transfer");
 
 const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year"];
 

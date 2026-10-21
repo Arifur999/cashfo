@@ -2,7 +2,10 @@ import { redirect } from "next/navigation";
 import { SavingsTransferPageClient } from "@/components/modules/Customer/SavingsGoals/SavingsTransferPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getSavingsGoals, getSavingsTransfers } from "@/lib/customer/savingsGoals";
+
+export const generateMetadata = () => customerPageMetadata("/savings-goals/transfer");
 
 export default async function SavingsTransferPage() {
   const user = await getCurrentUser();

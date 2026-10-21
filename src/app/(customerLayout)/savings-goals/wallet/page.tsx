@@ -3,6 +3,9 @@ import { SavingsWalletPageClient } from "@/components/modules/Customer/SavingsGo
 import { getSavingsWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+
+export const generateMetadata = () => customerPageMetadata("/savings-goals/wallet");
 
 export default async function SavingsWalletPage() {
   const user = await getCurrentUser();

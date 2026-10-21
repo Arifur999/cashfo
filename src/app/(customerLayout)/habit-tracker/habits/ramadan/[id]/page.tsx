@@ -2,7 +2,25 @@ import { notFound, redirect } from "next/navigation";
 import { RamadanSheetPageClient } from "@/components/modules/Customer/HabitTracker/Ramadan/RamadanSheetPageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getHabitTracker, getHabitTrackers } from "@/lib/customer/habits";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { ramadanWindow } from "@/lib/customer/ramadanDisplay";
 import { getAppToday } from "@/lib/date";
+import { getTranslator } from "@/lib/i18n/locale";
+
+// The tab names the Ramadan as the sheet does ("Ramadan 1447"), from the
+// read the page makes. It leaves out the prayer settings' Hijri adjustment,
+// which only the layout reads: a day either way keeps the same Hijri year.
+export async function generateMetadata({ params }: PageProps<"/habit-tracker/habits/ramadan/[id]">) {
+  const { id } = await params;
+  // A failed read is the page's to show (its error screen); the tab keeps
+  // the list's name.
+  const user = await getCurrentUser().catch(() => null);
+  const tracker = user ? await getHabitTracker(id).catch(() => null) : null;
+  if (tracker?.category !== "Ramadan") return customerPageMetadata(`/habit-tracker/habits/ramadan/${id}`);
+
+  const { t } = await getTranslator();
+  return customerPageMetadata(`/habit-tracker/habits/ramadan/${id}`, { record: `${t("Ramadan")} ${ramadanWindow(tracker, getAppToday()).hijriYear ?? tracker.year}` });
+}
 
 // One Ramadan's sheet, opened from Habits › Ramadan.
 export default async function RamadanSheetPage({ params }: PageProps<"/habit-tracker/habits/ramadan/[id]">) {

@@ -5,8 +5,11 @@ import type { LoanStatement } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getContacts } from "@/lib/customer/contacts";
 import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getLoanStatement } from "@/lib/customer/receivablesPayables";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/loan-management/ledger");
 
 const PRESETS: DateRangePreset[] = ["all", "this-year", "last-year", "custom"];
 

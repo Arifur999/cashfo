@@ -16,11 +16,31 @@ import { getBudgetCategoryNames } from "@/lib/customer/budgets";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDateTime } from "@/lib/customer/date";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { categoryIndex, describeTransaction, editableEntry, reversalTitle } from "@/lib/customer/transactionRows";
 import { getTransaction } from "@/lib/customer/transactions";
 import { getTranslator } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
+
+// The tab names the transaction the way the top bar does, from the reads
+// the page makes (cached, so they cost no request of their own).
+export async function generateMetadata({ params }: PageProps<"/transactions/[id]">) {
+  const { id } = await params;
+  // A failed read is the page's to show (its error or PIN screen); the tab
+  // keeps the list's name. A PIN-locked workspace keeps its records' names
+  // out of the tab, and so out of the browser's history, which outlives the
+  // unlock.
+  const user = await getCurrentUser().catch(() => null);
+  const activeBusinessId = user ? await resolveActiveBusinessId(user.businesses) : null;
+  if (!activeBusinessId || user?.businesses.some((b) => b.id === activeBusinessId && b.hasPinLock)) return customerPageMetadata(`/transactions/${id}`);
+
+  const reads = await Promise.all([getTransaction(activeBusinessId, id), getBudgetCategoryNames(activeBusinessId, "INCOME"), getBudgetCategoryNames(activeBusinessId, "EXPENSE"), getTranslator()]).catch(() => null);
+  if (!reads) return customerPageMetadata(`/transactions/${id}`);
+  const [transaction, incomeCategories, expenseCategories, { t }] = reads;
+  const record = transaction ? (describeTransaction(transaction, categoryIndex([...incomeCategories, ...expenseCategories])).title ?? t(TRANSACTION_TYPE_LABELS[transaction.transactionType])) : null;
+  return customerPageMetadata(`/transactions/${id}`, { record });
+}
 
 const ACCOUNT_KIND: Record<string, string> = {
   ASSET: "Wallet",

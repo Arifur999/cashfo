@@ -11,11 +11,14 @@ import PageHeader from "@/components/smartly/PageHeader";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { formatCurrency } from "@/lib/customer/currency";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { savingsPalette } from "@/lib/customer/savingsDisplay";
 import { getSavingsAccountOverview } from "@/lib/customer/savingsGoals";
 import { walletShares } from "@/lib/customer/walletShares";
 import { getTranslator } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
+
+export const generateMetadata = () => customerPageMetadata("/savings-goals/overview");
 
 const GRID = "grid-cols-[minmax(0,1fr)_repeat(3,140px)_160px]";
 

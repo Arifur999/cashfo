@@ -3,8 +3,11 @@ import { SavingsGoalsDashboardPageClient } from "@/components/modules/Customer/S
 import { getSavingsWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getSavingsGoals, getSavingsOverview } from "@/lib/customer/savingsGoals";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/savings-goals/dashboard");
 
 export default async function SavingsGoalsDashboardPage() {
   const user = await getCurrentUser();

@@ -9,8 +9,14 @@ import { RamadanHomePageClient } from "@/components/modules/Customer/HabitTracke
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
 import { getHabitTrackers, getQaza } from "@/lib/customer/habits";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { getAppToday } from "@/lib/date";
+
+// One route, five pages: ?category= says which one the tab names.
+export async function generateMetadata({ searchParams }: PageProps<"/habit-tracker/habits">) {
+  return customerPageMetadata("/habit-tracker/habits", { query: await searchParams });
+}
 
 export default async function HabitsPage({ searchParams }: PageProps<"/habit-tracker/habits">) {
   const user = await getCurrentUser();

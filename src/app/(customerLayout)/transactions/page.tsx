@@ -6,10 +6,13 @@ import type { TransactionType } from "@/lib/customer/api";
 import { getBudgetCategoryNames } from "@/lib/customer/budgets";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { isIsoDay } from "@/lib/customer/dateRangePresets";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getCategoryBreakdown } from "@/lib/customer/reports";
 import { isCancelled } from "@/lib/customer/transactionDisplay";
 import { getTransactions } from "@/lib/customer/transactions";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/transactions");
 
 const TYPES: TransactionType[] = ["INCOME", "EXPENSE"];
 

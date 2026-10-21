@@ -15,10 +15,13 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import type { WalletOverviewRow } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { formatCurrency } from "@/lib/customer/currency";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { walletShares } from "@/lib/customer/walletShares";
 import { WALLET_TYPE_META, walletIcon, walletPalette, walletType } from "@/lib/customer/walletVisuals";
 import { getTranslator } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
+
+export const generateMetadata = () => customerPageMetadata("/balance/overview");
 
 const GRID = "grid-cols-[minmax(0,1fr)_repeat(5,116px)_140px]";
 

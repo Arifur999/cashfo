@@ -9,11 +9,14 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { appYearMonth, resolveDateRange } from "@/lib/customer/dateRangePresets";
 import { loanCounts } from "@/lib/customer/homeInsights";
 import { biggestDrop, categoryMoves, concentrationNote, insightPeriodFrom, monthRates, monthSpan, netWorth, periodLabels, periodTotals, previousRange, rankedRows, rateTrend } from "@/lib/customer/insights";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
 import { getCategoryBreakdown, getMonthlyBreakdown } from "@/lib/customer/reports";
 import { getSavingsAccountOverview } from "@/lib/customer/savingsGoals";
 import { getAppToday } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
+
+export const generateMetadata = () => customerPageMetadata("/reports/overview");
 
 const pad = (n: number) => String(n).padStart(2, "0");
 

@@ -6,10 +6,13 @@ import { getBooksOverview } from "@/lib/customer/books";
 import { greetingFor, hourIn } from "@/lib/customer/greeting";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
 import { getHabitMonth, getHabits, getHabitsToday, getHabitTrackers } from "@/lib/customer/habits";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { listFor } from "@/lib/customer/todoDisplay";
 import { getTodoLists } from "@/lib/customer/todos";
 import { APP_TIME_ZONE, getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/habit-tracker");
 
 // Habits › Today: the day across every habit feature. Personal
 // (user-scoped), not a workspace's.

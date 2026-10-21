@@ -6,7 +6,10 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import type { Account } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getLocale } from "@/lib/i18n/locale";
+
+export const generateMetadata = () => customerPageMetadata("/balance/ledger");
 
 const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year", "custom"];
 
