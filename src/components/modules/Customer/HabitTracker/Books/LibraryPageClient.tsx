@@ -11,6 +11,7 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Book, BookStatus, BooksOverview } from "@/lib/customer/api";
 import { deleteBookAction, updateBookAction } from "@/lib/customer/bookActions";
+import { actionError } from "@/lib/customer/habitDisplay";
 import { applyProgress, nowReading, shelves } from "@/lib/customer/libraryDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { BookDrawer } from "./BookDrawer";
@@ -30,7 +31,7 @@ interface LibraryPageClientProps {
 // Habits › My library: the book on the nightstand, this year's goal, the
 // reading streak, the notes on the book and the three shelves.
 export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const { year, goalTarget } = overview;
 
@@ -59,7 +60,7 @@ export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
     startProgress(async () => {
       applyOptimisticProgress({ id: book.id, pagesRead });
       const result = await updateBookAction(book.id, { pagesRead });
-      if (!result.success) toast.error(result.message ?? t("Failed to update"));
+      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, locale));
       else if (result.data?.status === "FINISHED" && book.status !== "FINISHED") toast.success(t("Finished! Well done."));
       router.refresh();
     });
@@ -69,7 +70,7 @@ export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
     startTransition(async () => {
       const result = await updateBookAction(book.id, { status });
       if (result.success) toast.success(t(successMessage));
-      else toast.error(result.message ?? t("Failed to update"));
+      else toast.error(actionError(result.message, "Failed to update", t, locale));
       router.refresh();
     });
   }
@@ -83,7 +84,7 @@ export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
         toast.success(t("Book removed"));
         setRemoving(null);
       } else {
-        toast.error(result.message ?? t("Failed to remove book"));
+        toast.error(actionError(result.message, "Failed to remove book", t, locale));
       }
       router.refresh();
     });
@@ -148,7 +149,7 @@ export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
           setProgress(book, pagesRead);
         }}
       />
-      <ConfirmDialog open={removing !== null} onClose={() => setRemoving(null)} onConfirm={remove} isPending={isPending} danger title={t("Remove book")} description={removing ? `${t("Remove")} "${removing.title}"? ${t("Your progress on it will be lost.")}` : ""} confirmLabel={t("Remove")} />
+      <ConfirmDialog open={removing !== null} onClose={() => setRemoving(null)} onConfirm={remove} isPending={isPending} danger title={t("Remove book")} description={removing ? t("Remove \"{name}\"? Your progress on it will be lost.", { name: removing.title }) : ""} confirmLabel={t("Remove")} />
     </PageFrame>
   );
 }

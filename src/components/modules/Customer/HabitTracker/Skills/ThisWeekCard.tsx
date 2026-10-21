@@ -5,6 +5,7 @@ import Card from "@/components/smartly/Card";
 import type { Skill, SkillWeekDay } from "@/lib/customer/api";
 import { WEEKDAY_SHORT, weekdayOf } from "@/lib/customer/habitDisplay";
 import { amountText, cellText, weekTotal } from "@/lib/customer/skillsDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { paletteFor } from "./skillPalette";
@@ -21,7 +22,7 @@ const GRID = "grid grid-cols-[76px_repeat(7,minmax(0,1fr))] gap-1";
 
 // A row per skill, a cell per day of the last week: how much was practised.
 export function ThisWeekCard({ skills, week, streak, today }: ThisWeekCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   return (
     <Card padding="none" className="flex flex-col gap-3 p-5">
@@ -30,7 +31,7 @@ export function ThisWeekCard({ skills, week, streak, today }: ThisWeekCardProps)
         {streak > 0 && (
           <span className="flex items-center gap-1 text-small font-semibold text-ink">
             <Flame className="size-4 text-warning" aria-hidden="true" />
-            {streak} {t(streak === 1 ? "day in a row" : "days in a row")}
+            {t(streak === 1 ? "{count} day in a row" : "{count} days in a row", { count: formatCount(streak, locale) })}
           </span>
         )}
       </div>
@@ -58,8 +59,8 @@ export function ThisWeekCard({ skills, week, streak, today }: ThisWeekCardProps)
               {week.map((day) => {
                 const amount = day.bySkill[skill.id] ?? 0;
                 return (
-                  <span key={day.date} role="cell" title={amount > 0 ? `${amountText(skill.unit, amount, t)} · ${skill.name}` : t("Nothing logged")} className={cn("flex h-7.5 items-center justify-center rounded-sm text-caption font-bold tabular-nums", amount > 0 ? "bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)" : "bg-surface-sunken")}>
-                    {cellText(skill.unit, amount)}
+                  <span key={day.date} role="cell" title={amount > 0 ? `${amountText(skill.unit, amount, t, locale)} · ${skill.name}` : t("Nothing logged")} className={cn("flex h-7.5 items-center justify-center rounded-sm text-caption font-bold tabular-nums", amount > 0 ? "bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)" : "bg-surface-sunken")}>
+                    {cellText(skill.unit, amount, t, locale)}
                   </span>
                 );
               })}
@@ -72,7 +73,7 @@ export function ThisWeekCard({ skills, week, streak, today }: ThisWeekCardProps)
         <div className="mt-auto flex flex-wrap justify-between gap-x-3 gap-y-1 border-t border-divider pt-3 text-small text-ink-2">
           {skills.map((skill) => (
             <span key={skill.id}>
-              {skill.name}: <b className="font-semibold text-ink">{amountText(skill.unit, weekTotal(week, skill.id), t)}</b>
+              {skill.name}: <b className="font-semibold text-ink">{amountText(skill.unit, weekTotal(week, skill.id), t, locale)}</b>
             </span>
           ))}
         </div>

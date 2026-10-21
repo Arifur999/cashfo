@@ -1,14 +1,15 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { Skill } from "@/lib/customer/api";
-import { hoursInput, hoursText, parseHours } from "@/lib/customer/skillsDisplay";
+import { latinDigits } from "@/lib/customer/habitDisplay";
+import { amountText, hoursInput, parseHours } from "@/lib/customer/skillsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 
 interface SkillProgressDialogProps {
   // The skill whose progress is being logged; null keeps the dialog closed.
@@ -18,10 +19,14 @@ interface SkillProgressDialogProps {
   onComplete: (skill: Skill) => void;
 }
 
+// What is typed, in either language's digits: lessons as a whole number,
+// hours with up to two decimals.
+const typed = (value: string, hours: boolean) => (hours ? latinDigits(value).replace(/[^\d.]/g, "").slice(0, 7) : latinDigits(value).replace(/\D/g, "").slice(0, 4));
+
 // "Which lesson are you on?" or "How many hours have you done?", as a total
 // so far; the difference from the last total is what today's log records.
 export function SkillProgressDialog({ skill, onClose, onSave, onComplete }: SkillProgressDialogProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [text, setText] = useState("");
 
   const [prevId, setPrevId] = useState<string | null>(null);
@@ -47,29 +52,28 @@ export function SkillProgressDialog({ skill, onClose, onSave, onComplete }: Skil
         <form onSubmit={submit} className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
             <AlertDialogTitle className="text-h3 text-ink">{t(isHours ? "How many hours have you done?" : "Which lesson are you on?")}</AlertDialogTitle>
-            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-              <X className="size-4.5" aria-hidden="true" />
-            </button>
+            <CloseButton onClick={onClose} label={t("Close")} />
           </div>
-          <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{skill ? `${skill.name} · ${isHours ? `${hoursText(skill.target)} ${t("hours")}` : `${skill.target} ${t("lessons")}`}` : ""}</AlertDialogDescription>
+          <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{skill ? `${skill.name} · ${amountText(skill.unit, skill.target, t, locale)}` : ""}</AlertDialogDescription>
           <div className="px-6 py-4">
             <Field htmlFor="sk-progress" label={<span className="text-body font-medium text-ink">{t(isHours ? "Hours done so far" : "Lessons done so far")}</span>} error={error}>
-              <Input id="sk-progress" size="lg" inputMode={isHours ? "decimal" : "numeric"} autoFocus value={text} onChange={(event) => setText(isHours ? event.target.value.replace(/[^\d.]/g, "").slice(0, 7) : event.target.value.replace(/\D/g, "").slice(0, 4))} invalid={error !== undefined} className="text-body-lg font-semibold" frameClassName="w-40" />
+              <Input id="sk-progress" size="lg" inputMode={isHours ? "decimal" : "numeric"} autoFocus value={text} onChange={(event) => setText(typed(event.target.value, isHours))} invalid={error !== undefined} className="text-body-lg font-semibold" frameClassName="w-40" />
             </Field>
           </div>
-          <div className="flex items-center gap-3 border-t border-line bg-strip px-6 py-4">
-            <Button type="button" variant="ghost" onClick={() => skill && onComplete(skill)}>
-              {t("Mark as completed")}
+          <PanelFooter
+            aside={
+              <Button type="button" variant="ghost" onClick={() => skill && onComplete(skill)}>
+                {t("Mark as completed")}
+              </Button>
+            }
+          >
+            <Button type="button" variant="secondary" onClick={onClose}>
+              {t("Cancel")}
             </Button>
-            <div className="ml-auto flex items-center gap-3">
-              <Button type="button" variant="secondary" onClick={onClose}>
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" disabled={!valid} className="px-5">
-                {t("Save")}
-              </Button>
-            </div>
-          </div>
+            <Button type="submit" disabled={!valid} className="px-5">
+              {t("Save")}
+            </Button>
+          </PanelFooter>
         </form>
       </AlertDialogContent>
     </AlertDialog>

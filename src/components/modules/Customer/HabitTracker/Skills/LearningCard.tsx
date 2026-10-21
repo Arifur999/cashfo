@@ -6,6 +6,7 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import type { Skill, SkillWeekDay } from "@/lib/customer/api";
 import { practiceLine, progressPct, progressText, QUICK_ADD } from "@/lib/customer/skillsDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paletteFor } from "./skillPalette";
 import { SkillTile } from "./SkillTile";
@@ -22,11 +23,11 @@ interface LearningCardProps {
 // One skill being learned: how far along, when it was last practised, and a
 // quick "+1 lesson" or "+30 min".
 export function LearningCard({ skill, week, today, isPending, onQuickAdd, onLog }: LearningCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const palette = paletteFor(skill.color);
   const pct = progressPct(skill);
   const quick = QUICK_ADD[skill.unit];
-  const lastLine = practiceLine(skill, week, today, t) ?? t("Nothing logged this week");
+  const lastLine = practiceLine(skill, week, today, t, locale) ?? t("Nothing logged this week");
 
   return (
     <Card padding="none" className="flex flex-col gap-3 p-5">
@@ -43,8 +44,8 @@ export function LearningCard({ skill, week, today, isPending, onQuickAdd, onLog 
 
       <div className="flex flex-col gap-2">
         <div className="flex justify-between text-small">
-          <span className="font-semibold text-ink tabular-nums">{progressText(skill, t)}</span>
-          <span className="text-ink-muted">{pct}%</span>
+          <span className="font-semibold text-ink tabular-nums">{progressText(skill, t, locale)}</span>
+          <span className="text-ink-muted">{formatCount(pct, locale)}%</span>
         </div>
         <span role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${skill.name}: ${t("done")}`} className="block h-2 overflow-hidden rounded-full bg-surface-sunken">
           <span className="block h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: palette.to }} />
@@ -52,12 +53,12 @@ export function LearningCard({ skill, week, today, isPending, onQuickAdd, onLog 
         <span className="text-small text-ink-muted">{lastLine}</span>
       </div>
 
-      <div className="mt-auto flex gap-2 border-t border-divider pt-3">
-        <Button type="button" variant="soft" size="sm" onClick={() => onQuickAdd(skill, quick.amount)} disabled={isPending} className="bg-(--sk-ink)/12 text-(--sk-ink) hover:bg-(--sk-ink)/20 dark:bg-(--sk-light)/16 dark:text-(--sk-light)" style={{ "--sk-ink": palette.to, "--sk-light": palette.from } as React.CSSProperties}>
+      <div className="mt-auto flex flex-wrap gap-2 border-t border-divider pt-3">
+        <Button type="button" variant="soft" size="sm" onClick={() => onQuickAdd(skill, quick.amount)} disabled={isPending} className="pointer-coarse:h-11 bg-(--sk-ink)/12 text-(--sk-ink) hover:bg-(--sk-ink)/20 dark:bg-(--sk-light)/16 dark:text-(--sk-light)" style={{ "--sk-ink": palette.to, "--sk-light": palette.from } as React.CSSProperties}>
           <Plus strokeWidth={2.25} />
           {t(quick.label)}
         </Button>
-        <Button type="button" variant="secondary" size="sm" onClick={() => onLog(skill)} disabled={isPending}>
+        <Button type="button" variant="secondary" size="sm" onClick={() => onLog(skill)} disabled={isPending} className="pointer-coarse:h-11">
           {t("Log progress")}
         </Button>
       </div>

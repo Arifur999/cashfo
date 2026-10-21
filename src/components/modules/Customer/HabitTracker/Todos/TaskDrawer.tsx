@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Trash2, X } from "lucide-react";
+import { Info, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -18,6 +18,7 @@ import { dayOfMonthWord, PRIORITIES, PRIORITY_LABEL, repeatLabel } from "@/lib/c
 import type { TodoItemChanges } from "@/lib/customer/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 import { PRIORITY_TONE, PriorityDot } from "./TaskBits";
 
 type RepeatChoice = "NONE" | TodoRepeatKind;
@@ -107,12 +108,10 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
           event.preventDefault();
           textField.current?.focus();
         }}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:max-h-[92vh]")}>
+        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:max-h-[92dvh]")}>
         <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <SheetTitle className="text-h3 text-ink">{t("Edit task")}</SheetTitle>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
+          <CloseButton onClick={onClose} label={t("Close")} />
         </SheetHeader>
 
         <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
@@ -140,7 +139,7 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
               {quick.map((option) => {
                 const on = date === option.value;
                 return (
-                  <button key={option.label} type="button" aria-pressed={on} onClick={() => setDate(option.value)} className={cn("h-7 rounded-full border px-3 text-small font-semibold transition-colors", on ? "border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
+                  <button key={option.label} type="button" aria-pressed={on} onClick={() => setDate(option.value)} className={cn("h-7 rounded-full border px-3 text-small font-semibold transition-colors pointer-coarse:h-11", on ? "border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
                     {t(option.label)}
                   </button>
                 );
@@ -153,7 +152,7 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
                 {PRIORITIES.map((option) => {
                   const on = priority === option;
                   return (
-                    <button key={option} type="button" role="radio" aria-checked={on} onClick={() => setPriority(option)} className={cn("flex h-10.5 items-center justify-center gap-2 rounded-md text-body font-semibold transition-colors", on ? cn("border-[1.5px]", PRIORITY_TONE[option].on) : "border border-line bg-surface text-ink-2 hover:border-line-strong")}>
+                    <button key={option} type="button" role="radio" aria-checked={on} onClick={() => setPriority(option)} className={cn("flex h-10.5 items-center justify-center gap-2 rounded-md text-body font-semibold transition-colors pointer-coarse:h-11", on ? cn("border-[1.5px]", PRIORITY_TONE[option].on) : "border border-line bg-surface text-ink-2 hover:border-line-strong")}>
                       <PriorityDot priority={option} className="size-2" />
                       {t(PRIORITY_LABEL[option])}
                     </button>
@@ -177,22 +176,25 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
             </p>
           </div>
 
-          <div className={cn("flex items-center gap-3 border-t border-line bg-strip", wide ? "px-6 py-4" : "px-4 py-3")}>
-            {item && (
-              <Button type="button" variant="ghost" onClick={() => onDelete(item)} disabled={isPending} className="px-3 text-expense hover:bg-expense-soft hover:text-expense">
-                <Trash2 />
-                {t("Delete")}
-              </Button>
-            )}
-            <span className="flex-1" />
+          <PanelFooter
+            drawer
+            aside={
+              item && (
+                <Button type="button" variant="ghost" onClick={() => onDelete(item)} disabled={isPending} className="px-3 text-expense hover:bg-expense-soft hover:text-expense">
+                  <Trash2 />
+                  {t("Delete")}
+                </Button>
+              )
+            }
+          >
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
+            <Button type="submit" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader />}
               {t("Save changes")}
             </Button>
-          </div>
+          </PanelFooter>
         </form>
       </SheetContent>
     </Sheet>
