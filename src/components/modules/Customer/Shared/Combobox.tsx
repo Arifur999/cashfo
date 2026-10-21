@@ -122,15 +122,17 @@ export function Combobox({ value, onChange, options, placeholder, emptyMessage =
             }
           }}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary disabled:bg-neutral-50"
+          // The design's control frame (smartly InputFrame): line-strong edge,
+          // emerald border and mint ring while focused.
+          className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink outline-none focus:border-emerald focus:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)] disabled:bg-strip"
         />
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
       </div>
 
       {open && !disabled && (
-        <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-neutral-100 bg-surface py-1 shadow-xl shadow-black/10">
+        <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-line bg-surface py-1 shadow-overlay">
           {filtered.length === 0 ? (
-            <p className="px-3.5 py-2 text-sm text-neutral-400">{t(emptyMessage)}</p>
+            <p className="px-3.5 py-2 text-sm text-ink-muted">{t(emptyMessage)}</p>
           ) : (
             filtered.map((option, i) => (
               <button
@@ -139,7 +141,7 @@ export function Combobox({ value, onChange, options, placeholder, emptyMessage =
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => select(option)}
                 className={`block w-full px-3.5 py-2 text-left text-sm ${
-                  i === highlighted ? "bg-brand-primary/10 text-brand-primary" : "text-neutral-700 hover:bg-neutral-50"
+                  i === highlighted ? "bg-mint-50 text-brand-ink" : "text-ink-2 hover:bg-hover"
                 }`}
               >
                 {option.label}

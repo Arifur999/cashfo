@@ -1,17 +1,19 @@
 import { CloudSun, Moon, Sun, Sunrise, Sunset } from "lucide-react";
+import { SOFT_TONE } from "@/components/smartly/tones";
 
-// Tinted square behind each prayer's icon (full literal classes, and
-// translucent so it works in dark mode too).
+// Tinted square behind each prayer's icon: each prayer keeps a hue of its
+// sky (dawn teal, midday amber, afternoon orange, sunset rose, night violet),
+// taken from the design's soft tones so dark mode gets the matching pair.
 const BADGES: Record<string, string> = {
-  Fajr: "bg-sky-500/10 text-sky-600",
-  Dhuhr: "bg-amber-500/10 text-amber-600",
-  Asr: "bg-orange-500/10 text-orange-600",
-  Maghrib: "bg-rose-500/10 text-rose-600",
-  Isha: "bg-indigo-500/10 text-indigo-600",
+  Fajr: SOFT_TONE.insights,
+  Dhuhr: SOFT_TONE.warning,
+  Asr: SOFT_TONE.loans,
+  Maghrib: SOFT_TONE.rose,
+  Isha: SOFT_TONE.habits,
 };
 
 export function prayerBadge(item: string): string {
-  return Object.hasOwn(BADGES, item) ? BADGES[item] : "bg-blue-500/10 text-blue-600";
+  return Object.hasOwn(BADGES, item) ? BADGES[item] : SOFT_TONE.info;
 }
 
 // The sky at each prayer's time: sunrise, midday sun, afternoon, sunset, night.

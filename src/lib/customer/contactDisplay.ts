@@ -33,10 +33,12 @@ export function balanceDirection(balance: number | string): BalanceDirection {
   return "SETTLED";
 }
 
+// The colours the loan and contact lists give the same three cases
+// (loanDisplay's DIRECTION_META, Books > Contacts).
 export const BALANCE_DIRECTION_COLOR: Record<BalanceDirection, string> = {
-  OWED_TO_BUSINESS: "text-brand-primary",
-  OWED_BY_BUSINESS: "text-brand-danger",
-  SETTLED: "text-neutral-400",
+  OWED_TO_BUSINESS: "text-income",
+  OWED_BY_BUSINESS: "text-expense",
+  SETTLED: "text-ink-muted",
 };
 
 export const BALANCE_DIRECTION_LABEL: Record<BalanceDirection, string> = {

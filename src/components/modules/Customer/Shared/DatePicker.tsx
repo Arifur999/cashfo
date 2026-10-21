@@ -126,43 +126,45 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
       <button
         type="button"
         onClick={() => (open ? setOpen(false) : openPicker())}
-        className="flex w-full items-center gap-1.5 whitespace-nowrap rounded-xl border border-neutral-200 px-3 py-2.5 text-left text-sm outline-none focus:border-brand-primary"
+        // The design's control frame (smartly InputFrame): line-strong edge,
+        // emerald border and mint ring while focused.
+        className="flex w-full items-center gap-1.5 whitespace-nowrap rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-left text-sm text-ink outline-none focus:border-emerald focus:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]"
       >
-        <Calendar className="h-4 w-4 shrink-0 text-neutral-400" />
+        <Calendar className="h-4 w-4 shrink-0 text-ink-muted" />
         {selected ? (
           <span>
             {t(MONTH_NAMES[selected.getMonth()])} {ordinal(selected.getDate())}, {selected.getFullYear()}
           </span>
         ) : (
-          <span className="text-neutral-400">{t(placeholder)}</span>
+          <span className="text-ink-faint">{t(placeholder)}</span>
         )}
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-64 rounded-2xl border border-neutral-100 bg-surface p-3 shadow-xl shadow-black/10">
+        <div className="absolute z-50 mt-2 w-64 rounded-2xl border border-line bg-surface p-3 shadow-overlay">
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
               onClick={() => changeMonth(-1)}
-              aria-label="Previous month"
-              className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100"
+              aria-label={t("Previous month")}
+              className="rounded-lg p-1.5 text-ink-muted hover:bg-surface-sunken hover:text-ink"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm font-semibold text-neutral-900">
+            <span className="text-sm font-semibold text-ink">
               {t(MONTH_NAMES[viewMonth])} {viewYear}
             </span>
             <button
               type="button"
               onClick={() => changeMonth(1)}
-              aria-label="Next month"
-              className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100"
+              aria-label={t("Next month")}
+              className="rounded-lg p-1.5 text-ink-muted hover:bg-surface-sunken hover:text-ink"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-y-1 text-center text-xs font-medium text-neutral-400">
+          <div className="grid grid-cols-7 gap-y-1 text-center text-xs font-medium text-ink-muted">
             {WEEKDAY_LABELS.map((d) => (
               <span key={d} className="py-1">
                 {t(d)}
@@ -180,12 +182,12 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
                   onClick={() => pickDay(date)}
                   className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
                     isSelected
-                      ? "bg-brand-primary font-semibold text-white"
+                      ? "bg-emerald font-semibold text-on-action"
                       : isToday
-                        ? "ring-1 ring-inset ring-brand-primary text-neutral-700"
+                        ? "ring-1 ring-inset ring-emerald text-ink-2"
                         : inMonth
-                          ? "text-neutral-700 hover:bg-neutral-100"
-                          : "text-neutral-300 hover:bg-neutral-50"
+                          ? "text-ink-2 hover:bg-surface-sunken"
+                          : "text-ink-faint hover:bg-hover"
                   }`}
                 >
                   {date.getDate()}

@@ -53,8 +53,10 @@ export function ReadingStreakCard({ reading, today }: ReadingStreakCardProps) {
         {reading.week.map((day) => (
           <span key={day.date} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
             <span className={cn("text-caption font-bold tabular-nums", day.pages ? "text-ink-2" : "text-ink-muted")}>{day.pages}</span>
+            {/* The other days are the board's lighter loans orange: the night
+                palette's loans colour, as no light token carries it. */}
             <span
-              className={cn("w-full max-w-8.5 rounded-t-[5px]", !day.pages ? "bg-surface-sunken" : day.date === today ? "bg-pillar-loans" : "bg-[#F0A46A] dark:bg-pillar-loans/45")}
+              className={cn("w-full max-w-8.5 rounded-t-[5px]", !day.pages ? "bg-surface-sunken" : day.date === today ? "bg-pillar-loans" : "bg-night-loans dark:bg-pillar-loans/45")}
               style={{ height: `${Math.max(3, most ? Math.round((day.pages / most) * BAR_MAX) : 0)}px` }}
             />
           </span>
