@@ -2,7 +2,8 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
-import { type AnalyticsPreset, resolveAnalyticsRange, toAnalyticsRangeQuery } from "@/lib/analyticsRange";
+import { type AnalyticsPreset, toAnalyticsRangeQuery } from "@/lib/analyticsRange";
+import { resolveRange } from "./analyticsLabels";
 
 export interface AnalyticsRangeChange {
   preset: AnalyticsPreset;
@@ -17,7 +18,8 @@ export interface AnalyticsRangeChange {
 export function useAnalyticsRange(today: string) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const range = resolveAnalyticsRange({ range: searchParams.get("range"), from: searchParams.get("from"), to: searchParams.get("to") }, today);
+  // The same reading as the server page's, so its prefetch is the one used.
+  const range = resolveRange({ range: searchParams.get("range"), from: searchParams.get("from"), to: searchParams.get("to") }, today);
 
   const setRange = useCallback(
     ({ preset, from, to }: AnalyticsRangeChange) => {
