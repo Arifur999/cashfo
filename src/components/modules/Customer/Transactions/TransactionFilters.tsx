@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, Filter, Search, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
@@ -11,17 +11,35 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import type { Account, TransactionType } from "@/lib/customer/api";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
+import type { Account } from "@/lib/customer/api";
 import { formatDate } from "@/lib/customer/date";
-import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { activeFilterCount, categoryLabel, isReversedRange, readTransactionFilters } from "@/lib/customer/transactionRows";
+import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { formatCount } from "@/lib/i18n/digits";
+import type { Translate } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
-type TypeFilter = "" | TransactionType;
+type TypeFilter = "" | "INCOME" | "EXPENSE";
+
+export interface FilterCategory {
+  id: string;
+  name: string;
+  type: "INCOME" | "EXPENSE";
+}
 
 interface TransactionFiltersProps {
   accounts: Account[];
-  categories: { id: string; name: string }[];
+  categories: FilterCategory[];
+  // Runs a URL change in the page's transition, so the list dims while
+  // the next one loads. "replace" for a typed date, which shouldn't leave
+  // a Back step per keystroke.
+  navigate: (href: string, mode?: "push" | "replace") => void;
+  // The query a change builds on: the one last asked for while it loads,
+  // else the URL on show (which useSearchParams keeps until it lands).
+  baseQuery: () => URLSearchParams;
 }
 
 const PRESETS: { value: DateRangePreset; label: string }[] = [
@@ -31,49 +49,136 @@ const PRESETS: { value: DateRangePreset; label: string }[] = [
   { value: "all", label: "All time" },
 ];
 
-// "27 Sep – 2 Oct 2026" for a from/to pair; one side alone reads "From …" / "Until …".
-export function dateRangeLabel(from: string | undefined, to: string | undefined, t: (key: string) => string): string | null {
-  if (from && to) {
-    const sameYear = from.slice(0, 4) === to.slice(0, 4);
-    return `${formatDate(`${from}T00:00:00.000Z`, sameYear ? "d MMM" : "d MMM yyyy")} – ${formatDate(`${to}T00:00:00.000Z`, "d MMM yyyy")}`;
-  }
-  if (from) return `${t("From")} ${formatDate(`${from}T00:00:00.000Z`, "d MMM yyyy")}`;
-  if (to) return `${t("Until")} ${formatDate(`${to}T00:00:00.000Z`, "d MMM yyyy")}`;
+// The earliest day a typed date is applied from: while a year is typed
+// digit by digit, the field reads 0002, 0020, 0202 first.
+const MIN_DAY = "2000-01-01";
+
+// "27 Sep – 2 Oct 2026" for a from/to pair; one side alone reads "From …" /
+// "Until …". In Bangla the board's own month names and digits.
+export function dateRangeLabel(from: string | undefined, to: string | undefined, t: Translate, locale: "en" | "bn" = "en"): string | null {
+  const day = (value: string, withYear: boolean) =>
+    locale === "bn" ? `${banglaDayMonth(value)}${withYear ? ` ${toBanglaDigits(value.slice(0, 4))}` : ""}` : formatDate(`${value}T00:00:00.000Z`, withYear ? "d MMM yyyy" : "d MMM");
+  if (from && to) return `${day(from, from.slice(0, 4) !== to.slice(0, 4))} – ${day(to, true)}`;
+  if (from) return t("From {date}", { date: day(from, true) });
+  if (to) return t("Until {date}", { date: day(to, true) });
   return null;
 }
 
-// The filters on Transactions: search, type, category, account and the
+// A date field that applies a whole day, not every keystroke: a full day
+// from 2000 on as it is typed, anything else when it is left or on Enter
+// (or put back to what the list is showing, if it can't be read).
+function DateFilterInput({ id, value, size, onApply }: { id: string; value: string | undefined; size: "sm" | "md"; onApply: (day: string | undefined) => void }) {
+  const [draft, setDraft] = useState(value ?? "");
+  // A new day from the URL (a preset, Clear, Back) replaces what was typed.
+  const [shown, setShown] = useState(value);
+  if (value !== shown) {
+    setShown(value);
+    setDraft(value ?? "");
+  }
+  const usable = (day: string) => day === "" || (isIsoDay(day) && day >= MIN_DAY);
+  const commit = (day: string) => {
+    if (!usable(day)) {
+      setDraft(value ?? "");
+      return;
+    }
+    if (day !== (value ?? "")) onApply(day || undefined);
+  };
+  return (
+    <Input
+      id={id}
+      type="date"
+      size={size}
+      min={MIN_DAY}
+      value={draft}
+      onChange={(event) => {
+        const day = event.target.value;
+        setDraft(day);
+        if (usable(day) && day !== (value ?? "")) onApply(day || undefined);
+      }}
+      onBlur={() => commit(draft)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          commit(draft);
+        }
+      }}
+    />
+  );
+}
+
+// The filters on Transactions: search, type, category, wallet and the
 // date range, all kept in the URL so a filtered list can be shared and
 // comes back on refresh. On phones the search stays and the rest opens in
-// a sheet; chips show what is on.
-export function TransactionFilters({ accounts, categories }: TransactionFiltersProps) {
-  const { t } = useLocale();
-  const router = useRouter();
+// a sheet; chips show what is on, and each one takes its filter off.
+export function TransactionFilters({ accounts, categories, navigate, baseQuery }: TransactionFiltersProps) {
+  const { t, locale } = useLocale();
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const type = (searchParams.get("type") ?? "") as TypeFilter;
-  const categoryId = searchParams.get("categoryId") ?? "";
-  const accountId = searchParams.get("accountId") ?? "";
-  const dateFrom = searchParams.get("dateFrom") ?? undefined;
-  const dateTo = searchParams.get("dateTo") ?? undefined;
-  const rangeLabel = dateRangeLabel(dateFrom, dateTo, t);
-  const activeCount = [type, categoryId, accountId, rangeLabel].filter(Boolean).length;
+  const filters = readTransactionFilters((key) => searchParams.get(key));
+  const type: TypeFilter = filters.type ?? "";
+  const categoryId = filters.categoryId ?? "";
+  const accountId = filters.accountId ?? "";
+  const { dateFrom, dateTo } = filters;
+  const rangeLabel = dateRangeLabel(dateFrom, dateTo, t, locale);
+  const activeCount = activeFilterCount(filters);
+  const reversed = isReversedRange(filters);
+  const lang = displayLanguage(locale);
+  const walletName = (id: string) => {
+    const account = accounts.find((a) => a.id === id);
+    return account ? accountDisplayName(account, lang) : null;
+  };
 
-  function update(changes: Record<string, string | undefined>) {
-    const next = new URLSearchParams(searchParams.toString());
+  // The search box follows the URL (Clear filters, Back), and keeps what is
+  // being typed until it is sent.
+  const urlSearch = filters.search ?? "";
+  const [search, setSearch] = useState(urlSearch);
+  const [shownSearch, setShownSearch] = useState(urlSearch);
+  if (urlSearch !== shownSearch) {
+    setShownSearch(urlSearch);
+    setSearch(urlSearch);
+  }
+
+  function update(changes: Record<string, string | undefined>, mode: "push" | "replace" = "push") {
+    const next = baseQuery();
     for (const [key, value] of Object.entries(changes)) {
       if (value) next.set(key, value);
       else next.delete(key);
     }
     next.delete("page");
-    router.push(`/transactions?${next.toString()}`);
+    const query = next.toString();
+    navigate(query ? `/transactions?${query}` : "/transactions", mode);
+  }
+
+  function pickType(next: TypeFilter) {
+    const changes: Record<string, string | undefined> = { type: next || undefined };
+    // A category only the other side has can't match the new type. One the
+    // list doesn't know (a deleted category's) stays. The category is the
+    // one last picked, which may still be loading.
+    const base = baseQuery();
+    const picked = readTransactionFilters((key) => base.get(key)).categoryId;
+    if (next && picked) {
+      const other = next === "INCOME" ? "EXPENSE" : "INCOME";
+      const ours = categories.some((c) => c.type === next && c.name === picked);
+      if (!ours && categories.some((c) => c.type === other && c.name === picked)) changes.categoryId = undefined;
+    }
+    update(changes);
   }
 
   function pickPreset(preset: DateRangePreset) {
     const range = resolveDateRange(preset);
     update({ dateFrom: range.dateFrom, dateTo: range.dateTo });
+  }
+
+  // The preset the current range is, so its button shows as chosen.
+  const presetOn = (preset: DateRangePreset) => {
+    const range = resolveDateRange(preset);
+    return range.dateFrom === dateFrom && range.dateTo === dateTo;
+  };
+
+  function clearAll() {
+    setSearch("");
+    update({ type: undefined, categoryId: undefined, accountId: undefined, dateFrom: undefined, dateTo: undefined, search: undefined });
   }
 
   const typeOptions = [
@@ -82,84 +187,95 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
     { value: "EXPENSE" as TypeFilter, label: t("Expense"), dot: "var(--expense-fill)" },
   ];
 
+  // Income and expense categories in their own groups, only the chosen
+  // type's when one is chosen. A category in the URL the list doesn't know
+  // (a deleted one, "Asset Sale") still shows as picked.
+  const sides = (["EXPENSE", "INCOME"] as const).filter((side) => !type || side === type);
+  const knownCategory = categories.some((c) => c.name === categoryId && sides.includes(c.type));
   const selects = (
     <>
       <NativeSelect size="sm" value={categoryId} onChange={(event) => update({ categoryId: event.target.value })} aria-label={t("Category")} className="font-medium">
         <option value="">{t("All categories")}</option>
-        {categories.map((category) => (
-          <option key={category.id} value={category.name}>
-            {category.name}
-          </option>
-        ))}
+        {categoryId && !knownCategory && <option value={categoryId}>{categoryLabel(categoryId, t)}</option>}
+        {sides.map((side) => {
+          const list = categories.filter((c) => c.type === side);
+          return (
+            list.length > 0 && (
+              <optgroup key={side} label={t(side === "INCOME" ? "Income" : "Expense")}>
+                {list.map((category) => (
+                  <option key={category.id} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
+              </optgroup>
+            )
+          );
+        })}
       </NativeSelect>
-      <NativeSelect size="sm" value={accountId} onChange={(event) => update({ accountId: event.target.value })} aria-label={t("Account")} className="font-medium">
-        <option value="">{t("All accounts@@wallets")}</option>
+      <NativeSelect size="sm" value={accountId} onChange={(event) => update({ accountId: event.target.value })} aria-label={t("Wallet")} className="font-medium">
+        <option value="">{t("All wallets")}</option>
         {accounts.map((account) => (
           <option key={account.id} value={account.id}>
-            {account.name}
+            {accountDisplayName(account, lang)}
           </option>
         ))}
       </NativeSelect>
     </>
   );
 
+  const reversedNote = reversed && (
+    <p role="alert" className="text-caption text-warning">
+      {t("From is after To, so nothing can match. Swap the dates.")}
+    </p>
+  );
+
+  const presets = (className?: string) =>
+    PRESETS.map((preset) => {
+      const on = presetOn(preset.value);
+      return (
+        <Button key={preset.value} variant={on ? "soft" : "outline"} size="sm" aria-pressed={on} onClick={() => pickPreset(preset.value)} className={cn("pointer-coarse:h-11", className)}>
+          {t(preset.label)}
+        </Button>
+      );
+    });
+
+  // The chip and its × are siblings in one frame: a button can't hold
+  // another button.
   const dateRange = (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex h-9.5 items-center gap-2 rounded-md border px-3 text-small whitespace-nowrap transition-colors",
-            rangeLabel ? "border-emerald bg-mint-50 font-semibold text-emerald" : "border-line-strong bg-surface font-medium text-ink hover:bg-surface-sunken",
-          )}
-        >
-          <CalendarDays className="size-3.5" aria-hidden="true" />
-          {rangeLabel ?? t("Any date")}
-          {rangeLabel && (
-            <span
-              role="button"
-              tabIndex={0}
-              aria-label={t("Remove date filter")}
-              onClick={(event) => {
-                event.stopPropagation();
-                update({ dateFrom: undefined, dateTo: undefined });
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  update({ dateFrom: undefined, dateTo: undefined });
-                }
-              }}
-              className="flex"
-            >
-              <X className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
-            </span>
-          )}
+    <div className={cn("flex h-9.5 items-center rounded-md border", rangeLabel ? "border-emerald bg-mint-50" : "border-line-strong bg-surface")}>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn("flex h-full items-center gap-2 rounded-md px-3 text-small whitespace-nowrap transition-colors", rangeLabel ? "pr-1.5 font-semibold text-emerald" : "font-medium text-ink hover:bg-surface-sunken")}
+          >
+            <CalendarDays className="size-3.5" aria-hidden="true" />
+            {rangeLabel ?? t("Any date")}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-80 gap-3 rounded-lg border border-line bg-surface p-3 shadow-overlay ring-0">
+          <div className="grid grid-cols-2 gap-2">{presets()}</div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field htmlFor="filter-from" label={t("From")}>
+              <DateFilterInput id="filter-from" size="sm" value={dateFrom} onApply={(day) => update({ dateFrom: day }, "replace")} />
+            </Field>
+            <Field htmlFor="filter-to" label={t("To@@date")}>
+              <DateFilterInput id="filter-to" size="sm" value={dateTo} onApply={(day) => update({ dateTo: day }, "replace")} />
+            </Field>
+          </div>
+          {reversedNote}
+        </PopoverContent>
+      </Popover>
+      {rangeLabel && (
+        <button type="button" aria-label={t("Remove date filter")} onClick={() => update({ dateFrom: undefined, dateTo: undefined })} className="flex h-full items-center rounded-md pr-2.5 pl-1 text-emerald hover:text-emerald-hover">
+          <X className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
         </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-80 gap-3 rounded-lg border border-line bg-surface p-3 shadow-overlay ring-0">
-        <div className="grid grid-cols-2 gap-2">
-          {PRESETS.map((preset) => (
-            <Button key={preset.value} variant="outline" size="sm" onClick={() => pickPreset(preset.value)}>
-              {t(preset.label)}
-            </Button>
-          ))}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field htmlFor="filter-from" label={t("From")}>
-            <Input id="filter-from" type="date" size="sm" value={dateFrom ?? ""} onChange={(event) => update({ dateFrom: event.target.value || undefined })} />
-          </Field>
-          <Field htmlFor="filter-to" label={t("To@@date")}>
-            <Input id="filter-to" type="date" size="sm" value={dateTo ?? ""} onChange={(event) => update({ dateTo: event.target.value || undefined })} />
-          </Field>
-        </div>
-      </PopoverContent>
-    </Popover>
+      )}
+    </div>
   );
 
   const clear = activeCount > 0 && (
-    <Button variant="ghost" size="sm" onClick={() => update({ type: undefined, categoryId: undefined, accountId: undefined, dateFrom: undefined, dateTo: undefined, search: undefined })} className="ml-auto h-9.5 px-3 text-small font-semibold">
+    <Button variant="ghost" size="sm" onClick={clearAll} className="ml-auto h-9.5 px-3 text-small font-semibold">
       {t("Clear filters")}
     </Button>
   );
@@ -174,17 +290,27 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
       }}
       className="min-w-0 flex-1 md:flex-none"
     >
-      <Input
-        type="search"
-        size="sm"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        leading={<Search />}
-        placeholder={placeholder}
-        aria-label={t("Search transactions")}
-        frameClassName="h-12 md:h-9.5 md:w-65"
-      />
+      <Input type="search" size="sm" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={placeholder} aria-label={t("Search transactions")} frameClassName="h-12 md:h-9.5 md:w-65" />
     </form>
+  );
+
+  // What is on, as chips that take their own filter off; what isn't, as
+  // plain words, so the row always says the whole state.
+  const chip = (label: string, remove: Record<string, undefined>) => (
+    <button
+      type="button"
+      onClick={() => update(remove)}
+      aria-label={t("Remove {filter}", { filter: label })}
+      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-mint-50 px-3 text-caption font-semibold whitespace-nowrap text-brand-ink pointer-coarse:h-10"
+    >
+      {label}
+      <X className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
+    </button>
+  );
+  const quiet = (label: string) => (
+    <Chip tone="neutral" className="h-8 bg-surface font-semibold text-ink-2 pointer-coarse:h-10">
+      {label}
+    </Chip>
   );
 
   return (
@@ -192,7 +318,7 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
       {/* Desktop: one bar. */}
       <div className="hidden flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3 shadow-card md:flex">
         {searchForm(t("Search notes…"))}
-        <SegmentedControl options={typeOptions} value={type} onChange={(value) => update({ type: value })} label={t("Type")} />
+        <SegmentedControl options={typeOptions} value={type} onChange={pickType} label={t("Type")} />
         {selects}
         {dateRange}
         {clear}
@@ -204,53 +330,53 @@ export function TransactionFilters({ accounts, categories }: TransactionFiltersP
           {searchForm(t("Search notes"))}
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <button type="button" aria-label={`${t("Filters")}${activeCount ? `, ${activeCount} ${t("on")}` : ""}`} className="relative flex size-12 shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink">
+              <button
+                type="button"
+                aria-label={activeCount ? t("Filters, {count} on", { count: formatCount(activeCount, locale) }) : t("Filters")}
+                className="relative flex size-12 shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink"
+              >
                 <Filter className="size-4.75" aria-hidden="true" />
-                {activeCount > 0 && <span className="absolute -top-1 -right-1 flex size-4.5 items-center justify-center rounded-full bg-emerald text-caption font-bold text-white">{activeCount}</span>}
+                {activeCount > 0 && (
+                  <span aria-hidden="true" className="absolute -top-1 -right-1 flex size-4.5 items-center justify-center rounded-full bg-emerald text-caption font-bold text-white">
+                    {formatCount(activeCount, locale)}
+                  </span>
+                )}
               </button>
             </SheetTrigger>
             <SheetContent side="bottom" showCloseButton={false} className="gap-4 rounded-t-[18px] border-0 bg-surface p-5 pb-8">
               <SheetHeader className="p-0">
                 <SheetTitle className="text-h3 text-ink">{t("Filters")}</SheetTitle>
               </SheetHeader>
-              <SegmentedControl options={typeOptions} value={type} onChange={(value) => update({ type: value })} label={t("Type")} stretch />
+              <SegmentedControl options={typeOptions} value={type} onChange={pickType} label={t("Type")} stretch />
               <div className="grid gap-3">{selects}</div>
-              <div className="flex flex-wrap gap-2">
-                {PRESETS.map((preset) => (
-                  <Button key={preset.value} variant="outline" size="sm" onClick={() => pickPreset(preset.value)}>
-                    {t(preset.label)}
-                  </Button>
-                ))}
-              </div>
+              <div className="flex flex-wrap gap-2">{presets()}</div>
               <div className="grid grid-cols-2 gap-3">
                 <Field htmlFor="sheet-from" label={t("From")}>
-                  <Input id="sheet-from" type="date" size="md" value={dateFrom ?? ""} onChange={(event) => update({ dateFrom: event.target.value || undefined })} />
+                  <DateFilterInput id="sheet-from" size="md" value={dateFrom} onApply={(day) => update({ dateFrom: day }, "replace")} />
                 </Field>
                 <Field htmlFor="sheet-to" label={t("To@@date")}>
-                  <Input id="sheet-to" type="date" size="md" value={dateTo ?? ""} onChange={(event) => update({ dateTo: event.target.value || undefined })} />
+                  <DateFilterInput id="sheet-to" size="md" value={dateTo} onApply={(day) => update({ dateTo: day }, "replace")} />
                 </Field>
               </div>
-              <Button size="lg" onClick={() => setSheetOpen(false)}>
-                {t("Done")}
-              </Button>
+              {reversedNote}
+              <div className="flex gap-3">
+                {activeCount > 0 && (
+                  <Button variant="secondary" size="lg" onClick={clearAll} className="flex-1">
+                    {t("Clear filters")}
+                  </Button>
+                )}
+                <Button size="lg" onClick={() => setSheetOpen(false)} className="flex-1">
+                  {t("Done@@sheet")}
+                </Button>
+              </div>
             </SheetContent>
           </Sheet>
         </div>
         <div className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
-          <Chip tone={rangeLabel ? "mint" : "neutral"} className={cn("font-semibold", !rangeLabel && "bg-surface text-ink-2")}>
-            {rangeLabel ?? t("Any date")}
-          </Chip>
-          <Chip tone={type ? "mint" : "neutral"} className={cn("font-semibold", !type && "bg-surface text-ink-2")}>
-            {type ? t(type === "INCOME" ? "Income" : "Expense") : t("All types")}
-          </Chip>
-          <Chip tone={accountId ? "mint" : "neutral"} className={cn("font-semibold", !accountId && "bg-surface text-ink-2")}>
-            {accounts.find((a) => a.id === accountId)?.name ?? t("All wallets")}
-          </Chip>
-          {categoryId && (
-            <Chip tone="mint" className="font-semibold">
-              {categoryId}
-            </Chip>
-          )}
+          {rangeLabel ? chip(rangeLabel, { dateFrom: undefined, dateTo: undefined }) : quiet(t("Any date"))}
+          {type ? chip(t(type === "INCOME" ? "Income" : "Expense"), { type: undefined }) : quiet(t("All types"))}
+          {accountId ? chip(walletName(accountId) ?? t("Wallet"), { accountId: undefined }) : quiet(t("All wallets"))}
+          {categoryId && chip(categoryLabel(categoryId, t), { categoryId: undefined })}
         </div>
       </div>
     </>

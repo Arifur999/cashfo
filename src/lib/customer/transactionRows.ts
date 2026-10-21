@@ -1,8 +1,10 @@
-import type { Transaction } from "./api";
-import { formatDate } from "./date";
-import { cancelledLabel } from "./transactionDisplay";
+import type { Transaction, TransactionEntry } from "./api";
+import { formatDate, timeLabel } from "./date";
+import { isIsoDay } from "./dateRangePresets";
+import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "./transactionDisplay";
 import { toDateInputValue } from "@/lib/date";
-import { banglaShortDay } from "@/lib/i18n/banglaDates";
+import { banglaDayMonth, banglaShortDay, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import type { Translate } from "@/lib/i18n/message";
 
 export interface CategoryMeta {
   name: string;
@@ -26,7 +28,12 @@ export interface TransactionRow {
   transaction: Transaction;
   // What the row is called: the note, else the category, else the type.
   title: string | null;
+  // What the row shows as its category: the entry's own, or the other
+  // account's name standing in for one (see entryCategory).
   category: CategoryMeta | null;
+  // The category the entry itself carries (its name), null when it has
+  // none: what the Category filter and Edit go by.
+  entryCategory: string | null;
   // The wallet, or "from → to" for a transfer.
   wallet: string | null;
   // Positive for money in, negative for money out, as entered for a transfer.
@@ -51,25 +58,40 @@ export function reversalTitle(description: string | null): string | null {
   return undid && !BARE_ID.test(undid) ? undid : null;
 }
 
+// Cash, bank and mobile wallets, and the savings wallets goals are kept in.
+const MONEY_SUBTYPES = new Set(["cash", "bank", "mfs", "savings"]);
+
 // Which entry carries the category and which the wallet: entry order
 // differs between an income and an expense, so the wallet is "the other
-// entry". A transfer has two wallets and no category.
-export function describeTransaction(transaction: Transaction, categoriesById: Record<string, CategoryMeta>): TransactionRow {
+// entry" -- unless the category sits on the wallet's own entry, as on an
+// asset sale or a referral payout. A transfer has two wallets and no
+// category. `accountNames` gives a wallet the name the reader sees ("নগদ"
+// for Cash in Bangla), by its id.
+export function describeTransaction(transaction: Transaction, categoriesById: Record<string, CategoryMeta>, accountNames: Record<string, string> = {}): TransactionRow {
+  const nameOf = (entry: TransactionEntry | undefined) => (entry ? (accountNames[entry.accountId] ?? entry.account?.name ?? null) : null);
+  // One of the reader's wallets, or a money account they may no longer list
+  // (an archived wallet, a savings wallet).
+  const isWallet = (entry: TransactionEntry) => accountNames[entry.accountId] !== undefined || (entry.account?.accountType === "ASSET" && MONEY_SUBTYPES.has(entry.account.accountSubtype ?? ""));
   const categoryEntry = transaction.entries.find((e) => e.categoryId);
-  let category = categoryEntry?.categoryId ? (categoriesById[categoryEntry.categoryId] ?? null) : null;
-  let wallet = categoryEntry ? (transaction.entries.find((e) => e.id !== categoryEntry.id)?.account?.name ?? null) : null;
+  const entryCategory = categoryEntry?.categoryId ?? null;
+  // A name no current category answers to (a deleted category's, or a
+  // feature's own: "Asset Sale", "Referral Bonus") still names the row, on
+  // the neutral tile. An id-shaped one names nothing a reader would know.
+  let category: CategoryMeta | null = entryCategory ? (categoriesById[entryCategory] ?? (BARE_ID.test(entryCategory) ? null : { name: entryCategory, icon: null, color: "" })) : null;
+  let wallet = categoryEntry ? nameOf(isWallet(categoryEntry) ? categoryEntry : transaction.entries.find((e) => e.id !== categoryEntry.id)) : null;
   if (!categoryEntry && transaction.transactionType !== "TRANSFER") {
     // A posting made straight against the books (a journal entry, a
     // feature's own posting): the money side is the wallet, the other
-    // account stands in for the category.
-    const moneyEntry = transaction.entries.find((e) => e.account?.accountType === "ASSET") ?? transaction.entries[0];
+    // account stands in for the category. A wallet before any other asset:
+    // an asset bought moves money from a wallet into Fixed Assets.
+    const moneyEntry = transaction.entries.find(isWallet) ?? transaction.entries.find((e) => e.account?.accountType === "ASSET") ?? transaction.entries[0];
     const other = transaction.entries.find((e) => e.id !== moneyEntry?.id);
-    wallet = moneyEntry?.account?.name ?? null;
+    wallet = nameOf(moneyEntry);
     if (!category && other?.account) category = { name: other.account.name, icon: null, color: "" };
   }
   if (transaction.transactionType === "TRANSFER") {
-    const from = transaction.entries.find((e) => e.entryType === "CREDIT")?.account?.name;
-    const to = transaction.entries.find((e) => e.entryType === "DEBIT")?.account?.name;
+    const from = nameOf(transaction.entries.find((e) => e.entryType === "CREDIT"));
+    const to = nameOf(transaction.entries.find((e) => e.entryType === "DEBIT"));
     if (from && to) wallet = `${from} → ${to}`;
   }
   const amount = Number(transaction.entries[0]?.amount ?? 0);
@@ -78,16 +100,35 @@ export function describeTransaction(transaction: Transaction, categoriesById: Re
     transaction,
     title: (transaction.reversalOfId ? reversalTitle(transaction.description) : transaction.description) || category?.name || null,
     category,
+    entryCategory,
     wallet,
     signedAmount,
     cancelled: cancelledLabel(transaction),
   };
 }
 
+// The categories the backend gives a feature's own postings (an asset sale,
+// a referral payout), which no reader named: shown in the reader's
+// language. A category a reader named stays as they wrote it.
+export const SYSTEM_CATEGORIES = new Set(["Asset Sale", "Referral Bonus"]);
+// Those, and the note the backend writes on a referral payout (its title).
+export const SYSTEM_TEXTS = new Set([...SYSTEM_CATEGORIES, "Referral Program withdrawal"]);
+
+export const categoryLabel = (name: string, t: Translate): string => (SYSTEM_CATEGORIES.has(name) ? t(name) : name);
+
+// A row's title or note: translated when the backend wrote it, else as typed.
+export const systemText = (text: string, t: Translate): string => (SYSTEM_TEXTS.has(text) ? t(text) : text);
+
+// What a row is called on screen: its title, else its type.
+export const rowTitle = (row: Pick<TransactionRow, "title" | "transaction">, t: Translate): string =>
+  row.title ? systemText(row.title, t) : t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType]);
+
 export interface DayGroup {
   day: string;
   rows: TransactionRow[];
-  // The day's money in minus money out, voided rows left out.
+  // The day's money in minus money out, voided rows left out -- of the
+  // rows given, so a day split across two pages nets only its own part
+  // (see pageEdgeDays).
   net: number;
 }
 
@@ -108,6 +149,17 @@ export function groupByDay(rows: TransactionRow[]): DayGroup[] {
   return groups;
 }
 
+// The days a page may share with the pages around it: its first day when
+// a page comes before it, its last when one comes after. A day in between
+// is whole on this page, so its rows' net is the day's own.
+export function pageEdgeDays(rows: Pick<Transaction, "transactionDate">[], page: number, totalPages: number): { before: string | null; after: string | null } {
+  if (rows.length === 0) return { before: null, after: null };
+  return {
+    before: page > 1 ? toDateInputValue(rows[0].transactionDate) : null,
+    after: page < totalPages ? toDateInputValue(rows[rows.length - 1].transactionDate) : null,
+  };
+}
+
 // "Today", "Yesterday" or nothing, for a "YYYY-MM-DD" day.
 export function relativeDayKey(day: string, today: string): "Today" | "Yesterday" | null {
   if (day === today) return "Today";
@@ -121,6 +173,21 @@ export function dayHeading(day: string, today: string, t: (key: string) => strin
   const short = locale === "bn" ? banglaShortDay(day) : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM");
   const relative = relativeDayKey(day, today);
   return relative ? `${t(relative)} · ${short}` : short;
+}
+
+// "Thu, 1 Oct 2026" (or "বৃহস্পতি, ১ অক্টো ২০২৬"): a transaction's day. Its
+// date is a day with no time of its own (stored at UTC midnight), so it is
+// never shown with one.
+export function transactionDayLabel(day: string, locale: "en" | "bn"): string {
+  return locale === "bn" ? `${banglaShortDay(day)} ${toBanglaDigits(day.slice(0, 4))}` : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM yyyy");
+}
+
+// "1 Oct 2026, 5:30 pm" (or "১ অক্টো ২০২৬, ৫:৩০ অপরাহ্ণ"): when something
+// happened to a record, to the minute, in the platform timezone.
+export function recordTimeLabel(value: string, locale: "en" | "bn", t: Translate): string {
+  if (locale === "en") return formatDate(value, "d MMM yyyy, h:mm a");
+  const day = toDateInputValue(value);
+  return `${banglaDayMonth(day)} ${toBanglaDigits(day.slice(0, 4))}, ${toBanglaDigits(timeLabel(formatDate(value, "HH:mm"), t))}`;
 }
 
 // What Edit opens a saved entry with (decision D2): the wallet the money
@@ -147,6 +214,9 @@ export interface EditableEntry {
 
 // null for anything Edit can't take: a book entry, a reversal, a voided
 // entry, or one a feature keeps (the API says so through `voidable`).
+// `categoryName` is the entry's own category (TransactionRow.entryCategory),
+// never an account standing in for one: an entry saved without a category
+// edits as one without.
 export function editableEntry(transaction: Transaction, title: string, categoryName: string | null): EditableEntry | null {
   const kind = transaction.transactionType;
   if ((kind !== "INCOME" && kind !== "EXPENSE" && kind !== "TRANSFER") || !transaction.voidable || transaction.entries.length !== 2) return null;
@@ -157,4 +227,90 @@ export function editableEntry(transaction: Transaction, title: string, categoryN
   if (kind === "INCOME") return { ...base, accountId: debit.accountId, toAccountId: "", otherAccountId: credit.accountId, note: credit.note ?? transaction.description ?? "" };
   if (kind === "EXPENSE") return { ...base, accountId: credit.accountId, toAccountId: "", otherAccountId: debit.accountId, note: debit.note ?? transaction.description ?? "" };
   return { ...base, accountId: credit.accountId, toAccountId: debit.accountId, otherAccountId: "", note: transaction.description ?? "" };
+}
+
+// What the drawer holds while an entry is edited.
+export interface EntryValues {
+  amount: number;
+  category: string;
+  accountId: string;
+  toAccountId: string;
+  day: string;
+  note: string;
+}
+
+// How many of a saved entry's values an edit has changed. Only a transfer
+// has a second wallet, so an income or expense never counts one: the
+// drawer opening an edit untouched says "0 changes" and can't save.
+export function editChanges(editing: EditableEntry, values: EntryValues): number {
+  return [
+    values.amount !== editing.amount,
+    values.category !== editing.category,
+    values.accountId !== editing.accountId,
+    editing.kind === "TRANSFER" && values.toAccountId !== editing.toAccountId,
+    values.day !== editing.day,
+    values.note.trim() !== editing.note.trim(),
+  ].filter(Boolean).length;
+}
+
+// The filters the Transactions list takes from its URL. Anything else in
+// the query (page, limit, a tracking tag) is no filter.
+export interface TransactionListFilters {
+  type?: "INCOME" | "EXPENSE";
+  categoryId?: string;
+  accountId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+}
+
+// A query's values, from useSearchParams() or a page's searchParams.
+type QueryValue = (key: string) => string | null | undefined;
+
+// Only what the list can apply: a type it lists, real days, words that
+// aren't blank. The server page and the filter bar read the URL alike.
+export function readTransactionFilters(get: QueryValue): TransactionListFilters {
+  const type = get("type");
+  const text = (key: string) => get(key)?.trim() || undefined;
+  const day = (key: string) => {
+    const value = get(key);
+    return isIsoDay(value) ? value : undefined;
+  };
+  return {
+    type: type === "INCOME" || type === "EXPENSE" ? type : undefined,
+    categoryId: text("categoryId"),
+    accountId: text("accountId"),
+    dateFrom: day("dateFrom"),
+    dateTo: day("dateTo"),
+    search: text("search"),
+  };
+}
+
+// How many filters are on, the date range counting once.
+export const activeFilterCount = (filters: TransactionListFilters): number =>
+  [filters.type, filters.categoryId, filters.accountId, filters.dateFrom || filters.dateTo, filters.search].filter(Boolean).length;
+
+// A From day after the To day: nothing can match.
+export const isReversedRange = (filters: Pick<TransactionListFilters, "dateFrom" | "dateTo">): boolean => !!filters.dateFrom && !!filters.dateTo && filters.dateFrom > filters.dateTo;
+
+// One category's entries in one month: what Budget's and Income sources'
+// "See transactions" open.
+export function categoryTransactionsHref(type: "INCOME" | "EXPENSE", category: string, year: number, month: number): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const query = new URLSearchParams({ type, categoryId: category, dateFrom: `${year}-${pad(month)}-01`, dateTo: `${year}-${pad(month)}-${pad(last)}` });
+  return `/transactions?${query.toString()}`;
+}
+
+// The feature that keeps its own record of a posting, so the posting can
+// only change there: an asset bought or sold, a savings goal's deposit or
+// withdrawal, a referral payout. Read from what the backend writes on them.
+export type OwningFeature = "asset" | "savings" | "referral";
+
+export function owningFeature(transaction: Pick<Transaction, "description" | "entries">): OwningFeature | null {
+  const description = transaction.description ?? "";
+  if (/^Asset (purchase|sale):/.test(description) || transaction.entries.some((e) => e.categoryId === "Asset Sale")) return "asset";
+  if (/^Savings (contribution|withdrawal):/.test(description) || transaction.entries.some((e) => e.account?.accountSubtype === "savings")) return "savings";
+  if (description === "Referral Program withdrawal" || transaction.entries.some((e) => e.categoryId === "Referral Bonus")) return "referral";
+  return null;
 }
