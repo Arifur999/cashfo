@@ -1,210 +1,472 @@
 "use client";
 
-import { Lock, Menu, Plus, Search, ShieldAlert, ShieldCheck, Star, TriangleAlert } from "lucide-react";
-import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
-import { useEffect, useEffectEvent, useState, useTransition } from "react";
+import { ArrowUpDown, Lock, Menu, Plus, RefreshCw, Search, SearchX, ShieldAlert, ShieldCheck, Star, TriangleAlert } from "lucide-react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useTransition, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
+import ErrorState from "@/components/smartly/ErrorState";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
+import { ListCard, ListEmpty, ListFooter, ListHead, ListHeadCell } from "@/components/smartly/list";
+import LoadMore from "@/components/smartly/LoadMore";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import SkeletonRows from "@/components/smartly/SkeletonRows";
 import { SOFT_TONE } from "@/components/smartly/tones";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import type { VaultCheckup as Checkup, VaultEntryCategory, VaultEntrySummary } from "@/lib/customer/api";
+import type { VaultEntrySummary } from "@/lib/customer/api";
 import { deleteVaultEntryAction, dismissVaultCheckupAction, getVaultCheckupAction, revealVaultEntryAction, updateVaultEntryAction } from "@/lib/customer/passwordVaultActions";
-import { attentionIds, categoryCounts, countdownText, filterEntries, issuesOf, normalizeUrl, sortEntries, VAULT_SORTS, type QuickLogin, type VaultSort } from "@/lib/customer/vaultDisplay";
+import {
+  attentionIds,
+  categoryCounts,
+  checkupFor,
+  checkupStatus,
+  chipViews,
+  draftFor,
+  entriesInView,
+  filterEntries,
+  isLockedMessage,
+  issuesOf,
+  normalizeUrl,
+  settle,
+  sortEntries,
+  toggledView,
+  VAULT_SORTS,
+  type CheckupAnswer,
+  type EntryDraft,
+  type QuickLogin,
+  type VaultSort,
+  type VaultView,
+} from "@/lib/customer/vaultDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { copySecret, copyText } from "./clipboard";
 import { EntryDetails } from "./EntryDetails";
 import { EntryDrawer } from "./EntryDrawer";
 import { EntryRow } from "./EntryRow";
+import { LockCountdown } from "./LockCountdown";
 import { VAULT_CATEGORIES, VAULT_CATEGORY_ICONS, VAULT_CATEGORY_LABELS, VAULT_CATEGORY_TONE } from "./vaultCategoryDisplay";
 import { VaultCheckup } from "./VaultCheckup";
 import { VaultEmpty } from "./VaultEmpty";
-import { isLockedMessage } from "./VaultPageClient";
+import { useVaultSteps } from "./vaultSteps";
+
+// The list's first answer: on its way, in, or never came.
+export type VaultLoad = "loading" | "ready" | "failed";
+
+// The Add or Edit drawer as the page keeps it: open or closed (still
+// holding its fields for the closing slide), and what was typed. Open, it
+// is a step in the address too (?entry=, which VaultPageClient puts there).
+export interface DrawerState {
+  open: boolean;
+  draft: EntryDraft;
+}
 
 interface VaultHomeProps {
   token: string;
   entries: VaultEntrySummary[];
-  loading: boolean;
-  msLeft: number;
-  onEntries: (entries: VaultEntrySummary[]) => void;
+  load: VaultLoad;
+  onRetry: () => void;
+  // When the vault locks, in epoch milliseconds.
+  expiresAt: number;
+  onEntries: Dispatch<SetStateAction<VaultEntrySummary[]>>;
   onLock: () => void;
   // The API answered that the session is over.
   onLocked: () => void;
+  // Kept by the page, so a lock doesn't lose what was typed.
+  drawer: DrawerState | null;
+  onDrawer: Dispatch<SetStateAction<DrawerState | null>>;
 }
 
-// What the list shows: every login, the starred ones, the ones the
-// checkup flags, or one category.
-type VaultView = "" | "FAVORITES" | "ATTENTION" | VaultEntryCategory;
+const LIST_ID = "vault-list";
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_auto]";
+// A long vault shows this many rows at a time, and adds as many per press.
+const STEP = 50;
+
+const VIEWS: { value: VaultView; label: string; icon: typeof Menu; warn?: boolean }[] = [
+  { value: "", label: "All logins", icon: Menu },
+  { value: "FAVORITES", label: "Favorites", icon: Star },
+  { value: "ATTENTION", label: "Needs attention", icon: TriangleAlert, warn: true },
+];
 
 // The vault, open: search, the list with one-tap copy, and the picked
 // login's details beside it (below it, as a sheet, on a phone); and the
 // security checkup.
-export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, onLocked }: VaultHomeProps) {
-  const { t } = useLocale();
+export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries, onLock, onLocked, drawer, onDrawer }: VaultHomeProps) {
+  const { t, locale } = useLocale();
   const wide = useMediaQuery("(min-width: 1024px)");
+  const steps = useVaultSteps();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<VaultSort>("az");
   const [view, setView] = useState<VaultView>("");
-  const [checkup, setCheckup] = useState<Checkup | null>(null);
-  const [checkupOpen, setCheckupOpen] = useState(false);
+  const [checkupAnswer, setCheckupAnswer] = useState<CheckupAnswer | null>(null);
+  // Bumped by Try again, which asks the checkup once more.
+  const [checkupAttempt, setCheckupAttempt] = useState(0);
   const [isSaving, startSave] = useTransition();
+  // The login in the wide screen's details pane.
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drawer, setDrawer] = useState<{ open: boolean; editing: VaultEntrySummary | null; preset: QuickLogin | null }>({ open: false, editing: null, preset: null });
   const [removing, setRemoving] = useState<VaultEntrySummary | null>(null);
   const [isRemoving, startRemove] = useTransition();
+  // A password on show, and the login whose password is on its way.
+  const [revealed, setRevealed] = useState<{ id: string; password: string } | null>(null);
+  const [revealing, setRevealing] = useState<string | null>(null);
+  const frame = useRef<HTMLDivElement>(null);
 
-  // The checkup runs on the server whenever the logins change; it answers ids.
+  // The login in the phone's sheet: ?login=id, so Back closes the sheet.
+  // Mirrored here because Next catches up with pushState a moment later.
+  const urlLogin = steps.value("login");
+  const [sheetFor, setSheetFor] = useState(urlLogin);
+  const [seenUrlLogin, setSeenUrlLogin] = useState(urlLogin);
+  if (urlLogin !== seenUrlLogin) {
+    setSeenUrlLogin(urlLogin);
+    setSheetFor(urlLogin);
+  }
+  // The checkup is ?checkup=1, for the same reason.
+  const checkupOpen = steps.value("checkup") === "1";
+
+  // The checkup runs on the server whenever the logins change (and on Try
+  // again); it answers ids.
   const checkupLocked = useEffectEvent(() => onLocked());
   useEffect(() => {
     if (entries.length === 0) return;
     let live = true;
-    getVaultCheckupAction(token).then((result) => {
+    void settle(getVaultCheckupAction(token)).then((result) => {
       if (!live) return;
-      if (result.success && result.data) setCheckup(result.data);
+      if (result.success && result.data) setCheckupAnswer({ entries, attempt: checkupAttempt, found: result.data });
       else if (isLockedMessage(result.message)) checkupLocked();
+      else setCheckupAnswer({ entries, attempt: checkupAttempt, found: null });
     });
     return () => {
       live = false;
     };
-  }, [token, entries]);
+  }, [token, entries, checkupAttempt]);
 
-  const empty = entries.length === 0 && !loading;
-  const flagged = attentionIds(checkup);
-  const inView = entries.filter((entry) => (view === "" ? true : view === "FAVORITES" ? entry.isFavorite : view === "ATTENTION" ? flagged.has(entry.id) : entry.category === view));
-  const visible = sortEntries(filterEntries(inView, query, ""), sort);
-  const counts = categoryCounts(entries);
+  // The last findings stand in while a new run is on its way; with none on
+  // hand it is loading, and a failed run claims nothing (checkupStatus).
+  const { load: checkupLoad, found } = checkupStatus(checkupAnswer, entries, checkupAttempt);
+  const retryCheckup = () => setCheckupAttempt((attempt) => attempt + 1);
+
+  // The unlock button is gone: focus goes to the vault, unless a kept
+  // login's drawer opened with it and took focus itself.
+  const focusOnOpen = useEffectEvent(() => {
+    if (!drawer?.open) frame.current?.focus({ preventScroll: true });
+  });
+  useEffect(() => focusOnOpen(), []);
+
+  // The top bar's Lock button calls the latest onLock, so it needn't be
+  // drawn again whenever the page is.
+  const onLockRef = useRef(onLock);
+  useEffect(() => {
+    onLockRef.current = onLock;
+  });
+
+  const checkup = useMemo(() => checkupFor(entries, found), [entries, found]);
+  const flagged = useMemo(() => attentionIds(checkup), [checkup]);
+  const counts = useMemo(() => categoryCounts(entries), [entries]);
+  const visible = useMemo(() => sortEntries(filterEntries(entriesInView(entries, view, flagged), query, ""), sort), [entries, view, flagged, query, sort]);
   const favorites = entries.filter((entry) => entry.isFavorite).length;
-  const picked = entries.find((entry) => entry.id === selectedId) ?? null;
-  // On a wide screen the details pane always shows something.
-  const selected = picked ?? (wide ? (visible[0] ?? null) : null);
 
-  async function copy(text: string, message: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(message);
-    } catch {
-      toast.error(t("Couldn't copy. Select the text and copy it yourself."));
+  // Empty means an answer said so; a list on its way or one that never came
+  // is neither "no logins" nor a count of zero.
+  const loading = load === "loading" && entries.length === 0;
+  const failed = load === "failed" && entries.length === 0;
+  const empty = load === "ready" && entries.length === 0;
+  const canAdd = load === "ready" && entries.length > 0;
+  // Open, the checkup stays the step on screen even with no answer on hand
+  // (it says why), so the list never shows under ?checkup=1.
+  const showCheckup = checkupOpen && canAdd;
+
+  // A long list grows 50 at a time, for the view, search and sort it grew under.
+  const filterKey = `${view}|${query.trim()}|${sort}`;
+  const [grown, setGrown] = useState({ key: filterKey, count: STEP });
+  const shownCount = grown.key === filterKey ? grown.count : STEP;
+  const rows = visible.slice(0, shownCount);
+
+  // On a wide screen the details pane always shows something; on a phone
+  // the sheet shows the login tapped.
+  const selected = wide ? (entries.find((entry) => entry.id === selectedId) ?? visible[0] ?? null) : sheetFor ? (entries.find((entry) => entry.id === sheetFor) ?? null) : null;
+  // A password on show belongs to the login on show; another hides it.
+  if (revealed && revealed.id !== selected?.id) setRevealed(null);
+
+  const n = (value: number) => formatCount(value, locale);
+
+  function showLogin(id: string) {
+    setSelectedId(id);
+    if (!wide) {
+      setSheetFor(id);
+      steps.open("login", id);
     }
   }
 
-  async function copyPassword(entry: VaultEntrySummary) {
-    const result = await revealVaultEntryAction(token, entry.id);
-    if (result.success && result.data) await copy(result.data.password, `${entry.title} ${t("password copied")}`);
-    else if (isLockedMessage(result.message)) onLocked();
-    else toast.error(result.message ?? t("Failed to reveal password"));
+  function closeSheet() {
+    setSheetFor(null);
+    steps.close("login");
   }
 
+  function openCheckup() {
+    steps.open("checkup", "1");
+  }
+
+  // Leaving it shows the list as it was, with nothing popped open.
+  function closeCheckup() {
+    setSelectedId(null);
+    steps.close("checkup");
+  }
+
+  function copyShown(text: string, message: string) {
+    void copyText(text).then((copied) => (copied ? toast.success(message) : toast.error(t("Couldn't copy. Select the text and copy it yourself."))));
+  }
+
+  function copyUsername(entry: VaultEntrySummary) {
+    if (entry.usernameOrEmail) copyShown(entry.usernameOrEmail, t("{title} username copied", { title: entry.title }));
+  }
+
+  // The password from the server; null when it didn't come (said already).
+  function fetchPassword(entry: VaultEntrySummary): Promise<string | null> {
+    setRevealing(entry.id);
+    return settle(revealVaultEntryAction(token, entry.id)).then((result) => {
+      setRevealing((id) => (id === entry.id ? null : id));
+      if (result.success && result.data) return result.data.password;
+      if (isLockedMessage(result.message)) onLocked();
+      else toast.error(t(result.message ?? "Failed to reveal password"));
+      return null;
+    });
+  }
+
+  function toggleReveal(entry: VaultEntrySummary) {
+    if (revealed?.id === entry.id) {
+      setRevealed(null);
+      return;
+    }
+    void fetchPassword(entry).then((password) => {
+      if (password !== null) setRevealed({ id: entry.id, password });
+    });
+  }
+
+  // Started inside the tap (see clipboard.ts). When the browser still
+  // refuses, the login opens with its password shown, so "select the text"
+  // is something the reader can do.
+  function copyPassword(entry: VaultEntrySummary) {
+    const known = revealed?.id === entry.id ? revealed.password : null;
+    const password = known !== null ? Promise.resolve(known) : fetchPassword(entry);
+    void copySecret(password).then(async (outcome) => {
+      if (outcome === "copied") {
+        toast.success(t("{title} password copied", { title: entry.title }));
+      } else if (outcome === "failed") {
+        const value = await password;
+        if (value !== null) {
+          showLogin(entry.id);
+          setRevealed({ id: entry.id, password: value });
+        }
+        toast.error(t("Couldn't copy. Select the text and copy it yourself."));
+      }
+    });
+  }
+
+  function upsert(entry: VaultEntrySummary) {
+    onEntries((list) => (list.some((e) => e.id === entry.id) ? list.map((e) => (e.id === entry.id ? entry : e)) : [...list, entry]));
+  }
+
+  // A saved login is shown, except from the checkup, which stays on screen.
+  // On a phone the drawer's step turns into the login's sheet where it
+  // stands; the drawer's close (next) then has nothing left to take off.
   function saved(entry: VaultEntrySummary) {
-    onEntries(entries.some((e) => e.id === entry.id) ? entries.map((e) => (e.id === entry.id ? entry : e)) : [...entries, entry]);
+    upsert(entry);
+    if (checkupOpen) return;
     setSelectedId(entry.id);
+    if (!wide) {
+      setSheetFor(entry.id);
+      steps.swap("entry", "login", entry.id);
+    }
+  }
+
+  // Close, Cancel, Escape and a save take the drawer's step off the address
+  // (the way Back would, as it was put there), then close the drawer.
+  function closeDrawer() {
+    steps.close("entry");
+    onDrawer((current) => current && { ...current, open: false });
   }
 
   function remove() {
     if (!removing) return;
     const target = removing;
     startRemove(async () => {
-      const result = await deleteVaultEntryAction(token, target.id);
+      const result = await settle(deleteVaultEntryAction(token, target.id));
       if (result.success) {
-        onEntries(entries.filter((e) => e.id !== target.id));
+        onEntries((list) => list.filter((e) => e.id !== target.id));
         if (selectedId === target.id) setSelectedId(null);
+        if (sheetFor === target.id) closeSheet();
         setRemoving(null);
         toast.success(t("Login deleted"));
       } else if (isLockedMessage(result.message)) {
         onLocked();
       } else {
-        toast.error(result.message ?? t("Failed to delete entry"));
+        toast.error(t(result.message ?? "Failed to delete entry"));
       }
     });
   }
 
   function toggleFavorite(entry: VaultEntrySummary) {
     startSave(async () => {
-      const result = await updateVaultEntryAction(token, entry.id, { isFavorite: !entry.isFavorite });
-      if (result.success && result.data) saved(result.data);
+      const result = await settle(updateVaultEntryAction(token, entry.id, { isFavorite: !entry.isFavorite }));
+      if (result.success && result.data) upsert(result.data);
       else if (isLockedMessage(result.message)) onLocked();
-      else toast.error(result.message ?? t("Failed to update vault entry"));
+      else toast.error(t(result.message ?? "Failed to update vault entry"));
     });
   }
 
+  // "It's fine" updates the login where it is; nothing opens.
   function markFine(entry: VaultEntrySummary) {
     startSave(async () => {
-      const result = await dismissVaultCheckupAction(token, entry.id);
+      const result = await settle(dismissVaultCheckupAction(token, entry.id));
       if (result.success && result.data) {
-        saved(result.data);
+        upsert(result.data);
         toast.success(t("Marked as fine"));
       } else if (isLockedMessage(result.message)) onLocked();
-      else toast.error(result.message ?? t("Failed to update vault entry"));
+      else toast.error(t(result.message ?? "Failed to update vault entry"));
     });
   }
+
+  const openAdd = (preset: QuickLogin | null = null) => onDrawer({ open: true, draft: draftFor(null, preset, t) });
+  const openEdit = (entry: VaultEntrySummary) => onDrawer({ open: true, draft: draftFor(entry, null, t) });
 
   // Change: the website to set a new password there, and the login to save it.
   function changePassword(entry: VaultEntrySummary) {
     if (entry.websiteUrl) window.open(normalizeUrl(entry.websiteUrl), "_blank", "noopener,noreferrer");
-    setDrawer({ open: true, editing: entry, preset: null });
+    openEdit(entry);
   }
 
-  const openAdd = (preset: QuickLogin | null = null) => setDrawer({ open: true, editing: null, preset });
-  const listLabel = view === "" ? t("All logins") : view === "FAVORITES" ? t("Favorites") : view === "ATTENTION" ? t("Needs attention") : t(VAULT_CATEGORY_LABELS[view]);
-  const summary = checkup && flagged.size > 0 ? t("{count} logins need attention: {reused} reused, {weak} weak, {old} old.", { count: flagged.size, reused: checkup.reused.length, weak: checkup.weak.length, old: checkup.old.length }) : t("Every login looks fine.");
-  const VIEWS: { value: VaultView; label: string; icon: typeof Menu; count: number; warn?: boolean }[] = [
-    { value: "", label: "All logins", icon: Menu, count: entries.length },
-    { value: "FAVORITES", label: "Favorites", icon: Star, count: favorites },
-    { value: "ATTENTION", label: "Needs attention", icon: TriangleAlert, count: flagged.size, warn: true },
-  ];
+  // The rows' three handlers, made once. Each calls the latest one through
+  // this ref (kept current like onLockRef), so the memoised rows aren't
+  // drawn again with the page, which is every keystroke in the drawer.
+  const rowActions = useRef({ showLogin, copyUsername, copyPassword });
+  useEffect(() => {
+    rowActions.current = { showLogin, copyUsername, copyPassword };
+  });
+  const selectRow = useCallback((id: string) => rowActions.current.showLogin(id), []);
+  const copyRowUsername = useCallback((entry: VaultEntrySummary) => rowActions.current.copyUsername(entry), []);
+  const copyRowPassword = useCallback((entry: VaultEntrySummary) => rowActions.current.copyPassword(entry), []);
 
-  const details = selected && (
+  const viewLabel = (value: VaultView) => (value === "" ? t("All logins") : value === "FAVORITES" ? t("Favorites") : value === "ATTENTION" ? t("Needs attention") : t(VAULT_CATEGORY_LABELS[value]));
+  const chipLabel = (value: VaultView) => (value === "" ? t("All") : value === "FAVORITES" ? `★ ${t("Favorites")}` : viewLabel(value));
+  const viewCount = (value: VaultView) => (value === "" ? entries.length : value === "FAVORITES" ? favorites : value === "ATTENTION" ? flagged.size : counts[value]);
+  // A count is shown once there is one: the list's answer for every view,
+  // and the checkup's too for Needs attention.
+  const countKnown = (value: VaultView) => !loading && (value !== "ATTENTION" || checkupLoad === "ready");
+  const listLabel = viewLabel(view);
+  const summary =
+    checkup && flagged.size > 0
+      ? t(flagged.size === 1 ? "{count} login needs attention: {reused} reused, {weak} weak, {old} old." : "{count} logins need attention: {reused} reused, {weak} weak, {old} old.", { count: n(flagged.size), reused: n(checkup.reused.length), weak: n(checkup.weak.length), old: n(checkup.old.length) })
+      : t("Every login looks fine.");
+  const total = entries.length;
+  const phonePlaceholder = loading ? t("Search logins") : t(total === 1 ? "Search {count} login" : "Search {count} logins", { count: n(total) });
+  const widePlaceholder = loading ? t("Search logins") : t(total === 1 ? "Search {count} login by name, username or website" : "Search {count} logins by name, username or website", { count: n(total) });
+  const searched = query.trim();
+
+  const subtitle = useMemo(() => <LockCountdown expiresAt={expiresAt} look="bar" />, [expiresAt]);
+  const lockButton = useMemo(
+    () => (
+      <button type="button" onClick={() => onLockRef.current()} aria-label={t("Lock now")} title={t("Lock now")} className="flex size-11 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken">
+        <Lock className="size-5" aria-hidden="true" />
+      </button>
+    ),
+    [t],
+  );
+
+  const detailsFor = (entry: VaultEntrySummary, framed: boolean) => (
     <EntryDetails
-      entry={selected}
-      token={token}
-      issues={issuesOf(checkup, selected.id)}
-      onLocked={onLocked}
-      onCopy={copy}
-      onFavorite={() => toggleFavorite(selected)}
-      onEdit={() => setDrawer({ open: true, editing: selected, preset: null })}
-      onDelete={() => setRemoving(selected)}
+      entry={entry}
+      issues={issuesOf(checkup, entry.id)}
+      revealed={revealed?.id === entry.id ? revealed.password : null}
+      busy={revealing === entry.id}
+      onToggleReveal={() => toggleReveal(entry)}
+      onCopyPassword={() => copyPassword(entry)}
+      onCopy={copyShown}
+      onFavorite={() => toggleFavorite(entry)}
+      onEdit={() => openEdit(entry)}
+      onDelete={() => setRemoving(entry)}
+      framed={framed}
+      onClose={framed ? undefined : closeSheet}
     />
   );
 
-  return (
-    <PageFrame className={empty ? "gap-6" : "gap-4"}>
-      <TopbarExtras
-        record={checkupOpen ? t("Security checkup") : undefined}
-        subtitle={
-          <span role="timer" aria-label={`${t("Vault locks in")} ${countdownText(msLeft)}`} className="flex items-center gap-1 text-caption font-normal text-emerald tabular-nums">
-            <span className="size-1.75 rounded-full bg-emerald" aria-hidden="true" />
-            {t("Unlocked")} · {t("locks in")} {countdownText(msLeft)}
-          </span>
-        }
+  const showAll = view !== "" && (
+    <Button variant="secondary" size="sm" onClick={() => setView("")} className="pointer-coarse:h-11">
+      {searched ? t("Search all logins") : t("Show all logins")}
+    </Button>
+  );
+  // Needs attention with no checkup answer on hand says so, never "No
+  // logins need attention".
+  const noMatch =
+    view === "ATTENTION" && checkupLoad === "loading" ? (
+      <ListEmpty title={t("Checking your logins…")} />
+    ) : view === "ATTENTION" && checkupLoad === "failed" ? (
+      <ListEmpty
+        icon={<ShieldAlert />}
+        tone="warning"
+        title={t("The security checkup couldn't run.")}
         action={
-          <button type="button" onClick={onLock} aria-label={t("Lock now")} title={t("Lock now")} className="flex h-11 w-10 items-center justify-center rounded-md text-ink-2">
-            <Lock className="size-5" aria-hidden="true" />
-          </button>
+          <>
+            <Button variant="secondary" size="sm" onClick={retryCheckup} className="pointer-coarse:h-11">
+              <RefreshCw />
+              {t("Try again")}
+            </Button>
+            {showAll}
+          </>
         }
       />
+    ) : (
+      <ListEmpty
+        icon={<SearchX />}
+        title={
+          searched
+            ? view === ""
+              ? t("No logins match “{query}”.", { query: searched })
+              : t("No logins match “{query}” in {view}.", { query: searched, view: listLabel })
+            : view === "FAVORITES"
+              ? t("No favorites yet. Star a login to keep it here.")
+              : view === "ATTENTION"
+                ? t("No logins need attention.")
+                : t("No logins in {view} yet.", { view: listLabel })
+        }
+        action={
+          <>
+            {showAll}
+            {searched && (
+              <Button variant="ghost" size="sm" onClick={() => setQuery("")} className="pointer-coarse:h-11">
+                {t("Clear search")}
+              </Button>
+            )}
+          </>
+        }
+      />
+    );
+
+  return (
+    // Focus lands here after the unlock: a named region a screen reader announces.
+    <PageFrame ref={frame} tabIndex={-1} role="region" aria-label={t("Password vault")} className={cn(empty ? "gap-6" : "gap-4", "outline-none")}>
+      <TopbarExtras record={showCheckup ? t("Security checkup") : undefined} subtitle={subtitle} action={lockButton} />
+      {/* Phones name the page in the top bar, so the heading is for screen readers there. */}
+      <h1 className="sr-only md:hidden">{t("Password vault")}</h1>
       <PageHeader
         className="max-md:hidden"
-        eyebrow={t("Security")}
+        eyebrow={t("Vault")}
         tone="vault"
         title={t("Password vault")}
         description={t("Logins for your other accounts: Facebook, bank, email and more.")}
         actions={
           <>
-            <span role="timer" aria-label={`${t("Vault locks in")} ${countdownText(msLeft)}`} className="flex h-9.5 items-center gap-2 rounded-full border border-mint-200 bg-mint-50 px-3 text-small font-semibold text-forest tabular-nums">
-              <span className="size-2 rounded-full bg-emerald" aria-hidden="true" />
-              {t("Unlocked")} · {t("locks in")} {countdownText(msLeft)}
-            </span>
+            <LockCountdown expiresAt={expiresAt} look="pill" />
             <Button variant="secondary" onClick={onLock}>
               <Lock />
               {t("Lock now")}
             </Button>
-            {/* An empty vault adds from its own tiles. */}
-            {!empty && (
+            {/* An empty vault adds from its own tiles; a list on its way, not yet. */}
+            {canAdd && (
               <Button onClick={() => openAdd()}>
                 <Plus strokeWidth={2.25} />
                 {t("Add login")}
@@ -214,25 +476,33 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
         }
       />
 
-      {checkupOpen && checkup ? (
-        <VaultCheckup entries={entries} checkup={checkup} busy={isSaving} onBack={() => setCheckupOpen(false)} onChange={changePassword} onFine={markFine} />
+      {failed ? (
+        <ErrorState title={t("Couldn't load your logins")} onRetry={onRetry} />
       ) : empty ? (
         <VaultEmpty onPick={openAdd} />
+      ) : showCheckup ? (
+        <VaultCheckup entries={entries} checkup={checkup} failed={checkupLoad === "failed"} onRetry={retryCheckup} busy={isSaving} onBack={closeCheckup} onChange={changePassword} onFine={markFine} />
       ) : (
         <>
-          {/* Phones: one white band under the bar with the search and the chips. */}
+          {/* Phones: one white band under the bar with the search, the sort and the chips. */}
           <div className="-mx-4 -mt-5 flex flex-col gap-3 border-b border-line bg-surface px-4 pt-3 pb-2 md:contents">
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={`${t("Search")} ${entries.length} ${t(entries.length === 1 ? "login" : "logins")}`}
-              aria-label={t("Search logins")}
-              leading={<Search />}
-              size="md"
-              frameClassName="h-11.5 rounded-lg bg-strip text-body-lg md:hidden"
-            />
+            <div className="flex gap-2 md:hidden">
+              <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={phonePlaceholder} aria-label={t("Search logins")} leading={<Search />} size="md" frameClassName="h-11.5 flex-1 rounded-lg bg-strip text-body-lg" />
+              {/* The select is laid over the icon, so a tap opens the phone's own picker. */}
+              <label className="relative flex size-11.5 shrink-0 items-center justify-center rounded-lg border border-line-strong bg-surface text-ink-2 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring">
+                <ArrowUpDown className="size-5" aria-hidden="true" />
+                {sort !== "az" && <span aria-hidden="true" className="absolute top-2 right-2 size-2 rounded-full bg-emerald" />}
+                <select value={sort} onChange={(event) => setSort(event.target.value as VaultSort)} aria-label={t("Sort")} className="absolute inset-0 cursor-pointer appearance-none text-body-lg opacity-0">
+                  {VAULT_SORTS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.label)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <div className="flex flex-col gap-3 max-md:hidden sm:flex-row">
-              <Input size="md" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${t("Search")} ${entries.length} ${t(entries.length === 1 ? "login by name, username or website" : "logins by name, username or website")}`} aria-label={t("Search logins")} leading={<Search />} frameClassName="flex-1" />
+              <Input size="md" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={widePlaceholder} aria-label={t("Search logins")} leading={<Search />} frameClassName="flex-1" />
               <NativeSelect size="md" value={sort} onChange={(event) => setSort(event.target.value as VaultSort)} aria-label={t("Sort")} frameClassName="sm:w-52">
                 {VAULT_SORTS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -242,13 +512,20 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
               </NativeSelect>
             </div>
 
-            <div role="tablist" aria-label={t("Filter")} className="-mx-4 flex gap-2 overflow-x-auto px-4 lg:hidden">
-              {(["", "FAVORITES", "ATTENTION", ...VAULT_CATEGORIES] as const).map((value) => {
+            {/* Toggle buttons, not tabs: they filter the one list below. */}
+            <div role="group" aria-label={t("Filter")} className="-mx-4 flex gap-2 overflow-x-auto px-4 xl:hidden">
+              {chipViews(counts, view, VAULT_CATEGORIES).map((value) => {
                 const on = view === value;
-                const count = value === "" ? entries.length : value === "FAVORITES" ? favorites : value === "ATTENTION" ? flagged.size : counts[value];
                 return (
-                  <button key={value || "all"} type="button" role="tab" aria-selected={on} onClick={() => setView(value)} className={cn("flex h-8.5 shrink-0 items-center gap-1.5 rounded-full px-3 text-small font-medium", on ? "bg-emerald font-semibold text-white" : "border border-line bg-surface text-ink-2")}>
-                    {value === "" ? t("All") : value === "FAVORITES" ? `★ ${t("Favorites")}` : value === "ATTENTION" ? t("Needs attention") : t(VAULT_CATEGORY_LABELS[value])} <span className="opacity-70">{count}</span>
+                  <button
+                    key={value || "all"}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setView(toggledView(view, value))}
+                    className={cn("flex h-8.5 shrink-0 items-center gap-1.5 rounded-full px-3 text-small font-medium pointer-coarse:h-11", on ? "bg-emerald font-semibold text-on-action" : "border border-line bg-surface text-ink-2")}
+                  >
+                    {chipLabel(value)}
+                    {countKnown(value) && <span className="opacity-70 tabular-nums">{n(viewCount(value))}</span>}
                   </button>
                 );
               })}
@@ -256,68 +533,99 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
           </div>
 
           {checkup && flagged.size > 0 && (
-            <button type="button" onClick={() => setCheckupOpen(true)} className="flex items-center gap-2 rounded-md border border-warning-fill/40 bg-warning-soft px-3 py-2.5 text-left text-small text-warning lg:hidden">
+            <button type="button" onClick={openCheckup} className="flex items-center gap-2 rounded-md border border-warning-fill/40 bg-warning-soft px-3 py-2.5 text-left text-small text-warning xl:hidden">
               <ShieldAlert className="size-4 shrink-0" aria-hidden="true" />
               <span className="flex-1">{summary}</span>
               <span className="font-semibold">{t("Security checkup")}</span>
             </button>
           )}
 
-          <div className="grid items-start gap-4 max-md:-mx-4 max-md:-mt-4 lg:grid-cols-[212px_minmax(0,1fr)_372px]">
-            <nav aria-label={t("Vault sections")} className="hidden flex-col gap-0.5 lg:flex">
-              {VIEWS.map((item) => {
-                const on = view === item.value;
-                return (
-                  <button key={item.value || "all"} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(item.value)} className={cn("flex h-9.5 items-center gap-3 rounded-md px-3 text-body", on ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken")}>
-                    <item.icon className={cn("size-4", !on && (item.warn ? "text-warning" : "text-ink-muted"))} aria-hidden="true" />
-                    <span className="flex-1 text-left">{t(item.label)}</span>
-                    <span className={cn("min-w-5.5 rounded-full px-2 text-center text-caption font-semibold", on ? "bg-surface text-emerald" : item.warn ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}>{item.count}</span>
-                  </button>
-                );
-              })}
-              <span className="mx-3 mt-3 mb-2 text-caption font-semibold text-ink-muted">{t("Categories")}</span>
-              {VAULT_CATEGORIES.map((value) => {
-                const Icon = VAULT_CATEGORY_ICONS[value];
-                const on = view === value;
-                return (
-                  <button key={value} type="button" aria-current={on ? "page" : undefined} onClick={() => setView(on ? "" : value)} className={cn("flex h-9 items-center gap-3 rounded-md px-3 text-body font-medium", on ? "bg-mint-50 text-emerald" : "text-ink-2 hover:bg-surface-sunken")}>
-                    <span className={cn("flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5", SOFT_TONE[VAULT_CATEGORY_TONE[value]])}>
-                      <Icon aria-hidden="true" />
-                    </span>
-                    <span className="flex-1 text-left">{t(VAULT_CATEGORY_LABELS[value])}</span>
-                    <span className="text-caption text-ink-muted tabular-nums">{counts[value]}</span>
-                  </button>
-                );
-              })}
+          {/* The side menu joins at 1280px; below that the list keeps the room. */}
+          <div className="grid items-start gap-4 max-md:-mx-4 max-md:-mt-4 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[212px_minmax(0,1fr)_372px]">
+            <div className="hidden flex-col gap-0.5 xl:flex">
+              <div role="group" aria-label={t("Vault sections")} className="flex flex-col gap-0.5">
+                {VIEWS.map((item) => {
+                  const on = view === item.value;
+                  return (
+                    <button key={item.value || "all"} type="button" aria-pressed={on} onClick={() => setView(toggledView(view, item.value))} className={cn("flex h-9.5 items-center gap-3 rounded-md px-3 text-body", on ? "bg-mint-50 font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken")}>
+                      <item.icon className={cn("size-4", !on && (item.warn ? "text-warning" : "text-ink-muted"))} aria-hidden="true" />
+                      <span className="flex-1 text-left">{t(item.label)}</span>
+                      {countKnown(item.value) && <span className={cn("min-w-5.5 rounded-full px-2 text-center text-caption font-semibold tabular-nums", on ? "bg-surface text-emerald" : item.warn ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}>{n(viewCount(item.value))}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <span id="vault-categories" className="mx-3 mt-3 mb-2 text-caption font-semibold text-ink-muted">
+                {t("Categories")}
+              </span>
+              <div role="group" aria-labelledby="vault-categories" className="flex flex-col gap-0.5">
+                {VAULT_CATEGORIES.map((value) => {
+                  const Icon = VAULT_CATEGORY_ICONS[value];
+                  const on = view === value;
+                  return (
+                    <button key={value} type="button" aria-pressed={on} onClick={() => setView(toggledView(view, value))} className={cn("flex h-9 items-center gap-3 rounded-md px-3 text-body font-medium", on ? "bg-mint-50 text-emerald" : "text-ink-2 hover:bg-surface-sunken")}>
+                      <span aria-hidden="true" className={cn("flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5", SOFT_TONE[VAULT_CATEGORY_TONE[value]])}>
+                        <Icon />
+                      </span>
+                      <span className="flex-1 text-left">{t(VAULT_CATEGORY_LABELS[value])}</span>
+                      {!loading && <span className="text-caption text-ink-muted tabular-nums">{n(counts[value])}</span>}
+                    </button>
+                  );
+                })}
+              </div>
               {checkup && (
-                <button type="button" onClick={() => setCheckupOpen(true)} className={cn("mt-3 flex flex-col gap-1 rounded-md border p-3 text-left", flagged.size ? "border-warning-fill/40 bg-warning-soft text-warning" : "border-mint-200 bg-mint-50 text-emerald")}>
+                <button type="button" onClick={openCheckup} className={cn("mt-3 flex flex-col gap-1 rounded-md border p-3 text-left", flagged.size ? "border-warning-fill/40 bg-warning-soft text-warning" : "border-line bg-mint-50 text-brand-ink")}>
                   <span className="flex items-center gap-2 text-small font-bold">
                     {flagged.size ? <ShieldAlert className="size-4" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}
                     {t("Security checkup")}
                   </span>
-                  <span className="text-small leading-[1.45]">{summary}</span>
+                  <span className="text-small leading-normal">{summary}</span>
                 </button>
               )}
-            </nav>
+            </div>
 
-            <Card padding="none" className="overflow-hidden max-md:rounded-none max-md:border-0 max-md:shadow-none">
-              <div className="flex items-center justify-between border-b border-line bg-table-head px-4 py-3 text-caption font-medium text-ink-muted max-md:hidden">
-                <span>
-                  {listLabel} · {visible.length}
-                </span>
-                <span>{t("Copy")}</span>
-              </div>
-              {loading && entries.length === 0 ? (
-                <span className="block px-4 py-6 text-small text-ink-muted">{t("Loading...")}</span>
-              ) : visible.length === 0 ? (
-                <span className="block px-4 py-6 text-small text-ink-muted">{t("No logins match.")}</span>
-              ) : (
-                visible.map((entry) => <EntryRow key={entry.id} entry={entry} selected={selected?.id === entry.id} attention={flagged.has(entry.id)} onSelect={() => setSelectedId(entry.id)} onCopyUsername={() => entry.usernameOrEmail && copy(entry.usernameOrEmail, `${entry.title} ${t("username copied")}`)} onCopyPassword={() => copyPassword(entry)} />)
-              )}
-            </Card>
+            {loading ? (
+              <Card padding="none" className="overflow-hidden max-md:rounded-none max-md:border-0 max-md:shadow-none">
+                <SkeletonRows rows={5} />
+              </Card>
+            ) : (
+              <ListCard
+                id={LIST_ID}
+                label={listLabel}
+                className="max-md:rounded-none max-md:border-0 max-md:shadow-none"
+                footer={
+                  visible.length > STEP ? (
+                    <ListFooter>
+                      <LoadMore shown={rows.length} total={visible.length} step={STEP} onMore={() => setGrown({ key: filterKey, count: shownCount + STEP })} onLess={shownCount > STEP ? () => setGrown({ key: filterKey, count: STEP }) : undefined} focusTargetId={LIST_ID} />
+                    </ListFooter>
+                  ) : undefined
+                }
+              >
+                <ListHead columns={COLUMNS}>
+                  <ListHeadCell>{countKnown(view) ? `${listLabel} · ${n(visible.length)}` : listLabel}</ListHeadCell>
+                  <ListHeadCell align="end">{t("Copy")}</ListHeadCell>
+                </ListHead>
+                {visible.length === 0
+                  ? noMatch
+                  : rows.map((entry) => (
+                      <EntryRow
+                        key={entry.id}
+                        entry={entry}
+                        columns={COLUMNS}
+                        selected={selected?.id === entry.id}
+                        attention={flagged.has(entry.id)}
+                        onSelect={selectRow}
+                        onCopyUsername={copyRowUsername}
+                        onCopyPassword={copyRowPassword}
+                      />
+                    ))}
+              </ListCard>
+            )}
 
             <div className="hidden lg:block">
-              {details ?? (
+              {wide && selected ? (
+                detailsFor(selected, true)
+              ) : (
                 <Card padding="none" className="px-5 py-10 text-center text-small text-ink-muted">
                   {t("Pick a login to see its details.")}
                 </Card>
@@ -325,26 +633,34 @@ export function VaultHome({ token, entries, loading, msLeft, onEntries, onLock, 
             </div>
           </div>
 
-          <Sheet open={!wide && picked !== null} onOpenChange={(next) => !next && setSelectedId(null)}>
-            <SheetContent side="bottom" showCloseButton={false} className="max-h-[88vh] gap-0 overflow-y-auto rounded-t-xl border-0 bg-surface p-0">
+          <Sheet open={!wide && selected !== null} onOpenChange={(next) => !next && closeSheet()}>
+            <SheetContent side="bottom" showCloseButton={false} aria-describedby={undefined} className="max-h-[88vh] gap-0 overflow-y-auto rounded-t-xl border-0 bg-surface p-0">
               <SheetHeader className="sr-only">
-                <SheetTitle>{picked?.title ?? ""}</SheetTitle>
+                <SheetTitle>{selected?.title ?? ""}</SheetTitle>
               </SheetHeader>
-              <span aria-hidden="true" className="mt-2 block h-1 w-10 shrink-0 self-center rounded-full bg-line-strong" />
-              {!wide && details}
+              {!wide && selected && detailsFor(selected, false)}
             </SheetContent>
           </Sheet>
         </>
       )}
 
-      {entries.length > 0 && (
-        <button type="button" onClick={() => openAdd()} aria-label={t("Add login")} className="fixed right-4 bottom-6 z-30 flex size-14.5 items-center justify-center rounded-xl bg-emerald text-on-action shadow-[0_10px_24px_rgba(14,26,22,0.25)] md:hidden">
+      {canAdd && (
+        <button type="button" onClick={() => openAdd()} aria-label={t("Add login")} className="fixed right-4 bottom-6 z-30 flex size-14 items-center justify-center rounded-full bg-forest text-white shadow-float md:hidden dark:bg-emerald dark:text-on-action">
           <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
         </button>
       )}
 
-      <EntryDrawer open={drawer.open} editing={drawer.editing} preset={drawer.preset} token={token} onClose={() => setDrawer({ open: false, editing: null, preset: null })} onSaved={saved} onLocked={onLocked} />
-      <ConfirmDialog open={removing !== null} onClose={() => setRemoving(null)} onConfirm={remove} isPending={isRemoving} danger title={t("Delete this login?")} description={removing ? `${removing.title} ${t("will be removed from your vault. This can't be undone.")}` : ""} confirmLabel={t("Delete")} />
+      <EntryDrawer open={drawer?.open ?? false} draft={drawer?.draft ?? null} token={token} onChange={(draft) => onDrawer({ open: true, draft })} onClose={closeDrawer} onSaved={saved} onLocked={onLocked} />
+      <ConfirmDialog
+        open={removing !== null}
+        onClose={() => setRemoving(null)}
+        onConfirm={remove}
+        isPending={isRemoving}
+        danger
+        title={t("Delete this login?")}
+        description={removing ? t("{title} will be removed from your vault. This can't be undone.", { title: removing.title }) : ""}
+        confirmLabel={t("Delete")}
+      />
     </PageFrame>
   );
 }

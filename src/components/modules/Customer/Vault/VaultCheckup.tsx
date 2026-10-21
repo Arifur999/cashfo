@@ -4,17 +4,24 @@ import { ChevronLeft, Clock, Copy, ExternalLink, Info, ShieldAlert, ShieldCheck,
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
+import ErrorState from "@/components/smartly/ErrorState";
 import { SOFT_TONE } from "@/components/smartly/tones";
 import type { VaultCheckup as Checkup, VaultEntrySummary } from "@/lib/customer/api";
 import { monthsSince } from "@/lib/customer/date";
-import { attentionIds, avatarLetter, type VaultIssue } from "@/lib/customer/vaultDisplay";
+import { attentionIds, avatarLetter, checkupBreakdown, type VaultIssue } from "@/lib/customer/vaultDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { VAULT_CATEGORY_TONE } from "./vaultCategoryDisplay";
 
 interface VaultCheckupProps {
   entries: VaultEntrySummary[];
-  checkup: Checkup;
+  // Only the logins still listed (checkupFor in vaultDisplay.ts); null with
+  // no findings on hand: a run on its way after a failure, or a failed one.
+  checkup: Checkup | null;
+  failed: boolean;
+  // Try again: asks the checkup once more.
+  onRetry: () => void;
   busy: boolean;
   onBack: () => void;
   // Opens the website (when there is one) and the login, to save the new
@@ -30,32 +37,65 @@ const GROUPS: { issue: VaultIssue; title: string; why: string; tag: string; icon
   { issue: "old", title: "Not changed for over a year", why: "Old passwords are more likely to have leaked somewhere. Bank and email logins matter most.", tag: "", icon: Clock, tile: "bg-warning-soft text-warning", count: "text-warning", bar: "bg-warning-fill", legend: "{count} older than a year" },
 ];
 
+// The row buttons: 34px, 44px under a finger.
+const ROW_BUTTON = "h-8.5 px-3 text-small pointer-coarse:h-11";
+
 // The board's security checkup: how many logins need attention, then the
 // reused, weak and year-old ones, each with Change and (for an old one)
 // It's fine. It never shows a password.
-export function VaultCheckup({ entries, checkup, busy, onBack, onChange, onFine }: VaultCheckupProps) {
-  const { t } = useLocale();
+export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, onChange, onFine }: VaultCheckupProps) {
+  const { t, locale } = useLocale();
+  const back = (
+    <button type="button" onClick={onBack} className="-ml-2 flex w-fit items-center gap-2 rounded-md px-2 text-body font-medium text-ink-2 hover:text-ink pointer-coarse:min-h-11">
+      <ChevronLeft className="size-4" aria-hidden="true" />
+      {t("Password vault")}
+    </button>
+  );
+
+  // With no answer on hand the step stays open and says why, never "fine".
+  if (!checkup) {
+    return (
+      <div className="flex max-w-245 flex-col gap-4">
+        {back}
+        {failed ? (
+          <ErrorState title={t("The security checkup couldn't run.")} onRetry={onRetry} />
+        ) : (
+          <Card padding="none" role="status" className="px-5 py-10 text-center text-small text-ink-muted">
+            {t("Checking your logins…")}
+          </Card>
+        )}
+      </div>
+    );
+  }
+
   const now = new Date();
+  const count = (value: number) => formatCount(value, locale);
   const flagged = attentionIds(checkup).size;
-  const fine = entries.length - flagged;
+  // The bar counts each login once, by its worst issue, so it adds up to
+  // the logins there are. The legend counts a login under every issue it
+  // has, as the groups below and the vault's summary do, so all three agree.
+  const tally = checkupBreakdown(entries, checkup);
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
-  const segments = [{ key: "fine", flex: fine, bar: "bg-emerald" }, ...GROUPS.map((group) => ({ key: group.issue, flex: checkup[group.issue].length, bar: group.bar }))].filter((segment) => segment.flex > 0);
+  const segments = [{ key: "fine", flex: tally.fine, bar: "bg-emerald" }, ...GROUPS.map((group) => ({ key: group.issue, flex: tally[group.issue], bar: group.bar }))].filter((segment) => segment.flex > 0);
+  const headline = flagged
+    ? t(flagged === 1 ? "{count} of your {total} logins needs attention" : "{count} of your {total} logins need attention", { count: count(flagged), total: count(entries.length) })
+    : entries.length === 1
+      ? t("Your login looks fine")
+      : t("All {total} of your logins look fine", { total: count(entries.length) });
 
   return (
     <div className="flex max-w-245 flex-col gap-4">
-      <button type="button" onClick={onBack} className="flex w-fit items-center gap-2 text-body font-medium text-ink-2 hover:text-ink">
-        <ChevronLeft className="size-4" aria-hidden="true" />
-        {t("Password vault")}
-      </button>
+      {back}
 
       <Card padding="none" className="flex items-center gap-6 p-6">
         <span className={cn("flex size-14 shrink-0 items-center justify-center rounded-3xl [&_svg]:size-6", flagged ? "bg-warning-soft text-warning" : "bg-mint-50 text-emerald")}>{flagged ? <ShieldAlert aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />}</span>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex flex-col gap-0.75">
-            <h1 className="text-h2 font-semibold tracking-[-0.01em] text-ink">{flagged ? t("{count} of your {total} logins need attention", { count: flagged, total: entries.length }) : t("All {total} of your logins look fine", { total: entries.length })}</h1>
+            {/* Under the page's own h1. */}
+            <h2 className="text-h2 text-ink">{headline}</h2>
             <p className="text-body text-ink-muted">{t("Checked just now. Fixing these makes your other accounts much harder to break into.")}</p>
           </div>
-          <div role="img" aria-label={t("{fine} fine, {count} need attention", { fine, count: flagged })} className="flex h-2.5 gap-0.75 overflow-hidden rounded-full">
+          <div role="img" aria-label={t("{fine} fine, {count} need attention", { fine: count(tally.fine), count: count(flagged) })} className="flex h-2.5 gap-0.75 overflow-hidden rounded-full">
             {segments.map((segment) => (
               <span key={segment.key} className={segment.bar} style={{ flex: segment.flex }} />
             ))}
@@ -63,12 +103,12 @@ export function VaultCheckup({ entries, checkup, busy, onBack, onChange, onFine 
           <div className="flex flex-wrap gap-4 text-small text-ink-2">
             <span className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-emerald" aria-hidden="true" />
-              {t("{count} look fine", { count: fine })}
+              {t(tally.fine === 1 ? "{count} looks fine" : "{count} look fine", { count: count(tally.fine) })}
             </span>
             {GROUPS.map((group) => (
               <span key={group.issue} className="flex items-center gap-2">
                 <span className={cn("size-2 rounded-full", group.bar)} aria-hidden="true" />
-                {t(group.legend, { count: checkup[group.issue].length })}
+                {t(group.legend, { count: count(checkup[group.issue].length) })}
               </span>
             ))}
           </div>
@@ -85,30 +125,32 @@ export function VaultCheckup({ entries, checkup, busy, onBack, onChange, onFine 
                 <group.icon aria-hidden="true" />
               </span>
               <div className="flex flex-col gap-0.5">
-                <h2 className="text-title font-semibold text-ink">
-                  {t(group.title)} <span className={group.count}>· {items.length}</span>
-                </h2>
+                <h3 className="text-title text-ink">
+                  {t(group.title)} <span className={group.count}>· {count(items.length)}</span>
+                </h3>
                 <span className="text-small leading-normal text-ink-muted">{t(group.why)}</span>
               </div>
             </div>
             {items.map((entry) => {
               const months = monthsSince(entry.passwordChangedAt, now);
               return (
-                <div key={entry.id} className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-3 last:border-b-0">
-                  <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md text-body font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>{avatarLetter(entry.title)}</span>
+                <div key={entry.id} className="flex flex-wrap items-center gap-3 border-b border-divider px-5 py-3 last:border-b-0">
+                  <span aria-hidden="true" className={cn("flex size-8 shrink-0 items-center justify-center rounded-md text-body font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>
+                    {avatarLetter(entry.title)}
+                  </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-px">
                     <span className="truncate text-body font-semibold text-ink">{entry.title}</span>
                     {entry.usernameOrEmail && <span className="truncate text-small text-ink-muted">{entry.usernameOrEmail}</span>}
                   </span>
                   <Chip tone={group.issue === "reused" ? "expense" : group.issue === "weak" ? "loans" : "warning"} size="sm">
-                    {group.issue === "old" ? t(months === 1 ? "{count} month" : "{count} months", { count: months }) : t(group.tag)}
+                    {group.issue === "old" ? t(months === 1 ? "{count} month" : "{count} months", { count: count(months) }) : t(group.tag)}
                   </Chip>
                   {group.issue === "old" && (
-                    <Button variant="ghost" size="sm" disabled={busy} onClick={() => onFine(entry)} className="h-8.5 px-3 text-small">
+                    <Button variant="ghost" size="sm" disabled={busy} onClick={() => onFine(entry)} className={ROW_BUTTON}>
                       {t("It's fine")}
                     </Button>
                   )}
-                  <Button variant="secondary" size="sm" onClick={() => onChange(entry)} className="h-8.5 px-3 text-small">
+                  <Button variant="secondary" size="sm" onClick={() => onChange(entry)} className={ROW_BUTTON}>
                     {t("Change")}
                     <ExternalLink className="size-3.5" aria-hidden="true" />
                   </Button>
