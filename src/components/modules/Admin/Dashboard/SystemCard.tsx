@@ -1,15 +1,23 @@
 "use client";
 
-import { formatDateTime } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { IBackupStatusSummary } from "@/types/system.types";
-import { Section, SectionLink, Unavailable } from "./pieces";
+import { dateTimeLabel } from "./dashboardDates";
+import { backupIsDue } from "./dashboardFigures";
+import { COULD_NOT_LOAD, Section, SectionLink, Unavailable } from "./pieces";
 
 export interface SystemState {
-  // null when the health check itself could not be reached.
+  // true when the health check passed; false when the API answered that its
+  // database is down; null when the API didn't answer at all.
   healthy: boolean | null;
+  // How long the check took from this server, when it passed.
+  latencyMs: number | null;
+  // null when it couldn't be loaded.
   backup: IBackupStatusSummary | null;
+  // Not fixed yet and from the last 24 hours, as the Errors page opens;
+  // null when they couldn't be counted.
   unresolvedErrors: number | null;
 }
 
@@ -18,10 +26,23 @@ interface SystemCardProps {
   state: SystemState | null;
 }
 
+type RowTone = "ok" | "warn" | "bad" | "unknown";
+
+interface Row {
+  name: string;
+  state: string;
+  tone: RowTone;
+  // A date rather than a verdict: plain ink while all is well.
+  plain?: boolean;
+}
+
+const DOT: Record<RowTone, string> = { ok: "bg-income", warn: "bg-warning-fill", bad: "bg-expense-fill", unknown: "bg-ink-faint" };
+const TEXT: Record<RowTone, string> = { ok: "text-emerald", warn: "text-warning", bad: "text-expense", unknown: "text-ink-muted" };
+
 // The API, the database, the last backup and the open errors, each with a
-// coloured dot.
+// coloured dot. "All working" only when every row is.
 export function SystemCard({ state }: SystemCardProps) {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   if (state === null) {
     return (
       <Section title={translate("System")}>
@@ -29,17 +50,31 @@ export function SystemCard({ state }: SystemCardProps) {
       </Section>
     );
   }
-  const ok = state.healthy === true;
-  const errors = state.unresolvedErrors ?? 0;
-  const allWell = ok && errors === 0;
-  const rows: { name: string; state: string; tone: "ok" | "warn" | "bad" }[] = [
-    { name: translate("API"), state: translate(ok ? "Fast" : "Unreachable"), tone: ok ? "ok" : "bad" },
-    { name: translate("Database"), state: translate(ok ? "Healthy" : "Not reachable"), tone: ok ? "ok" : "bad" },
-    { name: translate("Last backup"), state: state.backup?.lastSuccessfulBackupAt ? formatDateTime(state.backup.lastSuccessfulBackupAt) : translate("None yet"), tone: state.backup?.lastSuccessfulBackupAt ? "ok" : "warn" },
-    { name: translate("Errors, 24 hours"), state: `${errors} ${translate("new")}`, tone: errors === 0 ? "ok" : "warn" },
+  const { healthy, latencyMs, backup, unresolvedErrors } = state;
+  const lastBackupAt = backup?.lastSuccessfulBackupAt ?? null;
+  const rows: Row[] = [
+    {
+      name: translate("API"),
+      state: healthy === null ? translate("Unreachable") : latencyMs === null ? translate("Working") : translate("Working · {ms} ms", { ms: formatCount(latencyMs, locale) }),
+      tone: healthy === null ? "bad" : "ok",
+    },
+    {
+      name: translate("Database"),
+      state: translate(healthy === true ? "Healthy" : healthy === false ? "Not reachable" : "Couldn't check"),
+      tone: healthy === true ? "ok" : healthy === false ? "bad" : "unknown",
+    },
+    backup === null
+      ? { name: translate("Last backup"), state: translate(COULD_NOT_LOAD), tone: "unknown" }
+      : lastBackupAt === null
+        ? { name: translate("Last backup"), state: translate("None yet"), tone: "warn" }
+        : { name: translate("Last backup"), state: dateTimeLabel(lastBackupAt, locale, { t: translate }), tone: backupIsDue(backup.daysSinceLastBackup) ? "warn" : "ok", plain: true },
+    {
+      name: translate("Errors, 24 hours"),
+      state: unresolvedErrors === null ? translate(COULD_NOT_LOAD) : translate("{count} new", { count: formatCount(unresolvedErrors, locale) }),
+      tone: unresolvedErrors === null ? "unknown" : unresolvedErrors === 0 ? "ok" : "warn",
+    },
   ];
-  const DOT = { ok: "bg-income", warn: "bg-warning-fill", bad: "bg-expense-fill" };
-  const TEXT = { ok: "text-emerald", warn: "text-warning", bad: "text-expense" };
+  const allWell = rows.every((row) => row.tone === "ok");
 
   return (
     <Section
@@ -57,7 +92,7 @@ export function SystemCard({ state }: SystemCardProps) {
           <div key={row.name} className="flex items-center gap-3 py-0.75 text-body">
             <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", DOT[row.tone])} />
             <span className="flex-1 text-ink">{row.name}</span>
-            <span className={cn("text-right text-small font-medium", row.tone === "ok" && row.name !== translate("Last backup") ? TEXT.ok : row.tone === "ok" ? "text-ink-2" : TEXT[row.tone])}>{row.state}</span>
+            <span className={cn("text-right text-small font-medium", row.plain && row.tone === "ok" ? "text-ink-2" : TEXT[row.tone])}>{row.state}</span>
           </div>
         ))}
       </div>
