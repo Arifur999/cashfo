@@ -150,7 +150,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
       return (
         <SetupBanner
           title={one ? t("Your savings wallet is archived") : t("Your savings wallets are archived")}
-          text={!canManage ? t("Ask the workspace owner to restore it.") : one ? t("Restore it to add money to your goals or withdraw from them again.") : t("Restore one to add money to your goals or withdraw from them again.")}
+          text={!canManage ? (one ? t("Ask the workspace owner to restore it.") : t("Ask the workspace owner to restore one of them.")) : one ? t("Restore it to add money to your goals or withdraw from them again.") : t("Restore one to add money to your goals or withdraw from them again.")}
           action={
             canManage && (
               <>
@@ -434,6 +434,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
         today={today}
         canManage={canManage}
         canAddMoney={hasSavingsWallet}
+        hasArchivedWallets={archivedWallets.length > 0}
         busy={isPending}
         onEdit={(goal) => {
           setDetailId(null);

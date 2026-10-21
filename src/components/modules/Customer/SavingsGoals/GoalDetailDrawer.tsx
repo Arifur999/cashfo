@@ -33,6 +33,9 @@ interface GoalDetailDrawerProps {
   canManage: boolean;
   // Whether money can be added right now (a savings wallet exists).
   canAddMoney: boolean;
+  // No active savings wallet, but archived ones exist: the way back is to
+  // restore one, not to add a duplicate.
+  hasArchivedWallets?: boolean;
   // A Pause or Resume is on its way: pressing again would send it twice.
   busy?: boolean;
   onEdit: (goal: SavingsGoal) => void;
@@ -67,7 +70,7 @@ interface FactProps {
 
 // One goal in full: how far along it is, when and how much a month, how it
 // has been going lately, and everything that moved in or out of it.
-export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, currency, today, canManage, canAddMoney, busy = false, onEdit, onAddMoney, onWithdraw, onTogglePause, onDelete }: GoalDetailDrawerProps) {
+export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, currency, today, canManage, canAddMoney, hasArchivedWallets = false, busy = false, onEdit, onAddMoney, onWithdraw, onTogglePause, onDelete }: GoalDetailDrawerProps) {
   const { t, locale } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   const historyId = useId();
@@ -151,6 +154,10 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
   const deleteReason = deletable && hasHistory ? (paused ? t("Goals with history can't be deleted.") : t("Goals with history can't be deleted. Pause it instead.")) : null;
   const addReason = closed ? null : paused ? (
     t("Resume the goal to add money")
+  ) : !canAddMoney && hasArchivedWallets ? (
+    <Link href="/savings-goals/overview" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
+      {t("Restore a savings wallet first")}
+    </Link>
   ) : !canAddMoney ? (
     <Link href="/savings-goals/wallet?add=1" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
       {t("Add a savings wallet first")}
