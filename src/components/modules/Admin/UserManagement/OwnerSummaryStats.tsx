@@ -2,7 +2,7 @@ import { formatDate, formatRelativeDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { getTranslator } from "@/lib/i18n/locale";
 import type { IOwnerDetail } from "@/types/owner.types";
-import { daysSince, daysUsedLabel, workspaceLabel } from "./peopleDisplay";
+import { daysSince, daysUsedLabel, ownWorkspaceLabel } from "./peopleDisplay";
 
 // Four small figures on strip tiles, as the design draws a person's
 // overview: workspaces, plan, since when, last sign-in. Counts are in the
@@ -11,7 +11,7 @@ import { daysSince, daysUsedLabel, workspaceLabel } from "./peopleDisplay";
 const OwnerSummaryStats = async ({ owner }: { owner: IOwnerDetail }) => {
   const { t, locale } = await getTranslator("admin");
   // The workspace listed is their own personal one; the others are counted.
-  const own = workspaceLabel(owner.businessName, t);
+  const own = ownWorkspaceLabel(owner, t);
   const others = owner.workspaceCount - 1;
   const days = daysSince(owner.createdAt);
   const used = daysUsedLabel(days, t, locale);

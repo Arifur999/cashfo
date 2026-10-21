@@ -43,7 +43,9 @@ const WorkspacesOverview = () => {
         {...toTableQueryProps(query)}
         data={overview?.items}
         columns={workspacesColumns}
-        layout={{ rowHeight: 56 }}
+        // The owner keeps 200px on a phone, so the plan is in view and the
+        // figures one swipe away; a wider card gives it the rest.
+        layout={{ rowHeight: 56, flexMinWidth: 200 }}
         getRowId={(row) => row.userId}
         title="Biggest add-on first"
         onRowClick={(row) => router.push(personHref(row.userId))}

@@ -9,9 +9,10 @@ export const adminPeopleDictionary: Record<string, string> = {
     "যাঁদের Smartly অ্যাকাউন্ট আছে, সবাই। প্ল্যান বদলাতে, পাসওয়ার্ড রিসেট করতে বা সাময়িক বন্ধ করতে একজনকে খুলুন।",
   "Loading users...": "ব্যবহারকারী লোড হচ্ছে...",
   "Loading user...": "ব্যবহারকারী লোড হচ্ছে...",
-  "Search name, email, phone or workspace": "নাম, ইমেইল, ফোন বা ওয়ার্কস্পেস খুঁজুন",
+  // Finds a name, email, phone or workspace; short enough for a phone.
+  "Search people or workspaces": "মানুষ বা ওয়ার্কস্পেস খুঁজুন",
   "No users match these filters.": "এই ফিল্টারে কোনো ব্যবহারকারী মেলেনি।",
-  "Couldn't load the users. Try again in a moment.": "ব্যবহারকারীদের তালিকা লোড করা যায়নি। একটু পরে আবার চেষ্টা করুন।",
+  "Couldn't load the users": "ব্যবহারকারীদের তালিকা লোড করা যায়নি",
   "Using for": "ব্যবহার করছেন",
   "Joined today": "আজ যোগ দিয়েছেন",
   "{count} more workspace": "আরও {count}টি ওয়ার্কস্পেস",
@@ -96,7 +97,7 @@ export const adminPeopleDictionary: Record<string, string> = {
   "{who}, and only after the owner asks in writing. Each reset is saved in the audit log.": "{who}, আর শুধু মালিক লিখিতভাবে চাইলে। প্রতিটি রিসেট অডিট লগে সংরক্ষিত হয়।",
   "Only super admins can reset data": "শুধু সুপার অ্যাডমিন ডেটা রিসেট করতে পারেন",
   "No owners match.": "কোনো মালিক মেলেনি।",
-  "Couldn't load the owners. Try again in a moment.": "মালিকদের তালিকা লোড করা যায়নি। একটু পরে আবার চেষ্টা করুন।",
+  "Couldn't load the owners": "মালিকদের তালিকা লোড করা যায়নি",
   // Short, and the toast's and the confirm button's রিসেট.
   "Reset data": "ডেটা রিসেট করুন",
   "Reset {name}'s personal workspace?": "{name}-এর ব্যক্তিগত ওয়ার্কস্পেস রিসেট করবেন?",

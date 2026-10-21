@@ -6,14 +6,15 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { UserOrigin } from "@/lib/navItem";
 import { cn } from "@/lib/utils";
-import { daysUsedLabel, moreWorkspacesLabel, workspaceLabel } from "./peopleDisplay";
+import { daysUsedLabel, moreWorkspacesLabel, type OwnWorkspaceFields, ownWorkspaceLabel, type WorkspaceListFields, workspaceNamesLabel } from "./peopleDisplay";
 import { usePersonHref } from "./usePersonHref";
 
 // Cells of the people lists that need the reader's language and digits:
 // the column definitions are plain data and can't call useLocale().
 
 interface OwnWorkspaceCellProps {
-  name: string | null;
+  // The row's own workspace: its name and, from newer responses, its kind.
+  workspace: OwnWorkspaceFields;
   // How many workspaces they own in all; more than one adds a "+2" chip.
   count?: number;
   // Owners names it in full: it is the workspace Reset data wipes.
@@ -22,9 +23,9 @@ interface OwnWorkspaceCellProps {
 
 // The person's own workspace (the personal one, in the reader's words) and,
 // beside it, how many more they have.
-export const OwnWorkspaceCell = ({ name, count = 1, long = false }: OwnWorkspaceCellProps) => {
+export const OwnWorkspaceCell = ({ workspace, count = 1, long = false }: OwnWorkspaceCellProps) => {
   const { t, locale } = useLocale();
-  const label = workspaceLabel(name, t, long ? "Personal workspace" : "Personal");
+  const label = ownWorkspaceLabel(workspace, t, long ? "Personal workspace" : "Personal");
   const extra = count - 1;
   const more = label && extra > 0 ? moreWorkspacesLabel(extra, t, locale) : null;
   return (
@@ -59,12 +60,9 @@ export const CountCell = ({ value, prefix = "", className }: { value: number; pr
 
 // Every workspace a person owns, the personal one in the reader's words.
 // The line is cut to the column, so the whole list is its tooltip.
-export const WorkspaceNamesCell = ({ names }: { names: string[] }) => {
+export const WorkspaceNamesCell = ({ row }: { row: WorkspaceListFields }) => {
   const { t } = useLocale();
-  const text = names
-    .map((name) => workspaceLabel(name, t))
-    .filter((name): name is string => name !== null)
-    .join(", ");
+  const text = workspaceNamesLabel(row, t);
   return (
     <span className="truncate text-small text-ink-muted" title={text}>
       {text}

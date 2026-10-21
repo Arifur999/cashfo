@@ -31,14 +31,14 @@ const ManageOwnersTable = ({ canResetData }: { canResetData: boolean }) => {
   const config = useMemo(() => buildManageOwnersTableConfig(statusCounts), [statusCounts]);
   const { dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config);
   const { activeRow, openDialog, getDialogProps } = useRowDialogs<IOwnerOverviewItem, "reset">();
-  // An outage isn't "no owners match": say the list didn't load.
-  const failed = query.isError && !query.data;
 
   // Only SUPER_ADMIN may reset, and only owners that actually have a
   // workspace. The inline buttons keep their clicks from the row.
   const actions = useMemo<DataTableActions<IOwnerOverviewItem>>(
     () => ({
       display: "inline",
+      // "View for Rahim Uddin", "Reset data for Rahim Uddin", to a screen reader.
+      rowLabel: (row) => row.name,
       onView: (row) => router.push(personHref(row.userId)),
       extra: [
         {
@@ -59,12 +59,21 @@ const ManageOwnersTable = ({ canResetData }: { canResetData: boolean }) => {
         {...toTableQueryProps(query)}
         data={query.data?.data.items}
         columns={manageOwnersColumns}
-        // Room for View and the Bangla ডেটা রিসেট করুন side by side at 1280.
-        layout={{ rowHeight: 58, actionsWidth: 210 }}
+        // Room for View and the Bangla ডেটা রিসেট করুন side by side. Every
+        // column keeps its px, so the buttons never spill over the Workspace
+        // column: the table is 1060px at least (960 of tracks, 100 of
+        // padding) and scrolls sideways in a card narrower than that, which
+        // includes a 1280 laptop's.
+        layout={{ rowHeight: 58, actionsWidth: 210, flexMinWidth: 220 }}
         getRowId={(row) => row.userId}
         actions={actions}
+        // A click opens the person. (Not rowHref yet: its row link would
+        // prefetch every person on the page.)
         onRowClick={(row) => router.push(personHref(row.userId))}
-        emptyMessage={failed ? "Couldn't load the owners. Try again in a moment." : "No owners match."}
+        emptyMessage="No owners match."
+        // An outage isn't "no owners match": the table says the list didn't
+        // load, with Try again.
+        errorTitle="Couldn't load the owners"
       />
       <ResetOwnerDataDialog owner={activeRow} {...getDialogProps("reset")} />
     </>

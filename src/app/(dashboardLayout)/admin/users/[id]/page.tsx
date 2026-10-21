@@ -3,7 +3,6 @@ import OwnerActivityTimeline from "@/components/modules/Admin/UserManagement/Own
 import OwnerDetailActions from "@/components/modules/Admin/UserManagement/OwnerDetailActions";
 import OwnerProfileHeader from "@/components/modules/Admin/UserManagement/OwnerProfileHeader";
 import OwnerSummaryStats from "@/components/modules/Admin/UserManagement/OwnerSummaryStats";
-import { BACK_PARAM, listBackHref } from "@/components/modules/Admin/UserManagement/peopleDisplay";
 import { USERS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/UserManagement/usersTable.config";
 import { WORKSPACES_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Workspaces/workspacesTable.config";
 import BreadcrumbTitle from "@/components/modules/Dashboard/BreadcrumbTitle";
@@ -14,7 +13,7 @@ import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { canManage } from "@/lib/authUtils";
 import { formatDate } from "@/lib/date";
 import { adminPageTitle } from "@/lib/i18n/locale";
-import { userListFor } from "@/lib/navItem";
+import { LIST_BACK_PARAM, LIST_PAGE_KEYS, listBackHref, userListFor } from "@/lib/navItem";
 import { getUserInfo } from "@/services/auth.services";
 import { getOwnerById } from "@/services/owner.services";
 import { getPlans } from "@/services/plan.services";
@@ -39,7 +38,7 @@ const UserDetailPage = async ({ params, searchParams }: PageProps<"/admin/users/
   // Opened from Owners or Workspaces (?from=), the way back leads there; the
   // list's filters and page ride along in ?back= (see usePersonHref).
   const list = userListFor(single(query.from));
-  const backHref = listBackHref(list.href, single(query[BACK_PARAM]), [...(LIST_QUERY_KEYS.get(list.href) ?? []), "page", "limit"]);
+  const backHref = listBackHref(list.href, query[LIST_BACK_PARAM], [...(LIST_QUERY_KEYS.get(list.href) ?? []), ...LIST_PAGE_KEYS]);
   const [owner, plans, admin] = await Promise.all([
     fetchOrNotFound(getOwnerById(id)),
     // Every admin may read the plans; if the request fails the list is
