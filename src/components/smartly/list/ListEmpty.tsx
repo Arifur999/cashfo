@@ -11,12 +11,15 @@ interface ListEmptyProps {
   description?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
+  // Classes for the row itself: "col-span-full" in a table laid out as one
+  // grid with subgrid rows, so the empty line spans every column.
+  rowClassName?: string;
 }
 
 // What a list shows with no rows, kept inside the table as one row and cell
 // so the list's structure stays whole.
-const ListEmpty = ({ title, icon, tone, description, action, className }: ListEmptyProps) => (
-  <div role="row" data-slot="list-empty">
+const ListEmpty = ({ title, icon, tone, description, action, className, rowClassName }: ListEmptyProps) => (
+  <div role="row" data-slot="list-empty" className={rowClassName}>
     <div role="cell">
       {icon ? (
         <EmptyState bordered={false} icon={icon} tone={tone} title={title} description={description} action={action} className={className} />

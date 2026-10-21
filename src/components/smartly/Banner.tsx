@@ -16,7 +16,10 @@ interface BannerProps extends React.ComponentProps<"div"> {
   inline?: boolean;
 }
 
-// A short notice: offline, a rename, a limit nearly reached.
+// A short notice: offline, a rename, a limit nearly reached. It is a status
+// region, announced when it appears or changes; a role passed in replaces
+// that one: role="note" for a note that was there from the start, "alert"
+// for an error.
 const Banner = ({ tone = "warning", icon, inline = false, className, children, ...props }: BannerProps) => (
   <div
     role="status"

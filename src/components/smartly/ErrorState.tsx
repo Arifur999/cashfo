@@ -10,13 +10,16 @@ interface ErrorStateProps {
   description?: React.ReactNode;
   // Shows a "Try again" button that calls it.
   onRetry?: () => void;
+  // Another way out beside it, a link or a button ("Clear filters", when a
+  // filter the server refuses would fail every retry).
+  secondaryAction?: React.ReactNode;
   bordered?: boolean;
   className?: string;
 }
 
 // Could not load: says what failed, that nothing was lost, and offers a
 // retry.
-const ErrorState = ({ title, description, onRetry, bordered, className }: ErrorStateProps) => {
+const ErrorState = ({ title, description, onRetry, secondaryAction, bordered, className }: ErrorStateProps) => {
   const { t } = useLocale();
   return (
     <StatePanel
@@ -25,11 +28,16 @@ const ErrorState = ({ title, description, onRetry, bordered, className }: ErrorS
       title={title}
       description={description ?? t("Check your internet and try again. Nothing was lost.")}
       action={
-        onRetry && (
-          <Button variant="secondary" onClick={onRetry}>
-            <RefreshCw />
-            {t("Try again")}
-          </Button>
+        (onRetry || secondaryAction) && (
+          <>
+            {onRetry && (
+              <Button variant="secondary" onClick={onRetry}>
+                <RefreshCw />
+                {t("Try again")}
+              </Button>
+            )}
+            {secondaryAction}
+          </>
         )
       }
       bordered={bordered}

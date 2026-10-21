@@ -53,27 +53,62 @@ const VARIANTS = {
   },
 } as const;
 
+export type SegmentVariant = keyof typeof VARIANTS;
+
+// "touch" makes 34px segments for a phone page's tabs (Loans); "lg" stands
+// 44px tall beside a 44px field (the Statement's Period); "coarse" keeps
+// md's size for a mouse and grows to 44px under a finger.
+export type SegmentSize = "md" | "touch" | "lg" | "coarse";
+
+const SIZES: Record<SegmentSize, string | undefined> = {
+  md: undefined,
+  touch: "h-8.5",
+  lg: "h-9",
+  coarse: "pointer-coarse:h-11",
+};
+
+interface SegmentLook {
+  variant?: SegmentVariant;
+  size?: SegmentSize;
+  // The chosen segment.
+  on?: boolean;
+  stretch?: boolean;
+}
+
+// One segment's classes. Exported for an element of the page's own that
+// sits in the row as one more segment (the trailing slot), a popover's
+// trigger, say; give it the same variant and size as the control.
+export const segmentClassName = ({ variant = "tabs", size = "md", on = false, stretch = false }: SegmentLook = {}) => {
+  const styles = VARIANTS[variant];
+  return cn("inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors", styles.item, on ? styles.on : styles.off, SIZES[size], stretch && "flex-1");
+};
+
 interface SegmentedControlProps<T extends string> {
   options: SegmentOption<T>[];
   value: T;
   onChange: (value: T) => void;
   label: string;
-  variant?: keyof typeof VARIANTS;
-  // "touch" makes 34px segments for a phone page's tabs (Loans); "lg"
-  // stands 44px tall beside a 44px field (the Statement's Period);
-  // "coarse" keeps md's size for a mouse and grows to 44px under a finger.
-  size?: "md" | "touch" | "lg" | "coarse";
+  variant?: SegmentVariant;
+  size?: SegmentSize;
   // Fill the width, each segment equal (the drawer's Income/Expense/Transfer).
   stretch?: boolean;
+  // Nothing can be picked for now (a reminder's channel before it has a
+  // day): the segments are off and the control fades.
+  disabled?: boolean;
+  // After the segments, inside the group: the page's own element drawn as
+  // one more segment with segmentClassName() (a Custom range's popover
+  // trigger after 7 / 30 / 90 days). Its on state is the page's to show:
+  // pass a value no option has while it is the one in force.
+  trailing?: React.ReactNode;
   className?: string;
 }
 
 // A row of exclusive choices; one is always on.
-const SegmentedControl = <T extends string>({ options, value, onChange, label, variant = "tabs", size = "md", stretch = false, className }: SegmentedControlProps<T>) => {
+const SegmentedControl = <T extends string>({ options, value, onChange, label, variant = "tabs", size = "md", stretch = false, disabled = false, trailing, className }: SegmentedControlProps<T>) => {
   const { translate } = useLocale();
   const styles = VARIANTS[variant];
   return (
-    <div role="group" aria-label={translate(label)} className={cn("inline-flex gap-0.5", stretch && "flex w-full", styles.group, size === "lg" && "p-1", className)}>
+    <div role="group" aria-label={translate(label)} className={cn("inline-flex gap-0.5", stretch && "flex w-full", styles.group, size === "lg" && "p-1", disabled && "opacity-60", className)}>
       {options.map((option) => {
         const on = option.value === value;
         return (
@@ -82,8 +117,9 @@ const SegmentedControl = <T extends string>({ options, value, onChange, label, v
             type="button"
             aria-pressed={on}
             lang={option.lang}
+            disabled={disabled}
             onClick={() => onChange(option.value)}
-            className={cn("inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors", styles.item, on ? styles.on : styles.off, size === "touch" && "h-8.5", size === "lg" && "h-9", size === "coarse" && "pointer-coarse:h-11", stretch && "flex-1")}
+            className={cn(segmentClassName({ variant, size, on, stretch }), disabled && "pointer-events-none")}
           >
             {option.dot && <span aria-hidden="true" className="size-2 rounded-full" style={{ background: option.dot }} />}
             {option.icon}
@@ -91,6 +127,7 @@ const SegmentedControl = <T extends string>({ options, value, onChange, label, v
           </button>
         );
       })}
+      {trailing}
     </div>
   );
 };

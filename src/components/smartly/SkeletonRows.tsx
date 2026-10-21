@@ -1,3 +1,6 @@
+"use client";
+
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 // The bar widths cycle so a stack of rows looks like real, varied text.
@@ -18,26 +21,31 @@ interface SkeletonRowsProps {
   className?: string;
 }
 
-// Placeholder rows for a list that usually loads in under a second.
-const SkeletonRows = ({ rows = 4, avatar = true, className }: SkeletonRowsProps) => (
-  <div role="status" aria-label="Loading" className={cn("flex flex-col", className)}>
-    {Array.from({ length: rows }, (_, index) => {
-      const [title, meta] = WIDTHS[index % WIDTHS.length];
-      return (
-        <div
-          key={index}
-          className={cn("grid items-center gap-3 px-5 py-4", avatar ? "grid-cols-[36px_minmax(0,1fr)_90px]" : "grid-cols-[minmax(0,1fr)_90px]", index > 0 && "border-t border-divider")}
-        >
-          {avatar && <span className="size-9 rounded-full bg-surface-sunken" />}
-          <span className="flex flex-col gap-2">
-            <span className={cn(bar, "h-2.5")} style={{ width: `${title}%` }} />
-            <span className={cn(bar, "h-2")} style={{ width: `${meta}%` }} />
-          </span>
-          <span className={cn(bar, "h-2.5 w-22.5")} />
-        </div>
-      );
-    })}
-  </div>
-);
+// Placeholder rows for a list that usually loads in under a second. A
+// Client Component for its label only, in the reader's language; a server
+// loading.tsx can still render it.
+const SkeletonRows = ({ rows = 4, avatar = true, className }: SkeletonRowsProps) => {
+  const { t } = useLocale();
+  return (
+    <div role="status" aria-label={t("Loading...")} className={cn("flex flex-col", className)}>
+      {Array.from({ length: rows }, (_, index) => {
+        const [title, meta] = WIDTHS[index % WIDTHS.length];
+        return (
+          <div
+            key={index}
+            className={cn("grid items-center gap-3 px-5 py-4", avatar ? "grid-cols-[36px_minmax(0,1fr)_90px]" : "grid-cols-[minmax(0,1fr)_90px]", index > 0 && "border-t border-divider")}
+          >
+            {avatar && <span className="size-9 rounded-full bg-surface-sunken" />}
+            <span className="flex flex-col gap-2">
+              <span className={cn(bar, "h-2.5")} style={{ width: `${title}%` }} />
+              <span className={cn(bar, "h-2")} style={{ width: `${meta}%` }} />
+            </span>
+            <span className={cn(bar, "h-2.5 w-22.5")} />
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default SkeletonRows;

@@ -1,10 +1,11 @@
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// md and lg match InputFrame's: 16px text below md, so iOS doesn't zoom in.
 const SIZES = {
   sm: "h-9.5 text-small",
-  md: "h-11 text-body",
-  lg: "h-12 text-body",
+  md: "h-11 text-body max-md:text-body-lg",
+  lg: "h-12 text-body max-md:text-body-lg",
 } as const;
 
 interface NativeSelectProps extends Omit<React.ComponentProps<"select">, "size"> {
