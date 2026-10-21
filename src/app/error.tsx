@@ -7,6 +7,7 @@ import Button from "@/components/smartly/Button";
 import StatePage from "@/components/smartly/StatePage";
 import { LOCALE_COOKIE } from "@/lib/i18n/localeCookie";
 import { translate, type Locale } from "@/lib/i18n/translate";
+import { cn } from "@/lib/utils";
 
 // No LocaleProvider out here (the layout that holds one is what failed), so
 // the language comes from the cookie directly. The server renders English;
@@ -27,28 +28,39 @@ export default function RootError({ error, retry }: { error: Error & { digest?: 
   }, [error]);
 
   return (
-    <StatePage
-      icon={<CircleAlert />}
-      tone="expense"
-      reference={error.digest ? `${t("Error reference")}: ${error.digest}` : undefined}
-      title={t("Something went wrong on our side")}
-      description={t("Nothing you entered was lost. Try again in a moment; if it keeps happening, send us the reference above and we will look into it.")}
-      actions={
-        <>
-          <Button size="xl" onClick={() => retry()}>
-            <RefreshCw />
-            {t("Try again")}
-          </Button>
-          <Button size="xl" variant="secondary" asChild>
-            <Link href="/">
-              <House />
-              {t("Go to Home")}
-            </Link>
-          </Button>
-        </>
-      }
-    >
-      <span className="text-small text-ink-muted">{t("Saved transactions stay saved. Anything you were typing may need to be entered again.")}</span>
-    </StatePage>
+    // The skip link's target and the page's main landmark, in the page's
+    // language (its own face too: no LocaleProvider to add it).
+    <main id="main-content" tabIndex={-1} lang={locale} className={cn("flex flex-1 flex-col outline-none", locale === "bn" && "font-bn")}>
+      <StatePage
+        icon={<CircleAlert />}
+        tone="expense"
+        reference={error.digest ? `${t("Error reference")}: ${error.digest}` : undefined}
+        title={t("Something went wrong on our side")}
+        // Errors raised in the browser carry no reference, so only ask for
+        // one when there is one to send.
+        description={t(
+          error.digest
+            ? "Nothing you entered was lost. Try again in a moment; if it keeps happening, send us the reference above and we will look into it."
+            : "Try again in a moment; if it keeps happening, tell us what you were doing.",
+        )}
+        actions={
+          <>
+            <Button size="xl" onClick={() => retry()}>
+              <RefreshCw />
+              {t("Try again")}
+            </Button>
+            <Button size="xl" variant="secondary" asChild>
+              <Link href="/">
+                <House />
+                {t("Go to Home")}
+              </Link>
+            </Button>
+          </>
+        }
+      >
+        {/* The admin panel lands here too, so nothing customer-only. */}
+        <span className="text-small text-ink-muted">{t("Anything already saved stays saved.")}</span>
+      </StatePage>
+    </main>
   );
 }
