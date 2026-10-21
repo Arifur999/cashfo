@@ -19,6 +19,10 @@ export interface IRefund {
   createdAt: string;
 }
 
+// What a list row or an invoice brings of a payment's refund: enough to tell
+// a partial one from a full one.
+export type IRefundSummary = Pick<IRefund, "amount" | "status" | "createdAt">;
+
 export interface IPayment {
   id: string;
   platformUserId: string;
@@ -41,6 +45,9 @@ export interface IPayment {
   paidAt: string | null;
   createdAt: string;
   invoice: IInvoiceSummary | null;
+  // What went back, null when nothing did. Absent from an API older than
+  // the field.
+  refund?: IRefundSummary | null;
 }
 
 export interface IOtherPayment {
@@ -51,7 +58,7 @@ export interface IOtherPayment {
   createdAt: string;
 }
 
-export interface IPaymentDetail extends Omit<IPayment, "invoice"> {
+export interface IPaymentDetail extends Omit<IPayment, "invoice" | "refund"> {
   invoice: IInvoice | null;
   refund: IRefund | null;
   // The same person's other payments, newest first.

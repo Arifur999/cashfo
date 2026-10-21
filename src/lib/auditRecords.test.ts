@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditChangeSummary, auditFieldLabel, auditOnText, auditRecordHref, auditRecordName, auditRecordTypeLabel } from "./auditRecords";
+import { auditChangeSummary, auditFieldLabel, auditOnText, auditRecordHref, auditRecordName, auditRecordTypeLabel, QUIET_FIELDS } from "./auditRecords";
 
 const entry = (overrides: Partial<Parameters<typeof auditOnText>[0]> = {}) => ({
   action: "PLAN_UPDATED",
@@ -42,6 +42,7 @@ describe("auditChangeSummary", () => {
     expect(auditChangeSummary({ oldValue: { updatedAt: "x" }, newValue: { updatedAt: "y", sensitive: true } })).toBeNull();
     expect(auditChangeSummary({ oldValue: null, newValue: { code: "PUJA25" } })).toBeNull();
     expect(auditFieldLabel("featureLimits.maxWorkspaces")).toBe("max workspaces");
+    expect([...QUIET_FIELDS]).toEqual(["sensitive", "updatedAt", "createdAt"]);
   });
 });
 
@@ -56,5 +57,26 @@ describe("auditOnText / auditRecordHref", () => {
     expect(auditRecordHref({ action: "PLAN_UPDATED", entityType: "SubscriptionPlan", entityId: "p-1" })).toBe("/admin/plans");
     expect(auditRecordHref({ action: "USER_UPDATED", entityType: "PlatformUser", entityId: "pu-1" })).toBeNull();
     expect(auditRecordHref({ action: "ADMIN_LOGIN", entityType: "AdminUser", entityId: "a-1" })).toBeNull();
+  });
+
+  it("opens the owner whose data was reset, by the id or else the email the entry saved", () => {
+    const reset = { action: "OWNER_DATA_RESET", entityType: "Business", entityId: "b-1", entityLabel: "Personal" };
+    expect(auditRecordHref({ ...reset, oldValue: { ownerId: "u-1", ownerEmail: "rahim@example.com", businessName: "Personal" }, newValue: null })).toBe(
+      "/admin/users/u-1",
+    );
+    expect(auditRecordHref({ ...reset, oldValue: { ownerEmail: "rahim@example.com", businessName: "Personal" }, newValue: null })).toBe(
+      "/admin/users?search=rahim%40example.com",
+    );
+    // Without it, the workspace's list, as before.
+    expect(auditRecordHref({ ...reset, action: "BUSINESS_PLAN_CHANGED", oldValue: { planId: "p-1" }, newValue: { planId: "p-2" } })).toBe("/admin/workspaces");
+  });
+
+  it("searches a record's list by its name when the entry has no id", () => {
+    expect(auditRecordHref({ action: "USER_SUSPENDED", entityType: "User", entityId: null, entityLabel: "Sharmin Akter" })).toBe("/admin/users?search=Sharmin+Akter");
+    expect(auditRecordHref({ action: "PAYMENT_REFUNDED", entityType: "Payment", entityId: null, oldValue: { email: "mahbub@example.com" } })).toBe(
+      "/admin/payments?search=mahbub%40example.com",
+    );
+    expect(auditRecordHref({ action: "PAYMENT_REFUNDED", entityType: "Payment", entityId: null })).toBe("/admin/payments");
+    expect(auditRecordHref({ action: "SETTINGS_UPDATED", entityType: "PlatformSetting", entityId: null })).toBe("/admin/settings");
   });
 });

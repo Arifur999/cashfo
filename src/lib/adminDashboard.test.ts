@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changePercent, dayPart, firstName, hourIn, hoursSince, liveAnnouncements, missingBangla, monthKeyLabel, planShares, topRequests, translationCoverage } from "./adminDashboard";
+import { dayPart, firstName, hourIn, liveAnnouncements, missingBangla, planShares, topRequests, translationCoverage } from "./adminDashboard";
 
 describe("the greeting", () => {
   it("reads the hour in the platform's time zone", () => {
@@ -20,14 +20,7 @@ describe("the greeting", () => {
 });
 
 describe("the figures", () => {
-  it("gives a change in percent, or nothing when there was nothing before", () => {
-    expect(changePercent(60404, 57970)).toBe(4.2);
-    expect(changePercent(50, 100)).toBe(-50);
-    expect(changePercent(10, 0)).toBeNull();
-  });
-
-  it("names a month key and splits accounts by plan", () => {
-    expect(monthKeyLabel("2026-10")).toBe("Oct");
+  it("splits accounts by plan", () => {
     const shares = planShares([
       { planName: "Monthly Pro", totalUsers: 132 },
       { planName: "Free", totalUsers: 1076 },
@@ -36,11 +29,6 @@ describe("the figures", () => {
     expect(shares.map((share) => `${share.name}:${share.pct}`)).toEqual(["Free:89.1", "Monthly Pro:10.9", "Business:0"]);
     expect(shares[0].color).not.toBe(shares[1].color);
     expect(planShares([])).toEqual([]);
-  });
-
-  it("counts hours waiting", () => {
-    expect(hoursSince("2026-10-02T06:00:00Z", new Date("2026-10-02T12:30:00Z"))).toBe(6);
-    expect(hoursSince("2026-10-02T13:00:00Z", new Date("2026-10-02T12:30:00Z"))).toBe(0);
   });
 });
 

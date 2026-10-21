@@ -1,5 +1,6 @@
 import type { FlagStatus, ISecurityFlag, Severity, SuspiciousActivityType } from "@/types/securityFlag.types";
 import { formatDayName, formatLogTime, type RelativeDateOptions } from "./date";
+import { formatCount } from "./i18n/digits";
 import { inEnglish, type Translate } from "./i18n/message";
 
 // The design's names for each kind of flag.
@@ -44,13 +45,34 @@ export const flagNextStep = (flag: Pick<ISecurityFlag, "status" | "type">): { la
   return flag.type === "MULTIPLE_FAILED_LOGINS" ? { label: "Mark resolved", status: "RESOLVED" } : { label: "Start a review", status: "REVIEWING" };
 };
 
-// "See the 9 tries": the network's failed sign-ins, while the flag is open.
-export const flagTriesLink = (flag: Pick<ISecurityFlag, "status" | "type" | "relatedIp" | "description">, t: Translate = inEnglish): { href: string; label: string } | null => {
+const DAY_MS = 86_400_000;
+// A failed-sign-ins flag counts the tries of the 15 minutes before it.
+const FLAG_LOOKBACK_MS = 15 * 60_000;
+
+// Sign-ins' "When" that still holds a flag's tries: the last 7 or 30 days,
+// or any time. Sign-ins opens on the last 24 hours, while a flag stays open
+// until someone looks, often for days. A flag without a readable time gets
+// any time.
+const triesWindow = (createdAt: string | undefined, now: Date): "7d" | "30d" | "all" => {
+  const since = createdAt ? now.getTime() - new Date(createdAt).getTime() + FLAG_LOOKBACK_MS : Number.NaN;
+  if (!Number.isFinite(since)) return "all";
+  return since <= 7 * DAY_MS ? "7d" : since <= 30 * DAY_MS ? "30d" : "all";
+};
+
+// "See the 9 tries": the network's failed sign-ins, while the flag is open,
+// over a window that reaches back to them. The count comes in the reader's
+// digits when `locale` is given.
+export const flagTriesLink = (
+  flag: Pick<ISecurityFlag, "status" | "type" | "relatedIp" | "description"> & Partial<Pick<ISecurityFlag, "createdAt">>,
+  t: Translate = inEnglish,
+  { now = new Date(), locale = "en" }: Pick<RelativeDateOptions, "now" | "locale"> = {},
+): { href: string; label: string } | null => {
   if (flag.type !== "MULTIPLE_FAILED_LOGINS" || !flag.relatedIp || !isOpenFlag(flag)) return null;
   const tries = /^(\d+) failed/.exec(flag.description)?.[1];
+  const query = new URLSearchParams({ ipAddress: flag.relatedIp, success: "false", within: triesWindow(flag.createdAt, now) });
   return {
-    href: `/admin/security/logins?ipAddress=${encodeURIComponent(flag.relatedIp)}&success=false`,
-    label: tries ? t("See the {count} tries", { count: tries }) : t("See the tries"),
+    href: `/admin/security/logins?${query.toString()}`,
+    label: tries ? t("See the {count} tries", { count: formatCount(Number(tries), locale) }) : t("See the tries"),
   };
 };
 

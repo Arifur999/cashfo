@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { BILLING_CYCLES, type IPlanPayload } from "@/types/plan.types";
+import { emptyStringToUndefined } from "./common.validation";
 
 // Mirrors the backend DTOs: price is a whole BDT amount (@IsInt), and each
 // of the three counts accepts -1 for "no limit".
@@ -12,6 +13,11 @@ const wholeNumberString = (message: string, min = 0) =>
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+// Where the plan sits among the others, 0 first, as the API orders them.
+// Blank (or left out) puts a new plan last and leaves an edited one where
+// it is, so it is never sent as 0.
+const DISPLAY_ORDER_MESSAGE = "A whole number from 0 to 9999";
+
 // A. Form schema -- numeric inputs hold strings.
 export const planFormZodSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -20,6 +26,11 @@ export const planFormZodSchema = z.object({
   price: wholeNumberString("Enter a whole amount, e.g. 499"),
   trialDays: wholeNumberString("Enter whole days, e.g. 14"),
   isActive: z.boolean(),
+  displayOrder: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || /^\d{1,4}$/.test(value), DISPLAY_ORDER_MESSAGE)
+    .optional(),
   featureLimits: z.object({
     maxWorkspaces: wholeNumberString("Enter a whole number", -1),
     maxBusinessWorkspaces: wholeNumberString("Enter a whole number", -1),
@@ -41,6 +52,7 @@ export const planServerZodSchema = z.object({
   price: z.coerce.number().int().min(0),
   trialDays: z.coerce.number().int().min(0),
   isActive: z.boolean().optional(),
+  displayOrder: z.preprocess(emptyStringToUndefined, z.coerce.number().int().min(0).max(9999).optional()),
   featureLimits: z.object({
     maxWorkspaces: z.coerce.number().int().min(-1),
     maxBusinessWorkspaces: z.coerce.number().int().min(-1),

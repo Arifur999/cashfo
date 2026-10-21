@@ -70,4 +70,7 @@ export interface IPlanPayload {
   trialDays: number;
   featureLimits: IFeatureLimits;
   isActive?: boolean;
+  // Where the plan sits among the others, 0 first. Left out, a new plan goes
+  // after every other one and an edited plan keeps its place.
+  displayOrder?: number;
 }

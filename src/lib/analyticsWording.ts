@@ -1,16 +1,21 @@
 import type { AnalyticsRange } from "./analyticsRange";
 import { formatDate } from "./date";
+import { banglaDayMonth } from "./i18n/banglaDates";
+import { toLocaleDigits } from "./i18n/digits";
 import { inEnglish, type Translate } from "./i18n/message";
+import type { Locale } from "./i18n/translate";
 import { formatNumber } from "./number";
 
-// Days are calendar dates, so they are read at noon UTC (no shifting).
-const dayLabel = (day: string) => formatDate(`${day}T12:00:00Z`, "d MMM");
+// Days are calendar dates, so they are read at noon UTC (no shifting). A
+// Bangla reader gets the board's own short months ("২ সেপ্টে").
+const dayLabel = (day: string, locale: Locale) => (locale === "bn" ? banglaDayMonth(day) : formatDate(`${day}T12:00:00Z`, "d MMM"));
 
-// "2 Sep – 1 Oct": the window the charts cover.
-export const rangeSpan = (range: Pick<AnalyticsRange, "from" | "to">) => `${dayLabel(range.from)} – ${dayLabel(range.to)}`;
+// "2 Sep – 1 Oct": the window the charts cover, in the reader's language.
+export const rangeSpan = (range: Pick<AnalyticsRange, "from" | "to">, locale: Locale = "en") => `${dayLabel(range.from, locale)} – ${dayLabel(range.to, locale)}`;
 
-// "Last 30 days", or the span of a custom range.
-export const rangeName = (range: AnalyticsRange, t: Translate = inEnglish) => (range.preset === "custom" ? rangeSpan(range) : t("Last {count} days", { count: range.preset }));
+// "Last 30 days", or the span of a custom range, in the reader's digits.
+export const rangeName = (range: AnalyticsRange, t: Translate = inEnglish, locale: Locale = "en") =>
+  range.preset === "custom" ? rangeSpan(range, locale) : t("Last {count} days", { count: toLocaleDigits(range.preset, locale) });
 
 // "60% of all 1,272 accounts"
 export const shareOfAccounts = (active: number, total: number, t: Translate = inEnglish) =>

@@ -53,6 +53,21 @@ describe("paymentNote", () => {
     expect(paymentNote({ ...base, gateway: "MANUAL" })).toEqual({ text: "Entered by hand", tone: "muted" });
     expect(paymentNote(base)).toEqual({ text: "Invoice INV-2026-000403", tone: "muted" });
   });
+
+  it("keeps the paisa of a discount", () => {
+    expect(paymentNote({ ...base, couponCode: "EID20", discountApplied: "59.80", currency: "BDT" })).toEqual({ text: `EID20 · ৳${NBSP}59.80 off`, tone: "muted" });
+  });
+
+  it("says how much of a partial refund went back", () => {
+    const refunded = { ...base, status: "REFUNDED" as const, amount: "299.00", currency: "BDT" };
+    expect(paymentNote({ ...refunded, refund: { amount: "100.50", status: "COMPLETED", createdAt: "2026-10-02T04:00:00.000Z" } })).toEqual({
+      text: `Partly refunded: ৳${NBSP}100.50`,
+      tone: "muted",
+    });
+    expect(paymentNote({ ...refunded, refund: { amount: "299.00", status: "COMPLETED", createdAt: "2026-10-02T04:00:00.000Z" } })).toEqual({ text: "Refunded", tone: "muted" });
+    // A list from an API without the refund on it says "Refunded" as before.
+    expect(paymentNote({ ...refunded, refund: undefined })).toEqual({ text: "Refunded", tone: "muted" });
+  });
 });
 
 describe("paymentSteps", () => {
@@ -71,7 +86,8 @@ describe("paymentSteps", () => {
       tone: "danger",
     });
     const refund = { id: "r", paymentId: "x", amount: "299.00", reason: "Double charge", processedBy: "a", status: "COMPLETED" as const, createdAt: "2026-10-02T04:00:00.000Z" };
-    expect(paymentSteps({ ...detail, status: "REFUNDED", refund }).at(-1)).toMatchObject({ what: `Refunded ৳${NBSP}299.00`, tone: "neutral" });
+    expect(paymentSteps({ ...detail, status: "REFUNDED", refund }).at(-1)).toMatchObject({ what: `Refunded ৳${NBSP}299`, tone: "neutral" });
+    expect(paymentSteps({ ...detail, status: "REFUNDED", refund: { ...refund, amount: "59.80" } }).at(-1)).toMatchObject({ what: `Refunded ৳${NBSP}59.80` });
   });
 });
 

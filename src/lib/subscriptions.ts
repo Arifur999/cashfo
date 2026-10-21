@@ -2,8 +2,12 @@ import type { ICoupon } from "@/types/coupon.types";
 import type { BillingCycle, ISubscriptionPlan } from "@/types/plan.types";
 import { formatCurrency } from "./currency";
 import { formatDate } from "./date";
+import { formatCount } from "./i18n/digits";
 import { inEnglish, type Translate } from "./i18n/message";
-import { formatNumber } from "./number";
+import type { Locale } from "./i18n/translate";
+
+// The counts below come in the reader's digits when `locale` is given
+// ("১,৫০০"); money keeps its Latin digits, as everywhere.
 
 // The accent each plan is drawn in: the bar on its card, its slice of the
 // chart. Anything unnamed (Free) is the muted grey.
@@ -24,20 +28,20 @@ export const money = (amount: number | string, currency?: string) =>
 
 // "No trial needed", "7-day free trial", or for a yearly plan
 // "14-day free trial · about ৳ 250 a month".
-export const trialLine = (plan: Pick<ISubscriptionPlan, "billingCycle" | "trialDays" | "price" | "currency">, t: Translate = inEnglish) => {
+export const trialLine = (plan: Pick<ISubscriptionPlan, "billingCycle" | "trialDays" | "price" | "currency">, t: Translate = inEnglish, locale: Locale = "en") => {
   if (plan.billingCycle === "FREE") return t("No trial needed");
-  const trial = plan.trialDays > 0 ? t("{days}-day free trial", { days: plan.trialDays }) : t("No free trial");
+  const trial = plan.trialDays > 0 ? t("{days}-day free trial", { days: formatCount(plan.trialDays, locale) }) : t("No free trial");
   return plan.billingCycle === "YEARLY" ? t("{trial} · about {amount} a month", { trial, amount: formatCurrency(Number(plan.price) / 12, plan.currency, 0) }) : trial;
 };
 
 // "6 of them are on a trial now", "Everyone starts here", "No trials running".
-export const trialsLine = (cycle: BillingCycle, trialing: number, t: Translate = inEnglish) => {
-  if (trialing > 0) return t(trialing === 1 ? "{count} of them is on a trial now" : "{count} of them are on a trial now", { count: formatNumber(trialing) });
+export const trialsLine = (cycle: BillingCycle, trialing: number, t: Translate = inEnglish, locale: Locale = "en") => {
+  if (trialing > 0) return t(trialing === 1 ? "{count} of them is on a trial now" : "{count} of them are on a trial now", { count: formatCount(trialing, locale) });
   return t(cycle === "FREE" ? "Everyone starts here" : "No trials running");
 };
 
 // The number a limit shows; -1 is no limit.
-export const limitText = (value: number, t: Translate = inEnglish) => (value === -1 ? t("No limit") : formatNumber(value));
+export const limitText = (value: number, t: Translate = inEnglish, locale: Locale = "en") => (value === -1 ? t("No limit") : formatCount(value, locale));
 
 // "All plans", "Yearly Pro only", "Monthly Pro and Yearly Pro",
 // "Free, Monthly Pro and Business".
@@ -68,8 +72,8 @@ export const validityText = (from: string, until: string) => {
 };
 
 // "of 500" beside the number of uses, or "no limit".
-export const usesCap = (maxRedemptions: number | null, t: Translate = inEnglish) =>
-  maxRedemptions === null ? t("no limit") : t("of {count}", { count: formatNumber(maxRedemptions) });
+export const usesCap = (maxRedemptions: number | null, t: Translate = inEnglish, locale: Locale = "en") =>
+  maxRedemptions === null ? t("no limit") : t("of {count}", { count: formatCount(maxRedemptions, locale) });
 
 // How a coupon's status reads in a list.
 export const COUPON_STATUS_LABEL: Record<ICoupon["status"], string> = {
@@ -80,12 +84,13 @@ export const COUPON_STATUS_LABEL: Record<ICoupon["status"], string> = {
   DISABLED: "Off",
 };
 
-// "WELCOME20 and PRO100", "EID50, PUJA15 and 3 more".
-export const codesLine = (codes: string[], t: Translate = inEnglish) => {
+// "WELCOME20 and PRO100", "EID50, PUJA15 and 3 more". The codes stay as
+// written; only the count takes the reader's digits.
+export const codesLine = (codes: string[], t: Translate = inEnglish, locale: Locale = "en") => {
   if (codes.length === 0) return t("None live right now");
   if (codes.length === 1) return codes[0];
   if (codes.length === 2) return t("{first} and {second}", { first: codes[0], second: codes[1] });
-  return t("{first}, {second} and {count} more", { first: codes[0], second: codes[1], count: codes.length - 2 });
+  return t("{first}, {second} and {count} more", { first: codes[0], second: codes[1], count: formatCount(codes.length - 2, locale) });
 };
 
 const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";

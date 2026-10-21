@@ -1,6 +1,8 @@
 import type { IFailingNetwork, ILoginAccount, ILoginAttempt, ILoginAttemptsSummary } from "@/types/loginAttempt.types";
 import { formatDate, formatDayName, formatLogTime, type RelativeDateOptions } from "./date";
+import { formatCount } from "./i18n/digits";
 import { inEnglish, type Translate } from "./i18n/message";
+import type { Locale } from "./i18n/translate";
 import { humanizeEnum } from "./statusBadge";
 import { upperFirst } from "./text";
 
@@ -61,7 +63,9 @@ const REASON_LABEL: Record<string, string> = {
 export const failureReasonLabel = (reason: string | null, t: Translate = inEnglish) =>
   t(reason ? (REASON_LABEL[reason] ?? humanizeEnum(reason.toUpperCase())) : "Failed");
 
-type WordOptions = Pick<RelativeDateOptions, "now" | "t">;
+// `locale` puts the counts, days and times in the reader's digits and
+// months ("আজ", "৩:০২ অপরাহ্ণ"); without it they read as English writes them.
+type WordOptions = Pick<RelativeDateOptions, "now" | "t" | "locale">;
 
 const isAdminAccount = (account: ILoginAccount) => account.role !== "USER";
 
@@ -74,7 +78,7 @@ export interface AttemptOutcome {
 // "Why it failed": the first reason with how many times ("Wrong password
 // ×5"), then what followed and what is worth knowing ("then paused ×4 ·
 // no account with this email", "Signed in at 8:02 am").
-export const attemptOutcome = (group: LoginAttemptGroup, { now = new Date(), t = inEnglish }: WordOptions = {}): AttemptOutcome => {
+export const attemptOutcome = (group: LoginAttemptGroup, { now = new Date(), t = inEnglish, locale }: WordOptions = {}): AttemptOutcome => {
   if (group.success) {
     return { text: t("Signed in"), note: null, tone: "income" };
   }
@@ -85,7 +89,7 @@ export const attemptOutcome = (group: LoginAttemptGroup, { now = new Date(), t =
     if (last && last.reason === attempt.failureReason) last.count += 1;
     else runs.push({ reason: attempt.failureReason, count: 1 });
   }
-  const times = (count: number) => (count > 1 ? ` ×${count}` : "");
+  const times = (count: number) => (count > 1 ? ` ×${formatCount(count, locale ?? "en")}` : "");
   const [first, ...rest] = runs;
 
   const notes = rest.map((run) => t("then {reason}", { reason: failureReasonLabel(run.reason, t).toLowerCase() }) + times(run.count));
@@ -94,7 +98,7 @@ export const attemptOutcome = (group: LoginAttemptGroup, { now = new Date(), t =
   if (account && isAdminAccount(account)) notes.push(t(account.status === "SUSPENDED" ? "admin account, suspended" : "admin account"));
   if (group.signedInAt) {
     const gap = new Date(group.signedInAt).getTime() - new Date(group.lastAt).getTime();
-    notes.push(gap <= 2 * 60_000 ? t("signed in a minute later") : t("signed in at {time}", { time: formatLogTime(group.signedInAt, { now, t }) }));
+    notes.push(gap <= 2 * 60_000 ? t("signed in a minute later") : t("signed in at {time}", { time: formatLogTime(group.signedInAt, { now, t, locale }) }));
   }
 
   const note = notes.join(" · ");
@@ -107,8 +111,8 @@ export const attemptOutcome = (group: LoginAttemptGroup, { now = new Date(), t =
 };
 
 // "Most failed sign-ins": what to say under each network, and its colour.
-export const networkNote = (network: IFailingNetwork, { now = new Date(), t = inEnglish }: WordOptions = {}): string => {
-  const day = formatDayName(network.lastAt, { now, t });
+export const networkNote = (network: IFailingNetwork, { now = new Date(), t = inEnglish, locale }: WordOptions = {}): string => {
+  const day = formatDayName(network.lastAt, { now, t, locale });
   if (network.flagStatus === "RESOLVED") return t("{day} · flag resolved", { day });
   if (network.flagStatus === "FALSE_POSITIVE") return t("{day} · flag was a false alarm", { day });
   const { account } = network;
@@ -117,7 +121,7 @@ export const networkNote = (network: IFailingNetwork, { now = new Date(), t = in
   const [tried] = network.emails;
   if (!tried) return day;
   return network.emailCount > 1
-    ? t("{day} · tried {email} and {count} more", { day, email: tried, count: network.emailCount - 1 })
+    ? t("{day} · tried {email} and {count} more", { day, email: tried, count: formatCount(network.emailCount - 1, locale ?? "en") })
     : t("{day} · tried {email}", { day, email: tried });
 };
 
@@ -127,21 +131,23 @@ export const networkTone = (network: IFailingNetwork): "danger" | "warning" | "n
   return "neutral";
 };
 
-// Under "Failed sign-ins, 24 hours": how concentrated they were.
-export const busiestNetworkNote = (summary: Pick<ILoginAttemptsSummary, "failedLast24h" | "busiestNetworkToday">, t: Translate = inEnglish): string => {
+// Under "Failed sign-ins, 24 hours": how concentrated they were, the count
+// in the reader's digits when `locale` is given.
+export const busiestNetworkNote = (summary: Pick<ILoginAttemptsSummary, "failedLast24h" | "busiestNetworkToday">, t: Translate = inEnglish, locale: Locale = "en"): string => {
   const { failedLast24h, busiestNetworkToday } = summary;
   if (failedLast24h === 0) return t("None in the last day");
   if (!busiestNetworkToday || busiestNetworkToday.count < 2) return t("Each from a different network");
   if (busiestNetworkToday.count === failedLast24h) return t("All of them from one network");
-  return t("{count} of them from one network", { count: busiestNetworkToday.count });
+  return t("{count} of them from one network", { count: formatCount(busiestNetworkToday.count, locale) });
 };
 
-// Under "Paused right now": who, and when sign-in opens again.
-export const pausedNote = (summary: Pick<ILoginAttemptsSummary, "paused">, t: Translate = inEnglish): string => {
+// Under "Paused right now": who, and when sign-in opens again, the count and
+// the time in the reader's digits when `locale` is given.
+export const pausedNote = (summary: Pick<ILoginAttemptsSummary, "paused">, t: Translate = inEnglish, locale: Locale = "en"): string => {
   const [first, ...others] = summary.paused;
   if (!first) return t("Nobody is paused");
-  const time = formatDate(first.until, "h:mm aaa");
+  const time = formatDate(first.until, "h:mm aaa", "—", locale);
   return others.length > 0
-    ? t("{email} and {count} more · opens again at {time}", { email: first.email, count: others.length, time })
+    ? t("{email} and {count} more · opens again at {time}", { email: first.email, count: formatCount(others.length, locale), time })
     : t("{email} · opens again at {time}", { email: first.email, time });
 };

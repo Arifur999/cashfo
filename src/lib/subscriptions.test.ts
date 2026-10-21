@@ -44,6 +44,14 @@ describe("plan lines", () => {
     expect(limitText(-1)).toBe("No limit");
     expect(limitText(1500)).toBe("1,500");
   });
+
+  it("writes the counts in the reader's digits, never the money", () => {
+    const t = (key: string, values?: Record<string, string | number>) => `${key}|${Object.values(values ?? {}).join("|")}`;
+    expect(limitText(1500, t, "bn")).toBe("১,৫০০");
+    expect(trialsLine("MONTHLY", 6, t, "bn")).toBe("{count} of them are on a trial now|৬");
+    expect(trialLine({ billingCycle: "MONTHLY", trialDays: 14, price: "299.00", currency: "BDT" }, t, "bn")).toBe("{days}-day free trial|১৪");
+    expect(trialLine({ billingCycle: "YEARLY", trialDays: 0, price: "2999.00", currency: "BDT" }, t, "bn")).toBe(`{trial} · about {amount} a month|No free trial||৳${NBSP}250`);
+  });
 });
 
 describe("coupon lines", () => {
@@ -77,12 +85,18 @@ describe("coupon lines", () => {
   it("caps the uses or says there is no limit", () => {
     expect(usesCap(500)).toBe("of 500");
     expect(usesCap(null)).toBe("no limit");
+    expect(usesCap(1500, undefined, "bn")).toBe("of ১,৫০০");
   });
 
   it("names the live codes without running on", () => {
     expect(codesLine([])).toBe("None live right now");
     expect(codesLine(["WELCOME20", "PRO100"])).toBe("WELCOME20 and PRO100");
     expect(codesLine(["A", "B", "C", "D", "E"])).toBe("A, B and 3 more");
+  });
+
+  it("keeps a code's own digits and writes the count in the reader's", () => {
+    expect(codesLine(["EID50", "PUJA15", "PRO100", "NEW10"], undefined, "bn")).toBe("EID50, PUJA15 and ২ more");
+    expect(codesLine(["EID50", "PUJA15"], undefined, "bn")).toBe("EID50 and PUJA15");
   });
 
   it("makes up a code of four letters and two digits", () => {

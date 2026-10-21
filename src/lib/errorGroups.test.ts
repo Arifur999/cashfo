@@ -46,4 +46,10 @@ describe("error wording", () => {
     const [once] = groupErrors([log(2)]);
     expect(errorFrequency(once, { now })).toBe("Once · 12:02 pm");
   });
+
+  it("puts the count and the times in the reader's digits", () => {
+    const t = (key: string, values?: Record<string, string | number>) => `${key}|${Object.values(values ?? {}).join("|")}`;
+    const [many] = groupErrors([log(40), log(14)]);
+    expect(errorFrequency(many, { now, t, locale: "bn" })).toBe("{count} times · first {first}, last {last}|২|১২:১৪ অপরাহ্ণ|১২:৪০ অপরাহ্ণ");
+  });
 });

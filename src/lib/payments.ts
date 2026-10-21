@@ -1,5 +1,5 @@
 import type { IPayment, IPaymentDetail, PaymentGateway, PaymentStatus } from "@/types/payment.types";
-import { formatCurrency } from "./currency";
+import { formatAmount } from "./currency";
 import { formatDate } from "./date";
 import { inEnglish, type Translate } from "./i18n/message";
 import { humanizeEnum } from "./statusBadge";
@@ -37,17 +37,26 @@ export const shortPaymentId = (id: string) => `PAY-${id.slice(0, 8).toUpperCase(
 type NoteTone = "muted" | "danger" | "warning";
 
 // The quiet line under the person in the list: what went wrong, what is
-// still pending, which coupon took money off, or how the money came in.
+// still pending, how much of a refund went back, which coupon took money
+// off, or how the money came in. Amounts keep their paisa ("৳ 59.80 off").
 export const paymentNote = (
-  payment: Pick<IPayment, "status" | "failureReason" | "gateway" | "couponCode" | "discountApplied" | "duplicateOfId" | "invoice">,
+  payment: Pick<IPayment, "status" | "failureReason" | "gateway" | "couponCode" | "discountApplied" | "duplicateOfId" | "invoice"> &
+    Partial<Pick<IPayment, "amount" | "currency" | "refund">>,
   t: Translate = inEnglish,
 ): { text: string; tone: NoteTone } => {
   if (payment.duplicateOfId) return { text: t("Looks like a double charge"), tone: "warning" };
   if (payment.status === "FAILED") return { text: payment.failureReason ?? t("The payment did not go through"), tone: "danger" };
   if (payment.status === "PENDING") return { text: t("Waiting for {gateway} to confirm", { gateway: t(humanizeEnum(payment.gateway)) }), tone: "muted" };
-  if (payment.status === "REFUNDED") return { text: t("Refunded"), tone: "muted" };
+  if (payment.status === "REFUNDED") {
+    const { refund, amount } = payment;
+    // Less than was paid went back: the amount beside "Refunded" isn't all of it.
+    if (refund && amount !== undefined && Number(refund.amount) < Number(amount)) {
+      return { text: t("Partly refunded: {amount}", { amount: formatAmount(refund.amount, payment.currency) }), tone: "muted" };
+    }
+    return { text: t("Refunded"), tone: "muted" };
+  }
   if (payment.discountApplied && Number(payment.discountApplied) > 0) {
-    const off = t("{amount} off", { amount: formatCurrency(payment.discountApplied, undefined, 0) });
+    const off = t("{amount} off", { amount: formatAmount(payment.discountApplied, payment.currency) });
     return { text: payment.couponCode ? `${payment.couponCode} · ${off}` : off, tone: "muted" };
   }
   if (payment.gateway === "MANUAL") return { text: t("Entered by hand"), tone: "muted" };
@@ -81,7 +90,7 @@ export const paymentSteps = (payment: IPaymentDetail, t: Translate = inEnglish):
   }
   if (payment.invoice) steps.push({ what: t("Invoice {number} made", { number: payment.invoice.invoiceNumber }), at: payment.invoice.createdAt, tone: "success" });
   if (payment.refund) {
-    steps.push({ what: t("Refunded {amount}", { amount: formatCurrency(payment.refund.amount, payment.currency) }), at: payment.refund.createdAt, tone: "neutral" });
+    steps.push({ what: t("Refunded {amount}", { amount: formatAmount(payment.refund.amount, payment.currency) }), at: payment.refund.createdAt, tone: "neutral" });
   }
   return steps;
 };

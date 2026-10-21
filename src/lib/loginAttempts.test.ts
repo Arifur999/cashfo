@@ -95,4 +95,14 @@ describe("network and summary notes", () => {
     expect(pausedNote({ paused: [{ ipAddress: "x", email: "admin@example.com", until: "2026-10-02T09:02:00Z" }] })).toBe("admin@example.com · opens again at 3:02 pm");
     expect(pausedNote({ paused: [] })).toBe("Nobody is paused");
   });
+
+  it("puts the counts, days and times in the reader's digits", () => {
+    const t = (key: string, values?: Record<string, string | number>) => `${key}|${Object.values(values ?? {}).join("|")}`;
+    expect(busiestNetworkNote({ failedLast24h: 14, busiestNetworkToday: { ipAddress: "x", count: 9 } }, t, "bn")).toBe("{count} of them from one network|৯");
+    const paused = { ipAddress: "x", email: "admin@example.com", until: "2026-10-02T09:02:00Z" };
+    expect(pausedNote({ paused: [paused, paused, paused] }, t, "bn")).toBe("{email} and {count} more · opens again at {time}|admin@example.com|২|৩:০২ অপরাহ্ণ");
+    expect(networkNote(network({ lastAt: "2026-09-28T05:00:00Z", emailCount: 12 }), { now, t, locale: "bn" })).toBe("{day} · tried {email} and {count} more|২৮ সেপ্টে|admin@example.com|১১");
+    const [row] = groupLoginAttempts([attempt(45), attempt(44), attempt(43)]);
+    expect(attemptOutcome(row, { now, locale: "bn" }).text).toBe("Wrong password ×৩");
+  });
 });

@@ -22,7 +22,7 @@ const PAGES: [string, AdminCrumb][] = [
   ["/admin/content/announcements", { parent: "Content", parentHref: "/admin/content/announcements", page: "Announcements" }],
   ["/admin/content/legal", { parent: "Content", parentHref: "/admin/content/announcements", page: "Legal pages" }],
   ["/admin/content/translations", { parent: "Content", parentHref: "/admin/content/announcements", page: "Translations" }],
-  ["/admin/content/categories", { parent: "Content", parentHref: "/admin/content/announcements", page: "Categories" }],
+  ["/admin/content/categories", { parent: "Content", parentHref: "/admin/content/announcements", page: "Categories & accounts" }],
   ["/admin/notifications", { parent: "Notifications", parentHref: "/admin/notifications", page: "Templates" }],
   ["/admin/notifications/campaigns", { parent: "Notifications", parentHref: "/admin/notifications", page: "Campaigns" }],
   ["/admin/notifications/history", { parent: "Notifications", parentHref: "/admin/notifications", page: "Send history" }],
@@ -65,6 +65,46 @@ describe("adminCrumb", () => {
     expect(adminCrumb("/admin/users/u-1", { from: "nowhere" })).toStrictEqual({ parent: "Users", parentHref: "/admin/users", page: null, record: true });
     // Only a user's page has an origin.
     expect(adminCrumb("/admin/payments/9f3c2a1b", { from: "owners" })?.parent).toBe("Payments");
+  });
+
+  describe("a record opened from a list", () => {
+    // The lists' own filters, as their table configs name them.
+    const listKeys = {
+      "/admin/users": ["search", "status", "planId"],
+      "/admin/manage-owners": ["search", "status"],
+      "/admin/support": ["status", "search", "priority"],
+    };
+
+    it("links back to the list as it was left, like the page's own way back", () => {
+      expect(adminCrumb("/admin/users/u-1", { back: "status=SUSPENDED&search=rahim&page=3", listKeys })?.parentHref).toBe("/admin/users?status=SUSPENDED&search=rahim&page=3");
+      expect(adminCrumb("/admin/users/u-1", { from: "owners", back: "status=ACTIVE&limit=50", listKeys })?.parentHref).toBe("/admin/manage-owners?status=ACTIVE&limit=50");
+      expect(adminCrumb("/admin/support/ab12cd34-0000", { back: "status=DONE&priority=HIGH&page=2", listKeys })).toStrictEqual({
+        parent: "Tickets",
+        parentHref: "/admin/support?status=DONE&priority=HIGH&page=2",
+        page: "#AB12C",
+        record: true,
+      });
+    });
+
+    it("keeps only the list's own params", () => {
+      expect(adminCrumb("/admin/users/u-1", { from: "owners", back: "planId=p-1&next=%2F%2Fevil.com&status=", listKeys })?.parentHref).toBe("/admin/manage-owners");
+      expect(adminCrumb("/admin/support/t-1", { back: "search=refund&assignedToAdminId=a-1", listKeys })?.parentHref).toBe("/admin/support?search=refund");
+    });
+
+    it("opens a list plain when its keys aren't given", () => {
+      expect(adminCrumb("/admin/users/u-1", { from: "workspaces", back: "page=2", listKeys })?.parentHref).toBe("/admin/workspaces");
+      expect(adminCrumb("/admin/users/u-1", { back: "page=2" })?.parentHref).toBe("/admin/users");
+      expect(adminCrumb("/admin/payments/9f3c2a1b", { back: "status=FAILED", listKeys })?.parentHref).toBe("/admin/payments");
+    });
+
+    it("ignores ?back= on a page of its own", () => {
+      expect(adminCrumb("/admin/users", { back: "status=ACTIVE", listKeys })).toStrictEqual({ parent: "People", page: "Users" });
+    });
+  });
+
+  it("names a link by its path, whatever its query", () => {
+    expect(adminCrumb("/admin/users?search=rahim%40example.com")).toStrictEqual({ parent: "People", page: "Users" });
+    expect(adminCrumb("/admin/security/flags#f-1")).toStrictEqual({ parent: "Security", parentHref: "/admin/security", page: "Suspicious activity" });
   });
 
   it("shows a mistyped id as written instead of failing", () => {
