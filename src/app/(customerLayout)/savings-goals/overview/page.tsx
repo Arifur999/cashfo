@@ -24,9 +24,14 @@ import { cn } from "@/lib/utils";
 
 export const generateMetadata = () => customerPageMetadata("/savings-goals/overview");
 
-// Five money columns need about 880px, so narrower screens scroll the table
-// sideways (heads included) rather than squeeze the wallet names away.
-const COLUMNS = "grid-cols-[minmax(0,1fr)_repeat(3,140px)_160px]";
+// Five money columns need about 880px, so from md to lg the table scrolls
+// sideways (heads included) rather than squeeze the wallet names away. On a
+// phone each row stacks to name | balance, as the other lists do, with what
+// went in and out under the name.
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_repeat(3,140px)_160px]";
+// The three middle figures, left out of a phone's name | balance row.
+const MIDDLE = "max-md:hidden";
+const BALANCE = "max-md:col-start-2 max-md:row-start-1";
 
 // Savings summary: what sits in the savings wallets altogether, how it is
 // spread, and what went in and out of each one. Goals are targets; this is
@@ -55,9 +60,12 @@ export default async function SavingsOverviewPage() {
   );
   const archived = rows.filter((row) => row.status === "ARCHIVED").length;
 
-  // An archived wallet's figures go grey rather than green and red.
-  const outFigure = (value: number, muted = false) => <span className={cn("tabular-nums", value > 0 && !muted ? "text-expense" : "text-ink-muted")}>{value > 0 ? `− ${formatCurrency(value, currency)}` : "—"}</span>;
-  const inFigure = (value: number, muted = false) => <span className={cn("tabular-nums", value > 0 && !muted ? "text-income" : "text-ink-muted")}>{value > 0 ? `+ ${formatCurrency(value, currency)}` : "—"}</span>;
+  // An archived wallet's figures go grey rather than green and red. A
+  // wallet's row shows nothing as a dash; a total says ৳0 (`zero`), since a
+  // dash there would read as no data.
+  const zeroTotal = formatCurrency(0, currency);
+  const outFigure = (value: number, muted = false, zero = "—") => <span className={cn("tabular-nums", value > 0 && !muted ? "text-expense" : "text-ink-muted")}>{value > 0 ? `− ${formatCurrency(value, currency)}` : zero}</span>;
+  const inFigure = (value: number, muted = false, zero = "—") => <span className={cn("tabular-nums", value > 0 && !muted ? "text-income" : "text-ink-muted")}>{value > 0 ? `+ ${formatCurrency(value, currency)}` : zero}</span>;
 
   return (
     <PageFrame className="gap-6">
@@ -95,15 +103,17 @@ export default async function SavingsOverviewPage() {
                   {archived > 0 && ` · ${t("{amount} in archived wallets", { amount: formatCurrency(overview.inactiveAmount, currency) })}`}
                 </span>
               </div>
-              {/* Rows on a phone (label left, figure right); three columns from sm. */}
-              <div className="grid grid-cols-1 sm:grid-cols-3">
+              {/* Rows on a phone (label left, figure right); three equal
+                  columns from sm, and from xl, beside the balance, each one
+                  as wide as its figure so the last ends flush right. */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-[repeat(3,auto)]">
                 <Stat label={t("Wallets")} first>
                   {formatCount(rows.length, locale)}
                   {archived > 0 && <span className="text-small font-medium text-ink-muted"> · {t("{count} archived", { count: formatCount(archived, locale) })}</span>}
                 </Stat>
-                <Stat label={t("Added")}>{inFigure(totals.in)}</Stat>
+                <Stat label={t("Added")}>{inFigure(totals.in, false, zeroTotal)}</Stat>
                 <Stat label={t("Taken out")} last>
-                  {outFigure(totals.out)}
+                  {outFigure(totals.out, false, zeroTotal)}
                 </Stat>
               </div>
             </div>
@@ -121,13 +131,14 @@ export default async function SavingsOverviewPage() {
                 </Link>
               </div>
             }
-            tableClassName="overflow-x-auto"
-            // Narrower than the five columns it scrolls sideways: in the tab
-            // order, the keyboard can reach Opening through Balance too.
+            tableClassName="md:overflow-x-auto"
+            // From md to lg, narrower than the five columns, it scrolls
+            // sideways: in the tab order, the keyboard can reach Opening
+            // through Balance too.
             scrollable
           >
-            <div role="rowgroup" className="min-w-220">
-              <ListHead columns={COLUMNS} showOnPhone>
+            <div role="rowgroup" className="md:min-w-220">
+              <ListHead columns={COLUMNS}>
                 <ListHeadCell>{t("Wallet")}</ListHeadCell>
                 <ListHeadCell align="end">{t("Opening")}</ListHeadCell>
                 <ListHeadCell align="end">{t("Added")}</ListHeadCell>
@@ -136,6 +147,8 @@ export default async function SavingsOverviewPage() {
               </ListHead>
               {rows.map((row) => {
                 const isArchived = row.status === "ARCHIVED";
+                const added = Number(row.totalIn) > 0;
+                const takenOut = Number(row.totalOut) > 0;
                 // Set back by colour, not by fading the row: a faded row
                 // would fade its Restore button into looking disabled.
                 return (
@@ -154,14 +167,26 @@ export default async function SavingsOverviewPage() {
                           {/* Above the row's link, so it restores rather than opens. */}
                           {isArchived && canManage && <RestoreWalletButton businessId={activeBusinessId} walletId={row.id} walletName={row.name} className="relative z-10 -my-1" />}
                         </span>
+                        {/* A phone's row has no Added and Taken out columns. */}
+                        {(added || takenOut) && (
+                          <span className="text-caption font-normal text-ink-muted md:hidden">
+                            {added && inFigure(Number(row.totalIn), isArchived)}
+                            {added && takenOut && " · "}
+                            {takenOut && outFigure(Number(row.totalOut), isArchived)}
+                          </span>
+                        )}
                       </span>
                     </ListCell>
-                    <ListCell align="end" className={isArchived ? "text-ink-muted" : "text-ink-2"}>
+                    <ListCell align="end" className={cn(MIDDLE, isArchived ? "text-ink-muted" : "text-ink-2")}>
                       {formatCurrency(row.openingBalance, currency)}
                     </ListCell>
-                    <ListCell align="end">{inFigure(Number(row.totalIn), isArchived)}</ListCell>
-                    <ListCell align="end">{outFigure(Number(row.totalOut), isArchived)}</ListCell>
-                    <ListCell align="end" className={cn("font-bold", isArchived && "text-ink-muted")}>
+                    <ListCell align="end" className={MIDDLE}>
+                      {inFigure(Number(row.totalIn), isArchived)}
+                    </ListCell>
+                    <ListCell align="end" className={MIDDLE}>
+                      {outFigure(Number(row.totalOut), isArchived)}
+                    </ListCell>
+                    <ListCell align="end" className={cn(BALANCE, "font-bold", isArchived && "text-ink-muted")}>
                       {formatCurrency(row.currentBalance, currency)}
                     </ListCell>
                   </ListRow>
@@ -169,10 +194,16 @@ export default async function SavingsOverviewPage() {
               })}
               <ListTotalRow columns={COLUMNS} className="tabular-nums">
                 <ListCell>{t("Total")}</ListCell>
-                <ListCell align="end">{formatCurrency(totals.opening, currency)}</ListCell>
-                <ListCell align="end">{inFigure(totals.in)}</ListCell>
-                <ListCell align="end">{outFigure(totals.out)}</ListCell>
-                <ListCell align="end" className="text-title font-bold">
+                <ListCell align="end" className={MIDDLE}>
+                  {formatCurrency(totals.opening, currency)}
+                </ListCell>
+                <ListCell align="end" className={MIDDLE}>
+                  {inFigure(totals.in, false, zeroTotal)}
+                </ListCell>
+                <ListCell align="end" className={MIDDLE}>
+                  {outFigure(totals.out, false, zeroTotal)}
+                </ListCell>
+                <ListCell align="end" className={cn(BALANCE, "text-title font-bold")}>
                   {formatCurrency(totals.current, currency)}
                 </ListCell>
               </ListTotalRow>

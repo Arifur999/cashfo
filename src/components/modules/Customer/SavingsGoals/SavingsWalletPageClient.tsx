@@ -32,7 +32,11 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
   const pathname = usePathname();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [drawer, setDrawer] = useState<"closed" | "create" | Account>(openAdd && canManage ? "create" : "closed");
-  const [, startTransition] = useTransition();
+  // The wallet an archive, unarchive or remove is working on: its card dims
+  // and its menu waits until the answer comes back, as on My wallets.
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const busy = isPending ? busyId : null;
   const editing = typeof drawer === "object" ? drawer : null;
   const ordered = [...wallets].sort((a, b) => Number(a.status === "ARCHIVED") - Number(b.status === "ARCHIVED"));
 
@@ -42,7 +46,9 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
     if (openAdd) window.history.replaceState(null, "", pathname);
   }, [openAdd, pathname]);
 
-  function run(action: () => Promise<ActionResult<unknown>>, done: string, failed: string) {
+  function run(wallet: Account, action: () => Promise<ActionResult<unknown>>, done: string, failed: string) {
+    if (isPending) return;
+    setBusyId(wallet.id);
     startTransition(async () => {
       const result = await action();
       if (result.success) {
@@ -70,7 +76,7 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
       });
       if (!ok) return;
     }
-    run(() => (isArchived ? unarchiveAccountAction(businessId, wallet.id) : archiveAccountAction(businessId, wallet.id)), isArchived ? "Wallet activated" : "Wallet archived", isArchived ? "Failed to activate wallet" : "Failed to archive wallet");
+    run(wallet, () => (isArchived ? unarchiveAccountAction(businessId, wallet.id) : archiveAccountAction(businessId, wallet.id)), isArchived ? "Wallet activated" : "Wallet archived", isArchived ? "Failed to activate wallet" : "Failed to archive wallet");
   }
 
   async function remove(wallet: Account) {
@@ -78,6 +84,8 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
     const rule = t("A wallet with transactions is archived instead of deleted, so your history stays whole.");
     const message = amount ? `${t("{name} still holds {amount}. Removed or archived, it leaves this page, and Add money and Withdraw can't use it.", { name: wallet.name, amount })} ${rule}` : rule;
     if (!(await confirm({ title: t("Remove {name}?", { name: wallet.name }), message, confirmLabel: "Remove wallet" }))) return;
+    if (isPending) return;
+    setBusyId(wallet.id);
     startTransition(async () => {
       const result = await removeAccountAction(businessId, wallet.id);
       if (result.success) {
@@ -107,7 +115,7 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
 
       <div className="grid gap-4 md:grid-cols-3 md:gap-5">
         {ordered.map((wallet) => (
-          <WalletCard key={wallet.id} wallet={wallet} index={wallets.indexOf(wallet)} currency={currency} canManage={canManage} savings onEdit={() => setDrawer(wallet)} onToggleArchive={() => toggleArchive(wallet)} onRemove={() => remove(wallet)} />
+          <WalletCard key={wallet.id} wallet={wallet} index={wallets.indexOf(wallet)} currency={currency} canManage={canManage} savings busy={busy === wallet.id} onEdit={() => setDrawer(wallet)} onToggleArchive={() => toggleArchive(wallet)} onRemove={() => remove(wallet)} />
         ))}
         {canManage ? (
           <button type="button" onClick={() => setDrawer("create")} className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border-[1.5px] border-dashed border-line-strong bg-surface transition-colors hover:border-emerald md:h-50">

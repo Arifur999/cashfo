@@ -13,12 +13,14 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, SavingsGoal } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { addContributionAction, listActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
 import { goalBadge, goalColor, quickAmounts, savingsError } from "@/lib/customer/savingsDisplay";
 import { getAppToday } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GoalRing } from "./GoalRing";
@@ -46,7 +48,7 @@ interface WalletLoad {
 // as quick picks), which wallet it leaves, which savings wallet it sits in,
 // and where everything stands after.
 export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, currency }: AddMoneyDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const [amount, setAmount] = useState("");
@@ -141,8 +143,8 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
       >
         <SheetHeader className={cn("flex-row items-center gap-4 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           {goal && (
-            <GoalRing percent={goal.progressPercent} color={goalColor(goalIndex, goal.status)} size={52} label={t("{percent}% saved", { percent: goal.progressPercent })}>
-              <span className="text-caption font-bold">{goal.progressPercent}%</span>
+            <GoalRing percent={goal.progressPercent} color={goalColor(goalIndex, goal.status)} size={52} label={t("{percent}% saved", { percent: formatCount(goal.progressPercent, locale) })}>
+              <span className="text-caption font-bold">{formatCount(goal.progressPercent, locale)}%</span>
             </GoalRing>
           )}
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -217,15 +219,15 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
                 <div className="flex justify-between gap-3">
                   <span className="truncate text-ink-2">{goal.name}</span>
                   <span>
-                    <span className="text-ink-muted">{goal.progressPercent}% → </span>
+                    <span className="text-ink-muted">{formatCount(goal.progressPercent, locale)}% → </span>
                     <span className="font-semibold text-income">
-                      {percentAfter}% · {formatCurrency(saved + value, currency)}
+                      {formatCount(percentAfter, locale)}% · {formatCurrency(saved + value, currency)}
                     </span>
                   </span>
                 </div>
                 {from && (
                   <div className="flex justify-between gap-3">
-                    <span className="truncate text-ink-2">{from.name}</span>
+                    <span className="truncate text-ink-2">{accountDisplayName(from, displayLanguage(locale))}</span>
                     <span>
                       <span className="text-ink-muted">{formatCurrency(from.currentBalance, currency)} → </span>
                       {/* Below zero: the wallet doesn't hold this much. */}
@@ -238,7 +240,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
                 )}
                 {into && (
                   <div className="flex justify-between gap-3">
-                    <span className="truncate text-ink-2">{into.name}</span>
+                    <span className="truncate text-ink-2">{accountDisplayName(into, displayLanguage(locale))}</span>
                     <span>
                       <span className="text-ink-muted">{formatCurrency(into.currentBalance, currency)} → </span>
                       <span className="font-semibold text-ink">{formatCurrency(Number(into.currentBalance) + value, currency)}</span>

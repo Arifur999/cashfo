@@ -134,7 +134,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
           </ListHead>
           {shown.rows.map((transfer) => (
             <ListRow key={transfer.id} columns={COLUMNS} density="relaxed">
-              <ListCell className="text-caption text-ink-2 max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.date)}</ListCell>
+              <ListCell className="text-caption text-ink-2 max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.date, undefined, locale)}</ListCell>
               <ListCell className="flex flex-col gap-0.75 max-md:col-start-1 max-md:row-start-1">
                 {/* Read as a sentence; the arrow means nothing out loud. */}
                 <span className="sr-only">{t("From {from} to {to}", { from: transfer.fromGoalName, to: transfer.toGoalName })}</span>
@@ -233,7 +233,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                 error={over && from ? t("Only {amount} is saved in {goal}", { amount: formatCurrency(fromSaved, currency), goal: from.name }) : undefined}
                 hint={
                   from && to && value > 0
-                    ? t("{goal} goes to {percent}% · {from} keeps {amount}", { goal: to.name, percent: toAfter, from: from.name, amount: formatCurrency(Math.max(0, fromSaved - value), currency) })
+                    ? t("{goal} goes to {percent}% · {from} keeps {amount}", { goal: to.name, percent: formatCount(toAfter, locale), from: from.name, amount: formatCurrency(Math.max(0, fromSaved - value), currency) })
                     : from
                       ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(fromSaved, currency), wallet: from.name })
                       : undefined
