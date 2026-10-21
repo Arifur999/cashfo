@@ -17,15 +17,16 @@ async function authHeaders() {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
+// The API's own message, when it sent one; otherwise none, so the drawer
+// says its own fallback through t() and it reads in Bangla.
+const apiMessage = (body: unknown): string | undefined => getApiErrorMessage(body, "") || undefined;
+
+async function callApi<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
   try {
     const data = await fn();
     return { success: true, data };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage) };
-    }
-    return { success: false, message: fallbackMessage };
+    return { success: false, message: axios.isAxiosError(error) ? apiMessage(error.response?.data) : undefined };
   }
 }
 
@@ -51,14 +52,14 @@ export async function recordSaleAction(businessId: string, input: RecordInvoiceI
   return callApi(async () => {
     const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/receivables`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to record credit sale");
+  });
 }
 
 export async function recordPurchaseAction(businessId: string, input: RecordInvoiceInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
     const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payables`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to record credit purchase");
+  });
 }
 
 export interface RecordPaymentInput {
@@ -74,14 +75,14 @@ export async function receivePaymentAction(businessId: string, input: RecordPaym
   return callApi(async () => {
     const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payments/receive`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to record payment");
+  });
 }
 
 export async function payPaymentAction(businessId: string, input: RecordPaymentInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
     const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payments/pay`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to record payment");
+  });
 }
 
 // On-demand fetch for modals opened from a list row (e.g. /dena-pawna's

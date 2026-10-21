@@ -75,7 +75,7 @@ const PAGE_SIZE = 25;
 // from md, its effect on the right), with the buttons beside them from md.
 // From xl the board's columns, Category and Account folded under the entry
 // so the table fits beside the sidebar at 1280.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_auto_auto] xl:grid-cols-[84px_minmax(160px,1fr)_150px_120px_160px_80px]";
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_auto_auto] xl:grid-cols-[96px_minmax(160px,1fr)_minmax(160px,1.2fr)_128px_180px_80px]";
 // On paper (about 720px wide): the same columns without the buttons.
 const PRINT_COLUMNS = "print:grid-cols-[72px_minmax(0,1fr)_140px_100px_140px] print:gap-x-3";
 // Back to the column's own place once the row has its columns.
@@ -121,7 +121,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const contactsById = new Map(loanContacts.map((contact) => [contact.id, contact]));
   const activeContacts = loanContacts.filter((contact) => contact.status === "ACTIVE");
   const archivedContacts = loanContacts.filter((contact) => contact.status === "ARCHIVED");
-  const rows = transactions.map((transaction) => ({ transaction, ...loanPaymentRow(transaction), contact: transaction.contactId ? contactsById.get(transaction.contactId) : undefined }));
+  const rows = transactions.map((transaction) => ({ transaction, ...loanPaymentRow(transaction, locale), contact: transaction.contactId ? contactsById.get(transaction.contactId) : undefined }));
   const filteredRows = show === "all" ? rows : rows.filter((row) => (show === "profit") === (row.profit !== null));
   // The tiles add up what the list shows: every page of it.
   const totals = loanTotals(filteredRows.map((row) => row.transaction));
@@ -163,7 +163,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     window.history.pushState(null, "", query ? `${PATH}?${query}` : PATH);
   }
 
-  const voidingRow = voiding ? loanPaymentRow(voiding) : null;
+  const voidingRow = voiding ? loanPaymentRow(voiding, locale) : null;
   const voidingProfit = voidingRow?.profit ?? null;
   const voidingName = voiding ? (voiding.contact?.name ?? (voiding.contactId ? contactsById.get(voiding.contactId)?.name : undefined) ?? "—") : "—";
   const voidingWallet = voidingRow?.wallet ?? t("your wallet");
@@ -171,7 +171,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const periodLabel =
     range === "custom"
       ? customFrom || customTo
-        ? t("{from} – {to}", { from: customFrom ? formatDate(customFrom) : "…", to: customTo ? formatDate(customTo) : "…" })
+        ? t("{from} – {to}", { from: customFrom ? formatDate(customFrom, undefined, locale) : "…", to: customTo ? formatDate(customTo, undefined, locale) : "…" })
         : t("All time")
       : t(PERIODS.find((period) => period.value === range)?.label ?? "All time");
   const printLine = [contactsById.get(selectedContactId)?.name ?? t("All banks & people"), show === "all" ? null : t(SHOW_LABELS[show]), periodLabel].filter(Boolean).join(" · ");
@@ -211,10 +211,10 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
 
       <Card padding="none" className="grid grid-cols-2 xl:grid-cols-4">
         <TotalCell label={`${t("Money in@@loan")} · ${t("loans taken, money back")}`}>
-          <AmountText value={totals.in} currency={currency} size="h2" tone="income" signed className={TOTAL_FIGURE} />
+          <AmountText value={totals.in} currency={currency} size="h2" tone={totals.in ? "income" : "neutral"} signed className={cn(TOTAL_FIGURE, !totals.in && "text-ink-muted")} />
         </TotalCell>
         <TotalCell label={`${t("Money out@@loan")} · ${t("loans given, paid back")}`} className="md:border-l">
-          <AmountText value={-totals.out} currency={currency} size="h2" tone="expense" signed className={TOTAL_FIGURE} />
+          <AmountText value={-totals.out} currency={currency} size="h2" tone={totals.out ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !totals.out && "text-ink-muted")} />
         </TotalCell>
         <TotalCell label={`${t("Profit paid")} · ${t("counted as expense")}`} className="border-t xl:border-t-0 xl:border-l">
           <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitPaid ? "text-warning" : "text-ink-muted")}>{formatCurrency(totals.profitPaid, currency)}</span>
@@ -232,7 +232,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         header={
           <div className="flex flex-col gap-3 border-b border-line px-4 py-3 md:px-6">
             <div className="flex flex-wrap items-center gap-3 print:hidden">
-              <NativeSelect size="sm" value={shownContactId} onChange={(event) => navigate({ contactId: event.target.value || undefined })} aria-label={t("Bank / person")} className="text-small">
+              <NativeSelect size="sm" value={shownContactId} onChange={(event) => navigate({ contactId: event.target.value || undefined })} aria-label={t("Bank / person")} frameClassName="max-md:flex-1" className="text-small">
                 <option value="">{t("All banks & people")}</option>
                 {activeContacts.map((contact) => (
                   <option key={contact.id} value={contact.id}>
@@ -254,9 +254,11 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 value={show}
                 onChange={setShow}
                 label={t("Kind")}
-                className="pointer-coarse:[&>button]:h-11"
+                size="coarse"
+                // A phone: the two selects share a row, and this fills the one under them.
+                className="max-md:order-last max-md:flex max-md:w-full max-md:[&>button]:flex-1"
               />
-              <NativeSelect size="sm" value={shownRange} onChange={(event) => setRange(event.target.value as DateRangePreset)} aria-label={t("Period")} className="text-small">
+              <NativeSelect size="sm" value={shownRange} onChange={(event) => setRange(event.target.value as DateRangePreset)} aria-label={t("Period")} frameClassName="max-md:flex-1" className="text-small">
                 {PERIODS.map((period) => (
                   <option key={period.value} value={period.value}>
                     {t(period.label)}
@@ -340,7 +342,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               );
               return (
                 <ListRow key={transaction.id} columns={cn(COLUMNS, PRINT_COLUMNS)} muted={!!cancelled} className="group print:break-inside-avoid">
-                  <ListCell className={cn("col-start-1 row-start-2 text-caption text-ink-2 xl:text-small", AT_XL)}>{formatDate(transaction.transactionDate)}</ListCell>
+                  {/* Below xl the date sits under the name, past the avatar. */}
+                  <ListCell className={cn("col-start-1 row-start-2 text-caption text-ink-2 max-xl:pl-10.5 xl:text-small print:pl-0", AT_XL)}>{formatDate(transaction.transactionDate, undefined, locale)}</ListCell>
                   <ListCell className={cn("col-start-1 row-start-1 flex min-w-0 items-center gap-3", AT_XL)}>
                     <PersonAvatar name={name} src={contact?.photoUrl} kind={contact?.type} size={30} />
                     <span className="flex min-w-0 flex-col">
@@ -438,7 +441,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               </span>
               <span className="flex shrink-0 flex-col items-end gap-px">
                 <span className="font-bold text-ink tabular-nums">{formatCurrency(Math.abs(voidingRow.signedAmount), currency)}</span>
-                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate)}</span>
+                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, locale)}</span>
               </span>
             </div>
           }

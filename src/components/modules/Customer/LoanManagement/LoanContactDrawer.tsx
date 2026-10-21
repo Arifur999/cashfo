@@ -4,6 +4,7 @@ import { Camera, ImagePlus, Trash2, WifiOff, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -20,7 +21,6 @@ import { DIRECTION_META, LOAN_KIND_LABELS, LOAN_KINDS, loanErrorText } from "@/l
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { radioProps } from "./radio";
-import { useOnline } from "./useOnline";
 
 interface LoanContactDrawerProps {
   open: boolean;

@@ -14,7 +14,7 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Contact, LoanBalanceDirection, LoanDashboard, LoanDashboardRow } from "@/lib/customer/api";
-import { formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { contactMatches, DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind, whoPhrase } from "@/lib/customer/loanDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -37,13 +37,15 @@ type Tab = "ALL" | LoanBalanceDirection;
 type Sort = "biggest" | "smallest" | "name";
 
 // From xl the board's columns, a little narrower so a name keeps room
-// beside the sidebar at 1280; below xl each row is the phone's two lines.
-const COLUMNS = "xl:grid-cols-[minmax(0,1fr)_104px_116px_116px_104px_160px]";
+// beside the sidebar at 1280 (the opening a little wider, for its sign);
+// below xl each row is the phone's two lines.
+const COLUMNS = "xl:grid-cols-[minmax(0,1fr)_116px_116px_116px_104px_160px]";
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
 const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-muted)" };
 
-// A dash for nothing, else the figure.
-const figure = (value: string, currency: string, className?: string) => (Number(value) === 0 ? <span className={cn("text-ink-muted", className)}>—</span> : <span className={cn("text-ink tabular-nums", className)}>{formatCurrency(Math.abs(Number(value)), currency)}</span>);
+// A grey dash for nothing, else the figure (in the column's own colour).
+const NOTHING = <span className="text-ink-muted">—</span>;
+const figure = (value: string, currency: string, className?: string) => (Number(value) === 0 ? NOTHING : <span className={cn("text-ink tabular-nums", className)}>{formatCurrency(Math.abs(Number(value)), currency)}</span>);
 
 // Loans: what you are owed and what you owe, then everyone with a balance,
 // filtered by direction. Rows open the statement.
@@ -142,7 +144,9 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               {t("You'll receive")} · <span className="font-semibold text-income">{t("Pawna")}</span>
             </span>
           </span>
-          <AmountText value={totalPawna} currency={currency} size="h2" tone="income" className={PHONE_FIGURE} />
+          {/* Signed from md, the two terms of the net position beside them; the phone board is unsigned. */}
+          <AmountText value={totalPawna} currency={currency} size="h2" tone="income" className={cn(PHONE_FIGURE, "md:hidden")} />
+          <AmountText value={totalPawna} currency={currency} size="h2" tone="income" signed className={cn(PHONE_FIGURE, "max-md:hidden")} />
           <span className="text-caption font-normal text-ink-muted">
             <span className="md:hidden">{sideCaption("PAWNA", "{side} · {who}")}</span>
             <span className="hidden md:inline">{sideCaption("PAWNA", "From {who}")}</span>
@@ -155,7 +159,8 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               {t("You owe")} · <span className="font-semibold text-expense">{t("Dena")}</span>
             </span>
           </span>
-          <AmountText value={totalDena} currency={currency} size="h2" tone="expense" className={PHONE_FIGURE} />
+          <AmountText value={totalDena} currency={currency} size="h2" tone="expense" className={cn(PHONE_FIGURE, "md:hidden")} />
+          <AmountText value={-totalDena} currency={currency} size="h2" tone="expense" signed className={cn(PHONE_FIGURE, "max-md:hidden")} />
           <span className="text-caption font-normal text-ink-muted">
             <span className="md:hidden">{sideCaption("DENA", "{side} · {who}")}</span>
             <span className="hidden md:inline">{sideCaption("DENA", "To {who}")}</span>
@@ -232,7 +237,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             value={tab}
             onChange={setTab}
             label={t("Balance")}
-            size="touch"
+            size="coarse"
             stretch
             className="md:hidden"
           />
@@ -331,7 +336,8 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
         </span>
       </ListCell>
       <ListCell align="end" className="hidden xl:block">
-        {figure(row.openingBalance, currency, "text-ink-2")}
+        {/* Signed and coloured by side, so the column adds up to the Net below it. */}
+        {Number(row.openingBalance) === 0 ? NOTHING : <span className={cn("tabular-nums", Number(row.openingBalance) > 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(row.openingBalance, currency)}</span>}
       </ListCell>
       <ListCell align="end" className="hidden xl:block">
         {figure(row.totalReceive, currency)}

@@ -91,6 +91,17 @@ describe("loanPaymentRow", () => {
     expect(loanPaymentRow(txn("PAYMENT", [entry("CREDIT", "cash", "100"), entry("DEBIT", null, "100", "Receivable")], "POSTED", "orig"))).toMatchObject({ title: "Got money back", signedAmount: -100 });
   });
 
+  it("names the wallet and a profit's account in the reader's language", () => {
+    const bangla = (base: TransactionEntry, nameBn: string | null): TransactionEntry => ({ ...base, account: base.account && { ...base.account, nameBn } });
+    const loan = txn("SALE", [bangla(entry("CREDIT", "cash", "500"), "নগদ")]);
+    expect(loanPaymentRow(loan, "bn").wallet).toBe("নগদ");
+    expect(loanPaymentRow(loan).wallet).toBe("Cash");
+    // No Bangla name: the English one.
+    expect(loanPaymentRow(txn("SALE", [bangla(entry("CREDIT", "cash", "500"), null)]), "bn").wallet).toBe("Cash");
+    const profit = txn("EXPENSE", [bangla(entry("CREDIT", "cash", "50"), "নগদ"), bangla(entry("DEBIT", null, "50", "Interest"), "সুদ")]);
+    expect(loanPaymentRow(profit, "bn").profit).toMatchObject({ wallet: "নগদ", category: "সুদ" });
+  });
+
   it("has no title or amount for a posting that is neither", () => {
     expect(loanPaymentRow(txn("PAYMENT", [entry("DEBIT", null, "100", "Receivable")]))).toMatchObject({ title: null, signedAmount: 0 });
   });

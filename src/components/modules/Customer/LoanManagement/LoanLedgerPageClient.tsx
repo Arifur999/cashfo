@@ -159,7 +159,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
     );
   };
   const rowId = (row: StatementRow) => `${LIST_ID}-${row.transactionId}`;
-  const periodText = periodFrom ? t("{from} – {to}", { from: formatDate(periodFrom), to: formatDate(periodTo) }) : t("All time, up to {date}", { date: formatDate(periodTo) });
+  const periodText = periodFrom ? t("{from} – {to}", { from: formatDate(periodFrom, undefined, locale), to: formatDate(periodTo, undefined, locale) }) : t("All time, up to {date}", { date: formatDate(periodTo, undefined, locale) });
 
   function toggle(key: string) {
     setUnfolded((current) => {
@@ -180,7 +180,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
     const movement = isProfit ? profitCell(Number(row.profitPaid ?? 0), Number(row.profitReceived ?? 0)) : row.credit ? `+ ${formatCurrency(row.credit, currency)}` : row.debit ? `− ${formatCurrency(row.debit, currency)}` : "—";
     return (
       <ListRow key={row.transactionId} id={rowId(row)} columns={GRID} muted={cancelled} className="xl:min-h-13 print:break-inside-avoid">
-        <ListCell className="hidden text-small text-ink-2 xl:block print:block">{formatDate(row.date)}</ListCell>
+        <ListCell className="hidden text-small text-ink-2 xl:block print:block">{formatDate(row.date, undefined, locale)}</ListCell>
         <ListCell className="flex min-w-0 flex-col gap-0.5">
           <span className="flex min-w-0 items-center gap-2">
             <ListRowLink href={`/transactions/${row.transactionId}`} className={cn("truncate", written ? "text-ink" : "text-ink-2", cancelled && "line-through")}>
@@ -197,7 +197,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               </Chip>
             )}
           </span>
-          <span className="truncate text-caption font-normal text-ink-muted xl:hidden print:hidden">{[formatDate(row.date), row.referenceNo].filter(Boolean).join(" · ")}</span>
+          <span className="truncate text-caption font-normal text-ink-muted xl:hidden print:hidden">{[formatDate(row.date, undefined, locale), row.referenceNo].filter(Boolean).join(" · ")}</span>
           {row.referenceNo && <span className="hidden truncate text-caption font-normal text-ink-muted xl:block print:block">{row.referenceNo}</span>}
         </ListCell>
         <ListCell className="hidden xl:block print:hidden">
@@ -237,7 +237,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
     const sum = statementProfit(item.rows);
     const count = formatCount(item.rows.length, locale);
     const label = open ? t(item.paid ? "Hide {count} profit payments" : "Hide {count} profit received", { count }) : t(item.paid ? "{count} more profit payments" : "{count} more profit received", { count });
-    const months = `${formatDate(first.date, "MMM")} – ${formatDate(last.date, "MMM")}`;
+    const months = `${formatDate(first.date, "MMM", locale)} – ${formatDate(last.date, "MMM", locale)}`;
     return (
       <Fragment key={`fold-${item.key}`}>
         <div role="row" data-slot="list-row" className="border-divider [[data-slot=list-row]+&]:border-t">
@@ -293,10 +293,11 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
         title={t("Loan statement")}
         description={t("One bank or person, every entry, with the balance carried forward.")}
         actions={
-          (pdfExportOn || (canManage && activeContacts.length > 0)) && (
+          ((pdfExportOn && ready) || (canManage && activeContacts.length > 0)) && (
             <>
-              {pdfExportOn && (
-                <Button variant="secondary" onClick={() => window.print()} disabled={!ready} className="print:hidden">
+              {/* Only once there is a statement to print. */}
+              {pdfExportOn && ready && (
+                <Button variant="secondary" onClick={() => window.print()} className="print:hidden">
                   <Printer className="text-ink-2" />
                   {t("Print / PDF")}
                 </Button>
@@ -369,11 +370,12 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               {quickPicks.length > 0 && (
                 <>
                   <span className="mt-4 text-caption font-semibold text-ink-muted">{t("People & banks")}</span>
-                  <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto xl:grid-cols-4">
+                  {/* Centred under the heading however many there are, four to a row at xl. */}
+                  <div className="flex w-full flex-wrap justify-center gap-3 xl:max-w-209">
                     {quickPicks.map((pick) => {
                       const side = DIRECTION_META[loanDirection(pick.currentBalance)];
                       return (
-                        <button key={pick.id} type="button" onClick={() => navigate({ contactId: pick.id })} className="flex h-16 w-full min-w-0 items-center gap-3 rounded-md border border-line bg-surface px-4 text-left shadow-card transition-colors hover:border-line-strong xl:w-50">
+                        <button key={pick.id} type="button" onClick={() => navigate({ contactId: pick.id })} className="flex h-16 w-full min-w-0 items-center gap-3 rounded-md border border-line bg-surface px-4 text-left shadow-card transition-colors hover:border-line-strong sm:w-[calc(50%-6px)] xl:w-50">
                           <PersonAvatar name={pick.name} src={pick.photoUrl} kind={pick.type} size={30} />
                           <span className="flex min-w-0 flex-col gap-px">
                             <span className="truncate text-body font-semibold text-ink">{pick.name}</span>
@@ -451,7 +453,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               <ListSummaryRow kind="opening" columns={GRID} className="text-body">
                 <ListCell className={cn("font-semibold text-ink-2", BEFORE_BALANCE)}>
                   {t("Opening balance")}
-                  {periodFrom && ` · ${formatDate(periodFrom)}`}
+                  {periodFrom && ` · ${formatDate(periodFrom, undefined, locale)}`}
                 </ListCell>
                 <ListCell align="end" className={cn("font-semibold tabular-nums", DIRECTION_META[loanDirection(opening)].text)}>
                   {amountWithSide(opening)}
@@ -470,7 +472,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
             {lastPage ? (
               <ListSummaryRow kind="closing" columns={GRID} className="min-h-13 text-body font-semibold">
                 <ListCell className="font-bold text-ink xl:col-span-3 print:col-span-2">
-                  {t("Closing balance")} · {formatDate(periodTo)}
+                  {t("Closing balance")} · {formatDate(periodTo, undefined, locale)}
                 </ListCell>
                 <ListCell align="end" className="hidden text-ink tabular-nums xl:block print:block">
                   {formatCurrency(received, currency)}
