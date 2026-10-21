@@ -85,9 +85,10 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
     startTransition(async () => {
       try {
         const result = editing
-          ? // "" clears the account number; left out (a cash wallet, which
-            // shows no field) it stays as it was.
-            await updateAccountAction(businessId, editing.id, { name: name.trim(), ...(numbered && { accountNumber: accountNumber.trim() }), accountSubtype: subtype })
+          ? // "" clears the account number. Cash has none, so a wallet
+            // turned into Cash (or a cash one holding a stray number) loses it,
+            // as the preview above already shows.
+            await updateAccountAction(businessId, editing.id, { name: name.trim(), accountNumber: numbered ? accountNumber.trim() : "", accountSubtype: subtype })
           : await createAccountAction(businessId, {
               name: name.trim(),
               accountNumber: (numbered && accountNumber.trim()) || undefined,

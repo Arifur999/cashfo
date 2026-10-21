@@ -85,9 +85,14 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
   // The custom days as typed, loaded once each is a whole date.
   const [draft, setDraft] = useState({ from: customFrom ?? "", to: customTo ?? "" });
   const [loaded, setLoaded] = useState({ from: customFrom, to: customTo });
+  // Only the side the URL changed is reset: committing one day must not
+  // wipe the other while it is still being typed.
   if (loaded.from !== customFrom || loaded.to !== customTo) {
     setLoaded({ from: customFrom, to: customTo });
-    setDraft({ from: customFrom ?? "", to: customTo ?? "" });
+    setDraft((current) => ({
+      from: loaded.from !== customFrom ? (customFrom ?? "") : current.from,
+      to: loaded.to !== customTo ? (customTo ?? "") : current.to,
+    }));
   }
 
   function hrefWith(next: Record<string, string | undefined>) {

@@ -145,6 +145,9 @@ export const balanceDictionary: Record<string, string> = {
   "Void this transfer?": "এই ট্রান্সফার বাতিল করবেন?",
   "Both wallets go back to their balances from before this transfer. It stays in your history, marked as voided.": "দুটি ওয়ালেটই এই ট্রান্সফারের আগের ব্যালেন্সে ফিরে যাবে। এটি বাতিল চিহ্নসহ ইতিহাসে থেকে যাবে।",
   "Transfer voided": "ট্রান্সফার বাতিল হয়েছে",
+  // Print, which loads the whole period first when the history has pages.
+  "Couldn't load the transfers to print": "ছাপার জন্য ট্রান্সফারগুলো আনা যায়নি",
+  "Only the latest {count} transfers are printed -- pick a shorter period to print them all.": "শুধু সর্বশেষ {count}টি ট্রান্সফার ছাপা হয়েছে -- সবগুলো ছাপতে ছোট সময়সীমা বেছে নিন।",
 
   // Statement (AccountLedgerPageClient.tsx, AccountPicker.tsx, lib/customer/ledger.ts)
   "Every movement through one account, with a running balance.": "একটি হিসাবের প্রতিটি লেনদেন, চলমান ব্যালেন্সসহ।",

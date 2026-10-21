@@ -113,7 +113,7 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
 
       <div className="relative hidden flex-col gap-1 md:flex">
         <span className="truncate text-h3 tracking-[-0.01em]">{name}</span>
-        <span className="text-small tracking-[0.08em] text-white/75 tabular-nums">{maskAccountNumber(wallet.accountNumber) ?? t("No account number")}</span>
+        <span className="text-small tracking-[0.08em] text-white/75 tabular-nums">{((savings || walletType(wallet) !== "cash") && maskAccountNumber(wallet.accountNumber)) || t("No account number")}</span>
       </div>
 
       {/* The figure is never cut short: when it and the link don't fit on

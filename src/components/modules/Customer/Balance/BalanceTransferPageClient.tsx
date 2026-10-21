@@ -4,8 +4,11 @@ import { ArrowLeftRight, ArrowRight, CircleOff, Eye, Info, PiggyBank, Plus, Prin
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
+import { toast } from "sonner";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
+import Loader from "@/components/shared/Loader";
 import AmountText from "@/components/smartly/AmountText";
 import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
@@ -24,6 +27,7 @@ import { formatDate } from "@/lib/customer/date";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { periodText, transactionHref } from "@/lib/customer/ledger";
 import { cancelledLabel, isCancelled } from "@/lib/customer/transactionDisplay";
+import { listTransfersForPrintAction } from "@/lib/customer/transferActions";
 import { isSavingsTransfer, transferAmount, transferParties, type TransferTotals } from "@/lib/customer/transfers";
 import { walletIcon, walletPalette } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
@@ -52,6 +56,9 @@ interface BalanceTransferPageClientProps {
   // The period resolved on the server, for the printed copy.
   periodFrom?: string;
   periodTo?: string;
+  // Whether the list leaves out what savings goals moved (false on an older
+  // backend), so Print loads the same rows.
+  excludeSavings: boolean;
   today: string;
   pageSizes: number[];
   defaultPageSize: number;
@@ -79,7 +86,7 @@ const CANCELLED_ROW = "[&>[role=cell]:not([data-slot=list-row-actions])]:graysca
 // Transfer: money moved between the customer's own wallets -- what moved
 // in the period, the note that it is never income or expense, and the
 // history, 25 to a page, with a void action on each standing transfer.
-export function BalanceTransferPageClient({ businessId, transfers, meta, totals, complete, wallets, currency, canManage, range, periodFrom, periodTo, today, pageSizes, defaultPageSize }: BalanceTransferPageClientProps) {
+export function BalanceTransferPageClient({ businessId, transfers, meta, totals, complete, wallets, currency, canManage, range, periodFrom, periodTo, excludeSavings, today, pageSizes, defaultPageSize }: BalanceTransferPageClientProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -88,6 +95,10 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
   const pdfExportOn = useFeature("pdf_export");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [voiding, setVoiding] = useState<Transaction | null>(null);
+  // Print's copy of the whole period while the print dialog is open; null
+  // the rest of the time, when the list shows the page on screen.
+  const [printed, setPrinted] = useState<{ transfers: Transaction[]; complete: boolean } | null>(null);
+  const [preparing, setPreparing] = useState(false);
 
   // ?new=1 (Balance's Move money, the drawer's Add a wallet) opens the drawer.
   const asked = canManage && searchParams.get("new") === "1";
@@ -129,6 +140,36 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
     router.push(hrefWith({ limit: size === defaultPageSize ? undefined : String(size) }), { scroll: false });
   }
 
+  // One page is printed as it stands. More than one: the whole period is
+  // loaded first and listed for the paper copy, then the page comes back.
+  async function print() {
+    if (!paged) {
+      window.print();
+      return;
+    }
+    setPreparing(true);
+    try {
+      const result = await listTransfersForPrintAction(businessId, { dateFrom: periodFrom, dateTo: periodTo, excludeSavings });
+      // The screen has rows, so an empty answer is a failed one.
+      if (!result.success || !result.data?.transfers.length) {
+        toast.error(t("Couldn't load the transfers to print"));
+        return;
+      }
+      const loaded = result.data;
+      flushSync(() => {
+        setPreparing(false);
+        setPrinted(loaded);
+      });
+      window.addEventListener("afterprint", () => setPrinted(null), { once: true });
+      window.print();
+    } catch {
+      toast.error(t("Couldn't reach Smartly. Check your connection and try again."));
+    } finally {
+      setPreparing(false);
+    }
+  }
+  const listed = printed?.transfers ?? transfers;
+
   // A wallet's name in the reader's language, from the wallet list where it
   // is there (as the pickers name it), else from the transfer's own entry.
   const lang = displayLanguage(locale);
@@ -161,8 +202,8 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
         actions={
           <>
             {pdfExportOn && meta.total > 0 && (
-              <Button variant="secondary" onClick={() => window.print()} className="print:hidden">
-                <Printer className="text-ink-2" />
+              <Button variant="secondary" onClick={print} disabled={preparing} aria-busy={preparing || undefined} className="print:hidden">
+                {preparing ? <Loader size={16} label={t("Loading...")} /> : <Printer className="text-ink-2" />}
                 {t("Print")}
               </Button>
             )}
@@ -179,8 +220,13 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
       {/* On paper the period switch is gone, so this line says what was printed. */}
       <p className="hidden text-small text-ink-2 print:block">
         {`${periodText(t, periodFrom, periodTo, locale)} · ${t("Printed {date}", { date: formatDate(today, undefined, locale) })}`}
-        {paged && ` · ${t("Page {page} of {total}", { page: formatCount(meta.page, locale), total: formatCount(meta.totalPages, locale) })}`}
+        {paged && !printed && ` · ${t("Page {page} of {total}", { page: formatCount(meta.page, locale), total: formatCount(meta.totalPages, locale) })}`}
       </p>
+      {printed && !printed.complete && (
+        <p className="hidden text-small font-semibold text-ink print:block">
+          {t("Only the latest {count} transfers are printed -- pick a shorter period to print them all.", { count: formatCount(printed.transfers.length, locale) })}
+        </p>
+      )}
 
       {!complete && (
         <Banner tone="warning" inline icon={<TriangleAlert />}>
@@ -271,7 +317,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
                 <span className="sr-only">{t("Actions")}</span>
               </ListHeadCell>
             </ListHead>
-            {transfers.map((transfer) => {
+            {listed.map((transfer) => {
               const parties = namesOf(transfer);
               const cancelled = cancelledLabel(transfer);
               const voided = isCancelled(transfer);
