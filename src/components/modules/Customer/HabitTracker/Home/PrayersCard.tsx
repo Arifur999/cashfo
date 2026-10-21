@@ -52,7 +52,9 @@ const MARKED: Partial<Record<CellState, { word: string; icon: React.ReactNode }>
 // the week so far and the run of full days. A tile opens the "how was it
 // prayed?" menu; on a phone the first tap marks the prayer on time and the
 // next one opens the menu, so a jama'at or qaza mark is never wiped by a tap.
-// A prayer whose time hasn't come yet waits ("Later").
+// A prayer whose time hasn't come yet reads "Later" but can still be marked
+// (joined with the one before it on a journey, or a city's times a little
+// off); on a phone its tap opens the menu, so an early mark is never a slip.
 export function PrayersCard({ trackers, today }: PrayersCardProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
@@ -69,6 +71,14 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
   const [marking, setMarking] = useState<{ item: string; where: "phone" | "desk" } | null>(null);
   const [openFailed, setOpenFailed] = useState(false);
   const creating = useRef(false);
+  // Each tile's button, by "where:item", to take the focus back when its
+  // menu closes: the menu wraps the tile while open, so the button the
+  // focus was on is gone, and the menu has no trigger to return it to.
+  const tiles = useRef(new Map<string, HTMLButtonElement>());
+  const tileRef = (where: "phone" | "desk", item: string) => (el: HTMLButtonElement | null) => {
+    if (el) tiles.current.set(`${where}:${item}`, el);
+    else tiles.current.delete(`${where}:${item}`);
+  };
 
   // No sheet for this month yet: open one. Already there (the Namaz page or
   // another tab opened it at the same time) is as good as opened; a failure,
@@ -102,6 +112,16 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
   function retryOpen() {
     setOpenFailed(false);
     openSheet();
+  }
+
+  // Close the menu and put the focus back on its tile, unless a click
+  // outside already moved it somewhere else.
+  function closeMenu(where: "phone" | "desk", item: string) {
+    setMarking(null);
+    requestAnimationFrame(() => {
+      const focused = document.activeElement;
+      if (!focused || focused === document.body) tiles.current.get(`${where}:${item}`)?.focus();
+    });
   }
 
   function mark(item: string, status: PrayerStatus | null) {
@@ -148,7 +168,19 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
   // The menu around a tile while it is open; the tile alone otherwise.
   const withMenu = (where: "phone" | "desk", item: string, tile: React.ReactNode) =>
     marking?.item === item && marking.where === where && current ? (
-      <PrayerStatusMenu key={item} open onOpenChange={(open) => !open && setMarking(null)} prayer={item} day={today} state={stateOf(item)} marked={marked(item)} onPick={(status) => mark(item, status)}>
+      <PrayerStatusMenu
+        key={item}
+        open
+        onOpenChange={(open) => !open && closeMenu(where, item)}
+        prayer={item}
+        day={today}
+        state={stateOf(item)}
+        marked={marked(item)}
+        onPick={(status) => {
+          closeMenu(where, item);
+          mark(item, status);
+        }}
+      >
         {tile}
       </PrayerStatusMenu>
     ) : (
@@ -192,11 +224,12 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
               item,
               <button
                 key={item}
+                ref={tileRef("phone", item)}
                 type="button"
-                disabled={!current || waiting}
-                // The first tap marks it on time; a marked prayer opens the menu.
-                onClick={() => (marked(item) ? setMarking({ item, where: "phone" }) : mark(item, "ON_TIME"))}
-                aria-haspopup={marked(item) ? "dialog" : undefined}
+                disabled={!current}
+                // The first tap marks it on time; a marked prayer, or one whose time hasn't come, opens the menu.
+                onClick={() => (marked(item) || waiting ? setMarking({ item, where: "phone" }) : mark(item, "ON_TIME"))}
+                aria-haspopup={marked(item) || waiting ? "dialog" : undefined}
                 aria-label={tileLabel(item)}
                 // A prayer still to come stays at full strength; only a sheet not yet loaded fades.
                 className={cn("flex w-full flex-col items-center gap-1 rounded-md py-2", !current && "opacity-60", next ? cn("bg-white", BRAND_INK) : "bg-white/12 text-white")}
@@ -239,7 +272,7 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
               return withMenu(
                 "desk",
                 item,
-                <button key={item} type="button" disabled={!current || later(item)} onClick={() => setMarking({ item, where: "desk" })} aria-haspopup="dialog" aria-label={tileLabel(item)} className={cn("flex w-full flex-col gap-2 rounded-md border p-2 text-left transition-colors disabled:cursor-not-allowed sm:p-3", !current && "opacity-60", prayed ? "border-mint-200 bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
+                <button key={item} ref={tileRef("desk", item)} type="button" disabled={!current} onClick={() => setMarking({ item, where: "desk" })} aria-haspopup="dialog" aria-label={tileLabel(item)} className={cn("flex w-full flex-col gap-2 rounded-md border p-2 text-left transition-colors disabled:cursor-not-allowed sm:p-3", !current && "opacity-60", prayed ? "border-mint-200 bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
                   <span className={cn("truncate text-small font-semibold", prayed ? "text-brand-ink" : "text-ink-2")}>{t(item)}</span>
                   {clock(item, "-mt-1 text-ink", "text-h3 font-bold", "text-caption font-semibold text-ink-muted")}
                   {/* Never wider than its tile: a long word ends in "…" rather than running into the next prayer. */}

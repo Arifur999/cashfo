@@ -44,7 +44,7 @@ function wait(minutes: number, t: (key: string, values?: Record<string, string |
 
 // The board's Namaz hero: the next prayer with its countdown and where the
 // times come from, then today's six times, each prayer marked as it went;
-// a prayer opens the "how was it prayed?" menu once its time has come.
+// a prayer opens the "how was it prayed?" menu, even before its time.
 // Stacked until xl, so six tiles never squeeze into a narrow column.
 export function NamazHero({ current, today, onMark, onSettings, openFailed = false, onRetry }: NamazHeroProps) {
   const { t, locale } = useLocale();
@@ -90,8 +90,10 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
       <button
         key={name}
         type="button"
-        // A prayer still to come can't be marked yet; a mark made by mistake can still be cleared.
-        disabled={!current || (!started && !marked)}
+        // A prayer still to come reads "Later" but can be marked (joined with
+        // the one before it on a journey, or a city's times a little off), as
+        // on Today's card.
+        disabled={!current}
         onClick={() => setMarking(name)}
         aria-haspopup="dialog"
         aria-label={`${t(name)}, ${timeLabel(clockOf(times[name]), t, locale)}, ${status.word}`}

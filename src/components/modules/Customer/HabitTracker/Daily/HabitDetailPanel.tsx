@@ -162,7 +162,9 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
             if (!cell) return <span key={i} className="h-9.5" />;
             const mark = dayMark(habit, shownLogs, cell, today);
             const log = monthLogs.find((l) => l.date.slice(0, 10) === cell);
-            const value = log?.value ?? null;
+            // A zero is no amount: a day brought back to 0 reads as missed,
+            // rest or open, as its week dots do, not as a low amount.
+            const value = log?.value || null;
             const fill = counted && value !== null ? countTone(value, target) : null;
             const current = cell === day;
             const strong = fill === "full" || (!fill && mark === "done");
