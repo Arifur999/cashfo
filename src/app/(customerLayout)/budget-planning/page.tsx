@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 
-// Retired -- "Expense Category" was merged with "Income Category" into the
-// single two-column /categories page. Kept as a redirect stub (rather than
-// deleted outright) so old bookmarks/back-button history don't 404.
+// Retired -- Budget planning became Budget (/categories), the spending
+// limits, while income moved to Income sources. Kept as a redirect stub
+// (rather than deleted outright) so old bookmarks and back-button history
+// don't 404; it keeps the month asked for.
 export default async function BudgetPlanningPage({ searchParams }: PageProps<"/budget-planning">) {
   const params = await searchParams;
   const next = new URLSearchParams();

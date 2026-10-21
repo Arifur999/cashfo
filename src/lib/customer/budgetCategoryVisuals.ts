@@ -504,25 +504,6 @@ const ICON_COMPONENTS: Record<(typeof BUDGET_CATEGORY_ICONS)[number], LucideIcon
   "other-income": Coins,
 };
 
-// Solid background + white icon, matching the reference design's filled
-// category badges (rather than this app's usual "colored icon on neutral
-// background" convention elsewhere) -- budget categories are meant to read
-// as distinct, at-a-glance tags.
-const COLOR_CLASSES: Record<(typeof BUDGET_CATEGORY_COLORS)[number], string> = {
-  blue: "bg-blue-600",
-  green: "bg-emerald-600",
-  purple: "bg-purple-600",
-  orange: "bg-orange-500",
-  pink: "bg-pink-600",
-  yellow: "bg-amber-500",
-  red: "bg-red-600",
-  indigo: "bg-indigo-600",
-  teal: "bg-teal-600",
-  cyan: "bg-cyan-600",
-  violet: "bg-violet-600",
-  lime: "bg-lime-500",
-};
-
 // Friendly label per icon key, for a hover tooltip AND (now that the picker
 // is searchable) the text a search matches against -- the keys themselves
 // are internal-only, e.g. "rental" for what a user should see as "Rental
@@ -695,13 +676,25 @@ export function budgetCategoryIconLabel(icon: string): string {
   return ICON_LABELS[icon as (typeof BUDGET_CATEGORY_ICONS)[number]] ?? icon;
 }
 
-export function budgetCategoryColorClass(color: string): string {
-  return COLOR_CLASSES[color as (typeof BUDGET_CATEGORY_COLORS)[number]] ?? "bg-neutral-500";
+// The dictionary key of an icon's name. Its own context, since the same
+// English word means something else elsewhere ("Sun" is a weekday, "Key"
+// an API key); English shows the label as it is.
+export const iconLabelKey = (icon: string): string => `${budgetCategoryIconLabel(icon)}@@icon`;
+
+// Bangla typed one way (ড় as one letter, or ড and its dot) matches either.
+const comparable = (text: string) => text.normalize("NFD").toLowerCase();
+
+// Whether an icon answers a search: its key, its English label, or its
+// name in the reader's language (`translate`), so "খাবার" finds the food
+// icons as "food" does.
+export function iconMatches(icon: string, query: string, translate: (key: string) => string): boolean {
+  const wanted = comparable(query.trim());
+  if (!wanted) return true;
+  return [icon, budgetCategoryIconLabel(icon), translate(iconLabelKey(icon))].some((text) => comparable(text).includes(wanted));
 }
 
-// Same colors as COLOR_CLASSES above, as actual hex values -- a
-// conic-gradient wedge (Financial Reports' category donut charts) needs a
-// real color, not a Tailwind class name.
+// Each colour name as a hex value, for what needs a real colour rather
+// than a class: the habit drawer's dots and the streak bars.
 const COLOR_HEX: Record<(typeof BUDGET_CATEGORY_COLORS)[number], string> = {
   blue: "#2563eb",
   green: "#059669",
