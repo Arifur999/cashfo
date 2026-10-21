@@ -112,7 +112,7 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: "Goals", href: "/savings-goals/dashboard" },
           { label: "Summary", href: "/savings-goals/overview" },
           { label: "Savings wallets", href: "/savings-goals/wallet" },
-          { label: "Move money", href: "/savings-goals/transfer" },
+          { label: "Move between goals", href: "/savings-goals/transfer" },
         ],
       },
       {
