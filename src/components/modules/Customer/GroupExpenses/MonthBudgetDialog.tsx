@@ -1,6 +1,5 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -17,6 +16,8 @@ import { monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
 import { createGroupMonthBudgetAction, deleteGroupMonthBudgetAction, updateGroupMonthBudgetAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { attempt } from "./attempt";
+import { CloseX } from "./GroupBits";
 
 interface MonthBudgetDialogProps {
   open: boolean;
@@ -61,7 +62,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
     if (!valid || isPending) return;
     const range = monthRangeOf(month);
     startTransition(async () => {
-      const result = editing ? await updateGroupMonthBudgetAction(businessId, editing.id, { budgetAmount: String(value) }) : await createGroupMonthBudgetAction(businessId, { month: range.month, year: range.year, budgetAmount: String(value) });
+      const result = await attempt(() => (editing ? updateGroupMonthBudgetAction(businessId, editing.id, { budgetAmount: String(value) }) : createGroupMonthBudgetAction(businessId, { month: range.month, year: range.year, budgetAmount: String(value) })), t("No connection. Nothing was saved; try again."));
       if (result.success) {
         toast.success(t("Budget saved"));
         onClose();
@@ -75,7 +76,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
   function remove() {
     if (!editing || isPending) return;
     startTransition(async () => {
-      const result = await deleteGroupMonthBudgetAction(businessId, editing.id);
+      const result = await attempt(() => deleteGroupMonthBudgetAction(businessId, editing.id), t("No connection. Nothing was saved; try again."));
       if (result.success) {
         toast.success(t("Budget removed"));
         onClose();
@@ -92,15 +93,13 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
         <form onSubmit={submit} className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
             <AlertDialogTitle className="text-h3 text-ink">{editing ? t("Edit budget") : t("Set a monthly budget")}</AlertDialogTitle>
-            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-              <X className="size-4.5" aria-hidden="true" />
-            </button>
+            <CloseX onClick={onClose} disabled={isPending} />
           </div>
           <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{t("The group is warned at 90% used and shown in red once over.")}</AlertDialogDescription>
 
           <div className="flex flex-col gap-4 px-6 py-4">
             <Field htmlFor="bud-month" label={<span className="text-body font-medium text-ink">{t("Month")}</span>} error={taken ? t("That month already has a budget. Edit it instead.") : undefined}>
-              <NativeSelect id="bud-month" size="md" value={month} onChange={(event) => setMonth(event.target.value)} disabled={!!editing} frameClassName="w-full" invalid={taken}>
+              <NativeSelect id="bud-month" size="md" value={month} onChange={(event) => setMonth(event.target.value)} disabled={!!editing} frameClassName="w-full" invalid={taken} aria-describedby={taken ? "bud-month-error" : undefined}>
                 {choices.map((keyChoice) => (
                   <option key={keyChoice} value={keyChoice}>
                     {monthName(keyChoice, locale, "long", true)}

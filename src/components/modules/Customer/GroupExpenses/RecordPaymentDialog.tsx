@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -12,14 +12,14 @@ import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTit
 import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupMember } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
-import type { MonthRange, Transfer } from "@/lib/customer/groupDisplay";
-import { createGroupContributionAction } from "@/lib/customer/groupExpensesActions";
+import { dayLabel, type MonthRange, type Transfer } from "@/lib/customer/groupDisplay";
+import { createGroupContributionAction, deleteGroupContributionAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { banglaDayMonth } from "@/lib/i18n/banglaDates";
 import { cn } from "@/lib/utils";
+import { attempt } from "./attempt";
 import { dayInMonth } from "./ContributionDrawer";
+import { CloseX } from "./GroupBits";
 import { MemberPicker } from "./MemberPicker";
 
 interface RecordPaymentDialogProps {
@@ -69,20 +69,40 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
   const valid = !!from && !!to && from.id !== to.id && value > 0;
   const date = dayInMonth(range, today);
   const monthLabel = monthName(range.key, locale);
+  const offline = t("No connection. Nothing was saved; try again.");
+
+  // Takes the payer's entry back after the receiver's failed.
+  async function undo(id: string) {
+    const result = await attempt(() => deleteGroupContributionAction(businessId, id), offline);
+    if (result.success) {
+      toast.success(t("Payment undone"));
+      router.refresh();
+    } else {
+      toast.error(result.message ?? t("Failed to delete the contribution"));
+    }
+  }
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!valid || isPending || !from || !to) return;
     startTransition(async () => {
       const extra = note.trim() ? ` · ${note.trim()}` : "";
-      const deposit = await createGroupContributionAction(businessId, { groupMemberId: from.id, amount: String(value), kind: "SETTLE", date, note: `${t("Paid to")} ${to.name}${extra}` });
+      const deposit = await attempt(() => createGroupContributionAction(businessId, { groupMemberId: from.id, amount: String(value), kind: "SETTLE", date, note: `${t("Paid to {name}", { name: to.name })}${extra}` }), offline);
       if (!deposit.success) {
         toast.error(deposit.message ?? t("Failed to record the payment"));
         return;
       }
-      const back = await createGroupContributionAction(businessId, { groupMemberId: to.id, amount: String(-value), kind: "SETTLE", date, note: `${t("Received from")} ${from.name}${extra}` });
+      const back = await attempt(() => createGroupContributionAction(businessId, { groupMemberId: to.id, amount: String(-value), kind: "SETTLE", date, note: `${t("Received from {name}", { name: from.name })}${extra}` }), offline);
       if (!back.success) {
-        toast.error(back.message ?? t("The payer's entry was saved, but not the receiver's. Add a return for them by hand."));
+        // Half a payment: the deposit stands. Say so, offer to take it
+        // back, and shut the dialog so a second Save can't add it twice.
+        const depositId = deposit.data?.id;
+        toast.error(t("The payer's entry was saved, but not the receiver's. Add a return for them by hand, or undo the payment."), {
+          description: back.message,
+          duration: 15_000,
+          action: depositId ? { label: t("Undo"), onClick: () => void undo(depositId) } : undefined,
+        });
+        onClose();
         router.refresh();
         return;
       }
@@ -103,29 +123,28 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
       <AlertDialogContent className="w-135 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
-        <form onSubmit={submit} className="flex flex-col">
+        <form onSubmit={submit} className="flex max-h-[calc(100dvh-32px)] flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
-            <AlertDialogTitle className="text-h3 text-ink">{t("Record a payment")}</AlertDialogTitle>
-            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-              <X className="size-4.5" aria-hidden="true" />
-            </button>
+            <AlertDialogTitle className="text-h3 text-ink">{t("Record payment")}</AlertDialogTitle>
+            <CloseX onClick={onClose} disabled={isPending} />
           </div>
           <AlertDialogDescription className="sr-only">{t("One member pays another to settle the month.")}</AlertDialogDescription>
 
-          <div className="flex flex-col gap-4 px-6 py-5">
-            <div className="grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-end gap-2">
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-6 py-5">
+            {/* Side by side from sm up; stacked on a phone, the arrow pointing down. */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] sm:items-end">
               <Field htmlFor="pay-from" label={label(t("Who paid"))}>
-                <MemberPicker id="pay-from" members={active} value={fromId} onChange={setFromId} currency={currency} balances={balances} exclude={toId} />
+                <MemberPicker id="pay-from" label={t("Who paid")} members={active} value={fromId} onChange={setFromId} currency={currency} balances={balances} exclude={toId} />
               </Field>
-              <span className="flex h-13.5 items-center justify-center text-ink-muted">
-                <ArrowRight className="size-4.5" aria-hidden="true" />
+              <span className="flex h-6 items-center justify-center text-ink-muted sm:h-13.5">
+                <ArrowRight className="size-4.5 max-sm:rotate-90" aria-hidden="true" />
               </span>
               <Field htmlFor="pay-to" label={label(t("Paid to"))}>
-                <MemberPicker id="pay-to" members={active} value={toId} onChange={setToId} currency={currency} balances={balances} exclude={fromId} />
+                <MemberPicker id="pay-to" label={t("Paid to")} members={active} value={toId} onChange={setToId} currency={currency} balances={balances} exclude={fromId} />
               </Field>
             </div>
 
-            <div className="grid grid-cols-[minmax(0,1fr)_190px] gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_190px]">
               <Field htmlFor="pay-amount" label={label(t("Amount"))}>
                 <Input
                   id="pay-amount"
@@ -138,11 +157,13 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                   frameClassName="overflow-hidden pl-0"
                 />
               </Field>
-              <Field htmlFor="pay-month" label={label(t("Settles"))}>
-                <span id="pay-month" className="flex h-12 items-center rounded-md border border-line-strong bg-strip px-3 text-body font-medium text-ink">
-                  {monthLabel}
-                </span>
-              </Field>
+              {/* Not a field: the month is the one on show, read only. */}
+              <dl className="flex min-w-0 flex-col gap-2">
+                <dt className="text-small leading-[normal] font-semibold text-ink-2">
+                  <span className="text-body font-medium text-ink">{t("Settles")}</span>
+                </dt>
+                <dd className="flex h-12 items-center rounded-md bg-strip px-3 text-body font-medium text-ink">{monthLabel}</dd>
+              </dl>
             </div>
 
             <Field htmlFor="pay-note" label={label(t("Note"), true)}>
@@ -151,59 +172,49 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
 
             {from && to && (
               <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4 text-small tabular-nums">
-                <span className="text-caption font-semibold text-ink-muted">
-                  {t("Saved as two entries dated")} {locale === "bn" ? banglaDayMonth(date) : formatDate(`${date}T00:00:00.000Z`, "d MMM")}, {t("so")} {monthLabel} {t("evens out")}
-                </span>
+                <span className="text-caption font-semibold text-ink-muted">{t("Saved as two entries dated {date}, so {month} evens out", { date: dayLabel(date, locale), month: monthLabel })}</span>
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">
-                    <b className="font-semibold text-ink">{from.name}</b> · {t("deposit")} · “{t("Paid to")} {to.name}”
+                  <span className="min-w-0 text-ink-2">
+                    <b className="font-semibold text-ink">{from.name}</b> · {t("Deposit")} · “{t("Paid to {name}", { name: to.name })}”
                   </span>
-                  <span className="font-semibold text-income">{formatSignedCurrency(value, currency)}</span>
+                  <span className="shrink-0 font-semibold text-income">{formatSignedCurrency(value, currency)}</span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">
-                    <b className="font-semibold text-ink">{to.name}</b> · {t("return")} · “{t("Received from")} {from.name}”
+                  <span className="min-w-0 text-ink-2">
+                    <b className="font-semibold text-ink">{to.name}</b> · {t("Return")} · “{t("Received from {name}", { name: from.name })}”
                   </span>
-                  <span className="font-semibold text-expense">{formatSignedCurrency(-value, currency)}</span>
+                  <span className="shrink-0 font-semibold text-expense">{formatSignedCurrency(-value, currency)}</span>
                 </div>
                 <span className="h-px bg-line" />
-                <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">
-                    {from.name}
-                    {t("'s balance")}
-                  </span>
+                <div className="flex flex-wrap justify-between gap-x-3">
+                  <span className="text-ink-2">{t("{name}'s balance", { name: from.name })}</span>
                   <span>
                     <span className={signedClass(balances[from.id] ?? 0)}>{formatSignedCurrency(balances[from.id] ?? 0, currency)}</span>
                     <span className="text-ink-muted"> → </span>
                     <b className={cn("font-bold", signedClass(after(from.id, 1)))}>{formatSignedCurrency(after(from.id, 1), currency)}</b>
                   </span>
                 </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">
-                    {to.name}
-                    {t("'s balance")}
-                  </span>
+                <div className="flex flex-wrap justify-between gap-x-3">
+                  <span className="text-ink-2">{t("{name}'s balance", { name: to.name })}</span>
                   <span>
                     <span className={signedClass(balances[to.id] ?? 0)}>{formatSignedCurrency(balances[to.id] ?? 0, currency)}</span>
                     <span className="text-ink-muted"> → </span>
                     <b className={cn("font-bold", signedClass(after(to.id, -1)))}>{formatSignedCurrency(after(to.id, -1), currency)}</b>
                   </span>
                 </div>
-                <div className="flex justify-between gap-3">
+                <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{t("Cash in hand")}</span>
-                  <span className="text-ink-muted">
-                    {formatCurrency(cashInHand, currency)}, {t("unchanged")}
-                  </span>
+                  <span className="text-ink-muted">{t("{amount}, unchanged", { amount: formatCurrency(cashInHand, currency) })}</span>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending} className="max-sm:flex-1">
               {t("Cancel")}
             </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
+            <Button type="submit" disabled={!valid || isPending} className="px-5 max-sm:flex-1">
               {isPending && <Loader />}
               {t("Save payment")}
             </Button>

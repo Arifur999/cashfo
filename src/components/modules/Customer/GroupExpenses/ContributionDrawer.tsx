@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowDownToLine, ArrowUpFromLine, X } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
+import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -13,13 +14,15 @@ import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupContribution, GroupMember } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import type { MonthRange } from "@/lib/customer/groupDisplay";
+import { groupMonthOf, type MonthRange, startDayOf } from "@/lib/customer/groupDisplay";
 import { createGroupContributionAction, updateGroupContributionAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { attempt } from "./attempt";
+import { CloseX, FOCUS_WITHIN } from "./GroupBits";
+import type { ClosedGuard } from "./groupTypes";
 import { MemberPicker } from "./MemberPicker";
-import DayInput from "@/components/smartly/form/DayInput";
 
 interface ContributionDrawerProps {
   open: boolean;
@@ -35,6 +38,7 @@ interface ContributionDrawerProps {
   editing: GroupContribution | null;
   // Open with a member already chosen (from their row or statement).
   presetMemberId?: string | null;
+  closedGuard: ClosedGuard;
 }
 
 type Kind = "DEPOSIT" | "RETURN";
@@ -48,7 +52,7 @@ export function dayInMonth(range: MonthRange, today: string): string {
 // Money a member hands to the fund, or the fund hands back, in the
 // design's drawer: who, deposit or return, how much (with a chip that
 // fills their dues), when and a note, with the balances after saving.
-export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, cashInHand, range, today, editing, presetMemberId = null }: ContributionDrawerProps) {
+export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, cashInHand, range, today, editing, presetMemberId = null, closedGuard }: ContributionDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -59,6 +63,8 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
   const amountField = useAmountField(amount, setAmount, currency);
   const [date, setDate] = useState(today);
   const [note, setNote] = useState("");
+  // A closed month was asked about once already while it is open.
+  const [closedOk, setClosedOk] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -72,6 +78,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
       setAmount(editing ? String(Math.abs(signed)) : "");
       setDate(editing ? editing.date.slice(0, 10) : dayInMonth(range, today));
       setNote(editing?.note ?? "");
+      setClosedOk(false);
     }
   }
 
@@ -83,14 +90,23 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
   const member = active.find((m) => m.id === memberId);
   const balance = balances[memberId] ?? 0;
   const dues = balance < 0 ? -balance : 0;
-  const inMonth = date >= range.from && date <= range.to;
   const valid = memberId.length > 0 && value > 0 && date.length > 0;
+  const monthLabel = monthName(range.key, locale);
+  // The group month the day counts in: with months from the 10th, 5 Oct is September's.
+  const countsIn = monthName(groupMonthOf(date || range.from, startDayOf(range)), locale);
 
-  function save(addAnother: boolean) {
+  async function save(addAnother: boolean) {
     if (!valid || isPending) return;
+    // A new entry (or one moved to another day) inside a closed month: ask
+    // first. An edit was asked about when it was opened.
+    const moved = !editing || editing.date.slice(0, 10) !== date;
+    if (moved && closedGuard.isClosed(date) && !closedOk) {
+      if (!(await closedGuard.ask(date))) return;
+      setClosedOk(true);
+    }
     startTransition(async () => {
       const input = { groupMemberId: memberId, amount: String(signed), date, note: note.trim() || undefined };
-      const result = editing ? await updateGroupContributionAction(businessId, editing.id, { ...input, note: note.trim() }) : await createGroupContributionAction(businessId, input);
+      const result = await attempt(() => (editing ? updateGroupContributionAction(businessId, editing.id, { ...input, note: note.trim() }) : createGroupContributionAction(businessId, input)), t("No connection. Nothing was saved; try again."));
       if (!result.success) {
         toast.error(result.message ?? t("Failed to save the contribution"));
         return;
@@ -100,6 +116,8 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
       if (addAnother) {
         setAmount("");
         setNote("");
+        // Ready for the next one.
+        document.getElementById("con-amount")?.focus();
       } else {
         onClose();
       }
@@ -112,10 +130,9 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
     </span>
   );
 
-  const monthLabel = monthName(range.key, locale);
   const kinds: { value: Kind; icon: React.ReactNode; title: string; sub: string }[] = [
-    { value: "DEPOSIT", icon: <ArrowDownToLine />, title: "Deposit", sub: "Member gives money" },
-    { value: "RETURN", icon: <ArrowUpFromLine />, title: "Return money", sub: "Fund pays back" },
+    { value: "DEPOSIT", icon: <ArrowDownToLine aria-hidden="true" />, title: "Deposit", sub: "Member gives money" },
+    { value: "RETURN", icon: <ArrowUpFromLine aria-hidden="true" />, title: "Return money", sub: "Fund pays back" },
   ];
 
   return (
@@ -123,36 +140,43 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
       <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
         <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <SheetTitle className="text-h3 text-ink">{editing ? t("Edit contribution") : t("Add contribution")}</SheetTitle>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
+          <CloseX onClick={onClose} disabled={isPending} />
         </SheetHeader>
 
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            save(false);
+            void save(false);
           }}
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <Field htmlFor="con-member" label={label(t("Member"))}>
-              <MemberPicker id="con-member" members={active} value={memberId} onChange={setMemberId} currency={currency} balances={balances} />
+              <MemberPicker id="con-member" label={t("Member")} members={active} value={memberId} onChange={setMemberId} currency={currency} balances={balances} />
             </Field>
 
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Type")}</legend>
-              <div role="radiogroup" className="grid grid-cols-2 gap-2">
+              {/* Real radios under the cards: arrow keys move between them. */}
+              <div className="grid grid-cols-2 gap-2">
                 {kinds.map((option) => {
                   const on = kind === option.value;
                   return (
-                    <button key={option.value} type="button" role="radio" aria-checked={on} onClick={() => setKind(option.value)} className={cn("flex h-13.5 items-center gap-3 rounded-md border px-3 text-left transition-colors [&_svg]:size-5 [&_svg]:shrink-0", on ? (option.value === "DEPOSIT" ? "border-[1.5px] border-emerald bg-mint-50 text-emerald" : "border-[1.5px] border-expense bg-expense-soft text-expense") : "border-line bg-surface text-ink-muted hover:border-line-strong")}>
+                    <label
+                      key={option.value}
+                      className={cn(
+                        "relative flex h-13.5 cursor-pointer items-center gap-3 rounded-md border px-3 text-left transition-colors [&_svg]:size-5 [&_svg]:shrink-0",
+                        FOCUS_WITHIN,
+                        on ? (option.value === "DEPOSIT" ? "border-[1.5px] border-emerald bg-mint-50 text-emerald" : "border-[1.5px] border-expense bg-expense-soft text-expense") : "border-line bg-surface text-ink-muted hover:border-line-strong",
+                      )}
+                    >
+                      <input type="radio" name="con-kind" value={option.value} checked={on} onChange={() => setKind(option.value)} className="sr-only" />
                       {option.icon}
-                      <span className="flex flex-col gap-px">
+                      <span className="flex min-w-0 flex-col gap-px">
                         <span className={cn("text-small", on ? "font-bold text-ink" : "font-semibold text-ink")}>{t(option.title)}</span>
                         <span className={cn("text-caption font-normal", on ? "text-current" : "text-ink-muted")}>{t(option.sub)}</span>
                       </span>
-                    </button>
+                    </label>
                   );
                 })}
               </div>
@@ -171,35 +195,32 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
                   frameClassName="overflow-hidden pl-0"
                 />
                 {kind === "DEPOSIT" && dues > 0 && member && (
-                  <button type="button" onClick={() => setAmount(String(dues))} className="mt-2 inline-flex h-6.5 items-center self-start rounded-full border border-mint-200 bg-mint-50 px-3 text-caption font-semibold text-emerald hover:bg-mint-200">
-                    {t("Fill")} {monthLabel} {t("dues")} · {formatCurrency(dues, currency)}
+                  <button type="button" onClick={() => setAmount(String(dues))} className="mt-2 inline-flex h-6.5 items-center self-start rounded-full border border-mint-200 bg-mint-50 px-3 text-caption font-semibold text-brand-ink hover:bg-mint-200">
+                    {t("Fill {month} dues · {amount}", { month: monthLabel, amount: formatCurrency(dues, currency) })}
                   </button>
                 )}
               </Field>
-              <Field htmlFor="con-date" label={label(t("Date"))} hint={inMonth ? `${t("Counts in")} ${monthLabel}` : `${t("Counts in")} ${monthName(date.slice(0, 7) || range.key, locale)}`}>
+              <Field htmlFor="con-date" label={label(t("Date"))} hint={t("Counts in {month}", { month: countsIn })}>
                 <DayInput id="con-date" size="lg" value={date} onChange={setDate} max={today} />
               </Field>
             </div>
 
             <Field htmlFor="con-note" label={label(t("Note"), true)}>
-              <Input id="con-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={140} placeholder={`${monthLabel} ${t("dues, paid in cash")}`} />
+              <Input id="con-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={140} placeholder={t("{month} dues, paid in cash", { month: monthLabel })} />
             </Field>
 
             {member && value > 0 && (
               <div className="flex flex-col gap-2 rounded-md border border-line bg-strip px-4 py-3 text-small tabular-nums">
                 <span className="text-caption font-semibold text-ink-muted">{t("After saving")}</span>
-                <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">
-                    {member.name}
-                    {t("'s")} {monthLabel} {t("balance")}
-                  </span>
+                <div className="flex flex-wrap justify-between gap-x-3">
+                  <span className="text-ink-2">{t("{name}'s {month} balance", { name: member.name, month: monthLabel })}</span>
                   <span>
                     <span className={balance < 0 ? "text-expense" : balance > 0 ? "text-income" : "text-ink-muted"}>{formatSignedCurrency(balance, currency)}</span>
                     <span className="text-ink-muted"> → </span>
                     <b className={cn("font-bold", balance + delta < -0.004 ? "text-expense" : balance + delta > 0.004 ? "text-income" : "text-ink")}>{Math.abs(balance + delta) < 0.005 ? `${formatCurrency(0, currency)} · ${t("settled")}` : formatSignedCurrency(balance + delta, currency)}</b>
                   </span>
                 </div>
-                <div className="flex justify-between gap-3">
+                <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{t("Cash in hand")}</span>
                   <span>
                     <span className="text-ink-muted">{formatCurrency(cashInHand, currency)} → </span>
@@ -210,17 +231,18 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
             )}
           </div>
 
-          <div className={cn("flex items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 py-3")}>
+          <div className={cn("flex flex-wrap items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 py-3")}>
             {!editing && (
-              <Button type="button" variant="secondary" onClick={() => save(true)} disabled={!valid || isPending}>
+              <Button type="button" variant="secondary" onClick={() => void save(true)} disabled={!valid || isPending} className="max-sm:w-full">
                 {t("Save & add another")}
               </Button>
             )}
-            <span className="flex-1" />
-            <Button type="button" variant="ghost" onClick={onClose} disabled={isPending}>
+            <span className="flex-1 max-sm:hidden" />
+            {/* Below md the X closes the sheet. */}
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending} className="hidden md:inline-flex">
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={!valid || isPending} className="px-5">
+            <Button type="submit" disabled={!valid || isPending} className="px-5 max-sm:w-full">
               {isPending && <Loader />}
               {editing ? t("Save changes") : t("Save")}
             </Button>

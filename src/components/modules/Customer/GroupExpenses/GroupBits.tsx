@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { createElement } from "react";
 import Chip from "@/components/smartly/Chip";
 import type { GroupExpenseCategoryOption } from "@/lib/customer/api";
@@ -11,14 +12,15 @@ import { cn } from "@/lib/utils";
 
 // The small pieces the group tabs share.
 
-// "+ ৳ 578  Gets back" / "− ৳ 351  Has to pay" / "৳ 0  Settled".
-export function BalanceCell({ value, currency, className }: { value: number; currency: string; className?: string }) {
+// "+ ৳ 578  Gets back" / "− ৳ 351  Has to pay" / "৳ 0  Settled". Stacked,
+// the chip goes under the figure, so a narrow column still fits it.
+export function BalanceCell({ value, currency, stacked = false, className }: { value: number; currency: string; stacked?: boolean; className?: string }) {
   const { t } = useLocale();
   const even = Math.abs(value) < 0.005;
   const up = value > 0;
   return (
-    <span className={cn("flex items-center justify-end gap-2", className)}>
-      <span className={cn("font-bold tabular-nums", even ? "text-ink" : up ? "text-income" : "text-expense")}>{even ? formatCurrency(0, currency) : formatSignedCurrency(value, currency)}</span>
+    <span className={cn("flex justify-end", stacked ? "flex-col items-end gap-1" : "items-center gap-2", className)}>
+      <span className={cn("font-bold whitespace-nowrap tabular-nums", even ? "text-ink" : up ? "text-income" : "text-expense")}>{even ? formatCurrency(0, currency) : formatSignedCurrency(value, currency)}</span>
       <Chip tone={even ? "neutral" : up ? "income" : "expense"} size="sm">
         {t(even ? "Settled" : up ? "Gets back" : "Has to pay")}
       </Chip>
@@ -31,8 +33,20 @@ export function Figure({ label, value, tone = "text-ink", divided = true }: { la
   return (
     <div className={cn("flex flex-col gap-0.5 pr-5", divided && "border-r border-line")}>
       <span className="text-caption font-normal text-ink-muted">{label}</span>
-      <span className={cn("text-h3 tabular-nums md:text-[22px] md:leading-7", tone)}>{value}</span>
+      <span className={cn("text-h3 tabular-nums md:text-h2", tone)}>{value}</span>
     </div>
+  );
+}
+
+// The X in a drawer's or a dialog's head: 44px under a finger. Disabled
+// while a save runs, as Cancel and Escape are, so a save that fails still
+// finds its drawer open (below md the X is the only way out).
+export function CloseX({ onClick, disabled = false, className }: { onClick: () => void; disabled?: boolean; className?: string }) {
+  const { t } = useLocale();
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} aria-label={t("Close")} className={cn("flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken disabled:pointer-events-none disabled:opacity-50 pointer-coarse:size-11", className)}>
+      <X className="size-4.5" aria-hidden="true" />
+    </button>
   );
 }
 
@@ -51,3 +65,11 @@ export function CategoryTile({ name, categories, size = 26 }: { name: string; ca
 export function categoryBarClass(name: string, categories: GroupExpenseCategoryOption[]): string {
   return categoryTone(categories.find((c) => c.name === name)?.color).fg;
 }
+
+// The Settlement tab's "Settle up" heading: the close dialog's "Record
+// payments first" brings focus there.
+export const SETTLE_UP_ID = "group-settle-up";
+
+// The focus ring of a card that wraps a visually hidden radio or checkbox:
+// the card shows it, since the input itself can't be seen.
+export const FOCUS_WITHIN = "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--focus-ring)";

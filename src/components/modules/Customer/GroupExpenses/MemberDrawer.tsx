@@ -1,21 +1,23 @@
 "use client";
 
-import { Camera, Info, Minus, Plus, X } from "lucide-react";
+import { Camera, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import Field from "@/components/smartly/form/Field";
 import DayInput from "@/components/smartly/form/DayInput";
+import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupMember } from "@/lib/customer/api";
 import { createGroupMemberAction, updateGroupMemberAction, updateGroupSettingsAction, uploadGroupMemberPhotoAction } from "@/lib/customer/groupExpensesActions";
-import { mealText } from "@/lib/customer/groupMeals";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { attempt } from "./attempt";
+import { CloseX, FOCUS_WITHIN } from "./GroupBits";
+import { ShareStepper } from "./ShareStepper";
 
 interface MemberDrawerProps {
   open: boolean;
@@ -28,6 +30,11 @@ interface MemberDrawerProps {
   // start) while the group has nothing recorded yet.
   defaultJoin: string;
 }
+
+const ROLES = [
+  { value: false, title: "Member", sub: "Shares the costs" },
+  { value: true, title: "Manager", sub: "Also holds the cash" },
+];
 
 // Add or edit a member in the design's drawer: a photo, the name, a phone
 // for sending the statement, the day they join (they share costs from then
@@ -79,24 +86,36 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
   }
 
   const valid = name.trim().length > 0;
+  // A photo still uploading lands in this form when it arrives, so the
+  // drawer stays open until then, as it does while saving: shut and opened
+  // for someone else, it would get their photo.
+  const busy = isPending || uploading;
 
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
+  function save(addAnother: boolean) {
     if (!valid || isPending) return;
     startTransition(async () => {
+      const offline = t("No connection. Nothing was saved; try again.");
       const input = { name: name.trim(), phone: phone.trim() || undefined, photoUrl: photoUrl || undefined, shareUnits, joinedOn: joinedOn || null };
-      const result = editing ? await updateGroupMemberAction(businessId, editing.id, input) : await createGroupMemberAction(businessId, input);
-      // The manager is the one who keeps the cash.
-      const id = editing?.id ?? result.data?.id;
-      if (result.success && id && manager !== (id === cashHolderId)) {
-        await updateGroupSettingsAction(businessId, { cashHolderMemberId: manager ? id : null });
-      }
-      if (result.success) {
-        toast.success(editing ? t("Member updated") : t("Member added"));
-        onClose();
-        router.refresh();
-      } else {
+      const result = await attempt(() => (editing ? updateGroupMemberAction(businessId, editing.id, input) : createGroupMemberAction(businessId, input)), offline);
+      if (!result.success) {
         toast.error(result.message ?? (editing ? t("Failed to update member") : t("Failed to add member")));
+        return;
+      }
+      // The manager is the one who keeps the cash: a separate save, with its own answer.
+      const id = editing?.id ?? result.data?.id;
+      const role = id && manager !== (id === cashHolderId) ? await attempt(() => updateGroupSettingsAction(businessId, { cashHolderMemberId: manager ? id : null }), offline) : { success: true };
+      if (!role.success) toast.warning(t(manager ? "Saved, but they couldn't be made the manager" : "Saved, but they are still the manager"));
+      else toast.success(editing ? t("Member updated") : t("Member added"));
+      router.refresh();
+      if (addAnother) {
+        // The next person: a fresh name, phone and photo; the same joining day.
+        setName("");
+        setPhone("");
+        setPhotoUrl("");
+        setManager(false);
+        document.getElementById("mem-name")?.focus();
+      } else {
+        onClose();
       }
     });
   }
@@ -112,19 +131,23 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
   const photo = <img src={photoUrl} alt="" className="size-full object-cover" />;
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
+    <Sheet open={open} onOpenChange={(next) => !next && !busy && onClose()}>
       <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
         <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <SheetTitle className="text-h3 text-ink">{editing ? t("Edit member") : t("Add member")}</SheetTitle>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
+          <CloseX onClick={onClose} disabled={busy} />
         </SheetHeader>
 
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            save(false);
+          }}
+          className="flex min-h-0 flex-1 flex-col"
+        >
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <div className="flex items-center gap-4">
-              <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} aria-label={t("Add a photo (optional)")} className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-dashed border-line-strong bg-surface-sunken text-ink-muted hover:border-emerald hover:text-emerald disabled:opacity-60">
+              <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} aria-label={t("Add a photo (optional)")} className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-dashed border-line-strong bg-surface-sunken text-ink-muted hover:border-emerald hover:text-brand-ink disabled:opacity-60">
                 {uploading ? <Loader size={20} /> : photoUrl ? photo : <Camera className="size-5.5" aria-hidden="true" />}
               </button>
               <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} className="hidden" />
@@ -145,7 +168,7 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
               <Input id="mem-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder="Mahin Rahman" />
             </Field>
             <Field htmlFor="mem-phone" label={label(t("Phone"), true)} hint={t("Used to send the monthly statement on WhatsApp.")}>
-              <Input id="mem-phone" size="md" type="tel" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={20} placeholder="01822-907316" className="tabular-nums" />
+              <Input id="mem-phone" size="md" type="tel" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={20} placeholder="01822-907316" className="tabular-nums" aria-describedby="mem-phone-hint" />
             </Field>
 
             <Field htmlFor="mem-join" label={label(t("Joins on"), !editing && !defaultJoin)} hint={joinedOn ? t("{name} shares costs from this date only. Earlier days stay as they are.", { name: name.trim() || t("They") }) : t("Shares every cost from the start.")}>
@@ -154,17 +177,16 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
 
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Role")}</legend>
-              <div role="radiogroup" className="grid grid-cols-2 gap-2">
-                {[
-                  { value: false, title: "Member", sub: "Shares the costs" },
-                  { value: true, title: "Manager", sub: "Also holds the cash" },
-                ].map((option) => {
+              {/* Real radios under the cards: arrow keys move between them. */}
+              <div className="grid grid-cols-2 gap-2">
+                {ROLES.map((option) => {
                   const on = option.value === manager;
                   return (
-                    <button key={option.title} type="button" role="radio" aria-checked={on} onClick={() => setManager(option.value)} className={cn("flex h-13 flex-col items-start justify-center gap-px rounded-md border px-3 text-left", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
+                    <label key={option.title} className={cn("relative flex h-13 cursor-pointer flex-col items-start justify-center gap-px rounded-md border px-3 text-left", FOCUS_WITHIN, on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
+                      <input type="radio" name="mem-role" checked={on} onChange={() => setManager(option.value)} className="sr-only" />
                       <span className={cn("text-small text-ink", on ? "font-bold" : "font-semibold")}>{t(option.title)}</span>
                       <span className={cn("text-caption", on ? "text-ink-2" : "text-ink-muted")}>{t(option.sub)}</span>
-                    </button>
+                    </label>
                   );
                 })}
               </div>
@@ -173,17 +195,9 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
             <div className="flex items-center justify-between gap-3 rounded-md border border-line px-4 py-3">
               <div className="flex flex-col gap-0.5">
                 <span className="text-body font-medium text-ink">{t("Share units")}</span>
-                <span className="text-caption leading-[1.45] text-ink-muted">{t("Only used when a cost is split by shares, for example a bigger room paying 1.5.")}</span>
+                <span className="text-caption leading-normal text-ink-muted">{t("Only used when a cost is split by shares, for example a bigger room paying 1.5.")}</span>
               </div>
-              <span className="flex h-9.5 shrink-0 items-center overflow-hidden rounded-md border border-line-strong">
-                <button type="button" aria-label={t("Fewer share units")} disabled={shareUnits <= 0.5} onClick={() => setShareUnits(Math.max(0.5, shareUnits - 0.5))} className="flex h-full w-8.5 items-center justify-center bg-strip disabled:opacity-40">
-                  <Minus className="size-3.5" aria-hidden="true" />
-                </button>
-                <span className="w-8.5 text-center text-body-lg font-semibold tabular-nums">{mealText(shareUnits)}</span>
-                <button type="button" aria-label={t("More share units")} disabled={shareUnits >= 100} onClick={() => setShareUnits(shareUnits + 0.5)} className="flex h-full w-8.5 items-center justify-center bg-strip disabled:opacity-40">
-                  <Plus className="size-3.5" aria-hidden="true" />
-                </button>
-              </span>
+              <ShareStepper value={shareUnits} onChange={setShareUnits} />
             </div>
 
             <div className="flex items-start gap-3 rounded-md bg-strip px-4 py-3 text-small leading-relaxed text-ink-2">
@@ -192,11 +206,18 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
             </div>
           </div>
 
-          <div className={cn("flex items-center justify-end gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 py-3")}>
-            <Button type="button" variant="ghost" onClick={onClose} disabled={isPending}>
+          <div className={cn("flex flex-wrap items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 py-3")}>
+            {!editing && (
+              <Button type="button" variant="secondary" onClick={() => save(true)} disabled={!valid || isPending || uploading} className="max-sm:w-full">
+                {t("Save & add another")}
+              </Button>
+            )}
+            <span className="flex-1 max-sm:hidden" />
+            {/* Below md the X closes the sheet. */}
+            <Button type="button" variant="secondary" onClick={onClose} disabled={busy} className="hidden md:inline-flex">
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={!valid || isPending || uploading} className="px-5">
+            <Button type="submit" disabled={!valid || isPending || uploading} className="px-5 max-sm:w-full">
               {isPending && <Loader />}
               {editing ? t("Save changes") : t("Add member")}
             </Button>
