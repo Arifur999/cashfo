@@ -113,7 +113,7 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
           )}
         </div>
         {/* No budget, no bar: an empty "Budget used" bar would say 0% of nothing. */}
-        {status && <ProgressBar value={status.percent} tone={BUDGET_TONE_PROGRESS[status.tone]} label={t("Budget used")} />}
+        {status && <ProgressBar value={status.percent} tone={BUDGET_TONE_PROGRESS[status.tone]} label={t("Budget used")} valueText={t("{percent}% used", { percent: formatCount(status.percent, locale) })} />}
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 rounded-b-lg border-t border-divider bg-strip px-5 py-3 text-small">

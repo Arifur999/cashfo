@@ -119,7 +119,11 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
   const paidInCell = !split ? "hidden md:block" : meals ? "hidden md:block 2xl:hidden" : "hidden md:block xl:hidden";
   const splitCell = meals ? "hidden 2xl:block" : "hidden xl:block";
 
-  const sharedCost = Number(settlement.totalExpense) - Number(settlement.mealExpense);
+  // The figures above the table and its subline follow the rows: the closed
+  // record's when that is picked, else the live ones.
+  const shown = lockedRecord ?? settlement;
+  const shownCash = lockedRecord ? Number(lockedRecord.cashInHand) : view.cash;
+  const sharedCost = Number(shown.totalExpense) - Number(shown.mealExpense);
   // One figure only when everyone pays it: costs split equally, nobody joining mid-month.
   const equal = view.sharedEqually;
   const payments = route === "manager" && holder ? throughManager(settlement.members, holder.id) : view.transfers.map((transfer) => ({ ...transfer, owes: false }));
@@ -129,17 +133,23 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
   return (
     <div className="flex flex-col gap-5">
       <Card padding="none" className="flex flex-wrap items-center gap-5 px-5 py-3">
-        <Figure label={t("Total expense")} value={money(settlement.totalExpense)} />
+        <Figure label={t("Total expense")} value={money(shown.totalExpense)} />
         {meals ? (
           <>
-            <Figure label={t("Meals")} value={mealText(Number(settlement.mealUnits), locale)} />
-            <Figure label={t("Meal rate")} value={money(settlement.mealRate)} tone="text-emerald" />
+            <Figure label={t("Meals")} value={mealText(Number(shown.mealUnits), locale)} />
+            <Figure label={t("Meal rate")} value={money(shown.mealRate)} tone="text-emerald" />
           </>
         ) : (
-          <Figure label={t("Members")} value={formatCount(settlement.memberCount, locale)} />
+          <Figure label={t("Members")} value={formatCount(shown.memberCount, locale)} />
         )}
-        <Figure label={t("Shared cost each")} value={equal ? money(sharedCostEach(settlement)) : "—"} tone={equal && !meals ? "text-emerald" : "text-ink"} />
-        <Figure label={t("Cash in hand")} value={money(view.cash)} tone={view.cash < 0 ? "text-expense" : "text-ink"} divided={false} />
+        <Figure label={t("Shared cost each")} value={equal ? money(sharedCostEach(shown)) : "—"} tone={equal && !meals ? "text-emerald" : "text-ink"} />
+        <Figure label={t("Cash in hand")} value={money(shownCash)} tone={shownCash < 0 ? "text-expense" : "text-ink"} divided={false} />
+        {locked && (
+          <span className="flex items-center gap-1.5 text-caption font-semibold text-ink-2">
+            <Lock className="size-3.5" aria-hidden="true" />
+            {t("Closed record")}
+          </span>
+        )}
         <span className="flex-1" />
         {view.closed ? (
           <span className="flex items-center gap-2 text-small font-semibold text-ink-2">
@@ -172,8 +182,8 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
                 {t("Who spent what")} · {rangeLabel(range, locale)}
               </h2>
               <span className="text-small text-ink-muted">
-                {meals && `${t("Meal cost = meals × {rate}", { rate: money(settlement.mealRate) })} · `}
-                {equal ? t("shared cost = {amount} ÷ {count}", { amount: money(sharedCost), count: formatCount(settlement.memberCount, locale) }) : t("Each cost is shared the way its expense says.")}
+                {meals && `${t("Meal cost = meals × {rate}", { rate: money(shown.mealRate) })} · `}
+                {equal ? t("shared cost = {amount} ÷ {count}", { amount: money(sharedCost), count: formatCount(shown.memberCount, locale) }) : t("Each cost is shared the way its expense says.")}
               </span>
             </div>
             {differs && (

@@ -139,10 +139,12 @@ export function hasActivity(settlement: GroupSettlementResult): boolean {
 
 // The group month before `range`, when it was never closed though the group
 // was already running then (a member was added before it ended): the list
-// reminds the reader to close it.
+// reminds the reader to close it. A record that only overlaps it (the start
+// day moved after 1-30 Sep was closed, so last month is now 10 Sep - 9 Oct)
+// counts too: the server refuses to close a period that overlaps a record.
 export function unclosedPreviousMonth(history: GroupSettlementRecord[], members: Pick<GroupMember, "createdAt">[], range: MonthRange): MonthRange | null {
   const previous = monthRangeOf(shiftMonth(range.key, -1), startDayOf(range));
-  if (closedRecordFor(history, previous)) return null;
+  if (history.some((record) => record.periodStart.slice(0, 10) <= previous.to && record.periodEnd.slice(0, 10) >= previous.from)) return null;
   return members.some((member) => member.createdAt.slice(0, 10) <= previous.to) ? previous : null;
 }
 
