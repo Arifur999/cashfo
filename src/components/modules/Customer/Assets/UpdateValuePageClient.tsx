@@ -73,13 +73,12 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
             <b className="font-semibold">{t(stale.length === 1 ? "{count} asset hasn't been checked in over 6 months." : "{count} assets haven't been checked in over 6 months.", { count: formatCount(stale.length, locale) })}</b>{" "}
             {t(stale.length === 1 ? "Its value may be out of date." : "Their values may be out of date.")}
           </span>
-          {/* Only someone who can update them is pointed at them. The label
-              says what a press does, so it is a plain button, not a toggle. */}
-          {canManage && (
-            <Button variant="secondary" size="sm" onClick={toggleStale} className="border-warning/50 px-3 text-small text-warning hover:bg-warning-soft pointer-coarse:h-11">
-              {filtering ? t("Show all") : t(stale.length === 1 ? "Show it" : "Show them")}
-            </Button>
-          )}
+          {/* Everyone can list which ones; only the rows' Update buttons
+              stay with those who can change them. The label says what a
+              press does, so it is a plain button, not a toggle. */}
+          <Button variant="secondary" size="sm" onClick={toggleStale} className="border-warning/50 px-3 text-small text-warning hover:bg-warning-soft pointer-coarse:h-11">
+            {filtering ? t("Show all") : t(stale.length === 1 ? "Show it" : "Show them")}
+          </Button>
         </div>
       )}
 

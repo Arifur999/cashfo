@@ -16,7 +16,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { deleteAssetAction, updateAssetAction, updateAssetValueAction, type UpdateAssetInput } from "@/lib/customer/assetActions";
-import { categoryVisual, gainChip, lastValued, newValueFloor, valueTimeline } from "@/lib/customer/assetDisplay";
+import { categoryVisual, gainChip, lastValued, latestPurchaseDay, newValueFloor, valueTimeline } from "@/lib/customer/assetDisplay";
 import type { ActionResult } from "@/lib/customer/authActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
@@ -98,11 +98,12 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
   // A typed date can still fall outside the picker's range.
   const valid = next > 0 && date >= floor && date <= today;
 
-  // The purchase date moves only on an asset no wallet paid for (a paid
-  // purchase keeps its posting's date), and only before it is revalued;
-  // the backend refuses it otherwise.
+  // The purchase date moves only on an owned asset no wallet paid for (a
+  // paid purchase keeps its posting's date), and never past a value
+  // recorded since; the backend refuses it otherwise.
   const fromWallet = !!asset.purchaseAccountId;
-  const redate = !fromWallet && asset.valueHistory.length <= 1;
+  const redate = !fromWallet && asset.status === "ACTIVE";
+  const boughtMax = latestPurchaseDay(asset, today);
   // Only what was changed is sent; an emptied note is cleared.
   const changes: UpdateAssetInput = {
     ...(name.trim() !== asset.name.trim() && { name: name.trim() }),
@@ -110,7 +111,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
     ...(notes.trim() !== (asset.notes ?? "").trim() && { notes: notes.trim() || null }),
     ...(redate && bought !== asset.purchaseDate.slice(0, 10) && { purchaseDate: bought }),
   };
-  const detailsValid = name.trim().length > 0 && category.length > 0 && bought <= today && Object.keys(changes).length > 0;
+  const detailsValid = name.trim().length > 0 && category.length > 0 && (!redate || bought <= boughtMax) && Object.keys(changes).length > 0;
 
   // One of the asset actions: a toast either way, and on success the drawer
   // closes and the page reads its assets again. A request that never
@@ -249,10 +250,16 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
               <Field
                 htmlFor="upd-bought"
                 label={label(t("Bought on"))}
-                hint={redate ? undefined : t(fromWallet ? "A purchase paid from a wallet keeps its date. Delete the asset and add it again to change it." : "The purchase date can only change before the asset is revalued or sold.")}
+                hint={
+                  redate
+                    ? boughtMax < today
+                      ? t("It can't be later than the first value recorded after it, on {date}.", { date: formatDate(boughtMax, "d MMM yyyy", locale) })
+                      : undefined
+                    : t(fromWallet ? "A purchase paid from a wallet keeps its date. Delete the asset and add it again to change it." : "A sold asset keeps its purchase date. Undo the sale to change it.")
+                }
               >
                 {redate ? (
-                  <DayInput id="upd-bought" size="md" value={bought} onChange={setBought} max={today} />
+                  <DayInput id="upd-bought" size="md" value={bought} onChange={setBought} max={boughtMax} aria-describedby={boughtMax < today ? "upd-bought-hint" : undefined} />
                 ) : (
                   <Input id="upd-bought" size="md" value={formatDate(asset.purchaseDate, "d MMM yyyy", locale)} readOnly aria-describedby="upd-bought-hint" className="text-ink-2" frameClassName="border-line bg-strip px-3" />
                 )}

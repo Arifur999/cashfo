@@ -9,6 +9,7 @@ import {
   isInitialValueNote,
   isStale,
   lastValued,
+  latestPurchaseDay,
   newValueFloor,
   sparkline,
   typeChips,
@@ -128,6 +129,21 @@ describe("value checks", () => {
     expect(newValueFloor(checked)).toBe("2019-03-15");
     expect(newValueFloor(asset({}))).toBe("2019-03-15");
     expect(newValueFloor(asset({ purchaseDate: "2015-06-01T00:00:00.000Z" }))).toBe("2015-06-01");
+  });
+
+  it("lets the purchase date move up to the first value recorded after it", () => {
+    expect(latestPurchaseDay(asset({}), "2026-10-21")).toBe("2026-10-21");
+    expect(latestPurchaseDay(checked, "2026-10-21")).toBe("2026-09-12");
+    // Added as already owned today at another value: both rows carry today,
+    // and the check written then doesn't pin the date.
+    const addedToday = asset({
+      valueHistory: [
+        { id: "h1", value: "2250000", recordedAt: "2026-10-21T00:00:00.000Z", note: null },
+        { id: "h0", value: "1800000", recordedAt: "2026-10-21T00:00:00.000Z", note: "Initial value" },
+      ],
+    });
+    expect(latestPurchaseDay(addedToday, "2026-10-21")).toBe("2026-10-21");
+    expect(latestPurchaseDay(asset({ valueHistory: [] }), "2026-10-21")).toBe("2026-10-21");
   });
 
   it("knows the backend's first-row notes", () => {

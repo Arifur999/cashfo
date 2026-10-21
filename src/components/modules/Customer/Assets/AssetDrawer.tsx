@@ -55,8 +55,8 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
   // What it's worth today ("I already own it"): follows the price until it
   // is typed over.
   const [worth, setWorth] = useState<string | null>(null);
-  // A wallet picked by hand. Until then the drawer pays from the first one
-  // that covers the price.
+  // A wallet picked by hand. Until then the drawer pays from the first
+  // regular wallet that covers the price.
   const [pickedWalletId, setPickedWalletId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [note, setNote] = useState("");
@@ -82,8 +82,11 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
   const all = [...wallets, ...savingsWallets];
   const covers = (candidate: Account) => Number(candidate.currentBalance) >= value;
   // The hand-picked wallet while this workspace still has it (a switch or a
-  // deleted wallet drops it), else the first that covers the price.
-  const wallet = all.find((candidate) => candidate.id === pickedWalletId) ?? all.find(covers) ?? all[0];
+  // deleted wallet drops it), else the first regular wallet that covers the
+  // price. Money set aside in savings is spent only when picked by hand (or
+  // when there is no regular wallet at all); a short regular wallet says so
+  // below instead.
+  const wallet = all.find((candidate) => candidate.id === pickedWalletId) ?? wallets.find(covers) ?? wallets[0] ?? savingsWallets.find(covers) ?? savingsWallets[0];
   // As the picker names it, in the language on screen.
   const walletName = wallet ? accountDisplayName(wallet, displayLanguage(locale)) : "";
   const short = buying && wallet !== undefined && value > 0 && !covers(wallet);
