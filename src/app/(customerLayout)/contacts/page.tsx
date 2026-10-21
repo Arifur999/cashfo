@@ -1,23 +1,22 @@
-import { redirect } from "next/navigation";
 import { ContactsPageClient } from "@/components/modules/Customer/Books/Contacts/ContactsPageClient";
-import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
-import { getCurrentUser } from "@/lib/customer/auth";
 import { getBusinessContacts } from "@/lib/customer/contacts";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getReceivablesAging } from "@/lib/customer/receivablesPayables";
+import { requireBusinessWorkspace } from "@/lib/customer/requireBusinessWorkspace";
 import { getAppToday } from "@/lib/date";
 
-// Books › Customers and suppliers: everyone the business trades with, read
-// here so the totals and the list arrive together.
-export default async function ContactsPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export const generateMetadata = () => customerPageMetadata("/contacts");
 
-  const activeBusinessId = await resolveActiveBusinessId(user.businesses);
-  if (!activeBusinessId) redirect("/dashboard");
+// Books › Customers and suppliers: everyone the business trades with, read
+// here so the totals and the list arrive together. Only a business
+// workspace has Books; any other shows the way to one.
+export default async function ContactsPage() {
+  const books = await requireBusinessWorkspace();
+  if (!books.ok) return books.notice;
+  const { businessId: activeBusinessId, business: activeBusiness } = books;
 
   const [contacts, receivableAging] = await Promise.all([getBusinessContacts(activeBusinessId), getReceivablesAging(activeBusinessId)]);
-  const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
-  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
+  const canManage = activeBusiness.role === "OWNER" || activeBusiness.role === "ACCOUNTANT";
 
-  return <ContactsPageClient businessId={activeBusinessId} contacts={contacts} receivableAging={receivableAging} canManage={canManage} currency={activeBusiness?.currency ?? "BDT"} today={getAppToday()} />;
+  return <ContactsPageClient businessId={activeBusinessId} contacts={contacts} receivableAging={receivableAging} canManage={canManage} currency={activeBusiness.currency} today={getAppToday()} />;
 }

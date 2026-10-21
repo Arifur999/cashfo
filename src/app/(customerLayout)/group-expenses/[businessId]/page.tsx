@@ -5,7 +5,19 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { getWorkspace } from "@/lib/customer/businesses";
 import { closedRecordFor, groupTabFrom, inMonth, monthChoices, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
 import { getGroupContributions, getGroupExpenseCategories, getGroupExpenses, getGroupMeals, getGroupMembers, getGroupMonthBudgets, getGroupSettings, getGroupSettlement, getGroupSettlementHistory } from "@/lib/customer/groupExpenses";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
+
+// The tab names the group, from the read the page makes; ?tab= goes along
+// for the menu to match on.
+export async function generateMetadata({ params, searchParams }: PageProps<"/group-expenses/[businessId]">) {
+  const [{ businessId }, query] = await Promise.all([params, searchParams]);
+  // A failed read is the page's to show (its error or PIN screen); the tab
+  // keeps the list's name.
+  const user = await getCurrentUser().catch(() => null);
+  const business = user ? await getWorkspace(businessId).catch(() => null) : null;
+  return customerPageMetadata(`/group-expenses/${businessId}`, { query, record: business?.type === "GROUP" ? business.name : null });
+}
 
 // A group, one month at a time. businessId comes from the URL, not the
 // active-workspace cookie: groups open from the list, whatever workspace

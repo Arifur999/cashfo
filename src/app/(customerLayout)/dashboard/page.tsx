@@ -11,6 +11,7 @@ import { appYearMonth, resolveDateRange } from "@/lib/customer/dateRangePresets"
 import { greetingFor, homeDates, hourIn } from "@/lib/customer/greeting";
 import { getHabitTrackers } from "@/lib/customer/habits";
 import { balanceChangePercent, categoryDelta, daysLeftInMonth, loanCounts, savingsRate, topShare } from "@/lib/customer/homeInsights";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
 import { getCategoryBreakdown, getIncomeVsSavingsTrend } from "@/lib/customer/reports";
 import { getSavingsGoals, getSavingsOverview } from "@/lib/customer/savingsGoals";
@@ -21,6 +22,8 @@ import { getVaultStatus } from "@/lib/customer/vault";
 import { APP_TIME_ZONE, getAppToday } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
 import { getPrayerSettings } from "@/lib/customer/habits";
+
+export const generateMetadata = () => customerPageMetadata("/dashboard");
 
 const monthName = (year: number, month: number, locale: "en" | "bn") =>
   new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-GB", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1)));

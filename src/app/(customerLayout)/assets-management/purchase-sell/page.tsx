@@ -3,6 +3,9 @@ import { BuySellPageClient } from "@/components/modules/Customer/Assets/BuySellP
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+
+export const generateMetadata = () => customerPageMetadata("/assets-management/purchase-sell");
 
 export default async function BuySellAssetPage() {
   const user = await getCurrentUser();

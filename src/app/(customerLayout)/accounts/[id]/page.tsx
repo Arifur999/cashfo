@@ -1,12 +1,26 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { AccountDetailPageClient } from "@/components/modules/Customer/Books/Accounts/AccountDetailPageClient";
-import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
-import { displayLanguage } from "@/lib/customer/accountDisplay";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import { getAccount, getAccounts, getAccountSummary, getLedger } from "@/lib/customer/accounts";
-import { getCurrentUser } from "@/lib/customer/auth";
 import { flattenAccounts } from "@/lib/customer/booksDisplay";
 import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { requireBusinessWorkspace } from "@/lib/customer/requireBusinessWorkspace";
 import { getLocale } from "@/lib/i18n/locale";
+
+// The tab names the account in the reader's language, as the page does,
+// from the read the page makes.
+export async function generateMetadata({ params }: PageProps<"/accounts/[id]">) {
+  const { id } = await params;
+  // A failed read is the page's to show (its error or PIN screen); the tab
+  // keeps the list's name. A PIN-locked workspace keeps its records' names
+  // out of the tab, and so out of the browser's history, which outlives the
+  // unlock.
+  const books = await requireBusinessWorkspace().catch(() => null);
+  const account = books?.ok && !books.business.hasPinLock ? await getAccount(books.businessId, id).catch(() => null) : null;
+  const record = account ? accountDisplayName(account, displayLanguage(await getLocale())) : null;
+  return customerPageMetadata(`/accounts/${id}`, { record });
+}
 
 const PRESETS: DateRangePreset[] = ["this-month", "last-month", "this-year", "all", "custom"];
 
@@ -15,11 +29,9 @@ const PRESETS: DateRangePreset[] = ["this-month", "last-month", "this-year", "al
 export default async function AccountDetailPage({ params, searchParams }: PageProps<"/accounts/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
-  const activeBusinessId = await resolveActiveBusinessId(user.businesses);
-  if (!activeBusinessId) redirect("/dashboard");
+  const books = await requireBusinessWorkspace();
+  if (!books.ok) return books.notice;
+  const { businessId: activeBusinessId, business: activeBusiness } = books;
 
   const range = PRESETS.find((preset) => preset === sp.range) ?? "this-month";
   const customFrom = isIsoDay(sp.dateFrom) ? sp.dateFrom : undefined;
@@ -30,8 +42,7 @@ export default async function AccountDetailPage({ params, searchParams }: PagePr
   const [account, groups, ledger, summary, locale] = await Promise.all([getAccount(activeBusinessId, id), getAccounts(activeBusinessId), getLedger(activeBusinessId, id, { dateFrom, dateTo, page }), getAccountSummary(activeBusinessId, id, { dateFrom, dateTo }), getLocale()]);
   if (!account) notFound();
 
-  const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
-  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
+  const canManage = activeBusiness.role === "OWNER" || activeBusiness.role === "ACCOUNTANT";
 
-  return <AccountDetailPageClient businessId={activeBusinessId} account={account} accounts={groups.flatMap((group) => flattenAccounts(group.accounts).map((row) => row.account))} ledger={ledger} summary={summary} canManage={canManage} preferredLanguage={displayLanguage(locale)} currency={activeBusiness?.currency ?? "BDT"} range={range} customFrom={customFrom} customTo={customTo} dateFrom={dateFrom} dateTo={dateTo} />;
+  return <AccountDetailPageClient businessId={activeBusinessId} account={account} accounts={groups.flatMap((group) => flattenAccounts(group.accounts).map((row) => row.account))} ledger={ledger} summary={summary} canManage={canManage} preferredLanguage={displayLanguage(locale)} currency={activeBusiness.currency} range={range} customFrom={customFrom} customTo={customTo} dateFrom={dateFrom} dateTo={dateTo} />;
 }

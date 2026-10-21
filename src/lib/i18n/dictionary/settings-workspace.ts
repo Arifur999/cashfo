@@ -35,8 +35,7 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "New Business Workspace": "নতুন ব্যবসায়িক ওয়ার্কস্পেস",
   "Your current plan does not include business workspaces. Upgrade to add one.":
     "আপনার বর্তমান প্ল্যানে ব্যবসায়িক ওয়ার্কস্পেস অন্তর্ভুক্ত নেই। একটি যোগ করতে আপগ্রেড করুন।",
-  "Your plan allows up to": "আপনার প্ল্যান সর্বোচ্চ",
-  "business workspace(s). Upgrade to add more.": "টি ব্যবসায়িক ওয়ার্কস্পেসের অনুমতি দেয়। আরও যোগ করতে আপগ্রেড করুন।",
+  "Your plan allows up to {count} business workspaces. Upgrade to add more.": "আপনার প্ল্যান সর্বোচ্চ {count}টি ব্যবসায়িক ওয়ার্কস্পেসের অনুমতি দেয়। আরও যোগ করতে আপগ্রেড করুন।",
   "e.g. My Shop": "যেমন: আমার দোকান",
   PIN: "পিন",
   "Optional -- set a PIN to require it when switching into this workspace.":
@@ -105,10 +104,9 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   Accountant: "হিসাবরক্ষক",
   Staff: "কর্মী",
   "A personal or business workspace. Each keeps its own books.": "ব্যক্তিগত বা ব্যবসায়িক ওয়ার্কস্পেস। প্রতিটির নিজস্ব খাতা।",
-  "Mess and family groups open from": "মেস ও পরিবারের গ্রুপ খোলে",
-  "inside any workspace.": "থেকে, যেকোনো ওয়ার্কস্পেসের ভেতরে।",
+  "Mess and family groups open from {place} inside any workspace.": "মেস ও পরিবারের গ্রুপ যেকোনো ওয়ার্কস্পেসের ভেতরে {place} থেকে খোলা যায়।",
   Open: "খুলুন",
-  "Enter the PIN for": "পিন লিখুন:",
+  "Enter the PIN for {name}": "{name}-এর পিন লিখুন",
   "Open workspace": "ওয়ার্কস্পেস খুলুন",
   "has a PIN so others using this device can't open its books.": "-এ পিন দেওয়া আছে, যাতে এই ডিভাইসের অন্য কেউ এর খাতা খুলতে না পারে।",
   "Remove the PIN with your account password": "অ্যাকাউন্টের পাসওয়ার্ড দিয়ে পিন সরান",

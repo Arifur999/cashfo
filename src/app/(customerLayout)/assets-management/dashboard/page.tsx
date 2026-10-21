@@ -3,6 +3,9 @@ import { AssetsDashboardPageClient } from "@/components/modules/Customer/Assets/
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+
+export const generateMetadata = () => customerPageMetadata("/assets-management/dashboard");
 
 export default async function AssetsDashboardPage() {
   const user = await getCurrentUser();

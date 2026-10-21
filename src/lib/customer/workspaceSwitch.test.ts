@@ -52,6 +52,15 @@ describe("switchableWorkspaces / orderWorkspaces", () => {
     expect(workspaceName(personal, "Tanvir Ahmed")).toBe("Tanvir Ahmed");
     expect(workspaceName(alpha, "Tanvir Ahmed")).toBe("Alpha Store");
   });
+
+  // Tanvir's shop opens by default and his Personal workspace doesn't.
+  it("goes by the kind of workspace, not by which one opens by default", () => {
+    const defaultShop = workspace("shop", { name: "Tanvir Ahmed's Shop", isDefault: true });
+    const ownPersonal = workspace("own", { name: "Personal", type: "PERSONAL" });
+    expect(workspaceName(defaultShop, "Tanvir Ahmed")).toBe("Tanvir Ahmed's Shop");
+    expect(workspaceName(ownPersonal, "Tanvir Ahmed")).toBe("Tanvir Ahmed");
+    expect(orderWorkspaces([defaultShop, zebra, ownPersonal]).map((b) => b.id)).toEqual(["own", "shop", "z"]);
+  });
 });
 
 // What switchWorkspaceAction (and the stored choice) will open. The id is

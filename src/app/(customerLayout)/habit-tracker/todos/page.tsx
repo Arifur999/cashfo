@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
 import { TodoBoardPageClient } from "@/components/modules/Customer/HabitTracker/Todos/TodoBoardPageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { isDayKey } from "@/lib/customer/todoDisplay";
 import { getTodoLists, getTodoRepeats } from "@/lib/customer/todos";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/habit-tracker/todos");
 
 // /habit-tracker/todos?day=YYYY-MM-DD; today when no day is asked for.
 export default async function TodosPage({ searchParams }: PageProps<"/habit-tracker/todos">) {

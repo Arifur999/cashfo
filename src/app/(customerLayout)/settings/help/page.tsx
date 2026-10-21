@@ -1,5 +1,8 @@
 import { HelpSection } from "@/components/modules/Customer/Settings/HelpSection";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getSupportMessagesAction } from "@/lib/customer/supportActions";
+
+export const generateMetadata = () => customerPageMetadata("/settings/help");
 
 // /settings/help?open=<question>: a guide can land on its question.
 // /settings/help?message=<id>: the bell or a reply email opens that

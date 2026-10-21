@@ -4,7 +4,10 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBudgetOverview } from "@/lib/customer/budgets";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/categories");
 
 // Budget: expense limits for the month (decision D3). Income lives on
 // Income sources.

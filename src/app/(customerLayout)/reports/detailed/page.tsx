@@ -5,9 +5,12 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { resolveDateRange } from "@/lib/customer/dateRangePresets";
 import { monthName } from "@/lib/customer/insights";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getMonthlyBreakdown } from "@/lib/customer/reports";
 import { reportPeriodFrom, reportShowFrom } from "@/lib/customer/reportTable";
 import { getLocale } from "@/lib/i18n/locale";
+
+export const generateMetadata = () => customerPageMetadata("/reports/detailed");
 
 // Insights › Reports: income and expense by category, a column per month.
 export default async function ReportsPage({ searchParams }: PageProps<"/reports/detailed">) {

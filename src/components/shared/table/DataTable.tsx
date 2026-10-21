@@ -79,7 +79,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
       />
       {totalRows > 0 &&
         (pager ? (
-          <DataTableSimplePager table={table} totalRows={totalRows} pager={pager} focusTargetId={listId} />
+          <DataTableSimplePager table={table} totalRows={totalRows} pager={pager} defaultPageSize={initialPageSize} focusTargetId={listId} />
         ) : (
           <DataTablePagination table={table} totalRows={totalRows} defaultPageSize={initialPageSize} focusTargetId={listId} />
         ))}

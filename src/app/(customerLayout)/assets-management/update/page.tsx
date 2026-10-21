@@ -3,7 +3,10 @@ import { UpdateValuePageClient } from "@/components/modules/Customer/Assets/Upda
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/assets-management/update");
 
 export default async function UpdateAssetValuePage() {
   const user = await getCurrentUser();

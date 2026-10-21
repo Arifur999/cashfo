@@ -3,6 +3,9 @@ import { LoanContactsPageClient } from "@/components/modules/Customer/LoanManage
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getContacts } from "@/lib/customer/contacts";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+
+export const generateMetadata = () => customerPageMetadata("/loan-management/bank-person-list");
 
 // People & banks: everyone with a loan relationship (category LOAN).
 export default async function LoanContactsPage() {

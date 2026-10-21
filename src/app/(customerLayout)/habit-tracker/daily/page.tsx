@@ -5,7 +5,10 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { isIsoDay } from "@/lib/customer/dateRangePresets";
 import { getHabitMonth, getHabits, getHabitStats, getHabitsToday } from "@/lib/customer/habits";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/habit-tracker/daily");
 
 // Daily habits: the habits planned for a day, ticked off as you go, with
 // each one's month on the side. Personal (user-scoped), not a workspace's.

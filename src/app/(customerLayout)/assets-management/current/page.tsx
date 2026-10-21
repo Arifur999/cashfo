@@ -3,6 +3,9 @@ import { MyAssetsPageClient } from "@/components/modules/Customer/Assets/MyAsset
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+
+export const generateMetadata = () => customerPageMetadata("/assets-management/current");
 
 // My assets: what is owned right now (a sold asset lives on the overview).
 export default async function MyAssetsPage() {

@@ -4,7 +4,10 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBudgetOverview } from "@/lib/customer/budgets";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getCategoryBreakdown } from "@/lib/customer/reports";
+
+export const generateMetadata = () => customerPageMetadata("/income-category");
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const lastDayOf = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();

@@ -3,7 +3,10 @@ import { LoanDashboardPageClient } from "@/components/modules/Customer/LoanManag
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getContacts } from "@/lib/customer/contacts";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
+
+export const generateMetadata = () => customerPageMetadata("/loan-management/dashboard");
 
 export default async function LoanManagementDashboardPage() {
   const user = await getCurrentUser();

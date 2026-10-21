@@ -3,6 +3,9 @@ import { AssetCategoriesPageClient } from "@/components/modules/Customer/Assets/
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
+
+export const generateMetadata = () => customerPageMetadata("/assets-management/category");
 
 // Asset categories, with what each one holds today.
 export default async function AssetCategoriesPage() {

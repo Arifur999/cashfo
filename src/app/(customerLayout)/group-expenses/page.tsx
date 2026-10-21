@@ -5,7 +5,10 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { listWorkspaces } from "@/lib/customer/businesses";
 import { budgetFor, closedRecordFor, monthKeyFrom, monthRangeOf } from "@/lib/customer/groupDisplay";
 import { getGroupMembers, getGroupMonthBudgets, getGroupSettings, getGroupSettlement, getGroupSettlementHistory } from "@/lib/customer/groupExpenses";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
+
+export const generateMetadata = () => customerPageMetadata("/group-expenses");
 
 // Not scoped to the active workspace: every GROUP-type workspace the
 // person is a member of, each with this month's figures (one settlement

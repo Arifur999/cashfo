@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { VaultPageClient } from "@/components/modules/Customer/Vault/VaultPageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getVaultStatus } from "@/lib/customer/vault";
+
+export const generateMetadata = () => customerPageMetadata("/password-manager");
 
 // Security › Password vault. Whether a vault password exists is readable
 // with the session alone; everything else needs the vault unlocked.

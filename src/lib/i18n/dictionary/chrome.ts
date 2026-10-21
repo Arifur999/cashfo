@@ -100,6 +100,7 @@ export const chromeDictionary: Record<string, string> = {
   "{group} pages": "{group}-এর পৃষ্ঠাগুলো",
   Breadcrumb: "আপনি এখানে",
   "Today’s tasks": "আজকের কাজ",
+  "Today’s tasks, {count} left": "আজকের কাজ, {count}টি বাকি",
   "left": "বাকি",
   Language: "ভাষা",
   "Switch to dark theme": "ডার্ক থিমে যান",

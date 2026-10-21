@@ -21,6 +21,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { workspaceName } from "@/lib/customer/workspaceSwitch";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { fillNodes } from "@/lib/i18n/fill";
 
 interface ChooseWorkspaceClientProps {
   user: CurrentUser;
@@ -195,7 +196,7 @@ export function ChooseWorkspaceClient({ user, workspaces, initialId, unlockedIds
       </div>
 
       <p className="mt-5 text-small text-ink-muted">
-        {t("Mess and family groups open from")} <b className="text-ink-2">{t("Group expenses")}</b> {t("inside any workspace.")}
+        {fillNodes(t("Mess and family groups open from {place} inside any workspace."), { place: <b className="text-ink-2">{t("Group expenses")}</b> })}
       </p>
 
       <div className="mt-10">
