@@ -13,13 +13,21 @@ import { logoutAction } from "@/app/-actions/authActions";
 // token itself expired), call refreshFailed() to sign out cleanly rather
 // than leave the UI half-authenticated.
 //
-// It also names the active workspace, resolved server-side
-// (lib/customer/activeBusiness.ts). Every account has one workspace now, so
-// there is nothing to switch between here.
+// It also names the open workspace, resolved server-side from the
+// workspace cookie (lib/customer/activeBusiness.ts), and which PIN-locked
+// workspaces this device has already opened. The switchers
+// (Workspace/useWorkspaceSwitch.tsx) read both: switching goes through
+// switchWorkspaceAction, which checks the id and sets the cookie, then a
+// refresh hands this provider the new values. Nothing here reads the
+// cookie or decides what is allowed -- the server and the API do.
 interface AuthContextValue {
   user: CurrentUser;
   activeBusinessId: string | null;
   activeBusiness: UserBusiness | undefined;
+  // PIN-locked workspaces this device holds a live unlock for (all of them
+  // in an admin's read-only view, which the API never asks). Locked ones
+  // missing here ask for the PIN before they open.
+  unlockedBusinessIds: string[];
   logout: () => void;
   refreshFailed: () => void;
 }
@@ -29,10 +37,13 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 interface AuthProviderProps {
   initialUser: CurrentUser;
   initialActiveBusinessId: string | null;
+  unlockedBusinessIds?: string[];
   children: ReactNode;
 }
 
-export function AuthProvider({ initialUser, initialActiveBusinessId, children }: AuthProviderProps) {
+const NONE: string[] = [];
+
+export function AuthProvider({ initialUser, initialActiveBusinessId, unlockedBusinessIds = NONE, children }: AuthProviderProps) {
   // Read straight from the props, never copied into state: router.refresh()
   // re-runs the layout and passes fresh values, which a useState would
   // ignore after the first render.
@@ -47,7 +58,7 @@ export function AuthProvider({ initialUser, initialActiveBusinessId, children }:
   }
 
   return (
-    <AuthContext.Provider value={{ user, activeBusinessId, activeBusiness, logout, refreshFailed: logout }}>
+    <AuthContext.Provider value={{ user, activeBusinessId, activeBusiness, unlockedBusinessIds, logout, refreshFailed: logout }}>
       {children}
     </AuthContext.Provider>
   );

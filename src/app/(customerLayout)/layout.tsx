@@ -11,17 +11,20 @@ import { PlatformProvider } from "@/components/modules/Customer/Providers/Platfo
 import { PrayerSettingsProvider } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 import { ThemeProvider } from "@/components/modules/Customer/Providers/ThemeProvider";
 import { TodayTasksProvider } from "@/components/modules/Customer/Providers/TodayTasksProvider";
+import { ChooseWorkspaceRedirect } from "@/components/modules/Customer/Workspace/ChooseWorkspaceRedirect";
 import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/WorkspaceLockScreen";
 import { MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
-import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
+import { resolveActiveWorkspace } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { isFeatureOn } from "@/lib/customer/features";
 import { getPrayerSettings } from "@/lib/customer/habits";
 import { getPlatform } from "@/lib/customer/platform";
+import { needsWorkspaceChoice, switchableWorkspaces, workspaceName } from "@/lib/customer/workspaceSwitch";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { getTranslationOverrides } from "@/lib/i18n/overrides";
 import { hasWorkspaceUnlock } from "@/lib/tokenUtils";
+import { AddActionsProvider } from "@/components/modules/Customer/Layout/AddActionsProvider";
 
 // The shell reads cookies (the session, the language), so it must be
 // dynamic -- otherwise it gets statically cached for every customer.
@@ -42,20 +45,43 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
     redirect(SESSION_EXPIRED_LOGIN_ROUTE);
   }
 
-  const [activeBusinessId, locale, overrides, prayerSettings] = await Promise.all([resolveActiveBusinessId(user.businesses), getLocale(), getTranslationOverrides(), getPrayerSettings()]);
+  const [workspace, locale, overrides, prayerSettings] = await Promise.all([resolveActiveWorkspace(user.businesses), getLocale(), getTranslationOverrides(), getPrayerSettings()]);
+  const allowDark = isFeatureOn(platform.flags, "dark_mode");
+  const viewAs = Boolean(user.impersonatedBy);
+  const choices = switchableWorkspaces(user.businesses);
+
+  // More than one workspace and none chosen on this device: ask which,
+  // once. The choice is remembered, so the next visit opens straight in.
+  if (needsWorkspaceChoice({ remembered: workspace.remembered, choices: choices.length, viewAs })) {
+    return (
+      <ThemeProvider allowDark={allowDark}>
+        <LocaleProvider initialLocale={locale} overrides={overrides}>
+          <ChooseWorkspaceRedirect />
+        </LocaleProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Which locked workspaces this device has opened, for the switchers. A
+  // super admin's read-only view isn't asked for PINs (the API doesn't ask
+  // it either).
+  const locked = choices.filter((business) => business.hasPinLock);
+  const unlocked = viewAs ? locked.map(() => true) : await Promise.all(locked.map((business) => hasWorkspaceUnlock(business.id)));
+  const unlockedBusinessIds = locked.filter((_, index) => unlocked[index]).map((business) => business.id);
 
   // A PIN-locked workspace asks for its PIN first, on whatever page was
-  // opened, and stays on it once it opens. A super admin's read-only view
-  // isn't asked (the API doesn't ask it either).
-  const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
-  if (activeBusiness?.hasPinLock && !user.impersonatedBy && !(await hasWorkspaceUnlock(activeBusiness.id))) {
+  // opened, and stays on it once it opens.
+  const activeBusiness = workspace.business;
+  const activeBusinessId = activeBusiness?.id ?? null;
+  if (activeBusiness?.hasPinLock && !unlockedBusinessIds.includes(activeBusiness.id)) {
     return (
-      <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>
+      <ThemeProvider allowDark={allowDark}>
         <LocaleProvider initialLocale={locale} overrides={overrides}>
           <WorkspaceLockScreen
             businessId={activeBusiness.id}
-            businessName={activeBusiness.isDefault ? user.name : activeBusiness.name}
+            businessName={workspaceName(activeBusiness, user.name)}
             isOwner={activeBusiness.role === "OWNER"}
+            canChooseAnother={choices.length > 1}
           />
         </LocaleProvider>
       </ThemeProvider>
@@ -63,29 +89,31 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   }
 
   return (
-    <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>
-      <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId}>
+    <ThemeProvider allowDark={allowDark}>
+      <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId} unlockedBusinessIds={unlockedBusinessIds}>
         <LocaleProvider initialLocale={locale} overrides={overrides}>
           <PlatformProvider value={{ flags: platform.flags, supportEmail: platform.supportEmail }}>
             <PrayerSettingsProvider initial={prayerSettings}>
               <TodayTasksProvider>
                 <TopbarProvider>
-                  {/* The Night sidebar on the left; the top bar and the one
-                      scrolling region on the right. */}
-                  <div className="flex h-screen overflow-hidden bg-page print:block print:h-auto print:overflow-visible">
-                    <AppSidebar />
-                    <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
-                      {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
-                      <AppTopbar />
-                      {/* id + tabIndex give the root layout's skip link a target. */}
-                      <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
-                        <OfflineBanner />
-                        <AnnouncementBanner announcements={platform.announcements} />
-                        {children}
-                      </main>
+                  <AddActionsProvider>
+                    {/* The Night sidebar on the left; the top bar and the one
+                        scrolling region on the right. */}
+                    <div className="flex h-screen overflow-hidden bg-page print:block print:h-auto print:overflow-visible">
+                      <AppSidebar />
+                      <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
+                        {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
+                        <AppTopbar />
+                        {/* id + tabIndex give the root layout's skip link a target. */}
+                        <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
+                          <OfflineBanner />
+                          <AnnouncementBanner announcements={platform.announcements} />
+                          {children}
+                        </main>
+                      </div>
                     </div>
-                  </div>
-                  <QuickAddFab />
+                    <QuickAddFab />
+                  </AddActionsProvider>
                 </TopbarProvider>
               </TodayTasksProvider>
             </PrayerSettingsProvider>

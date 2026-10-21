@@ -1,12 +1,17 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { CircleAlert, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import AppForm from "@/components/shared/form/AppForm";
+import Loader from "@/components/shared/Loader";
+import Button from "@/components/smartly/Button";
+import Field from "@/components/smartly/form/Field";
+import Input from "@/components/smartly/form/Input";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { createBusinessAction, getBusinessLimitsAction } from "@/lib/customer/businessActions";
 import type { BusinessLimits, WorkspaceListItem } from "@/lib/customer/api";
-import { Modal } from "@/components/modules/Customer/Shared/Modal";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface CreateWorkspaceModalProps {
@@ -14,13 +19,17 @@ interface CreateWorkspaceModalProps {
   onClose: () => void;
   // Optional -- fires with the newly-created workspace right after the
   // success toast, IN ADDITION TO (not instead of) the router.refresh()
-  // below. Callers that don't need it (the default WorkspaceSwitcher flow)
-  // just omit it; ChooseWorkspaceClient uses it to navigate straight into
-  // the new workspace instead of refreshing the current page.
+  // below. ChooseWorkspaceClient uses it to go straight into the new
+  // workspace instead of staying on the chooser.
   onCreated?: (business: WorkspaceListItem) => void;
+  // Optional -- the success toast then offers "Open it now", which calls
+  // this (Settings › Workspaces switches into it).
+  offerOpen?: (business: WorkspaceListItem) => void;
 }
 
-export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspaceModalProps) {
+// A new business workspace: its name, how to reach it, and an optional PIN.
+// Create stays off while the plan has no room for another one.
+export function CreateWorkspaceModal({ open, onClose, onCreated, offerOpen }: CreateWorkspaceModalProps) {
   const router = useRouter();
   const { t } = useLocale();
   const [name, setName] = useState("");
@@ -57,7 +66,12 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
       .finally(() => setLimitsLoading(false));
   }, [open]);
 
+  const atLimit = limits?.atLimit ?? false;
+  const pinValid = pin.length === 0 || /^\d{4,6}$/.test(pin);
+  const isValid = name.trim().length > 0 && !atLimit && pinValid;
+
   function handleSubmit() {
+    if (!isValid || isPending || limitsLoading) return;
     startTransition(async () => {
       const result = await createBusinessAction({
         name,
@@ -67,96 +81,75 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
         pin: pin || undefined,
       });
       if (result.success) {
-        toast.success(t("Workspace created"));
+        const created = result.data;
+        toast.success(t("Workspace created"), created && offerOpen ? { action: { label: t("Open it now"), onClick: () => offerOpen(created) } } : undefined);
         onClose();
         router.refresh();
-        if (result.data) onCreated?.(result.data);
+        if (created) onCreated?.(created);
       } else {
         toast.error(result.message ?? t("Failed to create workspace"));
       }
     });
   }
 
-  const atLimit = limits?.atLimit ?? false;
-  const pinValid = pin.length === 0 || /^\d{4,6}$/.test(pin);
-  const isValid = name.trim().length > 0 && !atLimit && pinValid;
-
   return (
-    <Modal open={open} onClose={onClose} title={t("New Business Workspace")}>
-      <div className="space-y-4">
-        {!limitsLoading && atLimit && (
-          <p className="rounded-xl bg-brand-danger/10 px-3.5 py-2.5 text-sm text-brand-danger">
-            {limits && limits.maxBusinessWorkspaces === 0
-              ? t("Your current plan does not include business workspaces. Upgrade to add one.")
-              : `${t("Your plan allows up to")} ${limits?.maxBusinessWorkspaces} ${t("business workspace(s). Upgrade to add more.")}`}
-          </p>
-        )}
+    <Dialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
+      <DialogContent showCloseButton={false} aria-describedby={undefined} className="w-110 max-w-[calc(100vw-32px)] gap-0 rounded-lg border border-line bg-surface p-6 text-ink shadow-overlay ring-0">
+        <AppForm onSubmit={handleSubmit} className="flex flex-col gap-5 space-y-0">
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="text-h3 text-ink">{t("New Business Workspace")}</DialogTitle>
+            <button type="button" onClick={onClose} disabled={isPending} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken disabled:opacity-50">
+              <X className="size-4.5" aria-hidden="true" />
+            </button>
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Name")}</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={atLimit}
-            placeholder={t("e.g. My Shop")}
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
-          />
-        </div>
+          {!limitsLoading && atLimit && (
+            <p role="alert" className="flex gap-2 rounded-md bg-expense-soft px-4 py-3 text-small text-expense">
+              <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              {limits && limits.maxBusinessWorkspaces === 0
+                ? t("Your current plan does not include business workspaces. Upgrade to add one.")
+                : `${t("Your plan allows up to")} ${limits?.maxBusinessWorkspaces} ${t("business workspace(s). Upgrade to add more.")}`}
+            </p>
+          )}
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Phone")}</label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            disabled={atLimit}
-            placeholder="e.g. 01XXXXXXXXX"
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
-          />
-        </div>
+          <div className="flex flex-col gap-4">
+            <Field htmlFor="new-workspace-name" label={t("Name")}>
+              <Input id="new-workspace-name" size="md" value={name} onChange={(e) => setName(e.target.value)} disabled={atLimit} placeholder={t("e.g. My Shop")} autoComplete="organization" />
+            </Field>
+            <Field htmlFor="new-workspace-phone" label={t("Phone")}>
+              <Input id="new-workspace-phone" size="md" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={atLimit} placeholder="e.g. 01XXXXXXXXX" autoComplete="tel" />
+            </Field>
+            <Field htmlFor="new-workspace-email" label={t("Email")}>
+              <Input id="new-workspace-email" size="md" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={atLimit} placeholder="e.g. name@example.com" autoComplete="email" />
+            </Field>
+            <Field htmlFor="new-workspace-pin" label={t("PIN")} hint={t("Optional -- set a PIN to require it when switching into this workspace.")}>
+              <Input
+                id="new-workspace-pin"
+                size="md"
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ""))}
+                disabled={atLimit}
+                placeholder={t("4-6 digits")}
+                autoComplete="off"
+                aria-describedby="new-workspace-pin-hint"
+              />
+            </Field>
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("Email")}</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={atLimit}
-            placeholder="e.g. name@example.com"
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">{t("PIN")}</label>
-          <p className="mb-1 text-xs text-neutral-500">{t("Optional -- set a PIN to require it when switching into this workspace.")}</p>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ""))}
-            disabled={atLimit}
-            placeholder={t("4-6 digits")}
-            className="w-full rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:bg-neutral-50 disabled:text-neutral-400"
-          />
-        </div>
-      </div>
-
-      <div className="mt-5 flex justify-end gap-3">
-        <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
-          {t("Cancel")}
-        </button>
-        <button
-          type="button"
-          disabled={!isValid || isPending || limitsLoading}
-          onClick={handleSubmit}
-          className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50"
-        >
-          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {t("Create")}
-        </button>
-      </div>
-    </Modal>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" disabled={!isValid || isPending || limitsLoading}>
+              {isPending && <Loader size={16} onDark label={t("Loading...")} />}
+              {t("Create")}
+            </Button>
+          </div>
+        </AppForm>
+      </DialogContent>
+    </Dialog>
   );
 }

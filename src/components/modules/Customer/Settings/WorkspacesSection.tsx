@@ -1,19 +1,22 @@
 "use client";
 
-import { Building2, CreditCard, Info, Lock, Pencil, Plus, Trash2, UserRound, Users } from "lucide-react";
+import { ArrowRight, Building2, Check, CreditCard, Info, Lock, Pencil, Plus, Trash2, UserRound, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { CreateWorkspaceModal } from "@/components/modules/Customer/Workspace/CreateWorkspaceModal";
 import { EditWorkspaceModal } from "@/components/modules/Customer/Workspace/EditWorkspaceModal";
+import { useWorkspaceSwitch } from "@/components/modules/Customer/Workspace/useWorkspaceSwitch";
+import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import type { WorkspaceListItem } from "@/lib/customer/api";
-import { deleteBusinessAction, listBusinessesAction } from "@/lib/customer/businessActions";
+import { deleteBusinessAction, listBusinessesAction, switchWorkspaceAction } from "@/lib/customer/businessActions";
 import { formatCurrency } from "@/lib/customer/currency";
+import { workspaceName } from "@/lib/customer/workspaceSwitch";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -31,11 +34,14 @@ interface WorkspacesSectionProps {
   initialBusinesses: WorkspaceListItem[];
 }
 
-// Your personal and business workspaces, with what each one costs.
+// Your personal and business workspaces, with what each one costs. Open
+// switches into one and goes to its Home; a new one offers the same in its
+// toast.
 export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps) {
   const { t } = useLocale();
-  const { user } = useAuth();
+  const { user, activeBusinessId } = useAuth();
   const router = useRouter();
+  const switcher = useWorkspaceSwitch({ land: "home" });
   const [businesses, setBusinesses] = useState<WorkspaceListItem[] | null>(initialBusinesses);
   const [editing, setEditing] = useState<WorkspaceListItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -59,7 +65,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
 
   // The personal workspace is literally named "Personal" in the database;
   // it reads better as the account holder's name.
-  const displayName = (business: WorkspaceListItem) => (business.isDefault ? user.name : business.name);
+  const displayName = (business: WorkspaceListItem) => workspaceName(business, user.name);
 
   function remove() {
     if (!removing) return;
@@ -67,6 +73,10 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
     startTransition(async () => {
       const result = await deleteBusinessAction(target.id);
       if (result.success) {
+        // The open workspace is gone: the personal one opens instead, so
+        // the app doesn't stop to ask which.
+        const personal = businesses?.find((business) => business.isDefault);
+        if (target.id === activeBusinessId && personal) await switchWorkspaceAction(personal.id);
         toast.success(t("Workspace deleted"));
         setRemoving(null);
         reload();
@@ -97,12 +107,20 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
           const personal = business.type === "PERSONAL";
           const trialActive = business.trialEndsAt ? new Date(business.trialEndsAt) > new Date() : null;
           const contact = [business.phone, business.email].filter(Boolean).join(" · ");
+          const active = business.id === activeBusinessId;
+          const opening = business.id === switcher.pendingId;
           return (
             <div key={business.id} className="flex flex-col gap-3 border-t border-divider p-5 sm:flex-row sm:items-center sm:gap-4">
               <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md", personal ? "bg-mint-50 text-emerald" : "bg-pillar-loans-soft text-pillar-loans")}>{personal ? <UserRound className="size-5" aria-hidden="true" /> : <Building2 className="size-5" aria-hidden="true" />}</span>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-2">
                   <b className="text-body-lg font-semibold text-ink">{displayName(business)}</b>
+                  {active && (
+                    <Chip tone="mint" size="sm">
+                      <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+                      {t("Active")}
+                    </Chip>
+                  )}
                   {business.isDefault && (
                     <Chip tone="mint" size="sm">
                       {t("Default")}
@@ -111,7 +129,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
                   {business.hasPinLock && (
                     <span title={t("PIN lock on")} className="flex items-center gap-1 text-caption font-semibold text-ink-muted">
                       <Lock className="size-3" aria-hidden="true" />
-                      PIN
+                      {t("PIN")}
                     </span>
                   )}
                   {business.trialEndsAt && (
@@ -130,7 +148,22 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
                   </span>
                 )}
               </span>
-              <span className="flex shrink-0 gap-2">
+              <span className="flex shrink-0 flex-wrap gap-2">
+                {!active && (
+                  // Named for its workspace, or a screen reader lists "Open, Open, Open".
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => switcher.choose(business)}
+                    disabled={switcher.busy}
+                    aria-busy={opening || undefined}
+                    aria-label={t("Open {name}", { name: displayName(business) })}
+                  >
+                    {opening ? <Loader size={14} label={t("Loading...")} /> : switcher.isLocked(business) && <Lock aria-hidden="true" />}
+                    {t("Open")}
+                    {!opening && <ArrowRight aria-hidden="true" />}
+                  </Button>
+                )}
                 {business.role === "OWNER" && (
                   <Button variant="secondary" size="sm" onClick={() => setEditing(business)}>
                     <Pencil />
@@ -181,6 +214,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
           setCreateOpen(false);
           reload();
         }}
+        offerOpen={(created) => switcher.choose(created)}
       />
       <EditWorkspaceModal
         business={editing}
@@ -190,6 +224,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
         }}
       />
       <ConfirmDialog open={removing !== null} onClose={() => setRemoving(null)} onConfirm={remove} isPending={isPending} danger title={t("Delete this workspace?")} description={removing ? `${displayName(removing)} ${t("and everything in it will be removed. This cannot be undone.")}` : ""} confirmLabel={t("Delete")} />
+      {switcher.pinPrompt}
     </div>
   );
 }
