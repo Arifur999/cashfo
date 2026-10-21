@@ -1,26 +1,29 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Printer, ScrollText } from "lucide-react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createElement } from "react";
+import { Printer, ScrollText } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { createElement, useState } from "react";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Input from "@/components/smartly/form/Input";
+import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowLink, ListSummaryRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import Pagination from "@/components/smartly/Pagination";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { accountDisplayName } from "@/lib/customer/accountDisplay";
 import type { Account, AccountLedger, AccountSummary, LanguagePreference } from "@/lib/customer/api";
-import { formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { LEDGER_TYPE_TONE, ledgerDirection } from "@/lib/customer/ledger";
-import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
+import { isSettledDay, LEDGER_TYPE_TONE, ledgerDirection, periodText, readsAsMoney, type StatementLine, statementPage, transactionHref, voidedNet } from "@/lib/customer/ledger";
+import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { walletIcon, walletPalette } from "@/lib/customer/walletVisuals";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { pageHref } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
 import { AccountPicker } from "./AccountPicker";
 
@@ -36,6 +39,11 @@ interface AccountLedgerPageClientProps {
   range: DateRangePreset;
   customFrom?: string;
   customTo?: string;
+  // The period resolved on the server: "This month" is its first day to today.
+  periodFrom?: string;
+  periodTo?: string;
+  // Today in the platform timezone, for the printed copy.
+  today: string;
 }
 
 const PERIODS: { value: DateRangePreset; label: string }[] = [
@@ -46,40 +54,100 @@ const PERIODS: { value: DateRangePreset; label: string }[] = [
   { value: "custom", label: "Custom" },
 ];
 
-const GRID = "grid-cols-[28px_104px_96px_104px_minmax(0,1fr)_112px_112px_124px]";
+// One grid for the heads, the rows and the balance lines. Phones scroll it
+// sideways, as before. Paper gets narrower columns and 12px type, so an A4
+// page holds every column instead of cutting off Out and Balance.
+const COLUMNS =
+  "grid-cols-[36px_104px_96px_104px_minmax(0,1fr)_112px_112px_124px] min-w-240 print:min-w-0 print:grid-cols-[24px_76px_72px_64px_minmax(0,1fr)_88px_88px_96px] print:gap-x-2 print:text-caption";
+const ROW = "tabular-nums print:min-h-0 print:py-1";
 
 // Statement: one account, the period, the equation from its opening balance
-// to its closing one, and every movement in between with a running balance.
-export function AccountLedgerPageClient({ wallets, others, account, ledger, summary, preferredLanguage, currency, accountId, range, customFrom, customTo }: AccountLedgerPageClientProps) {
-  const { t } = useLocale();
+// to its closing one, and every movement in between with a running balance,
+// 50 to a page.
+export function AccountLedgerPageClient({ wallets, others, account, ledger, summary, preferredLanguage, currency, accountId, range, customFrom, customTo, periodFrom, periodTo, today }: AccountLedgerPageClientProps) {
+  const { t, locale } = useLocale();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   // Admin > System > Feature Flags: pdf_export off hides Print / PDF.
   const pdfExportOn = useFeature("pdf_export");
 
-  function updateParams(next: Record<string, string | undefined>) {
+  // The custom days as typed, loaded once each is a whole date.
+  const [draft, setDraft] = useState({ from: customFrom ?? "", to: customTo ?? "" });
+  const [loaded, setLoaded] = useState({ from: customFrom, to: customTo });
+  if (loaded.from !== customFrom || loaded.to !== customTo) {
+    setLoaded({ from: customFrom, to: customTo });
+    setDraft({ from: customFrom ?? "", to: customTo ?? "" });
+  }
+
+  function hrefWith(next: Record<string, string | undefined>) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value) params.set(key, value);
       else params.delete(key);
     }
     params.delete("page");
-    router.push(`/balance/ledger?${params.toString()}`);
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
+
+  // Another account or period is a step Back can undo.
+  function updateParams(next: Record<string, string | undefined>) {
+    router.push(hrefWith(next));
   }
 
   function setRange(value: DateRangePreset) {
     updateParams(value === "custom" ? { range: value } : { range: value === "all" ? undefined : value, dateFrom: undefined, dateTo: undefined });
   }
 
-  function goToPage(page: number) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(page));
-    router.push(`/balance/ledger?${params.toString()}`);
+  // A custom day replaces the URL rather than adding to the history, and
+  // only once it's a whole date (or cleared): typing a year no longer loads
+  // four statements for 0002, 0020 and 0202.
+  function commitDay(key: "dateFrom" | "dateTo", value: string) {
+    if (value && !isSettledDay(value)) return;
+    if ((value || undefined) === (key === "dateFrom" ? customFrom : customTo)) return;
+    router.replace(hrefWith({ [key]: value || undefined }), { scroll: false });
+  }
+
+  function typeDay(side: "from" | "to", value: string) {
+    setDraft((current) => ({ ...current, [side]: value }));
+    if (isSettledDay(value)) commitDay(side === "from" ? "dateFrom" : "dateTo", value);
   }
 
   const ready = account && ledger && summary;
+  const money = account ? readsAsMoney(account) : true;
+  const lines = ledger ? statementPage(ledger) : null;
+  // Only a backend with page balances sends the period's true closing; an
+  // older one's is the page's own, which no equation could match.
+  const residual = ledger && summary && lines?.exact ? voidedNet(ledger, summary) : 0;
   const adjustment = summary ? Number(summary.adjustment) : 0;
-  const pageStart = ledger ? (ledger.meta.page - 1) * ledger.meta.limit : 0;
+  // Transfers only ever move money wallets; another account shows the term
+  // only if it somehow has some.
+  const showTransfers = money || adjustment !== 0;
+  // Four terms fit one line on a wide screen; five keep the grid.
+  const oneLine = 3 + (showTransfers ? 1 : 0) + (residual !== 0 ? 1 : 0) <= 4;
+  const openingLabel = periodFrom ? t("Balance on {date}", { date: formatDate(periodFrom) }) : t("Opening balance");
+  const here = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+  const paged = ledger ? ledger.meta.totalPages > 1 : false;
+
+  const lineText = (line: StatementLine): { label: string; note?: string } => {
+    switch (line.kind) {
+      case "opening":
+        return { label: openingLabel };
+      case "brought-forward":
+        return { label: t("Brought forward"), note: t("From the pages before") };
+      case "carried-forward":
+        return { label: t("Carried forward"), note: t("To the next page") };
+      default:
+        // The rows add up to the closing on their own. The note says how
+        // much of it comes from voids or edits split across two periods,
+        // which the equation above shows as a term of its own.
+        return {
+          label: t("Closing balance"),
+          note: residual !== 0 ? t("Includes {amount} from voids or edits whose other half is in another period", { amount: formatSignedCurrency(residual, currency) }) : undefined,
+        };
+    }
+  };
 
   return (
     <PageFrame className="gap-5">
@@ -88,41 +156,72 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
         title={t("Statement")}
         description={t("Every movement through one account, with a running balance.")}
         actions={
-          pdfExportOn && (
-            <Button variant="secondary" onClick={() => window.print()} disabled={!ready} title={ready ? undefined : t("Pick an account first")} className="disabled:border-line disabled:text-ink-muted disabled:opacity-100 print:hidden">
-              <Printer className={cn("size-4", ready ? "text-ink-2" : "text-line-strong")} />
+          pdfExportOn &&
+          ready && (
+            <Button variant="secondary" onClick={() => window.print()} className="print:hidden">
+              <Printer className="size-4 text-ink-2" />
               {t("Print / PDF")}
             </Button>
           )
         }
       />
 
-      <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-end print:hidden">
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <label htmlFor="ledger-account" className="text-small leading-[normal] font-medium text-ink-2">
+      {/* On paper the filters are gone, so this line says what was printed. */}
+      {ready && (
+        <p className="hidden text-small text-ink-2 print:block">
+          <span className="font-semibold text-ink">{accountDisplayName(account, preferredLanguage)}</span>
+          {` · ${periodText(t, periodFrom, periodTo)} · ${t("Printed {date}", { date: formatDate(today) })}`}
+          {paged && ` · ${t("Page {page} of {total}", { page: formatCount(ledger.meta.page, locale), total: formatCount(ledger.meta.totalPages, locale) })}`}
+        </p>
+      )}
+
+      <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:flex-wrap md:items-end print:hidden">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 md:min-w-72">
+          <label id="ledger-account-label" htmlFor="ledger-account" className="text-small leading-[normal] font-medium text-ink-2">
             {t("Account")}
           </label>
-          <AccountPicker wallets={wallets} others={others} value={accountId} onChange={(id) => updateParams({ accountId: id })} preferredLanguage={preferredLanguage} currency={currency} />
+          <AccountPicker id="ledger-account" labelId="ledger-account-label" wallets={wallets} others={others} value={accountId} onChange={(id) => updateParams({ accountId: id })} preferredLanguage={preferredLanguage} currency={currency} />
         </div>
         <div className="flex flex-col gap-2">
           <span className="text-small leading-[normal] font-medium text-ink-2">{t("Period")}</span>
           <SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={setRange} label={t("Period")} size="lg" className="max-md:w-full max-md:overflow-x-auto" />
         </div>
         {range === "custom" && (
-          <div className="flex items-center gap-2">
-            <Input size="md" type="date" value={customFrom ?? ""} onChange={(event) => updateParams({ dateFrom: event.target.value })} aria-label={t("From")} max={customTo} />
+          // A line of its own, so the account field keeps its room.
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 md:max-w-120 md:basis-full">
+            <Input
+              size="md"
+              type="date"
+              value={draft.from}
+              onChange={(event) => typeDay("from", event.target.value)}
+              onBlur={() => commitDay("dateFrom", draft.from)}
+              onKeyDown={(event) => event.key === "Enter" && commitDay("dateFrom", draft.from)}
+              aria-label={t("From")}
+              max={draft.to || undefined}
+              frameClassName="w-full min-w-0"
+            />
             <span className="text-small text-ink-muted">{t("to")}</span>
-            <Input size="md" type="date" value={customTo ?? ""} onChange={(event) => updateParams({ dateTo: event.target.value })} aria-label={t("To@@date")} min={customFrom} />
+            <Input
+              size="md"
+              type="date"
+              value={draft.to}
+              onChange={(event) => typeDay("to", event.target.value)}
+              onBlur={() => commitDay("dateTo", draft.to)}
+              onKeyDown={(event) => event.key === "Enter" && commitDay("dateTo", draft.to)}
+              aria-label={t("To@@date")}
+              min={draft.from || undefined}
+              frameClassName="w-full min-w-0"
+            />
           </div>
         )}
       </Card>
 
-      {!ready ? (
+      {!ready || !lines ? (
         <Card padding="none" className="flex flex-col items-center gap-3 p-10 text-center">
           <span className="flex size-14 items-center justify-center rounded-lg bg-mint-50 text-emerald">
             <ScrollText className="size-6" aria-hidden="true" />
           </span>
-          <h2 className="mt-2 text-h3 leading-[normal] tracking-normal text-ink">{t("Pick an account to see its ledger")}</h2>
+          <h2 className="mt-2 text-h3 leading-[normal] tracking-normal text-ink">{t("Pick an account to see its statement")}</h2>
           <p className="max-w-115 text-body leading-[1.55] text-ink-muted">{t("You'll see its opening balance, every movement and the running balance, ready to print.")}</p>
           {wallets.length > 0 && (
             <>
@@ -144,109 +243,182 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
         </Card>
       ) : (
         <>
-          <Card className="grid grid-cols-2 gap-3 md:flex md:items-stretch" aria-label={t("Opening balance plus money in, minus money out, plus transfers, equals closing balance")}>
-            <EquationCell label={t("Opening balance")} value={formatCurrency(ledger.balanceBroughtForward, currency)} />
-            <Operator>+</Operator>
-            <EquationCell label={t("Money in")} value={formatCurrency(summary.totalIn, currency)} className="text-income" />
-            <Operator>−</Operator>
-            <EquationCell label={t("Money out")} value={formatCurrency(summary.totalOut, currency)} className="text-expense" />
-            <Operator>±</Operator>
-            <EquationCell label={t("Transfers")} value={adjustment === 0 ? formatCurrency(0, currency) : `${adjustment > 0 ? "+" : "−"} ${formatCurrency(Math.abs(adjustment), currency)}`} className="text-info" />
-            <Operator equals>=</Operator>
-            <div className="col-span-2 flex flex-col gap-1 rounded-md bg-mint-50 px-4 py-2 md:-my-2 md:-mr-2.5 md:flex-[1.2]">
-              <span className="text-caption font-semibold text-emerald">{t("Closing balance")}</span>
-              <span className="text-h2 text-ink tabular-nums">{formatCurrency(ledger.closingBalance, currency)}</span>
+          <Card role="group" aria-label={t("From the opening balance to the closing balance")} className={cn("grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3", oneLine && "xl:flex xl:items-stretch xl:gap-3")}>
+            <EquationCell oneLine={oneLine} label={openingLabel} value={formatCurrency(ledger.balanceBroughtForward, currency)} />
+            {oneLine && <Operator>+</Operator>}
+            <EquationCell oneLine={oneLine} op="+" spoken={t("plus@@equation")} label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={formatCurrency(summary.totalIn, currency)} className={money ? "text-income" : undefined} />
+            {oneLine && <Operator>−</Operator>}
+            <EquationCell oneLine={oneLine} op="−" spoken={t("minus@@equation")} label={money ? t("Money out@@wallet") : t("Decrease@@statement")} value={formatCurrency(summary.totalOut, currency)} className={money ? "text-expense" : undefined} />
+            {showTransfers && (
+              <>
+                {oneLine && <Operator>±</Operator>}
+                {/* Signed figures: the sign says which way, so no spoken operator. */}
+                <EquationCell oneLine={oneLine} op="±" label={t("Transfers & savings")} value={formatSignedCurrency(adjustment, currency)} className="text-info" />
+              </>
+            )}
+            {residual !== 0 && (
+              <>
+                {oneLine && <Operator>±</Operator>}
+                <EquationCell oneLine={oneLine} op="±" label={t("Voided & reversed")} value={formatSignedCurrency(residual, currency)} note={t("From a void or edit whose other half is in another period")} className="text-ink-2" />
+              </>
+            )}
+            {oneLine && <Operator equals>=</Operator>}
+            <div className={cn("col-span-full flex min-w-0 flex-col gap-1 rounded-md bg-mint-50 px-4 py-2", oneLine && "xl:col-auto xl:-my-2 xl:-mr-2.5 xl:flex-[1.2]")}>
+              <span className="text-caption font-semibold text-emerald">
+                <span className="sr-only">{t("equals@@equation")} </span>
+                {t("Closing balance")}
+              </span>
+              <span className={cn("text-ink tabular-nums wrap-anywhere", oneLine ? "text-h3 sm:text-h2 xl:text-h3 2xl:text-h2" : "text-h3 sm:text-h2")}>{formatCurrency(ledger.closingBalance, currency)}</span>
             </div>
           </Card>
 
-          <Card padding="none" className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <div className="min-w-240">
-                <div className={cn("grid items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
-                  <span>#</span>
-                  <span>{t("Date")}</span>
-                  <span>{t("Type")}</span>
-                  <span>{t("Reference")}</span>
-                  <span>{t("Description")}</span>
-                  <span className="text-right">{t("In")}</span>
-                  <span className="text-right">{t("Out")}</span>
-                  <span className="text-right">{t("Balance")}</span>
-                </div>
-                <div className={cn("grid h-12 items-center gap-x-4 border-b border-divider bg-table-head px-6 text-body", GRID)}>
-                  <span />
-                  <span className="col-span-6 font-semibold text-ink-2">{t("Opening balance")}</span>
-                  <span className="text-right font-semibold text-ink tabular-nums">{formatCurrency(ledger.balanceBroughtForward, currency)}</span>
-                </div>
-                {ledger.entries.length === 0 && <p className="px-6 py-10 text-center text-body text-ink-muted">{t("No activity in this range.")}</p>}
-                {ledger.entries.map((row, index) => {
-                  const direction = ledgerDirection(row.entryType, account.accountType);
-                  const voided = row.transactionStatus === "VOIDED";
-                  const inTone = row.transactionType === "TRANSFER" ? "text-info" : "text-income";
-                  return (
-                    <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("grid h-14 items-center gap-x-4 border-b border-divider px-6 text-body text-ink tabular-nums transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
-                      <span className="text-ink-muted">{pageStart + index + 1}</span>
-                      <span className="text-ink-2">{formatDate(row.date)}</span>
-                      <span>
-                        <Chip tone={LEDGER_TYPE_TONE[row.transactionType]} size="sm" className="font-semibold">
-                          {t(TRANSACTION_TYPE_LABELS[row.transactionType])}
-                        </Chip>
-                      </span>
-                      <span className={cn("truncate text-small", row.referenceNo ? "text-ink-2" : "text-ink-muted")}>{row.referenceNo ?? "—"}</span>
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span className={cn("truncate", voided && "line-through")}>{row.description ?? "—"}</span>
-                        {voided && (
-                          <Chip tone="expense" size="sm" className="font-semibold">
-                            {t("Voided")}
-                          </Chip>
-                        )}
-                      </span>
-                      <span className={cn("text-right", direction === "in" ? inTone : "text-ink-muted")}>{direction === "in" ? formatCurrency(row.amount, currency) : "—"}</span>
-                      <span className={cn("text-right", direction === "out" ? "text-expense" : "text-ink-muted")}>{direction === "out" ? formatCurrency(row.amount, currency) : "—"}</span>
-                      <span className="text-right font-semibold">{formatCurrency(row.runningBalance, currency)}</span>
-                    </Link>
-                  );
-                })}
-                <div className={cn("grid h-13 items-center gap-x-4 bg-table-head px-6 text-body tabular-nums", GRID)}>
-                  <span />
-                  <span className="col-span-4 font-bold text-ink">{t("Closing balance")}</span>
-                  <span className="text-right font-semibold text-income">{formatCurrency(summary.totalIn, currency)}</span>
-                  <span className="text-right font-semibold text-expense">{formatCurrency(summary.totalOut, currency)}</span>
-                  <span className="text-right text-title font-bold text-ink">{formatCurrency(ledger.closingBalance, currency)}</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between border-t border-line px-6 py-3 text-small text-ink-muted print:hidden">
-              <span>
-                {ledger.meta.total} {t(ledger.meta.total === 1 ? "entry" : "entries")} · {t("Page")} {ledger.meta.page} {t("of")} {Math.max(1, ledger.meta.totalPages)}
-              </span>
-              <div className="flex gap-2">
-                <button type="button" disabled={ledger.meta.page <= 1} onClick={() => goToPage(ledger.meta.page - 1)} aria-label={t("Previous page")} className="flex size-8 items-center justify-center rounded-md border border-line bg-surface text-ink-2 disabled:opacity-50">
-                  <ChevronLeft className="size-4" aria-hidden="true" />
-                </button>
-                <button type="button" disabled={ledger.meta.page >= ledger.meta.totalPages} onClick={() => goToPage(ledger.meta.page + 1)} aria-label={t("Next page")} className="flex size-8 items-center justify-center rounded-md border border-line bg-surface text-ink-2 disabled:opacity-50">
-                  <ChevronRight className="size-4" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          </Card>
+          <ListCard
+            id="statement-list"
+            label={t("Statement")}
+            scrollable
+            tableClassName="overflow-x-auto print:overflow-visible"
+            footer={
+              ledger.meta.total > 0 && (
+                <ListFooter className="print:hidden">
+                  <Pagination page={ledger.meta.page} totalPages={ledger.meta.totalPages} total={ledger.meta.total} pageSize={ledger.meta.limit} hrefFor={(target) => pageHref(pathname, searchParams, target)} focusTargetId="statement-list" />
+                </ListFooter>
+              )
+            }
+          >
+            <ListHead showOnPhone columns={COLUMNS}>
+              <ListHeadCell>#</ListHeadCell>
+              <ListHeadCell>{t("Date")}</ListHeadCell>
+              <ListHeadCell>{t("Type")}</ListHeadCell>
+              <ListHeadCell>{t("Reference")}</ListHeadCell>
+              <ListHeadCell>{t("Description")}</ListHeadCell>
+              <ListHeadCell align="end">{money ? t("In") : t("Increase@@statement")}</ListHeadCell>
+              <ListHeadCell align="end">{money ? t("Out") : t("Decrease@@statement")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
+            </ListHead>
+            <BalanceLine kind={lines.top.kind} {...lineText(lines.top)} value={formatCurrency(lines.top.balance, currency)} />
+            {ledger.entries.length === 0 && <ListEmpty title={t("No activity in this range.")} />}
+            {ledger.entries.map((row, index) => {
+              const direction = ledgerDirection(row.entryType, account.accountType);
+              // A voided entry and the reversal that undid it both stay in
+              // the running balance, muted and struck through, each with its
+              // note, as the Transfer list shows them.
+              const cancelled = cancelledLabel({ status: row.transactionStatus, reversalOfId: row.reversalOfId ?? null });
+              const voided = cancelled !== null;
+              // A transfer moves money between the customer's own wallets:
+              // blue either way, never expense red. Other accounts only go
+              // up or down, so their figures stay in ink.
+              const tone = !money ? "text-ink" : row.transactionType === "TRANSFER" ? "text-info" : direction === "in" ? "text-income" : "text-expense";
+              const amount = (side: "in" | "out") =>
+                direction === side ? (
+                  <ListCell align="end" className={cn(tone, voided && "line-through")}>
+                    {formatCurrency(row.amount, currency)}
+                  </ListCell>
+                ) : (
+                  <ListCell align="end" className="text-ink-muted">
+                    —
+                  </ListCell>
+                );
+              return (
+                <ListRow key={row.entryId} columns={COLUMNS} muted={voided} className={ROW}>
+                  <ListCell className="text-ink-muted">{formatCount(lines.firstRow + index, locale)}</ListCell>
+                  <ListCell className="text-ink-2">{formatDate(row.date)}</ListCell>
+                  <ListCell>
+                    <Chip tone={LEDGER_TYPE_TONE[row.transactionType]} size="sm" className="font-semibold">
+                      {t(TRANSACTION_TYPE_LABELS[row.transactionType])}
+                    </Chip>
+                  </ListCell>
+                  <ListCell className={cn("truncate text-small print:text-caption", row.referenceNo ? "text-ink-2" : "text-ink-muted")}>{row.referenceNo ?? "—"}</ListCell>
+                  <ListCell className="flex items-center gap-2">
+                    <ListRowLink href={transactionHref(row.transactionId, here)} aria-label={row.description ? undefined : t("View details")} className={cn("truncate print:whitespace-normal", voided && "line-through")}>
+                      {row.description ?? "—"}
+                    </ListRowLink>
+                    {cancelled && (
+                      <Chip tone="expense" size="sm" className="font-semibold">
+                        {t(cancelled)}
+                      </Chip>
+                    )}
+                  </ListCell>
+                  {amount("in")}
+                  {amount("out")}
+                  <ListCell align="end" className="font-semibold">
+                    {formatCurrency(row.runningBalance, currency)}
+                  </ListCell>
+                </ListRow>
+              );
+            })}
+            <BalanceLine kind={lines.bottom.kind} {...lineText(lines.bottom)} value={formatCurrency(lines.bottom.balance, currency)} strong={lines.bottom.kind === "closing"} />
+          </ListCard>
         </>
       )}
     </PageFrame>
   );
 }
 
-function EquationCell({ label, value, className }: { label: string; value: string; className?: string }) {
+interface BalanceLineProps {
+  kind: StatementLine["kind"];
+  label: string;
+  note?: string;
+  value: string;
+  // The period's closing, set like a total.
+  strong?: boolean;
+}
+
+// A balance line on the table-head band: the opening or brought-forward
+// figure above the rows, carried forward or closing below them, under the
+// Balance column.
+function BalanceLine({ kind, label, note, value, strong = false }: BalanceLineProps) {
   return (
-    <div className="flex flex-col gap-1 md:flex-1">
-      <span className="text-caption font-normal text-ink-muted">{label}</span>
-      <span className={cn("text-h2 text-ink tabular-nums", className)}>{value}</span>
+    <ListSummaryRow kind={kind} columns={COLUMNS} className="min-h-12 text-body print:min-h-0">
+      <ListCell aria-colspan={7} className="col-span-7 flex flex-col">
+        <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-2")}>{label}</span>
+        {note && <span className="text-caption text-ink-muted">{note}</span>}
+      </ListCell>
+      <ListCell align="end" className={cn("font-semibold text-ink tabular-nums", strong && "text-title font-bold print:text-small")}>
+        {value}
+      </ListCell>
+    </ListSummaryRow>
+  );
+}
+
+interface EquationCellProps {
+  label: string;
+  value: string;
+  // The operator before the term, drawn beside the label while the terms
+  // sit in a grid (the one-line equation draws it between the terms).
+  op?: string;
+  // The operator as a screen reader says it, where the figure has no sign.
+  spoken?: string;
+  // A line under the figure.
+  note?: string;
+  // The equation runs on one line from xl (see oneLine above).
+  oneLine: boolean;
+  className?: string;
+}
+
+function EquationCell({ label, value, op, spoken, note, oneLine, className }: EquationCellProps) {
+  return (
+    <div className={cn("flex min-w-0 flex-col gap-1", oneLine && "xl:flex-1")}>
+      <span className="flex items-center gap-1.5 text-caption font-normal text-ink-muted">
+        {op && (
+          <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full bg-surface-sunken font-semibold text-ink-2", oneLine && "xl:hidden")}>
+            {op}
+          </span>
+        )}
+        <span>
+          {spoken && <span className="sr-only">{spoken} </span>}
+          {label}
+        </span>
+      </span>
+      <span className={cn("text-ink tabular-nums wrap-anywhere", oneLine ? "text-h3 sm:text-h2 xl:text-h3 2xl:text-h2" : "text-h3 sm:text-h2", className)}>{value}</span>
+      {note && <span className="text-caption text-ink-muted">{note}</span>}
     </div>
   );
 }
 
+// The round operator between two terms of the one-line equation.
 function Operator({ equals = false, children }: { equals?: boolean; children: React.ReactNode }) {
   return (
-    <span aria-hidden="true" className={cn("hidden size-6.5 shrink-0 items-center justify-center self-center rounded-full text-body-lg font-semibold md:flex", equals ? "bg-emerald text-white" : "bg-surface-sunken text-ink-2")}>
+    <span aria-hidden="true" className={cn("hidden size-6.5 shrink-0 items-center justify-center self-center rounded-full text-body-lg font-semibold xl:flex", equals ? "bg-emerald text-on-action" : "bg-surface-sunken text-ink-2")}>
       {children}
     </span>
   );
