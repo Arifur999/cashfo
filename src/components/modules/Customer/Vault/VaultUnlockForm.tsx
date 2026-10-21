@@ -36,7 +36,7 @@ const TEXT_BUTTON = "flex min-h-11 items-center rounded-md px-2 text-small font-
 
 // The unlock form, with a wrong try called out under the box.
 export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault }: VaultUnlockFormProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -65,7 +65,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault }: V
             <span className="flex size-14 items-center justify-center rounded-full bg-info-soft text-info">
               <Lock className="size-6" aria-hidden="true" />
             </span>
-            <h2 id="vault-unlock-title" className="text-h2 text-ink">
+            <h2 id="vault-unlock-title" className="text-h2 font-semibold text-ink">
               {t("Unlock your vault")}
             </h2>
             <p className="text-body leading-normal text-ink-muted">{t("Enter your vault password, not the password you log in with.")}</p>
@@ -81,23 +81,33 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault }: V
               invalid={error !== null}
               autoComplete="off"
               autoFocus
-              // 16px on phones, so focusing it doesn't zoom the page.
-              className="max-md:text-body-lg"
             />
           </Field>
           <Button type="submit" size="xl" variant="action" disabled={!password || isPending} className="w-full">
             {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <Lock />}
             {t("Unlock")}
           </Button>
-          <div className="-mx-2 flex items-center justify-between gap-3 text-small">
-            <button type="button" onClick={onForgot} className={`${TEXT_BUTTON} text-emerald hover:underline`}>
-              {t("Forgot vault password?")}
+          {/* The 44px targets take back their extra height (-my-2.5), so the
+              text sits as close under the button as the board draws it. That
+              assumes one row, so the row never wraps: when the card is too
+              narrow for the link and the hint side by side (a phone, or the
+              laptop range where the card shares the stage with the side
+              note), the hint goes and the link is centred. The side note says
+              the same. The test is the card's own width (a container query),
+              not the screen's. Bangla needs about 390px of the 392px a
+              full-width card gives, too tight to promise, so there the hint
+              always gives way. */}
+          <div className="@container -mx-2 -my-2.5 flex flex-col">
+            <div className={`flex items-center justify-between gap-x-3 text-small ${locale === "bn" ? "@max-[25rem]:justify-center" : "@max-[22rem]:justify-center"}`}>
+              <button type="button" onClick={onForgot} className={`${TEXT_BUTTON} whitespace-nowrap text-emerald hover:underline`}>
+                {t("Forgot vault password?")}
+              </button>
+              <span className={`px-2 whitespace-nowrap text-ink-muted ${locale === "bn" ? "@max-[25rem]:hidden" : "@max-[22rem]:hidden"}`}>{t("Opens for 10 minutes")}</span>
+            </div>
+            <button type="button" onClick={onChange} className={`${TEXT_BUTTON} self-center text-ink-2 hover:text-ink`}>
+              {t("Change vault password")}
             </button>
-            <span className="px-2 text-ink-muted">{t("Opens for 10 minutes")}</span>
           </div>
-          <button type="button" onClick={onChange} className={`${TEXT_BUTTON} self-center text-ink-2 hover:text-ink`}>
-            {t("Change vault password")}
-          </button>
         </form>
       </GateCard>
 

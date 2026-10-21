@@ -85,6 +85,8 @@ export const vaultDictionary: Record<string, string> = {
   "You sign in with Google, so there is no account password to prove it's you. Set one first, then come back here.": "আপনি Google দিয়ে সাইন ইন করেন, তাই এটা যে আপনিই তা প্রমাণ করার মতো কোনো অ্যাকাউন্ট পাসওয়ার্ড নেই। আগে একটি সেট করুন, তারপর এখানে ফিরে আসুন।",
   "Email me a link to set one": "পাসওয়ার্ড সেট করার লিংক ইমেইলে পাঠান",
   "Send the link again": "লিংকটি আবার পাঠান",
+  // Settings and Security as the side menu words them (chrome.ts).
+  "Open Settings › Security": "সেটিংস › নিরাপত্তা খুলুন",
   "We sent a link to {email}. Open it to set a password, then come back here.": "{email}-এ একটি লিংক পাঠিয়েছি। সেটি খুলে পাসওয়ার্ড সেট করুন, তারপর এখানে ফিরে আসুন।",
 
   // The API's own words, shown as it sends them (passwordVaultActions.ts
@@ -108,7 +110,6 @@ export const vaultDictionary: Record<string, string> = {
   "Enter your vault password, not the password you log in with.": "আপনার ভল্ট পাসওয়ার্ড দিন, যেটা দিয়ে লগইন করেন সেটা নয়।",
   "Vault password": "ভল্ট পাসওয়ার্ড",
   "That's not your vault password.": "এটা আপনার ভল্ট পাসওয়ার্ড নয়।",
-  Unlock: "আনলক করুন",
   "Forgot vault password?": "ভল্ট পাসওয়ার্ড ভুলে গেছেন?",
   "Opens for 10 minutes": "১০ মিনিটের জন্য খোলে",
   "How your vault stays safe": "আপনার ভল্ট যেভাবে নিরাপদ থাকে",
@@ -124,7 +125,6 @@ export const vaultDictionary: Record<string, string> = {
   "Search {count} login": "{count}টি লগইন খুঁজুন",
   "Search logins": "লগইন খুঁজুন",
   "A to Z": "A থেকে Z",
-  "Newest first": "নতুন আগে",
   "Recently edited": "সম্প্রতি সম্পাদিত",
   Filter: "ফিল্টার",
   "Vault sections": "ভল্টের অংশ",

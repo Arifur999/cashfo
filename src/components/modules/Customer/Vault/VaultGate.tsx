@@ -18,10 +18,11 @@ export function VaultGate({ children, className }: VaultGateProps) {
   );
 }
 
-// The white card a form sits in.
+// The white card a form sits in: the raised surface, so in the dark theme
+// it still lifts off the stage where the night wash is darkest.
 export function GateCard({ children, className, ...props }: React.ComponentProps<"section">) {
   return (
-    <section className={cn("relative flex w-full max-w-115 flex-col gap-4 rounded-xl border border-line bg-surface px-5 py-6 shadow-float sm:px-8", className)} {...props}>
+    <section className={cn("relative flex w-full max-w-115 flex-col gap-4 rounded-xl border border-line bg-surface-raised px-5 py-6 shadow-float sm:px-8", className)} {...props}>
       {children}
     </section>
   );
@@ -30,7 +31,7 @@ export function GateCard({ children, className, ...props }: React.ComponentProps
 // The side note beside a form.
 export function GateAside({ children, className, ...props }: React.ComponentProps<"aside">) {
   return (
-    <aside className={cn("relative flex w-full max-w-85 flex-col gap-4 rounded-xl border border-line bg-surface p-6", className)} {...props}>
+    <aside className={cn("relative flex w-full max-w-85 flex-col gap-4 rounded-xl border border-line bg-surface-raised p-6", className)} {...props}>
       {children}
     </aside>
   );
