@@ -63,7 +63,7 @@ const ListRow = ({ columns, density = "regular", muted = false, selected = false
       TARGET_FOCUS,
       onClick && "cursor-pointer",
       !selected && (onClick ? LIST_HOVER : TARGET_HOVER),
-      muted && "opacity-60",
+      muted && "text-ink-2 [&_.text-ink]:text-ink-2 [&_.text-ink-2]:text-ink-muted",
       selected && "bg-mint-50",
       className,
     )}

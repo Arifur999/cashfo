@@ -18,6 +18,9 @@ interface ListCardProps extends Omit<React.ComponentProps<"div">, "title"> {
   tableClassName?: string;
   // The rows are being replaced: assistive tech waits for them.
   busy?: boolean;
+  // The table scrolls sideways (a wide report on a phone): it joins the
+  // tab order, so arrow keys can scroll it too.
+  scrollable?: boolean;
 }
 
 // The card a list lives in: the optional title row, the table (div rows with
@@ -27,7 +30,7 @@ interface ListCardProps extends Omit<React.ComponentProps<"div">, "title"> {
 // LoadMore's) focusTargetId points at: the card scrolls back into view, with
 // a little room above it, and the table inside takes focus, since it has the
 // role and the name. Its ring is drawn inset, where the clip can't cut it.
-const ListCard = ({ label, title, description, actions, header, footer, elevated = true, tableClassName, busy = false, className, children, ...props }: ListCardProps) => (
+const ListCard = ({ label, title, description, actions, header, footer, elevated = true, tableClassName, busy = false, scrollable = false, className, children, ...props }: ListCardProps) => (
   <Card padding="none" elevated={elevated} className={cn("scroll-mt-4 overflow-clip", className)} {...props}>
     {header ??
       ((title || description || actions) && (
@@ -41,7 +44,7 @@ const ListCard = ({ label, title, description, actions, header, footer, elevated
           {actions && <div className="flex flex-wrap items-center gap-2 md:ml-auto">{actions}</div>}
         </div>
       ))}
-    <div role="table" aria-label={label} aria-busy={busy || undefined} className={cn("focus-visible:-outline-offset-2", tableClassName)}>
+    <div role="table" aria-label={label} aria-busy={busy || undefined} tabIndex={scrollable ? 0 : undefined} className={cn("focus-visible:-outline-offset-2", tableClassName)}>
       {children}
     </div>
     {footer}

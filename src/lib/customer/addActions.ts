@@ -34,12 +34,15 @@ export interface AddAction {
   block: number;
   // Hidden while this flag is off (Admin > System > Feature flags).
   feature?: FeatureKey;
+  // Posts to the open workspace's books, which only its owner or an
+  // accountant may do: a staff member isn't offered it.
+  workspaceWrite?: boolean;
 }
 
 export const ADD_ACTIONS: AddAction[] = [
-  { key: "income", letter: "I", label: "Income", hint: "Salary, freelance, any money in", icon: "money-in", tone: "income", block: 0, run: { kind: "drawer", entry: "INCOME" } },
-  { key: "expense", letter: "E", label: "Expense", hint: "Groceries, rent, bills", icon: "money-out", tone: "expense", block: 0, run: { kind: "drawer", entry: "EXPENSE" } },
-  { key: "transfer", letter: "T", label: "Transfer", hint: "Between your wallets", icon: "between", tone: "vault", block: 0, run: { kind: "drawer", entry: "TRANSFER" } },
+  { key: "income", letter: "I", label: "Income", hint: "Salary, freelance, any money in", icon: "money-in", tone: "income", block: 0, workspaceWrite: true, run: { kind: "drawer", entry: "INCOME" } },
+  { key: "expense", letter: "E", label: "Expense", hint: "Groceries, rent, bills", icon: "money-out", tone: "expense", block: 0, workspaceWrite: true, run: { kind: "drawer", entry: "EXPENSE" } },
+  { key: "transfer", letter: "T", label: "Transfer", hint: "Between your wallets", icon: "between", tone: "vault", block: 0, workspaceWrite: true, run: { kind: "drawer", entry: "TRANSFER" } },
   {
     key: "loan",
     letter: "L",
@@ -49,9 +52,10 @@ export const ADD_ACTIONS: AddAction[] = [
     tone: "loans",
     block: 1,
     feature: "loan_management",
+    workspaceWrite: true,
     run: { kind: "page", href: "/loan-management/transactions" },
   },
-  { key: "savings", letter: "S", label: "Add to savings", hint: "Put money towards a goal", icon: "piggy-bank", tone: "money", block: 1, run: { kind: "page", href: "/savings-goals/dashboard" } },
+  { key: "savings", letter: "S", label: "Add to savings", hint: "Put money towards a goal", icon: "piggy-bank", tone: "money", block: 1, workspaceWrite: true, run: { kind: "page", href: "/savings-goals/dashboard" } },
   { key: "task", letter: "D", label: "Task for today", hint: "Goes to Today’s tasks", icon: "checklist", tone: "habits", block: 2, run: { kind: "tasks" } },
   { key: "vault", letter: "P", label: "Login to the vault", hint: "Opens the vault first", icon: "key", tone: "vault", block: 2, run: { kind: "page", href: "/password-manager" } },
 ];
@@ -60,9 +64,10 @@ export const ADD_ACTIONS: AddAction[] = [
 export const TODAY_TASKS_PAGE = "/habit-tracker/todos";
 
 // The ones this customer can use: a feature switched off takes its action
-// with it.
-export function visibleAddActions(isFeatureOn: (key: FeatureKey) => boolean, actions: AddAction[] = ADD_ACTIONS): AddAction[] {
-  return actions.filter((action) => !action.feature || isFeatureOn(action.feature));
+// with it, and a staff member (canManage false) keeps only their own
+// task and vault.
+export function visibleAddActions(isFeatureOn: (key: FeatureKey) => boolean, actions: AddAction[] = ADD_ACTIONS, canManage = true): AddAction[] {
+  return actions.filter((action) => (!action.feature || isFeatureOn(action.feature)) && (canManage || !action.workspaceWrite));
 }
 
 // The actions in their blocks, in order, an emptied block left out. `lead`

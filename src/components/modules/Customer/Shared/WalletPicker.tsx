@@ -39,10 +39,13 @@ export interface WalletPickerProps {
   loading: boolean;
   error: string | null;
   onClose: () => void;
+  // What to say when there is no wallet to pick, in place of "No wallet yet.
+  // Add a wallet" (the Move money drawer's "To" when there's no other).
+  emptyMessage?: React.ReactNode;
 }
 
 // The wallet to pay from or into: its icon, name, balance now and after.
-export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, afterInWords = false, minBalance = 0, currency, loading, error, onClose }: WalletPickerProps) {
+export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, afterInWords = false, minBalance = 0, currency, loading, error, onClose, emptyMessage }: WalletPickerProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const all = [...wallets, ...savingsWallets];
@@ -134,10 +137,11 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
           {t(error)}
         </p>
       )}
-      {!loading && !error && all.length === 0 && (
+      {!loading && !error && all.length === 0 && emptyMessage && <p className="text-caption text-ink-muted">{emptyMessage}</p>}
+      {!loading && !error && all.length === 0 && !emptyMessage && (
         <p className="text-caption text-ink-muted">
           {variant === "savings" ? t("No savings wallet yet.") : t("No wallet yet.")}{" "}
-          <Link href={variant === "savings" ? "/savings-goals/wallet" : "/balance/wallet"} onNavigate={onClose} className="font-semibold text-emerald hover:underline">
+          <Link href={variant === "savings" ? "/savings-goals/wallet?add=1" : "/balance/wallet"} onNavigate={onClose} className="font-semibold text-emerald hover:underline">
             {variant === "savings" ? t("Add a savings wallet") : t("Add a wallet")}
           </Link>
         </p>

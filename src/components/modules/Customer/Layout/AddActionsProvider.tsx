@@ -47,8 +47,10 @@ export function AddActionsProvider({ children }: { children: React.ReactNode }) 
   // renders from it).
   const panels = useRef(0);
 
-  // Nothing can be added without an open workspace to add it to.
-  const actions = useMemo(() => (activeBusinessId ? visibleAddActions((key) => isFeatureOn(flags, key)) : []), [activeBusinessId, flags]);
+  // Nothing can be added without an open workspace to add it to, and a
+  // staff member can't post to its books.
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
+  const actions = useMemo(() => (activeBusinessId ? visibleAddActions((key) => isFeatureOn(flags, key), undefined, canManage) : []), [activeBusinessId, flags, canManage]);
 
   const run = useCallback(
     (action: AddAction) => {

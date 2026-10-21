@@ -49,6 +49,11 @@ describe("visibleAddActions", () => {
     expect(visibleAddActions(loansOff).map((action) => action.key)).not.toContain("loan");
     expect(visibleAddActions(loansOff)).toHaveLength(ADD_ACTIONS.length - 1);
   });
+
+  // The API refuses a staff member's postings in the workspace.
+  it("leaves a staff member only their own task and vault", () => {
+    expect(visibleAddActions(allOn, ADD_ACTIONS, false).map((action) => action.key)).toEqual(["task", "vault"]);
+  });
 });
 
 describe("addActionBlocks", () => {
