@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Plus, Trash2, Users } from "lucide-react";
+import { Building2, House, Info, Plus, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -11,9 +11,10 @@ import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { deleteBusinessAction } from "@/lib/customer/businessActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { attempt } from "./attempt";
+import { cn } from "@/lib/utils";
 import { GroupCard } from "./GroupCard";
 import type { GroupCardData } from "./groupTypes";
 import { NewGroupDrawer } from "./NewGroupDrawer";
@@ -26,6 +27,12 @@ const STEPS = [
   { title: "Add the members", body: "Brothers, flatmates or mess members. They don't need a login; you record for them." },
   { title: "Record money in and out", body: "Contributions, every expense (from the fund or someone's own pocket), and the month's budget." },
   { title: "Settle and close the month", body: "See who gets money back and who has to pay, record the payments, then lock the month." },
+];
+
+// How the two kinds of group differ, under the steps (the cards carry the chips).
+const KINDS = [
+  { title: "Family", body: "Brothers or relatives running one home. Bazar can be shared by family size (shares), and rent and bills equally.", icon: House, tone: "bg-pillar-insights-soft text-pillar-insights" },
+  { title: "Mess", body: "Students or workers sharing a flat. Daily meals are counted, bazar is shared at the meal rate, and the other costs equally.", icon: Building2, tone: "bg-warning-soft text-warning" },
 ];
 
 // Money › Group expenses: every group the person is in, with its month's
@@ -41,7 +48,7 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
     if (!deleting) return;
     const target = deleting;
     startTransition(async () => {
-      const result = await attempt(() => deleteBusinessAction(target.workspace.id), t("No connection. Nothing was saved; try again."));
+      const result = await attempt(() => deleteBusinessAction(target.workspace.id), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       if (result.success) {
         toast.success(t("Group deleted"));
         setDeleting(null);
@@ -102,6 +109,17 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
         <Banner tone="info" inline icon={<Info />} className="leading-relaxed">
           <b>{t("Balance")}</b> = {t("contributions and own-pocket payments − share of the month's costs. Plus means the member gets money back, minus means they have to pay. Cash in hand always equals every balance added up, so the account checks itself.")}
         </Banner>
+        <div className="grid gap-3 md:grid-cols-2">
+          {KINDS.map((kind) => (
+            <div key={kind.title} role="note" className={cn("flex items-start gap-3 rounded-md px-4 py-3", kind.tone)}>
+              <kind.icon className="mt-0.5 size-4.5 shrink-0" aria-hidden="true" />
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-body font-semibold">{t(kind.title)}</span>
+                <span className="text-small leading-relaxed text-ink-2">{t(kind.body)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </Card>
 
       <NewGroupDrawer open={createOpen} onClose={() => setCreateOpen(false)} />

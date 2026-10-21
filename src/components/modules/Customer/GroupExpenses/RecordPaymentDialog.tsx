@@ -11,13 +11,13 @@ import Input from "@/components/smartly/form/Input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupMember } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { dayLabel, type MonthRange, type Transfer } from "@/lib/customer/groupDisplay";
-import { createGroupContributionAction, deleteGroupContributionAction } from "@/lib/customer/groupExpensesActions";
+import { settleUpAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { attempt } from "./attempt";
 import { dayInMonth } from "./ContributionDrawer";
 import { CloseX } from "./GroupBits";
 import { MemberPicker } from "./MemberPicker";
@@ -37,9 +37,9 @@ interface RecordPaymentDialogProps {
   preset: Transfer | null;
 }
 
-// A member paying another to settle the month: saved as two entries dated
-// inside the month, a deposit by the payer and a return to the receiver,
-// so the fund's cash stays the same and both balances move.
+// A member paying another to settle the month: saved in one commit as two
+// entries dated inside the month, a deposit by the payer and a return to
+// the receiver, so the fund's cash stays the same and both balances move.
 export function RecordPaymentDialog({ open, onClose, businessId, currency, members, balances, cashInHand, range, today, preset }: RecordPaymentDialogProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
@@ -69,41 +69,20 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
   const valid = !!from && !!to && from.id !== to.id && value > 0;
   const date = dayInMonth(range, today);
   const monthLabel = monthName(range.key, locale);
-  const offline = t("No connection. Nothing was saved; try again.");
+  const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
 
-  // Takes the payer's entry back after the receiver's failed.
-  async function undo(id: string) {
-    const result = await attempt(() => deleteGroupContributionAction(businessId, id), offline);
-    if (result.success) {
-      toast.success(t("Payment undone"));
-      router.refresh();
-    } else {
-      toast.error(result.message ?? t("Failed to delete the contribution"));
-    }
-  }
+  // Each entry's note, one sentence each, with the person's own note when there is one.
+  const extra = note.trim();
+  const payerNote = to ? (extra ? t("Paid to {name} · {note}", { name: to.name, note: extra }) : t("Paid to {name}", { name: to.name })) : "";
+  const receiverNote = from ? (extra ? t("Received from {name} · {note}", { name: from.name, note: extra }) : t("Received from {name}", { name: from.name })) : "";
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!valid || isPending || !from || !to) return;
     startTransition(async () => {
-      const extra = note.trim() ? ` · ${note.trim()}` : "";
-      const deposit = await attempt(() => createGroupContributionAction(businessId, { groupMemberId: from.id, amount: String(value), kind: "SETTLE", date, note: `${t("Paid to {name}", { name: to.name })}${extra}` }), offline);
-      if (!deposit.success) {
-        toast.error(deposit.message ?? t("Failed to record the payment"));
-        return;
-      }
-      const back = await attempt(() => createGroupContributionAction(businessId, { groupMemberId: to.id, amount: String(-value), kind: "SETTLE", date, note: `${t("Received from {name}", { name: from.name })}${extra}` }), offline);
-      if (!back.success) {
-        // Half a payment: the deposit stands. Say so, offer to take it
-        // back, and shut the dialog so a second Save can't add it twice.
-        const depositId = deposit.data?.id;
-        toast.error(t("The payer's entry was saved, but not the receiver's. Add a return for them by hand, or undo the payment."), {
-          description: back.message,
-          duration: 15_000,
-          action: depositId ? { label: t("Undo"), onClick: () => void undo(depositId) } : undefined,
-        });
-        onClose();
-        router.refresh();
+      const result = await attempt(() => settleUpAction(businessId, { fromMemberId: from.id, toMemberId: to.id, amount: value.toFixed(2), date, payerNote, receiverNote }), offline, stale);
+      if (!result.success) {
+        toast.error(result.message ?? t("Failed to record the payment"));
         return;
       }
       toast.success(t("Payment recorded"));
@@ -175,13 +154,13 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                 <span className="text-caption font-semibold text-ink-muted">{t("Saved as two entries dated {date}, so {month} evens out", { date: dayLabel(date, locale), month: monthLabel })}</span>
                 <div className="flex justify-between gap-3">
                   <span className="min-w-0 text-ink-2">
-                    <b className="font-semibold text-ink">{from.name}</b> · {t("Deposit")} · “{t("Paid to {name}", { name: to.name })}”
+                    <b className="font-semibold text-ink">{from.name}</b> · {t("Deposit")} · “{payerNote}”
                   </span>
                   <span className="shrink-0 font-semibold text-income">{formatSignedCurrency(value, currency)}</span>
                 </div>
                 <div className="flex justify-between gap-3">
                   <span className="min-w-0 text-ink-2">
-                    <b className="font-semibold text-ink">{to.name}</b> · {t("Return")} · “{t("Received from {name}", { name: from.name })}”
+                    <b className="font-semibold text-ink">{to.name}</b> · {t("Return")} · “{receiverNote}”
                   </span>
                   <span className="shrink-0 font-semibold text-expense">{formatSignedCurrency(-value, currency)}</span>
                 </div>

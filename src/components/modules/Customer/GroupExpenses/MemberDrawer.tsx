@@ -12,10 +12,10 @@ import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupMember } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { createGroupMemberAction, updateGroupMemberAction, updateGroupSettingsAction, uploadGroupMemberPhotoAction } from "@/lib/customer/groupExpensesActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { attempt } from "./attempt";
 import { CloseX, FOCUS_WITHIN } from "./GroupBits";
 import { ShareStepper } from "./ShareStepper";
 
@@ -94,16 +94,16 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
   function save(addAnother: boolean) {
     if (!valid || isPending) return;
     startTransition(async () => {
-      const offline = t("No connection. Nothing was saved; try again.");
+      const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
       const input = { name: name.trim(), phone: phone.trim() || undefined, photoUrl: photoUrl || undefined, shareUnits, joinedOn: joinedOn || null };
-      const result = await attempt(() => (editing ? updateGroupMemberAction(businessId, editing.id, input) : createGroupMemberAction(businessId, input)), offline);
+      const result = await attempt(() => (editing ? updateGroupMemberAction(businessId, editing.id, input) : createGroupMemberAction(businessId, input)), offline, stale);
       if (!result.success) {
         toast.error(result.message ?? (editing ? t("Failed to update member") : t("Failed to add member")));
         return;
       }
       // The manager is the one who keeps the cash: a separate save, with its own answer.
       const id = editing?.id ?? result.data?.id;
-      const role = id && manager !== (id === cashHolderId) ? await attempt(() => updateGroupSettingsAction(businessId, { cashHolderMemberId: manager ? id : null }), offline) : { success: true };
+      const role = id && manager !== (id === cashHolderId) ? await attempt(() => updateGroupSettingsAction(businessId, { cashHolderMemberId: manager ? id : null }), offline, stale) : { success: true };
       if (!role.success) toast.warning(t(manager ? "Saved, but they couldn't be made the manager" : "Saved, but they are still the manager"));
       else toast.success(editing ? t("Member updated") : t("Member added"));
       router.refresh();
@@ -172,7 +172,7 @@ export function MemberDrawer({ open, onClose, businessId, editing, cashHolderId,
             </Field>
 
             <Field htmlFor="mem-join" label={label(t("Joins on"), !editing && !defaultJoin)} hint={joinedOn ? t("{name} shares costs from this date only. Earlier days stay as they are.", { name: name.trim() || t("They") }) : t("Shares every cost from the start.")}>
-              <DayInput id="mem-join" size="md" value={joinedOn} onChange={setJoinedOn} />
+              <DayInput id="mem-join" size="md" value={joinedOn} onChange={setJoinedOn} aria-describedby="mem-join-hint" />
             </Field>
 
             <fieldset className="flex flex-col gap-2">

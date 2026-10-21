@@ -11,12 +11,12 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupMonthlyBudget } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { currencySymbol } from "@/lib/customer/currency";
 import { monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
 import { createGroupMonthBudgetAction, deleteGroupMonthBudgetAction, updateGroupMonthBudgetAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { attempt } from "./attempt";
 import { CloseX } from "./GroupBits";
 
 interface MonthBudgetDialogProps {
@@ -62,7 +62,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
     if (!valid || isPending) return;
     const range = monthRangeOf(month);
     startTransition(async () => {
-      const result = await attempt(() => (editing ? updateGroupMonthBudgetAction(businessId, editing.id, { budgetAmount: String(value) }) : createGroupMonthBudgetAction(businessId, { month: range.month, year: range.year, budgetAmount: String(value) })), t("No connection. Nothing was saved; try again."));
+      const result = await attempt(() => (editing ? updateGroupMonthBudgetAction(businessId, editing.id, { budgetAmount: String(value) }) : createGroupMonthBudgetAction(businessId, { month: range.month, year: range.year, budgetAmount: String(value) })), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       if (result.success) {
         toast.success(t("Budget saved"));
         onClose();
@@ -76,7 +76,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
   function remove() {
     if (!editing || isPending) return;
     startTransition(async () => {
-      const result = await attempt(() => deleteGroupMonthBudgetAction(businessId, editing.id), t("No connection. Nothing was saved; try again."));
+      const result = await attempt(() => deleteGroupMonthBudgetAction(businessId, editing.id), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       if (result.success) {
         toast.success(t("Budget removed"));
         onClose();

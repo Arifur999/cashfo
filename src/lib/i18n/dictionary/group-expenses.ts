@@ -65,6 +65,9 @@ export const groupExpensesDictionary: Record<string, string> = {
   "How a group keeps the account straight": "গ্রুপের হিসাব যেভাবে ঠিক থাকে",
   "Add the members": "সদস্যদের যোগ করুন",
   "Brothers, flatmates or mess members. They don't need a login; you record for them.": "ভাই, ফ্ল্যাটমেট বা মেসের সদস্য। তাদের লগইন লাগে না; আপনি তাদের হয়ে লিখবেন।",
+  // The two kinds of group, under the steps on the list.
+  "Brothers or relatives running one home. Bazar can be shared by family size (shares), and rent and bills equally.": "ভাই বা আত্মীয়রা মিলে এক সংসার চালান। বাজার পরিবারের আকার (ভাগ) অনুযায়ী ভাগ করা যায়, আর ভাড়া ও বিল সমান ভাগে।",
+  "Students or workers sharing a flat. Daily meals are counted, bazar is shared at the meal rate, and the other costs equally.": "ছাত্র বা কর্মজীবীরা এক ফ্ল্যাট ভাগ করে থাকেন। প্রতিদিনের মিল গোনা হয়, বাজার মিল রেটে ভাগ হয়, আর বাকি খরচ সমান ভাগে।",
   "Record money in and out": "টাকা আসা-যাওয়া লিখুন",
   "Contributions, every expense (from the fund or someone's own pocket), and the month's budget.": "জমা, প্রতিটি খরচ (ফান্ড থেকে বা কারো নিজের পকেট থেকে), আর মাসের বাজেট।",
   "Settle and close the month": "হিসাব মিটিয়ে মাস বন্ধ করুন",
@@ -340,6 +343,8 @@ export const groupExpensesDictionary: Record<string, string> = {
   // The notes a payment's two entries keep.
   "Paid to {name}": "{name}-কে দেওয়া",
   "Received from {name}": "{name}-এর কাছ থেকে পাওয়া",
+  "Paid to {name} · {note}": "{name}-কে দেওয়া · {note}",
+  "Received from {name} · {note}": "{name}-এর কাছ থেকে পাওয়া · {note}",
   "Saved as two entries dated {date}, so {month} evens out": "{date} তারিখে দুটি এন্ট্রি হিসেবে লেখা হবে, যাতে {month} সমান হয়",
   "{name}'s balance": "{name}-এর ব্যালেন্স",
   "{amount}, unchanged": "{amount}, অপরিবর্তিত",
@@ -347,9 +352,7 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Save payment": "পেমেন্ট সংরক্ষণ",
   "Payment recorded": "পেমেন্ট লেখা হয়েছে",
   "Failed to record the payment": "পেমেন্ট লিখতে ব্যর্থ",
-  "The payer's entry was saved, but not the receiver's. Add a return for them by hand, or undo the payment.": "দাতার এন্ট্রি লেখা হয়েছে, গ্রহীতার হয়নি। তার জন্য হাতে একটি ফেরত যোগ করুন, অথবা পেমেন্টটি ফিরিয়ে নিন।",
   Undo: "ফিরিয়ে নিন",
-  "Payment undone": "পেমেন্ট ফিরিয়ে নেওয়া হয়েছে",
 
   // Statement (MemberStatementDrawer.tsx)
   "{group} · {month} statement": "{group} · {month}-এর স্টেটমেন্ট",

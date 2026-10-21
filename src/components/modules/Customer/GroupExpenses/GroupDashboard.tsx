@@ -13,7 +13,7 @@ import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { BUDGET_TONE_BAR, BUDGET_TONE_TEXT, budgetFor, budgetStatus, categorySplits, countLabel, monthRangeOf, paidIn, shortName, SPLIT_LABELS, startDayOf, type Transfer } from "@/lib/customer/groupDisplay";
 import { mealText } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { BalanceCell, CategoryTile, categoryBarClass } from "./GroupBits";
@@ -67,7 +67,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
         ? {
             label: t("{month} budget", { month }),
             value: money(view.budget.budget),
-            sub: view.budget.left < 0 ? t("{percent}% used · {amount} over", { percent: view.budget.percent, amount: money(-view.budget.left) }) : t("{percent}% used · {amount} left", { percent: view.budget.percent, amount: money(view.budget.left) }),
+            sub: view.budget.left < 0 ? t("{percent}% used · {amount} over", { percent: formatCount(view.budget.percent, locale), amount: money(-view.budget.left) }) : t("{percent}% used · {amount} left", { percent: formatCount(view.budget.percent, locale), amount: money(view.budget.left) }),
             subTone: BUDGET_TONE_TEXT[view.budget.tone],
             subBold: view.budget.tone !== "ok",
           }
@@ -264,7 +264,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                   </Chip>
                   <span className="flex-1" />
                   <span className="font-semibold text-ink tabular-nums">{money(cat.amount)}</span>
-                  <span className="w-11 text-right text-ink-muted tabular-nums">{cat.share}%</span>
+                  <span className="w-11 text-right text-ink-muted tabular-nums">{toLocaleDigits(`${cat.share}%`, locale)}</span>
                 </div>
                 <span className={cn("block h-1.5 overflow-hidden rounded-full bg-surface-sunken", categoryBarClass(cat.name, data.categories))}>
                   <span className="block h-full rounded-full bg-current" style={{ width: `${cat.share}%` }} />
@@ -297,7 +297,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                   {status && <span className="absolute -inset-y-1 w-0.5 bg-ink" style={{ left: "90.9%" }} aria-hidden="true" />}
                 </span>
                 <span className={cn("text-right text-ink", last ? "font-bold" : "font-medium")}>{money(point.amount)}</span>
-                <span className={cn("text-right font-semibold", status ? BUDGET_TONE_TEXT[status.tone] : "text-ink-muted")}>{status ? `${status.percent}%` : "—"}</span>
+                <span className={cn("text-right font-semibold", status ? BUDGET_TONE_TEXT[status.tone] : "text-ink-muted")}>{status ? `${formatCount(status.percent, locale)}%` : "—"}</span>
               </div>
             );
           })}

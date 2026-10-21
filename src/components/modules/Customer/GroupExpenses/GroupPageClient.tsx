@@ -8,6 +8,7 @@ import { CategoryDrawer } from "@/components/modules/Customer/Budget/CategoryDra
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import PageFrame from "@/components/smartly/PageFrame";
 import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMember, GroupMonthlyBudget } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { deleteBusinessAction } from "@/lib/customer/businessActions";
 import { budgetFor, budgetStatus, cashInHand, isDayClosed, poolsMeals, sharedEqually, shiftMonth, spendByCategory, spendByMonth, startDayOf, type Transfer, whoPaysWhom } from "@/lib/customer/groupDisplay";
 import { unitsOf } from "@/lib/customer/groupMeals";
@@ -15,7 +16,6 @@ import { deleteGroupContributionAction, deleteGroupExpenseAction, deleteGroupExp
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { attempt } from "./attempt";
 import { CloseMonthDialog } from "./CloseMonthDialog";
 import { ContributionDrawer, dayInMonth } from "./ContributionDrawer";
 import { ExpenseDrawer } from "./ExpenseDrawer";
@@ -92,7 +92,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
   }, [data]);
 
   const monthLabel = monthName(data.range.key, locale, "long", true);
-  const offline = t("No connection. Nothing was saved; try again.");
+  const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
 
   function goToMonth(key: string) {
     startMoving(() => router.push(`/group-expenses/${data.businessId}?tab=${data.tab}&month=${key}`));
@@ -128,7 +128,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
 
   function run(action: () => Promise<{ success: boolean; message?: string }>, done: string, failed: string) {
     startTransition(async () => {
-      const result = await attempt(action, offline);
+      const result = await attempt(action, offline, stale);
       if (result.success) {
         toast.success(done);
         setConfirm(null);
@@ -168,7 +168,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       danger: true,
       onConfirm: () =>
         startTransition(async () => {
-          const result = await attempt(() => deleteGroupMemberAction(data.businessId, target.id), offline);
+          const result = await attempt(() => deleteGroupMemberAction(data.businessId, target.id), offline, stale);
           if (result.success) {
             toast.success(result.data?.action === "archived" ? t("This member has history, so they were archived instead") : t("Member removed"));
             setConfirm(null);
@@ -198,7 +198,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       danger: true,
       onConfirm: () =>
         startTransition(async () => {
-          const result = await attempt(() => deleteBusinessAction(data.businessId), offline);
+          const result = await attempt(() => deleteBusinessAction(data.businessId), offline, stale);
           if (result.success) {
             toast.success(t("Group deleted"));
             router.push("/group-expenses");

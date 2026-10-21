@@ -10,13 +10,13 @@ import IconTile from "@/components/smartly/IconTile";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import type { GroupSettlementResult } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { formatCurrency } from "@/lib/customer/currency";
 import { cashInHand, countLabel, dayLabel, type MonthRange, rangeLabel, sharedCostEach, shiftMonth, whoPaysWhom } from "@/lib/customer/groupDisplay";
 import { closeGroupSettlementAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { attempt } from "./attempt";
 import { CloseX, SETTLE_UP_ID } from "./GroupBits";
 
 interface CloseMonthDialogProps {
@@ -72,7 +72,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, t
   function confirm() {
     if (isPending) return;
     startTransition(async () => {
-      const result = await attempt(() => closeGroupSettlementAction(businessId, { periodStart: range.from, periodEnd: range.to, carryForward: carry }), t("No connection. Nothing was saved; try again."));
+      const result = await attempt(() => closeGroupSettlementAction(businessId, { periodStart: range.from, periodEnd: range.to, carryForward: carry }), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       if (result.success) {
         toast.success(t("{month} is closed", { month: monthLabel }), {
           action: { label: t("Go to {month}", { month: nextMonth }), onClick: () => router.push(`/group-expenses/${businessId}?tab=dashboard&month=${nextKey}`) },

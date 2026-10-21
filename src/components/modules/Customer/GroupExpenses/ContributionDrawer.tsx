@@ -13,13 +13,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupContribution, GroupMember } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { groupMonthOf, type MonthRange, startDayOf } from "@/lib/customer/groupDisplay";
 import { createGroupContributionAction, updateGroupContributionAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { attempt } from "./attempt";
 import { CloseX, FOCUS_WITHIN } from "./GroupBits";
 import type { ClosedGuard } from "./groupTypes";
 import { MemberPicker } from "./MemberPicker";
@@ -106,7 +106,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
     }
     startTransition(async () => {
       const input = { groupMemberId: memberId, amount: String(signed), date, note: note.trim() || undefined };
-      const result = await attempt(() => (editing ? updateGroupContributionAction(businessId, editing.id, { ...input, note: note.trim() }) : createGroupContributionAction(businessId, input)), t("No connection. Nothing was saved; try again."));
+      const result = await attempt(() => (editing ? updateGroupContributionAction(businessId, editing.id, { ...input, note: note.trim() }) : createGroupContributionAction(businessId, input)), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       if (!result.success) {
         toast.error(result.message ?? t("Failed to save the contribution"));
         return;
@@ -201,7 +201,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
                 )}
               </Field>
               <Field htmlFor="con-date" label={label(t("Date"))} hint={t("Counts in {month}", { month: countsIn })}>
-                <DayInput id="con-date" size="lg" value={date} onChange={setDate} max={today} />
+                <DayInput id="con-date" size="lg" value={date} onChange={setDate} max={today} aria-describedby="con-date-hint" />
               </Field>
             </div>
 
