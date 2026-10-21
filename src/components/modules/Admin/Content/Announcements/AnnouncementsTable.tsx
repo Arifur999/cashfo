@@ -6,7 +6,6 @@ import { setAnnouncementEnabledAction } from "@/app/(dashboardLayout)/admin/cont
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
-import ErrorState from "@/components/smartly/ErrorState";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
 import { queryKeys } from "@/lib/queryKeys";
@@ -52,11 +51,6 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
     [canManage, openDialog, setEnabled],
   );
 
-  // An outage isn't "no announcements": say they didn't load.
-  if (query.isError && !data) {
-    return <ErrorState title={translate("Couldn't load announcements")} description={translate("Try again in a moment.")} onRetry={() => void query.refetch()} />;
-  }
-
   return (
     <>
       {data && <LiveAnnouncementsCard announcements={data.data} planNames={planNames} />}
@@ -68,6 +62,12 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}
+        // An outage isn't "no announcements": the table says they didn't
+        // load, with Try again, in the rows' place.
+        isError={query.isError}
+        onRetry={() => void query.refetch()}
+        errorTitle="Couldn't load announcements"
+        errorDescription="Try again in a moment."
         // A short list: the board draws it without search or filters.
         hideToolbar
         actions={actions}

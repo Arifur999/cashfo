@@ -12,7 +12,7 @@ import { firstZodError } from "@/lib/formValidators";
 import { formatCount } from "@/lib/i18n/digits";
 import { plural } from "@/lib/i18n/message";
 import { queryKeys } from "@/lib/queryKeys";
-import { fillPlaceholders, findUnknownPlaceholders } from "@/lib/templatePlaceholders";
+import { fillPlaceholders, getPlaceholderError } from "@/lib/templatePlaceholders";
 import type { INotificationTemplate } from "@/types/notification.types";
 import { type INotificationTemplateFormValues, notificationTemplateFormZodSchema } from "@/zod/notification.validation";
 import { CHANNEL_META, SAMPLE_VALUES, templateWhen } from "../notificationOptions";
@@ -82,12 +82,8 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
   // One sentence with the names in it, so it reads in Bangla too.
   const checkText =
     (schema: typeof shape.bodyEn) =>
-    ({ value }: { value: string }) => {
-      const zodError = firstZodError(schema, value);
-      if (zodError) return zodError;
-      const unknown = findUnknownPlaceholders(value, template.variables);
-      return unknown.length > 0 ? translate("Not a variable of this template: {names}", { names: unknown.map((name) => `{{${name}}}`).join(", ") }) : undefined;
-    };
+    ({ value }: { value: string }) =>
+      firstZodError(schema, value) ?? getPlaceholderError(value, template.variables, translate);
 
   const { run, isPending } = useActionMutation({
     action: (values: INotificationTemplateFormValues) => updateNotificationTemplateAction(template.id, { ...values, isEmail }),
@@ -147,7 +143,9 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
   const previewBody = fillPlaceholders(bangla ? values.bodyBn : values.bodyEn, SAMPLE_VALUES);
 
   return (
-    <AppForm onSubmit={form.handleSubmit} className="flex flex-col space-y-0 overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+    // uniqueIds: two templates can be open side by side without their
+    // fields sharing ids.
+    <AppForm uniqueIds onSubmit={form.handleSubmit} className="flex flex-col space-y-0 overflow-hidden rounded-lg border border-line bg-surface shadow-card">
       <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-4">
         <div className="flex grow flex-col gap-0.5">
           {/* Focused when the template is picked on a phone (see TemplatesEditor). */}

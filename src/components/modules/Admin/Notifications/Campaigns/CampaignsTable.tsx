@@ -8,7 +8,6 @@ import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
-import ErrorState from "@/components/smartly/ErrorState";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
 import { queryKeys } from "@/lib/queryKeys";
@@ -56,23 +55,24 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-      {query.isError && !data ? (
-        // An outage isn't "no campaigns yet": say they didn't load.
-        <ErrorState title={translate("Couldn't load campaigns")} description={translate("Try again in a moment.")} onRetry={() => void query.refetch()} />
-      ) : (
-        <DataTable
-          data={data?.data}
-          columns={columns}
-          layout={{ rowHeight: 62, headPadding: 12, designWidth: 820 }}
-          getRowId={(row) => row.id}
-          isLoading={isLoading}
-          isFetching={isFetching}
-          // A short list: the board draws it without search or filters.
-          hideToolbar
-          actions={actions}
-          emptyMessage="No campaigns yet."
-        />
-      )}
+      <DataTable
+        data={data?.data}
+        columns={columns}
+        layout={{ rowHeight: 62, headPadding: 12, designWidth: 820 }}
+        getRowId={(row) => row.id}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        // An outage isn't "no campaigns yet": the table says they didn't
+        // load, with Try again, in the rows' place.
+        isError={query.isError}
+        onRetry={() => void query.refetch()}
+        errorTitle="Couldn't load campaigns"
+        errorDescription="Try again in a moment."
+        // A short list: the board draws it without search or filters.
+        hideToolbar
+        actions={actions}
+        emptyMessage="No campaigns yet."
+      />
       <SendSummaryCard />
       <ConfirmDialog
         {...getDialogProps("cancel")}

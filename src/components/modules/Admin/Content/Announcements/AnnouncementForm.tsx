@@ -93,13 +93,13 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
           {(field) => <AppField field={field} label="Title, English" />}
         </form.Field>
         <form.Field name="titleBn" validators={{ onChange: shape.titleBn }}>
-          {(field) => <AppField field={field} label="Title, বাংলা" className="font-bn" />}
+          {(field) => <AppField field={field} label="Title, বাংলা" lang="bn" className="font-bn" />}
         </form.Field>
         <form.Field name="body" validators={{ onChange: shape.body }}>
           {(field) => <AppTextareaField field={field} label="Message, English" rows={2} />}
         </form.Field>
         <form.Field name="bodyBn" validators={{ onChange: shape.bodyBn }}>
-          {(field) => <AppTextareaField field={field} label="Message, বাংলা" rows={2} className="font-bn" />}
+          {(field) => <AppTextareaField field={field} label="Message, বাংলা" rows={2} lang="bn" className="font-bn" />}
         </form.Field>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">

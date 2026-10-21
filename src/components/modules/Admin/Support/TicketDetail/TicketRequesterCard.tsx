@@ -2,22 +2,30 @@
 
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { userRecordHref } from "@/lib/navItem";
 import { getInitials } from "@/lib/text";
 import { earlierTicketsText } from "@/lib/tickets";
 import type { ISupportTicketDetail } from "@/types/ticket.types";
 import T from "@/components/shared/T";
 import { requesterTicketsHref } from "../ticketLinks";
 
+// Who asked, as GET /admin/tickets/:id says it: their customer account
+// (isCustomer) or an older ticket's own record of the person. Optional,
+// as an older backend leaves it out.
+type TicketWithRequester = ISupportTicketDetail & {
+  requester?: { id: string; name: string; email: string; isCustomer: boolean } | null;
+};
+
 // Who wrote: the person, their plan, their history with support (a link to
-// those tickets), and a way to find them in Users (by email, since older
-// tickets keep their own record of the person).
-const TicketRequesterCard = ({ ticket }: { ticket: ISupportTicketDetail }) => {
+// those tickets), and the way to them in Users: their own page when the
+// ticket says they are a customer, else a search of Users by email.
+const TicketRequesterCard = ({ ticket }: { ticket: TicketWithRequester }) => {
   const user = ticket.platformUser;
+  const customerId = ticket.requester?.isCustomer ? ticket.requester.id : null;
   const { locale, translate } = useLocale();
   const history = ticket.requesterTickets;
-  const earlier = toLocaleDigits(earlierTicketsText(history, translate), locale);
+  const earlier = earlierTicketsText(history, translate, locale);
   const facts: { label: string; value: React.ReactNode }[] = [
     { label: "Plan", value: user?.plan?.name ?? translate("No plan") },
     {
@@ -59,11 +67,15 @@ const TicketRequesterCard = ({ ticket }: { ticket: ISupportTicketDetail }) => {
               </div>
             ))}
           </dl>
-          {/* A search of Users, not the person's own page: the ticket doesn't
-              say whether its requester is a customer account. */}
-          <Link href={`/admin/users?search=${encodeURIComponent(user.email)}`} className="text-small font-semibold text-emerald hover:underline">
-            <T>Find in Users</T>
-          </Link>
+          {customerId ? (
+            <Link href={userRecordHref(customerId)} className="self-start text-small font-semibold text-emerald hover:underline">
+              <T>Open their page</T>
+            </Link>
+          ) : (
+            <Link href={`/admin/users?search=${encodeURIComponent(user.email)}`} className="self-start text-small font-semibold text-emerald hover:underline">
+              <T>Find in Users</T>
+            </Link>
+          )}
         </>
       ) : (
         <p className="text-small text-ink-muted"><T>This person&apos;s record is gone.</T></p>

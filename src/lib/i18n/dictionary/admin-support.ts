@@ -42,8 +42,13 @@ export const adminSupportDictionary: Record<string, string> = {
   "Couldn't load tickets": "টিকিট লোড করা যায়নি",
   "Try again in a moment.": "একটু পরে আবার চেষ্টা করুন।",
   "Resolved or closed": "সমাধান বা বন্ধ",
-  // The reader, first in the Assigned filter.
+  // The reader, first in the Assigned filter, then the tickets nobody has.
   Me: "আমি",
+  Unassigned: "কারও দায়িত্বে নেই",
+  // The toggle for tickets whose last message is the customer's.
+  "Waiting on us": "আমাদের উত্তরের অপেক্ষায়",
+  "Queue order": "তালিকার ক্রমে",
+  "Waiting longest first": "সবচেয়ে বেশি অপেক্ষা আগে",
   // Short: it sits in the queue's Status badge.
   "Waiting on user": "ব্যবহারকারীর অপেক্ষায়",
   Resolved: "সমাধান হয়েছে",
@@ -147,6 +152,8 @@ export const adminSupportDictionary: Record<string, string> = {
   "They didn't add a description.": "তাঁরা কোনো বিবরণ দেননি।",
   "Asked by": "যিনি চেয়েছেন",
   "Open their page": "তাঁর পাতা খুলুন",
+  // A card's requester name, linking to their page.
+  "Open {name}'s page": "{name}-এর পাতা খুলুন",
   New: "নতুন",
   "Looking at it": "দেখা হচ্ছে",
   Planned: "পরিকল্পনায়",

@@ -9,7 +9,8 @@ import type { INotificationLog } from "@/types/notification.types";
 import { CHANNEL_META, LOG_STATUS_LABEL } from "../notificationOptions";
 
 // Every message the platform tried to send: when, to whom, which template,
-// how, and whether it went.
+// how, and whether it went. The design's fixed grid: the recipient (a name
+// over an email) takes what the other columns leave.
 export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
   {
     id: "createdAt",
@@ -18,7 +19,7 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     cell: ({ row }) => <span className="text-small whitespace-nowrap text-ink-2">
         <RelativeTime value={row.original.createdAt} />
       </span>,
-    meta: { exportValue: (row) => formatDateTime(row.createdAt) },
+    meta: { width: 120, exportValue: (row) => formatDateTime(row.createdAt) },
   },
   {
     id: "user",
@@ -31,7 +32,10 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     id: "templateKey",
     accessorKey: "templateKey",
     header: "Template",
-    cell: ({ row }) => <code className="font-mono text-small text-ink">{row.original.templateKey}</code>,
+    cell: ({ row }) => <code title={row.original.templateKey} className="block truncate font-mono text-small text-ink">{row.original.templateKey}</code>,
+    // The longest seeded key (subscription_expiring) is about 165px; a
+    // longer one is cut, with the whole key in its title.
+    meta: { width: 180 },
   },
   {
     id: "channel",
@@ -42,7 +46,7 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
         <T>{CHANNEL_META[row.original.channel].label}</T>
       </Chip>
     ),
-    meta: { exportValue: (row) => CHANNEL_META[row.channel].label },
+    meta: { width: 100, exportValue: (row) => CHANNEL_META[row.channel].label },
   },
   {
     id: "status",
@@ -51,10 +55,10 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     cell: ({ row }) => (
       <span className="flex flex-col items-start gap-1">
         <StatusBadgeCell status={row.original.status} label={LOG_STATUS_LABEL[row.original.status]} dot />
-        {row.original.errorMessage && <span className="max-w-72 text-caption whitespace-normal text-expense">{row.original.errorMessage}</span>}
+        {row.original.errorMessage && <span className="max-w-full text-caption wrap-break-word whitespace-normal text-expense">{row.original.errorMessage}</span>}
       </span>
     ),
-    meta: { exportValue: (row) => (row.errorMessage ? `${LOG_STATUS_LABEL[row.status]}: ${row.errorMessage}` : LOG_STATUS_LABEL[row.status]) },
+    meta: { width: 150, exportValue: (row) => (row.errorMessage ? `${LOG_STATUS_LABEL[row.status]}: ${row.errorMessage}` : LOG_STATUS_LABEL[row.status]) },
   },
   {
     id: "sentAt",
@@ -63,6 +67,6 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     cell: ({ row }) => <span className="text-small whitespace-nowrap text-ink-muted">
         <RelativeTime value={row.original.sentAt} />
       </span>,
-    meta: { exportValue: (row) => formatDateTime(row.sentAt) },
+    meta: { width: 110, align: "right", exportValue: (row) => formatDateTime(row.sentAt) },
   },
 ];

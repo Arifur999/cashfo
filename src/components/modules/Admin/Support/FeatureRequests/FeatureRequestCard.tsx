@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronUp, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -9,6 +10,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
+import { userRecordHref } from "@/lib/navItem";
 import { cn } from "@/lib/utils";
 import type { FeatureRequestStatus, IFeatureRequest } from "@/types/featureRequest.types";
 import { DECLINED_COLUMN, FEATURE_REQUEST_COLUMNS } from "./featureRequestOptions";
@@ -38,12 +40,13 @@ export const askedText = (createdAt: string, t: Translate) => {
 export const votesText = (count: number, t: Translate, locale: Locale) => plural(t, count, "{count} vote", "{count} votes", { count: formatCount(count, locale) });
 
 // One request on the board: the votes in a box, the title (which opens the
-// request), what was asked in up to three lines, and when; dragged to
+// request), what was asked in up to three lines, when and who asked; dragged to
 // another column, or moved from its menu.
 const FeatureRequestCard = ({ request, canManage, onMove, onOpen, onDragStart, onDragEnd, dragging }: FeatureRequestCardProps) => {
   const { locale, translate } = useLocale();
   const [expanded, setExpanded] = useState(false);
   const description = request.description.trim();
+  const requester = request.requester;
   // "Show more" goes by whether the text is actually cut, not its length:
   // the columns are narrow at xl, so a short description can still be.
   const textRef = useRef<HTMLSpanElement>(null);
@@ -88,7 +91,31 @@ const FeatureRequestCard = ({ request, canManage, onMove, onOpen, onDragStart, o
             )}
           </>
         )}
-        <span className="text-caption text-ink-muted">{askedText(request.createdAt, translate)}</span>
+        {/* When, then who asked: a customer's name opens their page. Not
+            draggable itself, so dragging from the name still moves the card. */}
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-caption text-ink-muted">
+          <span>{askedText(request.createdAt, translate)}</span>
+          {requester && (
+            <>
+              <span aria-hidden="true">·</span>
+              {requester.isCustomer ? (
+                <Link
+                  href={userRecordHref(requester.id)}
+                  draggable={false}
+                  title={requester.email}
+                  aria-label={translate("Open {name}'s page", { name: requester.name })}
+                  className="max-w-full truncate font-semibold text-ink-2 hover:text-emerald hover:underline"
+                >
+                  {requester.name}
+                </Link>
+              ) : (
+                <span title={requester.email} className="max-w-full truncate text-ink-2">
+                  {requester.name}
+                </span>
+              )}
+            </>
+          )}
+        </span>
       </span>
       {canManage && (
         <DropdownMenu>
