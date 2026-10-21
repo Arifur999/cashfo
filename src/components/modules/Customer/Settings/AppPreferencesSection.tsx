@@ -169,7 +169,7 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
           <span className="text-small font-semibold text-emerald">{t("Preview@@format")}</span>
           <span className="text-body-lg font-semibold text-ink tabular-nums">{formatCurrency(123456, "BDT")}</span>
           <span className="text-ink-muted">·</span>
-          <span className="text-body-lg font-semibold text-ink">{formatDate(today, "EEE, d MMM yyyy")}</span>
+          <span className="text-body-lg font-semibold text-ink">{formatDate(today, "EEE, d MMM yyyy", locale)}</span>
           <span className="text-ink-muted">·</span>
           <span className="text-small text-ink-2">{t("Weeks run Saturday to Friday")}</span>
         </div>

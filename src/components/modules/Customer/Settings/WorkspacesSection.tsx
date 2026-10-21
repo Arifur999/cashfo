@@ -148,47 +148,53 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
             // The section's own width decides when the buttons fit beside
             // the name: from 1024px the rail leaves the section 440px.
             <div key={business.id} className="flex flex-col gap-3 border-t border-divider p-5 @xl:flex-row @xl:items-center @xl:gap-4">
-              {/* The account menu's and the drawer's icons for the same workspace. */}
-              <IconTile size={40} tone={isBusiness ? "loans" : "money"}>
-                {isBusiness ? <Store /> : <User />}
-              </IconTile>
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="flex flex-wrap items-center gap-2">
-                  <b className="min-w-0 text-body-lg font-semibold wrap-break-word text-ink">{name}</b>
-                  {active && (
-                    <Chip tone="mint" size="sm">
-                      <Check className="size-3" strokeWidth={3} aria-hidden="true" />
-                      {t("Active")}
-                    </Chip>
+              {/* The icon stays beside the name at every width; only this
+                  pair and the buttons stack on a narrow section. */}
+              <div className="flex min-w-0 flex-1 items-start gap-3 @xl:items-center @xl:gap-4">
+                {/* The account menu's and the drawer's icons for the same workspace. */}
+                <IconTile size={40} tone={isBusiness ? "loans" : "money"}>
+                  {isBusiness ? <Store /> : <User />}
+                </IconTile>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <b className="min-w-0 text-body-lg font-semibold wrap-break-word text-ink">{name}</b>
+                    {active && (
+                      // A status marker like the PIN-lock one, not a pill, so it
+                      // never reads as a second mint "Default" beside it.
+                      <span className="flex items-center gap-1 text-caption font-semibold text-emerald">
+                        <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+                        {t("Active")}
+                      </span>
+                    )}
+                    {business.isDefault && (
+                      <Chip tone="mint" size="sm">
+                        {t("Default")}
+                      </Chip>
+                    )}
+                    {business.hasPinLock && (
+                      <span title={t("PIN lock on")} className="flex items-center gap-1 text-caption font-semibold text-ink-muted">
+                        <Lock className="size-3" aria-hidden="true" />
+                        <span aria-hidden="true">{t("PIN")}</span>
+                        <span className="sr-only">{t("PIN lock on")}</span>
+                      </span>
+                    )}
+                    {business.trialEndsAt && (
+                      <Chip tone={trialActive ? "warning" : "expense"} size="sm">
+                        {t(trialActive ? "Trial" : "Trial expired")}
+                      </Chip>
+                    )}
+                  </span>
+                  <span className="text-small text-ink-muted">
+                    {t(TYPE_LABEL[business.type])} · {t(ROLE_LABEL[business.role])}
+                  </span>
+                  {contact && <span className="truncate text-small text-ink-muted">{contact}</span>}
+                  {business.monthlyFee !== null && (
+                    <span className="text-small text-ink-muted">{fillNodes(t("Extra workspace fee: {amount} a month, half your plan"), { amount: <b className="font-semibold text-ink-2">{formatCurrency(business.monthlyFee, business.currency)}</b> })}</span>
                   )}
-                  {business.isDefault && (
-                    <Chip tone="mint" size="sm">
-                      {t("Default")}
-                    </Chip>
-                  )}
-                  {business.hasPinLock && (
-                    <span title={t("PIN lock on")} className="flex items-center gap-1 text-caption font-semibold text-ink-muted">
-                      <Lock className="size-3" aria-hidden="true" />
-                      <span aria-hidden="true">{t("PIN")}</span>
-                      <span className="sr-only">{t("PIN lock on")}</span>
-                    </span>
-                  )}
-                  {business.trialEndsAt && (
-                    <Chip tone={trialActive ? "warning" : "expense"} size="sm">
-                      {t(trialActive ? "Trial" : "Trial expired")}
-                    </Chip>
-                  )}
+                  {/* Said in words: a tooltip never shows under a finger or to most screen readers. */}
+                  {business.isDefault && <span className="text-caption text-ink-muted">{t("Your personal workspace always stays.")}</span>}
                 </span>
-                <span className="text-small text-ink-muted">
-                  {t(TYPE_LABEL[business.type])} · {t(ROLE_LABEL[business.role])}
-                </span>
-                {contact && <span className="truncate text-small text-ink-muted">{contact}</span>}
-                {business.monthlyFee !== null && (
-                  <span className="text-small text-ink-muted">{fillNodes(t("Extra workspace fee: {amount} a month, half your plan"), { amount: <b className="font-semibold text-ink-2">{formatCurrency(business.monthlyFee, business.currency)}</b> })}</span>
-                )}
-                {/* Said in words: a tooltip never shows under a finger or to most screen readers. */}
-                {business.isDefault && <span className="text-caption text-ink-muted">{t("Your personal workspace always stays.")}</span>}
-              </span>
+              </div>
               <span className="flex shrink-0 flex-wrap gap-2">
                 {!active && (
                   // Named for its workspace, or a screen reader lists "Open, Open, Open".
@@ -229,8 +235,8 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
             </div>
           ))}
         </div>
-        <span className="flex items-center gap-2 text-caption text-ink-muted">
-          <Info className="size-3.5 shrink-0" aria-hidden="true" />
+        <span className="flex items-start gap-2 text-caption text-ink-muted">
+          <Info className="mt-px size-3.5 shrink-0" aria-hidden="true" />
           {t("Deleting a workspace removes its wallets, transactions and books for good.")}
         </span>
       </Card>

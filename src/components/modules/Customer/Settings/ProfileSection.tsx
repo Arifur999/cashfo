@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Loader from "@/components/shared/Loader";
+import Avatar from "@/components/smartly/Avatar";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
@@ -16,7 +17,6 @@ import { updateProfileAction } from "@/lib/customer/authActions";
 import { cleanLocalPhone, fullPhone, ownWorkspaces, samePhone } from "@/lib/customer/settingsDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { getInitials } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { ChangeAvatarDialog } from "./ChangeAvatarDialog";
 
@@ -92,16 +92,8 @@ export function ProfileSection() {
           </div>
           <div className="flex flex-col gap-4 px-6 py-5">
             <div className="flex items-center gap-4">
-              {user.avatarUrl ? (
-                // A backend-served upload, so a plain <img>.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatarUrl} alt="" className="size-18 shrink-0 rounded-full object-cover" />
-              ) : (
-                // The top bar's avatar (forest, mint initials), a few sizes up.
-                <span aria-hidden="true" className="flex size-18 shrink-0 items-center justify-center rounded-full bg-forest text-h2 font-bold tracking-wide text-mint-200">
-                  {getInitials(user.name) || "?"}
-                </span>
-              )}
+              {/* The top bar's avatar (forest, mint initials), a few sizes up. */}
+              <Avatar name={user.name} src={user.avatarUrl} size={72} alt="" className="tracking-wide" />
               <div className="flex min-w-0 flex-col gap-2">
                 <Button type="button" variant="secondary" size="sm" onClick={() => setAvatarOpen(true)} className="w-fit pointer-coarse:h-11">
                   <Camera />

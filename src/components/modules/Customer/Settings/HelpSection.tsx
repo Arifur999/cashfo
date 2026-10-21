@@ -30,6 +30,9 @@ interface HelpSectionProps {
 const PILL = "h-7.5 rounded-full border border-line-strong bg-surface px-3 text-small font-semibold text-ink-2 hover:bg-surface-sunken pointer-coarse:h-11 pointer-coarse:px-4";
 // A link-styled button, in a sentence or under one: 44px tall under a finger.
 const TEXT_BUTTON = "inline-flex items-center rounded-sm font-semibold text-emerald hover:underline pointer-coarse:min-h-11";
+// Under a card's text: the 44px box overlaps the gap and the padding, so a
+// finger gets its hit area without the link floating below the words.
+const CARD_LINK = "w-fit text-small pointer-coarse:-my-3";
 
 // The questions people ask most, searchable; a message to support with a
 // screenshot; ideas to vote on; the full FAQ; and the shortcuts.
@@ -93,7 +96,10 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
 
   return (
     <div className="flex flex-col gap-4">
-      <Input size="xl" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Search help, for example: void a transaction")} aria-label={t("Search help")} leading={<Search />} />
+      {/* On a phone the example is set a size down (the typed text keeps
+          16px, so iOS doesn't zoom) and ends with an ellipsis if it still
+          doesn't fit, rather than being cut mid-word. */}
+      <Input size="xl" className="text-ellipsis max-md:placeholder:text-body" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Search help, for example: void a transaction")} aria-label={t("Search help")} leading={<Search />} />
       {/* Two columns once the section itself is 672px wide: from 1024px the
           sidebar and the rail leave it far less than the window. */}
       <div className="grid items-start gap-4 @2xl:grid-cols-[minmax(0,1fr)_330px]">
@@ -168,7 +174,7 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
             <span className="flex min-w-0 flex-col gap-2">
               <h2 className="text-body font-semibold text-ink">{t("Have an idea?")}</h2>
               <span className="text-small leading-normal text-ink-muted">{t("Suggest a feature and vote on what others asked for.")}</span>
-              <button type="button" onClick={() => setIdeasOpen(true)} className={cn("w-fit text-small", TEXT_BUTTON)}>
+              <button type="button" onClick={() => setIdeasOpen(true)} className={cn(CARD_LINK, TEXT_BUTTON)}>
                 {t("Share an idea")}
               </button>
             </span>
@@ -181,7 +187,7 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
             <span className="flex min-w-0 flex-col gap-2">
               <h2 className="text-body font-semibold text-ink">{t("More answers")}</h2>
               <span className="text-small leading-normal text-ink-muted">{t("Every question we have answered, kept up to date.")}</span>
-              <a href="/faq" target="_blank" rel="noopener noreferrer" className={cn("w-fit gap-1 text-small", TEXT_BUTTON)}>
+              <a href="/faq" target="_blank" rel="noopener noreferrer" className={cn(CARD_LINK, "gap-1", TEXT_BUTTON)}>
                 {t("Open the FAQ")}
                 <ExternalLink className="size-3.5" aria-hidden="true" />
                 <span className="sr-only">({t("opens in a new tab")})</span>

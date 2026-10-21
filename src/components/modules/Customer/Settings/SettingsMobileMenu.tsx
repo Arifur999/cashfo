@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
 import Loader from "@/components/shared/Loader";
+import Avatar from "@/components/smartly/Avatar";
 import { SOFT_TONE, type Tone } from "@/components/smartly/tones";
 import { APP_VERSION, ownWorkspaces, REMINDERS_ANCHOR, SETTINGS_GROUPS, SETTINGS_SECTIONS, type SettingsSection } from "@/lib/customer/settingsDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { getInitials } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { SECTION_ICONS, useSignOut } from "./SettingsNav";
 
@@ -39,7 +39,7 @@ export function SettingsMobileMenu() {
     if (allowDark) {
       rows.push({ key: "theme", href, label: "Theme", icon: Moon, tone: "neutral", value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") });
     }
-    rows.push({ key: "reminders", href: `${href}#${REMINDERS_ANCHOR}`, label: "Reminders", icon: Bell, tone: "info" });
+    rows.push({ key: "reminders", href: `${href}#${REMINDERS_ANCHOR}`, label: "Reminders", icon: Bell, tone: "rose" });
     return rows;
   };
 
@@ -53,16 +53,8 @@ export function SettingsMobileMenu() {
   return (
     <div className="flex flex-col gap-4">
       <Link href="/settings/profile" className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4 text-ink">
-        {user.avatarUrl ? (
-          // A backend-served upload, so a plain <img>.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.avatarUrl} alt="" className="size-12 shrink-0 rounded-full object-cover" />
-        ) : (
-          // The top bar's avatar (forest, mint initials), a size up.
-          <span aria-hidden="true" className="flex size-12 shrink-0 items-center justify-center rounded-full bg-forest text-body-lg font-bold text-mint-200">
-            {getInitials(user.name) || "?"}
-          </span>
-        )}
+        {/* The top bar's avatar (forest, mint initials), a size up. */}
+        <Avatar name={user.name} src={user.avatarUrl} size={48} alt="" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-body-lg font-semibold">
             <span className="sr-only">{t("Profile")}: </span>

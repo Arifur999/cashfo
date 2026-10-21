@@ -75,3 +75,16 @@ describe("notificationTime", () => {
     expect(notificationTime("2026-10-02T07:48:00.000Z", inEnglish, "bn", now)).toBe("১২ min ago");
   });
 });
+
+describe("notificationTime in Bangla", () => {
+  it("dates a row in the reader's language", () => {
+    expect(notificationTime("2026-10-02T05:20:00.000Z", inEnglish, "bn", now)).toBe("১১:২০ পূর্বাহ্ণ");
+    expect(notificationTime("2026-09-29T10:00:00.000Z", inEnglish, "bn", now)).toBe("মঙ্গল, ২৯ সেপ্টে");
+    expect(notificationTime("2025-06-02T10:00:00.000Z", inEnglish, "bn", now)).toBe("২ জুন ২০২৫");
+  });
+
+  it("dates a loan reminder in the reader's language", () => {
+    const item = row("LOAN_DUE", { name: "Islami Bank", contactId: "c1", loan: 1, direction: "PAYABLE", amount: "5000.00", dueDate: "2026-10-05" });
+    expect(notificationView(item, inEnglish, "bn", "BDT", now).body).toContain("সোম, ৫ অক্টো");
+  });
+});

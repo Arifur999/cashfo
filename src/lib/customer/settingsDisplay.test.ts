@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountPasswordRules, cleanLocalPhone, FAQS, fileNameFrom, fullPhone, GUIDES, knownIp, localPhone, ownWorkspaces, samePhone, searchFaqs, sectionFor, sectionOf, signInResult, triedThePassword } from "./settingsDisplay";
+import { accountPasswordRules, cleanLocalPhone, FAQS, fileNameFrom, fullPhone, GUIDES, knownIp, LEGAL_LINKS, localPhone, ownWorkspaces, samePhone, searchFaqs, sectionFor, sectionOf, signInResult, triedThePassword } from "./settingsDisplay";
 
 describe("settings sections", () => {
   it("finds the section a path belongs to", () => {
@@ -125,5 +125,11 @@ describe("help", () => {
     for (const guide of GUIDES) expect(ids.has(guide.faqId), guide.title).toBe(true);
     expect(GUIDES.find((guide) => guide.title === "Budgets that work")?.faqId).toBe("budget");
     expect(GUIDES.find((guide) => guide.title === "Getting started")?.faqId).toBe("start");
+  });
+});
+
+describe("resources", () => {
+  it("names the legal pages as their own headings do", () => {
+    expect(LEGAL_LINKS.map((link) => link.title)).toEqual(["Terms of use", "Privacy policy", "Refund policy"]);
   });
 });
