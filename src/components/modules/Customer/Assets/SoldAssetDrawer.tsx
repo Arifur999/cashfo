@@ -1,0 +1,173 @@
+"use client";
+
+import { Undo2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import Button from "@/components/smartly/Button";
+import ConfirmDialog from "@/components/smartly/ConfirmDialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
+import { undoAssetSaleAction } from "@/lib/customer/assetActions";
+import { assetGain, categoryVisual, gainChip, valueTimeline } from "@/lib/customer/assetDisplay";
+import type { ActionResult } from "@/lib/customer/authActions";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { formatDate } from "@/lib/customer/date";
+import { getAppToday } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
+import { AssetTypeTile } from "./AssetTypeTile";
+import { AssetValueHistory } from "./AssetValueHistory";
+import { useDrawerWallets } from "./useDrawerWallets";
+
+const BOX = { income: "bg-mint-50 text-income", expense: "bg-expense-soft text-expense", neutral: "bg-strip text-ink-2" } as const;
+
+interface SoldAssetDrawerProps {
+  open: boolean;
+  onClose: () => void;
+  businessId: string;
+  asset: Asset | null;
+  categories: AssetCategoryOption[];
+  currency: string;
+  // The owner or an accountant, who may undo the sale.
+  canManage: boolean;
+}
+
+// A sold asset, to look back on: what it cost against what it sold for, the
+// dates, the wallets the money left and reached, its note and its value
+// history. Those who can manage assets may undo a sale recorded by mistake.
+export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, currency, canManage }: SoldAssetDrawerProps) {
+  const { t } = useLocale();
+  const router = useRouter();
+  const wide = useMediaQuery("(min-width: 768px)");
+  // Only for the wallets' names.
+  const { wallets, savingsWallets } = useDrawerWallets(open, businessId);
+  // The undo question is open.
+  const [undoing, setUndoing] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  if (!asset) return null;
+  const all = [...wallets, ...savingsWallets];
+  const walletName = (id: string | null) => (id ? all.find((wallet) => wallet.id === id)?.name : undefined);
+  const gain = assetGain(asset);
+  const chip = gainChip(gain.percent);
+  const visual = categoryVisual(categories, asset.category);
+  const soldOn = asset.soldAt ? formatDate(asset.soldAt) : null;
+  // A purchase from a wallet, where the sale went, and the note; each only
+  // when there is one (an asset added as already owned left no wallet).
+  const details = [
+    { label: t("Paid from@@wallet"), value: walletName(asset.purchaseAccountId) },
+    { label: t("Received into"), value: walletName(asset.soldAccountId) },
+    { label: t("Note"), value: asset.notes ?? undefined },
+  ].filter((detail): detail is { label: string; value: string } => !!detail.value);
+  // Names the wallet once the wallets have loaded (and while it is still one).
+  const soldInto = walletName(asset.soldAccountId);
+  const soldFor = formatCurrency(asset.soldPrice ?? 0, currency);
+
+  // The sale's income leaves the wallet it reached and the asset is owned
+  // again. The question closes either way; on success the drawer does too.
+  // A request that never reached the server (offline, a new deploy) is a
+  // failure like any other.
+  function undoSale() {
+    if (isPending || !asset) return;
+    startTransition(async () => {
+      const result = await undoAssetSaleAction(businessId, asset.id).catch((): ActionResult<unknown> => ({ success: false }));
+      setUndoing(false);
+      if (result.success) {
+        toast.success(t("Sale undone"));
+        onClose();
+        router.refresh();
+      } else {
+        toast.error(t(result.message ?? "Failed to undo the sale"));
+      }
+    });
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
+      <SheetContent
+        side={wide ? "right" : "bottom"}
+        showCloseButton={false}
+        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
+      >
+        <SheetHeader className={cn("flex-row items-center gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
+          <AssetTypeTile visual={visual} size="lg" />
+          <span className="flex min-w-0 flex-1 flex-col gap-px">
+            <SheetTitle className="truncate text-h3 text-ink">{asset.name}</SheetTitle>
+            <SheetDescription className="truncate text-small leading-[normal] text-ink-muted">
+              {t(asset.category)} · {soldOn ? t("Sold {date}", { date: soldOn }) : t("Sold")}
+            </SheetDescription>
+          </span>
+          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
+            <X className="size-4.5" aria-hidden="true" />
+          </button>
+        </SheetHeader>
+
+        <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
+          <div className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-strip p-4 tabular-nums">
+            <span className="flex flex-col gap-0.5 *:leading-[normal]">
+              <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
+              <span className="text-title text-ink">{formatCurrency(asset.purchasePrice, currency)}</span>
+              <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate) })}</span>
+            </span>
+            <span className="flex flex-col gap-0.5 *:leading-[normal]">
+              <span className="text-caption font-normal text-ink-muted">{t("Sale price")}</span>
+              <span className="text-title text-ink">{soldFor}</span>
+              {soldOn && <span className="text-caption font-normal text-ink-muted">{t("Sold {date}", { date: soldOn })}</span>}
+            </span>
+          </div>
+
+          <div className={cn("flex items-center justify-between gap-3 rounded-md p-3 text-small", BOX[chip.tone])}>
+            <span className="font-medium">{gain.amount > 0 ? t("Gain on the sale") : gain.amount < 0 ? t("Loss on the sale") : t("Sold for what you paid")}</span>
+            <span className="font-semibold tabular-nums">
+              {formatSignedCurrency(gain.amount, currency)} ({chip.label})
+            </span>
+          </div>
+
+          {details.length > 0 && (
+            <dl className="flex flex-col rounded-lg border border-line">
+              {details.map((detail, index) => (
+                <div key={detail.label} className={cn("flex justify-between gap-3 px-4 py-3 text-small", index > 0 && "border-t border-divider")}>
+                  <dt className="shrink-0 text-ink-muted">{detail.label}</dt>
+                  <dd className="min-w-0 text-right font-medium wrap-anywhere text-ink">{detail.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          <AssetValueHistory entries={valueTimeline(asset)} currency={currency} today={getAppToday()} />
+        </div>
+
+        <div className={cn("flex items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-6")}>
+          {canManage && (
+            <Button type="button" variant="ghost" onClick={() => setUndoing(true)} disabled={isPending}>
+              <Undo2 />
+              {t("Undo sale")}
+            </Button>
+          )}
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending} className="ml-auto">
+            {t("Close")}
+          </Button>
+        </div>
+
+        <ConfirmDialog
+          open={undoing}
+          onClose={() => setUndoing(false)}
+          onConfirm={undoSale}
+          isPending={isPending}
+          // Not red: a sale undone can be recorded again.
+          danger={false}
+          icon={<Undo2 />}
+          title={t("Undo the sale of {name}?", { name: asset.name })}
+          description={
+            soldInto
+              ? t("The {amount} from the sale is taken back out of {wallet}, and the asset is owned again.", { amount: soldFor, wallet: soldInto })
+              : t("The {amount} from the sale is taken back out of the wallet it went into, and the asset is owned again.", { amount: soldFor })
+          }
+          confirmLabel={t("Undo sale")}
+        />
+      </SheetContent>
+    </Sheet>
+  );
+}

@@ -1,28 +1,27 @@
 "use client";
 
-import { X } from "lucide-react";
+import { CircleAlert, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createElement, useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
+import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useAmountField } from "@/hooks/useAmountField";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, AssetCategoryOption } from "@/lib/customer/api";
-import { purchaseAssetAction } from "@/lib/customer/assetActions";
-import { categoryVisual } from "@/lib/customer/assetDisplay";
-import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
-import { getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
+import { addOwnedAssetAction, purchaseAssetAction } from "@/lib/customer/assetActions";
+import { formatCurrency } from "@/lib/customer/currency";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import DayInput from "@/components/smartly/form/DayInput";
+import { TypeChoice } from "./TypeChoice";
+import { useDrawerWallets } from "./useDrawerWallets";
 
 interface AssetDrawerProps {
   open: boolean;
@@ -34,14 +33,17 @@ interface AssetDrawerProps {
   currency: string;
   // Open on "Buying it now" or "I already own it".
   initialMode?: Mode;
+  // The type picked when it opens (an empty type's own "Add asset").
+  initialCategory?: string;
 }
 
 type Mode = "buy" | "own";
 
 // Add an asset: something bought now (the price leaves a wallet) or
-// something already owned (nothing moves). Name, category, price, the
-// wallet for a purchase, the date and a note.
-export function AssetDrawer({ open, onClose, businessId, categories, totalValue, currency, initialMode = "buy" }: AssetDrawerProps) {
+// something already owned (nothing moves; what was paid, when, and what it
+// is worth today). Name, type, price, the wallet for a purchase, the date
+// and a note.
+export function AssetDrawer({ open, onClose, businessId, categories, totalValue, currency, initialMode = "buy", initialCategory }: AssetDrawerProps) {
   const { t } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -49,14 +51,15 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
-  const priceField = useAmountField(price, setPrice, currency);
-  const [walletId, setWalletId] = useState("");
+  // What it's worth today ("I already own it"): follows the price until it
+  // is typed over.
+  const [worth, setWorth] = useState<string | null>(null);
+  // A wallet picked by hand. Until then the drawer pays from the first one
+  // that covers the price.
+  const [pickedWalletId, setPickedWalletId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [note, setNote] = useState("");
-  const [wallets, setWallets] = useState<Account[]>([]);
-  const [savingsWallets, setSavingsWallets] = useState<Account[]>([]);
-  const [walletsError, setWalletsError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { wallets, savingsWallets, loading, error: walletsError } = useDrawerWallets(open, businessId);
   const [isPending, startTransition] = useTransition();
 
   const [prevOpen, setPrevOpen] = useState(false);
@@ -65,43 +68,53 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
     if (open) {
       setMode(initialMode);
       setName("");
-      setCategory(categories.find((option) => option.name === "Other")?.name ?? categories[0]?.name ?? "");
+      setCategory(categories.some((option) => option.name === initialCategory) ? (initialCategory ?? "") : (categories.find((option) => option.name === "Other")?.name ?? categories[0]?.name ?? ""));
       setPrice("");
+      setWorth(null);
       setDate(getAppToday());
       setNote("");
-      setLoading(true);
     }
   }
 
-  useEffect(() => {
-    if (!open) return;
-    Promise.all([listMoneyAccountsAction(businessId), getActiveSavingsWalletsAction(businessId)]).then(([money, savings]) => {
-      const list = money.data ?? [];
-      setWallets(list);
-      setSavingsWallets(savings);
-      setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
-      setWalletId((current) => current || list[0]?.id || savings[0]?.id || "");
-      setLoading(false);
-    });
-  }, [open, businessId]);
-
   const value = Number(price) || 0;
   const buying = mode === "buy";
-  const wallet = [...wallets, ...savingsWallets].find((w) => w.id === walletId);
-  const valid = name.trim().length > 0 && category.length > 0 && value > 0 && (!buying || walletId.length > 0);
+  const all = [...wallets, ...savingsWallets];
+  const covers = (candidate: Account) => Number(candidate.currentBalance) >= value;
+  // The hand-picked wallet while this workspace still has it (a switch or a
+  // deleted wallet drops it), else the first that covers the price.
+  const wallet = all.find((candidate) => candidate.id === pickedWalletId) ?? all.find(covers) ?? all[0];
+  const short = buying && wallet !== undefined && value > 0 && !covers(wallet);
+  // An emptied "Value today" means the price again.
+  const worthValue = worth === null || worth.trim() === "" ? value : Number(worth) || 0;
+  const lastDay = getAppToday();
+  // A typed date can still fall outside the picker's range.
+  const valid = name.trim().length > 0 && category.length > 0 && value > 0 && date <= lastDay && (buying ? wallet !== undefined && !short : worthValue > 0);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid || isPending) return;
+    if (!valid || isPending || (buying && !wallet)) return;
+    const input = { name: name.trim(), category, purchaseDate: date, purchasePrice: value, notes: note.trim() || undefined };
+    // Bought today at what it is worth: the purchase says it all.
+    const valueToday = worthValue !== value || date !== lastDay ? worthValue : undefined;
     startTransition(async () => {
-      const result = await purchaseAssetAction(businessId, { name: name.trim(), category, purchaseDate: date, purchasePrice: value, purchaseAccountId: buying ? walletId : undefined, notes: note.trim() || undefined });
-      if (result.success) {
-        toast.success(buying ? t("Asset bought") : t("Asset added"));
-        onClose();
-        router.refresh();
+      if (buying && wallet) {
+        const result = await purchaseAssetAction(businessId, { ...input, purchaseAccountId: wallet.id });
+        if (!result.success) {
+          toast.error(t(result.message ?? "Failed to add the asset"));
+          return;
+        }
+        toast.success(t("Asset bought"));
       } else {
-        toast.error(result.message ?? t("Failed to add the asset"));
+        const result = await addOwnedAssetAction(businessId, input, valueToday);
+        if (!result.success) {
+          toast.error(t(result.message ?? "Failed to add the asset"));
+          return;
+        }
+        if (result.data?.valueSaved === false) toast.warning(t("The asset was added, but its value today wasn't saved. Record it from Update value."));
+        else toast.success(t("Asset added"));
       }
+      onClose();
+      router.refresh();
     });
   }
 
@@ -121,7 +134,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-1">
             <SheetTitle className="text-h3 text-ink">{t("Add an asset")}</SheetTitle>
-            <p className="text-small leading-[normal] text-ink-muted">{t("Something you're buying now, or something you already own.")}</p>
+            <SheetDescription className="text-small leading-[normal] text-ink-muted">{t("Something you're buying now, or something you already own.")}</SheetDescription>
           </div>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
             <X className="size-4.5" aria-hidden="true" />
@@ -146,45 +159,47 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
               <Input id="asset-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("Gold ring, 22K")} />
             </Field>
 
-            <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Category")}</legend>
-              {categories.length === 0 ? (
-                <p className="text-caption text-ink-muted">{t("No category yet -- add one under Categories first.")}</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((option) => {
-                    const on = option.name === category;
-                    const visual = categoryVisual(categories, option.name);
-                    return (
-                      <button key={option.id} type="button" aria-pressed={on} onClick={() => setCategory(option.name)} className={cn("flex h-8.5 items-center gap-2 rounded-full border py-0 pr-3 pl-2 text-small transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
-                        <span className={cn("flex size-5.5 items-center justify-center rounded-full [&_svg]:size-3", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
-                        {option.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </fieldset>
+            <TypeChoice categories={categories} value={category} onChange={setCategory} onClose={onClose} />
 
-            <Field htmlFor="asset-price" label={label(buying ? t("Price") : t("Value today"))}>
-              <Input
-                id="asset-price"
-                type="text"
-                inputMode="decimal"
-                size="xl"
-                {...priceField}
-                placeholder="0"
-                leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                frameClassName="gap-0 overflow-hidden pl-0"
-                className="pl-4 text-h2 tabular-nums"
-              />
+            <Field htmlFor="asset-price" label={label(buying ? t("Price") : t("What you paid"))}>
+              <AmountInput id="asset-price" value={price} onChange={setPrice} currency={currency} />
             </Field>
 
-            {buying && <WalletPicker label={t("Pay from")} balanceLabel="Available@@balance" tone="sand" wallets={wallets} savingsWallets={savingsWallets} value={walletId} onChange={setWalletId} after={null} minBalance={value} currency={currency} loading={loading} error={walletsError} onClose={onClose} />}
+            {!buying && (
+              <Field htmlFor="asset-worth" label={label(t("Value today"), true)} hint={t("Change it if it's worth more or less now.")}>
+                <AmountInput id="asset-worth" value={worth ?? price} onChange={setWorth} currency={currency} describedBy="asset-worth-hint" />
+              </Field>
+            )}
+
+            {buying && (
+              <div className="flex flex-col gap-2">
+                <WalletPicker
+                  label={t("Pay from")}
+                  balanceLabel="Available@@balance"
+                  tone="sand"
+                  wallets={wallets}
+                  savingsWallets={savingsWallets}
+                  value={wallet?.id ?? ""}
+                  onChange={setPickedWalletId}
+                  after={null}
+                  minBalance={value}
+                  currency={currency}
+                  loading={loading}
+                  error={walletsError}
+                  onClose={onClose}
+                />
+                {!loading && short && wallet && (
+                  <p role="alert" className="flex items-center gap-2 text-caption text-expense">
+                    <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
+                    {all.some(covers) ? t("Not enough in {wallet}. Pick another wallet.", { wallet: wallet.name }) : t("None of your wallets has that much.")}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="asset-date" label={label(buying ? t("Date") : t("Bought on"))}>
-                <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
+                <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={lastDay} />
               </Field>
               <Field htmlFor="asset-note" label={label(t("Note"), true)}>
                 <Input id="asset-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />
@@ -198,7 +213,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
                     <span className="truncate text-ink-2">{wallet.name}</span>
                     <span>
                       <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency)} → </span>
-                      <span className={cn("font-semibold", Number(wallet.currentBalance) < value ? "text-warning" : "text-ink")}>{formatCurrency(Number(wallet.currentBalance) - value, currency)}</span>
+                      <span className={cn("font-semibold", short ? "text-expense" : "text-ink")}>{formatCurrency(Number(wallet.currentBalance) - value, currency)}</span>
                     </span>
                   </div>
                 )}
@@ -206,7 +221,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
                   <span className="text-ink-2">{t("Your assets")}</span>
                   <span>
                     <span className="text-ink-muted">{formatCurrency(totalValue, currency)} → </span>
-                    <span className="font-semibold text-ink">{formatCurrency(totalValue + value, currency)}</span>
+                    <span className="font-semibold text-ink">{formatCurrency(totalValue + (buying ? value : worthValue), currency)}</span>
                   </span>
                 </div>
               </div>
@@ -219,7 +234,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {buying ? (value > 0 ? `${t("Buy for")} ${formatCurrency(value, currency)}` : t("Buy asset")) : t("Add asset")}
+              {buying ? (value > 0 ? t("Buy for {amount}", { amount: formatCurrency(value, currency) }) : t("Buy asset")) : t("Add asset")}
             </Button>
           </div>
         </form>

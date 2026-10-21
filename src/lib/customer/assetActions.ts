@@ -1,6 +1,7 @@
 "use server";
 
 import axios from "axios";
+import { getAppToday } from "@/lib/date";
 import { API_BASE_URL, getApiErrorMessage, type Asset, type AssetCategoryOption } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import type { ActionResult } from "./authActions";
@@ -12,13 +13,29 @@ async function authHeaders() {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
+// Backend refusals the pages can say in the reader's language, matched by
+// status and wording and answered with a dictionary key (the pages toast
+// t(message)). Anything else passes through as the backend worded it.
+const REFUSALS: { status?: number; pattern: RegExp; message: string }[] = [
+  { status: 409, pattern: /asset category named/i, message: "An asset type with that name already exists" },
+  // The drawer already stops a purchase a wallet can't cover; this is a
+  // balance that changed in another tab meanwhile.
+  { pattern: /only has .* cannot spend/i, message: "That wallet doesn't have enough money. Pick another wallet." },
+  { pattern: /^account not found in this workspace$/i, message: "That wallet isn't in this workspace. Pick another wallet." },
+  { status: 404, pattern: /^asset category not found$/i, message: "This asset type was already deleted." },
+];
+
+// The fallbacks are dictionary keys too: a network or session failure
+// reaches the reader in their language.
 async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
   try {
     const data = await fn();
     return { success: true, data };
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage) };
+      const message = getApiErrorMessage(error.response?.data, fallbackMessage);
+      const known = REFUSALS.find((refusal) => (refusal.status === undefined || refusal.status === error.response?.status) && refusal.pattern.test(message));
+      return { success: false, message: known?.message ?? message };
     }
     return { success: false, message: fallbackMessage };
   }
@@ -36,8 +53,8 @@ export interface PurchaseAssetInput {
   category: string;
   purchaseDate: string;
   purchasePrice: number;
-  // Omitted by "Current Asset list"'s simpler Add Assets flow (AddCurrentAssetModal)
-  // -- see backend AssetsService.purchase()'s comment for what that skips.
+  // Omitted for something already owned (addOwnedAssetAction): a plain
+  // record, no money moves -- see backend AssetsService.purchase()'s comment.
   purchaseAccountId?: string;
   notes?: string;
 }
@@ -46,7 +63,27 @@ export async function purchaseAssetAction(businessId: string, input: PurchaseAss
   return callApi(async () => {
     const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to purchase asset");
+  }, "Failed to add the asset");
+}
+
+export interface AddOwnedAsset {
+  asset: Asset;
+  // False when the asset was saved but today's value wasn't.
+  valueSaved: boolean;
+}
+
+// Something already owned: what was paid, on the day it was bought, then
+// what it is worth today as a value check dated today. The backend files
+// the price as the value on the purchase day, so without the check today's
+// value would read as the price paid years ago, and the 6-month reminder
+// would fire at once. valueToday is left out when there is nothing to add
+// (bought today, at that value).
+export async function addOwnedAssetAction(businessId: string, input: Omit<PurchaseAssetInput, "purchaseAccountId">, valueToday?: number): Promise<ActionResult<AddOwnedAsset>> {
+  const added = await purchaseAssetAction(businessId, { ...input, purchaseAccountId: undefined });
+  if (!added.success || !added.data) return { success: false, message: added.message };
+  if (valueToday === undefined) return { success: true, data: { asset: added.data, valueSaved: true } };
+  const checked = await updateAssetValueAction(businessId, added.data.id, { value: valueToday, date: getAppToday() });
+  return { success: true, data: { asset: checked.data ?? added.data, valueSaved: checked.success } };
 }
 
 export interface SellAssetInput {
@@ -60,7 +97,7 @@ export async function sellAssetAction(businessId: string, id: string, input: Sel
   return callApi(async () => {
     const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/sell`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to sell asset");
+  }, "Failed to record the sale");
 }
 
 export interface UpdateAssetValueInput {
@@ -73,14 +110,50 @@ export async function updateAssetValueAction(businessId: string, id: string, inp
   return callApi(async () => {
     const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/value`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to update asset value");
+  }, "Failed to update value");
+}
+
+// A correction to an asset entered wrongly. Only what is sent changes; null
+// clears the note. The backend takes purchaseDate only for an asset no
+// wallet paid for, before it is revalued or sold (a paid purchase keeps its
+// posting's date), and says so otherwise.
+export interface UpdateAssetInput {
+  name?: string;
+  category?: string;
+  notes?: string | null;
+  purchaseDate?: string;
+}
+
+export async function updateAssetAction(businessId: string, id: string, input: UpdateAssetInput): Promise<ActionResult<Asset>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the changes");
+}
+
+// Takes away an asset entered by mistake, with its value history. A
+// purchase paid from a wallet is voided with it, so the money is back in
+// that wallet; a sold asset needs its sale undone first.
+export async function deleteAssetAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}`, { headers: await authHeaders() });
+  }, "Failed to delete the asset");
+}
+
+// Undoes a sale recorded by mistake: the sale's income leaves the wallet it
+// went into, and the asset is owned again at the value it had.
+export async function undoAssetSaleAction(businessId: string, id: string): Promise<ActionResult<Asset>> {
+  return callApi(async () => {
+    const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/undo-sale`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to undo the sale");
 }
 
 export async function getAssetCategoriesAction(businessId: string): Promise<ActionResult<AssetCategoryOption[]>> {
   return callApi(async () => {
     const res = await customerApi.get<AssetCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories`, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to load categories");
+  }, "Failed to load asset types");
 }
 
 export interface AssetCategoryInput {
@@ -93,18 +166,18 @@ export async function createAssetCategoryAction(businessId: string, input: Asset
   return callApi(async () => {
     const res = await customerApi.post<AssetCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to create category");
+  }, "Failed to save category");
 }
 
 export async function updateAssetCategoryAction(businessId: string, id: string, input: Partial<AssetCategoryInput>): Promise<ActionResult<AssetCategoryOption>> {
   return callApi(async () => {
     const res = await customerApi.patch<AssetCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories/${id}`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to update category");
+  }, "Failed to save category");
 }
 
 export async function deleteAssetCategoryAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories/${id}`, { headers: await authHeaders() });
-  }, "Failed to delete category");
+  }, "Failed to delete the asset type");
 }
