@@ -29,7 +29,7 @@ export function PinPromptModal({ open, onClose, businessId, businessName, isOwne
         onCloseAutoFocus={onCloseAutoFocus}
         className="w-110 max-w-[calc(100vw-32px)] gap-0 rounded-lg border border-line bg-surface p-6 text-ink shadow-overlay ring-0"
       >
-        <DialogTitle className="sr-only">{`${t("Enter the PIN for")} ${businessName}`}</DialogTitle>
+        <DialogTitle className="sr-only">{t("Enter the PIN for {name}", { name: businessName })}</DialogTitle>
         <PinCard
           businessId={businessId}
           businessName={businessName}

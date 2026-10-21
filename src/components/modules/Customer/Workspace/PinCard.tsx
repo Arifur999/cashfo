@@ -77,7 +77,7 @@ export function PinCard({ businessId, businessName, isOwner, onOpened, cancelLab
           <Lock />
         </IconTile>
         <h2 className="text-h3 leading-[26px] text-ink">
-          {forgot ? t("Remove the PIN with your account password") : `${t("Enter the PIN for")} ${businessName}`}
+          {forgot ? t("Remove the PIN with your account password") : t("Enter the PIN for {name}", { name: businessName })}
         </h2>
       </div>
       <p className="text-body leading-[21px] text-ink-2">
