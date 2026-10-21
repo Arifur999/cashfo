@@ -35,6 +35,8 @@ export const adminSecurityDictionary: Record<string, string> = {
   "Copy as JSON": "JSON হিসেবে কপি",
   "the entry as JSON": "এন্ট্রিটি JSON হিসেবে",
   "Open {name}": "{name} খুলুন",
+  "Open the owner's page": "মালিকের পাতা খুলুন",
+  "Find the owner in Users": "ব্যবহারকারীদের মধ্যে মালিককে খুঁজুন",
   Field: "ফিল্ড",
   Before: "আগে",
   After: "পরে",

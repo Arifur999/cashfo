@@ -14,6 +14,7 @@ import { auditActionLabel } from "@/lib/auditActionLabels";
 import { auditRecordHref, auditRecordName, auditRecordTypeLabel, namesNoRecord } from "@/lib/auditRecords";
 import { formatRelativeDateTime } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { ADMIN_USERS_ROUTE } from "@/lib/navItem";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IAuditLogEntry } from "@/types/auditLog.types";
 import AuditValueDiff from "./AuditValueDiff";
@@ -41,7 +42,7 @@ interface AuditEntryDrawerProps {
 // where, the fields that changed (before struck out, after in green), and
 // the whole saved record to copy.
 const AuditEntryDrawer = ({ entryId, listEntry, onClose }: AuditEntryDrawerProps) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   const detail = useQuery({ ...auditEntryQuery(entryId ?? ""), enabled: Boolean(entryId) });
   const entry = detail.data ?? listEntry;
   // Only the API's own "no such entry" reads as a wrong link; anything else
@@ -61,7 +62,7 @@ const AuditEntryDrawer = ({ entryId, listEntry, onClose }: AuditEntryDrawerProps
       description={
         entry ? (
           <>
-            {formatRelativeDateTime(entry.createdAt, { withSeconds: true, t: translate })} · <code className="font-mono text-caption">{entry.action}</code>
+            {formatRelativeDateTime(entry.createdAt, { withSeconds: true, t: translate, locale })} · <code className="font-mono text-caption">{entry.action}</code>
           </>
         ) : undefined
       }
@@ -92,12 +93,24 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
   const recordName = auditRecordName(entry, translate);
   const typeLabel = auditRecordTypeLabel(entry.entityType, translate);
   const href = auditRecordHref(entry);
-  // A record with a page of its own is opened ("Open Yearly Pro"); the rest
-  // live in a list, and the button names that list ("Go to Workspaces"), so
-  // it never promises the record itself.
+  // The button names where it leads. A record with a page of its own is
+  // opened ("Open Yearly Pro"); an entry on someone else's record that leads
+  // to a person (a workspace's owner) says so; the rest live in a list, and
+  // the button names that list ("Go to Workspaces"), so it never promises the
+  // record itself.
   const ownPage = Boolean(href && entry.entityId && href.endsWith(`/${entry.entityId}`));
+  const toOwnerPage = Boolean(href && !ownPage && entry.entityType !== "User" && href.startsWith(`${ADMIN_USERS_ROUTE}/`));
+  const toOwnerSearch = Boolean(href && entry.entityType !== "User" && href.startsWith(`${ADMIN_USERS_ROUTE}?`));
   const listName = href && !ownPage ? adminCrumb(href)?.page : null;
-  const linkLabel = ownPage ? translate("Open {name}", { name: recordName }) : translate("Go to {page}", { page: listName ? translate(listName) : typeLabel });
+  const linkLabel = ownPage
+    ? translate("Open {name}", { name: recordName })
+    : toOwnerPage
+      ? translate("Open the owner's page")
+      : toOwnerSearch
+        ? translate("Find the owner in Users")
+        : listName
+          ? translate("Go to {page}", { page: translate(listName) })
+          : translate("Open");
   const saved = JSON.stringify(
     {
       action: entry.action,
