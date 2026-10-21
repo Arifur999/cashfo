@@ -16,6 +16,8 @@ describe("cn", () => {
 
   it("treats the design shadows as shadows, not shadow colours", () => {
     expect(cn("shadow-card", "shadow-overlay")).toBe("shadow-overlay");
+    // A drawer's own shadow replaces the sheet primitive's shadow-lg.
+    expect(cn("shadow-lg", "shadow-drawer")).toBe("shadow-drawer");
     expect(cn("shadow-card shadow-black/10")).toBe("shadow-card shadow-black/10");
   });
 
