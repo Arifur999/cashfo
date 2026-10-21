@@ -52,9 +52,17 @@ export function RangePicker({ value, from, to, customFrom, customTo, busy = fals
   const [sent, setSent] = useState(applied);
   const [seen, setSeen] = useState(applied);
   if (applied !== seen) {
+    // A side edited since the last send keeps what was typed: leaving From
+    // loads it, and a date typed into To meanwhile must survive that load.
+    // Off Custom the fields are hidden, so both sides take the page's dates.
+    const [sentFrom = "", sentTo = ""] = sent.split("|");
+    const keep = value === "custom";
     setSeen(applied);
     setSent(applied);
-    setDraft({ from: customFrom ?? "", to: customTo ?? "" });
+    setDraft({
+      from: keep && draft.from !== sentFrom ? draft.from : customFrom ?? "",
+      to: keep && draft.to !== sentTo ? draft.to : customTo ?? "",
+    });
   }
 
   function pick(range: DateRangePreset) {
