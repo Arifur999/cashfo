@@ -18,6 +18,9 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "a month": "প্রতি মাসে",
   "a year": "প্রতি বছরে",
   "No trial needed": "ট্রায়ালের দরকার নেই",
+  // The plan form's Display order (its label is in admin-content.ts).
+  "Where it sits among the plans, 0 first.": "প্ল্যানগুলোর মধ্যে এটি কোথায় থাকবে, ০ সবার আগে।",
+  "Where it sits among the plans, 0 first. Leave it blank to put it last.": "প্ল্যানগুলোর মধ্যে এটি কোথায় থাকবে, ০ সবার আগে। খালি রাখলে সবার শেষে যাবে।",
   "No free trial": "ফ্রি ট্রায়াল নেই",
   "{days}-day free trial": "{days} দিনের ফ্রি ট্রায়াল",
   "{trial} · about {amount} a month": "{trial} · মাসে প্রায় {amount}",

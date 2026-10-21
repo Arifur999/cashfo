@@ -1,10 +1,11 @@
 import Card from "@/components/smartly/Card";
 import MiniBars from "@/components/shared/MiniBars";
+import { formatCurrency } from "@/lib/currency";
 import { formatMonthName } from "@/lib/date";
 import type { IMrrHistoryPoint } from "@/types/revenue.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
-import { compactAmount, mrrChartLabel, shortMonthKey } from "./revenueDisplay";
+import { compactAmount, shortMonthKey } from "./revenueDisplay";
 
 // MRR at the end of each of the last six months, the running month in
 // forest. Worked out from payments (the KPI above counts the plans
@@ -34,10 +35,18 @@ const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
         <p className="py-8 text-center text-small text-ink-muted"><T>No paid months yet.</T></p>
       ) : (
         <MiniBars
-          label={mrrChartLabel(history, t)}
+          // A screen reader hears the chart's name, then each month with its
+          // MRR in whole taka ("October ৳ 60,400").
+          label="MRR at the end of each month"
           height={180}
           gap="6"
-          bars={history.map((point, index) => ({ label: t(shortMonthKey(point.month)), value: point.mrr, short: compactAmount(point.mrr), highlight: index === history.length - 1 }))}
+          bars={history.map((point, index) => ({
+            label: t(shortMonthKey(point.month)),
+            value: point.mrr,
+            short: compactAmount(point.mrr),
+            highlight: index === history.length - 1,
+            spoken: `${t(formatMonthName(point.month))} ${formatCurrency(point.mrr, undefined, 0)}`,
+          }))}
         />
       )}
     </Card>

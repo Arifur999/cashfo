@@ -13,7 +13,7 @@ const DOT = { neutral: "bg-ink-muted", success: "bg-emerald", danger: "bg-expens
 // its day too when it came on a later day (an invoice or a refund made
 // days after the payment).
 const PaymentTimeline = async ({ payment }: { payment: IPaymentDetail }) => {
-  const { t } = await getTranslator("admin");
+  const { t, locale } = await getTranslator("admin");
   const steps = paymentSteps(payment, t);
   const firstAt = steps[0]?.at ?? payment.createdAt;
   return (
@@ -32,7 +32,7 @@ const PaymentTimeline = async ({ payment }: { payment: IPaymentDetail }) => {
               <span className="flex grow justify-between gap-3 text-body">
                 <span className="text-ink">{step.what}</span>
                 <time dateTime={step.at} className="whitespace-nowrap text-ink-muted tabular-nums">
-                  {formatDate(step.at, stepTimePattern(step.at, firstAt))}
+                  {formatDate(step.at, stepTimePattern(step.at, firstAt), "—", locale)}
                 </time>
               </span>
             </li>

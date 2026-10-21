@@ -8,11 +8,7 @@ import { cn } from "@/lib/utils";
 import type { IInvoiceDetail, IInvoiceListItem } from "@/types/invoice.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
-import { invoiceHref } from "./invoiceDisplay";
-
-// The smartly action button (emerald), in place of PrintButton's own
-// secondary look.
-const ACTION_BUTTON = "w-full border-0 bg-emerald text-on-action hover:bg-emerald-hover";
+import { invoiceHref, splitIssuedTo } from "./invoiceDisplay";
 
 interface InvoiceSidebarProps {
   invoice: IInvoiceDetail;
@@ -34,7 +30,7 @@ const InvoiceSidebar = async ({ invoice, recent, back }: InvoiceSidebarProps) =>
         <section aria-label={t("Invoice actions")}>
           <h2 className="text-title text-ink">{invoice.invoiceNumber}</h2>
           {invoice.payment && <span className="text-small text-ink-2">{t("Made automatically when {id} was paid.", { id: shortPaymentId(invoice.payment.id) })}</span>}
-          <PrintButton label="Print / Save as PDF" className={ACTION_BUTTON} />
+          <PrintButton label="Print / Save as PDF" variant="action" className="w-full" />
           {invoice.payment && (
             <Link href={`/admin/payments/${invoice.payment.id}`} className="text-small font-semibold text-emerald hover:underline">
               <T>Open the payment</T>
@@ -59,7 +55,7 @@ const InvoiceSidebar = async ({ invoice, recent, back }: InvoiceSidebarProps) =>
                 >
                   <span className="flex min-w-0 flex-col">
                     <code className={cn("font-mono", current ? "font-bold" : "font-medium")}>{item.invoiceNumber}</code>
-                    <span className="truncate text-ink-muted">{item.issuedTo}</span>
+                    <span className="truncate text-ink-muted">{splitIssuedTo(item.issuedTo).name}</span>
                   </span>
                   <b className="font-semibold tabular-nums">{formatAmount(item.totalAmount)}</b>
                 </Link>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { IInvoiceDetail } from "@/types/invoice.types";
-import { invoiceHref, invoiceListQuery, invoicePaymentStatus, invoicesListHref, invoiceStamp, splitIssuedTo } from "./invoiceDisplay";
+import { invoiceHref, invoiceListQuery, invoicePaymentStatus, invoiceRefund, invoicesListHref, invoiceStamp, splitIssuedTo } from "./invoiceDisplay";
 
 describe("invoiceListQuery", () => {
   it("keeps the list's dates and page, in order", () => {
@@ -68,6 +68,25 @@ describe("invoicePaymentStatus", () => {
   it("has none without it", () => {
     expect(invoicePaymentStatus(invoice({ id: "p1", plan: { id: "x", name: "Monthly Pro" } }))).toBeUndefined();
     expect(invoicePaymentStatus(invoice(null))).toBeUndefined();
+  });
+});
+
+describe("invoiceRefund", () => {
+  const invoice = (payment: unknown) => ({ payment }) as unknown as IInvoiceDetail;
+  const refund = { amount: "50.00", status: "COMPLETED", createdAt: "2026-10-04T09:10:00Z" };
+
+  it("reads what went back on a refunded payment", () => {
+    expect(invoiceRefund(invoice({ id: "p1", status: "REFUNDED", refund }))).toEqual(refund);
+  });
+
+  it("is null when the API sent none", () => {
+    expect(invoiceRefund(invoice({ id: "p1", status: "REFUNDED", refund: null }))).toBeNull();
+    expect(invoiceRefund(invoice({ id: "p1", status: "REFUNDED" }))).toBeNull();
+    expect(invoiceRefund(invoice(null))).toBeNull();
+  });
+
+  it("is null while the payment is kept, whatever refund it carries", () => {
+    expect(invoiceRefund(invoice({ id: "p1", status: "SUCCESS", refund: { ...refund, status: "REJECTED" } }))).toBeNull();
   });
 });
 

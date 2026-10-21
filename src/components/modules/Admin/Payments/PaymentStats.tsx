@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import Kpi from "@/components/shared/Kpi";
 import { formatCurrency } from "@/lib/currency";
@@ -18,11 +17,6 @@ import { countPhrase, PAYMENTS_LIST_HREF } from "./paymentsDisplay";
 
 // Totals over many payments, in whole taka.
 const money = (value: string) => formatCurrency(value, undefined, 0);
-
-// A figure that opens the payments behind it: the link fills its grid
-// cell, and the card's border darkens on hover as an interactive card's does.
-const TILE_LINK = "group/tile rounded-lg";
-const TILE_CARD = "h-full transition-colors group-hover/tile:border-line-strong";
 
 interface PaymentStatsProps {
   // The day the "last 7 days" start (yyyy-MM-dd), read by the page.
@@ -48,7 +42,9 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Two across on a phone: the figures are short, and four full-width
+          tiles would push the list a screen down. */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Kpi
           size="sm"
           label={translate("Collected in {month}", { month: last })}
@@ -73,16 +69,14 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
             days: countPhrase(translate, locale, stats.thisMonth.days, "{count} day", "{count} days"),
           })}
         />
-        {/* The failures open the failed payments of those days. */}
-        <Link href={`${PAYMENTS_LIST_HREF}?status=FAILED&dateFrom=${failedSince}`} className={TILE_LINK}>
-          <Kpi
-            size="sm"
-            className={TILE_CARD}
-            label="Failed, last 7 days"
-            value={count(stats.failedLast7Days.count)}
-            note={<span className={stats.failedLast7Days.count > 0 ? "text-expense" : undefined}>{translate("{amount} not collected yet", { amount: money(stats.failedLast7Days.amount) })}</span>}
-          />
-        </Link>
+        {/* The failures open the failed payments of those days: the card is the link. */}
+        <Kpi
+          size="sm"
+          href={`${PAYMENTS_LIST_HREF}?status=FAILED&dateFrom=${failedSince}`}
+          label="Failed, last 7 days"
+          value={count(stats.failedLast7Days.count)}
+          note={<span className={stats.failedLast7Days.count > 0 ? "text-expense" : undefined}>{translate("{amount} not collected yet", { amount: money(stats.failedLast7Days.amount) })}</span>}
+        />
         {/* No link: the list goes by the day a payment was made, not the
             day it was refunded, so no filter shows a month's refunds. */}
         <Kpi

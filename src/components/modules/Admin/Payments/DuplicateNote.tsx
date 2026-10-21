@@ -26,7 +26,7 @@ const DuplicateNote = async ({ payment, back }: { payment: IPaymentDetail; back?
           {t(earlier ? "{id} already paid for {plan} on {date}. Check with the person before refunding this one." : "{id} already paid for {plan}. Check with the person before refunding this one.", {
             id: payment.duplicateOfId ? shortPaymentId(payment.duplicateOfId) : "",
             plan: payment.plan.name,
-            date: earlier ? formatDate(earlier.createdAt, "d MMM") : "",
+            date: earlier ? formatDate(earlier.createdAt, "d MMM", "—", locale) : "",
           })}
         </span>
       </div>

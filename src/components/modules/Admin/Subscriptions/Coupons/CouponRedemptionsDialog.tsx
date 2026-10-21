@@ -17,6 +17,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // and cached per coupon for reopening.
 const RedemptionsList = ({ couponId }: { couponId: string }) => {
   const { data, isLoading, isError, refetch } = useQuery(couponRedemptionsQuery(couponId));
+  const { locale } = useLocale();
 
   if (isLoading) {
     return (
@@ -49,7 +50,7 @@ const RedemptionsList = ({ couponId }: { couponId: string }) => {
             {redemption.plan.name}
             <br />
             {/* The area's own way of writing a moment: "1 Oct 2026, 10:14 am". */}
-            {formatDate(redemption.redeemedAt, "d MMM yyyy, h:mm aaa")}
+            {formatDate(redemption.redeemedAt, "d MMM yyyy, h:mm aaa", "—", locale)}
           </span>
         </li>
       ))}
@@ -73,6 +74,8 @@ const CouponRedemptionsDialog = ({ coupon, open, onOpenChange }: CouponRedemptio
       title={translate("Who used {code}", { code: coupon?.code ?? "" })}
       description={coupon ? countPhrase(translate, locale, coupon.timesRedeemed, "{count} use so far, newest first.", "{count} uses so far, newest first.") : undefined}
       size="sm"
+      // It only shows who used the code: a click outside closes it.
+      closeOnOutsideClick
     >
       {coupon && <RedemptionsList couponId={coupon.id} />}
     </FormDialog>

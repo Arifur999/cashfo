@@ -8,6 +8,8 @@ export const EMPTY_PLAN_FORM_VALUES: IPlanFormValues = {
   price: "0",
   trialDays: "0",
   isActive: true,
+  // Blank: the API puts a new plan last.
+  displayOrder: "",
   featureLimits: {
     maxWorkspaces: "1",
     maxBusinessWorkspaces: "0",
@@ -27,6 +29,10 @@ export const toPlanFormValues = (plan: ISubscriptionPlan): IPlanFormValues => ({
   price: String(Math.round(Number(plan.price))),
   trialDays: String(plan.trialDays),
   isActive: plan.isActive,
+  // The form takes 0-9999 but the API can store more (its auto-placement
+  // takes highest + 1). Outside that range the box is left blank, which the
+  // save drops, so the stored order is kept and other edits aren't blocked.
+  displayOrder: plan.displayOrder >= 0 && plan.displayOrder <= 9999 ? String(plan.displayOrder) : "",
   featureLimits: {
     ...plan.featureLimits,
     maxWorkspaces: String(plan.featureLimits.maxWorkspaces),

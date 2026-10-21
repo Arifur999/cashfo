@@ -6,7 +6,6 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { countPhrase } from "@/components/modules/Admin/Payments/paymentsDisplay";
-import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatPercent } from "@/lib/number";
 import { billingPeriod, limitText, money, planAccentClass, trialLine, trialsLine } from "@/lib/subscriptions";
@@ -57,7 +56,7 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
           <span className="text-h1 text-ink">{money(plan.price, plan.currency)}</span>
           {period && <span className="text-small text-ink-muted">{period}</span>}
         </span>
-        <span className="text-small text-ink-muted">{trialLine(plan, translate)}</span>
+        <span className="text-small text-ink-muted">{trialLine(plan, translate, locale)}</span>
       </div>
 
       {/* Who is on the plan now (its workspaces), not the paid people the
@@ -70,7 +69,7 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
         <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken">
           <span className={cn("block h-full rounded-full", planAccentClass(plan.name))} style={{ width: `${figuresKnown ? Math.round(share) : 0}%` }} />
         </span>
-        <span className="text-caption text-ink-muted">{figuresKnown ? toLocaleDigits(trialsLine(plan.billingCycle, analytics?.trialing ?? 0, translate), locale) : "—"}</span>
+        <span className="text-caption text-ink-muted">{figuresKnown ? trialsLine(plan.billingCycle, analytics?.trialing ?? 0, translate, locale) : "—"}</span>
       </div>
 
       <ul className="flex flex-col gap-2 text-small">
@@ -79,7 +78,7 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
             <span className="grow text-ink-2">
               <T>{label}</T>
             </span>
-            <b className="font-semibold text-ink-2 tabular-nums">{toLocaleDigits(limitText(plan.featureLimits[key], translate), locale)}</b>
+            <b className="font-semibold text-ink-2 tabular-nums">{limitText(plan.featureLimits[key], translate, locale)}</b>
           </li>
         ))}
         {PLAN_FEATURE_TOGGLES.map(({ key, label }) => {

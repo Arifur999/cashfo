@@ -1,6 +1,6 @@
 import { BACK_PARAM, pickParams } from "@/components/modules/Admin/Payments/paymentsDisplay";
 import type { IInvoiceDetail } from "@/types/invoice.types";
-import type { PaymentStatus } from "@/types/payment.types";
+import type { IRefundSummary, PaymentStatus } from "@/types/payment.types";
 import { INVOICES_TABLE_CONFIG } from "./invoicesTable.config";
 
 // Plain helpers for the invoice pages. Pure, so they are tested on their own.
@@ -35,11 +35,15 @@ export const splitIssuedTo = (issuedTo: string): { name: string; email: string |
   return match[1] ? { name: match[1], email: match[2] } : { name: match[2], email: null };
 };
 
-// The invoice's payment status. The API sends every column of the payment
-// with the invoice, its status among them, though IInvoiceDetail doesn't
-// name it yet.
-export const invoicePaymentStatus = (invoice: IInvoiceDetail): PaymentStatus | undefined =>
-  (invoice.payment as (IInvoiceDetail["payment"] & { status?: PaymentStatus }) | null | undefined)?.status;
+// The invoice's payment status, which the API sends with the invoice. None
+// for an invoice read without its payment.
+export const invoicePaymentStatus = (invoice: IInvoiceDetail): PaymentStatus | undefined => invoice.payment?.status;
+
+// What went back on the invoice's payment, for the sheet's stamp and its
+// "Refunded ... on ..." line: only once the payment is Refunded, and null
+// when the API sent none (the sheet then still says REFUNDED).
+export const invoiceRefund = (invoice: IInvoiceDetail): IRefundSummary | null =>
+  invoicePaymentStatus(invoice) === "REFUNDED" ? (invoice.payment?.refund ?? null) : null;
 
 // The stamp at the top of the sheet: PAID, or once the payment went back,
 // REFUNDED, or PARTLY REFUNDED when less than the total did. A refund whose

@@ -7,6 +7,7 @@ import { PAYMENT_STATUS_LABEL, shortPaymentId } from "@/lib/payments";
 import { cn } from "@/lib/utils";
 import type { IOtherPayment } from "@/types/payment.types";
 import T from "@/components/shared/T";
+import { getTranslator } from "@/lib/i18n/locale";
 import { OTHER_PAYMENTS_SHOWN, PAYMENTS_LIST_HREF, paymentHref } from "./paymentsDisplay";
 
 // The list rows' recipe, at the card's 20px edge.
@@ -22,7 +23,8 @@ interface OtherPaymentsCardProps {
 
 // The same person's other payments, newest first, each a link. The API
 // sends the five newest, so five lead on to all of them in the list.
-const OtherPaymentsCard = ({ payments, email, back }: OtherPaymentsCardProps) => {
+const OtherPaymentsCard = async ({ payments, email, back }: OtherPaymentsCardProps) => {
+  const { locale } = await getTranslator("admin");
   return (
     <Card asChild padding="none" className="overflow-hidden">
       <section aria-labelledby="other-payments">
@@ -36,7 +38,7 @@ const OtherPaymentsCard = ({ payments, email, back }: OtherPaymentsCardProps) =>
             <Link key={payment.id} href={paymentHref(payment.id, back)} className={ROW}>
               <code className="font-mono font-semibold text-ink">{shortPaymentId(payment.id)}</code>
               <span className="grow text-ink-muted">
-                {formatDate(payment.createdAt, "d MMM yyyy")}
+                {formatDate(payment.createdAt, "d MMM yyyy", "—", locale)}
                 {payment.status !== "SUCCESS" && (
                   <>
                     {" · "}

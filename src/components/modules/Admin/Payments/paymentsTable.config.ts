@@ -16,18 +16,21 @@ export const PAYMENTS_TABLE_BASE_CONFIG = {
 const STATUS_TABS: PaymentStatus[] = ["SUCCESS", "FAILED", "PENDING", "REFUNDED"];
 
 // The plan chip's options come from the API and the status tabs' counts
-// from the stats, so the full config is built once those are loaded
-// (memoize the result -- it must stay stable). Leave the counts out while
-// the list is narrowed: they are all-time totals per status.
+// from the list's own meta (each status under the list's other filters), so
+// the full config is built once those are loaded (memoize the result -- it
+// must stay stable). Without the counts the tabs show none.
 export const buildPaymentsTableConfig = (plans: IPlanOption[], statusCounts?: Record<PaymentStatus, number>): ServerDataTableConfig => ({
   ...PAYMENTS_TABLE_BASE_CONFIG,
-  // The search matches the id as the list prints it, the person's name or
-  // email, the invoice number and any gateway's reference.
-  search: { placeholder: "Payment ID, name, email, invoice or gateway ref" },
+  // The search matches the id as the list prints it (PAY-3F2A1C9B, with or
+  // without PAY-), the person's name or email, the invoice number and any
+  // gateway's reference. The 240px box keeps it on the tabs' row, so the
+  // placeholder stays short enough not to clip in either language.
+  search: { placeholder: "ID, name, email or ref", width: "sm" },
   filters: [
     { id: "status", type: "tabs", label: "Status", options: STATUS_TABS.map((value) => ({ value, label: PAYMENT_STATUS_LABEL[value], count: statusCounts?.[value] })) },
     { id: "gateway", type: "single-select", label: "Gateway", options: enumOptions(PAYMENT_GATEWAYS), align: "end" },
-    { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name })), align: "end" },
+    // Plan names are the plans' own, shown as they are.
+    { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name, raw: true })), align: "end" },
     { id: "createdAt", type: "date-range", label: "Date", align: "end" },
   ],
 });
