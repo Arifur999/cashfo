@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import DataTable from "@/components/shared/table/DataTable";
 import T from "@/components/shared/T";
+import { userRecordHref } from "@/lib/navItem";
 import { formatNumber } from "@/lib/number";
 import { workspaceOverviewQuery } from "@/queries/workspace.queries";
 import WorkspaceKpis from "./WorkspaceKpis";
@@ -36,7 +37,8 @@ const WorkspacesOverview = () => {
             </span>
           )
         }
-        onRowClick={(row) => router.push(`/admin/users/${row.userId}`)}
+        // Marked as opened from here, so the menu and the way back return to Workspaces.
+        onRowClick={(row) => router.push(userRecordHref(row.userId, "workspaces"))}
         emptyMessage="No users own more than one workspace yet."
         footer="Add-on = extra workspaces × plan price × 50%. Workspaces on the Free plan add nothing. This is an estimate; nobody is charged for it yet."
       />

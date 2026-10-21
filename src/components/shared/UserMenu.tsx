@@ -23,7 +23,7 @@ interface UserMenuProps {
 
 const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 py-2 text-body font-medium text-ink focus:bg-surface-sunken [&_svg]:size-4.5 [&_svg]:text-ink-2";
 
-// The signed-in account in the top bar, with Log out -- for admins and
+// The signed-in account in the top bar, with Sign out -- for admins and
 // customers alike -- and, for admins (who have a role), Change password.
 const UserMenu = ({ name, email, role }: UserMenuProps) => {
   const { translate } = useLocale();
@@ -75,8 +75,8 @@ const UserMenu = ({ name, email, role }: UserMenuProps) => {
               }}
               className={cn(ITEM, "text-expense focus:text-expense [&_svg]:text-expense")}
             >
-              {isLoggingOut ? <Loader size={14} label={translate("Log out")} /> : <LogOut aria-hidden="true" />}
-              {translate("Log out")}
+              {isLoggingOut ? <Loader size={14} label="Signing out..." /> : <LogOut aria-hidden="true" />}
+              {translate("Sign out")}
             </DropdownMenuItem>
           </div>
         </DropdownMenuContent>
