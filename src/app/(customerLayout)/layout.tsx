@@ -21,7 +21,7 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { isFeatureOn } from "@/lib/customer/features";
 import { getPrayerSettings } from "@/lib/customer/habits";
 import { getPlatform } from "@/lib/customer/platform";
-import { needsWorkspaceChoice, switchableWorkspaces, workspaceName } from "@/lib/customer/workspaceSwitch";
+import { chooseWorkspaceHref, needsWorkspaceChoice, switchableWorkspaces, workspaceName } from "@/lib/customer/workspaceSwitch";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { getTranslationOverrides } from "@/lib/i18n/overrides";
@@ -63,7 +63,12 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
 
   // More than one workspace and none chosen on this device: ask which,
   // once. The choice is remembered, so the next visit opens straight in.
+  // Sent there from the server, coming back to the page asked for
+  // (x-pathname, from proxy.ts); only without that header does the client
+  // look the URL up and go itself.
   if (needsWorkspaceChoice({ remembered: workspace.remembered, choices: choices.length, viewAs })) {
+    const asked = (await headers()).get("x-pathname");
+    if (asked) redirect(chooseWorkspaceHref(asked));
     return (
       <ThemeProvider allowDark={allowDark}>
         <LocaleProvider initialLocale={locale} overrides={overrides}>

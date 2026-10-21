@@ -88,7 +88,9 @@ export function CreateWorkspaceModal({ open, onClose, onCreated, offerOpen }: Cr
         router.refresh();
         if (created) onCreated?.(created);
       } else {
-        toast.error(result.message ?? t("Failed to create workspace"));
+        // The API's own refusal (or the action's fallback) is English;
+        // its Bangla is in settings-workspace.ts.
+        toast.error(t(result.message ?? "Failed to create workspace"));
       }
     });
   }
