@@ -18,10 +18,12 @@ import { cn } from "@/lib/utils";
 interface ChangePasswordDialogProps {
   open: boolean;
   onClose: () => void;
+  // The password changed: every other device is signed out by now.
+  onChanged?: () => void;
 }
 
 // A new account password, with the rules ticked off as it is typed.
-export function ChangePasswordDialog({ open, onClose }: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({ open, onClose, onChanged }: ChangePasswordDialogProps) {
   const { t } = useLocale();
   const [current, setCurrent] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +51,7 @@ export function ChangePasswordDialog({ open, onClose }: ChangePasswordDialogProp
       const result = await changePasswordAction({ currentPassword: current, newPassword: password });
       if (result.success) {
         toast.success(t("Password updated. Your other devices were signed out."));
+        onChanged?.();
         onClose();
       } else {
         toast.error(result.message ?? t("Failed to update password"));
@@ -64,7 +67,7 @@ export function ChangePasswordDialog({ open, onClose }: ChangePasswordDialogProp
         <form onSubmit={submit} className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
             <AlertDialogTitle className="text-h3 text-ink">{t("Change password")}</AlertDialogTitle>
-            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
+            <button type="button" onClick={onClose} disabled={isPending} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:size-11">
               <X className="size-4.5" aria-hidden="true" />
             </button>
           </div>
@@ -96,10 +99,10 @@ export function ChangePasswordDialog({ open, onClose }: ChangePasswordDialogProp
             </div>
           </div>
           <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending} className="pointer-coarse:h-11">
               {t("Cancel")}
             </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
+            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5 pointer-coarse:h-11">
               {isPending && <Loader />}
               {t("Update password")}
             </Button>
