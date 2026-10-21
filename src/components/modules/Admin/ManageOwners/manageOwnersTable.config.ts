@@ -10,9 +10,10 @@ export const MANAGE_OWNERS_TABLE_BASE_CONFIG = {
 } as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaults">;
 
 // The status tabs carry the counts the list response brings back, so the
-// full config is built once a page has loaded (memoize the result).
+// full config is built once a page has loaded (memoize the result). The
+// search is the same one Users has, in the same words.
 export const buildManageOwnersTableConfig = (statusCounts?: Record<OwnerStatus, number>): ServerDataTableConfig => ({
   ...MANAGE_OWNERS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Search by name, business, email, phone" },
+  search: { placeholder: "Search name, email, phone or workspace" },
   filters: [{ id: "status", type: "tabs", label: "Status", options: enumTabs(OWNER_STATUSES, statusCounts) }],
 });

@@ -1,11 +1,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import { OwnWorkspaceCell } from "@/components/modules/Admin/UserManagement/PeopleCells";
 import DateCell from "@/components/shared/cell/DateCell";
+import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
 
-// The design's Manage owners list: who, their workspace, plan, when they
-// last signed in, status -- and the View / Reset data buttons DataTable adds.
+// The design's Owners list: who, the workspace Reset data wipes (their
+// personal one), plan, when they last signed in, status -- and the View /
+// Reset data buttons DataTable adds.
 export const manageOwnersColumns: ColumnDef<IOwnerOverviewItem>[] = [
   {
     id: "name",
@@ -18,20 +21,20 @@ export const manageOwnersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     id: "businessName",
     accessorKey: "businessName",
     header: "Workspace",
-    cell: ({ row }) => <span className={row.original.businessName ? "text-ink-2" : "text-ink-muted"}>{row.original.businessName ?? "—"}</span>,
+    cell: ({ row }) => <OwnWorkspaceCell name={row.original.businessName} long />,
     meta: { width: 190, cellClassName: "truncate" },
   },
   {
     id: "planName",
     accessorKey: "planName",
     header: "Plan",
-    cell: ({ row }) => <span className={row.original.planName ? "text-ink-2" : "text-ink-muted"}>{row.original.planName ?? "—"}</span>,
+    cell: ({ row }) => <PlanChipCell plan={row.original.planName} />,
     meta: { width: 120 },
   },
   {
     id: "lastLoginAt",
     accessorKey: "lastLoginAt",
-    header: "Last login",
+    header: "Last sign-in",
     cell: ({ row }) => <DateCell date={row.original.lastLoginAt} relative />,
     meta: { width: 150 },
   },

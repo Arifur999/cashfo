@@ -4,11 +4,10 @@ import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
-import Localized from "@/components/shared/Localized";
-import { plural } from "@/lib/i18n/message";
+import { DaysUsedCell, OwnWorkspaceCell } from "./PeopleCells";
 
 // The design's Users list: who, phone, their workspace (and how many more),
-// plan, when they were last here, how long they have used Smartly, status.
+// plan, when they last signed in, how long they have used Smartly, status.
 export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
   {
     id: "name",
@@ -28,12 +27,7 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     id: "businessName",
     accessorKey: "businessName",
     header: "Workspace",
-    cell: ({ row }) => (
-      <span className="flex items-center gap-2">
-        <span className={row.original.businessName ? "truncate text-ink-2" : "text-ink-muted"}>{row.original.businessName ?? "—"}</span>
-        {row.original.workspaceCount > 1 && <span className="shrink-0 rounded-full bg-surface-sunken px-2 text-caption font-semibold text-ink-2">+{row.original.workspaceCount - 1}</span>}
-      </span>
-    ),
+    cell: ({ row }) => <OwnWorkspaceCell name={row.original.businessName} count={row.original.workspaceCount} />,
     meta: { width: 170, exportValue: (row) => row.businessName ?? "" },
   },
   {
@@ -44,9 +38,11 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     meta: { width: 116 },
   },
   {
+    // lastLoginAt moves only when they sign in (a session lasts a week), so
+    // it is named for that, not for "active".
     id: "lastLoginAt",
     accessorKey: "lastLoginAt",
-    header: "Last active",
+    header: "Last sign-in",
     cell: ({ row }) => <DateCell date={row.original.lastLoginAt} relative />,
     meta: { width: 124 },
   },
@@ -54,11 +50,7 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     id: "daysUsing",
     accessorKey: "daysUsing",
     header: "Using for",
-    cell: ({ row }) => (
-      <span className="text-ink-2 tabular-nums">
-        <Localized>{(t) => plural(t, row.original.daysUsing, "{count} day", "{count} days")}</Localized>
-      </span>
-    ),
+    cell: ({ row }) => <DaysUsedCell days={row.original.daysUsing} />,
     meta: { width: 84 },
   },
   {

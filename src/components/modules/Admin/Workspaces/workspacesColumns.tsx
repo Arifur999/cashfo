@@ -1,4 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import { CountCell, PersonLinkCell, WorkspaceNamesCell } from "@/components/modules/Admin/UserManagement/PeopleCells";
 import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import { formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -6,8 +7,9 @@ import type { IWorkspaceOverviewItem } from "@/types/workspace.types";
 
 const NUMBER = { align: "right" as const };
 
-// The design's Workspaces list: the owner over their workspaces' names,
-// plan, how many workspaces, how many extra, and the add-on they could pay.
+// The design's Workspaces list: the owner (a link to their page) over their
+// workspaces' names, plan, how many workspaces, how many extra, and the
+// add-on they could pay. Counts in the reader's digits; money stays Latin.
 export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
   {
     id: "name",
@@ -15,8 +17,8 @@ export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
     header: "Owner",
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-col gap-px">
-        <span className="font-semibold text-ink">{row.original.name}</span>
-        <span className="truncate text-small text-ink-muted">{row.original.workspaceNames.join(", ")}</span>
+        <PersonLinkCell userId={row.original.userId} name={row.original.name} from="workspaces" />
+        <WorkspaceNamesCell names={row.original.workspaceNames} />
       </span>
     ),
     meta: { exportValue: (row) => `${row.name} <${row.email}>` },
@@ -32,14 +34,14 @@ export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
     id: "totalWorkspaces",
     accessorKey: "totalWorkspaces",
     header: "Total workspaces",
-    cell: ({ row }) => <span className="tabular-nums">{row.original.totalWorkspaces}</span>,
+    cell: ({ row }) => <CountCell value={row.original.totalWorkspaces} />,
     meta: { ...NUMBER, width: 140 },
   },
   {
     id: "additionalWorkspaces",
     accessorKey: "additionalWorkspaces",
     header: "Extra",
-    cell: ({ row }) => <span className="font-semibold tabular-nums">+{row.original.additionalWorkspaces}</span>,
+    cell: ({ row }) => <CountCell value={row.original.additionalWorkspaces} prefix="+" className="font-semibold" />,
     meta: { ...NUMBER, width: 110 },
   },
   {
