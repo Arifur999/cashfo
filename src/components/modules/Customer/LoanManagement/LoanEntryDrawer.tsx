@@ -205,6 +205,10 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         }
         toast.success(t("Entry saved"));
         router.refresh();
+        // The old detail is stale now: until the fresh one is in, the cap
+        // reads as being checked and Save waits, rather than allowing
+        // what was owed before this entry.
+        setDetail(null);
         setSaves((count) => count + 1);
         if (another) {
           setAmount("");

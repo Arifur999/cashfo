@@ -351,7 +351,11 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                         {name}
                       </ListRowLink>
                       <span className="flex min-w-0 items-center gap-2 text-caption font-normal text-ink-muted xl:hidden print:hidden">
-                        <span className="truncate">{entryTitle}</span>
+                        <span className="truncate">
+                          {entryTitle}
+                          {/* From md the wallet it went through too, until the Entry column shows it at xl. */}
+                          {wallet && <span className="hidden md:inline"> · {wallet}</span>}
+                        </span>
                         {cancelledChip}
                       </span>
                     </span>

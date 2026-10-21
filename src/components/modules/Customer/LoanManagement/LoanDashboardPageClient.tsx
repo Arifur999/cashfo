@@ -290,6 +290,8 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 </ListCell>
               </ListTotalRow>
             )}
+            {/* Tablet and small laptop: the Net, under the balance column. */}
+            {shown.length > 0 && <ListTotalRow label={t("Net")} value={<AmountText value={sums.net} currency={currency} signed size="sm" className="text-body font-bold" />} className="hidden md:flex xl:hidden" />}
           </ListCard>
           {phoneEntryButtons}
         </div>
@@ -310,11 +312,18 @@ const PHONE_FIGURE = "text-h3 wrap-anywhere max-md:leading-[1.2] max-md:font-bol
 const DESK_FIGURE = "wrap-anywhere xl:text-h1";
 
 // One contact: the phone's two lines (who, then where it stands) below xl,
-// the board's columns from xl. The name is the link, stretched over the row.
+// plus a line of its figures from md, and the board's columns from xl. The name is the link, stretched over the row.
 function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; contact?: Contact; currency: string }) {
   const { t } = useLocale();
   const meta = DIRECTION_META[row.direction];
   const settled = row.direction === "SETTLED";
+  // The figures the xl columns show, those that are not nothing.
+  const movements = [
+    Number(row.openingBalance) !== 0 && `${t("Opening")} ${formatSignedCurrency(row.openingBalance, currency)}`,
+    Number(row.totalReceive) !== 0 && `${t("Money in@@loan")} ${formatCurrency(Math.abs(Number(row.totalReceive)), currency)}`,
+    Number(row.totalPayment) !== 0 && `${t("Money out@@loan")} ${formatCurrency(Math.abs(Number(row.totalPayment)), currency)}`,
+    Number(row.profitPaid) !== 0 && `${t("Profit paid")} ${formatCurrency(Math.abs(Number(row.profitPaid)), currency)}`,
+  ].filter(Boolean);
   return (
     <ListRow columns={COLUMNS} density="relaxed" className="xl:min-h-15">
       <ListCell className="flex min-w-0 items-center gap-3">
@@ -333,6 +342,8 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
           </span>
           <span className="truncate text-caption font-normal text-ink-muted xl:hidden">{contact ? [t(LOAN_KIND_LABELS[contact.type]), contact.notes].filter(Boolean).join(" · ") : (row.contactPhone ?? "")}</span>
           <span className="hidden truncate text-caption font-normal text-ink-muted xl:block">{row.contactPhone || contact?.email || contact?.address || "—"}</span>
+          {/* Tablet and small laptop: the board's four figures, on a line of their own. */}
+          {movements.length > 0 && <span className="hidden truncate text-caption font-normal text-ink-muted tabular-nums md:block xl:hidden">{movements.join(" · ")}</span>}
         </span>
       </ListCell>
       <ListCell align="end" className="hidden xl:block">

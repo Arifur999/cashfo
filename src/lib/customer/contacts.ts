@@ -71,7 +71,8 @@ export const getAllContacts = cache(async (businessId: string, category: Contact
   for (let page = 1; ; page++) {
     const { data, meta } = await getContacts(businessId, { category, page, limit: 100 });
     contacts.push(...data);
-    if (page >= meta.totalPages) return contacts;
+    // Once each, should a page boundary ever shift between two requests.
+    if (page >= meta.totalPages) return [...new Map(contacts.map((contact) => [contact.id, contact])).values()];
   }
 });
 
