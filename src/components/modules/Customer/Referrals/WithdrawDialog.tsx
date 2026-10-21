@@ -8,6 +8,7 @@ import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker"
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
@@ -37,7 +38,7 @@ interface WalletLoad {
 // Move every available reward into one of the user's own wallets or
 // savings wallets, in one posting.
 export function WithdrawDialog({ open, onClose, businessId, availableBalance, currency, workspaceName }: WithdrawDialogProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   // The wallets, fetched each time the dialog opens (and on Try again);
   // null while they load.
@@ -95,7 +96,8 @@ export function WithdrawDialog({ open, onClose, businessId, availableBalance, cu
         const result = await withdrawReferralEarningsAction(businessId, target.id);
         if (result.success && result.data) {
           const moved = formatCurrency(result.data.withdrawnAmount, currency);
-          toast.success(t("{amount} moved to {wallet}", { amount: moved, wallet: target.name }));
+          // Named as the picker names it, in the language on screen.
+          toast.success(t("{amount} moved to {wallet}", { amount: moved, wallet: accountDisplayName(target, displayLanguage(locale)) }));
           onClose();
           router.refresh();
         } else {

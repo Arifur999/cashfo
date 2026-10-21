@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Gift, Link2, Mail, MessageCircle, Send, Share2, ThumbsUp } from "lucide-react";
+import { Copy, Gift, Link2, Mail, MessageCircle, Send, Share2 } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
@@ -88,11 +88,14 @@ export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: In
 
   // Centred and allowed to wrap, so a two-line Bangla label stays tidy.
   const SQUARE = "flex h-15 flex-col items-center justify-center gap-1 rounded-lg border border-line bg-surface px-1 text-center text-caption leading-tight font-semibold text-ink-2";
-  const WIDE = "flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-surface text-small font-semibold text-ink hover:border-line-strong";
+  // One line each: about 100px a tile beside the hero at xl, so the Bangla
+  // copy tile takes a shorter label than the phone's square.
+  const WIDE = "flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-surface px-2 text-small font-semibold whitespace-nowrap text-ink hover:border-line-strong";
 
+  // lucide has no Facebook mark, and its thumbs-up reads as "like".
   const shares = [
     { label: "WhatsApp", href: share.whatsapp, icon: MessageCircle, className: "text-emerald" },
-    { label: "Facebook", href: share.facebook, icon: ThumbsUp, className: "text-info" },
+    { label: "Facebook", href: share.facebook, icon: Share2, className: "text-info" },
     { label: t("Email"), href: share.email, icon: Mail, className: "text-ink-2" },
   ];
 
@@ -150,7 +153,7 @@ export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: In
         ))}
         <button type="button" onClick={() => copy(link, t("Link copied"))} className={WIDE}>
           <Link2 className="size-4 text-ink-2" aria-hidden="true" />
-          {t("Copy link")}
+          {t("Copy link@@tile")}
         </button>
       </div>
       <p className="flex items-start gap-2 rounded-md bg-mint-50 p-3 text-small leading-[1.45] text-ink md:gap-3 md:leading-normal">

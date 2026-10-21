@@ -45,9 +45,10 @@ export function initials(name: string): string {
     .join("");
 }
 
-// What the friend counts are worked out from. The API lists only the newest
-// friends (recentReferrals) while referralCount counts them all; a newer
-// API also says how many are pending (pendingCount), an older one doesn't.
+// What the friend counts are worked out from. The API lists every friend
+// (recentReferrals) and says how many are pending (pendingCount); an older
+// one listed only the newest 10 while referralCount counted them all, and
+// sent no pendingCount.
 export type FriendCounts = Pick<ReferralInfo, "referralCount" | "recentReferrals"> & { pendingCount?: number };
 
 // Whether the list holds every friend who ever joined.
@@ -100,7 +101,24 @@ export const STATUS_META: Record<ReferralStatus, { label: string; tone: "warning
   WITHDRAWN: { label: "Paid out@@referral", tone: "neutral", note: "Moved to your wallet" },
 };
 
-export const filterReferrals = (entries: ReferralEntry[], filter: ReferralFilter): ReferralEntry[] => (filter === "ALL" ? entries : entries.filter((entry) => entry.status === filter));
+// The note with its day where the API says when it happened: the day a
+// pending reward is ready, the day a reward was confirmed, or the day it
+// was withdrawn. An older API sent neither of the last two, so those fall
+// back to the plain note. `day` is "YYYY-MM-DD" on the app's calendar, or
+// null for a note without one.
+export const DATED_NOTES: Record<Exclude<ReferralStatus, "PENDING">, string> = {
+  CONFIRMED: "Ready since {date}",
+  WITHDRAWN: "Withdrawn {date}",
+};
+
+export function statusNote(entry: Pick<ReferralEntry, "status" | "createdAt" | "confirmedAt" | "withdrawnAt">): { note: string; day: string | null } {
+  if (entry.status === "PENDING") return { note: STATUS_META.PENDING.note, day: readyOn(entry) };
+  const at = entry.status === "CONFIRMED" ? entry.confirmedAt : entry.withdrawnAt;
+  const day = at ? toDateInputValue(at) : "";
+  return day ? { note: DATED_NOTES[entry.status], day } : { note: STATUS_META[entry.status].note, day: null };
+}
+
+export const filterReferrals =(entries: ReferralEntry[], filter: ReferralFilter): ReferralEntry[] => (filter === "ALL" ? entries : entries.filter((entry) => entry.status === filter));
 
 export function filterCounts(entries: ReferralEntry[]): Record<ReferralFilter, number> {
   const counts: Record<ReferralFilter, number> = { ALL: entries.length, PENDING: 0, CONFIRMED: 0, WITHDRAWN: 0 };

@@ -27,8 +27,10 @@ interface EarningsHeroProps {
 // takes colours that don't change in dark either (forest on white is about
 // 11.6:1, on mint-200 about 10:1; the dark hover is pinned too, or the main
 // button's emerald one would win), and a mint focus ring, which shows on
-// the forest where the page's emerald one hardly does.
-const ON_FOREST = "bg-white text-forest hover:bg-mint-200 dark:hover:bg-mint-200 focus-visible:outline-mint-200";
+// the forest where the page's emerald one hardly does. Off, it recedes to a
+// quiet glass on the green (half-faded white read as a muddy sage block);
+// the line under the amount says why.
+const ON_FOREST = "bg-white text-forest hover:bg-mint-200 dark:hover:bg-mint-200 focus-visible:outline-mint-200 disabled:bg-white/14 disabled:text-white/70 disabled:opacity-100 disabled:shadow-none";
 
 // The switch under the amount reads as a link in the sentence.
 const SWITCH_LINK = "font-semibold text-white underline underline-offset-2 hover:text-mint-200 focus-visible:outline-mint-200";
@@ -107,7 +109,7 @@ export function EarningsHero({ info, currency, canWithdraw, today, onWithdraw }:
             <span className="text-small text-white/84 max-md:hidden">{t("To any wallet or savings wallet · no fee")}</span>
           )}
         </div>
-        <Button size="lg" onClick={onWithdraw} disabled={!canPress} aria-describedby={describedBy} className={cn(ON_FOREST, "shadow-[0_6px_16px_rgba(14,26,22,0.18)] max-md:hidden")}>
+        <Button size="lg" onClick={onWithdraw} disabled={!canPress} aria-describedby={describedBy} className={cn(ON_FOREST, "enabled:shadow-[0_6px_16px_rgba(14,26,22,0.18)] max-md:hidden")}>
           <ArrowDownToLine />
           {t("Withdraw@@referral")}
         </Button>
