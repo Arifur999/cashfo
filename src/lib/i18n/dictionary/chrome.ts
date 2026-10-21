@@ -69,6 +69,7 @@ export const chromeDictionary: Record<string, string> = {
   "Buy & sell": "কেনা-বেচা",
   "Update value": "মূল্য হালনাগাদ",
   Categories: "ক্যাটাগরি",
+  "Asset types": "সম্পদের ধরন",
   "Group expenses": "গ্রুপ খরচ",
   Books: "খাতা",
   Accounts: "হিসাব",
@@ -85,11 +86,18 @@ export const chromeDictionary: Record<string, string> = {
   Challenges: "চ্যালেঞ্জ",
   "To-do list": "করণীয় তালিকা",
   Security: "নিরাপত্তা",
+  Vault: "ভল্ট",
   "Password vault": "পাসওয়ার্ড ভল্ট",
   Insights: "ইনসাইটস",
   "Invite & earn": "আমন্ত্রণ করে আয়",
   "Earn ৳": "আয় ৳",
+  // The customer's own account (the sidebar's foot, Settings' first group);
+  // plain "Account" is a ledger account (shared.ts).
+  "Account@@user": "অ্যাকাউন্ট",
   Main: "প্রধান",
+  "{brand} home": "{brand} হোম",
+  // A menu group's chevron: "Wallets pages".
+  "{group} pages": "{group}-এর পৃষ্ঠাগুলো",
   Breadcrumb: "আপনি এখানে",
   "Today’s tasks": "আজকের কাজ",
   "left": "বাকি",
@@ -120,6 +128,9 @@ export const chromeDictionary: Record<string, string> = {
   "Opens the vault first": "প্রথমে ভল্ট খুলবে",
   "Press N anywhere to open this menu": "যেকোনো জায়গায় N চাপলে এই মেনু খুলবে",
   "Add transaction": "লেনদেন যোগ করুন",
+  // The keyboard shortcuts under Settings › Help & support
+  "Open the Add menu": "যোগ করার মেনু খুলুন",
+  "Search and go": "খুঁজুন ও সেখানে যান",
 
   // UserMenu
   Profile: "প্রোফাইল",

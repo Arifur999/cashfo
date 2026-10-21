@@ -12,19 +12,20 @@ export interface SettingsSection {
   href: string;
   // Dictionary keys.
   label: string;
-  group: "Account" | "App" | "Support";
+  // "@@user": plain "Account" is Bangla's হিসাব, a ledger account.
+  group: "Account@@user" | "App" | "Support";
 }
 
 export const SETTINGS_SECTIONS: SettingsSection[] = [
-  { key: "profile", href: "/settings", label: "Profile", group: "Account" },
-  { key: "security", href: "/settings/security", label: "Security", group: "Account" },
-  { key: "workspaces", href: "/settings/workspaces", label: "Workspaces", group: "Account" },
+  { key: "profile", href: "/settings", label: "Profile", group: "Account@@user" },
+  { key: "security", href: "/settings/security", label: "Security", group: "Account@@user" },
+  { key: "workspaces", href: "/settings/workspaces", label: "Workspaces", group: "Account@@user" },
   { key: "app", href: "/settings/app", label: "App preferences", group: "App" },
   { key: "help", href: "/settings/help", label: "Help & support", group: "Support" },
   { key: "resources", href: "/settings/resources", label: "Resources & legal", group: "Support" },
 ];
 
-export const SETTINGS_GROUPS: SettingsSection["group"][] = ["Account", "App", "Support"];
+export const SETTINGS_GROUPS: SettingsSection["group"][] = ["Account@@user", "App", "Support"];
 
 export function sectionFor(pathname: string): SettingsSectionKey {
   const match = SETTINGS_SECTIONS.filter((section) => pathname === section.href || pathname.startsWith(`${section.href}/`)).sort((a, b) => b.href.length - a.href.length)[0];
@@ -85,8 +86,12 @@ export function searchFaqs(faqs: Faq[], query: string, t: (key: string) => strin
   return faqs.filter((faq) => `${t(faq.question)} ${t(faq.answer)} ${faq.question} ${faq.answer}`.toLowerCase().includes(q));
 }
 
+// The keys that work on every page: N opens the Add menu (not a new
+// transaction straight away), Ctrl K (⌘K on a Mac) the search palette, and
+// Esc closes whatever drawer is open.
 export const SHORTCUTS: { what: string; key: string }[] = [
-  { what: "New transaction", key: "N" },
+  { what: "Open the Add menu", key: "N" },
+  { what: "Search and go", key: "Ctrl K" },
   { what: "Close a drawer", key: "Esc" },
 ];
 
