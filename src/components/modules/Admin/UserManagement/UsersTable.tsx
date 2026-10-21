@@ -12,12 +12,20 @@ import { buildTableQueryString } from "@/lib/queryString";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { ownersListQuery } from "@/queries/owner.queries";
 import { plansQuery } from "@/queries/plan.queries";
+import { getOwners } from "@/services/owner.services";
 import type { IOwnerOverviewItem, OwnerDialog } from "@/types/owner.types";
 import OwnerDialogs from "./OwnerDialogs";
 import { usersColumns } from "./usersColumns";
 import { buildUsersTableConfig, USERS_TABLE_BASE_CONFIG } from "./usersTable.config";
 
 const detailHref = (row: IOwnerOverviewItem) => `/admin/users/${row.userId}`;
+
+// Export reads every user that matches, a page at a time, with the list's
+// own fetch.
+const fetchUsersPage = async (queryString: string) => {
+  const { data, meta } = await getOwners(queryString);
+  return { rows: data.items, meta };
+};
 
 // Each action only for the roles the API allows it (MANAGE_ROLES) -- the
 // others got a 403 after clicking.
@@ -33,7 +41,7 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
   const query = useQuery({ ...ownersListQuery(queryString), placeholderData: keepPreviousData });
   const statusCounts = query.data?.data.statusCounts;
   const config = useMemo(() => buildUsersTableConfig(plans, statusCounts), [plans, statusCounts]);
-  const { dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config);
+  const { dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config, { fetchPage: fetchUsersPage });
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IOwnerOverviewItem, OwnerDialog>();
 
   const actions = useMemo<DataTableActions<IOwnerOverviewItem>>(

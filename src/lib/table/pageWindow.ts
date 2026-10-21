@@ -1,6 +1,6 @@
 export type PageWindowItem = number | "ellipsis-start" | "ellipsis-end";
 
-// The page buttons DataTablePagination renders: a fixed 7-slot window that
+// The page buttons smartly/Pagination renders (through pagerModel): a fixed 7-slot window that
 // always shows the first and last page and the current page's neighbours,
 // collapsing the rest into ellipses (which jump 5 pages when clicked).
 // Fixed width means the buttons never shift under the cursor while paging.

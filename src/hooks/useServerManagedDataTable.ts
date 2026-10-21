@@ -3,8 +3,11 @@
 import type { PaginationState, SortingState } from "@tanstack/react-table";
 import { usePathname, type ReadonlyURLSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { buildListQueryString } from "@/lib/queryString";
 
-export type UpdateParamsFn = (updater: (params: URLSearchParams) => void, options?: { resetPage?: boolean }) => void;
+// replace: a correction (a page past the end) rather than a step that Back
+// should undo.
+export type UpdateParamsFn = (updater: (params: URLSearchParams) => void, options?: { resetPage?: boolean; replace?: boolean }) => void;
 
 interface UseServerManagedDataTableOptions {
   searchParams: ReadonlyURLSearchParams;
@@ -28,19 +31,27 @@ export function useServerManagedDataTable({ searchParams, defaultLimit = 10 }: U
         params.delete("page");
       }
       const query = params.toString();
-      window.history.pushState(null, "", query ? `${pathname}?${query}` : pathname);
+      const href = query ? `${pathname}?${query}` : pathname;
+      if (options?.replace) window.history.replaceState(null, "", href);
+      else window.history.pushState(null, "", href);
     },
     [pathname, searchParams],
   );
 
-  const page = Math.max(Math.floor(Number(searchParams.get("page"))) || 1, 1);
-  const limit = Math.max(Math.floor(Number(searchParams.get("limit"))) || defaultLimit, 1);
+  // The page and limit exactly as buildListQueryString sends them, so the
+  // pager can't disagree with the rows it shows: a typed ?limit=500 is 100
+  // in both, ?limit=-5 the default.
+  const sent = new URLSearchParams(buildListQueryString(searchParams, [], defaultLimit));
+  const page = Number(sent.get("page"));
+  const limit = Number(sent.get("limit"));
   const sortBy = searchParams.get("sortBy");
   const sortOrder = searchParams.get("sortOrder");
 
   const paginationState = useMemo<PaginationState>(() => ({ pageIndex: page - 1, pageSize: limit }), [page, limit]);
   const sortingState = useMemo<SortingState>(() => (sortBy ? [{ id: sortBy, desc: sortOrder === "desc" }] : []), [sortBy, sortOrder]);
 
+  // Rows per page goes through here too, as the limit param (dropped when
+  // it is the list's own size).
   const handlePaginationChange = useCallback(
     (next: PaginationState) => {
       updateParams((params) => {
@@ -52,6 +63,21 @@ export function useServerManagedDataTable({ searchParams, defaultLimit = 10 }: U
       });
     },
     [updateParams, defaultLimit],
+  );
+
+  // A page past the end goes to the last page in place, so Back doesn't
+  // return to a page that isn't there.
+  const handlePastEnd = useCallback(
+    (lastPage: number) => {
+      updateParams(
+        (params) => {
+          if (lastPage <= 1) params.delete("page");
+          else params.set("page", String(lastPage));
+        },
+        { replace: true },
+      );
+    },
+    [updateParams],
   );
 
   // A new sort always starts from page 1.
@@ -74,5 +100,5 @@ export function useServerManagedDataTable({ searchParams, defaultLimit = 10 }: U
     [updateParams],
   );
 
-  return { paginationState, sortingState, updateParams, handlePaginationChange, handleSortingChange };
+  return { paginationState, sortingState, updateParams, handlePaginationChange, handlePastEnd, handleSortingChange };
 }

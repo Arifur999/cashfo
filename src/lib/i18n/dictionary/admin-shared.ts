@@ -20,7 +20,18 @@ export const adminSharedDictionary: Record<string, string> = {
   "Rows per page": "প্রতি পাতায় সারি",
   "Clear filters": "ফিল্টার মুছুন",
   Export: "এক্সপোর্ট",
-  "Download the selected rows, or all rows shown, as CSV": "বাছাই করা সারি, বা দেখানো সব সারি CSV হিসেবে নামান",
+  "Download the selected rows, or every row that matches the filters, as CSV": "বাছাই করা সারি, বা ফিল্টারে মেলে এমন সব সারি CSV হিসেবে নামান",
+  // Export of every matching row, read a page at a time.
+  "Exporting {count} of {total} rows…": "{total}টির মধ্যে {count}টি সারি নামানো হচ্ছে…",
+  "Pausing up to a minute to stay within the server's request limit.": "সার্ভারের অনুরোধের সীমার মধ্যে থাকতে সর্বোচ্চ এক মিনিট থামছে।",
+  "Exported {count} row": "{count}টি সারি নামানো হয়েছে",
+  "Exported {count} rows": "{count}টি সারি নামানো হয়েছে",
+  "Exported the first {count} of {total} rows. Narrow the filters to export the rest.":
+    "{total}টির মধ্যে প্রথম {count}টি সারি নামানো হয়েছে। বাকিগুলো নামাতে ফিল্টার দিয়ে তালিকা ছোট করুন।",
+  "Exported {count} of {total} rows. The list changed while exporting; export again to get the rest.":
+    "{total}টির মধ্যে {count}টি সারি নামানো হয়েছে। নামানোর সময় তালিকাটি বদলে গেছে; বাকিগুলো পেতে আবার এক্সপোর্ট করুন।",
+  "Couldn't export the rows. Try again.": "সারিগুলো নামানো যায়নি। আবার চেষ্টা করুন।",
+  "An export is already running": "একটি এক্সপোর্ট আগে থেকেই চলছে",
   View: "দেখুন",
   "Show all": "সব দেখান",
   Reset: "রিসেট",

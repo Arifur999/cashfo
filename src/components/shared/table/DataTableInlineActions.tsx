@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import DataTableRowActions from "./DataTableRowActions";
@@ -17,8 +17,8 @@ interface InlineButton<TData> {
   destructive?: boolean;
 }
 
-const BUTTON = "h-8 rounded-md border bg-surface px-3 text-small font-semibold";
-const SAFE = "border-line-strong text-ink hover:bg-surface-sunken";
+// The smartly secondary button at the row's 32px.
+const BUTTON = "h-8 px-3";
 const DANGER = "border-expense/40 text-expense hover:bg-expense-soft";
 
 // The row's actions as the design's small buttons (View, Reset data): the
@@ -44,7 +44,7 @@ const DataTableInlineActions = <TData,>({ row, actions }: DataTableInlineActions
   return (
     <div className="flex justify-end gap-2" onClick={(event) => event.stopPropagation()}>
       {buttons.map(({ label, onClick, destructive }) => (
-        <Button key={label} type="button" variant="outline" size="sm" className={cn(BUTTON, destructive ? DANGER : SAFE)} onClick={() => onClick(row)}>
+        <Button key={label} variant="secondary" size="sm" className={cn(BUTTON, destructive && DANGER)} onClick={() => onClick(row)}>
           {translate(label)}
         </Button>
       ))}

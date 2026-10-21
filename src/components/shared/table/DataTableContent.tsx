@@ -1,6 +1,8 @@
 "use client";
 
 import { flexRender, type Column, type Header, type Table as TanStackTable } from "@tanstack/react-table";
+import { useEffect, useRef } from "react";
+import { LIST_DIVIDER, LIST_HEAD, LIST_HOVER, LIST_INSET } from "@/components/smartly/list/recipes";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,13 @@ const EDGE_CLASS = "[&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-c
 const DESIGN_WIDTH = 1136;
 // Below this a gridded table scrolls sideways instead of crushing its columns.
 const MIN_TABLE = "min-w-180";
+// The column heads every list draws (LIST_HEAD: the table-head band, 12px, no
+// capitals), less the list's inset: GAP_CLASS and EDGE_CLASS pad each cell,
+// 20px at the card's edges.
+const INSET = new Set(LIST_INSET.split(" "));
+const HEAD = LIST_HEAD.split(" ")
+  .filter((name) => !INSET.has(name))
+  .join(" ");
 
 const trackWidth = <TData,>(column: Column<TData, unknown>, layout: DataTableLayout | undefined) =>
   column.id === ACTIONS_COLUMN_ID ? (layout?.actionsWidth ?? column.columnDef.meta?.width) : column.columnDef.meta?.width;
@@ -61,9 +70,16 @@ const DataTableContent = <TData,>({
   layout,
 }: DataTableContentProps<TData>) => {
   const { translate } = useLocale();
+  const frame = useRef<HTMLDivElement>(null);
+  const { pageIndex, pageSize } = table.getState().pagination;
   const rows = table.getRowModel().rows;
   const columns = table.getVisibleLeafColumns();
   const columnCount = columns.length;
+  // Another page starts at its first row, not where the rows box was
+  // scrolled to on the last one.
+  useEffect(() => {
+    frame.current?.querySelector<HTMLElement>("[data-slot=table-container]")?.scrollTo({ top: 0 });
+  }, [pageIndex, pageSize]);
   const { gap = 12, rowHeight = 54, headPadding = 8, designWidth = DESIGN_WIDTH } = layout ?? {};
   // Widths given = the design's fixed grid; a list without any keeps the
   // browser's own column sizing.
@@ -82,7 +98,7 @@ const DataTableContent = <TData,>({
   return (
     // The max-height makes the table container the scroll box, which is what
     // lets the header stick while long pages scroll.
-    <div className="relative overflow-hidden border-t border-line **:data-[slot=table-container]:max-h-[70vh] **:data-[slot=table-container]:overflow-auto">
+    <div ref={frame} className="relative overflow-hidden border-t border-line **:data-[slot=table-container]:max-h-[70vh] **:data-[slot=table-container]:overflow-auto">
       {isFetching && !isLoading && (
         <div className="absolute inset-x-0 top-0 z-20 h-0.5 animate-pulse bg-primary" role="progressbar" aria-label={translate("Refreshing")} />
       )}
@@ -98,8 +114,8 @@ const DataTableContent = <TData,>({
             ))}
           </colgroup>
         )}
-        {/* The design's column heads: the table-head band, 12px, no capitals. */}
-        <TableHeader className="sticky top-0 z-10 bg-table-head [&_tr]:border-line">
+        {/* The column heads (HEAD, each cell opaque), stuck to the top of the rows box. */}
+        <TableHeader className="sticky top-0 z-10 [&_tr]:border-line">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (
@@ -110,7 +126,8 @@ const DataTableContent = <TData,>({
                   // the menu narrow.
                   style={{ width: fixed ? undefined : widths[headerGroup.headers.indexOf(header)] }}
                   className={cn(
-                    "h-auto text-caption font-medium text-ink-muted",
+                    "h-auto",
+                    HEAD,
                     headPadding === 12 ? "py-3" : "py-2",
                     header.column.columnDef.meta?.align === "right" && "text-right",
                     header.column.columnDef.meta?.headerClassName,
@@ -137,7 +154,9 @@ const DataTableContent = <TData,>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() ? "selected" : undefined}
-                className={cn("group/row border-divider bg-surface hover:bg-row-hover", onRowClick && "cursor-pointer", rowClassName?.(row.original))}
+                // The list recipes' divider and hover; a highlight (a double
+                // charge's amber) comes last so it wins.
+                className={cn("group/row bg-surface", LIST_DIVIDER, LIST_HOVER, onRowClick && "cursor-pointer", rowClassName?.(row.original))}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 onKeyDown={
                   onRowClick

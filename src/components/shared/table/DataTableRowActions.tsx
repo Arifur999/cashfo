@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,9 +38,11 @@ const DataTableRowActions = <TData,>({ row, actions, variant = "ghost" }: DataTa
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant={variant}
+          // The bordered one is the smartly secondary button beside the
+          // inline ones; both stay 32px, as the actions column is drawn.
+          variant={variant === "outline" ? "secondary" : "ghost"}
           size="icon-sm"
-          className={variant === "outline" ? "rounded-md border-line-strong bg-surface text-ink hover:bg-surface-sunken data-[state=open]:bg-surface-sunken" : "data-[state=open]:bg-muted"}
+          className="size-8 data-[state=open]:bg-surface-sunken"
           aria-label={translate("Open row actions")}
           // Keeps a row-level onRowClick from firing as well.
           onClick={(event) => event.stopPropagation()}

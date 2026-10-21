@@ -1,6 +1,7 @@
 import type { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table";
 import type { LucideIcon } from "lucide-react";
 import type { PaginationMeta } from "@/types/api.types";
+import type { ExportPage } from "./exportAll";
 
 export interface DataTableFilterOption {
   label: string;
@@ -86,8 +87,9 @@ export interface DataTableSimplePager {
   previous: string;
   next: string;
   // Left of the buttons: "1,284 entries · newest first", or the rows on
-  // screen ("Showing 1–10 of 1,912 payments").
-  summary: (total: number, range: { first: number; last: number }) => React.ReactNode;
+  // screen ("Showing 1–10 of 1,912 payments"). The range is pageRange's, so
+  // a stale ?page=99 still reads 41–50, never 981–50.
+  summary: (total: number, range: { first: number; last: number; page: number; pageSize: number }) => React.ReactNode;
 }
 
 // How a list sits in its card, from the design's grid for it: the gap
@@ -148,8 +150,9 @@ export interface DataTableProps<TData> {
   // 2 puts the filter chips on a row of their own under the tabs and the
   // search, as the design's Users list does; 1 (the default) keeps one row.
   toolbarRows?: 1 | 2;
-  // Under the rows: numbered pages once there is more than one. A
-  // time-ordered log draws "Newer" / "Older" beside a summary instead.
+  // Under the rows: "Showing 1–10 of 54", numbered pages once there is more
+  // than one, and rows per page. A time-ordered log draws "Newer" / "Older"
+  // beside a summary instead. Either way one page shows the summary alone.
   pager?: DataTableSimplePager;
   emptyMessage?: string;
   // First load (skeleton rows) vs background refetch (progress bar, rows stay).
@@ -163,13 +166,25 @@ export interface DataTableProps<TData> {
   bulkActions?: DataTableBulkAction<TData>[];
   // What the page header's Export button downloads, as CSV, when the page
   // wraps its header and table in an ExportProvider; the file is named
-  // after it.
+  // after it. The selected rows if any, else every row the table holds.
   exportFileName?: string;
+  // A server list's page of every row that matches the filters
+  // (useServerDataTable fills it from the list's fetch). With it, Export
+  // reads them all, a page at a time, instead of the page on screen; one
+  // export runs at a time, and leaving the page calls it off.
+  exportAll?: (page: number) => Promise<ExportPage<TData>>;
   search?: DataTableSearchConfig;
   filters?: DataTableFiltersConfig;
   // Presence flips the table into server-managed mode for that concern.
   sorting?: { state: SortingState; onSortingChange: (state: SortingState) => void };
-  pagination?: { state: PaginationState; onPaginationChange: (state: PaginationState) => void };
+  pagination?: {
+    state: PaginationState;
+    onPaginationChange: (state: PaginationState) => void;
+    // The URL asked for a page past the end (a stale link, rows deleted
+    // since): put it on the last page, without a history entry.
+    onPastEnd?: (lastPage: number) => void;
+  };
   meta?: PaginationMeta;
+  // The list's own page size; rows per page offers it beside 10/25/50/100.
   initialPageSize?: number;
 }

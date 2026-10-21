@@ -14,11 +14,19 @@ import { buildTableQueryString } from "@/lib/queryString";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { paymentsListQuery, paymentStatsQuery } from "@/queries/payment.queries";
 import { plansQuery } from "@/queries/plan.queries";
+import { getPayments } from "@/services/payment.services";
 import type { IPayment } from "@/types/payment.types";
 import { paymentsColumns } from "./paymentsColumns";
 import { buildPaymentsTableConfig, PAYMENTS_TABLE_BASE_CONFIG } from "./paymentsTable.config";
 
 const detailHref = (row: IPayment) => `/admin/payments/${row.id}`;
+
+// Export reads every payment that matches, a page at a time, with the
+// list's own fetch.
+const fetchPaymentsPage = async (queryString: string) => {
+  const { data, meta } = await getPayments(queryString);
+  return { rows: data, meta };
+};
 
 // "Showing 1–10 of 1,912 payments", then Previous and Next.
 const PAGER: DataTableSimplePager = {
@@ -44,7 +52,7 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
   const queryString = buildTableQueryString(searchParams, PAYMENTS_TABLE_BASE_CONFIG);
   const query = useQuery({ ...paymentsListQuery(queryString), placeholderData: keepPreviousData });
   const config = useMemo(() => buildPaymentsTableConfig(plans ?? [], statusCounts), [plans, statusCounts]);
-  const { dataTableProps } = useServerDataTable<IPayment>(config);
+  const { dataTableProps } = useServerDataTable<IPayment>(config, { fetchPage: fetchPaymentsPage });
 
   const retry = useActionMutation({
     action: retryPaymentAction,

@@ -19,11 +19,12 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { smartColumnFilterFn } from "@/lib/table/filterFns";
 import { ACTIONS_COLUMN_ID, createActionsColumn } from "./columns/createActionsColumn";
 import { createSelectColumn, SELECT_COLUMN_ID } from "./columns/createSelectColumn";
 import type { DataTableProps } from "./dataTable.types";
+import { DEFAULT_PAGE_SIZE, pastEndPage } from "./tablePaging";
 
 const NO_HIDDEN_COLUMNS: readonly string[] = [];
 
@@ -48,7 +49,8 @@ export function useDataTable<TData>({
   sorting,
   pagination,
   meta,
-  initialPageSize = 10,
+  isFetching = false,
+  initialPageSize = DEFAULT_PAGE_SIZE,
 }: DataTableProps<TData>) {
   const isServerPaginated = Boolean(pagination);
   const isServerSorted = Boolean(sorting);
@@ -148,6 +150,16 @@ export function useDataTable<TData>({
   if (!isServerPaginated && localPagination.pageIndex > lastPageIndex) {
     setLocalPagination({ ...localPagination, pageIndex: lastPageIndex });
   }
+
+  // The server's version: a URL page past the end (a stale link, rows
+  // deleted since) moves to the last page in place. Only once this URL's
+  // own rows are in, since the meta shown while they load is the previous
+  // page's.
+  const pastEnd = pagination && !isFetching ? pastEndPage(pagination.state.pageIndex + 1, meta) : null;
+  const onPastEnd = pagination?.onPastEnd;
+  useEffect(() => {
+    if (pastEnd !== null) onPastEnd?.(pastEnd);
+  }, [pastEnd, onPastEnd]);
 
   return table;
 }

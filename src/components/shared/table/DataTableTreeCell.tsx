@@ -28,7 +28,7 @@ const DataTableTreeCell = <TData,>({ row, children }: DataTableTreeCellProps<TDa
           }}
           aria-expanded={isExpanded}
           aria-label={translate(isExpanded ? "Collapse" : "Expand")}
-          className="rounded-md p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="rounded-md p-0.5 text-ink-muted hover:bg-surface-sunken hover:text-ink"
         >
           <ChevronRight className={cn("size-4 transition-transform", isExpanded && "rotate-90")} aria-hidden="true" />
         </button>

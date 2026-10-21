@@ -2,8 +2,9 @@
 
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 import type { DataTableBulkAction } from "./dataTable.types";
 import { plural } from "@/lib/i18n/message";
 
@@ -12,8 +13,12 @@ interface DataTableSelectionBarProps<TData> {
   bulkActions?: DataTableBulkAction<TData>[];
 }
 
+// The bar's 28px buttons; a destructive one outlined in red, like a row's.
+const BUTTON = "h-7 px-2.5";
+const DANGER = "border-expense/40 text-expense hover:bg-expense-soft";
+
 // Appears only while rows are selected: the count, any bulk actions, and a
-// way out. Export lives in the toolbar and already honours the selection.
+// way out. Export lives in the page header and already honours the selection.
 const DataTableSelectionBar = <TData,>({ table, bulkActions }: DataTableSelectionBarProps<TData>) => {
   const { translate } = useLocale();
   const selectedRows = table.getSelectedRowModel().rows;
@@ -34,16 +39,16 @@ const DataTableSelectionBar = <TData,>({ table, bulkActions }: DataTableSelectio
       {bulkActions?.map(({ label, icon: Icon, onClick, destructive }) => (
         <Button
           key={label}
+          variant="secondary"
           size="sm"
-          variant={destructive ? "destructive" : "outline"}
-          className="h-7"
+          className={cn(BUTTON, destructive && DANGER)}
           onClick={() => onClick(selectedRows.map((row) => row.original))}
         >
           {Icon && <Icon aria-hidden="true" />}
           {translate(label)}
         </Button>
       ))}
-      <Button variant="ghost" size="sm" className="ml-auto h-7" onClick={() => table.resetRowSelection()}>
+      <Button variant="ghost" size="sm" className={cn(BUTTON, "ml-auto")} onClick={() => table.resetRowSelection()}>
         <X aria-hidden="true" />
         {translate("Clear selection")}
       </Button>

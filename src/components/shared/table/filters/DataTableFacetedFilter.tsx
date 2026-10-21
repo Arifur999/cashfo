@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import {
   Command,
   CommandEmpty,
@@ -17,7 +17,8 @@ import { cn } from "@/lib/utils";
 import type { DataTableFilterOption } from "../dataTable.types";
 import { asStatus } from "@/lib/i18n/message";
 
-// The chip the design draws for a filter: "Plan: All plans".
+// The chip the design draws for a filter: "Plan: All plans". It goes on the
+// smartly secondary button: 32px, plain weight, sunken while open.
 export const FILTER_CHIP_CLASS = "h-8 gap-2 rounded-md border-line-strong bg-surface px-3 text-small font-normal text-ink-2 hover:bg-surface-sunken data-[state=open]:bg-surface-sunken";
 
 interface DataTableFacetedFilterProps {
@@ -49,7 +50,7 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={FILTER_CHIP_CLASS}>
+        <Button variant="secondary" size="sm" className={FILTER_CHIP_CLASS}>
           <span>{translate(title)}:</span>
           <b className="font-semibold text-ink">
             {selected.length === 0
@@ -84,9 +85,9 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
                     >
                       <Check className="size-3" aria-hidden="true" />
                     </span>
-                    {option.icon && <option.icon className="size-4 text-muted-foreground" aria-hidden="true" />}
+                    {option.icon && <option.icon className="size-4 text-ink-muted" aria-hidden="true" />}
                     <span>{translate(asStatus(option.label))}</span>
-                    {count !== undefined && <span className="ml-auto font-mono text-xs text-muted-foreground">{count}</span>}
+                    {count !== undefined && <span className="ml-auto font-mono text-caption text-ink-muted">{count}</span>}
                   </CommandItem>
                 );
               })}
