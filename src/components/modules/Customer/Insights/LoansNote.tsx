@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { formatCurrency } from "@/lib/customer/currency";
 import type { NetWorth } from "@/lib/customer/insights";
-import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 
 interface LoansNoteProps {
   worth: NetWorth;
@@ -26,7 +26,7 @@ export function LoansNote({ worth, youOweCount, currency }: LoansNoteProps) {
   const owedSentence =
     youOweCount === 0
       ? t("You owe {amount}.", { amount: youOwe })
-      : t(youOweCount === 1 ? "You owe {amount} to {count} contact." : "You owe {amount} to {count} contacts.", { amount: youOwe, count: formatCount(youOweCount, locale) });
+      : plural(t, youOweCount, "You owe {amount} to {count} contact.", "You owe {amount} to {count} contacts.", { amount: youOwe }, locale);
 
   return (
     <div className="mx-6 mt-4 mb-6 flex items-center gap-3 rounded-md bg-pillar-loans-soft p-4 text-small text-pillar-loans">

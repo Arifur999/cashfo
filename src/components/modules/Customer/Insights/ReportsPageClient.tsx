@@ -8,7 +8,7 @@ import { useFeature } from "@/components/modules/Customer/Providers/PlatformProv
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
-import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListTotalRow } from "@/components/smartly/list";
+import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListTotalRow, STICKY_START } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
@@ -16,7 +16,7 @@ import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDispl
 import type { Account, MonthlyBreakdown } from "@/lib/customer/api";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency, formatGrouped } from "@/lib/customer/currency";
-import { type DayRange, monthName } from "@/lib/customer/insights";
+import { type DayRange, monthName, percentLabel } from "@/lib/customer/insights";
 import { REPORT_PERIOD_LABELS, REPORT_PERIODS, reportCsv, reportFileName, reportHref, type ReportPeriod, type ReportRow, reportRows, type ReportShow, type ReportView } from "@/lib/customer/reportTable";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ interface ReportsPageClientProps {
   range: DayRange;
   // "1 August – 21 October 2026": the same, for the caption.
   rangeLabel: string;
-  // The income years' July–June spans, for their options.
+  // The income years' names ("2025–26"), for their options.
   periodSpans: Partial<Record<ReportPeriod, string>>;
 }
 
@@ -41,14 +41,26 @@ interface ReportsPageClientProps {
 // up and the table sets its own width from real minimums. It scrolls inside
 // its card, both ways, which is what lets the head stick while the months
 // scroll sideways on a phone. The edge cells carry the inset, so the name
-// keeps it once its column sticks.
-const ROW = "col-span-full grid-cols-subgrid px-0 py-0 md:px-0 md:py-0";
+// keeps it once its column sticks. A fixed line height, so a cell whose ৳
+// falls back to a taller font doesn't sit higher than its neighbours.
+const ROW = "col-span-full grid-cols-subgrid px-0 py-0 leading-5 md:px-0 md:py-0";
 const TABLE =
-  "grid grid-cols-(--report-cols) gap-x-4 overflow-auto overscroll-x-contain max-h-[70dvh] md:grid-cols-(--report-cols-md) print:max-h-none print:overflow-visible print:grid-cols-(--report-cols-print)!";
+  "grid grid-cols-(--report-cols) gap-x-3 md:gap-x-4 overflow-auto overscroll-x-contain max-h-[70dvh] md:grid-cols-(--report-cols-md) print:max-h-none print:overflow-visible print:grid-cols-(--report-cols-print)!";
 // The name column stays put while the months scroll under it, on its row's
 // own band, so nothing shows through.
-const NAME_CELL = "sticky left-0 z-[1] flex items-center gap-3 self-stretch bg-inherit pl-4 md:pl-6 print:static";
-const LAST_CELL = "pr-4 md:pr-6";
+const NAME_CELL = cn(STICKY_START, "flex items-center gap-3 print:static");
+// Phones put Total and Share beside the name, where they show without a
+// scroll, and the months after them; the cells reorder inside each row's
+// subgrid, so the head and the rows still line up. Screen readers and print
+// keep the source order: name, months, total, share.
+const PHONE_SECOND = "max-md:order-1 print:order-none";
+const PHONE_LAST = "max-md:order-2 print:order-none";
+// The last column carries the right inset: Share from md up (and in print),
+// the last month on a phone.
+const SHARE_CELL = "max-md:print:pr-4 md:pr-6";
+const LAST_MONTH_CELL = "max-md:pr-4 max-md:print:pr-0";
+// Each select fits the option chosen (Chromium), not its longest one.
+const SELECT = "font-semibold field-sizing-content max-md:h-11 pointer-coarse:h-11";
 
 // Leads the CSV so Excel reads it as UTF-8 and keeps Bangla names whole.
 const BYTE_ORDER_MARK = String.fromCharCode(0xfeff);
@@ -80,11 +92,15 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
   const heading = show === "income" ? t("Income by category") : show === "expense" ? t("Expense by category") : t("Income and expense by category");
   const nothingToDownload = hasRows ? undefined : t("Nothing to download for this period");
 
-  // Phones: a narrow name column; wider screens room for the name; print
-  // drops the month minimums so a year fits a landscape page.
+  // Phones: a narrow name column, then Total and Share, then the months;
+  // wider screens room for the name and the months first; print drops the
+  // month minimums so a year fits a landscape page. The phone's first three
+  // columns and their gaps come to 312px, inside a 360px phone's 326px
+  // card, so Share never clips.
   const columnsOf = (name: string, month: string, total: string, share: string) => `${name} repeat(${months.length}, ${month}) ${total} ${share}`;
+  const phoneColumnsOf = (name: string, month: string, total: string, share: string) => `${name} ${total} ${share} repeat(${months.length}, ${month})`;
   const columns = {
-    "--report-cols": columnsOf("minmax(7.5rem,1.4fr)", "minmax(5.5rem,1fr)", "minmax(7.5rem,1.1fr)", "3.5rem"),
+    "--report-cols": phoneColumnsOf("minmax(8.5rem,1.4fr)", "minmax(5.5rem,1fr)", "minmax(6.5rem,1.1fr)", "3rem"),
     "--report-cols-md": columnsOf("minmax(10rem,1.6fr)", "minmax(5.5rem,1fr)", "minmax(8rem,1.1fr)", "4rem"),
     "--report-cols-print": columnsOf("minmax(7rem,1.4fr)", "minmax(0,1fr)", "minmax(5.5rem,1.1fr)", "2.5rem"),
   } as React.CSSProperties;
@@ -161,14 +177,14 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
 
       {/* Every control here stands 44px tall on a phone or under a finger. */}
       <Card padding="none" className="flex flex-wrap items-center gap-3 p-3 print:hidden">
-        <NativeSelect size="sm" aria-label={t("Period")} value={view.period} onChange={(e) => update({ period: e.target.value as ReportPeriod })} className="font-semibold max-md:h-11 pointer-coarse:h-11">
+        <NativeSelect size="sm" aria-label={t("Period")} value={view.period} onChange={(e) => update({ period: e.target.value as ReportPeriod })} className={SELECT}>
           {REPORT_PERIODS.map((value) => (
             <option key={value} value={value}>
               {t(REPORT_PERIOD_LABELS[value], { span: periodSpans[value] ?? "" })}
             </option>
           ))}
         </NativeSelect>
-        <NativeSelect size="sm" aria-label={t("Wallet")} value={view.walletId ?? ""} onChange={(e) => update({ walletId: e.target.value || null })} className="font-semibold max-md:h-11 pointer-coarse:h-11">
+        <NativeSelect size="sm" aria-label={t("Wallet")} value={view.walletId ?? ""} onChange={(e) => update({ walletId: e.target.value || null })} className={SELECT}>
           <option value="">{t("All wallets")}</option>
           {wallets.map((option) => (
             <option key={option.id} value={option.id}>
@@ -198,12 +214,16 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
         // It scrolls both ways, so it joins the tab order for the arrow keys.
         scrollable={hasRows}
         header={
-          <h2 className="border-b border-line px-4 pt-5 pb-3 text-h3 text-ink md:px-6">
-            {heading}
-            <span className="hidden print:inline"> · {[rangeLabel, walletName].filter(Boolean).join(" · ")}</span>
-          </h2>
+          // The days it covers on screen too: the month heads alone don't
+          // say that October runs only to the 21st.
+          <div className="flex flex-col gap-0.5 border-b border-line px-4 pt-5 pb-3 md:px-6">
+            <h2 className="text-h3 text-ink">{heading}</h2>
+            <span className="text-small text-ink-muted">{[rangeLabel, walletName].filter(Boolean).join(" · ")}</span>
+            {/* On a phone the months start past the card's edge. */}
+            {hasRows && <span className="text-caption text-ink-faint md:hidden print:hidden">{t("Swipe sideways for each month")}</span>}
+          </div>
         }
-        style={hasRows ? columns : undefined}
+        tableStyle={hasRows ? columns : undefined}
         tableClassName={hasRows ? TABLE : undefined}
         className={cn("transition-opacity motion-reduce:transition-none", isPending && "opacity-60")}
       >
@@ -212,12 +232,14 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
             <ListHead columns={ROW} showOnPhone sticky>
               <ListHeadCell className={NAME_CELL}>{t("Category")}</ListHeadCell>
               {monthLabels.map((label, i) => (
-                <ListHeadCell key={months[i]} align="end">
+                <ListHeadCell key={months[i]} align="end" className={cn(PHONE_LAST, i === months.length - 1 && LAST_MONTH_CELL)}>
                   {label}
                 </ListHeadCell>
               ))}
-              <ListHeadCell align="end">{t("Total")}</ListHeadCell>
-              <ListHeadCell align="end" className={LAST_CELL}>
+              <ListHeadCell align="end" className={PHONE_SECOND}>
+                {t("Total")}
+              </ListHeadCell>
+              <ListHeadCell align="end" className={cn(PHONE_SECOND, SHARE_CELL)}>
                 {t("Share")}
               </ListHeadCell>
             </ListHead>
@@ -252,6 +274,8 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
 // link (keyboard, middle-click), the rest of the row follows it for the
 // pointer.
 function ReportLine({ row, name, currency, href, onOpen }: { row: ReportRow; name: string; currency: string; href?: string; onOpen?: () => void }) {
+  const { locale } = useLocale();
+  const lastMonth = row.amounts.length - 1;
   const dot = row.kind === "category" ? categoryTone(row.color).fg : row.type === "INCOME" ? "text-emerald" : row.type === "EXPENSE" ? "text-expense-fill" : "text-mint-300";
   // A Left over below zero is red, never the brand's green.
   const total = row.kind === "block" ? (row.type === "INCOME" ? "text-income" : "text-expense") : row.kind === "left" ? (row.total < 0 ? "text-expense" : "text-brand-ink") : "text-ink";
@@ -269,15 +293,15 @@ function ReportLine({ row, name, currency, href, onOpen }: { row: ReportRow; nam
         )}
       </ListCell>
       {row.amounts.map((amount, i) => (
-        <ListCell key={i} align="end" className={cn("whitespace-nowrap font-normal print:text-caption", row.kind === "left" && amount < 0 ? "text-expense" : "text-ink-2")}>
+        <ListCell key={i} align="end" className={cn("whitespace-nowrap font-normal print:text-caption", PHONE_LAST, i === lastMonth && LAST_MONTH_CELL, row.kind === "left" && amount < 0 ? "text-expense" : "text-ink-2")}>
           {amount === 0 ? "—" : formatGrouped(amount, currency)}
         </ListCell>
       ))}
-      <ListCell align="end" className={cn("whitespace-nowrap font-bold print:text-small", total)}>
+      <ListCell align="end" className={cn("whitespace-nowrap font-bold print:text-small", PHONE_SECOND, total)}>
         {totalText}
       </ListCell>
-      <ListCell align="end" className={cn("whitespace-nowrap font-normal text-ink-muted print:text-caption", LAST_CELL)}>
-        {row.share === null ? "—" : `${row.share}%`}
+      <ListCell align="end" className={cn("whitespace-nowrap font-normal text-ink-muted print:text-caption", PHONE_SECOND, SHARE_CELL)}>
+        {row.share === null ? "—" : percentLabel(row.share, locale)}
       </ListCell>
     </>
   );

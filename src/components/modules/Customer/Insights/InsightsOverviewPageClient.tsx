@@ -17,10 +17,9 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Tone } from "@/components/smartly/tones";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { INSIGHT_PERIOD_LABELS, INSIGHT_PERIODS, monthlyAverage, movement, type InsightPeriod, type Movement, type RankedRow } from "@/lib/customer/insights";
-import { formatCount } from "@/lib/i18n/digits";
+import { INSIGHT_PERIOD_LABELS, INSIGHT_PERIODS, monthlyAverage, movement, percentLabel, type InsightPeriod, type Movement, type RankedRow } from "@/lib/customer/insights";
 import { fillNodes } from "@/lib/i18n/fill";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { type Locale, useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural, type Translate } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 import type { InsightsData } from "./insightsTypes";
@@ -72,7 +71,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
   const rise = previous.expense > 0 && data.biggestMove && data.biggestMove.change > 0 ? data.biggestMove : null;
   const reportsHref = `/reports/detailed?period=${period}`;
   const hadBefore = previous.income > 0 || previous.expense > 0;
-  const kept = keptSay(data, when, t);
+  const kept = keptSay(data, when, t, locale);
 
   function goToPeriod(next: InsightPeriod) {
     startTransition(() => {
@@ -143,7 +142,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
               <SayCard
                 icon={<TrendingUp />}
                 tone="insights"
-                say={topSource ? t("{name} is {percent} of your income {period}.", { name: topSource.name, percent: `${Math.round(topSource.share)}%`, period: when }) : t("No money in yet.")}
+                say={topSource ? t("{name} is {percent} of your income {period}.", { name: topSource.name, percent: percentLabel(Math.round(topSource.share), locale), period: when }) : t("No money in yet.")}
                 why={topSource ? secondSourceLine(data, t) : t("Record an income and this fills in.")}
               />
               <SayCard icon={kept.icon} tone={kept.tone} className="max-md:order-first" say={kept.say} why={kept.why} />
@@ -159,16 +158,16 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
             <div className="max-md:order-first">{netWorth}</div>
 
             <section aria-label={t("Totals")} className="hidden gap-6 md:grid md:grid-cols-2 xl:grid-cols-4">
-              <KpiTile label={t("Money in")} value={<AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className="font-bold" />}>
+              <KpiTile label={t("Money in")} value={<AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className="font-bold leading-8" />}>
                 <DeltaLine move={movement(totals.income, previous.income)} good={(d) => d >= 0} vs={labels.before} currency={currency} />
               </KpiTile>
-              <KpiTile label={t("Money out")} value={<AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className="font-bold" />}>
+              <KpiTile label={t("Money out")} value={<AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className="font-bold leading-8" />}>
                 <DeltaLine move={movement(totals.expense, previous.expense)} good={(d) => d <= 0} vs={labels.before} currency={currency} />
               </KpiTile>
-              <KpiTile label={t("Left over")} value={<AmountText value={totals.left} currency={currency} size="h2" tone={totals.left < 0 ? "expense" : "neutral"} className="font-bold" />}>
+              <KpiTile label={t("Left over")} value={<AmountText value={totals.left} currency={currency} size="h2" tone={totals.left < 0 ? "expense" : "neutral"} className="font-bold leading-8" />}>
                 <DeltaLine move={movement(totals.left, previous.left, { hadBefore })} good={(d) => d >= 0} vs={labels.before} currency={currency} />
               </KpiTile>
-              <KpiTile label={t("Savings rate")} value={<b className="text-h2 text-ink tabular-nums">{totals.rate === null ? "—" : `${totals.rate}%`}</b>}>
+              <KpiTile label={t("Savings rate")} value={<b className="text-h2 leading-8 text-ink tabular-nums">{totals.rate === null ? "—" : percentLabel(totals.rate, locale)}</b>}>
                 {totals.rate !== null && previous.rate !== null ? <PointsLine points={totals.rate - previous.rate} vs={labels.before} /> : <span>{t("Nothing before to compare with")}</span>}
               </KpiTile>
             </section>
@@ -179,7 +178,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                   <div className="flex flex-col gap-0.5">
                     <h2 className="text-h3 text-ink">{t("Where your money comes from")}</h2>
                     <span className="text-small text-ink-muted">
-                      {t(data.sources.length === 1 ? "{count} income source · {amount}" : "{count} income sources · {amount}", { count: formatCount(data.sources.length, locale), amount: formatCurrency(totals.income, currency) })}
+                      {plural(t, data.sources.length, "{count} income source · {amount}", "{count} income sources · {amount}", { amount: formatCurrency(totals.income, currency) }, locale)}
                     </span>
                   </div>
                   <CardLink href="/income-category">{t("Income sources")}</CardLink>
@@ -195,7 +194,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                 )}
                 {data.concentration && (
                   <Banner tone="warning" inline icon={<TriangleAlert />}>
-                    <b>{t("{percent} of your income comes from {name} alone.", { percent: `${data.concentration.percent}%`, name: data.concentration.name })}</b> {secondSourceLine(data, t)}
+                    <b>{t("{percent} of your income comes from {name} alone.", { percent: percentLabel(data.concentration.percent, locale), name: data.concentration.name })}</b> {secondSourceLine(data, t)}
                   </Banner>
                 )}
               </Card>
@@ -205,7 +204,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                   <div className="flex flex-col gap-0.5">
                     <h2 className="text-h3 text-ink">{t("Where it goes")}</h2>
                     <span className="text-small text-ink-muted">
-                      {t(data.spend.length === 1 ? "{count} category · {amount}" : "{count} categories · {amount}", { count: formatCount(data.spend.length, locale), amount: formatCurrency(totals.expense, currency) })}
+                      {plural(t, data.spend.length, "{count} category · {amount}", "{count} categories · {amount}", { amount: formatCurrency(totals.expense, currency) }, locale)}
                     </span>
                   </div>
                   <CardLink href="/categories">{t("Budget")}</CardLink>
@@ -229,7 +228,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                           <span className={cn("size-2.5 shrink-0 rounded-[3px] bg-current", categoryTone(row.color).fg)} />
                           <span className="flex-1 truncate text-ink">{row.name}</span>
                           <b className="text-ink tabular-nums">{formatCurrency(row.amount, currency)}</b>
-                          <span className="w-10 text-right text-ink-muted tabular-nums">{Math.round(row.share)}%</span>
+                          <span className="w-10 text-right text-ink-muted tabular-nums">{percentLabel(Math.round(row.share), locale)}</span>
                         </Link>
                       ))}
                     </div>
@@ -297,7 +296,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
 }
 
 // The middle card: the share kept, or that more went out than came in.
-function keptSay(data: InsightsData, when: string, t: Translate): { tone: Tone; icon: React.ReactNode; say: string; why: string } {
+function keptSay(data: InsightsData, when: string, t: Translate, locale: Locale): { tone: Tone; icon: React.ReactNode; say: string; why: string } {
   const { totals, previous, labels, currency } = data;
   const spent = formatCurrency(totals.expense, currency);
   if (totals.income > 0 && totals.left < 0) {
@@ -311,7 +310,7 @@ function keptSay(data: InsightsData, when: string, t: Translate): { tone: Tone; 
   if (totals.rate === null) {
     return { tone: "money", icon: <PiggyBank />, say: t("Nothing earned yet."), why: totals.expense > 0 ? t("{spent} went out {period}.", { spent, period: when }) : t("Once money comes in, this shows the share you kept.") };
   }
-  const values = { amount: formatCurrency(totals.left, currency), period: when, before: `${previous.rate}%`, previous: labels.previous };
+  const values = { amount: formatCurrency(totals.left, currency), period: when, before: previous.rate === null ? "" : percentLabel(previous.rate, locale), previous: labels.previous };
   const why =
     previous.rate === null
       ? t("That is {amount} {period}.", values)
@@ -320,7 +319,7 @@ function keptSay(data: InsightsData, when: string, t: Translate): { tone: Tone; 
         : totals.rate < previous.rate
           ? t("That is {amount} {period}, down from {before} in {previous}.", values)
           : t("That is {amount} {period}, the same share as in {previous}.", values);
-  return { tone: "money", icon: <PiggyBank />, say: t("You kept {percent} of what you earned.", { percent: `${totals.rate}%` }), why };
+  return { tone: "money", icon: <PiggyBank />, say: t("You kept {percent} of what you earned.", { percent: percentLabel(totals.rate, locale) }), why };
 }
 
 // The biggest spend's line: its share and a month's worth of it, in whole
@@ -328,8 +327,8 @@ function keptSay(data: InsightsData, when: string, t: Translate): { tone: Tone; 
 // (this month, this year in January) what it has come to so far, as there
 // is nothing to average yet.
 function SpendWhy({ data, row }: { data: InsightsData; row: RankedRow }) {
-  const { t } = useLocale();
-  const percent = `${Math.round(row.share)}%`;
+  const { t, locale } = useLocale();
+  const percent = percentLabel(Math.round(row.share), locale);
   const total = { percent, amount: formatCurrency(row.amount, data.currency) };
   if (data.period === "last-month") return t("{percent} of spending · {amount} in all.", total);
   const perMonth = monthlyAverage(row.amount, data.months);
@@ -363,10 +362,10 @@ function CardLink({ href, children }: { href: string; children: React.ReactNode 
 
 // A total's line under its figure: "↑ 6.3% vs 1–21 Sep", "↑ ৳ 7,000 vs …".
 function DeltaLine({ move, good, vs, currency }: { move: Movement; good: (change: number) => boolean; vs: string; currency: string }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   if (move.kind === "new" || move.kind === "same") return <span>{t("Nothing before to compare with")}</span>;
   const arrow = move.change > 0 ? "↑" : move.change < 0 ? "↓" : "=";
-  const figure = move.kind === "percent" ? `${Math.abs(move.percent)}%` : formatCurrency(Math.abs(move.change), currency);
+  const figure = move.kind === "percent" ? percentLabel(Math.abs(move.percent), locale) : formatCurrency(Math.abs(move.change), currency);
   return (
     <span>
       {fillNodes(t("{change} vs {previous}"), {
@@ -383,14 +382,14 @@ function DeltaLine({ move, good, vs, currency }: { move: Movement; good: (change
 
 // The savings rate's line: how many points it moved.
 function PointsLine({ points, vs }: { points: number; vs: string }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const arrow = points > 0 ? "↑" : points < 0 ? "↓" : "=";
   return (
     <span>
       {fillNodes(t("{change} vs {previous}"), {
         change: (
           <b className={points >= 0 ? "text-income" : "text-expense"}>
-            {arrow} {plural(t, Math.abs(points), "{count} point", "{count} points")}
+            {arrow} {plural(t, Math.abs(points), "{count} point", "{count} points", undefined, locale)}
           </b>
         ),
         previous: vs,
@@ -400,6 +399,7 @@ function PointsLine({ points, vs }: { points: number; vs: string }) {
 }
 
 function SourceRow({ row, currency, href }: { row: RankedRow; currency: string; href: string }) {
+  const { locale } = useLocale();
   return (
     <Link href={href} className="-mx-2 grid grid-cols-[24px_minmax(0,1fr)_110px_56px] items-center gap-3 rounded-md px-2 py-1.5 text-body transition-colors hover:bg-hover">
       <span className="text-small font-bold text-ink-muted tabular-nums">{row.rank}</span>
@@ -410,7 +410,7 @@ function SourceRow({ row, currency, href }: { row: RankedRow; currency: string; 
         </span>
       </span>
       <span className="text-right font-semibold text-ink tabular-nums">{formatCurrency(row.amount, currency)}</span>
-      <span className="text-right text-ink-muted tabular-nums">{Math.round(row.share)}%</span>
+      <span className="text-right text-ink-muted tabular-nums">{percentLabel(Math.round(row.share), locale)}</span>
     </Link>
   );
 }
@@ -418,10 +418,10 @@ function SourceRow({ row, currency, href }: { row: RankedRow; currency: string; 
 // One line of What changed: before, now, and the move as a percent, an
 // amount (Left over after an overspent period), "new" or a dash.
 function ChangeRow({ name, before, now, move, currency, good }: { name: string; before: number; now: number; move: Movement; currency: string; good: (change: number) => boolean }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const text =
     move.kind === "percent"
-      ? `${move.percent > 0 ? "+ " : move.percent < 0 ? "− " : ""}${Math.abs(move.percent)}%`
+      ? `${move.percent > 0 ? "+ " : move.percent < 0 ? "− " : ""}${percentLabel(Math.abs(move.percent), locale)}`
       : move.kind === "amount"
         ? formatSignedCurrency(move.change, currency)
         : move.kind === "new"

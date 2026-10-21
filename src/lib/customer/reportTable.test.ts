@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { bnDictionary } from "@/lib/i18n/dictionary";
 import type { MonthlyBreakdown } from "./api";
-import { incomeYear, REPORT_PERIOD_LABELS, REPORT_PERIODS, reportCsv, reportFileName, reportHref, reportPeriodFrom, reportRange, reportRows, reportShowFrom } from "./reportTable";
+import { incomeYear, incomeYearSpan, REPORT_PERIOD_LABELS, REPORT_PERIODS, reportCsv, reportFileName, reportHref, reportPeriodFrom, reportRange, reportRows, reportShowFrom } from "./reportTable";
 
 const months = ["2026-08", "2026-09"];
 const breakdown = (type: "INCOME" | "EXPENSE", rows: [string, number[]][]): MonthlyBreakdown => {
@@ -76,6 +76,11 @@ describe("periods", () => {
     expect(incomeYear("2026-10-21", -1)).toEqual({ dateFrom: "2025-07-01", dateTo: "2026-06-30" });
     expect(incomeYear("2026-03-01")).toEqual({ dateFrom: "2025-07-01", dateTo: "2026-06-30" });
     expect(incomeYear("2026-07-01")).toEqual({ dateFrom: "2026-07-01", dateTo: "2027-06-30" });
+  });
+
+  it("names an income year as the return does", () => {
+    expect(incomeYearSpan(incomeYear("2026-10-21", -1))).toBe("2025–26");
+    expect(incomeYearSpan(incomeYear("2099-10-21"))).toBe("2099–00");
   });
 
   // The July–June year is the income year (আয়বর্ষ); its tax year is the next.

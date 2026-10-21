@@ -46,11 +46,13 @@ export function KeptChart({ rates, currency, partialMonth }: KeptChartProps) {
       <div aria-hidden="true" className="flex gap-1">
         {rates.map((point) => {
           const overspent = point.kept < 0;
+          // The month under way is faint, as on the desktop chart.
+          const soFar = point.month === partialMonth;
           return (
             <div key={point.month} className="flex flex-1 flex-col items-center gap-2">
               <div className="flex w-full items-end justify-center gap-0.75" style={{ height: HEIGHT }}>
-                <span className="w-3 rounded-t-sm bg-emerald" style={{ height: barHeight(point.income) }} />
-                <span className={cn("w-3 rounded-t-sm", overspent ? "bg-expense-fill" : "bg-mint-300")} style={{ height: overspent ? Math.max(3, barHeight(-point.kept)) : barHeight(point.kept) }} />
+                <span className={cn("w-3 rounded-t-sm bg-emerald", soFar && "opacity-60")} style={{ height: barHeight(point.income) }} />
+                <span className={cn("w-3 rounded-t-sm", overspent ? "bg-expense-fill" : "bg-mint-300", soFar && "opacity-60")} style={{ height: overspent ? Math.max(3, barHeight(-point.kept)) : barHeight(point.kept) }} />
               </div>
               <span className={cn("text-caption", point === last ? "font-bold text-ink" : "font-normal text-ink-muted")}>{monthName(point.month, locale, "short")}</span>
             </div>
