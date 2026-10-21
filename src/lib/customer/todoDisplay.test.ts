@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { TodoList } from "./api";
-import { inEnglish } from "@/lib/i18n/message";
+import { fillText } from "@/lib/i18n/fill";
+import { inEnglish, type Translate } from "@/lib/i18n/message";
+import { translate } from "@/lib/i18n/translate";
 import { timeLabel } from "./date";
-import { byPriority, dayCount, dayCountText, dayLabel, dayOfMonthWord, doneItems, isDayKey, listFor, movedLabel, openItems, relativeName, repeatLabel, stripDays, upcoming, withList } from "./todoDisplay";
+import { byPriority, dayCount, dayCountText, dayLabel, dayOfMonthWord, doneItems, doneOfText, isDayKey, listFor, movedLabel, openItems, relativeName, repeatLabel, stripDays, upcoming, withList } from "./todoDisplay";
 
-const t = (key: string) => key;
+const t = inEnglish;
+// The Bangla dictionary, the way useLocale().t reads it.
+const bn: Translate = (key, values) => fillText(translate("bn", key), values ?? {});
 const list = (id: string, date: string, items: [string, boolean][]): TodoList => ({ id, date, items: items.map(([text, completed], i) => ({ id: `${id}-${i}`, text, completed, priority: "MEDIUM", dueTime: null, movedFrom: null, repeat: null })) });
 
 const TODAY = "2026-10-15";
@@ -39,6 +43,13 @@ describe("days", () => {
     expect(relativeName("2026-10-14", TODAY)).toBe("Yesterday");
     expect(relativeName("2026-10-20", TODAY)).toBeNull();
     expect(dayLabel(TODAY)).toBe("Thursday, 15 Oct");
+    expect(dayLabel(TODAY, "en", "short")).toBe("Thu, 15 Oct");
+  });
+
+  // Bangla days come from fixed names and Bangla digits, never from English.
+  it("names a day in Bangla", () => {
+    expect(dayLabel(TODAY, "bn")).toBe("বৃহস্পতিবার, ১৫ অক্টো");
+    expect(dayLabel(TODAY, "bn", "short")).toBe("বৃহস্পতি, ১৫ অক্টো");
   });
 });
 
@@ -58,6 +69,14 @@ describe("a day's list", () => {
     expect(dayCountText({ total: 5, done: 3 }, t)).toBe("3 of 5");
     expect(dayCountText({ total: 3, done: 0 }, t)).toBe("3 tasks");
     expect(dayCountText({ total: 1, done: 0 }, t)).toBe("1 task");
+  });
+
+  // "3 of 5" must keep its numbers in the right places in Bangla too.
+  it("says the count as one Bangla sentence, in Bangla digits", () => {
+    expect(dayCountText({ total: 5, done: 3 }, bn, "bn")).toBe("৫টির মধ্যে ৩টি");
+    expect(dayCountText({ total: 4, done: 4 }, bn, "bn")).toBe("৪টি হয়েছে");
+    expect(doneOfText(2, 5, t)).toBe("2 of 5 done");
+    expect(doneOfText(2, 5, bn, "bn")).toBe("৫টির মধ্যে ২টি শেষ");
   });
 
   it("finds tomorrow and the open tasks later in the week", () => {
@@ -90,7 +109,7 @@ describe("a task's priority, time and repeating", () => {
 
   it("words the day of the month for each language", () => {
     expect(["1", "2", "3", "4", "11", "12", "13", "21", "22", "31"].map((day) => dayOfMonthWord(Number(day), "en"))).toEqual(["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd", "31st"]);
-    expect(dayOfMonthWord(3, "bn")).toBe("3");
+    expect(dayOfMonthWord(3, "bn")).toBe("৩");
   });
 
   it("reads a repeat rule as the board does", () => {
@@ -103,6 +122,7 @@ describe("a task's priority, time and repeating", () => {
 
   it("says where a moved task came from", () => {
     expect(movedLabel("2026-10-14", TODAY, inEnglish)).toBe("Moved from yesterday");
-    expect(movedLabel("2026-10-12", TODAY, inEnglish)).toBe(`Moved from ${dayLabel("2026-10-12", "EEE d MMM")}`);
+    expect(movedLabel("2026-10-12", TODAY, inEnglish)).toBe("Moved from Mon, 12 Oct");
+    expect(movedLabel("2026-10-12", TODAY, bn, "bn")).toBe("সোম, ১২ অক্টো থেকে সরানো");
   });
 });

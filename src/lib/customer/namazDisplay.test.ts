@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HabitMonthTracker, PrayerStatus } from "./api";
-import { canMark, cellState, dayTotals, hijriRange, monthInsights, monthSummary, prayerSummaries, PRAYERS, yearSummary } from "./namazDisplay";
+import { allOnTime, allPrayed, canMark, cellState, dayTotals, hijriRange, monthInsights, monthSummary, prayerSummaries, PRAYERS, yearSummary } from "./namazDisplay";
 
 // September 2026, viewed on the 4th at some point during the day: three
 // days fully past, today the 4th.
@@ -100,6 +100,15 @@ describe("prayer statuses", () => {
     expect(cellState(tracker, 2, "Fajr")).toBe("qaza");
     expect(cellState(tracker, 2, "Dhuhr")).toBe("missed");
     expect(cellState(tracker, 4, "Fajr")).toBe("missed");
+  });
+
+  // "All five prayed" means one thing everywhere: Today's streak and the
+  // sheet's full days in a row both count a qaza; a perfect day is on time.
+  it("counts a qaza toward full days in a row, not toward perfect days", () => {
+    const qazaDay = sheet([...fullDays([1, 2]), ...PRAYERS.map((p) => [3, p, p === "Fajr" ? "QAZA" : "ON_TIME"] as [number, string, PrayerStatus])]);
+    expect(allPrayed(qazaDay, 3)).toBe(true);
+    expect(allOnTime(qazaDay, 3)).toBe(false);
+    expect(monthSummary(qazaDay)).toMatchObject({ perfectDays: 2, perfectRun: 3 });
   });
 
   it("counts a qaza as prayed but not toward a perfect day, and a 'not prayed' mark as missed", () => {

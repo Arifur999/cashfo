@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { fillText } from "@/lib/i18n/fill";
+import type { Translate } from "@/lib/i18n/message";
+import { translate } from "@/lib/i18n/translate";
 import type { Book } from "./api";
-import { applyProgress, daysSince, daysToFinish, finishedIn, goalPace, nowReading, pagesLeft, progressPct, readingPace, shelves, weekPages } from "./libraryDisplay";
+import { applyProgress, daysSince, daysToFinish, finishedIn, goalPace, nowReading, pageOfText, paceSentence, pagesLeft, progressPct, readingPace, shelves, weekPages } from "./libraryDisplay";
+
+// The Bangla dictionary, the way useLocale().t reads it.
+const bn: Translate = (key, values) => fillText(translate("bn", key), values ?? {});
 
 function book(over: Partial<Book> & { id: string }): Book {
   return {
@@ -107,5 +113,15 @@ describe("goalPace", () => {
 
   it("never asks for a pace once the year is over", () => {
     expect(goalPace(finished(1), 2026, 4, "2026-12-31").weeksPerBook).toBeNull();
+  });
+
+  // Whole weeks (or days, under a week), never "2.3 weeks".
+  it("says the pace needed as one sentence", () => {
+    expect(paceSentence(2.3)).toBe("About one book every 2 weeks to finish by December.");
+    expect(paceSentence(1.2)).toBe("About one book a week to finish by December.");
+    expect(paceSentence(0.5)).toBe("About one book every 4 days to finish by December.");
+    expect(paceSentence(0.1)).toBe("About one book a day to finish by December.");
+    expect(paceSentence(2.3, bn, "bn")).toBe("ডিসেম্বরের মধ্যে শেষ করতে মোটামুটি প্রতি ২ সপ্তাহে একটি বই।");
+    expect(pageOfText({ pagesRead: 120, totalPages: 320 }, bn, "bn")).toBe("পৃষ্ঠা ১২০ / ৩২০");
   });
 });

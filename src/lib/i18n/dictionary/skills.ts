@@ -13,28 +13,21 @@ export const skillsDictionary: Record<string, string> = {
   "Add skill": "দক্ষতা যোগ করুন",
   "Your learning list is empty, for now": "আপনার শেখার তালিকা এখন খালি, আপাতত",
   "Add a course or a skill you want to learn. It takes ten seconds.": "যে কোর্স বা দক্ষতা শিখতে চান সেটা যোগ করুন। মাত্র দশ সেকেন্ড লাগে।",
-  "We couldn't load your skills. Please refresh the page.": "আপনার দক্ষতার তালিকা লোড করা যায়নি। পাতাটা রিফ্রেশ করুন।",
 
   // The four numbers
   "Learning now": "এখন শিখছি",
   "Nothing on the go yet": "এখনো কিছু চলছে না",
   "Practice streak": "টানা অনুশীলন",
-  "Logged every day since": "প্রতিদিন লেখা হয়েছে",
   "Log something today to start one": "শুরু করতে আজ কিছু লিখুন",
   "This week": "এই সপ্তাহ",
-  "of practice": "অনুশীলন",
   "Nothing logged yet": "এখনো কিছু লেখা হয়নি",
   "across every skill": "সব দক্ষতা মিলিয়ে",
-  goal: "লক্ষ্য",
   "Skills completed this year": "এ বছর সম্পন্ন দক্ষতা",
   "Completed this year. Set a goal below.": "এ বছর সম্পন্ন। নিচে একটা লক্ষ্য ঠিক করুন।",
 
   // Units
-  lesson: "পাঠ",
   lessons: "পাঠ",
-  hour: "ঘণ্টা",
   hours: "ঘণ্টা",
-  min: "মিনিট",
   "+1 lesson": "+১ পাঠ",
   "+30 min": "+৩০ মিনিট",
 
@@ -74,7 +67,6 @@ export const skillsDictionary: Record<string, string> = {
   "Remove skill": "দক্ষতা সরান",
 
   // Goal
-  "skills goal": "দক্ষতার লক্ষ্য",
   "How many skills do you want to complete this year?": "এ বছর কয়টা দক্ষতা সম্পন্ন করতে চান?",
   "Skills to complete this year": "এ বছর সম্পন্ন করার দক্ষতা",
 
@@ -127,4 +119,34 @@ export const skillsDictionary: Record<string, string> = {
   "Failed to remove skill": "দক্ষতা সরাতে ব্যর্থ হয়েছে",
   "Completed! Well done.": "সম্পন্ন! সাবাশ।",
   "Started. Happy learning!": "শুরু হলো। শুভ শেখা!",
+
+  // Amounts and progress as whole sentences, in the reader's digits.
+  "We couldn't load your skills just now.": "এই মুহূর্তে আপনার দক্ষতার তালিকা লোড করা যায়নি।",
+  "{count} lesson": "{count}টি পাঠ",
+  "{count} lessons": "{count}টি পাঠ",
+  "{count} hour": "{count} ঘণ্টা",
+  "{count} hours": "{count} ঘণ্টা",
+  "{count} min": "{count} মিনিট",
+  // A week cell's short amount: "1.5h", "30m".
+  "{count}h": "{count}ঘ",
+  "{count}m": "{count}মি",
+  "{done} of {total} lessons": "{total}টি পাঠের মধ্যে {done}টি",
+  "{done} of {total} hours": "{total} ঘণ্টার মধ্যে {done} ঘণ্টা",
+  "{amount} today": "আজ {amount}",
+  "{amount} yesterday": "গতকাল {amount}",
+  "{amount} on {day}": "{day} {amount}",
+  "Logged every day since {day}": "{day} থেকে প্রতিদিন লেখা হয়েছে",
+  "Practice streak: {days}": "টানা অনুশীলন: {days}",
+  "{first} and {second}": "{first} ও {second}",
+  "{first}, {second} and {count} more": "{first}, {second} ও আরও {count}টি",
+  "and {amount} of practice": "আর {amount} অনুশীলন",
+  "{year} goal": "{year} সালের লক্ষ্য",
+  "{year} goal: {figure}": "{year} সালের লক্ষ্য: {figure}",
+  "{year} skills goal": "{year} সালের দক্ষতার লক্ষ্য",
+  "{done} of {total} completed": "{total}টির মধ্যে {done}টি সম্পন্ন",
+  // The server's refusals (habitDisplay's actionError).
+  "A course can have up to {count} lessons": "একটি কোর্সে সর্বোচ্চ {count}টি পাঠ থাকতে পারে",
+  "A goal can be up to {count} hours": "লক্ষ্য সর্বোচ্চ {count} ঘণ্টা হতে পারে",
+  "You can keep up to {count} skills": "সর্বোচ্চ {count}টি দক্ষতা রাখা যায়",
+  "Skill not found": "দক্ষতাটি পাওয়া যায়নি",
 };

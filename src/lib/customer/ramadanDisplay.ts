@@ -19,6 +19,14 @@ export function ramadanStartIn(year: number, adjust = 0): string | null {
   return null;
 }
 
+// The Gregorian years the setup dialog offers, those with no sheet yet:
+// around the one asked for (two back, three ahead), or, for an earlier
+// Ramadan, the six years up to it.
+export function setupYears(existing: Pick<HabitMonthTracker, "year">[], year: number, earlier = false): number[] {
+  const first = earlier ? year - 5 : year - 2;
+  return Array.from({ length: 6 }, (_, i) => first + i).filter((y) => !existing.some((tracker) => tracker.year === y));
+}
+
 export interface RamadanDay {
   day: number;
   date: string | null;
@@ -76,16 +84,27 @@ export interface ItemSummary {
   pct: number;
 }
 
-// Each row's count over the days that have come (all of them once it is
-// over), and the share of everything done.
+const tickedOn = (tracker: HabitMonthTracker, day: number, item: string): boolean => tracker.checks.some((c) => c.day === day && c.item === item);
+
+// The days a row is counted over: all of them once Ramadan is over; while it
+// is going, the days fully past, and today only once its box is ticked (an
+// open box today is not a missed fast yet).
+export function countedDays(tracker: HabitMonthTracker, window: RamadanWindow, item: string): number {
+  if (window.status === "completed") return tracker.totalDays;
+  if (window.status === "upcoming" || window.todayDay === null) return 0;
+  return window.elapsedDays + (tickedOn(tracker, window.todayDay, item) ? 1 : 0);
+}
+
+// Each row's count over the days counted (see countedDays), and the share
+// of everything done.
 export function ramadanSummary(tracker: HabitMonthTracker, window: RamadanWindow): { items: ItemSummary[]; done: number; of: number; pct: number } {
-  const counted = window.status === "completed" ? tracker.totalDays : window.todayDay ?? 0;
   const items = tracker.items.map((item) => {
+    const counted = countedDays(tracker, window, item);
     const done = tracker.checks.filter((c) => c.item === item && c.day <= counted).length;
     return { item, done, of: counted, pct: counted > 0 ? Math.round((done / counted) * 100) : 0 };
   });
   const done = items.reduce((sum, i) => sum + i.done, 0);
-  const of = counted * tracker.items.length;
+  const of = items.reduce((sum, i) => sum + i.of, 0);
   return { items, done, of, pct: of > 0 ? Math.round((done / of) * 100) : 0 };
 }
 
@@ -105,13 +124,17 @@ export function summaryNote(tracker: HabitMonthTracker, window: RamadanWindow, r
   return all ? { kind: "lastTen", nights: NIGHT_ROWS.has(row.item.toLowerCase()) } : null;
 }
 
-// Share of everything done in each ashra, over its days that have come.
+// Share of everything done in each ashra, over its days counted the same
+// way: the days fully past, and today's boxes once they are ticked.
 export function ashraSummary(tracker: HabitMonthTracker, window: RamadanWindow): { n: 1 | 2 | 3; done: number; of: number; pct: number }[] {
-  const counted = window.status === "completed" ? tracker.totalDays : window.todayDay ?? 0;
+  const past = window.status === "completed" ? tracker.totalDays : window.status === "going" ? window.elapsedDays : 0;
+  const today = window.status === "going" ? window.todayDay : null;
   return ASHRAS.map((a) => {
-    const days = ramadanDays(tracker).filter((d) => d.ashra === a.n && d.day <= counted);
-    const of = days.length * tracker.items.length;
-    const done = tracker.checks.filter((c) => days.some((d) => d.day === c.day)).length;
+    const days = ramadanDays(tracker).filter((d) => d.ashra === a.n);
+    const pastDays = days.filter((d) => d.day <= past);
+    const todayTicks = today !== null && days.some((d) => d.day === today) ? tracker.items.filter((item) => tickedOn(tracker, today, item)).length : 0;
+    const of = pastDays.length * tracker.items.length + todayTicks;
+    const done = tracker.checks.filter((c) => tracker.items.includes(c.item) && pastDays.some((d) => d.day === c.day)).length + todayTicks;
     return { n: a.n, done, of, pct: of > 0 ? Math.round((done / of) * 100) : 0 };
   });
 }

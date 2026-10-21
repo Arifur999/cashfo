@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker, type PrayerStatus, type QazaSummary } from "./api";
+import { DAY_ITEM, MAX_BACKFILL_DAYS } from "./challengeDisplay";
 import type { PrayerSettings } from "./prayerTimes";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
@@ -122,6 +123,107 @@ export async function removeTrackerItemAction(id: string, name: string): Promise
     const res = await customerApi.delete<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { headers: await authHeaders(), params: { name } });
     return res.data;
   }, "Failed to remove habit");
+}
+
+// ---- Challenges: what takes the server several requests, in one call ----
+
+const MAX_DAYS = 365;
+const MAX_ITEMS = 20;
+const isDay = (day: unknown): day is number => Number.isInteger(day) && (day as number) >= 1 && (day as number) <= MAX_DAYS;
+const isItemList = (items: unknown): items is string[] => Array.isArray(items) && items.length <= MAX_ITEMS && items.every((item) => typeof item === "string");
+
+// Adds the hidden day item to a challenge that has none yet: the server only
+// ticks an item the sheet has. Already there (a second tab) is fine.
+async function addDayItem(id: string, headers: Record<string, string>) {
+  try {
+    await customerApi.post(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { name: DAY_ITEM }, { headers });
+  } catch (error) {
+    if (!(axios.isAxiosError(error) && error.response?.status === 409)) throw error;
+  }
+}
+
+// Ticks a challenge's items on one day on or off, in order, stopping at the
+// first refusal. addDayItem: the challenge is ticked through the day itself
+// and has no item for it yet.
+export async function setChallengeDayAction(id: string, input: { day: number; items: string[]; checked: boolean; addDayItem?: boolean }): Promise<ActionResult> {
+  if (!isDay(input.day) || !isItemList(input.items)) return { success: false, message: "Failed to update" };
+  return callApi(async () => {
+    const headers = await authHeaders();
+    if (input.addDayItem && input.checked) await addDayItem(id, headers);
+    for (const item of input.items) {
+      try {
+        await customerApi.put(`${API_BASE_URL}/api/habit-trackers/${id}/check`, { day: input.day, item, checked: input.checked }, { headers });
+      } catch (error) {
+        // Unticking the day itself on a sheet that never had it: nothing to clear.
+        if (input.addDayItem && !input.checked && axios.isAxiosError(error) && error.response?.status === 400) continue;
+        throw error;
+      }
+    }
+  }, "Failed to update");
+}
+
+// A new challenge with its daily items. A refused item still leaves the
+// challenge made, so its sheet comes back with the error to open it anyway.
+export async function createChallengeAction(input: { name: string; totalDays: number; items: string[] }): Promise<ActionResult<HabitMonthTracker>> {
+  if (!isItemList(input.items)) return { success: false, message: "Failed to create challenge" };
+  const made = await createCustomTrackerAction({ name: input.name, totalDays: input.totalDays });
+  if (!made.success || !made.data) return made;
+  let tracker = made.data;
+  for (const item of input.items) {
+    const added = await addTrackerItemAction(tracker.id, item);
+    if (!added.success || !added.data) return { success: false, message: added.message, data: tracker };
+    tracker = added.data;
+  }
+  return { success: true, data: tracker };
+}
+
+// A new daily item on a challenge, ticked on every day already done (the
+// days the client lists) so no done day turns missed. replaceDayItem: the
+// challenge was ticked through the day itself; its ticks are now the new
+// item's, so the hidden day item goes. Past MAX_BACKFILL_DAYS done days it
+// is refused (the dialog says so first): the ticks would run into the
+// server's request limit.
+export async function addChallengeItemAction(id: string, input: { name: string; doneDays: number[]; replaceDayItem: boolean }): Promise<ActionResult<HabitMonthTracker>> {
+  if (!Array.isArray(input.doneDays) || input.doneDays.length > MAX_BACKFILL_DAYS || !input.doneDays.every(isDay)) return { success: false, message: "Failed to add the row" };
+  return callApi(async () => {
+    const headers = await authHeaders();
+    const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { name: input.name }, { headers });
+    // The name as the server saved it (trimmed, normalised).
+    const wanted = input.name.trim().normalize("NFC").toLowerCase();
+    const item = res.data.items.find((each) => each.toLowerCase() === wanted) ?? input.name.trim();
+    try {
+      for (const day of input.doneDays) {
+        await customerApi.put(`${API_BASE_URL}/api/habit-trackers/${id}/check`, { day, item, checked: true }, { headers });
+      }
+    } catch (error) {
+      // Ticked on only some of the done days, the new item would turn the
+      // rest missed: it goes again, its ticks with it, so the sheet is as it
+      // was (the day item untouched) and the refusal is reported. Best
+      // effort: if this fails too, the row stays to be removed by hand.
+      await customerApi.delete(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { headers, params: { name: item } }).catch(() => undefined);
+      throw error;
+    }
+    if (!input.replaceDayItem || !res.data.items.includes(DAY_ITEM)) return res.data;
+    const after = await customerApi.delete<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { headers, params: { name: DAY_ITEM } });
+    return after.data;
+  }, "Failed to add the row");
+}
+
+// Deletes a challenge with its days and ticks. The server deletes only a
+// sheet with nothing ticked, so each daily item goes first, and its ticks
+// with it. A Namaz or Ramadan sheet keeps that guard: this refuses them.
+export async function deleteChallengeAction(id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    const headers = await authHeaders();
+    const { data: tracker } = await customerApi.get<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers });
+    if (tracker.category !== "Others") throw new Error("Not a challenge");
+    if (tracker.checks.length > 0) {
+      for (const item of tracker.items) {
+        await customerApi.delete(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { headers, params: { name: item } });
+      }
+    }
+    await customerApi.delete(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers });
+  }, "Failed to remove challenge");
 }
 
 // ---- Daily habits ----
