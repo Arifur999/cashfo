@@ -1,8 +1,50 @@
 import { describe, expect, it } from "vitest";
 import type { VaultEntrySummary } from "./api";
-import { attentionIds, avatarLetter, categoryCounts, countdownText, filterEntries, generatePassword, hostOf, issuesOf, normalizeUrl, parseExpiry, passwordStrength, rulesMet, sortEntries, vaultRules } from "./vaultDisplay";
+import {
+  attentionIds,
+  avatarLetter,
+  categoryCounts,
+  checkupBreakdown,
+  checkupFor,
+  checkupStatus,
+  chipViews,
+  countdownText,
+  draftFor,
+  draftProblems,
+  entriesInView,
+  entryInput,
+  filterEntries,
+  generatePassword,
+  hostOf,
+  isLockedMessage,
+  issuesOf,
+  normalizeUrl,
+  NO_CONNECTION_MESSAGE,
+  parseExpiry,
+  passwordDetail,
+  passwordStrength,
+  presetTitle,
+  QUICK_LOGINS,
+  rulesMet,
+  settle,
+  sortEntries,
+  toggledView,
+  vaultRules,
+} from "./vaultDisplay";
 
-const entry = (over: Partial<VaultEntrySummary> & { id: string; title: string }): VaultEntrySummary => ({ category: "OTHER", websiteUrl: null, holderName: null, usernameOrEmail: null, notes: null, createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z", ...over });
+const entry = (over: Partial<VaultEntrySummary> & { id: string; title: string }): VaultEntrySummary => ({
+  category: "OTHER",
+  websiteUrl: null,
+  holderName: null,
+  usernameOrEmail: null,
+  notes: null,
+  passwordChangedAt: "2026-01-01T00:00:00.000Z",
+  isFavorite: false,
+  checkupDismissedAt: null,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  ...over,
+});
 
 describe("passwords", () => {
   it("rates strength by length and variety", () => {
@@ -13,6 +55,14 @@ describe("passwords", () => {
     expect(passwordStrength("Abcdef123456")).toEqual({ score: 3, label: "Good" });
     expect(passwordStrength("kP4!wX9m#Qe2zL7v")).toEqual({ score: 4, label: "Strong" });
     expect(passwordStrength("correct horse battery staple 1").score).toBe(4);
+  });
+
+  it("words the meter's detail as one sentence per case", () => {
+    expect(passwordDetail("")).toBeNull();
+    expect(passwordDetail("7")).toEqual({ key: "{count} character", count: 1 });
+    expect(passwordDetail("abcdef")).toEqual({ key: "{count} characters", count: 6 });
+    expect(passwordDetail("48215")).toEqual({ key: "{count} characters with numbers", count: 5 });
+    expect(passwordDetail("kP4!wX9m#Qe2zL7v")).toEqual({ key: "{count} characters with numbers and symbols", count: 16 });
   });
 
   it("checks the vault password rules", () => {
@@ -57,9 +107,26 @@ describe("the unlock timer", () => {
   });
 });
 
+describe("answers", () => {
+  it("knows every way the API says the vault is shut", () => {
+    expect(isLockedMessage("Vault is locked")).toBe(true);
+    expect(isLockedMessage("Vault session expired -- please unlock again")).toBe(true);
+    expect(isLockedMessage("Incorrect vault password")).toBe(false);
+    expect(isLockedMessage("Set up a vault password first")).toBe(false);
+    expect(isLockedMessage(NO_CONNECTION_MESSAGE)).toBe(false);
+    expect(isLockedMessage(undefined)).toBe(false);
+  });
+
+  it("reads a call that never got an answer as a failed one", async () => {
+    await expect(settle(Promise.resolve({ success: true, data: 3 }))).resolves.toEqual({ success: true, data: 3 });
+    await expect(settle(Promise.resolve({ success: false, message: "Vault entry not found" }))).resolves.toEqual({ success: false, message: "Vault entry not found" });
+    await expect(settle(Promise.reject(new TypeError("Failed to fetch")))).resolves.toEqual({ success: false, message: NO_CONNECTION_MESSAGE });
+  });
+});
+
 describe("the list", () => {
   const entries = [
-    entry({ id: "1", title: "Facebook", category: "SOCIAL", usernameOrEmail: "shirin.akter.bd", websiteUrl: "https://facebook.com", createdAt: "2026-03-01T00:00:00.000Z", updatedAt: "2026-05-01T00:00:00.000Z" }),
+    entry({ id: "1", title: "Facebook", category: "SOCIAL", usernameOrEmail: "shirin.akter.bd", websiteUrl: "https://facebook.com", isFavorite: true, createdAt: "2026-03-01T00:00:00.000Z", updatedAt: "2026-05-01T00:00:00.000Z" }),
     entry({ id: "2", title: "bKash", category: "BANK", usernameOrEmail: "01711-482915", createdAt: "2026-04-01T00:00:00.000Z", updatedAt: "2026-04-01T00:00:00.000Z" }),
     entry({ id: "3", title: "Daraz", category: "SHOPPING", websiteUrl: "daraz.com.bd", createdAt: "2026-02-01T00:00:00.000Z", updatedAt: "2026-06-01T00:00:00.000Z" }),
   ];
@@ -76,6 +143,25 @@ describe("the list", () => {
     expect(filterEntries(entries, "", "SOCIAL").map((e) => e.id)).toEqual(["1"]);
     expect(filterEntries(entries, "face", "BANK")).toEqual([]);
     expect(categoryCounts(entries)).toMatchObject({ SOCIAL: 1, BANK: 1, SHOPPING: 1, OTHER: 0 });
+  });
+
+  it("shows one view at a time: all, starred, flagged or a category", () => {
+    const flagged = new Set(["2"]);
+    expect(entriesInView(entries, "", flagged)).toHaveLength(3);
+    expect(entriesInView(entries, "FAVORITES", flagged).map((e) => e.id)).toEqual(["1"]);
+    expect(entriesInView(entries, "ATTENTION", flagged).map((e) => e.id)).toEqual(["2"]);
+    expect(entriesInView(entries, "SHOPPING", flagged).map((e) => e.id)).toEqual(["3"]);
+  });
+
+  it("offers chips for the categories that hold a login, and toggles a category off", () => {
+    const counts = categoryCounts(entries);
+    const order = ["SOCIAL", "EMAIL", "BANK", "SHOPPING", "OTHER"] as const;
+    expect(chipViews(counts, "", [...order])).toEqual(["", "FAVORITES", "ATTENTION", "SOCIAL", "BANK", "SHOPPING"]);
+    // The category on show stays, even emptied.
+    expect(chipViews(counts, "EMAIL", [...order])).toContain("EMAIL");
+    expect(toggledView("BANK", "BANK")).toBe("");
+    expect(toggledView("", "BANK")).toBe("BANK");
+    expect(toggledView("FAVORITES", "FAVORITES")).toBe("FAVORITES");
   });
 
   it("shows a website as its host and fills in the scheme", () => {
@@ -98,5 +184,74 @@ describe("checkup", () => {
     expect(issuesOf(checkup, "c")).toEqual(["reused", "weak"]);
     expect(issuesOf(null, "c")).toEqual([]);
     expect([...attentionIds(checkup)].sort()).toEqual(["a", "c", "d"]);
+  });
+
+  it("forgets logins deleted since it ran", () => {
+    const left = [entry({ id: "a", title: "A" }), entry({ id: "d", title: "D" })];
+    expect(checkupFor(left, checkup)).toEqual({ weak: [], reused: ["a"], old: ["d"] });
+    expect(checkupFor(left, null)).toBeNull();
+  });
+
+  it("counts each login once, by its worst issue, so the bar adds up", () => {
+    // Four logins; two share a weak password.
+    const four = ["a", "b", "c", "e"].map((id) => entry({ id, title: id }));
+    const tally = checkupBreakdown(four, { weak: ["a", "b"], reused: ["a", "b"], old: [] });
+    expect(tally).toEqual({ fine: 2, reused: 2, weak: 0, old: 0 });
+    expect(tally.fine + tally.reused + tally.weak + tally.old).toBe(four.length);
+    expect(checkupBreakdown(four, null)).toEqual({ fine: 4, reused: 0, weak: 0, old: 0 });
+  });
+
+  it("is loading until it answers, and a failed run claims nothing", () => {
+    const logins = [entry({ id: "a", title: "A" })];
+    expect(checkupStatus(null, logins, 0)).toEqual({ load: "loading", found: null });
+    expect(checkupStatus({ entries: logins, attempt: 0, found: checkup }, logins, 0)).toEqual({ load: "ready", found: checkup });
+    expect(checkupStatus({ entries: logins, attempt: 0, found: null }, logins, 0)).toEqual({ load: "failed", found: null });
+  });
+
+  it("keeps the last findings while it runs again, but not a failure", () => {
+    const before = [entry({ id: "a", title: "A" })];
+    const after = [...before, entry({ id: "b", title: "B" })];
+    // A login was added: the run for it is on its way.
+    expect(checkupStatus({ entries: before, attempt: 0, found: checkup }, after, 0)).toEqual({ load: "ready", found: checkup });
+    // After a failure, a run for the new list, or Try again, is loading.
+    expect(checkupStatus({ entries: before, attempt: 0, found: null }, after, 0).load).toBe("loading");
+    expect(checkupStatus({ entries: before, attempt: 0, found: null }, before, 1).load).toBe("loading");
+  });
+});
+
+describe("saving a login", () => {
+  const saved = entry({ id: "9", title: "Dutch Bangla Bank", category: "BANK", websiteUrl: "https://dutchbanglabank.com", usernameOrEmail: "shirin", holderName: "Shirin Akter", notes: "Recovery code 4821", isFavorite: true });
+
+  it("starts from the login, a quick pick or nothing", () => {
+    expect(draftFor(saved)).toMatchObject({ editing: saved, title: "Dutch Bangla Bank", website: "https://dutchbanglabank.com", username: "shirin", holder: "Shirin Akter", holderOpen: true, favorite: true, password: "", kept: false });
+    const bkash = QUICK_LOGINS.find((preset) => preset.title === "bKash")!;
+    expect(draftFor(null, bkash)).toMatchObject({ editing: null, title: "bKash", category: "MOBILE_BANKING", website: "bkash.com", holderOpen: false });
+    expect(draftFor(null)).toMatchObject({ title: "", category: "OTHER" });
+  });
+
+  it("translates only the quick logins that aren't a brand", () => {
+    const shout = (key: string) => key.toUpperCase();
+    expect(presetTitle(QUICK_LOGINS.find((preset) => preset.title === "Home Wi-Fi")!, shout)).toBe("HOME WI-FI");
+    expect(presetTitle(QUICK_LOGINS.find((preset) => preset.title === "Facebook")!, shout)).toBe("Facebook");
+  });
+
+  it("leaves out what is empty on a new login", () => {
+    const draft = { ...draftFor(null), title: " bKash ", category: "MOBILE_BANKING" as const, password: "48215", notes: "  " };
+    expect(entryInput(draft)).toEqual({ title: "bKash", category: "MOBILE_BANKING", websiteUrl: undefined, usernameOrEmail: undefined, holderName: undefined, notes: undefined, isFavorite: false, password: "48215" });
+  });
+
+  it("sends null for a field emptied on an edit, so the old value goes", () => {
+    const draft = { ...draftFor(saved), username: "", notes: "", website: " ", holderOpen: false };
+    const input = entryInput(draft);
+    expect(input).toMatchObject({ websiteUrl: null, usernameOrEmail: null, holderName: null, notes: null });
+    // No password typed: the saved one stays.
+    expect(input).not.toHaveProperty("password");
+    expect(entryInput({ ...draftFor(saved), website: "rokomari.com" }).websiteUrl).toBe("https://rokomari.com");
+  });
+
+  it("asks for a name, and a password only on a new login, of any length", () => {
+    expect(draftProblems(draftFor(null))).toEqual({ title: "Give this login a name", password: "Type or generate a password" });
+    expect(draftProblems({ ...draftFor(null), title: "Nagad", password: "4821" })).toEqual({});
+    expect(draftProblems({ ...draftFor(saved), title: "  " })).toEqual({ title: "Give this login a name" });
   });
 });

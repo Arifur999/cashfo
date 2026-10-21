@@ -6,12 +6,21 @@ import { getVaultStatus } from "@/lib/customer/vault";
 
 export const generateMetadata = () => customerPageMetadata("/password-manager");
 
-// Security › Password vault. Whether a vault password exists is readable
-// with the session alone; everything else needs the vault unlocked.
+// Vault › Password vault. Whether a vault password exists is readable with
+// the session alone; everything else needs the vault unlocked. A status
+// that couldn't be read is passed on as unknown (null), never as "no vault":
+// that would offer a set-up form to someone who has one.
 export default async function PasswordManagerPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const status = await getVaultStatus();
-  return <VaultPageClient hasVaultPassword={status?.hasVaultPassword ?? false} />;
+  return (
+    <VaultPageClient
+      hasVaultPassword={status?.hasVaultPassword ?? null}
+      entryCount={status?.entryCount}
+      hasAccountPassword={status?.hasAccountPassword ?? user.hasPassword}
+      readOnly={Boolean(user.impersonatedBy)}
+    />
+  );
 }
