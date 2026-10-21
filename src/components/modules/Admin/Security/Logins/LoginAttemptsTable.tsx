@@ -1,18 +1,15 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import DataTable from "@/components/shared/table/DataTable";
-import Button from "@/components/smartly/Button";
-import ErrorState from "@/components/smartly/ErrorState";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
-import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { groupLoginAttempts } from "@/lib/loginAttempts";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { loginAttemptsListQuery } from "@/queries/security.queries";
-import { hrefWithoutFilters } from "../knownWithin";
 import { loginAttemptsColumns } from "./loginAttemptsColumns";
 import { type LoginAttemptRow, markPageEdges } from "./loginAttemptRows";
 import { LOGIN_ATTEMPTS_TABLE_BASE_CONFIG, LOGIN_ATTEMPTS_TABLE_CONFIG } from "./loginAttemptsTable.config";
@@ -26,7 +23,6 @@ const NARROWING_KEYS = ["success", "email", "ipAddress"] as const;
 // so a burst of failures reads as one line with its count.
 const LoginAttemptsTable = () => {
   const { translate, locale } = useLocale();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { queryString, dataTableProps } = useServerDataTable<LoginAttemptRow>(LOGIN_ATTEMPTS_TABLE_CONFIG);
   const query = useQuery({ ...loginAttemptsListQuery(queryString), placeholderData: keepPreviousData });
@@ -37,27 +33,6 @@ const LoginAttemptsTable = () => {
   }, [query.data]);
   const narrowed = NARROWING_KEYS.some((key) => searchParams.get(key));
   const lastDay = (searchParams.get("within") ?? LOGIN_ATTEMPTS_TABLE_BASE_CONFIG.defaults.within) === "24h";
-
-  // A failed read is no quiet day: say so, and offer it again. The toolbar
-  // goes with the table, so while a filter is set (one the server may be
-  // refusing) there is a way back to the plain list too.
-  if (query.isError && !query.data) {
-    const filtered = LOGIN_ATTEMPTS_TABLE_BASE_CONFIG.queryKeys.some((key) => searchParams.has(key));
-    return (
-      <ErrorState
-        title={translate("Couldn't load the sign-in attempts")}
-        onRetry={() => void query.refetch()}
-        secondaryAction={
-          filtered && (
-            <Button variant="secondary" onClick={() => window.history.replaceState(null, "", hrefWithoutFilters(pathname, new URLSearchParams(searchParams.toString()), LOGIN_ATTEMPTS_TABLE_BASE_CONFIG.queryKeys))}>
-              {translate("Clear filters")}
-            </Button>
-          )
-        }
-        className="shadow-card"
-      />
-    );
-  }
 
   return (
     <DataTable
@@ -74,9 +49,11 @@ const LoginAttemptsTable = () => {
         next: "Older",
         // How many tries match the filters (the last day's failures are the
         // card above), then how the rows are folded.
-        summary: (total) =>
-          `${translate(total === 1 ? "{count} try · newest first" : "{count} tries · newest first", { count: formatCount(total, locale) })} · ${translate(GROUPING_NOTE)}`,
+        summary: (total) => `${plural(translate, total, "{count} try · newest first", "{count} tries · newest first", undefined, locale)} · ${translate(GROUPING_NOTE)}`,
       }}
+      // A failed read is no quiet day: the table says so under its toolbar,
+      // whose Reset is the way back from a filter the server refuses.
+      errorTitle="Couldn't load the sign-in attempts"
       emptyMessage={!narrowed && lastDay ? "No sign-in attempts in the last 24 hours." : "No sign-in attempts match these filters."}
     />
   );

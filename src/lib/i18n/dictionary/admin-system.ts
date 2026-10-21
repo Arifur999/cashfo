@@ -178,11 +178,16 @@ export const adminSystemDictionary: Record<string, string> = {
   "Error details": "ত্রুটির বিস্তারিত",
   Server: "সার্ভার",
   "Admin panel": "অ্যাডমিন প্যানেল",
+  // The customer app's error screen reports under the admin panel's source.
+  "Customer app": "গ্রাহক অ্যাপ",
+  "Admin panel or customer app": "অ্যাডমিন প্যানেল বা গ্রাহক অ্যাপ",
   "Background job": "ব্যাকগ্রাউন্ড কাজ",
-  "· last {time}": "· শেষ {time}",
+  "last {time}": "শেষ {time}",
   time: "বার",
   times: "বার",
-  "How often": "কতবার",
+  // The count beside "5 times · first …" (the habit tracker's "How often" is
+  // a schedule).
+  "How often@@count": "কতবার",
   "Once · {time}": "একবার · {time}",
   "{count} times · first {first}, last {last}": "{count} বার · প্রথম {first}, শেষ {last}",
   Request: "অনুরোধ",

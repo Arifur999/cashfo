@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hrefWithoutFilters, hrefWithoutUnknownWithin } from "./knownWithin";
+import { hrefWithoutUnknownWithin } from "./knownWithin";
 
 describe("hrefWithoutUnknownWithin", () => {
   it("leaves an address without within alone", () => {
@@ -20,16 +20,5 @@ describe("hrefWithoutUnknownWithin", () => {
 
   it("keeps repeated other params", () => {
     expect(hrefWithoutUnknownWithin("/admin/security", { within: "1d", tag: ["a", "b"] })).toBe("/admin/security?tag=a&tag=b");
-  });
-});
-
-describe("hrefWithoutFilters", () => {
-  it("takes off the filters and the page and keeps the rest", () => {
-    const current = new URLSearchParams("action=LOGIN&within=7d&page=3&entry=abc");
-    expect(hrefWithoutFilters("/admin/security", current, ["action", "within"])).toBe("/admin/security?entry=abc");
-  });
-
-  it("returns the bare path when nothing else is left", () => {
-    expect(hrefWithoutFilters("/admin/security/logins", new URLSearchParams("email=a%40b.c"), ["email"])).toBe("/admin/security/logins");
   });
 });

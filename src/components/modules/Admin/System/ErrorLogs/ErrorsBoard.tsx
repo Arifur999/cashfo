@@ -6,15 +6,17 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import DataTableFacetedFilter from "@/components/shared/table/filters/DataTableFacetedFilter";
+import DataTableTextFilter from "@/components/shared/table/filters/DataTableTextFilter";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import EmptyState from "@/components/smartly/EmptyState";
 import ErrorState from "@/components/smartly/ErrorState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { ERROR_SOURCE_LABEL, type ErrorGroup, groupErrors } from "@/lib/errorGroups";
+import { ERROR_SOURCE_LABEL, type ErrorGroup } from "@/lib/errorGroups";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { WHEN_OPTIONS } from "@/lib/timeWindows";
 import { cn } from "@/lib/utils";
 import { errorLogsListQuery } from "@/queries/system.queries";
@@ -23,13 +25,28 @@ import { ERROR_SOURCES, type ErrorSource } from "@/types/system.types";
 import { SEVERITY_OPTIONS } from "./errorChips";
 import ErrorDetailPanel from "./ErrorDetailPanel";
 import ErrorGroupRow from "./ErrorGroupRow";
-import { DEFAULT_ERROR_FILTERS, type ErrorFilters, type ErrorStatus, errorsQueryString, narrowsErrors, readErrorFilters, withErrorFilters } from "./errorsQuery";
+import { groupBoardErrors } from "./errorOrigin";
+import {
+  CUSTOMER_APP,
+  DEFAULT_ERROR_FILTERS,
+  type ErrorApp,
+  type ErrorFilters,
+  type ErrorStatus,
+  errorsQueryString,
+  narrowsErrors,
+  readErrorFilters,
+  withErrorFilters,
+  withoutNarrowing,
+} from "./errorsQuery";
 
 const STATUS_OPTIONS = [
   { value: "open", label: "Not fixed" },
   { value: "fixed", label: "Fixed" },
 ];
-const SOURCE_OPTIONS = ERROR_SOURCES.map((value) => ({ value, label: ERROR_SOURCE_LABEL[value] }));
+// The customer app reports under the admin panel's source, so that choice
+// covers both; App narrows to the customer app alone.
+const SOURCE_OPTIONS = ERROR_SOURCES.map((value) => ({ value, label: value === "ADMIN_FRONTEND" ? "Admin panel or customer app" : ERROR_SOURCE_LABEL[value] }));
+const APP_OPTIONS = [{ value: CUSTOMER_APP, label: "Customer app" }];
 
 // The detail panel sits beside the list from xl (1280px); below that a
 // picked group opens in a drawer, not in a panel far under a long list.
@@ -67,14 +84,14 @@ const ErrorsBoard = () => {
     setPickedKey(null);
   };
 
-  const groups = useMemo(() => groupErrors(query.data?.data ?? []), [query.data]);
+  const groups = useMemo(() => groupBoardErrors(query.data?.data ?? []), [query.data]);
   const picked = groups.find((group) => group.key === pickedKey) ?? groups[0];
   const total = query.data?.meta?.total ?? 0;
   const loaded = query.data?.data.length ?? 0;
   const count = (value: number) => formatCount(value, locale);
 
-  const errors = translate(total === 1 ? "{count} error" : "{count} errors", { count: count(total) });
-  const kinds = translate(groups.length === 1 ? "{count} kind" : "{count} kinds", { count: count(groups.length) });
+  const errors = plural(translate, total, "{count} error", "{count} errors", undefined, locale);
+  const kinds = plural(translate, groups.length, "{count} kind", "{count} kinds", undefined, locale);
   const summary =
     total > loaded
       ? translate("The newest {loaded} of {errors} · {kinds} · the same message is grouped", { loaded: count(loaded), errors, kinds })
@@ -141,6 +158,13 @@ const ErrorsBoard = () => {
           onChange={(values) => update({ source: values[0] as ErrorSource | undefined })}
         />
         <DataTableFacetedFilter
+          title="App"
+          options={APP_OPTIONS}
+          selected={filters.app ? [filters.app] : []}
+          emptyLabel="All"
+          onChange={(values) => update({ app: values[0] as ErrorApp | undefined })}
+        />
+        <DataTableFacetedFilter
           title="Severity"
           options={SEVERITY_OPTIONS}
           selected={filters.severity ? [filters.severity] : []}
@@ -154,6 +178,9 @@ const ErrorsBoard = () => {
           defaultValue={DEFAULT_ERROR_FILTERS.within}
           onChange={(values) => update({ within: values[0] ?? DEFAULT_ERROR_FILTERS.within })}
         />
+        {/* The reference a customer quotes from their error screen: an
+            exact match, so support lands on the one row behind it. */}
+        <DataTableTextFilter label="Error reference" value={filters.digest} onChange={(digest) => update({ digest })} />
         <span className="flex-1" />
         {query.data && <span className="text-small text-ink-muted">{summary}</span>}
       </div>
@@ -169,7 +196,7 @@ const ErrorsBoard = () => {
               icon={<SearchX />}
               title={translate("No errors match these filters.")}
               action={
-                <Button variant="secondary" size="sm" onClick={() => update({ within: DEFAULT_ERROR_FILTERS.within, source: undefined, severity: undefined })}>
+                <Button variant="secondary" size="sm" onClick={() => update(withoutNarrowing(filters))}>
                   {translate("Clear filters")}
                 </Button>
               }
@@ -192,7 +219,15 @@ const ErrorsBoard = () => {
             >
               {groups.map((group) => (
                 <li key={group.key}>
-                  <ErrorGroupRow group={group} selected={group.key === picked.key} onSelect={() => pick(group.key)} />
+                  {/* Marked only while its detail shows: beside the list from xl, or
+                      in the drawer below it -- never a highlight with
+                      nothing open. */}
+                  <ErrorGroupRow
+                    group={group}
+                    selected={group.key === picked.key && (sideBySide || drawerOpen)}
+                    shownBeside={group.key === picked.key}
+                    onSelect={() => pick(group.key)}
+                  />
                 </li>
               ))}
             </ul>

@@ -65,9 +65,12 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
     accessorFn: (row) => row.adminUser.name,
     header: "Admin",
     cell: ({ row }) => (
-      <span className="flex items-center gap-2">
+      // A long name truncates in its own column, never over the next one.
+      <span className="flex min-w-0 items-center gap-2">
         <AdminAvatar name={row.original.adminUser.name} role={row.original.adminUser.role} size="sm" />
-        <span className="whitespace-nowrap text-ink">{row.original.adminUser.name}</span>
+        <span className="min-w-0 truncate text-ink" title={row.original.adminUser.name}>
+          {row.original.adminUser.name}
+        </span>
       </span>
     ),
     meta: { width: 170 },
@@ -94,7 +97,11 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
     id: "ipAddress",
     accessorKey: "ipAddress",
     header: "IP address",
-    cell: ({ row }) => <code className="font-mono text-small whitespace-nowrap text-ink-2">{row.original.ipAddress ?? "—"}</code>,
+    cell: ({ row }) => (
+      <code className="block truncate font-mono text-small text-ink-2" title={row.original.ipAddress ?? undefined}>
+        {row.original.ipAddress ?? "—"}
+      </code>
+    ),
     meta: { width: 130 },
   },
   {

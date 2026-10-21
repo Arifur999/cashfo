@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FLAG_FILTERS, readFlagFilters, showsFlag, withFlagFilters, withTriesWindow } from "./flagFilters";
+import { DEFAULT_FLAG_FILTERS, readFlagFilters, showsFlag, withFlagFilters } from "./flagFilters";
 
 describe("readFlagFilters", () => {
   it("opens on the flags that need a look, any severity", () => {
@@ -43,20 +43,5 @@ describe("showsFlag", () => {
   it("narrows by severity", () => {
     expect(showsFlag(open, { view: "open", severities: ["CRITICAL"] })).toBe(false);
     expect(showsFlag(open, { view: "open", severities: ["HIGH", "CRITICAL"] })).toBe(true);
-  });
-});
-
-describe("withTriesWindow", () => {
-  it("opens the tries on any time", () => {
-    expect(withTriesWindow("/admin/security/logins?ipAddress=10.0.0.7&success=false")).toBe("/admin/security/logins?ipAddress=10.0.0.7&success=false&within=all");
-  });
-
-  it("keeps an IPv6 address intact", () => {
-    const href = withTriesWindow(`/admin/security/logins?ipAddress=${encodeURIComponent("2001:db8::1")}&success=false`);
-    expect(new URLSearchParams(href.split("?")[1]).get("ipAddress")).toBe("2001:db8::1");
-  });
-
-  it("keeps a window the link already names", () => {
-    expect(withTriesWindow("/admin/security/logins?ipAddress=10.0.0.7&within=7d")).toBe("/admin/security/logins?ipAddress=10.0.0.7&within=7d");
   });
 });

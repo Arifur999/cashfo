@@ -75,7 +75,7 @@ const FailingNetworks = () => {
                   <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
                     <span className={cn("block h-full rounded-full", BAR_TONE[tone])} style={{ width: `${Math.round((network.count / most) * 100)}%` }} />
                   </span>
-                  <span className="text-caption wrap-anywhere text-ink-muted">{networkNote(network, { t: translate })}</span>
+                  <span className="text-caption wrap-anywhere text-ink-muted">{networkNote(network, { t: translate, locale })}</span>
                 </li>
               );
             })}

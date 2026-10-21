@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { useId } from "react";
 import { resolveErrorsAction } from "@/app/(dashboardLayout)/admin/system/errors/_action";
 import CopyButton from "@/components/shared/CopyButton";
@@ -8,22 +9,27 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatDateTime, formatRelativeDateTime } from "@/lib/date";
-import { ERROR_SOURCE_LABEL, type ErrorGroup, errorFrequency, errorRequest } from "@/lib/errorGroups";
+import { type ErrorGroup, errorFrequency, errorRequest } from "@/lib/errorGroups";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { CHIP, ERROR_SEVERITY_CHIP, SOURCE_CHIP } from "./errorChips";
+import { errorDigest, errorOriginLabel } from "./errorOrigin";
 
 // Everything worth pasting into an issue: the message, how often, where,
-// and the newest stack trace. (English: it goes into a bug report.)
+// the reference the customer saw, and the newest stack trace. (English: it
+// goes into a bug report.)
 const detailsText = (group: ErrorGroup) => {
   const [latest] = group.logs;
+  const digest = errorDigest(latest);
   return [
-    `${group.severity} · ${ERROR_SOURCE_LABEL[group.source]}`,
+    `${group.severity} · ${errorOriginLabel(latest)}`,
     group.message,
     `${group.logs.length} times, first ${formatDateTime(group.firstAt)}, last ${formatDateTime(group.lastAt)}`,
     errorRequest(latest, 36),
+    digest && `Reference: ${digest}`,
     latest.stackTrace,
   ]
     .filter(Boolean)
@@ -47,12 +53,13 @@ const ErrorDetailPanel = ({ group, inDrawer = false, onFixed }: ErrorDetailPanel
   const headingId = useId();
   const [latest] = group.logs;
   const request = errorRequest(latest, 4);
+  const digest = errorDigest(latest);
   const open = group.logs.filter((log) => !log.resolved);
   const { translate, locale } = useLocale();
 
   const { run, isPending } = useActionMutation({
     action: (ids: string[]) => resolveErrorsAction(ids),
-    successMessage: ({ count }) => translate(count === 1 ? "{count} error marked fixed" : "{count} errors marked fixed", { count: formatCount(count, locale) }),
+    successMessage: ({ count }) => plural(translate, count, "{count} error marked fixed", "{count} errors marked fixed", undefined, locale),
     invalidateKeys: [queryKeys.errorLogs.all],
     refreshRoute: false,
   });
@@ -66,7 +73,7 @@ const ErrorDetailPanel = ({ group, inDrawer = false, onFixed }: ErrorDetailPanel
         <T>{group.severity}</T>
       </span>
       <span className={cn(CHIP, "font-semibold", SOURCE_CHIP)}>
-        <T>{ERROR_SOURCE_LABEL[group.source]}</T>
+        <T>{errorOriginLabel(latest)}</T>
       </span>
     </span>
   );
@@ -80,9 +87,20 @@ const ErrorDetailPanel = ({ group, inDrawer = false, onFixed }: ErrorDetailPanel
   const facts = (
     <dl className={cn("grid grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-2 text-small", !inDrawer && "px-5 py-4")}>
       <dt className="text-ink-muted">
-        <T>How often</T>
+        <T>How often@@count</T>
       </dt>
-      <dd className="font-semibold text-ink">{errorFrequency(group, { t: translate })}</dd>
+      <dd className="font-semibold text-ink">{errorFrequency(group, { t: translate, locale })}</dd>
+      {/* The newest report's: what the customer quotes to support. */}
+      {digest && (
+        <>
+          <dt className="text-ink-muted">
+            <T>Reference</T>
+          </dt>
+          <dd>
+            <code className="font-mono text-caption wrap-anywhere text-ink">{digest}</code>
+          </dd>
+        </>
+      )}
       {request && (
         <>
           <dt className="text-ink-muted">
@@ -98,7 +116,7 @@ const ErrorDetailPanel = ({ group, inDrawer = false, onFixed }: ErrorDetailPanel
           <dt className="text-ink-muted">
             <T>Fixed</T>
           </dt>
-          <dd className="text-ink">{formatRelativeDateTime(latest.resolvedAt, { t: translate })}</dd>
+          <dd className="text-ink">{formatRelativeDateTime(latest.resolvedAt, { t: translate, locale })}</dd>
         </>
       )}
     </dl>
@@ -118,6 +136,7 @@ const ErrorDetailPanel = ({ group, inDrawer = false, onFixed }: ErrorDetailPanel
       <CopyButton value={detailsText(group)} label="the error details" text="Copy details" size="md" />
       {open.length > 0 && (
         <Button variant="action" disabled={isPending} onClick={() => void fix()}>
+          {!isPending && <Check aria-hidden="true" />}
           {isPending ? translate("Marking...") : open.length === 1 ? translate("Mark fixed") : translate("Mark all {count} fixed", { count: formatCount(open.length, locale) })}
         </Button>
       )}

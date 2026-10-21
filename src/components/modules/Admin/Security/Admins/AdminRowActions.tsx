@@ -38,7 +38,10 @@ const AdminRowActions = ({ admin, isSelf, onOpen }: AdminRowActionsProps) => {
         <DataTableRowActions
           row={admin}
           variant="outline"
+          // smartly's 36px, level with the size-sm Edit beside it.
+          size="sm"
           actions={{
+            rowLabel: (row) => row.name,
             extra: [
               { label: "Reset password", icon: KeyRound, onClick: (row) => onOpen("resetPassword", row) },
               { label: "Suspend", icon: ShieldOff, destructive: true, onClick: (row) => onOpen("suspend", row) },

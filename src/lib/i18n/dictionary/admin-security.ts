@@ -229,9 +229,9 @@ export const adminSecurityDictionary: Record<string, string> = {
     "{name} সব জায়গা থেকে সাইন আউট হবেন, আর আবার চালু না করা পর্যন্ত সাইন ইন করতে পারবেন না।",
   "{name} suspended": "{name} সাময়িক বন্ধ হয়েছেন",
   "Type {email} to confirm": "{email} লিখে নিশ্চিত করুন",
-  "Turn back on": "আবার চালু",
+  "Turn back on": "আবার চালু করুন",
   // Starts with the button's own words, so a voice user's "Turn back on" hits it.
-  "Turn back on: {name}": "আবার চালু: {name}",
+  "Turn back on: {name}": "আবার চালু করুন: {name}",
   "Turning on...": "চালু হচ্ছে...",
   "Turn {name} back on": "{name}-কে আবার চালু করুন",
   "{name} can sign in again with their current password, with the same role.":
@@ -299,7 +299,6 @@ export const adminSecurityDictionary: Record<string, string> = {
   "At least 8 characters, with a letter and a number.": "কমপক্ষে ৮টি অক্ষর, তার মধ্যে একটি বর্ণ ও একটি সংখ্যা।",
   "Type the password again": "পাসওয়ার্ডটি আবার লিখুন",
   "Changing...": "বদলানো হচ্ছে...",
-  "Password changed -- your other sessions were signed out": "পাসওয়ার্ড বদলেছে -- আপনার অন্য সেশনগুলো সাইন আউট হয়েছে",
   Language: "ভাষা",
   "For the admin panel only": "শুধু অ্যাডমিন প্যানেলের জন্য",
   "Two-step verification": "দুই ধাপে যাচাই",
@@ -323,6 +322,8 @@ export const adminSecurityDictionary: Record<string, string> = {
   Everything: "সবকিছু",
   "{count} entry today · newest first": "আজ {count}টি এন্ট্রি · নতুনগুলো আগে",
   "{count} entries today · newest first": "আজ {count}টি এন্ট্রি · নতুনগুলো আগে",
+  // Under an empty audit log that shows today or the last 24 hours.
+  "Show the last 7 days": "গত ৭ দিন দেখুন",
   "this computer": "এই কম্পিউটার",
   "this phone": "এই ফোন",
   "{time} ago": "{time} আগে",
