@@ -82,6 +82,12 @@ describe("coupon lines", () => {
     expect(validityText("2025-12-20T00:00:00.000Z", "2026-01-05T17:59:59.000Z")).toBe("20 Dec 2025 – 5 Jan 2026");
   });
 
+  it("writes the validity window in Bangla for a Bangla reader", () => {
+    expect(validityText("2026-09-04T00:00:00.000Z", "2026-12-31T17:59:59.000Z", "bn")).toBe("৪ সেপ্টে – ৩১ ডিসে ২০২৬");
+    expect(validityText("2026-01-01T00:00:00.000Z", "2026-01-15T17:59:59.000Z", "bn")).toBe("১ – ১৫ জানু ২০২৬");
+    expect(validityText("2025-12-20T00:00:00.000Z", "2026-01-05T17:59:59.000Z", "bn")).toBe("২০ ডিসে ২০২৫ – ৫ জানু ২০২৬");
+  });
+
   it("caps the uses or says there is no limit", () => {
     expect(usesCap(500)).toBe("of 500");
     expect(usesCap(null)).toBe("no limit");

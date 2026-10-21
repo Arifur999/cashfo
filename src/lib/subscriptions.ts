@@ -63,12 +63,14 @@ export const discountedPrice = (price: number, coupon: Pick<ICoupon, "discountTy
   return Math.max(0, Math.round(discounted * 100) / 100);
 };
 
-// "4 Sep – 31 Dec 2026", "1 – 15 Jan 2026", "20 Dec 2025 – 5 Jan 2026".
-export const validityText = (from: string, until: string) => {
+// "4 Sep – 31 Dec 2026", "1 – 15 Jan 2026", "20 Dec 2025 – 5 Jan 2026"
+// ("৪ সেপ্টে – ৩১ ডিসে ২০২৬" with locale "bn"). The year and month are
+// compared in English.
+export const validityText = (from: string, until: string, locale: Locale = "en") => {
   const sameYear = formatDate(from, "yyyy") === formatDate(until, "yyyy");
   const sameMonth = sameYear && formatDate(from, "MM") === formatDate(until, "MM");
-  const start = sameMonth ? formatDate(from, "d") : sameYear ? formatDate(from, "d MMM") : formatDate(from, "d MMM yyyy");
-  return `${start} – ${formatDate(until, "d MMM yyyy")}`;
+  const start = formatDate(from, sameMonth ? "d" : sameYear ? "d MMM" : "d MMM yyyy", "—", locale);
+  return `${start} – ${formatDate(until, "d MMM yyyy", "—", locale)}`;
 };
 
 // "of 500" beside the number of uses, or "no limit".

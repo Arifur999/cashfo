@@ -24,11 +24,12 @@ interface RelativeTimeProps {
   fallback?: string;
 }
 
-// A date the way lib/date.ts words it, with "Today" and "Yesterday" in the
-// reader's language -- for table cells and other places without a hook.
+// A date the way lib/date.ts words it, in the reader's language: "Today" and
+// "Yesterday", and in Bangla its months, am/pm and digits too -- for table
+// cells and other places without a hook.
 const RelativeTime = ({ value, as = "dateTime", fallback }: RelativeTimeProps) => {
-  const { translate } = useLocale();
-  return FORMATS[as](value, { t: translate, fallback });
+  const { translate, locale } = useLocale();
+  return FORMATS[as](value, { t: translate, fallback, locale });
 };
 
 export default RelativeTime;

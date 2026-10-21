@@ -1,13 +1,14 @@
 "use client";
 
-import { format } from "date-fns";
 import { CalendarRange } from "lucide-react";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { formatDate } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { Locale } from "@/lib/i18n/translate";
 import type { DateRangeValue } from "../dataTable.types";
 import { FILTER_CHIP_CLASS } from "./DataTableFacetedFilter";
 
@@ -17,19 +18,21 @@ interface DataTableDateRangeFilterProps {
   onChange: (value: DateRangeValue | undefined) => void;
 }
 
-const formatDay = (day: string) => format(new Date(`${day}T00:00:00`), "MMM d, yyyy");
+// "Oct 2, 2026" ("অক্টো ২, ২০২৬" in Bangla). Noon UTC is the same calendar
+// day in the platform timezone, so the picked day never shifts.
+const formatDay = (day: string, locale: Locale) => formatDate(`${day}T12:00:00Z`, "MMM d, yyyy", "—", locale);
 
-const describeRange = ({ from, to }: DateRangeValue, translate: (key: string) => string) => {
-  if (from && to) return `${formatDay(from)} – ${formatDay(to)}`;
-  if (from) return translate("From {date}").replace("{date}", formatDay(from));
-  if (to) return translate("Until {date}").replace("{date}", formatDay(to));
+const describeRange = ({ from, to }: DateRangeValue, translate: (key: string) => string, locale: Locale) => {
+  if (from && to) return `${formatDay(from, locale)} – ${formatDay(to, locale)}`;
+  if (from) return translate("From {date}").replace("{date}", formatDay(from, locale));
+  if (to) return translate("Until {date}").replace("{date}", formatDay(to, locale));
   return "";
 };
 
 // Edits a draft and only applies on "Apply", so picking two dates fires one
 // query instead of two.
 const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRangeFilterProps) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRangeValue>(value ?? {});
   const isActive = Boolean(value?.from || value?.to);
@@ -53,7 +56,7 @@ const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRange
         <Button variant="secondary" size="sm" className={FILTER_CHIP_CLASS}>
           <CalendarRange className="size-3.5 text-ink-muted" aria-hidden="true" />
           <span>{translate(title)}:</span>
-          <b className="font-semibold text-ink">{isActive && value ? describeRange(value, translate) : translate("Any time")}</b>
+          <b className="font-semibold text-ink">{isActive && value ? describeRange(value, translate, locale) : translate("Any time")}</b>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 space-y-3" align="start">

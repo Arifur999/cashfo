@@ -200,6 +200,8 @@ describe("formDayLabel", () => {
   it("writes the date in Bangla too when told the locale", () => {
     expect(formDayLabel("2026-10-02", "2026-10-02", "আজ", "bn")).toBe("আজ, ২ অক্টো");
     expect(formDayLabel("2026-09-30", "2026-10-02", "আজ", "bn")).toBe("৩০ সেপ্টে ২০২৬");
+    expect(formDayLabel("2027-06-30", "2026-10-02", "আজ", "bn")).toBe("৩০ জুন ২০২৭");
+    expect(formDayLabel("", "2026-10-02", "আজ", "bn")).toBe("");
   });
 
   it("is empty when no day is picked", () => {

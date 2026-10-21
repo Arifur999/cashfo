@@ -1,6 +1,5 @@
 import { formatDate as formatInAppTimeZone } from "@/lib/date";
-import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
-import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { inEnglish, plural, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 
@@ -10,12 +9,13 @@ import type { Locale } from "@/lib/i18n/translate";
 // format (lib/date.ts), never a bare toLocaleDateString(): that follows the
 // machine -- "9/14/2026" on one, "14/09/2026" on another -- so the server
 // and the browser could print different text and break hydration.
-export function formatDate(value: string | Date, pattern = "d MMM yyyy"): string {
-  return formatInAppTimeZone(value, pattern);
+// `locale` "bn" writes the same pattern in Bangla ("১৪ সেপ্টে ২০২৬").
+export function formatDate(value: string | Date, pattern = "d MMM yyyy", locale: Locale = "en"): string {
+  return formatInAppTimeZone(value, pattern, "—", locale);
 }
 
-export function formatDateTime(value: string | Date): string {
-  return formatInAppTimeZone(value, "d MMM yyyy, h:mm a");
+export function formatDateTime(value: string | Date, locale: Locale = "en"): string {
+  return formatInAppTimeZone(value, "d MMM yyyy, h:mm a", "—", locale);
 }
 
 // "5 minutes ago", "2 hours ago", "3 days ago", then the date: how long
@@ -23,18 +23,14 @@ export function formatDateTime(value: string | Date): string {
 // Counts and the date are in the reader's digits ("৫ মিনিট আগে").
 export function formatTimeAgo(value: string | Date, t: Translate = inEnglish, locale: Locale = "en", now: Date = new Date()): string {
   const minutes = Math.max(0, Math.floor((now.getTime() - new Date(value).getTime()) / 60_000));
-  const ago = (count: number, one: string, many: string) => plural(t, count, one, many, { count: formatCount(count, locale) });
+  const ago = (count: number, one: string, many: string) => plural(t, count, one, many, undefined, locale);
   if (minutes < 1) return t("just now");
   if (minutes < 60) return ago(minutes, "{count} minute ago", "{count} minutes ago");
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return ago(hours, "{count} hour ago", "{count} hours ago");
   const days = Math.floor(hours / 24);
   if (days < 30) return ago(days, "{count} day ago", "{count} days ago");
-  if (locale === "bn") {
-    const day = formatDate(value, "yyyy-MM-dd");
-    return `${banglaDayMonth(day)} ${toBanglaDigits(day.slice(0, 4))}`;
-  }
-  return formatDate(value);
+  return formatDate(value, undefined, locale);
 }
 
 // Whole months from an ISO time to `now` (0 within the first month): how

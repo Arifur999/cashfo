@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { inEnglish } from "@/lib/i18n/message";
-import { formatTimeAgo, monthsSince, timeLabel } from "./date";
+import { formatDate, formatDateTime, formatTimeAgo, monthsSince, timeLabel } from "./date";
+
+describe("formatDate and formatDateTime", () => {
+  it("write the date in English, or in Bangla when told the locale", () => {
+    expect(formatDate("2026-09-14T06:00:00.000Z")).toBe("14 Sep 2026");
+    expect(formatDate("2026-09-14T06:00:00.000Z", "d MMM")).toBe("14 Sep");
+    expect(formatDate("2026-09-14T06:00:00.000Z", undefined, "bn")).toBe("১৪ সেপ্টে ২০২৬");
+    expect(formatDateTime("2026-09-14T08:10:00.000Z")).toBe("14 Sep 2026, 2:10 PM");
+    expect(formatDateTime("2026-09-14T08:10:00.000Z", "bn")).toBe("১৪ সেপ্টে ২০২৬, ২:১০ অপরাহ্ণ");
+  });
+});
 
 describe("formatTimeAgo", () => {
   const now = new Date("2026-10-18T12:00:00.000Z");
