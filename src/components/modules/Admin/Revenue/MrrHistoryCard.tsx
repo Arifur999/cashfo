@@ -1,14 +1,15 @@
 import Card from "@/components/smartly/Card";
 import MiniBars from "@/components/shared/MiniBars";
-import { formatMonthKey } from "@/lib/date";
+import { formatMonthName } from "@/lib/date";
 import type { IMrrHistoryPoint } from "@/types/revenue.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
+import { compactAmount, mrrChartLabel, shortMonthKey } from "./revenueDisplay";
 
-// "৳ 60.4k": a bar's label.
-const short = (value: number) => (value >= 1000 ? `৳ ${(value / 1000).toFixed(1)}k` : `৳ ${Math.round(value)}`);
-
-// MRR at the end of each of the last six months, the running month in forest.
+// MRR at the end of each of the last six months, the running month in
+// forest. Worked out from payments (the KPI above counts the plans
+// workspaces are on, so the two can differ), and labelled in compact taka
+// so the bars' figures fit a phone.
 const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
   const { t } = await getTranslator("admin");
   const first = history[0]?.mrr ?? 0;
@@ -18,11 +19,14 @@ const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
 
   return (
     <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-title text-ink"><T>MRR at the end of each month</T></h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-title text-ink"><T>MRR at the end of each month</T></h2>
+          <span className="text-small text-ink-muted"><T>In taka, from payments</T></span>
+        </div>
         {growth !== null && history.length > 1 && (
           <span className="text-small text-ink-muted">
-            {t(growth >= 0 ? "up {percent}% since {month}" : "down {percent}% since {month}", { percent: Math.abs(growth), month: formatMonthKey(history[0].month, false) })}
+            {t(growth >= 0 ? "up {percent}% since {month}" : "down {percent}% since {month}", { percent: Math.abs(growth), month: t(formatMonthName(history[0].month)) })}
           </span>
         )}
       </div>
@@ -30,10 +34,10 @@ const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
         <p className="py-8 text-center text-small text-ink-muted"><T>No paid months yet.</T></p>
       ) : (
         <MiniBars
-          label="MRR at the end of each month"
+          label={mrrChartLabel(history, t)}
           height={180}
           gap="6"
-          bars={history.map((point, index) => ({ label: formatMonthKey(point.month, false), value: point.mrr, short: short(point.mrr), highlight: index === history.length - 1 }))}
+          bars={history.map((point, index) => ({ label: t(shortMonthKey(point.month)), value: point.mrr, short: compactAmount(point.mrr), highlight: index === history.length - 1 }))}
         />
       )}
     </Card>

@@ -1,6 +1,7 @@
 import Card from "@/components/smartly/Card";
-import { formatMonthKey } from "@/lib/date";
-import { formatNumber } from "@/lib/number";
+import { shortMonthKey } from "@/components/modules/Admin/Revenue/revenueDisplay";
+import { formatMonthName } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { planAccentClass } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
 import type { IPlanAnalytics } from "@/types/plan.types";
@@ -12,9 +13,10 @@ const CHART_HEIGHT = 170;
 const LABEL_ROOM = 24;
 
 // The design's "Paid people at the end of each month": one stacked bar per
-// month, a slice per paid plan, the total on top.
+// month, a slice per paid plan, the total on top. Counted from payments, so
+// it can differ from the people the plan cards say are on a plan now.
 const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   const paidPlans = analytics.perPlan.filter((plan) => plan.billingCycle !== "FREE");
   const months = analytics.history.map((entry) => ({
     month: entry.month,
@@ -23,11 +25,25 @@ const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
   const most = Math.max(1, ...months.map((entry) => entry.total));
   const scale = (CHART_HEIGHT - LABEL_ROOM) / most;
   const nobody = months.every((entry) => entry.total === 0);
+  const count = (value: number) => formatCount(value, locale);
+  // Every figure in words for a screen reader, which can't reach the slices:
+  // "October: 98 (Monthly Pro 80, Yearly Pro 18)".
+  const label = translate("Paid people per plan at the end of each month: {months}", {
+    months: analytics.history
+      .map((entry, index) => {
+        const slices = paidPlans.map((plan) => `${plan.planName} ${count(entry.perPlan[plan.planId] ?? 0)}`).join(", ");
+        return `${translate(formatMonthName(entry.month))}: ${count(months[index].total)}${slices ? ` (${slices})` : ""}`;
+      })
+      .join("; "),
+  });
 
   return (
     <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-title text-ink"><T>Paid people at the end of each month</T></h2>
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-title text-ink"><T>Paid people at the end of each month</T></h2>
+          <span className="text-small text-ink-muted"><T>Counted from payments</T></span>
+        </div>
         <span className="flex flex-wrap gap-4 text-small text-ink-2">
           {paidPlans.map((plan) => (
             <span key={plan.planId} className="flex items-center gap-1">
@@ -41,17 +57,17 @@ const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
         <p className="py-8 text-center text-small text-ink-muted"><T>Nobody has paid for a plan in these months yet.</T></p>
       ) : (
         <>
-          <div role="img" aria-label={translate("Paid people per plan at the end of each month")} className="flex items-end gap-8 border-b border-line px-3" style={{ height: CHART_HEIGHT }}>
+          <div role="img" aria-label={label} className="flex items-end gap-8 border-b border-line px-3" style={{ height: CHART_HEIGHT }}>
             {analytics.history.map((entry, index) => (
               <span key={entry.month} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-                <span className="text-caption font-bold text-ink tabular-nums">{formatNumber(months[index].total)}</span>
+                <span className="text-caption font-bold text-ink tabular-nums">{count(months[index].total)}</span>
                 <span className="flex w-full max-w-16 flex-col overflow-hidden rounded-t-[5px]">
                   {[...paidPlans].reverse().map((plan) => {
                     const people = entry.perPlan[plan.planId] ?? 0;
                     return (
                       <span
                         key={plan.planId}
-                        title={`${plan.planName}: ${formatNumber(people)}`}
+                        title={`${plan.planName}: ${count(people)}`}
                         className={planAccentClass(plan.planName)}
                         style={{ height: `${Math.round(people * scale)}px` }}
                       />
@@ -61,10 +77,10 @@ const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
               </span>
             ))}
           </div>
-          <div className="-mt-1.5 flex gap-8 px-3">
+          <div className="-mt-1.5 flex gap-8 px-3" aria-hidden="true">
             {analytics.history.map((entry) => (
               <span key={entry.month} className="flex-1 text-center text-caption text-ink-muted">
-                {formatMonthKey(entry.month, false)}
+                {translate(shortMonthKey(entry.month))}
               </span>
             ))}
           </div>

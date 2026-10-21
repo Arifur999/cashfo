@@ -1,6 +1,7 @@
 "use client";
 
 import type { AnyFieldApi } from "@tanstack/react-form";
+import { useRef } from "react";
 import AppSwitchField from "@/components/shared/form/AppSwitchField";
 import FormFieldShell from "@/components/shared/form/FormFieldShell";
 import Input from "@/components/smartly/form/Input";
@@ -16,10 +17,13 @@ const limitsSchema = planFormZodSchema.shape.featureLimits.shape;
 const NO_LIMIT = "-1";
 
 // One count with its "No limit" box: ticking it stores -1 and greys the
-// number out, as the design draws the limits row.
-const LimitField = ({ field, label }: { field: AnyFieldApi; label: string }) => {
+// number out (the read-only band's fill), as the design draws the limits
+// row. Unticking it puts back the number it had, or `restore` when it had
+// none, so it never lands on 0.
+const LimitField = ({ field, label, restore }: { field: AnyFieldApi; label: string; restore: string }) => {
   const unlimited = field.state.value === NO_LIMIT;
   const checkboxId = `${field.name}-no-limit`;
+  const lastNumber = useRef<string>(unlimited ? restore : String(field.state.value ?? restore));
 
   return (
     <FormFieldShell field={field} label={label}>
@@ -36,13 +40,20 @@ const LimitField = ({ field, label }: { field: AnyFieldApi; label: string }) => 
             disabled={unlimited}
             onBlur={field.handleBlur}
             onChange={(event) => field.handleChange(event.target.value)}
-            frameClassName={unlimited ? "bg-surface-sunken" : undefined}
+            frameClassName={unlimited ? "bg-strip" : undefined}
           />
           <label htmlFor={checkboxId} className="flex cursor-pointer items-center gap-2 text-small text-ink-2">
             <Checkbox
               id={checkboxId}
               checked={unlimited}
-              onCheckedChange={(checked) => field.handleChange(checked === true ? NO_LIMIT : "0")}
+              onCheckedChange={(checked) => {
+                if (checked === true) {
+                  if (!unlimited) lastNumber.current = String(field.state.value ?? "") || restore;
+                  field.handleChange(NO_LIMIT);
+                } else {
+                  field.handleChange(lastNumber.current);
+                }
+              }}
               className="rounded-[4px] border-line-strong data-checked:border-emerald data-checked:bg-emerald"
             />
             <T>No limit</T>
@@ -54,16 +65,17 @@ const LimitField = ({ field, label }: { field: AnyFieldApi; label: string }) => 
 };
 
 // The three counts, then what is included, as the design's drawer draws
-// them.
+// them. The counts' inputs line up along the bottom, whichever label wraps
+// to two lines.
 const PlanLimitsFields = ({ form }: { form: PlanFormApi }) => {
   return (
     <>
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-3 text-body font-semibold text-ink"><T>Limits</T></legend>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {PLAN_NUMERIC_LIMITS.map(({ key, label }) => (
+        <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
+          {PLAN_NUMERIC_LIMITS.map(({ key, label, restore }) => (
             <form.Field key={key} name={`featureLimits.${key}` as const} validators={{ onChange: limitsSchema[key] }}>
-              {(field) => <LimitField field={field} label={label} />}
+              {(field) => <LimitField field={field} label={label} restore={restore} />}
             </form.Field>
           ))}
         </div>
