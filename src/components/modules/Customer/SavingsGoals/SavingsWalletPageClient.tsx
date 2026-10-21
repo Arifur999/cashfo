@@ -1,8 +1,8 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { WalletCard } from "@/components/modules/Customer/Balance/WalletCard";
 import { WalletDrawer } from "@/components/modules/Customer/Balance/WalletDrawer";
@@ -12,6 +12,7 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { archiveAccountAction, removeAccountAction, unarchiveAccountAction, type ActionResult } from "@/lib/customer/accountActions";
 import type { Account } from "@/lib/customer/api";
+import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface SavingsWalletPageClientProps {
@@ -19,18 +20,27 @@ interface SavingsWalletPageClientProps {
   wallets: Account[];
   canManage: boolean;
   currency: string;
+  // Arrived from an "Add savings wallet" link: start with the drawer open.
+  openAdd?: boolean;
 }
 
 // Savings wallets: the DPS, FDR and other accounts saved money sits in --
 // the same cards and drawer as My wallets, in the savings colours.
-export function SavingsWalletPageClient({ businessId, wallets, canManage, currency }: SavingsWalletPageClientProps) {
+export function SavingsWalletPageClient({ businessId, wallets, canManage, currency, openAdd = false }: SavingsWalletPageClientProps) {
   const { t } = useLocale();
   const router = useRouter();
+  const pathname = usePathname();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
-  const [drawer, setDrawer] = useState<"closed" | "create" | Account>("closed");
+  const [drawer, setDrawer] = useState<"closed" | "create" | Account>(openAdd && canManage ? "create" : "closed");
   const [, startTransition] = useTransition();
   const editing = typeof drawer === "object" ? drawer : null;
   const ordered = [...wallets].sort((a, b) => Number(a.status === "ARCHIVED") - Number(b.status === "ARCHIVED"));
+
+  // ?add=1 has done its job once the drawer is open: drop it, so a refresh
+  // or Back doesn't open the drawer again.
+  useEffect(() => {
+    if (openAdd) window.history.replaceState(null, "", pathname);
+  }, [openAdd, pathname]);
 
   function run(action: () => Promise<ActionResult<unknown>>, done: string, failed: string) {
     startTransition(async () => {
@@ -39,25 +49,42 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
         toast.success(t(done));
         router.refresh();
       } else {
-        toast.error(result.message ?? t(failed));
+        toast.error(t(result.message ?? failed));
       }
     });
   }
 
-  function toggleArchive(wallet: Account) {
+  // This page lists active wallets only, so an archived one leaves it (and
+  // the Add money and Withdraw pickers) until restored from Savings summary.
+  // Money still in it is worth a second look first.
+  const stillHolds = (wallet: Account) => (Number(wallet.currentBalance) !== 0 ? formatCurrency(wallet.currentBalance, currency) : null);
+
+  async function toggleArchive(wallet: Account) {
     const isArchived = wallet.status === "ARCHIVED";
+    const amount = stillHolds(wallet);
+    if (!isArchived && amount) {
+      const ok = await confirm({
+        title: t("Archive {name}?", { name: wallet.name }),
+        message: t("{name} still holds {amount}. Once archived it leaves this page, and Add money and Withdraw can't use it. You can restore it from Savings summary.", { name: wallet.name, amount }),
+        confirmLabel: "Archive wallet",
+      });
+      if (!ok) return;
+    }
     run(() => (isArchived ? unarchiveAccountAction(businessId, wallet.id) : archiveAccountAction(businessId, wallet.id)), isArchived ? "Wallet activated" : "Wallet archived", isArchived ? "Failed to activate wallet" : "Failed to archive wallet");
   }
 
   async function remove(wallet: Account) {
-    if (!(await confirm({ title: `${t("Remove")} ${wallet.name}?`, message: t("A wallet with transactions is archived instead of deleted, so your history stays whole."), confirmLabel: "Remove wallet" }))) return;
+    const amount = stillHolds(wallet);
+    const rule = t("A wallet with transactions is archived instead of deleted, so your history stays whole.");
+    const message = amount ? `${t("{name} still holds {amount}. Removed or archived, it leaves this page, and Add money and Withdraw can't use it.", { name: wallet.name, amount })} ${rule}` : rule;
+    if (!(await confirm({ title: t("Remove {name}?", { name: wallet.name }), message, confirmLabel: "Remove wallet" }))) return;
     startTransition(async () => {
       const result = await removeAccountAction(businessId, wallet.id);
       if (result.success) {
         toast.success(result.data?.deleted ? t("Wallet deleted") : t("Wallet archived"));
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to remove wallet"));
+        toast.error(t(result.message ?? "Failed to remove wallet"));
       }
     });
   }

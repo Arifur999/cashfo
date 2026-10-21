@@ -1,3 +1,5 @@
+import { formatCount } from "@/lib/i18n/digits";
+import type { Locale } from "@/lib/i18n/translate";
 import { walletPalette, type WalletPalette } from "./walletVisuals";
 
 export interface WalletShare {
@@ -21,4 +23,15 @@ export function walletShares(wallets: { id: string; name: string; currentBalance
     .filter((item) => item.amount > 0)
     .sort((a, b) => b.amount - a.amount)
     .map(({ wallet, index, amount }) => ({ id: wallet.id, name: wallet.name, amount, share: total > 0 ? (amount / total) * 100 : 0, bar: palette(index).bar }));
+}
+
+// A whole percentage in the reader's digits: "45%", "৪৫%".
+export const sharePercent = (share: number, locale: Locale): string => `${formatCount(Math.round(share), locale)}%`;
+
+// What the bar says to a screen reader, which can't see the slices: its
+// name, then each wallet's share ("Share of balance by wallet: Cash 45%,
+// bKash 30%").
+export function shareBarLabel(label: string, slices: Pick<WalletShare, "name" | "share">[], locale: Locale): string {
+  if (slices.length === 0) return label;
+  return `${label}: ${slices.map((slice) => `${slice.name} ${sharePercent(slice.share, locale)}`).join(", ")}`;
 }

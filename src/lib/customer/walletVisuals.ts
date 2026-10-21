@@ -1,4 +1,5 @@
-import { Banknote, Landmark, Smartphone, type LucideIcon } from "lucide-react";
+import { Banknote, Boxes, HandCoins, Landmark, PiggyBank, Scale, ShoppingBag, Smartphone, TrendingUp, type LucideIcon } from "lucide-react";
+import type { AccountType } from "./api";
 
 // A wallet is a money account; its subtype says what kind. Anything else
 // (an old row with no subtype) reads as a bank account.
@@ -17,6 +18,21 @@ export function walletType(account: { accountSubtype: string | null }): WalletTy
 
 export function walletIcon(account: { accountSubtype: string | null }): LucideIcon {
   return WALLET_TYPE_META[walletType(account)].icon;
+}
+
+// The icon for any other account in the chart (the Statement's picker): one
+// per account type, and a savings wallet's piggy bank. A letter would read
+// the same for Equity and Expenses, and stay English in Bangla.
+export const ACCOUNT_TYPE_ICONS: Record<AccountType, LucideIcon> = {
+  ASSET: Boxes,
+  LIABILITY: HandCoins,
+  EQUITY: Scale,
+  INCOME: TrendingUp,
+  EXPENSE: ShoppingBag,
+};
+
+export function accountIcon(account: { accountType: AccountType; accountSubtype: string | null }): LucideIcon {
+  return account.accountSubtype === "savings" ? PiggyBank : ACCOUNT_TYPE_ICONS[account.accountType];
 }
 
 export interface WalletPalette {

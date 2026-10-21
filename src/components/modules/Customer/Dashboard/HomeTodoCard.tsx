@@ -8,6 +8,7 @@ import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTask
 import Card from "@/components/smartly/Card";
 import type { TodoItem } from "@/lib/customer/api";
 import { updateTodoItemAction } from "@/lib/customer/todosActions";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,7 @@ const MAX_ROWS = 4;
 // and the link to the full list. Reads the same copy of the list as the top
 // bar, so ticking one here updates the count there.
 export function HomeTodoCard() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { list, loaded, setList } = useTodayTasks();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -39,18 +40,17 @@ export function HomeTodoCard() {
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h3 className="text-h3 leading-6 text-ink">{t("To-do list")}</h3>
-        <span className="text-small text-ink-muted">
-          {open} {t("left")}
-        </span>
+        {/* Only once the list is in: never "0 left" beside "Loading...". */}
+        {loaded && <span className="text-small text-ink-muted">{t("{count} left", { count: formatCount(open, locale) })}</span>}
       </div>
       {rows.length === 0 ? (
         <p className="py-2 text-body text-ink-muted">{loaded ? t("Nothing planned for today") : t("Loading...")}</p>
       ) : (
         rows.map((item) => (
-          <label key={item.id} className={cn("flex min-h-8 cursor-pointer items-center gap-3 text-body", item.completed ? "text-ink-muted line-through" : "text-ink")}>
+          <label key={item.id} className={cn("flex min-h-8 cursor-pointer items-center gap-3 text-body pointer-coarse:min-h-11", item.completed ? "text-ink-muted line-through" : "text-ink")}>
             <span className="relative flex size-4.5 shrink-0 items-center justify-center">
               <input type="checkbox" checked={item.completed} disabled={busy === item.id} onChange={() => toggle(item)} className="peer sr-only" />
-              <span className={cn("flex size-4.5 items-center justify-center rounded-[5px] border-[1.5px] transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus-ring", item.completed ? "border-emerald bg-emerald text-white" : "border-line-strong bg-surface")}>
+              <span className={cn("flex size-4.5 items-center justify-center rounded-[5px] border-[1.5px] transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus-ring", item.completed ? "border-emerald bg-emerald text-on-action" : "border-line-strong bg-surface")}>
                 {item.completed && <Check className="size-3" strokeWidth={3.5} aria-hidden="true" />}
               </span>
             </span>

@@ -1,67 +1,55 @@
 "use client";
 
-import { ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, BookOpen, Box, ChartPie, CircleCheckBig, CreditCard, GraduationCap, Lock, PiggyBank, Plus, TrendingUp, Utensils } from "lucide-react";
-import Link from "next/link";
-import { createElement, useState } from "react";
+import { ArrowLeftRight, Plus } from "lucide-react";
+import { useAddActions } from "@/components/modules/Customer/Layout/AddActionsProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
-import { TransactionDrawer, type EntryKind } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
-import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
-import ByWidth from "@/components/smartly/ByWidth";
-import Card from "@/components/smartly/Card";
-import Chip from "@/components/smartly/Chip";
-import Eyebrow from "@/components/smartly/Eyebrow";
-import IconTile from "@/components/smartly/IconTile";
-import KpiTile from "@/components/smartly/KpiTile";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import ProgressBar from "@/components/smartly/ProgressBar";
-import SectionHeader from "@/components/smartly/SectionHeader";
-import { budgetCategoryIcon, categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
-import { formatCurrency } from "@/lib/customer/currency";
+import type { AddActionKey } from "@/lib/customer/addActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { plural } from "@/lib/i18n/message";
-import { cn } from "@/lib/utils";
+import { HomeHabits } from "./HomeHabits";
 import { HomeHero } from "./HomeHero";
-import { HomeSetup } from "./HomeSetup";
-import { HomeTodoCard } from "./HomeTodoCard";
-import { PhoneLoanCards, PhoneMoneyCards, PhonePrayers, PhoneVaultInsights } from "./HomePhone";
+import { HomeLoans } from "./HomeLoans";
+import { HomeMoney } from "./HomeMoney";
+import { HomeSetup, HomeSetupMore } from "./HomeSetup";
 import type { HomeData } from "./homeTypes";
-import { IncomeSavedChart } from "./IncomeSavedChart";
-import { RecentTransactionsCard } from "./RecentTransactionsCard";
-
-const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+import { HomeVaultInsights } from "./HomeVaultInsights";
 
 // Home: one section per feature -- this month on the hero, money, loans,
-// habits, the vault and the insights -- or the setup steps for a new
-// account. Phones get the board's shorter version of each section
-// (HomePhone) and the floating button instead of the header's actions.
+// habits, the vault and the insights. A new account gets the setup steps in
+// place of the money part only: its habits, the vault and any loans already
+// kept show as they always do. Phones get the board's shorter version of
+// each section (HomePhone) and the floating button instead of the header's
+// actions.
 export function HomePageClient({ data }: { data: HomeData }) {
   const { t } = useLocale();
+  // The shell's own Add actions: one transaction drawer, however it opens.
+  const { actions, run } = useAddActions();
   const loansOn = useFeature("loan_management");
-  const [drawer, setDrawer] = useState<EntryKind | null>(null);
-  const { currency } = data;
+  const hasLoans = (data.loans?.rows.length ?? 0) > 0;
+  const showLoans = loansOn && (data.loans !== null || data.unavailable.includes("loans"));
 
-  const actions = (
-    <>
-      <Button variant="secondary" size="lg" onClick={() => setDrawer("TRANSFER")}>
-        <ArrowLeftRight />
-        {t("Transfer")}
-      </Button>
-      <Button size="lg" onClick={() => setDrawer("EXPENSE")}>
-        <Plus strokeWidth={2.25} />
-        {t("Add transaction")}
-      </Button>
-    </>
-  );
+  const add = (key: AddActionKey) => {
+    const action = actions.find((candidate) => candidate.key === key);
+    if (action) run(action);
+  };
 
-  const prayersDone = data.namaz ? data.namaz.checks.filter((c) => c.day === data.namaz!.todayDay && c.status !== "MISSED").map((c) => c.item) : [];
-  const prayerItems = data.namaz?.items.length ? data.namaz.items : PRAYERS;
-  const prayerHref = data.namaz ? `/habit-tracker/habits/namaz/${data.namaz.id}` : "/habit-tracker/habits?category=Namaz";
-  const expenseIcon = data.topExpense ? categoryIconFor(data.categoriesById[data.topExpense.name] ?? { icon: null, name: data.topExpense.name }) : Utensils;
-  // "Locked · 14 logins" once the backend says how many there are.
-  const logins = data.vault?.entryCount;
-  const loginCount = logins === undefined ? "" : ` · ${logins} ${t(logins === 1 ? "login" : "logins")}`;
+  // Only an owner or accountant can post (the API refuses anyone else), so
+  // only they get the buttons.
+  const headerActions =
+    data.canManage && !data.setup ? (
+      <>
+        <Button variant="secondary" size="lg" onClick={() => add("transfer")}>
+          <ArrowLeftRight />
+          {t("Transfer")}
+        </Button>
+        <Button size="lg" onClick={() => add("expense")}>
+          <Plus strokeWidth={2.25} />
+          {t("Add transaction")}
+        </Button>
+      </>
+    ) : undefined;
 
   return (
     <PageFrame gap="lg">
@@ -79,310 +67,27 @@ export function HomePageClient({ data }: { data: HomeData }) {
         }
         title={`${t(data.greeting)}, ${data.firstName}`}
         description={data.setup ? t("Three quick steps and Home fills itself in.") : t("Here is your day at a glance.")}
-        actions={data.setup ? undefined : actions}
+        actions={headerActions}
         hideActionsOnPhone
       />
 
       {data.setup ? (
-        <HomeSetup hasWallet={data.setup.hasWallet} hasTransaction={data.setup.hasTransaction} balance={data.balance} currency={currency} onAddTransaction={() => setDrawer("EXPENSE")} />
+        <>
+          <HomeSetup data={data} onAddTransaction={() => add("expense")} />
+          {showLoans && hasLoans && <HomeLoans data={data} />}
+          <HomeHabits data={data} />
+          <HomeVaultInsights data={data} />
+          <HomeSetupMore showLoans={!hasLoans} canManage={data.canManage} />
+        </>
       ) : (
         <>
-          <HomeHero {...data} />
-
-          <section aria-labelledby="h-money" className="flex flex-col gap-3 md:gap-4">
-            <SectionHeader
-              id="h-money"
-              eyebrow={t("Money")}
-              title={<ByWidth phone={t("Recent transactions")} wide={t("Income & expense")} />}
-              aside={<SectionLink href="/transactions" phone={t("See all")} wide={t("See all transactions")} arrow />}
-            />
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-              <IncomeSavedChart points={data.trend} currency={currency} monthName={data.monthName} className="hidden md:flex" />
-              <RecentTransactionsCard transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={currency} today={data.today} />
-            </div>
-            <PhoneMoneyCards data={data} />
-            <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-3 lg:gap-6">
-              <Card interactive asChild className="flex flex-col gap-3">
-                <Link href="/savings-goals/dashboard">
-                  <span className="flex items-center gap-3 text-small font-medium text-ink-muted">
-                    <IconTile tone="money">
-                      <PiggyBank />
-                    </IconTile>
-                    {t("Savings goals")}
-                  </span>
-                  <span className="flex flex-wrap items-baseline gap-2">
-                    <AmountText value={data.savingsSaved} currency={currency} size="lg" className="leading-8" />
-                    {data.savingsTarget > 0 && (
-                      <span className="text-small text-ink-muted">
-                        {t("of")} {formatCurrency(data.savingsTarget, currency)}
-                      </span>
-                    )}
-                  </span>
-                  <ProgressBar value={data.savingsProgress} label={t("Savings goals")} />
-                  <span className="text-small text-ink-muted">
-                    {data.goalCount} {t(data.goalCount === 1 ? "goal" : "goals")} · {Math.round(data.savingsProgress)}% {t("reached")}
-                  </span>
-                </Link>
-              </Card>
-              <Card interactive asChild className="flex flex-col gap-3">
-                <Link href="/assets-management/dashboard">
-                  <span className="flex items-center gap-3 text-small font-medium text-ink-muted">
-                    <IconTile tone="money">
-                      <Box />
-                    </IconTile>
-                    {t("Assets")}
-                  </span>
-                  <AmountText value={data.assetsValue} currency={currency} size="lg" className="leading-8" />
-                  <span className="text-small text-ink-muted">
-                    {data.assetCount} {t(data.assetCount === 1 ? "asset" : "assets")}
-                    {data.assetCount > 0 && (
-                      <>
-                        {" · "}
-                        <b className={data.assetsGain >= 0 ? "text-income" : "text-expense"}>
-                          {data.assetsGain >= 0 ? "↑" : "↓"} {formatCurrency(Math.abs(data.assetsGain), currency)}
-                        </b>{" "}
-                        {t("since you bought them")}
-                      </>
-                    )}
-                  </span>
-                </Link>
-              </Card>
-              <Card interactive asChild className="flex flex-col gap-3">
-                <Link href="/categories">
-                  <span className="flex items-center gap-3 text-small font-medium text-ink-muted">
-                    <IconTile tone="warning">
-                      <ChartPie />
-                    </IconTile>
-                    {t("Budget")} · {data.monthName}
-                  </span>
-                  {data.budgetFocus ? (
-                    <BudgetFocus focus={data.budgetFocus} currency={currency} daysLeft={data.daysLeftInMonth} />
-                  ) : (
-                    <>
-                      <span className="text-title font-semibold text-ink">{t("No budget yet")}</span>
-                      <span className="text-small text-ink-muted">{t("Set a monthly limit and Smartly warns you at 70%.")}</span>
-                    </>
-                  )}
-                </Link>
-              </Card>
-            </div>
-          </section>
-
-          {loansOn && data.loans && (
-            <section aria-labelledby="h-loans" className="flex flex-col gap-3 md:gap-4">
-              <SectionHeader
-                id="h-loans"
-                eyebrow={t("Loans")}
-                tone="loans"
-                title={t("Dena-pawna")}
-                aside={
-                  <>
-                    <SectionLink href="/loan-management/dashboard" phone={t("Open")} wide={t("Open loans")} />
-                    <Button variant="action" size="lg" asChild className="hidden md:inline-flex">
-                      <Link href="/loan-management/transactions">{t("Record a payment")}</Link>
-                    </Button>
-                  </>
-                }
-              />
-              <PhoneLoanCards loans={data.loans} counts={data.loanCounts} currency={currency} />
-              <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-4 lg:gap-6">
-                <KpiTile icon={<ArrowDownLeft />} tone="income" label={`${t("Owed to you")} · ${t("pawna")}`} value={<AmountText value={Number(data.loans.totalPawna)} currency={currency} size="lg" signed tone="income" className="leading-8" />}>
-                  {plural(t, data.loanCounts.oweYou, "From {count} person", "From {count} people")}
-                </KpiTile>
-                <KpiTile icon={<ArrowUpRight />} tone="expense" label={`${t("You owe")} · ${t("dena")}`} value={<AmountText value={-Number(data.loans.totalDena)} currency={currency} size="lg" signed tone="expense" className="leading-8" />}>
-                  {plural(t, data.loanCounts.youOwe, "To {count} person", "To {count} people")}
-                </KpiTile>
-                <KpiTile icon={<CreditCard />} tone="loans" label={t("Net position")} value={<AmountText value={Number(data.loans.netBalance)} currency={currency} size="lg" signed className="leading-8" />}>
-                  {Number(data.loans.netBalance) < 0 ? t("You owe more than you are owed") : Number(data.loans.netBalance) > 0 ? t("You are owed more than you owe") : t("All settled")}
-                </KpiTile>
-                <KpiTile icon={<CircleCheckBig />} tone="warning" label={t("Active loans")} value={<span className="text-amount-lg leading-8 text-ink tabular-nums">{data.loans.activeAccounts}</span>}>
-                  {t("People and banks with a balance")}
-                </KpiTile>
-              </div>
-            </section>
-          )}
-
-          <section aria-labelledby="h-habits" className="flex flex-col gap-3 md:gap-4">
-            <SectionHeader
-              id="h-habits"
-              eyebrow={t("Habits")}
-              tone="habits"
-              title={<ByWidth phone={t("Today's prayers")} wide={t("Today")} />}
-              aside={<SectionLink href="/habit-tracker" phone={t("Open")} wide={t("Open habits")} arrow />}
-            />
-            <PhonePrayers data={data} prayers={prayerItems} done={prayersDone} href={prayerHref} />
-            <div className="hidden gap-4 md:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-6">
-              <Card className="flex flex-col gap-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex flex-col gap-0.5">
-                    <h3 className="text-h3 leading-6 text-ink">{t("Today's prayers")}</h3>
-                    <span className="text-small text-ink-muted">{data.namaz ? `${prayersDone.length} ${t("of")} ${prayerItems.length} ${t("ticked today")}` : t("No month tracked yet")}</span>
-                  </div>
-                  {data.namaz && (
-                    <Chip tone="habits" className="font-semibold">
-                      {prayersDone.length} {t("of")} {prayerItems.length}
-                    </Chip>
-                  )}
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {prayerItems.map((prayer) => {
-                    const done = prayersDone.includes(prayer);
-                    return (
-                      <Link
-                        key={prayer}
-                        href={prayerHref}
-                        className={cn("flex flex-col items-center gap-2 rounded-md border px-1 py-3", done ? "border-transparent bg-mint-50" : "border-transparent bg-surface-sunken")}
-                      >
-                        <span className={cn("flex size-8 items-center justify-center rounded-full text-white", done ? "bg-emerald" : "border-[1.5px] border-dashed border-line-strong bg-surface")}>
-                          {done && <CircleCheckBig className="size-4" strokeWidth={2.5} aria-hidden="true" />}
-                        </span>
-                        <span className="text-small font-semibold text-ink">{t(prayer)}</span>
-                        <span className={cn("text-caption", done ? "text-brand-ink" : "font-normal text-ink-muted")}>{done ? t("Done") : t("Not yet")}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </Card>
-              <HomeTodoCard />
-              <Card className="flex flex-col gap-4">
-                <h3 className="text-h3 leading-6 text-ink">{t("Streaks")}</h3>
-                <StreakRow icon={<CircleCheckBig />} title={`${t("Daily habits")} · ${data.dailyChallenges}`} text={data.dailyChallenges > 0 ? t("challenges running") : t("Start a daily habit")} href="/habit-tracker/habits?category=Others" />
-                <StreakRow
-                  icon={<BookOpen />}
-                  title={data.reading ? `${t("Reading")} · ${data.reading.title}` : `${t("Reading")} · ${data.readingCount}`}
-                  text={data.reading ? `${t("page")} ${data.reading.pagesRead} ${t("of")} ${data.reading.totalPages}` : t("Nothing on the go")}
-                  href="/habit-tracker/habits?category=Book"
-                />
-                <StreakRow
-                  icon={<GraduationCap />}
-                  title={`${t("Skills")} · ${data.skills?.streak ?? 0} ${t((data.skills?.streak ?? 0) === 1 ? "day" : "days")}`}
-                  text={data.skills?.practisedToday ? t("Practised today") : t("Practice again today to keep it")}
-                  href="/habit-tracker/habits?category=Course"
-                />
-              </Card>
-            </div>
-          </section>
-
-          <PhoneVaultInsights data={data} />
-          <div className="hidden gap-6 md:grid lg:grid-cols-2">
-            <section aria-labelledby="h-vault" className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <Eyebrow tone="vault">{t("Security")}</Eyebrow>
-                <h2 id="h-vault" className="text-h3 leading-6 text-ink md:text-h2 md:leading-7">
-                  {t("Password vault")}
-                </h2>
-              </div>
-              <Card className="flex flex-1 flex-wrap items-center gap-4">
-                <span className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-info-soft text-info">
-                  <Lock className="size-6.5" strokeWidth={1.9} aria-hidden="true" />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <b className="text-title leading-5.5 font-bold text-ink">{data.vault?.hasVaultPassword ? `${t("Locked")}${loginCount}` : t("Not set up yet")}</b>
-                  <span className="text-small leading-4.5 text-ink-muted">{data.vault?.hasVaultPassword ? t("Your logins are behind the vault password.") : t("Keep every login behind its own vault password.")}</span>
-                </span>
-                <Button variant="action" size="lg" asChild>
-                  <Link href="/password-manager">{data.vault?.hasVaultPassword ? t("Unlock vault") : t("Set up the vault")}</Link>
-                </Button>
-              </Card>
-            </section>
-            <section aria-labelledby="h-ins" className="flex flex-col gap-4">
-              <SectionHeader
-                id="h-ins"
-                eyebrow={t("Insights")}
-                tone="insights"
-                title={t("What your numbers say")}
-                aside={
-                  <Link href="/reports/overview" className="text-body font-semibold text-emerald hover:text-emerald-hover">
-                    {t("Open insights")}
-                  </Link>
-                }
-              />
-              <Card padding="none" className="flex flex-1 flex-col">
-                {data.topIncome || data.topExpense ? (
-                  <>
-                    {data.topIncome && (
-                      <InsightRow icon={<TrendingUp />} tone="insights" title={`${data.topIncome.name} ${t("is")} ${data.topIncome.percent}% ${t("of your income this month.")}`} text={t("Your biggest source of money in.")} />
-                    )}
-                    {data.topExpense && (
-                      <InsightRow
-                        icon={createElement(expenseIcon)}
-                        tone="loans"
-                        title={`${data.topExpense.name} ${t("is your biggest spend")}: ${data.topExpense.percent}%.`}
-                        text={`${formatCurrency(data.topExpense.amount, currency)} ${t("this month")}, ${
-                          data.topExpense.delta === 0 ? t("the same as") : `${formatCurrency(Math.abs(data.topExpense.delta), currency)} ${t(data.topExpense.delta < 0 ? "less than" : "more than")}`
-                        } ${data.lastMonthName}.`}
-                        divided={Boolean(data.topIncome)}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <p className="p-5 text-body text-ink-muted">{t("After a few transactions, Smartly explains them here.")}</p>
-                )}
-              </Card>
-            </section>
-          </div>
+          <HomeHero data={data} />
+          <HomeMoney data={data} />
+          {showLoans && <HomeLoans data={data} />}
+          <HomeHabits data={data} />
+          <HomeVaultInsights data={data} />
         </>
       )}
-
-      <TransactionDrawer open={drawer !== null} initialKind={drawer ?? "EXPENSE"} onClose={() => setDrawer(null)} businessId={data.businessId} currency={currency} />
     </PageFrame>
-  );
-}
-
-function BudgetFocus({ focus, currency, daysLeft }: { focus: HomeData["budgetFocus"] & object; currency: string; daysLeft: number }) {
-  const { t } = useLocale();
-  const limit = Number(focus.monthlyLimit ?? 0);
-  const spent = Number(focus.spent);
-  const left = limit - spent;
-  return (
-    <>
-      <span className="flex items-baseline justify-between gap-2">
-        <b className="flex items-center gap-2 text-title leading-5.5 font-semibold text-ink">
-          {createElement(budgetCategoryIcon(focus.icon ?? ""), { className: "size-4 text-ink-muted", "aria-hidden": true })}
-          {focus.name}
-        </b>
-        <span className="text-small text-ink-muted tabular-nums">
-          <b className="text-ink">{formatCurrency(spent, currency)}</b> {t("of")} {formatCurrency(limit, currency)}
-        </span>
-      </span>
-      <ProgressBar value={focus.percent} tone="budget" label={focus.name} />
-      <span className={cn("text-small", focus.percent > 90 ? "font-semibold text-expense" : focus.percent >= 70 ? "font-semibold text-warning" : "text-ink-muted")}>
-        {Math.round(focus.percent)}% {t("used")} · {left >= 0 ? `${formatCurrency(left, currency)} ${t("left for")} ${daysLeft} ${t("days")}` : `${formatCurrency(-left, currency)} ${t("over")}`}
-      </span>
-    </>
-  );
-}
-
-// A section header's link, 44px tall on phones for the thumb.
-function SectionLink({ href, phone, wide, arrow = false }: { href: string; phone: string; wide: string; arrow?: boolean }) {
-  return (
-    <Link href={href} className="flex min-h-11 items-center gap-1 text-body font-semibold text-emerald hover:text-emerald-hover md:min-h-0">
-      <ByWidth phone={phone} wide={wide} />
-      {arrow && <ArrowRight className="hidden size-4 md:block" aria-hidden="true" />}
-    </Link>
-  );
-}
-
-function StreakRow({ icon, title, text, href }: { icon: React.ReactNode; title: string; text: string; href: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-3">
-      <IconTile tone="habits">{icon}</IconTile>
-      <span className="flex min-w-0 flex-col">
-        <b className="truncate text-body leading-5 font-bold text-ink">{title}</b>
-        <span className="text-small text-ink-muted">{text}</span>
-      </span>
-    </Link>
-  );
-}
-
-function InsightRow({ icon, tone, title, text, divided = false }: { icon: React.ReactNode; tone: "insights" | "loans"; title: string; text: string; divided?: boolean }) {
-  return (
-    <div className={cn("flex items-start gap-4 px-5 py-4", divided && "border-t border-line")}>
-      <IconTile tone={tone}>{icon}</IconTile>
-      <span className="flex flex-col gap-0.5">
-        <b className="text-title leading-5.5 font-semibold text-ink">{title}</b>
-        <span className="text-small leading-4.5 text-ink-muted">{text}</span>
-      </span>
-    </div>
   );
 }

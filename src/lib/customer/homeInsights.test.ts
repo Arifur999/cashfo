@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
-import type { CategoryBreakdown, LoanDashboardRow } from "./api";
-import { balanceChangePercent, bestMonthNote, categoryDelta, daysLeftInMonth, loanCounts, savingsRate, topShare } from "./homeInsights";
+import type { CategoryBreakdown, LoanDashboardRow, MonthlyBreakdown } from "./api";
+import {
+  balanceChangePercent,
+  bestMonthNote,
+  categoryDelta,
+  daysLeftInMonth,
+  isFirstMonthOnRecord,
+  loanCounts,
+  monthColumn,
+  sameDaysLastMonth,
+  savingsRate,
+  savingsTotals,
+  topShare,
+  windowStart,
+} from "./homeInsights";
 
 const breakdown = (type: "INCOME" | "EXPENSE", rows: [string, number][]): CategoryBreakdown => ({
   type,
@@ -9,14 +22,22 @@ const breakdown = (type: "INCOME" | "EXPENSE", rows: [string, number][]): Catego
 });
 
 describe("balanceChangePercent", () => {
-  it("compares the month's net flow with the starting balance", () => {
-    expect(balanceChangePercent(66750, 8800)).toBe(15.2);
-    expect(balanceChangePercent(50000, -5000)).toBe(-9.1);
+  it("compares the wallets now with what they held on the 1st", () => {
+    expect(balanceChangePercent(66750, 57950)).toBe(15.2);
+    expect(balanceChangePercent(45000, 50000)).toBe(-10);
   });
 
-  it("has nothing to compare with when the month started at zero", () => {
-    expect(balanceChangePercent(8800, 8800)).toBeNull();
-    expect(balanceChangePercent(0, 0)).toBeNull();
+  it("counts every way money left, not only expenses", () => {
+    // 50,000 on the 1st; +10,000 income, −2,000 expense and 20,000 into a
+    // savings goal leave 38,000: the balance fell, whatever the month's
+    // income and expense say.
+    expect(balanceChangePercent(38000, 50000)).toBe(-24);
+  });
+
+  it("has nothing to compare with when the month started at zero or is unknown", () => {
+    expect(balanceChangePercent(8800, 0)).toBeNull();
+    expect(balanceChangePercent(100, -50)).toBeNull();
+    expect(balanceChangePercent(100, null)).toBeNull();
   });
 });
 
@@ -39,6 +60,28 @@ describe("categoryDelta", () => {
   });
 });
 
+describe("monthColumn", () => {
+  const monthly: MonthlyBreakdown = {
+    type: "EXPENSE",
+    months: ["2026-09", "2026-10"],
+    rows: [
+      { name: "Food", color: "orange", amounts: ["18200.00", "16800.00"], total: "35000.00" },
+      { name: "Rent", color: "blue", amounts: ["15000.00", "0.00"], total: "15000.00" },
+    ],
+    totals: ["33200.00", "16800.00"],
+    total: "50000.00",
+  };
+
+  it("reads one month as a category breakdown, leaving out the empty categories", () => {
+    expect(monthColumn(monthly, 1)).toEqual({ type: "EXPENSE", total: "16800.00", categories: [{ name: "Food", amount: "16800.00", percent: 100, color: "orange" }] });
+    expect(topShare(monthColumn(monthly, 0))).toEqual({ name: "Food", amount: 18200, percent: 55 });
+  });
+
+  it("reads a month it doesn't have as empty", () => {
+    expect(monthColumn(monthly, 5)).toEqual({ type: "EXPENSE", total: "0.00", categories: [] });
+  });
+});
+
 describe("loanCounts", () => {
   it("counts people by direction", () => {
     const row = (direction: LoanDashboardRow["direction"]): LoanDashboardRow => ({
@@ -48,6 +91,8 @@ describe("loanCounts", () => {
       openingBalance: "0",
       totalReceive: "0",
       totalPayment: "0",
+      profitPaid: "0",
+      profitReceived: "0",
       currentBalance: "0",
       direction,
     });
@@ -63,19 +108,33 @@ describe("savingsRate", () => {
   });
 });
 
+describe("savingsTotals", () => {
+  const goal = (currentAmount: number, targetAmount: number) => ({ currentAmount: currentAmount.toFixed(2), targetAmount: targetAmount.toFixed(2) });
+
+  it("adds up every goal, as Savings › Goals does", () => {
+    expect(savingsTotals([goal(55000, 100000), goal(0, 50000)])).toEqual({ saved: 55000, target: 150000, progress: 37, count: 2 });
+  });
+
+  it("never passes 100%, and is 0% with no target", () => {
+    expect(savingsTotals([goal(120000, 100000)]).progress).toBe(100);
+    expect(savingsTotals([])).toEqual({ saved: 0, target: 0, progress: 0, count: 0 });
+  });
+});
+
 describe("bestMonthNote", () => {
-  const point = (month: string, savings: number) => ({ month, income: "0", savings: String(savings) });
+  const point = (month: string, kept: number) => ({ month, kept });
 
   it("says when this month is the best of the run", () => {
-    expect(bestMonthNote([point("Jul", 33000), point("Aug", 26000), point("Oct", 35000)])).toEqual({ best: true });
+    expect(bestMonthNote([point("2026-07", 33000), point("2026-08", 26000), point("2026-10", 35000)])).toEqual({ best: true });
   });
 
-  it("names the latest month that beat it", () => {
-    expect(bestMonthNote([point("Jul", 33000), point("Aug", 26000), point("Oct", 32700)])).toEqual({ best: false, beatenBy: "Jul" });
+  it("names the latest month that kept more", () => {
+    expect(bestMonthNote([point("2026-07", 33000), point("2026-08", 26000), point("2026-10", 32700)])).toEqual({ best: false, beatenBy: "2026-07" });
   });
 
-  it("needs at least two months", () => {
-    expect(bestMonthNote([point("Oct", 1)])).toBeNull();
+  it("says nothing of a month that kept nothing, or with no months before it", () => {
+    expect(bestMonthNote([point("2026-09", 1000), point("2026-10", -500)])).toBeNull();
+    expect(bestMonthNote([point("2026-10", 1)])).toBeNull();
   });
 });
 
@@ -84,5 +143,42 @@ describe("daysLeftInMonth", () => {
     expect(daysLeftInMonth("2026-10-02")).toBe(30);
     expect(daysLeftInMonth("2026-02-28")).toBe(1);
     expect(daysLeftInMonth("2028-02-01")).toBe(29);
+  });
+});
+
+describe("windowStart", () => {
+  it("is the 1st of the month count − 1 months back", () => {
+    expect(windowStart("2026-10-21", 6)).toBe("2026-05-01");
+    expect(windowStart("2026-02-10", 6)).toBe("2025-09-01");
+    expect(windowStart("2026-10-21", 1)).toBe("2026-10-01");
+  });
+});
+
+describe("sameDaysLastMonth", () => {
+  it("runs from last month's 1st to the same day", () => {
+    expect(sameDaysLastMonth("2026-10-05")).toEqual({ dateFrom: "2026-09-01", dateTo: "2026-09-05" });
+    expect(sameDaysLastMonth("2026-01-15")).toEqual({ dateFrom: "2025-12-01", dateTo: "2025-12-15" });
+  });
+
+  it("stops at the end of a shorter month", () => {
+    expect(sameDaysLastMonth("2026-03-31")).toEqual({ dateFrom: "2026-02-01", dateTo: "2026-02-28" });
+    expect(sameDaysLastMonth("2028-03-30")).toEqual({ dateFrom: "2028-02-01", dateTo: "2028-02-29" });
+  });
+});
+
+describe("isFirstMonthOnRecord", () => {
+  const quiet = [{ income: 0, expense: 0 }];
+
+  it("is true only when nothing at all came before this month", () => {
+    expect(isFirstMonthOnRecord({ earlier: quiet, recentDays: ["2026-10-04", "2026-10-02"], total: 2, monthStart: "2026-10-01" })).toBe(true);
+  });
+
+  it("is false once an earlier month had money in or out", () => {
+    expect(isFirstMonthOnRecord({ earlier: [{ income: 0, expense: 300 }], recentDays: ["2026-10-04"], total: 1, monthStart: "2026-10-01" })).toBe(false);
+  });
+
+  it("is false when a transaction is older, or there may be older ones unseen", () => {
+    expect(isFirstMonthOnRecord({ earlier: quiet, recentDays: ["2026-10-04", "2026-09-28"], total: 2, monthStart: "2026-10-01" })).toBe(false);
+    expect(isFirstMonthOnRecord({ earlier: quiet, recentDays: ["2026-10-04"], total: 9, monthStart: "2026-10-01" })).toBe(false);
   });
 });

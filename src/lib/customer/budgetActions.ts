@@ -12,15 +12,18 @@ import { customerApi } from "./apiClient";
 export type BudgetCategoryName = Pick<BudgetCategory, "id" | "name" | "icon" | "color">;
 
 export async function getBudgetCategoryNamesAction(businessId: string, type: BudgetCategoryType = "EXPENSE"): Promise<BudgetCategoryName[]> {
-  try {
-    const res = await customerApi.get<Pick<BudgetCategory, "id" | "name" | "icon" | "color">[]>(
-      `${API_BASE_URL}/api/businesses/${businessId}/budget/categories`,
-      { headers: await authHeaders(), params: { type } },
-    );
+  const result = await listBudgetCategoryNamesAction(businessId, type);
+  return result.data ?? [];
+}
+
+// The same names for a form that says "No categories yet" when there are
+// none: a failed request comes back as success: false, never as an empty
+// list, so the form can't treat an outage as "nothing to pick".
+export async function listBudgetCategoryNamesAction(businessId: string, type: BudgetCategoryType = "EXPENSE"): Promise<ActionResult<BudgetCategoryName[]>> {
+  return callApi(async () => {
+    const res = await customerApi.get<BudgetCategoryName[]>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories`, { headers: await authHeaders(), params: { type } });
     return res.data;
-  } catch {
-    return [];
-  }
+  }, "Failed to load your categories");
 }
 
 // The month's budget for the New transaction drawer's "left this month"

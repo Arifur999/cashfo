@@ -7,11 +7,16 @@ import type { Account } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getAppToday } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
+import { pageHref, pastEnd, readPageParam } from "@/lib/table/pageParams";
 
 export const generateMetadata = () => customerPageMetadata("/balance/ledger");
 
 const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year", "custom"];
+
+// Rows on one page of a statement.
+const PAGE_SIZE = 50;
 
 // Every account in the chart, parents before their children.
 function flatten(accounts: Account[]): Account[] {
@@ -33,7 +38,7 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
   const range = PRESETS.find((preset) => preset === params.range) ?? "all";
   const customFrom = isIsoDay(params.dateFrom) ? params.dateFrom : undefined;
   const customTo = isIsoDay(params.dateTo) ? params.dateTo : undefined;
-  const page = typeof params.page === "string" ? Math.max(1, Number(params.page) || 1) : 1;
+  const page = readPageParam(params);
 
   // The wallets lead the picker (archived ones included, struck through);
   // the rest of the chart -- income, expense, equity -- is there for anyone
@@ -47,10 +52,15 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
   const [account, ledger, summary] = accountId
     ? await Promise.all([
         getAccount(activeBusinessId, accountId),
-        getLedger(activeBusinessId, accountId, { dateFrom, dateTo, page }),
+        getLedger(activeBusinessId, accountId, { dateFrom, dateTo, page, limit: PAGE_SIZE }),
         getAccountSummary(activeBusinessId, accountId, { dateFrom, dateTo }),
       ])
     : [null, null, null];
+
+  // A page past the end (entries voided away, an old link) opens the last
+  // page instead of an empty statement.
+  const last = ledger ? pastEnd(page, ledger.meta.totalPages, ledger.meta.total) : null;
+  if (last) redirect(pageHref("/balance/ledger", params, last));
 
   return (
     <AccountLedgerPageClient
@@ -65,6 +75,9 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
       range={range}
       customFrom={customFrom}
       customTo={customTo}
+      periodFrom={dateFrom}
+      periodTo={dateTo}
+      today={getAppToday()}
     />
   );
 }

@@ -7,7 +7,8 @@ import { customerPageMetadata } from "@/lib/customer/pageTitle";
 
 export const generateMetadata = () => customerPageMetadata("/savings-goals/wallet");
 
-export default async function SavingsWalletPage() {
+export default async function SavingsWalletPage({ searchParams }: PageProps<"/savings-goals/wallet">) {
+  const params = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -19,6 +20,14 @@ export default async function SavingsWalletPage() {
   const wallets = await getSavingsWallets(activeBusinessId);
 
   return (
-    <SavingsWalletPageClient businessId={activeBusinessId} wallets={wallets} canManage={canManage} currency={activeBusiness?.currency ?? "BDT"} />
+    <SavingsWalletPageClient
+      businessId={activeBusinessId}
+      wallets={wallets}
+      canManage={canManage}
+      currency={activeBusiness?.currency ?? "BDT"}
+      // "Add savings wallet" elsewhere links here with ?add=1: the drawer
+      // opens at once, rather than asking for the same click again.
+      openAdd={params.add === "1"}
+    />
   );
 }

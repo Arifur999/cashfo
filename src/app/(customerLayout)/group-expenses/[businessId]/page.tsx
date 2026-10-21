@@ -8,15 +8,12 @@ import { getGroupContributions, getGroupExpenseCategories, getGroupExpenses, get
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
 
-// The tab names the group, from the read the page makes; ?tab= goes along
-// for the menu to match on.
+// The list's name, read from nothing: Next runs generateMetadata for every
+// <Link> prefetch of this page, without rendering the page, so reading the
+// record here cost API calls for each row on screen.
 export async function generateMetadata({ params, searchParams }: PageProps<"/group-expenses/[businessId]">) {
   const [{ businessId }, query] = await Promise.all([params, searchParams]);
-  // A failed read is the page's to show (its error or PIN screen); the tab
-  // keeps the list's name.
-  const user = await getCurrentUser().catch(() => null);
-  const business = user ? await getWorkspace(businessId).catch(() => null) : null;
-  return customerPageMetadata(`/group-expenses/${businessId}`, { query, record: business?.type === "GROUP" ? business.name : null });
+  return customerPageMetadata(`/group-expenses/${businessId}`, { query });
 }
 
 // A group, one month at a time. businessId comes from the URL, not the

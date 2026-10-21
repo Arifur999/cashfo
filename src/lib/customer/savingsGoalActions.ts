@@ -26,6 +26,9 @@ async function authHeaders() {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
+// The fallback is the English key the page already translates ("Failed to
+// add money"), so a failure with no message of its own still reads in
+// Bangla; savingsError() in savingsDisplay.ts words the backend's own.
 async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
   try {
     const data = await fn();
@@ -38,17 +41,16 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
   }
 }
 
-// Client components (the "View Details" modal, opened on demand from the
+// Client components (the goal's details drawer, opened on demand from the
 // dashboard list) can't call lib/savingsGoals.ts's getSavingsGoal() directly
-// -- that's a plain server-only module, not a Server Action. Same reasoning
-// as getBudgetCategoryNamesAction().
-export async function getSavingsGoalDetailAction(businessId: string, id: string): Promise<SavingsGoalDetail | null> {
-  try {
+// -- that's a plain server-only module, not a Server Action. A result, not a
+// bare null, so the drawer can tell a failed load (and offer to try again)
+// from a goal with no history.
+export async function getSavingsGoalDetailAction(businessId: string, id: string): Promise<ActionResult<SavingsGoalDetail>> {
+  return callApi(async () => {
     const res = await customerApi.get<SavingsGoalDetail>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, { headers: await authHeaders() });
     return res.data;
-  } catch {
-    return null;
-  }
+  }, "Couldn't load this goal's history.");
 }
 
 export interface SavingsGoalFormInput {
@@ -56,8 +58,10 @@ export interface SavingsGoalFormInput {
   targetAmount: number;
   targetDate: string;
   durationMonths: number;
-  reminderDate?: string;
-  reminderChannel?: SavingsReminderChannel;
+  // null clears a reminder on an edit (the backend accepts it there).
+  reminderDate?: string | null;
+  reminderChannel?: SavingsReminderChannel | null;
+  // "" clears the description on an edit; undefined leaves it as it is.
   description?: string;
 }
 
@@ -65,7 +69,7 @@ export async function createSavingsGoalAction(businessId: string, input: Savings
   return callApi(async () => {
     const res = await customerApi.post<SavingsGoal>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to create savings goal");
+  }, "Failed to save goal");
 }
 
 export async function updateSavingsGoalAction(
@@ -78,7 +82,7 @@ export async function updateSavingsGoalAction(
       headers: await authHeaders(),
     });
     return res.data;
-  }, "Failed to update savings goal");
+  }, "Failed to save goal");
 }
 
 export async function updateSavingsGoalStatusAction(businessId: string, id: string, status: SavingsGoalStatus): Promise<ActionResult<SavingsGoal>> {
@@ -89,28 +93,35 @@ export async function updateSavingsGoalStatusAction(businessId: string, id: stri
       { headers: await authHeaders() },
     );
     return res.data;
-  }, "Failed to update goal status");
+  }, "Failed to update goal");
 }
 
 export async function deleteSavingsGoalAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, { headers: await authHeaders() });
-  }, "Failed to delete savings goal");
+  }, "Failed to delete goal");
 }
 
-// The AddContributionModal's "To Wallet" dropdown -- client components
-// can't call lib/accounts.ts's getSavingsWallets() directly (server-only),
-// and this picker only needs ACTIVE wallets, same "active-only for a new
-// transaction" convention as getMoneyAccountsAction().
-export async function getActiveSavingsWalletsAction(businessId: string): Promise<Account[]> {
-  try {
+// The savings wallets a new contribution or withdrawal can use -- client
+// components can't call lib/accounts.ts's getSavingsWallets() directly
+// (server-only), and these pickers only need ACTIVE wallets, same "active-
+// only for a new transaction" convention as listMoneyAccountsAction(). A
+// result, so a drawer can say the load failed instead of "no savings wallet
+// yet".
+export async function listActiveSavingsWalletsAction(businessId: string): Promise<ActionResult<Account[]>> {
+  return callApi(async () => {
     const res = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/active-savings-wallets`, {
       headers: await authHeaders(),
     });
     return res.data;
-  } catch {
-    return [];
-  }
+  }, "Couldn't load your savings wallets.");
+}
+
+// The plain list, empty when it could not be loaded -- for pickers elsewhere
+// (Assets, Referrals) that only need something to offer.
+export async function getActiveSavingsWalletsAction(businessId: string): Promise<Account[]> {
+  const result = await listActiveSavingsWalletsAction(businessId);
+  return result.data ?? [];
 }
 
 export interface AddContributionInput {
@@ -127,7 +138,7 @@ export async function addContributionAction(businessId: string, goalId: string, 
       headers: await authHeaders(),
     });
     return res.data;
-  }, "Failed to add contribution");
+  }, "Failed to add money");
 }
 
 export interface WithdrawSavingsGoalInput {
@@ -147,7 +158,7 @@ export async function withdrawSavingsGoalAction(businessId: string, goalId: stri
       headers: await authHeaders(),
     });
     return res.data;
-  }, "Failed to withdraw savings");
+  }, "Failed to withdraw");
 }
 
 export interface SavingsTransferInput {
@@ -161,5 +172,5 @@ export interface SavingsTransferInput {
 export async function createSavingsTransferAction(businessId: string, input: SavingsTransferInput): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/transfer`, input, { headers: await authHeaders() });
-  }, "Failed to transfer between goals");
+  }, "Failed to move");
 }
