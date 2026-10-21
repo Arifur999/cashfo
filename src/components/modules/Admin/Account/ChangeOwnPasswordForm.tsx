@@ -6,16 +6,20 @@ import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
 import AppForm from "@/components/shared/form/AppForm";
 import AppPasswordField from "@/components/shared/form/AppPasswordField";
 import { useActionMutation } from "@/hooks/useActionMutation";
+import { queryKeys } from "@/lib/queryKeys";
 import { changeOwnPasswordFormZodSchema, getPasswordMismatchError, type IChangeOwnPasswordFormValues } from "@/zod/auth.validation";
 
 const { shape } = changeOwnPasswordFormZodSchema;
 
-// An admin's own password, from the account menu. Admins used to depend on
-// a super admin resetting it for them.
+// An admin's own password, from My account or the account menu. Admins
+// used to depend on a super admin resetting it for them.
 const ChangeOwnPasswordForm = ({ onDone }: { onDone: () => void }) => {
   const { run, isPending } = useActionMutation({
     action: ({ currentPassword, newPassword }: IChangeOwnPasswordFormValues) => changeOwnPasswordAction({ currentPassword, newPassword }),
-    successMessage: "Password changed -- your other sessions were signed out",
+    successMessage: "Password changed. Your other devices were signed out.",
+    // The API signs every other session out: My account's devices and its
+    // "Changed ..." line are stale now (nothing to refetch from the menu).
+    invalidateKeys: [queryKeys.myAccount.all],
     refreshRoute: false,
   });
 

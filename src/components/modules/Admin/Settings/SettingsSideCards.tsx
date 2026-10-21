@@ -1,23 +1,36 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Construction, Lock, MessageSquareText } from "lucide-react";
+import { ChevronRight, Construction, Gift, Lock, MessageSquareText } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { platformSettingsQuery } from "@/queries/settings.queries";
+import T from "@/components/shared/T";
+import Chip from "@/components/smartly/Chip";
+import type { IPlatformSettings } from "@/types/settings.types";
 import ReferralRulesCard from "./ReferralRulesCard";
 import SettingsSideCard, { SIDE_CARD_LINK } from "./SettingsSideCard";
-import T from "@/components/shared/T";
+
+interface SettingsSideCardsProps {
+  canManage: boolean;
+  // undefined until the settings load, or when they couldn't be.
+  settings: IPlatformSettings | undefined;
+  loadFailed: boolean;
+}
 
 // The column beside General: referral rules, maintenance (switched from
-// System) and where message wording lives, then who may change what.
-const SettingsSideCards = ({ canManage }: { canManage: boolean }) => {
-  const settings = useQuery(platformSettingsQuery()).data?.data;
-  const on = settings?.maintenanceMode ?? false;
+// System) and where message wording lives, then who may change what. A
+// setting that isn't loaded says so: maintenance never reads as Off on a
+// guess.
+const SettingsSideCards = ({ canManage, settings, loadFailed }: SettingsSideCardsProps) => {
+  const on = settings?.maintenanceMode === true;
 
   return (
     <aside className="flex flex-col gap-4">
-      {settings && <ReferralRulesCard amount={settings.referralRewardAmount} canManage={canManage} />}
+      {settings ? (
+        <ReferralRulesCard amount={settings.referralRewardAmount} canManage={canManage} />
+      ) : (
+        <SettingsSideCard icon={Gift} tone="mint" title="Referral rules">
+          <T>{loadFailed ? "Couldn't load" : "Loading..."}</T>
+        </SettingsSideCard>
+      )}
       <SettingsSideCard
         icon={Construction}
         tone="warning"
@@ -31,8 +44,16 @@ const SettingsSideCards = ({ canManage }: { canManage: boolean }) => {
           )
         }
       >
-        <span className={cn("mr-1 rounded-full px-2 py-0.5 text-caption font-semibold", on ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}><T>{on ? "On" : "Off"}</T></span>
-        <T>{on ? "Customers see the maintenance message and can't use the app." : "The app works as normal."}</T>
+        {settings ? (
+          <>
+            <Chip tone={on ? "warning" : "neutral"} size="sm" className="mr-1">
+              <T>{on ? "On" : "Off"}</T>
+            </Chip>
+            <T>{on ? "Customers see the maintenance message and can't use the app." : "The app works as normal."}</T>
+          </>
+        ) : (
+          <T>{loadFailed ? "Couldn't check" : "Checking..."}</T>
+        )}
       </SettingsSideCard>
       <SettingsSideCard
         icon={MessageSquareText}
