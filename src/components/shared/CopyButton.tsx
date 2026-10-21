@@ -3,9 +3,8 @@
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
 
 interface CopyButtonProps {
   value: string;
@@ -36,14 +35,9 @@ const CopyButton = ({ value, label, text = "Copy", size = "sm" }: CopyButtonProp
   };
 
   return (
-    <Button
-      type="button"
-      variant="outline"
-      size={size === "md" ? "default" : "sm"}
-      onClick={copy}
-      aria-label={translate("Copy {label}", { label: translate(label) })}
-      className={cn(size === "md" && "h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken")}
-    >
+    // The design's secondary button: white with the line-strong edge, at
+    // either size.
+    <Button type="button" variant="secondary" size={size} onClick={copy} aria-label={translate("Copy {label}", { label: translate(label) })}>
       {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
       {translate(copied ? "Copied" : text)}
     </Button>

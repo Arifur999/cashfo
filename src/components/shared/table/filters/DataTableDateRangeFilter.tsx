@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { CalendarRange } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -50,7 +50,7 @@ const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRange
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={FILTER_CHIP_CLASS}>
+        <Button variant="secondary" size="sm" className={FILTER_CHIP_CLASS}>
           <CalendarRange className="size-3.5 text-ink-muted" aria-hidden="true" />
           <span>{translate(title)}:</span>
           <b className="font-semibold text-ink">{isActive && value ? describeRange(value, translate) : translate("Any time")}</b>
@@ -77,7 +77,7 @@ const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRange
             onChange={(event) => setDraft((previous) => ({ ...previous, to: event.target.value || undefined }))}
           />
         </div>
-        {isInvalid && <p className="text-xs text-destructive">{translate("The start must be on or before the end.")}</p>}
+        {isInvalid && <p className="text-caption text-expense">{translate("The start must be on or before the end.")}</p>}
         <div className="flex justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => apply(undefined)}>
             {translate("Clear")}

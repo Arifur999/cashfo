@@ -1,6 +1,6 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
 import { cache } from "react";
-import { API_BASE_URL, type ContactCategory, type Transaction, type TransactionDetail, type TransactionListResponse, type TransactionType } from "./api";
+import { API_BASE_URL, type ContactCategory, type Transaction, type TransactionDetail, type TransactionListResponse, type TransactionsSummary, type TransactionType } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -41,6 +41,25 @@ export const getTransactions = cache(async (businessId: string, filters: Transac
     return response.data;
   } catch (error) {
     return emptyUnlessOutage(error, { data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+  }
+});
+
+// Every transaction matching the list's filters, across all pages: the
+// count, how many were voided and the income/expense/transfer totals. null
+// when the backend predates the endpoint, so the page can fall back.
+export const getTransactionsSummary = cache(async (businessId: string, filters: Omit<TransactionFilters, "page" | "limit"> = {}): Promise<TransactionsSummary | null> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const { transactionTypes, ...rest } = filters;
+    const response = await customerApi.get<TransactionsSummary>(`${API_BASE_URL}/api/businesses/${businessId}/transactions/summary`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { ...rest, transactionTypes: transactionTypes?.join(",") },
+    });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });
 

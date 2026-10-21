@@ -73,7 +73,6 @@ const bnAdminDictionary: Record<string, string> = {
   "Smartly admin home": "Smartly অ্যাডমিন হোম",
   "Coming soon": "শীঘ্রই আসছে",
   "Welcome back,": "স্বাগতম,",
-  "Log out": "লগ আউট",
   "Open navigation": "নেভিগেশন খুলুন",
   "Main navigation": "প্রধান নেভিগেশন",
   "Account menu": "অ্যাকাউন্ট মেনু",

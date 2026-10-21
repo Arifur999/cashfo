@@ -6,9 +6,12 @@ import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminNotificationsBell from "./AdminNotificationsBell";
 import AdminSearch from "./AdminSearch";
 import MobileNav from "./MobileNav";
+import PhoneLocaleToggle from "./PhoneLocaleToggle";
 
 // The admin top bar: 64px, the breadcrumb, the search (Ctrl K), the
-// language pill, the bell and the account menu.
+// language pill, the bell and the account menu. Phones keep the language
+// too, as one 44px button, and the tighter phone gap leaves the page's name
+// room beside it.
 const DashboardNavbar = async () => {
   const admin = await getUserInfo();
   if (!admin) {
@@ -17,10 +20,11 @@ const DashboardNavbar = async () => {
   const sections = getNavSectionsByRole(admin.role);
 
   return (
-    <header className="flex h-topbar-mobile shrink-0 items-center gap-2 border-b border-line bg-surface px-2 md:h-topbar md:gap-3 md:px-8 print:hidden">
+    <header className="flex h-topbar-mobile shrink-0 items-center gap-1 border-b border-line bg-surface px-2 md:h-topbar md:gap-3 md:px-8 print:hidden">
       <MobileNav sections={sections} admin={admin} />
       <AdminBreadcrumb sections={sections} adminName={admin.name} />
       <AdminSearch />
+      <PhoneLocaleToggle />
       <div className="hidden md:block">
         <LocalePill />
       </div>

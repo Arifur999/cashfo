@@ -2,10 +2,11 @@ import type { FeatureKey } from "./features";
 import type { WorkspaceType } from "./api";
 
 // The customer app's menu, as the design's AppSidebar draws it: Home, then
-// Money, Books (business workspaces only), Habits, Security and Insights,
+// Money, Books (business workspaces only), Habits, Vault and Insights,
 // with Invite & earn and Settings at the foot. Labels are the English
 // strings t() translates. Icons are named here and drawn by the sidebar,
-// so this file stays plain data the top bar's breadcrumb can use too.
+// so this file stays plain data the top bar's breadcrumb and the tab
+// titles (pageTitle.ts) can use too.
 export type NavTone = "money" | "loans" | "habits" | "vault" | "insights" | "neutral";
 
 export type NavIcon =
@@ -124,7 +125,7 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: "My assets", href: "/assets-management/current" },
           { label: "Buy & sell", href: "/assets-management/purchase-sell" },
           { label: "Update value", href: "/assets-management/update" },
-          { label: "Categories", href: "/assets-management/category" },
+          { label: "Asset types", href: "/assets-management/category" },
         ],
       },
       { label: "Group expenses", href: "/group-expenses", icon: "group" },
@@ -155,7 +156,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "To-do list", href: "/habit-tracker/todos", icon: "todo", badge: "todayTasks" },
     ],
   },
-  { label: "Security", tone: "vault", items: [{ label: "Password vault", href: "/password-manager", icon: "vault" }] },
+  // "Vault", not "Security": Settings has a Security page of its own.
+  { label: "Vault", tone: "vault", items: [{ label: "Password vault", href: "/password-manager", icon: "vault" }] },
   {
     label: "Insights",
     tone: "insights",
@@ -168,8 +170,9 @@ export const NAV_SECTIONS: NavSection[] = [
 
 // The sidebar's foot: the account's own pages. The top bar puts them under
 // "Account", and Settings' sections under "Account › Settings" (the
-// sidebar draws no subs for them; Settings has its own menu).
-export const NAV_FOOT_LABEL = "Account";
+// sidebar draws no subs for them; Settings has its own menu). "@@user":
+// plain "Account" is Bangla's হিসাব, a ledger account, not the customer's.
+export const NAV_FOOT_LABEL = "Account@@user";
 export const NAV_FOOT: NavItem[] = [
   { label: "Invite & earn", href: "/referrals", icon: "gift", tag: "Earn ৳" },
   {
@@ -206,7 +209,19 @@ export interface NavLocation {
   sub: NavLeaf | null;
 }
 
-type QueryReader = { get(name: string): string | null };
+export type QueryReader = { get(name: string): string | null };
+
+// A page's searchParams, as Next hands them to a Server Component.
+export type PageQuery = Record<string, string | string[] | undefined>;
+
+// searchParams read the way URLSearchParams.get() reads a query string: the
+// first of a repeated value, null when it's absent.
+export const queryOf = (params: PageQuery = {}): QueryReader => ({
+  get: (name) => {
+    const value = Object.hasOwn(params, name) ? params[name] : undefined;
+    return (Array.isArray(value) ? value[0] : value) ?? null;
+  },
+});
 
 const prefixScore = (prefix: string, pathname: string): number =>
   pathname === prefix || pathname.startsWith(`${prefix}/`) ? prefix.length : -1;
@@ -245,7 +260,7 @@ export function findNavLocation(pathname: string, query: QueryReader, sections: 
 }
 
 // Home, the Money pages and Books: where the phone boards float the + for a
-// new transaction. Habits, Security, Insights and the account pages don't;
+// new transaction. Habits, Vault, Insights and the account pages don't;
 // a page the menu doesn't know keeps it.
 export function movesMoney(location: NavLocation | null): boolean {
   if (!location) return true;
@@ -271,4 +286,43 @@ export function breadcrumbFor(location: NavLocation): Breadcrumb {
     heading: location.sub?.label ?? location.item.label,
     tone: location.item.tone ?? location.section?.tone ?? "money",
   };
+}
+
+// Page labels the menu uses more than once ("Statement" in Wallets and
+// Loans, "Overview" in Loans, Assets and Insights). On its own such a label
+// could be any of them, so a title always names its group too.
+const SHARED_LABELS: ReadonlySet<string> = (() => {
+  const seen = new Set<string>();
+  const shared = new Set<string>();
+  for (const item of [...NAV_SECTIONS.flatMap((section) => section.items), ...NAV_FOOT]) {
+    for (const leaf of [item, ...(item.subs ?? [])]) {
+      if (seen.has(leaf.label)) shared.add(leaf.label);
+      seen.add(leaf.label);
+    }
+  }
+  return shared;
+})();
+
+// A tab title's parts, most specific first and untranslated: a sub-page
+// with its group (["Transfer", "Wallets"]), a page on its own
+// (["Transactions"]) unless its label is shared (["Overview", "Insights"]),
+// and a record page's own name in front (["Rahim", "Transactions"]).
+export function titleParts(location: NavLocation, record?: string | null): string[] {
+  const { section, item, sub } = location;
+  const group = section ? section.label : NAV_FOOT.includes(item) ? NAV_FOOT_LABEL : undefined;
+  const page = sub ? [sub.label, item.label] : group && SHARED_LABELS.has(item.label) ? [item.label, group] : [item.label];
+  const name = record?.trim();
+  return name ? [name, ...page] : page;
+}
+
+export const TITLE_SEPARATOR = " · ";
+
+// The tab title in the reader's language ("Transfer · Wallets"; the root
+// layout adds "| Smartly"): the menu's words go through t(), a record's
+// name is shown as given, since it is already the reader's own text.
+export function titleFor(location: NavLocation, t: (key: string) => string, record?: string | null): string {
+  const name = record?.trim();
+  return titleParts(location, name)
+    .map((part, index) => (name && index === 0 ? part : t(part)))
+    .join(TITLE_SEPARATOR);
 }

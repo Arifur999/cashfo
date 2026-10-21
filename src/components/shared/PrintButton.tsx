@@ -1,7 +1,7 @@
 "use client";
 
 import { Printer } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -11,11 +11,12 @@ interface PrintButtonProps {
 }
 
 // Opens the browser's print dialog -- which also offers "Save as PDF". The
-// dashboard chrome carries print:hidden, so only the document prints.
+// dashboard chrome carries print:hidden, so only the document prints. The
+// design's secondary button unless the caller restyles it.
 const PrintButton = ({ label = "Print / Save as PDF", className }: PrintButtonProps) => {
   const { translate } = useLocale();
   return (
-    <Button variant="outline" onClick={() => window.print()} className={cn("print:hidden", className)}>
+    <Button variant="secondary" onClick={() => window.print()} className={cn("print:hidden", className)}>
       <Printer aria-hidden="true" />
       {translate(label)}
     </Button>

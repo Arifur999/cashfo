@@ -1,12 +1,13 @@
 "use client";
 
-import { Banknote, Bell, ChartPie, Megaphone, MessageCircle, PiggyBank, Settings } from "lucide-react";
+import { Banknote, Bell, ChartPie, CheckCheck, Megaphone, MessageCircle, PiggyBank, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
+import StatePanel from "@/components/smartly/StatePanel";
 import { SOFT_TONE, type Tone } from "@/components/smartly/tones";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { UserNotification } from "@/lib/customer/api";
@@ -27,8 +28,9 @@ const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
 type Filter = "all" | "unread";
 
 // The bell in the top bar and its feed: budget, loan and savings reminders
-// and announcements, newest first. Hidden until the feed has something in
-// it. A row about another workspace switches to it before opening.
+// and announcements, newest first. Always there, so the reminder settings
+// stay one tap away; an empty feed says so. A row about another workspace
+// switches to it before opening.
 export function NotificationsBell() {
   const router = useRouter();
   const { t, locale } = useLocale();
@@ -54,8 +56,6 @@ export function NotificationsBell() {
     void loadOnMount();
   }, []);
 
-  if (items.length === 0) return null;
-
   const workspaces = user.businesses.filter((business) => business.type !== "GROUP");
   const shown = filter === "unread" ? items.filter((item) => !item.readAt) : items;
 
@@ -76,7 +76,9 @@ export function NotificationsBell() {
     setItems((current) => current.map((row) => (row.readAt ? row : { ...row, readAt: now })));
     setUnread(0);
     markAllNotificationsReadAction().then((result) => {
-      if (!result.success) toast.error(result.message ?? t("Failed to mark the notifications as read"));
+      // The action always brings a message (the API's, else its English
+      // fallback), so that is what gets translated.
+      if (!result.success) toast.error(t(result.message ?? "Failed to mark the notifications as read"));
     });
   }
 
@@ -88,7 +90,13 @@ export function NotificationsBell() {
     event.preventDefault();
     const businessId = item.businessId;
     startTransition(async () => {
-      await switchWorkspaceAction(businessId);
+      // The server checks the workspace is still one of theirs; a PIN-locked
+      // one asks for its PIN on the page itself.
+      const result = await switchWorkspaceAction(businessId);
+      if (!result.success) {
+        toast.error(t(result.message ?? "Couldn't open that workspace. Please try again."));
+        return;
+      }
       router.push(href);
       router.refresh();
     });
@@ -122,20 +130,27 @@ export function NotificationsBell() {
             </button>
           )}
         </div>
-        <div className="px-4 pb-3">
-          <SegmentedControl
-            label="Show"
-            value={filter}
-            onChange={setFilter}
-            className="[&>button]:h-7.5"
-            options={[
-              { value: "all", label: t("All") },
-              { value: "unread", label: unread > 0 ? `${t("Unread")} ${unread}` : t("Unread") },
-            ]}
-          />
-        </div>
+        {/* Nothing to filter in an empty feed. */}
+        {items.length > 0 && (
+          <div className="px-4 pb-3">
+            <SegmentedControl
+              label="Show"
+              value={filter}
+              onChange={setFilter}
+              className="[&>button]:h-7.5"
+              options={[
+                { value: "all", label: t("All") },
+                { value: "unread", label: unread > 0 ? `${t("Unread")} ${unread}` : t("Unread") },
+              ]}
+            />
+          </div>
+        )}
         <ul className="max-h-[min(30rem,calc(100vh-14rem))] overflow-y-auto">
-          {shown.length === 0 && <li className="border-t border-divider px-4 py-8 text-center text-small text-ink-muted">{t("You're all caught up.")}</li>}
+          {shown.length === 0 && (
+            <li className="border-t border-divider">
+              <StatePanel icon={<CheckCheck />} tone="money" title={t("You're all caught up.")} bordered={false} className="py-8" />
+            </li>
+          )}
           {shown.map((item) => {
             const business = item.businessId ? user.businesses.find((b) => b.id === item.businessId) : undefined;
             const view = notificationView(item, t, locale, business?.currency);

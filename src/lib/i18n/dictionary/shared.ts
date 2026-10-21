@@ -146,4 +146,19 @@ export const sharedDictionary: Record<string, string> = {
   // statement words it).
   "Brought forward": "এগিয়ে আনা ব্যালেন্স",
   "Carried forward": "এগিয়ে নেওয়া ব্যালেন্স",
+
+  // The customer top bar's search palette (Ctrl K): app screens are পেজ, as
+  // "Page not found" says it; the pagers' পৃষ্ঠা is a page of a list.
+  "Search pages, people, transactions": "পেজ, মানুষ, লেনদেন খুঁজুন",
+  "Search pages, people, transactions…": "পেজ, মানুষ, লেনদেন খুঁজুন…",
+  "Finds pages, actions, people and transactions": "পেজ, কাজ, মানুষ ও লেনদেন খুঁজে দেয়",
+  "Type 2 letters or more to find people and transactions": "মানুষ ও লেনদেন খুঁজতে অন্তত ২টি অক্ষর লিখুন",
+  Recent: "সাম্প্রতিক",
+  Pages: "পেজ",
+  "Switch workspace": "ওয়ার্কস্পেস বদলান",
+  "Change language": "ভাষা বদলান",
+  "Change theme": "থিম বদলান",
+  "See all matching transactions": "মিলে যাওয়া সব লেনদেন দেখুন",
+  // The bell, when marking everything read fails.
+  "Failed to mark the notifications as read": "নোটিফিকেশনগুলো পড়া হয়েছে বলে চিহ্নিত করা যায়নি",
 };

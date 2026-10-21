@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
+import { type ExportPage, exportPageQuery } from "@/components/shared/table/exportAll";
 import type { DataTableFilterConfig, DataTableProps } from "@/components/shared/table/dataTable.types";
 import { buildTableQueryString } from "@/lib/queryString";
 import { useServerManagedDataTable } from "./useServerManagedDataTable";
@@ -21,12 +22,19 @@ export interface ServerDataTableConfig {
   defaults?: Readonly<Record<string, string>>;
 }
 
+export interface ServerDataTableOptions<TData> {
+  // One page of the list, fetched the way the table's own query fetches it
+  // (its service), as rows and meta. With it, the page header's Export
+  // downloads every row that matches the filters, not just this page.
+  fetchPage?: (queryString: string) => Promise<ExportPage<TData>>;
+}
+
 const NO_FILTERS: DataTableFilterConfig[] = [];
 
 // Composes the URL-driven pagination, search and filter hooks into the props
 // a DataTable needs, plus the query string to fetch with -- so a feature
 // table is just useQuery + <DataTable {...dataTableProps} />.
-export function useServerDataTable<TData>(config: ServerDataTableConfig) {
+export function useServerDataTable<TData>(config: ServerDataTableConfig, { fetchPage }: ServerDataTableOptions<TData> = {}) {
   const { filters: configFilters = NO_FILTERS, search, defaultLimit = 10, defaults } = config;
   const searchParams = useSearchParams();
   // Tabs and single choices learn which option stands in for an empty URL.
@@ -39,7 +47,7 @@ export function useServerDataTable<TData>(config: ServerDataTableConfig) {
   );
   const definitions = useMemo(() => toServerFilterDefinitions(filters), [filters]);
 
-  const { paginationState, updateParams, handlePaginationChange } = useServerManagedDataTable({ searchParams, defaultLimit });
+  const { paginationState, updateParams, handlePaginationChange, handlePastEnd } = useServerManagedDataTable({ searchParams, defaultLimit });
   const { searchTermFromUrl, handleDebouncedSearchChange } = useServerManagedDataTableSearch({
     searchParams,
     updateParams,
@@ -53,9 +61,9 @@ export function useServerDataTable<TData>(config: ServerDataTableConfig) {
 
   const queryString = buildTableQueryString(searchParams, config);
 
-  const dataTableProps: Pick<DataTableProps<TData>, "pagination" | "search" | "filters" | "initialPageSize"> = {
+  const dataTableProps: Pick<DataTableProps<TData>, "pagination" | "search" | "filters" | "initialPageSize" | "exportAll"> = {
     initialPageSize: defaultLimit,
-    pagination: { state: paginationState, onPaginationChange: handlePaginationChange },
+    pagination: { state: paginationState, onPaginationChange: handlePaginationChange, onPastEnd: handlePastEnd },
     search: search
       ? { initialValue: searchTermFromUrl, placeholder: search.placeholder, width: search.width, onDebouncedChange: handleDebouncedSearchChange }
       : undefined,
@@ -63,6 +71,8 @@ export function useServerDataTable<TData>(config: ServerDataTableConfig) {
       filters.length > 0
         ? { configs: filters, values: filterValues, onFilterChange: handleFilterChange, onClearAll: clearAllFilters }
         : undefined,
+    // The same filters and order as the rows on screen, 100 a page.
+    exportAll: fetchPage ? (page) => fetchPage(exportPageQuery(searchParams, config, page)) : undefined,
   };
 
   return { queryString, dataTableProps };

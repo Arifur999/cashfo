@@ -9,7 +9,9 @@ const icon = (className: string, glyph: React.ReactNode) => <span className={cn(
 // Toasts as the design draws them: dark, 16px radius, the round icon in
 // the meaning's colour, the action in mint. Bottom left on desktop; sonner
 // moves them to the bottom edge on phones. They leave after 5 seconds, 8
-// when there is an Undo.
+// when there is an Undo. The toast is dark in both themes, so the green and
+// amber icons take the night palette's fixed colours; the red is the danger
+// fill.
 const AppToaster = (props: ToasterProps) => (
   <Toaster
     position="bottom-left"
@@ -18,10 +20,10 @@ const AppToaster = (props: ToasterProps) => (
     offset={24}
     mobileOffset={16}
     icons={{
-      success: icon("bg-[#4CC995] text-forest", <Check strokeWidth={2.5} />),
+      success: icon("bg-night-money text-forest", <Check strokeWidth={2.5} />),
       info: icon("bg-mint-200 text-forest", <Copy />),
-      warning: icon("bg-[#F2B84B] text-[#04140E]", <CircleOff />),
-      error: icon("bg-[#E5484D] text-white", <CircleAlert />),
+      warning: icon("bg-night-amber text-night-ink", <CircleOff />),
+      error: icon("bg-expense-fill text-white", <CircleAlert />),
       loading: icon("bg-white/14 text-white", <Info />),
       close: <X className="size-3.75" />,
     }}

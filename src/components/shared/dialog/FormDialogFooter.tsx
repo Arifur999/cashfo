@@ -1,7 +1,7 @@
 "use client";
 
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -26,8 +26,10 @@ const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disab
     <DialogFooter className={cn("-mx-6 -mb-5 items-center border-t border-line bg-strip px-6 py-4 sm:justify-between", pinned ? "mt-auto" : "mt-4")}>
       <div>{extra}</div>
       <div className="flex flex-col-reverse gap-3 sm:flex-row">
+        {/* The secondary button ConfirmDialog's Cancel is: white, the
+            line-strong edge, sunken on hover. */}
         <DialogClose asChild>
-          <Button type="button" variant="outline" disabled={isPending} className="h-10 border-line-strong bg-surface px-4 font-semibold text-ink hover:bg-surface-sunken">
+          <Button type="button" variant="secondary" size="md" disabled={isPending}>
             {translate("Cancel")}
           </Button>
         </DialogClose>

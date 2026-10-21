@@ -108,4 +108,8 @@ export const adminDashboardDictionary: Record<string, string> = {
   "Tickets with no reply": "উত্তর না পাওয়া টিকিট",
   "Active in 30 days": "৩০ দিনে সক্রিয়",
   "{count} has no one assigned": "{count}টির দায়িত্বে কেউ নেই",
+  // The admin shell (components/modules/Dashboard/): the way back from a
+  // user's page opened from Owners or Workspaces.
+  "All owners": "সব মালিক",
+  "All workspaces": "সব ওয়ার্কস্পেস",
 };

@@ -46,7 +46,8 @@ const VARIANTS = {
   // On the Night drawer.
   onDark: {
     group: "rounded-full bg-white/8 p-0.75",
-    item: "h-8 rounded-full px-3 text-small font-semibold [&[lang=bn]]:text-body [&[lang=bn]]:font-normal",
+    // The page's green focus ring hardly shows on the night panel; mint does.
+    item: "h-8 rounded-full px-3 text-small font-semibold focus-visible:outline-mint-200 focus-visible:-outline-offset-2 [&[lang=bn]]:text-body [&[lang=bn]]:font-normal",
     on: "bg-white text-ink",
     off: "text-white hover:bg-white/10",
   },

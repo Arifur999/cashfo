@@ -126,4 +126,20 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "{count} hours ago": "{count} ঘণ্টা আগে",
   "{count} day ago": "{count} দিন আগে",
   "{count} days ago": "{count} দিন আগে",
+
+  // Switching workspaces: the account menu, the phone drawer, Settings ›
+  // Workspaces, the chooser, the lock screen and the Books notice
+  "See all workspaces": "সব ওয়ার্কস্পেস দেখুন",
+  "Switched to {name}": "{name} খোলা হয়েছে",
+  "Couldn't open that workspace. Please try again.": "ওয়ার্কস্পেসটি খোলা যায়নি। আবার চেষ্টা করুন।",
+  "That workspace isn't available any more.": "এই ওয়ার্কস্পেসটি আর পাওয়া যাচ্ছে না।",
+  "Open it now": "এখনই খুলুন",
+  "Use another workspace": "অন্য ওয়ার্কস্পেস ব্যবহার করুন",
+  "Choose a workspace": "ওয়ার্কস্পেস বেছে নিন",
+  "Workspace locked": "ওয়ার্কস্পেস লক করা",
+  "Books live in a business workspace": "খাতা থাকে ব্যবসায়িক ওয়ার্কস্পেসে",
+  "Accounts, customers and suppliers, receivables and payables and journal entries are kept in a business workspace, apart from your personal money.":
+    "হিসাব, ক্রেতা ও সরবরাহকারী, বকেয়া প্রাপ্য ও দেয় আর জার্নাল এন্ট্রি থাকে ব্যবসায়িক ওয়ার্কস্পেসে, আপনার ব্যক্তিগত টাকা থেকে আলাদা।",
+  "Create a business workspace": "ব্যবসায়িক ওয়ার্কস্পেস তৈরি করুন",
+  "Go home": "হোমে যান",
 };

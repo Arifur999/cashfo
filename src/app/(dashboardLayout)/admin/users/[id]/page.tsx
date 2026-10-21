@@ -7,6 +7,7 @@ import Callout from "@/components/shared/Callout";
 import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { canManage } from "@/lib/authUtils";
 import { formatDateTime } from "@/lib/date";
+import { userListFor } from "@/lib/navItem";
 import { getUserInfo } from "@/services/auth.services";
 import { getOwnerById } from "@/services/owner.services";
 import { getPlans } from "@/services/plan.services";
@@ -16,8 +17,10 @@ import BreadcrumbTitle from "@/components/modules/Dashboard/BreadcrumbTitle";
 
 export const generateMetadata = adminPageTitle("User");
 
-const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
-  const { id } = await params;
+const UserDetailPage = async ({ params, searchParams }: PageProps<"/admin/users/[id]">) => {
+  const [{ id }, { from }] = await Promise.all([params, searchParams]);
+  // Opened from Owners or Workspaces (?from=), the way back leads there.
+  const list = userListFor(Array.isArray(from) ? from[0] : from);
   const [owner, plans, admin] = await Promise.all([
     fetchOrNotFound(getOwnerById(id)),
     // Roles that can't read plans just don't get options to change to.
@@ -30,7 +33,7 @@ const UserDetailPage = async ({ params }: PageProps<"/admin/users/[id]">) => {
   return (
     <div className="flex flex-col gap-4">
       <BreadcrumbTitle title={owner.name} />
-      <BackLink href="/admin/users"><T>All users</T></BackLink>
+      <BackLink href={list.href}><T>{list.back}</T></BackLink>
       <OwnerProfileHeader
         owner={owner}
         actions={

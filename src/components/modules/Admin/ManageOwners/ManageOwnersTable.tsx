@@ -7,6 +7,7 @@ import type { DataTableActions } from "@/components/shared/table/dataTable.types
 import DataTable from "@/components/shared/table/DataTable";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
+import { userRecordHref } from "@/lib/navItem";
 import { buildTableQueryString } from "@/lib/queryString";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { ownersListQuery } from "@/queries/owner.queries";
@@ -27,12 +28,13 @@ const ManageOwnersTable = ({ canResetData }: { canResetData: boolean }) => {
   const { dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config);
   const { activeRow, openDialog, getDialogProps } = useRowDialogs<IOwnerOverviewItem, "reset">();
 
-  // View opens the person. Only SUPER_ADMIN may reset, and only owners that
-  // actually have a workspace.
+  // View opens the person, marked as opened from here so the menu and the
+  // way back return to Owners. Only SUPER_ADMIN may reset, and only owners
+  // that actually have a workspace.
   const actions = useMemo<DataTableActions<IOwnerOverviewItem>>(
     () => ({
       display: "inline",
-      onView: (row) => router.push(`/admin/users/${row.userId}`),
+      onView: (row) => router.push(userRecordHref(row.userId, "owners")),
       extra: [
         {
           label: "Reset data",

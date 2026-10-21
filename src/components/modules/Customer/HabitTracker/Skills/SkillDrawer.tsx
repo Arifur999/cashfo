@@ -107,7 +107,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-[-28px_0_60px_-16px_rgba(11,61,46,0.3)] data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
+      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit skill") : t("Add a skill")}</SheetTitle>

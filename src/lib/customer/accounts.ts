@@ -103,6 +103,8 @@ const EMPTY_LEDGER: AccountLedger = {
   balanceBroughtForward: "0",
   entries: [],
   closingBalance: "0",
+  pageOpeningBalance: "0",
+  pageClosingBalance: "0",
   meta: { page: 1, limit: 50, total: 0, totalPages: 0 },
 };
 

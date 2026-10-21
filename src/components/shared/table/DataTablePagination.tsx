@@ -1,71 +1,43 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
-import { ELLIPSIS_JUMP, getPageWindow } from "@/lib/table/pageWindow";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
-import ShowingRange from "./ShowingRange";
+import ListFooter from "@/components/smartly/list/ListFooter";
+import Pagination from "@/components/smartly/Pagination";
+import { pageSizeOptions } from "./tablePaging";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   totalRows: number;
+  // The list's own page size (initialPageSize, a server list's defaultLimit).
+  defaultPageSize: number;
+  // The list's card, brought back into view after a page change.
+  focusTargetId?: string;
 }
 
-const PAGE_BUTTON = "flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-small font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
-
-// The design's list footer: "Showing 1–10 of 1,284" on the left, the page
-// numbers on the right.
-const DataTablePagination = <TData,>({ table, totalRows }: DataTablePaginationProps<TData>) => {
-  const { translate } = useLocale();
+// The numbered footer of an admin list: the shared Pagination ("Showing
+// 1–10 of 1,284", the pages, rows per page) on the table's own state. A
+// server list's page and size live in the URL (useServerManagedDataTable
+// takes them from table.setPageIndex / setPageSize), an in-memory list's in
+// the table. One page shows the summary alone, as DataTableSimplePager does
+// (Pagination keeps rows per page there while the list holds more rows than
+// the smallest size). The footer keeps the admin board's 20px edges.
+const DataTablePagination = <TData,>({ table, totalRows, defaultPageSize, focusTargetId }: DataTablePaginationProps<TData>) => {
   const { pageIndex, pageSize } = table.getState().pagination;
-  const pageCount = Math.max(table.getPageCount(), 1);
-  const currentPage = pageIndex + 1;
-  const goToPage = (page: number) => table.setPageIndex(Math.min(Math.max(page, 1), pageCount) - 1);
-  const first = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
-  const last = Math.min((pageIndex + 1) * pageSize, totalRows);
 
   return (
-    <div className="flex flex-col gap-3 border-t border-line px-5 py-3 text-small text-ink-muted sm:flex-row sm:items-center sm:justify-between">
-      <p>
-        <ShowingRange first={first} last={last} total={totalRows} />
-      </p>
-
-      <nav aria-label={translate("Pagination")} className="flex items-center gap-1">
-        <button type="button" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} aria-label={translate("Previous page")} className={cn(PAGE_BUTTON, "border-line bg-surface text-ink-2")}>
-          <ChevronLeft className="size-4" aria-hidden="true" />
-        </button>
-
-        {getPageWindow(currentPage, pageCount).map((item) =>
-          typeof item === "number" ? (
-            <button
-              key={item}
-              type="button"
-              aria-label={translate("Page {page}", { page: item })}
-              aria-current={item === currentPage ? "page" : undefined}
-              onClick={() => goToPage(item)}
-              className={cn(PAGE_BUTTON, item === currentPage ? "border-forest bg-forest text-white dark:border-emerald dark:bg-emerald dark:text-on-action" : "border-line bg-surface text-ink-2 hover:bg-surface-sunken")}
-            >
-              {item}
-            </button>
-          ) : (
-            <button
-              key={item}
-              type="button"
-              aria-label={translate(item === "ellipsis-start" ? "Earlier pages" : "Later pages")}
-              onClick={() => goToPage(item === "ellipsis-start" ? currentPage - ELLIPSIS_JUMP : currentPage + ELLIPSIS_JUMP)}
-              className={cn(PAGE_BUTTON, "border-transparent text-ink-muted hover:bg-surface-sunken")}
-            >
-              <MoreHorizontal className="size-4" aria-hidden="true" />
-            </button>
-          ),
-        )}
-
-        <button type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} aria-label={translate("Next page")} className={cn(PAGE_BUTTON, "border-line bg-surface text-ink-2")}>
-          <ChevronRight className="size-4" aria-hidden="true" />
-        </button>
-      </nav>
-    </div>
+    <ListFooter className="px-5 md:px-5">
+      <Pagination
+        page={pageIndex + 1}
+        totalPages={table.getPageCount()}
+        total={totalRows}
+        pageSize={pageSize}
+        onPageChange={(page) => table.setPageIndex(page - 1)}
+        pageSizes={pageSizeOptions(defaultPageSize)}
+        // Keeps the top row in view: page 3 of 10s is page 1 of 25s.
+        onPageSizeChange={(size) => table.setPageSize(size)}
+        focusTargetId={focusTargetId}
+      />
+    </ListFooter>
   );
 };
 

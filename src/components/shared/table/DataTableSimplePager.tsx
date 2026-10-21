@@ -1,38 +1,45 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
+import ListFooter from "@/components/smartly/list/ListFooter";
+import Pagination from "@/components/smartly/Pagination";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { clampPage, pageRange } from "@/lib/table/pageParams";
 import type { DataTableSimplePager as SimplePagerConfig } from "./dataTable.types";
-
-const BUTTON = "h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold text-ink hover:bg-surface-sunken disabled:text-ink-muted disabled:opacity-100";
 
 interface DataTableSimplePagerProps<TData> {
   table: Table<TData>;
   totalRows: number;
   pager: SimplePagerConfig;
+  // The list's card, brought back into view after a page change.
+  focusTargetId?: string;
 }
 
 // The footer of a time-ordered log, as the design draws the audit log: a
 // summary on the left ("1,284 entries · newest first"), "Newer" and
-// "Older" on the right.
-const DataTableSimplePager = <TData,>({ table, totalRows, pager }: DataTableSimplePagerProps<TData>) => {
+// "Older" on the right -- the shared Pagination's simple variant. One page
+// shows the summary alone.
+const DataTableSimplePager = <TData,>({ table, totalRows, pager, focusTargetId }: DataTableSimplePagerProps<TData>) => {
   const { translate } = useLocale();
   const { pageIndex, pageSize } = table.getState().pagination;
-  const first = pageIndex * pageSize + 1;
-  const last = Math.min((pageIndex + 1) * pageSize, totalRows);
+  const pageCount = table.getPageCount();
+  // A stale ?page=99 reads as the last page until the URL catches up.
+  const page = clampPage(pageIndex + 1, pageCount);
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3 text-small text-ink-muted">
-      <span>{pager.summary(totalRows, { first, last })}</span>
-      <span className="flex gap-2">
-        <Button type="button" variant="outline" size="sm" className={BUTTON} disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>
-          {translate(pager.previous)}
-        </Button>
-        <Button type="button" variant="outline" size="sm" className={BUTTON} disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
-          {translate(pager.next)}
-        </Button>
-      </span>
-    </div>
+    <ListFooter className="px-5 md:px-5">
+      <Pagination
+        variant="simple"
+        page={page}
+        totalPages={pageCount}
+        total={totalRows}
+        pageSize={pageSize}
+        onPageChange={(next) => table.setPageIndex(next - 1)}
+        labels={{ previous: translate(pager.previous), next: translate(pager.next) }}
+        summary={pager.summary(totalRows, { ...pageRange(page, pageSize, totalRows), page, pageSize })}
+        focusTargetId={focusTargetId}
+      />
+    </ListFooter>
   );
 };
 

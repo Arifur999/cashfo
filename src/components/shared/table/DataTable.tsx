@@ -1,17 +1,18 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useExportAction } from "@/components/shared/ExportAction";
+import { useId } from "react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import DataTableContent from "./DataTableContent";
 import DataTablePagination from "./DataTablePagination";
 import DataTableSelectionBar from "./DataTableSelectionBar";
 import DataTableSimplePager from "./DataTableSimplePager";
 import DataTableToolbar from "./DataTableToolbar";
-import { exportTableCsv } from "./exportTableCsv";
 import type { DataTableProps } from "./dataTable.types";
+import { DEFAULT_PAGE_SIZE } from "./tablePaging";
 import { useDataTable } from "./useDataTable";
 import { useDataTableReset } from "./useDataTableReset";
+import { useTableExport } from "./useTableExport";
 
 // The single table component. Client-side by default (sorts, filters and
 // pages in memory); passing `pagination` / `sorting` / server search
@@ -33,21 +34,27 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     toolbarRows,
     pager,
     exportFileName,
+    exportAll,
+    getRowId,
     search,
     filters,
     bulkActions,
     pagination,
     meta,
+    initialPageSize = DEFAULT_PAGE_SIZE,
   } = props;
 
   const { translate } = useLocale();
+  // The card the pager brings back into view (and focuses the table in)
+  // after a page change.
+  const listId = useId();
   const table = useDataTable(props);
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const totalRows = pagination ? (meta?.total ?? 0) : table.getFilteredRowModel().rows.length;
-  useExportAction(exportFileName ? () => exportTableCsv(table, exportFileName) : null);
+  useTableExport(table, { exportFileName, exportAll, getRowId });
 
   return (
-    <section className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+    <section id={listId} className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
       {!hideToolbar && (
         <DataTableToolbar
           table={table}
@@ -72,9 +79,9 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
       />
       {totalRows > 0 &&
         (pager ? (
-          <DataTableSimplePager table={table} totalRows={totalRows} pager={pager} />
+          <DataTableSimplePager table={table} totalRows={totalRows} pager={pager} focusTargetId={listId} />
         ) : (
-          table.getPageCount() > 1 && <DataTablePagination table={table} totalRows={totalRows} />
+          <DataTablePagination table={table} totalRows={totalRows} defaultPageSize={initialPageSize} focusTargetId={listId} />
         ))}
       {/* The design's note under a list, behind an (i). */}
       {footer && (
