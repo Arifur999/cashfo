@@ -139,6 +139,8 @@ export const adminSupportDictionary: Record<string, string> = {
   "{total}, all solved": "{total}টি, সবগুলোর সমাধান হয়েছে",
   "{total}, {open} still open": "{total}টি, {open}টি এখনো খোলা",
   "Find in Users": "ব্যবহারকারীদের মধ্যে খুঁজুন",
+  // A search of the queue by the requester's email, not the counted list.
+  "Find their tickets": "তাঁর টিকিটগুলো খুঁজুন",
   "This person's record is gone.": "এই ব্যক্তির রেকর্ড আর নেই।",
 
   // Feature requests

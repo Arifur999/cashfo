@@ -32,8 +32,11 @@ export const ticketStatusHref = (status: string): string => `${TICKETS_ROUTE}?${
 // what the figures count as needing a reply.
 export const AWAITING_REPLY_HREF = `${TICKETS_ROUTE}?awaitingReply=true`;
 
-// The requester's other tickets in the queue, found by their email: the
-// open ones while any are open (they still need the team), else the solved.
+// A search of the queue by the requester's email: the open tab while any of
+// their earlier tickets is open (they still need the team), else the solved.
+// It is a search, not the "Earlier tickets" count: it also holds the ticket
+// being read when that one is in the tab, and anyone whose name or email
+// contains this one, so the card labels it as a search.
 export const requesterTicketsHref = (email: string, history: { total: number; solved: number }): string => {
   const params = new URLSearchParams({ search: email });
   if (history.total > 0 && history.solved === history.total) params.set("status", "DONE");
