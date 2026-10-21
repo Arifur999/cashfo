@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowRight, Building2, Check, CreditCard, Info, Lock, Pencil, Plus, Trash2, UserRound, Users } from "lucide-react";
+import { ArrowRight, Check, CreditCard, Info, Lock, Pencil, Plus, Store, Trash2, User, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { CreateWorkspaceModal } from "@/components/modules/Customer/Workspace/CreateWorkspaceModal";
@@ -13,12 +13,15 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
+import ErrorState from "@/components/smartly/ErrorState";
+import IconTile from "@/components/smartly/IconTile";
 import type { WorkspaceListItem } from "@/lib/customer/api";
 import { deleteBusinessAction, listBusinessesAction, switchWorkspaceAction } from "@/lib/customer/businessActions";
 import { formatCurrency } from "@/lib/customer/currency";
+import { ownWorkspaces } from "@/lib/customer/settingsDisplay";
 import { workspaceName } from "@/lib/customer/workspaceSwitch";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
 
 const TYPE_LABEL = { PERSONAL: "Personal", BUSINESS: "Business", GROUP: "Group" } as const;
 const ROLE_LABEL = { OWNER: "Owner", ACCOUNTANT: "Accountant", STAFF: "Staff" } as const;
@@ -29,9 +32,13 @@ const TIPS = [
   { icon: Users, text: "Mess and family groups live in Group expenses, not here." },
 ];
 
+// Under a finger every row button is 44px tall.
+const ROW_BUTTON = "pointer-coarse:h-11";
+
 interface WorkspacesSectionProps {
-  // Read by the server page, so the list is there on the first paint.
-  initialBusinesses: WorkspaceListItem[];
+  // Read by the server page, so the list is there on the first paint; null
+  // when it couldn't be read (the card then says so, with Try again).
+  initialBusinesses: WorkspaceListItem[] | null;
 }
 
 // Your personal and business workspaces, with what each one costs. Open
@@ -49,19 +56,35 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
   const [isPending, startTransition] = useTransition();
 
   // The list needs the richer shape (phone, email, fee) the session's user
-  // doesn't carry, so after every change it is fetched again.
+  // doesn't carry, so after every change it is fetched again. A failed
+  // fetch keeps the list on screen and says so; with no list yet, the card
+  // keeps its Try again.
   const [version, setVersion] = useState(0);
+  const [reading, setReading] = useState(false);
+  const settle = useEffectEvent((result: Awaited<ReturnType<typeof listBusinessesAction>> | null) => {
+    setReading(false);
+    if (result?.success && result.data) setBusinesses(result.data);
+    else toast.error(t("Couldn't load your workspaces"));
+  });
   useEffect(() => {
     if (version === 0) return;
     let cancelled = false;
-    listBusinessesAction().then((result) => {
-      if (!cancelled && result.success && result.data) setBusinesses(result.data);
-    });
+    listBusinessesAction().then(
+      (result) => {
+        if (!cancelled) settle(result);
+      },
+      () => {
+        if (!cancelled) settle(null);
+      },
+    );
     return () => {
       cancelled = true;
     };
   }, [version]);
-  const reload = () => setVersion((v) => v + 1);
+  const reload = () => {
+    setReading(true);
+    setVersion((v) => v + 1);
+  };
 
   // The personal workspace is literally named "Personal" in the database;
   // it reads better as the account holder's name.
@@ -90,31 +113,48 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
   return (
     <div className="flex max-w-220 flex-col gap-5">
       <Card padding="none" className="overflow-hidden">
-        <div className="flex items-start justify-between gap-3 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3 p-5">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <h2 className="text-h3 text-ink">{t("Workspaces")}</h2>
+            <h2 className="text-h3 text-ink">{t("Your workspaces")}</h2>
             <span className="text-small text-ink-muted">{t("Manage your personal and business workspaces.")}</span>
           </div>
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={() => setCreateOpen(true)} className={ROW_BUTTON}>
             <Plus strokeWidth={2.25} />
             {t("New workspace")}
           </Button>
         </div>
-        {businesses === null && <div className="border-t border-divider px-5 py-6 text-small text-ink-muted">{t("Loading...")}</div>}
+        {businesses === null &&
+          (reading ? (
+            <div className="flex justify-center border-t border-divider py-10">
+              <Loader size={24} label="Loading..." />
+            </div>
+          ) : (
+            // Nothing listed is not "no workspaces": the personal one always
+            // exists, and a second one made now would be a duplicate.
+            <div className="border-t border-divider">
+              <ErrorState bordered={false} title={t("Couldn't load your workspaces")} onRetry={reload} />
+            </div>
+          ))}
         {/* Family and mess groups live in Group expenses, not here, as the
             card below says. */}
-        {(businesses ?? []).filter((business) => business.type !== "GROUP").map((business) => {
-          const personal = business.type === "PERSONAL";
+        {ownWorkspaces(businesses ?? []).map((business) => {
+          const isBusiness = business.type === "BUSINESS";
           const trialActive = business.trialEndsAt ? new Date(business.trialEndsAt) > new Date() : null;
           const contact = [business.phone, business.email].filter(Boolean).join(" · ");
           const active = business.id === activeBusinessId;
           const opening = business.id === switcher.pendingId;
+          const name = displayName(business);
           return (
-            <div key={business.id} className="flex flex-col gap-3 border-t border-divider p-5 sm:flex-row sm:items-center sm:gap-4">
-              <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md", personal ? "bg-mint-50 text-emerald" : "bg-pillar-loans-soft text-pillar-loans")}>{personal ? <UserRound className="size-5" aria-hidden="true" /> : <Building2 className="size-5" aria-hidden="true" />}</span>
+            // The section's own width decides when the buttons fit beside
+            // the name: from 1024px the rail leaves the section 440px.
+            <div key={business.id} className="flex flex-col gap-3 border-t border-divider p-5 @xl:flex-row @xl:items-center @xl:gap-4">
+              {/* The account menu's and the drawer's icons for the same workspace. */}
+              <IconTile size={40} tone={isBusiness ? "loans" : "money"}>
+                {isBusiness ? <Store /> : <User />}
+              </IconTile>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-2">
-                  <b className="text-body-lg font-semibold text-ink">{displayName(business)}</b>
+                  <b className="min-w-0 text-body-lg font-semibold wrap-break-word text-ink">{name}</b>
                   {active && (
                     <Chip tone="mint" size="sm">
                       <Check className="size-3" strokeWidth={3} aria-hidden="true" />
@@ -129,7 +169,8 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
                   {business.hasPinLock && (
                     <span title={t("PIN lock on")} className="flex items-center gap-1 text-caption font-semibold text-ink-muted">
                       <Lock className="size-3" aria-hidden="true" />
-                      {t("PIN")}
+                      <span aria-hidden="true">{t("PIN")}</span>
+                      <span className="sr-only">{t("PIN lock on")}</span>
                     </span>
                   )}
                   {business.trialEndsAt && (
@@ -143,45 +184,31 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
                 </span>
                 {contact && <span className="truncate text-small text-ink-muted">{contact}</span>}
                 {business.monthlyFee !== null && (
-                  <span className="text-small text-ink-muted">
-                    {t("Extra workspace fee:")} <b className="font-semibold text-ink-2">{formatCurrency(business.monthlyFee, business.currency)}</b> {t("a month, half your plan")}
-                  </span>
+                  <span className="text-small text-ink-muted">{fillNodes(t("Extra workspace fee: {amount} a month, half your plan"), { amount: <b className="font-semibold text-ink-2">{formatCurrency(business.monthlyFee, business.currency)}</b> })}</span>
                 )}
+                {/* Said in words: a tooltip never shows under a finger or to most screen readers. */}
+                {business.isDefault && <span className="text-caption text-ink-muted">{t("Your personal workspace always stays.")}</span>}
               </span>
               <span className="flex shrink-0 flex-wrap gap-2">
                 {!active && (
                   // Named for its workspace, or a screen reader lists "Open, Open, Open".
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => switcher.choose(business)}
-                    disabled={switcher.busy}
-                    aria-busy={opening || undefined}
-                    aria-label={t("Open {name}", { name: displayName(business) })}
-                  >
+                  <Button variant="secondary" size="sm" onClick={() => switcher.choose(business)} disabled={switcher.busy} aria-busy={opening || undefined} aria-label={t("Open {name}", { name })} className={ROW_BUTTON}>
                     {opening ? <Loader size={14} label={t("Loading...")} /> : switcher.isLocked(business) && <Lock aria-hidden="true" />}
                     {t("Open")}
                     {!opening && <ArrowRight aria-hidden="true" />}
                   </Button>
                 )}
                 {business.role === "OWNER" && (
-                  <Button variant="secondary" size="sm" onClick={() => setEditing(business)}>
+                  <Button variant="secondary" size="sm" onClick={() => setEditing(business)} aria-label={t("Edit {name}", { name })} className={ROW_BUTTON}>
                     <Pencil />
                     {t("Edit")}
                   </Button>
                 )}
-                {business.isDefault ? (
-                  <span title={t("Your personal workspace can't be deleted. Every account always has one.")} className="flex h-9 items-center gap-2 px-3 text-body font-semibold text-ink-muted">
-                    <Lock className="size-4" aria-hidden="true" />
-                    {t("Can't delete")}
-                  </span>
-                ) : (
-                  business.role === "OWNER" && (
-                    <Button variant="ghost" size="sm" onClick={() => setRemoving(business)} disabled={isPending} className="text-expense hover:bg-expense-soft hover:text-expense">
-                      <Trash2 />
-                      {t("Delete")}
-                    </Button>
-                  )
+                {!business.isDefault && business.role === "OWNER" && (
+                  <Button variant="ghost" size="sm" onClick={() => setRemoving(business)} disabled={isPending} aria-label={t("Delete {name}", { name })} className={`text-expense hover:bg-expense-soft hover:text-expense ${ROW_BUTTON}`}>
+                    <Trash2 />
+                    {t("Delete")}
+                  </Button>
                 )}
               </span>
             </div>
@@ -194,7 +221,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
           <h3 className="text-h3 text-ink">{t("Editing a workspace")}</h3>
           <span className="text-small text-ink-muted">{t("Edit changes the name, phone, email and PIN lock.")}</span>
         </div>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 @2xl:grid-cols-3">
           {TIPS.map((tip) => (
             <div key={tip.text} className="flex gap-3 rounded-md bg-strip px-4 py-3">
               <tip.icon className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
@@ -203,7 +230,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
           ))}
         </div>
         <span className="flex items-center gap-2 text-caption text-ink-muted">
-          <Info className="size-3.5" aria-hidden="true" />
+          <Info className="size-3.5 shrink-0" aria-hidden="true" />
           {t("Deleting a workspace removes its wallets, transactions and books for good.")}
         </span>
       </Card>
@@ -223,7 +250,16 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
           reload();
         }}
       />
-      <ConfirmDialog open={removing !== null} onClose={() => setRemoving(null)} onConfirm={remove} isPending={isPending} danger title={t("Delete this workspace?")} description={removing ? `${displayName(removing)} ${t("and everything in it will be removed. This cannot be undone.")}` : ""} confirmLabel={t("Delete")} />
+      <ConfirmDialog
+        open={removing !== null}
+        onClose={() => setRemoving(null)}
+        onConfirm={remove}
+        isPending={isPending}
+        danger
+        title={t("Delete this workspace?")}
+        description={removing ? t("{name} and everything in it will be removed. This cannot be undone.", { name: displayName(removing) }) : ""}
+        confirmLabel={t("Delete")}
+      />
       {switcher.pinPrompt}
     </div>
   );

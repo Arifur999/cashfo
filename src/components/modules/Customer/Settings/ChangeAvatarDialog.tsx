@@ -9,8 +9,8 @@ import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { uploadAvatarAction } from "@/lib/customer/authActions";
-import { initialsOf } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { getInitials } from "@/lib/text";
 
 interface ChangeAvatarDialogProps {
   open: boolean;
@@ -90,7 +90,7 @@ export function ChangeAvatarDialog({ open, onClose }: ChangeAvatarDialogProps) {
       <AlertDialogContent className="w-110 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
         <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
           <AlertDialogTitle className="text-h3 text-ink">{t("Change photo")}</AlertDialogTitle>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
+          <button type="button" onClick={onClose} disabled={isPending} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:size-11">
             <X className="size-4.5" aria-hidden="true" />
           </button>
         </div>
@@ -101,19 +101,22 @@ export function ChangeAvatarDialog({ open, onClose }: ChangeAvatarDialogProps) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={shown} alt="" className="size-30 rounded-full object-cover" />
           ) : (
-            <span className="flex size-30 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--emerald)_0%,var(--forest)_100%)] text-display text-white">{initialsOf(user.name)}</span>
+            // The top bar's avatar (forest, mint initials), as large as the preview.
+            <span aria-hidden="true" className="flex size-30 items-center justify-center rounded-full bg-forest text-display text-mint-200">
+              {getInitials(user.name) || "?"}
+            </span>
           )}
           <input ref={fileInput} type="file" accept={ALLOWED_TYPES.join(",")} className="hidden" onChange={picked} />
-          <Button type="button" variant="secondary" onClick={() => fileInput.current?.click()} disabled={isPending}>
+          <Button type="button" variant="secondary" onClick={() => fileInput.current?.click()} disabled={isPending} className="pointer-coarse:h-11">
             <ImagePlus />
             {t(file ? "Pick another" : "Choose a photo")}
           </Button>
         </div>
         <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending} className="pointer-coarse:h-11">
             {t("Cancel")}
           </Button>
-          <Button type="button" variant="action" onClick={upload} disabled={!file || isPending} className="px-5">
+          <Button type="button" variant="action" onClick={upload} disabled={!file || isPending} className="px-5 pointer-coarse:h-11">
             {isPending ? <Loader /> : <Upload />}
             {t("Upload")}
           </Button>
