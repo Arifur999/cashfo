@@ -335,11 +335,12 @@ function SearchPalette() {
       <button
         type="button"
         onClick={() => changeOpen(true)}
+        aria-label={label}
         aria-keyshortcuts="Control+K Meta+K"
         className="hidden h-10 w-64 shrink-0 items-center gap-3 rounded-md border border-line bg-strip pr-2 pl-4 text-body text-ink-muted hover:border-line-strong min-[1400px]:flex 2xl:w-80"
       >
         <Search className="size-4 shrink-0" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-left">{t("Search pages, people, transactions…")}</span>
+        <span className="min-w-0 flex-1 truncate text-left">{t("Search…")}</span>
         <Kbd className={KBD}>Ctrl K</Kbd>
       </button>
 

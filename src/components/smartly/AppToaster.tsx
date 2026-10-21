@@ -8,8 +8,9 @@ const icon = (className: string, glyph: React.ReactNode) => <span className={cn(
 
 // Toasts as the design draws them: dark, 16px radius, the round icon in
 // the meaning's colour, the action in mint. Bottom left on desktop; sonner
-// moves them to the bottom edge on phones. They leave after 5 seconds, 8
-// when there is an Undo. The toast is dark in both themes, so the green and
+// moves them to the bottom edge on phones, 88px up so they clear the
+// floating Add button (24px off the edge, 56px tall, an 8px gap). They
+// leave after 5 seconds, 8 when there is an Undo. The toast is dark in both themes, so the green and
 // amber icons take the night palette's fixed colours; the red is the danger
 // fill.
 const AppToaster = (props: ToasterProps) => (
@@ -18,7 +19,7 @@ const AppToaster = (props: ToasterProps) => (
     duration={5000}
     gap={12}
     offset={24}
-    mobileOffset={16}
+    mobileOffset={{ bottom: 88, left: 16, right: 16 }}
     icons={{
       success: icon("bg-night-money text-forest", <Check strokeWidth={2.5} />),
       info: icon("bg-mint-200 text-forest", <Copy />),
