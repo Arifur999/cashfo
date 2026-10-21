@@ -1,9 +1,7 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
 import { Check, Info } from "lucide-react";
-import { useState } from "react";
 import { resetPasswordAction } from "@/app/(auth)/reset-password/_action";
 import AppForm from "@/components/shared/form/AppForm";
 import AppPasswordField from "@/components/shared/form/AppPasswordField";
@@ -16,6 +14,7 @@ import { getPasswordMismatchError, resetPasswordFormZodSchema, type IResetPasswo
 import AuthLink from "./AuthLink";
 import FormErrorCallout from "./FormErrorCallout";
 import PasswordStrengthMeter from "./PasswordStrengthMeter";
+import { useAuthAction } from "./useAuthAction";
 
 const defaultValues: IResetPasswordFormValues = { newPassword: "", confirmPassword: "" };
 const schema = resetPasswordFormZodSchema.shape;
@@ -24,19 +23,13 @@ const schema = resetPasswordFormZodSchema.shape;
 // and out everywhere else.
 const ResetPasswordForm = ({ token }: { token: string }) => {
   const { translate } = useLocale();
-  const [serverError, setServerError] = useState<string | null>(null);
-
-  const { mutateAsync, isPending } = useMutation({ mutationFn: resetPasswordAction });
+  const { run, error, isPending } = useAuthAction(resetPasswordAction);
 
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
-      setServerError(null);
-      // Success redirects away; only a failure ever resolves here.
-      const result = await mutateAsync({ token, newPassword: value.newPassword });
-      if (!result.success) {
-        setServerError(result.message);
-      }
+      // Success redirects away; only a failure ever resolves with an answer.
+      await run({ token, newPassword: value.newPassword });
     },
   });
 
@@ -71,12 +64,15 @@ const ResetPasswordForm = ({ token }: { token: string }) => {
 
       <p className="text-body text-ink-2">{translate("You'll be signed out on every other device.")}</p>
 
-      {serverError && (
-        <div className="flex flex-col gap-2">
-          <FormErrorCallout message={serverError} />
-          <AuthLink href={FORGOT_PASSWORD_ROUTE} className="text-body">
-            {translate("Request a new link")}
-          </AuthLink>
+      {error && (
+        <div className="flex flex-col gap-1">
+          <FormErrorCallout error={error} />
+          {/* A page older than the site needs the reload, not a new link. */}
+          {!error.reload && (
+            <AuthLink href={FORGOT_PASSWORD_ROUTE} className="inline-flex min-h-11 items-center self-start text-body">
+              {translate("Request a new link")}
+            </AuthLink>
+          )}
         </div>
       )}
 
