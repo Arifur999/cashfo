@@ -1,105 +1,147 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
-import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
+import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowLink, ListSummaryRow, type SummaryKind } from "@/components/smartly/list";
+import Pagination from "@/components/smartly/Pagination";
 import type { Account, AccountLedger, AccountSummary } from "@/lib/customer/api";
+import { booksDate, ledgerWords, type LedgerFigures } from "@/lib/customer/booksDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
 import { ledgerDirection } from "@/lib/customer/ledger";
+import { cancelledLabel } from "@/lib/customer/transactionDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { BalanceText } from "../shared/BalanceText";
 
 interface LedgerTableProps {
+  // The ListCard's id: the pager brings the table back into view and focus.
+  id: string;
   account: Account;
   ledger: AccountLedger;
+  figures: LedgerFigures;
   summary: AccountSummary;
   currency: string;
-  // The first day of the period; empty for all time.
+  today: string;
+  // The first and last day of the period; empty for all time.
   from?: string;
-  onPage: (page: number) => void;
+  to?: string;
+  hrefFor: (page: number) => string;
+  // Another period is loading.
+  busy?: boolean;
 }
 
-const GRID = "md:grid md:grid-cols-[110px_minmax(0,1fr)_100px_120px_120px_130px] md:items-center md:gap-x-4";
+// The rows' widths: narrower until xl, where Reference gets its own column
+// (below xl it sits under the description), so the description keeps room
+// at 768px and beside the 1024px sidebar.
+const COLUMNS = "md:grid-cols-[96px_minmax(0,1fr)_110px_110px_120px] xl:grid-cols-[110px_minmax(0,1fr)_100px_120px_120px_130px]";
+
+const PAGE_SIZE = 50;
 
 // Every movement through the account in the period, oldest first, with the
-// running balance; the opening balance leads and the totals close it.
-export function LedgerTable({ account, ledger, summary, currency, from, onPage }: LedgerTableProps) {
-  const { t } = useLocale();
-  const change = Number(ledger.closingBalance) - Number(ledger.balanceBroughtForward);
+// running balance. Page 1 opens on the period's opening balance and later
+// pages on what the pages before brought forward; every page but the last
+// carries its balance forward, and the last closes on the period's closing
+// balance.
+export function LedgerTable({ id, account, ledger, figures, summary, currency, today, from, to, hrefFor, busy = false }: LedgerTableProps) {
+  const { t, locale } = useLocale();
+  const words = ledgerWords(account);
   const adjustment = Number(summary.adjustment);
-  const sum = [`${formatCurrency(summary.totalIn, currency)} − ${formatCurrency(summary.totalOut, currency)}`, adjustment !== 0 ? `${adjustment > 0 ? "+" : "−"} ${formatCurrency(Math.abs(adjustment), currency)}` : null].filter(Boolean).join(" ");
   const dash = <span className="text-ink-muted">—</span>;
+  const day = (value: string) => booksDate(value, locale, { today, weekday: true });
+
+  // The period's change as a sum: in − out, the transfers, and what a void
+  // in another period left behind, each term written out.
+  const terms = [`${formatCurrency(summary.totalIn, currency)} − ${formatCurrency(summary.totalOut, currency)}`];
+  if (adjustment !== 0) terms.push(`${adjustment > 0 ? "+" : "−"} ${formatCurrency(Math.abs(adjustment), currency)}`);
+  if (figures.voided !== 0) terms.push(`${figures.voided > 0 ? "+" : "−"} ${t("{amount} voided or reversed", { amount: formatCurrency(Math.abs(figures.voided), currency) })}`);
+  const sentence = words.money
+    ? adjustment !== 0
+      ? "Money in − money out ± transfers is the change in balance: {sum} = {change}"
+      : "Money in − money out is the change in balance: {sum} = {change}"
+    : adjustment !== 0
+      ? "Increases − decreases ± transfers is the change in balance: {sum} = {change}"
+      : "Increases − decreases is the change in balance: {sum} = {change}";
+
+  const summaryRow = (kind: SummaryKind, label: string, value: number, note?: string | null) => (
+    <ListSummaryRow kind={kind} columns={COLUMNS}>
+      <span role="cell" className="flex min-w-0 flex-col md:col-span-4 xl:col-span-5">
+        <span className="font-semibold text-ink">{label}</span>
+        {note && <span className="text-caption text-ink-muted">{note}</span>}
+      </span>
+      <span role="cell" className="text-right">
+        <BalanceText value={value} currency={currency} className="font-semibold" />
+      </span>
+    </ListSummaryRow>
+  );
 
   return (
-    <Card padding="none" className="overflow-hidden">
-      <div className={cn("hidden bg-table-head px-5 py-3 text-caption font-semibold text-ink-muted", GRID)}>
-        <span>{t("Date")}</span>
-        <span>{t("Description")}</span>
-        <span>{t("Reference")}</span>
-        <span className="text-right">{t("Money in")}</span>
-        <span className="text-right">{t("Money out")}</span>
-        <span className="text-right">{t("Balance")}</span>
-      </div>
-      <div className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-divider bg-table-head px-5 py-2 text-body", GRID)}>
-        <span className="hidden text-small whitespace-nowrap text-ink-2 md:block">{from ? formatDate(from, "EEE, d MMM") : ""}</span>
-        <span className="font-medium text-ink-muted">{t("Opening balance")}</span>
-        <span className="hidden md:block" />
-        <span className="hidden text-right md:block">{dash}</span>
-        <span className="hidden text-right md:block">{dash}</span>
-        <BalanceText value={ledger.balanceBroughtForward} currency={currency} className="font-semibold md:text-right" />
-      </div>
-      {ledger.entries.length === 0 && <p className="border-t border-divider px-5 py-10 text-center text-body text-ink-muted">{t("No entries in this period.")}</p>}
+    <ListCard
+      id={id}
+      label={t("Ledger")}
+      busy={busy}
+      className={cn("transition-opacity", busy && "opacity-60")}
+      footer={
+        ledger.meta.total > 0 && (
+          <ListFooter>
+            <p className="tabular-nums">{t(sentence, { sum: terms.join(" "), change: formatSignedCurrency(figures.change, currency) })}</p>
+            <Pagination page={ledger.meta.page} totalPages={ledger.meta.totalPages} total={ledger.meta.total} pageSize={ledger.meta.limit || PAGE_SIZE} hrefFor={hrefFor} focusTargetId={id} className="print:hidden" />
+          </ListFooter>
+        )
+      }
+    >
+      <ListHead columns={COLUMNS}>
+        <ListHeadCell>{t("Date")}</ListHeadCell>
+        <ListHeadCell>{t("Description")}</ListHeadCell>
+        <ListHeadCell className="hidden xl:block">{t("Reference")}</ListHeadCell>
+        <ListHeadCell align="end">{t(words.in)}</ListHeadCell>
+        <ListHeadCell align="end">{t(words.out)}</ListHeadCell>
+        <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
+      </ListHead>
+
+      {figures.firstPage ? summaryRow("opening", t("Opening balance"), figures.opening, from ? day(from) : null) : summaryRow("brought-forward", t("Brought forward"), figures.pageOpening, t("From the pages before"))}
+
+      {ledger.entries.length === 0 && <ListEmpty title={t("No entries in this period.")} />}
       {ledger.entries.map((row) => {
-        const direction = ledgerDirection(row.entryType, account.accountType);
-        const voided = row.transactionStatus === "VOIDED";
-        const amount = direction === "in" ? <span className="font-bold text-income tabular-nums whitespace-nowrap">{formatSignedCurrency(row.amount, currency)}</span> : <span className="font-bold text-expense tabular-nums whitespace-nowrap">{formatSignedCurrency(-Number(row.amount), currency)}</span>;
+        const into = ledgerDirection(row.entryType, account.accountType) === "in";
+        // A voided entry and the reversal that undid it both stay listed (they
+        // net to nothing), set back and struck through, each with its chip.
+        const cancelled = cancelledLabel({ status: row.transactionStatus, reversalOfId: row.reversalOfId ?? null });
+        // Money accounts colour what came in and went out; elsewhere a debit
+        // only grows the balance, so the figures stay in ink.
+        const tone = cancelled ? "text-ink-muted line-through" : words.money ? (into ? "text-income" : "text-expense") : "text-ink";
+        const amount = <span className={cn("font-bold tabular-nums whitespace-nowrap", tone)}>{formatSignedCurrency(into ? row.amount : -Number(row.amount), currency)}</span>;
         return (
-          <Link key={row.entryId} href={`/transactions/${row.transactionId}`} className={cn("flex min-h-14 items-center justify-between gap-3 border-t border-divider px-5 py-2 text-body transition-colors hover:bg-hover", GRID, voided && "opacity-60")}>
-            <span className="flex min-w-0 flex-col md:contents">
-              <span className="text-small whitespace-nowrap text-ink-2 max-md:text-caption max-md:text-ink-muted">{formatDate(row.date, "EEE, d MMM")}</span>
+          <ListRow key={row.entryId} columns={COLUMNS} muted={cancelled !== null}>
+            <ListCell className="hidden text-small whitespace-nowrap text-ink-2 md:block">{day(row.date)}</ListCell>
+            <ListCell className="flex min-w-0 flex-col">
+              <span className="text-caption text-ink-muted md:hidden">{day(row.date)}</span>
               <span className="flex min-w-0 items-center gap-2">
-                <span className={cn("truncate font-semibold text-ink", voided && "line-through")}>{row.description ?? t("No description")}</span>
-                {voided && (
+                <ListRowLink href={`/transactions/${row.transactionId}`} className={cn("truncate font-semibold text-ink", cancelled && "line-through")}>
+                  {row.description ?? t("No description")}
+                </ListRowLink>
+                {cancelled && (
                   <Chip tone="expense" size="sm">
-                    {t("Voided")}
+                    {t(cancelled)}
                   </Chip>
                 )}
               </span>
-              <span className={cn("font-mono text-caption text-ink-muted", !row.referenceNo && "hidden md:block")}>{row.referenceNo ?? ""}</span>
-            </span>
-            <span className="hidden text-right md:block">{direction === "in" ? amount : dash}</span>
-            <span className="hidden text-right md:block">{direction === "out" ? amount : dash}</span>
-            <span className="flex shrink-0 flex-col items-end md:contents">
+              {row.referenceNo && <span className="truncate font-mono text-caption text-ink-muted xl:hidden">{row.referenceNo}</span>}
+            </ListCell>
+            <ListCell className="hidden truncate font-mono text-caption text-ink-muted xl:block">{row.referenceNo ?? ""}</ListCell>
+            <ListCell align="end" className="hidden md:block">
+              {into ? amount : dash}
+            </ListCell>
+            <ListCell align="end" className="hidden md:block">
+              {into ? dash : amount}
+            </ListCell>
+            <ListCell align="end" className="flex flex-col items-end md:block">
               <span className="md:hidden">{amount}</span>
-              <BalanceText value={row.runningBalance} currency={currency} className="font-semibold max-md:text-caption max-md:font-normal max-md:text-ink-muted md:text-right" />
-            </span>
-          </Link>
+              <BalanceText value={row.runningBalance} currency={currency} className="font-semibold max-md:text-caption max-md:font-normal max-md:text-ink-muted" />
+            </ListCell>
+          </ListRow>
         );
       })}
-      <div className="flex flex-col gap-2 border-t border-line px-5 py-3 text-small text-ink-muted sm:flex-row sm:items-center sm:justify-between">
-        <span className="whitespace-nowrap">
-          {ledger.meta.total} {t(ledger.meta.total === 1 ? "entry" : "entries")}
-        </span>
-        {ledger.entries.length > 0 && (
-          <span className="tabular-nums">
-            {t(adjustment !== 0 ? "Money in − money out ± transfers is the change in balance:" : "Money in − money out is the change in balance:")} {sum} = {formatSignedCurrency(change, currency)}
-          </span>
-        )}
-        {ledger.meta.totalPages > 1 && (
-          <span className="flex items-center gap-2 print:hidden">
-            {t("Page")} {ledger.meta.page} {t("of")} {ledger.meta.totalPages}
-            <button type="button" disabled={ledger.meta.page <= 1} onClick={() => onPage(ledger.meta.page - 1)} aria-label={t("Previous page")} className="flex size-8 items-center justify-center rounded-md border border-line bg-surface text-ink-2 disabled:opacity-50">
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <button type="button" disabled={ledger.meta.page >= ledger.meta.totalPages} onClick={() => onPage(ledger.meta.page + 1)} aria-label={t("Next page")} className="flex size-8 items-center justify-center rounded-md border border-line bg-surface text-ink-2 disabled:opacity-50">
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </button>
-          </span>
-        )}
-      </div>
-    </Card>
+
+      {ledger.entries.length > 0 && (figures.lastPage ? summaryRow("closing", t("Closing balance"), figures.closing, to ? day(to) : null) : summaryRow("carried-forward", t("Carried forward"), figures.pageClosing, t("To the next page")))}
+    </ListCard>
   );
 }

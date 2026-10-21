@@ -1,6 +1,40 @@
 import { describe, expect, it } from "vitest";
-import type { Account, AccountGroup, Contact, OverdueRow, Transaction } from "./api";
-import { accountsCsvRows, agingFromInvoices, agingShares, agingTotal, booksBalance, contactStats, contactsCsvRows, daysBetween, descendantIds, filterAccounts, filterContacts, flattenAccounts, hasAccountCodes, journalEntries, journalTotals, lastRow, lateByContact, overdueOver30, statementRows, yearRows } from "./booksDisplay";
+import type { Account, AccountGroup, AccountLedger, Contact, ContactBalanceDetail, LedgerRow, OverdueRow, Transaction } from "./api";
+import {
+  accountsCsvRows,
+  agingFor,
+  agingFromInvoices,
+  agingShares,
+  agingTotal,
+  booksBalance,
+  booksDate,
+  booksRange,
+  contactOwed,
+  contactStats,
+  contactsCsvRows,
+  daysBetween,
+  descendantIds,
+  filterAccounts,
+  filterContacts,
+  findInChart,
+  flattenAccounts,
+  hasAccountCodes,
+  hasJournalAmounts,
+  isAppManagedAccount,
+  isMoneyAccount,
+  journalEntries,
+  journalTotals,
+  lastRow,
+  lateByContact,
+  ledgerFigures,
+  ledgerWords,
+  lineNeedsAccount,
+  overdueOver30,
+  statementRows,
+  statementRowsFromApi,
+  subtypeLabel,
+  yearRows,
+} from "./booksDisplay";
 
 function account(over: Partial<Account> & { id: string; accountType: Account["accountType"]; currentBalance: string }): Account {
   return { businessId: "b", parentId: null, name: over.id, nameBn: null, accountNumber: null, accountSubtype: null, openingBalance: "0.00", isSystemAccount: false, status: "ACTIVE", displayOrder: 0, children: [], ...over };
@@ -14,6 +48,9 @@ const GROUPS: AccountGroup[] = [
   { accountType: "EXPENSE", accounts: [account({ id: "Rent", accountType: "EXPENSE", currentBalance: "39200.00" })] },
 ];
 
+// A translator that marks what it was asked to translate.
+const bracket = (key: string) => `[${key}]`;
+
 describe("accounts", () => {
   it("flattens a tree parents first and searches it", () => {
     const rows = flattenAccounts(GROUPS[0].accounts);
@@ -22,6 +59,12 @@ describe("accounts", () => {
     expect(filterAccounts(rows, "cash").map((r) => r.account.id)).toEqual(["Cash"]);
     expect(filterAccounts(rows, "")).toHaveLength(3);
     expect([...descendantIds(GROUPS[0].accounts[1])]).toEqual(["Bank", "Branch"]);
+  });
+
+  it("finds an account in the chart with its sub-accounts", () => {
+    expect(findInChart(GROUPS, "Bank")?.children.map((child) => child.id)).toEqual(["Branch"]);
+    expect(findInChart(GROUPS, "Branch")?.id).toBe("Branch");
+    expect(findInChart(GROUPS, "missing")).toBeUndefined();
   });
 
   it("knows whether codes are worth a column and lays the chart out as rows", () => {
@@ -33,6 +76,35 @@ describe("accounts", () => {
       ["", "Branch", "Asset", "", 100],
       ["", "Loan", "Liability", "", 250000],
     ]);
+    expect(accountsCsvRows(GROUPS.slice(4))).toEqual([["", "Rent", "Expense", "", 39200]]);
+  });
+
+  it("writes the chart's file in the reader's language", () => {
+    const named: AccountGroup[] = [{ accountType: "ASSET", accounts: [account({ id: "Cash", nameBn: "নগদ টাকা", accountType: "ASSET", currentBalance: "10.00", accountSubtype: "mfs" })] }];
+    expect(accountsCsvRows(named, bracket, "BN")).toEqual([["", "নগদ টাকা", "[Asset]", "[Mobile banking]", 10]]);
+    expect(accountsCsvRows(GROUPS.slice(4), bracket)).toEqual([["", "Rent", "[Expense@@account]", "", 39200]]);
+  });
+
+  it("names the kinds the app gives its own accounts, and leaves an unknown one as it is", () => {
+    expect(subtypeLabel("fixed-assets")).toBe("Fixed assets");
+    expect(subtypeLabel("referral-bonus")).toBe("Referral bonus");
+    expect(subtypeLabel("loan")).toBe("Loan");
+    expect(subtypeLabel("something-new")).toBe("something-new");
+    expect(subtypeLabel(null)).toBeNull();
+  });
+
+  it("knows which system accounts the app keeps from being archived or removed", () => {
+    const system = (accountType: Account["accountType"], accountSubtype: string | null) => account({ id: "x", accountType, accountSubtype, currentBalance: "0.00", isSystemAccount: true });
+    expect(isAppManagedAccount(system("ASSET", "receivable"))).toBe(true);
+    expect(isAppManagedAccount(system("LIABILITY", "payable"))).toBe(true);
+    expect(isAppManagedAccount(system("ASSET", "fixed-assets"))).toBe(true);
+    expect(isAppManagedAccount(system("INCOME", "referral-bonus"))).toBe(true);
+    // The hidden savings pool, but not a savings account the owner added.
+    expect(isAppManagedAccount(system("ASSET", "savings"))).toBe(true);
+    expect(isAppManagedAccount(account({ id: "DPS", accountType: "ASSET", accountSubtype: "savings", currentBalance: "0.00" }))).toBe(false);
+    // A seeded default (an income or expense category) archives like any other.
+    expect(isAppManagedAccount(system("EXPENSE", null))).toBe(false);
+    expect(isAppManagedAccount(system("ASSET", "cash"))).toBe(false);
   });
 
   it("checks that the books balance, counting sub-accounts", () => {
@@ -40,17 +112,98 @@ describe("accounts", () => {
     expect(balance.owns).toBe(360900);
     expect(balance.owes).toBe(250000);
     expect(balance.share).toBe(110800);
+    expect(balance.opening).toBe(0);
     expect(balance.balanced).toBe(false);
+    expect(balance.gap).toBe(100);
     expect(booksBalance([...GROUPS.slice(0, 2), { accountType: "EQUITY", accounts: [account({ id: "Capital", accountType: "EQUITY", currentBalance: "50100.00" })] }, ...GROUPS.slice(3)]).balanced).toBe(true);
   });
 
+  it("counts opening balances in the owner's share, so a wallet opened with money still balances", () => {
+    const cashOnly = booksBalance([{ accountType: "ASSET", accounts: [account({ id: "Cash", accountType: "ASSET", currentBalance: "10000.00", openingBalance: "10000.00" })] }]);
+    expect(cashOnly).toEqual({ owns: 10000, owes: 0, share: 10000, opening: 10000, gap: 0, balanced: true });
+    // A loan account opened owing money takes it back out of the share.
+    const withLoan = booksBalance([
+      { accountType: "ASSET", accounts: [account({ id: "Cash", accountType: "ASSET", currentBalance: "12000.00", openingBalance: "10000.00" })] },
+      { accountType: "LIABILITY", accounts: [account({ id: "Loan", accountType: "LIABILITY", currentBalance: "5000.00", openingBalance: "5000.00" })] },
+      { accountType: "INCOME", accounts: [account({ id: "Sales", accountType: "INCOME", currentBalance: "2000.00" })] },
+    ]);
+    expect(withLoan.opening).toBe(5000);
+    expect(withLoan.share).toBe(7000);
+    expect(withLoan.balanced).toBe(true);
+  });
+
   it("sums a year's income or expenses by account", () => {
-    expect(yearRows([{ name: "Rent", totalIn: "60000.00", totalOut: "0.00" }, { name: "Stock", totalIn: "620600.00", totalOut: "200.00" }, { name: "Interest", totalIn: "0.00", totalOut: "0.00" }])).toEqual({ rows: [{ name: "Stock", total: 620400 }, { name: "Rent", total: 60000 }], total: 680400 });
+    expect(yearRows([{ id: "r", name: "Rent", totalIn: "60000.00", totalOut: "0.00" }, { id: "s", name: "Stock", totalIn: "620600.00", totalOut: "200.00" }, { id: "i", name: "Interest", totalIn: "0.00", totalOut: "0.00" }])).toEqual({
+      rows: [
+        { id: "s", name: "Stock", total: 620400 },
+        { id: "r", name: "Rent", total: 60000 },
+      ],
+      total: 680400,
+    });
   });
 
   it("orders siblings by code, uncoded ones last", () => {
     const rows = flattenAccounts([account({ id: "Late", accountType: "ASSET", currentBalance: "0", displayOrder: 1 }), account({ id: "B", accountType: "ASSET", currentBalance: "0", accountNumber: "1020" }), account({ id: "Early", accountType: "ASSET", currentBalance: "0", displayOrder: 0 }), account({ id: "A", accountType: "ASSET", currentBalance: "0", accountNumber: "1010" })]);
     expect(rows.map((r) => r.account.id)).toEqual(["A", "B", "Early", "Late"]);
+  });
+});
+
+describe("an account's ledger", () => {
+  it("calls wallet movements money in and out, and every other account's increases and decreases", () => {
+    expect(isMoneyAccount({ accountType: "ASSET", accountSubtype: "mfs" })).toBe(true);
+    expect(isMoneyAccount({ accountType: "ASSET", accountSubtype: "receivable" })).toBe(false);
+    expect(isMoneyAccount({ accountType: "EXPENSE", accountSubtype: null })).toBe(false);
+    expect(ledgerWords({ accountType: "ASSET", accountSubtype: "cash" })).toEqual({ in: "Money in@@ledger", out: "Money out@@ledger", money: true });
+    expect(ledgerWords({ accountType: "EXPENSE", accountSubtype: null })).toEqual({ in: "Increase@@ledger", out: "Decrease@@ledger", money: false });
+    expect(ledgerWords({ accountType: "LIABILITY", accountSubtype: "payable" }).money).toBe(false);
+  });
+
+  const row = (id: string, entryType: LedgerRow["entryType"], amount: string, runningBalance: string): LedgerRow => ({ entryId: id, transactionId: id, transactionType: "INCOME", date: "2026-10-01", description: null, referenceNo: null, entryType, amount, transactionStatus: "POSTED", runningBalance });
+  const ledger = (over: Partial<AccountLedger>): AccountLedger => ({ accountId: "a", accountName: "Cash", openingBalance: "0", balanceBroughtForward: "1000.00", entries: [], closingBalance: "1000.00", meta: { page: 1, limit: 50, total: 0, totalPages: 0 }, ...over });
+  const summary = { totalIn: "500.00", totalOut: "200.00", adjustment: "0.00" };
+
+  it("reads the period's closing and each page's brought and carried forward lines from the API", () => {
+    const page2 = ledgerFigures(ledger({ entries: [row("e", "DEBIT", "100", "1200.00")], closingBalance: "1300.00", pageOpeningBalance: "1100.00", pageClosingBalance: "1200.00", meta: { page: 2, limit: 50, total: 120, totalPages: 3 } }), "ASSET", summary);
+    expect(page2).toEqual({ opening: 1000, closing: 1300, pageOpening: 1100, pageClosing: 1200, firstPage: false, lastPage: false, change: 300, voided: 0 });
+  });
+
+  it("works the figures out on an older backend that sends neither page line", () => {
+    // Page 1 of 2: closingBalance is the running balance at the page's end.
+    const first = ledgerFigures(ledger({ entries: [row("a", "DEBIT", "300", "1300.00"), row("b", "CREDIT", "100", "1200.00")], closingBalance: "1200.00", meta: { page: 1, limit: 2, total: 3, totalPages: 2 } }), "ASSET", summary);
+    expect(first).toMatchObject({ pageOpening: 1000, pageClosing: 1200, closing: 1300, firstPage: true, lastPage: false });
+    // The last page's closingBalance is the period's.
+    const last = ledgerFigures(ledger({ entries: [row("c", "CREDIT", "100", "1300.00")], closingBalance: "1300.00", meta: { page: 2, limit: 2, total: 3, totalPages: 2 } }), "EXPENSE", summary);
+    expect(last).toMatchObject({ pageOpening: 1400, pageClosing: 1300, closing: 1300, lastPage: true });
+    // No entries at all: one page, opening and closing alike.
+    expect(ledgerFigures(ledger({}), "ASSET", { totalIn: "0", totalOut: "0", adjustment: "0" })).toMatchObject({ pageOpening: 1000, pageClosing: 1000, closing: 1000, firstPage: true, lastPage: true, change: 0, voided: 0 });
+  });
+
+  it("names what a void in another period leaves in the change", () => {
+    // A September sale voided in October: October's balance falls by it, but
+    // its money in and out leave the pair out.
+    const october = ledgerFigures(ledger({ closingBalance: "900.00", pageOpeningBalance: "1000.00", pageClosingBalance: "900.00", meta: { page: 1, limit: 50, total: 1, totalPages: 1 } }), "ASSET", { totalIn: "0.00", totalOut: "0.00", adjustment: "0.00" });
+    expect(october.change).toBe(-100);
+    expect(october.voided).toBe(-100);
+  });
+});
+
+describe("Books dates", () => {
+  it("adds the year only outside this year, in English or Bangla words", () => {
+    expect(booksDate("2026-06-03T00:00:00.000Z", "en", { today: "2026-10-21", weekday: true })).toBe("Wed, 3 Jun");
+    expect(booksDate("2025-06-03T00:00:00.000Z", "en", { today: "2026-10-21", weekday: true })).toBe("Tue, 3 Jun 2025");
+    expect(booksDate("2026-06-03", "en", { today: "2026-10-21" })).toBe("3 Jun");
+    expect(booksDate("2026-10-01T00:00:00.000Z", "bn", { today: "2026-10-21", weekday: true })).toBe("বৃহস্পতি, ১ অক্টো");
+    expect(booksDate("2025-10-01T00:00:00.000Z", "bn", { today: "2026-10-21" })).toBe("১ অক্টো ২০২৫");
+    // Without a today, the year always shows.
+    expect(booksDate("2026-06-03", "en")).toBe("3 Jun 2026");
+    expect(booksDate("2026-06-03", "en", { today: "2025-01-01", year: "never" })).toBe("3 Jun");
+  });
+
+  it("words a period", () => {
+    expect(booksRange("2026-09-01", "2026-10-02", "en")).toBe("1 Sep – 2 Oct 2026");
+    expect(booksRange("2025-12-01", "2026-01-31", "en")).toBe("1 Dec 2025 – 31 Jan 2026");
+    expect(booksRange("2026-09-01", undefined, "bn")).toBe("১ সেপ্টে ২০২৬");
+    expect(booksRange(undefined, undefined, "en")).toBeNull();
   });
 });
 
@@ -72,6 +225,28 @@ describe("contacts", () => {
       ["Rahim", "Customer", "01712", "", 64500],
       ["Nabil", "Supplier", "", "", -92600],
     ]);
+    expect(contactsCsvRows(contacts.slice(0, 1), bracket)[0][1]).toBe("[Customer@@books]");
+  });
+
+  const direction = (over: Partial<ContactBalanceDetail["receivable"]> & { openingRemaining?: string } = {}) => ({ totalInvoiced: "0.00", totalPaid: "0.00", remaining: "0.00", transactions: [], ...over });
+  const invoice = (id: string, remainingAmount: string) => ({ transactionId: id, date: "2026-09-01", description: null, originalAmount: remainingAmount, amountPaid: "0.00", remainingAmount, dueDate: null, isOverdue: false });
+
+  it("counts what was owed from before Books as its own part of the debt", () => {
+    // Already owed 20,000 and no invoices: all of it is from before.
+    const before = contactOwed({ receivable: direction({ openingRemaining: "20000.00" }), payable: direction({ openingRemaining: "0.00" }) }, 20000);
+    expect(before.receivable).toEqual({ invoices: [], onInvoices: 0, fromBefore: 20000, total: 20000 });
+    expect(before.payable.total).toBe(0);
+    // Paid invoices drop out; the rest add to what was owed before.
+    const mixed = contactOwed({ receivable: direction({ openingRemaining: "5000.00", transactions: [invoice("a", "3000.00"), invoice("b", "0.00")] }), payable: direction() }, 8000);
+    expect(mixed.receivable.invoices.map((i) => i.transactionId)).toEqual(["a"]);
+    expect(mixed.receivable).toMatchObject({ onInvoices: 3000, fromBefore: 5000, total: 8000 });
+  });
+
+  it("falls back to what the balance holds beyond the invoices on an older backend", () => {
+    const owed = contactOwed({ receivable: direction({ transactions: [invoice("a", "3000.00")] }), payable: direction() }, 23000);
+    expect(owed.receivable).toMatchObject({ onInvoices: 3000, fromBefore: 20000, total: 23000 });
+    // A supplier the business owes from before.
+    expect(contactOwed({ receivable: direction(), payable: direction() }, -4000).payable.fromBefore).toBe(4000);
   });
 });
 
@@ -98,9 +273,34 @@ describe("a statement", () => {
     expect(statementRows([], "-1200")[0]).toBeUndefined();
   });
 
+  it("takes the statement endpoint's rows as they come, balance and all", () => {
+    const rows = statementRowsFromApi([
+      { transactionId: "s1", date: "2026-06-03T00:00:00.000Z", kind: "sale", referenceNo: "INV-0277", description: null, wallet: null, amount: "35000.00", runningBalance: "55000.00", cancelled: false },
+      { transactionId: "v", date: "2026-08-01T00:00:00.000Z", kind: "sale", referenceNo: null, description: "Wrong", wallet: null, amount: "999.00", runningBalance: "55000.00", cancelled: true },
+      { transactionId: "p", date: "2026-09-02T00:00:00.000Z", kind: "received", referenceNo: null, description: null, wallet: "Islami Bank", amount: "35000.00", runningBalance: "20000.00", cancelled: false },
+    ]);
+    expect(rows.map((row) => `${row.id}:${row.kind}:${row.amount}:${row.running}${row.cancelled ? ":x" : ""}`)).toEqual(["s1:sale:35000:55000", "v:sale:999:55000:x", "p:received:35000:20000"]);
+    expect(rows[2].wallet).toBe("Islami Bank");
+    expect(rows[1].note).toBe("Wrong");
+  });
+
   it("sums what is more than 30 days late", () => {
     const report = { buckets: { current: "98400.00", days1to30: "52000.00", days31to60: "21000.00", over60: "15000.00" }, contacts: [{ contactId: "r", contactName: "Rahim", current: "0", days1to30: "0", days31to60: "21000", over60: "0", total: "21000", totalInvoiced: "21000", totalPaid: "0" }, { contactId: "k", contactName: "Karim", current: "98400", days1to30: "52000", days31to60: "0", over60: "0", total: "150400", totalInvoiced: "150400", totalPaid: "0" }] };
     expect(overdueOver30(report)).toEqual({ amount: 36000, contacts: 1 });
+  });
+
+  it("narrows the aging to Books' own contacts and adds the buckets up again", () => {
+    const report = {
+      buckets: { current: "1100.00", days1to30: "200.00", days31to60: "0.00", over60: "5000.00" },
+      contacts: [
+        { contactId: "shop", contactName: "Shop", current: "1000.00", days1to30: "200.00", days31to60: "0.00", over60: "0.00", total: "1200.00", totalInvoiced: "1200.00", totalPaid: "0.00" },
+        { contactId: "loan", contactName: "Friend", current: "100.00", days1to30: "0.00", days31to60: "0.00", over60: "5000.00", total: "5100.00", totalInvoiced: "5100.00", totalPaid: "0.00" },
+      ],
+    };
+    const books = agingFor(report, new Set(["shop"]));
+    expect(books.contacts.map((row) => row.contactId)).toEqual(["shop"]);
+    expect(books.buckets).toEqual({ current: "1000.00", days1to30: "200.00", days31to60: "0.00", over60: "0.00" });
+    expect(agingFor(report, new Set()).buckets.over60).toBe("0.00");
   });
 });
 
@@ -112,6 +312,12 @@ describe("ageing", () => {
     expect(agingTotal(report)).toBe(186400);
     expect(shares.map((s) => s.pct)).toEqual([52.8, 27.9, 11.3, 8]);
     expect(agingShares({ buckets: { current: "0", days1to30: "0", days31to60: "0", over60: "0" } }).every((s) => s.pct === 0)).toBe(true);
+  });
+
+  it("adds what was owed from before Books as a fifth share", () => {
+    const shares = agingShares({ buckets: { current: "0", days1to30: "0", days31to60: "0", over60: "0" } }, 20000);
+    expect(shares.map((s) => `${s.key}:${s.amount}:${s.pct}`)).toEqual(["current:0:0", "days1to30:0:0", "days31to60:0:0", "over60:0:0", "opening:20000:100"]);
+    expect(agingShares(report, 0)).toHaveLength(4);
   });
 
   it("sorts one contact's invoices into the age buckets", () => {
@@ -136,6 +342,16 @@ describe("ageing", () => {
     expect(late.map((l) => `${l.contactName}:${l.amount}:${l.daysLate}:${l.oldestDescription}`)).toEqual(["Sohag:21000:98:INV-0290", "Rahim:40000:74:INV-0318"]);
     expect(daysBetween("2026-07-20", "2026-10-02")).toBe(74);
   });
+
+  it("counts only what is more than 30 days late on the Over 30 days list", () => {
+    const rows: OverdueRow[] = [
+      { contactId: "r", contactName: "Rahim", transactionId: "1", description: "INV-1", originalAmount: "25000", remainingAmount: "25000", dueDate: "2026-09-06", daysOverdue: 45 },
+      { contactId: "r", contactName: "Rahim", transactionId: "2", description: "INV-2", originalAmount: "10000", remainingAmount: "10000", dueDate: "2026-10-11", daysOverdue: 10 },
+      { contactId: "k", contactName: "Karim", transactionId: "3", description: "INV-3", originalAmount: "500", remainingAmount: "500", dueDate: "2026-10-01", daysOverdue: 20 },
+    ];
+    expect(lateByContact(rows, 30).map((l) => `${l.contactName}:${l.amount}:${l.daysLate}`)).toEqual(["Rahim:25000:45"]);
+    expect(lateByContact(rows).map((l) => `${l.contactName}:${l.amount}`)).toEqual(["Rahim:35000", "Karim:500"]);
+  });
 });
 
 describe("a journal entry", () => {
@@ -157,5 +373,13 @@ describe("a journal entry", () => {
     expect(journalTotals([{ accountId: "a", note: "", debit: "10", credit: "" }, { accountId: "", note: "", debit: "", credit: "10" }]).complete).toBe(false);
     expect(journalTotals([{ accountId: "a", note: "", debit: "10", credit: "5" }, { accountId: "b", note: "", debit: "", credit: "5" }]).complete).toBe(false);
     expect(journalTotals([{ accountId: "a", note: "", debit: "10", credit: "" }, { accountId: "b", note: "", debit: "", credit: "8" }]).difference).toBe(2);
+  });
+
+  it("points at the lines that still need an account, and knows when there is something to lose", () => {
+    expect(lineNeedsAccount({ accountId: "", note: "", debit: "", credit: "100" })).toBe(true);
+    expect(lineNeedsAccount({ accountId: "", note: "Rent", debit: "", credit: "" })).toBe(false);
+    expect(lineNeedsAccount({ accountId: "rent", note: "", debit: "100", credit: "" })).toBe(false);
+    expect(hasJournalAmounts([{ accountId: "rent", note: "Rent", debit: "", credit: "" }])).toBe(false);
+    expect(hasJournalAmounts([{ accountId: "", note: "", debit: "0", credit: "5" }])).toBe(true);
   });
 });
