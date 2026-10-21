@@ -1,66 +1,50 @@
 "use client";
 
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CreditCard, KeyRound, ListChecks, PiggyBank, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
-import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
-import { TransactionDrawer, type EntryKind } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
 import Button from "@/components/smartly/Button";
 import IconTile from "@/components/smartly/IconTile";
 import Kbd from "@/components/smartly/Kbd";
-import type { Tone } from "@/components/smartly/tones";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { addActionBlocks, addActionForKey, type AddAction } from "@/lib/customer/addActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { ADD_ACTION_ICONS, useAddActions, WithAddActions } from "./AddActionsProvider";
 
-type Choice = "income" | "expense" | "transfer" | "loan" | "savings" | "task" | "vault";
-
-interface Row {
-  choice: Choice;
-  key: string;
-  icon: React.ReactNode;
-  tone: Tone;
-  title: string;
-  text: string;
-}
-
-const ROWS: Row[][] = [
-  [
-    { choice: "income", key: "I", icon: <ArrowUpRight />, tone: "income", title: "Income", text: "Salary, freelance, any money in" },
-    { choice: "expense", key: "E", icon: <ArrowDownLeft />, tone: "expense", title: "Expense", text: "Groceries, rent, bills" },
-    { choice: "transfer", key: "T", icon: <ArrowLeftRight />, tone: "vault", title: "Transfer", text: "Between your wallets" },
-  ],
-  [
-    { choice: "loan", key: "L", icon: <CreditCard />, tone: "loans", title: "Loan entry", text: "Gave, took, got back or paid back" },
-    { choice: "savings", key: "S", icon: <PiggyBank />, tone: "money", title: "Add to savings", text: "Put money towards a goal" },
-  ],
-  [
-    { choice: "task", key: "D", icon: <ListChecks />, tone: "habits", title: "Task for today", text: "Goes to Today's tasks" },
-    { choice: "vault", key: "P", icon: <KeyRound />, tone: "vault", title: "Login to the vault", text: "Opens the vault first" },
-  ],
-];
-
-const isTyping = (target: EventTarget | null) =>
-  target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
-
-interface AddMenuProps {
-  // Opens the Today's tasks panel.
-  onAddTask: () => void;
-}
+// N is a letter like any other while typing, or inside an open drawer,
+// dialog or menu.
+const isBusy = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.closest("[role=dialog], [role=alertdialog], [role=menu]") !== null);
 
 // The top bar's Add button: one menu for everything you can add. N opens
 // it anywhere; the letter on each row picks it.
-export function AddMenu({ onAddTask }: AddMenuProps) {
+export function AddMenu() {
+  return (
+    <WithAddActions>
+      <AddMenuButton />
+    </WithAddActions>
+  );
+}
+
+function AddMenuButton() {
   const { t } = useLocale();
-  const router = useRouter();
-  const { activeBusinessId, activeBusiness } = useAuth();
-  const loansOn = useFeature("loan_management");
+  const { activeBusinessId } = useAuth();
+  const { actions, run } = useAddActions();
   const [open, setOpen] = useState(false);
-  const [drawer, setDrawer] = useState<EntryKind | null>(null);
+  // A pick opens a drawer or a panel of its own; focus stays with that
+  // rather than going back to the Add button (which would close the panel).
+  const picked = useRef(false);
+  const button = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "n" && !event.ctrlKey && !event.metaKey && !event.altKey && !isTyping(event.target)) {
+      // Autofill fires keydowns with no key at all.
+      if (typeof event.key !== "string") return;
+      // Below md the button is hidden (the + sheet stands in for it), and a
+      // menu opened there would hang off nothing.
+      if (!button.current?.offsetParent) return;
+      if (event.key.toLowerCase() === "n" && !event.ctrlKey && !event.metaKey && !event.altKey && !isBusy(event.target)) {
         event.preventDefault();
         setOpen(true);
       }
@@ -69,89 +53,78 @@ export function AddMenu({ onAddTask }: AddMenuProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const rows = ROWS.map((group) => group.filter((row) => row.choice !== "loan" || loansOn)).filter((group) => group.length > 0);
-
-  function choose(choice: Choice) {
+  function choose(action: AddAction) {
+    picked.current = true;
     setOpen(false);
-    switch (choice) {
-      case "income":
-        setDrawer("INCOME");
-        break;
-      case "expense":
-        setDrawer("EXPENSE");
-        break;
-      case "transfer":
-        setDrawer("TRANSFER");
-        break;
-      case "loan":
-        router.push("/loan-management/transactions");
-        break;
-      case "savings":
-        router.push("/savings-goals/dashboard");
-        break;
-      case "task":
-        onAddTask();
-        break;
-      case "vault":
-        router.push("/password-manager");
-        break;
-    }
+    run(action);
   }
 
   function onMenuKeyDown(event: React.KeyboardEvent) {
-    const row = rows.flat().find((r) => r.key.toLowerCase() === event.key.toLowerCase());
-    if (row) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const action = addActionForKey(actions, event.key);
+    if (action) {
       event.preventDefault();
-      choose(row.choice);
+      choose(action);
     }
   }
 
   if (!activeBusinessId) return null;
 
+  const hint = t("Press N anywhere to open this menu").split("N");
+
   return (
-    <>
-      <DropdownMenu open={open} onOpenChange={setOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="soft" className="pl-3">
-            <Plus strokeWidth={2.25} />
-            {t("Add")}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={8} onKeyDown={onMenuKeyDown} className="w-85 rounded-lg border border-line bg-surface p-0 shadow-overlay ring-0">
-          <div className="p-2">
-            {rows.map((group, index) => (
-              <div key={index}>
-                {index > 0 && <DropdownMenuSeparator className="mx-3 my-2 bg-line" />}
-                {group.map((row) => (
-                  <DropdownMenuItem key={row.choice} onSelect={() => choose(row.choice)} className="cursor-pointer gap-3 rounded-md px-3 py-2 focus:bg-surface-sunken">
-                    <IconTile tone={row.tone} size={36}>
-                      {row.icon}
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button ref={button} variant="soft" className="pl-3">
+          <Plus strokeWidth={2.25} />
+          {t("Add")}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        onKeyDown={onMenuKeyDown}
+        onCloseAutoFocus={(event) => {
+          if (!picked.current) return;
+          picked.current = false;
+          event.preventDefault();
+        }}
+        className="w-85 rounded-lg border border-line bg-surface p-0 shadow-overlay ring-0"
+      >
+        <div className="p-2">
+          {addActionBlocks(actions).map((block, index) => (
+            <div key={block[0].key}>
+              {index > 0 && <DropdownMenuSeparator className="mx-3 my-2 bg-line" />}
+              {block.map((action) => {
+                const Icon = ADD_ACTION_ICONS[action.icon];
+                return (
+                  <DropdownMenuItem key={action.key} onSelect={() => choose(action)} className="cursor-pointer gap-3 rounded-md px-3 py-2 focus:bg-surface-sunken">
+                    <IconTile tone={action.tone} size={36}>
+                      <Icon />
                     </IconTile>
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-body font-semibold text-ink">{t(row.title)}</span>
-                      <span className="text-caption font-normal text-ink-muted">{t(row.text)}</span>
+                      <span className="text-body font-semibold text-ink">{t(action.label)}</span>
+                      <span className="text-caption font-normal text-ink-muted">{t(action.hint)}</span>
                     </span>
-                    <Kbd>{row.key}</Kbd>
+                    <Kbd>{action.letter}</Kbd>
                   </DropdownMenuItem>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-line bg-strip px-4 py-3 text-caption font-normal text-ink-muted">
-            {t("Press N anywhere to open this menu").split("N").length === 2 ? (
-              <>
-                {t("Press N anywhere to open this menu").split("N")[0]}
-                <Kbd className="px-1 py-0">N</Kbd>
-                {t("Press N anywhere to open this menu").split("N")[1]}
-              </>
-            ) : (
-              t("Press N anywhere to open this menu")
-            )}
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <TransactionDrawer open={drawer !== null} initialKind={drawer ?? "EXPENSE"} onClose={() => setDrawer(null)} businessId={activeBusinessId} currency={activeBusiness?.currency ?? "BDT"} />
-    </>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-line bg-strip px-4 py-3 text-caption font-normal text-ink-muted">
+          {hint.length === 2 ? (
+            <>
+              {hint[0]}
+              <Kbd className="px-1 py-0">N</Kbd>
+              {hint[1]}
+            </>
+          ) : (
+            t("Press N anywhere to open this menu")
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
