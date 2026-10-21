@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
+import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import type { TodoItem } from "@/lib/customer/api";
 import { updateTodoItemAction } from "@/lib/customer/todosActions";
@@ -16,11 +17,15 @@ const MAX_ROWS = 4;
 
 // Today's to-do list on Home: the first few tasks with their checkboxes,
 // and the link to the full list. Reads the same copy of the list as the top
-// bar, so ticking one here updates the count there.
+// bar, so ticking one here updates the count there. When the list couldn't
+// be read it says so, with Try again, rather than "Nothing planned".
 export function HomeTodoCard() {
   const { t, locale } = useLocale();
-  const { list, loaded, setList } = useTodayTasks();
+  const { list, loaded, failed, setList, reload } = useTodayTasks();
   const [busy, setBusy] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  // Nothing to show because the read failed, not because nothing is planned.
+  const unread = failed && !list;
 
   const items = list?.items ?? [];
   const open = items.filter((i) => !i.completed).length;
@@ -36,14 +41,28 @@ export function HomeTodoCard() {
     setBusy(null);
   }
 
+  async function retry() {
+    setRetrying(true);
+    await reload();
+    setRetrying(false);
+  }
+
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h3 className="text-h3 leading-6 text-ink">{t("To-do list")}</h3>
         {/* Only once the list is in: never "0 left" beside "Loading...". */}
-        {loaded && <span className="text-small text-ink-muted">{t("{count} left", { count: formatCount(open, locale) })}</span>}
+        {loaded && !unread && <span className="text-small text-ink-muted">{t("{count} left", { count: formatCount(open, locale) })}</span>}
       </div>
-      {rows.length === 0 ? (
+      {rows.length === 0 && unread ? (
+        <div className="flex flex-col items-start gap-2 py-2">
+          <p className="text-body text-ink-muted">{t("Couldn't load today's tasks")}</p>
+          {/* A 44px target in a line's room. */}
+          <Button variant="link" size="sm" onClick={retry} disabled={retrying} className="-my-3 h-auto min-h-11 px-0">
+            {t("Try again")}
+          </Button>
+        </div>
+      ) : rows.length === 0 ? (
         <p className="py-2 text-body text-ink-muted">{loaded ? t("Nothing planned for today") : t("Loading...")}</p>
       ) : (
         rows.map((item) => (

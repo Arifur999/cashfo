@@ -3,6 +3,7 @@
 import { ArrowLeftRight, Receipt } from "lucide-react";
 import { createElement } from "react";
 import AmountText from "@/components/smartly/AmountText";
+import ByWidth from "@/components/smartly/ByWidth";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import { ListCard, ListCell, ListEmpty, ListRow, ListRowLink } from "@/components/smartly/list";
@@ -30,7 +31,9 @@ interface RecentTransactionsCardProps {
 // Home's own "Recent transactions" heading, without the category. A
 // cancelled row is set back as on Transactions: struck through, its
 // amount grey, with a red Voided chip (on phones, the word in the line
-// under the title, where a long title can't push it out of sight).
+// under the title, where a long title can't push it out of sight). Phones
+// write the day without its weekday, so that word and the wallet route
+// never push the date out of the line.
 const PHONE_ROWS = 4;
 const COLUMNS = "grid-cols-[36px_minmax(0,1fr)_auto] gap-x-3";
 
@@ -38,8 +41,8 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
   const { t, locale } = useLocale();
   const oldest = transactions[transactions.length - 1];
   // "30 Sep" / "Wed, 30 Sep", or the Bangla board's own short words.
-  const dayMonth = (day: string) => (locale === "bn" ? banglaDayMonth(day) : formatDate(`${day}T00:00:00.000Z`, "d MMM"));
-  const shortDay = (day: string) => (locale === "bn" ? banglaShortDay(day) : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM"));
+  const dayMonth = (day: string) => (locale === "bn" ? banglaDayMonth(day) : formatDate(`${day}T00:00:00.000Z`, "d MMM", locale));
+  const shortDay = (day: string) => (locale === "bn" ? banglaShortDay(day) : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM", locale));
 
   return (
     <ListCard
@@ -62,7 +65,6 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
           const icon = isTransfer ? ArrowLeftRight : row.category ? categoryIconFor(row.category) : Receipt;
           const day = toDateInputValue(transaction.transactionDate);
           const when = relativeDayKey(day, today);
-          const whereAndWhen = [row.wallet, when ? t(when) : shortDay(day)].filter(Boolean).join(" · ");
           return (
             <ListRow key={transaction.id} density="relaxed" muted={Boolean(row.cancelled)} columns={COLUMNS} className={cn(index >= PHONE_ROWS && "hidden md:grid")}>
               <ListCell>
@@ -84,7 +86,8 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
                 <span className="truncate text-small leading-4.5 text-ink-muted">
                   {row.cancelled && <span className="md:hidden">{t(row.cancelled)} · </span>}
                   {row.category && <span className="hidden md:inline">{row.category.name} · </span>}
-                  {whereAndWhen}
+                  {row.wallet && <>{row.wallet} · </>}
+                  {when ? t(when) : <ByWidth phone={dayMonth(day)} wide={shortDay(day)} />}
                 </span>
               </ListCell>
               <ListCell align="end">

@@ -65,6 +65,11 @@ export const dashboardDictionary: Record<string, string> = {
   "You kept {amount} in {month}, less than in {other}.": "{month}-এ আপনি রেখেছেন {amount}, {other}-এর চেয়ে কম।",
   "You kept {amount} in {month}.": "{month}-এ আপনি রেখেছেন {amount}।",
   "In {month}, {amount} more went out than came in.": "{month}-এ আয়ের চেয়ে {amount} বেশি খরচ হয়েছে।",
+  // The chart axis's units after a Latin figure and a space ("1 লাখ",
+  // "50 হাজার"): crore, lakh, thousand.
+  "Cr@@axis": "কোটি",
+  "L@@axis": "লাখ",
+  "K@@axis": "হাজার",
   "Recent transactions": "সাম্প্রতিক লেনদেন",
   "Since {date}": "{date} থেকে",
   "No transactions yet.": "এখনো কোনো লেনদেন নেই।",
@@ -73,8 +78,11 @@ export const dashboardDictionary: Record<string, string> = {
   "{count} goals": "{count}টি লক্ষ্য",
   "{percent}% reached": "{percent}% পূরণ হয়েছে",
   "{percent}% of {amount}": "{amount}-এর {percent}%",
+  // Home's savings card: the saved figure leads, the target after it.
+  "{saved} of {target}@@home": "{saved}, লক্ষ্য {target}",
   "No assets yet": "এখনো কোনো সম্পদ নেই",
   "{change} since you bought them": "কেনার পর থেকে {change}",
+  "Worth what you paid for them": "কেনা দামের সমানই আছে",
   "No budget yet": "এখনো বাজেট নেই",
   "Set a monthly limit and Smartly warns you at 70%.": "মাসিক সীমা ঠিক করুন, ৭০%-এ Smartly সতর্ক করবে।",
   "{spent} of {limit}": "{limit}-এর মধ্যে {spent}",
@@ -111,6 +119,7 @@ export const dashboardDictionary: Record<string, string> = {
   "{done} of {total}": "{total}টির মধ্যে {done}টি",
   // The to-do list is করণীয় তালিকা in the menu; Home calls it the same.
   "Open to-do list": "করণীয় তালিকা খুলুন",
+  "Couldn't load today's tasks": "আজকের করণীয় লোড করা যায়নি",
   "To-do": "করণীয়",
   "{count} running": "{count}টি চলছে",
   "Reading · {title}": "পড়ছি · {title}",

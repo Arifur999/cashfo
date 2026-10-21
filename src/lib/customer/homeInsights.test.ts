@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type { CategoryBreakdown, LoanDashboardRow, MonthlyBreakdown } from "./api";
+import type { CategoryBreakdown, LoanDashboardRow, MonthlyBreakdown, SavingsGoal } from "./api";
 import {
+  balanceAsOfTotal,
   balanceChangePercent,
   bestMonthNote,
   categoryDelta,
+  chartAxis,
   daysLeftInMonth,
   isFirstMonthOnRecord,
   loanCounts,
   monthColumn,
+  previousMonthEnd,
   sameDaysLastMonth,
   savingsRate,
   savingsTotals,
@@ -109,15 +112,60 @@ describe("savingsRate", () => {
 });
 
 describe("savingsTotals", () => {
-  const goal = (currentAmount: number, targetAmount: number) => ({ currentAmount: currentAmount.toFixed(2), targetAmount: targetAmount.toFixed(2) });
+  const goal = (currentAmount: number, targetAmount: number, status: SavingsGoal["status"] = "ACTIVE") => ({ status, currentAmount: currentAmount.toFixed(2), targetAmount: targetAmount.toFixed(2) });
 
   it("adds up every goal, as Savings › Goals does", () => {
     expect(savingsTotals([goal(55000, 100000), goal(0, 50000)])).toEqual({ saved: 55000, target: 150000, progress: 37, count: 2 });
   });
 
+  it("leaves out a withdrawn goal, its target and all", () => {
+    expect(savingsTotals([goal(20000, 150000), goal(0, 80000, "WITHDRAWN")])).toEqual({ saved: 20000, target: 150000, progress: 13, count: 1 });
+  });
+
   it("never passes 100%, and is 0% with no target", () => {
     expect(savingsTotals([goal(120000, 100000)]).progress).toBe(100);
     expect(savingsTotals([])).toEqual({ saved: 0, target: 0, progress: 0, count: 0 });
+  });
+});
+
+describe("balanceAsOfTotal", () => {
+  it("adds up each wallet's balance at the day's close", () => {
+    expect(balanceAsOfTotal([{ balanceAsOf: "1000.50" }, { balanceAsOf: "-200.00" }, { balanceAsOf: "0.00" }])).toBe(800.5);
+  });
+
+  it("is null with no wallets, or when a wallet has no balanceAsOf (an older backend)", () => {
+    expect(balanceAsOfTotal([])).toBeNull();
+    expect(balanceAsOfTotal([{ balanceAsOf: "100.00" }, {}])).toBeNull();
+    expect(balanceAsOfTotal([{ balanceAsOf: null }])).toBeNull();
+  });
+});
+
+describe("chartAxis", () => {
+  it("has no axis when there is nothing to plot", () => {
+    expect(chartAxis(0)).toBeNull();
+    expect(chartAxis(-500)).toBeNull();
+    expect(chartAxis(Number.NaN)).toBeNull();
+  });
+
+  it("never labels the top and the middle with the same figure", () => {
+    expect(chartAxis(0.4)).toEqual({ max: 2, mid: 1 });
+    expect(chartAxis(1)).toEqual({ max: 2, mid: 1 });
+    expect(chartAxis(3)).toEqual({ max: 10, mid: 5 });
+  });
+
+  it("rounds the top up to a clean figure", () => {
+    expect(chartAxis(85000)).toEqual({ max: 100000, mid: 50000 });
+    expect(chartAxis(320000)).toEqual({ max: 500000, mid: 250000 });
+    expect(chartAxis(150000)).toEqual({ max: 200000, mid: 100000 });
+    expect(chartAxis(100000)).toEqual({ max: 100000, mid: 50000 });
+  });
+});
+
+describe("previousMonthEnd", () => {
+  it("is the last day of the month before", () => {
+    expect(previousMonthEnd("2026-10-21")).toBe("2026-09-30");
+    expect(previousMonthEnd("2026-01-01")).toBe("2025-12-31");
+    expect(previousMonthEnd("2028-03-15")).toBe("2028-02-29");
   });
 });
 

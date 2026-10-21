@@ -4,6 +4,8 @@ import { HomePageClient } from "@/components/modules/Customer/Dashboard/HomePage
 import type { HomeData, HomePart } from "@/components/modules/Customer/Dashboard/homeTypes";
 import { getLedger, getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
+import { API_BASE_URL, type WalletOverviewRow, type WalletsOverview } from "@/lib/customer/api";
+import { customerApi } from "@/lib/customer/apiClient";
 import { getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
@@ -14,12 +16,14 @@ import { isFeatureOn } from "@/lib/customer/features";
 import { greetingFor, greetingName, homeDates, hourIn } from "@/lib/customer/greeting";
 import { getHabitTrackers, getPrayerSettings } from "@/lib/customer/habits";
 import {
+  balanceAsOfTotal,
   balanceChangePercent,
   categoryDelta,
   daysLeftInMonth,
   isFirstMonthOnRecord,
   loanCounts,
   monthColumn,
+  previousMonthEnd,
   sameDaysLastMonth,
   savingsRate,
   savingsTotals,
@@ -44,11 +48,22 @@ export const generateMetadata = () => customerPageMetadata("/dashboard");
 // The chart's months, this one included.
 const CHART_MONTHS = 6;
 const RECENT_ROWS = 5;
-// The hero's trend reads each wallet's balance on the 1st; past this many
-// wallets it is left out rather than spend that many calls on one chip.
-const MAX_TREND_WALLETS = 8;
+// Only for a backend from before wallets-overview?asOf: the hero's trend
+// then reads each wallet's ledger, and past this many wallets it is left
+// out rather than spend that many calls on one chip.
+const MAX_LEDGER_TREND_WALLETS = 8;
 
 type Part<T> = { ok: true; value: T } | { ok: false };
+
+type WalletsAsOf = Omit<WalletsOverview, "accounts"> & { accounts: (WalletOverviewRow & { balanceAsOf?: string | null })[] };
+
+// wallets-overview with ?asOf (a Dhaka day): each wallet also carries what
+// it held when that day ended, so the hero's trend costs one call however
+// many wallets there are. Any failure is the caller's to fall back from.
+async function getWalletsAsOf(businessId: string, asOf: string): Promise<WalletsAsOf> {
+  const response = await customerApi.get<WalletsAsOf>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/wallets-overview`, { params: { asOf } });
+  return response.data;
+}
 
 // A side part's read: what it found, or { ok: false } when it failed (an
 // outage, a timeout, the throttle), so that part of Home says it couldn't
@@ -98,11 +113,18 @@ export default async function DashboardPage() {
   const loansOn = isFeatureOn((await getPlatform()).flags, "loan_management");
 
   const walletsRead = getWalletsOverview(activeBusinessId);
-  // What the active wallets held when the month began: each one's balance
-  // brought forward to the 1st, read as soon as the wallets are known.
+  // What the active wallets held when the month began: their balances when
+  // last month's final day ended, in one call beside the wallets' own. A
+  // backend from before asOf (no balanceAsOf on the rows, or a refusal)
+  // falls back to each wallet's balance brought forward to the 1st.
+  const asOfRead = getWalletsAsOf(activeBusinessId, previousMonthEnd(today)).catch(() => null);
   const startRead = part(async () => {
     const active = (await walletsRead).accounts.filter((wallet) => wallet.status !== "ARCHIVED");
-    if (active.length === 0 || active.length > MAX_TREND_WALLETS) return null;
+    if (active.length === 0) return null;
+    const asOfById = new Map((await asOfRead)?.accounts.map((wallet) => [wallet.id, { balanceAsOf: wallet.balanceAsOf }] as const) ?? []);
+    const asOfTotal = balanceAsOfTotal(active.map((wallet) => asOfById.get(wallet.id) ?? {}));
+    if (asOfTotal !== null) return asOfTotal;
+    if (active.length > MAX_LEDGER_TREND_WALLETS) return null;
     const ledgers = await Promise.all(active.map((wallet) => getLedger(activeBusinessId, wallet.id, { dateFrom: monthStart, limit: 1 })));
     return ledgers.reduce((sum, ledger) => sum + Number(ledger.balanceBroughtForward), 0);
   });
@@ -203,7 +225,8 @@ export default async function DashboardPage() {
     savingsProgress: savings.progress,
     goalCount: savings.count,
     assetsValue,
-    assetsGain: assetsValue - assetsCost,
+    // To the paisa, so a value that is exactly what was paid reads as 0.
+    assetsGain: Math.round((assetsValue - assetsCost) * 100) / 100,
     assetCount: assetList.length,
     budgetFocus,
     // A limit on a category, or a total for the month.

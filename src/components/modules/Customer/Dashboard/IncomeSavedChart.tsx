@@ -3,7 +3,7 @@
 import { useId } from "react";
 import Card from "@/components/smartly/Card";
 import { formatCompactAmount, formatCurrency } from "@/lib/customer/currency";
-import { bestMonthNote } from "@/lib/customer/homeInsights";
+import { bestMonthNote, chartAxis } from "@/lib/customer/homeInsights";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -15,15 +15,8 @@ const HEIGHT = 200;
 // wraps.
 const BN_LEADING = "[.font-bn_&]:leading-normal";
 
-// Rounds the axis top up to a clean figure (85,000 → 1,00,000; 3,20,000 →
-// 4,00,000), so the labels read as whole lakhs or thousands.
-function niceMax(value: number): number {
-  if (value <= 0) return 1;
-  const magnitude = 10 ** Math.floor(Math.log10(value));
-  const unit = value / magnitude;
-  const step = unit <= 1 ? 1 : unit <= 2 ? 2 : unit <= 5 ? 5 : 10;
-  return step * magnitude;
-}
+// A grid rule across the plot, under the bars.
+const RULE = "pointer-events-none absolute inset-x-0 h-px bg-chart-grid";
 
 interface IncomeSavedChartProps {
   points: HomeChartPoint[];
@@ -38,10 +31,14 @@ interface IncomeSavedChartProps {
 // month that spent more than it earned keeps nothing: its bar stays at
 // zero, and its line says by how much.
 export function IncomeSavedChart({ points, currency, className }: IncomeSavedChartProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const listId = useId();
   const top = Math.max(0, ...points.map((p) => Math.max(p.income, p.kept)));
-  const max = niceMax(top);
+  // null when every month is 0: the card says so instead of an axis.
+  const axis = chartAxis(top);
+  // The figures stay Latin (money), the units in the reader's words: a
+  // Bangla unit is a whole word ("50 হাজার"), so it gets a space.
+  const axisLabel = (value: number) => formatCompactAmount(value).replace(/(Cr|L|K)$/, (unit) => (locale === "bn" ? " " : "") + t(`${unit}@@axis`));
   const current = points[points.length - 1];
   const note = bestMonthNote(points);
   const beatenBy = note && !note.best ? points.find((p) => p.month === note.beatenBy)?.name : undefined;
@@ -58,7 +55,7 @@ export function IncomeSavedChart({ points, currency, className }: IncomeSavedCha
           <h3 className="text-h3 leading-6 text-ink">{t("Income and what you kept")}</h3>
           <span className="text-small leading-4.5 text-ink-muted">{t("Last 6 months")}</span>
         </div>
-        {top > 0 && (
+        {axis && (
           <span aria-hidden="true" className="flex gap-4 text-caption text-ink-2">
             <span className="flex items-center gap-2">
               <span className="size-2.5 rounded-[3px] bg-chart-income" />
@@ -72,15 +69,16 @@ export function IncomeSavedChart({ points, currency, className }: IncomeSavedCha
         )}
       </div>
 
-      {top === 0 ? (
+      {!axis ? (
         <p className="rounded-md bg-strip px-4 py-6 text-center text-body text-ink-muted">{t("Your income and what you keep show here after your first income.")}</p>
       ) : (
         <>
-          <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-2">
-            <div aria-hidden="true" className="relative text-right text-caption font-normal text-ink-muted tabular-nums" style={{ height: HEIGHT }}>
-              <span className="absolute -top-2 right-0">{formatCompactAmount(max)}</span>
+          {/* Bangla's axis words ("50 হাজার") need a wider column. */}
+          <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-2 [.font-bn_&]:grid-cols-[56px_minmax(0,1fr)]">
+            <div aria-hidden="true" className="relative text-right text-caption font-normal whitespace-nowrap text-ink-muted tabular-nums" style={{ height: HEIGHT }}>
+              <span className="absolute -top-2 right-0">{axisLabel(axis.max)}</span>
               <span className="absolute right-0" style={{ top: HEIGHT / 2 - 8 }}>
-                {formatCompactAmount(max / 2)}
+                {axisLabel(axis.mid)}
               </span>
               <span className="absolute right-0 -bottom-2">0</span>
             </div>
@@ -88,16 +86,21 @@ export function IncomeSavedChart({ points, currency, className }: IncomeSavedCha
               role="img"
               aria-label={t("Income and what you kept, by month")}
               aria-describedby={listId}
-              className="grid items-end border-b border-line bg-[linear-gradient(var(--chart-grid),var(--chart-grid))_0_0/100%_1px_no-repeat,linear-gradient(var(--chart-grid),var(--chart-grid))_0_50%/100%_1px_no-repeat]"
+              className="relative grid items-end border-b border-line"
               style={{ height: HEIGHT, gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
             >
+              {/* The top and halfway rules, beside their labels. They paint
+                  over the current month's band (an unpositioned column) and
+                  under the bars (positioned, and later). */}
+              <span aria-hidden="true" className={cn(RULE, "top-0")} />
+              <span aria-hidden="true" className={cn(RULE, "top-1/2")} />
               {points.map((point) => {
-                const income = Math.round((Math.max(0, point.income) / max) * HEIGHT);
-                const kept = Math.round((Math.max(0, point.kept) / max) * HEIGHT);
+                const income = Math.round((Math.max(0, point.income) / axis.max) * HEIGHT);
+                const kept = Math.round((Math.max(0, point.kept) / axis.max) * HEIGHT);
                 return (
-                  <div key={point.month} title={describe(point)} className={cn("flex h-full items-end justify-center gap-2 rounded-t-md", point === current && "bg-strip")}>
-                    <span className="w-5.5 rounded-t-sm bg-chart-income" style={{ height: income }} />
-                    <span className="w-5.5 rounded-t-sm bg-chart-savings" style={{ height: kept }} />
+                  <div key={point.month} title={describe(point)} className={cn("flex h-full items-end justify-center gap-2 rounded-t-md", point === current && "bg-hover")}>
+                    <span className="relative w-5.5 rounded-t-sm bg-chart-income" style={{ height: income }} />
+                    <span className="relative w-5.5 rounded-t-sm bg-chart-savings" style={{ height: kept }} />
                   </div>
                 );
               })}

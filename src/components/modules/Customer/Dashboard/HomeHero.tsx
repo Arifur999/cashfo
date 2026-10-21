@@ -3,7 +3,7 @@
 import AmountText from "@/components/smartly/AmountText";
 import ByWidth from "@/components/smartly/ByWidth";
 import Chip from "@/components/smartly/Chip";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,9 @@ export function HomeHero({ data }: { data: HomeData }) {
   const { t, locale } = useLocale();
   const { balance, walletCount, balanceChangePercent: change, income, expense, savingsRate, lastSavingsRate, currency, monthName, lastMonthName, lastMonthShort } = data;
   const leftOver = income - expense;
-  const arrowed = change === null ? "" : `${change >= 0 ? "↑" : "↓"} ${Math.abs(change)}%`;
+  // Percentages in the reader's digits; only money stays Latin.
+  const percent = (value: number) => toLocaleDigits(String(value), locale);
+  const arrowed = change === null ? "" : `${change >= 0 ? "↑" : "↓"} ${percent(Math.abs(change))}%`;
   const caption =
     savingsRate === null
       ? t("Add an income to see it")
@@ -33,7 +35,7 @@ export function HomeHero({ data }: { data: HomeData }) {
         ? data.firstMonthOnRecord
           ? t("First month on record")
           : t("No income in {month}", { month: lastMonthName })
-        : t(savingsRate >= lastSavingsRate ? "Up from {rate}% in {month}" : "Down from {rate}% in {month}", { rate: lastSavingsRate, month: lastMonthName });
+        : t(savingsRate >= lastSavingsRate ? "Up from {rate}% in {month}" : "Down from {rate}% in {month}", { rate: percent(lastSavingsRate), month: lastMonthName });
 
   return (
     <section aria-label={t("This month · {month}", { month: monthName })} className="relative grid items-center gap-4 overflow-hidden rounded-xl bg-aurora p-5 text-white md:grid-cols-[minmax(0,1fr)_260px] md:gap-8 md:p-8 md:shadow-float">
@@ -65,13 +67,13 @@ export function HomeHero({ data }: { data: HomeData }) {
               amount: <AmountText value={leftOver} currency={currency} size="sm" tone="neutral" signed={leftOver < 0} className="font-bold leading-[normal]" />,
             })}
           </span>
-          {savingsRate !== null && <Chip tone="mint">{t("{rate}% saved", { rate: savingsRate })}</Chip>}
+          {savingsRate !== null && <Chip tone="mint">{t("{rate}% saved", { rate: percent(savingsRate) })}</Chip>}
         </div>
       </div>
 
       <div className="relative hidden w-56 flex-col items-center gap-3 justify-self-end rounded-xl bg-surface p-5 text-ink shadow-overlay md:flex">
         <div className="relative size-30">
-          <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={savingsRate === null ? t("No income this month yet") : t("{rate}% of income saved this month", { rate: savingsRate })}>
+          <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={savingsRate === null ? t("No income this month yet") : t("{rate}% of income saved this month", { rate: percent(savingsRate) })}>
             <circle cx="60" cy="60" r="50" fill="none" stroke="var(--mint-50)" strokeWidth="12" />
             {savingsRate !== null && (
               <circle cx="60" cy="60" r="50" fill="none" stroke="var(--emerald)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${(savingsRate / 100) * RING} ${RING}`} transform="rotate(-90 60 60)" />
@@ -79,7 +81,7 @@ export function HomeHero({ data }: { data: HomeData }) {
           </svg>
           {/* The ring's own label says this; read once. */}
           <span aria-hidden="true" className="absolute inset-0 flex flex-col items-center justify-center">
-            <b className={cn("text-amount-lg leading-8 font-extrabold tabular-nums", savingsRate === null && "text-ink-muted")}>{savingsRate === null ? "—" : `${savingsRate}%`}</b>
+            <b className={cn("text-amount-lg leading-8 font-extrabold tabular-nums", savingsRate === null && "text-ink-muted")}>{savingsRate === null ? "—" : `${percent(savingsRate)}%`}</b>
             <span className="text-caption font-normal text-ink-muted">{t("saved")}</span>
           </span>
         </div>

@@ -16,9 +16,11 @@ import { SectionLink } from "./SectionLink";
 import type { HomeData } from "./homeTypes";
 
 // Dena-pawna on Home: what others owe you, what you owe, where that leaves
-// you and how many people it is with -- in the words and the unsigned
-// figures of Loans › Overview. Someone who never lent or borrowed gets one
-// card saying what the section is for instead of four zeros.
+// you and how many people it is with, in the words of Loans › Overview.
+// The figures carry their sign, as on the Dashboard boards ("+৳1,25,000",
+// "−৳6,00,000") and like Net position beside them, so the direction never
+// rests on colour alone. Someone who never lent or borrowed gets one card
+// saying what the section is for instead of four zeros.
 export function HomeLoans({ data }: { data: HomeData }) {
   const { t, locale } = useLocale();
   const { currency, loans, loanCounts: counts } = data;
@@ -70,10 +72,10 @@ export function HomeLoans({ data }: { data: HomeData }) {
         <>
           <PhoneLoanCards loans={loans} counts={counts} currency={currency} />
           <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-4 lg:gap-6">
-            <KpiTile icon={<ArrowDownLeft />} tone="income" label={t("Owed to you · pawna")} value={<AmountText value={Math.abs(Number(loans.totalPawna))} currency={currency} size="lg" tone="income" className="leading-8" />}>
+            <KpiTile icon={<ArrowDownLeft />} tone="income" label={t("Owed to you · pawna")} value={<AmountText value={Math.abs(Number(loans.totalPawna))} currency={currency} size="lg" tone="income" signed className="leading-8" />}>
               {t(counts.oweYou === 1 ? "From {count} person" : "From {count} people", { count: formatCount(counts.oweYou, locale) })}
             </KpiTile>
-            <KpiTile icon={<ArrowUpRight />} tone="expense" label={t("You owe · dena")} value={<AmountText value={Math.abs(Number(loans.totalDena))} currency={currency} size="lg" tone="expense" className="leading-8" />}>
+            <KpiTile icon={<ArrowUpRight />} tone="expense" label={t("You owe · dena")} value={<AmountText value={-Math.abs(Number(loans.totalDena))} currency={currency} size="lg" tone="expense" signed className="leading-8" />}>
               {t(counts.youOwe === 1 ? "To {count} person" : "To {count} people", { count: formatCount(counts.youOwe, locale) })}
             </KpiTile>
             <KpiTile icon={<CreditCard />} tone="loans" label={t("Net position")} value={<AmountText value={net} currency={currency} size="lg" signed className="leading-8" />}>

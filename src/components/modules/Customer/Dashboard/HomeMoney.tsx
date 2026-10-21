@@ -11,7 +11,7 @@ import ProgressBar from "@/components/smartly/ProgressBar";
 import SectionHeader from "@/components/smartly/SectionHeader";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/customer/currency";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -94,7 +94,9 @@ function SavingsCard({ data }: { data: HomeData }) {
           <>
             <span className="text-small text-ink-muted">
               {data.savingsTarget > 0 ? (
-                fillNodes(t("{saved} of {target}"), {
+                // Home's own key: the Bangla of Savings goals' "{saved} of
+                // {target}" puts the small target before the headline figure.
+                fillNodes(t("{saved} of {target}@@home"), {
                   saved: <AmountText value={data.savingsSaved} currency={currency} size="lg" className="leading-8" />,
                   target: formatCurrency(data.savingsTarget, currency),
                 })
@@ -104,7 +106,7 @@ function SavingsCard({ data }: { data: HomeData }) {
             </span>
             <ProgressBar value={data.savingsProgress} label={t("Savings goals")} />
             <span className="text-small text-ink-muted">
-              {t(data.goalCount === 1 ? "{count} goal" : "{count} goals", { count: formatCount(data.goalCount, locale) })} · {t("{percent}% reached", { percent: data.savingsProgress })}
+              {t(data.goalCount === 1 ? "{count} goal" : "{count} goals", { count: formatCount(data.goalCount, locale) })} · {t("{percent}% reached", { percent: toLocaleDigits(String(data.savingsProgress), locale) })}
             </span>
           </>
         )}
@@ -139,13 +141,16 @@ function AssetsCard({ data }: { data: HomeData }) {
             <span className="text-small text-ink-muted">
               {t(data.assetCount === 1 ? "{count} asset" : "{count} assets", { count: formatCount(data.assetCount, locale) })}
               {" · "}
-              {fillNodes(t("{change} since you bought them"), {
-                change: (
-                  <b className={data.assetsGain >= 0 ? "text-income" : "text-expense"}>
-                    {data.assetsGain >= 0 ? "↑" : "↓"} {formatCurrency(Math.abs(data.assetsGain), currency)}
-                  </b>
-                ),
-              })}
+              {/* No green arrow over a zero: an unchanged value is no gain. */}
+              {data.assetsGain === 0
+                ? t("Worth what you paid for them")
+                : fillNodes(t("{change} since you bought them"), {
+                    change: (
+                      <b className={data.assetsGain > 0 ? "text-income" : "text-expense"}>
+                        {data.assetsGain > 0 ? "↑" : "↓"} {formatCurrency(Math.abs(data.assetsGain), currency)}
+                      </b>
+                    ),
+                  })}
             </span>
           </>
         )}
@@ -198,7 +203,7 @@ function BudgetFocus({ focus, currency, daysLeft }: { focus: NonNullable<HomeDat
       </span>
       <ProgressBar value={focus.percent} tone="budget" label={focus.name} />
       <span className={cn("text-small", focus.percent > 90 ? "font-semibold text-expense" : focus.percent >= 70 ? "font-semibold text-warning" : "text-ink-muted")}>
-        {t("{percent}% used", { percent: Math.round(focus.percent) })} ·{" "}
+        {t("{percent}% used", { percent: toLocaleDigits(String(Math.round(focus.percent)), locale) })} ·{" "}
         {left >= 0
           ? t(daysLeft === 1 ? "{amount} left for {count} day" : "{amount} left for {count} days", { amount: formatCurrency(left, currency), count: formatCount(daysLeft, locale) })
           : t("{amount} over", { amount: formatCurrency(-left, currency) })}

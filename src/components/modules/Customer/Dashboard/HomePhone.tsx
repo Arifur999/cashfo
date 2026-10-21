@@ -10,7 +10,7 @@ import IconTile from "@/components/smartly/IconTile";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { budgetTone } from "@/lib/budgetTone";
 import { formatCurrency } from "@/lib/customer/currency";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { HomePartError } from "./HomePartError";
@@ -58,7 +58,7 @@ function FailedCompactCard({ label }: { label: string }) {
 
 // Savings goals and the budget closest to its limit, under the list.
 export function PhoneMoneyCards({ data }: { data: HomeData }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { currency, budgetFocus: focus } = data;
   const left = Number(focus?.monthlyLimit ?? 0) - Number(focus?.spent ?? 0);
 
@@ -71,7 +71,7 @@ export function PhoneMoneyCards({ data }: { data: HomeData }) {
           <span className={LABEL}>{t("Savings goals")}</span>
           <AmountText value={data.savingsSaved} currency={currency} className={FIGURE} />
           <ProgressBar value={data.savingsProgress} size="sm" label={t("Savings goals")} />
-          <span className={NOTE}>{data.savingsTarget > 0 ? t("{percent}% of {amount}", { percent: data.savingsProgress, amount: formatCurrency(data.savingsTarget, currency) }) : t("No goals yet")}</span>
+          <span className={NOTE}>{data.savingsTarget > 0 ? t("{percent}% of {amount}", { percent: toLocaleDigits(String(data.savingsProgress), locale), amount: formatCurrency(data.savingsTarget, currency) }) : t("No goals yet")}</span>
         </CompactCard>
       )}
       {data.unavailable.includes("budget") ? (
@@ -83,7 +83,7 @@ export function PhoneMoneyCards({ data }: { data: HomeData }) {
               <span className={cn(LABEL, "truncate")}>{t("{name} budget", { name: focus.name })}</span>
               <span className={cn(FIGURE, "tabular-nums")}>{left >= 0 ? t("{amount} left", { amount: formatCurrency(left, currency) }) : t("{amount} over", { amount: formatCurrency(-left, currency) })}</span>
               <ProgressBar value={focus.percent} tone="budget" size="sm" label={focus.name} />
-              <span className={cn(NOTE, BUDGET_NOTE[budgetTone(focus.percent)])}>{t("{percent}% used", { percent: Math.round(focus.percent) })}</span>
+              <span className={cn(NOTE, BUDGET_NOTE[budgetTone(focus.percent)])}>{t("{percent}% used", { percent: toLocaleDigits(String(Math.round(focus.percent)), locale) })}</span>
             </>
           ) : (
             <>
@@ -98,20 +98,20 @@ export function PhoneMoneyCards({ data }: { data: HomeData }) {
   );
 }
 
-// What others owe you and what you owe, side by side: the figures alone,
-// as Loans › Overview writes them, the colour saying which way.
+// What others owe you and what you owe, side by side, each figure signed
+// as on the board, so the direction never rests on colour alone.
 export function PhoneLoanCards({ loans, counts, currency }: { loans: NonNullable<HomeData["loans"]>; counts: HomeData["loanCounts"]; currency: string }) {
   const { t, locale } = useLocale();
   return (
     <Pair>
       <CompactCard tight>
         <span className={LABEL}>{t("Owed to you · pawna")}</span>
-        <AmountText value={Math.abs(Number(loans.totalPawna))} currency={currency} tone="income" className={FIGURE} />
+        <AmountText value={Math.abs(Number(loans.totalPawna))} currency={currency} tone="income" signed className={FIGURE} />
         <span className={NOTE}>{t(counts.oweYou === 1 ? "From {count} person" : "From {count} people", { count: formatCount(counts.oweYou, locale) })}</span>
       </CompactCard>
       <CompactCard tight>
         <span className={LABEL}>{t("You owe · dena")}</span>
-        <AmountText value={Math.abs(Number(loans.totalDena))} currency={currency} tone="expense" className={FIGURE} />
+        <AmountText value={-Math.abs(Number(loans.totalDena))} currency={currency} tone="expense" signed className={FIGURE} />
         <span className={NOTE}>{t(counts.youOwe === 1 ? "To {count} person" : "To {count} people", { count: formatCount(counts.youOwe, locale) })}</span>
       </CompactCard>
     </Pair>
@@ -121,7 +121,7 @@ export function PhoneLoanCards({ loans, counts, currency }: { loans: NonNullable
 // Today's five prayers as rings, and a line of the other habits.
 export function PhonePrayers({ data, prayers, done, href }: { data: HomeData; prayers: string[]; done: string[]; href: string }) {
   const { t, locale } = useLocale();
-  const { openCount, loaded } = useTodayTasks();
+  const { openCount, loaded, failed, list } = useTodayTasks();
   const streak = data.skills?.streak ?? 0;
 
   return (
@@ -158,17 +158,18 @@ export function PhonePrayers({ data, prayers, done, href }: { data: HomeData; pr
         </span>
         <span>
           {t("To-do")}
-          {/* The count only once the list is in, never "0 left" while it loads. */}
+          {/* The count only once the list is in: never "0 left" while it
+              loads, and a dash, like Challenges', when it couldn't be read. */}
           {loaded && (
             <>
               {" "}
-              <b className="font-bold text-ink">{t("{count} left", { count: formatCount(openCount, locale) })}</b>
+              <b className="font-bold text-ink">{failed && !list ? "—" : t("{count} left", { count: formatCount(openCount, locale) })}</b>
             </>
           )}
         </span>
         {data.reading ? (
           <span>
-            {t("Reading")} <b className="font-bold text-ink">{Math.round((data.reading.pagesRead / Math.max(1, data.reading.totalPages)) * 100)}%</b>
+            {t("Reading")} <b className="font-bold text-ink">{toLocaleDigits(String(Math.round((data.reading.pagesRead / Math.max(1, data.reading.totalPages)) * 100)), locale)}%</b>
           </span>
         ) : data.unavailable.includes("skills") ? (
           <span>
@@ -219,7 +220,7 @@ export function PhoneVaultInsights({ data }: { data: HomeData }) {
         {topIncome || topExpense ? (
           <>
             <b className={cn("text-body font-bold text-ink", PLAIN)}>
-              {topIncome ? t("{name} is {percent}% of income", { name: topIncome.name, percent: topIncome.percent }) : t("{name} is your biggest spend", { name: topExpense!.name })}
+              {topIncome ? t("{name} is {percent}% of income", { name: topIncome.name, percent: toLocaleDigits(String(topIncome.percent), locale) }) : t("{name} is your biggest spend", { name: topExpense!.name })}
             </b>
             {topIncome && topExpense && <span className={NOTE}>{t("{name} is your biggest spend", { name: topExpense.name })}</span>}
           </>
