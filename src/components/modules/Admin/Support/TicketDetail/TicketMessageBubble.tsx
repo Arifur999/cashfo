@@ -2,11 +2,11 @@ import { Paperclip } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/text";
 import { cn } from "@/lib/utils";
-import { screenshotUrl } from "@/lib/customer/supportDisplay";
 import { isHttpUrl } from "@/lib/validators";
 import type { ITicketMessage } from "@/types/ticket.types";
 import T from "@/components/shared/T";
 import RelativeTime from "@/components/shared/RelativeTime";
+import ScreenshotAttachment from "./ScreenshotAttachment";
 
 // A reply still on its way to the server is shown optimistically.
 export type ThreadMessage = ITicketMessage & { isPending?: boolean };
@@ -45,15 +45,7 @@ const TicketMessageBubble = ({ message, senderName }: TicketMessageBubbleProps) 
         >
           {message.message}
         </div>
-        {message.attachment && (
-          <a href={screenshotUrl(message.attachment.id)} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-md border border-line bg-surface hover:border-line-strong">
-            {/* eslint-disable-next-line @next/next/no-img-element -- a private image behind the session; next/image can't fetch it */}
-            <img src={screenshotUrl(message.attachment.id)} alt="" className="max-h-60 max-w-full object-contain" />
-            <span className="flex items-center gap-2 border-t border-line px-3 py-1.5 text-small text-ink-2">
-              <Paperclip className="size-3.5" aria-hidden="true" /> <T>Screenshot</T>
-            </span>
-          </a>
-        )}
+        {message.attachment && <ScreenshotAttachment attachmentId={message.attachment.id} />}
         {isHttpUrl(message.attachmentUrl) && (
           <a
             href={message.attachmentUrl}

@@ -18,3 +18,7 @@ export const DECLINED_COLUMN = { status: "DECLINED" as const, label: "Declined",
 export const FEATURE_REQUEST_STATUS_LABEL: Record<FeatureRequestStatus, string> = Object.fromEntries(
   [...FEATURE_REQUEST_COLUMNS, DECLINED_COLUMN].map((column) => [column.status, column.label]),
 ) as Record<FeatureRequestStatus, string>;
+
+// What the Support tab counts as waiting: requests nobody has decided on
+// yet. Planned, being built and shipped ones are already in hand.
+export const NEEDS_TRIAGE_STATUSES: FeatureRequestStatus[] = ["SUBMITTED", "UNDER_REVIEW"];

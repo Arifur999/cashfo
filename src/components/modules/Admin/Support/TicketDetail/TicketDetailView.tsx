@@ -10,9 +10,10 @@ interface TicketDetailViewProps {
   ticketId: string;
   currentAdminId: string | null;
   canManage: boolean;
+  backHref: string;
 }
 
-const TicketDetailView = ({ ticketId, currentAdminId, canManage }: TicketDetailViewProps) => {
+const TicketDetailView = ({ ticketId, currentAdminId, canManage, backHref }: TicketDetailViewProps) => {
   const ticket = useQuery(ticketDetailQuery(ticketId)).data?.data;
   const { data: adminsResponse } = useQuery(assignableAdminsQuery());
   const admins = useMemo(() => adminsResponse?.data ?? [], [adminsResponse]);
@@ -23,7 +24,7 @@ const TicketDetailView = ({ ticketId, currentAdminId, canManage }: TicketDetailV
     return <RouteLoading label="Loading ticket..." />;
   }
 
-  return <TicketDetailLayout ticket={ticket} admins={admins} currentAdminId={currentAdminId} canManage={canManage} />;
+  return <TicketDetailLayout ticket={ticket} admins={admins} currentAdminId={currentAdminId} canManage={canManage} backHref={backHref} />;
 };
 
 export default TicketDetailView;

@@ -47,7 +47,7 @@ const TicketConversation = ({ ticket, admins, currentAdminId, canReply, onSetSta
         )}
       </div>
       {canReply && (
-        <TicketReplyForm ticketId={ticket.id} requesterName={requesterName.split(" ")[0]} currentAdminId={currentAdminId} onSending={addPendingMessage} onSetStatus={onSetStatus} />
+        <TicketReplyForm ticketId={ticket.id} currentStatus={ticket.status} requesterName={requesterName.split(" ")[0]} currentAdminId={currentAdminId} onSending={addPendingMessage} onSetStatus={onSetStatus} />
       )}
     </>
   );

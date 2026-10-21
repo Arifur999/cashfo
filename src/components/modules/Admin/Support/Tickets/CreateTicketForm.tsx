@@ -54,8 +54,9 @@ const CreateTicketForm = ({ onDone }: { onDone: () => void }) => {
         {(field) => <AppField field={field} label="Subject" placeholder="Short summary of the issue" />}
       </form.Field>
       <div className="grid gap-5 sm:grid-cols-2">
+        {/* "Type", as the queue's column and the ticket's settings call it. */}
         <form.Field name="category" validators={{ onChange: shape.category }}>
-          {(field) => <AppSelectField field={field} label="Category" options={TICKET_CATEGORY_OPTIONS} />}
+          {(field) => <AppSelectField field={field} label="Type" options={TICKET_CATEGORY_OPTIONS} />}
         </form.Field>
         <form.Field name="priority" validators={{ onChange: shape.priority }}>
           {(field) => <AppSelectField field={field} label="Priority" options={TICKET_PRIORITY_OPTIONS} />}

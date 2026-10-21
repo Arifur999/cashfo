@@ -28,7 +28,11 @@ const TicketHeader = ({ ticket }: { ticket: ISupportTicketDetail }) => {
         <StatusBadgeCell status={ticket.priority} />
         <StatusBadgeCell status={ticket.status} label={TICKET_STATUS_LABEL[ticket.status]} />
       </div>
-      <h1 className="text-h2 leading-snug wrap-break-word text-ink">{ticket.subject}</h1>
+      {/* The conversation card is named by this heading. A subject can be
+          Bangla, so it keeps the face's own line height. */}
+      <h1 id="ticket-subject" className="text-h2 wrap-break-word text-ink">
+        {ticket.subject}
+      </h1>
       <span className="text-small text-ink-muted">
         {translate("{category} · opened {when} by {name}", {
           category: translate(humanizeEnum(ticket.category)),
