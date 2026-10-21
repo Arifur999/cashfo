@@ -1,8 +1,8 @@
 "use client";
 
-import { Package, Plus, Search } from "lucide-react";
+import { Package, Pencil, Plus, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { createElement, useState } from "react";
+import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
@@ -11,12 +11,16 @@ import Input from "@/components/smartly/form/Input";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
-import { assetGain, categoryVisual, gainChip, updateCount, valueTrail } from "@/lib/customer/assetDisplay";
+import { assetGain, categoryVisual, gainChip, typeChips, updateCount, valueTrail } from "@/lib/customer/assetDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
+import { formatCount } from "@/lib/i18n/digits";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AssetDrawer } from "./AssetDrawer";
+import { AssetTypeTile } from "./AssetTypeTile";
+import { ReadOnlyNote } from "./ReadOnlyNote";
 import { Sparkline } from "./Sparkline";
 import { UpdateValueDrawer } from "./UpdateValueDrawer";
 
@@ -29,10 +33,18 @@ interface MyAssetsPageClientProps {
   canManage: boolean;
 }
 
+// The card's button covers the card (its ::after), so the card draws the
+// focus ring the button can't show on its own.
+const CARD_FOCUS = [
+  "has-[[data-slot=card-action]:focus-visible]:outline-2",
+  "has-[[data-slot=card-action]:focus-visible]:outline-offset-2",
+  "has-[[data-slot=card-action]:focus-visible]:outline-(--focus-ring)",
+].join(" ");
+
 // My assets: everything owned as cards, each with today's value, how it
 // has moved since purchase, and the line of values it went through.
 export function MyAssetsPageClient({ businessId, assets, categories, currency, canManage }: MyAssetsPageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const searchParams = useSearchParams();
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [search, setSearch] = useState("");
@@ -40,22 +52,27 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
   const [valuing, setValuing] = useState<Asset | null>(null);
 
   const total = assets.reduce((sum, asset) => sum + Number(asset.currentValue), 0);
-  const q = search.trim().toLowerCase();
-  const shown = assets.filter((asset) => (!category || asset.category === category) && (!q || asset.name.toLowerCase().includes(q)));
   const counts = new Map<string, number>();
   for (const asset of assets) counts.set(asset.category, (counts.get(asset.category) ?? 0) + 1);
-  const chips = [...categories.map((option) => option.name), ...[...counts.keys()].filter((name) => !categories.some((option) => option.name === name))].filter((name) => counts.has(name));
+  const chips = typeChips(categories, counts, category);
+  // A type the link names that this workspace doesn't have shows everything.
+  const active = chips.includes(category) ? category : "";
+  const q = search.trim().toLowerCase();
+  const shown = assets.filter((asset) => (!active || asset.category === active) && (!q || asset.name.toLowerCase().includes(q)));
+  const showAll = () => {
+    setCategory("");
+    setSearch("");
+  };
 
   return (
     <PageFrame className="gap-5">
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Assets")}`}
         title={t("My assets")}
-        description={
-          <>
-            {assets.length} {t(assets.length === 1 ? "thing you own" : "things you own")} · <b className="font-semibold text-ink">{formatCurrency(total, currency)}</b> {t("today")}
-          </>
-        }
+        description={fillNodes(t(assets.length === 1 ? "{count} thing you own · {amount} today" : "{count} things you own · {amount} today"), {
+          count: formatCount(assets.length, locale),
+          amount: <b className="font-semibold text-ink">{formatCurrency(total, currency)}</b>,
+        })}
         actions={
           <>
             {assets.length > 0 && <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search assets…")} aria-label={t("Search assets")} frameClassName="h-10 w-60" />}
@@ -68,65 +85,82 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
           </>
         }
       />
+      {!canManage && <ReadOnlyNote>{t("Only the owner or an accountant can add, sell or update assets in this workspace.")}</ReadOnlyNote>}
 
       {assets.length === 0 ? (
         <EmptyState icon={<Package />} title={t("Nothing owned yet")} description={t("Add what you already own, or buy something new, and it shows up here.")} action={canManage && <Button onClick={() => setAddOpen(true)}>{t("Add asset")}</Button>} className="min-h-80" />
       ) : (
         <>
-          <div role="group" aria-label={t("Filter by category")} className="flex flex-wrap gap-2">
-            <FilterChip on={category === ""} onClick={() => setCategory("")} count={assets.length}>
+          <div role="group" aria-label={t("Filter by type")} className="flex flex-wrap gap-2">
+            <FilterChip on={active === ""} onClick={() => setCategory("")} count={formatCount(assets.length, locale)}>
               {t("All")}
             </FilterChip>
             {chips.map((name) => (
-              <FilterChip key={name} on={category === name} onClick={() => setCategory(name)} count={counts.get(name) ?? 0} dot={categoryVisual(categories, name).hex}>
-                {name}
+              <FilterChip key={name} on={active === name} onClick={() => setCategory(name)} count={formatCount(counts.get(name) ?? 0, locale)} dot={categoryVisual(categories, name).color}>
+                {t(name)}
               </FilterChip>
             ))}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {shown.length === 0 && <p className="py-8 text-center text-body text-ink-muted md:col-span-2 lg:col-span-3">{t("No asset matches")}</p>}
+            {shown.length === 0 && (
+              <EmptyState
+                icon={<Package />}
+                title={active && !q ? t("No {type} assets yet", { type: t(active) }) : t("No asset matches")}
+                action={
+                  <>
+                    <Button variant="secondary" onClick={showAll}>
+                      {t("Show all")}
+                    </Button>
+                    {canManage && <Button onClick={() => setAddOpen(true)}>{t("Add asset")}</Button>}
+                  </>
+                }
+                className="md:col-span-2 lg:col-span-3"
+              />
+            )}
             {shown.map((asset) => {
               const visual = categoryVisual(categories, asset.category);
               const chip = gainChip(assetGain(asset).percent);
               const updates = updateCount(asset);
-              const body = (
-                <>
+              const trail = valueTrail(asset);
+              return (
+                <Card key={asset.id} interactive={canManage} className={cn("group relative flex flex-col gap-3", canManage && CARD_FOCUS)}>
                   <div className="flex items-center gap-3">
-                    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
+                    <AssetTypeTile visual={visual} size="lg" />
                     <span className="flex min-w-0 flex-1 flex-col gap-px">
-                      <span className="truncate text-title text-ink">{asset.name}</span>
-                      <span className="text-caption font-normal text-ink-muted">{asset.category}</span>
+                      {canManage ? (
+                        // The whole card is this one button: a div card, so
+                        // the figures inside stay plain text.
+                        <button type="button" data-slot="card-action" onClick={() => setValuing(asset)} aria-label={t("Update value of {name}", { name: asset.name })} className="truncate text-left text-title text-ink after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none">
+                          {asset.name}
+                        </button>
+                      ) : (
+                        <span className="truncate text-title text-ink">{asset.name}</span>
+                      )}
+                      <span className="truncate text-caption font-normal text-ink-muted">{t(asset.category)}</span>
                     </span>
                     <Chip tone={chip.tone} size="sm" className="font-semibold">
                       {chip.label}
                     </Chip>
+                    {canManage && <Pencil aria-hidden="true" className="size-3.5 shrink-0 text-ink-muted transition-colors group-hover:text-ink" />}
                   </div>
                   <div className="flex items-end justify-between gap-3">
                     <span className="flex flex-col gap-0.5">
                       <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
                       <span className="text-h2 tracking-[-0.01em] text-ink tabular-nums">{formatCurrency(asset.currentValue, currency)}</span>
                     </span>
-                    <Sparkline values={valueTrail(asset)} label={t("Value over time")} />
+                    <Sparkline values={trail} label={t("Value over time: {first} to {last}", { first: formatCurrency(trail[0], currency), last: formatCurrency(trail[trail.length - 1], currency) })} />
                   </div>
                   <div className="flex justify-between gap-3 border-t border-divider pt-3 text-caption font-normal text-ink-muted">
                     <span>
-                      {t("Paid")} <b className="font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency)}</b> · {formatDate(asset.purchaseDate, "MMM yyyy")}
+                      {fillNodes(t("Paid {amount} · {month}"), {
+                        amount: <b className="font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency)}</b>,
+                        month: formatDate(asset.purchaseDate, "MMM yyyy"),
+                      })}
                     </span>
-                    <span>{updates === 0 ? t("Never updated") : `${updates} ${t(updates === 1 ? "update" : "updates")}`}</span>
+                    <span className="text-right">{updates === 0 ? t("Not checked since bought") : t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, locale) })}</span>
                   </div>
                   {asset.notes && <span className="-mt-1 truncate text-caption font-normal text-ink-muted">{asset.notes}</span>}
-                </>
-              );
-              return canManage ? (
-                <Card key={asset.id} asChild interactive className="flex flex-col gap-3 text-left">
-                  <button type="button" onClick={() => setValuing(asset)}>
-                    {body}
-                  </button>
-                </Card>
-              ) : (
-                <Card key={asset.id} className="flex flex-col gap-3">
-                  {body}
                 </Card>
               );
             })}
@@ -134,17 +168,17 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
         </>
       )}
 
-      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} totalValue={total} currency={currency} initialMode="own" />
+      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} totalValue={total} currency={currency} initialMode="own" initialCategory={active || undefined} />
       <UpdateValueDrawer open={valuing !== null} onClose={() => setValuing(null)} businessId={businessId} asset={valuing} categories={categories} currency={currency} />
     </PageFrame>
   );
 }
 
-function FilterChip({ on, onClick, count, dot, children }: { on: boolean; onClick: () => void; count: number; dot?: string; children: React.ReactNode }) {
+function FilterChip({ on, onClick, count, dot, children }: { on: boolean; onClick: () => void; count: string; dot?: string; children: React.ReactNode }) {
   return (
-    <button type="button" aria-pressed={on} onClick={onClick} className={cn("flex h-8.5 items-center gap-2 rounded-full border px-3 text-small transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
+    <button type="button" aria-pressed={on} onClick={onClick} className={cn("flex h-8.5 items-center gap-2 rounded-full border px-3 text-small transition-colors pointer-coarse:h-11", on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
       {dot && <span aria-hidden="true" className="size-2 rounded-full" style={{ background: dot }} />}
-      {children} <span className={cn("tabular-nums", on ? "text-emerald/80" : "text-ink-muted")}>{count}</span>
+      {children} <span className={cn("tabular-nums", on ? "text-emerald" : "text-ink-muted")}>{count}</span>
     </button>
   );
 }

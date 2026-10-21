@@ -3,22 +3,28 @@
 import { Package, Pencil, Plus } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { createElement, useState } from "react";
+import { useState } from "react";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import EmptyState from "@/components/smartly/EmptyState";
+import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListRowButton } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
-import { assetGain, assetsSummary, assetWorth, biggestChanges, categoryVisual, gainChip, valueByCategory } from "@/lib/customer/assetDisplay";
-import { formatCurrency } from "@/lib/customer/currency";
+import { assetGain, assetsSummary, assetWorth, biggestChanges, categoryVisual, gainChip, type GainChip, valueByCategory } from "@/lib/customer/assetDisplay";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
+import { formatCount } from "@/lib/i18n/digits";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AssetDrawer } from "./AssetDrawer";
+import { AssetTypeTile } from "./AssetTypeTile";
+import { ReadOnlyNote } from "./ReadOnlyNote";
+import { SoldAssetDrawer } from "./SoldAssetDrawer";
 import { UpdateValueDrawer } from "./UpdateValueDrawer";
 
 interface AssetsDashboardPageClientProps {
@@ -30,21 +36,47 @@ interface AssetsDashboardPageClientProps {
 }
 
 type Status = "all" | "owned" | "sold";
-const GRID = "grid-cols-[minmax(0,1fr)_120px_140px_140px_110px_90px]";
+
+// Asset, bought, paid, value today, change, status. The table keeps its
+// columns on phones and scrolls sideways there.
+const COLUMNS = "grid-cols-[minmax(0,1fr)_120px_140px_140px_110px_90px]";
+
+// The four figures: two to a row up to xl (a lakh or crore total needs the
+// room), four across from there. 18px on phones, 28px from md.
+const TILE = "flex min-w-0 flex-col gap-2 md:p-5";
+const TILE_LABEL = "text-small font-medium text-ink-muted";
+const FIGURE = "text-h3 wrap-anywhere max-md:font-bold md:text-h1";
 
 // Assets: what everything owned is worth today against what was paid, the
-// spread by category, the biggest moves, and every asset owned or sold.
+// spread by type, the biggest moves, and every asset owned or sold.
 export function AssetsDashboardPageClient({ businessId, assets, categories, currency, canManage }: AssetsDashboardPageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<Status>(searchParams.get("status") === "sold" ? "sold" : "all");
   const [addOpen, setAddOpen] = useState(false);
   const [valuing, setValuing] = useState<Asset | null>(null);
+  const [viewing, setViewing] = useState<Asset | null>(null);
 
   const summary = assetsSummary(assets);
   const gain = gainChip(summary.gain.percent);
+  const soldGain = gainChip(summary.soldGain.percent);
   const shown = status === "owned" ? summary.owned : status === "sold" ? summary.sold : [...summary.owned, ...summary.sold];
   const lastSold = summary.sold[0];
+  const slices = valueByCategory(summary.owned);
+  const moved = biggestChanges(summary.owned);
+  const owned = formatCount(summary.owned.length, locale);
+  const chipOf = (tone: GainChip["tone"], label: string) => (
+    <Chip tone={tone} size="sm" className="font-semibold">
+      {label}
+    </Chip>
+  );
+  // "All 7", the count in the reader's digits; one span, so the segment's
+  // flex gap doesn't widen the space.
+  const segment = (word: string, count: number) => (
+    <span>
+      {t(word)} <span className="tabular-nums">{formatCount(count, locale)}</span>
+    </span>
+  );
 
   return (
     <PageFrame className="gap-6">
@@ -71,170 +103,164 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
           )
         }
       />
+      {!canManage && <ReadOnlyNote>{t("Only the owner or an accountant can add, sell or update assets in this workspace.")}</ReadOnlyNote>}
 
       {assets.length === 0 ? (
         <EmptyState icon={<Package />} title={t("No asset yet")} description={t("A plot of land, a car, gold, a laptop… add what you own and watch what it's worth.")} action={canManage && <Button onClick={() => setAddOpen(true)}>{t("Add asset")}</Button>} className="min-h-80" />
       ) : (
         <>
-          <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Card className="flex flex-col gap-2">
-              <span className="text-small font-medium text-ink-muted">{t("Total value today")}</span>
-              <AmountText value={summary.totalValue} currency={currency} size="h2" className="text-h1" />
-              <span className="text-caption font-normal text-ink-muted">
-                {summary.owned.length} {t(summary.owned.length === 1 ? "asset you own" : "assets you own")}
-              </span>
+          <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
+            <Card padding="sm" className={TILE}>
+              <span className={TILE_LABEL}>{t("Total value today")}</span>
+              <AmountText value={summary.totalValue} currency={currency} size="h2" className={FIGURE} />
+              <span className="text-caption font-normal text-ink-muted">{t(summary.owned.length === 1 ? "{count} asset you own" : "{count} assets you own", { count: owned })}</span>
             </Card>
-            <Card className="flex flex-col gap-2">
-              <span className="text-small font-medium text-ink-muted">{t("You paid")}</span>
-              <AmountText value={summary.totalPaid} currency={currency} size="h2" className="text-h1" />
-              <span className="text-caption font-normal text-ink-muted">
-                {t("Purchase price of the same")} {summary.owned.length}
-              </span>
+            <Card padding="sm" className={TILE}>
+              <span className={TILE_LABEL}>{t("You paid")}</span>
+              <AmountText value={summary.totalPaid} currency={currency} size="h2" className={FIGURE} />
+              <span className="text-caption font-normal text-ink-muted">{t("Purchase price of the {count} you own", { count: owned })}</span>
             </Card>
-            <Card className="flex flex-col gap-2">
-              <span className="text-small font-medium text-ink-muted">{summary.gain.amount < 0 ? t("Loss so far") : t("Gain so far")}</span>
-              <AmountText value={summary.gain.amount} currency={currency} size="h2" tone="auto" signed className="text-h1" />
-              <span className="flex items-center gap-2 text-caption font-normal text-ink-muted">
-                <Chip tone={gain.tone} size="sm" className="font-semibold">
-                  {gain.label}
-                </Chip>
-                {t("on what you paid")}
-              </span>
+            <Card padding="sm" className={TILE}>
+              <span className={TILE_LABEL}>{summary.gain.amount < 0 ? t("Loss so far") : t("Gain so far")}</span>
+              <AmountText value={summary.gain.amount} currency={currency} size="h2" tone="auto" signed className={FIGURE} />
+              {/* What has been sold counts on the Sold tile, not here. */}
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption font-normal text-ink-muted">{fillNodes(t("{change} on what you still own"), { change: chipOf(gain.tone, gain.label) })}</span>
             </Card>
-            <Card className="flex flex-col gap-2">
-              <span className="text-small font-medium text-ink-muted">{t("Sold")}</span>
-              <span className="text-h1 text-ink tabular-nums">{summary.sold.length}</span>
-              <span className="truncate text-caption font-normal text-ink-muted">{lastSold ? `${lastSold.name}, ${t("for")} ${formatCurrency(lastSold.soldPrice ?? 0, currency)}` : t("Nothing sold yet")}</span>
+            <Card padding="sm" className={TILE}>
+              <span className={TILE_LABEL}>{t("Sold")}</span>
+              <span className={cn(FIGURE, "text-ink tabular-nums")}>{formatCount(summary.sold.length, locale)}</span>
+              <span className="truncate text-caption font-normal text-ink-muted">{lastSold ? t("{name}, sold for {amount}", { name: lastSold.name, amount: formatCurrency(lastSold.soldPrice ?? 0, currency) }) : t("Nothing sold yet")}</span>
+              {lastSold && <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption font-normal text-ink-muted">{fillNodes(t("{change} on sales"), { change: chipOf(soldGain.tone, formatSignedCurrency(summary.soldGain.amount, currency)) })}</span>}
             </Card>
           </section>
 
           {summary.owned.length > 0 && (
             <div className="grid gap-6 md:grid-cols-3">
               <Card padding="lg" className="flex flex-col gap-4 md:col-span-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-title text-ink">{t("Value by category")}</h2>
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-title text-ink">{t("Value by type")}</h2>
                   <span className="text-small text-ink-muted">{t("Today's value")}</span>
                 </div>
-                <div role="img" aria-label={t("Value by category")} className="flex h-3.5 gap-0.75 overflow-hidden rounded-full bg-surface-sunken">
-                  {valueByCategory(summary.owned).map((slice) => (
-                    <span key={slice.name} className="h-full" style={{ width: `${slice.share}%`, background: categoryVisual(categories, slice.name).hex }} />
+                {/* The list under the bar carries every figure. */}
+                <div aria-hidden="true" className="flex h-3.5 gap-0.75 overflow-hidden rounded-full bg-surface-sunken">
+                  {slices.map((slice) => (
+                    <span key={slice.name} className="h-full" style={{ width: `${slice.share}%`, background: categoryVisual(categories, slice.name).color }} />
                   ))}
                 </div>
-                <div className="grid gap-x-8 gap-y-4 md:grid-cols-2">
-                  {valueByCategory(summary.owned).map((slice) => {
-                    const visual = categoryVisual(categories, slice.name);
-                    return (
-                      <div key={slice.name} className="flex items-center gap-3">
-                        <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
-                        <span className="flex min-w-0 flex-1 flex-col gap-px">
-                          <span className="truncate text-body font-medium text-ink">{slice.name}</span>
-                          <span className="text-caption font-normal text-ink-muted">
-                            {slice.count} {t(slice.count === 1 ? "asset" : "assets")}
-                          </span>
-                        </span>
-                        <span className="flex flex-col items-end gap-px">
-                          <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(slice.value, currency)}</span>
-                          <span className="text-caption font-normal text-ink-muted tabular-nums">{Math.round(slice.share)}%</span>
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                <ul className="grid gap-x-8 gap-y-4 md:grid-cols-2">
+                  {slices.map((slice) => (
+                    <li key={slice.name} className="flex items-center gap-3">
+                      <AssetTypeTile visual={categoryVisual(categories, slice.name)} size="sm" />
+                      <span className="flex min-w-0 flex-1 flex-col gap-px">
+                        <span className="truncate text-body font-medium text-ink">{t(slice.name)}</span>
+                        <span className="text-caption font-normal text-ink-muted">{t(slice.count === 1 ? "{count} asset" : "{count} assets", { count: formatCount(slice.count, locale) })}</span>
+                      </span>
+                      <span className="flex flex-col items-end gap-px">
+                        <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(slice.value, currency)}</span>
+                        <span className="text-caption font-normal text-ink-muted tabular-nums">{Math.round(slice.share)}%</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </Card>
               <Card padding="lg" className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <h2 className="text-title text-ink">{t("Biggest changes")}</h2>
                   <span className="text-small text-ink-muted">{t("vs what you paid")}</span>
                 </div>
-                {biggestChanges(summary.owned).map((asset) => {
-                  const visual = categoryVisual(categories, asset.category);
-                  const chip = gainChip(assetGain(asset).percent);
-                  return (
-                    <div key={asset.id} className="flex items-center gap-3">
-                      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
-                      <span className="min-w-0 flex-1 truncate text-body font-medium text-ink">{asset.name}</span>
-                      <Chip tone={chip.tone} size="sm" className="font-semibold">
-                        {chip.label}
-                      </Chip>
-                    </div>
-                  );
-                })}
+                {moved.length === 0 ? (
+                  <p className="text-body text-ink-muted">
+                    {t("No value has moved yet.")}{" "}
+                    {canManage && (
+                      <Link href="/assets-management/update" className="font-semibold text-emerald hover:text-emerald-hover">
+                        {t("Update a value")}
+                      </Link>
+                    )}
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-4">
+                    {moved.map((asset) => {
+                      const chip = gainChip(assetGain(asset).percent);
+                      return (
+                        <li key={asset.id} className="flex items-center gap-3">
+                          <AssetTypeTile visual={categoryVisual(categories, asset.category)} size="sm" />
+                          <span className="min-w-0 flex-1 truncate text-body font-medium text-ink">{asset.name}</span>
+                          {chipOf(chip.tone, chip.label)}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </Card>
             </div>
           )}
 
-          <Card padding="none" className="overflow-hidden">
-            <div className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6">
-              <h2 className="text-title text-ink">{t("All assets")}</h2>
-              <SegmentedControl
-                options={[
-                  { value: "all", label: `${t("All")} ${assets.length}` },
-                  { value: "owned", label: `${t("Owned")} ${summary.owned.length}` },
-                  { value: "sold", label: `${t("Sold")} ${summary.sold.length}` },
-                ]}
-                value={status}
-                onChange={setStatus}
-                label={t("Status")}
-              />
-            </div>
-            <div className="overflow-x-auto">
-              <div className="min-w-220">
-                <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
-                  <span>{t("Asset")}</span>
-                  <span>{t("Bought")}</span>
-                  <span className="text-right">{t("Paid")}</span>
-                  <span className="text-right">{t("Value today")}</span>
-                  <span className="text-right">{t("Change")}</span>
-                  <span className="text-right">{t("Status")}</span>
-                </div>
-                {shown.length === 0 && <p className="px-6 py-10 text-center text-body text-ink-muted">{t("Nothing here.")}</p>}
-                {shown.map((asset) => {
-                  const visual = categoryVisual(categories, asset.category);
-                  const chip = gainChip(assetGain(asset).percent);
-                  const sold = asset.status === "SOLD";
-                  const row = (
-                    <>
-                      <span className="flex min-w-0 items-center gap-3">
-                        <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", visual.tone.bg, visual.tone.fg)}>{createElement(visual.icon, { "aria-hidden": true })}</span>
-                        <span className="flex min-w-0 flex-col gap-px">
+          <ListCard
+            label={t("All assets")}
+            title={t("All assets")}
+            actions={<SegmentedControl options={[{ value: "all", label: segment("All", assets.length) }, { value: "owned", label: segment("Owned", summary.owned.length) }, { value: "sold", label: segment("Sold", summary.sold.length) }]} value={status} onChange={setStatus} label="Status" />}
+            tableClassName="overflow-x-auto"
+          >
+            <div role="rowgroup" className="min-w-220">
+              <ListHead columns={COLUMNS} showOnPhone>
+                <ListHeadCell>{t("Asset")}</ListHeadCell>
+                <ListHeadCell>{t("Bought")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Paid@@price")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Value today")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Change@@value")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Status")}</ListHeadCell>
+              </ListHead>
+              {shown.map((asset) => {
+                const chip = gainChip(assetGain(asset).percent);
+                const sold = asset.status === "SOLD";
+                // A sold asset opens to look at (anyone may); an owned one
+                // to update its value or details (only those who can).
+                const opens = sold || canManage;
+                return (
+                  <ListRow key={asset.id} columns={COLUMNS}>
+                    <ListCell className="flex min-w-0 items-center gap-3">
+                      <AssetTypeTile visual={categoryVisual(categories, asset.category)} />
+                      <span className="flex min-w-0 flex-col gap-px">
+                        {opens ? (
+                          <ListRowButton onClick={() => (sold ? setViewing(asset) : setValuing(asset))} aria-label={sold ? t("Open {name}", { name: asset.name }) : t("Update value of {name}", { name: asset.name })} className={cn("truncate font-medium", sold ? "text-ink-2" : "text-ink")}>
+                            {asset.name}
+                          </ListRowButton>
+                        ) : (
                           <span className="truncate font-medium text-ink">{asset.name}</span>
-                          <span className="text-caption font-normal text-ink-muted">{sold && asset.soldAt ? `${asset.category} · ${t("sold")} ${formatDate(asset.soldAt)}` : asset.category}</span>
-                        </span>
+                        )}
+                        <span className="truncate text-caption font-normal text-ink-muted">{sold && asset.soldAt ? `${t(asset.category)} · ${t("Sold {date}", { date: formatDate(asset.soldAt) })}` : t(asset.category)}</span>
                       </span>
-                      <span className="text-small text-ink-2">{formatDate(asset.purchaseDate)}</span>
-                      <span className="text-right text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency)}</span>
-                      <span className="text-right font-semibold text-ink tabular-nums">{formatCurrency(assetWorth(asset), currency)}</span>
-                      <span className="text-right">
-                        <Chip tone={chip.tone} size="sm" className="font-semibold">
-                          {chip.label}
-                        </Chip>
-                      </span>
-                      <span className="text-right">
-                        <Chip tone={sold ? "neutral" : "income"} size="sm" className="font-semibold">
-                          {sold ? t("Sold") : t("Owned")}
-                        </Chip>
-                      </span>
-                    </>
-                  );
-                  const rowClass = cn("grid h-14.5 w-full items-center gap-x-4 border-b border-divider px-6 text-left text-body", GRID, sold && "opacity-70");
-                  return sold || !canManage ? (
-                    <div key={asset.id} className={rowClass}>
-                      {row}
-                    </div>
-                  ) : (
-                    <button key={asset.id} type="button" onClick={() => setValuing(asset)} className={cn(rowClass, "transition-colors hover:bg-hover")}>
-                      {row}
-                    </button>
-                  );
-                })}
-              </div>
+                    </ListCell>
+                    <ListCell className="text-small text-ink-2">{formatDate(asset.purchaseDate)}</ListCell>
+                    <ListCell align="end" className="text-ink-2 tabular-nums">
+                      {formatCurrency(asset.purchasePrice, currency)}
+                    </ListCell>
+                    {/* Once sold, the figure is the sale price, and says so. */}
+                    <ListCell align="end" className="flex flex-col items-end gap-px">
+                      {sold && <span className="text-caption font-normal text-ink-muted">{t("Sale price")}</span>}
+                      <span className={cn("font-semibold tabular-nums", sold ? "text-ink-2" : "text-ink")}>{formatCurrency(assetWorth(asset), currency)}</span>
+                    </ListCell>
+                    <ListCell align="end">{chipOf(chip.tone, chip.label)}</ListCell>
+                    <ListCell align="end">
+                      <Chip tone={sold ? "neutral" : "income"} size="sm" className="font-semibold">
+                        {sold ? t("Sold") : t("Owned")}
+                      </Chip>
+                    </ListCell>
+                  </ListRow>
+                );
+              })}
             </div>
-          </Card>
+            {/* Outside the 880px rows, so it is as wide as the card and a
+                phone sees it without scrolling sideways. */}
+            {shown.length === 0 && <ListEmpty title={t("Nothing here.")} />}
+          </ListCard>
         </>
       )}
 
-      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} totalValue={summary.totalValue} currency={currency} />
+      {/* "Add asset" means something already owned on every page; buying is on Buy & sell. */}
+      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} totalValue={summary.totalValue} currency={currency} initialMode="own" />
       <UpdateValueDrawer open={valuing !== null} onClose={() => setValuing(null)} businessId={businessId} asset={valuing} categories={categories} currency={currency} />
+      <SoldAssetDrawer open={viewing !== null} onClose={() => setViewing(null)} businessId={businessId} asset={viewing} categories={categories} currency={currency} canManage={canManage} />
     </PageFrame>
   );
 }
