@@ -99,6 +99,7 @@ export const todosDictionary: Record<string, string> = {
   "Move it to today": "আজকে আনুন",
   "Move both to today": "দুটোই আজকে আনুন",
   "Move all to today": "সব আজকে আনুন",
+  "Move {count} to today": "{count}টি আজকে আনুন",
   "{count} task moved to today": "{count}টি কাজ আজকে আনা হয়েছে",
   "{count} tasks moved to today": "{count}টি কাজ আজকে আনা হয়েছে",
   "Failed to remove list": "লিস্ট সরানো যায়নি",

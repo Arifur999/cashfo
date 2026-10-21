@@ -19,12 +19,23 @@ export function ramadanStartIn(year: number, adjust = 0): string | null {
   return null;
 }
 
-// The Gregorian years the setup dialog offers, those with no sheet yet:
-// around the one asked for (two back, three ahead), or, for an earlier
-// Ramadan, the six years up to it.
-export function setupYears(existing: Pick<HabitMonthTracker, "year">[], year: number, earlier = false): number[] {
-  const first = earlier ? year - 5 : year - 2;
-  return Array.from({ length: 6 }, (_, i) => first + i).filter((y) => !existing.some((tracker) => tracker.year === y));
+// Which years the setup dialog offers: around the next Ramadan (two back,
+// three ahead), or, once the next one has its sheet, any other nearby one
+// (six back, three ahead).
+export type SetupRange = "next" | "another";
+
+// The Gregorian years the setup dialog offers, those with no sheet yet,
+// around the year of the next Ramadan.
+export function setupYears(existing: Pick<HabitMonthTracker, "year">[], year: number, range: SetupRange = "next"): number[] {
+  const [first, length] = range === "another" ? [year - 6, 10] : [year - 2, 6];
+  return Array.from({ length }, (_, i) => first + i).filter((y) => !existing.some((tracker) => tracker.year === y));
+}
+
+// The year the dialog opens on: the nearest free one from the next
+// Ramadan's year, forward for the next one, back first for another one.
+export function setupDefaultYear(years: number[], year: number, range: SetupRange = "next"): number {
+  if (range === "another") return [...years].reverse().find((y) => y < year) ?? years.find((y) => y > year) ?? year;
+  return years.find((y) => y >= year) ?? years[years.length - 1] ?? year;
 }
 
 export interface RamadanDay {

@@ -10,7 +10,7 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { HabitMonthTracker } from "@/lib/customer/api";
 import { daysText, dayText, nextRamadan } from "@/lib/customer/habitDisplay";
-import { ramadanSummary, ramadanWindow, setupYears } from "@/lib/customer/ramadanDisplay";
+import { ramadanSummary, ramadanWindow, type SetupRange, setupYears } from "@/lib/customer/ramadanDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -31,21 +31,22 @@ export function RamadanHomePageClient({ trackers, today }: RamadanHomePageClient
   const { t, locale } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const [setupOpen, setSetupOpen] = useState(false);
-  // Which Ramadan the dialog sets up: the next one, or an earlier one. Kept
-  // after it closes, so its years don't change while it fades out.
-  const [earlier, setEarlier] = useState(false);
+  // Which Ramadan the dialog sets up: the next one, or another one (earlier
+  // or later). Kept after it closes, so its years don't change while it
+  // fades out.
+  const [range, setRange] = useState<SetupRange>("next");
   const next = nextRamadan(today, hijriAdjust);
   const nextYear = Number(next.startsOn.slice(0, 4));
   const hasNext = trackers.some((tr) => tr.year === nextYear);
-  // The years an earlier Ramadan can still be set up in.
-  const earlierYears = setupYears(trackers, nextYear - 1, true);
+  // The years another Ramadan can still be set up in.
+  const otherYears = setupYears(trackers, nextYear, "another");
   const cards = [...trackers].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
   const count = (n: number) => formatCount(n, locale);
   const year = (value: number | null) => toLocaleDigits(String(value ?? ""), locale);
   const nextName = t("Ramadan {year}", { year: year(next.year) });
 
-  function openSetup(past: boolean) {
-    setEarlier(past);
+  function openSetup(which: SetupRange) {
+    setRange(which);
     setSetupOpen(true);
   }
 
@@ -57,19 +58,19 @@ export function RamadanHomePageClient({ trackers, today }: RamadanHomePageClient
         title={t("Ramadan")}
         description={t("Every Ramadan on its own sheet: fasts, Taraweeh, Quran and whatever else you keep up.")}
         actions={
-          // Once the next Ramadan has its sheet, an earlier one can still be
-          // added (to log its fasts, or the ones to make up), as Namaz adds
-          // an earlier month.
+          // Once the next Ramadan has its sheet, another can still be added:
+          // an earlier one (to log its fasts, or the ones to make up), as
+          // Namaz adds an earlier month, or one after the next.
           !hasNext ? (
-            <Button onClick={() => openSetup(false)}>
+            <Button onClick={() => openSetup("next")}>
               <Plus strokeWidth={2.25} />
               {t("Set up {name}", { name: nextName })}
             </Button>
           ) : (
-            earlierYears.length > 0 && (
-              <Button variant="secondary" onClick={() => openSetup(true)}>
+            otherYears.length > 0 && (
+              <Button variant="secondary" onClick={() => openSetup("another")}>
                 <Plus />
-                {t("Add an earlier Ramadan")}
+                {t("Add another Ramadan")}
               </Button>
             )
           )
@@ -89,14 +90,14 @@ export function RamadanHomePageClient({ trackers, today }: RamadanHomePageClient
           )}
         </span>
         {!hasNext && (
-          <Button variant="secondary" size="sm" onClick={() => openSetup(false)} className="pointer-coarse:h-11">
+          <Button variant="secondary" size="sm" onClick={() => openSetup("next")} className="pointer-coarse:h-11">
             {t("Set it up")}
           </Button>
         )}
       </div>
 
       {cards.length === 0 ? (
-        <EmptyState icon={<Moon />} tone="habits" title={t("No Ramadan tracked yet")} description={t("Set one up and every day gets a row for Roza, with more rows for whatever you keep up.")} action={<Button onClick={() => openSetup(false)}>{t("Set up {name}", { name: nextName })}</Button>} />
+        <EmptyState icon={<Moon />} tone="habits" title={t("No Ramadan tracked yet")} description={t("Set one up and every day gets a row for Roza, with more rows for whatever you keep up.")} action={<Button onClick={() => openSetup("next")}>{t("Set up {name}", { name: nextName })}</Button>} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {cards.map((tracker) => {
@@ -134,7 +135,7 @@ export function RamadanHomePageClient({ trackers, today }: RamadanHomePageClient
         </div>
       )}
 
-      <RamadanSetupDialog open={setupOpen} onClose={() => setSetupOpen(false)} existing={trackers} defaultYear={earlier ? nextYear - 1 : nextYear} earlier={earlier} />
+      <RamadanSetupDialog open={setupOpen} onClose={() => setSetupOpen(false)} existing={trackers} defaultYear={nextYear} range={range} />
     </PageFrame>
   );
 }

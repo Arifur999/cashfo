@@ -94,12 +94,15 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
   const startDay = window.todayDay ?? (window.status === "completed" ? 1 : 0);
   const grid = useRovingGrid(sheet.items.length, sheet.totalDays, { row: 0, col: Math.max(0, startDay - 1) });
 
-  // Today in view, whatever the width.
+  // Today in view, whatever the width. Measured against the scroller itself
+  // (offsetLeft would count the sidebar and the page's gutters too, and push
+  // today under the pinned row names), with today's column in the middle.
   useEffect(() => {
     const box = scroller.current;
     const head = todayHead.current;
     if (!box || !head || box.scrollWidth <= box.clientWidth) return;
-    box.scrollLeft = Math.max(0, head.offsetLeft - box.clientWidth / 2);
+    const left = head.getBoundingClientRect().left - box.getBoundingClientRect().left + box.scrollLeft;
+    box.scrollLeft = Math.max(0, left - box.clientWidth / 2 + head.offsetWidth / 2);
   }, []);
 
   function toggle(day: number, item: string, checked: boolean) {

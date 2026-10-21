@@ -666,7 +666,7 @@ export const habitTrackerDictionary: Record<string, string> = {
   "{name} is going on now.": "{name} এখন চলছে।",
   "{name} begins around {date}, in {count} days.": "{name} শুরু আনুমানিক {date}, আর {count} দিন পরে।",
   "{name} begins around {date}, in {count} day.": "{name} শুরু আনুমানিক {date}, আর {count} দিন পরে।",
-  "Add an earlier Ramadan": "আগের একটি রমজান যোগ করুন",
+  "Add another Ramadan": "আরেকটি রমজান যোগ করুন",
   "{count} row": "{count}টি সারি",
   "{count} rows": "{count}টি সারি",
   "{done} of {total} fasts": "{total}টির মধ্যে {done}টি রোজা",

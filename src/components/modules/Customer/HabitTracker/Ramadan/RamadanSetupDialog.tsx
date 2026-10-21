@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTit
 import type { HabitMonthTracker } from "@/lib/customer/api";
 import { actionError, daysText, dayText, hijriParts } from "@/lib/customer/habitDisplay";
 import { createRamadanTrackerAction } from "@/lib/customer/habitsActions";
-import { ramadanStartIn, setupYears } from "@/lib/customer/ramadanDisplay";
+import { ramadanStartIn, setupDefaultYear, type SetupRange, setupYears } from "@/lib/customer/ramadanDisplay";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -22,33 +22,33 @@ interface RamadanSetupDialogProps {
   open: boolean;
   onClose: () => void;
   existing: HabitMonthTracker[];
-  // The Gregorian year to offer first.
+  // The Gregorian year of the next Ramadan.
   defaultYear: number;
-  // An earlier Ramadan (the next one has its sheet): only the years up to
-  // defaultYear.
-  earlier?: boolean;
+  // "another" once the next Ramadan has its sheet: an earlier one or a
+  // later one.
+  range?: SetupRange;
 }
 
 // Set up a Ramadan sheet: the year it falls in and whether it has 29 or
 // 30 days (the moon decides). The sheet starts with Roza; rows are added
-// on the sheet. It opens on the nearest year still free from the one asked
-// for, never one two years back; an earlier Ramadan on the latest free one.
-export function RamadanSetupDialog({ open, onClose, existing, defaultYear, earlier = false }: RamadanSetupDialogProps) {
+// on the sheet. It opens on the nearest year still free from the next
+// Ramadan's, never one two years back; another Ramadan on the latest free
+// one before it (or the first after it, when every earlier one is taken).
+export function RamadanSetupDialog({ open, onClose, existing, defaultYear, range = "next" }: RamadanSetupDialogProps) {
   const { t, locale } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [year, setYear] = useState(defaultYear);
   const [days, setDays] = useState<29 | 30>(30);
   const [isPending, startTransition] = useTransition();
-  const years = setupYears(existing, defaultYear, earlier);
+  const years = setupYears(existing, defaultYear, range);
   const digits = (value: number | string) => toLocaleDigits(String(value), locale);
 
   const [prevOpen, setPrevOpen] = useState(false);
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      const latest = years[years.length - 1];
-      setYear((earlier ? latest : (years.find((y) => y >= defaultYear) ?? latest)) ?? defaultYear);
+      setYear(setupDefaultYear(years, defaultYear, range));
       setDays(30);
     }
   }
