@@ -43,12 +43,13 @@ export function AccountMenu() {
   const switcher = useWorkspaceSwitch({ onSwitched: () => setOpen(false), returnFocusRef: triggerRef });
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
   const kind = workspaceKind(activeBusiness);
-  // Read when the menu first opens, not on every page.
+  // Read each time the menu opens, not on every page: after a withdrawal
+  // the reward ready to take has changed. The last figure shows meanwhile.
   const [earnings, setEarnings] = useState<string | null>(null);
 
   function changeOpen(next: boolean) {
     setOpen(next);
-    if (!next || earnings !== null) return;
+    if (!next) return;
     void getReferralInfoAction().then((result) => {
       if (result.success && result.data) setEarnings(result.data.availableBalance);
     });
