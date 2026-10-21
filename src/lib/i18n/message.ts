@@ -33,4 +33,4 @@ export const inEnglish: Translate = (key, values) => {
 // "{count} entry" or "{count} entries": English picks the form by count and
 // Bangla words both keys alike. The count arrives formatted ("1,234").
 export const plural = (t: Translate, count: number, one: string, many: string, values?: FillValues) =>
-  t(count === 1 ? one : many, { ...values, count: formatNumber(count) });
+  t(count === 1 ? one : many, { count: formatNumber(count), ...values });
