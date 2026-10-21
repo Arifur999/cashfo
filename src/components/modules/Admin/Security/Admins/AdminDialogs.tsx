@@ -5,6 +5,7 @@ import { activateAdminAction, resetAdminPasswordAction, suspendAdminAction } fro
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import FormDialog from "@/components/shared/dialog/FormDialog";
 import TemporaryPasswordDialog from "@/components/shared/dialog/TemporaryPasswordDialog";
+import T from "@/components/shared/T";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IAdminAccount } from "@/types/adminAccount.types";
@@ -56,7 +57,9 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
 
   return (
     <>
-      <FormDialog title={isSelf ? "Edit your name" : "Change role"} description={admin?.email} size="sm" {...dialogProps("edit")}>
+      {/* Another admin's name and role are both edited here, so the title
+          says Edit, as the row's button does. */}
+      <FormDialog title={isSelf ? "Edit your name" : translate("Edit {name}", { name: admin?.name ?? "" })} description={admin?.email} size="sm" {...dialogProps("edit")}>
         {admin && <EditAdminForm admin={admin} isSelf={isSelf} onDone={onClose} />}
       </FormDialog>
 
@@ -80,6 +83,8 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
         confirmLabel="Suspend"
         pendingLabel="Suspending..."
         confirmationText={admin?.email}
+        // One sentence, so Bangla can put the address where it reads right.
+        confirmationLabel={<T values={{ email: <span className="font-semibold">{admin?.email}</span> }}>{"Type {email} to confirm"}</T>}
         isPending={suspend.isPending}
         onConfirm={async () => {
           if (admin && (await suspend.run(admin.id))) onClose();

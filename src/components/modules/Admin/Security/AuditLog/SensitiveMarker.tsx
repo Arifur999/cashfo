@@ -9,11 +9,13 @@ const SensitiveMarker = () => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="inline-flex text-destructive" role="img" aria-label={translate("Sensitive action")}>
+        <span className="inline-flex text-expense" role="img" aria-label={translate("Sensitive action")}>
           <ShieldAlert className="size-4" aria-hidden="true" />
         </span>
       </TooltipTrigger>
-      <TooltipContent><T>Sensitive action</T></TooltipContent>
+      <TooltipContent>
+        <T>Sensitive action</T>
+      </TooltipContent>
     </Tooltip>
   );
 };

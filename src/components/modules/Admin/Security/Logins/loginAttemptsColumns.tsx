@@ -1,9 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDateTime, formatTimeRange } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { attemptOutcome, type LoginAttemptGroup } from "@/lib/loginAttempts";
 import { cn } from "@/lib/utils";
-import T from "@/components/shared/T";
+import type { LoginAttemptRow } from "./loginAttemptRows";
 
 const OUTCOME_TONE = { income: "text-emerald", expense: "text-expense", warning: "text-warning" } as const;
 
@@ -24,6 +25,18 @@ const WhenCell = ({ row }: { row: LoginAttemptGroup }) => {
   return formatTimeRange(row.firstAt, row.lastAt, { t: translate });
 };
 
+// "5 tries" on a burst, or "At least 20 tries" when it runs past this page.
+// White with a red edge, so it keeps its shape on the burst's red row.
+const TriesChip = ({ row }: { row: LoginAttemptRow }) => {
+  const { translate, locale } = useLocale();
+  const count = formatCount(row.attempts.length, locale);
+  return (
+    <span className="shrink-0 rounded-full border border-expense-line bg-surface px-2 py-px text-caption font-bold text-expense">
+      {translate(row.clipped ? "At least {count} tries" : "{count} tries", { count })}
+    </span>
+  );
+};
+
 const outcomeText = (row: LoginAttemptGroup) => {
   const { text, note } = attemptOutcome(row);
   return note ? `${text} (${note})` : text;
@@ -31,7 +44,7 @@ const outcomeText = (row: LoginAttemptGroup) => {
 
 // One row per attempt, or per burst of failures by one email from one
 // network: who and on what device, from where, why it failed, and when.
-export const loginAttemptsColumns: ColumnDef<LoginAttemptGroup>[] = [
+export const loginAttemptsColumns: ColumnDef<LoginAttemptRow>[] = [
   {
     id: "email",
     accessorKey: "email",
@@ -40,10 +53,7 @@ export const loginAttemptsColumns: ColumnDef<LoginAttemptGroup>[] = [
       <span className="flex min-w-0 flex-col gap-px">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate font-medium text-ink">{row.original.email}</span>
-          {row.original.attempts.length > 1 && (
-            <span className="shrink-0 rounded-full bg-expense-soft px-2 py-px text-caption font-bold text-expense"><T values={{ count: row.original.attempts.length }}>{"{count} tries"}</T>
-            </span>
-          )}
+          {row.original.attempts.length > 1 && <TriesChip row={row.original} />}
         </span>
         <span className="text-small text-ink-muted">{row.original.deviceLabel}</span>
       </span>
