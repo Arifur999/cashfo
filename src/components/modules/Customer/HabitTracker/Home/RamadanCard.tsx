@@ -45,7 +45,7 @@ export function RamadanCard({ trackers, today }: RamadanCardProps) {
   if (goingSheet && going) {
     const day = goingSheet.window.todayDay ?? 1;
     const fasted = going.checks.some((c) => c.day === day && c.item === ROZA);
-    const iftar = timeLabel(clockOf(prayerTimesFor(settings, today).Maghrib), t);
+    const iftar = timeLabel(clockOf(prayerTimesFor(settings, today).Maghrib), t, locale);
 
     const sheetId = going.id;
     const tick = () =>

@@ -9,7 +9,7 @@ import { timeLabel } from "@/lib/customer/date";
 import { shiftDay } from "@/lib/customer/habitDisplay";
 import { type CellState, cellState, isPrayed } from "@/lib/customer/namazDisplay";
 import { clockOf, clockParts, methodShort, minutesUntil, nextPrayer, prayerTimesFor, TIME_NAMES, type TimeName } from "@/lib/customer/prayerTimes";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PrayerStatusMenu } from "./PrayerStatusMenu";
@@ -61,7 +61,7 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
     const parts = clockParts(times[name]);
     return (
       <span className="flex min-w-0 flex-wrap items-baseline gap-x-1">
-        <span className="text-h3 font-bold tabular-nums">{parts.clock}</span>
+        <span className="text-h3 font-bold tabular-nums">{toLocaleDigits(parts.clock, locale)}</span>
         <span className="text-caption font-semibold opacity-90">{t(parts.meridiem)}</span>
       </span>
     );
@@ -94,7 +94,7 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
         disabled={!current || (!started && !marked)}
         onClick={() => setMarking(name)}
         aria-haspopup="dialog"
-        aria-label={`${t(name)}, ${timeLabel(clockOf(times[name]), t)}, ${status.word}`}
+        aria-label={`${t(name)}, ${timeLabel(clockOf(times[name]), t, locale)}, ${status.word}`}
         className={cn("flex w-full min-w-0 flex-col gap-2 rounded-md border p-2.5 text-left transition-colors disabled:cursor-default sm:p-3", isNext && !isPrayed(state) ? cn("border-white bg-white", BRAND_INK) : "border-white/18 bg-white/12 text-white enabled:hover:bg-white/20")}
       >
         <span className="truncate text-small font-semibold opacity-90">{t(name)}</span>
@@ -133,7 +133,7 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
         </span>
         <span className="flex flex-wrap items-baseline gap-x-3">
           <span className="text-display leading-[normal] font-bold tracking-[-0.02em]">{next ? t(next.prayer) : " "}</span>
-          <span className="text-h2 font-semibold tabular-nums">{next ? timeLabel(clockOf(next.at), t) : ""}</span>
+          <span className="text-h2 font-semibold tabular-nums">{next ? timeLabel(clockOf(next.at), t, locale) : ""}</span>
         </span>
         <span className={cn("flex h-7 items-center gap-2 self-start rounded-full bg-white/18 px-3 text-small font-semibold", left === null && "invisible")}>
           <Timer className="size-4" aria-hidden="true" />

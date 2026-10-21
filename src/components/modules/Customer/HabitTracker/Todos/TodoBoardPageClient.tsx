@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import Chip from "@/components/smartly/Chip";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import Input from "@/components/smartly/form/Input";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListGroupRow, ListRow, ListRowActions } from "@/components/smartly/list";
@@ -158,7 +159,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   // "High · 10:00 am · every Thursday" under an upcoming task, with its day
   // first when it is later in the week.
   const upcomingSub = (item: TodoItem, when?: string) =>
-    [when && dayLabel(when, locale, "short"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t), item.repeat && repeatLabel(item.repeat, t, locale, true)].filter(Boolean).join(" · ");
+    [when && dayLabel(when, locale, "short"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t, locale), item.repeat && repeatLabel(item.repeat, t, locale, true)].filter(Boolean).join(" · ");
 
   async function moveOn(item: TodoItem, quiet = false): Promise<boolean> {
     if (!list) return false;
@@ -274,7 +275,18 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   const group = (key: string, title: string, items: TodoItem[], footer?: React.ReactNode, below = false) =>
     items.length > 0 && (
       <div key={key} role="rowgroup">
-        <ListGroupRow label={title} aside={count(items.length)} className={cn(below && "border-t border-line")} />
+        {/* The count sits beside its group's name, as a chip. */}
+        <ListGroupRow
+          label={
+            <span className="inline-flex items-center gap-2">
+              {title}
+              <Chip tone="neutral" size="sm" className="tabular-nums">
+                {count(items.length)}
+              </Chip>
+            </span>
+          }
+          className={cn(below && "border-t border-line")}
+        />
         {items.map(row)}
         {footer}
       </div>

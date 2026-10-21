@@ -1142,6 +1142,9 @@ export interface HabitStat {
   icon: string;
   color: string;
   currentStreak: number;
+  // The longest run in the habit's whole history, in currentStreak's unit
+  // (days, or weeks for a weekly-count habit); never below currentStreak.
+  bestStreak?: number;
   last30DaysCompleted: number;
   // Against 30 days; the UI recomputes it against the planned days.
   completionRate: number;

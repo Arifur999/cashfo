@@ -28,7 +28,6 @@ export const todosDictionary: Record<string, string> = {
   "Later this week": "এই সপ্তাহে পরে",
   "Edit task": "কাজ সম্পাদনা",
   Task: "কাজ",
-  "Save changes": "পরিবর্তন সংরক্ষণ করুন",
   "Delete task": "কাজ মুছুন",
   "Failed to add task": "কাজ যোগ করতে ব্যর্থ হয়েছে",
   "Failed to update task": "কাজ আপডেট করতে ব্যর্থ হয়েছে",

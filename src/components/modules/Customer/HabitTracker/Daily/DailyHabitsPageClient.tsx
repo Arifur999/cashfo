@@ -27,8 +27,14 @@ import type { DailyHabitsData } from "./dailyTypes";
 import { HabitDetailPanel } from "./HabitDetailPanel";
 import { HabitDrawer } from "./HabitDrawer";
 
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_160px_70px_56px_150px]";
+// The week is seven 18px dots with 3px between them (148px); the streak's
+// widest word is "weeks"; Today holds "This week: 2 of 3" and its tick.
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_148px_64px_56px_150px]";
 const LIST_ID = "daily-habits";
+// Two stat cards side by side on a phone are ~175px each: a tighter inset.
+const STAT_PHONE = "max-md:px-4 max-md:py-3";
+// A smaller figure on phones, so a Bangla "x of y" fits one line of a 2x2 tile.
+const STAT_PHONE_VALUE = "max-md:text-h3";
 // A long list grows 50 rows at a time.
 const STEP = 50;
 // The habit's month sits beside the list from 1400px. The row's fixed
@@ -184,6 +190,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         bestLogs={bestLogs}
         monthLogs={panelLogs}
         streak={streakOf(selected)}
+        bestStreak={stats.find((s) => s.habitId === selected.id)?.bestStreak}
         note={isToday ? (logFor(selected)?.note ?? null) : null}
         todayLog={isToday ? logFor(selected) : null}
         onEdit={() => {
@@ -340,11 +347,12 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label={isToday ? t("Done today") : t("Done on {date}", { date: dayShort })} value={t("{done} of {total}", { done: count(done.length), total: count(planned.length) })} sub={<span className="block truncate">{openLine}</span>} />
-        <StatCard label={t("Longest streak now")} value={longest && longest.streak > 0 ? streakText(longest.habit, longest.streak, t, locale) : "—"} sub={<span className="block truncate">{longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running")}</span>} />
-        <StatCard label={t("Last 30 days")} value={planned30 > 0 ? `${count(Math.min(100, Math.round((done30 / planned30) * 100)))}%` : "—"} sub={t("{done} of {total} planned check-ins", { done: count(done30), total: count(planned30) })} />
-        <StatCard label={t("Perfect days")} value={t("{done} of {total}", { done: count(perfect), total: count(30) })} sub={t("Every planned habit done")} />
+      {/* Two by two on a phone, so the habits start on the first screen. */}
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={isToday ? t("Done today") : t("Done on {date}", { date: dayShort })} value={t("{done} of {total}", { done: count(done.length), total: count(planned.length) })} sub={<span className="block truncate">{openLine}</span>} />
+        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Longest streak now")} value={longest && longest.streak > 0 ? streakText(longest.habit, longest.streak, t, locale) : "—"} sub={<span className="block truncate">{longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running")}</span>} />
+        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Last 30 days")} value={planned30 > 0 ? `${count(Math.min(100, Math.round((done30 / planned30) * 100)))}%` : "—"} sub={t("{done} of {total} planned check-ins", { done: count(done30), total: count(planned30) })} />
+        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Perfect days")} value={t("{done} of {total}", { done: count(perfect), total: count(30) })} sub={t("Every planned habit done")} />
       </div>
 
       {habits.length === 0 ? (

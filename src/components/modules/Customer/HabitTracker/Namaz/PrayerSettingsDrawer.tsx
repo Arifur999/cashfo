@@ -141,7 +141,7 @@ export function PrayerSettingsDrawer({ open, onClose, today }: PrayerSettingsDra
               {PREVIEW.map((prayer, index) => (
                 <div key={prayer} className={cn("grid grid-cols-[120px_minmax(0,1fr)] gap-4 py-3 text-body leading-5", index > 0 && "border-t border-divider")}>
                   <dt className="text-ink-muted">{t(prayer)}</dt>
-                  <dd className="min-w-0 tabular-nums">{timeLabel(clockOf(times[prayer]), t)}</dd>
+                  <dd className="min-w-0 tabular-nums">{timeLabel(clockOf(times[prayer]), t, locale)}</dd>
                 </div>
               ))}
             </dl>

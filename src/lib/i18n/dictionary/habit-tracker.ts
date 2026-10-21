@@ -563,6 +563,7 @@ export const habitTrackerDictionary: Record<string, string> = {
   "Every habit is archived. Bring one back below, or add a new one.": "সব অভ্যাস আর্কাইভ করা। নিচ থেকে একটি ফিরিয়ে আনুন, বা নতুন একটি যোগ করুন।",
   "This habit's month": "এই অভ্যাসের মাস",
   "Best, last 60 days": "সেরা, গত ৬০ দিনে",
+  "Best streak": "সেরা টানা দিন",
   "Rate in {month}": "{month}-এর হার",
   "{month}: {done} of {total} planned days done": "{month}: পরিকল্পিত {total} দিনের মধ্যে {done} দিন হয়েছে",
   "under {count}": "{count}-এর কম",

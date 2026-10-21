@@ -209,19 +209,15 @@ export async function addChallengeItemAction(id: string, input: { name: string; 
   }, "Failed to add the row");
 }
 
-// Deletes a challenge with its days and ticks. The server deletes only a
-// sheet with nothing ticked, so each daily item goes first, and its ticks
-// with it. A Namaz or Ramadan sheet keeps that guard: this refuses them.
+// Deletes a challenge with its days and ticks. The server deletes an Others
+// challenge whole, ticks and all, in one transaction. A Namaz or Ramadan
+// sheet is deleted only while nothing is ticked: this refuses them, so the
+// challenge page can never take one away.
 export async function deleteChallengeAction(id: string): Promise<ActionResult> {
   return callApi(async () => {
     const headers = await authHeaders();
     const { data: tracker } = await customerApi.get<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers });
     if (tracker.category !== "Others") throw new Error("Not a challenge");
-    if (tracker.checks.length > 0) {
-      for (const item of tracker.items) {
-        await customerApi.delete(`${API_BASE_URL}/api/habit-trackers/${id}/items`, { headers, params: { name: item } });
-      }
-    }
     await customerApi.delete(`${API_BASE_URL}/api/habit-trackers/${id}`, { headers });
   }, "Failed to remove challenge");
 }

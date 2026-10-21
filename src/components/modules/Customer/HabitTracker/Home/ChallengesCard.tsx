@@ -45,7 +45,7 @@ export function ChallengesCard({ trackers, today }: ChallengesCardProps) {
             <div key={tracker.id} className="flex items-center gap-3">
               <span role="img" aria-label={t("{pct}% of the way", { pct: count(pct) })} className="relative size-10.5 shrink-0">
                 <svg viewBox="0 0 42 42" className="size-10.5 -rotate-90">
-                  <circle cx="21" cy="21" r={RADIUS} className="fill-none stroke-surface-sunken" strokeWidth="4" />
+                  <circle cx="21" cy="21" r={RADIUS} className="fill-none stroke-surface-sunken dark:stroke-line" strokeWidth="4" />
                   <circle cx="21" cy="21" r={RADIUS} className="fill-none stroke-emerald" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${fill * CIRCUMFERENCE} ${CIRCUMFERENCE}`} />
                 </svg>
                 <span className="absolute inset-0 flex items-center justify-center text-caption font-bold text-ink">{count(pct)}%</span>

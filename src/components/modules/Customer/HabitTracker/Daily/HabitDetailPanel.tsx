@@ -10,7 +10,7 @@ import type { Habit, HabitMonthLog } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
-import { actionError, amountLabel, bestStreak, countsOn, countTone, dayMark, dayText, instantText, monthGrid, ruleLabel, streakText, unitLabel, WEEK_START, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
+import { actionError, amountLabel, bestStreak, countsOn, countTone, dayMark, dayText, HABIT_UNITS, instantText, monthGrid, ruleLabel, streakText, unitLabel, WEEK_START, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
@@ -29,6 +29,9 @@ interface HabitDetailPanelProps {
   bestLogs: HabitMonthLog[];
   monthLogs: HabitMonthLog[];
   streak: number;
+  // The best run over the habit's whole history, from the stats; without
+  // it the panel works the best out of the last 60 days' logs.
+  bestStreak?: number;
   // Today's note, when the viewed day is today.
   note: string | null;
   todayLog: { completed: boolean; value: number | null } | null;
@@ -53,7 +56,7 @@ const BEST_LOOK_BACK = 60;
 // One habit's month: its streaks, every day of the month coloured, and a
 // note for today. The month arrows leaf through the habit's months alone;
 // the day's list stays where it is.
-export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs: shownLogs, streak, note, todayLog, onEdit, onMonthChange, inSheet = false }: HabitDetailPanelProps) {
+export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs: shownLogs, streak, bestStreak: allTimeBest, note, todayLog, onEdit, onMonthChange, inSheet = false }: HabitDetailPanelProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const [draft, setDraft] = useState(note ?? "");
@@ -78,7 +81,7 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
   // Over the planned days, so a missed day counts as nothing rather than not at all.
   const total = monthLogs.reduce((sum, l) => sum + (l.value ?? 0), 0);
   const average = plannedThisMonth > 0 ? Math.round((total / plannedThisMonth) * 10) / 10 : null;
-  const best = Math.max(streak, bestStreak(habit, bestLogs, today, BEST_LOOK_BACK));
+  const best = Math.max(streak, allTimeBest ?? bestStreak(habit, bestLogs, today, BEST_LOOK_BACK));
   const rate = plannedThisMonth > 0 ? Math.round((doneThisMonth / plannedThisMonth) * 100) : null;
   const thisMonth = month === today.slice(0, 7);
   const name = monthName(month, locale);
@@ -87,7 +90,7 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
 
   const facts = [
     { label: t("Current streak"), value: streakText(habit, streak, t, locale) },
-    { label: t("Best, last 60 days"), value: streakText(habit, best, t, locale) },
+    { label: allTimeBest !== undefined ? t("Best streak") : t("Best, last 60 days"), value: streakText(habit, best, t, locale) },
     { label: name, value: t("{done} of {total} days", { done: count(doneThisMonth), total: count(plannedThisMonth) }) },
     counted
       ? { label: t("Daily average"), value: average === null ? "—" : amountLabel(average, habit.unit, t, locale) }
@@ -182,7 +185,8 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
         </div>
         {counted && target > 0 && (
           <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-caption font-normal text-ink-muted">
-            <span>{habit.unit ? `${unitLabel(habit.unit, t)}:` : t("Amount:")}</span>
+            {/* Only a chip unit is capitalised; a typed one ("ml", "km") stays as typed. */}
+            <span className={cn("inline-block", habit.unit && HABIT_UNITS.includes(habit.unit.trim()) && "first-letter:uppercase")}>{habit.unit ? `${unitLabel(habit.unit, t)}:` : t("Amount:")}</span>
             {near < target && (
               <>
                 <span className="flex items-center gap-1">

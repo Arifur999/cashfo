@@ -27,6 +27,10 @@ interface DailyHabitsCardProps {
 
 type LogUpdate = { id: string; completed: boolean; value: number | null };
 
+// The done ring in the header: 40px across, a 4px stroke.
+const RING_RADIUS = 16;
+const RING = 2 * Math.PI * RING_RADIUS;
+
 // Today's habits with a tick each; a counted habit gets a plus instead and
 // its figure opens a field to type the amount. Phones get the board's taller
 // rows: 44px ticks, and a counted habit's one-less / count / one-more.
@@ -77,6 +81,18 @@ export function DailyHabitsCard({ rows: serverRows, resting, today, onAddHabit }
           <span className="text-small text-ink-muted max-md:hidden">{rows.length === 0 ? t("Nothing planned for today") : doneLine("{done} of {total} done today")}</span>
           {rows.length > 0 && <span className="text-small font-semibold text-emerald md:hidden">{doneLine("{done} of {total} done")}</span>}
         </div>
+        {/* The text line beside it already says how many are done. */}
+        {rows.length > 0 && (
+          <span aria-hidden="true" className="relative size-10 shrink-0 max-md:hidden">
+            <svg viewBox="0 0 40 40" className="size-10 -rotate-90">
+              <circle cx="20" cy="20" r={RING_RADIUS} className="fill-none stroke-surface-sunken dark:stroke-line" strokeWidth="4" />
+              <circle cx="20" cy="20" r={RING_RADIUS} className="fill-none stroke-emerald" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${(done / rows.length) * RING} ${RING}`} />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-caption font-bold text-ink tabular-nums">
+              {formatCount(done, locale)}/{formatCount(rows.length, locale)}
+            </span>
+          </span>
+        )}
         {/* Phones have no page header: Add habit lives here. */}
         <button type="button" onClick={onAddHabit} className="flex h-11 shrink-0 items-center gap-1.5 rounded-md px-2 text-small font-semibold text-brand-ink hover:bg-surface-sunken md:hidden">
           <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
@@ -84,7 +100,7 @@ export function DailyHabitsCard({ rows: serverRows, resting, today, onAddHabit }
         </button>
       </div>
       {rows.length === 0 && <span className="border-t border-divider py-3 text-small text-ink-muted md:hidden">{t("Nothing planned for today")}</span>}
-      <ul className="flex flex-col gap-1 md:gap-0.5">
+      <ul className="flex flex-col gap-1">
         {rows.map((row) => {
           const tone = categoryTone(row.color);
           const log = row.todayLog;
@@ -101,7 +117,7 @@ export function DailyHabitsCard({ rows: serverRows, resting, today, onAddHabit }
             </AmountPopover>
           );
           return (
-            <li key={row.id} className="box-content flex min-h-13 items-center gap-3 border-t border-divider md:h-10.5 md:min-h-0 md:border-0">
+            <li key={row.id} className="box-content flex min-h-13 items-center gap-3 border-t border-divider md:min-h-10.5 md:border-0">
               <span className={cn("flex size-8.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-4 md:size-7.5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(row.icon), { "aria-hidden": true })}</span>
               <span className="flex min-w-0 flex-1 flex-col gap-px">
                 <span className="truncate text-body font-medium text-ink">{row.name}</span>

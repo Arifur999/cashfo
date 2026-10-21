@@ -145,7 +145,8 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
       />
 
       {notice && (
-        <div className="flex items-center gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body text-ink-2">
+        // Its own box, not the shared Banner: the board draws it bordered and in the body size.
+        <div role="note" className="flex items-center gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body text-ink-2">
           <Info className="size-5 shrink-0 text-ink-muted" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             <b className="font-semibold text-ink">{t("\"Others\" is now called Challenges.")}</b> {t("Everything you made there is here.")}

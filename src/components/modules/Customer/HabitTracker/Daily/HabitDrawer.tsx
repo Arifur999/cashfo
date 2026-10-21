@@ -2,11 +2,11 @@
 
 import { Archive, Check, Info, Minus, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createElement, useState, useTransition } from "react";
+import { createElement, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import ChoiceCard from "@/components/smartly/ChoiceCard";
+import ChoiceCard, { ChoiceCardGroup } from "@/components/smartly/ChoiceCard";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
@@ -44,6 +44,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
+  const oftenId = useId();
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<HabitIconKey>("droplet");
   const [color, setColor] = useState<HabitColorKey>("blue");
@@ -188,31 +189,36 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
             </div>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("How often")}</legend>
-              {OFTEN.map((option) => (
-                <ChoiceCard key={option.value} checked={frequency === option.value} onSelect={() => setFrequency(option.value)} title={t(option.title)} sub={t(option.sub)}>
-                  {option.value === "WEEKLY_DAYS" && (
-                    <span className="flex flex-col gap-2 pl-8">
-                      <WeekdayPicker value={days} onChange={setDays} />
-                      {noDays && <span className="text-caption text-expense">{t("Pick at least one day.")}</span>}
-                    </span>
-                  )}
-                  {option.value === "WEEKLY_COUNT" && (
-                    <span className="flex flex-wrap items-center gap-3 pl-8">
-                      <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface pointer-coarse:h-11">
-                        <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
-                          <Minus className="size-4" aria-hidden="true" />
-                        </button>
-                        <span className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">{formatCount(count, locale)}</span>
-                        <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
-                          <Plus className="size-4" aria-hidden="true" />
-                        </button>
+              <legend id={oftenId} className="mb-2 text-body leading-[normal] font-medium text-ink">
+                {t("How often")}
+              </legend>
+              {/* One tab stop; the arrow keys move the choice, as native radios do. */}
+              <ChoiceCardGroup aria-labelledby={oftenId}>
+                {OFTEN.map((option) => (
+                  <ChoiceCard key={option.value} checked={frequency === option.value} onSelect={() => setFrequency(option.value)} title={t(option.title)} sub={t(option.sub)}>
+                    {option.value === "WEEKLY_DAYS" && (
+                      <span className="flex flex-col gap-2 pl-8">
+                        <WeekdayPicker value={days} onChange={setDays} />
+                        {noDays && <span className="text-caption text-expense">{t("Pick at least one day.")}</span>}
                       </span>
-                      <span className="text-body text-ink-2">{t("times a week, on any days")}</span>
-                    </span>
-                  )}
-                </ChoiceCard>
-              ))}
+                    )}
+                    {option.value === "WEEKLY_COUNT" && (
+                      <span className="flex flex-wrap items-center gap-3 pl-8">
+                        <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface pointer-coarse:h-11">
+                          <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
+                            <Minus className="size-4" aria-hidden="true" />
+                          </button>
+                          <span className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">{formatCount(count, locale)}</span>
+                          <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
+                            <Plus className="size-4" aria-hidden="true" />
+                          </button>
+                        </span>
+                        <span className="text-body text-ink-2">{t("times a week, on any days")}</span>
+                      </span>
+                    )}
+                  </ChoiceCard>
+                ))}
+              </ChoiceCardGroup>
             </fieldset>
 
             <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
