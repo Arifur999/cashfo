@@ -61,11 +61,20 @@ export const CommandMark = ({ tone = "neutral", children }: { tone?: "forest" | 
   </span>
 );
 
-// Typing in a field or an editable area elsewhere keeps Ctrl K to itself;
-// the palette's own field (inside data-command-palette) still closes it.
-const typingElsewhere = (target: EventTarget | null) => {
+// Text inputs that take Ctrl K as a Mac editing key (delete to the end of
+// the line). Checkboxes, dates and numbers have no such meaning.
+const MAC_EDIT_INPUT = /^(text|search|email|url|tel|password)$/;
+
+// Leaves the key press to the field only where Ctrl K or ⌘K means something
+// there: a rich editor (insert a link), and plain Ctrl K in a Mac text field.
+// Anywhere else, a filter box included, it opens the palette as before; the
+// palette's own field (inside data-command-palette) still closes it.
+const typingElsewhere = (event: KeyboardEvent) => {
+  const target = event.target;
   if (!(target instanceof HTMLElement) || target.closest("[data-command-palette]")) return false;
-  return target.isContentEditable || target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+  if (target.isContentEditable) return true;
+  if (!event.ctrlKey || event.metaKey || !/Mac|iP(hone|ad|od)/.test(navigator.platform)) return false;
+  return target instanceof HTMLTextAreaElement || (target instanceof HTMLInputElement && MAC_EDIT_INPUT.test(target.type));
 };
 
 // Ctrl K (⌘K on a Mac) anywhere on the page calls onToggle.
@@ -73,7 +82,7 @@ export function useCommandShortcut(onToggle: () => void) {
   const handle = useEffectEvent((event: KeyboardEvent) => {
     // Autofill fires keydowns with no key at all.
     if (typeof event.key !== "string" || event.key.toLowerCase() !== "k" || !(event.ctrlKey || event.metaKey)) return;
-    if (typingElsewhere(event.target)) return;
+    if (typingElsewhere(event)) return;
     event.preventDefault();
     onToggle();
   });
