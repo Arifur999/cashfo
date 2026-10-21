@@ -856,6 +856,9 @@ export interface ReferralEntry {
   status: ReferralStatus;
   rewardAmount: string;
   createdAt: string;
+  // When the reward was confirmed (30 days after joining) and withdrawn.
+  confirmedAt?: string | null;
+  withdrawnAt?: string | null;
 }
 
 export interface ReferralInfo {
@@ -865,6 +868,9 @@ export interface ReferralInfo {
   availableBalance: string;
   referralCount: number;
   rewardAmountPerReferral: string;
+  // Friends whose reward is still waiting out its 30 days.
+  pendingCount?: number;
+  // Every friend, newest first (an older backend sent the newest 10).
   recentReferrals: ReferralEntry[];
 }
 

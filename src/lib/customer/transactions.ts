@@ -16,6 +16,9 @@ export interface TransactionFilters {
   categoryId?: string;
   contactId?: string;
   contactCategory?: ContactCategory;
+  // Leave out what a savings goal moved (Wallets › Transfer lists money
+  // moved between wallets).
+  excludeSavings?: boolean;
   search?: string;
   page?: number;
   limit?: number;
