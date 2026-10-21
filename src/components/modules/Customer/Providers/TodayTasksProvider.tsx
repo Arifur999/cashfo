@@ -8,6 +8,9 @@ interface TodayTasksContextValue {
   // Today's list, null before it loads or when there is none yet.
   list: TodoList | null;
   loaded: boolean;
+  // The last load failed (an outage, a timeout): "Couldn't load today's
+  // tasks" rather than "Nothing planned".
+  failed: boolean;
   // Open tasks today, for the badge on the top bar and the sidebar.
   openCount: number;
   setList: (list: TodoList | null) => void;
@@ -22,10 +25,12 @@ const TodayTasksContext = createContext<TodayTasksContextValue | null>(null);
 export function TodayTasksProvider({ children }: { children: ReactNode }) {
   const [list, setList] = useState<TodoList | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const reload = useCallback(async () => {
     const result = await getTodayTodoListAction();
     if (result.success) setList(result.data ?? null);
+    setFailed(!result.success);
     setLoaded(true);
   }, []);
 
@@ -35,6 +40,7 @@ export function TodayTasksProvider({ children }: { children: ReactNode }) {
     getTodayTodoListAction().then((result) => {
       if (cancelled) return;
       if (result.success) setList(result.data ?? null);
+      setFailed(!result.success);
       setLoaded(true);
     });
     return () => {
@@ -43,13 +49,13 @@ export function TodayTasksProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<TodayTasksContextValue>(
-    () => ({ list, loaded, openCount: list?.items.filter((item) => !item.completed).length ?? 0, setList, reload }),
-    [list, loaded, reload],
+    () => ({ list, loaded, failed, openCount: list?.items.filter((item) => !item.completed).length ?? 0, setList, reload }),
+    [list, loaded, failed, reload],
   );
   return <TodayTasksContext.Provider value={value}>{children}</TodayTasksContext.Provider>;
 }
 
-const fallback: TodayTasksContextValue = { list: null, loaded: false, openCount: 0, setList: () => {}, reload: async () => {} };
+const fallback: TodayTasksContextValue = { list: null, loaded: false, failed: false, openCount: 0, setList: () => {}, reload: async () => {} };
 
 export function useTodayTasks(): TodayTasksContextValue {
   return useContext(TodayTasksContext) ?? fallback;
