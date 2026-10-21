@@ -20,7 +20,7 @@ const InvoiceSidebar = async ({ invoice, recent }: InvoiceSidebarProps) => {
       <section className="flex flex-col gap-3 rounded-lg border border-line bg-surface px-5 py-4 shadow-card">
         <h2 className="text-title text-ink">{invoice.invoiceNumber}</h2>
         {invoice.payment && <span className="text-small text-ink-2">{t("Made automatically when {id} was paid.", { id: shortPaymentId(invoice.payment.id) })}</span>}
-        <PrintButton label="Print / Save as PDF" className="h-10 w-full rounded-md bg-emerald text-body font-semibold text-white shadow-[0_1px_2px_rgba(11,61,46,0.14)] hover:bg-forest" />
+        <PrintButton label="Print / Save as PDF" className="w-full border-0 bg-emerald text-white shadow-[0_1px_2px_rgba(11,61,46,0.14)] hover:bg-forest" />
         {invoice.payment && (
           <Link href={`/admin/payments/${invoice.payment.id}`} className="text-small font-semibold text-emerald hover:underline">
             <T>Open the payment</T>

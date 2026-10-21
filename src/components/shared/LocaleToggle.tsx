@@ -1,9 +1,10 @@
 "use client";
 
 import { Languages } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/smartly/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
+// Switches English and Bangla: the design's toolbar outline button.
 const LocaleToggle = () => {
   const { locale, toggleLocale, translate } = useLocale();
 
