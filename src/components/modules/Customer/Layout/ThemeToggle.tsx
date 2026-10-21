@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { NIGHT_FOCUS } from "./SidebarNav";
 
 // The server always renders assuming "light" (it has no access to
 // localStorage/prefers-color-scheme), while the client's real value is set
@@ -40,7 +41,7 @@ export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
       title={label}
       className={cn(
         "flex shrink-0 items-center justify-center transition-colors",
-        onDark ? "size-9.5 rounded-full bg-white/8 text-white hover:bg-white/14" : "size-10 rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken",
+        onDark ? cn("size-9.5 rounded-full bg-white/8 text-white hover:bg-white/14", NIGHT_FOCUS) : "size-10 rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken",
       )}
     >
       {icon}
