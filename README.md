@@ -61,9 +61,12 @@ src/
 
 ### Tables
 
-Every list uses the shared `DataTable` (`components/shared/table`): sorting, faceted and date-range filters, search, column visibility (remembered per browser), CSV export, row selection, row actions, sticky header, skeleton and empty states, and tree rows (`getSubRows`).
+Every list uses the shared `DataTable` (`components/shared/table`): sorting, faceted and date-range filters, search, column visibility (remembered per browser), CSV export, row selection, row actions, sticky header, skeleton and empty states, and tree rows (`getSubRows`). Its pagers draw `smartly/Pagination`, the customer app's pager.
 
 - **Server-paginated** lists use `useServerDataTable(config)`: the URL is the source of truth (`?page=&limit=&search=&status=...`), updated with `history.pushState`, and the same config builds the page's prefetch query string.
+- **Rows per page** offers 10, 25, 50 and 100, plus the list's own size when it is none of those (the logs' 20), kept in `?limit=`.
+- **Past the end** (a stale link, rows deleted since), the URL is replaced with the last page, so a table never reads "Showing 981–50 of 50".
+- **Export** downloads the selected rows when any are ticked. Otherwise a server list that passes `useServerDataTable(config, { fetchPage })` downloads every row matching the filters: 100 a request, at most 10,000 rows (a toast says when it stops short), and no more than 60 requests a minute, so the export stays under the API's 100-a-minute limit and leaves room for the page itself. A list without `fetchPage` exports the rows it holds.
 - **Short lists** (plans, coupons, categories, ...) are filtered, sorted and paged in memory.
 
 ### Signing in
