@@ -31,4 +31,5 @@ export const HABIT_COLORS: { key: HabitColorKey; label: string }[] = [
   { key: "violet", label: "Violet" },
 ];
 
-export const HABIT_UNITS = ["minutes", "glasses", "pages", "steps", "times"];
+// The unit chips live with the maths that words them (habitDisplay.ts).
+export { HABIT_UNITS } from "@/lib/customer/habitDisplay";

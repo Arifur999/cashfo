@@ -55,7 +55,8 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
 
   if (category === "Others") {
     const trackers = await getHabitTrackers("Others");
-    return <ChallengesHomePageClient trackers={trackers} today={getAppToday()} />;
+    // ?new=1 (Today's "Start a challenge") opens the new-challenge dialog.
+    return <ChallengesHomePageClient trackers={trackers} today={getAppToday()} openNew={sp.new === "1"} />;
   }
 
   redirect("/habit-tracker");

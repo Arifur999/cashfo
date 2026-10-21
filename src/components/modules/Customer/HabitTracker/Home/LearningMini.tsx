@@ -4,6 +4,7 @@ import { Flame } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import type { SkillsOverview } from "@/lib/customer/api";
+import { daysText } from "@/lib/customer/habitDisplay";
 import { byStatus, practiceLine, progressPct, progressText } from "@/lib/customer/skillsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paletteFor } from "../Skills/skillPalette";
@@ -15,7 +16,7 @@ interface LearningMiniProps {
 
 // The skills being learned, in brief, and the practice streak.
 export function LearningMini({ overview, today }: LearningMiniProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const learning = overview ? byStatus(overview.skills, "LEARNING").slice(0, 2) : [];
   const streak = overview?.streak ?? 0;
 
@@ -36,19 +37,19 @@ export function LearningMini({ overview, today }: LearningMiniProps) {
             <div key={skill.id} className="flex flex-col gap-1">
               <div className="flex justify-between gap-2 text-small">
                 <span className="truncate font-semibold text-ink">{skill.name}</span>
-                <span className="shrink-0 text-ink-muted tabular-nums">{progressText(skill, t)}</span>
+                <span className="shrink-0 text-ink-muted tabular-nums">{progressText(skill, t, locale)}</span>
               </div>
               <span role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${skill.name}: ${t("done")}`} className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
                 <span className="block h-full rounded-full" style={{ width: `${pct}%`, background: paletteFor(skill.color).to }} />
               </span>
-              <span className="text-caption text-ink-muted">{(overview && practiceLine(skill, overview.week, today, t)) ?? t("Nothing logged this week")}</span>
+              <span className="text-caption text-ink-muted">{(overview && practiceLine(skill, overview.week, today, t, locale)) ?? t("Nothing logged this week")}</span>
             </div>
           );
         })
       )}
       <div className="mt-auto flex items-center gap-1 border-t border-divider pt-3 text-small font-semibold text-ink">
         <Flame className={streak > 0 ? "size-4 text-warning" : "size-4 text-ink-muted"} aria-hidden="true" />
-        {streak > 0 ? `${t("Practice streak")}: ${streak} ${t(streak === 1 ? "day" : "days")}` : t("No practice streak yet")}
+        {streak > 0 ? t("Practice streak: {days}", { days: daysText(streak, t, locale) }) : t("No practice streak yet")}
       </div>
     </Card>
   );

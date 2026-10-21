@@ -10,7 +10,9 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Input from "@/components/smartly/form/Input";
 import type { TodoItem, TodoList } from "@/lib/customer/api";
+import { actionError } from "@/lib/customer/habitDisplay";
 import { addTodoItemAction, createTodoListAction, updateTodoItemAction } from "@/lib/customer/todosActions";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -27,9 +29,10 @@ const SHOWN = 5;
 
 // Today's to-do list, the same copy the top bar shows: what is left first,
 // then what is done, and a box to add one more. Phones get the board's
-// taller rows, with the done ones folded under "N done".
+// taller rows, with the done ones folded under "N done". A task's words
+// tick it too, not only its box.
 export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const shell = useTodayTasks();
   const { loaded, setList } = shell;
   const list = loaded ? shell.list : initial;
@@ -54,7 +57,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
       if (!target) {
         const created = await createTodoListAction(today);
         if (!created.success || !created.data) {
-          toast.error(created.message ?? t("Failed to add task"));
+          toast.error(actionError(created.message, "Failed to add task", t, locale));
           return;
         }
         target = created.data;
@@ -65,7 +68,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
         setList(result.data);
         setText("");
       } else {
-        toast.error(result.message ?? t("Failed to add task"));
+        toast.error(actionError(result.message, "Failed to add task", t, locale));
       }
     } finally {
       setAdding(false);
@@ -78,7 +81,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
     updateTodoItemAction(list.id, item.id, { completed: !item.completed })
       .then((result) => {
         if (result.success && result.data) setList(result.data);
-        else toast.error(result.message ?? t("Failed to update task"));
+        else toast.error(actionError(result.message, "Failed to update task", t, locale));
       })
       .finally(() =>
         setBusy((prev) => {
@@ -97,16 +100,18 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
       aria-label={item.text}
       disabled={busy.has(item.id)}
       onClick={() => toggle(item)}
-      className={cn("flex shrink-0 items-center justify-center transition-colors disabled:opacity-50", item.completed ? "bg-emerald text-white" : "border-[1.5px] border-line-strong bg-surface hover:border-emerald", className)}
+      className={cn("relative flex shrink-0 items-center justify-center transition-colors after:absolute after:-inset-3 disabled:opacity-50", item.completed ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface hover:border-emerald", className)}
     >
       {item.completed && <Check className="size-3" strokeWidth={3.5} aria-hidden="true" />}
     </button>
   );
 
   const phoneRow = (item: TodoItem) => (
-    <li key={item.id} className="box-content flex min-h-13 items-center gap-3 border-t border-divider">
-      {checkbox(item, "size-5.5 rounded-sm")}
-      <span className={cn("min-w-0 flex-1 truncate text-body font-medium", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+    <li key={item.id} className="box-content border-t border-divider">
+      <label className="flex min-h-13 cursor-pointer items-center gap-3">
+        {checkbox(item, "size-5.5 rounded-sm")}
+        <span className={cn("min-w-0 flex-1 truncate text-body font-medium", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+      </label>
     </li>
   );
 
@@ -117,17 +122,15 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
           <h2 className="text-title font-semibold text-ink max-md:leading-[normal]">{t("Today's tasks")}</h2>
           {items.length > 0 && (
             <Chip tone="neutral" size="sm" className="max-md:hidden">
-              {open.length} {t("left")}
+              {t("{count} left", { count: formatCount(open.length, locale) })}
             </Chip>
           )}
         </div>
         {items.length > 0 && (
-          <span className="text-small text-ink-muted md:hidden">
-            {open.length} {t("left")}
-          </span>
+          <span className="ml-auto text-small text-ink-muted md:hidden">{t("{count} left", { count: formatCount(open.length, locale) })}</span>
         )}
-        <Link href="/habit-tracker/todos" className="text-small font-semibold text-emerald hover:underline max-md:hidden">
-          {t("Open list")}
+        <Link href="/habit-tracker/todos" className="flex shrink-0 items-center text-small font-semibold text-emerald hover:underline max-md:min-h-11">
+          {t("To-do list")}
         </Link>
       </div>
       {items.length > 0 ? (
@@ -138,7 +141,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
             {done.length > 0 && (
               <>
                 <button type="button" aria-expanded={showDone} onClick={() => setShowDone((value) => !value)} className="flex h-11 items-center justify-between border-t border-divider px-0.5 text-small font-semibold text-ink-2">
-                  {done.length} {t("done")}
+                  {t("{count} done", { count: formatCount(done.length, locale) })}
                   <ChevronDown className={cn("size-4 transition-transform", showDone && "rotate-180")} aria-hidden="true" />
                 </button>
                 {showDone && <ul className="flex flex-col gap-1">{done.map(phoneRow)}</ul>}
@@ -147,15 +150,15 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
           </div>
           <ul className="flex flex-col max-md:hidden">
             {shown.map((item) => (
-              <li key={item.id} className="flex items-start gap-3 border-b border-divider py-2">
-                {checkbox(item, "mt-px size-4.5 rounded-[5px]")}
-                <span className={cn("min-w-0 flex-1 truncate text-body", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+              <li key={item.id} className="border-b border-divider">
+                <label className="flex cursor-pointer items-start gap-3 py-2">
+                  {checkbox(item, "mt-px size-4.5 rounded-[5px]")}
+                  <span className={cn("min-w-0 flex-1 truncate text-body", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+                </label>
               </li>
             ))}
             {more > 0 && (
-              <li className="pt-2 text-caption text-ink-muted">
-                {more} {t("more on the list")}
-              </li>
+              <li className="pt-2 text-caption text-ink-muted">{t("{count} more on the list", { count: formatCount(more, locale) })}</li>
             )}
           </ul>
         </>

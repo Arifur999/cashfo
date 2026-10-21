@@ -6,6 +6,7 @@ import Card from "@/components/smartly/Card";
 import { budgetCategoryHex, budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import type { StreakRow } from "@/lib/customer/habitsHome";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +24,7 @@ interface StreaksCardProps {
 // Every run that is alive, longest first: habits, skills practice and the
 // five prayers.
 export function StreaksCard({ rows }: StreaksCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const max = Math.max(1, ...rows.map((row) => row.days));
 
   return (
@@ -33,7 +34,7 @@ export function StreaksCard({ rows }: StreaksCardProps) {
         <span className="text-caption text-ink-muted">{t("days in a row")}</span>
       </div>
       {rows.length === 0 ? (
-        <span className="py-3 text-small text-ink-muted">{t("Tick things off two days running and the streaks show up here.")}</span>
+        <span className="py-3 text-small text-ink-muted">{t("Tick something today and again tomorrow to start a streak.")}</span>
       ) : (
         <ul className="flex flex-col gap-2">
           {rows.map((row) => {
@@ -53,7 +54,7 @@ export function StreaksCard({ rows }: StreaksCardProps) {
                 </span>
                 <span className="flex items-center justify-end gap-1 text-body font-bold text-ink tabular-nums">
                   <Flame className="size-3.5 text-warning" aria-hidden="true" />
-                  {row.days}
+                  {formatCount(row.days, locale)}
                 </span>
               </li>
             );

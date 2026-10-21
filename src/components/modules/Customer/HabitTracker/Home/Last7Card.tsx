@@ -3,6 +3,7 @@
 import Card from "@/components/smartly/Card";
 import { WEEKDAY_SHORT, weekdayOf } from "@/lib/customer/habitDisplay";
 import { fullDays, pct, type DayBars } from "@/lib/customer/habitsHome";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -17,8 +18,10 @@ const MAX = 150;
 // Prayers and habits done each day for the last seven days, as two bars a
 // day, with the totals over the days that are over.
 export function Last7Card({ bars, today }: Last7CardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const count = (n: number) => formatCount(n, locale);
   const sums = fullDays(bars);
+  const share = (done: number, due: number) => `${t("{done} of {total}", { done: count(done), total: count(due) })} · ${count(pct(done, due))}%`;
   const height = (done: number, due: number) => (due > 0 ? Math.max(done > 0 ? 4 : 0, Math.round((done / due) * MAX)) : 0);
 
   return (
@@ -41,8 +44,8 @@ export function Last7Card({ bars, today }: Last7CardProps) {
           const isToday = bar.day === today;
           return (
             <div key={bar.day} className="flex flex-1 items-end justify-center gap-0.75">
-              <span title={`${bar.prayed} ${t("of")} 5 ${t("prayers")}${isToday ? ` ${t("so far")}` : ""}`} className={cn("w-3 rounded-t-[3px] bg-emerald", isToday && "opacity-55")} style={{ height: height(bar.prayed, 5) }} />
-              <span title={`${bar.habitsDone} ${t("of")} ${bar.habitsDue} ${t("habits")}${isToday ? ` ${t("so far")}` : ""}`} className={cn("w-3 rounded-t-[3px] bg-warning-fill", isToday && "opacity-55")} style={{ height: height(bar.habitsDone, bar.habitsDue) }} />
+              <span title={t(isToday ? "{count} of 5 prayers so far" : "{count} of 5 prayers", { count: count(bar.prayed) })} className={cn("w-3 rounded-t-[3px] bg-emerald", isToday && "opacity-55")} style={{ height: height(bar.prayed, 5) }} />
+              <span title={t(isToday ? "{done} of {total} habits so far" : "{done} of {total} habits", { done: count(bar.habitsDone), total: count(bar.habitsDue) })} className={cn("w-3 rounded-t-[3px] bg-warning-fill", isToday && "opacity-55")} style={{ height: height(bar.habitsDone, bar.habitsDue) }} />
             </div>
           );
         })}
@@ -53,27 +56,19 @@ export function Last7Card({ bars, today }: Last7CardProps) {
           return (
             <span key={bar.day} className={cn("flex flex-1 flex-col items-center gap-px text-caption", isToday ? "font-bold text-emerald" : "font-medium text-ink-muted")}>
               <span>{isToday ? t("Today") : t(WEEKDAY_SHORT[weekdayOf(bar.day)])}</span>
-              <span className="font-medium text-ink-muted">{Number(bar.day.slice(8))}</span>
+              <span className="font-medium text-ink-muted">{count(Number(bar.day.slice(8)))}</span>
             </span>
           );
         })}
       </div>
       <div className="mt-auto grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-0.5 rounded-md bg-strip p-3">
-          <span className="text-caption text-ink-muted">
-            {t("Prayers")}, {sums.days} {t("full days")}
-          </span>
-          <span className="text-title font-bold text-ink tabular-nums">
-            {sums.prayed} {t("of")} {sums.prayersDue} · {pct(sums.prayed, sums.prayersDue)}%
-          </span>
+          <span className="text-caption text-ink-muted">{t("Prayers, last {count} days", { count: count(sums.days) })}</span>
+          <span className="text-title font-bold text-ink tabular-nums">{share(sums.prayed, sums.prayersDue)}</span>
         </div>
         <div className="flex flex-col gap-0.5 rounded-md bg-strip p-3">
-          <span className="text-caption text-ink-muted">
-            {t("Habits")}, {sums.days} {t("full days")}
-          </span>
-          <span className="text-title font-bold text-ink tabular-nums">
-            {sums.habitsDone} {t("of")} {sums.habitsDue} · {pct(sums.habitsDone, sums.habitsDue)}%
-          </span>
+          <span className="text-caption text-ink-muted">{t("Habits, last {count} days", { count: count(sums.days) })}</span>
+          <span className="text-title font-bold text-ink tabular-nums">{share(sums.habitsDone, sums.habitsDue)}</span>
         </div>
       </div>
     </Card>
