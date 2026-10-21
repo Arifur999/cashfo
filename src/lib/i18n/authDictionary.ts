@@ -95,26 +95,59 @@ export const bnAuthDictionary: Record<string, string> = {
   "We couldn't send the link. Please try again.": "লিংক পাঠানো যায়নি। আবার চেষ্টা করুন।",
   "We couldn't save your new password. Please try again.": "নতুন পাসওয়ার্ড সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।",
   "This reset link is incomplete. Request a new one.": "এই রিসেট লিংকটি অসম্পূর্ণ। নতুন লিংক চান।",
-  "Invite code applied:": "ইনভাইট কোড যুক্ত হয়েছে:",
+  // zod's register and password rules (zod/auth.validation.ts), and what the
+  // API answers when one slips past them.
+  "Leave web addresses out of your name": "নামে কোনো ওয়েব ঠিকানা দেবেন না",
+  "At most 128 characters": "সর্বোচ্চ ১২৮ অক্ষর",
+  "At most 64 characters": "সর্বোচ্চ ৬৪ অক্ষর",
+  "Name cannot contain a web address": "নামে ওয়েব ঠিকানা রাখা যাবে না",
+  "Password must contain at least one letter and one number": "পাসওয়ার্ডে অন্তত একটি অক্ষর ও একটি সংখ্যা থাকতে হবে",
+  // A suspended admin's sign-in refusal (admin-auth.service.ts).
+  "This account has been suspended": "এই অ্যাকাউন্টটি স্থগিত করা হয়েছে",
+  // The sign-in pages' call to their action never got an answer
+  // (useAuthAction.ts): an older tab after a deploy needs a reload.
+  "{brand} was just updated. Reload the page and try again.": "{brand} এইমাত্র আপডেট হয়েছে। পেজটি রিলোড করে আবার চেষ্টা করুন।",
+  "Reload the page": "পেজটি রিলোড করুন",
+  // lib/actionError.ts once it reads the throttler's Retry-After (requested):
+  // the login lock lasts up to 15 minutes, not "a few".
+  "Too many attempts. Try again in {minutes} minutes.": "অনেকবার চেষ্টা করা হয়েছে। {minutes} মিনিট পরে আবার চেষ্টা করুন।",
+  "Too many attempts. Try again in a minute.": "অনেকবার চেষ্টা করা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।",
+  "Too many attempts. Wait up to 15 minutes, then try again.": "অনেকবার চেষ্টা করা হয়েছে। ১৫ মিনিট পর্যন্ত অপেক্ষা করে আবার চেষ্টা করুন।",
+  // Next steps under an error.
+  "Sign in instead": "বরং সাইন ইন করুন",
+  "Reset your password": "পাসওয়ার্ড রিসেট করুন",
+  "Created your account with Google? Use Continue with Google.": "Google দিয়ে অ্যাকাউন্ট খুলেছিলেন? \"Google দিয়ে চালিয়ে যান\" ব্যবহার করুন।",
 
   // components/modules/Legal/* and the maintenance page and notice -- the
-  // pages anyone can open.
-  "Terms of Service": "সেবার শর্তাবলি",
-  "Privacy Policy": "গোপনীয়তা নীতি",
-  "Refund Policy": "রিফান্ড নীতি",
-  FAQ: "সাধারণ জিজ্ঞাসা",
+  // pages anyone can open. The pages' own names (Terms of use, Privacy
+  // policy ...) are worded in settings-workspace.ts.
   Legal: "আইনি তথ্য",
-  Version: "সংস্করণ",
   // A saved version is live at once, so it is in effect from when it was saved.
-  "in effect from {date}": "{date} থেকে কার্যকর",
+  "Version {version} · in effect from {date}": "সংস্করণ {version} · {date} থেকে কার্যকর",
+  "This page is only in English for now.": "এই পৃষ্ঠাটি আপাতত শুধু ইংরেজিতে আছে।",
   "This page isn't available right now. Please check back later.": "পৃষ্ঠাটি এখন পাওয়া যাচ্ছে না। একটু পরে আবার দেখুন।",
   "On this page": "এই পৃষ্ঠায়",
-  "By creating an account, you agree to our Terms of Service and Privacy Policy.":
-    "অ্যাকাউন্ট খোলার মাধ্যমে আপনি আমাদের সেবার শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত হচ্ছেন।",
+  "By creating an account, you agree to our {terms} and {privacy}.": "অ্যাকাউন্ট খুললে আপনি আমাদের {terms} ও {privacy} মেনে নিচ্ছেন।",
+  // A screen reader's note on a link that opens in a new tab.
+  "(opens in a new tab)": "(নতুন ট্যাবে খোলে)",
   "Under maintenance": "রক্ষণাবেক্ষণ চলছে",
+  // What maintenance means for the sign-in page the notice is on.
+  "You can sign in; the app opens again when we're done.": "সাইন ইন করতে পারবেন; কাজ শেষ হলে অ্যাপ আবার খুলবে।",
+  "Sign-up is paused until then.": "ততক্ষণ নতুন অ্যাকাউন্ট খোলা বন্ধ থাকবে।",
+  "Password reset is paused until then; ask for a new link afterwards.": "ততক্ষণ পাসওয়ার্ড রিসেট বন্ধ থাকবে; শেষ হলে নতুন লিংক চেয়ে নিন।",
   "We'll be back soon": "আমরা শীঘ্রই ফিরছি",
   "Questions? Write to": "কোনো প্রশ্ন? লিখুন",
   "Check again": "আবার দেখুন",
+  "Checking again...": "আবার দেখা হচ্ছে...",
+  "Still under maintenance. Checked at {time}.": "এখনো রক্ষণাবেক্ষণ চলছে। {time}-এ দেখা হয়েছে।",
+  "{brand} is getting an upgrade": "{brand} আপগ্রেড হচ্ছে",
+
+  // The message pages (app/error.tsx and the customer one): a browser-side
+  // error has no reference to send.
+  "Try again in a moment; if it keeps happening, tell us what you were doing.": "একটু পরে আবার চেষ্টা করুন; বারবার হলে আপনি কী করছিলেন তা আমাদের জানান।",
+  // The root page is the admin panel's outage page too: nothing customer-only.
+  "Anything already saved stays saved.": "যা সংরক্ষিত হয়েছে, তা সংরক্ষিতই থাকবে।",
+  "Contact support": "সাপোর্টে যোগাযোগ করুন",
 
   // The Smartly sign-in pages (AuthHero, the forms)
   "About Smartly": "Smartly সম্পর্কে",
@@ -134,7 +167,8 @@ export const bnAuthDictionary: Record<string, string> = {
   "Money, loans and savings in one place": "টাকা, দেনা-পাওনা আর সঞ্চয় এক জায়গায়",
   "A separate password for your vault": "ভল্টের জন্য আলাদা পাসওয়ার্ড",
   "English and বাংলা, light and dark": "ইংরেজি ও বাংলা, লাইট ও ডার্ক",
-  "English and": "ইংরেজি ও",
+  // {bangla} is the word বাংলা itself, set in its own face.
+  "English and {bangla}": "ইংরেজি ও {bangla}",
   "Light and dark": "লাইট ও ডার্ক",
   "Made for Bangladesh": "বাংলাদেশের জন্য তৈরি",
   "Money, loans, prayers and every login in one calm place.": "টাকা, দেনা-পাওনা, নামাজ আর প্রতিটি লগইন এক শান্ত জায়গায়।",
@@ -142,23 +176,35 @@ export const bnAuthDictionary: Record<string, string> = {
   "Money in": "টাকা এসেছে",
   "Money out": "টাকা গেছে",
   "Next prayer": "পরের নামাজ",
+  "Asr · 4:05 pm": "আসর · বিকাল ৪:০৫",
   "Salary is 80% of your income.": "বেতন আপনার আয়ের ৮০%।",
-  "Freelance grew from ৳ 8,000 to ৳ 12,000 a month.": "ফ্রিল্যান্স মাসে ৳ ৮,০০০ থেকে ৳ ১২,০০০ হয়েছে।",
+  // Money keeps Latin digits in Bangla too, as on the cards beside it.
+  "Freelance grew from ৳ 8,000 to ৳ 12,000 a month.": "ফ্রিল্যান্স মাসে ৳ 8,000 থেকে ৳ 12,000 হয়েছে।",
   "14 logins, locked": "১৪টি লগইন, লক করা",
   "Sign in to Smartly to pick up where you left off.": "যেখানে ছেড়েছিলেন সেখান থেকে শুরু করতে Smartly-তে সাইন ইন করুন।",
   "You've been signed out": "আপনাকে সাইন আউট করা হয়েছে",
+  // Only when there is a ?redirect= page to go back to.
   "Sign in again and we will take you back to the page you were on.": "আবার সাইন ইন করুন, আমরা আপনাকে আগের পেজে ফিরিয়ে নেব।",
-  "For your safety we sign you out after a long time away, or when you choose Sign out everywhere on another device.":
-    "নিরাপত্তার জন্য অনেকক্ষণ দূরে থাকলে, বা অন্য ডিভাইসে \"সব জায়গা থেকে সাইন আউট\" বেছে নিলে আমরা আপনাকে সাইন আউট করি।",
-  "Money Tracker is now": "Money Tracker এখন",
-  "Same account, same data, a few new things inside.": "একই অ্যাকাউন্ট, একই তথ্য, ভেতরে কিছু নতুন জিনিস।",
+  "Sign in again to carry on.": "চালিয়ে যেতে আবার সাইন ইন করুন।",
+  // Names Settings › Security's button as it reads (settings.ts).
+  "For your safety we sign you out after a long time away, after a password change, or when Sign out everywhere else is used on another device.":
+    "নিরাপত্তার জন্য অনেকক্ষণ দূরে থাকলে, পাসওয়ার্ড বদলালে, অথবা অন্য ডিভাইসে \"বাকি সব জায়গা থেকে সাইন আউট\" ব্যবহার করা হলে আমরা আপনাকে সাইন আউট করি।",
+  "Money Tracker is now {brand}. Same account, same data, a few new things inside.": "Money Tracker এখন {brand}। একই অ্যাকাউন্ট, একই তথ্য, ভেতরে কিছু নতুন জিনিস।",
   "Your password": "আপনার পাসওয়ার্ড",
   "New to Smartly?": "Smartly-তে নতুন?",
   "Create an account": "অ্যাকাউন্ট খুলুন",
   "One account for your money, habits and passwords.": "আপনার টাকা, অভ্যাস আর পাসওয়ার্ডের জন্য একটি অ্যাকাউন্ট।",
   Phone: "ফোন",
   optional: "ঐচ্ছিক",
-  password: "পাসওয়ার্ড",
+  // The new-password meter's label, a whole phrase per step.
+  "Password too weak": "পাসওয়ার্ড খুব দুর্বল",
+  "Fair password": "মোটামুটি পাসওয়ার্ড",
+  "Good password": "ভালো পাসওয়ার্ড",
+  "Strong password": "শক্তিশালী পাসওয়ার্ড",
+  // What a screen reader hears as the meter changes, and before each rule.
+  "Password strength: {strength}": "পাসওয়ার্ডের শক্তি: {strength}",
+  "Done:": "হয়েছে:",
+  "Not yet:": "এখনো হয়নি:",
   "At least 8 characters": "কমপক্ষে ৮ অক্ষর",
   "A letter and a number": "একটি অক্ষর ও একটি সংখ্যা",
   "Passwords match": "পাসওয়ার্ড মিলেছে",
@@ -178,4 +224,19 @@ export const bnAuthDictionary: Record<string, string> = {
   "Its own password, and it locks itself after a few minutes.": "আলাদা পাসওয়ার্ড, আর কয়েক মিনিট পর নিজেই লক হয়ে যায়।",
   "Sign in again": "আবার সাইন ইন করুন",
   "Keep me signed in on this device": "এই ডিভাইসে সাইন ইন থাকুন",
+
+  // Sign-up's invite code: from a ?ref= link, or typed from a friend's text.
+  "Have an invite code?": "ইনভাইট কোড আছে?",
+  "Invite code": "ইনভাইট কোড",
+  "Signing up with invite code {code}": "ইনভাইট কোড {code} দিয়ে সাইন আপ করছেন",
+
+  // "Check your email", once the reset link is on its way.
+  "Only the newest link works.": "শুধু সবচেয়ে নতুন লিংকটিই কাজ করবে।",
+  "Send the link again": "লিংকটি আবার পাঠান",
+  "Send again in {seconds}s": "{seconds} সেকেন্ড পর আবার পাঠান",
+  "Sent again. Use the link in the newest email.": "আবার পাঠানো হয়েছে। সবচেয়ে নতুন ইমেইলের লিংকটি ব্যবহার করুন।",
+  // A reset link the API says can't be used any more.
+  "This reset link no longer works": "এই রিসেট লিংকটি আর কাজ করে না",
+  "A link lasts 30 minutes, works once, and only the newest one works. Request a new link and open it from the latest email.":
+    "একটি লিংক ৩০ মিনিট থাকে, একবারই কাজ করে, আর শুধু সবচেয়ে নতুনটিই চলে। নতুন লিংক চেয়ে সর্বশেষ ইমেইল থেকে খুলুন।",
 };

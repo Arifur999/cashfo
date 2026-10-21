@@ -19,6 +19,15 @@ const LABEL_COLORS: Record<Exclude<PasswordStrength, 0>, string> = {
   4: "text-brand-ink",
 };
 
+// The new-password page's label, as a whole phrase: "Too weak password"
+// read wrong glued from the sign-up meter's word and "password".
+const FULL_LABELS: Record<Exclude<PasswordStrength, 0>, string> = {
+  1: "Password too weak",
+  2: "Fair password",
+  3: "Good password",
+  4: "Strong password",
+};
+
 const STEPS = [1, 2, 3, 4] as const;
 
 interface PasswordStrengthMeterProps {
@@ -31,15 +40,26 @@ interface PasswordStrengthMeterProps {
 // Under a new-password field: the rule before anything is typed, then the
 // four-step meter with the rules ticked off as they are met. Rendered as the
 // field's description, so screen readers hear it with the field and it
-// gives way to a validation error.
+// gives way to a validation error. Each rule says whether it is met in words
+// too, and the strength is announced as it changes while typing.
 const PasswordStrengthMeter = ({ password, size = "sm" }: PasswordStrengthMeterProps) => {
   const { translate } = useLocale();
   const strength = getPasswordStrength(password);
 
-  if (strength === 0) {
-    return <>{translate("At least 8 characters, with a letter and a number")}</>;
-  }
+  return (
+    <>
+      {strength === 0 ? translate("At least 8 characters, with a letter and a number") : <StrengthDetails password={password} strength={strength} size={size} />}
+      {/* The same element from before the first keystroke (second in both
+          branches), so the first change is heard too. */}
+      <span aria-live="polite" className="sr-only">
+        {strength === 0 ? "" : translate("Password strength: {strength}", { strength: translate(PASSWORD_STRENGTH_LABELS[strength]) })}
+      </span>
+    </>
+  );
+};
 
+const StrengthDetails = ({ password, strength, size }: { password: string; strength: Exclude<PasswordStrength, 0>; size: "sm" | "md" }) => {
+  const { translate } = useLocale();
   const rules = [
     { label: "At least 8 characters", met: password.length >= 8 },
     { label: "A letter and a number", met: /[A-Za-z]/.test(password) && /\d/.test(password) },
@@ -47,18 +67,19 @@ const PasswordStrengthMeter = ({ password, size = "sm" }: PasswordStrengthMeterP
   const RuleIcon = size === "md" ? CircleCheckBig : Check;
 
   return (
-    <span className={cn("flex flex-col", size === "md" ? "gap-2" : "gap-2")}>
+    <span className="flex flex-col gap-2">
       <span className={cn("grid grid-cols-4", size === "md" ? "gap-1" : "gap-2")} aria-hidden="true">
         {STEPS.map((step) => (
           <span key={step} className={cn("rounded-full bg-surface-sunken transition-colors", size === "md" ? "h-1.5" : "h-1", step <= strength && BAR_COLORS[strength])} />
         ))}
       </span>
+      {/* Screen readers get the strength from the announcement instead. */}
       {size === "md" ? (
-        <span className={cn("text-small font-semibold", LABEL_COLORS[strength])}>
-          {translate(PASSWORD_STRENGTH_LABELS[strength])} {translate("password")}
+        <span aria-hidden="true" className={cn("text-small font-semibold", LABEL_COLORS[strength])}>
+          {translate(FULL_LABELS[strength])}
         </span>
       ) : (
-        <span className="flex items-center justify-between">
+        <span aria-hidden="true" className="flex items-center justify-between">
           <span>{translate("Password strength")}</span>
           <span className={cn("font-semibold", LABEL_COLORS[strength])}>{translate(PASSWORD_STRENGTH_LABELS[strength])}</span>
         </span>
@@ -67,7 +88,10 @@ const PasswordStrengthMeter = ({ password, size = "sm" }: PasswordStrengthMeterP
         {rules.map((rule) => (
           <span key={rule.label} className={cn("flex items-center gap-1.5", rule.met ? "text-brand-ink" : "text-ink-muted")}>
             {rule.met ? <RuleIcon className="size-3.5" strokeWidth={2.5} aria-hidden="true" /> : <Info className="size-3.5" aria-hidden="true" />}
-            {translate(rule.label)}
+            <span>
+              <span className="sr-only">{translate(rule.met ? "Done:" : "Not yet:")} </span>
+              {translate(rule.label)}
+            </span>
           </span>
         ))}
       </span>

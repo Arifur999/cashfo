@@ -1,9 +1,8 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { requestPasswordResetAction } from "@/app/(auth)/forgot-password/_action";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
@@ -16,6 +15,7 @@ import AuthHeading from "./AuthHeading";
 import AuthLink from "./AuthLink";
 import FormErrorCallout from "./FormErrorCallout";
 import ResetLinkSent from "./ResetLinkSent";
+import { useAuthAction } from "./useAuthAction";
 
 const defaultValues: IForgotPasswordFormValues = { email: "" };
 
@@ -24,28 +24,38 @@ const defaultValues: IForgotPasswordFormValues = { email: "" };
 const ForgotPasswordForm = () => {
   const { translate } = useLocale();
   const [sentTo, setSentTo] = useState<string | null>(null);
-  const [serverError, setServerError] = useState<string | null>(null);
+  // Set by "Use a different email", so the field takes the focus back.
+  const returning = useRef(false);
 
-  const { mutateAsync, isPending } = useMutation({ mutationFn: requestPasswordResetAction });
+  const { run, error, clearError, isPending } = useAuthAction(requestPasswordResetAction);
 
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
-      setServerError(null);
-      const result = await mutateAsync(value);
-      if (result.success) {
+      const answer = await run(value);
+      if (answer?.success) {
         setSentTo(value.email.trim());
-      } else {
-        setServerError(result.message);
       }
     },
   });
+
+  useEffect(() => {
+    if (!sentTo && returning.current) {
+      returning.current = false;
+      document.getElementById("email")?.focus();
+    }
+  }, [sentTo]);
 
   if (sentTo) {
     return (
       <ResetLinkSent
         email={sentTo}
+        onResend={() => run({ email: sentTo })}
+        resendError={error}
+        isResending={isPending}
         onUseAnotherEmail={() => {
+          returning.current = true;
+          clearError();
           form.reset();
           setSentTo(null);
         }}
@@ -71,7 +81,7 @@ const ForgotPasswordForm = () => {
           )}
         </form.Field>
 
-        <FormErrorCallout message={serverError} />
+        <FormErrorCallout error={error} />
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
@@ -85,7 +95,7 @@ const ForgotPasswordForm = () => {
       <Banner tone="neutral" inline icon={<Clock />} className="font-normal">
         {translate("The link works for 30 minutes and only once. Check spam if it hasn't arrived in 2 minutes.")}
       </Banner>
-      <AuthLink href={LOGIN_ROUTE} className="flex items-center justify-center gap-2 text-body">
+      <AuthLink href={LOGIN_ROUTE} className="flex min-h-11 items-center justify-center gap-2 text-body">
         <ArrowLeft className="size-4" aria-hidden="true" />
         {translate("Back to sign in")}
       </AuthLink>
