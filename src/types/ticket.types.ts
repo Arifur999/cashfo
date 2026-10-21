@@ -66,6 +66,10 @@ export interface ITicketStats {
   inProgressCount: number;
   // In progress, but nothing has happened on them for a day.
   inProgressOver24hCount: number;
+  // Unsolved tickets whose last message is the customer's (the list's
+  // "waiting on us"), and those waiting over a day.
+  needsReplyCount?: number;
+  needsReplyOver24hCount?: number;
   waitingOnUserCount: number;
   urgentCount: number;
   solvedThisWeekCount: number;

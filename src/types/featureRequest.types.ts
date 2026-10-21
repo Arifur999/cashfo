@@ -9,4 +9,7 @@ export interface IFeatureRequest {
   status: FeatureRequestStatus;
   voteCount: number;
   createdAt: string;
+  // Who asked: a customer's account, or an older request's platform user;
+  // null once gone.
+  requester?: { id: string; name: string; email: string; isCustomer: boolean } | null;
 }

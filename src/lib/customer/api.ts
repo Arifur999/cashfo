@@ -43,6 +43,8 @@ export interface CurrentUser {
   // When the password was last set; null for an account that never set one
   // (Google sign-in) or set it before this was recorded.
   passwordChangedAt: string | null;
+  // False for a Google-only account, which has no password to change yet.
+  hasPassword?: boolean;
   businesses: UserBusiness[];
   // Set when this is a super admin's read-only "View as customer" session.
   impersonatedBy?: { name: string; email: string | null } | null;
@@ -283,6 +285,8 @@ export interface LedgerRow {
   entryType: EntryType;
   amount: string;
   transactionStatus: TransactionStatus;
+  // The posting this row's transaction reversed (a void's second half).
+  reversalOfId?: string | null;
   runningBalance: string;
 }
 
@@ -342,6 +346,8 @@ export interface TransactionsSummary {
   count: number;
   // Voided originals among them.
   voided: number;
+  // The ones that still stand: neither voided nor a reversal.
+  standing?: number;
   // Debit totals of the standing ones (POSTED, not a reversal), 2dp strings.
   totals: { INCOME: string; EXPENSE: string; TRANSFER: string };
 }
@@ -618,6 +624,10 @@ export interface LoanStatementRow {
   profitReceived: string | null;
   runningPrincipal: string;
   status: TransactionStatus;
+  // The posting this one reversed, for a reversal.
+  reversalOfId?: string | null;
+  // Voided, or the reversal that voided it: listed, but not in the balance.
+  cancelled?: boolean;
 }
 
 export interface LoanStatement {
