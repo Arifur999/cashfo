@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 import type { DataTableActions } from "./dataTable.types";
 
 interface DataTableRowActionsProps<TData> {
@@ -18,12 +19,17 @@ interface DataTableRowActionsProps<TData> {
   // "outline" is the 32px bordered button the design draws beside an
   // inline action; "ghost" the bare dots at the end of a row.
   variant?: "ghost" | "outline";
+  // "row" is the actions column's 32px; "sm" smartly's 36px icon button,
+  // for a cell that sets it beside its own size-sm buttons (the admin
+  // team's Edit).
+  size?: "row" | "sm";
 }
 
 // Order: View, Edit, extra actions, then everything destructive (extra
 // destructive actions and Delete) behind a separator.
-const DataTableRowActions = <TData,>({ row, actions, variant = "ghost" }: DataTableRowActionsProps<TData>) => {
+const DataTableRowActions = <TData,>({ row, actions, variant = "ghost", size = "row" }: DataTableRowActionsProps<TData>) => {
   const { translate } = useLocale();
+  const name = actions.rowLabel?.(row);
   const visibleExtras = (actions.extra ?? []).filter((action) => !action.hidden?.(row));
   const safeExtras = visibleExtras.filter((action) => !action.destructive);
   const destructiveExtras = visibleExtras.filter((action) => action.destructive);
@@ -39,11 +45,12 @@ const DataTableRowActions = <TData,>({ row, actions, variant = "ghost" }: DataTa
       <DropdownMenuTrigger asChild>
         <Button
           // The bordered one is the smartly secondary button beside the
-          // inline ones; both stay 32px, as the actions column is drawn.
+          // inline ones; both stay 32px, as the actions column is drawn,
+          // unless the cell asks for smartly's own 36px.
           variant={variant === "outline" ? "secondary" : "ghost"}
           size="icon-sm"
-          className="size-8 data-[state=open]:bg-surface-sunken"
-          aria-label={translate("Open row actions")}
+          className={cn(size === "row" && "size-8", "data-[state=open]:bg-surface-sunken")}
+          aria-label={name ? translate("Open row actions for {name}", { name }) : translate("Open row actions")}
           // Keeps a row-level onRowClick from firing as well.
           onClick={(event) => event.stopPropagation()}
         >

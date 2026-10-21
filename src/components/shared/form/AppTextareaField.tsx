@@ -12,12 +12,15 @@ interface AppTextareaFieldProps {
   rows?: number;
   description?: React.ReactNode;
   readOnly?: boolean;
+  // The language of what's typed ("bn" for a Bangla message), so a screen
+  // reader says it right.
+  lang?: string;
   className?: string;
   // e.g. Ctrl+Enter to submit a reply box.
   onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
 }
 
-const AppTextareaField = ({ field, label, placeholder, rows = 4, description, readOnly, className, onKeyDown }: AppTextareaFieldProps) => {
+const AppTextareaField = ({ field, label, placeholder, rows = 4, description, readOnly, lang, className, onKeyDown }: AppTextareaFieldProps) => {
   const { translate } = useLocale();
   return (
     <FormFieldShell field={field} label={label} description={description}>
@@ -33,6 +36,7 @@ const AppTextareaField = ({ field, label, placeholder, rows = 4, description, re
           onKeyDown={onKeyDown}
           placeholder={placeholder && translate(placeholder)}
           readOnly={readOnly}
+          lang={lang}
           className={className}
         />
       )}

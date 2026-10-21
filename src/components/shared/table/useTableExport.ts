@@ -10,7 +10,7 @@ import type { DataTableProps } from "./dataTable.types";
 import { claimExport, collectAllRows, EXPORT_ROW_CAP } from "./exportAll";
 import { exportRowsCsv, exportTableCsv } from "./exportTableCsv";
 
-type ExportProps<TData> = Pick<DataTableProps<TData>, "exportFileName" | "exportAll" | "getRowId">;
+type ExportProps<TData> = Pick<DataTableProps<TData>, "exportFileName" | "exportAll" | "exportColumns" | "getRowId">;
 type FetchPage<TData> = NonNullable<DataTableProps<TData>["exportAll"]>;
 
 // A wait for the request limit shorter than this passes without a note, so
@@ -20,7 +20,8 @@ const NOTED_PAUSE_MS = 2_000;
 // What the page header's Export downloads for a DataTable: the selected rows
 // if any; else, for a server list with exportAll, every row that matches the
 // filters (read a page at a time, up to 10,000); else every row it holds.
-export function useTableExport<TData>(table: Table<TData>, { exportFileName, exportAll, getRowId }: ExportProps<TData>) {
+// The CSV-only columns (exportColumns) follow the table's own either way.
+export function useTableExport<TData>(table: Table<TData>, { exportFileName, exportAll, exportColumns, getRowId }: ExportProps<TData>) {
   const { translate, locale } = useLocale();
   const count = (value: number) => formatCount(value, locale);
   // The export this list has under way. Leaving the page calls it off: no
@@ -76,7 +77,7 @@ export function useTableExport<TData>(table: Table<TData>, { exportFileName, exp
           showProgress();
         },
       });
-      exportRowsCsv(table, rows, fileName);
+      exportRowsCsv(table, rows, fileName, exportColumns);
       const counts = { count: count(rows.length), total: count(total) };
       if (capped) {
         toast.warning(translate("Exported the first {count} of {total} rows. Narrow the filters to export the rest.", counts), { id: toastId, description: undefined });
@@ -106,7 +107,7 @@ export function useTableExport<TData>(table: Table<TData>, { exportFileName, exp
           if (exportAll && table.getSelectedRowModel().rows.length === 0) {
             return exportEveryRow(exportFileName, exportAll);
           }
-          exportTableCsv(table, exportFileName);
+          exportTableCsv(table, exportFileName, exportColumns);
         }
       : null,
   );

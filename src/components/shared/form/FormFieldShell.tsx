@@ -2,6 +2,7 @@
 
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { CircleAlert } from "lucide-react";
+import { createContext, useContext, useId } from "react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,26 @@ export const getFieldError = (field: AnyFieldApi): string | null => {
   const shouldShow = isBlurred || field.form.state.submissionAttempts > 0;
   return shouldShow && errors.length > 0 ? getErrorMessage(errors[0]) : null;
 };
+
+// A field's control takes the field's name as its id, which some pages focus
+// it by (the sign-in forms). Inside UniqueFieldIds (AppForm's uniqueIds)
+// every field takes an id of its own instead, so a form can be on the page
+// twice (two templates side by side) without two controls sharing one; the
+// name stays the input's name either way.
+const UniqueFieldIdsContext = createContext(false);
+
+export const UniqueFieldIds = ({ children }: { children: React.ReactNode }) => (
+  <UniqueFieldIdsContext.Provider value>{children}</UniqueFieldIdsContext.Provider>
+);
+
+export const useFieldControlId = (field: AnyFieldApi): string => {
+  const ownId = useId();
+  return useContext(UniqueFieldIdsContext) ? ownId : field.name;
+};
+
+// The label's id beside its control's: a chip group or a slider is named by
+// pointing at it.
+export const fieldLabelId = (controlId: string) => `${controlId}-label`;
 
 export interface FieldControlProps {
   id: string;
@@ -49,20 +70,21 @@ interface FormFieldShellProps {
 const FormFieldShell = ({ field, label, aside, description, className, children }: FormFieldShellProps) => {
   const { translate } = useLocale();
   const error = getFieldError(field);
-  const errorId = `${field.name}-error`;
-  const descriptionId = `${field.name}-description`;
+  const controlId = useFieldControlId(field);
+  const errorId = `${controlId}-error`;
+  const descriptionId = `${controlId}-description`;
 
   return (
     <div className={cn("flex min-w-0 flex-col gap-2", className)}>
       <div className="flex items-center justify-between gap-3">
-        <label id={`${field.name}-label`} htmlFor={field.name} className="text-small font-semibold text-ink-2 select-none">
+        <label id={fieldLabelId(controlId)} htmlFor={controlId} className="text-small font-semibold text-ink-2 select-none">
           {typeof label === "string" ? translate(label) : label}
         </label>
         {aside}
       </div>
       {children(
         {
-          id: field.name,
+          id: controlId,
           "aria-invalid": error !== null,
           "aria-describedby": error ? errorId : description ? descriptionId : undefined,
         },

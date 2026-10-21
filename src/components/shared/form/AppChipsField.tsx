@@ -2,7 +2,7 @@
 
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { cn } from "@/lib/utils";
-import FormFieldShell from "./FormFieldShell";
+import FormFieldShell, { fieldLabelId } from "./FormFieldShell";
 import type { SelectOption } from "./AppSelectField";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
@@ -31,7 +31,7 @@ const AppChipsField = ({ field, label, options, description }: AppChipsFieldProp
         <div
           role="group"
           id={control.id}
-          aria-labelledby={`${field.name}-label`}
+          aria-labelledby={fieldLabelId(control.id)}
           aria-describedby={control["aria-describedby"]}
           className="flex flex-wrap gap-2"
         >

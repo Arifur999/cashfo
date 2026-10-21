@@ -41,6 +41,10 @@ export const adminSharedDictionary: Record<string, string> = {
   "rows selected": "সারি বাছাই করা হয়েছে",
   "Clear selection": "বাছাই মুছুন",
   "Open row actions": "সারির কাজগুলো খুলুন",
+  "Open row actions for {name}": "{name}-এর সারির কাজগুলো খুলুন",
+  // A row's button named for its row, the visible word kept: "View for Rahim".
+  "{action} for {name}": "{name}: {action}",
+  "Couldn't load this list": "তালিকাটি লোড করা যায়নি",
   Actions: "কাজ",
   Newer: "নতুনগুলো",
   Older: "পুরোনোগুলো",
@@ -63,7 +67,7 @@ export const adminSharedDictionary: Record<string, string> = {
   When: "কখন",
   Status: "অবস্থা",
   // Dialogs and forms
-  "To confirm, type": "নিশ্চিত করতে লিখুন",
+  "Type {text} to confirm": "{text} লিখে নিশ্চিত করুন",
   "Working...": "কাজ চলছে...",
   Confirm: "নিশ্চিত করুন",
   "Temporary password": "অস্থায়ী পাসওয়ার্ড",

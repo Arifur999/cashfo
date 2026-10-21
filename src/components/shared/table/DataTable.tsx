@@ -18,13 +18,20 @@ import { useTableExport } from "./useTableExport";
 // pages in memory); passing `pagination` / `sorting` / server search
 // and filters flips that concern to server-managed mode. See
 // dataTable.types.ts for every option. The toolbar, the rows and the pager
-// sit in one card, as the design draws every admin list.
+// sit in one card, as the design draws every admin list; a failed read
+// (isError) draws its error in the rows' place, under the toolbar.
 const DataTable = <TData,>(props: DataTableProps<TData>) => {
   const {
     emptyMessage = "No results found.",
+    emptyAction,
     isLoading = false,
     isFetching = false,
+    isError = false,
+    onRetry,
+    errorTitle = "Couldn't load this list",
+    errorDescription,
     onRowClick,
+    rowHref,
     rowClassName,
     title,
     toolbarAction,
@@ -35,6 +42,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     pager,
     exportFileName,
     exportAll,
+    exportColumns,
     getRowId,
     search,
     filters,
@@ -51,7 +59,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
   const table = useDataTable(props);
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const totalRows = pagination ? (meta?.total ?? 0) : table.getFilteredRowModel().rows.length;
-  useTableExport(table, { exportFileName, exportAll, getRowId });
+  useTableExport(table, { exportFileName, exportAll, exportColumns, getRowId });
 
   return (
     <section id={listId} className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
@@ -71,9 +79,15 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
         isLoading={isLoading}
         isFetching={isFetching}
         emptyMessage={emptyMessage}
+        emptyAction={emptyAction}
         canReset={canReset}
         onReset={reset}
+        isError={isError}
+        onRetry={onRetry}
+        errorTitle={errorTitle}
+        errorDescription={errorDescription}
         onRowClick={onRowClick}
+        rowHref={rowHref}
         rowClassName={rowClassName}
         layout={layout}
       />

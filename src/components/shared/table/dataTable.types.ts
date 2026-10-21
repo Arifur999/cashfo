@@ -7,6 +7,9 @@ export interface DataTableFilterOption {
   label: string;
   value: string;
   icon?: LucideIcon;
+  // The label is a record's own name (a plan's "Business"), shown as it is
+  // instead of being looked up as a word to translate.
+  raw?: boolean;
 }
 
 export interface DataTableTabOption {
@@ -35,7 +38,7 @@ export type DataTableFilterConfig = (
   // A switch with its label ("Sensitive only"); on sends "true".
   | { id: string; type: "toggle"; label: string }
   // The list's order, as plain words at the end of the filter row ("Sort:
-  // Last active, newest first").
+  // Last sign-in, newest first").
   | { id: string; type: "sort"; label: string; options: DataTableFilterOption[]; defaultValue?: string }
 ) & {
   // "end" puts the filter at the far right of the toolbar, beside the table
@@ -70,6 +73,10 @@ export interface DataTableActions<TData> {
   // false leaves the inline buttons' column without a heading, as the
   // design's Payments list draws its Retry column.
   heading?: boolean;
+  // The row's name ("Rahim Uddin"), so the buttons and the "..." menu tell a
+  // screen reader whose row they act on: "View for Rahim Uddin", "Open row
+  // actions for Rahim Uddin".
+  rowLabel?: (row: TData) => string;
   onView?: (row: TData) => void;
   onEdit?: (row: TData) => void;
   onDelete?: (row: TData) => void;
@@ -103,6 +110,20 @@ export interface DataTableLayout {
   // The card's width on the 1440 board (1136, or less beside a side card):
   // columns keep their share of it at any screen width.
   designWidth?: number;
+  // Set: each column keeps its meta.width in px instead of its share of the
+  // card, so nothing crushes an id or a badge on a narrower screen. The
+  // column without a width gives way instead, down to this many px (gaps not
+  // included), and then the table scrolls sideways; on a wider card that
+  // column takes the extra room.
+  flexMinWidth?: number;
+}
+
+// A column the CSV has and the screen doesn't (a gateway's reference, why a
+// payment failed): its heading, in English like the table's own, and each
+// row's value.
+export interface DataTableExportColumn<TData> {
+  label: string;
+  value: (row: TData) => string | number | boolean | null | undefined;
 }
 
 export interface DataTableSearchConfig {
@@ -155,10 +176,28 @@ export interface DataTableProps<TData> {
   // beside a summary instead. Either way one page shows the summary alone.
   pager?: DataTableSimplePager;
   emptyMessage?: string;
+  // Beside "Clear filters" under an empty list: another way out ("Show the
+  // last 7 days").
+  emptyAction?: React.ReactNode;
   // First load (skeleton rows) vs background refetch (progress bar, rows stay).
   isLoading?: boolean;
   isFetching?: boolean;
+  // The read failed (toTableQueryProps passes the list query's, with its
+  // refetch as onRetry): with no rows to show, an error and Try again take
+  // their place while the toolbar stays, so a filter that broke the read can
+  // be changed back. Rows already on screen stay.
+  isError?: boolean;
+  onRetry?: () => void;
+  // What failed, in English ("Couldn't load payments"); "Couldn't load this
+  // list" by default. The line under it is ErrorState's own unless given.
+  errorTitle?: string;
+  errorDescription?: React.ReactNode;
   onRowClick?: (row: TData) => void;
+  // The page a row opens. The whole row becomes a real link: Ctrl and the
+  // middle button open a new tab, and a screen reader lists it, named by the
+  // row's first cell. Buttons, links and boxes in the row keep their own
+  // clicks. A row given a page takes no onRowClick.
+  rowHref?: (row: TData) => string | undefined;
   // Extra classes for a row that needs singling out (a payment that looks
   // like a double charge gets an amber wash).
   rowClassName?: (row: TData) => string | undefined;
@@ -173,6 +212,8 @@ export interface DataTableProps<TData> {
   // reads them all, a page at a time, instead of the page on screen; one
   // export runs at a time, and leaving the page calls it off.
   exportAll?: (page: number) => Promise<ExportPage<TData>>;
+  // Columns only the CSV has, after the table's own.
+  exportColumns?: readonly DataTableExportColumn<TData>[];
   search?: DataTableSearchConfig;
   filters?: DataTableFiltersConfig;
   // Presence flips the table into server-managed mode for that concern.
