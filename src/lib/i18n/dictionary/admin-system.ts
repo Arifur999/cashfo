@@ -71,8 +71,10 @@ export const adminSystemDictionary: Record<string, string> = {
   "See all": "সব দেখুন",
   "Limit hit once today": "আজ একবার সীমা ছুঁয়েছে",
   "Limit hit {count} times today": "আজ {count} বার সীমা ছুঁয়েছে",
-  "Limit hit once today, by {name}": "আজ একবার সীমা ছুঁয়েছে, {name} থেকে",
-  "Limit hit {count} times today, most often by {name}": "আজ {count} বার সীমা ছুঁয়েছে, সবচেয়ে বেশি {name} থেকে",
+  "Limit hit once today. Most often over the limit, all time: {name}":
+    "আজ একবার সীমা ছুঁয়েছে। সব সময় মিলিয়ে সবচেয়ে বেশিবার সীমা ছুঁয়েছে: {name}",
+  "Limit hit {count} times today. Most often over the limit, all time: {name}":
+    "আজ {count} বার সীমা ছুঁয়েছে। সব সময় মিলিয়ে সবচেয়ে বেশিবার সীমা ছুঁয়েছে: {name}",
   "Not recorded yet: the API enforces its limits but doesn't log them here. Paused sign-ins are under {link}.":
     "এখনো নথিভুক্ত হয় না: এপিআই সীমাগুলো মেনে চলে, কিন্তু এখানে তার লগ রাখে না। থামানো সাইন-ইনগুলো দেখুন {link}-এ।",
   "Security › Sign-ins": "সিকিউরিটি › সাইন-ইন",
