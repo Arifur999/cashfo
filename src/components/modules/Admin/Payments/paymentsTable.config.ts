@@ -5,8 +5,10 @@ import { PAYMENT_GATEWAYS, PAYMENT_STATUSES, type PaymentStatus } from "@/types/
 import type { IPlanOption } from "@/types/plan.types";
 
 // What the page needs to build the identical query string on the server.
+// dateFrom/dateTo are the Date filter's days; the "Failed, last 7 days"
+// tile links to its failures with dateFrom.
 export const PAYMENTS_TABLE_BASE_CONFIG = {
-  queryKeys: ["search", "status", "gateway", "planId"],
+  queryKeys: ["search", "status", "gateway", "planId", "dateFrom", "dateTo"],
   defaultLimit: 10,
 } as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaultLimit">;
 
@@ -15,14 +17,18 @@ const STATUS_TABS: PaymentStatus[] = ["SUCCESS", "FAILED", "PENDING", "REFUNDED"
 
 // The plan chip's options come from the API and the status tabs' counts
 // from the stats, so the full config is built once those are loaded
-// (memoize the result -- it must stay stable).
+// (memoize the result -- it must stay stable). Leave the counts out while
+// the list is narrowed: they are all-time totals per status.
 export const buildPaymentsTableConfig = (plans: IPlanOption[], statusCounts?: Record<PaymentStatus, number>): ServerDataTableConfig => ({
   ...PAYMENTS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Payment ID, name or bKash ref", width: "sm" },
+  // The search matches the id as the list prints it, the person's name or
+  // email, the invoice number and any gateway's reference.
+  search: { placeholder: "Payment ID, name, email, invoice or gateway ref" },
   filters: [
     { id: "status", type: "tabs", label: "Status", options: STATUS_TABS.map((value) => ({ value, label: PAYMENT_STATUS_LABEL[value], count: statusCounts?.[value] })) },
     { id: "gateway", type: "single-select", label: "Gateway", options: enumOptions(PAYMENT_GATEWAYS), align: "end" },
     { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name })), align: "end" },
+    { id: "createdAt", type: "date-range", label: "Date", align: "end" },
   ],
 });
 

@@ -19,7 +19,7 @@ const InvoicesPage = async ({ searchParams }: PageProps<"/admin/invoices">) => {
   return (
     <ExportProvider>
       <div className="space-y-4">
-        <PageHeader {...PAYMENTS_PAGE} actions={<ExportButton />} />
+        <PageHeader {...PAYMENTS_PAGE} actions={<ExportButton hint="Download every invoice that matches the filters as CSV" />} />
         <PaymentsTabs showRevenue={canManage(admin?.role, "revenue")} />
         <QueryPrefetch prefetch={(client) => client.prefetchQuery(invoicesListQuery(queryString))}>
           <InvoicesTable />

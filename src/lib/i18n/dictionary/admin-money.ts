@@ -12,6 +12,14 @@ export const adminMoneyDictionary: Record<string, string> = {
   "Loading revenue...": "আয় লোড হচ্ছে...",
   "Loading invoices...": "ইনভয়েস লোড হচ্ছে...",
   "Loading invoice...": "ইনভয়েস লোড হচ্ছে...",
+  "Download every payment that matches the filters as CSV": "ফিল্টারে মেলা সব পেমেন্ট CSV হিসেবে নামান",
+  "Download every invoice that matches the filters as CSV": "ফিল্টারে মেলা সব ইনভয়েস CSV হিসেবে নামান",
+
+  // When a read fails (lists, the plans board, rows of figures)
+  "The server didn't answer. Nothing was changed.": "সার্ভার সাড়া দেয়নি। কিছুই বদলায়নি।",
+  "Couldn't load payments": "পেমেন্ট লোড করা যায়নি",
+  "Couldn't load invoices": "ইনভয়েস লোড করা যায়নি",
+  "Couldn't load these figures": "এই হিসাবগুলো লোড করা যায়নি",
 
   // Statuses and gateways
   Paid: "পরিশোধিত",
@@ -38,10 +46,11 @@ export const adminMoneyDictionary: Record<string, string> = {
 
   // The list
   "All payments": "সব পেমেন্ট",
-  "Payment ID, name or bKash ref": "পেমেন্ট আইডি, নাম বা bKash রেফারেন্স",
+  "Payment ID, name, email, invoice or gateway ref": "পেমেন্ট আইডি, নাম, ইমেইল, ইনভয়েস বা গেটওয়ের রেফারেন্স",
   Person: "ব্যক্তি",
   "Paid with": "যেভাবে পরিশোধ",
   "No payments match these filters.": "এই ফিল্টারে কোনো পেমেন্ট মেলেনি।",
+  "No payments yet.": "এখনো কোনো পেমেন্ট নেই।",
   "Looks like a double charge": "দুবার কাটা হয়েছে মনে হচ্ছে",
   "The payment did not go through": "পেমেন্ট সম্পন্ন হয়নি",
   "Waiting for {gateway} to confirm": "{gateway}-এর নিশ্চিতকরণের অপেক্ষায়",
@@ -51,11 +60,17 @@ export const adminMoneyDictionary: Record<string, string> = {
   Retry: "আবার চেষ্টা",
   "Payment set back to Waiting": "পেমেন্ট আবার অপেক্ষায় রাখা হয়েছে",
   "Failed to retry payment": "পেমেন্ট আবার চেষ্টা করা যায়নি",
+  // The API's answers, shown as they come.
+  "Only failed payments can be retried": "শুধু ব্যর্থ পেমেন্ট আবার চেষ্টা করা যায়",
+  "Only successful payments can be refunded": "শুধু সফল পেমেন্ট ফেরত দেওয়া যায়",
+  "This payment has already been refunded": "এই পেমেন্ট আগেই ফেরত দেওয়া হয়েছে",
+  "Refund amount cannot exceed the original payment amount": "ফেরতের পরিমাণ মূল পেমেন্টের চেয়ে বেশি হতে পারে না",
 
   // One payment
   "Payment {id}": "পেমেন্ট {id}",
   "paid with {gateway}": "{gateway} দিয়ে পরিশোধ",
   "via {gateway}": "{gateway} দিয়ে",
+  "Partly refunded: {amount}": "আংশিক ফেরত: {amount}",
   "Same person, same plan": "একই ব্যক্তি, একই প্ল্যান",
   "Same person, same plan, {count} minute apart": "একই ব্যক্তি, একই প্ল্যান, {count} মিনিটের ব্যবধানে",
   "Same person, same plan, {count} minutes apart": "একই ব্যক্তি, একই প্ল্যান, {count} মিনিটের ব্যবধানে",
@@ -71,6 +86,7 @@ export const adminMoneyDictionary: Record<string, string> = {
   "{amount} ({off} off)": "{amount} ({off} ছাড়)",
   "{amount} ({off} off with {code})": "{amount} ({code} দিয়ে {off} ছাড়)",
   "Tried at": "চেষ্টার সময়",
+  "Started at": "শুরুর সময়",
   "Paid at": "পরিশোধের সময়",
   Invoice: "ইনভয়েস",
   None: "নেই",
@@ -84,26 +100,35 @@ export const adminMoneyDictionary: Record<string, string> = {
   "Invoice {number} made": "ইনভয়েস {number} তৈরি হয়েছে",
   "Refunded {amount}": "{amount} ফেরত দেওয়া হয়েছে",
   "Paid by": "পরিশোধ করেছেন",
+  "Find them in Users": "ব্যবহারকারীদের মধ্যে খুঁজুন",
+  // Support's feature requests link a person's page with these words too.
   "Open their page": "তাঁর পাতা খুলুন",
   "Their other payments": "তাঁর অন্য পেমেন্ট",
   "This is their only payment.": "এটিই তাঁর একমাত্র পেমেন্ট।",
+  "See all their payments": "তাঁর সব পেমেন্ট দেখুন",
   "{amount} sent back on {date}.": "{date} তারিখে {amount} ফেরত গেছে।",
   "Retry {id}?": "{id} আবার চেষ্টা করবেন?",
-  "Nothing is charged now. The {amount} payment goes back to Waiting, to be collected again through {gateway}.":
-    "এখন কিছু কাটা হবে না। {amount}-এর পেমেন্টটি আবার অপেক্ষায় যাবে, {gateway} দিয়ে আবার আদায়ের জন্য।",
+  "Nothing is charged now. The {amount} payment goes back to Waiting until {gateway} confirms it, and it can't be marked as paid from here.":
+    "এখন কিছু কাটা হবে না। {gateway} নিশ্চিত না করা পর্যন্ত {amount}-এর পেমেন্টটি অপেক্ষায় থাকবে, আর এখান থেকে এটি পরিশোধিত হিসেবে চিহ্নিত করা যায় না।",
+  "Payment not found": "পেমেন্ট পাওয়া যায়নি",
+  "This payment doesn't exist, or was removed.": "এই পেমেন্টটি নেই, অথবা সরিয়ে ফেলা হয়েছে।",
 
   // Refund
   Refund: "ফেরত",
   "Refund {id}": "{id} ফেরত",
   "The money goes back through {gateway} to the account that paid. {name} paid {amount} on {date}.":
     "টাকা {gateway} দিয়ে যে অ্যাকাউন্ট থেকে পরিশোধ হয়েছিল, সেখানে ফেরত যাবে। {name} {date} তারিখে {amount} পরিশোধ করেছিলেন।",
+  "{gateway} reference: {ref}": "{gateway} রেফারেন্স: {ref}",
   "The person": "ব্যক্তিটি",
   "How much": "কত টাকা",
   "All of it": "পুরোটা",
   "Part of it": "কিছু অংশ",
   "Type an amount": "পরিমাণ লিখুন",
   "Up to {amount}.": "সর্বোচ্চ {amount}।",
+  "More than this payment": "এই পেমেন্টের চেয়ে বেশি",
   "Why the money is going back": "টাকা কেন ফেরত যাচ্ছে",
+  // The reason's rule (zod/common.validation.ts), worded as People words it.
+  "Explain why (at least 5 characters)": "কারণটি লিখুন (কমপক্ষে ৫টি অক্ষর)",
   "The refund and the reason go into the audit log. Nothing is sent to the gateway from here: send the money back there, then record it.":
     "ফেরত আর কারণ অডিট লগে যায়। এখান থেকে গেটওয়েতে কিছু পাঠানো হয় না: সেখানে টাকা ফেরত পাঠান, তারপর এখানে লিখে রাখুন।",
   "Refund {amount}": "{amount} ফেরত দিন",
@@ -122,14 +147,18 @@ export const adminMoneyDictionary: Record<string, string> = {
   "{change} in {month}: {joined} joined, {left} left": "{month}-এ {change}: {joined} জন যোগ দিয়েছেন, {left} জন ছেড়েছেন",
   "Churn, {month}": "গ্রাহক হারানো, {month}",
   "{left} of the {started} who started the month": "মাসের শুরুতে থাকা {started} জনের মধ্যে {left} জন",
+  "MRR, ARR and churn count the workspaces on paid plans now. The change on last month, the chart, paid people and the average per person come from payments, so the two can differ.":
+    "MRR, ARR আর গ্রাহক হারানো গোনা হয় এখন পেইড প্ল্যানে থাকা ওয়ার্কস্পেস থেকে। গত মাসের তুলনা, চার্ট, পেইড মানুষ আর প্রতি জনের গড় আসে পেমেন্ট থেকে, তাই দুটি আলাদা হতে পারে।",
   "MRR at the end of each month": "প্রতি মাসের শেষে MRR",
+  "MRR at the end of each month: {months}": "প্রতি মাসের শেষে MRR: {months}",
+  "In taka, from payments": "টাকায়, পেমেন্ট থেকে",
   "up {percent}% since {month}": "{month} থেকে {percent}% বেশি",
   "down {percent}% since {month}": "{month} থেকে {percent}% কম",
   "No paid months yet.": "এখনো কোনো পেইড মাস নেই।",
   "{month} by plan": "প্ল্যান অনুযায়ী {month}",
   "No payments yet this month.": "এই মাসে এখনো কোনো পেমেন্ট নেই।",
-  "After {count} refund of {amount}.": "{amount}-এর {count}টি ফেরতের পর।",
-  "After {count} refunds of {amount}.": "{amount}-এর {count}টি ফেরতের পর।",
+  "{count} refund this month: {amount}": "এই মাসে {count}টি ফেরত: {amount}",
+  "{count} refunds this month: {amount}": "এই মাসে {count}টি ফেরত: {amount}",
   "Average per paid person": "প্রতি পেইড ব্যক্তির গড়",
   "{amount} a month": "মাসে {amount}",
   "MRR ÷ {count} paid person": "MRR ÷ {count} জন পেইড ব্যক্তি",
@@ -139,9 +168,26 @@ export const adminMoneyDictionary: Record<string, string> = {
   "Sent back": "ফেরত গেছে",
   "{count} refund in {month}": "{month}-এ {count}টি ফেরত",
   "{count} refunds in {month}": "{month}-এ {count}টি ফেরত",
+  // A chart's axis: the month's short name (the full names are shared).
+  "Jan@@month": "জানু",
+  "Feb@@month": "ফেব্রু",
+  "Mar@@month": "মার্চ",
+  "Apr@@month": "এপ্রিল",
+  "May@@month": "মে",
+  "Jun@@month": "জুন",
+  "Jul@@month": "জুলাই",
+  "Aug@@month": "আগস্ট",
+  "Sep@@month": "সেপ্টে",
+  "Oct@@month": "অক্টো",
+  "Nov@@month": "নভে",
+  "Dec@@month": "ডিসে",
 
   // Invoices
   "No invoices yet.": "এখনো কোনো ইনভয়েস নেই।",
+  "No invoices in these dates.": "এই তারিখগুলোতে কোনো ইনভয়েস নেই।",
+  "All invoices": "সব ইনভয়েস",
+  "Invoice not found": "ইনভয়েস পাওয়া যায়নি",
+  "This invoice doesn't exist, or was removed.": "এই ইনভয়েসটি নেই, অথবা সরিয়ে ফেলা হয়েছে।",
   "Issued to": "যাঁর নামে",
   "Invoice actions": "ইনভয়েসের কাজ",
   "Made automatically when {id} was paid.": "{id} পরিশোধ হওয়ার সময় নিজে থেকে তৈরি।",
@@ -149,8 +195,11 @@ export const adminMoneyDictionary: Record<string, string> = {
   "Recent invoices": "সাম্প্রতিক ইনভয়েস",
   "Dhaka, Bangladesh": "ঢাকা, বাংলাদেশ",
   PAID: "পরিশোধিত",
+  REFUNDED: "ফেরত দেওয়া",
+  "PARTLY REFUNDED": "আংশিক ফেরত",
   Subtotal: "উপমোট",
   "Total paid": "মোট পরিশোধ",
+  "Refunded {amount} on {date}.": "{date} তারিখে {amount} ফেরত দেওয়া হয়েছে।",
   "Thank you for using Smartly. Questions about this invoice? Reply from the Help page in the app.":
     "Smartly ব্যবহারের জন্য ধন্যবাদ। এই ইনভয়েস নিয়ে প্রশ্ন? অ্যাপের সাহায্য পাতা থেকে লিখুন।",
   "Download MRR at the end of each month as CSV": "প্রতি মাস শেষের MRR CSV হিসেবে নামান",

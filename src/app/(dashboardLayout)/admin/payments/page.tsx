@@ -1,6 +1,8 @@
+import { redirect } from "next/navigation";
 import PaymentStats from "@/components/modules/Admin/Payments/PaymentStats";
 import PaymentsTable from "@/components/modules/Admin/Payments/PaymentsTable";
 import PaymentsTabs, { PAYMENTS_PAGE } from "@/components/modules/Admin/Payments/PaymentsTabs";
+import { failedSinceDay, listQuery, PAYMENTS_LIST_HREF } from "@/components/modules/Admin/Payments/paymentsDisplay";
 import { PAYMENTS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Payments/paymentsTable.config";
 import PageHeader from "@/components/shared/PageHeader";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
@@ -16,12 +18,25 @@ export const generateMetadata = adminPageTitle("Payments");
 
 const PaymentsPage = async ({ searchParams }: PageProps<"/admin/payments">) => {
   const [params, admin] = await Promise.all([searchParams, getUserInfo()]);
+  // Older links ask for ?view=failed: they open the Failed tab, keeping
+  // whatever else of the list they named.
+  if (params.view === "failed") {
+    const named = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => [value ?? []].flat().forEach((item) => named.append(key, item)));
+    const query = new URLSearchParams(listQuery(named.toString()));
+    query.set("status", "FAILED");
+    query.delete("page");
+    redirect(`${PAYMENTS_LIST_HREF}?${query.toString()}`);
+  }
   const queryString = buildTableQueryString(params, PAYMENTS_TABLE_BASE_CONFIG);
+  // Read here, on the server: a client component mustn't read the clock
+  // while it renders.
+  const failedSince = failedSinceDay();
 
   return (
     <ExportProvider>
       <div className="space-y-4">
-        <PageHeader {...PAYMENTS_PAGE} actions={<ExportButton />} />
+        <PageHeader {...PAYMENTS_PAGE} actions={<ExportButton hint="Download every payment that matches the filters as CSV" />} />
         <PaymentsTabs showRevenue={canManage(admin?.role, "revenue")} />
         <QueryPrefetch
           prefetch={(client) =>
@@ -32,7 +47,7 @@ const PaymentsPage = async ({ searchParams }: PageProps<"/admin/payments">) => {
             ])
           }
         >
-          <PaymentStats />
+          <PaymentStats failedSince={failedSince} />
           <PaymentsTable canRetry={canManage(admin?.role, "payments")} />
         </QueryPrefetch>
       </div>

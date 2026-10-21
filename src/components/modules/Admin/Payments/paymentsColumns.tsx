@@ -1,4 +1,8 @@
+"use client";
+
 import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { formatAmount } from "@/lib/currency";
 import Localized from "@/components/shared/Localized";
@@ -9,8 +13,28 @@ import { GATEWAY_CHIP_CLASS, PAYMENT_STATUS_LABEL, paymentNote, shortPaymentId }
 import { humanizeEnum } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 import type { IPayment } from "@/types/payment.types";
+import { paymentHref } from "./paymentsDisplay";
 
 const NOTE_TONE = { muted: "text-ink-muted", danger: "text-expense", warning: "text-warning" } as const;
+
+// The short id as a real link, so a payment opens in a new tab with Ctrl or
+// the middle button and reads as a link to a screen reader. It carries the
+// list's query, so the payment's page leads back to these rows; the click
+// stops here instead of reaching the row's own.
+const PaymentIdLink = ({ id }: { id: string }) => {
+  const searchParams = useSearchParams();
+  const label = shortPaymentId(id);
+  return (
+    <Link
+      href={paymentHref(id, searchParams.toString())}
+      title={label}
+      onClick={(event) => event.stopPropagation()}
+      className="block truncate font-mono text-small font-semibold text-ink hover:underline"
+    >
+      {label}
+    </Link>
+  );
+};
 
 // The design's Payments list: the short id, the person over what matters
 // about the payment, plan, how they paid, the amount, status, and when.
@@ -20,8 +44,9 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     accessorFn: (row) => shortPaymentId(row.id),
     header: "Payment",
     enableSorting: false,
-    cell: ({ getValue }) => <span className="font-mono text-small font-semibold">{String(getValue())}</span>,
-    meta: { width: 96 },
+    cell: ({ row }) => <PaymentIdLink id={row.original.id} />,
+    // The whole id in the CSV, to match against other records.
+    meta: { width: 96, exportValue: (row) => row.id },
   },
   {
     id: "user",
@@ -44,7 +69,11 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     id: "plan",
     accessorFn: (row) => row.plan.name,
     header: "Plan",
-    cell: ({ row }) => <span className="text-ink-2">{row.original.plan.name}</span>,
+    cell: ({ row }) => (
+      <span className="block truncate text-ink-2" title={row.original.plan.name}>
+        {row.original.plan.name}
+      </span>
+    ),
     meta: { width: 110 },
   },
   {
@@ -80,9 +109,12 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     id: "createdAt",
     accessorKey: "createdAt",
     header: "When",
-    cell: ({ row }) => <span className="whitespace-nowrap text-small text-ink-2">
+    // Cut short where the column is narrow, the full moment on hover.
+    cell: ({ row }) => (
+      <span className="block truncate text-small text-ink-2" title={formatDate(row.original.createdAt, "d MMM yyyy, h:mm aaa")}>
         <RelativeTime value={row.original.createdAt} />
-      </span>,
+      </span>
+    ),
     meta: { width: 122, exportValue: (row) => formatDate(row.createdAt, "yyyy-MM-dd HH:mm") },
   },
 ];
