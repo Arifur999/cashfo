@@ -1,11 +1,13 @@
 "use client";
 
-import { AlertTriangle, RotateCcw } from "lucide-react";
+import { CircleAlert, House, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { useEffect } from "react";
 import { reportErrorAction } from "@/app/-actions/reportErrorAction";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import T from "@/components/shared/T";
+import Button from "@/components/smartly/Button";
+import StatePage from "@/components/smartly/StatePage";
+import { ADMIN_HOME_ROUTE } from "@/lib/authUtils";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface DashboardErrorProps {
   error: Error & { digest?: string };
@@ -14,26 +16,47 @@ interface DashboardErrorProps {
 }
 
 // A page inside the dashboard threw. The shell (sidebar, navbar) stays up;
-// only the content area is replaced, and the crash is logged to System >
-// Error Logs as an ADMIN_FRONTEND error.
+// only the content area is replaced, in the words the site's other error
+// pages use, and the crash is logged to System > Error Logs as an
+// ADMIN_FRONTEND error. The shell's main already pads the content area, so
+// the page adds none of its own.
 export default function DashboardError({ error, retry }: DashboardErrorProps) {
+  const { translate, locale } = useLocale();
+
   useEffect(() => {
     void reportErrorAction({ message: error.message || "Unknown error", stackTrace: error.stack });
   }, [error]);
 
   return (
-    <Card className="shadow-sm shadow-black/5">
-      <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-        <AlertTriangle className="size-10 text-destructive" aria-hidden="true" />
-        <h1 className="text-lg font-semibold text-foreground"><T>Something went wrong</T></h1>
-        <p className="max-w-md text-sm text-muted-foreground">
-          <T>This page hit an unexpected error. Try again, or head somewhere else from the sidebar.</T>
-        </p>
-        {error.digest && <p className="font-mono text-xs text-muted-foreground"><T values={{ digest: error.digest }}>{"Reference: {digest}"}</T></p>}
-        <Button onClick={() => retry()} className="mt-2">
-          <RotateCcw aria-hidden="true" /> <T>Try again</T>
-        </Button>
-      </CardContent>
-    </Card>
+    <StatePage
+      standalone={false}
+      locale={locale}
+      className="p-0 md:p-0"
+      icon={<CircleAlert />}
+      tone="expense"
+      reference={error.digest ? translate("Error reference: {digest}", { digest: error.digest }) : undefined}
+      title={translate("Something went wrong on our side")}
+      // Errors raised in the browser carry no reference, so only ask for one
+      // when there is one to send.
+      description={translate(
+        error.digest
+          ? "Nothing you entered was lost. Try again in a moment; if it keeps happening, send us the reference above and we will look into it."
+          : "Try again in a moment; if it keeps happening, tell us what you were doing.",
+      )}
+      actions={
+        <>
+          <Button size="lg" onClick={() => retry()}>
+            <RefreshCw />
+            {translate("Try again")}
+          </Button>
+          <Button size="lg" variant="secondary" asChild>
+            <Link href={ADMIN_HOME_ROUTE}>
+              <House />
+              {translate("Back to dashboard")}
+            </Link>
+          </Button>
+        </>
+      }
+    />
   );
 }

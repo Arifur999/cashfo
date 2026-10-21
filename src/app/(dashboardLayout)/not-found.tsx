@@ -1,23 +1,35 @@
-import { SearchX } from "lucide-react";
+import { Compass, House } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import Button from "@/components/smartly/Button";
+import StatePage from "@/components/smartly/StatePage";
 import { ADMIN_HOME_ROUTE } from "@/lib/authUtils";
-import T from "@/components/shared/T";
+import { getTranslator } from "@/lib/i18n/locale";
 
 // An unknown URL, or a detail page whose record doesn't exist (see
-// fetchOrNotFound). Rendered inside the dashboard shell.
-export default function DashboardNotFound() {
+// fetchOrNotFound) and that has no not-found page of its own. Rendered
+// inside the dashboard shell, with the site's "We can't find that page";
+// the shell's main already pads the content area, so the page adds none.
+export default async function DashboardNotFound() {
+  const { t, locale } = await getTranslator("admin");
+
   return (
-    <Card className="shadow-sm shadow-black/5">
-      <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-        <SearchX className="size-10 text-muted-foreground" aria-hidden="true" />
-        <h1 className="text-lg font-semibold text-foreground"><T>Not found</T></h1>
-        <p className="max-w-md text-sm text-muted-foreground"><T>The page or record you&apos;re looking for doesn&apos;t exist, or was removed.</T></p>
-        <Button asChild className="mt-2">
-          <Link href={ADMIN_HOME_ROUTE}><T>Back to dashboard</T></Link>
+    <StatePage
+      standalone={false}
+      locale={locale}
+      className="p-0 md:p-0"
+      icon={<Compass />}
+      tone="insights"
+      reference="404"
+      title={t("We can't find that page")}
+      description={t("The page or record you're looking for doesn't exist, or was removed.")}
+      actions={
+        <Button size="lg" asChild>
+          <Link href={ADMIN_HOME_ROUTE}>
+            <House />
+            {t("Back to dashboard")}
+          </Link>
         </Button>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }

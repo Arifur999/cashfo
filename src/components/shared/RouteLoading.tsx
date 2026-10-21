@@ -8,7 +8,7 @@ const RouteLoading = ({ label }: { label: string }) => {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3" aria-live="polite">
       <Loader size={32} label={label} />
-      <p className="text-sm text-muted-foreground">
+      <p className="text-small text-ink-muted">
         <T>{label}</T>
       </p>
     </div>
