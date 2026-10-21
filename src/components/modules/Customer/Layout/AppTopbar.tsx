@@ -11,7 +11,7 @@ import { TodayTasksPanel } from "@/components/modules/Customer/HabitTracker/Todo
 import Logo from "@/components/smartly/Logo";
 import { TONE_BG } from "@/components/smartly/tones";
 import { CUSTOMER_HOME_ROUTE } from "@/lib/authUtils";
-import { breadcrumbFor, findNavLocation } from "@/lib/customer/nav";
+import { breadcrumbFor, findNavLocation, NAV_SECTIONS } from "@/lib/customer/nav";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AccountMenu } from "./AccountMenu";
@@ -25,6 +25,7 @@ import { useNavSections } from "./SidebarNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { listOf, listUrlKey, listVisitUrl, restoredListUrl, savedListUrl, savedListValue, topbarTrail } from "./topbarCrumbs";
 import { useTopbarExtras } from "./TopbarExtras";
+import { formatCount } from "@/lib/i18n/digits";
 
 // The phone boards name these pages in the top bar instead of showing the
 // logo (the pages leave out their own heading there). Settings drops the
@@ -61,13 +62,15 @@ export function AppTopbar() {
 function Topbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { activeBusinessId } = useAuth();
   const darkModeOn = useFeature("dark_mode");
   const { openCount } = useTodayTasks();
   const { tasksOpen, setTasksOpen, attachTasksPanel } = useAddActions();
   const sections = useNavSections();
-  const location = findNavLocation(pathname, searchParams, sections);
+  // A page the menu hides here (Books outside a business workspace, which
+  // shows its notice; Loans while switched off) still has a name.
+  const location = findNavLocation(pathname, searchParams, sections) ?? findNavLocation(pathname, searchParams, NAV_SECTIONS);
   const crumb = location ? breadcrumbFor(location) : null;
   const extras = useTopbarExtras();
   // A record page adds its record's name as the last part, and the list
@@ -102,7 +105,7 @@ function Topbar() {
   const trail = location && !extras?.title ? topbarTrail(location, !!record, listUrl, { linkList }) : [];
   const current = extras?.title ?? record ?? extras?.heading ?? (crumb ? t(crumb.heading) : "");
 
-  const tasksLabel = openCount > 0 ? `${t("Today’s tasks")}, ${openCount} ${t("left")}` : t("Today’s tasks");
+  const tasksLabel = openCount > 0 ? t("Today’s tasks, {count} left", { count: formatCount(openCount, locale) }) : t("Today’s tasks");
 
   return (
     <header className="flex h-topbar-mobile shrink-0 items-center gap-1 border-b border-line bg-surface px-2 md:h-topbar md:gap-3 md:px-8 print:hidden">
