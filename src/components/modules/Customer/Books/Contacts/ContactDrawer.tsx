@@ -1,8 +1,8 @@
 "use client";
 
-import { Archive, Camera, Trash2, X } from "lucide-react";
+import { Archive, Camera, CircleAlert, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type ChangeEvent } from "react";
+import { useRef, useState, useTransition, type ChangeEvent } from "react";
 import { toast } from "sonner";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Loader from "@/components/shared/Loader";
@@ -15,7 +15,7 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Contact, ContactType } from "@/lib/customer/api";
 import { CONTACT_TYPE_WORD } from "@/lib/customer/booksDisplay";
 import { archiveContactAction, createContactAction, deleteContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
-import { currencySymbol } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { limitMoneyDecimals } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Drawer } from "../shared/Drawer";
@@ -28,6 +28,9 @@ interface ContactDrawerProps {
   open: boolean;
   // The person being edited; null adds a new one.
   editing: Contact | null;
+  // Whether anything is posted with them: Remove then archives, which needs
+  // a settled balance. Unknown counts as yes.
+  hasEntries?: boolean;
   businessId: string;
   currency: string;
   onClose: () => void;
@@ -37,9 +40,10 @@ interface ContactDrawerProps {
 
 // Add or edit a customer or supplier: who they are, how to reach them and,
 // for a new one, what is already owed either way.
-export function ContactDrawer({ open, editing, businessId, currency, onClose, onRemoved }: ContactDrawerProps) {
+export function ContactDrawer({ open, editing, hasEntries = true, businessId, currency, onClose, onRemoved }: ContactDrawerProps) {
   const { t } = useLocale();
   const router = useRouter();
+  const photoInput = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState<ContactType>("CUSTOMER");
   const [phone, setPhone] = useState("");
@@ -51,6 +55,8 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
   const [opening, setOpening] = useState("");
   const [direction, setDirection] = useState<"THEY_OWE" | "YOU_OWE">("THEY_OWE");
   const [removing, setRemoving] = useState(false);
+  // Save was pressed without a phone or an email.
+  const [tried, setTried] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -68,12 +74,23 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
       setOpening("");
       setDirection("THEY_OWE");
       setRemoving(false);
+      setTried(false);
     }
   }
 
-  const valid = name.trim().length > 0;
+  // The API keeps a contact only with a way to reach them, new or edited.
+  const reachable = phone.trim() !== "" || email.trim() !== "";
+  const valid = name.trim().length > 0 && reachable;
+  const missingReach = tried && !reachable;
   // A type from before Books (relative, other) stays pickable while editing.
   const types = editing && !TYPES.includes(editing.type) ? [...TYPES, editing.type] : TYPES;
+
+  // Archiving needs a settled balance, either way; so does Remove once
+  // there are entries with them, since it archives then.
+  const balance = Number(editing?.currentBalance ?? 0);
+  const owed = Math.abs(balance) >= 0.005;
+  const unsettled = !owed ? null : balance > 0 ? t("They still owe you {amount}. It can be archived once that is settled.", { amount: formatCurrency(balance, currency) }) : t("You still owe them {amount}. It can be archived once that is settled.", { amount: formatCurrency(-balance, currency) });
+  const removeBlocked = owed && hasEntries;
 
   async function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -89,7 +106,7 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
     try {
       const result = await uploadContactPhotoAction(businessId, formData);
       if (result.success && result.data) setPhotoUrl(result.data.url);
-      else toast.error(result.message ?? t("Failed to upload photo"));
+      else toast.error(t(result.message ?? "Failed to upload photo"));
     } catch {
       toast.error(t("Failed to upload photo"));
     } finally {
@@ -105,7 +122,12 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid || isPending) return;
+    if (isPending || uploading) return;
+    if (!reachable) {
+      setTried(true);
+      return;
+    }
+    if (!valid) return;
     startTransition(async () => {
       // Sent as-is, empty included: the API reads a missing field as "leave
       // unchanged", so an emptied phone or address must still go.
@@ -114,8 +136,8 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
       const result = editing
         ? await updateContactAction(businessId, editing.id, shared)
         : await createContactAction(businessId, { ...shared, category: "BUSINESS", phone: shared.phone || undefined, email: shared.email || undefined, address: shared.address || undefined, notes: shared.notes || undefined, photoUrl: photoUrl || undefined, openingBalance: amount > 0 ? (direction === "YOU_OWE" ? -amount : amount).toFixed(2) : undefined });
-      if (result.success) finish(t(editing ? "Saved" : "Added"));
-      else toast.error(result.message ?? t(editing ? "Failed to update contact" : "Failed to create contact"));
+      if (result.success) finish(t(editing ? "Saved@@contact" : "Added"));
+      else toast.error(t(result.message ?? (editing ? "Failed to update contact" : "Failed to create contact")));
     });
   }
 
@@ -123,8 +145,8 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
     if (!editing) return;
     startTransition(async () => {
       const result = await archiveContactAction(businessId, editing.id);
-      if (result.success) finish(t("Archived. They stay in the books but drop out of the lists."));
-      else toast.error(result.message ?? t("Failed to archive contact"));
+      if (result.success) finish(t("Archived. They stay in the books, marked archived."));
+      else toast.error(t(result.message ?? "Failed to archive contact"));
     });
   }
 
@@ -140,12 +162,13 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
         if (deleted && onRemoved) onRemoved();
         else router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to delete contact"));
+        toast.error(t(result.message ?? "Failed to remove contact"));
       }
     });
   }
 
   const optional = <span className="font-normal text-ink-muted"> ({t("optional")})</span>;
+  const reachLine = t("A phone or an email, so they can be reached");
 
   return (
     <>
@@ -157,10 +180,10 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
         onSubmit={submit}
         footer={
           <>
-            <Button type="button" variant="ghost" onClick={onClose} disabled={isPending}>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={isPending || uploading}>
               {t("Cancel")}
             </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending || uploading} className="px-5">
+            <Button type="submit" variant="action" disabled={name.trim().length === 0 || isPending || uploading} className="px-5">
               {isPending && <Loader />}
               {t(editing ? "Save changes" : "Add")}
             </Button>
@@ -169,13 +192,14 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
       >
         <div className="flex items-center gap-4">
           <PersonAvatar name={name || "?"} src={photoUrl || null} size={44} coloured />
-          <label htmlFor="ct-photo" className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-line-strong bg-surface px-3.5 text-small font-semibold text-ink hover:bg-surface-sunken">
+          {/* A real button, so the keyboard reaches it; the file field stays hidden. */}
+          <Button type="button" variant="secondary" size="sm" onClick={() => photoInput.current?.click()} disabled={uploading} className="pointer-coarse:h-11">
             {uploading ? <Loader /> : <Camera className="size-4" aria-hidden="true" />}
             {t(photoUrl ? "Change photo" : "Add a photo")}
-          </label>
-          <input id="ct-photo" type="file" accept="image/*" onChange={pickPhoto} disabled={uploading} className="hidden" />
+          </Button>
+          <input ref={photoInput} id="ct-photo" type="file" accept="image/*" onChange={pickPhoto} disabled={uploading} tabIndex={-1} aria-hidden="true" className="hidden" />
           {photoUrl && (
-            <button type="button" onClick={() => setPhotoUrl("")} aria-label={t("Remove photo")} className="flex size-9 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-expense">
+            <button type="button" onClick={() => setPhotoUrl("")} aria-label={t("Remove photo")} className="flex size-9 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-expense pointer-coarse:size-11">
               <X className="size-4" aria-hidden="true" />
             </button>
           )}
@@ -190,13 +214,21 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
           <SegmentedControl label={t("They are a")} value={type} onChange={setType} stretch options={types.map((value) => ({ value, label: t(CONTACT_TYPE_WORD[value]) }))} />
         </fieldset>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field htmlFor="ct-phone" label={<>{t("Phone")}{optional}</>}>
-            <Input id="ct-phone" size="md" type="tel" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="01712-345678" className="font-mono" />
-          </Field>
-          <Field htmlFor="ct-email" label={<>{t("Email")}{optional}</>}>
-            <Input id="ct-email" size="md" type="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={120} />
-          </Field>
+        {/* One line under the pair: the hint, and the error once Save was
+            pressed without either. Both fields point at it. */}
+        <div className="flex flex-col gap-2">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field htmlFor="ct-phone" label={t("Phone")}>
+              <Input id="ct-phone" size="md" type="tel" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="01712-345678" invalid={missingReach} aria-describedby="ct-reach" className="font-mono" />
+            </Field>
+            <Field htmlFor="ct-email" label={t("Email")}>
+              <Input id="ct-email" size="md" type="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={120} invalid={missingReach} aria-describedby="ct-reach" />
+            </Field>
+          </div>
+          <p id="ct-reach" role={missingReach ? "alert" : undefined} className={missingReach ? "flex items-center gap-2 text-caption text-expense" : "text-caption text-ink-muted"}>
+            {missingReach && <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />}
+            {reachLine}
+          </p>
         </div>
         <Field htmlFor="ct-address" label={<>{t("Address")}{optional}</>}>
           <Input id="ct-address" size="md" value={address} onChange={(event) => setAddress(event.target.value)} maxLength={200} placeholder={t("Shop 14, Eastern Plaza, Hatirpool")} />
@@ -218,25 +250,30 @@ export function ContactDrawer({ open, editing, businessId, currency, onClose, on
           <div className="mt-2 flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
             <span className="flex flex-col gap-0.5">
               <b className="text-body font-semibold text-ink">{t("Archive or remove")}</b>
-              <span className="text-small text-ink-muted">{t("Archiving keeps their history but hides them from the lists. Removing is only possible while there are no entries with them.")}</span>
+              <span className="text-small text-ink-muted">{t("Archiving keeps their history and marks them archived. It is possible only when nothing is owed either way.")}</span>
             </span>
             <span className="flex flex-wrap gap-2">
               {editing.status === "ACTIVE" && (
-                <Button type="button" variant="secondary" size="sm" onClick={archive} disabled={isPending}>
+                <Button type="button" variant="secondary" size="sm" onClick={archive} disabled={isPending || owed} aria-describedby={unsettled ? "ct-unsettled" : undefined}>
                   <Archive />
                   {t("Archive")}
                 </Button>
               )}
-              <Button type="button" variant="ghost" size="sm" onClick={() => setRemoving(true)} disabled={isPending} className="text-expense hover:bg-expense-soft hover:text-expense">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setRemoving(true)} disabled={isPending || removeBlocked} aria-describedby={removeBlocked && unsettled ? "ct-unsettled" : undefined} className="text-expense hover:bg-expense-soft hover:text-expense">
                 <Trash2 />
                 {t("Remove")}
               </Button>
             </span>
+            {unsettled && (editing.status === "ACTIVE" || removeBlocked) && (
+              <p id="ct-unsettled" className="text-caption text-ink-muted">
+                {unsettled}
+              </p>
+            )}
           </div>
         )}
       </Drawer>
 
-      <ConfirmDialog open={removing} onClose={() => setRemoving(false)} onConfirm={remove} isPending={isPending} danger title={t("Remove this person?")} description={editing ? `${editing.name} ${t("will be removed from the books. If there are already entries with them, they are archived instead, so nothing is lost.")}` : ""} confirmLabel={t("Remove")} />
+      <ConfirmDialog open={removing} onClose={() => setRemoving(false)} onConfirm={remove} isPending={isPending} danger title={t("Remove this person?")} description={editing ? t("{name} will be removed from the books. If there are already entries with them, they are archived instead, so nothing is lost.", { name: editing.name }) : ""} confirmLabel={t("Remove")} />
     </>
   );
 }
