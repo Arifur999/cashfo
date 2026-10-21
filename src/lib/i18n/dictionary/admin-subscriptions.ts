@@ -104,7 +104,8 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "Failed to delete plan": "প্ল্যান মুছে ফেলা যায়নি",
   // The API's answers about a plan or coupon (plans/_action.ts words the
   // delete refusal, whose counts can't be a key).
-  "Payments, coupons or workspaces still use this plan. Take it off sale instead.": "পেমেন্ট, কুপন বা ওয়ার্কস্পেস এখনো এই প্ল্যান ব্যবহার করে। এর বদলে বিক্রি বন্ধ করুন।",
+  "Payments, coupons or workspaces still use this plan, so it can't be deleted. Keep it off sale instead.":
+    "পেমেন্ট, কুপন বা ওয়ার্কস্পেস এখনো এই প্ল্যান ব্যবহার করে, তাই এটি মুছে ফেলা যাবে না। এর বদলে বিক্রি বন্ধ রাখুন।",
   "Plan not found": "প্ল্যান পাওয়া যায়নি",
 
   // Coupons

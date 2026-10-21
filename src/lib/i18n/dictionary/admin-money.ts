@@ -207,5 +207,4 @@ export const adminMoneyDictionary: Record<string, string> = {
     "Smartly ব্যবহারের জন্য ধন্যবাদ। এই ইনভয়েস নিয়ে প্রশ্ন? অ্যাপের সাহায্য পাতা থেকে লিখুন।",
   "Download MRR at the end of each month as CSV": "প্রতি মাস শেষের MRR CSV হিসেবে নামান",
   "Showing {range} of {total} payments": "{total}টি পেমেন্টের মধ্যে {range} দেখানো হচ্ছে",
-  "Showing {range} of {total} invoices": "{total}টি ইনভয়েসের মধ্যে {range} দেখানো হচ্ছে",
 };

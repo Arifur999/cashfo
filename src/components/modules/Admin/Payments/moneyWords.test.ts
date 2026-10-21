@@ -38,7 +38,6 @@ const KEYS = [
   "Invoice not found",
   "This invoice doesn't exist, or was removed.",
   "All invoices",
-  "Showing {range} of {total} invoices",
   "REFUNDED",
   "PARTLY REFUNDED",
   "Refunded {amount} on {date}.",
@@ -70,7 +69,7 @@ const KEYS = [
   "Failed to turn the coupon off",
   "A coupon with this code already exists",
   "Works at checkout",
-  "Payments, coupons or workspaces still use this plan. Take it off sale instead.",
+  "Payments, coupons or workspaces still use this plan, so it can't be deleted. Keep it off sale instead.",
   "Plan not found",
   "Coupon not found",
 ];

@@ -3,9 +3,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { hasAnyParam } from "@/components/modules/Admin/Payments/paymentsDisplay";
-import type { DataTableSimplePager } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
-import ShowingRange from "@/components/shared/table/ShowingRange";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { invoicesListQuery } from "@/queries/invoice.queries";
@@ -22,18 +20,6 @@ const DATE_KEYS = ["dateFrom", "dateTo"] as const;
 const fetchInvoicesPage = async (queryString: string) => {
   const { data, meta } = await getInvoices(queryString);
   return { rows: data, meta };
-};
-
-// "Showing 1–10 of 54 invoices", then Previous and Next, as the Payments
-// tab beside it.
-const PAGER: DataTableSimplePager = {
-  previous: "Previous",
-  next: "Next",
-  summary: (total, { first, last }) => (
-    <ShowingRange first={first} last={last} total={total}>
-      {"Showing {range} of {total} invoices"}
-    </ShowingRange>
-  ),
 };
 
 // Each column keeps its px and "Issued to" gives way down to 200px, so a
@@ -60,7 +46,8 @@ const InvoicesTable = () => {
       layout={LAYOUT}
       getRowId={(row) => row.id}
       exportFileName="invoices"
-      pager={PAGER}
+      // No `pager`: one invoice per paid payment runs to many pages, so the
+      // numbered footer (page numbers, first and last page) stays.
       // The invoice's page leads back to these dates and this page.
       rowHref={(row) => invoiceHref(row.id, searchParams.toString())}
       emptyMessage={dated ? "No invoices in these dates." : "No invoices yet."}
