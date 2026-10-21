@@ -111,6 +111,11 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
 
   const hrefFor = (page: number) => pageHref("/transactions", searchParams, page);
 
+  // Clearing the filters keeps the page size the reader picked, as the
+  // filter bar's Clear does.
+  const limitParam = searchParams.get("limit");
+  const clearHref = limitParam ? `/transactions?${new URLSearchParams({ limit: limitParam }).toString()}` : "/transactions";
+
   // A new page size keeps the first row of the page on show (or asked for)
   // in view.
   function changePageSize(size: number) {
@@ -224,7 +229,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             )}
             {filtered ? (
               <Button variant="secondary" asChild>
-                <Link href="/transactions">{t("Clear filters")}</Link>
+                <Link href={clearHref}>{t("Clear filters")}</Link>
               </Button>
             ) : (
               <Button variant="secondary" asChild>
