@@ -9,6 +9,23 @@ export function greetingFor(hour: number): "Good morning" | "Good afternoon" | "
   return "Good evening";
 }
 
+// Titles that open many Bangladeshi names ("Md. Arifur Rahman", "Mst Nasrin
+// Akter", "Engr. Rakib"), written without their dot as often as with it.
+const HONORIFICS = new Set(["md", "mst", "mohd", "dr", "engr", "mr", "mrs"]);
+
+// A title or an initial: a word that ends in a dot or a visarga ("Md.",
+// "মোঃ", "মোছাঃ", "ডাঃ", "A.", or "মো:" typed with a colon), or one of the
+// titles above.
+const isHonorific = (word: string) => /[.:ঃ]$/.test(word) || HONORIFICS.has(word.toLowerCase());
+
+// The name Home greets someone by: the first word that is not a title, so
+// "Md. Arifur Rahman" reads "Good evening, Arifur". A name that is all
+// titles is used whole.
+export function greetingName(name: string): string {
+  const full = name.trim();
+  return full.split(/\s+/).find((word) => word && !isHonorific(word)) ?? full;
+}
+
 // The hour of the day in the platform's timezone (0–23).
 export function hourIn(zone: string, now: Date = new Date()): number {
   const hour = new Intl.DateTimeFormat("en-GB", { timeZone: zone, hour: "numeric", hourCycle: "h23" }).format(now);

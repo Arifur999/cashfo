@@ -1,149 +1,225 @@
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
+import { HomeNoWorkspace } from "@/components/modules/Customer/Dashboard/HomeNoWorkspace";
 import { HomePageClient } from "@/components/modules/Customer/Dashboard/HomePageClient";
-import type { HomeData } from "@/components/modules/Customer/Dashboard/homeTypes";
-import { getWalletsOverview } from "@/lib/customer/accounts";
+import type { HomeData, HomePart } from "@/components/modules/Customer/Dashboard/homeTypes";
+import { getLedger, getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
 import { getBudgetCategoryNames, getBudgetOverview } from "@/lib/customer/budgets";
-import { appYearMonth, resolveDateRange } from "@/lib/customer/dateRangePresets";
-import { greetingFor, homeDates, hourIn } from "@/lib/customer/greeting";
-import { getHabitTrackers } from "@/lib/customer/habits";
-import { balanceChangePercent, categoryDelta, daysLeftInMonth, loanCounts, savingsRate, topShare } from "@/lib/customer/homeInsights";
+import { challengeWindow } from "@/lib/customer/challengeDisplay";
+import { appYearMonth } from "@/lib/customer/dateRangePresets";
+import { isFeatureOn } from "@/lib/customer/features";
+import { greetingFor, greetingName, homeDates, hourIn } from "@/lib/customer/greeting";
+import { getHabitTrackers, getPrayerSettings } from "@/lib/customer/habits";
+import {
+  balanceChangePercent,
+  categoryDelta,
+  daysLeftInMonth,
+  isFirstMonthOnRecord,
+  loanCounts,
+  monthColumn,
+  sameDaysLastMonth,
+  savingsRate,
+  savingsTotals,
+  topShare,
+  windowStart,
+} from "@/lib/customer/homeInsights";
+import { monthName, monthRates } from "@/lib/customer/insights";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getPlatform } from "@/lib/customer/platform";
 import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
-import { getCategoryBreakdown, getIncomeVsSavingsTrend } from "@/lib/customer/reports";
-import { getSavingsGoals, getSavingsOverview } from "@/lib/customer/savingsGoals";
+import { getCategoryBreakdown, getMonthlyBreakdown } from "@/lib/customer/reports";
+import { getSavingsGoals } from "@/lib/customer/savingsGoals";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { categoryIndex } from "@/lib/customer/transactionRows";
 import { getTransactions } from "@/lib/customer/transactions";
 import { getVaultStatus } from "@/lib/customer/vault";
-import { APP_TIME_ZONE, getAppToday } from "@/lib/date";
+import { APP_TIME_ZONE, getAppToday, toDateInputValue } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
-import { getPrayerSettings } from "@/lib/customer/habits";
 
 export const generateMetadata = () => customerPageMetadata("/dashboard");
 
-const monthName = (year: number, month: number, locale: "en" | "bn") =>
-  new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-GB", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1)));
+// The chart's months, this one included.
+const CHART_MONTHS = 6;
+const RECENT_ROWS = 5;
+// The hero's trend reads each wallet's balance on the 1st; past this many
+// wallets it is left out rather than spend that many calls on one chip.
+const MAX_TREND_WALLETS = 8;
+
+type Part<T> = { ok: true; value: T } | { ok: false };
+
+// A side part's read: what it found, or { ok: false } when it failed (an
+// outage, a timeout, the throttle), so that part of Home says it couldn't
+// load and the rest stays up. Next's own redirects (maintenance mode, a PIN
+// lock) still go through.
+async function part<T>(read: () => Promise<T>): Promise<Part<T>> {
+  try {
+    return { ok: true, value: await read() };
+  } catch (error) {
+    unstable_rethrow(error);
+    return { ok: false };
+  }
+}
 
 // Home. Everything it shows comes from calls the feature pages already
-// make; the figures are derived here, on the server, once.
+// make; the figures are derived here, on the server, once. The wallets,
+// this month's money and the newest transactions are its core: without
+// them Home shows the error screen. Every other part is read on its own.
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  const locale = await getLocale();
+  const now = new Date();
+  const greeting = greetingFor(hourIn(APP_TIME_ZONE, now));
+  const firstName = greetingName(user.name);
+  const prayerSettings = await getPrayerSettings();
+  const dates = homeDates(now, locale, APP_TIME_ZONE, prayerSettings.hijriAdjust);
+
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
-  if (!activeBusinessId) redirect("/dashboard");
+  // No personal or business workspace to open (only groups, or theirs was
+  // removed). Every page sends such a customer here, so Home says what they
+  // can do rather than sending them round again.
+  if (!activeBusinessId) {
+    return <HomeNoWorkspace greeting={greeting} firstName={firstName} day={dates.day} hasGroup={user.businesses.some((b) => b.type === "GROUP")} />;
+  }
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const currency = activeBusiness?.currency ?? "BDT";
-  const locale = await getLocale();
-  const now = new Date();
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
   const today = getAppToday();
   const { year, month } = appYearMonth();
-  const thisMonth = resolveDateRange("this-month");
-  const lastMonth = resolveDateRange("last-month");
-  const lastMonthYear = month === 1 ? year - 1 : year;
-  const lastMonthNumber = month === 1 ? 12 : month - 1;
+  const monthStart = `${today.slice(0, 7)}-01`;
+  const chartFrom = windowStart(today, CHART_MONTHS);
+  const lastSameDays = sameDaysLastMonth(today);
+  // The layout has read it already; this is the same answer.
+  const loansOn = isFeatureOn((await getPlatform()).flags, "loan_management");
 
-  const [
-    walletsOverview,
-    income,
-    expense,
-    lastIncome,
-    lastExpense,
-    savingsOverview,
-    goals,
-    loanDashboard,
-    recent,
-    trend,
-    assets,
-    budget,
-    incomeCategories,
-    expenseCategories,
-    namazTrackers,
-    othersTrackers,
-    booksOverview,
-    skillsOverview,
-    vault,
-  ] = await Promise.all([
-    getWalletsOverview(activeBusinessId),
-    getCategoryBreakdown(activeBusinessId, "INCOME", thisMonth.dateFrom, thisMonth.dateTo),
-    getCategoryBreakdown(activeBusinessId, "EXPENSE", thisMonth.dateFrom, thisMonth.dateTo),
-    getCategoryBreakdown(activeBusinessId, "INCOME", lastMonth.dateFrom, lastMonth.dateTo),
-    getCategoryBreakdown(activeBusinessId, "EXPENSE", lastMonth.dateFrom, lastMonth.dateTo),
-    getSavingsOverview(activeBusinessId),
-    getSavingsGoals(activeBusinessId, "ACTIVE"),
-    getLoanDashboard(activeBusinessId),
-    getTransactions(activeBusinessId, { limit: 5 }),
-    getIncomeVsSavingsTrend(activeBusinessId, 6),
-    getAssets(activeBusinessId),
-    getBudgetOverview(activeBusinessId, month, year),
-    getBudgetCategoryNames(activeBusinessId, "INCOME"),
-    getBudgetCategoryNames(activeBusinessId, "EXPENSE"),
-    getHabitTrackers("Namaz"),
-    getHabitTrackers("Others"),
-    getBooksOverview(),
-    getSkillsOverview(),
-    getVaultStatus(),
-  ]);
+  const walletsRead = getWalletsOverview(activeBusinessId);
+  // What the active wallets held when the month began: each one's balance
+  // brought forward to the 1st, read as soon as the wallets are known.
+  const startRead = part(async () => {
+    const active = (await walletsRead).accounts.filter((wallet) => wallet.status !== "ARCHIVED");
+    if (active.length === 0 || active.length > MAX_TREND_WALLETS) return null;
+    const ledgers = await Promise.all(active.map((wallet) => getLedger(activeBusinessId, wallet.id, { dateFrom: monthStart, limit: 1 })));
+    return ledgers.reduce((sum, ledger) => sum + Number(ledger.balanceBroughtForward), 0);
+  });
 
-  const incomeTotal = Number(income.total);
-  const expenseTotal = Number(expense.total);
-  const balance = Number(walletsOverview.totalBalance);
-  const activeAssets = assets.filter((a) => a.status === "ACTIVE");
-  const assetsValue = activeAssets.reduce((sum, a) => sum + Number(a.currentValue), 0);
-  const assetsCost = activeAssets.reduce((sum, a) => sum + Number(a.purchasePrice), 0);
-  const categoriesById = categoryIndex([...incomeCategories, ...expenseCategories]);
-  const budgetFocus = [...budget.categories].filter((c) => c.monthlyLimit !== null && Number(c.monthlyLimit) > 0).sort((a, b) => b.percent - a.percent)[0] ?? null;
-  const topIncome = topShare(income);
-  const topExpense = topShare(expense);
-  const readingBooks = booksOverview?.books.filter((b) => b.status === "READING") ?? [];
-  const practisedToday = Boolean(skillsOverview?.week.find((d) => d.date === today && (d.minutes > 0 || d.lessons > 0)));
+  const [walletsOverview, income, expense, recent, start, incomeNames, lastSpend, goals, assets, budget, loanDashboard, namazTrackers, challengeTrackers, booksOverview, skillsOverview, vault] =
+    await Promise.all([
+      walletsRead,
+      // This month, last month and the chart, in two calls: one column per
+      // month, this month up to today.
+      getMonthlyBreakdown(activeBusinessId, "INCOME", chartFrom, today),
+      getMonthlyBreakdown(activeBusinessId, "EXPENSE", chartFrom, today),
+      getTransactions(activeBusinessId, { limit: RECENT_ROWS }),
+      startRead,
+      // Income categories' icons for the rows (the budget below brings the
+      // expense ones); without them the rows fall back to plain icons.
+      part(() => getBudgetCategoryNames(activeBusinessId, "INCOME")),
+      part(() => getCategoryBreakdown(activeBusinessId, "EXPENSE", lastSameDays.dateFrom, lastSameDays.dateTo)),
+      part(() => getSavingsGoals(activeBusinessId)),
+      part(() => getAssets(activeBusinessId)),
+      part(() => getBudgetOverview(activeBusinessId, month, year)),
+      loansOn ? part(() => getLoanDashboard(activeBusinessId)) : null,
+      part(() => getHabitTrackers("Namaz")),
+      part(() => getHabitTrackers("Others")),
+      part(() => getBooksOverview()),
+      part(() => getSkillsOverview()),
+      part(() => getVaultStatus()),
+    ]);
+
+  const unavailable: HomePart[] = [];
+  // A part's value, or `empty` (and the part listed as unavailable) when it
+  // couldn't be read.
+  const read = <T,>(name: HomePart, result: Part<T>, empty: T): T => {
+    if (result.ok) return result.value;
+    unavailable.push(name);
+    return empty;
+  };
+
+  const rates = monthRates(income, expense);
+  const current = rates.length - 1;
+  const incomeTotal = rates[current]?.income ?? 0;
+  const expenseTotal = rates[current]?.expense ?? 0;
+  const thisIncome = monthColumn(income, income.months.length - 1);
+  const thisExpense = monthColumn(expense, expense.months.length - 1);
+  const topIncome = topShare(thisIncome);
+  const topExpense = topShare(thisExpense);
+
+  const activeWallets = walletsOverview.accounts.filter((wallet) => wallet.status !== "ARCHIVED");
+  const balance = Number(walletsOverview.availableBalance);
+  const savings = savingsTotals(read("savings", goals, []));
+  const assetList = read("assets", assets, []).filter((a) => a.status === "ACTIVE");
+  const assetsValue = assetList.reduce((sum, a) => sum + Number(a.currentValue), 0);
+  const assetsCost = assetList.reduce((sum, a) => sum + Number(a.purchasePrice), 0);
+  const budgetOverview = read("budget", budget, null);
+  // Every expense category, with its limit and what went against it.
+  const expenseCategories = budgetOverview?.categories ?? [];
+  const limited = expenseCategories.filter((c) => c.monthlyLimit !== null && Number(c.monthlyLimit) > 0);
+  const budgetFocus = [...limited].sort((a, b) => b.percent - a.percent)[0] ?? null;
+  const loans = loanDashboard ? read("loans", loanDashboard, null) : null;
+  const namaz = read("namaz", namazTrackers, []);
+  const challenges = read("challenges", challengeTrackers, []);
+  const books = read("books", booksOverview, null);
+  const skills = read("skills", skillsOverview, null);
+  const readingBooks = books?.books.filter((b) => b.status === "READING") ?? [];
+  const practisedToday = Boolean(skills?.week.find((d) => d.date === today && (d.minutes > 0 || d.lessons > 0)));
+  const incomeCategories = incomeNames.ok ? incomeNames.value : [];
   const hasWallet = walletsOverview.totalAccounts > 0;
   const hasTransaction = recent.data.length > 0;
 
   const data: HomeData = {
     businessId: activeBusinessId,
-    firstName: user.name.trim().split(/\s+/)[0] || user.name,
+    firstName,
     currency,
+    canManage,
     today,
-    greeting: greetingFor(hourIn(APP_TIME_ZONE, now)),
-    dates: homeDates(now, locale, APP_TIME_ZONE, (await getPrayerSettings()).hijriAdjust),
-    monthName: monthName(year, month, locale),
-    lastMonthName: monthName(lastMonthYear, lastMonthNumber, locale),
+    greeting,
+    dates,
+    monthName: monthName(today.slice(0, 7), locale),
+    lastMonthName: monthName(lastSameDays.dateFrom.slice(0, 7), locale),
+    lastMonthShort: monthName(lastSameDays.dateFrom.slice(0, 7), locale, "short"),
     balance,
-    walletCount: walletsOverview.totalAccounts,
-    balanceChangePercent: balanceChangePercent(balance, incomeTotal - expenseTotal),
+    walletCount: activeWallets.length,
+    balanceChangePercent: balanceChangePercent(balance, start.ok ? start.value : null),
     income: incomeTotal,
     expense: expenseTotal,
     savingsRate: savingsRate(incomeTotal, expenseTotal),
-    lastSavingsRate: savingsRate(Number(lastIncome.total), Number(lastExpense.total)),
-    trend,
+    lastSavingsRate: current > 0 ? savingsRate(rates[current - 1].income, rates[current - 1].expense) : null,
+    firstMonthOnRecord: isFirstMonthOnRecord({
+      earlier: rates.slice(0, -1),
+      recentDays: recent.data.map((tx) => toDateInputValue(tx.transactionDate)),
+      total: recent.meta.total,
+      monthStart,
+    }),
+    chart: rates.map((rate) => ({ month: rate.month, label: monthName(rate.month, locale, "short"), name: monthName(rate.month, locale), income: rate.income, kept: rate.kept })),
     recentTransactions: recent.data,
-    categoriesById,
-    savingsSaved: Number(savingsOverview.totalSaved),
-    savingsTarget: Number(savingsOverview.totalGoals),
-    savingsProgress: savingsOverview.progressPercent,
-    goalCount: goals.length,
+    categoriesById: categoryIndex([...incomeCategories, ...expenseCategories]),
+    savingsSaved: savings.saved,
+    savingsTarget: savings.target,
+    savingsProgress: savings.progress,
+    goalCount: savings.count,
     assetsValue,
     assetsGain: assetsValue - assetsCost,
-    assetCount: activeAssets.length,
+    assetCount: assetList.length,
     budgetFocus,
+    // A limit on a category, or a total for the month.
+    hasBudget: limited.length > 0 || Number(budgetOverview?.totalBudget ?? 0) > 0,
     daysLeftInMonth: daysLeftInMonth(today),
-    loans: loanDashboard,
-    loanCounts: loanCounts(loanDashboard.rows),
-    namaz: namazTrackers.find((tr) => tr.todayDay !== null) ?? null,
-    dailyChallenges: othersTrackers.length,
+    loans,
+    loanCounts: loanCounts(loans?.rows ?? []),
+    namaz: namaz.find((tr) => tr.todayDay !== null) ?? null,
+    challengesRunning: challenges.filter((tr) => challengeWindow(tr, today).status === "going").length,
     reading: readingBooks[0] ? { title: readingBooks[0].title, pagesRead: readingBooks[0].pagesRead, totalPages: readingBooks[0].totalPages } : null,
-    readingCount: readingBooks.length,
-    skills: skillsOverview ? { streak: skillsOverview.streak, practisedToday } : null,
-    vault,
+    skills: skills ? { streak: skills.streak, practisedToday, hasSkills: skills.skills.length > 0 } : null,
+    vault: read("vault", vault, null),
     topIncome: topIncome ? { name: topIncome.name, percent: topIncome.percent } : null,
-    topExpense: topExpense ? { ...topExpense, delta: categoryDelta(expense, lastExpense, topExpense.name) } : null,
+    topExpense: topExpense ? { ...topExpense, delta: lastSpend.ok ? categoryDelta(thisExpense, lastSpend.value, topExpense.name) : null } : null,
     setup: hasWallet && hasTransaction ? null : { hasWallet, hasTransaction },
+    unavailable,
   };
 
   return <HomePageClient data={data} />;
