@@ -1,12 +1,16 @@
 import type { FeatureKey } from "./features";
 import type { WorkspaceType } from "./api";
 
-// The customer app's menu, as the design's AppSidebar draws it: Home, then
-// Money, Books (business workspaces only), Habits, Vault and Insights,
-// with Invite & earn and Settings at the foot. Labels are the English
-// strings t() translates. Icons are named here and drawn by the sidebar,
-// so this file stays plain data the top bar's breadcrumb and the tab
-// titles (pageTitle.ts) can use too.
+// The customer app's menu: Home, then the open workspace's pages -- Money,
+// Books (business workspaces only) and Insights, which reviews them -- then
+// the customer's own -- Habits and Vault -- with Invite & earn and Settings
+// at the foot. The order came out of an information-architecture review of
+// the AppSidebar board (2026-10-21): Insights moved up beside the money it
+// reads, To-do moved up under Today (its badge sat below the fold), and
+// Books leads with Customers & suppliers, a shop's daily page. Labels are
+// the English strings t() translates. Icons are named here and drawn by the
+// sidebar, so this file stays plain data the top bar's breadcrumb and the
+// tab titles (pageTitle.ts) can use too.
 export type NavTone = "money" | "loans" | "habits" | "vault" | "insights" | "neutral";
 
 export type NavIcon =
@@ -136,28 +140,12 @@ export const NAV_SECTIONS: NavSection[] = [
     tone: "neutral",
     businessOnly: true,
     items: [
-      { label: "Accounts", href: "/accounts", icon: "ledger" },
       { label: "Customers & suppliers", href: "/contacts", icon: "people" },
       { label: "Receivables & payables", href: "/dena-pawna", icon: "clock" },
+      { label: "Accounts", href: "/accounts", icon: "ledger" },
       { label: "Journal entry", href: "/transactions/advanced", icon: "journal" },
     ],
   },
-  {
-    label: "Habits",
-    tone: "habits",
-    items: [
-      { label: "Today", href: "/habit-tracker", icon: "today" },
-      { label: "Daily habits", href: "/habit-tracker/daily", icon: "daily" },
-      { label: "Namaz", href: "/habit-tracker/habits", query: { category: "Namaz" }, match: ["/habit-tracker/habits/namaz"], icon: "namaz" },
-      { label: "Ramadan", href: "/habit-tracker/habits", query: { category: "Ramadan" }, match: ["/habit-tracker/habits/ramadan"], icon: "ramadan" },
-      { label: "My library", href: "/habit-tracker/habits", query: { category: "Book" }, icon: "library" },
-      { label: "Skills", href: "/habit-tracker/habits", query: { category: "Course" }, icon: "skills" },
-      { label: "Challenges", href: "/habit-tracker/habits", query: { category: "Others" }, match: ["/habit-tracker/habits/others"], icon: "challenges" },
-      { label: "To-do list", href: "/habit-tracker/todos", icon: "todo", badge: "todayTasks" },
-    ],
-  },
-  // "Vault", not "Security": Settings has a Security page of its own.
-  { label: "Vault", tone: "vault", items: [{ label: "Password vault", href: "/password-manager", icon: "vault" }] },
   {
     label: "Insights",
     tone: "insights",
@@ -166,6 +154,22 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Reports", href: "/reports/detailed", icon: "reports" },
     ],
   },
+  {
+    label: "Habits",
+    tone: "habits",
+    items: [
+      { label: "Today", href: "/habit-tracker", icon: "today" },
+      { label: "To-do list", href: "/habit-tracker/todos", icon: "todo", badge: "todayTasks" },
+      { label: "Daily habits", href: "/habit-tracker/daily", icon: "daily" },
+      { label: "Namaz", href: "/habit-tracker/habits", query: { category: "Namaz" }, match: ["/habit-tracker/habits/namaz"], icon: "namaz" },
+      { label: "Ramadan", href: "/habit-tracker/habits", query: { category: "Ramadan" }, match: ["/habit-tracker/habits/ramadan"], icon: "ramadan" },
+      { label: "Challenges", href: "/habit-tracker/habits", query: { category: "Others" }, match: ["/habit-tracker/habits/others"], icon: "challenges" },
+      { label: "My library", href: "/habit-tracker/habits", query: { category: "Book" }, icon: "library" },
+      { label: "Skills", href: "/habit-tracker/habits", query: { category: "Course" }, icon: "skills" },
+    ],
+  },
+  // "Vault", not "Security": Settings has a Security page of its own.
+  { label: "Vault", tone: "vault", items: [{ label: "Password vault", href: "/password-manager", icon: "vault" }] },
 ];
 
 // The sidebar's foot: the account's own pages. The top bar puts them under
