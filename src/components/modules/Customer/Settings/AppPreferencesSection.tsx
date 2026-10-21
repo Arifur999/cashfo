@@ -38,10 +38,11 @@ const REMINDERS: { key: keyof ReminderPreferences; title: string; body: string }
   { key: "savings", title: "Savings goal check-in", body: "On the 1st, how far each goal has come." },
 ];
 
-// Language, theme, and how numbers and dates will look.
+// Language, theme (while the dark_mode flag is on), and how numbers and
+// dates will look.
 export function AppPreferencesSection({ today, reminders: initialReminders }: AppPreferencesSectionProps) {
   const { t, locale, toggleLocale } = useLocale();
-  const { preference, setTheme } = useTheme();
+  const { preference, setTheme, allowDark } = useTheme();
   const [reminders, setReminders] = useState(initialReminders);
 
   // Saved as soon as it flips; put back if the save fails.
@@ -85,7 +86,8 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
   return (
     <div className="flex max-w-200 flex-col gap-4">
       <Card padding="none" className="overflow-hidden">
-        <h2 className="px-6 py-4 text-title font-semibold text-ink">{t("Language and look")}</h2>
+        {/* With dark mode switched off there is no look to pick, only the language. */}
+        <h2 className="px-6 py-4 text-title font-semibold text-ink">{allowDark ? t("Language and look") : t("Language")}</h2>
         {row(
           "Language",
           "Saved to your account, so every device opens in it.",
@@ -100,21 +102,22 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
             ]}
           />,
         )}
-        {row(
-          "Theme",
-          "Dark is easier on the eyes at night.",
-          <SegmentedControl<ThemePreference>
-            label={t("Theme")}
-            variant="soft"
-            value={preference}
-            onChange={setTheme}
-            options={[
-              { value: "light", label: t("Light"), icon: <Sun /> },
-              { value: "dark", label: t("Dark"), icon: <Moon /> },
-              { value: "system", label: t("Match device"), icon: <Monitor /> },
-            ]}
-          />,
-        )}
+        {allowDark &&
+          row(
+            "Theme",
+            "Dark is easier on the eyes at night.",
+            <SegmentedControl<ThemePreference>
+              label={t("Theme")}
+              variant="soft"
+              value={preference}
+              onChange={setTheme}
+              options={[
+                { value: "light", label: t("Light"), icon: <Sun /> },
+                { value: "dark", label: t("Dark"), icon: <Moon /> },
+                { value: "system", label: t("Match device"), icon: <Monitor /> },
+              ]}
+            />,
+          )}
       </Card>
 
       <Card padding="none" className="overflow-hidden">

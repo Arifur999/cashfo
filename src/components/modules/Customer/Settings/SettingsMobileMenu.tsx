@@ -22,19 +22,25 @@ interface MenuRow {
 const TONE: Partial<Record<SettingsSection["key"], Tone>> = { security: "warning", workspaces: "money", help: "info", resources: "neutral" };
 
 // Settings on a phone: the profile card, then every section as a row. The
-// phone board splits App preferences into its Language and Theme rows.
+// phone board splits App preferences into its Language and Theme rows; the
+// Theme one only while the dark_mode flag is on.
 export function SettingsMobileMenu() {
   const { t, locale } = useLocale();
   const { user, logout } = useAuth();
-  const { preference } = useTheme();
+  const { preference, allowDark } = useTheme();
+
+  const appRows = (href: string): MenuRow[] => {
+    const rows: MenuRow[] = [{ key: "language", href, label: "Language", icon: Languages, tone: "money", value: locale === "bn" ? "বাংলা" : "English" }];
+    if (allowDark) {
+      rows.push({ key: "theme", href, label: "Theme", icon: Moon, tone: "neutral", value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") });
+    }
+    return rows;
+  };
 
   const rowsOf = (group: SettingsSection["group"]): MenuRow[] =>
     SETTINGS_SECTIONS.filter((section) => section.group === group && section.key !== "profile").flatMap((section): MenuRow[] =>
       section.key === "app"
-        ? [
-            { key: "language", href: section.href, label: "Language", icon: Languages, tone: "money", value: locale === "bn" ? "বাংলা" : "English" },
-            { key: "theme", href: section.href, label: "Theme", icon: Moon, tone: "neutral", value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") },
-          ]
+        ? appRows(section.href)
         : [{ key: section.key, href: section.href, label: section.label, icon: SECTION_ICONS[section.key], tone: TONE[section.key] ?? "neutral", value: section.key === "workspaces" ? String(user.businesses.length) : undefined }],
     );
 
