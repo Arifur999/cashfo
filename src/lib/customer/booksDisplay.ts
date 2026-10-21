@@ -213,6 +213,20 @@ export function ledgerFigures(ledger: Pick<AccountLedger, "balanceBroughtForward
   return { opening, closing, pageOpening: round2(pageOpening), pageClosing: round2(pageClosing), firstPage, lastPage, change, voided: round2(change - movement) };
 }
 
+// For each reversal on a ledger page, the day of the posting it undid, when
+// that posting is on the same page: the row can say which entry it reverses.
+// A reversal whose original is on another page (or a backend that sends no
+// reversalOfId) is left out.
+export function reversedDates(entries: Pick<LedgerRow, "transactionId" | "date" | "reversalOfId">[]): Map<string, string> {
+  const dateOf = new Map(entries.map((row) => [row.transactionId, row.date]));
+  const reversed = new Map<string, string>();
+  for (const row of entries) {
+    const original = row.reversalOfId ? dateOf.get(row.reversalOfId) : undefined;
+    if (original) reversed.set(row.transactionId, original);
+  }
+  return reversed;
+}
+
 export interface BooksDateOptions {
   // Today, "YYYY-MM-DD": a day in another year shows its year.
   today?: string;
@@ -429,9 +443,7 @@ export interface SideOwed {
 // openingRemaining comes with the balance detail; an older backend leaves
 // it out, and then what the balance holds beyond this side's invoices
 // stands in for it.
-type WithOpening = DirectionBreakdown & { openingRemaining?: string };
-
-function sideOwed(side: WithOpening, beyondInvoices: number): SideOwed {
+function sideOwed(side: DirectionBreakdown, beyondInvoices: number): SideOwed {
   const invoices = side.transactions.filter((invoice) => Number(invoice.remainingAmount) > 0);
   const onInvoices = round2(invoices.reduce((sum, invoice) => sum + Number(invoice.remainingAmount), 0));
   const fromBefore = side.openingRemaining !== undefined ? Math.max(0, Number(side.openingRemaining)) : Math.max(0, round2(beyondInvoices - onInvoices));

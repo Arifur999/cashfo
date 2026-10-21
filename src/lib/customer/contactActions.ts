@@ -92,6 +92,14 @@ export async function archiveContactAction(businessId: string, id: string): Prom
   });
 }
 
+// Makes an archived contact active again (the owner or an accountant only).
+// It takes no body and is safe to repeat.
+export async function unarchiveContactAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/contacts/${id}/unarchive`, {}, { headers: await authHeaders() });
+  });
+}
+
 export interface DeleteContactResult {
   id: string;
   // Real permanent delete when this contact has zero transactions;

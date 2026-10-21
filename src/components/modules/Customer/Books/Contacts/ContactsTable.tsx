@@ -88,8 +88,11 @@ export function ContactsTable({ contacts, currency, canManage, today, onAdd, onE
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {/* Wraps onto a second row on a phone rather than hiding "You owe" off screen. */}
-        <SegmentedControl label={t("Show some of the people")} value={filter} onChange={(value) => narrow({ filter: value })} options={filters} className="max-sm:flex max-sm:w-full max-sm:flex-wrap" />
+        {/* On a phone the five filters wrap rather than run off screen. Each
+            keeps its own width (the labels carry counts), and each row
+            stretches to fill the track, so a pill left over on its own
+            spans its row. */}
+        <SegmentedControl label={t("Show some of the people")} value={filter} onChange={(value) => narrow({ filter: value })} options={filters} className="max-sm:flex max-sm:w-full max-sm:flex-wrap max-sm:[&>button]:flex-auto" />
         <Input size="sm" value={query} onChange={(event) => narrow({ query: event.target.value })} placeholder={t("Search by name or phone")} aria-label={t("Search by name or phone")} leading={<Search />} frameClassName="sm:ml-auto sm:w-65" />
       </div>
 

@@ -63,8 +63,8 @@ export function AccountsTable({ groups, preferredLanguage, currency, hasCodes, c
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {/* Wraps onto a second row on a phone rather than hiding Expenses off screen. */}
-        <SegmentedControl label={t("Show accounts of one type")} value={filter} onChange={setFilter} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("All") : t(ACCOUNT_TYPE_META[value].label) }))} className="max-sm:flex max-sm:w-full max-sm:flex-wrap" />
+        {/* On a phone the six types sit in an even 3 × 2 rather than off screen. */}
+        <SegmentedControl label={t("Show accounts of one type")} value={filter} onChange={setFilter} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("All") : t(ACCOUNT_TYPE_META[value].label) }))} className="max-sm:grid max-sm:w-full max-sm:grid-cols-3" />
         <Input size="sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Search accounts")} aria-label={t("Search accounts")} leading={<Search />} frameClassName="sm:ml-auto sm:w-65" />
       </div>
 

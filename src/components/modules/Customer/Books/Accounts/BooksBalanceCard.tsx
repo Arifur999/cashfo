@@ -20,11 +20,13 @@ interface BooksBalanceCardProps {
 // wallet opened with money in it never reads as a missing entry.
 export function BooksBalanceCard({ balance, currency }: BooksBalanceCardProps) {
   const { t } = useLocale();
+  // On a phone each term is one line, label left and figure right, so the
+  // three don't stack into a column of display figures.
   const term = (label: string, value: number, note?: string) => (
-    <span className="flex min-w-0 flex-col gap-1">
+    <span className="flex min-w-0 flex-col gap-1 max-sm:grid max-sm:w-full max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-baseline max-sm:gap-x-3 max-sm:gap-y-0.5">
       <span className="text-small text-ink-muted">{label}</span>
-      <BalanceText value={value} currency={currency} className="text-h2" />
-      {note && <span className="text-caption whitespace-normal text-ink-muted">{note}</span>}
+      <BalanceText value={value} currency={currency} className="text-h3 sm:text-h2" />
+      {note && <span className="text-caption whitespace-normal text-ink-muted max-sm:col-span-2 max-sm:text-right">{note}</span>}
     </span>
   );
   // The = and + read as a sentence only when the three sit in one row.
@@ -43,7 +45,7 @@ export function BooksBalanceCard({ balance, currency }: BooksBalanceCardProps) {
         <b className="text-body-lg font-bold text-ink">{t("Your books balance")}</b>
         <span className="text-small text-ink-muted">{t("What the business owns equals what it owes plus your share. If this ever stops matching, an entry is missing.")}</span>
       </span>
-      <span className="flex flex-wrap items-center gap-x-3 gap-y-3 whitespace-nowrap max-sm:flex-col max-sm:items-start">
+      <span className="flex flex-wrap items-center gap-x-3 gap-y-3 whitespace-nowrap max-sm:flex-col max-sm:items-stretch">
         {term(t("Owns"), balance.owns)}
         {sign("=")}
         {term(t("Owes"), balance.owes)}

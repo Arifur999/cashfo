@@ -66,7 +66,7 @@ export function AccountsPageClient({ businessId, businessName, groups, income, e
 
       <BooksBalanceCard balance={booksBalance(groups)} currency={currency} />
       <AccountsTable groups={groups} preferredLanguage={preferredLanguage} currency={currency} hasCodes={hasAccountCodes(groups)} canManage={canManage} onAdd={() => setAdding(true)} />
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <YearSummaryCard title={t("Income this year")} description={since} rows={income.rows} total={income.total} currency={currency} />
         <YearSummaryCard title={t("Expenses this year")} description={since} rows={expense.rows} total={expense.total} currency={currency} />
       </div>
