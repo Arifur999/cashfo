@@ -40,7 +40,8 @@ export function scrollFadeMask({ start, end }: ScrollFades, axis: ScrollAxis = "
 
 // A long menu scrolls; its edges fade to say so (a sideways bar's too, with
 // axis "x"). Returns the ref for the scrolling element and a mask style that
-// fades whichever edge has more content beyond it.
+// fades whichever edge has more content beyond it. While nothing overflows
+// there is no mask at all, so a box that fits draws exactly as before.
 export function useScrollFades<T extends HTMLElement>({ axis = "y", fade = FADE }: ScrollFadesOptions = {}) {
   const ref = useRef<T>(null);
   const [fades, setFades] = useState<ScrollFades>({ start: false, end: false });
@@ -64,6 +65,7 @@ export function useScrollFades<T extends HTMLElement>({ axis = "y", fade = FADE 
     };
   }, [axis]);
 
+  if (!fades.start && !fades.end) return { ref, style: undefined };
   const mask = scrollFadeMask(fades, axis, fade);
   const style: CSSProperties = { maskImage: mask, WebkitMaskImage: mask };
 
