@@ -6,6 +6,7 @@ import { setAnnouncementEnabledAction } from "@/app/(dashboardLayout)/admin/cont
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
+import ErrorState from "@/components/smartly/ErrorState";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
 import { queryKeys } from "@/lib/queryKeys";
@@ -22,9 +23,11 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // row as the design draws them.
 const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
   const { translate } = useLocale();
-  const { data, isLoading, isFetching } = useQuery(announcementsQuery());
+  const query = useQuery(announcementsQuery());
+  const { data, isLoading, isFetching } = query;
   const { data: plansResponse } = useQuery(plansQuery());
-  const columns = useMemo(() => buildAnnouncementsColumns(new Map((plansResponse?.data ?? []).map((plan) => [plan.id, plan.name]))), [plansResponse]);
+  const planNames = useMemo(() => new Map((plansResponse?.data ?? []).map((plan) => [plan.id, plan.name])), [plansResponse]);
+  const columns = useMemo(() => buildAnnouncementsColumns(planNames), [planNames]);
   const { activeRow: announcement, openDialog, closeDialog, getDialogProps } = useRowDialogs<IAnnouncement, "edit">();
 
   const { run: setEnabled } = useActionMutation({
@@ -49,13 +52,19 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
     [canManage, openDialog, setEnabled],
   );
 
+  // An outage isn't "no announcements": say they didn't load.
+  if (query.isError && !data) {
+    return <ErrorState title={translate("Couldn't load announcements")} description={translate("Try again in a moment.")} onRetry={() => void query.refetch()} />;
+  }
+
   return (
     <>
-      {data && <LiveAnnouncementsCard announcements={data.data} />}
+      {data && <LiveAnnouncementsCard announcements={data.data} planNames={planNames} />}
       <DataTable
         data={data?.data}
         columns={columns}
-        layout={{ gap: 16, rowHeight: 62, headPadding: 12, actionsWidth: 90 }}
+        // Edit and Turn off side by side, with room for the Bangla words.
+        layout={{ gap: 16, rowHeight: 62, headPadding: 12, actionsWidth: 170 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}

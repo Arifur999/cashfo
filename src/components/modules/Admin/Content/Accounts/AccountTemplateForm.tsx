@@ -11,7 +11,8 @@ import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IAccountTemplate } from "@/types/accountTemplate.types";
 import { accountTemplateFormZodSchema, type IAccountTemplateFormValues } from "@/zod/accountTemplate.validation";
-import { ACCOUNT_TYPE_OPTIONS, WORKSPACE_TYPE_OPTIONS } from "./accountTemplateOptions";
+import { toAccountTemplateSubmitValues } from "./accountTemplateForm.defaults";
+import { ACCOUNT_TYPE_OPTIONS, buildSubtypeOptions, isReservedSubtype, WORKSPACE_TYPE_OPTIONS } from "./accountTemplateOptions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { localName } from "@/lib/i18n/message";
 
@@ -31,10 +32,16 @@ const AccountTemplateForm = ({ defaultValues, template, parent, onDone }: Accoun
   const { locale, translate } = useLocale();
   // A parent and its children must share one type.
   const isTypeLocked = Boolean(parent || template?.parentId || template?.children?.length);
+  // The account the app posts loans, credit sales and the like through keeps
+  // its kind: the API refuses re-typing it.
+  const isAppAccount = isReservedSubtype(template?.accountSubtype);
 
+  // The subtype picker's "no subtype" is saved as no subtype at all.
   const { run, isPending } = useActionMutation({
     action: (values: IAccountTemplateFormValues) =>
-      template ? updateAccountTemplateAction(template.id, values) : createAccountTemplateAction(values, parent?.id),
+      template
+        ? updateAccountTemplateAction(template.id, toAccountTemplateSubmitValues(values))
+        : createAccountTemplateAction(toAccountTemplateSubmitValues(values), parent?.id),
     successMessage: template ? "Account updated" : parent ? translate("Sub-account added under {name}", { name: localName(locale, parent) }) : "Account created",
     // Categories show the names of the accounts they link to.
     invalidateKeys: [queryKeys.accountTemplates.all, queryKeys.categories.all],
@@ -67,13 +74,24 @@ const AccountTemplateForm = ({ defaultValues, template, parent, onDone }: Accoun
               field={field}
               label="Account type"
               options={ACCOUNT_TYPE_OPTIONS}
-              disabled={isTypeLocked}
-              description={isTypeLocked ? "Shared with its parent / sub-accounts." : undefined}
+              disabled={isTypeLocked || isAppAccount}
+              description={isAppAccount ? "The app posts through this account, so its kind stays." : isTypeLocked ? "Shared with its parent / sub-accounts." : undefined}
             />
           )}
         </form.Field>
+        {/* A pick, not free text: a misspelt kind would make a new one. The
+            app's own accounts (receivable, payable...) are seeded once, so
+            they aren't offered elsewhere and can't be changed on theirs. */}
         <form.Field name="accountSubtype" validators={{ onChange: shape.accountSubtype }}>
-          {(field) => <AppField field={field} label="Subtype" placeholder="e.g. cash, bank, mfs" description="Optional grouping key." />}
+          {(field) => (
+            <AppSelectField
+              field={field}
+              label="Subtype"
+              options={buildSubtypeOptions(field.state.value)}
+              disabled={isAppAccount}
+              description={isAppAccount ? "The app posts through this account, so its kind stays." : "The kind of account, as the apps group it."}
+            />
+          )}
         </form.Field>
       </div>
       <form.Field name="appliesTo" validators={{ onChange: shape.appliesTo }}>

@@ -4,13 +4,32 @@ import type { ISubscriptionPlan } from "@/types/plan.types";
 import { ALL_PLANS } from "@/zod/announcement.validation";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
 
-// Each kind of banner: its icon and the colours it is drawn in, in the
-// list's chip and in the app.
-export const ANNOUNCEMENT_TYPE_META: Record<AnnouncementType, { label: string; icon: LucideIcon; chip: string; banner: string }> = {
-  INFO: { label: "Info", icon: Info, chip: "bg-info-soft text-info", banner: "border-info/20 bg-info-soft text-info" },
-  WARNING: { label: "Warning", icon: AlertTriangle, chip: "bg-warning-soft text-warning", banner: "border-warning/25 bg-warning-soft text-warning" },
-  PROMOTION: { label: "Promotion", icon: Megaphone, chip: "bg-mint-50 text-emerald", banner: "border-mint-200 bg-mint-50 text-emerald" },
-  MAINTENANCE: { label: "Maintenance", icon: Wrench, chip: "bg-surface-sunken text-ink-2", banner: "border-line bg-surface-sunken text-ink-2" },
+type AnnouncementTone = "info" | "warning" | "mint" | "expense";
+
+// Each kind of banner: its icon and its colour, the same pairing the app's
+// banner uses (Customer/Layout/AnnouncementBanner.tsx), so the list's
+// chip, the type picker and the preview read as the app draws it.
+export const ANNOUNCEMENT_TYPE_META: Record<AnnouncementType, { label: string; icon: LucideIcon; tone: AnnouncementTone }> = {
+  INFO: { label: "Info", icon: Info, tone: "info" },
+  WARNING: { label: "Warning", icon: AlertTriangle, tone: "warning" },
+  PROMOTION: { label: "Promotion", icon: Megaphone, tone: "mint" },
+  MAINTENANCE: { label: "Maintenance", icon: Wrench, tone: "expense" },
+};
+
+// The smartly Banner's name for each tone.
+export const BANNER_TONE: Record<AnnouncementTone, "info" | "warning" | "mint" | "danger"> = {
+  info: "info",
+  warning: "warning",
+  mint: "mint",
+  expense: "danger",
+};
+
+// The round icon tile on the type picker's cards.
+export const ICON_TILE: Record<AnnouncementTone, string> = {
+  info: "bg-info-soft text-info",
+  warning: "bg-warning-soft text-warning",
+  mint: "bg-mint-50 text-brand-ink",
+  expense: "bg-expense-soft text-expense",
 };
 
 export const buildAudienceOptions = (plans: Pick<ISubscriptionPlan, "id" | "name">[], t: Translate = inEnglish) => [

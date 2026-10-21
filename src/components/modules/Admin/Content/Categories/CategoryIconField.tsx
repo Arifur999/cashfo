@@ -5,15 +5,17 @@ import { Grid3x3 } from "lucide-react";
 import { useState } from "react";
 import FormFieldShell from "@/components/shared/form/FormFieldShell";
 import IconPreview from "@/components/shared/IconPreview";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Button from "@/components/smartly/Button";
+import Input from "@/components/smartly/form/Input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CATEGORY_ICON_NAMES } from "@/lib/categoryIcons";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 // The icon name as text (the apps may know icons the panel doesn't), with a
-// live preview and a picker for the icons the panel can show.
+// live preview and a picker for the icons the panel can show. The field is
+// the form's 44px frame; the picker is a grid of buttons, the chosen one
+// pressed.
 const CategoryIconField = ({ field, label }: { field: AnyFieldApi; label: string }) => {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const { translate } = useLocale();
@@ -23,35 +25,32 @@ const CategoryIconField = ({ field, label }: { field: AnyFieldApi; label: string
     <FormFieldShell field={field} label={label} description="Pick one, or type a name the app knows.">
       {(control, hasError) => (
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-foreground">
-              <IconPreview name={value} />
-            </span>
-            <Input
-              {...control}
-              name={field.name}
-              value={value}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              placeholder={translate("e.g. shopping-cart")}
-              autoComplete="off"
-              className={cn("pl-10", hasError && "border-destructive focus-visible:ring-destructive/20")}
-            />
-          </div>
+          <Input
+            {...control}
+            name={field.name}
+            size="md"
+            invalid={hasError}
+            leading={<IconPreview name={value} />}
+            value={value}
+            onBlur={field.handleBlur}
+            onChange={(event) => field.handleChange(event.target.value)}
+            placeholder={translate("e.g. shopping-cart")}
+            autoComplete="off"
+            frameClassName="min-w-0 flex-1"
+          />
           <Popover open={isPickerOpen} onOpenChange={setIsPickerOpen} modal>
             <PopoverTrigger asChild>
-              <Button type="button" variant="outline" size="icon" aria-label={translate("Choose an icon")}>
+              <Button variant="secondary" size="icon-lg" aria-label={translate("Choose an icon")}>
                 <Grid3x3 aria-hidden="true" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-80 p-2">
-              <div role="listbox" aria-label={translate("Icons")} className="grid max-h-64 grid-cols-6 gap-1 overflow-y-auto">
+              <div role="group" aria-label={translate("Icons")} className="grid max-h-64 grid-cols-6 gap-1 overflow-y-auto">
                 {CATEGORY_ICON_NAMES.map((name) => (
                   <button
                     key={name}
                     type="button"
-                    role="option"
-                    aria-selected={name === value}
+                    aria-pressed={name === value}
                     aria-label={name}
                     title={name}
                     onClick={() => {
@@ -60,8 +59,8 @@ const CategoryIconField = ({ field, label }: { field: AnyFieldApi; label: string
                       setIsPickerOpen(false);
                     }}
                     className={cn(
-                      "flex aspect-square items-center justify-center rounded-lg text-foreground hover:bg-muted",
-                      name === value && "bg-primary/15 ring-1 ring-primary",
+                      "flex aspect-square items-center justify-center rounded-md text-ink transition-colors hover:bg-surface-sunken",
+                      name === value && "bg-mint-50 ring-1 ring-emerald hover:bg-mint-50",
                     )}
                   >
                     <IconPreview name={name} className="size-5" />

@@ -7,7 +7,7 @@ import { categoriesQuery } from "@/queries/category.queries";
 import { getUserInfo } from "@/services/auth.services";
 import { adminPageTitle } from "@/lib/i18n/locale";
 
-export const generateMetadata = adminPageTitle("Categories");
+export const generateMetadata = adminPageTitle("Categories & accounts");
 
 // What a new workspace starts with: its categories on the left, its
 // account tree on the right (the accounts also feed the category form's
