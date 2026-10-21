@@ -58,12 +58,17 @@ export async function getIncomeAccountsAction(businessId: string): Promise<Accou
 }
 
 export async function getExpenseAccountsAction(businessId: string): Promise<Account[]> {
-  try {
+  const result = await listExpenseAccountsAction(businessId);
+  return result.data ?? [];
+}
+
+// The same list for a form that says "No expense account yet" when it is
+// empty: a failed request comes back as success: false, never as none.
+export async function listExpenseAccountsAction(businessId: string): Promise<ActionResult<Account[]>> {
+  return callApi(async () => {
     const res = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/expense-accounts`, { headers: await authHeaders() });
     return res.data;
-  } catch {
-    return [];
-  }
+  }, "Failed to load your expense accounts");
 }
 
 export interface AddIncomeInput {
