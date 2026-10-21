@@ -6,6 +6,7 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { countPhrase } from "@/components/modules/Admin/Payments/paymentsDisplay";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatPercent } from "@/lib/number";
 import { billingPeriod, limitText, money, planAccentClass, trialLine, trialsLine } from "@/lib/subscriptions";
@@ -64,7 +65,7 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
       <div className="flex flex-col gap-2 rounded-md bg-strip p-3">
         <span className="flex justify-between text-small">
           <b className="font-semibold text-ink">{figuresKnown ? countPhrase(translate, locale, people, "{count} person on it now", "{count} people on it now") : "—"}</b>
-          <span className="text-ink-muted">{figuresKnown ? formatPercent(share) : "—"}</span>
+          <span className="text-ink-muted">{figuresKnown ? toLocaleDigits(formatPercent(share), locale) : "—"}</span>
         </span>
         <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken">
           <span className={cn("block h-full rounded-full", planAccentClass(plan.name))} style={{ width: `${figuresKnown ? Math.round(share) : 0}%` }} />
@@ -119,7 +120,10 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
               {deletable &&
                 (blockedBy > 0 ? (
                   // Offered, but greyed with the reason, while people are on it.
-                  <DropdownMenuItem disabled className="flex-col items-start gap-0.5 data-disabled:opacity-100">
+                  // Inert yet still focusable (not `disabled`, which Radix drops
+                  // from arrow-key focus), so a keyboard or screen-reader user
+                  // reaches it and hears the reason as part of its name.
+                  <DropdownMenuItem aria-disabled="true" onSelect={(event) => event.preventDefault()} className="cursor-default flex-col items-start gap-0.5 text-ink-muted">
                     <span className="flex items-center gap-2.5 text-ink-muted">
                       <Trash2 aria-hidden="true" /> <T>Delete plan</T>
                     </span>

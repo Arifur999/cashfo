@@ -115,7 +115,7 @@ const TabsNav = ({ tabs, label = "Section" }: { tabs: TabDef[]; label?: string }
     // the row, which on Windows used to raise a vertical scrollbar even when
     // every tab fit. scroll-px-8 (the fade's width) stops a tab reached with
     // the Tab key clear of the fades.
-    <nav ref={ref} style={style} aria-label={translate(label)} className="flex scroll-px-8 gap-1overflow-x-auto overflow-y-hidden border-b border-line scrollbar-none [&::-webkit-scrollbar]:hidden">
+    <nav ref={ref} style={style} aria-label={translate(label)} className="flex scroll-px-8 gap-1 overflow-x-auto overflow-y-hidden border-b border-line scrollbar-none [&::-webkit-scrollbar]:hidden">
       {tabs.map((tab) => {
         const isActive = isTabActive(tab, tabs, pathname, current);
         return (
