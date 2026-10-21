@@ -161,4 +161,15 @@ export const sharedDictionary: Record<string, string> = {
   "See all matching transactions": "মিলে যাওয়া সব লেনদেন দেখুন",
   // The bell, when marking everything read fails.
   "Failed to mark the notifications as read": "নোটিফিকেশনগুলো পড়া হয়েছে বলে চিহ্নিত করা যায়নি",
+
+  // The menu's words, as the AppSidebar board's Bangla has them. Area files
+  // define some of them too (habit-tracker.ts, balance.ts, referrals.ts,
+  // todos.ts) and used to win; this file spreads last, so the menu, the
+  // breadcrumb, the tab titles and the pages read the same word.
+  Habits: "অভ্যাস",
+  Accounts: "হিসাব",
+  "Invite & earn": "আমন্ত্রণ করে আয়",
+  "To-do list": "করণীয় তালিকা",
+  // Loans › Payments; the admin panel keeps its own পেমেন্ট.
+  Payments: "পরিশোধ",
 };
