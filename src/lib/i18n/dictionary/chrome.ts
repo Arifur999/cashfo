@@ -111,7 +111,6 @@ export const chromeDictionary: Record<string, string> = {
   "Business workspace": "ব্যবসায়িক ওয়ার্কস্পেস",
   "Group workspace": "গ্রুপ ওয়ার্কস্পেস",
   "Manage workspaces": "ওয়ার্কস্পেস ব্যবস্থাপনা",
-  "Profile and settings": "প্রোফাইল ও সেটিংস",
   switch: "বদলান",
   Income: "আয়",
   Expense: "খরচ",
@@ -131,10 +130,6 @@ export const chromeDictionary: Record<string, string> = {
   // The keyboard shortcuts under Settings › Help & support
   "Open the Add menu": "যোগ করার মেনু খুলুন",
   "Search and go": "খুঁজুন ও সেখানে যান",
-
-  // UserMenu
-  Profile: "প্রোফাইল",
-  "Log out": "লগ আউট",
 
   // The bell and its feed
   Notifications: "নোটিফিকেশন",
