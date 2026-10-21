@@ -137,11 +137,16 @@ interface SidebarNavProps {
 }
 
 // Uses the shell's providers for what the menu depends on: the workspace
-// (Books), the feature flags (Loans) and today's open tasks (the badge).
-export function useNavSections() {
+// (Books) and the member's role in it (Journal entry), the feature flags
+// (Loans) and today's open tasks (the badge). allRoles keeps the items a
+// staff member can't use, for working out which page is open: a staff
+// member who opens Journal entry by its address is on Journal entry, not
+// on the nearest row the menu does show.
+export function useNavSections({ allRoles = false }: { allRoles?: boolean } = {}) {
   const { activeBusiness } = useAuth();
   const loansOn = useFeature("loan_management");
-  return visibleNavSections({ workspaceType: activeBusiness?.type, isFeatureOn: (key) => (key === "loan_management" ? loansOn : true) });
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
+  return visibleNavSections({ workspaceType: activeBusiness?.type, isFeatureOn: (key) => (key === "loan_management" ? loansOn : true), canManage: allRoles || canManage });
 }
 
 // The menu itself, shared by the desktop sidebar and the phone drawer. A
@@ -153,7 +158,8 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
   const { t } = useLocale();
   const { openCount } = useTodayTasks();
   const sections = useNavSections();
-  const location = findNavLocation(pathname, searchParams, sections);
+  // Found among every item, so a page hidden from this member lights no row.
+  const location = findNavLocation(pathname, searchParams, useNavSections({ allRoles: true }));
   const groups = useOpenGroups();
   const baseId = useId();
 
@@ -273,8 +279,7 @@ export function SidebarFoot({ compact = true }: { compact?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useLocale();
-  const sections = useNavSections();
-  const location = findNavLocation(pathname, searchParams, sections);
+  const location = findNavLocation(pathname, searchParams, useNavSections({ allRoles: true }));
 
   return (
     <div className="flex flex-col gap-0.5">

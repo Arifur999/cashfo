@@ -166,7 +166,7 @@ export function NotificationsBell() {
                   <b className="text-body font-semibold text-ink">{view.title}</b>
                   <span className="text-small leading-4.5 text-ink-2">{view.body}</span>
                   <span className="text-caption text-ink-muted">
-                    {notificationTime(item.createdAt, t)}
+                    {notificationTime(item.createdAt, t, locale)}
                     {where}
                   </span>
                 </span>

@@ -27,22 +27,26 @@ export function TodayTasksProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
+  // An action that never answered (offline, the server out of reach)
+  // failed too: the list on screen stays, and Try again can ask again.
   const reload = useCallback(async () => {
-    const result = await getTodayTodoListAction();
-    if (result.success) setList(result.data ?? null);
-    setFailed(!result.success);
+    const result = await getTodayTodoListAction().catch(() => null);
+    if (result?.success) setList(result.data ?? null);
+    setFailed(!result?.success);
     setLoaded(true);
   }, []);
 
   // The first load, once, when the shell mounts.
   useEffect(() => {
     let cancelled = false;
-    getTodayTodoListAction().then((result) => {
-      if (cancelled) return;
-      if (result.success) setList(result.data ?? null);
-      setFailed(!result.success);
-      setLoaded(true);
-    });
+    void getTodayTodoListAction()
+      .catch(() => null)
+      .then((result) => {
+        if (cancelled) return;
+        if (result?.success) setList(result.data ?? null);
+        setFailed(!result?.success);
+        setLoaded(true);
+      });
     return () => {
       cancelled = true;
     };

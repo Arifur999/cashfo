@@ -30,6 +30,13 @@ describe("ADD_ACTIONS", () => {
     expect(ADD_ACTIONS.find((action) => action.key === "task")?.run).toEqual({ kind: "tasks" });
   });
 
+  // The loan page and the vault open their form on ?new=1 (the vault once
+  // it is unlocked), so a pick lands in it rather than on the list.
+  it("opens the loan entry and the vault's form straight away", () => {
+    expect(ADD_ACTIONS.find((action) => action.key === "loan")?.run).toEqual({ kind: "page", href: "/loan-management/transactions?new=1" });
+    expect(ADD_ACTIONS.find((action) => action.key === "vault")?.run).toEqual({ kind: "page", href: "/password-manager?new=1" });
+  });
+
   // A label without its Bangla would leave English in a Bangla menu (the
   // task's hint once had a straight apostrophe the dictionary didn't know).
   it("has Bangla for every label and hint", () => {

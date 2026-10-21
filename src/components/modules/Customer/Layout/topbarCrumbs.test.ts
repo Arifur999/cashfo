@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { findNavLocation, visibleNavSections } from "@/lib/customer/nav";
-import { listOf, listUrlKey, listVisitUrl, restoredListUrl, savedListUrl, savedListValue, topbarTrail } from "./topbarCrumbs";
+import { listOf, listUrlKey, listVisitUrl, recordListHref, restoredListUrl, savedListUrl, savedListValue, topbarTrail } from "./topbarCrumbs";
 
 const sections = visibleNavSections({ workspaceType: "BUSINESS", isFeatureOn: () => true });
 const at = (url: string) => {
@@ -39,11 +39,37 @@ describe("topbarTrail", () => {
   });
 
   it("leaves the list as text for a record shown on the list's own page", () => {
-    // The vault opens its security checkup on /password-manager itself, so
-    // the bar sees the list's own address and passes linkList: false.
+    // A record shown on /password-manager itself, with nothing in the
+    // address to drop: the bar passes linkList: false.
     const vault = at("/password-manager");
     expect(listVisitUrl(vault.location, vault.pathname, vault.query)).toBe("/password-manager");
     expect(topbarTrail(vault.location!, true, undefined, { linkList: false })).toEqual([{ label: "Vault" }, { label: "Password vault" }]);
+  });
+});
+
+describe("recordListHref", () => {
+  it("leads a record page back to its list as it was left, else the plain list", () => {
+    const record = at("/transactions/abc");
+    expect(recordListHref(record.location!, listVisitUrl(record.location, record.pathname, record.query), "/transactions?page=3")).toBe("/transactions?page=3");
+    expect(recordListHref(record.location!, null)).toBe("/transactions");
+    const sheet = at("/habit-tracker/habits/namaz/2026-10");
+    expect(recordListHref(sheet.location!, null)).toBe("/habit-tracker/habits?category=Namaz");
+  });
+
+  // The vault's security checkup is ?checkup=1 on the vault's own page: the
+  // crumb leads to the plain vault, which closes it, never to the saved
+  // address (which is this one).
+  it("closes a record shown on the list's own page", () => {
+    const checkup = at("/password-manager?checkup=1");
+    const visitUrl = listVisitUrl(checkup.location, checkup.pathname, checkup.query);
+    expect(visitUrl).toBe("/password-manager?checkup=1");
+    expect(recordListHref(checkup.location!, visitUrl, "/password-manager?checkup=1")).toBe("/password-manager");
+    expect(topbarTrail(checkup.location!, true, "/password-manager")).toEqual([{ label: "Vault" }, { label: "Password vault", href: "/password-manager" }]);
+  });
+
+  it("has nowhere to go at the plain list's own address", () => {
+    const vault = at("/password-manager");
+    expect(recordListHref(vault.location!, listVisitUrl(vault.location, vault.pathname, vault.query))).toBeNull();
   });
 });
 

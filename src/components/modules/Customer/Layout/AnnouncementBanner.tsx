@@ -1,10 +1,11 @@
 "use client";
 
-import { Info, Megaphone, TriangleAlert, Wrench, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useCallback, useSyncExternalStore } from "react";
 import Banner from "@/components/smartly/Banner";
-import type { AnnouncementType, CustomerAnnouncement } from "@/lib/customer/platform";
+import type { CustomerAnnouncement } from "@/lib/customer/platform";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { ANNOUNCEMENT_BANNER_STYLE } from "./announcementStyle";
 
 // Which announcements this browser has closed -- a per-viewer convenience,
 // so it lives in localStorage; a new announcement (new id) shows again.
@@ -26,13 +27,6 @@ const subscribe = (onChange: () => void) => {
     window.removeEventListener("storage", onChange);
     window.removeEventListener(CHANGE_EVENT, onChange);
   };
-};
-
-const STYLE: Record<AnnouncementType, { tone: "info" | "warning" | "mint" | "danger"; Icon: typeof Info }> = {
-  INFO: { tone: "info", Icon: Info },
-  WARNING: { tone: "warning", Icon: TriangleAlert },
-  PROMOTION: { tone: "mint", Icon: Megaphone },
-  MAINTENANCE: { tone: "danger", Icon: Wrench },
 };
 
 // The admin's announcements (Admin > Content > Announcements) that are live
@@ -60,7 +54,8 @@ export function AnnouncementBanner({ announcements }: { announcements: CustomerA
   return (
     <div className="flex flex-col gap-2 px-4 pt-4 md:px-8">
       {visible.map((a) => {
-        const { tone, Icon } = STYLE[a.type] ?? STYLE.INFO;
+        // An unknown kind (a newer API) reads as Info.
+        const { tone, Icon } = ANNOUNCEMENT_BANNER_STYLE[a.type] ?? ANNOUNCEMENT_BANNER_STYLE.INFO;
         const title = locale === "bn" && a.titleBn ? a.titleBn : a.title;
         const body = locale === "bn" && a.bodyBn ? a.bodyBn : a.body;
         return (

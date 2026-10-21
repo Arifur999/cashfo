@@ -7,6 +7,9 @@ export const chromeDictionary: Record<string, string> = {
   "Money Tracker": "মানি ট্র্যাকার",
   // OfflineBanner.tsx
   "You are offline. Showing what was loaded at {time}; changes are paused.": "আপনি অফলাইনে আছেন। {time}-এ লোড হওয়া তথ্য দেখানো হচ্ছে; পরিবর্তন আপাতত বন্ধ।",
+  // ShellNotice.tsx: after a password reset (the admin's own change says
+  // it the same way, admin-dashboard.ts)
+  "Password changed. Your other devices were signed out.": "পাসওয়ার্ড বদলানো হয়েছে। আপনার অন্য ডিভাইসগুলো থেকে সাইন আউট করা হয়েছে।",
   // Sidebar top-level items
   Dashboard: "ড্যাশবোর্ড",
   Balance: "ব্যালেন্স",
@@ -124,7 +127,7 @@ export const chromeDictionary: Record<string, string> = {
   "Put money towards a goal": "একটি লক্ষ্যে টাকা রাখুন",
   "Task for today": "আজকের কাজ",
   "Goes to Today’s tasks": "আজকের কাজের তালিকায় যাবে",
-  "Login to the vault": "ভল্টে লগইন যোগ করুন",
+  "Save a login": "লগইন সংরক্ষণ করুন",
   "Opens the vault first": "প্রথমে ভল্ট খুলবে",
   "Press N anywhere to open this menu": "যেকোনো জায়গায় N চাপলে এই মেনু খুলবে",
   "Add transaction": "লেনদেন যোগ করুন",

@@ -42,6 +42,16 @@ describe("visibleNavSections", () => {
     const money = sections.find((s) => s.label === "Money");
     expect(money?.items.map((i) => i.label)).not.toContain("Loans");
   });
+
+  // The API refuses a staff member's journal entries; the rest of Books
+  // they may read.
+  it("hides Journal entry from a staff member", () => {
+    const books = (ctx: NavContext) => visibleNavSections(ctx).find((s) => s.label === "Books")?.items.map((i) => i.label);
+    expect(books(business)).toContain("Journal entry");
+    expect(books({ ...business, canManage: true })).toContain("Journal entry");
+    expect(books({ ...business, canManage: false })).toEqual(["Customers & suppliers", "Receivables & payables", "Accounts"]);
+    expect(locate("/transactions/advanced", { ...business, canManage: false })!.item.label).toBe("Transactions");
+  });
 });
 
 describe("findNavLocation", () => {
@@ -91,6 +101,12 @@ describe("findNavLocation", () => {
 
   it("returns null for a page outside the menu", () => {
     expect(locate("/unknown-page")).toBeNull();
+  });
+
+  // Each retired page forwards to the one that took its place.
+  it("files the retired planning pages where they now forward", () => {
+    expect(locate("/income-planning")!.item.label).toBe("Income sources");
+    expect(locate("/budget-planning")!.item.label).toBe("Budget");
   });
 });
 

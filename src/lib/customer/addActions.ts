@@ -17,7 +17,9 @@ export type AddActionTone = "income" | "expense" | "vault" | "loans" | "money" |
 export type AddActionIcon = "money-in" | "money-out" | "between" | "loan" | "piggy-bank" | "checklist" | "key";
 
 // What picking one does: open the transaction drawer on a tab, go to the
-// page where it is added, or open Today's tasks.
+// page where it is added, or open Today's tasks. A page's ?new=1 opens its
+// own form as it lands (and leaves the address), so the pick goes straight
+// to it.
 export type AddActionRun = { kind: "drawer"; entry: AddEntryKind } | { kind: "page"; href: string } | { kind: "tasks" };
 
 export interface AddAction {
@@ -53,11 +55,11 @@ export const ADD_ACTIONS: AddAction[] = [
     block: 1,
     feature: "loan_management",
     workspaceWrite: true,
-    run: { kind: "page", href: "/loan-management/transactions" },
+    run: { kind: "page", href: "/loan-management/transactions?new=1" },
   },
   { key: "savings", letter: "S", label: "Add to savings", hint: "Put money towards a goal", icon: "piggy-bank", tone: "money", block: 1, workspaceWrite: true, run: { kind: "page", href: "/savings-goals/dashboard" } },
   { key: "task", letter: "D", label: "Task for today", hint: "Goes to Today’s tasks", icon: "checklist", tone: "habits", block: 2, run: { kind: "tasks" } },
-  { key: "vault", letter: "P", label: "Login to the vault", hint: "Opens the vault first", icon: "key", tone: "vault", block: 2, run: { kind: "page", href: "/password-manager" } },
+  { key: "vault", letter: "P", label: "Save a login", hint: "Opens the vault first", icon: "key", tone: "vault", block: 2, run: { kind: "page", href: "/password-manager?new=1" } },
 ];
 
 // Where "Task for today" goes when no tasks panel is on screen to open.
