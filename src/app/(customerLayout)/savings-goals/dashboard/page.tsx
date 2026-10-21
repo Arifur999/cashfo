@@ -4,7 +4,7 @@ import { getSavingsWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { getSavingsGoals, getSavingsOverview } from "@/lib/customer/savingsGoals";
+import { getSavingsAccountOverview, getSavingsGoals, getSavingsOverview } from "@/lib/customer/savingsGoals";
 import { getAppToday } from "@/lib/date";
 
 export const generateMetadata = () => customerPageMetadata("/savings-goals/dashboard");
@@ -21,6 +21,14 @@ export default async function SavingsGoalsDashboardPage() {
 
   // Money can only be added once there is a savings wallet to keep it in.
   const [goals, overview, savingsWallets] = await Promise.all([getSavingsGoals(activeBusinessId), getSavingsOverview(activeBusinessId), getSavingsWallets(activeBusinessId)]);
+  const hasSavingsWallet = savingsWallets.some((wallet) => wallet.status === "ACTIVE");
+
+  // With none active, the archived ones (only Savings summary still lists
+  // them), so the page can offer them back rather than read as a new account.
+  const archivedWallets =
+    hasSavingsWallet || goals.length === 0
+      ? []
+      : (await getSavingsAccountOverview(activeBusinessId)).accounts.filter((row) => row.status === "ARCHIVED").map((row) => ({ id: row.id, name: row.name }));
 
   return (
     <SavingsGoalsDashboardPageClient
@@ -29,7 +37,8 @@ export default async function SavingsGoalsDashboardPage() {
       overview={overview}
       currency={activeBusiness?.currency ?? "BDT"}
       canManage={canManage}
-      hasSavingsWallet={savingsWallets.some((wallet) => wallet.status === "ACTIVE")}
+      hasSavingsWallet={hasSavingsWallet}
+      archivedWallets={archivedWallets}
       today={getAppToday()}
     />
   );

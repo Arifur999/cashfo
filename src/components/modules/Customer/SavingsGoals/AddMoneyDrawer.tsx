@@ -1,12 +1,14 @@
 "use client";
 
-import { X } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
+import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -14,14 +16,12 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Account, SavingsGoal } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
-import { addContributionAction, getActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
-import { goalBadge, goalColor, quickAmounts } from "@/lib/customer/savingsDisplay";
+import { addContributionAction, listActiveSavingsWalletsAction } from "@/lib/customer/savingsGoalActions";
+import { goalBadge, goalColor, quickAmounts, savingsError } from "@/lib/customer/savingsDisplay";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GoalRing } from "./GoalRing";
-import DayInput from "@/components/smartly/form/DayInput";
-import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 
 interface AddMoneyDrawerProps {
   open: boolean;
@@ -31,6 +31,15 @@ interface AddMoneyDrawerProps {
   // The goal's place in the list, which picks its ring colour.
   goalIndex: number;
   currency: string;
+}
+
+// What the two wallet lists came back as. A failed one is told apart from
+// an empty one, so an outage never reads "No savings wallet yet".
+interface WalletLoad {
+  money: Account[];
+  moneyError: string | null;
+  savings: Account[];
+  savingsError: string | null;
 }
 
 // Add money to a goal: how much (with the monthly target and what is left
@@ -45,10 +54,8 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
   const [intoId, setIntoId] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [note, setNote] = useState("");
-  const [wallets, setWallets] = useState<Account[]>([]);
-  const [walletsError, setWalletsError] = useState<string | null>(null);
-  const [savingsWallets, setSavingsWallets] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [load, setLoad] = useState<WalletLoad | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [isPending, startTransition] = useTransition();
 
   const [prevOpen, setPrevOpen] = useState(false);
@@ -58,30 +65,51 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
       setAmount("");
       setNote("");
       setDate(getAppToday());
-      setLoading(true);
+      setLoad(null);
     }
   }
 
   useEffect(() => {
     if (!open) return;
-    Promise.all([listMoneyAccountsAction(businessId), getActiveSavingsWalletsAction(businessId)]).then(([money, savings]) => {
-      const list = money.data ?? [];
-      setWallets(list);
-      setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
-      setFromId((current) => current || list[0]?.id || "");
-      setSavingsWallets(savings);
-      setIntoId((current) => current || savings[0]?.id || "");
-      setLoading(false);
-    });
-  }, [open, businessId]);
+    // A reply that lands after the drawer closed (or a retry started) is
+    // dropped; one that never comes (offline) ends as a failure, not an
+    // endless spinner.
+    let cancelled = false;
+    Promise.all([listMoneyAccountsAction(businessId), listActiveSavingsWalletsAction(businessId)])
+      .then(([money, savings]) => {
+        if (cancelled) return;
+        const moneyList = money.data ?? [];
+        const savingsList = savings.data ?? [];
+        setLoad({
+          money: moneyList,
+          moneyError: money.success ? null : (money.message ?? "Couldn't load your wallets."),
+          savings: savingsList,
+          savingsError: savings.success ? null : (savings.message ?? "Couldn't load your savings wallets."),
+        });
+        // The last choice stays while its wallet is still on offer.
+        setFromId((current) => (moneyList.some((wallet) => wallet.id === current) ? current : (moneyList[0]?.id ?? "")));
+        setIntoId((current) => (savingsList.some((wallet) => wallet.id === current) ? current : (savingsList[0]?.id ?? "")));
+      })
+      .catch(() => {
+        if (!cancelled) setLoad({ money: [], moneyError: "Couldn't load your wallets.", savings: [], savingsError: "Couldn't load your savings wallets." });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, businessId, attempt]);
 
+  const loading = load === null;
+  const wallets = load?.money ?? [];
+  const savingsWallets = load?.savings ?? [];
+  const loadFailed = !!load && (load.moneyError !== null || load.savingsError !== null);
   const value = Number(amount) || 0;
   const from = wallets.find((w) => w.id === fromId);
   const into = savingsWallets.find((w) => w.id === intoId);
-  const valid = !!goal && value > 0 && fromId.length > 0 && intoId.length > 0;
+  const valid = !!goal && value > 0 && !!from && !!into;
   const saved = goal ? Number(goal.currentAmount) : 0;
   const target = goal ? Number(goal.targetAmount) : 0;
   const percentAfter = target > 0 ? Math.min(100, Math.round(((saved + value) / target) * 100)) : 0;
+  const fromAfter = from ? Number(from.currentBalance) - value : 0;
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -93,7 +121,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to add money"));
+        toast.error(savingsError(result.message, "Failed to add money", t, currency));
       }
     });
   }
@@ -113,21 +141,19 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
       >
         <SheetHeader className={cn("flex-row items-center gap-4 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
           {goal && (
-            <GoalRing percent={goal.progressPercent} color={goalColor(goalIndex, goal.status)} size={52} label={`${goal.progressPercent}% ${t("saved")}`}>
+            <GoalRing percent={goal.progressPercent} color={goalColor(goalIndex, goal.status)} size={52} label={t("{percent}% saved", { percent: goal.progressPercent })}>
               <span className="text-caption font-bold">{goal.progressPercent}%</span>
             </GoalRing>
           )}
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <SheetTitle className="truncate text-h3 text-ink">
-              {t("Add money to")} {goal?.name}
-            </SheetTitle>
+            <SheetTitle className="truncate text-h3 text-ink">{goal ? t("Add money to {name}", { name: goal.name }) : t("Add money")}</SheetTitle>
             {goal && (
               <span className="text-small text-ink-muted tabular-nums">
-                {formatCurrency(goal.currentAmount, currency)} {t("of")} {formatCurrency(goal.targetAmount, currency)} · {t(goalBadge(goal).label)}
+                {t("{saved} of {target}", { saved: formatCurrency(goal.currentAmount, currency), target: formatCurrency(goal.targetAmount, currency) })} · {t(goalBadge(goal).label)}
               </span>
             )}
           </span>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
+          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken pointer-coarse:size-11">
             <X className="size-4.5" aria-hidden="true" />
           </button>
         </SheetHeader>
@@ -139,7 +165,15 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
               {goal && (
                 <div className="flex flex-wrap gap-2">
                   {quickAmounts(goal).map((pick) => (
-                    <button key={`${pick.kind}-${pick.amount}`} type="button" onClick={() => setAmount(String(pick.amount))} className={cn("h-7.5 rounded-full border px-3 text-caption transition-colors", pick.kind === "monthly" ? "border-mint-200 bg-mint-50 font-semibold text-emerald hover:bg-mint-200/60" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
+                    <button
+                      key={`${pick.kind}-${pick.amount}`}
+                      type="button"
+                      onClick={() => setAmount(String(pick.amount))}
+                      className={cn(
+                        "h-7.5 rounded-full border px-3 text-caption transition-colors pointer-coarse:h-11",
+                        pick.kind === "monthly" ? "border-mint-200 bg-mint-50 font-semibold text-brand-ink hover:bg-mint-200/60" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong",
+                      )}
+                    >
                       {pick.kind === "monthly" && `${t("Monthly target")} · `}
                       {pick.kind === "rest" && `${t("All that's left")} · `}
                       {formatCurrency(pick.amount, currency)}
@@ -149,8 +183,24 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
               )}
             </Field>
 
-            <WalletPicker label={t("Take it from")} balanceLabel="Available@@balance" tone="sand" wallets={wallets} value={fromId} onChange={setFromId} after={null} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-            <WalletPicker label={t("Keep it in")} variant="savings" wallets={savingsWallets} value={intoId} onChange={setIntoId} after={null} currency={currency} loading={loading} error={null} onClose={onClose} />
+            {/* Wallets that can't cover the amount are greyed out. */}
+            <WalletPicker label={t("Take it from")} balanceLabel="Available@@balance" tone="sand" wallets={wallets} value={fromId} onChange={setFromId} after={null} minBalance={value} currency={currency} loading={loading} error={load?.moneyError ?? null} onClose={onClose} />
+            <WalletPicker label={t("Keep it in")} variant="savings" wallets={savingsWallets} value={intoId} onChange={setIntoId} after={null} currency={currency} loading={loading} error={load?.savingsError ?? null} onClose={onClose} />
+            {loadFailed && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setLoad(null);
+                  setAttempt((count) => count + 1);
+                }}
+                className="self-start pointer-coarse:h-11"
+              >
+                <RefreshCw aria-hidden="true" />
+                {t("Try again")}
+              </Button>
+            )}
 
             <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
               <Field htmlFor="add-date" label={label(t("Date"))}>
@@ -178,7 +228,11 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
                     <span className="truncate text-ink-2">{from.name}</span>
                     <span>
                       <span className="text-ink-muted">{formatCurrency(from.currentBalance, currency)} → </span>
-                      <span className="font-semibold text-ink">{formatCurrency(Number(from.currentBalance) - value, currency)}</span>
+                      {/* Below zero: the wallet doesn't hold this much. */}
+                      <span className={cn("font-semibold", fromAfter < 0 ? "text-expense" : "text-ink")}>
+                        {formatCurrency(fromAfter, currency)}
+                        {fromAfter < 0 && ` · ${t("not enough")}`}
+                      </span>
                     </span>
                   </div>
                 )}
@@ -201,7 +255,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t("Add")} {value > 0 ? formatCurrency(value, currency) : t("money")}
+              {value > 0 ? t("Add {amount}", { amount: formatCurrency(value, currency) }) : t("Add money")}
             </Button>
           </div>
         </form>
