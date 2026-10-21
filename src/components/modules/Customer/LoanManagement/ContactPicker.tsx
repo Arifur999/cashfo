@@ -7,7 +7,7 @@ import Input from "@/components/smartly/form/Input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Contact } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import { DIRECTION_META, LOAN_KIND_LABELS, loanDirection } from "@/lib/customer/loanDisplay";
+import { contactMatches, DIRECTION_META, LOAN_KIND_LABELS, loanDirection } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
@@ -22,18 +22,31 @@ interface ContactPickerProps {
   size?: "md" | "xl";
   id?: string;
   disabled?: boolean;
+  // The list's name for assistive tech: the field's own label.
+  label?: string;
 }
 
 // A bank or person, found by typing: their avatar, name and kind, and where
-// the balance stands.
-export function ContactPicker({ contacts, value, onChange, currency, size = "md", id, disabled = false }: ContactPickerProps) {
+// the balance stands. The search field drives the list: the arrow keys move
+// through it and Enter picks, as a combobox does. Archived contacts come
+// last, still there for their statement.
+export function ContactPicker({ contacts, value, onChange, currency, size = "md", id, disabled = false, label }: ContactPickerProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const labelId = useId();
+  const [active, setActive] = useState(0);
+  const listId = useId();
   const selected = contacts.find((contact) => contact.id === value);
-  const q = query.trim().toLowerCase();
-  const hits = q ? contacts.filter((contact) => contact.name.toLowerCase().includes(q) || (contact.phone ?? "").includes(q)) : contacts;
+  const ordered = [...contacts].sort((a, b) => Number(a.status === "ARCHIVED") - Number(b.status === "ARCHIVED"));
+  const hits = ordered.filter((contact) => contactMatches(contact.name, contact.phone, query));
+  const activeIndex = Math.min(active, hits.length - 1);
+  const optionId = (contactId: string) => `${listId}-${contactId}`;
+
+  function openChange(next: boolean) {
+    setOpen(next);
+    if (next) setActive(Math.max(0, ordered.findIndex((contact) => contact.id === value)));
+    else setQuery("");
+  }
 
   function pick(contactId: string) {
     onChange(contactId);
@@ -41,23 +54,46 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
     setQuery("");
   }
 
+  function moveTo(index: number) {
+    const next = Math.max(0, Math.min(index, hits.length - 1));
+    setActive(next);
+    const hit = hits[next];
+    if (hit) document.getElementById(optionId(hit.id))?.scrollIntoView({ block: "nearest" });
+  }
+
+  function onSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveTo(activeIndex + 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveTo(activeIndex - 1);
+    } else if (event.key === "Enter") {
+      // Never the form's submit: Enter here picks.
+      event.preventDefault();
+      const hit = hits[activeIndex];
+      if (hit) pick(hit.id);
+    }
+  }
+
   const balanceLine = (contact: Contact) => {
     const direction = loanDirection(contact.currentBalance);
     const meta = DIRECTION_META[direction];
     return direction === "SETTLED" ? t(meta.label) : `${t(meta.label)} ${formatCurrency(Math.abs(Number(contact.currentBalance)), currency)}`;
   };
+  const kindOf = (contact: Contact) => (contact.status === "ARCHIVED" ? `${t(LOAN_KIND_LABELS[contact.type])} · ${t("Archived")}` : t(LOAN_KIND_LABELS[contact.type]));
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={openChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
           id={id}
-          aria-haspopup="listbox"
+          aria-haspopup="dialog"
           aria-expanded={open}
           disabled={disabled || contacts.length === 0}
           className={cn(
-            "flex w-full items-center gap-3 rounded-md border border-line-strong bg-surface text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]",
+            "flex w-full min-w-0 items-center gap-3 rounded-md border border-line-strong bg-surface text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]",
             size === "xl" ? "h-13 px-4" : "h-11 px-3",
           )}
         >
@@ -66,7 +102,7 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
               <PersonAvatar name={selected.name} src={selected.photoUrl} kind={selected.type} size={size === "xl" ? 30 : 28} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-body font-semibold text-ink">
-                  {selected.name} <span className="font-medium text-ink-muted">· {t(LOAN_KIND_LABELS[selected.type])}</span>
+                  {selected.name} <span className="font-medium text-ink-muted">· {kindOf(selected)}</span>
                 </span>
                 {size === "xl" && <span className="truncate text-caption font-normal text-ink-muted tabular-nums">{balanceLine(selected)}</span>}
               </span>
@@ -79,24 +115,52 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
           ) : (
             <>
               <Search className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-              <span className="min-w-0 flex-1 truncate text-body text-ink-muted">{contacts.length === 0 ? t("No banks or people yet") : t("Search by name or phone")}</span>
+              <span className="min-w-0 flex-1 truncate text-body text-ink-muted">{contacts.length === 0 ? t("No banks or people yet") : t("Search name or phone…")}</span>
             </>
           )}
           <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" sideOffset={6} className="w-(--radix-popover-trigger-width) gap-0 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-        <Input size="sm" type="search" value={query} onChange={(event) => setQuery(event.target.value)} autoFocus leading={<Search />} placeholder={t("Type to search")} aria-label={t("Search contacts")} frameClassName="mb-1" />
-        <ul role="listbox" aria-labelledby={labelId} className="flex max-h-80 flex-col overflow-y-auto">
-          {hits.map((contact) => {
+        <Input
+          size="sm"
+          type="search"
+          role="combobox"
+          aria-expanded="true"
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={hits[activeIndex] ? optionId(hits[activeIndex].id) : undefined}
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setActive(0);
+          }}
+          onKeyDown={onSearchKeyDown}
+          autoFocus
+          leading={<Search />}
+          placeholder={t("Search name or phone…")}
+          aria-label={t("Search by name or phone")}
+          frameClassName="mb-1"
+        />
+        <ul id={listId} role="listbox" aria-label={label ?? t("Banks and people")} className="flex max-h-80 flex-col overflow-y-auto">
+          {hits.map((contact, index) => {
             const on = contact.id === value;
             return (
-              <li key={contact.id} role="option" aria-selected={on}>
-                <button type="button" onClick={() => pick(contact.id)} className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-hover", on && "bg-mint-50")}>
+              <li key={contact.id} role="none">
+                <button
+                  type="button"
+                  id={optionId(contact.id)}
+                  role="option"
+                  aria-selected={on}
+                  tabIndex={-1}
+                  onClick={() => pick(contact.id)}
+                  onMouseMove={() => index !== activeIndex && setActive(index)}
+                  className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-left", on ? "bg-mint-50" : index === activeIndex ? "bg-hover" : "hover:bg-hover", index === activeIndex && "outline-2 -outline-offset-2 outline-focus-ring")}
+                >
                   <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={30} />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-body font-semibold text-ink">
-                      {contact.name} <span className="font-medium text-ink-muted">· {t(LOAN_KIND_LABELS[contact.type])}</span>
+                      {contact.name} <span className="font-medium text-ink-muted">· {kindOf(contact)}</span>
                     </span>
                     <span className={cn("truncate text-caption font-normal tabular-nums", DIRECTION_META[loanDirection(contact.currentBalance)].text)}>{balanceLine(contact)}</span>
                   </span>
@@ -104,7 +168,11 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
               </li>
             );
           })}
-          {hits.length === 0 && <li className="px-3 py-4 text-center text-small text-ink-muted">{t("No one matches")}</li>}
+          {hits.length === 0 && (
+            <li role="none" className="px-3 py-4 text-center text-small text-ink-muted">
+              {t("No one matches")}
+            </li>
+          )}
         </ul>
       </PopoverContent>
     </Popover>

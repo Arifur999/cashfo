@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowDownLeft, ArrowUpRight, HandCoins, Plus, Search, UserPlus } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
@@ -10,12 +9,14 @@ import Chip from "@/components/smartly/Chip";
 import EmptyState from "@/components/smartly/EmptyState";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
+import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Contact, LoanBalanceDirection, LoanDashboard, LoanDashboardRow } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import { DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind, whoPhrase } from "@/lib/customer/loanDisplay";
+import { contactMatches, DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind, whoPhrase } from "@/lib/customer/loanDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
@@ -25,26 +26,29 @@ import { LoanEntryDrawer } from "./LoanEntryDrawer";
 interface LoanDashboardPageClientProps {
   businessId: string;
   dashboard: LoanDashboard;
-  // The loan contacts, for each row's kind and photo.
+  // Every loan contact: each row's kind and photo, and which rows are loans.
   contacts: Contact[];
   currency: string;
   canManage: boolean;
+  canTrade: boolean;
 }
 
 type Tab = "ALL" | LoanBalanceDirection;
 type Sort = "biggest" | "smallest" | "name";
 
-const GRID = "grid-cols-[minmax(0,1fr)_120px_130px_130px_120px_170px]";
+// From xl the board's columns, a little narrower so a name keeps room
+// beside the sidebar at 1280; below xl each row is the phone's two lines.
+const COLUMNS = "xl:grid-cols-[minmax(0,1fr)_104px_116px_116px_104px_160px]";
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
 const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-muted)" };
 
 // A dash for nothing, else the figure.
-const figure = (value: string, currency: string, className?: string) => (Number(value) === 0 ? <span className={cn("text-right text-ink-muted", className)}>—</span> : <span className={cn("text-right text-ink tabular-nums", className)}>{formatCurrency(Math.abs(Number(value)), currency)}</span>);
+const figure = (value: string, currency: string, className?: string) => (Number(value) === 0 ? <span className={cn("text-ink-muted", className)}>—</span> : <span className={cn("text-ink tabular-nums", className)}>{formatCurrency(Math.abs(Number(value)), currency)}</span>);
 
 // Loans: what you are owed and what you owe, then everyone with a balance,
 // filtered by direction. Rows open the statement.
-export function LoanDashboardPageClient({ businessId, dashboard, contacts, currency, canManage }: LoanDashboardPageClientProps) {
-  const { t } = useLocale();
+export function LoanDashboardPageClient({ businessId, dashboard, contacts, currency, canManage, canTrade }: LoanDashboardPageClientProps) {
+  const { t, locale } = useLocale();
   const [tab, setTab] = useState<Tab>("ALL");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("biggest");
@@ -52,18 +56,49 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   const [entry, setEntry] = useState<{ kind?: LoanEntryKind } | null>(null);
 
   const contactsById = new Map(contacts.map((contact) => [contact.id, contact]));
+  // Loan contacts only, whatever the API sends: a trade customer or
+  // supplier belongs to Books, and its statement here would be empty. The
+  // totals are worked out from the same rows, so they always agree.
+  const rows = dashboard.rows.filter((row) => contactsById.has(row.contactId));
+  const totalPawna = rows.reduce((sum, row) => sum + Math.max(0, Number(row.currentBalance)), 0);
+  const totalDena = rows.reduce((sum, row) => sum + Math.max(0, -Number(row.currentBalance)), 0);
+  const net = totalPawna - totalDena;
+  const topProfit = dashboard.topProfit && contactsById.has(dashboard.topProfit.contactId) ? dashboard.topProfit : null;
+  const profitThisYear = Number(dashboard.profitPaidThisYear);
+
+  const onSide = (direction: LoanBalanceDirection) => rows.filter((row) => row.direction === direction);
   // "3 contacts", "1 bank and 1 NGO": who a side's total is with.
-  const whoOf = (direction: LoanBalanceDirection) => whoPhrase(dashboard.rows.filter((row) => row.direction === direction).map((row) => contactsById.get(row.contactId)?.type), t);
-  const counts = { ALL: dashboard.rows.length, ...Object.fromEntries(DIRECTIONS.map((direction) => [direction, dashboard.rows.filter((row) => row.direction === direction).length])) } as Record<Tab, number>;
-  const q = search.trim().toLowerCase();
-  const shown = dashboard.rows
+  const whoOf = (direction: LoanBalanceDirection) => whoPhrase(onSide(direction).map((row) => contactsById.get(row.contactId)?.type), t, locale);
+  const counts = { ALL: rows.length, ...Object.fromEntries(DIRECTIONS.map((direction) => [direction, onSide(direction).length])) } as Record<Tab, number>;
+  const shown = rows
     .filter((row) => tab === "ALL" || row.direction === tab)
-    .filter((row) => !q || row.contactName.toLowerCase().includes(q) || (row.contactPhone ?? "").includes(q))
+    .filter((row) => contactMatches(row.contactName, row.contactPhone, search))
     .sort((a, b) => (sort === "name" ? a.contactName.localeCompare(b.contactName) : (Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance))) * (sort === "biggest" ? 1 : -1)));
   const sums = shown.reduce((sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), profit: sum.profit + Number(row.profitPaid), net: sum.net + Number(row.currentBalance) }), { opening: 0, in: 0, out: 0, profit: 0, net: 0 });
-  const net = Number(dashboard.netBalance);
 
+  const counted = (label: string, count: number) => (
+    <>
+      {label} <span className="font-medium text-ink-muted tabular-nums">{formatCount(count, locale)}</span>
+    </>
+  );
   const tabs = [{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, ...DIRECTIONS.map((direction) => ({ value: direction as Tab, label: counted(t(DIRECTION_META[direction].name), counts[direction]), dot: DOT[direction] }))];
+  // A side's caption: who it is with, or that nobody is on it.
+  const sideCaption = (direction: "PAWNA" | "DENA", sentence: string) => (counts[direction] === 0 ? t(direction === "PAWNA" ? "No one owes you" : "You owe no one") : t(sentence, { who: whoOf(direction), side: t(DIRECTION_META[direction].name) }));
+  const activeContacts = contacts.filter((contact) => contact.status === "ACTIVE");
+
+  const phoneEntryButtons = canManage && activeContacts.length > 0 && (
+    <div className="grid grid-cols-2 gap-2 md:hidden">
+      {/* The arrows point the way the balance goes, as the board draws them: lent comes back to you, borrowed goes out. */}
+      <Button variant="secondary" size="xl" onClick={() => setEntry({ kind: "GIVE_LOAN" })} className="font-semibold">
+        <ArrowDownLeft />
+        {t("Gave or lent")}
+      </Button>
+      <Button variant="secondary" size="xl" onClick={() => setEntry({ kind: "TAKE_LOAN" })} className="font-semibold">
+        <ArrowUpRight />
+        {t("Took or borrowed")}
+      </Button>
+    </div>
+  );
 
   return (
     <PageFrame className="md:gap-6">
@@ -99,7 +134,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
         hideActionsOnPhone
       />
 
-      <section className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
+      <section className="grid grid-cols-2 gap-2 md:gap-4 xl:grid-cols-4">
         <Card padding="sm" className={PHONE_FIGURE_CARD}>
           <span className={PHONE_FIGURE_LABEL}>
             <span className="md:hidden">{t("Owed to you")}</span>
@@ -107,12 +142,10 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               {t("You'll receive")} · <span className="font-semibold text-income">{t("Pawna")}</span>
             </span>
           </span>
-          <AmountText value={Math.abs(Number(dashboard.totalPawna))} currency={currency} size="h2" tone="income" className={PHONE_FIGURE} />
+          <AmountText value={totalPawna} currency={currency} size="h2" tone="income" className={PHONE_FIGURE} />
           <span className="text-caption font-normal text-ink-muted">
-            <span className="md:hidden">
-              {t("Pawna")} · {counts.PAWNA} {t(counts.PAWNA === 1 ? "person" : "people")}
-            </span>
-            <span className="hidden md:inline">{t("From {who}", { who: whoOf("PAWNA") })}</span>
+            <span className="md:hidden">{sideCaption("PAWNA", "{side} · {who}")}</span>
+            <span className="hidden md:inline">{sideCaption("PAWNA", "From {who}")}</span>
           </span>
         </Card>
         <Card padding="sm" className={PHONE_FIGURE_CARD}>
@@ -122,29 +155,27 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               {t("You owe")} · <span className="font-semibold text-expense">{t("Dena")}</span>
             </span>
           </span>
-          <AmountText value={Math.abs(Number(dashboard.totalDena))} currency={currency} size="h2" tone="expense" className={PHONE_FIGURE} />
+          <AmountText value={totalDena} currency={currency} size="h2" tone="expense" className={PHONE_FIGURE} />
           <span className="text-caption font-normal text-ink-muted">
-            <span className="md:hidden">
-              {t("Dena")} · {counts.DENA} {t(counts.DENA === 1 ? "person" : "people")}
-            </span>
-            <span className="hidden md:inline">{t("To {who}", { who: whoOf("DENA") })}</span>
+            <span className="md:hidden">{sideCaption("DENA", "{side} · {who}")}</span>
+            <span className="hidden md:inline">{sideCaption("DENA", "To {who}")}</span>
           </span>
         </Card>
-        <Card className="hidden flex-col gap-2 md:flex">
+        <Card className="hidden min-w-0 flex-col gap-2 md:flex">
           <span className="text-small font-medium text-ink-muted">{t("Net position")}</span>
-          <AmountText value={net} currency={currency} size="h2" signed className="text-h1" />
+          <AmountText value={net} currency={currency} size="h2" signed className={DESK_FIGURE} />
           <span className="text-caption font-normal text-ink-muted">{net > 0 ? t("You're owed more than you owe") : net < 0 ? t("You owe more than you're owed") : t("All square")}</span>
         </Card>
-        <Card className="hidden flex-col gap-2 md:flex">
+        <Card className="hidden min-w-0 flex-col gap-2 md:flex">
           <span className="text-small font-medium text-ink-muted">{t("Profit paid this year")}</span>
-          <AmountText value={Number(dashboard.profitPaidThisYear)} currency={currency} size="h2" className="text-h1" />
+          <AmountText value={profitThisYear} currency={currency} size="h2" className={DESK_FIGURE} />
           <span className="truncate text-caption font-normal text-ink-muted">
-            {dashboard.topProfit ? `${dashboard.topProfit.contactName} · ${t("{amount} a month", { amount: formatCurrency(Number(dashboard.topProfit.monthly), currency) })}` : t("No profit or interest paid yet")}
+            {topProfit ? `${topProfit.contactName} · ${t("{amount} a month", { amount: formatCurrency(Number(topProfit.monthly), currency) })}` : profitThisYear === 0 ? t("No profit or interest paid yet") : ""}
           </span>
         </Card>
       </section>
 
-      {dashboard.rows.length === 0 ? (
+      {contacts.length === 0 ? (
         <EmptyState
           tone="loans"
           icon={<HandCoins />}
@@ -160,147 +191,169 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           }
           className="min-h-80"
         />
+      ) : rows.length === 0 ? (
+        // People are added, but no loan is recorded yet: the next step is the entry.
+        <div className="flex flex-col gap-4">
+          <EmptyState
+            tone="loans"
+            icon={<HandCoins />}
+            title={t("No loans recorded yet")}
+            description={t("Record the loan you gave or took, and everyone with a balance shows up here.")}
+            action={
+              canManage && (
+                <>
+                  {activeContacts.length > 0 && (
+                    <Button onClick={() => setEntry({})} className="max-md:hidden">
+                      <Plus strokeWidth={2.5} className="size-4" />
+                      {t("New loan entry")}
+                    </Button>
+                  )}
+                  <Button variant="secondary" onClick={() => setContactOpen(true)}>
+                    <UserPlus className="text-ink-2" />
+                    {t("Add bank / person")}
+                  </Button>
+                </>
+              )
+            }
+            className="min-h-80"
+          />
+          {phoneEntryButtons}
+        </div>
       ) : (
-        <>
-          <Card padding="none" className="hidden overflow-hidden md:block">
-            <div className="flex items-center justify-between gap-4 px-6 py-4">
-              <SegmentedControl options={tabs} value={tab} onChange={setTab} label={t("Balance")} />
-              <div className="flex gap-3">
-                <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="w-60" />
-                <NativeSelect size="sm" value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label={t("Sort")} className="text-small">
-                  <option value="biggest">{t("Biggest balance first")}</option>
-                  <option value="smallest">{t("Smallest balance first")}</option>
-                  <option value="name">{t("Name A–Z")}</option>
-                </NativeSelect>
+        <div className="flex flex-col gap-4">
+          {/* Phone: the direction switch above the list, as the board has it. */}
+          <SegmentedControl
+            options={[
+              { value: "ALL" as Tab, label: counted(t("All"), counts.ALL) },
+              { value: "PAWNA" as Tab, label: t("Owe you") },
+              { value: "DENA" as Tab, label: t("You owe") },
+              { value: "SETTLED" as Tab, label: t("Settled") },
+            ]}
+            value={tab}
+            onChange={setTab}
+            label={t("Balance")}
+            size="touch"
+            stretch
+            className="md:hidden"
+          />
+          <ListCard
+            label={t("Loans")}
+            header={
+              <div className="hidden flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4 md:flex">
+                <SegmentedControl options={tabs} value={tab} onChange={setTab} label={t("Balance")} />
+                <div className="flex w-full flex-wrap gap-3 md:w-auto">
+                  <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="w-full md:w-60" />
+                  <NativeSelect size="sm" value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label={t("Sort")} className="text-small">
+                    <option value="biggest">{t("Biggest balance first")}</option>
+                    <option value="smallest">{t("Smallest balance first")}</option>
+                    <option value="name">{t("Name A–Z")}</option>
+                  </NativeSelect>
+                </div>
               </div>
-            </div>
-            <div className={cn("grid items-center gap-x-4 border-y border-line bg-table-head px-6 py-3 text-caption text-ink-muted", GRID)}>
-              <span>{t("Bank / person")}</span>
-              <span className="text-right">{t("Opening")}</span>
-              <span className="text-right">{t("Money in")}</span>
-              <span className="text-right">{t("Money out")}</span>
-              <span className="text-right">{t("Profit paid")}</span>
-              <span className="text-right">{t("Balance")}</span>
-            </div>
-            {shown.length === 0 && <p className="px-6 py-10 text-center text-body text-ink-muted">{t("No one matches")}</p>}
+            }
+            className="max-md:shadow-none"
+          >
+            <ListHead columns={COLUMNS} className="md:hidden xl:grid">
+              <ListHeadCell>{t("Bank / person")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Opening")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Money in@@loan")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Money out@@loan")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Profit paid")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
+            </ListHead>
+            {shown.length === 0 && <ListEmpty title={t("No one matches")} />}
             {shown.map((row) => (
               <DashboardRow key={row.contactId} row={row} contact={contactsById.get(row.contactId)} currency={currency} />
             ))}
-            <div className={cn("grid h-13 items-center gap-x-4 bg-table-head px-6 text-body font-semibold text-ink tabular-nums", GRID)}>
-              <span>{t("Net")}</span>
-              <span className="text-right">{formatCurrency(Math.abs(sums.opening), currency)}</span>
-              <span className="text-right">{formatCurrency(sums.in, currency)}</span>
-              <span className="text-right">{formatCurrency(sums.out, currency)}</span>
-              <span className="text-right">{formatCurrency(sums.profit, currency)}</span>
-              <AmountText value={sums.net} currency={currency} signed size="sm" className="text-right text-body font-bold" />
-            </div>
-          </Card>
-
-          {/* Phone: the direction switch, then one row per contact. */}
-          <div className="flex flex-col gap-4 md:hidden">
-            <SegmentedControl
-              options={[
-                { value: "ALL" as Tab, label: `${t("All")} ${counts.ALL}` },
-                { value: "PAWNA" as Tab, label: t("Owe you") },
-                { value: "DENA" as Tab, label: t("You owe") },
-                { value: "SETTLED" as Tab, label: t("Settled") },
-              ]}
-              value={tab}
-              onChange={setTab}
-              label={t("Balance")}
-              size="touch"
-              stretch
-            />
-            <Card padding="none" elevated={false} className="overflow-hidden">
-              {shown.length === 0 && <p className="px-4 py-8 text-center text-body text-ink-muted">{t("No one matches")}</p>}
-              {shown.map((row, index) => {
-                const meta = DIRECTION_META[row.direction];
-                const contact = contactsById.get(row.contactId);
-                return (
-                  <Link key={row.contactId} href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("box-content flex min-h-16 items-center gap-3 px-4", index > 0 && "border-t border-divider")}>
-                    <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={40} coloured />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <b className="truncate text-title leading-[normal] text-ink">{row.contactName}</b>
-                      <span className="truncate text-caption leading-[normal] font-normal text-ink-muted">{contact ? [t(LOAN_KIND_LABELS[contact.type]), contact.notes].filter(Boolean).join(" · ") : (row.contactPhone ?? "")}</span>
-                    </span>
-                    {row.direction === "SETTLED" ? (
-                      <b className="text-body-lg leading-[normal] font-bold text-ink-muted">{t("Settled")}</b>
-                    ) : (
-                      <span className="flex flex-col items-end">
-                        <b className={cn("text-body-lg leading-[normal] font-bold tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</b>
-                        <span className="text-caption leading-[normal] font-normal text-ink-muted">{t(meta.short)}</span>
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </Card>
-            {canManage && (
-              <div className="grid grid-cols-2 gap-2">
-                {/* The arrows point the way the balance goes, as the board draws them: lent comes back to you, borrowed goes out. */}
-                <Button variant="secondary" size="xl" onClick={() => setEntry({ kind: "GIVE_LOAN" })} className="font-semibold">
-                  <ArrowDownLeft />
-                  {t("Gave or lent")}
-                </Button>
-                <Button variant="secondary" size="xl" onClick={() => setEntry({ kind: "TAKE_LOAN" })} className="font-semibold">
-                  <ArrowUpRight />
-                  {t("Took or borrowed")}
-                </Button>
-              </div>
+            {shown.length > 0 && (
+              <ListTotalRow columns={COLUMNS} className="hidden xl:grid">
+                <ListCell>{t("Net")}</ListCell>
+                <ListCell align="end">
+                  <AmountText value={sums.opening} currency={currency} signed size="sm" className="font-semibold" />
+                </ListCell>
+                <ListCell align="end" className="tabular-nums">
+                  {formatCurrency(sums.in, currency)}
+                </ListCell>
+                <ListCell align="end" className="tabular-nums">
+                  {formatCurrency(sums.out, currency)}
+                </ListCell>
+                <ListCell align="end" className="tabular-nums">
+                  {formatCurrency(sums.profit, currency)}
+                </ListCell>
+                <ListCell align="end">
+                  <AmountText value={sums.net} currency={currency} signed size="sm" className="text-body font-bold" />
+                </ListCell>
+              </ListTotalRow>
             )}
-          </div>
-        </>
+          </ListCard>
+          {phoneEntryButtons}
+        </div>
       )}
 
-      <LoanContactDrawer open={contactOpen} onClose={() => setContactOpen(false)} businessId={businessId} editing={null} currency={currency} />
-      <LoanEntryDrawer open={entry !== null} onClose={() => setEntry(null)} businessId={businessId} contacts={contacts.filter((contact) => contact.status === "ACTIVE")} currency={currency} initialKind={entry?.kind} />
+      <LoanContactDrawer open={contactOpen} onClose={() => setContactOpen(false)} businessId={businessId} editing={null} currency={currency} canTrade={canTrade} />
+      <LoanEntryDrawer open={entry !== null} onClose={() => setEntry(null)} businessId={businessId} contacts={activeContacts} currency={currency} initialKind={entry?.kind} />
     </PageFrame>
   );
 }
 
 // The two figures on a phone: flat cards, a 13px label, 18px bold on a
-// 1.2 line; wider screens keep the desktop tiles.
-const PHONE_FIGURE_CARD = "flex flex-col gap-1 max-md:shadow-none md:gap-2 md:p-5";
+// 1.2 line; two to a row up to xl (a lakh or crore needs the room), 22px
+// there and the board's 28px from xl.
+const PHONE_FIGURE_CARD = "flex min-w-0 flex-col gap-1 max-md:shadow-none md:gap-2 md:p-5";
 const PHONE_FIGURE_LABEL = "text-small font-medium text-ink-muted max-md:font-normal";
-const PHONE_FIGURE = "text-h3 whitespace-nowrap max-md:leading-[1.2] max-md:font-bold md:text-h1";
+const PHONE_FIGURE = "text-h3 wrap-anywhere max-md:leading-[1.2] max-md:font-bold md:text-h2 xl:text-h1";
+const DESK_FIGURE = "wrap-anywhere xl:text-h1";
 
-function counted(label: string, count: number) {
-  return (
-    <>
-      {label} <span className="font-medium text-ink-muted">{count}</span>
-    </>
-  );
-}
-
+// One contact: the phone's two lines (who, then where it stands) below xl,
+// the board's columns from xl. The name is the link, stretched over the row.
 function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; contact?: Contact; currency: string }) {
   const { t } = useLocale();
   const meta = DIRECTION_META[row.direction];
+  const settled = row.direction === "SETTLED";
   return (
-    <Link href={`/loan-management/ledger?contactId=${row.contactId}`} className={cn("grid h-15 items-center gap-x-4 border-b border-divider px-6 text-body text-ink transition-colors hover:bg-hover", GRID)}>
-      <span className="flex min-w-0 items-center gap-3">
-        <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} />
+    <ListRow columns={COLUMNS} density="relaxed" className="xl:min-h-15">
+      <ListCell className="flex min-w-0 items-center gap-3">
+        <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={40} coloured className="xl:hidden" />
+        <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} className="hidden xl:inline-flex" />
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="flex items-center gap-2">
-            <span className="truncate font-medium">{row.contactName}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            <ListRowLink href={`/loan-management/ledger?contactId=${row.contactId}`} className="truncate text-title text-ink xl:text-body xl:font-medium">
+              {row.contactName}
+            </ListRowLink>
             {contact && (
-              <Chip tone="neutral" size="sm" className="font-semibold">
+              <Chip tone="neutral" size="sm" className="hidden font-semibold xl:inline-flex">
                 {t(LOAN_KIND_LABELS[contact.type])}
               </Chip>
             )}
           </span>
-          <span className="text-caption font-normal text-ink-muted">{row.contactPhone ?? contact?.address ?? "—"}</span>
+          <span className="truncate text-caption font-normal text-ink-muted xl:hidden">{contact ? [t(LOAN_KIND_LABELS[contact.type]), contact.notes].filter(Boolean).join(" · ") : (row.contactPhone ?? "")}</span>
+          <span className="hidden truncate text-caption font-normal text-ink-muted xl:block">{row.contactPhone || contact?.email || contact?.address || "—"}</span>
         </span>
-      </span>
-      {figure(row.openingBalance, currency, "text-ink-2")}
-      {figure(row.totalReceive, currency)}
-      {figure(row.totalPayment, currency)}
-      {figure(row.profitPaid, currency, "text-warning")}
-      <span className="flex items-center justify-end gap-2">
-        <span className={cn("font-bold tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</span>
-        <Chip tone={meta.chip} size="sm" className="font-semibold">
+      </ListCell>
+      <ListCell align="end" className="hidden xl:block">
+        {figure(row.openingBalance, currency, "text-ink-2")}
+      </ListCell>
+      <ListCell align="end" className="hidden xl:block">
+        {figure(row.totalReceive, currency)}
+      </ListCell>
+      <ListCell align="end" className="hidden xl:block">
+        {figure(row.totalPayment, currency)}
+      </ListCell>
+      <ListCell align="end" className="hidden xl:block">
+        {figure(row.profitPaid, currency, "text-warning")}
+      </ListCell>
+      <ListCell align="end" className="flex flex-col items-end xl:flex-row xl:items-center xl:justify-end xl:gap-2">
+        {settled ? (
+          <b className="text-body-lg leading-[normal] font-bold text-ink-muted xl:hidden">{t("Settled")}</b>
+        ) : (
+          <b className={cn("text-body-lg leading-[normal] font-bold tabular-nums xl:text-body", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</b>
+        )}
+        {settled && <b className={cn("hidden text-body font-bold tabular-nums xl:inline", meta.text)}>{formatCurrency(0, currency)}</b>}
+        {!settled && <span className="text-caption leading-[normal] font-normal text-ink-muted xl:hidden">{t(meta.short)}</span>}
+        <Chip tone={meta.chip} size="sm" className="hidden font-semibold xl:inline-flex">
           {t(meta.name)}
         </Chip>
-      </span>
-    </Link>
+      </ListCell>
+    </ListRow>
   );
 }

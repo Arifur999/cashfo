@@ -2,14 +2,16 @@ import { redirect } from "next/navigation";
 import { LoanTransactionsPageClient } from "@/components/modules/Customer/LoanManagement/LoanTransactionsPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { getContacts } from "@/lib/customer/contacts";
-import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { getAllContacts } from "@/lib/customer/contacts";
+import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAllTransactions } from "@/lib/customer/transactions";
 
 export const generateMetadata = () => customerPageMetadata("/loan-management/transactions");
 
-const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year"];
+// Last year and a custom range too, so the 1,000-row notice's "pick a
+// shorter range" can be followed.
+const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year", "last-year", "custom"];
 
 export default async function LoanTransactionsPage({ searchParams }: PageProps<"/loan-management/transactions">) {
   const params = await searchParams;
@@ -23,16 +25,18 @@ export default async function LoanTransactionsPage({ searchParams }: PageProps<"
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
   const range = PRESETS.find((preset) => preset === params.range) ?? "all";
+  const customFrom = isIsoDay(params.dateFrom) ? params.dateFrom : undefined;
+  const customTo = isIsoDay(params.dateTo) ? params.dateTo : undefined;
   const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
-  const { dateFrom, dateTo } = resolveDateRange(range);
+  const { dateFrom, dateTo } = resolveDateRange(range, customFrom, customTo);
 
   // Loan contacts only: a trade (BUSINESS) contact books a "loan" as a
   // credit sale or purchase -- revenue or expense, with the wallet ignored --
   // so the entry drawer must not offer one. The list shows those contacts'
   // loans and repayments, not every transaction in the workspace. All of
   // them are read (100 at a time), since the totals add them up.
-  const [{ data: loanContacts }, { data: transactions, complete }] = await Promise.all([
-    getContacts(activeBusinessId, { category: "LOAN", limit: 100 }),
+  const [loanContacts, { data: transactions, complete }] = await Promise.all([
+    getAllContacts(activeBusinessId, "LOAN"),
     getAllTransactions(activeBusinessId, {
       contactId: selectedContactId || undefined,
       contactCategory: "LOAN",
@@ -53,6 +57,8 @@ export default async function LoanTransactionsPage({ searchParams }: PageProps<"
       currency={activeBusiness?.currency ?? "BDT"}
       range={range}
       selectedContactId={selectedContactId}
+      customFrom={customFrom}
+      customTo={customTo}
     />
   );
 }
