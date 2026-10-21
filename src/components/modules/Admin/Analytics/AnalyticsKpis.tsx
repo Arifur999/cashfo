@@ -1,13 +1,12 @@
 "use client";
 
 import Kpi from "@/components/shared/Kpi";
-import { shareOfAccounts, shareOfWeek, weekChange } from "@/lib/analyticsWording";
+import { rangeName, shareOfAccounts, shareOfWeek, weekChange } from "@/lib/analyticsWording";
 import type { AnalyticsRange } from "@/lib/analyticsRange";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { IAnalyticsSummary, IFeatureUsageEntry } from "@/types/analytics.types";
-import { rangeNameIn } from "./analyticsLabels";
 import { type ReportQuery, updatingClass } from "./ReportState";
 
 const CHANGE_TONE = { up: "font-semibold text-emerald", down: "font-semibold text-expense", same: "" } as const;
@@ -79,7 +78,7 @@ const AnalyticsKpis = ({ summary, summaryQuery, featureUsage, featureQuery, rang
           size="sm"
           label="Income and expenses added"
           value={featureQuery.status === "pending" ? <PendingValue /> : added === undefined ? "—" : formatCount(added, locale)}
-          note={featureQuery.status === "error" ? <FailedNote onRetry={featureQuery.retry} /> : <Note>{rangeNameIn(range, locale, translate)}</Note>}
+          note={featureQuery.status === "error" ? <FailedNote onRetry={featureQuery.retry} /> : <Note>{rangeName(range, translate, locale)}</Note>}
         />
       </div>
     </div>

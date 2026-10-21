@@ -71,12 +71,12 @@ export const DevicesCard = () => {
                   <span className="truncate text-body font-semibold text-ink">
                     {session.current ? `${session.deviceLabel} · ${translate(isPhone(session.deviceLabel) ? "this phone" : "this computer")}` : session.deviceLabel}
                   </span>
-                  <span className="truncate text-small text-ink-muted tabular-nums" title={translate("Signed in {when}", { when: formatDateTime(session.signedInAt) })}>
+                  <span className="truncate text-small text-ink-muted tabular-nums" title={translate("Signed in {when}", { when: formatDateTime(session.signedInAt, "—", locale) })}>
                     {[session.place, session.ipAddress].filter(Boolean).join(" · ") || translate("Unknown place")}
                   </span>
                 </span>
                 {/* The wait is counted from the clock, which can tick a minute between the server's render and hydration. */}
-                <span className={cn("shrink-0 text-small font-semibold", session.current ? "text-emerald" : "text-ink-muted")} title={formatDateTime(session.lastActiveAt)} suppressHydrationWarning>
+                <span className={cn("shrink-0 text-small font-semibold", session.current ? "text-emerald" : "text-ink-muted")} title={formatDateTime(session.lastActiveAt, "—", locale)} suppressHydrationWarning>
                   {session.current ? translate("Now") : translate("{time} ago", { time: formatElapsed(session.lastActiveAt, { t: translate, locale }) })}
                 </span>
               </li>
@@ -141,7 +141,7 @@ export const RecentSignInsCard = () => {
                 <span className="hidden max-w-40 min-w-0 truncate text-ink-muted tabular-nums sm:block" title={attempt.ipAddress}>
                   {attempt.ipAddress}
                 </span>
-                <span className="hidden w-30 shrink-0 text-right text-ink-muted sm:block" title={formatDateTime(attempt.createdAt)}>
+                <span className="hidden w-30 shrink-0 text-right text-ink-muted sm:block" title={formatDateTime(attempt.createdAt, "—", locale)}>
                   {when}
                 </span>
               </li>

@@ -11,13 +11,17 @@ const PLACES_SHOWN = 5;
 
 // Where people sign in from, by country: the top five and everyone else.
 // The API places addresses offline with MaxMind's GeoLite2 data, whose
-// licence (CC BY-SA 4.0) asks for the credit at the foot. The total adds up
-// each country's people, so someone seen in two countries counts twice
-// until the API sends a total of its own.
-const PlacesCard = ({ data, query }: { data: IGeography | undefined; query: ReportQuery }) => {
+// licence (CC BY-SA 4.0) asks for the credit at the foot. The people count
+// is the API's totalUsers, each customer once however many countries they
+// were seen in; an API from before it sent one gets each country's people
+// added up.
+// totalUsers is optional here until IGeography carries it.
+type Geography = IGeography & { totalUsers?: number };
+
+const PlacesCard = ({ data, query }: { data: Geography | undefined; query: ReportQuery }) => {
   const { locale } = useLocale();
   const countries = data?.countries ?? [];
-  const people = countries.reduce((sum, entry) => sum + entry.userCount, 0);
+  const people = data?.totalUsers ?? countries.reduce((sum, entry) => sum + entry.userCount, 0);
   const top = countries.slice(0, PLACES_SHOWN).map((entry) => ({ name: entry.country, count: entry.userCount }));
   const rest = countries.slice(PLACES_SHOWN).reduce((sum, entry) => sum + entry.userCount, 0);
   const rows = rest > 0 ? [...top, { name: "Other places", count: rest }] : top;

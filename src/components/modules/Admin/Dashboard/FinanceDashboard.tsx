@@ -12,7 +12,7 @@ import type { IPayment } from "@/types/payment.types";
 import type { IPlanAnalytics, ISubscriptionPlan } from "@/types/plan.types";
 import type { IChurnData, IRevenueOverview, IRevenueSummary } from "@/types/revenue.types";
 import { dayLabel, monthLabel, shortMonth } from "./dashboardDates";
-import { allZero, compactAmount } from "./dashboardFigures";
+import { allZero, compactMoney } from "./dashboardFigures";
 import { COULD_NOT_LOAD, Greeting, Kpi, LoadFailed, MiniBars, SECTION_ROW, Section, SectionLink, SectionTable, Unavailable } from "./pieces";
 import { PlanShareCard } from "./PlanShareCard";
 
@@ -46,9 +46,6 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
   const history = overview?.mrrHistory ?? [];
   // The biggest earner first; the API lists them by their first payment.
   const byPlan = revenue ? [...revenue.revenueByPlan].sort((a, b) => b.amount - a.amount) : [];
-  const barsLabel = translate("MRR each month: {values}", {
-    values: history.map((point) => `${monthLabel(point.month, locale, translate)} ${formatAmount(point.mrr)}`).join(", "),
-  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -58,7 +55,7 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
         <Kpi
           label="MRR"
           value={mrr !== null ? formatAmount(mrr) : "—"}
-          chip={change !== null ? { text: `${change >= 0 ? "+" : ""}${toLocaleDigits(`${change}%`, locale)}`, tone: change >= 0 ? "income" : "expense" } : null}
+          chip={change !== null ? { text: `${change > 0 ? "+" : ""}${toLocaleDigits(`${change}%`, locale)}`, tone: change > 0 ? "income" : change < 0 ? "expense" : "neutral" } : null}
           note={change !== null ? "vs last month" : mrr !== null ? undefined : COULD_NOT_LOAD}
         />
         {/* Only part of the month is in, so it gets no change on the last. */}
@@ -92,9 +89,15 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
             <Unavailable>{translate("No revenue yet.")}</Unavailable>
           ) : (
             <MiniBars
-              label={barsLabel}
+              label="MRR, last 6 months"
               height={190}
-              bars={history.map((point, index) => ({ label: shortMonth(point.month, locale), value: point.mrr, short: compactAmount(point.mrr), highlight: index === history.length - 1 }))}
+              bars={history.map((point, index) => ({
+                label: shortMonth(point.month, locale),
+                value: point.mrr,
+                short: compactMoney(point.mrr),
+                highlight: index === history.length - 1,
+                spoken: `${monthLabel(point.month, locale, translate)} ${formatAmount(point.mrr)}`,
+              }))}
             />
           )}
         </Section>
@@ -130,7 +133,8 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
         </Section>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* The row above's split, so the gutter runs straight down both rows. */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Section title={translate("Revenue by plan")} aside={translate("Last 12 months")} flush={byPlan.length > 0}>
           {revenue === null ? (
             <LoadFailed />

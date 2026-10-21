@@ -39,7 +39,6 @@ export const adminDashboardDictionary: Record<string, string> = {
   "Revenue, last 6 months": "আয়, গত ৬ মাস",
   "So far this month {amount}": "এ মাসে এ পর্যন্ত {amount}",
   // A bar chart's name for a screen reader, with every bar's month and amount.
-  "Revenue each month: {values}": "প্রতি মাসের আয়: {values}",
   "No revenue yet.": "এখনো কোনো আয় নেই।",
   "Accounts by plan": "প্ল্যান অনুযায়ী অ্যাকাউন্ট",
   "No plans yet.": "এখনো কোনো প্ল্যান নেই।",
@@ -88,7 +87,6 @@ export const adminDashboardDictionary: Record<string, string> = {
   "{count} paid workspaces lost this month": "এ মাসে {count}টি পেইড ওয়ার্কস্পেস চলে গেছে",
   "MRR, last 6 months": "MRR, গত ৬ মাস",
   "Recurring revenue from paid plans": "পেইড প্ল্যান থেকে নিয়মিত আয়",
-  "MRR each month: {values}": "প্রতি মাসের MRR: {values}",
   "Revenue by plan": "প্ল্যান অনুযায়ী আয়",
   "Last 12 months": "গত ১২ মাস",
   "All failed payments": "সব ব্যর্থ পেমেন্ট",

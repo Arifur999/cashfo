@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allZero, backupIsDue, compactAmount, openRequests, queueOrder, waitingSince } from "./dashboardFigures";
+import { allZero, backupIsDue, compactAmount, compactMoney, openRequests, queueOrder, waitingSince } from "./dashboardFigures";
 
 const ticket = (id: string, priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT", createdAt: string, lastMessageAt: string | null = null) => ({ id, priority, createdAt, lastMessageAt });
 
@@ -68,6 +68,16 @@ describe("a bar's short amount", () => {
 
   it("keeps the sign of a month refunds took below zero", () => {
     expect(compactAmount(-2_900)).toBe("-2.9k");
+  });
+
+  it("marks a money bar with the taka sign, as the board writes it", () => {
+    expect(compactMoney(4_396)).toBe("৳4.4k");
+    expect(compactMoney(41_300)).toBe("৳41k");
+    expect(compactMoney(0)).toBe("৳0");
+    expect(compactMoney(1_250_000)).toBe("৳13L");
+    // The minus before the sign, and none on a refund that rounds to nothing.
+    expect(compactMoney(-2_900)).toBe("-৳2.9k");
+    expect(compactMoney(-0.4)).toBe("৳0");
   });
 });
 

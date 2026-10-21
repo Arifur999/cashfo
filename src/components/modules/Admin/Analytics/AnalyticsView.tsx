@@ -3,11 +3,11 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { AnalyticsRange } from "@/lib/analyticsRange";
+import { rangeName } from "@/lib/analyticsWording";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
 import ActivePeopleCard from "./ActivePeopleCard";
 import AnalyticsKpis from "./AnalyticsKpis";
-import { rangeNameIn } from "./analyticsLabels";
 import ComeBackCard from "./ComeBackCard";
 import DevicesCard from "./DevicesCard";
 import FeatureUsageCard from "./FeatureUsageCard";
@@ -49,7 +49,7 @@ const AnalyticsView = ({ today }: { today: string }) => {
         <DevicesCard data={devices.data?.data} query={reportQuery(devices)} />
       </div>
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <FeatureUsageCard data={featureUsage.data?.data} query={featureQuery} rangeLabel={rangeNameIn(figuresRange, locale, translate)} />
+        <FeatureUsageCard data={featureUsage.data?.data} query={featureQuery} rangeLabel={rangeName(figuresRange, translate, locale)} />
         <PlacesCard data={geography.data?.data} query={reportQuery(geography)} />
       </div>
       <ComeBackCard rows={cohorts.data?.data} query={reportQuery(cohorts)} currentMonth={today.slice(0, 7)} />

@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { formatNumber } from "@/lib/number";
 import type { NavBadgeKind } from "@/lib/navItem";
 import { openTicketCount } from "@/lib/tickets";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { ticketStatsQuery } from "@/queries/ticket.queries";
 // The count beside a menu item, as the design's sidebar draws it: amber for
 // work waiting (open tickets), coral for something wrong (security flags).
 const Count = ({ value, title, tone }: { value: number | undefined; title: string; tone: "warning" | "danger" }) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   if (!value) return null;
   return (
     <span
@@ -22,7 +22,7 @@ const Count = ({ value, title, tone }: { value: number | undefined; title: strin
         tone === "danger" ? "bg-night-coral" : "bg-night-amber",
       )}
     >
-      {formatNumber(value)}
+      {formatCount(value, locale)}
     </span>
   );
 };
