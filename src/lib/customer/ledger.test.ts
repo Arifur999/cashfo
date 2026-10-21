@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { inEnglish } from "@/lib/i18n/message";
-import { isDebitPositive, isSettledDay, ledgerDirection, periodText, readsAsMoney, statementPage, transactionHref, voidedNet } from "./ledger";
+import { formatDate } from "./date";
+import { isDebitPositive, isSettledDay, ledgerDirection, periodText, readsAsMoney, statementBackLabel, statementBackPath, statementPage, transactionHref, voidedNet } from "./ledger";
 
 describe("isDebitPositive", () => {
   it("is true for assets and expenses only", () => {
@@ -125,6 +126,37 @@ describe("periodText", () => {
     expect(periodText(inEnglish, "2026-10-01")).toBe("From 1 Oct 2026");
     expect(periodText(inEnglish, undefined, "2026-10-21")).toBe("Up to 21 Oct 2026");
     expect(periodText(inEnglish)).toBe("All time");
+  });
+
+  it("writes the days in the reader's language", () => {
+    const bn = formatDate("2026-10-01", undefined, "bn");
+    expect(bn).not.toBe("1 Oct 2026");
+    expect(periodText(inEnglish, "2026-10-01", undefined, "bn")).toBe(`From ${bn}`);
+  });
+});
+
+describe("statementBackPath", () => {
+  it("takes a path on this site", () => {
+    expect(statementBackPath("/savings-goals/overview")).toBe("/savings-goals/overview");
+    expect(statementBackPath("/balance/transfer?range=this-month")).toBe("/balance/transfer?range=this-month");
+  });
+
+  it("refuses another site's address and anything that isn't a path", () => {
+    expect(statementBackPath("https://evil.example")).toBeNull();
+    expect(statementBackPath("//evil.example")).toBeNull();
+    expect(statementBackPath("/\\evil.example")).toBeNull();
+    expect(statementBackPath("/\t/evil.example")).toBeNull();
+    expect(statementBackPath("savings-goals")).toBeNull();
+    expect(statementBackPath(["/a", "/b"])).toBeNull();
+    expect(statementBackPath(undefined)).toBeNull();
+  });
+});
+
+describe("statementBackLabel", () => {
+  it("names a known page, else says Back", () => {
+    expect(statementBackLabel("/savings-goals/overview")).toBe("Back to Savings summary");
+    expect(statementBackLabel("/savings-goals/overview?tab=1")).toBe("Back to Savings summary");
+    expect(statementBackLabel("/balance/transfer")).toBe("Back");
   });
 });
 

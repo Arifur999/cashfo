@@ -158,14 +158,16 @@ export interface WorkspaceFigure {
 }
 
 // The workspace chooser's figure for one workspace: what its wallets hold
-// and how many there are, as its Home shows them. null when it can't be read -- a hiccup, or a
-// workspace that answers only after its PIN -- and the card shows the role
-// instead: a missing figure on a picker is no reason for an error page, and
-// a "৳ 0" would be wrong.
+// and how many there are, as its Home and My wallets show them: what the
+// active wallets hold, and only those counted (archived ones left out).
+// null when it can't be read -- a hiccup, or a workspace that answers only
+// after its PIN -- and the card shows the role instead: a missing figure on
+// a picker is no reason for an error page, and a "৳ 0" would be wrong.
 export const getWorkspaceFigure = cache(async (businessId: string): Promise<WorkspaceFigure | null> => {
   try {
     const response = await customerApi.get<WalletsOverview>(`/api/businesses/${businessId}/accounts/wallets-overview`);
-    return { balance: response.data.totalBalance, wallets: response.data.totalAccounts };
+    const { availableBalance, accounts } = response.data;
+    return { balance: availableBalance, wallets: accounts.filter((account) => account.status !== "ARCHIVED").length };
   } catch {
     return null;
   }

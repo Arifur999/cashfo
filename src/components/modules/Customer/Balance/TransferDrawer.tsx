@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -13,6 +14,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { createTransferAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
@@ -37,9 +39,11 @@ const TOUCH = "pointer-coarse:size-11";
 // much, the day and a note; and both wallets after the move -- the total
 // stays the same, since a transfer is never income or expense.
 export function TransferDrawer({ open, onClose, businessId, currency }: TransferDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
+  // Offline, Move money waits for the connection instead of failing on send.
+  const online = useOnline();
   const [pair, setPair] = useState<TransferPair>({ fromId: "", toId: "" });
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(getAppToday());
@@ -97,6 +101,8 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
   const tooFew = !loading && !walletsError && wallets.length < 2;
   // The API takes a transfer larger than the wallet holds; say what it does.
   const overdraws = !!from && value > available;
+  // The names as the pickers show them: "নগদ" for Cash in Bangla.
+  const nameOf = (wallet: Account) => accountDisplayName(wallet, displayLanguage(locale));
 
   function swap() {
     setPair({ fromId: toId, toId: fromId });
@@ -104,7 +110,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid || isPending) return;
+    if (!valid || isPending || !online) return;
     startTransition(async () => {
       try {
         const result = await createTransferAction(businessId, { fromAccountId: fromId, toAccountId: toId, amount: value, date, description: note.trim() || undefined });
@@ -113,7 +119,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
           onClose();
           router.refresh();
         } else {
-          toast.error(result.message ?? t("Couldn't move the money"));
+          toast.error(t(result.message ?? "Couldn't move the money"));
         }
       } catch {
         // The request never got an answer (offline): nothing was moved.
@@ -134,7 +140,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
     const after = Number(wallet.currentBalance) + change;
     return (
       <div className="flex justify-between gap-3">
-        <span className="truncate text-ink-2">{wallet.name}</span>
+        <span className="truncate text-ink-2">{nameOf(wallet)}</span>
         <span>
           <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency)} → </span>
           <span className={cn("font-semibold", after < 0 ? "text-warning" : "text-ink")}>{formatCurrency(after, currency)}</span>
@@ -178,46 +184,51 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
                 onClose={onClose}
               />
               {tooFew ? (
-                // In place of To: why the button stays grey, and the way on.
-                <p className="mt-3 rounded-md border border-line bg-strip px-4 py-3 text-small text-ink-2">
-                  {t("Moving money needs two wallets.")}{" "}
-                  {wallets.length === 1 && (
-                    <Link href="/balance/wallet?new=1" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
-                      {t("Add a wallet")}
-                    </Link>
-                  )}
-                </p>
+                // Nothing to swap with: just the room the button would take.
+                <span aria-hidden="true" className="h-1" />
               ) : (
-                <>
-                  <div className="-mt-0.5 -mb-6 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={swap}
-                      disabled={!from || !to}
-                      aria-label={t("Swap From and To")}
-                      title={t("Swap")}
-                      className={cn(
-                        "relative z-10 flex size-9 items-center justify-center rounded-full border border-line-strong bg-surface text-emerald shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-surface-sunken hover:text-brand-ink disabled:opacity-60",
-                        TOUCH,
-                      )}
-                    >
-                      <ArrowUpDown className="size-4" strokeWidth={2.25} aria-hidden="true" />
-                    </button>
-                  </div>
-                  <WalletPicker
-                    label={t("To@@wallet")}
-                    size="2xl"
-                    wallets={wallets.filter((w) => w.id !== fromId)}
-                    value={toId}
-                    onChange={(id) => setPair((previous) => ({ ...previous, toId: id }))}
-                    after={null}
-                    currency={currency}
-                    loading={loading}
-                    error={null}
-                    onClose={onClose}
-                  />
-                </>
+                <div className="-mt-0.5 -mb-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={swap}
+                    disabled={!from || !to}
+                    aria-label={t("Swap From and To")}
+                    title={t("Swap")}
+                    className={cn(
+                      "relative z-10 flex size-9 items-center justify-center rounded-full border border-line-strong bg-surface text-emerald shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-surface-sunken hover:text-brand-ink disabled:opacity-60",
+                      TOUCH,
+                    )}
+                  >
+                    <ArrowUpDown className="size-4" strokeWidth={2.25} aria-hidden="true" />
+                  </button>
+                </div>
               )}
+              <WalletPicker
+                label={t("To@@wallet")}
+                size="2xl"
+                wallets={wallets.filter((w) => w.id !== fromId)}
+                value={toId}
+                onChange={(id) => setPair((previous) => ({ ...previous, toId: id }))}
+                after={null}
+                currency={currency}
+                loading={loading}
+                error={null}
+                onClose={onClose}
+                // With one wallet (or none) there's nowhere to move money to:
+                // why the button stays grey, and the way on.
+                emptyMessage={
+                  tooFew && (
+                    <>
+                      {t("Moving money needs two wallets.")}{" "}
+                      {wallets.length === 1 && (
+                        <Link href="/balance/wallet?new=1" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
+                          {t("Add a wallet")}
+                        </Link>
+                      )}
+                    </>
+                  )
+                }
+              />
             </div>
 
             <Field
@@ -227,12 +238,12 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
                 from ? (
                   <>
                     <span className={cn("block", overdraws && "text-warning")}>
-                      {available > 0 ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(available, currency), wallet: from.name }) : t("{wallet} has {amount}", { wallet: from.name, amount: formatCurrency(available, currency) })}
+                      {available > 0 ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(available, currency), wallet: nameOf(from) }) : t("{wallet} has {amount}", { wallet: nameOf(from), amount: formatCurrency(available, currency) })}
                     </span>
                     {overdraws && (
                       <span className="mt-1 flex items-center gap-1.5 font-medium text-warning">
                         <TriangleAlert className="size-3.5 shrink-0" aria-hidden="true" />
-                        {t("This leaves {wallet} at {amount}.", { wallet: from.name, amount: formatCurrency(available - value, currency) })}
+                        {t("This leaves {wallet} at {amount}.", { wallet: nameOf(from), amount: formatCurrency(available - value, currency) })}
                       </span>
                     )}
                   </>
@@ -272,7 +283,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
+            <Button type="submit" variant="action" disabled={!valid || isPending || !online} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
               {value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency) }) : t("Move money")}
             </Button>

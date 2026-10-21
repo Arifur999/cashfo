@@ -1,4 +1,5 @@
 import type { Translate } from "@/lib/i18n/message";
+import type { Locale } from "@/lib/i18n/translate";
 import type { AccountLedger, AccountSummary, AccountType, EntryType, TransactionType } from "./api";
 import { formatDate } from "./date";
 import { isIsoDay } from "./dateRangePresets";
@@ -95,11 +96,34 @@ export function isSettledDay(value: string): boolean {
 }
 
 // The period a statement or a list covers, in words, for its printed copy.
-export function periodText(t: Translate, from?: string, to?: string): string {
-  if (from && to) return t("{from} to {to}", { from: formatDate(from), to: formatDate(to) });
-  if (from) return t("From {from}", { from: formatDate(from) });
-  if (to) return t("Up to {to}", { to: formatDate(to) });
+// The days are written in the reader's language ("১ অক্টো ২০২৬" in Bangla).
+export function periodText(t: Translate, from?: string, to?: string, locale: Locale = "en"): string {
+  const day = (value: string) => formatDate(value, undefined, locale);
+  if (from && to) return t("{from} to {to}", { from: day(from), to: day(to) });
+  if (from) return t("From {from}", { from: day(from) });
+  if (to) return t("Up to {to}", { to: day(to) });
   return t("All time");
+}
+
+// Whitespace, control characters and backslashes: browsers drop tabs and
+// newlines from a URL and read "\" as "/", so "/\t/evil.com" or "/\evil.com"
+// would lead to another site once followed.
+const UNSAFE_PATH_CHARS = /[\s\u0000-\u001f\u007f\\]/;
+
+// The page a Statement was opened from (?from=/savings-goals/overview), for
+// its Back link: a path on this site only, never another site's address.
+export function statementBackPath(value: unknown): string | null {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || UNSAFE_PATH_CHARS.test(value)) return null;
+  return value;
+}
+
+// What the Back link says: the page's name where it is known, else "Back".
+const BACK_LABELS: Record<string, string> = {
+  "/savings-goals/overview": "Back to Savings summary",
+};
+
+export function statementBackLabel(path: string): string {
+  return BACK_LABELS[path.split(/[?#]/)[0]] ?? "Back";
 }
 
 // A row's transaction page. `from` is the list it was opened from (a path on

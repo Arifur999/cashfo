@@ -1,6 +1,7 @@
 "use client";
 
-import { Printer, ScrollText } from "lucide-react";
+import { ArrowLeft, Printer, ScrollText } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useState } from "react";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
@@ -13,12 +14,12 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import { accountDisplayName } from "@/lib/customer/accountDisplay";
+import { accountDisplayName, balanceText } from "@/lib/customer/accountDisplay";
 import type { Account, AccountLedger, AccountSummary, LanguagePreference } from "@/lib/customer/api";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { isSettledDay, LEDGER_TYPE_TONE, ledgerDirection, periodText, readsAsMoney, type StatementLine, statementPage, transactionHref, voidedNet } from "@/lib/customer/ledger";
+import { isSettledDay, LEDGER_TYPE_TONE, ledgerDirection, periodText, readsAsMoney, statementBackLabel, type StatementLine, statementPage, transactionHref, voidedNet } from "@/lib/customer/ledger";
 import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { walletIcon, walletPalette } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
@@ -44,6 +45,9 @@ interface AccountLedgerPageClientProps {
   periodTo?: string;
   // Today in the platform timezone, for the printed copy.
   today: string;
+  // The page the statement was opened from (?from=, a path on this site),
+  // for a Back link to it: Savings summary's rows open their wallet here.
+  backHref?: string | null;
 }
 
 const PERIODS: { value: DateRangePreset; label: string }[] = [
@@ -60,11 +64,17 @@ const PERIODS: { value: DateRangePreset; label: string }[] = [
 const COLUMNS =
   "grid-cols-[36px_104px_96px_104px_minmax(0,1fr)_112px_112px_124px] min-w-240 print:min-w-0 print:grid-cols-[24px_76px_72px_64px_minmax(0,1fr)_88px_88px_96px] print:gap-x-2 print:text-caption";
 const ROW = "tabular-nums print:min-h-0 print:py-1";
+// One half of a void (the voided entry, or the reversal that undid it) is
+// set back as a whole: every cell fades, the chips and figures with it.
+// A faded cell is a layer of its own that would cover the row's stretched
+// link, so the link's cell is lifted above them (z-index works on a grid
+// item without moving the link's containing block off the row).
+const CANCELLED_ROW = "[&>[role=cell]:not([data-slot=list-row-actions])]:grayscale [&>[role=cell]:has([data-slot=list-row-link])]:z-1";
 
 // Statement: one account, the period, the equation from its opening balance
 // to its closing one, and every movement in between with a running balance,
 // 50 to a page.
-export function AccountLedgerPageClient({ wallets, others, account, ledger, summary, preferredLanguage, currency, accountId, range, customFrom, customTo, periodFrom, periodTo, today }: AccountLedgerPageClientProps) {
+export function AccountLedgerPageClient({ wallets, others, account, ledger, summary, preferredLanguage, currency, accountId, range, customFrom, customTo, periodFrom, periodTo, today, backHref }: AccountLedgerPageClientProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -126,7 +136,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
   const showTransfers = money || adjustment !== 0;
   // Four terms fit one line on a wide screen; five keep the grid.
   const oneLine = 3 + (showTransfers ? 1 : 0) + (residual !== 0 ? 1 : 0) <= 4;
-  const openingLabel = periodFrom ? t("Balance on {date}", { date: formatDate(periodFrom) }) : t("Opening balance");
+  const openingLabel = periodFrom ? t("Balance on {date}", { date: formatDate(periodFrom, undefined, locale) }) : t("Opening balance");
   const here = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
   const paged = ledger ? ledger.meta.totalPages > 1 : false;
 
@@ -151,6 +161,12 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
 
   return (
     <PageFrame className="gap-5">
+      {backHref && (
+        <Link href={backHref} className="-mb-2 inline-flex items-center gap-2 self-start text-small font-semibold text-emerald hover:text-emerald-hover print:hidden">
+          <ArrowLeft className="size-3.75" aria-hidden="true" />
+          {t(statementBackLabel(backHref))}
+        </Link>
+      )}
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Wallets")}`}
         title={t("Statement")}
@@ -170,7 +186,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
       {ready && (
         <p className="hidden text-small text-ink-2 print:block">
           <span className="font-semibold text-ink">{accountDisplayName(account, preferredLanguage)}</span>
-          {` · ${periodText(t, periodFrom, periodTo)} · ${t("Printed {date}", { date: formatDate(today) })}`}
+          {` · ${periodText(t, periodFrom, periodTo, locale)} · ${t("Printed {date}", { date: formatDate(today, undefined, locale) })}`}
           {paged && ` · ${t("Page {page} of {total}", { page: formatCount(ledger.meta.page, locale), total: formatCount(ledger.meta.totalPages, locale) })}`}
         </p>
       )}
@@ -184,7 +200,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
         </div>
         <div className="flex flex-col gap-2">
           <span className="text-small leading-[normal] font-medium text-ink-2">{t("Period")}</span>
-          <SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={setRange} label={t("Period")} size="lg" className="max-md:w-full max-md:overflow-x-auto" />
+          <SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={setRange} label={t("Period")} size="lg" className="max-md:grid max-md:w-full max-md:grid-cols-3" />
         </div>
         {range === "custom" && (
           // A line of its own, so the account field keeps its room.
@@ -232,7 +248,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                     <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", walletPalette(index).tile)}>{createElement(walletIcon(wallet), { "aria-hidden": true })}</span>
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className="truncate text-body leading-[normal] font-semibold text-ink">{accountDisplayName(wallet, preferredLanguage)}</span>
-                      <span className="text-caption leading-[normal] font-normal text-ink-muted tabular-nums">{formatCurrency(wallet.currentBalance, currency)}</span>
+                      <span className={cn("text-caption leading-[normal] font-normal tabular-nums", Number(wallet.currentBalance) < 0 ? "text-expense" : "text-ink-muted")}>{balanceText(wallet.currentBalance, currency)}</span>
                     </span>
                   </button>
                 ))}
@@ -244,7 +260,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
       ) : (
         <>
           <Card role="group" aria-label={t("From the opening balance to the closing balance")} className={cn("grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3", oneLine && "xl:flex xl:items-stretch xl:gap-3")}>
-            <EquationCell oneLine={oneLine} label={openingLabel} value={formatCurrency(ledger.balanceBroughtForward, currency)} />
+            <EquationCell oneLine={oneLine} label={openingLabel} value={balanceText(ledger.balanceBroughtForward, currency)} />
             {oneLine && <Operator>+</Operator>}
             <EquationCell oneLine={oneLine} op="+" spoken={t("plus@@equation")} label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={formatCurrency(summary.totalIn, currency)} className={money ? "text-income" : undefined} />
             {oneLine && <Operator>−</Operator>}
@@ -268,7 +284,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                 <span className="sr-only">{t("equals@@equation")} </span>
                 {t("Closing balance")}
               </span>
-              <span className={cn("text-ink tabular-nums wrap-anywhere", oneLine ? "text-h3 sm:text-h2 xl:text-h3 2xl:text-h2" : "text-h3 sm:text-h2")}>{formatCurrency(ledger.closingBalance, currency)}</span>
+              <span className={cn("text-ink tabular-nums wrap-anywhere", oneLine ? "text-h3 sm:text-h2 xl:text-h3 2xl:text-h2" : "text-h3 sm:text-h2")}>{balanceText(ledger.closingBalance, currency)}</span>
             </div>
           </Card>
 
@@ -295,7 +311,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
               <ListHeadCell align="end">{money ? t("Out") : t("Decrease@@statement")}</ListHeadCell>
               <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
             </ListHead>
-            <BalanceLine kind={lines.top.kind} {...lineText(lines.top)} value={formatCurrency(lines.top.balance, currency)} />
+            <BalanceLine kind={lines.top.kind} {...lineText(lines.top)} value={balanceText(lines.top.balance, currency)} />
             {ledger.entries.length === 0 && <ListEmpty title={t("No activity in this range.")} />}
             {ledger.entries.map((row, index) => {
               const direction = ledgerDirection(row.entryType, account.accountType);
@@ -319,9 +335,9 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                   </ListCell>
                 );
               return (
-                <ListRow key={row.entryId} columns={COLUMNS} muted={voided} className={ROW}>
+                <ListRow key={row.entryId} columns={COLUMNS} muted={voided} className={cn(ROW, voided && CANCELLED_ROW)}>
                   <ListCell className="text-ink-muted">{formatCount(lines.firstRow + index, locale)}</ListCell>
-                  <ListCell className="text-ink-2">{formatDate(row.date)}</ListCell>
+                  <ListCell className="text-ink-2">{formatDate(row.date, undefined, locale)}</ListCell>
                   <ListCell>
                     <Chip tone={LEDGER_TYPE_TONE[row.transactionType]} size="sm" className="font-semibold">
                       {t(TRANSACTION_TYPE_LABELS[row.transactionType])}
@@ -341,12 +357,12 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                   {amount("in")}
                   {amount("out")}
                   <ListCell align="end" className="font-semibold">
-                    {formatCurrency(row.runningBalance, currency)}
+                    {balanceText(row.runningBalance, currency)}
                   </ListCell>
                 </ListRow>
               );
             })}
-            <BalanceLine kind={lines.bottom.kind} {...lineText(lines.bottom)} value={formatCurrency(lines.bottom.balance, currency)} strong={lines.bottom.kind === "closing"} />
+            <BalanceLine kind={lines.bottom.kind} {...lineText(lines.bottom)} value={balanceText(lines.bottom.balance, currency)} strong={lines.bottom.kind === "closing"} />
           </ListCard>
         </>
       )}

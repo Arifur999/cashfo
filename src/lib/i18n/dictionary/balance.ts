@@ -138,7 +138,6 @@ export const balanceDictionary: Record<string, string> = {
   "From → To": "থেকে → যেখানে",
   // A row's link, read out instead of the arrow between the two wallets.
   "{from} to {to}, {amount}": "{from} থেকে {to}, {amount}",
-  "Newest first": "নতুনটি আগে",
   "Void transfer": "ট্রান্সফার বাতিল করুন",
   // In place of Void on a savings goal's deposit: Savings Goals undoes it.
   "Kept by the savings goal": "সঞ্চয় লক্ষ্যে রাখা আছে",
@@ -208,6 +207,8 @@ export const balanceDictionary: Record<string, string> = {
   // "Balance"/"Previous"/"Next" reuse shared.ts's keys; "No activity in this
   // range." reuses reports.ts's key.
   "Back to Chart of Accounts": "হিসাবচিত্রে ফিরে যান",
+  // The Statement opened from Savings summary (?from=/savings-goals/overview).
+  "Back to Savings summary": "সঞ্চয়ের সারসংক্ষেপে ফিরে যান",
   "Money In": "জমা",
   "Money Out": "উত্তোলন",
   "All time": "সর্বসময়",
