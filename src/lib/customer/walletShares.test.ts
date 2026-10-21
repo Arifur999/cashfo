@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { walletShares } from "./walletShares";
+import { shareBarLabel, sharePercent, walletShares } from "./walletShares";
 import { WALLET_PALETTES } from "./walletVisuals";
 
 const wallet = (id: string, currentBalance: string, status = "ACTIVE") => ({ id, name: id, currentBalance, status });
@@ -23,5 +23,27 @@ describe("walletShares", () => {
   it("is empty when nothing is held", () => {
     expect(walletShares([wallet("a", "0")])).toEqual([]);
     expect(walletShares([])).toEqual([]);
+  });
+});
+
+describe("sharePercent", () => {
+  it("rounds to a whole percent in the reader's digits", () => {
+    expect(sharePercent(44.6, "en")).toBe("45%");
+    expect(sharePercent(44.6, "bn")).toBe("৪৫%");
+  });
+});
+
+describe("shareBarLabel", () => {
+  it("names every slice with its share", () => {
+    const slices = [
+      { name: "Cash", share: 45.2 },
+      { name: "bKash", share: 30 },
+    ];
+    expect(shareBarLabel("Share of balance by wallet", slices, "en")).toBe("Share of balance by wallet: Cash 45%, bKash 30%");
+    expect(shareBarLabel("ওয়ালেট অনুযায়ী ব্যালেন্সের ভাগ", slices, "bn")).toBe("ওয়ালেট অনুযায়ী ব্যালেন্সের ভাগ: Cash ৪৫%, bKash ৩০%");
+  });
+
+  it("is just the name when nothing is held", () => {
+    expect(shareBarLabel("Share of balance by wallet", [], "en")).toBe("Share of balance by wallet");
   });
 });

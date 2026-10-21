@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Banknote, Landmark, Smartphone } from "lucide-react";
-import { maskAccountNumber, WALLET_PALETTES, walletIcon, walletPalette, walletType } from "./walletVisuals";
+import { Banknote, Landmark, PiggyBank, Smartphone } from "lucide-react";
+import { ACCOUNT_TYPE_ICONS, accountIcon, maskAccountNumber, WALLET_PALETTES, walletIcon, walletPalette, walletType } from "./walletVisuals";
 
 describe("walletType", () => {
   it("reads cash and mfs from the subtype", () => {
@@ -18,6 +18,18 @@ describe("walletType", () => {
     expect(walletIcon({ accountSubtype: "cash" })).toBe(Banknote);
     expect(walletIcon({ accountSubtype: "bank" })).toBe(Landmark);
     expect(walletIcon({ accountSubtype: "mfs" })).toBe(Smartphone);
+  });
+});
+
+describe("accountIcon", () => {
+  it("draws a savings wallet as a piggy bank", () => {
+    expect(accountIcon({ accountType: "ASSET", accountSubtype: "savings" })).toBe(PiggyBank);
+  });
+
+  it("gives every other account its type's icon, each type a different one", () => {
+    expect(accountIcon({ accountType: "EXPENSE", accountSubtype: null })).toBe(ACCOUNT_TYPE_ICONS.EXPENSE);
+    expect(accountIcon({ accountType: "EQUITY", accountSubtype: null })).toBe(ACCOUNT_TYPE_ICONS.EQUITY);
+    expect(new Set(Object.values(ACCOUNT_TYPE_ICONS)).size).toBe(5);
   });
 });
 

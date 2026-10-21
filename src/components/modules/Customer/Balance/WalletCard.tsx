@@ -3,6 +3,7 @@
 import { Archive, ArchiveRestore, ArrowRight, ChevronRight, Ellipsis, Pencil, PiggyBank, ScrollText, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { createElement } from "react";
+import Loader from "@/components/shared/Loader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
@@ -22,6 +23,9 @@ interface WalletCardProps {
   onRemove: () => void;
   // A savings wallet: the violet / teal cards, no kind chip.
   savings?: boolean;
+  // An archive, unarchive or remove is on its way: the card dims and its
+  // menu waits.
+  busy?: boolean;
 }
 
 const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75";
@@ -31,19 +35,21 @@ const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 te
 // Phones get the shorter card from the phone board: the whole card opens
 // the statement, a chevron (or the actions menu, for a manager) on the
 // right, and the board's natural line heights.
-export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggleArchive, onRemove, savings = false }: WalletCardProps) {
+export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggleArchive, onRemove, savings = false, busy = false }: WalletCardProps) {
   const { t } = useLocale();
   const palette = savings ? savingsPalette(index) : walletPalette(index);
   const meta = savings ? { label: "Savings wallet", icon: PiggyBank } : WALLET_TYPE_META[walletType(wallet)];
   const archived = wallet.status === "ARCHIVED";
-  const ledgerHref = `/balance/ledger?accountId=${wallet.id}`;
+  const statementHref = `/balance/ledger?accountId=${wallet.id}`;
 
   return (
     <div
+      aria-busy={busy || undefined}
       className={cn(
-        "relative flex flex-col gap-3 overflow-hidden rounded-lg p-4 text-white md:h-50 md:justify-between md:gap-0 md:rounded-xl md:p-5 md:shadow-[0_10px_28px_-8px_rgba(11,61,46,0.18),0_2px_6px_rgba(14,26,22,0.06)]",
+        "relative flex flex-col gap-3 overflow-hidden rounded-lg p-4 text-white transition-opacity md:min-h-50 md:justify-between md:gap-0 md:rounded-xl md:p-5 md:shadow-float",
         palette.gradient,
         archived && "saturate-50",
+        busy && "opacity-70",
       )}
     >
       <span aria-hidden="true" className="absolute -top-12.5 -right-10 size-35 rounded-full border border-white/16 md:-top-22.5 md:-right-17.5 md:size-55 md:border-0 md:bg-white/7" />
@@ -54,22 +60,24 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
           <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/14 [&_svg]:size-4.5">{createElement(meta.icon, { "aria-hidden": true })}</span>
           <span className="flex min-w-0 flex-col leading-[normal]">
             <span className="truncate text-body leading-[normal] font-bold">{wallet.name}</span>
-            <span className="text-caption leading-[normal] font-normal text-white/75">{archived ? t("Archived") : t(meta.label)}</span>
+            <span className="text-caption leading-[normal] font-normal text-white/75">{archived ? t("Archived@@status") : t(meta.label)}</span>
           </span>
         </span>
         <span className="hidden items-center gap-2 rounded-full bg-white/16 px-3 py-1 text-caption font-semibold md:inline-flex [&_svg]:size-3.5">
           {createElement(meta.icon, { "aria-hidden": true })}
           {t(meta.label)}
-          {archived && ` · ${t("Archived")}`}
+          {archived && ` · ${t("Archived@@status")}`}
         </span>
         {!canManage && <ChevronRight className="size-4.5 shrink-0 text-white/70 md:hidden" aria-hidden="true" />}
         {canManage && (
           <DropdownMenu>
+            {/* 44px on phones, where a near miss would open the statement under it. */}
             <DropdownMenuTrigger
-              aria-label={`${t("Actions for")} ${wallet.name}`}
-              className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-md bg-white/12 text-white hover:bg-white/20 data-open:bg-white/28 max-md:bg-transparent max-md:text-white/70"
+              disabled={busy}
+              aria-label={t("Actions for {name}", { name: wallet.name })}
+              className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-md bg-white/12 text-white hover:bg-white/20 disabled:cursor-default data-open:bg-white/28 max-md:-mr-2 max-md:size-11 max-md:bg-transparent max-md:text-white/70"
             >
-              <Ellipsis className="size-4.5" aria-hidden="true" />
+              {busy ? <Loader size={16} onDark label={t("Loading...")} /> : <Ellipsis className="size-4.5" aria-hidden="true" />}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={6} className="w-49 rounded-md border border-line bg-surface p-2 shadow-overlay ring-0">
               <DropdownMenuItem onSelect={onEdit} className={MENU_ITEM}>
@@ -77,9 +85,9 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
                 {t("Edit wallet")}
               </DropdownMenuItem>
               <DropdownMenuItem asChild className={MENU_ITEM}>
-                <Link href={ledgerHref}>
+                <Link href={statementHref}>
                   <ScrollText aria-hidden="true" />
-                  {t("View ledger")}
+                  {t("View statement")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onToggleArchive} className={MENU_ITEM}>
@@ -101,22 +109,25 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
         <span className="text-small tracking-[0.08em] text-white/75 tabular-nums">{maskAccountNumber(wallet.accountNumber) ?? t("No account number")}</span>
       </div>
 
-      <div className="relative flex items-end justify-between gap-3">
+      {/* The figure is never cut short: when it and the link don't fit on
+          one line, the link wraps under it. */}
+      <div className="relative flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 flex-col gap-3 md:gap-0.5">
           <span className="hidden text-caption font-normal text-white/78 md:block">{savings ? t("Balance") : t("Current balance")}</span>
-          <span className="truncate text-h1 font-extrabold tabular-nums max-md:leading-[normal] md:font-bold">{formatCurrency(wallet.currentBalance, currency)}</span>
+          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-h2 md:font-bold xl:text-h1">{formatCurrency(wallet.currentBalance, currency)}</span>
           <span className="text-caption font-normal text-white/78 tabular-nums max-md:leading-[normal]">
             {t("Opening")} {formatCurrency(wallet.openingBalance, currency)}
           </span>
         </div>
-        <Link href={ledgerHref} className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/16 px-3 py-2 text-caption font-semibold text-white hover:bg-white/24 max-md:hidden">
-          {t("Ledger")}
+        <Link href={statementHref} className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/16 px-3 py-2 text-caption font-semibold text-white hover:bg-white/24 max-md:hidden">
+          {t("Statement")}
           <ArrowRight className="size-3" strokeWidth={2.5} aria-hidden="true" />
         </Link>
       </div>
 
-      {/* Phones: the whole card opens the statement; the menu sits above. */}
-      <Link href={ledgerHref} aria-label={`${wallet.name}: ${t("View ledger")}`} className="absolute inset-0 md:hidden" />
+      {/* Phones: the whole card opens the statement; the menu sits above.
+          The ring is drawn inside, where the card's rounded clip can't cut it. */}
+      <Link href={statementHref} aria-label={t("View the statement of {name}", { name: wallet.name })} className="absolute inset-0 rounded-lg focus-visible:-outline-offset-2 md:hidden" />
     </div>
   );
 }
