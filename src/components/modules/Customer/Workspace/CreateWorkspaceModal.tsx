@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { createBusinessAction, getBusinessLimitsAction } from "@/lib/customer/businessActions";
 import type { BusinessLimits, WorkspaceListItem } from "@/lib/customer/api";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { formatCount } from "@/lib/i18n/digits";
 
 interface CreateWorkspaceModalProps {
   open: boolean;
@@ -31,7 +32,7 @@ interface CreateWorkspaceModalProps {
 // Create stays off while the plan has no room for another one.
 export function CreateWorkspaceModal({ open, onClose, onCreated, offerOpen }: CreateWorkspaceModalProps) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -108,7 +109,7 @@ export function CreateWorkspaceModal({ open, onClose, onCreated, offerOpen }: Cr
               <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
               {limits && limits.maxBusinessWorkspaces === 0
                 ? t("Your current plan does not include business workspaces. Upgrade to add one.")
-                : `${t("Your plan allows up to")} ${limits?.maxBusinessWorkspaces} ${t("business workspace(s). Upgrade to add more.")}`}
+                : t("Your plan allows up to {count} business workspaces. Upgrade to add more.", { count: formatCount(limits?.maxBusinessWorkspaces ?? 0, locale) })}
             </p>
           )}
 

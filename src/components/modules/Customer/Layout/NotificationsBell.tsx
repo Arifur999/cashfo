@@ -16,6 +16,7 @@ import { notificationTime, notificationView, type NotificationKind } from "@/lib
 import { getNotificationsAction, markAllNotificationsReadAction, markNotificationReadAction } from "@/lib/customer/notificationsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { formatCount } from "@/lib/i18n/digits";
 
 const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
   budget: { icon: ChartPie, tone: "warning" },
@@ -134,13 +135,13 @@ export function NotificationsBell() {
         {items.length > 0 && (
           <div className="px-4 pb-3">
             <SegmentedControl
-              label="Show"
+              label={t("Show")}
               value={filter}
               onChange={setFilter}
               className="[&>button]:h-7.5"
               options={[
                 { value: "all", label: t("All") },
-                { value: "unread", label: unread > 0 ? `${t("Unread")} ${unread}` : t("Unread") },
+                { value: "unread", label: unread > 0 ? `${t("Unread")} ${formatCount(unread, locale)}` : t("Unread") },
               ]}
             />
           </div>

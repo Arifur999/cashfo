@@ -35,8 +35,7 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "New Business Workspace": "নতুন ব্যবসায়িক ওয়ার্কস্পেস",
   "Your current plan does not include business workspaces. Upgrade to add one.":
     "আপনার বর্তমান প্ল্যানে ব্যবসায়িক ওয়ার্কস্পেস অন্তর্ভুক্ত নেই। একটি যোগ করতে আপগ্রেড করুন।",
-  "Your plan allows up to": "আপনার প্ল্যান সর্বোচ্চ",
-  "business workspace(s). Upgrade to add more.": "টি ব্যবসায়িক ওয়ার্কস্পেসের অনুমতি দেয়। আরও যোগ করতে আপগ্রেড করুন।",
+  "Your plan allows up to {count} business workspaces. Upgrade to add more.": "আপনার প্ল্যান সর্বোচ্চ {count}টি ব্যবসায়িক ওয়ার্কস্পেসের অনুমতি দেয়। আরও যোগ করতে আপগ্রেড করুন।",
   "e.g. My Shop": "যেমন: আমার দোকান",
   PIN: "পিন",
   "Optional -- set a PIN to require it when switching into this workspace.":
