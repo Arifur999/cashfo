@@ -6,8 +6,7 @@ import Button from "@/components/smartly/Button";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { AccountGroup, LanguagePreference } from "@/lib/customer/api";
-import { accountsCsvRows, booksBalance, flattenAccounts, hasAccountCodes, type YearRow } from "@/lib/customer/booksDisplay";
-import { formatDate } from "@/lib/customer/date";
+import { accountsCsvRows, booksBalance, booksDate, flattenAccounts, hasAccountCodes, type YearRow } from "@/lib/customer/booksDisplay";
 import { downloadCsv } from "@/lib/download";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { toCsv } from "@/lib/table/csv";
@@ -32,13 +31,13 @@ interface AccountsPageClientProps {
 // Books › Accounts: whether the books balance, every account by group, and
 // what came in and went out this year.
 export function AccountsPageClient({ businessId, businessName, groups, income, expense, today, canManage, preferredLanguage, currency }: AccountsPageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [adding, setAdding] = useState(false);
   const accounts = groups.flatMap((group) => flattenAccounts(group.accounts).map(({ account }) => account));
-  const since = `${t("1 Jan to")} ${formatDate(today, "d MMM yyyy")}`;
+  const since = t("1 Jan to {date}", { date: booksDate(today, locale, { year: "always" }) });
 
   function exportCsv() {
-    downloadCsv(toCsv([t("Code"), t("Account"), t("Type"), t("Kind"), t("Balance")], accountsCsvRows(groups)), `accounts-${today}`);
+    downloadCsv(toCsv([t("Code"), t("Account"), t("Type"), t("Kind@@account"), t("Balance")], accountsCsvRows(groups, t, preferredLanguage)), `accounts-${today}`);
   }
 
   return (
@@ -47,7 +46,7 @@ export function AccountsPageClient({ businessId, businessName, groups, income, e
         eyebrow={t("Books")}
         tone="neutral"
         title={t("Accounts")}
-        description={`${t("Every account in")} ${businessName}, ${t("grouped the way an accountant would read them.")}`}
+        description={t("Every account in {name}, grouped the way an accountant would read them.", { name: businessName })}
         looseDescription
         actions={
           <>
@@ -66,8 +65,8 @@ export function AccountsPageClient({ businessId, businessName, groups, income, e
       />
 
       <BooksBalanceCard balance={booksBalance(groups)} currency={currency} />
-      <AccountsTable groups={groups} preferredLanguage={preferredLanguage} currency={currency} hasCodes={hasAccountCodes(groups)} />
-      <div className="grid gap-4 lg:grid-cols-2">
+      <AccountsTable groups={groups} preferredLanguage={preferredLanguage} currency={currency} hasCodes={hasAccountCodes(groups)} canManage={canManage} onAdd={() => setAdding(true)} />
+      <div className="grid items-start gap-4 lg:grid-cols-2">
         <YearSummaryCard title={t("Income this year")} description={since} rows={income.rows} total={income.total} currency={currency} />
         <YearSummaryCard title={t("Expenses this year")} description={since} rows={expense.rows} total={expense.total} currency={currency} />
       </div>

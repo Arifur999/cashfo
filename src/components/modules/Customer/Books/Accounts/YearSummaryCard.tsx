@@ -1,6 +1,6 @@
 "use client";
 
-import Card from "@/components/smartly/Card";
+import { ListCard, ListCell, ListEmpty, ListRow, ListTotalRow } from "@/components/smartly/list";
 import type { YearRow } from "@/lib/customer/booksDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -13,33 +13,28 @@ interface YearSummaryCardProps {
   currency: string;
 }
 
-// This year's income or expenses by account, largest first, with the total.
+// This year's income or expenses by account, largest first, the amounts
+// lined up on the right and the total on the table's own band.
 export function YearSummaryCard({ title, description, rows, total, currency }: YearSummaryCardProps) {
   const { t } = useLocale();
-  const line = "grid grid-cols-[minmax(0,1fr)_auto] gap-4 py-3 text-body sm:grid-cols-[200px_minmax(0,1fr)]";
 
   return (
-    <Card className="flex flex-col gap-2">
-      <div className="flex flex-col gap-0.5">
-        <h3 className="text-h3 text-ink">{title}</h3>
-        <span className="text-small text-ink-muted">{description}</span>
-      </div>
+    <ListCard label={title} title={title} description={description} footer={null}>
       {rows.length === 0 ? (
-        <p className="py-3 text-small text-ink-muted">{t("Nothing posted yet this year.")}</p>
+        <ListEmpty title={t("Nothing posted yet this year.")} />
       ) : (
-        <div className="flex flex-col">
+        <>
           {rows.map((row) => (
-            <div key={row.name} className={`${line} border-b border-divider`}>
-              <span className="truncate text-ink-muted">{row.name}</span>
-              <span className="tabular-nums text-ink">{formatCurrency(row.total, currency)}</span>
-            </div>
+            <ListRow key={row.id} density="dense">
+              <ListCell className="truncate text-ink-2">{row.name}</ListCell>
+              <ListCell align="end" className="text-ink tabular-nums whitespace-nowrap">
+                {formatCurrency(row.total, currency)}
+              </ListCell>
+            </ListRow>
           ))}
-          <div className={line}>
-            <b className="text-ink">{t("Total")}</b>
-            <b className="tabular-nums text-ink">{formatCurrency(total, currency)}</b>
-          </div>
-        </div>
+          <ListTotalRow label={t("Total")} value={formatCurrency(total, currency)} />
+        </>
       )}
-    </Card>
+    </ListCard>
   );
 }

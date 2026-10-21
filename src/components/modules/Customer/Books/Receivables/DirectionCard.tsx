@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
-import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
+import { ListCard, ListCell, ListEmpty, ListGroupRow, ListRow, ListRowLink } from "@/components/smartly/list";
 import type { AgingReport, OverdueRow } from "@/lib/customer/api";
-import { agingShares, agingTotal, lateByContact } from "@/lib/customer/booksDisplay";
+import { agingShares, agingTotal, booksDate, lateByContact } from "@/lib/customer/booksDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AgingBar, AgingLegend } from "../shared/Aging";
@@ -17,64 +16,77 @@ interface DirectionCardProps {
   aging: AgingReport;
   overdue: OverdueRow[];
   currency: string;
+  today: string;
 }
 
 // One side of the ledger: everything customers owe you (or you owe
-// suppliers), by age, with who is more than 30 days late.
-export function DirectionCard({ direction, aging, overdue, currency }: DirectionCardProps) {
-  const { t } = useLocale();
+// suppliers) on credit sales or purchases, by age, with who is more than
+// 30 days late and by how much of it.
+export function DirectionCard({ direction, aging, overdue, currency, today }: DirectionCardProps) {
+  const { t, locale } = useLocale();
   const receivable = direction === "RECEIVABLE";
   const shares = agingShares(aging);
   const total = agingTotal(aging);
   const late = lateByContact(overdue);
-  const over30 = late.filter((row) => row.daysLate > 30);
+  // Only what is past 30 days counts on this list, not a contact's whole overdue.
+  const over30 = lateByContact(overdue, 30);
   const people = aging.contacts.length;
+  const count = { count: formatCount(people, locale) };
+  const title = t(receivable ? "Customers owe you" : "You owe suppliers");
 
   return (
-    <Card className="flex min-w-0 flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <span className="flex flex-col gap-0.5">
-          <h3 className="text-h3 text-ink">{t(receivable ? "Customers owe you" : "You owe suppliers")}</h3>
-          <span className="text-small text-ink-muted">
-            {t(receivable ? "Receivables" : "Payables")} · {people} {t(receivable ? (people === 1 ? "customer" : "customers") : people === 1 ? "supplier" : "suppliers")}
+    <ListCard
+      label={t(receivable ? "Customers more than 30 days late" : "Suppliers more than 30 days late")}
+      className="min-w-0"
+      header={
+        <div className="flex flex-col gap-4 border-b border-line px-4 py-4 md:px-6 md:py-5">
+          <div className="flex items-start justify-between gap-3">
+            <span className="flex flex-col gap-0.5">
+              <h2 className="text-h3 text-ink">{title}</h2>
+              <span className="text-small text-ink-muted">{receivable ? t(people === 1 ? "Receivables · {count} customer" : "Receivables · {count} customers", count) : t(people === 1 ? "Payables · {count} supplier" : "Payables · {count} suppliers", count)}</span>
+            </span>
+            {late.length > 0 && (
+              <Chip tone="warning" size="md">
+                {t("{count} overdue", { count: formatCount(late.length, locale) })}
+              </Chip>
+            )}
+          </div>
+          <span className="flex flex-col gap-0.5">
+            <span className={cn("text-display tabular-nums wrap-anywhere", receivable ? "text-income" : "text-expense")}>{formatCurrency(total, currency)}</span>
+            {/* What was owed from before Books is on no invoice, so the
+                aging leaves it out; the contact's own page shows it. */}
+            <span className="text-caption text-ink-muted">{t(receivable ? "On credit sales" : "On credit purchases")}</span>
           </span>
-        </span>
-        {late.length > 0 && (
-          <Chip tone="warning" size="md">
-            {late.length} {t("overdue")}
-          </Chip>
-        )}
-      </div>
-      <span className={cn("text-display tabular-nums", receivable ? "text-income" : "text-expense")}>{formatCurrency(total, currency)}</span>
-      {total > 0 ? (
-        <>
-          <AgingBar shares={shares} />
-          <AgingLegend shares={shares} currency={currency} variant="tiles" />
-        </>
-      ) : (
-        <p className="text-small text-ink-muted">{t(receivable ? "No customer owes you anything right now." : "You owe no supplier anything right now.")}</p>
-      )}
-      <div className="flex flex-col">
-        <span className="pb-1 text-small font-semibold text-ink-2">{t("Over 30 days")}</span>
-        {over30.length === 0 && <p className="border-t border-divider py-3 text-small text-ink-muted">{t("Nothing is more than 30 days late.")}</p>}
-        {over30.map((row) => (
-          <Link key={row.contactId} href={`/contacts/${row.contactId}`} className="-mx-2 flex items-center gap-3 rounded-md border-t border-divider px-2 py-3 transition-colors hover:bg-hover">
+          {total > 0 ? (
+            <>
+              <AgingBar shares={shares} />
+              <AgingLegend shares={shares} currency={currency} variant="tiles" />
+            </>
+          ) : (
+            <p className="text-small text-ink-muted">{t(receivable ? "No customer owes you anything right now." : "You owe no supplier anything right now.")}</p>
+          )}
+        </div>
+      }
+    >
+      <ListGroupRow label={<h3 className="text-small font-semibold text-ink-2">{t("Over 30 days")}</h3>} />
+      {over30.length === 0 && <ListEmpty title={t("Nothing is more than 30 days late.")} className="py-6" />}
+      {over30.map((row) => (
+        <ListRow key={row.contactId}>
+          <ListCell className="flex min-w-0 items-center gap-3">
             <PersonAvatar name={row.contactName} size={36} coloured />
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-body font-semibold text-ink">{row.contactName}</span>
-              <span className="truncate text-small text-ink-muted">
-                {t("Oldest:")} {row.oldestDescription ?? t(receivable ? "a sale" : "a purchase")}, {formatDate(row.oldestDueDate, "d MMM")}
-              </span>
+            <span className="flex min-w-0 flex-col">
+              <ListRowLink href={`/contacts/${row.contactId}`} className="truncate text-body font-semibold text-ink">
+                {row.contactName}
+              </ListRowLink>
+              <span className="truncate text-small text-ink-muted">{t("Oldest: {what}, {date}", { what: row.oldestDescription ?? t(receivable ? "a sale" : "a purchase"), date: booksDate(row.oldestDueDate, locale, { today }) })}</span>
             </span>
-            <span className="flex shrink-0 flex-col items-end">
-              <b className="text-ink tabular-nums">{formatCurrency(row.amount, currency)}</b>
-              <span className={cn("text-caption font-semibold", row.daysLate > 60 ? "text-expense" : "text-warning")}>
-                {row.daysLate} {t("days late")}
-              </span>
-            </span>
-          </Link>
-        ))}
-      </div>
-    </Card>
+          </ListCell>
+          <ListCell align="end" className="flex shrink-0 flex-col items-end">
+            <b className="text-ink tabular-nums whitespace-nowrap">{formatCurrency(row.amount, currency)}</b>
+            <span className={cn("text-caption font-semibold whitespace-nowrap", row.daysLate > 60 ? "text-expense" : "text-warning")}>{t("{count} days late", { count: formatCount(row.daysLate, locale) })}</span>
+          </ListCell>
+        </ListRow>
+      ))}
+    </ListCard>
   );
 }

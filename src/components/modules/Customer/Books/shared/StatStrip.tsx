@@ -13,18 +13,22 @@ const TONE = { neutral: "text-ink", income: "text-income", expense: "text-expens
 
 interface StatStripProps {
   stats: Stat[];
+  // The figures are being read again (another period): set back until then.
+  busy?: boolean;
   className?: string;
 }
 
-// Four figures side by side in one card, divided by hairlines: an account's
-// opening, in, out and closing; what customers owe and what you owe.
-export function StatStrip({ stats, className }: StatStripProps) {
+// Four figures in one card, divided by hairlines: an account's opening, in,
+// out and closing; what customers owe and what you owe. Two by two until
+// the content is wide enough (xl) for four lakh-sized figures side by side;
+// a figure too long for its cell wraps rather than being cut off.
+export function StatStrip({ stats, busy = false, className }: StatStripProps) {
   return (
-    <Card padding="none" className={cn("grid grid-cols-2 lg:grid-cols-4", className)}>
+    <Card padding="none" aria-busy={busy || undefined} className={cn("grid grid-cols-2 transition-opacity xl:grid-cols-4", busy && "opacity-60", className)}>
       {stats.map((stat, index) => (
-        <div key={index} className={cn("flex min-w-0 flex-col gap-1 px-4 py-3 lg:px-5 lg:py-4", index % 2 === 1 && "border-l border-line", index >= 2 && "border-t border-line lg:border-t-0", index > 0 && "lg:border-l lg:border-line")}>
+        <div key={index} className={cn("flex min-w-0 flex-col gap-1 px-4 py-3 lg:px-5 lg:py-4", index % 2 === 1 && "border-l border-line", index >= 2 && "border-t border-line xl:border-t-0", index > 0 && "xl:border-l xl:border-line")}>
           <span className="text-small text-ink-muted">{stat.label}</span>
-          <span className={cn("truncate text-h3 tabular-nums lg:text-h2", TONE[stat.tone ?? "neutral"])}>{stat.value}</span>
+          <span className={cn("text-h3 tabular-nums wrap-anywhere md:text-h2", TONE[stat.tone ?? "neutral"])}>{stat.value}</span>
           {stat.note && <span className="text-caption text-ink-muted">{stat.note}</span>}
         </div>
       ))}

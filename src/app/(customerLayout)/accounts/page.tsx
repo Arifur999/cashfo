@@ -1,8 +1,7 @@
 import { AccountsPageClient } from "@/components/modules/Customer/Books/Accounts/AccountsPageClient";
-import { displayLanguage } from "@/lib/customer/accountDisplay";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import { getAccounts, getAccountSummary } from "@/lib/customer/accounts";
 import type { AccountGroup, AccountType, LanguagePreference } from "@/lib/customer/api";
-import { accountDisplayName } from "@/lib/customer/accountDisplay";
 import { flattenAccounts, groupOf, yearRows } from "@/lib/customer/booksDisplay";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { requireBusinessWorkspace } from "@/lib/customer/requireBusinessWorkspace";
@@ -11,11 +10,12 @@ import { getLocale } from "@/lib/i18n/locale";
 
 export const generateMetadata = () => customerPageMetadata("/accounts");
 
-// What moved through each income or expense account this year.
+// What moved through each income or expense account this year. One read per
+// account until the API can total them all at once.
 async function yearByAccount(businessId: string, groups: AccountGroup[], type: AccountType, dateFrom: string, dateTo: string, language: LanguagePreference) {
   const accounts = flattenAccounts(groupOf(groups, type)).map((row) => row.account);
   const summaries = await Promise.all(accounts.map((account) => getAccountSummary(businessId, account.id, { dateFrom, dateTo })));
-  return yearRows(accounts.map((account, index) => ({ name: accountDisplayName(account, language), totalIn: summaries[index].totalIn, totalOut: summaries[index].totalOut })));
+  return yearRows(accounts.map((account, index) => ({ id: account.id, name: accountDisplayName(account, language), totalIn: summaries[index].totalIn, totalOut: summaries[index].totalOut })));
 }
 
 // Books › Accounts: the chart of accounts with this year's income and
