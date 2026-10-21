@@ -1,14 +1,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import PlanChipCell from "@/components/shared/cell/PlanChipCell";
-import { Button } from "@/components/ui/button";
 import RelativeTime from "@/components/shared/RelativeTime";
+import T from "@/components/shared/T";
+import Button from "@/components/smartly/Button";
 import { formatDate } from "@/lib/date";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { rolloutLabel } from "@/lib/featureFlags";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { IFeatureFlag } from "@/types/featureFlag.types";
 import FeatureFlagSwitch from "./FeatureFlagSwitch";
-import T from "@/components/shared/T";
 
 interface FeatureFlagColumnsOptions {
   planNames: Map<string, string>;
@@ -18,6 +18,32 @@ interface FeatureFlagColumnsOptions {
 
 const targetsOf = (flag: IFeatureFlag, planNames: Map<string, string>) =>
   flag.targetPlanIds.length === 0 ? ["All plans"] : flag.targetPlanIds.map((id) => planNames.get(id) ?? "Removed plan");
+
+// What it is, and what switching it changes in the app -- or that nothing
+// reads it yet, so switching it changes nothing.
+const NameCell = ({ flag }: { flag: IFeatureFlag }) => {
+  const { translate } = useLocale();
+  return (
+    <span className="flex max-w-md min-w-0 flex-col gap-0.5">
+      <span className="flex flex-wrap items-center gap-2">
+        <b className="font-semibold text-ink">{flag.name}</b>
+        <code className="rounded-sm bg-surface-sunken px-2 font-mono text-caption text-ink-2">{flag.key}</code>
+      </span>
+      {flag.description && (
+        <span className="truncate text-small text-ink-muted" title={flag.description}>
+          {flag.description}
+        </span>
+      )}
+      {flag.usedFor ? (
+        <span className="text-caption text-ink-2">{translate("In the app: {usedFor}", { usedFor: translate(flag.usedFor) })}</span>
+      ) : (
+        <span className="text-caption font-semibold text-warning">
+          <T>Not used by the app yet</T>
+        </span>
+      )}
+    </span>
+  );
+};
 
 // How many people get it, with its bar, in the reader's language.
 const RolloutCell = ({ flag }: { flag: IFeatureFlag }) => {
@@ -44,31 +70,33 @@ const TargetsCell = ({ flag, planNames }: { flag: IFeatureFlag; planNames: Map<s
   );
 };
 
+// "Rollout", named for its row: it changes who gets the flag, not its name.
+const RolloutButton = ({ flag, onEdit }: { flag: IFeatureFlag; onEdit: (flag: IFeatureFlag) => void }) => {
+  const { translate } = useLocale();
+  return (
+    <span className="flex justify-end">
+      <Button variant="secondary" size="sm" aria-label={translate("Edit rollout for {name}", { name: flag.name })} onClick={() => onEdit(flag)}>
+        <T>Rollout</T>
+      </Button>
+    </span>
+  );
+};
+
 // The design's flag list: what it is, its switch, how many people get it,
-// on which plans, who changed it last, and Edit.
+// on which plans, who changed it last, and its rollout.
 export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: FeatureFlagColumnsOptions): ColumnDef<IFeatureFlag>[] => [
   {
     id: "name",
     accessorKey: "name",
     header: "Flag",
-    cell: ({ row }) => (
-      <span className="flex max-w-md min-w-0 flex-col gap-0.5">
-        <span className="flex flex-wrap items-center gap-2">
-          <b className="font-semibold text-ink">{row.original.name}</b>
-          <code className="rounded-sm bg-surface-sunken px-2 font-mono text-caption text-ink-2">{row.original.key}</code>
-        </span>
-        {row.original.description && <span className="truncate text-small text-ink-muted">{row.original.description}</span>}
-        {/* A key no code reads yet: switching it changes nothing. */}
-        {!row.original.usedFor && <span className="text-caption font-semibold text-warning"><T>Not used by the app yet</T></span>}
-      </span>
-    ),
+    cell: ({ row }) => <NameCell flag={row.original} />,
     meta: { exportValue: (row) => `${row.name} (${row.key})` },
   },
   {
     id: "isEnabled",
     accessorFn: (row) => (row.isEnabled ? "On" : "Off"),
     header: "On",
-    cell: ({ row }) => <FeatureFlagSwitch flag={row.original} />,
+    cell: ({ row }) => <FeatureFlagSwitch flag={row.original} targets={targetsOf(row.original, planNames)} />,
     meta: { width: 64 },
   },
   {
@@ -102,22 +130,14 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
   },
   {
     id: "edit",
-    header: () => <span className="sr-only"><T>Edit</T></span>,
-    cell: ({ row }) => (
-      <span className="flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 rounded-md border-line-strong bg-surface px-3 text-small font-semibold text-ink hover:bg-surface-sunken"
-          onClick={() => onEdit(row.original)}
-        >
-          <T>Edit</T>
-        </Button>
+    header: () => (
+      <span className="sr-only">
+        <T>Rollout</T>
       </span>
     ),
+    cell: ({ row }) => <RolloutButton flag={row.original} onEdit={onEdit} />,
     enableSorting: false,
     enableHiding: false,
-    meta: { width: 56 },
+    meta: { width: 96 },
   },
 ];

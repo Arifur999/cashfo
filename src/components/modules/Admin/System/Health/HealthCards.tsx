@@ -5,6 +5,7 @@ import { CreditCard, FolderOpen, type LucideIcon, Mail, Server } from "lucide-re
 import Card from "@/components/smartly/Card";
 import T from "@/components/shared/T";
 import { formatLogTime } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { healthQuery } from "@/queries/system.queries";
@@ -54,7 +55,7 @@ const HealthCard = ({ service }: { service: ServiceHealth }) => {
 const HealthCards = () => {
   const { data, isError } = useQuery(healthQuery());
   const health = data?.data;
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
 
   const api: ServiceHealth = {
     name: "API and database",
@@ -62,7 +63,7 @@ const HealthCards = () => {
     ...(isError || health?.status === "error"
       ? { tone: "down", state: "Not answering", sub: "The API or its database is down" }
       : health
-        ? { tone: "ok", state: "Working", sub: translate("Answered in {ms} ms · {time}", { ms: health.latencyMs, time: formatLogTime(health.timestamp, { t: translate }) }) }
+        ? { tone: "ok", state: "Working", sub: translate("Answered in {ms} ms · {time}", { ms: formatCount(health.latencyMs, locale), time: formatLogTime(health.timestamp, { t: translate }) }) }
         : { tone: "unknown", state: "Checking...", sub: "" }),
   };
   const services: ServiceHealth[] = [

@@ -5,39 +5,54 @@ import { Construction } from "lucide-react";
 import { useState } from "react";
 import { updateSettingsAction } from "@/app/(dashboardLayout)/admin/settings/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
+import T from "@/components/shared/T";
+import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
-import { Button } from "@/components/ui/button";
+import ErrorState from "@/components/smartly/ErrorState";
 import { Textarea } from "@/components/ui/textarea";
 import { useActionMutation } from "@/hooks/useActionMutation";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { platformSettingsQuery } from "@/queries/settings.queries";
 import type { IUpdatePlatformSettingsPayload } from "@/types/settings.types";
-import T from "@/components/shared/T";
-
-const OUTLINE = "h-9.5 border-line-strong bg-surface font-semibold text-ink hover:bg-surface-sunken";
 
 // Maintenance mode from the System page: the same setting as in Settings.
 // While it is on, customers see the message and can't use the app; admins
 // can still sign in. One message for now -- a Bangla one is a NEW item in
-// the design notes.
+// the design notes. Until the setting has loaded the card claims neither On
+// nor Off.
 const MaintenanceCard = () => {
-  const settings = useQuery(platformSettingsQuery()).data?.data;
+  const { translate } = useLocale();
+  const settingsQuery = useQuery(platformSettingsQuery());
+  const settings = settingsQuery.data?.data;
   const [draft, setDraft] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
 
-  const on = settings?.maintenanceMode ?? false;
-  const message = draft ?? settings?.maintenanceMessage ?? "";
-  const edited = draft !== null && draft.trim() !== (settings?.maintenanceMessage ?? "");
+  // undefined until the setting is known: never a guessed "Off".
+  const on = settings?.maintenanceMode;
+  const saved = settings?.maintenanceMessage ?? "";
+  const message = draft ?? saved;
+  // A changed message can be saved on its own, on or off, so a draft
+  // written ahead of time isn't lost.
+  const edited = settings !== undefined && draft !== null && draft.trim() !== saved;
 
-  const { run, isPending } = useActionMutation({
+  const mode = useActionMutation({
     action: (values: IUpdatePlatformSettingsPayload) => updateSettingsAction(values),
     successMessage: (updated) => (updated.maintenanceMode ? "Maintenance is on, customers see the message" : "Maintenance is off"),
     invalidateKeys: [queryKeys.settings.all],
     refreshRoute: false,
   });
-  const save = async (values: IUpdatePlatformSettingsPayload) => {
-    if (await run(values)) setDraft(null);
+  const messageSave = useActionMutation({
+    action: (values: IUpdatePlatformSettingsPayload) => updateSettingsAction(values),
+    successMessage: "Message saved",
+    invalidateKeys: [queryKeys.settings.all],
+    refreshRoute: false,
+  });
+  const isPending = mode.isPending || messageSave.isPending;
+
+  const saveMessage = async () => {
+    if (await messageSave.run({ maintenanceMessage: message.trim() })) setDraft(null);
   };
 
   return (
@@ -46,40 +61,55 @@ const MaintenanceCard = () => {
         <span className="flex size-9 items-center justify-center rounded-md bg-warning-soft text-warning">
           <Construction aria-hidden="true" className="size-4.5" />
         </span>
-        <h2 className="grow text-title text-ink"><T>Maintenance mode</T></h2>
-        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", on ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}><T>{on ? "On" : "Off"}</T></span>
+        <h2 className="grow text-title text-ink">
+          <T>Maintenance mode</T>
+        </h2>
+        <span className={cn("rounded-full px-2 py-0.5 text-caption font-semibold", on ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-2")}>
+          <T>{on === undefined ? "Unknown" : on ? "On" : "Off"}</T>
+        </span>
       </div>
-      <p className="text-small leading-normal text-ink-2"><T>While it&apos;s on, customers see this message and can&apos;t use the app. Admins can still sign in here.</T></p>
+      <p className="text-small leading-normal text-ink-2">
+        <T>While it&apos;s on, customers see this message and can&apos;t use the app. Admins can still sign in here.</T>
+      </p>
       <label className="flex flex-col gap-1">
-        <span className="text-small font-medium text-ink"><T>Message</T></span>
+        <span className="text-small font-medium text-ink">
+          <T>Message</T>
+        </span>
         <Textarea
           rows={2}
           value={message}
+          disabled={settings === undefined}
           onChange={(event) => setDraft(event.target.value)}
           className="min-h-0 resize-none rounded-md border-line-strong bg-surface px-3 py-2 text-small leading-normal"
         />
       </label>
+      {/* The visible reason the buttons are off: the setting didn't load. */}
+      {settingsQuery.isError && !settings && (
+        <ErrorState
+          bordered={false}
+          className="rounded-md bg-strip p-4"
+          title={translate("Couldn't load the maintenance setting")}
+          onRetry={() => void settingsQuery.refetch()}
+        />
+      )}
       <div className="flex flex-wrap gap-2">
         {on ? (
-          <>
-            <Button type="button" variant="outline" disabled={isPending} className={cn(OUTLINE, "grow")} onClick={() => void save({ maintenanceMode: false })}>
-              <T>Turn off maintenance</T>
-            </Button>
-            {edited && (
-              <Button type="button" disabled={isPending} className="h-9.5 font-semibold" onClick={() => void save({ maintenanceMessage: message.trim() })}>
-                <T>Save message</T>
-              </Button>
-            )}
-          </>
+          <Button variant="secondary" disabled={isPending} className="grow" onClick={() => void mode.run({ maintenanceMode: false })}>
+            <T>Turn off maintenance</T>
+          </Button>
         ) : (
           <Button
-            type="button"
-            variant="outline"
-            disabled={isPending || !settings}
-            className={cn(OUTLINE, "grow border-warning-fill text-warning hover:bg-warning-soft")}
+            variant="secondary"
+            disabled={isPending || on === undefined}
+            className="grow border-warning-fill text-warning hover:bg-warning-soft"
             onClick={() => setConfirming(true)}
           >
             <T>Turn on maintenance</T>
+          </Button>
+        )}
+        {edited && (
+          <Button variant="action" disabled={isPending} onClick={() => void saveMessage()}>
+            <T>Save message</T>
           </Button>
         )}
       </div>
@@ -90,12 +120,29 @@ const MaintenanceCard = () => {
         description="Customers see this message and can't use the app until you turn it off. Admins can still sign in."
         confirmLabel="Turn on"
         pendingLabel="Turning on..."
-        isPending={isPending}
+        isPending={mode.isPending}
         onConfirm={async () => {
-          await save({ maintenanceMode: true, maintenanceMessage: message.trim() });
-          setConfirming(false);
+          // Stays open on a failed save, so nothing looks done that wasn't.
+          if (await mode.run({ maintenanceMode: true, maintenanceMessage: message.trim() })) {
+            setDraft(null);
+            setConfirming(false);
+          }
         }}
-      />
+      >
+        {/* What customers will actually read. */}
+        {message.trim() ? (
+          <figure className="flex flex-col gap-1 rounded-md border border-line bg-strip px-4 py-3">
+            <figcaption className="text-caption font-semibold text-ink-muted">
+              <T>What customers will read</T>
+            </figcaption>
+            <blockquote className="text-small leading-normal whitespace-pre-line text-ink-2">{message.trim()}</blockquote>
+          </figure>
+        ) : (
+          <p className="rounded-md border border-line bg-strip px-4 py-3 text-small text-ink-2">
+            <T>Customers will see the standard notice, with no message from the team.</T>
+          </p>
+        )}
+      </ConfirmDialog>
     </Card>
   );
 };
