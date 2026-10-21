@@ -82,7 +82,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   const lang = displayLanguage(locale);
   const accountNames = Object.fromEntries(accounts.map((account) => [account.id, accountDisplayName(account, lang)]));
   const categoriesById = categoryIndex(categories);
-  const groups = groupByDay(transactions.map((transaction) => describeTransaction(transaction, categoriesById, accountNames)));
+  const groups = groupByDay(transactions.map((transaction) => describeTransaction(transaction, categoriesById, accountNames, locale)));
   const filters = readTransactionFilters((key) => searchParams.get(key));
   const filtered = activeFilterCount(filters) > 0;
 
@@ -252,7 +252,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             footer={<ListFooter>{pager(LIST_ID)}</ListFooter>}
           >
             {/* Above the rows' buttons (z-10) as they scroll under it. */}
-            <ListHead columns={COLUMNS} sticky className="z-20">
+            <ListHead columns={COLUMNS} sticky>
               <ListHeadCell>{t("Transaction")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Category")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Wallet")}</ListHeadCell>

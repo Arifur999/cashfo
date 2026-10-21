@@ -19,7 +19,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { budgetTone } from "@/lib/budgetTone";
-import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, BudgetOverview } from "@/lib/customer/api";
 import { getBudgetOverviewAction, listBudgetCategoryNamesAction, type BudgetCategoryName } from "@/lib/customer/budgetActions";
 import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
@@ -27,10 +26,10 @@ import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { correctTransactionAction, createExpenseAction, createIncomeAction, createTransferAction, listExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
 import { editChanges, type EditableEntry, relativeDayKey } from "@/lib/customer/transactionRows";
 import { getAppToday } from "@/lib/date";
-import { banglaDayMonth, banglaShortDay } from "@/lib/i18n/banglaDates";
-import { formatCount } from "@/lib/i18n/digits";
+import { plural } from "@/lib/i18n/message";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -197,9 +196,6 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     setAttempt((value) => value + 1);
   }
 
-  const lang = displayLanguage(locale);
-  // Wallets by the name the reader sees ("নগদ" for Cash in Bangla).
-  const shownWallets = wallets.map((w) => ({ ...w, name: accountDisplayName(w, lang) }));
   const isTransfer = kind === "TRANSFER";
   const options = isTransfer ? [] : categories[kind];
   const categoriesFailed = !isTransfer && failed[kind];
@@ -271,8 +267,9 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         }
         toast.success(t("Changes saved"));
         onClose();
-        // The entry on screen is now the voided original; open the new one.
-        router.replace(`/transactions/${corrected.data.id}`);
+        // The entry on screen is now the voided original; open the new one,
+        // keeping the way back to the page it was opened from.
+        router.replace(transactionPageHref(corrected.data.id, transactionBackLink(new URLSearchParams(window.location.search).get("from"))));
         return;
       }
       const savedKind = kind;
@@ -314,7 +311,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     <Field htmlFor="txn-date" label={<span className={PHONE_LABEL}>{t("Date")}</span>}>
       <span className="relative flex h-13 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]">
         <CalendarDays className="size-4.5 shrink-0 text-ink-2" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{dayWord ? t(dayWord) : locale === "bn" ? banglaDayMonth(date) : formatDate(`${date}T00:00:00.000Z`, "d MMM")}</span>
+        <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{dayWord ? t(dayWord) : formatDate(`${date}T00:00:00.000Z`, "d MMM", locale)}</span>
         <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         <input id="txn-date" type="date" value={date} onChange={(event) => event.target.value && setDate(event.target.value)} max={getAppToday()} className="absolute inset-0 opacity-0" />
       </span>
@@ -473,8 +470,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
 
       {wide ? (
         <>
-          <WalletPicker label={t(fromLabel)} wallets={shownWallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-          {isTransfer && <WalletPicker label={t("To@@wallet")} wallets={shownWallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />}
+          <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+          {isTransfer && <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />}
           <div className="grid grid-cols-[170px_minmax(0,1fr)] gap-3">
             <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
               <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
@@ -494,8 +491,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3">
-            <WalletPicker size="compact" label={t(phoneFromLabel)} wallets={shownWallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-            {isTransfer ? <WalletPicker size="compact" label={t("To@@wallet")} wallets={shownWallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} /> : phoneDate}
+            <WalletPicker size="compact" label={t(phoneFromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+            {isTransfer ? <WalletPicker size="compact" label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} /> : phoneDate}
           </div>
           {isTransfer && phoneDate}
           <Field htmlFor="txn-note" label={<span className={PHONE_LABEL}>{t("Note")}</span>}>
@@ -510,7 +507,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
 
   const footer = editing ? (
     <div className={cn("flex items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-8")}>
-      <span className="flex-1 text-small text-ink-muted">{t(changes === 1 ? "{count} change" : "{count} changes", { count: formatCount(changes, locale) })}</span>
+      <span className="flex-1 text-small text-ink-muted">{plural(t, changes, "{count} change", "{count} changes", undefined, locale)}</span>
       <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
         {t("Cancel")}
       </Button>
@@ -572,7 +569,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             <span className="flex min-w-0 flex-col gap-1">
               <SheetTitle className="text-h3 text-ink">{t("Edit transaction")}</SheetTitle>
               <span className="truncate text-small text-ink-muted">
-                {editing.title} · {locale === "bn" ? banglaShortDay(editing.day) : formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM")}
+                {editing.title} · {formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM", locale)}
               </span>
             </span>
           ) : (

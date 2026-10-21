@@ -228,7 +228,7 @@ export function BudgetPageClient({ businessId, overview, monthTotal, currency, c
               </span>
             </div>
             <AmountText value={spent} currency={currency} size="h2" className="text-h1 font-extrabold" />
-            <ProgressBar value={usedPercent} tone="budget" label={t("{name}, {percent}% used", { name: t("Spent so far"), percent: percent(usedPercent) })} className="h-2.5" />
+            <ProgressBar value={usedPercent} tone="budget" label={t("Spent so far")} valueText={reference ? t("{percent}% used", { percent: percent(usedPercent) }) : undefined} className="h-2.5" />
             <span className={cn("text-small font-semibold", reference ? TONE_TEXT[budgetTone(usedPercent)] : "text-ink-muted")}>
               {!reference
                 ? t("Set a monthly budget to see what is still free")
@@ -256,7 +256,7 @@ export function BudgetPageClient({ businessId, overview, monthTotal, currency, c
         </p>
 
         <Card padding="none" className="hidden md:grid md:grid-cols-[0.8fr_1.3fr_1fr]">
-          <div className="flex flex-col gap-2 px-5 py-5 md:px-6">
+          <div className="flex flex-col gap-3 px-5 py-5 md:px-6">
             <div className="flex items-center justify-between">
               <span className="text-small font-medium text-ink-muted">{t("Monthly budget")}</span>
               {canManage && (
@@ -265,7 +265,7 @@ export function BudgetPageClient({ businessId, overview, monthTotal, currency, c
                   onClick={() => setTargetOpen(true)}
                   aria-label={t("Edit monthly budget")}
                   title={t("Edit monthly budget")}
-                  className="relative flex size-7.5 items-center justify-center rounded-md border border-line bg-surface text-ink-2 after:absolute after:-inset-2 hover:bg-surface-sunken"
+                  className="relative -my-1.5 flex size-7.5 items-center justify-center rounded-md border border-line bg-surface text-ink-2 after:absolute after:-inset-2 hover:bg-surface-sunken"
                 >
                   <Pencil className="size-3.5" aria-hidden="true" />
                 </button>
@@ -280,12 +280,12 @@ export function BudgetPageClient({ businessId, overview, monthTotal, currency, c
               <span className="text-small font-medium text-ink-muted">{t("Spent so far")}</span>
               {reference && <span className={cn("text-small font-semibold", TONE_TEXT[budgetTone(usedPercent)])}>{t("{percent}% used", { percent: percent(usedPercent) })}</span>}
             </div>
-            <span className="text-body font-medium text-ink-muted tabular-nums">
-              {reference
-                ? fillNodes(t("{used} of {limit}"), { used: <span className="text-h2 text-ink">{money(spent)}</span>, limit: money(reference.amount) })
-                : <span className="text-h2 text-ink">{money(spent)}</span>}
+            {/* The hero first in either language; "of the limit" trails it. */}
+            <span className="flex flex-wrap items-baseline gap-x-1.5">
+              <span className="text-h2 text-ink tabular-nums">{money(spent)}</span>
+              {reference && <span className="text-body font-medium text-ink-muted tabular-nums">{t("of {amount}", { amount: money(reference.amount) })}</span>}
             </span>
-            <ProgressBar value={reference ? usedPercent : 0} tone="budget" label={t("{name}, {percent}% used", { name: t("Spent so far"), percent: percent(usedPercent) })} className="h-2.5" />
+            <ProgressBar value={reference ? usedPercent : 0} tone="budget" label={t("Spent so far")} valueText={reference ? t("{percent}% used", { percent: percent(usedPercent) }) : undefined} className="h-2.5" />
             <div className="flex justify-between gap-3 text-caption font-normal text-ink-muted">
               <span>
                 {reference &&
@@ -342,7 +342,7 @@ export function BudgetPageClient({ businessId, overview, monthTotal, currency, c
                       <span className="text-caption font-normal text-ink-muted">{statusOf(category)}</span>
                     </span>
                   </span>
-                  <ProgressBar value={category.percent} tone="budget" size="sm" label={t("{name}, {percent}% used", { name: category.name, percent: percent(category.percent) })} />
+                  <ProgressBar value={category.percent} tone="budget" size="sm" label={category.name} valueText={t("{percent}% used", { percent: percent(category.percent) })} />
                 </>
               );
               const rowClass = cn("flex w-full flex-col gap-2 px-4 py-4 text-left", index > 0 && "border-t border-divider");
@@ -409,7 +409,7 @@ export function BudgetPageClient({ businessId, overview, monthTotal, currency, c
                       </DropdownMenu>
                     </div>
                     <span className="text-small font-medium text-ink-muted tabular-nums">{fillNodes(t("{amount} spent"), { amount: <span className="text-h2 text-ink">{money(used)}</span> })}</span>
-                    <ProgressBar value={category.percent} tone="budget" label={t("{name}, {percent}% used", { name: category.name, percent: percent(category.percent) })} />
+                    <ProgressBar value={category.percent} tone="budget" label={category.name} valueText={t("{percent}% used", { percent: percent(category.percent) })} />
                     <div className={cn("flex items-center justify-between text-small font-semibold", TONE_TEXT[tone])}>
                       <span className="flex items-center gap-2">
                         {tone === "expense" && <TriangleAlert className="size-3.5" strokeWidth={2.25} aria-hidden="true" />}
@@ -462,20 +462,23 @@ function MonthlyBudgetDialog({ open, onClose, businessId, current, currency }: {
   const [value, setValue] = useState(current ? String(current) : "");
   const valueField = useAmountField(value, setValue, currency);
   const [isPending, startTransition] = useTransition();
+  // Remove asks first, in the dialog itself, not a second one on top.
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
     setPrevOpen(open);
-    if (open) setValue(current ? String(current) : "");
+    if (open) {
+      setValue(current ? String(current) : "");
+      setConfirmingRemove(false);
+    }
   }
   const amount = Number(value) || 0;
 
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!(amount > 0) || isPending) return;
+  function save(target: number | null) {
     startTransition(async () => {
-      const result = await updateBudgetTargetAction(businessId, amount);
+      const result = await updateBudgetTargetAction(businessId, target);
       if (result.success) {
-        toast.success(t("Monthly budget updated"));
+        toast.success(t(target === null ? "Monthly budget removed" : "Monthly budget updated"));
         onClose();
         router.refresh();
       } else {
@@ -484,26 +487,56 @@ function MonthlyBudgetDialog({ open, onClose, businessId, current, currency }: {
     });
   }
 
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!(amount > 0) || isPending) return;
+    save(amount);
+  }
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
       <DialogContent showCloseButton={false} className="w-110 max-w-[calc(100vw-32px)] gap-0 rounded-lg border border-line bg-surface p-6 shadow-overlay">
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <DialogTitle className="text-h3 text-ink">{t("Monthly budget")}</DialogTitle>
-            {/* The API keeps one target for every month, past ones too. */}
-            <DialogDescription className="text-body text-ink-2">{t("How much you plan to spend in a month. It applies to every month, past ones too, and your categories share it.")}</DialogDescription>
+        {confirmingRemove ? (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <DialogTitle className="text-h3 text-ink">{t("Remove the monthly budget?")}</DialogTitle>
+              <DialogDescription className="text-body text-ink-2">{t("No month will have a budget, past ones too. Your category limits stay, and the month is measured against what they were given.")}</DialogDescription>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="secondary" onClick={() => setConfirmingRemove(false)} disabled={isPending} autoFocus>
+                {t("Cancel")}
+              </Button>
+              <Button type="button" variant="danger" onClick={() => !isPending && save(null)} disabled={isPending}>
+                {isPending && <Loader size={16} onDark label={t("Loading...")} />}
+                {t("Remove budget")}
+              </Button>
+            </div>
           </div>
-          <Input id="budget-target" type="text" inputMode="decimal" size="lg" {...valueField} leading={<span className="text-body font-semibold">{currencySymbol(currency)}</span>} autoFocus aria-label={t("Monthly budget")} className="text-h3 font-semibold tabular-nums" />
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-              {t("Cancel")}
-            </Button>
-            <Button type="submit" disabled={!(amount > 0) || isPending}>
-              {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t("Save")}
-            </Button>
-          </div>
-        </form>
+        ) : (
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <DialogTitle className="text-h3 text-ink">{t("Monthly budget")}</DialogTitle>
+              {/* The API keeps one target for every month, past ones too. */}
+              <DialogDescription className="text-body text-ink-2">{t("How much you plan to spend in a month. It applies to every month, past ones too, and your categories share it.")}</DialogDescription>
+            </div>
+            <Input id="budget-target" type="text" inputMode="decimal" size="lg" {...valueField} leading={<span className="text-body font-semibold">{currencySymbol(currency)}</span>} autoFocus aria-label={t("Monthly budget")} className="text-h3 font-semibold tabular-nums" />
+            <div className="flex flex-wrap items-center gap-3">
+              {current !== null && (
+                <Button type="button" variant="ghost" onClick={() => setConfirmingRemove(true)} disabled={isPending} className="-ml-2 text-expense hover:bg-expense-soft hover:text-expense">
+                  {t("Remove budget")}
+                </Button>
+              )}
+              <span className="flex-1" />
+              <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+                {t("Cancel")}
+              </Button>
+              <Button type="submit" disabled={!(amount > 0) || isPending}>
+                {isPending && <Loader size={16} onDark label={t("Loading...")} />}
+                {t("Save")}
+              </Button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

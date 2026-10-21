@@ -168,9 +168,15 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
             {canManage && addButton}
           </>
         }
+        hideActionsOnPhone
+        className="md:mb-2"
       />
 
       <div aria-busy={switching || undefined} className={cn("flex flex-col gap-4 transition-opacity", switching && "opacity-60")}>
+        {/* Phone: the month across the page, as on Budget; the add button follows the list. */}
+        <div className="md:hidden">
+          <MonthSwitcher month={month} year={year} onChange={goToMonth} stretch />
+        </div>
         <section aria-label={monthName} className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <Card className="flex flex-col gap-3">
             <span className="text-small font-medium text-ink-muted">{t("Money in · {month}", { month: monthName })}</span>
@@ -306,6 +312,12 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
             </>
           )}
         </ListCard>
+        {canManage && sources.length > 0 && (
+          <Button variant="soft" size="xl" onClick={() => setDrawer("create")} className="md:hidden">
+            <Plus strokeWidth={2.25} className="size-4" />
+            {t("Add income source")}
+          </Button>
+        )}
       </div>
 
       <CategoryDrawer

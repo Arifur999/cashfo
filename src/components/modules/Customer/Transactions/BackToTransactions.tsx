@@ -22,14 +22,16 @@ const readSaved = (): string | null => {
 // A transaction's way back to the list as it was left (its filters and
 // page), from the address the top bar saved in this workspace, the way the
 // bar's own crumb goes back. The server (and hydration) link the plain
-// list, and so does a tab that saved nothing.
-export function BackToTransactions({ label }: { label: string }) {
+// list, and so does a tab that saved nothing. A transaction opened from
+// another page (a statement, a loan's payments, an account) passes that
+// page's own address as `href`, checked by transactionBackLink.
+export function BackToTransactions({ label, href: from }: { label: string; href?: string }) {
   const { activeBusinessId } = useAuth();
   const stored = useSyncExternalStore(subscribeNowhere, readSaved, () => null);
-  const href = restoredListUrl(TRANSACTIONS, savedListUrl(stored, activeBusinessId));
+  const href = from ?? restoredListUrl(TRANSACTIONS, savedListUrl(stored, activeBusinessId));
   return (
     <Link href={href} className="mb-1 inline-flex items-center gap-2 self-start text-small font-semibold text-emerald hover:text-emerald-hover">
-      <ArrowLeft className="size-[15px]" aria-hidden="true" />
+      <ArrowLeft className="size-3.75" aria-hidden="true" />
       {label}
     </Link>
   );

@@ -114,6 +114,22 @@ describe("describeTransaction without a category", () => {
     expect(row.wallet).toBe("Bank");
     expect(row.category?.name).toBe("Fixed Assets (Internal)");
   });
+
+  it("names an account in Bangla for a Bangla reader when it has a Bangla name", () => {
+    const journal = transaction({
+      entries: [
+        entry({ entryType: "DEBIT", amount: "7", account: { id: "x", name: "Rent Expense", nameBn: "ভাড়া খরচ", accountType: "EXPENSE", accountSubtype: null } }),
+        entry({ accountId: "s", entryType: "CREDIT", amount: "7", account: { id: "s", name: "Hajj fund", nameBn: null, accountType: "ASSET", accountSubtype: "savings" } }),
+      ],
+    });
+    const bangla = describeTransaction(journal, {}, {}, "bn");
+    expect(bangla.category?.name).toBe("ভাড়া খরচ");
+    // No Bangla name: the account's own.
+    expect(bangla.wallet).toBe("Hajj fund");
+    expect(describeTransaction(journal, {}, {}, "en").category?.name).toBe("Rent Expense");
+    // A wallet the reader lists keeps the name it was given.
+    expect(describeTransaction(journal, {}, { s: "হজ তহবিল" }, "bn").wallet).toBe("হজ তহবিল");
+  });
 });
 
 describe("describeTransaction with a category the list doesn't know", () => {

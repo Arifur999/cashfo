@@ -4,7 +4,7 @@ import { isIsoDay } from "./dateRangePresets";
 import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "./transactionDisplay";
 import { toDateInputValue } from "@/lib/date";
 import { banglaDayMonth, banglaShortDay, toBanglaDigits } from "@/lib/i18n/banglaDates";
-import type { Translate } from "@/lib/i18n/message";
+import { localName, type Translate } from "@/lib/i18n/message";
 
 export interface CategoryMeta {
   name: string;
@@ -66,9 +66,10 @@ const MONEY_SUBTYPES = new Set(["cash", "bank", "mfs", "savings"]);
 // entry" -- unless the category sits on the wallet's own entry, as on an
 // asset sale or a referral payout. A transfer has two wallets and no
 // category. `accountNames` gives a wallet the name the reader sees ("নগদ"
-// for Cash in Bangla), by its id.
-export function describeTransaction(transaction: Transaction, categoriesById: Record<string, CategoryMeta>, accountNames: Record<string, string> = {}): TransactionRow {
-  const nameOf = (entry: TransactionEntry | undefined) => (entry ? (accountNames[entry.accountId] ?? entry.account?.name ?? null) : null);
+// for Cash in Bangla), by its id; any other account shows its Bangla name
+// (nameBn) to a Bangla reader.
+export function describeTransaction(transaction: Transaction, categoriesById: Record<string, CategoryMeta>, accountNames: Record<string, string> = {}, locale: "en" | "bn" = "en"): TransactionRow {
+  const nameOf = (entry: TransactionEntry | undefined) => (entry ? (accountNames[entry.accountId] ?? (entry.account ? localName(locale, entry.account) : null)) : null);
   // One of the reader's wallets, or a money account they may no longer list
   // (an archived wallet, a savings wallet).
   const isWallet = (entry: TransactionEntry) => accountNames[entry.accountId] !== undefined || (entry.account?.accountType === "ASSET" && MONEY_SUBTYPES.has(entry.account.accountSubtype ?? ""));
@@ -87,7 +88,7 @@ export function describeTransaction(transaction: Transaction, categoriesById: Re
     const moneyEntry = transaction.entries.find(isWallet) ?? transaction.entries.find((e) => e.account?.accountType === "ASSET") ?? transaction.entries[0];
     const other = transaction.entries.find((e) => e.id !== moneyEntry?.id);
     wallet = nameOf(moneyEntry);
-    if (!category && other?.account) category = { name: other.account.name, icon: null, color: "" };
+    if (!category && other?.account) category = { name: localName(locale, other.account), icon: null, color: "" };
   }
   if (transaction.transactionType === "TRANSFER") {
     const from = nameOf(transaction.entries.find((e) => e.entryType === "CREDIT"));
