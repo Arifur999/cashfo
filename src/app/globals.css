@@ -36,6 +36,8 @@
   --strip: #f7f9f8;
   /* A row or list item under the pointer. */
   --hover: #f1f5f3;
+  /* A shared DataTable row under the pointer: the same hover in light. */
+  --row-hover: var(--hover);
   --surface: #ffffff;
   --surface-raised: #ffffff;
   /* Tracks, button and icon hovers, the menu highlight and neutral chips. */
@@ -167,6 +169,10 @@
   --table-head: #08120e;
   --strip: #08120e;
   --hover: #08120e;
+  /* The table row hover was never the plain cream: it was
+     color-mix(in oklab, cream 60%, surface), precomputed here so it stays
+     opaque for pinned cells and the contrast test can read it. */
+  --row-hover: #0b1612;
   --surface: #0f1c17;
   --surface-raised: #15251f;
   --surface-sunken: #0b1712;
@@ -342,8 +348,9 @@
   --color-strip: var(--strip);
   --color-hover: var(--hover);
   --color-divider: var(--divider);
-  /* The old name for bg-hover; opaque, so a pinned cell can take it too. */
-  --color-row-hover: var(--hover);
+  /* The shared DataTable's row hover: bg-hover in light, the old blend in
+     dark. Opaque, so a pinned cell can take it too. */
+  --color-row-hover: var(--row-hover);
   --color-forest-hover: var(--forest-hover);
   --color-emerald: var(--emerald);
   --color-emerald-hover: var(--emerald-hover);

@@ -62,7 +62,7 @@ const contrast = (a: string, b: string) => {
 };
 
 const TEXT = ["ink", "ink-2", "ink-muted", "brand-ink"];
-const TEXT_GROUNDS = ["surface", "page", "strip", "table-head", "hover", "surface-sunken", "mint-50"];
+const TEXT_GROUNDS = ["surface", "page", "strip", "table-head", "hover", "row-hover", "surface-sunken", "mint-50"];
 // Amounts and pillar labels in coloured text. Rose is left out: it only ever
 // sits on rose-soft.
 const MEANING = ["income", "expense", "warning", "info", "pillar-loans", "pillar-habits", "pillar-insights"];
@@ -75,7 +75,7 @@ const RULES: { fg: string[]; bg: string[]; min: number }[] = [
   { fg: ["emerald"], bg: TEXT_GROUNDS.filter((ground) => ground !== "surface-sunken"), min: 4.5 },
   // Coloured amounts land on cards, the page, strips, table heads (group,
   // opening and total rows) and hovered rows; never on sunken (same rule).
-  { fg: MEANING, bg: ["surface", "page", "strip", "table-head", "hover"], min: 4.5 },
+  { fg: MEANING, bg: ["surface", "page", "strip", "table-head", "hover", "row-hover"], min: 4.5 },
   { fg: ["line-strong", "focus-ring"], bg: EDGE_GROUNDS, min: 3 },
   // shadcn's menu and select highlight.
   { fg: ["accent-foreground"], bg: ["accent"], min: 4.5 },
