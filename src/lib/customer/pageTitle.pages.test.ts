@@ -22,6 +22,22 @@ const routeOf = (file: string) => "/" + relative(ROOT, file).split(sep).slice(0,
 
 const pages = pageFiles(ROOT).map((file) => ({ file, route: routeOf(file) }));
 
+// A reader or guard called from the metadata: get-anything (but the
+// translator, which reads only the language cookie), the Books guard, or the
+// workspace resolver.
+const API_READ = /\b(get(?!Translator)[A-Z]\w*|requireBusinessWorkspace|resolveActiveBusinessId)\(/;
+
+// The metadata's own code: a one-line export, or a function to its closing
+// brace (helpers below it are the page's).
+const metadataOf = (source: string) => {
+  const start = source.indexOf("generateMetadata");
+  if (start < 0) return "";
+  const line = source.slice(start, source.indexOf("\n", start));
+  if (!line.trimEnd().endsWith("{")) return line;
+  const end = source.indexOf("\n}\n", start);
+  return source.slice(start, end > start ? end : undefined);
+};
+
 describe("customer page titles", () => {
   it("finds the customer pages", () => {
     expect(pages.length).toBeGreaterThan(40);
@@ -32,5 +48,12 @@ describe("customer page titles", () => {
     // A record page is titled under its list, so any id stands in for it.
     const pathname = route.replace(/\[[^\]]+\]/g, "sample-id");
     expect(findNavLocation(pathname, queryOf(undefined), NAV_SECTIONS), `the menu doesn't know ${route}`).not.toBeNull();
+  });
+
+  // Next runs generateMetadata for every <Link> prefetch of a page without
+  // rendering the page, so a read there is paid for each link on screen (a
+  // list of 20 transactions cost 80 API calls). Titles come from the route.
+  it.each(pages)("$route names its tab without reading the API", ({ file }) => {
+    expect(metadataOf(readFileSync(file, "utf8").replace(/\r\n/g, "\n"))).not.toMatch(API_READ);
   });
 });

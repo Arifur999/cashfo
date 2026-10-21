@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AccountDetailPageClient } from "@/components/modules/Customer/Books/Accounts/AccountDetailPageClient";
-import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
+import { displayLanguage } from "@/lib/customer/accountDisplay";
 import { getAccount, getAccounts, getAccountSummary, getLedger } from "@/lib/customer/accounts";
 import { flattenAccounts } from "@/lib/customer/booksDisplay";
 import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
@@ -8,18 +8,12 @@ import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { requireBusinessWorkspace } from "@/lib/customer/requireBusinessWorkspace";
 import { getLocale } from "@/lib/i18n/locale";
 
-// The tab names the account in the reader's language, as the page does,
-// from the read the page makes.
+// The list's name, read from nothing: Next runs generateMetadata for every
+// <Link> prefetch of this page, without rendering the page, so reading the
+// record here cost API calls for each row on screen.
 export async function generateMetadata({ params }: PageProps<"/accounts/[id]">) {
   const { id } = await params;
-  // A failed read is the page's to show (its error or PIN screen); the tab
-  // keeps the list's name. A PIN-locked workspace keeps its records' names
-  // out of the tab, and so out of the browser's history, which outlives the
-  // unlock.
-  const books = await requireBusinessWorkspace().catch(() => null);
-  const account = books?.ok && !books.business.hasPinLock ? await getAccount(books.businessId, id).catch(() => null) : null;
-  const record = account ? accountDisplayName(account, displayLanguage(await getLocale())) : null;
-  return customerPageMetadata(`/accounts/${id}`, { record });
+  return customerPageMetadata(`/accounts/${id}`);
 }
 
 const PRESETS: DateRangePreset[] = ["this-month", "last-month", "this-year", "all", "custom"];

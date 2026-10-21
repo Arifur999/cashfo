@@ -6,16 +6,12 @@ import { getContactBalanceDetail } from "@/lib/customer/receivablesPayables";
 import { requireBusinessWorkspace } from "@/lib/customer/requireBusinessWorkspace";
 import { getAppToday } from "@/lib/date";
 
-// The tab names the customer or supplier, from the read the page makes.
+// The list's name, read from nothing: Next runs generateMetadata for every
+// <Link> prefetch of this page, without rendering the page, so reading the
+// record here cost API calls for each row on screen.
 export async function generateMetadata({ params }: PageProps<"/contacts/[id]">) {
   const { id } = await params;
-  // A failed read is the page's to show (its error or PIN screen); the tab
-  // keeps the list's name. A PIN-locked workspace keeps its records' names
-  // out of the tab, and so out of the browser's history, which outlives the
-  // unlock.
-  const books = await requireBusinessWorkspace().catch(() => null);
-  const contact = books?.ok && !books.business.hasPinLock ? await getContact(books.businessId, id).catch(() => null) : null;
-  return customerPageMetadata(`/contacts/${id}`, { record: contact?.name });
+  return customerPageMetadata(`/contacts/${id}`);
 }
 
 // Books › one customer or supplier, with their statement and what is owed.
