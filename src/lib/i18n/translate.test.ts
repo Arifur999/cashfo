@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { sharedDictionary } from "./dictionary/shared";
 import { translate } from "./translate";
 
 describe("translate", () => {
@@ -32,6 +33,16 @@ describe("translate", () => {
     // The admin dictionaries word "Status" অবস্থা; the customer app স্ট্যাটাস.
     expect(translate("bn", "Status", undefined, "admin")).not.toBe(translate("bn", "Status"));
     expect(translate("bn", "Status", undefined, "admin")).toBe("অবস্থা");
+  });
+
+  // Words two areas worded differently, settled in shared.ts, which spreads
+  // last: every customer page reads them one way.
+  it("reads a shared word as shared.ts words it", () => {
+    for (const key of ["Unlock", "Newest first", "Preview", "Save changes", "Show fewer", "Saved@@status"]) {
+      expect(translate("bn", key), key).toBe(sharedDictionary[key]);
+    }
+    // A save confirmation, not the money put by in Savings.
+    expect(translate("bn", "Saved@@status")).not.toBe(translate("bn", "Saved"));
   });
 
   it("never resolves an inherited property", () => {

@@ -1,6 +1,10 @@
 import { TZDate } from "@date-fns/tz";
-import { format } from "date-fns";
+import { format, type Locale as DateFnsLocale } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
+import { BN_AM, BN_MONTHS_LONG, BN_MONTHS_SHORT, BN_PM, BN_WEEKDAYS_LONG, BN_WEEKDAYS_SHORT, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { formatCount } from "@/lib/i18n/digits";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
+import type { Locale } from "@/lib/i18n/translate";
 
 // Every date in the panel renders in the platform's own timezone, not the
 // machine's. A Server Component on a UTC host and the hydrating browser in
@@ -19,11 +23,36 @@ export interface RelativeDateOptions {
   now?: Date;
   // What a missing or unreadable date shows.
   fallback?: string;
-  // The reader's translate(), for the words; digits and times stay as they are.
+  // The reader's translate(), for the words ("Today", "Yesterday").
   t?: Translate;
+  // The reader's language, for the rest: Bangla months, am/pm and digits
+  // ("৩০ সেপ্টে", "আজ, ২:১০ অপরাহ্ণ", "৩৫ মিনিট"). Without it the dates,
+  // times and counts are written as English writes them.
+  locale?: Locale;
 }
 
-export const formatDate = (value: DateInput, pattern = DATE_FORMAT, fallback = "—"): string => {
+// date-fns' English with the Bangla board's month and day names and its
+// am/pm words, so one pattern ("d MMM yyyy, h:mm aaa") serves both
+// languages. Fixed lists, never the browser's ICU data, so a Server
+// Component and the hydrating browser print the same text.
+const BANGLA_DATES: DateFnsLocale = {
+  ...enUS,
+  code: "bn",
+  localize: {
+    ...enUS.localize,
+    // "১৪ অক্টোবর", never "14th"; the digits turn Bangla afterwards.
+    ordinalNumber: (value) => String(value),
+    month: (month, options) => (options?.width === "wide" ? BN_MONTHS_LONG : BN_MONTHS_SHORT)[month],
+    day: (day, options) => (options?.width === "wide" ? BN_WEEKDAYS_LONG : BN_WEEKDAYS_SHORT)[day],
+    dayPeriod: (period, options) => (period === "am" ? BN_AM : period === "pm" ? BN_PM : enUS.localize.dayPeriod(period, options)),
+  },
+};
+
+// `locale` "bn" writes the same pattern in Bangla, digits and all:
+// formatDate(at, "d MMM yyyy, h:mm aaa", "—", "bn") is
+// "১ অক্টো ২০২৬, ২:১০ অপরাহ্ণ". Input values, query params and exports
+// leave it out and keep English.
+export const formatDate = (value: DateInput, pattern = DATE_FORMAT, fallback = "—", locale: Locale = "en"): string => {
   if (value === null || value === undefined || value === "") {
     return fallback;
   }
@@ -31,10 +60,11 @@ export const formatDate = (value: DateInput, pattern = DATE_FORMAT, fallback = "
   if (Number.isNaN(date.getTime())) {
     return fallback;
   }
-  return format(new TZDate(date, APP_TIME_ZONE), pattern);
+  const zoned = new TZDate(date, APP_TIME_ZONE);
+  return locale === "bn" ? toBanglaDigits(format(zoned, pattern, { locale: BANGLA_DATES })) : format(zoned, pattern);
 };
 
-export const formatDateTime = (value: DateInput, fallback = "—") => formatDate(value, DATE_TIME_FORMAT, fallback);
+export const formatDateTime = (value: DateInput, fallback = "—", locale: Locale = "en") => formatDate(value, DATE_TIME_FORMAT, fallback, locale);
 
 // yyyy-MM-dd in the platform timezone, for <input type="date"> values and
 // date-range query params.
@@ -47,11 +77,11 @@ export const getAppToday = () => toDateInputValue(new Date());
 
 // A form's day as the boards write it: "Today, 2 Oct", else "30 Sep 2026".
 // `day` and `today` are "YYYY-MM-DD"; `todayWord` is "Today" in the
-// reader's language.
-export const formDayLabel = (day: string, today: string, todayWord: string): string => {
+// reader's language, and `locale` writes the date in it too ("আজ, ২ অক্টো").
+export const formDayLabel = (day: string, today: string, todayWord: string, locale: Locale = "en"): string => {
   if (!day) return "";
   const instant = `${day}T00:00:00.000Z`;
-  return day === today ? `${todayWord}, ${formatDate(instant, "d MMM")}` : formatDate(instant, "d MMM yyyy");
+  return day === today ? `${todayWord}, ${formatDate(instant, "d MMM", "—", locale)}` : formatDate(instant, "d MMM yyyy", "—", locale);
 };
 
 const parseDay = (day: string) => {
@@ -109,7 +139,7 @@ export const formatMonthKey = (key: string, withYear = true): string => {
 
 // "Today, 11:42 am", "Yesterday", "30 Sep" (this year) or "2 Jun 2025":
 // the way a list says when something last happened.
-export const formatRelativeDay = (value: DateInput, { now = new Date(), fallback = "—", t = inEnglish }: RelativeDateOptions = {}): string => {
+export const formatRelativeDay = (value: DateInput, { now = new Date(), fallback = "—", t = inEnglish, locale }: RelativeDateOptions = {}): string => {
   if (value === null || value === undefined || value === "") {
     return fallback;
   }
@@ -119,17 +149,18 @@ export const formatRelativeDay = (value: DateInput, { now = new Date(), fallback
   }
   const today = toDateInputValue(now);
   if (day === today) {
-    return t("Today, {time}", { time: formatDate(value, "h:mm aaa") });
+    return t("Today, {time}", { time: formatDate(value, "h:mm aaa", fallback, locale) });
   }
   if (day === dayBefore(today)) {
     return t("Yesterday");
   }
-  return formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy");
+  return formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy", fallback, locale);
 };
 
 // "35 min", "2 h", "26 h", "2 days": how long ago something happened, the
-// way a support queue counts waiting time (hours up to two days).
-export const formatElapsed = (value: DateInput, { now = new Date(), fallback = "—", t = inEnglish }: RelativeDateOptions = {}): string => {
+// way a support queue counts waiting time (hours up to two days). With the
+// locale, the count comes in the reader's digits ("৩৫ মিনিট").
+export const formatElapsed = (value: DateInput, { now = new Date(), fallback = "—", t = inEnglish, locale }: RelativeDateOptions = {}): string => {
   if (value === null || value === undefined || value === "") {
     return fallback;
   }
@@ -137,11 +168,12 @@ export const formatElapsed = (value: DateInput, { now = new Date(), fallback = "
   if (Number.isNaN(then)) {
     return fallback;
   }
+  const count = (amount: number) => (locale ? formatCount(amount, locale) : amount);
   const minutes = Math.max(0, Math.round((now.getTime() - then) / 60_000));
-  if (minutes < 60) return t("{count} min", { count: minutes });
+  if (minutes < 60) return t("{count} min", { count: count(minutes) });
   const hours = Math.round(minutes / 60);
-  if (hours < 48) return t("{count} h", { count: hours });
-  return t("{count} days", { count: Math.round(hours / 24) });
+  if (hours < 48) return t("{count} h", { count: count(hours) });
+  return t("{count} days", { count: count(Math.round(hours / 24)) });
 };
 
 // "Today, 2:10 pm", "Yesterday, 6:55 pm", "1 Oct, 8:12 pm" (this year) or
@@ -149,7 +181,7 @@ export const formatElapsed = (value: DateInput, { now = new Date(), fallback = "
 // second with withSeconds: "Today, 1:05:12 pm").
 export const formatRelativeDateTime = (
   value: DateInput,
-  { now = new Date(), fallback = "—", t = inEnglish, withSeconds = false }: RelativeDateOptions & { withSeconds?: boolean } = {},
+  { now = new Date(), fallback = "—", t = inEnglish, locale, withSeconds = false }: RelativeDateOptions & { withSeconds?: boolean } = {},
 ): string => {
   if (value === null || value === undefined || value === "") {
     return fallback;
@@ -159,10 +191,10 @@ export const formatRelativeDateTime = (
     return fallback;
   }
   const today = toDateInputValue(now);
-  const time = formatDate(value, withSeconds ? "h:mm:ss aaa" : "h:mm aaa");
+  const time = formatDate(value, withSeconds ? "h:mm:ss aaa" : "h:mm aaa", fallback, locale);
   if (day === today) return t("Today, {time}", { time });
   if (day === dayBefore(today)) return t("Yesterday, {time}", { time });
-  return `${formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy")}, ${time}`;
+  return `${formatDate(value, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy", fallback, locale)}, ${time}`;
 };
 
 // "Today, 2:48 pm", "Yesterday, 5:10 pm", then "28 Sep": the time while it
@@ -192,7 +224,7 @@ export const formatLogTime = (value: DateInput, options: RelativeDateOptions = {
   if (!day) {
     return options.fallback ?? "—";
   }
-  return day === toDateInputValue(options.now ?? new Date()) ? formatDate(value, "h:mm aaa") : formatRelativeDateTime(value, options);
+  return day === toDateInputValue(options.now ?? new Date()) ? formatDate(value, "h:mm aaa", options.fallback, options.locale) : formatRelativeDateTime(value, options);
 };
 
 // "2:43 – 2:47 pm", "11:50 am – 12:10 pm", "Yesterday, 7:30 – 7:42 pm":
@@ -206,11 +238,14 @@ export const formatTimeRange = (from: DateInput, to: DateInput, options: Relativ
   if (fromDay !== toDay) {
     return `${formatLogTime(from, options)} – ${formatLogTime(to, options)}`;
   }
-  const start = formatDate(from, "h:mm aaa");
-  const end = formatDate(to, "h:mm aaa");
+  const start = formatDate(from, "h:mm aaa", options.fallback, options.locale);
+  const end = formatDate(to, "h:mm aaa", options.fallback, options.locale);
   if (start === end) {
     return formatLogTime(from, options);
   }
   const prefix = fromDay === toDateInputValue(options.now ?? new Date()) ? "" : `${formatRelativeDay(from, options)}, `;
-  return `${prefix}${start.slice(-2) === end.slice(-2) ? formatDate(from, "h:mm") : start} – ${end}`;
+  // One am/pm when both share it. Compared in English: পূর্বাহ্ণ and অপরাহ্ণ
+  // end in the same letters.
+  const samePeriod = formatDate(from, "a") === formatDate(to, "a");
+  return `${prefix}${samePeriod ? formatDate(from, "h:mm", options.fallback, options.locale) : start} – ${end}`;
 };
