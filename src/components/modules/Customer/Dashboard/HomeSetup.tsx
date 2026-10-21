@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { HomePartError } from "./HomePartError";
 import type { HomeData } from "./homeTypes";
 
 // Bangla's vowel signs need more room than these fixed lines when they wrap.
@@ -37,6 +38,9 @@ interface MoneyCard {
   href?: string;
   // Already done before the first transaction: says so, and opens it.
   done?: { title: string; text: string; cta: string; href: string };
+  // Its read failed: the card keeps its name and says it couldn't load,
+  // rather than claim there is nothing yet.
+  failed?: { name: string };
 }
 
 // Home for a new account: three steps on the aurora card, then the money
@@ -82,6 +86,7 @@ export function HomeSetup({ data, onAddTransaction }: HomeSetupProps) {
       cta: "Plan a budget",
       href: "/categories",
       done: data.hasBudget ? { title: "Your budget is planned", text: "Smartly warns you when a category reaches 70%.", cta: "See your budget", href: "/categories" } : undefined,
+      failed: data.unavailable.includes("budget") ? { name: "Budget" } : undefined,
     },
     {
       icon: <PiggyBank />,
@@ -91,6 +96,7 @@ export function HomeSetup({ data, onAddTransaction }: HomeSetupProps) {
       cta: "Add a goal",
       href: "/savings-goals/dashboard?new=1",
       done: data.goalCount > 0 ? { title: "Your savings goal is set", text: "Add money to it whenever you can.", cta: "Open goals", href: "/savings-goals/dashboard" } : undefined,
+      failed: data.unavailable.includes("savings") ? { name: "Savings goals" } : undefined,
     },
   ];
 
@@ -156,6 +162,17 @@ export function HomeSetup({ data, onAddTransaction }: HomeSetupProps) {
         <SectionHeader id="h-money" eyebrow={t("Money")} title={t("Income & expense")} />
         <div className="grid gap-6 md:grid-cols-3">
           {moneyCards.map((card) => {
+            if (card.failed) {
+              return (
+                <Card key={card.title} padding="lg" className="flex flex-col items-start gap-3">
+                  <IconTile tone={card.tone} size={40}>
+                    {card.icon}
+                  </IconTile>
+                  <b className="text-title leading-5.5 font-semibold text-ink">{t(card.failed.name)}</b>
+                  <HomePartError compact />
+                </Card>
+              );
+            }
             const shown = card.done ?? card;
             // A step only an owner or accountant can take shows no button.
             const cta = card.done ? card.done.cta : canManage ? card.cta : null;

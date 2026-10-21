@@ -59,8 +59,13 @@ function FailedCompactCard({ label }: { label: string }) {
 // Savings goals and the budget closest to its limit, under the list.
 export function PhoneMoneyCards({ data }: { data: HomeData }) {
   const { t, locale } = useLocale();
-  const { currency, budgetFocus: focus } = data;
-  const left = Number(focus?.monthlyLimit ?? 0) - Number(focus?.spent ?? 0);
+  const { currency, budgetFocus: focus, budgetTotal: total } = data;
+  // The category closest to its limit, or else the month's total budget.
+  const budget = focus
+    ? { label: t("{name} budget", { name: focus.name }), name: focus.name, left: Number(focus.monthlyLimit ?? 0) - Number(focus.spent), percent: focus.percent }
+    : total
+      ? { label: t("Monthly budget"), name: t("Monthly budget"), left: total.budget - total.spent, percent: total.percent }
+      : null;
 
   return (
     <Pair>
@@ -78,12 +83,17 @@ export function PhoneMoneyCards({ data }: { data: HomeData }) {
         <FailedCompactCard label={t("Budget")} />
       ) : (
         <CompactCard href="/categories">
-          {focus ? (
+          {budget ? (
             <>
-              <span className={cn(LABEL, "truncate")}>{t("{name} budget", { name: focus.name })}</span>
-              <span className={cn(FIGURE, "tabular-nums")}>{left >= 0 ? t("{amount} left", { amount: formatCurrency(left, currency) }) : t("{amount} over", { amount: formatCurrency(-left, currency) })}</span>
-              <ProgressBar value={focus.percent} tone="budget" size="sm" label={focus.name} />
-              <span className={cn(NOTE, BUDGET_NOTE[budgetTone(focus.percent)])}>{t("{percent}% used", { percent: toLocaleDigits(String(Math.round(focus.percent)), locale) })}</span>
+              <span className={cn(LABEL, "truncate")}>{budget.label}</span>
+              <span className={cn(FIGURE, "tabular-nums")}>{budget.left >= 0 ? t("{amount} left", { amount: formatCurrency(budget.left, currency) }) : t("{amount} over", { amount: formatCurrency(-budget.left, currency) })}</span>
+              <ProgressBar value={budget.percent} tone="budget" size="sm" label={budget.name} />
+              <span className={cn(NOTE, BUDGET_NOTE[budgetTone(budget.percent)])}>{t("{percent}% used", { percent: toLocaleDigits(String(Math.round(budget.percent)), locale) })}</span>
+            </>
+          ) : data.hasBudget ? (
+            <>
+              <span className={LABEL}>{t("Budget")}</span>
+              <span className={FIGURE}>{t("Your budget is planned")}</span>
             </>
           ) : (
             <>

@@ -173,7 +173,23 @@ function BudgetCard({ data }: { data: HomeData }) {
       <Link href="/categories">
         {label}
         {data.budgetFocus ? (
-          <BudgetFocus focus={data.budgetFocus} currency={data.currency} daysLeft={data.daysLeftInMonth} />
+          <BudgetFocus
+            name={data.budgetFocus.name}
+            icon={data.budgetFocus.icon ?? ""}
+            limit={Number(data.budgetFocus.monthlyLimit ?? 0)}
+            spent={Number(data.budgetFocus.spent)}
+            percent={data.budgetFocus.percent}
+            currency={data.currency}
+            daysLeft={data.daysLeftInMonth}
+          />
+        ) : data.budgetTotal ? (
+          // Only a total for the month: everything spent against it.
+          <BudgetFocus name={t("Monthly budget")} limit={data.budgetTotal.budget} spent={data.budgetTotal.spent} percent={data.budgetTotal.percent} currency={data.currency} daysLeft={data.daysLeftInMonth} />
+        ) : data.hasBudget ? (
+          <>
+            <span className="text-title font-semibold text-ink">{t("Your budget is planned")}</span>
+            <span className="text-small text-ink-muted">{t("Smartly warns you when a category reaches 70%.")}</span>
+          </>
         ) : (
           <>
             <span className="text-title font-semibold text-ink">{t("No budget yet")}</span>
@@ -185,25 +201,35 @@ function BudgetCard({ data }: { data: HomeData }) {
   );
 }
 
-function BudgetFocus({ focus, currency, daysLeft }: { focus: NonNullable<HomeData["budgetFocus"]>; currency: string; daysLeft: number }) {
+// A limit and what went against it: the category closest to its limit, or
+// the month's total budget (no icon) when no category has one.
+interface BudgetFocusProps {
+  name: string;
+  icon?: string;
+  limit: number;
+  spent: number;
+  percent: number;
+  currency: string;
+  daysLeft: number;
+}
+
+function BudgetFocus({ name, icon, limit, spent, percent, currency, daysLeft }: BudgetFocusProps) {
   const { t, locale } = useLocale();
-  const limit = Number(focus.monthlyLimit ?? 0);
-  const spent = Number(focus.spent);
   const left = limit - spent;
   return (
     <>
       <span className="flex items-baseline justify-between gap-2">
         <b className="flex min-w-0 items-center gap-2 text-title leading-5.5 font-semibold text-ink">
-          {createElement(budgetCategoryIcon(focus.icon ?? ""), { className: "size-4 shrink-0 text-ink-muted", "aria-hidden": true })}
-          <span className="truncate">{focus.name}</span>
+          {icon !== undefined && createElement(budgetCategoryIcon(icon), { className: "size-4 shrink-0 text-ink-muted", "aria-hidden": true })}
+          <span className="truncate">{name}</span>
         </b>
         <span className="shrink-0 text-small text-ink-muted tabular-nums">
           {fillNodes(t("{spent} of {limit}"), { spent: <b className="text-ink">{formatCurrency(spent, currency)}</b>, limit: formatCurrency(limit, currency) })}
         </span>
       </span>
-      <ProgressBar value={focus.percent} tone="budget" label={focus.name} />
-      <span className={cn("text-small", focus.percent > 90 ? "font-semibold text-expense" : focus.percent >= 70 ? "font-semibold text-warning" : "text-ink-muted")}>
-        {t("{percent}% used", { percent: toLocaleDigits(String(Math.round(focus.percent)), locale) })} ·{" "}
+      <ProgressBar value={percent} tone="budget" label={name} />
+      <span className={cn("text-small", percent > 90 ? "font-semibold text-expense" : percent >= 70 ? "font-semibold text-warning" : "text-ink-muted")}>
+        {t("{percent}% used", { percent: toLocaleDigits(String(Math.round(percent)), locale) })} ·{" "}
         {left >= 0
           ? t(daysLeft === 1 ? "{amount} left for {count} day" : "{amount} left for {count} days", { amount: formatCurrency(left, currency), count: formatCount(daysLeft, locale) })
           : t("{amount} over", { amount: formatCurrency(-left, currency) })}

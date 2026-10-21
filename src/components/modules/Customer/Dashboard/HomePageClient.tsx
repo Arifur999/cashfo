@@ -28,7 +28,8 @@ export function HomePageClient({ data }: { data: HomeData }) {
   const { actions, run } = useAddActions();
   const loansOn = useFeature("loan_management");
   const hasLoans = (data.loans?.rows.length ?? 0) > 0;
-  const showLoans = loansOn && (data.loans !== null || data.unavailable.includes("loans"));
+  const loansFailed = data.unavailable.includes("loans");
+  const showLoans = loansOn && (data.loans !== null || loansFailed);
 
   const add = (key: AddActionKey) => {
     const action = actions.find((candidate) => candidate.key === key);
@@ -74,10 +75,12 @@ export function HomePageClient({ data }: { data: HomeData }) {
       {data.setup ? (
         <>
           <HomeSetup data={data} onAddTransaction={() => add("expense")} />
-          {showLoans && hasLoans && <HomeLoans data={data} />}
+          {/* A loans read that failed shows its own error card, never the
+              invitation to add a first person. */}
+          {showLoans && (hasLoans || loansFailed) && <HomeLoans data={data} />}
           <HomeHabits data={data} />
           <HomeVaultInsights data={data} />
-          <HomeSetupMore showLoans={!hasLoans} canManage={data.canManage} />
+          <HomeSetupMore showLoans={!hasLoans && !loansFailed} canManage={data.canManage} />
         </>
       ) : (
         <>

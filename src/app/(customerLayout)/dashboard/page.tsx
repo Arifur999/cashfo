@@ -112,17 +112,19 @@ export default async function DashboardPage() {
   // The layout has read it already; this is the same answer.
   const loansOn = isFeatureOn((await getPlatform()).flags, "loan_management");
 
-  const walletsRead = getWalletsOverview(activeBusinessId);
-  // What the active wallets held when the month began: their balances when
-  // last month's final day ended, in one call beside the wallets' own. A
-  // backend from before asOf (no balanceAsOf on the rows, or a refusal)
-  // falls back to each wallet's balance brought forward to the 1st.
-  const asOfRead = getWalletsAsOf(activeBusinessId, previousMonthEnd(today)).catch(() => null);
+  // The wallets, each also carrying what it held when last month's final
+  // day ended (the hero's trend since the 1st), in one call. A backend from
+  // before asOf refuses it or leaves balanceAsOf off: the plain overview is
+  // read then (it still throws on an outage, to the error screen), and the
+  // trend falls back to each wallet's balance brought forward to the 1st.
+  const walletsRead: Promise<WalletsAsOf> = getWalletsAsOf(activeBusinessId, previousMonthEnd(today)).catch((error: unknown) => {
+    unstable_rethrow(error);
+    return getWalletsOverview(activeBusinessId);
+  });
   const startRead = part(async () => {
     const active = (await walletsRead).accounts.filter((wallet) => wallet.status !== "ARCHIVED");
     if (active.length === 0) return null;
-    const asOfById = new Map((await asOfRead)?.accounts.map((wallet) => [wallet.id, { balanceAsOf: wallet.balanceAsOf }] as const) ?? []);
-    const asOfTotal = balanceAsOfTotal(active.map((wallet) => asOfById.get(wallet.id) ?? {}));
+    const asOfTotal = balanceAsOfTotal(active);
     if (asOfTotal !== null) return asOfTotal;
     if (active.length > MAX_LEDGER_TREND_WALLETS) return null;
     const ledgers = await Promise.all(active.map((wallet) => getLedger(activeBusinessId, wallet.id, { dateFrom: monthStart, limit: 1 })));
@@ -182,6 +184,7 @@ export default async function DashboardPage() {
   const expenseCategories = budgetOverview?.categories ?? [];
   const limited = expenseCategories.filter((c) => c.monthlyLimit !== null && Number(c.monthlyLimit) > 0);
   const budgetFocus = [...limited].sort((a, b) => b.percent - a.percent)[0] ?? null;
+  const monthBudget = Number(budgetOverview?.totalBudget ?? 0);
   const loans = loanDashboard ? read("loans", loanDashboard, null) : null;
   const namaz = read("namaz", namazTrackers, []);
   const challenges = read("challenges", challengeTrackers, []);
@@ -229,8 +232,11 @@ export default async function DashboardPage() {
     assetsGain: Math.round((assetsValue - assetsCost) * 100) / 100,
     assetCount: assetList.length,
     budgetFocus,
+    // The month's budget against everything spent this month, as Budget
+    // measures it: the card's figure when no category has a limit.
+    budgetTotal: monthBudget > 0 ? { budget: monthBudget, spent: expenseTotal, percent: Math.round((expenseTotal / monthBudget) * 100) } : null,
     // A limit on a category, or a total for the month.
-    hasBudget: limited.length > 0 || Number(budgetOverview?.totalBudget ?? 0) > 0,
+    hasBudget: limited.length > 0 || monthBudget > 0,
     daysLeftInMonth: daysLeftInMonth(today),
     loans,
     loanCounts: loanCounts(loans?.rows ?? []),
