@@ -402,16 +402,6 @@
   --color-cat-5: var(--cat-5);
   --color-cat-6: var(--cat-6);
 
-  /* Names older pages still use (bg-brand-primary, text-brand-danger,
-     bg-brand-content): aliases onto the palette, so nothing reads off-brand
-     while those pages wait their turn. Delete when the last use is gone. */
-  --color-brand-dark: var(--forest);
-  --color-brand-dark-hover: var(--forest-hover);
-  --color-brand-primary: var(--emerald);
-  --color-brand-primary-hover: var(--emerald-hover);
-  --color-brand-danger: var(--expense-fill);
-  --color-brand-danger-hover: var(--expense);
-
   /* shadcn */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
