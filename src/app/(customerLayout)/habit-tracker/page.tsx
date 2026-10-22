@@ -7,6 +7,7 @@ import { greetingFor, hourIn } from "@/lib/customer/greeting";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
 import { getHabitMonth, getHabits, getHabitsToday, getHabitTrackers } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getReminders } from "@/lib/customer/reminders";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { listFor } from "@/lib/customer/todoDisplay";
 import { getTodoLists } from "@/lib/customer/todos";
@@ -22,7 +23,7 @@ export default async function HabitsTodayPage() {
 
   const today = getAppToday();
   const month = today.slice(0, 7);
-  const [namaz, habits, todayRows, thisMonth, lastMonth, books, skills, challenges, ramadan, todoLists] = await Promise.all([
+  const [namaz, habits, todayRows, thisMonth, lastMonth, books, skills, challenges, ramadan, todoLists, reminders] = await Promise.all([
     getHabitTrackers("Namaz"),
     getHabits(true),
     getHabitsToday(),
@@ -33,6 +34,7 @@ export default async function HabitsTodayPage() {
     getHabitTrackers("Others"),
     getHabitTrackers("Ramadan"),
     getTodoLists(),
+    getReminders(),
   ]);
 
   const data: HabitsHomeData = {
@@ -48,6 +50,7 @@ export default async function HabitsTodayPage() {
     skills,
     challenges,
     ramadan,
+    reminders: reminders?.reminders ?? null,
   };
   return <HabitsHomePageClient data={data} />;
 }

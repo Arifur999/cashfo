@@ -11,7 +11,7 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import type { HabitMonthTracker, PrayerStatus, QazaSummary } from "@/lib/customer/api";
+import type { HabitMonthTracker, PrayerStatus, QazaSummary, Reminder } from "@/lib/customer/api";
 import { actionError, monthShort } from "@/lib/customer/habitDisplay";
 import { createHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
@@ -20,9 +20,11 @@ import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { useReminderBook } from "../Reminders";
 import { withCheck } from "../trackerChecks";
 import { EarlierMonthDialog } from "./EarlierMonthDialog";
 import { NamazHero } from "./NamazHero";
+import { PrayerRemindersCard } from "./PrayerRemindersCard";
 import { PrayerSettingsDrawer } from "./PrayerSettingsDrawer";
 import { QazaCard } from "./QazaCard";
 
@@ -32,6 +34,8 @@ interface NamazHomePageClientProps {
   qaza: QazaSummary | null;
   // "YYYY-MM-DD" today in the platform timezone.
   today: string;
+  // Saved reminders (the prayers' are set here); null when they couldn't be read.
+  reminders: Reminder[] | null;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -61,7 +65,7 @@ function StateIcon({ state, className }: { state: CellState; className?: string 
 // Habits › Namaz: today's five prayers to tap, this month at a glance, what
 // was missed so far, the year so far, and every month's sheet. The current
 // month's sheet opens on its own.
-export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClientProps) {
+export function NamazHomePageClient({ trackers, qaza, today, reminders: savedReminders }: NamazHomePageClientProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const year = Number(today.slice(0, 4));
@@ -75,6 +79,7 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openFailed, setOpenFailed] = useState(false);
   const { settings } = usePrayerSettings();
+  const reminders = useReminderBook(savedReminders);
   const creating = useRef(false);
   const count = (n: number) => formatCount(n, locale);
 
@@ -234,6 +239,8 @@ export function NamazHomePageClient({ trackers, qaza, today }: NamazHomePageClie
           </span>
         </Card>
       </div>
+
+      {reminders.available && <PrayerRemindersCard book={reminders} today={today} onSettings={() => setSettingsOpen(true)} />}
 
       <section aria-labelledby="namaz-months" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">

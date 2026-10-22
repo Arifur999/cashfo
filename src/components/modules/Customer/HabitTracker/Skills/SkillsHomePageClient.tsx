@@ -10,7 +10,7 @@ import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import type { Skill, SkillStatus, SkillsOverview } from "@/lib/customer/api";
+import type { Reminder, Skill, SkillStatus, SkillsOverview } from "@/lib/customer/api";
 import { actionError, daysText } from "@/lib/customer/habitDisplay";
 import { deleteSkillAction, updateSkillAction } from "@/lib/customer/skillActions";
 import { amountText, applyProgress, byStatus, completedIn, namesLine, streakSince, streakStart, weekSums } from "@/lib/customer/skillsDisplay";
@@ -18,6 +18,7 @@ import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { StatCard } from "../Tracker/StatCard";
 import { LearningCard } from "./LearningCard";
+import { useReminderBook } from "../Reminders";
 import { SkillDrawer } from "./SkillDrawer";
 import { SkillGoalDialog } from "./SkillGoalDialog";
 import { SkillProgressDialog } from "./SkillProgressDialog";
@@ -27,6 +28,8 @@ import { ThisWeekCard } from "./ThisWeekCard";
 interface SkillsHomePageClientProps {
   overview: SkillsOverview;
   today: string;
+  // Saved reminders (each one's is set in its drawer); null when they couldn't be read.
+  reminders: Reminder[] | null;
 }
 
 // How many learning skills get a card of their own; the rest are in the
@@ -35,7 +38,8 @@ const CARDS = 2;
 
 // Habits › Skills: four numbers, the skills being learned with a quick-add,
 // this week's practice and every skill in a table.
-export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientProps) {
+export function SkillsHomePageClient({ overview, today, reminders: savedReminders }: SkillsHomePageClientProps) {
+  const reminders = useReminderBook(savedReminders);
   const { t, locale } = useLocale();
   const router = useRouter();
   const { year, goalTarget, streak, week } = overview;
@@ -195,6 +199,7 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
         open={drawer.open}
         onClose={() => setDrawer({ open: false, editing: null })}
         editing={drawer.editing}
+        reminders={reminders}
         onRemove={(skill) => {
           setDrawer({ open: false, editing: null });
           setRemoving(skill);

@@ -1,4 +1,4 @@
-import type { Habit, HabitMonthLog, HabitStat, HabitToday } from "@/lib/customer/api";
+import type { Habit, HabitMonthLog, HabitStat, HabitToday, Reminder } from "@/lib/customer/api";
 
 // What the Daily habits page is told by its server page.
 export interface DailyHabitsData {
@@ -21,4 +21,7 @@ export interface DailyHabitsData {
   // The months the 60 days up to today reach, for the panel's best streak,
   // whatever day is shown.
   bestLogs: HabitMonthLog[];
+  // Every saved habit-area reminder (the drawer shows a habit's), or null
+  // when they couldn't be read.
+  reminders: Reminder[] | null;
 }

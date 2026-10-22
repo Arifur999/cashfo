@@ -17,6 +17,7 @@ import { actionError, latinDigits } from "@/lib/customer/habitDisplay";
 import { SHELF_LABEL } from "@/lib/customer/libraryDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { draftFromReminder, type ReminderBook, ReminderSection } from "../Reminders";
 import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 import { BOOK_PALETTE, suggestColor } from "./bookPalette";
 import { Cover } from "./Cover";
@@ -27,6 +28,8 @@ interface BookDrawerProps {
   // The book being edited; null adds a new one.
   editing: Book | null;
   onRemove: (book: Book) => void;
+  // The page's saved reminders; without them the drawer has no reminder.
+  reminders?: ReminderBook;
 }
 
 const SHELF_OPTIONS: BookStatus[] = ["WANT_TO_READ", "READING", "FINISHED"];
@@ -34,7 +37,7 @@ const MAX_PAGES = 20000;
 
 // Add or edit a book: title, author, how many pages, which shelf it starts
 // on, and the cover colour.
-export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps) {
+export function BookDrawer({ open, onClose, editing, onRemove, reminders }: BookDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -45,6 +48,8 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
   const [pagesRead, setPagesRead] = useState("");
   // Until the reader picks a colour, a new book takes one from its title.
   const [pickedColor, setPickedColor] = useState<string | null>(null);
+  // A new book's reminder, saved once the book is (an edited one's saves itself).
+  const [reminder, setReminder] = useState(() => draftFromReminder("BOOK", null));
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -58,6 +63,7 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
       setStatus("WANT_TO_READ");
       setPagesRead("");
       setPickedColor(editing?.color ?? null);
+      setReminder(draftFromReminder("BOOK", null));
     }
   }
 
@@ -79,6 +85,11 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
       const result = editing ? await updateBookAction(editing.id, details) : await createBookAction({ ...details, status, ...(status === "READING" ? { pagesRead: Number(pagesRead || 0) } : {}) });
       if (result.success) {
         toast.success(t(editing ? "Book updated" : "Book added"));
+        // A new book's reminder needs its id, so it is saved now.
+        if (!editing && result.data && reminders?.available) {
+          const saved = await reminders.saveDraft("BOOK", result.data.id, reminder);
+          if (!saved.success) toast.error(t("Saved, but not its reminder. Open it again to set the reminder."));
+        }
         onClose();
         router.refresh();
       } else {
@@ -143,6 +154,8 @@ export function BookDrawer({ open, onClose, editing, onRemove }: BookDrawerProps
                 </div>
               </div>
             </fieldset>
+
+            {reminders && <ReminderSection kind="BOOK" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("A nudge to pick up the book and read.")} />}
           </div>
 
           <PanelFooter

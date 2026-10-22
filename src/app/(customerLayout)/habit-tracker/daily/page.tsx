@@ -6,6 +6,7 @@ import { isIsoDay } from "@/lib/customer/dateRangePresets";
 import { dailyLogMonths } from "@/lib/customer/habitDisplay";
 import { getHabitMonth, getHabits, getHabitStats, getHabitsToday } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getReminders } from "@/lib/customer/reminders";
 import { getAppToday } from "@/lib/date";
 
 export const generateMetadata = () => customerPageMetadata("/habit-tracker/daily");
@@ -32,11 +33,11 @@ export default async function DailyHabitsPage({ searchParams }: PageProps<"/habi
   const { dayMonths, bestMonths } = dailyLogMonths(day, today);
   const months = [...new Set([...dayMonths, ...bestMonths, panelMonth])];
 
-  const [habits, todayRows, stats, sheets] = await Promise.all([getHabits(true), getHabitsToday(), getHabitStats(), Promise.all(months.map((key) => getHabitMonth(key)))]);
+  const [habits, todayRows, stats, sheets, reminders] = await Promise.all([getHabits(true), getHabitsToday(), getHabitStats(), Promise.all(months.map((key) => getHabitMonth(key))), getReminders()]);
 
   const logsOf = new Map(months.map((key, i) => [key, sheets[i].logs]));
   const logsIn = (keys: string[]) => keys.flatMap((key) => logsOf.get(key) ?? []);
   const logs = logsIn(dayMonths);
-  const data: DailyHabitsData = { today, day, habits, todayRows, stats, logs, panelMonth, panelLogs: dayMonths.includes(panelMonth) ? logs : logsIn([panelMonth]), bestLogs: logsIn(bestMonths) };
+  const data: DailyHabitsData = { today, day, habits, todayRows, stats, logs, panelMonth, panelLogs: dayMonths.includes(panelMonth) ? logs : logsIn([panelMonth]), bestLogs: logsIn(bestMonths), reminders: reminders?.reminders ?? null };
   return <DailyHabitsPageClient data={data} />;
 }

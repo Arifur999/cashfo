@@ -11,7 +11,7 @@ import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { HabitMonthTracker } from "@/lib/customer/api";
+import type { HabitMonthTracker, Reminder } from "@/lib/customer/api";
 import { actionError, daysText, dayText, nextRamadan, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
 import { deleteHabitTrackerAction, removeTrackerItemAction, setHabitTrackerCheckAction, setRamadanParasAction } from "@/lib/customer/habitsActions";
 import { ASHRAS, ashraSummary, ramadanCell, ramadanDays, ramadanSummary, ramadanWindow, type SummaryNote, summaryNote, withParas } from "@/lib/customer/ramadanDisplay";
@@ -23,6 +23,7 @@ import { RecordEyebrow } from "../Tracker/RecordEyebrow";
 import { type BoxState, BoxSwatch, DayTotal, SheetBox } from "../Tracker/SheetBox";
 import { useRovingGrid } from "../Tracker/useRovingGrid";
 import { withCheck } from "../trackerChecks";
+import { useReminderBook } from "../Reminders";
 import { QuranKhatamCard } from "./QuranKhatamCard";
 import { RamadanSetupDialog } from "./RamadanSetupDialog";
 import { SehriIftarCard } from "./SehriIftarCard";
@@ -33,6 +34,9 @@ interface RamadanSheetPageClientProps {
   tracker: HabitMonthTracker;
   all: HabitMonthTracker[];
   today: string;
+  // Saved reminders (Sehri's and Iftar's show on its card); null when they
+  // couldn't be read.
+  reminders: Reminder[] | null;
 }
 
 const SUGGESTIONS = ["Taraweeh", "Quran", "Zikr", "Sadaqah", "Tahajjud", "Dua", "Hadis"];
@@ -63,7 +67,8 @@ type SheetUpdate = { kind: "check"; day: number; item: string; checked: boolean 
 // last ten marked, a summary of every row, the Quran khatam, and Sehri and
 // Iftar times. On a phone the sheet opens scrolled to today with the rows'
 // names pinned; it is one Tab stop, its boxes reached with the arrow keys.
-export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPageClientProps) {
+export function RamadanSheetPageClient({ tracker, all, today, reminders: savedReminders }: RamadanSheetPageClientProps) {
+  const reminders = useReminderBook(savedReminders);
   const { t, locale } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
@@ -332,7 +337,7 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
         </Card>
 
         <QuranKhatamCard sheet={sheet} window={window} days={days} onParas={logParas} saving={savingParas} />
-        <SehriIftarCard day={window.status === "going" ? today : window.status === "upcoming" && window.start ? window.start : next.startsOn} todayDay={window.todayDay} year={window.status === "completed" ? next.year : window.hijriYear} />
+        <SehriIftarCard day={window.status === "going" ? today : window.status === "upcoming" && window.start ? window.start : next.startsOn} todayDay={window.todayDay} year={window.status === "completed" ? next.year : window.hijriYear} reminders={reminders} />
       </div>
 
       <AddRowDialog open={addOpen} onClose={() => setAddOpen(false)} trackerId={sheet.id} existing={sheet.items} suggestions={SUGGESTIONS} description={t("Something to keep up every day of Ramadan, like Taraweeh or a para of Quran.")} />

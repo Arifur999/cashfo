@@ -17,6 +17,7 @@ import { createSkillAction, updateSkillAction } from "@/lib/customer/skillAction
 import { hoursInput, MAX_LESSONS, MAX_MINUTES, MIN_MINUTES, parseHours, STATUS_LABEL } from "@/lib/customer/skillsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { draftFromReminder, type ReminderBook, ReminderSection } from "../Reminders";
 import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 import { SkillIcon } from "./SkillIcon";
 import { SKILL_ICONS, SKILL_PALETTE, suggestColor } from "./skillPalette";
@@ -28,6 +29,8 @@ interface SkillDrawerProps {
   // The skill being edited; null adds a new one.
   editing: Skill | null;
   onRemove: (skill: Skill) => void;
+  // The page's saved reminders; without them the drawer has no reminder.
+  reminders?: ReminderBook;
 }
 
 const UNITS: SkillUnit[] = ["LESSONS", "HOURS"];
@@ -36,7 +39,7 @@ const STATUSES: SkillStatus[] = ["WANT_TO_LEARN", "LEARNING", "COMPLETED"];
 
 // Add or edit a skill: what it is, where it is learned, how it is counted
 // and how much of it there is, plus an icon and a colour.
-export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerProps) {
+export function SkillDrawer({ open, onClose, editing, onRemove, reminders }: SkillDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -50,6 +53,8 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
   const [icon, setIcon] = useState("sparkles");
   // Until the learner picks a colour, a new skill takes one from its name.
   const [pickedColor, setPickedColor] = useState<string | null>(null);
+  // A new skill's reminder, saved once the skill is (an edited one's saves itself).
+  const [reminder, setReminder] = useState(() => draftFromReminder("SKILL", null));
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -65,6 +70,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
       setDone("");
       setIcon(editing?.icon ?? "sparkles");
       setPickedColor(editing?.color ?? null);
+      setReminder(draftFromReminder("SKILL", null));
     }
   }
 
@@ -92,6 +98,11 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
       const result = editing ? await updateSkillAction(editing.id, details) : await createSkillAction({ ...details, unit, status, ...(status === "LEARNING" ? { progress: doneUnits ?? 0 } : {}) });
       if (result.success) {
         toast.success(t(editing ? "Skill updated" : "Skill added"));
+        // A new skill's reminder needs its id, so it is saved now.
+        if (!editing && result.data && reminders?.available) {
+          const saved = await reminders.saveDraft("SKILL", result.data.id, reminder);
+          if (!saved.success) toast.error(t("Saved, but not its reminder. Open it again to set the reminder."));
+        }
         onClose();
         router.refresh();
       } else {
@@ -178,6 +189,8 @@ export function SkillDrawer({ open, onClose, editing, onRemove }: SkillDrawerPro
                 </div>
               </fieldset>
             </div>
+
+            {reminders && <ReminderSection kind="SKILL" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("A nudge to sit down and practise.")} />}
           </div>
 
           <PanelFooter

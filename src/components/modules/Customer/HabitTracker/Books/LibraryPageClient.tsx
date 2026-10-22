@@ -9,11 +9,12 @@ import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import type { Book, BookStatus, BooksOverview } from "@/lib/customer/api";
+import type { Book, BookStatus, BooksOverview, Reminder } from "@/lib/customer/api";
 import { deleteBookAction, updateBookAction } from "@/lib/customer/bookActions";
 import { actionError } from "@/lib/customer/habitDisplay";
 import { applyProgress, nowReading, shelves } from "@/lib/customer/libraryDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { useReminderBook } from "../Reminders";
 import { BookDrawer } from "./BookDrawer";
 import { BookNotesCard } from "./BookNotesCard";
 import { GoalDialog } from "./GoalDialog";
@@ -26,11 +27,14 @@ import { ShelvesCard, type ShelfAction } from "./ShelvesCard";
 interface LibraryPageClientProps {
   overview: BooksOverview;
   today: string;
+  // Saved reminders (each one's is set in its drawer); null when they couldn't be read.
+  reminders: Reminder[] | null;
 }
 
 // Habits › My library: the book on the nightstand, this year's goal, the
 // reading streak, the notes on the book and the three shelves.
-export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
+export function LibraryPageClient({ overview, today, reminders: savedReminders }: LibraryPageClientProps) {
+  const reminders = useReminderBook(savedReminders);
   const { t, locale } = useLocale();
   const router = useRouter();
   const { year, goalTarget } = overview;
@@ -135,6 +139,7 @@ export function LibraryPageClient({ overview, today }: LibraryPageClientProps) {
         open={drawer.open}
         onClose={() => setDrawer({ open: false, editing: null })}
         editing={drawer.editing}
+        reminders={reminders}
         onRemove={(book) => {
           setDrawer({ open: false, editing: null });
           setRemoving(book);

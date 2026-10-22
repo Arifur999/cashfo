@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
 import { getHabitTrackers, getQaza } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getReminders } from "@/lib/customer/reminders";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { getAppToday } from "@/lib/date";
 
@@ -30,33 +31,33 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
   // category (a stale bookmark, or the bare route) goes back to the
   // whole-account dashboard instead of rendering an orphaned page.
   if (category === "Namaz") {
-    const [trackers, qaza] = await Promise.all([getHabitTrackers("Namaz"), getQaza()]);
-    return <NamazHomePageClient trackers={trackers} qaza={qaza} today={getAppToday()} />;
+    const [trackers, qaza, reminders] = await Promise.all([getHabitTrackers("Namaz"), getQaza(), getReminders()]);
+    return <NamazHomePageClient trackers={trackers} qaza={qaza} today={getAppToday()} reminders={reminders?.reminders ?? null} />;
   }
 
   if (category === "Ramadan") {
-    const trackers = await getHabitTrackers("Ramadan");
-    return <RamadanHomePageClient trackers={trackers} today={getAppToday()} />;
+    const [trackers, reminders] = await Promise.all([getHabitTrackers("Ramadan"), getReminders()]);
+    return <RamadanHomePageClient trackers={trackers} today={getAppToday()} reminders={reminders?.reminders ?? null} />;
   }
 
   if (category === "Book") {
-    const overview = await getBooksOverview();
+    const [overview, reminders] = await Promise.all([getBooksOverview(), getReminders()]);
     // Never render "no books yet" when the request merely failed.
     if (!overview) return <BooksLoadError />;
-    return <LibraryPageClient overview={overview} today={getAppToday()} />;
+    return <LibraryPageClient overview={overview} today={getAppToday()} reminders={reminders?.reminders ?? null} />;
   }
 
   // "Skills" (stored as the habit category "Course").
   if (category === "Course") {
-    const overview = await getSkillsOverview();
+    const [overview, reminders] = await Promise.all([getSkillsOverview(), getReminders()]);
     if (!overview) return <SkillsLoadError />;
-    return <SkillsHomePageClient overview={overview} today={getAppToday()} />;
+    return <SkillsHomePageClient overview={overview} today={getAppToday()} reminders={reminders?.reminders ?? null} />;
   }
 
   if (category === "Others") {
-    const trackers = await getHabitTrackers("Others");
+    const [trackers, reminders] = await Promise.all([getHabitTrackers("Others"), getReminders()]);
     // ?new=1 (Today's "Start a challenge") opens the new-challenge dialog.
-    return <ChallengesHomePageClient trackers={trackers} today={getAppToday()} openNew={sp.new === "1"} />;
+    return <ChallengesHomePageClient trackers={trackers} today={getAppToday()} openNew={sp.new === "1"} reminders={reminders?.reminders ?? null} />;
   }
 
   redirect("/habit-tracker");

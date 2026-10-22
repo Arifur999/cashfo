@@ -22,6 +22,7 @@ import { createHabitAction, deleteHabitAction, updateHabitAction } from "@/lib/c
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { draftFromReminder, type ReminderBook, ReminderSection } from "../Reminders";
 import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 import { HABIT_COLORS, HABIT_ICONS, HABIT_UNITS, type HabitColorKey, type HabitIconKey } from "./habitVisuals";
 
@@ -29,6 +30,8 @@ interface HabitDrawerProps {
   open: boolean;
   onClose: () => void;
   editing: Habit | null;
+  // The page's saved reminders; without them the drawer has no reminder.
+  reminders?: ReminderBook;
 }
 
 const OFTEN: { value: HabitFrequency; title: string; sub: string }[] = [
@@ -40,7 +43,7 @@ const OFTEN: { value: HabitFrequency; title: string; sub: string }[] = [
 // A new or edited habit in the design's drawer: its name, icon and colour,
 // how often, and whether an amount is counted each time. Archive keeps it
 // (and its history) to bring back later; Delete asks first.
-export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
+export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -56,6 +59,8 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
   // The unit as shown in the field, in the reader's language; saved as its
   // chip's key when it is one (unitKey).
   const [unit, setUnit] = useState("minutes");
+  // A new habit's reminder, saved once the habit is (an edited one's saves itself).
+  const [reminder, setReminder] = useState(() => draftFromReminder("HABIT", null));
   const [deleting, setDeleting] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -73,6 +78,7 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
       setCounted(!!editing?.targetValue);
       setTarget(editing?.targetValue ? String(editing.targetValue) : "");
       setUnit(unitLabel(editing?.unit ?? "minutes", t));
+      setReminder(draftFromReminder("HABIT", null));
       setDeleting(false);
     }
   }
@@ -102,6 +108,11 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
       const result = editing ? await updateHabitAction(editing.id, input) : await createHabitAction(input);
       if (result.success) {
         toast.success(editing ? t("Habit updated") : t("Habit added"));
+        // A new habit's reminder needs its id, so it is saved now.
+        if (!editing && result.data && reminders?.available) {
+          const saved = await reminders.saveDraft("HABIT", result.data.id, reminder);
+          if (!saved.success) toast.error(t("Saved, but not its reminder. Open it again to set the reminder."));
+        }
         onClose();
         router.refresh();
       } else {
@@ -254,6 +265,8 @@ export function HabitDrawer({ open, onClose, editing }: HabitDrawerProps) {
                 </>
               )}
             </div>
+
+            {reminders && <ReminderSection kind="HABIT" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("Skipped on a day it's already done.")} />}
 
             <span className="flex items-start gap-2 text-small text-ink-2">
               <Info className="mt-px size-4 shrink-0 text-ink-muted" aria-hidden="true" />
