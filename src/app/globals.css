@@ -486,9 +486,14 @@
 @utility bg-night {
   background-image: linear-gradient(160deg, #0e1a16 0%, #0b3d2e 100%);
 }
-/* The sidebar's own vertical night, fixed in px so it reads the same at any height. */
-@utility bg-night-panel {
-  background-image: linear-gradient(180deg, #0e1a16 0px, #0b3d2e 900px);
+/* The sidebar's aurora: forest at the top where the logo sits, deepening
+   into emerald (fixed in px, so it reads the same at any height), with the
+   aurora's mint as a glow in the bottom-right corner, clear of the rows'
+   text -- type stays on the deep end. */
+@utility bg-aurora-panel {
+  background-image:
+    radial-gradient(75% 24% at 100% 100%, rgb(123 211 168 / 0.6) 0%, rgb(123 211 168 / 0) 100%),
+    linear-gradient(165deg, #0b3d2e 0px, #1f7a5a 760px, #24855f 100%);
 }
 @utility bg-fresh {
   background-image: linear-gradient(135deg, var(--page) 0%, var(--mint-50) 100%);
