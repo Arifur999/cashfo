@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/customer/date";
 import { APP_VERSION, fileNameFrom, GUIDES, LEGAL_LINKS, type Guide } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 
 const GUIDE_ICONS: Record<Guide["faqId"], LucideIcon> = { start: Wallet, budget: ChartPie, group: Users, vault: KeyRound };
 
@@ -127,7 +128,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
         </div>
       </Card>
 
-      <p className="text-small text-ink-muted">{t("Smartly for web · version {version}", { version: APP_VERSION })}</p>
+      <p className="text-small text-ink-muted">{t("Smartly for web · version {version}", { version: toLocaleDigits(APP_VERSION, locale) })}</p>
     </div>
   );
 }
