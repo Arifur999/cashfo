@@ -84,7 +84,7 @@ const LegalPages = ({ canManage }: { canManage: boolean }) => {
                 </Chip>
               </span>
               <span className="text-small text-ink-muted">
-                <T values={{ date: lowerFirst(formatRelativeDay(document.updatedAt, { t: translate })) }}>{"Updated {date}"}</T>
+                <T values={{ date: lowerFirst(formatRelativeDay(document.updatedAt, { t: translate, locale })) }}>{"Updated {date}"}</T>
               </span>
               {/* Whether a Bangla text exists, not whether it matches the latest English. */}
               <span className={cn("text-caption", hasBangla ? "text-emerald" : "text-warning")}><T>{hasBangla ? "বাংলা written" : "বাংলা not written yet"}</T></span>

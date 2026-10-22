@@ -33,7 +33,7 @@ const FeatureRequestDrawer = ({ open, onOpenChange, request, canManage, onMove }
       open={open && request !== undefined}
       onOpenChange={onOpenChange}
       title="Feature request"
-      description={request ? `${askedText(request.createdAt, translate)} · ${votesText(request.voteCount, translate, locale)}` : undefined}
+      description={request ? `${askedText(request.createdAt, translate, locale)} · ${votesText(request.voteCount, translate, locale)}` : undefined}
       width="lg"
       closeOnOutsideClick
     >

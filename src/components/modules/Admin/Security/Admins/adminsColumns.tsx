@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { ADMIN_ROLE_CHIP, ADMIN_ROLE_SHORT_LABELS } from "@/lib/adminRoles";
 import { formatDateTime } from "@/lib/date";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { IAdminAccount } from "@/types/adminAccount.types";
 import AdminAvatar from "../AdminAvatar";
@@ -11,6 +12,16 @@ import T from "@/components/shared/T";
 import RelativeTime from "@/components/shared/RelativeTime";
 
 const STATUS_LABEL: Record<IAdminAccount["status"], string> = { ACTIVE: "Active", SUSPENDED: "Suspended" };
+
+// "Yesterday", with the full date and time on hover, both in the reader's language.
+const LastSignIn = ({ at }: { at: string | null }) => {
+  const { locale } = useLocale();
+  return (
+    <span className="text-small whitespace-nowrap text-ink-2" title={at ? formatDateTime(at, "—", locale) : undefined}>
+      {at ? <RelativeTime value={at} as="day" /> : <T>Never</T>}
+    </span>
+  );
+};
 
 // The admin team as the design draws it: who (with "(you)" on your own
 // row), their role, when they last signed in, whether they can, and the
@@ -59,11 +70,7 @@ export const buildAdminsColumns = (currentAdminId: string | null, onOpen: (dialo
     id: "lastLoginAt",
     accessorKey: "lastLoginAt",
     header: "Last sign-in",
-    cell: ({ row }) => (
-      <span className="text-small whitespace-nowrap text-ink-2" title={row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : undefined}>
-        {row.original.lastLoginAt ? <RelativeTime value={row.original.lastLoginAt} as="day" /> : <T>Never</T>}
-      </span>
-    ),
+    cell: ({ row }) => <LastSignIn at={row.original.lastLoginAt} />,
     meta: { width: 150, exportValue: (row) => (row.lastLoginAt ? formatDateTime(row.lastLoginAt) : "Never") },
   },
   {

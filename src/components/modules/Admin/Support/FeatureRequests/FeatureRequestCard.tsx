@@ -28,9 +28,10 @@ interface FeatureRequestCardProps {
   dragging: boolean;
 }
 
-// "Asked today", "Asked 14 Oct".
-export const askedText = (createdAt: string, t: Translate) => {
-  const when = formatRelativeDay(createdAt);
+// "Asked today", "Asked 14 Oct". The words stay English for the checks
+// below; the date comes in the reader's months and digits ("৬ অক্টো").
+export const askedText = (createdAt: string, t: Translate, locale: Locale = "en") => {
+  const when = formatRelativeDay(createdAt, { locale });
   if (when.startsWith("Today")) return t("Asked today");
   if (when === "Yesterday") return t("Asked yesterday");
   return t("Asked {date}", { date: when });
@@ -94,7 +95,7 @@ const FeatureRequestCard = ({ request, canManage, onMove, onOpen, onDragStart, o
         {/* When, then who asked: a customer's name opens their page. Not
             draggable itself, so dragging from the name still moves the card. */}
         <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-caption text-ink-muted">
-          <span>{askedText(request.createdAt, translate)}</span>
+          <span>{askedText(request.createdAt, translate, locale)}</span>
           {requester && (
             <>
               <span aria-hidden="true">·</span>

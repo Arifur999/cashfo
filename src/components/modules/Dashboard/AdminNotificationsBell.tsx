@@ -9,6 +9,7 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { adminFeedRow, type AdminFeedTone } from "@/lib/adminFeedDisplay";
 import { formatRecentDateTime } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { AdminFeedGroup, AdminFeedKind, IAdminFeed } from "@/types/adminFeed.types";
@@ -69,7 +70,7 @@ const AdminNotificationsBell = () => {
     });
   }
 
-  const label = unread > 0 ? `${t("Notifications")}, ${t("{count} new", { count: unread })}` : t("Notifications");
+  const label = unread > 0 ? `${t("Notifications")}, ${t("{count} new", { count: formatCount(unread, locale) })}` : t("Notifications");
 
   return (
     <Popover open={open} onOpenChange={changeOpen}>
@@ -84,7 +85,7 @@ const AdminNotificationsBell = () => {
             aria-hidden="true"
             className="absolute top-1 right-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-expense-fill px-1 text-caption leading-4 font-bold text-white tabular-nums shadow-[0_0_0_2px_var(--surface)] md:-top-1.5 md:-right-1.5"
           >
-            {unread}
+            {formatCount(unread, locale)}
           </span>
         )}
       </PopoverTrigger>

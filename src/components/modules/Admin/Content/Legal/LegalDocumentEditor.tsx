@@ -94,7 +94,7 @@ const LegalDocumentEditor = ({ document, canManage, onDirtyChange }: LegalDocume
           <span className="text-small text-ink-muted">
             {translate("Live version {version} · updated {when}", {
               version: formatCount(document.version, locale),
-              when: lowerFirst(formatRelativeDateTime(document.updatedAt, { t: translate })),
+              when: lowerFirst(formatRelativeDateTime(document.updatedAt, { t: translate, locale })),
             })}
           </span>
           <a
