@@ -606,7 +606,7 @@
    sign-in pages never take the dark theme. */
 .auth-backdrop {
   background:
-    radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--mint-200) 70%, transparent) 0%, transparent 55%),
+    radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--mint-200) 34%, transparent) 0%, transparent 55%),
     radial-gradient(110% 90% at 100% 100%, color-mix(in oklab, var(--mint-300) 32%, transparent) 0%, transparent 60%),
     linear-gradient(160deg, var(--mint-50) 0%, var(--page) 45%, color-mix(in oklab, var(--mint-200) 45%, var(--page)) 100%);
 }
