@@ -209,7 +209,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
             className={cn(
               "relative flex h-10 items-center justify-center rounded-md transition-colors",
               NIGHT_FOCUS,
-              lit ? "bg-mint-200/14 text-white" : "text-white/74 hover:bg-white/6 hover:text-white",
+              lit ? "bg-mint-200/14 text-white" : "text-white/88 hover:bg-white/10 hover:text-white",
             )}
           >
             {lit && <span aria-hidden="true" className={cn(MARKER, "top-2.5 h-5")} />}
@@ -231,7 +231,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
               compact ? "h-10 text-body" : "h-11 text-body-lg",
               // Room for the chevron's own button.
               item.subs && (compact ? "pr-11" : "pr-12"),
-              lit ? "font-semibold text-white" : "font-medium text-white/74 hover:bg-white/6 hover:text-white",
+              lit ? "font-semibold text-white" : "font-medium text-white/88 hover:bg-white/10 hover:text-white",
               self && "bg-mint-200/14",
             )}
           >
@@ -255,7 +255,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
                 "absolute top-0 right-0 flex items-center justify-center rounded-md transition-colors",
                 NIGHT_FOCUS,
                 compact ? "size-10" : "size-11",
-                lit ? "text-white/60" : "text-white/45 hover:bg-white/8 hover:text-white",
+                lit ? "text-white/80" : "text-white/70 hover:bg-white/10 hover:text-white",
               )}
             >
               <Chevron className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
@@ -275,7 +275,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
                     "relative flex items-center rounded-md pr-3 pl-10 transition-colors",
                     NIGHT_FOCUS,
                     compact ? "h-8.5 text-small" : "h-10 text-body",
-                    on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/68 hover:text-white",
+                    on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/85 hover:text-white",
                   )}
                 >
                   <span aria-hidden="true" className="absolute top-0 bottom-0 left-5.25 w-px bg-mint-200/16" />
@@ -305,7 +305,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
               </span>
             )}
             {section.label && !collapsed && (
-              <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-200/62 uppercase", compact ? "h-9 pb-2" : "pb-1 leading-[normal]")}>
+              <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-50/90 uppercase", compact ? "h-9 pb-2" : "pb-1 leading-[normal]")}>
                 <span aria-hidden="true" className={cn("size-1.5 rounded-full", NIGHT_DOT[section.tone])} />
                 {t(section.label)}
               </span>
@@ -340,7 +340,7 @@ export function SidebarFoot({ compact = true, collapsed = false }: { compact?: b
                 "relative flex items-center rounded-md transition-colors",
                 NIGHT_FOCUS,
                 collapsed ? "h-10 justify-center" : cn("gap-3 px-3", compact ? "h-10 text-body" : "h-11 text-body"),
-                on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/74 hover:bg-white/6 hover:text-white",
+                on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/88 hover:bg-white/10 hover:text-white",
               )}
             >
               {on && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}

@@ -37,7 +37,7 @@ export function AppSidebar({ initialCollapsed = false }: { initialCollapsed?: bo
       onClick={toggle}
       aria-label={toggleLabel}
       aria-expanded={!collapsed}
-      className={cn("flex size-9 shrink-0 items-center justify-center rounded-md text-white/55 transition-colors hover:bg-white/8 hover:text-white", NIGHT_FOCUS)}
+      className={cn("flex size-9 shrink-0 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white", NIGHT_FOCUS)}
     >
       <ToggleIcon className="size-4.5" strokeWidth={1.9} aria-hidden="true" />
     </button>
@@ -47,7 +47,7 @@ export function AppSidebar({ initialCollapsed = false }: { initialCollapsed?: bo
     <aside
       data-collapsed={collapsed || undefined}
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex-col overflow-hidden bg-night-panel pt-5 pb-4 text-white transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex print:hidden",
+        "sticky top-0 hidden h-screen shrink-0 flex-col overflow-hidden bg-aurora-panel pt-5 pb-4 text-white transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex print:hidden",
         collapsed ? "w-18 px-3" : "w-sidebar px-3",
       )}
     >

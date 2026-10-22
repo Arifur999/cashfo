@@ -22,7 +22,7 @@ import { workspaceKind } from "./workspaceKind";
 
 // The foot rows, drawn like SidebarFoot's own (its mint focus ring too:
 // the site's green one is lost on the Night panel).
-const FOOT_ROW = cn("relative flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-body font-medium text-white/74 transition-colors hover:bg-white/6 hover:text-white [&_svg]:size-4.75 [&_svg]:shrink-0", NIGHT_FOCUS);
+const FOOT_ROW = cn("relative flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-body font-medium text-white/88 transition-colors hover:bg-white/10 hover:text-white [&_svg]:size-4.75 [&_svg]:shrink-0", NIGHT_FOCUS);
 // The links under the workspace list.
 const CARD_LINK = cn("flex h-10 items-center gap-3 rounded-md px-2.5 text-small font-semibold text-mint-200 hover:bg-white/6 hover:text-white [&_svg]:size-4 [&_svg]:shrink-0", NIGHT_FOCUS);
 
@@ -58,7 +58,7 @@ export function NavDrawer() {
         <SheetContent
           side="left"
           showCloseButton={false}
-          className="max-w-[85vw] gap-0 border-none bg-night-panel p-0 text-white shadow-[28px_0_60px_-16px_rgba(0,0,0,0.4)] data-[side=left]:w-79 data-[side=left]:sm:max-w-79"
+          className="max-w-[85vw] gap-0 border-none bg-aurora-panel p-0 text-white shadow-[28px_0_60px_-16px_rgba(0,0,0,0.4)] data-[side=left]:w-79 data-[side=left]:sm:max-w-79"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>{t("Main")}</SheetTitle>
