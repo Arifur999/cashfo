@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditChangeSummary, auditFieldLabel, auditOnText, auditRecordHref, auditRecordName, auditRecordTypeLabel, QUIET_FIELDS } from "./auditRecords";
+import { auditChangeSummary, auditFieldLabel, auditOnText, auditReasonText, auditRecordHref, auditRecordName, auditRecordTypeLabel, QUIET_FIELDS } from "./auditRecords";
 
 const entry = (overrides: Partial<Parameters<typeof auditOnText>[0]> = {}) => ({
   action: "PLAN_UPDATED",
@@ -29,6 +29,14 @@ describe("auditRecordName", () => {
 describe("auditChangeSummary", () => {
   it("prefers the reason an admin gave", () => {
     expect(auditChangeSummary({ oldValue: { status: "ACTIVE" }, newValue: { status: "SUSPENDED", reason: "spam invites" } })).toBe("spam invites");
+  });
+
+  it("words a reason the API wrote as a code, and only for its action", () => {
+    const refused = (reason: string) => entry({ action: "USER_IMPERSONATION_REFUSED", entityType: "User", entityLabel: "Shirin Akter", oldValue: null, newValue: { sensitive: true, reason } });
+    expect(auditOnText(refused("no-code"))).toBe("Shirin Akter · No support code was active");
+    expect(auditOnText(refused("wrong-code"))).toBe("Shirin Akter · Wrong support code");
+    expect(auditReasonText("USER_IMPERSONATION_REFUSED", "something-new")).toBe("something-new");
+    expect(auditReasonText("USER_SUSPENDED", "no-code")).toBe("no-code");
   });
 
   it("spells out one change and counts several", () => {
