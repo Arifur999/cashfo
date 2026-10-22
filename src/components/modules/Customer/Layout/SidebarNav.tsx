@@ -56,6 +56,16 @@ const NIGHT_DOT: Record<NavTone, string> = {
 
 const MARKER = "absolute -left-3 w-0.75 rounded-r-[3px] bg-night-marker";
 
+// On the aurora a lighter pill melted into the emerald: the open page sits
+// in a darker pill with a faint edge (white on it is about 6:1), and hover
+// darkens a little less. Black, not a theme token: the panel looks the same
+// in both themes.
+const ACTIVE_ROW = "bg-black/22 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]";
+const HOVER_ROW = "hover:bg-black/12";
+// On a short screen (a laptop with the browser's bars) rows close up a
+// little, so more of the menu shows before it scrolls.
+const SHORT = "[@media(max-height:860px)]:h-9";
+
 // The site's focus ring is dark green, which the night panel swallows; the
 // mint one reads on it. Drawn inside the row, since the scrolling menu
 // clips anything outside it. Every control on the panel takes it: the
@@ -207,9 +217,9 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
             aria-current={self ? "page" : undefined}
             aria-label={t(item.label)}
             className={cn(
-              "relative flex h-10 items-center justify-center rounded-md transition-colors",
+              cn("relative flex h-10 items-center justify-center rounded-md transition-colors", SHORT),
               NIGHT_FOCUS,
-              lit ? "bg-mint-200/14 text-white" : "text-white/88 hover:bg-white/10 hover:text-white",
+              lit ? cn(ACTIVE_ROW, "text-white") : cn("text-white/88 hover:text-white", HOVER_ROW),
             )}
           >
             {lit && <span aria-hidden="true" className={cn(MARKER, "top-2.5 h-5")} />}
@@ -228,11 +238,11 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
             className={cn(
               "relative flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 transition-colors",
               NIGHT_FOCUS,
-              compact ? "h-10 text-body" : "h-11 text-body-lg",
+              compact ? cn("h-10 text-body", SHORT) : "h-11 text-body-lg",
               // Room for the chevron's own button.
               item.subs && (compact ? "pr-11" : "pr-12"),
-              lit ? "font-semibold text-white" : "font-medium text-white/88 hover:bg-white/10 hover:text-white",
-              self && "bg-mint-200/14",
+              lit ? "font-semibold text-white" : cn("font-medium text-white/88 hover:text-white", HOVER_ROW),
+              self && ACTIVE_ROW,
             )}
           >
             {self && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}
@@ -255,7 +265,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
                 "absolute top-0 right-0 flex items-center justify-center rounded-md transition-colors",
                 NIGHT_FOCUS,
                 compact ? "size-10" : "size-11",
-                lit ? "text-white/80" : "text-white/70 hover:bg-white/10 hover:text-white",
+                lit ? "text-white/80" : cn("text-white/70 hover:text-white", HOVER_ROW),
               )}
             >
               <Chevron className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
@@ -274,8 +284,8 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
                   className={cn(
                     "relative flex items-center rounded-md pr-3 pl-10 transition-colors",
                     NIGHT_FOCUS,
-                    compact ? "h-8.5 text-small" : "h-10 text-body",
-                    on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/85 hover:text-white",
+                    compact ? "h-8.5 text-small [@media(max-height:860px)]:h-8" : "h-10 text-body",
+                    on ? cn(ACTIVE_ROW, "font-semibold text-white") : "font-medium text-white/85 hover:text-white",
                   )}
                 >
                   <span aria-hidden="true" className="absolute top-0 bottom-0 left-5.25 w-px bg-mint-200/16" />
@@ -305,7 +315,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
               </span>
             )}
             {section.label && !collapsed && (
-              <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-50/90 uppercase", compact ? "h-9 pb-2" : "pb-1 leading-[normal]")}>
+              <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-200/90 uppercase", compact ? "h-9 pb-2 [@media(max-height:860px)]:h-7 [@media(max-height:860px)]:pt-2.5 [@media(max-height:860px)]:pb-1" : "pb-1 leading-[normal]")}>
                 <span aria-hidden="true" className={cn("size-1.5 rounded-full", NIGHT_DOT[section.tone])} />
                 {t(section.label)}
               </span>
@@ -339,8 +349,8 @@ export function SidebarFoot({ compact = true, collapsed = false }: { compact?: b
               className={cn(
                 "relative flex items-center rounded-md transition-colors",
                 NIGHT_FOCUS,
-                collapsed ? "h-10 justify-center" : cn("gap-3 px-3", compact ? "h-10 text-body" : "h-11 text-body"),
-                on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/88 hover:bg-white/10 hover:text-white",
+                collapsed ? cn("h-10 justify-center", SHORT) : cn("gap-3 px-3", compact ? cn("h-10 text-body", SHORT) : "h-11 text-body"),
+                on ? cn(ACTIVE_ROW, "font-semibold text-white") : cn("font-medium text-white/88 hover:text-white", HOVER_ROW),
               )}
             >
               {on && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}
