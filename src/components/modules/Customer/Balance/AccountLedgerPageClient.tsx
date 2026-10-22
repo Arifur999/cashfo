@@ -159,7 +159,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
         // which the equation above shows as a term of its own.
         return {
           label: t("Closing balance"),
-          note: residual !== 0 ? t("Includes {amount} from voids or edits whose other half is in another period", { amount: formatSignedCurrency(residual, currency) }) : undefined,
+          note: residual !== 0 ? t("Includes {amount} from voids or edits whose other half is in another period", { amount: formatSignedCurrency(residual, currency, locale) }) : undefined,
         };
     }
   };
@@ -253,7 +253,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                     <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", walletPalette(index).tile)}>{createElement(walletIcon(wallet), { "aria-hidden": true })}</span>
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className="truncate text-body leading-[normal] font-semibold text-ink">{accountDisplayName(wallet, preferredLanguage)}</span>
-                      <span className={cn("text-caption leading-[normal] font-normal tabular-nums", Number(wallet.currentBalance) < 0 ? "text-expense" : "text-ink-muted")}>{balanceText(wallet.currentBalance, currency)}</span>
+                      <span className={cn("text-caption leading-[normal] font-normal tabular-nums", Number(wallet.currentBalance) < 0 ? "text-expense" : "text-ink-muted")}>{balanceText(wallet.currentBalance, currency, locale)}</span>
                     </span>
                   </button>
                 ))}
@@ -265,22 +265,22 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
       ) : (
         <>
           <Card role="group" aria-label={t("From the opening balance to the closing balance")} className={cn("grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3", oneLine && "xl:flex xl:items-stretch xl:gap-3")}>
-            <EquationCell oneLine={oneLine} label={openingLabel} value={balanceText(ledger.balanceBroughtForward, currency)} />
+            <EquationCell oneLine={oneLine} label={openingLabel} value={balanceText(ledger.balanceBroughtForward, currency, locale)} />
             {oneLine && <Operator>+</Operator>}
-            <EquationCell oneLine={oneLine} op="+" spoken={t("plus@@equation")} label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={formatCurrency(summary.totalIn, currency)} className={money ? "text-income" : undefined} />
+            <EquationCell oneLine={oneLine} op="+" spoken={t("plus@@equation")} label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={formatCurrency(summary.totalIn, currency, locale)} className={money ? "text-income" : undefined} />
             {oneLine && <Operator>−</Operator>}
-            <EquationCell oneLine={oneLine} op="−" spoken={t("minus@@equation")} label={money ? t("Money out@@wallet") : t("Decrease@@statement")} value={formatCurrency(summary.totalOut, currency)} className={money ? "text-expense" : undefined} />
+            <EquationCell oneLine={oneLine} op="−" spoken={t("minus@@equation")} label={money ? t("Money out@@wallet") : t("Decrease@@statement")} value={formatCurrency(summary.totalOut, currency, locale)} className={money ? "text-expense" : undefined} />
             {showTransfers && (
               <>
                 {oneLine && <Operator>±</Operator>}
                 {/* Signed figures: the sign says which way, so no spoken operator. */}
-                <EquationCell oneLine={oneLine} op="±" label={t("Transfers & savings")} value={formatSignedCurrency(adjustment, currency)} className="text-info" />
+                <EquationCell oneLine={oneLine} op="±" label={t("Transfers & savings")} value={formatSignedCurrency(adjustment, currency, locale)} className="text-info" />
               </>
             )}
             {residual !== 0 && (
               <>
                 {oneLine && <Operator>±</Operator>}
-                <EquationCell oneLine={oneLine} op="±" label={t("Voided & reversed")} value={formatSignedCurrency(residual, currency)} note={t("From a void or edit whose other half is in another period")} className="text-ink-2" />
+                <EquationCell oneLine={oneLine} op="±" label={t("Voided & reversed")} value={formatSignedCurrency(residual, currency, locale)} note={t("From a void or edit whose other half is in another period")} className="text-ink-2" />
               </>
             )}
             {oneLine && <Operator equals>=</Operator>}
@@ -289,7 +289,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                 <span className="sr-only">{t("equals@@equation")} </span>
                 {t("Closing balance")}
               </span>
-              <span className={cn("text-ink tabular-nums wrap-anywhere", oneLine ? "text-h3 sm:text-h2 xl:text-h3 2xl:text-h2" : "text-h3 sm:text-h2")}>{balanceText(ledger.closingBalance, currency)}</span>
+              <span className={cn("text-ink tabular-nums wrap-anywhere", oneLine ? "text-h3 sm:text-h2 xl:text-h3 2xl:text-h2" : "text-h3 sm:text-h2")}>{balanceText(ledger.closingBalance, currency, locale)}</span>
             </div>
           </Card>
 
@@ -316,7 +316,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
               <ListHeadCell align="end">{money ? t("Out") : t("Decrease@@statement")}</ListHeadCell>
               <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
             </ListHead>
-            <BalanceLine kind={lines.top.kind} {...lineText(lines.top)} value={balanceText(lines.top.balance, currency)} />
+            <BalanceLine kind={lines.top.kind} {...lineText(lines.top)} value={balanceText(lines.top.balance, currency, locale)} />
             {ledger.entries.length === 0 && <ListEmpty title={t("No activity in this range.")} />}
             {ledger.entries.map((row, index) => {
               const direction = ledgerDirection(row.entryType, account.accountType);
@@ -332,7 +332,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
               const amount = (side: "in" | "out") =>
                 direction === side ? (
                   <ListCell align="end" className={cn(tone, voided && "line-through")}>
-                    {formatCurrency(row.amount, currency)}
+                    {formatCurrency(row.amount, currency, locale)}
                   </ListCell>
                 ) : (
                   <ListCell align="end" className="text-ink-muted">
@@ -362,12 +362,12 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                   {amount("in")}
                   {amount("out")}
                   <ListCell align="end" className="font-semibold">
-                    {balanceText(row.runningBalance, currency)}
+                    {balanceText(row.runningBalance, currency, locale)}
                   </ListCell>
                 </ListRow>
               );
             })}
-            <BalanceLine kind={lines.bottom.kind} {...lineText(lines.bottom)} value={balanceText(lines.bottom.balance, currency)} strong={lines.bottom.kind === "closing"} />
+            <BalanceLine kind={lines.bottom.kind} {...lineText(lines.bottom)} value={balanceText(lines.bottom.balance, currency, locale)} strong={lines.bottom.kind === "closing"} />
           </ListCard>
         </>
       )}

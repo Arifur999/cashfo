@@ -50,7 +50,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
     { icon: Moon, label: "Dinner", value: units.dinner },
   ];
   const settingsLink = { pathname: `/group-expenses/${data.businessId}`, query: { tab: "settings", month: data.range.key }, hash: "gs-meals" };
-  const money = (value: number) => formatCurrency(value, data.currency);
+  const money = (value: number) => formatCurrency(value, data.currency, locale);
 
   // The cell that holds the sheet's one tab stop: row 0 is the day heads,
   // then a row per member. It starts on today.

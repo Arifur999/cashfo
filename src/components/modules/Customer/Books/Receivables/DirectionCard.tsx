@@ -52,7 +52,7 @@ export function DirectionCard({ direction, aging, overdue, currency, today }: Di
             )}
           </div>
           <span className="flex flex-col gap-0.5">
-            <span className={cn("text-display tabular-nums wrap-anywhere", receivable ? "text-income" : "text-expense")}>{formatCurrency(total, currency)}</span>
+            <span className={cn("text-display tabular-nums wrap-anywhere", receivable ? "text-income" : "text-expense")}>{formatCurrency(total, currency, locale)}</span>
             {/* What was owed from before Books is on no invoice, so the
                 aging leaves it out; the contact's own page shows it. */}
             <span className="text-caption text-ink-muted">{t(receivable ? "On credit sales" : "On credit purchases")}</span>
@@ -82,7 +82,7 @@ export function DirectionCard({ direction, aging, overdue, currency, today }: Di
             </span>
           </ListCell>
           <ListCell align="end" className="flex shrink-0 flex-col items-end">
-            <b className="text-ink tabular-nums whitespace-nowrap">{formatCurrency(row.amount, currency)}</b>
+            <b className="text-ink tabular-nums whitespace-nowrap">{formatCurrency(row.amount, currency, locale)}</b>
             <span className={cn("text-caption font-semibold whitespace-nowrap", row.daysLate > 60 ? "text-expense" : "text-warning")}>{t("{count} days late", { count: formatCount(row.daysLate, locale) })}</span>
           </ListCell>
         </ListRow>

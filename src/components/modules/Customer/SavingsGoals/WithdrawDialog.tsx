@@ -51,7 +51,7 @@ const ALL_FAILED: Failed = { wallets: true, accounts: true, categories: true };
 // Cash a goal out: the whole saved amount leaves a savings wallet and is
 // spent as an expense, and the goal closes for good -- so it asks twice.
 export function WithdrawDialog({ open, onClose, businessId, goal, currency }: WithdrawDialogProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const [walletId, setWalletId] = useState("");
   const [category, setCategory] = useState("");
@@ -122,7 +122,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
   // they couldn't be read: an outage can't withdraw into no category.
   const categoryReady = categories.length > 0 ? category.length > 0 : !failed?.categories;
   const valid = !!goal && covering.some((wallet) => wallet.id === walletId) && expenseAccountId.length > 0 && categoryReady && confirmed;
-  const amount = goal ? formatCurrency(goal.currentAmount, currency) : "";
+  const amount = goal ? formatCurrency(goal.currentAmount, currency, locale) : "";
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -134,7 +134,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
         onClose();
         router.refresh();
       } else {
-        toast.error(savingsError(result.message, "Failed to withdraw", t, currency));
+        toast.error(savingsError(result.message, "Failed to withdraw", t, currency, locale));
       }
     });
   }
@@ -182,7 +182,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
                   const short = Number(wallet.currentBalance) < goalAmount;
                   return (
                     <option key={wallet.id} value={wallet.id} disabled={short}>
-                      {`${wallet.name} · ${formatCurrency(wallet.currentBalance, currency)}${short ? ` · ${t("not enough")}` : ""}`}
+                      {`${wallet.name} · ${formatCurrency(wallet.currentBalance, currency, locale)}${short ? ` · ${t("not enough")}` : ""}`}
                     </option>
                   );
                 })}

@@ -110,7 +110,7 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
       const input = { contactId: contact.id, amount: value, date, dueDate: dueDate || undefined, description: description.trim() || undefined, referenceNo: reference.trim() || undefined, ...(kind === "sale" ? { incomeAccountId: accountId } : { expenseAccountId: accountId }) };
       const result = kind === "sale" ? await recordSaleAction(businessId, input) : await recordPurchaseAction(businessId, input);
       if (result.success) {
-        toast.success(t(kind === "sale" ? "{amount} sold on credit to {name}" : "{amount} bought on credit from {name}", { amount: formatCurrency(value, currency), name: contact.name }));
+        toast.success(t(kind === "sale" ? "{amount} sold on credit to {name}" : "{amount} bought on credit from {name}", { amount: formatCurrency(value, currency, locale), name: contact.name }));
         onClose();
         router.refresh();
       } else {

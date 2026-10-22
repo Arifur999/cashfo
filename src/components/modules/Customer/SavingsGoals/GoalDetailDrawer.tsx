@@ -133,7 +133,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
   // Only what is true of the goal as it stands: a finished or paid-out goal
   // has no months left and no monthly amount to keep up.
   const facts: FactProps[] = [{ label: t("Reach by"), value: formatDate(goal.targetDate, "MMM yyyy", locale), sub: paused ? t("paused") : closed ? t("Paid out") : completed ? t("Reached") : leftLabel }];
-  if (active || paused) facts.push({ label: t("Monthly target"), value: paused ? "—" : formatCurrency(goal.monthlyTarget, currency), sub: paused ? t("while paused") : t("as planned") });
+  if (active || paused) facts.push({ label: t("Monthly target"), value: paused ? "—" : formatCurrency(goal.monthlyTarget, currency, locale), sub: paused ? t("while paused") : t("as planned") });
   if (active) facts.push({ label: t("Lately"), value: trend ? t(trend.short) : "—", sub: trend ? t("than before") : t("too early to say"), className: trend?.text });
 
   // The plan's monthly figure is an even pace from the start; this is what
@@ -142,8 +142,8 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
   const neededNote =
     active && toGo > 0
       ? left.kind === "past"
-        ? fillNodes(t("Its date has passed, with {amount} still to go."), { amount: bold(formatCurrency(toGo, currency)) })
-        : fillNodes(t("To finish on time, save {amount} a month from now."), { amount: bold(formatCurrency(Math.ceil(neededPerMonth(goal, today)), currency)) })
+        ? fillNodes(t("Its date has passed, with {amount} still to go."), { amount: bold(formatCurrency(toGo, currency, locale)) })
+        : fillNodes(t("To finish on time, save {amount} a month from now."), { amount: bold(formatCurrency(Math.ceil(neededPerMonth(goal, today)), currency, locale)) })
       : null;
 
   // The backend deletes only a goal nothing was ever added to or moved out
@@ -189,7 +189,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
           )}
         </span>
         <span className={cn("shrink-0 text-body font-semibold tabular-nums", meta.tone === "income" ? "text-income" : meta.tone === "info" ? "text-info" : "text-expense")}>
-          {meta.flow === "in" ? "+" : "−"} {formatCurrency(entry.amount, currency)}
+          {meta.flow === "in" ? "+" : "−"} {formatCurrency(entry.amount, currency, locale)}
         </span>
       </li>
     );
@@ -224,7 +224,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
               percent={percent}
               color={goalColor(goalIndex, goal.status)}
               size={128}
-              label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency) }) : t("{percent}% saved", { percent: formatCount(percent, locale) })}
+              label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency, locale) }) : t("{percent}% saved", { percent: formatCount(percent, locale) })}
             >
               <span className="text-h1">{closed && percent >= 100 ? "✓" : `${formatCount(percent, locale)}%`}</span>
               <span className="text-caption font-normal text-ink-muted">{closed ? t("withdrawn") : t("saved")}</span>
@@ -232,12 +232,12 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
             <div className="flex flex-col gap-3 tabular-nums">
               <div className="flex flex-col gap-px">
                 <span className="text-caption font-normal text-ink-muted">{closed ? t("Withdrawn") : t("Saved")}</span>
-                <span className="text-h2 text-ink">{formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency)}</span>
+                <span className="text-h2 text-ink">{formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency, locale)}</span>
               </div>
               <div className="flex gap-5">
                 <div className="flex flex-col gap-px">
                   <span className="text-caption font-normal text-ink-muted">{t("Target")}</span>
-                  <span className="text-body font-semibold text-ink">{formatCurrency(goal.targetAmount, currency)}</span>
+                  <span className="text-body font-semibold text-ink">{formatCurrency(goal.targetAmount, currency, locale)}</span>
                 </div>
                 {closed ? (
                   <div className="flex flex-col gap-px">
@@ -247,7 +247,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
                 ) : (
                   <div className="flex flex-col gap-px">
                     <span className="text-caption font-normal text-ink-muted">{t("To go")}</span>
-                    <span className="text-body font-semibold text-ink">{formatCurrency(toGo, currency)}</span>
+                    <span className="text-body font-semibold text-ink">{formatCurrency(toGo, currency, locale)}</span>
                   </div>
                 )}
               </div>

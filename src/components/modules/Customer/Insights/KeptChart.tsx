@@ -19,7 +19,7 @@ interface KeptChartProps {
 // "October: ৳ 85,000 in, ৳ 25,000 kept", or "October so far: …" while it
 // is under way, when its salary is in but not all of its spending.
 function latestLine(point: MonthRate, soFar: boolean, currency: string, locale: Locale, t: Translate): string {
-  const values = { month: monthName(point.month, locale), income: formatCurrency(point.income, currency), kept: formatCurrency(point.kept, currency), over: formatCurrency(-point.kept, currency) };
+  const values = { month: monthName(point.month, locale), income: formatCurrency(point.income, currency, locale), kept: formatCurrency(point.kept, currency, locale), over: formatCurrency(-point.kept, currency, locale) };
   if (point.kept < 0) return soFar ? t("{month} so far: {income} in, {over} more went out", values) : t("{month}: {income} in, {over} more went out", values);
   return soFar ? t("{month} so far: {income} in, {kept} kept", values) : t("{month}: {income} in, {kept} kept", values);
 }
@@ -88,8 +88,8 @@ export function KeptChart({ rates, currency, partialMonth }: KeptChartProps) {
           {rates.map((point) => (
             <tr key={point.month}>
               <th scope="row">{point.month === partialMonth ? t("{month} so far", { month: monthName(point.month, locale, "long", true) }) : monthName(point.month, locale, "long", true)}</th>
-              <td>{formatCurrency(point.income, currency)}</td>
-              <td>{formatCurrency(point.kept, currency)}</td>
+              <td>{formatCurrency(point.income, currency, locale)}</td>
+              <td>{formatCurrency(point.kept, currency, locale)}</td>
             </tr>
           ))}
         </tbody>

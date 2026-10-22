@@ -14,7 +14,7 @@ import type { GroupExpense } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { countLabel, dayLabel, rangeLabel, SPLIT_LABELS, splitText } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -71,7 +71,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
   const month = monthName(data.range.key, locale);
   // The chosen one too, so the select still names it in a month without it.
   const categoryNames = [...new Set([...data.categories.map((c) => c.name), ...data.expenses.map((e) => e.category), ...(category ? [category] : [])])];
-  const money = (value: number | string) => formatCurrency(value, currency);
+  const money = (value: number | string) => formatCurrency(value, currency, locale);
   // "All 14 entries add up to ৳ 12,000"; with a filter on, "These 3 entries".
   const sum = rows.length === 1 ? "{count} entry adds up to {amount}" : filtered ? "These {count} entries add up to {amount}" : "All {count} entries add up to {amount}";
 
@@ -160,7 +160,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
         {shown.map((row) => {
           const payer = row.paidFrom === "MEMBER" && row.paidByMemberId ? view.memberById[row.paidByMemberId] : null;
           const shared = splitText(row, data.members);
-          const sharedText = shared.only ? t("Only {name}", { name: shared.only }) : `${t(SPLIT_LABELS[shared.kind])}${shared.detail ? ` · ${shared.detail}` : ""}`;
+          const sharedText = shared.only ? t("Only {name}", { name: shared.only }) : `${t(SPLIT_LABELS[shared.kind])}${shared.detail ? ` · ${toLocaleDigits(shared.detail, locale)}` : ""}`;
           const day = dayLabel(row.date, locale);
           return (
             <ListRow key={row.id} columns={COLUMNS} className="grid-cols-[minmax(0,1fr)_auto_44px] gap-x-3 tabular-nums md:gap-x-4">

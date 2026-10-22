@@ -217,10 +217,10 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           <AmountText value={-totals.out} currency={currency} size="h2" tone={totals.out ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !totals.out && "text-ink-muted")} />
         </TotalCell>
         <TotalCell label={`${t("Profit paid")} · ${t("counted as expense")}`} className="border-t xl:border-t-0 xl:border-l">
-          <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitPaid ? "text-warning" : "text-ink-muted")}>{formatCurrency(totals.profitPaid, currency)}</span>
+          <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitPaid ? "text-warning" : "text-ink-muted")}>{formatCurrency(totals.profitPaid, currency, locale)}</span>
         </TotalCell>
         <TotalCell label={`${t("Profit received")} · ${t("counted as income")}`} className="border-t md:border-l xl:border-t-0">
-          <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitReceived ? "text-income" : "text-ink-muted")}>{formatCurrency(totals.profitReceived, currency)}</span>
+          <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitReceived ? "text-income" : "text-ink-muted")}>{formatCurrency(totals.profitReceived, currency, locale)}</span>
         </TotalCell>
       </Card>
 
@@ -393,7 +393,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                     ) : meta && effect && entry ? (
                       <>
                         <span className={cn("font-semibold", effect.text)}>
-                          {t(effect.name)} {meta.effectSign} {formatCurrency(entry.amount, currency)}
+                          {t(effect.name)} {meta.effectSign} {formatCurrency(entry.amount, currency, locale)}
                         </span>
                         <span className="font-normal text-ink-muted">{t(meta.effectSub)}</span>
                       </>
@@ -444,7 +444,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 <span className="truncate text-caption font-normal text-ink-muted">{[voidingRow.title ? t(voidingRow.title) : null, voidingProfit?.category ?? null].filter(Boolean).join(" · ")}</span>
               </span>
               <span className="flex shrink-0 flex-col items-end gap-px">
-                <span className="font-bold text-ink tabular-nums">{formatCurrency(Math.abs(voidingRow.signedAmount), currency)}</span>
+                <span className="font-bold text-ink tabular-nums">{formatCurrency(Math.abs(voidingRow.signedAmount), currency, locale)}</span>
                 <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, locale)}</span>
               </span>
             </div>

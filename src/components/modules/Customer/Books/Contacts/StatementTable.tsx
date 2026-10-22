@@ -83,8 +83,8 @@ export function StatementTable({ id, rows, side, currency, today, paging, hrefFo
   // green with a plus, out to them in red with a minus. A cancelled row's
   // figure no longer counts, so it is set back and struck through.
   const amountClass = (row: StatementRow, tone: string) => cn("font-bold tabular-nums whitespace-nowrap", row.cancelled ? "text-ink-muted line-through" : tone);
-  const paidAmount = (row: StatementRow) => (row.kind === "received" ? <span className={amountClass(row, "text-income")}>{formatSignedCurrency(row.amount, currency)}</span> : <span className={amountClass(row, "text-expense")}>{formatSignedCurrency(-row.amount, currency)}</span>);
-  const creditAmount = (row: StatementRow) => <span className={amountClass(row, "text-ink")}>{formatCurrency(row.amount, currency)}</span>;
+  const paidAmount = (row: StatementRow) => (row.kind === "received" ? <span className={amountClass(row, "text-income")}>{formatSignedCurrency(row.amount, currency, locale)}</span> : <span className={amountClass(row, "text-expense")}>{formatSignedCurrency(-row.amount, currency, locale)}</span>);
+  const creditAmount = (row: StatementRow) => <span className={amountClass(row, "text-ink")}>{formatCurrency(row.amount, currency, locale)}</span>;
 
   const footer =
     paging && paging.total > 0 ? (

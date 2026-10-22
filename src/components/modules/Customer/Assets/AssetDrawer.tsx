@@ -218,16 +218,16 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
                   <div className="flex justify-between gap-3">
                     <span className="truncate text-ink-2">{walletName}</span>
                     <span>
-                      <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency)} → </span>
-                      <span className={cn("font-semibold", short ? "text-expense" : "text-ink")}>{formatCurrency(Number(wallet.currentBalance) - value, currency)}</span>
+                      <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, locale)} → </span>
+                      <span className={cn("font-semibold", short ? "text-expense" : "text-ink")}>{formatCurrency(Number(wallet.currentBalance) - value, currency, locale)}</span>
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between gap-3">
                   <span className="text-ink-2">{t("Your assets")}</span>
                   <span>
-                    <span className="text-ink-muted">{formatCurrency(totalValue, currency)} → </span>
-                    <span className="font-semibold text-ink">{formatCurrency(totalValue + (buying ? value : worthValue), currency)}</span>
+                    <span className="text-ink-muted">{formatCurrency(totalValue, currency, locale)} → </span>
+                    <span className="font-semibold text-ink">{formatCurrency(totalValue + (buying ? value : worthValue), currency, locale)}</span>
                   </span>
                 </div>
               </div>
@@ -240,7 +240,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {buying ? (value > 0 ? t("Buy for {amount}", { amount: formatCurrency(value, currency) }) : t("Buy asset")) : t("Add asset")}
+              {buying ? (value > 0 ? t("Buy for {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Buy asset")) : t("Add asset")}
             </Button>
           </div>
         </form>

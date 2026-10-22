@@ -81,7 +81,7 @@ function Insights({ data }: { data: HomeData }) {
   }
 
   const expenseIcon = topExpense ? categoryIconFor(data.categoriesById[topExpense.name] ?? { icon: null, name: topExpense.name }) : Utensils;
-  const amount = topExpense ? formatCurrency(topExpense.amount, currency) : "";
+  const amount = topExpense ? formatCurrency(topExpense.amount, currency, locale) : "";
   const delta = topExpense?.delta ?? null;
   // Against the same days of last month, so the 5th is weighed against
   // 1–5 September rather than the whole of it.
@@ -92,7 +92,7 @@ function Insights({ data }: { data: HomeData }) {
         ? t("{amount} this month, the same as this time in {month}.", { amount, month: data.lastMonthName })
         : t(delta < 0 ? "{amount} this month, {delta} less than this time in {month}." : "{amount} this month, {delta} more than this time in {month}.", {
             amount,
-            delta: formatCurrency(Math.abs(delta), currency),
+            delta: formatCurrency(Math.abs(delta), currency, locale),
             month: data.lastMonthName,
           });
 

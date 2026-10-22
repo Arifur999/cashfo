@@ -80,8 +80,8 @@ export function ContactsTable({ contacts, currency, canManage, today, onAdd, onE
   function balance(contact: Contact) {
     const toYou = owedToYou(contact);
     const byYou = owedByYou(contact);
-    if (toYou > 0) return { amount: formatCurrency(toYou, currency), note: t("owes you"), className: "text-income" };
-    if (byYou > 0) return { amount: formatCurrency(byYou, currency), note: t("you owe"), className: "text-expense" };
+    if (toYou > 0) return { amount: formatCurrency(toYou, currency, locale), note: t("owes you"), className: "text-income" };
+    if (byYou > 0) return { amount: formatCurrency(byYou, currency, locale), note: t("you owe"), className: "text-expense" };
     return { amount: t("Settled"), note: t("nothing due"), className: "text-ink-muted" };
   }
 

@@ -18,6 +18,7 @@ import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { contactMatches, DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind, whoPhrase } from "@/lib/customer/loanDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { Locale } from "@/lib/i18n/translate";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { LoanContactDrawer } from "./LoanContactDrawer";
@@ -45,7 +46,7 @@ const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA
 
 // A grey dash for nothing, else the figure (in the column's own colour).
 const NOTHING = <span className="text-ink-muted">—</span>;
-const figure = (value: string, currency: string, className?: string) => (Number(value) === 0 ? NOTHING : <span className={cn("text-ink tabular-nums", className)}>{formatCurrency(Math.abs(Number(value)), currency)}</span>);
+const figure = (value: string, currency: string, locale: Locale, className?: string) => (Number(value) === 0 ? NOTHING : <span className={cn("text-ink tabular-nums", className)}>{formatCurrency(Math.abs(Number(value)), currency, locale)}</span>);
 
 // Loans: what you are owed and what you owe, then everyone with a balance,
 // filtered by direction. Rows open the statement.
@@ -175,7 +176,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           <span className="text-small font-medium text-ink-muted">{t("Profit paid this year")}</span>
           <AmountText value={profitThisYear} currency={currency} size="h2" className={DESK_FIGURE} />
           <span className="truncate text-caption font-normal text-ink-muted">
-            {topProfit ? `${topProfit.contactName} · ${t("{amount} a month", { amount: formatCurrency(Number(topProfit.monthly), currency) })}` : profitThisYear === 0 ? t("No profit or interest paid yet") : ""}
+            {topProfit ? `${topProfit.contactName} · ${t("{amount} a month", { amount: formatCurrency(Number(topProfit.monthly), currency, locale) })}` : profitThisYear === 0 ? t("No profit or interest paid yet") : ""}
           </span>
         </Card>
       </section>
@@ -277,13 +278,13 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                   <AmountText value={sums.opening} currency={currency} signed size="sm" className="font-semibold" />
                 </ListCell>
                 <ListCell align="end" className="tabular-nums">
-                  {formatCurrency(sums.in, currency)}
+                  {formatCurrency(sums.in, currency, locale)}
                 </ListCell>
                 <ListCell align="end" className="tabular-nums">
-                  {formatCurrency(sums.out, currency)}
+                  {formatCurrency(sums.out, currency, locale)}
                 </ListCell>
                 <ListCell align="end" className="tabular-nums">
-                  {formatCurrency(sums.profit, currency)}
+                  {formatCurrency(sums.profit, currency, locale)}
                 </ListCell>
                 <ListCell align="end">
                   <AmountText value={sums.net} currency={currency} signed size="sm" className="text-body font-bold" />
@@ -314,15 +315,15 @@ const DESK_FIGURE = "wrap-anywhere xl:text-h1";
 // One contact: the phone's two lines (who, then where it stands) below xl,
 // plus a line of its figures from md, and the board's columns from xl. The name is the link, stretched over the row.
 function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; contact?: Contact; currency: string }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const meta = DIRECTION_META[row.direction];
   const settled = row.direction === "SETTLED";
   // The figures the xl columns show, those that are not nothing.
   const movements = [
-    Number(row.openingBalance) !== 0 && `${t("Opening")} ${formatSignedCurrency(row.openingBalance, currency)}`,
-    Number(row.totalReceive) !== 0 && `${t("Money in@@loan")} ${formatCurrency(Math.abs(Number(row.totalReceive)), currency)}`,
-    Number(row.totalPayment) !== 0 && `${t("Money out@@loan")} ${formatCurrency(Math.abs(Number(row.totalPayment)), currency)}`,
-    Number(row.profitPaid) !== 0 && `${t("Profit paid")} ${formatCurrency(Math.abs(Number(row.profitPaid)), currency)}`,
+    Number(row.openingBalance) !== 0 && `${t("Opening")} ${formatSignedCurrency(row.openingBalance, currency, locale)}`,
+    Number(row.totalReceive) !== 0 && `${t("Money in@@loan")} ${formatCurrency(Math.abs(Number(row.totalReceive)), currency, locale)}`,
+    Number(row.totalPayment) !== 0 && `${t("Money out@@loan")} ${formatCurrency(Math.abs(Number(row.totalPayment)), currency, locale)}`,
+    Number(row.profitPaid) !== 0 && `${t("Profit paid")} ${formatCurrency(Math.abs(Number(row.profitPaid)), currency, locale)}`,
   ].filter(Boolean);
   return (
     <ListRow columns={COLUMNS} density="relaxed" className="xl:min-h-15">
@@ -348,24 +349,24 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
       </ListCell>
       <ListCell align="end" className="hidden xl:block">
         {/* Signed and coloured by side, so the column adds up to the Net below it. */}
-        {Number(row.openingBalance) === 0 ? NOTHING : <span className={cn("tabular-nums", Number(row.openingBalance) > 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(row.openingBalance, currency)}</span>}
+        {Number(row.openingBalance) === 0 ? NOTHING : <span className={cn("tabular-nums", Number(row.openingBalance) > 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(row.openingBalance, currency, locale)}</span>}
       </ListCell>
       <ListCell align="end" className="hidden xl:block">
-        {figure(row.totalReceive, currency)}
+        {figure(row.totalReceive, currency, locale)}
       </ListCell>
       <ListCell align="end" className="hidden xl:block">
-        {figure(row.totalPayment, currency)}
+        {figure(row.totalPayment, currency, locale)}
       </ListCell>
       <ListCell align="end" className="hidden xl:block">
-        {figure(row.profitPaid, currency, "text-warning")}
+        {figure(row.profitPaid, currency, locale, "text-warning")}
       </ListCell>
       <ListCell align="end" className="flex flex-col items-end xl:flex-row xl:items-center xl:justify-end xl:gap-2">
         {settled ? (
           <b className="text-body-lg leading-[normal] font-bold text-ink-muted xl:hidden">{t("Settled")}</b>
         ) : (
-          <b className={cn("text-body-lg leading-[normal] font-bold tabular-nums xl:text-body", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency)}</b>
+          <b className={cn("text-body-lg leading-[normal] font-bold tabular-nums xl:text-body", meta.text)}>{formatCurrency(Math.abs(Number(row.currentBalance)), currency, locale)}</b>
         )}
-        {settled && <b className={cn("hidden text-body font-bold tabular-nums xl:inline", meta.text)}>{formatCurrency(0, currency)}</b>}
+        {settled && <b className={cn("hidden text-body font-bold tabular-nums xl:inline", meta.text)}>{formatCurrency(0, currency, locale)}</b>}
         {!settled && <span className="text-caption leading-[normal] font-normal text-ink-muted xl:hidden">{t(meta.short)}</span>}
         <Chip tone={meta.chip} size="sm" className="hidden font-semibold xl:inline-flex">
           {t(meta.name)}

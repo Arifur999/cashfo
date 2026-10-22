@@ -154,7 +154,7 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
       <>
         {/* A phone stacks the entry: its one figure says which side it is on. */}
         <span className="block text-caption font-normal text-ink-muted md:hidden">{t(side === "DEBIT" ? "Debit" : "Credit")}</span>
-        {formatCurrency(entry.amount, currency)}
+        {formatCurrency(entry.amount, currency, locale)}
       </>
     ) : (
       <span className="font-normal text-ink-muted">—</span>
@@ -247,10 +247,10 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
                   <ListCell>{t("Total")}</ListCell>
                   <ListCell align="end" className="tabular-nums">
                     <span className="block text-caption font-normal text-ink-muted md:hidden">{t("Debit and credit")}</span>
-                    {formatCurrency(debitTotal, currency)}
+                    {formatCurrency(debitTotal, currency, locale)}
                   </ListCell>
                   <ListCell align="end" className="tabular-nums max-md:hidden">
-                    {formatCurrency(debitTotal, currency)}
+                    {formatCurrency(debitTotal, currency, locale)}
                   </ListCell>
                 </ListTotalRow>
               </div>
@@ -264,7 +264,7 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
             {transaction.correctedFrom ? (
               <HistoryRow
                 tone="bg-info"
-                title={t("Corrected from {amount}", { amount: formatCurrency(Number(transaction.correctedFrom.amount), currency) })}
+                title={t("Corrected from {amount}", { amount: formatCurrency(Number(transaction.correctedFrom.amount), currency, locale) })}
                 when={recordTimeLabel(transaction.createdAt, locale, t)}
                 link={{ href: transactionPageHref(transaction.correctedFrom.id, back), label: t("See the original") }}
               />
@@ -276,7 +276,7 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
                 tone="bg-expense-fill"
                 title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}` : ""}`}
                 when={recordTimeLabel(transaction.voidedAt, locale, t)}
-                link={transaction.correctedBy ? { href: transactionPageHref(transaction.correctedBy.id, back), label: t("See the corrected entry ({amount})", { amount: formatCurrency(Number(transaction.correctedBy.amount), currency) }) } : undefined}
+                link={transaction.correctedBy ? { href: transactionPageHref(transaction.correctedBy.id, back), label: t("See the corrected entry ({amount})", { amount: formatCurrency(Number(transaction.correctedBy.amount), currency, locale) }) } : undefined}
               />
             )}
           </Card>

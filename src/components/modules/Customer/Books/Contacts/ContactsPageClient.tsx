@@ -72,11 +72,11 @@ export function ContactsPageClient({ businessId, contacts, receivableAging, canM
           customer is someone you owe. */}
       <StatStrip
         stats={[
-          { label: t("Owed to you"), value: formatCurrency(stats.receivable, currency), tone: "income", note: counted(stats.receivableFrom, "{count} person", "{count} people") },
-          { label: t("You owe"), value: formatCurrency(stats.payable, currency), tone: "expense", note: counted(stats.payableTo, "{count} person", "{count} people") },
+          { label: t("Owed to you"), value: formatCurrency(stats.receivable, currency, locale), tone: "income", note: counted(stats.receivableFrom, "{count} person", "{count} people") },
+          { label: t("You owe"), value: formatCurrency(stats.payable, currency, locale), tone: "expense", note: counted(stats.payableTo, "{count} person", "{count} people") },
           {
             label: t("Overdue over 30 days"),
-            value: formatCurrency(late.amount, currency),
+            value: formatCurrency(late.amount, currency, locale),
             tone: late.amount > 0 ? "warning" : "neutral",
             note: (
               <>

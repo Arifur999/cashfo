@@ -16,6 +16,7 @@ import type { ActionResult } from "@/lib/customer/authActions";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { getAppToday } from "@/lib/date";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AssetTypeTile } from "./AssetTypeTile";
@@ -67,7 +68,7 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
   ].filter((detail): detail is { label: string; value: string } => !!detail.value);
   // Names the wallet once the wallets have loaded (and while it is still one).
   const soldInto = walletName(asset.soldAccountId);
-  const soldFor = formatCurrency(asset.soldPrice ?? 0, currency);
+  const soldFor = formatCurrency(asset.soldPrice ?? 0, currency, locale);
 
   // The sale's income leaves the wallet it reached and the asset is owned
   // again. The question closes either way; on success the drawer does too.
@@ -112,7 +113,7 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
           <div className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-strip p-4 tabular-nums">
             <span className="flex flex-col gap-0.5 *:leading-[normal]">
               <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
-              <span className="text-title text-ink">{formatCurrency(asset.purchasePrice, currency)}</span>
+              <span className="text-title text-ink">{formatCurrency(asset.purchasePrice, currency, locale)}</span>
               <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}</span>
             </span>
             <span className="flex flex-col gap-0.5 *:leading-[normal]">
@@ -125,7 +126,7 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
           <div className={cn("flex items-center justify-between gap-3 rounded-md p-3 text-small", BOX[chip.tone])}>
             <span className="font-medium">{gain.amount > 0 ? t("Gain on the sale") : gain.amount < 0 ? t("Loss on the sale") : t("Sold for what you paid")}</span>
             <span className="font-semibold tabular-nums">
-              {formatSignedCurrency(gain.amount, currency)} ({chip.label})
+              {formatSignedCurrency(gain.amount, currency, locale)} ({toLocaleDigits(chip.label, locale)})
             </span>
           </div>
 

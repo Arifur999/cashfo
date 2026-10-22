@@ -22,7 +22,7 @@ export function LoansNote({ worth, youOweCount, currency }: LoansNoteProps) {
   const loansOn = useFeature("loan_management");
   if (worth.youOwe <= 0 && worth.owedToYou <= 0) return null;
 
-  const youOwe = formatCurrency(worth.youOwe, currency);
+  const youOwe = formatCurrency(worth.youOwe, currency, locale);
   const owedSentence =
     youOweCount === 0
       ? t("You owe {amount}.", { amount: youOwe })
@@ -41,7 +41,7 @@ export function LoansNote({ worth, youOweCount, currency }: LoansNoteProps) {
             </>
           ) : (
             <>
-              <b>{t("{amount} is owed to you.", { amount: formatCurrency(worth.owedToYou, currency) })}</b> {t("Collecting it would move that into your wallets.")}
+              <b>{t("{amount} is owed to you.", { amount: formatCurrency(worth.owedToYou, currency, locale) })}</b> {t("Collecting it would move that into your wallets.")}
             </>
           )}
         </span>

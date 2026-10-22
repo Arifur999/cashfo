@@ -63,9 +63,9 @@ export default async function SavingsOverviewPage() {
   // An archived wallet's figures go grey rather than green and red. A
   // wallet's row shows nothing as a dash; a total says ৳0 (`zero`), since a
   // dash there would read as no data.
-  const zeroTotal = formatCurrency(0, currency);
-  const outFigure = (value: number, muted = false, zero = "—") => <span className={cn("tabular-nums", value > 0 && !muted ? "text-expense" : "text-ink-muted")}>{value > 0 ? `− ${formatCurrency(value, currency)}` : zero}</span>;
-  const inFigure = (value: number, muted = false, zero = "—") => <span className={cn("tabular-nums", value > 0 && !muted ? "text-income" : "text-ink-muted")}>{value > 0 ? `+ ${formatCurrency(value, currency)}` : zero}</span>;
+  const zeroTotal = formatCurrency(0, currency, locale);
+  const outFigure = (value: number, muted = false, zero = "—") => <span className={cn("tabular-nums", value > 0 && !muted ? "text-expense" : "text-ink-muted")}>{value > 0 ? `− ${formatCurrency(value, currency, locale)}` : zero}</span>;
+  const inFigure = (value: number, muted = false, zero = "—") => <span className={cn("tabular-nums", value > 0 && !muted ? "text-income" : "text-ink-muted")}>{value > 0 ? `+ ${formatCurrency(value, currency, locale)}` : zero}</span>;
 
   return (
     <PageFrame className="gap-6">
@@ -99,8 +99,8 @@ export default async function SavingsOverviewPage() {
                 <span className="text-small font-medium text-ink-muted">{t("In your savings wallets")}</span>
                 <AmountText value={overview.totalBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em]" />
                 <span className="text-small text-ink-muted tabular-nums">
-                  {t("Available {amount}", { amount: formatCurrency(overview.availableBalance, currency) })}
-                  {archived > 0 && ` · ${t("{amount} in archived wallets", { amount: formatCurrency(overview.inactiveAmount, currency) })}`}
+                  {t("Available {amount}", { amount: formatCurrency(overview.availableBalance, currency, locale) })}
+                  {archived > 0 && ` · ${t("{amount} in archived wallets", { amount: formatCurrency(overview.inactiveAmount, currency, locale) })}`}
                 </span>
               </div>
               {/* Rows on a phone (label left, figure right); three equal
@@ -178,7 +178,7 @@ export default async function SavingsOverviewPage() {
                       </span>
                     </ListCell>
                     <ListCell align="end" className={cn(MIDDLE, isArchived ? "text-ink-muted" : "text-ink-2")}>
-                      {formatCurrency(row.openingBalance, currency)}
+                      {formatCurrency(row.openingBalance, currency, locale)}
                     </ListCell>
                     <ListCell align="end" className={MIDDLE}>
                       {inFigure(Number(row.totalIn), isArchived)}
@@ -187,7 +187,7 @@ export default async function SavingsOverviewPage() {
                       {outFigure(Number(row.totalOut), isArchived)}
                     </ListCell>
                     <ListCell align="end" className={cn(BALANCE, "font-bold", isArchived && "text-ink-muted")}>
-                      {formatCurrency(row.currentBalance, currency)}
+                      {formatCurrency(row.currentBalance, currency, locale)}
                     </ListCell>
                   </ListRow>
                 );
@@ -195,7 +195,7 @@ export default async function SavingsOverviewPage() {
               <ListTotalRow columns={COLUMNS} className="tabular-nums">
                 <ListCell>{t("Total")}</ListCell>
                 <ListCell align="end" className={MIDDLE}>
-                  {formatCurrency(totals.opening, currency)}
+                  {formatCurrency(totals.opening, currency, locale)}
                 </ListCell>
                 <ListCell align="end" className={MIDDLE}>
                   {inFigure(totals.in, false, zeroTotal)}
@@ -204,7 +204,7 @@ export default async function SavingsOverviewPage() {
                   {outFigure(totals.out, false, zeroTotal)}
                 </ListCell>
                 <ListCell align="end" className={cn(BALANCE, "text-title font-bold")}>
-                  {formatCurrency(totals.current, currency)}
+                  {formatCurrency(totals.current, currency, locale)}
                 </ListCell>
               </ListTotalRow>
             </div>

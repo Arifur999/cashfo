@@ -142,8 +142,8 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
       <div className="flex justify-between gap-3">
         <span className="truncate text-ink-2">{nameOf(wallet)}</span>
         <span>
-          <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency)} → </span>
-          <span className={cn("font-semibold", after < 0 ? "text-warning" : "text-ink")}>{formatCurrency(after, currency)}</span>
+          <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, locale)} → </span>
+          <span className={cn("font-semibold", after < 0 ? "text-warning" : "text-ink")}>{formatCurrency(after, currency, locale)}</span>
         </span>
       </div>
     );
@@ -238,12 +238,12 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
                 from ? (
                   <>
                     <span className={cn("block", overdraws && "text-warning")}>
-                      {available > 0 ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(available, currency), wallet: nameOf(from) }) : t("{wallet} has {amount}", { wallet: nameOf(from), amount: formatCurrency(available, currency) })}
+                      {available > 0 ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(available, currency, locale), wallet: nameOf(from) }) : t("{wallet} has {amount}", { wallet: nameOf(from), amount: formatCurrency(available, currency, locale) })}
                     </span>
                     {overdraws && (
                       <span className="mt-1 flex items-center gap-1.5 font-medium text-warning">
                         <TriangleAlert className="size-3.5 shrink-0" aria-hidden="true" />
-                        {t("This leaves {wallet} at {amount}.", { wallet: nameOf(from), amount: formatCurrency(available - value, currency) })}
+                        {t("This leaves {wallet} at {amount}.", { wallet: nameOf(from), amount: formatCurrency(available - value, currency, locale) })}
                       </span>
                     )}
                   </>
@@ -272,7 +272,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
                   {/* Active wallets only, as on My wallets: what can be moved. */}
                   <span>{t("Available balance")}</span>
                   <span>
-                    {formatCurrency(total, currency)} · {t("unchanged")}
+                    {formatCurrency(total, currency, locale)} · {t("unchanged")}
                   </span>
                 </div>
               </div>
@@ -285,7 +285,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending || !online} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency) }) : t("Move money")}
+              {value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Move money")}
             </Button>
           </div>
         </form>

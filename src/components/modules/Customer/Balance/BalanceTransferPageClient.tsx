@@ -239,7 +239,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
           <span className="text-small font-medium text-ink-muted">{t("Moved in this period")}</span>
           <AmountText value={totals.moved} currency={currency} size="h2" className="text-h1 wrap-anywhere" />
           <span className="text-caption font-normal text-ink-muted">
-            {totals.savings > 0 ? t("Not counting {amount} put into savings goals", { amount: formatCurrency(totals.savings, currency) }) : t("Voided transfers aren't counted")}
+            {totals.savings > 0 ? t("Not counting {amount} put into savings goals", { amount: formatCurrency(totals.savings, currency, locale) }) : t("Voided transfers aren't counted")}
           </span>
         </Card>
         <Card className="flex min-w-0 flex-col gap-2">
@@ -322,7 +322,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
               const cancelled = cancelledLabel(transfer);
               const voided = isCancelled(transfer);
               const savings = isSavingsTransfer(transfer);
-              const amount = formatCurrency(transferAmount(transfer), currency);
+              const amount = formatCurrency(transferAmount(transfer), currency, locale);
               const href = transactionHref(transfer.id, here);
               return (
                 // Phones: From → To and the amount, then the date and the
@@ -396,7 +396,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
                 <span className="truncate">{voidingParties.to}</span>
               </span>
               <span className="flex shrink-0 flex-col items-end gap-px">
-                <span className="font-bold text-info tabular-nums">{formatCurrency(transferAmount(voiding), currency)}</span>
+                <span className="font-bold text-info tabular-nums">{formatCurrency(transferAmount(voiding), currency, locale)}</span>
                 <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, locale)}</span>
               </span>
             </div>

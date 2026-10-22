@@ -279,7 +279,7 @@ function ReportLine({ row, name, currency, href, onOpen }: { row: ReportRow; nam
   const dot = row.kind === "category" ? categoryTone(row.color).fg : row.type === "INCOME" ? "text-emerald" : row.type === "EXPENSE" ? "text-expense-fill" : "text-mint-300";
   // A Left over below zero is red, never the brand's green.
   const total = row.kind === "block" ? (row.type === "INCOME" ? "text-income" : "text-expense") : row.kind === "left" ? (row.total < 0 ? "text-expense" : "text-brand-ink") : "text-ink";
-  const totalText = row.kind === "block" ? `${row.type === "INCOME" ? "+" : "−"} ${formatCurrency(row.total, currency)}` : formatCurrency(row.total, currency);
+  const totalText = row.kind === "block" ? `${row.type === "INCOME" ? "+" : "−"} ${formatCurrency(row.total, currency, locale)}` : formatCurrency(row.total, currency, locale);
   const cells = (
     <>
       <ListCell className={NAME_CELL} title={name}>
@@ -294,7 +294,7 @@ function ReportLine({ row, name, currency, href, onOpen }: { row: ReportRow; nam
       </ListCell>
       {row.amounts.map((amount, i) => (
         <ListCell key={i} align="end" className={cn("whitespace-nowrap font-normal print:text-caption", PHONE_LAST, i === lastMonth && LAST_MONTH_CELL, row.kind === "left" && amount < 0 ? "text-expense" : "text-ink-2")}>
-          {amount === 0 ? "—" : formatGrouped(amount, currency)}
+          {amount === 0 ? "—" : formatGrouped(amount, currency, locale)}
         </ListCell>
       ))}
       <ListCell align="end" className={cn("whitespace-nowrap font-bold print:text-small", PHONE_SECOND, total)}>

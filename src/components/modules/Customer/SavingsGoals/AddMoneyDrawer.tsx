@@ -123,7 +123,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
         onClose();
         router.refresh();
       } else {
-        toast.error(savingsError(result.message, "Failed to add money", t, currency));
+        toast.error(savingsError(result.message, "Failed to add money", t, currency, locale));
       }
     });
   }
@@ -151,7 +151,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
             <SheetTitle className="truncate text-h3 text-ink">{goal ? t("Add money to {name}", { name: goal.name }) : t("Add money")}</SheetTitle>
             {goal && (
               <span className="text-small text-ink-muted tabular-nums">
-                {t("{saved} of {target}", { saved: formatCurrency(goal.currentAmount, currency), target: formatCurrency(goal.targetAmount, currency) })} · {t(goalBadge(goal).label)}
+                {t("{saved} of {target}", { saved: formatCurrency(goal.currentAmount, currency, locale), target: formatCurrency(goal.targetAmount, currency, locale) })} · {t(goalBadge(goal).label)}
               </span>
             )}
           </span>
@@ -178,7 +178,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
                     >
                       {pick.kind === "monthly" && `${t("Monthly target")} · `}
                       {pick.kind === "rest" && `${t("All that's left")} · `}
-                      {formatCurrency(pick.amount, currency)}
+                      {formatCurrency(pick.amount, currency, locale)}
                     </button>
                   ))}
                 </div>
@@ -221,7 +221,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
                   <span>
                     <span className="text-ink-muted">{formatCount(goal.progressPercent, locale)}% → </span>
                     <span className="font-semibold text-income">
-                      {formatCount(percentAfter, locale)}% · {formatCurrency(saved + value, currency)}
+                      {formatCount(percentAfter, locale)}% · {formatCurrency(saved + value, currency, locale)}
                     </span>
                   </span>
                 </div>
@@ -229,10 +229,10 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
                   <div className="flex justify-between gap-3">
                     <span className="truncate text-ink-2">{accountDisplayName(from, displayLanguage(locale))}</span>
                     <span>
-                      <span className="text-ink-muted">{formatCurrency(from.currentBalance, currency)} → </span>
+                      <span className="text-ink-muted">{formatCurrency(from.currentBalance, currency, locale)} → </span>
                       {/* Below zero: the wallet doesn't hold this much. */}
                       <span className={cn("font-semibold", fromAfter < 0 ? "text-expense" : "text-ink")}>
-                        {formatCurrency(fromAfter, currency)}
+                        {formatCurrency(fromAfter, currency, locale)}
                         {fromAfter < 0 && ` · ${t("not enough")}`}
                       </span>
                     </span>
@@ -242,8 +242,8 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
                   <div className="flex justify-between gap-3">
                     <span className="truncate text-ink-2">{accountDisplayName(into, displayLanguage(locale))}</span>
                     <span>
-                      <span className="text-ink-muted">{formatCurrency(into.currentBalance, currency)} → </span>
-                      <span className="font-semibold text-ink">{formatCurrency(Number(into.currentBalance) + value, currency)}</span>
+                      <span className="text-ink-muted">{formatCurrency(into.currentBalance, currency, locale)} → </span>
+                      <span className="font-semibold text-ink">{formatCurrency(Number(into.currentBalance) + value, currency, locale)}</span>
                     </span>
                   </div>
                 )}
@@ -257,7 +257,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {value > 0 ? t("Add {amount}", { amount: formatCurrency(value, currency) }) : t("Add money")}
+              {value > 0 ? t("Add {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Add money")}
             </Button>
           </div>
         </form>

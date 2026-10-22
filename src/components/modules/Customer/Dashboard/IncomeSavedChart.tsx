@@ -4,6 +4,7 @@ import { useId } from "react";
 import Card from "@/components/smartly/Card";
 import { formatCompactAmount, formatCurrency } from "@/lib/customer/currency";
 import { bestMonthNote, chartAxis } from "@/lib/customer/homeInsights";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -36,13 +37,13 @@ export function IncomeSavedChart({ points, currency, className }: IncomeSavedCha
   const top = Math.max(0, ...points.map((p) => Math.max(p.income, p.kept)));
   // null when every month is 0: the card says so instead of an axis.
   const axis = chartAxis(top);
-  // The figures stay Latin (money), the units in the reader's words: a
+  // The figures in the reader's digits, the units in the reader's words: a
   // Bangla unit is a whole word ("50 হাজার"), so it gets a space.
-  const axisLabel = (value: number) => formatCompactAmount(value).replace(/(Cr|L|K)$/, (unit) => (locale === "bn" ? " " : "") + t(`${unit}@@axis`));
+  const axisLabel = (value: number) => toLocaleDigits(formatCompactAmount(value).replace(/(Cr|L|K)$/, (unit) => (locale === "bn" ? " " : "") + t(`${unit}@@axis`)), locale);
   const current = points[points.length - 1];
   const note = bestMonthNote(points);
   const beatenBy = note && !note.best ? points.find((p) => p.month === note.beatenBy)?.name : undefined;
-  const money = (value: number) => formatCurrency(value, currency);
+  const money = (value: number) => formatCurrency(value, currency, locale);
   const describe = (point: HomeChartPoint) =>
     point.kept >= 0
       ? t("{month}: income {income}, kept {kept}", { month: point.name, income: money(point.income), kept: money(point.kept) })
@@ -80,7 +81,7 @@ export function IncomeSavedChart({ points, currency, className }: IncomeSavedCha
               <span className="absolute right-0" style={{ top: HEIGHT / 2 - 8 }}>
                 {axisLabel(axis.mid)}
               </span>
-              <span className="absolute right-0 -bottom-2">0</span>
+              <span className="absolute right-0 -bottom-2">{toLocaleDigits("0", locale)}</span>
             </div>
             <div
               role="img"

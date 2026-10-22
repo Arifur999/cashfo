@@ -70,7 +70,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
   const holder = settings.cashHolderMemberId ? view.memberById[settings.cashHolderMemberId] : undefined;
   const [route, setRoute] = useState<Route>(holder ? "manager" : "direct");
   const [historyLimit, setHistoryLimit] = useState(HISTORY_PAGE);
-  const money = (value: number | string) => formatCurrency(value, currency);
+  const money = (value: number | string) => formatCurrency(value, currency, locale);
   const dash = (value: number) => (Math.abs(value) < 0.005 ? <span className="text-ink-muted">—</span> : money(value));
 
   // A closed month whose entries changed since: its record and the live
@@ -213,7 +213,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
               <span>
                 <b className="font-semibold">{view.cash < 0 ? t("More was spent than came in.") : t("The account checks out.")}</b>{" "}
                 {t("Balances add up to {cash}, exactly the cash {holder} should hold: {contributed} contributed − {spent} spent from the fund.", {
-                  cash: formatSignedCurrency(view.cash, currency),
+                  cash: formatSignedCurrency(view.cash, currency, locale),
                   holder: holder?.name ?? t("the fund"),
                   contributed: money(totals.gross - totals.returned),
                   spent: money(Number(settlement.totalExpense) - totals.pocket),
@@ -338,7 +338,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
                 </>
               )}
               <span role="cell" className={cn("text-right", totals.balance < 0 ? "text-expense" : "text-income")}>
-                {formatSignedCurrency(locked ? totals.balance : view.cash, currency)}
+                {formatSignedCurrency(locked ? totals.balance : view.cash, currency, locale)}
               </span>
             </ListTotalRow>
           )}

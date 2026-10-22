@@ -95,7 +95,7 @@ export function WithdrawDialog({ open, onClose, businessId, availableBalance, cu
       try {
         const result = await withdrawReferralEarningsAction(businessId, target.id);
         if (result.success && result.data) {
-          const moved = formatCurrency(result.data.withdrawnAmount, currency);
+          const moved = formatCurrency(result.data.withdrawnAmount, currency, locale);
           // Named as the picker names it, in the language on screen.
           toast.success(t("{amount} moved to {wallet}", { amount: moved, wallet: accountDisplayName(target, displayLanguage(locale)) }));
           onClose();
@@ -128,7 +128,7 @@ export function WithdrawDialog({ open, onClose, businessId, availableBalance, cu
           <div className="flex flex-col gap-4 px-6 py-4">
             <div className="flex items-baseline justify-between rounded-md bg-mint-50 px-4 py-3">
               <span className="text-small font-medium text-ink-2">{t("Available to withdraw")}</span>
-              <span className="text-h3 font-bold text-emerald tabular-nums">{formatCurrency(amount, currency)}</span>
+              <span className="text-h3 font-bold text-emerald tabular-nums">{formatCurrency(amount, currency, locale)}</span>
             </div>
             {/* No error of its own for an empty list: the picker then says
                 "No wallet yet" with its link to add one. */}
@@ -158,7 +158,7 @@ export function WithdrawDialog({ open, onClose, businessId, availableBalance, cu
             </Button>
             <Button type="submit" variant="action" disabled={!target || amount <= 0 || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t("Withdraw {amount}", { amount: formatCurrency(amount, currency) })}
+              {t("Withdraw {amount}", { amount: formatCurrency(amount, currency, locale) })}
             </Button>
           </div>
         </form>

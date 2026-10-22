@@ -46,7 +46,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
     .filter((c) => (!memberId || c.groupMemberId === memberId) && (kind === "all" || (kind === "deposit" ? Number(c.amount) >= 0 : Number(c.amount) < 0)))
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shownTotal = rows.reduce((sum, c) => sum + Number(c.amount), 0);
-  const money = (value: number | string) => formatCurrency(value, currency);
+  const money = (value: number | string) => formatCurrency(value, currency, locale);
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3 md:px-6">
@@ -140,7 +140,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
               </ListCell>
               <ListCell className={cn("hidden truncate md:block", row.note ? "text-ink-2" : "text-ink-muted")}>{row.note || "—"}</ListCell>
               <ListCell align="end" className={cn("font-semibold", isReturn ? "text-expense" : "text-income")}>
-                {formatSignedCurrency(amount, currency)}
+                {formatSignedCurrency(amount, currency, locale)}
               </ListCell>
               <ListRowActions>
                 <DropdownMenu>
@@ -168,7 +168,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
               {t("Total")}
             </span>
             <span role="cell" className={cn("text-right", shownTotal < 0 ? "text-expense" : "text-income")}>
-              {formatSignedCurrency(shownTotal, currency)}
+              {formatSignedCurrency(shownTotal, currency, locale)}
             </span>
             <span role="cell" />
           </ListTotalRow>

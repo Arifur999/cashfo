@@ -56,7 +56,7 @@ export function EarningsHero({ info, currency, canWithdraw, today, onWithdraw }:
   const stats = [
     {
       label: t("Pending"),
-      value: formatCurrency(info.pendingEarnings, currency),
+      value: formatCurrency(info.pendingEarnings, currency, locale),
       sub:
         pending === null
           ? t("Ready 30 days after each friend joins")
@@ -64,8 +64,8 @@ export function EarningsHero({ info, currency, canWithdraw, today, onWithdraw }:
             ? t("Nothing waiting")
             : t(pending === 1 ? "{count} friend · ready 30 days after joining" : "{count} friends · ready 30 days after joining", { count: count(pending) }),
     },
-    { label: t("Total earned"), value: formatCurrency(info.totalEarned, currency), sub: t(info.referralCount === 1 ? "{count} friend joined" : "{count} friends joined", { count: count(info.referralCount) }) },
-    { label: t("Paid out@@referral"), value: formatCurrency(paidOut(info), currency), sub: t("Withdrawn to your wallets") },
+    { label: t("Total earned"), value: formatCurrency(info.totalEarned, currency, locale), sub: t(info.referralCount === 1 ? "{count} friend joined" : "{count} friends joined", { count: count(info.referralCount) }) },
+    { label: t("Paid out@@referral"), value: formatCurrency(paidOut(info), currency, locale), sub: t("Withdrawn to your wallets") },
   ];
 
   // Why Withdraw can't be pressed: not the reader's to move in this
@@ -100,7 +100,7 @@ export function EarningsHero({ info, currency, canWithdraw, today, onWithdraw }:
           <h2 id="earn-title" className="text-small font-medium text-white/86 max-md:leading-[normal] md:text-body">
             {t("Available to withdraw")}
           </h2>
-          <span className="text-display text-white tabular-nums max-md:leading-[normal] max-md:font-bold">{formatCurrency(info.availableBalance, currency)}</span>
+          <span className="text-display text-white tabular-nums max-md:leading-[normal] max-md:font-bold">{formatCurrency(info.availableBalance, currency, locale)}</span>
           {reason ? (
             <p id={reasonId} className="max-w-md text-small text-white">
               {reason}
@@ -118,13 +118,13 @@ export function EarningsHero({ info, currency, canWithdraw, today, onWithdraw }:
           Bangla's three need more than a 390px phone has on one line. */}
       <div className="relative flex flex-wrap gap-x-4 gap-y-1 text-small leading-[normal] text-white/86 tabular-nums md:hidden">
         <span className="whitespace-nowrap">
-          {t("Pending")} <b className="text-white">{formatCurrency(info.pendingEarnings, currency)}</b>
+          {t("Pending")} <b className="text-white">{formatCurrency(info.pendingEarnings, currency, locale)}</b>
         </span>
         <span className="whitespace-nowrap">
-          {t("Earned")} <b className="text-white">{formatCurrency(info.totalEarned, currency)}</b>
+          {t("Earned")} <b className="text-white">{formatCurrency(info.totalEarned, currency, locale)}</b>
         </span>
         <span className="whitespace-nowrap">
-          {t("Paid@@payout")} <b className="text-white">{formatCurrency(paidOut(info), currency)}</b>
+          {t("Paid@@payout")} <b className="text-white">{formatCurrency(paidOut(info), currency, locale)}</b>
         </span>
       </div>
       <Button size="xl" onClick={onWithdraw} disabled={!canPress} aria-describedby={describedBy} className={cn(ON_FOREST, "relative w-full rounded-lg text-body-lg font-bold md:hidden")}>

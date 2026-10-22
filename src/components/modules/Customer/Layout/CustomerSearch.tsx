@@ -292,7 +292,7 @@ function SearchPalette() {
       key: `transaction:${transaction.id}`,
       title: transaction.title ?? (typeLabel ? t(typeLabel) : t("Transaction")),
       sub: [dayText(transaction.date), transaction.wallet, transaction.cancelled && t(transaction.cancelled)].filter(Boolean).join(" · "),
-      badge: signed ? formatSignedCurrency(transaction.amount, currency) : formatCurrency(Math.abs(transaction.amount), currency),
+      badge: signed ? formatSignedCurrency(transaction.amount, currency, locale) : formatCurrency(Math.abs(transaction.amount), currency, locale),
       mark: transactionMark(transaction.type),
       href: `/transactions/${encodeURIComponent(transaction.id)}`,
     };

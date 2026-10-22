@@ -126,7 +126,7 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
               </Link>
               <div className="flex items-baseline justify-between gap-3 border-t border-divider pt-3">
                 <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
-                <span className={cn("text-title font-bold tabular-nums", value > 0 ? "text-ink" : "text-ink-muted")}>{formatCurrency(value, currency)}</span>
+                <span className={cn("text-title font-bold tabular-nums", value > 0 ? "text-ink" : "text-ink-muted")}>{formatCurrency(value, currency, locale)}</span>
               </div>
             </Card>
           );

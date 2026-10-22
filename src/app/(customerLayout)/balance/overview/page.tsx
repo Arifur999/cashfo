@@ -73,11 +73,11 @@ export default async function BalanceOverviewPage() {
     if (amount === 0) return <span className="text-ink-muted">—</span>;
     const sign = kind === "in" || (kind === "transfer" && amount > 0) ? "+" : "−";
     const tone = kind === "in" ? "text-income" : kind === "out" ? "text-expense" : kind === "savings" ? "text-ink-2" : "text-info";
-    return <span className={tone}>{`${sign} ${formatCurrency(Math.abs(amount), currency)}`}</span>;
+    return <span className={tone}>{`${sign} ${formatCurrency(Math.abs(amount), currency, locale)}`}</span>;
   };
   // An overdrawn balance takes the true minus the figures beside it use
   // (the cell turns expense red), not a hyphen against the symbol.
-  const balance = (value: number | string) => balanceText(value, currency);
+  const balance = (value: number | string) => balanceText(value, currency, locale);
 
   return (
     <PageFrame className="gap-6">
@@ -103,11 +103,11 @@ export default async function BalanceOverviewPage() {
             <span className="text-small font-medium text-ink-muted">{t("Available balance")}</span>
             <AmountText value={overview.availableBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em] wrap-anywhere" />
             <span className="text-small text-ink-muted">
-              {t("Total balance {amount}", { amount: formatCurrency(overview.totalBalance, currency) })}
+              {t("Total balance {amount}", { amount: formatCurrency(overview.totalBalance, currency, locale) })}
               {inArchived !== 0 && (
                 <>
                   {" · "}
-                  <span className="text-ink-2">{t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency) })}</span>
+                  <span className="text-ink-2">{t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, locale) })}</span>
                 </>
               )}
             </span>
@@ -201,7 +201,7 @@ export default async function BalanceOverviewPage() {
                     </span>
                   </ListCell>
                   <ListCell align="end" className={cn("text-ink-2", MOVEMENT)}>
-                    {formatCurrency(account.openingBalance, currency)}
+                    {formatCurrency(account.openingBalance, currency, locale)}
                   </ListCell>
                   <ListCell align="end" className={MOVEMENT}>
                     {figure(account.totalIn, "in")}
@@ -224,7 +224,7 @@ export default async function BalanceOverviewPage() {
             <ListTotalRow columns={COLUMNS} className="tabular-nums">
               <ListCell>{t("Total")}</ListCell>
               <ListCell align="end" className={MOVEMENT}>
-                {formatCurrency(totals.opening, currency)}
+                {formatCurrency(totals.opening, currency, locale)}
               </ListCell>
               <ListCell align="end" className={MOVEMENT}>
                 {figure(totals.in, "in")}

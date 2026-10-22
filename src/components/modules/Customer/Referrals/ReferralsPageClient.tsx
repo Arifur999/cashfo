@@ -35,10 +35,10 @@ interface ReferralsPageClientProps {
 // so the heading is there for screen readers only, and How it works folds
 // into one row under the list.
 export function ReferralsPageClient({ businessId, info, currency, canManage, workspaceName, origin, today }: ReferralsPageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const [withdrawOpen, setWithdrawOpen] = useState(false);
-  const reward = info ? formatCurrency(info.rewardAmountPerReferral, currency) : "";
+  const reward = info ? formatCurrency(info.rewardAmountPerReferral, currency, locale) : "";
 
   return (
     <PageFrame className="max-md:pt-4 md:gap-5">

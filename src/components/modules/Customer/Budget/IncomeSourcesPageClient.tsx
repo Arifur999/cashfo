@@ -108,7 +108,7 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
     lastMonth,
   );
   const hadLastMonth = Object.values(lastMonth).some((amount) => amount > 0);
-  const money = (value: number | string) => formatCurrency(value, currency);
+  const money = (value: number | string) => formatCurrency(value, currency, locale);
   const percent = (value: number) => formatCount(value, locale);
 
   function goToMonth(nextMonth: number, nextYear: number) {

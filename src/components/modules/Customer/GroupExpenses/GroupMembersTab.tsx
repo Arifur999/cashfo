@@ -64,7 +64,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
   const meals = data.settings.kind === "MESS" || data.settings.mealsOn;
   const columns = meals ? MEALS_COLUMNS : COLUMNS;
   const holder = data.settings.cashHolderMemberId;
-  const money = (value: number) => formatCurrency(value, data.currency);
+  const money = (value: number) => formatCurrency(value, data.currency, locale);
 
   const toolbar = (
     <div className="flex flex-col gap-3 border-b border-line px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6">
@@ -135,7 +135,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                   {/* The phone and joining month, whose columns start at xl. */}
                   <span className="hidden truncate text-caption font-normal text-ink-muted md:block xl:hidden">{[member.phone, t("Member since {month}", { month: monthName(memberSince(member), locale, "short", true) })].filter(Boolean).join(" · ")}</span>
                   {/* The month's figures, which have no columns on a phone. */}
-                  <span className="truncate text-caption font-normal text-ink-2 md:hidden">{t("{paid} paid in · {balance}", { paid: money(paidInBy(member.id)), balance: formatSignedCurrency(balance, data.currency) })}</span>
+                  <span className="truncate text-caption font-normal text-ink-2 md:hidden">{t("{paid} paid in · {balance}", { paid: money(paidInBy(member.id)), balance: formatSignedCurrency(balance, data.currency, locale) })}</span>
                 </span>
               </ListCell>
               <ListCell className="hidden text-ink-2 xl:block">{member.phone ?? "—"}</ListCell>

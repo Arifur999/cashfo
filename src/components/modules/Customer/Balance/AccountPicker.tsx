@@ -38,7 +38,7 @@ const GROUP = "**:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:pt-2 **:
 // arrow keys to move, Enter to pick. Clearing it goes back to the wallet
 // picks.
 export function AccountPicker({ id, labelId, wallets, others, value, onChange, preferredLanguage, currency }: AccountPickerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const nameOf = (account: Account) => accountDisplayName(account, preferredLanguage);
@@ -128,7 +128,7 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
             <Command.Empty className="px-3 py-4 text-center text-small text-ink-muted">{t("No account matches")}</Command.Empty>
             {walletHits.length > 0 && (
               <Command.Group heading={t("Wallets")} className={GROUP}>
-                {walletHits.map((wallet) => option(wallet, formatCurrency(wallet.currentBalance, currency)))}
+                {walletHits.map((wallet) => option(wallet, formatCurrency(wallet.currentBalance, currency, locale)))}
               </Command.Group>
             )}
             {otherHits.length > 0 && (

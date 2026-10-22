@@ -20,6 +20,7 @@ import { categoryVisual } from "@/lib/customer/assetDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { getAppToday } from "@/lib/date";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -82,7 +83,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
     const amount = value - against;
     const percent = against > 0 ? (amount / against) * 100 : 0;
     const sign = amount > 0 ? "+" : amount < 0 ? "−" : "";
-    return { amount, text: `${sign} ${formatCurrency(Math.abs(amount), currency)} · ${sign}${Math.abs(percent).toFixed(1)}%`.trim(), tone: amount > 0 ? "income" : amount < 0 ? "expense" : "neutral" };
+    return { amount, text: `${sign} ${formatCurrency(Math.abs(amount), currency, locale)} · ${toLocaleDigits(`${sign}${Math.abs(percent).toFixed(1)}%`, locale)}`.trim(), tone: amount > 0 ? "income" : amount < 0 ? "expense" : "neutral" };
   };
   const vsPaid = diff(paid);
   const vsToday = diff(today);
@@ -141,11 +142,11 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
               <div className="grid grid-cols-2 gap-3 tabular-nums">
                 <span className="flex flex-col gap-0.5 *:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
-                  <span className="text-title text-ink">{formatCurrency(paid, currency)}</span>
+                  <span className="text-title text-ink">{formatCurrency(paid, currency, locale)}</span>
                 </span>
                 <span className="flex flex-col gap-0.5 *:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
-                  <span className="text-title text-ink">{formatCurrency(today, currency)}</span>
+                  <span className="text-title text-ink">{formatCurrency(today, currency, locale)}</span>
                 </span>
               </div>
             </div>
@@ -182,7 +183,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
                 <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <span>
                   {fillNodes(t("The full {amount} is recorded as income in {wallet}, and {asset} moves to Sold."), {
-                    amount: <b className="font-semibold">{formatCurrency(value, currency)}</b>,
+                    amount: <b className="font-semibold">{formatCurrency(value, currency, locale)}</b>,
                     wallet: accountDisplayName(wallet, displayLanguage(locale)),
                     asset: asset.name,
                   })}
@@ -197,7 +198,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
             </Button>
             <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {value > 0 ? t("Sell for {amount}", { amount: formatCurrency(value, currency) }) : t("Sell asset")}
+              {value > 0 ? t("Sell for {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Sell asset")}
             </Button>
           </div>
         </form>

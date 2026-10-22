@@ -95,7 +95,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
           toast.success(t("Contact archived"));
           router.refresh();
         } else {
-          toast.error(loanErrorText(result.message, "Failed to archive contact", t, (amount) => formatCurrency(amount, currency)));
+          toast.error(loanErrorText(result.message, "Failed to archive contact", t, (amount) => formatCurrency(amount, currency, locale)));
         }
       } catch {
         toast.error(t("Couldn't save. Check your connection and try again."));
@@ -112,7 +112,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
           toast.success(t("Contact restored"));
           router.refresh();
         } else {
-          toast.error(loanErrorText(result.message, "Failed to restore contact", t, (amount) => formatCurrency(amount, currency)));
+          toast.error(loanErrorText(result.message, "Failed to restore contact", t, (amount) => formatCurrency(amount, currency, locale)));
         }
       } catch {
         toast.error(t("Couldn't save. Check your connection and try again."));
@@ -125,7 +125,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   // with them, so the confirm names it.
   async function remove(contact: Contact) {
     const direction = loanDirection(contact.currentBalance);
-    const values = { name: contact.name, amount: formatCurrency(Math.abs(Number(contact.currentBalance)), currency) };
+    const values = { name: contact.name, amount: formatCurrency(Math.abs(Number(contact.currentBalance)), currency, locale) };
     const message =
       direction === "PAWNA"
         ? t("{name} still owes you {amount}. Removing them deletes that balance too, for good.", values)
@@ -140,7 +140,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
           toast.success(result.data?.action === "archived" ? t("This contact has transaction history, so it was archived instead") : t("Contact deleted"));
           router.refresh();
         } else {
-          toast.error(loanErrorText(result.message, "Failed to remove contact", t, (amount) => formatCurrency(amount, currency)));
+          toast.error(loanErrorText(result.message, "Failed to remove contact", t, (amount) => formatCurrency(amount, currency, locale)));
         }
       } catch {
         toast.error(t("Couldn't save. Check your connection and try again."));
@@ -209,7 +209,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
             <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="min-w-0 flex-1 md:w-65 md:flex-none" />
             <span className="hidden flex-1 md:block" />
             <span className="text-small text-ink-muted tabular-nums max-md:w-full">
-              {t("Pawna")} <span className="font-semibold text-income">{formatCurrency(pawna, currency)}</span> · {t("Dena")} <span className="font-semibold text-expense">{formatCurrency(dena, currency)}</span>
+              {t("Pawna")} <span className="font-semibold text-income">{formatCurrency(pawna, currency, locale)}</span> · {t("Dena")} <span className="font-semibold text-expense">{formatCurrency(dena, currency, locale)}</span>
             </span>
           </div>
 
@@ -304,7 +304,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                     <div className={cn("flex items-end justify-between gap-3 rounded-md px-4 py-3", meta.box)}>
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <span className={cn("text-caption font-normal", settled ? "text-ink-muted" : meta.text)}>{t(meta.label)}</span>
-                        <span className={cn("truncate text-h2 tracking-[-0.01em] tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(contact.currentBalance)), currency)}</span>
+                        <span className={cn("truncate text-h2 tracking-[-0.01em] tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(contact.currentBalance)), currency, locale)}</span>
                       </span>
                       {/* A white pill, as the board draws it: the tone's own fill is the tile's colour. */}
                       <Chip tone={meta.chip} size="sm" className="bg-surface font-bold">

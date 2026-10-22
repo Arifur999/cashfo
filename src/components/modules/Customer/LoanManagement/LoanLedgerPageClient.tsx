@@ -143,17 +143,17 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
 
   const amountWithSide = (balance: number) => {
     const side = loanDirection(balance);
-    return side === "SETTLED" ? formatCurrency(0, currency) : `${formatCurrency(Math.abs(balance), currency)} ${t(DIRECTION_META[side].name)}`;
+    return side === "SETTLED" ? formatCurrency(0, currency, locale) : `${formatCurrency(Math.abs(balance), currency, locale)} ${t(DIRECTION_META[side].name)}`;
   };
   // A profit row's amount: paid, or received (with a plus).
   const profitCell = (paidAmount: number, receivedAmount: number) =>
-    paidAmount ? <span className="text-warning">{formatCurrency(paidAmount, currency)}</span> : receivedAmount ? <span className="text-income">+ {formatCurrency(receivedAmount, currency)}</span> : <span className="text-ink-muted">—</span>;
+    paidAmount ? <span className="text-warning">{formatCurrency(paidAmount, currency, locale)}</span> : receivedAmount ? <span className="text-income">+ {formatCurrency(receivedAmount, currency, locale)}</span> : <span className="text-ink-muted">—</span>;
   // A row's balance names its side in words, not by colour alone.
   const balanceOf = (value: string | number, quiet: boolean) => {
     const side = loanDirection(value);
     return (
       <span className={cn("inline-flex flex-wrap items-baseline justify-end gap-x-1", quiet ? "text-ink-muted" : DIRECTION_META[side].text)}>
-        <span className={cn(!quiet && "font-semibold")}>{formatCurrency(Math.abs(Number(value)), currency)}</span>
+        <span className={cn(!quiet && "font-semibold")}>{formatCurrency(Math.abs(Number(value)), currency, locale)}</span>
         {side !== "SETTLED" && <span className="text-caption font-normal">{t(DIRECTION_META[side].name)}</span>}
       </span>
     );
@@ -177,7 +177,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
     // A reversal is named for what it undid; an entry with no note for what it is.
     const written = row.reversalOfId ? reversalTitle(row.description) : row.description;
     const fallback = isProfit ? (Number(row.profitPaid ?? 0) > 0 ? "Paid profit" : "Received profit") : row.debit ? "Loan given / paid back" : "Loan taken / got back";
-    const movement = isProfit ? profitCell(Number(row.profitPaid ?? 0), Number(row.profitReceived ?? 0)) : row.credit ? `+ ${formatCurrency(row.credit, currency)}` : row.debit ? `− ${formatCurrency(row.debit, currency)}` : "—";
+    const movement = isProfit ? profitCell(Number(row.profitPaid ?? 0), Number(row.profitReceived ?? 0)) : row.credit ? `+ ${formatCurrency(row.credit, currency, locale)}` : row.debit ? `− ${formatCurrency(row.debit, currency, locale)}` : "—";
     return (
       <ListRow key={row.transactionId} id={rowId(row)} columns={GRID} muted={cancelled} className="xl:min-h-13 print:break-inside-avoid">
         <ListCell className="hidden text-small text-ink-2 xl:block print:block">{formatDate(row.date, undefined, locale)}</ListCell>
@@ -206,10 +206,10 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
           </Chip>
         </ListCell>
         <ListCell align="end" className={cn("hidden tabular-nums xl:block print:block", row.credit ? "text-ink" : "text-ink-muted")}>
-          {row.credit ? formatCurrency(row.credit, currency) : "—"}
+          {row.credit ? formatCurrency(row.credit, currency, locale) : "—"}
         </ListCell>
         <ListCell align="end" className={cn("hidden tabular-nums xl:block print:block", row.debit ? "text-ink" : "text-ink-muted")}>
-          {row.debit ? formatCurrency(row.debit, currency) : "—"}
+          {row.debit ? formatCurrency(row.debit, currency, locale) : "—"}
         </ListCell>
         <ListCell align="end" className="hidden tabular-nums xl:block print:block">
           {profitCell(Number(row.profitPaid ?? 0), Number(row.profitReceived ?? 0))}
@@ -265,7 +265,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               <span className="hidden text-right text-ink-muted xl:block">—</span>
               <span className="hidden text-right text-ink-muted xl:block">—</span>
               <span className="text-right">{profitCell(sum.paid, sum.received)}</span>
-              <span className="hidden text-right text-ink-muted xl:block">{formatCurrency(Math.abs(Number(last.runningPrincipal)), currency)}</span>
+              <span className="hidden text-right text-ink-muted xl:block">{formatCurrency(Math.abs(Number(last.runningPrincipal)), currency, locale)}</span>
             </button>
           </div>
         </div>
@@ -280,7 +280,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
       <span className="text-caption font-semibold">
         {way === "paid" ? t(months === 1 ? "Profit paid · {count} month" : "Profit paid · {count} months", { count: formatCount(months, locale) }) : t(months === 1 ? "Profit received · {count} month" : "Profit received · {count} months", { count: formatCount(months, locale) })}
       </span>
-      <span className="text-h2 font-bold tabular-nums">{formatCurrency(amount, currency)}</span>
+      <span className="text-h2 font-bold tabular-nums">{formatCurrency(amount, currency, locale)}</span>
       <span className="text-caption">{way === "paid" ? t("Counted as expense. Doesn't change what you owe.") : t("Counted as income. Doesn't change what they owe.")}</span>
     </div>
   );
@@ -397,9 +397,9 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               {/* An opening on the other side counts as a minus. */}
               <EquationCell label={t("Opening")} value={equation.opening < 0 ? `− ${amountWithSide(opening)}` : amountWithSide(opening)} />
               <Operator>+</Operator>
-              <EquationCell sign="+" spoken={t("plus")} label={owe ? t("Loan taken / got back") : t("Loan given / paid back")} value={formatCurrency(equation.raised, currency)} className={owe ? "text-expense" : "text-income"} />
+              <EquationCell sign="+" spoken={t("plus")} label={owe ? t("Loan taken / got back") : t("Loan given / paid back")} value={formatCurrency(equation.raised, currency, locale)} className={owe ? "text-expense" : "text-income"} />
               <Operator>−</Operator>
-              <EquationCell sign="−" spoken={t("minus")} label={owe ? t("Loan given / paid back") : t("Loan taken / got back")} value={formatCurrency(equation.lowered, currency)} className="text-ink-muted" />
+              <EquationCell sign="−" spoken={t("minus")} label={owe ? t("Loan given / paid back") : t("Loan taken / got back")} value={formatCurrency(equation.lowered, currency, locale)} className="text-ink-muted" />
               <Operator equals>=</Operator>
               <div className={cn("col-span-2 flex min-w-0 flex-col gap-1 rounded-md px-4 py-2 md:-my-2 md:-mr-2.5 md:flex-[1.2]", meta.box)}>
                 <span className={cn("text-caption font-semibold", meta.text)}>
@@ -409,7 +409,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
                   <span className="sr-only">{t("equals")} </span>
                   {direction === "SETTLED" ? t("Settled") : `${t(meta.label)} · ${t(meta.name)}`}
                 </span>
-                <span className={cn(EQUATION_FIGURE, meta.text)}>{formatCurrency(equation.closing, currency)}</span>
+                <span className={cn(EQUATION_FIGURE, meta.text)}>{formatCurrency(equation.closing, currency, locale)}</span>
               </div>
             </Card>
             {hasProfit && (
@@ -475,16 +475,16 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
                   {t("Closing balance")} · {formatDate(periodTo, undefined, locale)}
                 </ListCell>
                 <ListCell align="end" className="hidden text-ink tabular-nums xl:block print:block">
-                  {formatCurrency(received, currency)}
+                  {formatCurrency(received, currency, locale)}
                 </ListCell>
                 <ListCell align="end" className={cn("hidden tabular-nums xl:block print:block", paid ? "text-ink" : "text-ink-muted")}>
-                  {formatCurrency(paid, currency)}
+                  {formatCurrency(paid, currency, locale)}
                 </ListCell>
                 <ListCell align="end" className="hidden flex-col items-end tabular-nums xl:flex print:flex">
                   {/* Both, when there was profit both ways. */}
                   {profit.paid > 0 && profitCell(profit.paid, 0)}
                   {profit.received > 0 && profitCell(0, profit.received)}
-                  {!hasProfit && <span className="text-ink-muted">{formatCurrency(0, currency)}</span>}
+                  {!hasProfit && <span className="text-ink-muted">{formatCurrency(0, currency, locale)}</span>}
                 </ListCell>
                 <ListCell align="end" className={cn("text-title font-bold tabular-nums", meta.text)}>
                   {amountWithSide(closing)}

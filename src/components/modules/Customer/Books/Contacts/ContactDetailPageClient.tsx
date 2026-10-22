@@ -161,7 +161,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, statement
         {late > 0 && (
           <p className="flex items-start gap-3 rounded-md bg-warning-soft px-4 py-3 text-small leading-relaxed text-warning">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <span>{t(direction === "RECEIVABLE" ? "{amount} is more than 30 days late. A friendly reminder usually works best before 60 days." : "{amount} you owe is more than 30 days late.", { amount: formatCurrency(late, currency) })}</span>
+            <span>{t(direction === "RECEIVABLE" ? "{amount} is more than 30 days late. A friendly reminder usually works best before 60 days." : "{amount} you owe is more than 30 days late.", { amount: formatCurrency(late, currency, locale) })}</span>
           </p>
         )}
       </div>
@@ -224,7 +224,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, statement
         <PersonAvatar name={contact.name} src={contact.photoUrl} size={56} coloured />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-small text-ink-muted">{headline}</span>
-          <span className={cn("text-display tabular-nums wrap-anywhere", balance > 0 ? "text-income" : balance < 0 ? "text-expense" : "text-ink")}>{formatCurrency(Math.abs(balance), currency)}</span>
+          <span className={cn("text-display tabular-nums wrap-anywhere", balance > 0 ? "text-income" : balance < 0 ? "text-expense" : "text-ink")}>{formatCurrency(Math.abs(balance), currency, locale)}</span>
           <span className="text-small text-ink-muted">{lastLine}</span>
         </span>
         {/* Nothing new with an archived contact, but whatever they owe again

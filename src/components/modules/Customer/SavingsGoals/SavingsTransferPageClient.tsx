@@ -85,7 +85,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
       // is opened again.
       const result = await createSavingsTransferAction(businessId, { fromGoalId: fromId, toGoalId: toId, amount: value, date: getAppToday(), notes: note.trim() || undefined });
       if (!result.success) {
-        toast.error(savingsError(result.message, "Failed to move", t, currency));
+        toast.error(savingsError(result.message, "Failed to move", t, currency, locale));
         return;
       }
       toast.success(t("Moved"));
@@ -102,7 +102,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
       <h2 className="text-title text-ink">{t("History")}</h2>
       {transfers.length > 0 && (
         <span className="text-small text-ink-muted tabular-nums">
-          {t(transfers.length === 1 ? "{count} move" : "{count} moves", { count: formatCount(transfers.length, locale) })} · {formatCurrency(total, currency)}
+          {t(transfers.length === 1 ? "{count} move" : "{count} moves", { count: formatCount(transfers.length, locale) })} · {formatCurrency(total, currency, locale)}
         </span>
       )}
     </div>
@@ -146,7 +146,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                 {transfer.notes && <span className="truncate text-caption font-normal text-ink-muted">{transfer.notes}</span>}
               </ListCell>
               <ListCell align="end" className="font-semibold text-info tabular-nums max-md:col-start-2 max-md:row-start-1">
-                {formatCurrency(transfer.amount, currency)}
+                {formatCurrency(transfer.amount, currency, locale)}
               </ListCell>
             </ListRow>
           ))}
@@ -230,12 +230,12 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
               <Field
                 htmlFor="st-amount"
                 label={<span className="text-small font-medium text-ink-2">{t("Amount")}</span>}
-                error={over && from ? t("Only {amount} is saved in {goal}", { amount: formatCurrency(fromSaved, currency), goal: from.name }) : undefined}
+                error={over && from ? t("Only {amount} is saved in {goal}", { amount: formatCurrency(fromSaved, currency, locale), goal: from.name }) : undefined}
                 hint={
                   from && to && value > 0
-                    ? t("{goal} goes to {percent}% · {from} keeps {amount}", { goal: to.name, percent: formatCount(toAfter, locale), from: from.name, amount: formatCurrency(Math.max(0, fromSaved - value), currency) })
+                    ? t("{goal} goes to {percent}% · {from} keeps {amount}", { goal: to.name, percent: formatCount(toAfter, locale), from: from.name, amount: formatCurrency(Math.max(0, fromSaved - value), currency, locale) })
                     : from
-                      ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(fromSaved, currency), wallet: from.name })
+                      ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(fromSaved, currency, locale), wallet: from.name })
                       : undefined
                 }
               >
@@ -256,7 +256,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
               </Field>
               <Button type="submit" variant="action" size="lg" disabled={!valid || isPending} className="w-full">
                 {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-                {value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency) }) : t("Move")}
+                {value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Move")}
               </Button>
             </form>
           )}

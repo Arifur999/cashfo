@@ -52,9 +52,9 @@ export function LedgerTable({ id, account, ledger, figures, summary, currency, t
 
   // The period's change as a sum: in − out, the transfers, and what a void
   // in another period left behind, each term written out.
-  const terms = [`${formatCurrency(summary.totalIn, currency)} − ${formatCurrency(summary.totalOut, currency)}`];
-  if (adjustment !== 0) terms.push(`${adjustment > 0 ? "+" : "−"} ${formatCurrency(Math.abs(adjustment), currency)}`);
-  if (figures.voided !== 0) terms.push(`${figures.voided > 0 ? "+" : "−"} ${t("{amount} voided or reversed", { amount: formatCurrency(Math.abs(figures.voided), currency) })}`);
+  const terms = [`${formatCurrency(summary.totalIn, currency, locale)} − ${formatCurrency(summary.totalOut, currency, locale)}`];
+  if (adjustment !== 0) terms.push(`${adjustment > 0 ? "+" : "−"} ${formatCurrency(Math.abs(adjustment), currency, locale)}`);
+  if (figures.voided !== 0) terms.push(`${figures.voided > 0 ? "+" : "−"} ${t("{amount} voided or reversed", { amount: formatCurrency(Math.abs(figures.voided), currency, locale) })}`);
   const sentence = words.money
     ? adjustment !== 0
       ? "Money in − money out ± transfers is the change in balance: {sum} = {change}"
@@ -84,7 +84,7 @@ export function LedgerTable({ id, account, ledger, figures, summary, currency, t
       footer={
         ledger.meta.total > 0 && (
           <ListFooter>
-            <p className="tabular-nums">{t(sentence, { sum: terms.join(" "), change: formatSignedCurrency(figures.change, currency) })}</p>
+            <p className="tabular-nums">{t(sentence, { sum: terms.join(" "), change: formatSignedCurrency(figures.change, currency, locale) })}</p>
             <Pagination page={ledger.meta.page} totalPages={ledger.meta.totalPages} total={ledger.meta.total} pageSize={ledger.meta.limit || PAGE_SIZE} hrefFor={hrefFor} focusTargetId={id} className="print:hidden" />
           </ListFooter>
         )
@@ -110,7 +110,7 @@ export function LedgerTable({ id, account, ledger, figures, summary, currency, t
         // Money accounts colour what came in and went out; elsewhere a debit
         // only grows the balance, so the figures stay in ink.
         const tone = cancelled ? "text-ink-muted line-through" : words.money ? (into ? "text-income" : "text-expense") : "text-ink";
-        const amount = <span className={cn("font-bold tabular-nums whitespace-nowrap", tone)}>{formatSignedCurrency(into ? row.amount : -Number(row.amount), currency)}</span>;
+        const amount = <span className={cn("font-bold tabular-nums whitespace-nowrap", tone)}>{formatSignedCurrency(into ? row.amount : -Number(row.amount), currency, locale)}</span>;
         return (
           <ListRow key={row.entryId} columns={COLUMNS} muted={cancelled !== null}>
             <ListCell className="hidden text-small whitespace-nowrap text-ink-2 md:block">{day(row.date)}</ListCell>

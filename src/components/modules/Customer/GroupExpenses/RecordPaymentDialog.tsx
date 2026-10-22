@@ -156,34 +156,34 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                   <span className="min-w-0 text-ink-2">
                     <b className="font-semibold text-ink">{from.name}</b> · {t("Deposit")} · “{payerNote}”
                   </span>
-                  <span className="shrink-0 font-semibold text-income">{formatSignedCurrency(value, currency)}</span>
+                  <span className="shrink-0 font-semibold text-income">{formatSignedCurrency(value, currency, locale)}</span>
                 </div>
                 <div className="flex justify-between gap-3">
                   <span className="min-w-0 text-ink-2">
                     <b className="font-semibold text-ink">{to.name}</b> · {t("Return")} · “{receiverNote}”
                   </span>
-                  <span className="shrink-0 font-semibold text-expense">{formatSignedCurrency(-value, currency)}</span>
+                  <span className="shrink-0 font-semibold text-expense">{formatSignedCurrency(-value, currency, locale)}</span>
                 </div>
                 <span className="h-px bg-line" />
                 <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{t("{name}'s balance", { name: from.name })}</span>
                   <span>
-                    <span className={signedClass(balances[from.id] ?? 0)}>{formatSignedCurrency(balances[from.id] ?? 0, currency)}</span>
+                    <span className={signedClass(balances[from.id] ?? 0)}>{formatSignedCurrency(balances[from.id] ?? 0, currency, locale)}</span>
                     <span className="text-ink-muted"> → </span>
-                    <b className={cn("font-bold", signedClass(after(from.id, 1)))}>{formatSignedCurrency(after(from.id, 1), currency)}</b>
+                    <b className={cn("font-bold", signedClass(after(from.id, 1)))}>{formatSignedCurrency(after(from.id, 1), currency, locale)}</b>
                   </span>
                 </div>
                 <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{t("{name}'s balance", { name: to.name })}</span>
                   <span>
-                    <span className={signedClass(balances[to.id] ?? 0)}>{formatSignedCurrency(balances[to.id] ?? 0, currency)}</span>
+                    <span className={signedClass(balances[to.id] ?? 0)}>{formatSignedCurrency(balances[to.id] ?? 0, currency, locale)}</span>
                     <span className="text-ink-muted"> → </span>
-                    <b className={cn("font-bold", signedClass(after(to.id, -1)))}>{formatSignedCurrency(after(to.id, -1), currency)}</b>
+                    <b className={cn("font-bold", signedClass(after(to.id, -1)))}>{formatSignedCurrency(after(to.id, -1), currency, locale)}</b>
                   </span>
                 </div>
                 <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{t("Cash in hand")}</span>
-                  <span className="text-ink-muted">{t("{amount}, unchanged", { amount: formatCurrency(cashInHand, currency) })}</span>
+                  <span className="text-ink-muted">{t("{amount}, unchanged", { amount: formatCurrency(cashInHand, currency, locale) })}</span>
                 </div>
               </div>
             )}

@@ -14,7 +14,7 @@ import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { assetGain, assetsSummary, categoryVisual, gainChip } from "@/lib/customer/assetDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paginate } from "@/lib/table/paginate";
@@ -117,10 +117,10 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                     </span>
                   </ListCell>
                   <ListCell align="end" className="hidden text-ink-2 tabular-nums md:block">
-                    {formatCurrency(asset.purchasePrice, currency)}
+                    {formatCurrency(asset.purchasePrice, currency, locale)}
                   </ListCell>
                   <ListCell align="end" className="font-semibold text-ink tabular-nums">
-                    {formatCurrency(asset.currentValue, currency)}
+                    {formatCurrency(asset.currentValue, currency, locale)}
                   </ListCell>
                   {canManage ? (
                     <ListRowActions className="col-span-2 md:col-span-1">
@@ -155,12 +155,12 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                   </button>
                   <span className="text-caption font-normal text-ink-muted">{lastSold.soldAt ? t("Sold {date}", { date: formatDate(lastSold.soldAt, "d MMM yyyy", locale) }) : t("Sold")}</span>
                 </span>
-                <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(lastSold.soldPrice ?? 0, currency)}</span>
+                <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(lastSold.soldPrice ?? 0, currency, locale)}</span>
               </div>
               <div className={cn("flex items-center justify-between gap-3 rounded-md p-3 text-caption", RESULT_BOX[lastChip.tone])}>
-                <span className="font-normal">{t("Paid {amount} in {month}", { amount: formatCurrency(lastSold.purchasePrice, currency), month: formatDate(lastSold.purchaseDate, "MMM yyyy", locale) })}</span>
+                <span className="font-normal">{t("Paid {amount} in {month}", { amount: formatCurrency(lastSold.purchasePrice, currency, locale), month: formatDate(lastSold.purchaseDate, "MMM yyyy", locale) })}</span>
                 <span className="font-semibold whitespace-nowrap tabular-nums">
-                  {formatSignedCurrency(lastGain.amount, currency)} ({lastChip.label})
+                  {formatSignedCurrency(lastGain.amount, currency, locale)} ({toLocaleDigits(lastChip.label, locale)})
                 </span>
               </div>
             </Card>

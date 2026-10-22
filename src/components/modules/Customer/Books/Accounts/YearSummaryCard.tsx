@@ -18,7 +18,7 @@ interface YearSummaryCardProps {
 // fills its grid cell and its Total band sits at the bottom, so the income
 // and expense cards end level whatever their row counts.
 export function YearSummaryCard({ title, description, rows, total, currency }: YearSummaryCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   return (
     <ListCard label={title} title={title} description={description} footer={null} className="flex flex-col" tableClassName="flex flex-1 flex-col">
@@ -30,11 +30,11 @@ export function YearSummaryCard({ title, description, rows, total, currency }: Y
             <ListRow key={row.id} density="dense">
               <ListCell className="truncate text-ink-2">{row.name}</ListCell>
               <ListCell align="end" className="text-ink tabular-nums whitespace-nowrap">
-                {formatCurrency(row.total, currency)}
+                {formatCurrency(row.total, currency, locale)}
               </ListCell>
             </ListRow>
           ))}
-          <ListTotalRow label={t("Total")} value={formatCurrency(total, currency)} className="mt-auto" />
+          <ListTotalRow label={t("Total")} value={formatCurrency(total, currency, locale)} className="mt-auto" />
         </>
       )}
     </ListCard>

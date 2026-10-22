@@ -86,7 +86,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
   const totalOpening = sum(active, (wallet) => wallet.openingBalance);
   const editing = typeof drawer === "object" ? drawer : null;
   const busy = isPending ? busyId : null;
-  const archivedNote = inArchived !== 0 ? t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency) }) : null;
+  const archivedNote = inArchived !== 0 ? t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, locale) }) : null;
 
   // One action on one wallet at a time: its card dims and its menu waits
   // until the answer comes back.
