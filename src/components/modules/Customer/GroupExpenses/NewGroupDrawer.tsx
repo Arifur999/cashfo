@@ -14,13 +14,13 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupKind } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { createBusinessAction } from "@/lib/customer/businessActions";
 import { countLabel } from "@/lib/customer/groupDisplay";
 import { createGroupMemberAction, getGroupExpenseCategoriesAction, updateGroupExpenseCategoryAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
 import { toBanglaDigits } from "@/lib/i18n/banglaDates";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { attempt } from "./attempt";
 import { CloseX, FOCUS_WITHIN } from "./GroupBits";
 
 interface NewGroupDrawerProps {
@@ -100,22 +100,22 @@ export function NewGroupDrawer({ open, onClose }: NewGroupDrawerProps) {
     event.preventDefault();
     if (!valid || isPending) return;
     startTransition(async () => {
-      const offline = t("No connection. Nothing was saved; try again.");
-      const created = await attempt(() => createBusinessAction({ name: name.trim(), currency: "BDT", type: "GROUP" }), offline);
+      const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
+      const created = await attempt(() => createBusinessAction({ name: name.trim(), currency: "BDT", type: "GROUP" }), offline, stale);
       if (!created.success || !created.data) {
         toast.error(created.message ?? t("Failed to create the group"));
         return;
       }
       const businessId = created.data.id;
       const members = everyone.length > 0 ? everyone : draft.trim() ? [draft.trim()] : [];
-      const results = await Promise.all(members.map((memberName) => attempt(() => createGroupMemberAction(businessId, { name: memberName }), offline)));
+      const results = await Promise.all(members.map((memberName) => attempt(() => createGroupMemberAction(businessId, { name: memberName }), offline, stale)));
       const failed = results.filter((r) => !r.success).length;
       const cashHolder = results.find((r, i) => r.success && members[i] === holderName)?.data?.id ?? null;
-      const settingsSaved = await attempt(() => updateGroupSettingsAction(businessId, { kind, monthStartDay: startDay, mealsOn: kind === "MESS", cashHolderMemberId: cashHolder }), offline);
+      const settingsSaved = await attempt(() => updateGroupSettingsAction(businessId, { kind, monthStartDay: startDay, mealsOn: kind === "MESS", cashHolderMemberId: cashHolder }), offline, stale);
       // The bazar is shared by meals in a mess, by family size in a family.
-      const categories = await attempt(() => getGroupExpenseCategoriesAction(businessId), offline);
+      const categories = await attempt(() => getGroupExpenseCategoriesAction(businessId), offline, stale);
       const bazar = categories.data?.find((c) => /bazar|grocery/i.test(c.name));
-      const splitSaved = !categories.success ? categories : bazar ? await attempt(() => updateGroupExpenseCategoryAction(businessId, bazar.id, { defaultSplit: kind === "MESS" ? "MEALS" : "SHARES" }), offline) : { success: true };
+      const splitSaved = !categories.success ? categories : bazar ? await attempt(() => updateGroupExpenseCategoryAction(businessId, bazar.id, { defaultSplit: kind === "MESS" ? "MEALS" : "SHARES" }), offline, stale) : { success: true };
       if (failed > 0) toast.warning(countLabel(t, locale, failed, "{count} member could not be added", "{count} members could not be added"));
       // The group is there either way; a group left as a family with no meal
       // counting must not pass for the mess that was asked for.

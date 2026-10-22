@@ -135,6 +135,22 @@ export async function deleteGroupContributionAction(businessId: string, id: stri
   }, "Failed to remove contribution");
 }
 
+// A payment from one member to another: the payer's SETTLE in and the
+// receiver's SETTLE out, written in one commit, so it can never half save.
+// `amount` is positive with at most two decimals; each note is already in
+// the reader's words. Answers both rows, the payer's first.
+export async function settleUpAction(
+  businessId: string,
+  input: { fromMemberId: string; toMemberId: string; amount: string; date: string; payerNote?: string; receiverNote?: string },
+): Promise<ActionResult<GroupContribution[]>> {
+  return callApi(async () => {
+    const res = await customerApi.post<GroupContribution[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/settle-up`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to record the payment");
+}
+
 // ---- Expense categories ----
 
 export async function getGroupExpenseCategoriesAction(businessId: string): Promise<ActionResult<GroupExpenseCategoryOption[]>> {

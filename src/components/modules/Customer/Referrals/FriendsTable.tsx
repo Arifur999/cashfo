@@ -1,6 +1,6 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { Info, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Chip from "@/components/smartly/Chip";
@@ -10,7 +10,7 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { usePageParam } from "@/hooks/usePageParam";
 import type { ReferralInfo } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import { filterCounts, filterReferrals, friendDay, joinedOn, listsEveryFriend, pendingFriends, readyOn, REFERRAL_FILTERS, sortReferrals, STATUS_META, type ReferralFilter } from "@/lib/customer/referralDisplay";
+import { filterCounts, filterReferrals, friendDay, joinedOn, listsEveryFriend, pendingFriends, REFERRAL_FILTERS, sortReferrals, STATUS_META, statusNote, type ReferralFilter } from "@/lib/customer/referralDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paginate } from "@/lib/table/paginate";
@@ -31,8 +31,8 @@ const PAGE_SIZE = 25;
 const LIST_ID = "referral-friends";
 
 // Everyone who joined with the link, with what each one earns and where
-// that reward stands, 25 to a page. Phones get the board's one-line rows
-// and no filter.
+// that reward stands (with the day it is ready, was confirmed or was paid
+// out), 25 to a page. Phones get the board's one-line rows and no filter.
 export function FriendsTable({ info, currency, today }: FriendsTableProps) {
   const { t, locale } = useLocale();
   const [filter, setFilter] = useState<ReferralFilter>("ALL");
@@ -105,7 +105,7 @@ export function FriendsTable({ info, currency, today }: FriendsTableProps) {
   return (
     <ListCard id={LIST_ID} label={t("Friends who joined with your link")} header={header} footer={footer}>
       {entries.length === 0 ? (
-        <ListEmpty title={t("No one has joined with your link yet. Share it and they show up here.")} />
+        <ListEmpty icon={<UserPlus />} tone="money" title={t("No friends yet")} description={t("No one has joined with your link yet. Share it and they show up here.")} />
       ) : (
         <>
           <ListHead columns={COLUMNS}>
@@ -116,6 +116,7 @@ export function FriendsTable({ info, currency, today }: FriendsTableProps) {
           {list.rows.length === 0 && <ListEmpty title={t("No friends with this status.")} className="py-6" />}
           {list.rows.map((entry) => {
             const meta = STATUS_META[entry.status];
+            const note = statusNote(entry);
             const waiting = entry.status === "PENDING";
             const reward = formatCurrency(entry.rewardAmount, currency);
             return (
@@ -139,7 +140,7 @@ export function FriendsTable({ info, currency, today }: FriendsTableProps) {
                     <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
                     {t(meta.label)}
                   </Chip>
-                  <span className="text-caption whitespace-nowrap text-ink-muted">{waiting ? t(meta.note, { date: friendDay(readyOn(entry), today, locale) }) : t(meta.note)}</span>
+                  <span className="text-caption text-ink-muted">{note.day ? t(note.note, { date: friendDay(note.day, today, locale) }) : t(note.note)}</span>
                 </ListCell>
               </ListRow>
             );

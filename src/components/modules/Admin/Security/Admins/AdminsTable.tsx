@@ -37,8 +37,10 @@ const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
       <DataTable
         data={rows}
         columns={columns}
-        // The density scale's relaxed row: a name over an email.
-        layout={{ rowHeight: 64, headPadding: 12 }}
+        // The density scale's relaxed row: a name over an email. Each column
+        // keeps its px, so a role chip never runs into Last sign-in on a
+        // phone: the name column gives way, then the table scrolls sideways.
+        layout={{ rowHeight: 64, headPadding: 12, flexMinWidth: 200 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}

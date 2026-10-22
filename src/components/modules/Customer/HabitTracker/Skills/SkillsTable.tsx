@@ -91,10 +91,9 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
           <span className="flex min-w-0 items-center gap-3">
             <SkillTile icon={skill.icon} color={skill.color} size={30} />
             <span className="flex min-w-0 flex-col">
-              {/* The trigger hands its own data-slot down; naming the button's again keeps the row's hover and focus ring. */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <ListRowButton data-slot="list-row-button" aria-label={t("{name}: actions", { name: skill.name })} className="truncate font-semibold">
+                  <ListRowButton aria-label={t("{name}: actions", { name: skill.name })} className="truncate font-semibold">
                     {skill.name}
                   </ListRowButton>
                 </DropdownMenuTrigger>

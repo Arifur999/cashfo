@@ -9,7 +9,7 @@ import Card from "@/components/smartly/Card";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
+import { accountDisplayName, balanceText, displayLanguage } from "@/lib/customer/accountDisplay";
 import { getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
@@ -24,7 +24,14 @@ import { cn } from "@/lib/utils";
 export const generateMetadata = () => customerPageMetadata("/balance/overview");
 
 // The heads, rows and totals share one grid, which phones scroll sideways.
-const COLUMNS = "grid-cols-[minmax(0,1fr)_repeat(5,116px)_140px] min-w-260";
+// Phones bring Current balance, the figure people come for, next to the
+// account (CURRENT first, the five movements after it), so the first screen
+// doesn't read as Account and Opening alone. Grid placement follows
+// `order`, so heads, rows and the total stay lined up; wider screens keep
+// the board's order.
+const COLUMNS = "grid-cols-[minmax(0,1fr)_repeat(5,116px)_140px] max-md:grid-cols-[minmax(0,1fr)_140px_repeat(5,116px)] min-w-260";
+const CURRENT = "max-md:order-1";
+const MOVEMENT = "max-md:order-2";
 
 type Totals = Record<"opening" | "in" | "out" | "savings" | "adjustment" | "current", number>;
 
@@ -68,6 +75,9 @@ export default async function BalanceOverviewPage() {
     const tone = kind === "in" ? "text-income" : kind === "out" ? "text-expense" : kind === "savings" ? "text-ink-2" : "text-info";
     return <span className={tone}>{`${sign} ${formatCurrency(Math.abs(amount), currency)}`}</span>;
   };
+  // An overdrawn balance takes the true minus the figures beside it use
+  // (the cell turns expense red), not a hyphen against the symbol.
+  const balance = (value: number | string) => balanceText(value, currency);
 
   return (
     <PageFrame className="gap-6">
@@ -88,7 +98,7 @@ export default async function BalanceOverviewPage() {
       />
 
       <Card padding="lg" className="flex flex-col gap-5">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-end xl:justify-between">
           <div className="flex min-w-0 flex-col gap-2">
             <span className="text-small font-medium text-ink-muted">{t("Available balance")}</span>
             <AmountText value={overview.availableBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em] wrap-anywhere" />
@@ -102,9 +112,9 @@ export default async function BalanceOverviewPage() {
               )}
             </span>
           </div>
-          {/* Phones list the three one under the other; wider screens set them side by side. */}
-          <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-0">
-            <HeroStat label={t("Active wallets")} note={archivedCount > 0 ? t("{count} archived", { count: formatCount(archivedCount, locale) }) : undefined}>
+          {/* Rows on a phone (label left, figure right); three columns from sm, as Savings summary sets them. */}
+          <dl className="grid grid-cols-1 sm:grid-cols-3">
+            <HeroStat first label={t("Active wallets")} note={archivedCount > 0 ? t("{count} archived", { count: formatCount(archivedCount, locale) }) : undefined}>
               {formatCount(activeCount, locale)}
             </HeroStat>
             <HeroStat label={t("Money in@@wallet")}>{figure(totals.in, "in")}</HeroStat>
@@ -157,12 +167,24 @@ export default async function BalanceOverviewPage() {
           <>
             <ListHead showOnPhone columns={COLUMNS}>
               <ListHeadCell>{t("Account")}</ListHeadCell>
-              <ListHeadCell align="end">{t("Opening")}</ListHeadCell>
-              <ListHeadCell align="end">{t("Money in@@wallet")}</ListHeadCell>
-              <ListHeadCell align="end">{t("Money out@@wallet")}</ListHeadCell>
-              <ListHeadCell align="end">{t("To savings")}</ListHeadCell>
-              <ListHeadCell align="end">{t("Transfers")}</ListHeadCell>
-              <ListHeadCell align="end">{t("Current balance")}</ListHeadCell>
+              <ListHeadCell align="end" className={MOVEMENT}>
+                {t("Opening")}
+              </ListHeadCell>
+              <ListHeadCell align="end" className={MOVEMENT}>
+                {t("Money in@@wallet")}
+              </ListHeadCell>
+              <ListHeadCell align="end" className={MOVEMENT}>
+                {t("Money out@@wallet")}
+              </ListHeadCell>
+              <ListHeadCell align="end" className={MOVEMENT}>
+                {t("To savings")}
+              </ListHeadCell>
+              <ListHeadCell align="end" className={MOVEMENT}>
+                {t("Transfers")}
+              </ListHeadCell>
+              <ListHeadCell align="end" className={CURRENT}>
+                {t("Current balance")}
+              </ListHeadCell>
             </ListHead>
             {rows.map((account, index) => {
               const archived = account.status === "ARCHIVED";
@@ -178,28 +200,46 @@ export default async function BalanceOverviewPage() {
                       <span className="text-caption font-normal text-ink-muted">{archived ? `${typeLabel} · ${t("Archived@@status")}` : typeLabel}</span>
                     </span>
                   </ListCell>
-                  <ListCell align="end" className="text-ink-2">
+                  <ListCell align="end" className={cn("text-ink-2", MOVEMENT)}>
                     {formatCurrency(account.openingBalance, currency)}
                   </ListCell>
-                  <ListCell align="end">{figure(account.totalIn, "in")}</ListCell>
-                  <ListCell align="end">{figure(account.totalOut, "out")}</ListCell>
-                  <ListCell align="end">{figure(account.savings, "savings")}</ListCell>
-                  <ListCell align="end">{figure(account.adjustment, "transfer")}</ListCell>
-                  <ListCell align="end" className="font-bold">
-                    {formatCurrency(account.currentBalance, currency)}
+                  <ListCell align="end" className={MOVEMENT}>
+                    {figure(account.totalIn, "in")}
+                  </ListCell>
+                  <ListCell align="end" className={MOVEMENT}>
+                    {figure(account.totalOut, "out")}
+                  </ListCell>
+                  <ListCell align="end" className={MOVEMENT}>
+                    {figure(account.savings, "savings")}
+                  </ListCell>
+                  <ListCell align="end" className={MOVEMENT}>
+                    {figure(account.adjustment, "transfer")}
+                  </ListCell>
+                  <ListCell align="end" className={cn("font-bold", CURRENT, Number(account.currentBalance) < 0 && "text-expense")}>
+                    {balance(account.currentBalance)}
                   </ListCell>
                 </ListRow>
               );
             })}
             <ListTotalRow columns={COLUMNS} className="tabular-nums">
               <ListCell>{t("Total")}</ListCell>
-              <ListCell align="end">{formatCurrency(totals.opening, currency)}</ListCell>
-              <ListCell align="end">{figure(totals.in, "in")}</ListCell>
-              <ListCell align="end">{figure(totals.out, "out")}</ListCell>
-              <ListCell align="end">{figure(totals.savings, "savings")}</ListCell>
-              <ListCell align="end">{figure(totals.adjustment, "transfer")}</ListCell>
-              <ListCell align="end" className="text-title font-bold">
-                {formatCurrency(totals.current, currency)}
+              <ListCell align="end" className={MOVEMENT}>
+                {formatCurrency(totals.opening, currency)}
+              </ListCell>
+              <ListCell align="end" className={MOVEMENT}>
+                {figure(totals.in, "in")}
+              </ListCell>
+              <ListCell align="end" className={MOVEMENT}>
+                {figure(totals.out, "out")}
+              </ListCell>
+              <ListCell align="end" className={MOVEMENT}>
+                {figure(totals.savings, "savings")}
+              </ListCell>
+              <ListCell align="end" className={MOVEMENT}>
+                {figure(totals.adjustment, "transfer")}
+              </ListCell>
+              <ListCell align="end" className={cn("text-title font-bold", CURRENT, totals.current < 0 && "text-expense")}>
+                {balance(totals.current)}
               </ListCell>
             </ListTotalRow>
           </>
@@ -213,16 +253,26 @@ interface HeroStatProps {
   label: string;
   // A line under the figure ("1 archived").
   note?: string;
+  // The first column, which has no rule before it from sm until md.
+  first?: boolean;
   last?: boolean;
   children: React.ReactNode;
 }
 
-function HeroStat({ label, note, last = false, children }: HeroStatProps) {
+// Phones: a row, the label left and the figure right, ruled off from the
+// one above. From sm: three columns between vertical rules.
+function HeroStat({ label, note, first = false, last = false, children }: HeroStatProps) {
   return (
-    <div className={cn("flex min-w-0 items-baseline justify-between gap-3 sm:flex-col sm:items-start sm:justify-start sm:gap-1 sm:border-l sm:border-line sm:pl-6", !last && "sm:pr-6")}>
+    <div
+      className={cn(
+        "flex min-w-0 items-baseline justify-between gap-4 py-2.5 sm:flex-col sm:items-start sm:justify-start sm:gap-1 sm:border-l sm:border-line sm:py-0 sm:pl-6",
+        first ? "sm:border-l-0 sm:pl-0 xl:border-l xl:pl-6" : "border-t border-divider sm:border-t-0",
+        !last && "sm:pr-6",
+      )}
+    >
       <dt className="text-caption font-normal text-ink-muted">{label}</dt>
       <dd className="flex flex-col items-end sm:items-start">
-        <span className="text-h3 font-bold text-ink tabular-nums">{children}</span>
+        <span className="text-h3 font-bold whitespace-nowrap text-ink tabular-nums">{children}</span>
         {note && <span className="text-caption text-ink-muted">{note}</span>}
       </dd>
     </div>

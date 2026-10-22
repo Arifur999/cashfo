@@ -20,7 +20,7 @@ const SWITCH = "data-checked:bg-emerald data-unchecked:bg-line-strong";
 // `targets` are the plans it is limited to, as the Plans column names them,
 // so the confirm says who it reaches on both counts.
 const FeatureFlagSwitch = ({ flag, targets }: { flag: IFeatureFlag; targets: string[] }) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   // The position asked for, while the dialog waits for a yes.
   const [asked, setAsked] = useState<boolean | null>(null);
   const { run, isPending } = useActionMutation({
@@ -37,7 +37,7 @@ const FeatureFlagSwitch = ({ flag, targets }: { flag: IFeatureFlag; targets: str
 
   const turningOn = asked === true;
   // Who it reaches: everyone in its rollout gets it on, or loses it off.
-  const audience = rolloutLabel({ isEnabled: true, rolloutPercent: flag.rolloutPercent }, translate);
+  const audience = rolloutLabel({ isEnabled: true, rolloutPercent: flag.rolloutPercent }, translate, locale);
 
   return (
     <>

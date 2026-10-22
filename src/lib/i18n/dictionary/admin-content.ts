@@ -9,7 +9,6 @@ export const adminContentDictionary: Record<string, string> = {
   Announcements: "ঘোষণা",
   "Legal pages": "আইনি পাতা",
   Translations: "অনুবাদ",
-  Categories: "ক্যাটাগরি",
   "Categories & accounts": "ক্যাটাগরি ও অ্যাকাউন্ট",
 
   // Announcements

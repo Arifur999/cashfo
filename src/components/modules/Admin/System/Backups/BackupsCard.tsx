@@ -127,7 +127,7 @@ const BackupsCard = () => {
       <div className="grid grid-cols-1 border-t border-divider border-b border-b-line sm:grid-cols-3">
         <SummaryCell
           label="Last good backup"
-          value={summary ? (summary.lastSuccessfulBackupAt ? formatRelativeDateTime(summary.lastSuccessfulBackupAt, { t: translate }) : translate("Never")) : "—"}
+          value={summary ? (summary.lastSuccessfulBackupAt ? formatRelativeDateTime(summary.lastSuccessfulBackupAt, { t: translate, locale }) : translate("Never")) : "—"}
           sub={runsQuery.isPending ? undefined : lastGood ? sizeText(lastGood.sizeMb, locale) : "No backup yet"}
         />
         <SummaryCell
@@ -190,8 +190,8 @@ const BackupsCard = () => {
             return (
               <ListRow key={backup.id} columns={COLUMNS} density="dense">
                 <ListCell className="flex flex-col gap-0.5">
-                  <span className="text-ink-2" title={formatDateTime(backup.startedAt)}>
-                    {formatRelativeDateTime(backup.startedAt, { t: translate })}
+                  <span className="text-ink-2" title={formatDateTime(backup.startedAt, "—", locale)}>
+                    {formatRelativeDateTime(backup.startedAt, { t: translate, locale })}
                   </span>
                   <span className="text-caption text-ink-muted md:hidden">{by ? `${type} · ${by}` : type}</span>
                 </ListCell>

@@ -88,15 +88,36 @@ async function superData(): Promise<SuperDashboardData> {
   return { summary, activity, tickets, failedPayments, revenue, overview, plans, planList, system: { ...health, backup, unresolvedErrors } };
 }
 
-// The API's largest page. Its own order (unassigned first, then newest)
-// would leave the longest-waiting tickets out of a short page, so the
-// dashboard sorts them itself and shows the first few.
-const QUEUE_FETCHED = 100;
 const QUEUE_SHOWN = 6;
+// The API's largest page, for the fallback below.
+const QUEUE_FETCHED = 100;
+
+// The few open tickets shown, ranked by the API itself (sort=waiting). An API
+// from before that sort refuses the query with a 400; any other failure is
+// an outage, which a second, larger call would only wait on again.
+async function rankedPage() {
+  try {
+    const { data, meta } = await getTickets(`status=OPEN&sort=waiting&limit=${QUEUE_SHOWN}`);
+    return { rows: data, total: meta?.total ?? data.length };
+  } catch (error) {
+    return isAxiosError(error) && error.response?.status === 400 ? ("unsupported" as const) : null;
+  }
+}
+
+// The open tickets (the inbox's Need a reply tab), the most urgent and
+// longest waiting first. On an API without sort=waiting the dashboard reads
+// its largest page of open tickets and ranks them here, as it used to.
+async function waitingQueue(): Promise<SupportDashboardData["queue"]> {
+  const ranked = await rankedPage();
+  if (ranked === null) return null;
+  if (ranked !== "unsupported") return { tickets: ranked.rows, total: ranked.total };
+  const open = await pageOf(() => getTickets(`status=OPEN&limit=${QUEUE_FETCHED}`));
+  return open && { tickets: queueOrder(open.rows).slice(0, QUEUE_SHOWN), total: open.total };
+}
 
 async function supportData(): Promise<SupportDashboardData> {
-  const [stats, open, requests] = await Promise.all([maybe(getTicketStats), pageOf(() => getTickets(`status=OPEN&limit=${QUEUE_FETCHED}`)), maybe(getFeatureRequests)]);
-  return { stats, queue: open && { tickets: queueOrder(open.rows).slice(0, QUEUE_SHOWN), total: open.total }, requests, now: Date.now() };
+  const [stats, queue, requests] = await Promise.all([maybe(getTicketStats), waitingQueue(), maybe(getFeatureRequests)]);
+  return { stats, queue, requests, now: Date.now() };
 }
 
 async function financeData(): Promise<FinanceDashboardData> {

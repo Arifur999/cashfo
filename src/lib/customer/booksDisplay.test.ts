@@ -30,6 +30,7 @@ import {
   ledgerWords,
   lineNeedsAccount,
   overdueOver30,
+  reversedDates,
   statementRows,
   statementRowsFromApi,
   subtypeLabel,
@@ -184,6 +185,18 @@ describe("an account's ledger", () => {
     const october = ledgerFigures(ledger({ closingBalance: "900.00", pageOpeningBalance: "1000.00", pageClosingBalance: "900.00", meta: { page: 1, limit: 50, total: 1, totalPages: 1 } }), "ASSET", { totalIn: "0.00", totalOut: "0.00", adjustment: "0.00" });
     expect(october.change).toBe(-100);
     expect(october.voided).toBe(-100);
+  });
+});
+
+describe("a ledger's reversals", () => {
+  it("finds the day of the posting a reversal undid, when it is on the page", () => {
+    const reversed = reversedDates([
+      { transactionId: "t1", date: "2026-10-02", reversalOfId: null },
+      { transactionId: "t2", date: "2026-10-05", reversalOfId: "t1" },
+      { transactionId: "t3", date: "2026-10-06", reversalOfId: "elsewhere" },
+      { transactionId: "t4", date: "2026-10-07" },
+    ]);
+    expect([...reversed]).toEqual([["t2", "2026-10-02"]]);
   });
 });
 

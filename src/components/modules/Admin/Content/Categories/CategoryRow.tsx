@@ -36,8 +36,8 @@ interface CategoryRowProps {
 // One starting category: a handle to drag it into place (or its menu's
 // Move up / Move down, for a keyboard or a finger), its names (a name
 // opens the editor), where its money goes, and the switch that says
-// whether new workspaces still get it. The switch moves at once and holds
-// still while it saves.
+// whether new workspaces still get it. The switch moves at once and ignores
+// presses while it saves, but keeps keyboard focus.
 const CategoryRow = ({ category, canManage, isFirst, isLast, isDragged, onEdit, onSetActive, onMove, onDragStart, onDragEnd, onDrop }: CategoryRowProps) => {
   const { locale, translate } = useLocale();
   const [isActive, setOptimisticActive] = useOptimistic(category.isActive);
@@ -70,15 +70,19 @@ const CategoryRow = ({ category, canManage, isFirst, isLast, isDragged, onEdit, 
       <span className="hidden shrink-0 text-caption text-ink-muted sm:inline">{link}</span>
       <Switch
         checked={isActive}
-        disabled={!canManage || isSaving}
-        onCheckedChange={(checked) =>
+        // It stays enabled while it saves, so keyboard focus stays on it;
+        // the handler ignores a press until the save is done.
+        disabled={!canManage}
+        aria-busy={isSaving}
+        onCheckedChange={(checked) => {
+          if (isSaving) return;
           startTransition(async () => {
             setOptimisticActive(checked);
             await onSetActive(checked);
-          })
-        }
+          });
+        }}
         aria-label={translate("Use {name}", { name: category.name })}
-        className="data-checked:bg-emerald data-unchecked:bg-line-strong"
+        className={cn("data-checked:bg-emerald data-unchecked:bg-line-strong", isSaving && "cursor-progress opacity-70")}
       />
       {canManage && (
         <DropdownMenu>

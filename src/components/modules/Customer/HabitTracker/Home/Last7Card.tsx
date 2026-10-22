@@ -21,7 +21,15 @@ export function Last7Card({ bars, today }: Last7CardProps) {
   const { t, locale } = useLocale();
   const count = (n: number) => formatCount(n, locale);
   const sums = fullDays(bars);
-  const share = (done: number, due: number) => `${t("{done} of {total}", { done: count(done), total: count(due) })} · ${count(pct(done, due))}%`;
+  // The share never breaks inside, so a narrow tile drops it whole onto a
+  // second line rather than leaving "7%" on its own. The count may wrap, so
+  // a long Bangla count can't run past the tile.
+  const share = (done: number, due: number) => (
+    <span className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-title font-bold text-ink tabular-nums">
+      <span className="min-w-0">{t("{done} of {total}", { done: count(done), total: count(due) })}</span>
+      <span className="whitespace-nowrap">· {count(pct(done, due))}%</span>
+    </span>
+  );
   const height = (done: number, due: number) => (due > 0 ? Math.max(done > 0 ? 4 : 0, Math.round((done / due) * MAX)) : 0);
 
   return (
@@ -64,11 +72,11 @@ export function Last7Card({ bars, today }: Last7CardProps) {
       <div className="mt-auto grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-0.5 rounded-md bg-strip p-3">
           <span className="text-caption text-ink-muted">{t("Prayers, last {count} days", { count: count(sums.days) })}</span>
-          <span className="text-title font-bold text-ink tabular-nums">{share(sums.prayed, sums.prayersDue)}</span>
+          {share(sums.prayed, sums.prayersDue)}
         </div>
         <div className="flex flex-col gap-0.5 rounded-md bg-strip p-3">
           <span className="text-caption text-ink-muted">{t("Habits, last {count} days", { count: count(sums.days) })}</span>
-          <span className="text-title font-bold text-ink tabular-nums">{share(sums.habitsDone, sums.habitsDue)}</span>
+          {share(sums.habitsDone, sums.habitsDue)}
         </div>
       </div>
     </Card>

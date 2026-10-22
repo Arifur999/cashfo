@@ -36,7 +36,7 @@ type Filter = "ALL" | AdminFeedGroup;
 // flags and errors -- only what this admin's role can act on, newest first.
 // The rows newer than the last "Mark all as read" are the unread ones.
 const AdminNotificationsBell = () => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [feed, setFeed] = useState<IAdminFeed | null>(null);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("ALL");
@@ -111,7 +111,7 @@ const AdminNotificationsBell = () => {
         <ul className="max-h-[min(30rem,calc(100vh-14rem))] overflow-y-auto">
           {shown.length === 0 && <li className="border-t border-divider px-4 py-8 text-center text-small text-ink-muted">{t("Nothing needs you right now.")}</li>}
           {shown.map(({ item, unread: isNew }) => {
-            const row = adminFeedRow(item, t);
+            const row = adminFeedRow(item, t, undefined, locale);
             const Icon = KIND_ICON[item.kind];
             return (
               <li key={item.id}>
@@ -122,7 +122,7 @@ const AdminNotificationsBell = () => {
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <b className="text-body font-semibold text-ink">{row.title}</b>
                     {row.body && <span className="text-small text-ink-2">{row.body}</span>}
-                    <span className="text-caption text-ink-muted">{formatRecentDateTime(item.at, { t })}</span>
+                    <span className="text-caption text-ink-muted">{formatRecentDateTime(item.at, { t, locale })}</span>
                   </span>
                   {isNew && <span aria-label={t("Unread")} className="mt-2 size-2 shrink-0 rounded-full bg-emerald" />}
                 </Link>

@@ -7,7 +7,9 @@ import {
   failedSinceDay,
   hasAnyParam,
   listQuery,
+  listStatusCounts,
   PAYMENT_NARROWING_KEYS,
+  paymentBadge,
   paymentHref,
   paymentsListHref,
   refundExtent,
@@ -114,5 +116,39 @@ describe("refundExtent", () => {
     expect(refundExtent("299.00", { amount: "299.00" })).toBe("full");
     expect(refundExtent("299.00", { amount: "50.00" })).toBe("part");
     expect(refundExtent(239.2, { amount: "239.20" })).toBe("full");
+  });
+});
+
+describe("paymentBadge", () => {
+  it("draws Waiting in amber", () => {
+    expect(paymentBadge({ status: "PENDING", amount: "299.00" })).toEqual({ label: "Waiting", tone: "warning" });
+    expect(paymentBadge({ status: "PENDING" })).toEqual({ label: "Waiting", tone: "warning" });
+  });
+
+  it("says Partly refunded, in amber, when less than was paid went back", () => {
+    expect(paymentBadge({ status: "REFUNDED", amount: "299.00", refund: { amount: "50.00" } })).toEqual({ label: "Partly refunded", tone: "warning" });
+  });
+
+  it("keeps the plain status and the shared colours otherwise", () => {
+    expect(paymentBadge({ status: "REFUNDED", amount: "299.00", refund: { amount: "299.00" } })).toEqual({ label: "Refunded" });
+    // A refund that couldn't be read, or no amount to weigh it against.
+    expect(paymentBadge({ status: "REFUNDED", amount: "299.00", refund: null })).toEqual({ label: "Refunded" });
+    expect(paymentBadge({ status: "REFUNDED", refund: { amount: "50.00" } })).toEqual({ label: "Refunded" });
+    expect(paymentBadge({ status: "SUCCESS", amount: "299.00" })).toEqual({ label: "Paid" });
+    expect(paymentBadge({ status: "FAILED", amount: "299.00" })).toEqual({ label: "Failed" });
+  });
+});
+
+describe("listStatusCounts", () => {
+  const page = { page: 1, limit: 10, total: 13, totalPage: 2 };
+
+  it("reads each status's count from the list's meta", () => {
+    const statusCounts = { PENDING: 1, SUCCESS: 9, FAILED: 2, REFUNDED: 1 };
+    expect(listStatusCounts({ ...page, statusCounts } as typeof page)).toEqual(statusCounts);
+  });
+
+  it("has none from an older API, or before the rows load", () => {
+    expect(listStatusCounts(page)).toBeUndefined();
+    expect(listStatusCounts(undefined)).toBeUndefined();
   });
 });

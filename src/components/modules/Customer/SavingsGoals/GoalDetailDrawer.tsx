@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { getSavingsGoalDetailAction } from "@/lib/customer/savingsGoalActions";
 import { ENTRY_META, goalBadge, goalColor, neededPerMonth, remainingOf, ringPercent, timeLeft, timeLeftText, TREND_META } from "@/lib/customer/savingsDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,9 @@ interface GoalDetailDrawerProps {
   canManage: boolean;
   // Whether money can be added right now (a savings wallet exists).
   canAddMoney: boolean;
+  // No active savings wallet, but archived ones exist: the way back is to
+  // restore one, not to add a duplicate.
+  hasArchivedWallets?: boolean;
   // A Pause or Resume is on its way: pressing again would send it twice.
   busy?: boolean;
   onEdit: (goal: SavingsGoal) => void;
@@ -66,7 +70,7 @@ interface FactProps {
 
 // One goal in full: how far along it is, when and how much a month, how it
 // has been going lately, and everything that moved in or out of it.
-export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, currency, today, canManage, canAddMoney, busy = false, onEdit, onAddMoney, onWithdraw, onTogglePause, onDelete }: GoalDetailDrawerProps) {
+export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, currency, today, canManage, canAddMoney, hasArchivedWallets = false, busy = false, onEdit, onAddMoney, onWithdraw, onTogglePause, onDelete }: GoalDetailDrawerProps) {
   const { t, locale } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   const historyId = useId();
@@ -128,7 +132,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
 
   // Only what is true of the goal as it stands: a finished or paid-out goal
   // has no months left and no monthly amount to keep up.
-  const facts: FactProps[] = [{ label: t("Reach by"), value: formatDate(goal.targetDate, "MMM yyyy"), sub: paused ? t("paused") : closed ? t("Paid out") : completed ? t("Reached") : leftLabel }];
+  const facts: FactProps[] = [{ label: t("Reach by"), value: formatDate(goal.targetDate, "MMM yyyy", locale), sub: paused ? t("paused") : closed ? t("Paid out") : completed ? t("Reached") : leftLabel }];
   if (active || paused) facts.push({ label: t("Monthly target"), value: paused ? "—" : formatCurrency(goal.monthlyTarget, currency), sub: paused ? t("while paused") : t("as planned") });
   if (active) facts.push({ label: t("Lately"), value: trend ? t(trend.short) : "—", sub: trend ? t("than before") : t("too early to say"), className: trend?.text });
 
@@ -150,6 +154,10 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
   const deleteReason = deletable && hasHistory ? (paused ? t("Goals with history can't be deleted.") : t("Goals with history can't be deleted. Pause it instead.")) : null;
   const addReason = closed ? null : paused ? (
     t("Resume the goal to add money")
+  ) : !canAddMoney && hasArchivedWallets ? (
+    <Link href="/savings-goals/overview" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
+      {t("Restore a savings wallet first")}
+    </Link>
   ) : !canAddMoney ? (
     <Link href="/savings-goals/wallet?add=1" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
       {t("Add a savings wallet first")}
@@ -158,7 +166,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
 
   const entryLine = (entry: SavingsGoalEntry) => {
     const route = entry.type === "WITHDRAWAL" ? entry.savingsAccountName : [entry.moneyAccountName, entry.savingsAccountName].filter(Boolean).join(" → ");
-    return [formatDate(entry.date), route || (entry.relatedGoalName ? t("goal transfer") : null)].filter(Boolean).join(" · ");
+    return [formatDate(entry.date, undefined, locale), route || (entry.relatedGoalName ? t("goal transfer") : null)].filter(Boolean).join(" · ");
   };
 
   const entryRow = (entry: SavingsGoalEntry) => {
@@ -216,9 +224,9 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
               percent={percent}
               color={goalColor(goalIndex, goal.status)}
               size={128}
-              label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency) }) : t("{percent}% saved", { percent })}
+              label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency) }) : t("{percent}% saved", { percent: formatCount(percent, locale) })}
             >
-              <span className="text-h1">{closed && percent >= 100 ? "✓" : `${percent}%`}</span>
+              <span className="text-h1">{closed && percent >= 100 ? "✓" : `${formatCount(percent, locale)}%`}</span>
               <span className="text-caption font-normal text-ink-muted">{closed ? t("withdrawn") : t("saved")}</span>
             </GoalRing>
             <div className="flex flex-col gap-3 tabular-nums">
@@ -234,7 +242,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
                 {closed ? (
                   <div className="flex flex-col gap-px">
                     <span className="text-caption font-normal text-ink-muted">{t("Withdrawn on")}</span>
-                    <span className="text-body font-semibold text-ink">{payout ? formatDate(payout.date) : "—"}</span>
+                    <span className="text-body font-semibold text-ink">{payout ? formatDate(payout.date, undefined, locale) : "—"}</span>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-px">

@@ -19,7 +19,7 @@ const VARIANTS = {
   pill: {
     group: "rounded-full bg-surface-sunken p-0.75",
     item: "h-8.5 rounded-full px-3 text-small font-semibold [&[lang=bn]]:text-body [&[lang=bn]]:font-medium",
-    on: "bg-surface text-ink shadow-[0_1px_2px_rgba(14,26,22,0.08)] dark:bg-surface-raised dark:shadow-[0_0_0_1px_var(--line)]",
+    on: "bg-surface text-ink shadow-[0_1px_2px_rgba(14,26,22,0.08)] dark:bg-surface-raised dark:shadow-[0_0_0_1px_var(--line-strong)]",
     off: "text-ink-2 hover:text-ink",
   },
   // Filter tabs inside a toolbar.

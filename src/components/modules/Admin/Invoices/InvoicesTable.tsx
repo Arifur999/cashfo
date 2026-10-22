@@ -1,8 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
-import LoadError from "@/components/modules/Admin/Payments/LoadError";
+import { useSearchParams } from "next/navigation";
 import { hasAnyParam } from "@/components/modules/Admin/Payments/paymentsDisplay";
 import DataTable from "@/components/shared/table/DataTable";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
@@ -10,7 +9,7 @@ import { toTableQueryProps } from "@/lib/table/queryProps";
 import { invoicesListQuery } from "@/queries/invoice.queries";
 import { getInvoices } from "@/services/invoice.services";
 import type { IInvoiceListItem } from "@/types/invoice.types";
-import { INVOICES_LIST_HREF, invoiceHref } from "./invoiceDisplay";
+import { invoiceHref } from "./invoiceDisplay";
 import { invoicesColumns } from "./invoicesColumns";
 import { INVOICES_TABLE_CONFIG } from "./invoicesTable.config";
 
@@ -23,30 +22,34 @@ const fetchInvoicesPage = async (queryString: string) => {
   return { rows: data, meta };
 };
 
-// A row opens its invoice (its number is the link to it), so it needs no
-// menu of its own.
+// Each column keeps its px and "Issued to" gives way down to 200px, so a
+// phone scrolls sideways with the amount and the date still readable.
+const LAYOUT = { flexMinWidth: 200 } as const;
+
+// A row is a link to its invoice, so it needs no menu of its own.
 const InvoicesTable = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { queryString, dataTableProps } = useServerDataTable<IInvoiceListItem>(INVOICES_TABLE_CONFIG, { fetchPage: fetchInvoicesPage });
   const query = useQuery({ ...invoicesListQuery(queryString), placeholderData: keepPreviousData });
   const dated = hasAnyParam(searchParams, DATE_KEYS);
 
-  // An outage is never "No invoices yet": the list says it couldn't load.
-  if (query.isError && !query.data) {
-    return <LoadError title="Couldn't load invoices" onRetry={() => void query.refetch()} clearHref={dated ? INVOICES_LIST_HREF : undefined} />;
-  }
-
   return (
     <DataTable
       {...dataTableProps}
+      // An outage is never "No invoices yet": the rows' place says the list
+      // couldn't load, under the toolbar whose Reset clears the dates.
       {...toTableQueryProps(query)}
+      errorTitle="Couldn't load invoices"
+      errorDescription="The server didn't answer. Nothing was changed."
       data={query.data?.data}
       columns={invoicesColumns}
+      layout={LAYOUT}
       getRowId={(row) => row.id}
       exportFileName="invoices"
+      // No `pager`: one invoice per paid payment runs to many pages, so the
+      // numbered footer (page numbers, first and last page) stays.
       // The invoice's page leads back to these dates and this page.
-      onRowClick={(row) => router.push(invoiceHref(row.id, searchParams.toString()))}
+      rowHref={(row) => invoiceHref(row.id, searchParams.toString())}
       emptyMessage={dated ? "No invoices in these dates." : "No invoices yet."}
     />
   );

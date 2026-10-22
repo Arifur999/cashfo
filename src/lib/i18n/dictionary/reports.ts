@@ -109,11 +109,13 @@ export const reportsDictionary: Record<string, string> = {
   "Am I saving more?": "আমি কি বেশি সঞ্চয় করছি?",
   "Share of income you kept, each month": "প্রতি মাসে আয়ের যত ভাগ রেখেছেন",
   "Share of income kept by month: {months}": "মাস অনুযায়ী আয়ের রাখা ভাগ: {months}",
-  "Yes · up {points} point since {month}": "হ্যাঁ · {month} থেকে {points} পয়েন্ট বেড়েছে",
-  "Yes · up {points} points since {month}": "হ্যাঁ · {month} থেকে {points} পয়েন্ট বেড়েছে",
-  "Not yet · down {points} point since {month}": "এখনো না · {month} থেকে {points} পয়েন্ট কমেছে",
-  "Not yet · down {points} points since {month}": "এখনো না · {month} থেকে {points} পয়েন্ট কমেছে",
-  "Same as {month}": "{month}-এর সমান",
+  // The trend chip names the month it judges: "{latest}" is that month,
+  // "{month}" the first one it is measured from.
+  "{latest}: up {points} point since {month}": "{latest}: {month} থেকে {points} পয়েন্ট বেড়েছে",
+  "{latest}: up {points} points since {month}": "{latest}: {month} থেকে {points} পয়েন্ট বেড়েছে",
+  "{latest}: down {points} point since {month}": "{latest}: {month} থেকে {points} পয়েন্ট কমেছে",
+  "{latest}: down {points} points since {month}": "{latest}: {month} থেকে {points} পয়েন্ট কমেছে",
+  "{latest}: same as {month}": "{latest}: {month}-এর সমান",
   "Not yet": "এখনো না",
   "Income and what you kept, by month": "মাস অনুযায়ী আয় এবং যা রেখেছেন",
   "{month}: {income} in, {kept} kept": "{month}: আয় {income}, রেখেছেন {kept}",
@@ -140,6 +142,8 @@ export const reportsDictionary: Record<string, string> = {
   // The Show switch: the table beside it says খরচ, not the shared ব্যয়.
   "Expense@@report": "খরচ",
   "Voided entries are left out": "বাতিল এন্ট্রি বাদ দেওয়া হয়েছে",
+  // A phone's hint under the table's heading: the months sit past the edge.
+  "Swipe sideways for each month": "প্রতি মাসের হিসাব দেখতে পাশে সরান",
   "Income by category": "ক্যাটাগরি অনুযায়ী আয়",
   "Expense by category": "ক্যাটাগরি অনুযায়ী খরচ",
   "Income and expense by category": "ক্যাটাগরি অনুযায়ী আয় ও খরচ",

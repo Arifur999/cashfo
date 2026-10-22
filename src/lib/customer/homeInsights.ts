@@ -1,4 +1,5 @@
 import type { CategoryBreakdown, LoanDashboardRow, MonthlyBreakdown, SavingsGoal } from "./api";
+import { goalTotals } from "./savingsDisplay";
 
 // The figures Home derives from what the pages already fetch. Pure, so the
 // page can compute them on the server and the tests can pin them down.
@@ -67,12 +68,46 @@ export function savingsRate(income: number, expense: number): number | null {
   return Math.max(0, Math.round(((income - expense) / income) * 100));
 }
 
-// Every savings goal together, the way Savings › Goals adds them up: what
-// is saved, the targets, how far along (0–100) and how many goals.
-export function savingsTotals(goals: Pick<SavingsGoal, "currentAmount" | "targetAmount">[]): { saved: number; target: number; progress: number; count: number } {
-  const saved = goals.reduce((sum, goal) => sum + Number(goal.currentAmount), 0);
-  const target = goals.reduce((sum, goal) => sum + Number(goal.targetAmount), 0);
-  return { saved, target, progress: target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0, count: goals.length };
+// Every savings goal together, the way Savings › Goals adds them up (its
+// goalTotals): what is saved, the targets, how far along (0–100) and how
+// many goals. A withdrawn goal is paid out and done, so neither it nor its
+// target counts as still to save.
+export function savingsTotals(goals: Pick<SavingsGoal, "status" | "currentAmount" | "targetAmount">[]): { saved: number; target: number; progress: number; count: number } {
+  const { saved, target, percent, count } = goalTotals(goals);
+  return { saved, target, progress: percent, count };
+}
+
+// What the wallets held when a day ended, from wallets-overview?asOf: each
+// wallet's balanceAsOf added up. null when there are none, or when any of
+// them lacks one (a backend from before asOf), so the caller can read it
+// another way.
+export function balanceAsOfTotal(wallets: { balanceAsOf?: string | null }[]): number | null {
+  if (wallets.length === 0) return null;
+  let total = 0;
+  for (const wallet of wallets) {
+    if (wallet.balanceAsOf === undefined || wallet.balanceAsOf === null) return null;
+    const value = Number(wallet.balanceAsOf);
+    if (!Number.isFinite(value)) return null;
+    total += value;
+  }
+  return total;
+}
+
+// The axis of "Income and what you kept": its top and the rule halfway up,
+// the top rounded up to a clean figure (85,000 → 1,00,000; 3,20,000 →
+// 4,00,000) so the labels read as whole lakhs or thousands. Never below 2,
+// so the halfway label is a whole taka of its own rather than a second "1",
+// and 10 above that, so it is never "2.5" rounded to "3". null when there
+// is nothing to plot (every month 0): no axis is drawn then.
+export function chartAxis(top: number): { max: number; mid: number } | null {
+  if (!(top > 0) || !Number.isFinite(top)) return null;
+  if (top <= 2) return { max: 2, mid: 1 };
+  if (top <= 10) return { max: 10, mid: 5 };
+  const magnitude = 10 ** Math.floor(Math.log10(top));
+  const unit = top / magnitude;
+  const step = unit <= 1 ? 1 : unit <= 2 ? 2 : unit <= 5 ? 5 : 10;
+  const max = step * magnitude;
+  return { max, mid: max / 2 };
 }
 
 // Where this month's kept amount stands among the months before it: the
@@ -84,6 +119,15 @@ export function bestMonthNote(points: { month: string; kept: number }[]): { best
   if (!(current.kept > 0)) return null;
   const better = [...points.slice(0, -1)].reverse().find((p) => p.kept > current.kept);
   return better ? { best: false, beatenBy: better.month } : { best: true };
+}
+
+// The last day of the month before a "YYYY-MM-DD" day's: the day whose
+// close the hero's trend chip compares with (2026-10-21 → 2026-09-30).
+export function previousMonthEnd(day: string): string {
+  const [year, month] = partsOf(day);
+  const lastYear = month === 1 ? year - 1 : year;
+  const lastMonth = month === 1 ? 12 : month - 1;
+  return ymd(lastYear, lastMonth, lastDayOf(lastYear, lastMonth));
 }
 
 // Days left in the month of a "YYYY-MM-DD" day, counting today.

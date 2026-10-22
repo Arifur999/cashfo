@@ -5,7 +5,6 @@ import { useCallback, useMemo, useState } from "react";
 import { updateTranslationTextAction } from "@/app/(dashboardLayout)/admin/content/translations/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import DataTable from "@/components/shared/table/DataTable";
-import ErrorState from "@/components/smartly/ErrorState";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import { translationsQuery } from "@/queries/translation.queries";
@@ -65,11 +64,6 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
     setPendingEnglish(null);
   };
 
-  // An outage isn't "no strings": say they didn't load.
-  if (query.isError && !data) {
-    return <ErrorState title={translate("Couldn't load the translations")} description={translate("Try again in a moment.")} onRetry={() => void query.refetch()} />;
-  }
-
   return (
     <>
       <DataTable
@@ -81,6 +75,12 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
         initialPageSize={25}
         isLoading={isLoading}
         isFetching={isFetching}
+        // An outage isn't "no strings": the table says they didn't load,
+        // with Try again, while its tabs and search stay to hand.
+        isError={query.isError}
+        onRetry={() => void query.refetch()}
+        errorTitle="Couldn't load the translations"
+        errorDescription="Try again in a moment."
         search={{ placeholder: "Search a key or a word", width: "sm" }}
         filters={{ configs: filters }}
         footer={

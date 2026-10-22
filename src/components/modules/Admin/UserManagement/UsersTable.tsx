@@ -44,12 +44,12 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
   const config = useMemo(() => buildUsersTableConfig(plans, statusCounts), [plans, statusCounts]);
   const { dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config, { fetchPage: fetchUsersPage });
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IOwnerOverviewItem, OwnerDialog>();
-  // An outage isn't "no users match": say the list didn't load.
-  const failed = query.isError && !query.data;
 
   // A deleted account can't be used, so it gets no new plan either.
   const actions = useMemo<DataTableActions<IOwnerOverviewItem>>(
     () => ({
+      // "Open row actions for Rahim Uddin", to a screen reader.
+      rowLabel: (row) => row.name,
       onView: (row) => router.push(personHref(row.userId)),
       extra: [
         {
@@ -83,10 +83,20 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
         exportFileName="users"
         enableRowSelection
         toolbarRows={2}
-        layout={{ rowHeight: 58 }}
+        // On a narrow screen the box, phone, workspace and plan keep their
+        // widths and the list scrolls sideways, instead of crushing them.
+        // That is 898px of tracks and padding plus the name's 200: 1098px,
+        // which fits the 1440 card (1134 inside, 1117 beside a scrollbar).
+        // A card under 1098px (a 1280 or 1366 laptop) scrolls too.
+        layout={{ rowHeight: 58, flexMinWidth: 200 }}
         actions={actions}
+        // A click opens the person. (Not rowHref yet: its row link would
+        // prefetch every person on the page.)
         onRowClick={(row) => router.push(personHref(row.userId))}
-        emptyMessage={failed ? "Couldn't load the users. Try again in a moment." : "No users match these filters."}
+        emptyMessage="No users match these filters."
+        // An outage isn't "no users match": the table says the list didn't
+        // load, with Try again.
+        errorTitle="Couldn't load the users"
       />
       <OwnerDialogs owner={activeRow} activeDialog={activeDialog} onClose={closeDialog} plans={plans} />
     </>

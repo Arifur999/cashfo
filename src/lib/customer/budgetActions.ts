@@ -72,7 +72,9 @@ export interface BudgetCategoryFormInput {
   monthlyLimit?: number;
 }
 
-export async function updateBudgetTargetAction(businessId: string, monthlyBudgetTarget: number): Promise<ActionResult> {
+// null clears the budget (0 is refused): every month then measures against
+// what the categories were given.
+export async function updateBudgetTargetAction(businessId: string, monthlyBudgetTarget: number | null): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/budget`, { monthlyBudgetTarget }, { headers: await authHeaders() });
   }, "Failed to update total budget");

@@ -258,6 +258,9 @@ export interface RateTrend {
   points: number;
   // "YYYY-MM": the first month it is measured from.
   since: string;
+  // "YYYY-MM": the month it is judged by, the latest one with a rate, so
+  // the chip can name it ("Sep: down 10 points since May").
+  until: string;
 }
 
 // Whether the share kept is rising: the latest month's rate against the
@@ -268,7 +271,7 @@ export function rateTrend(rates: MonthRate[]): RateTrend | null {
   const first = known[0];
   const last = known[known.length - 1];
   const points = (last.rate ?? 0) - (first.rate ?? 0);
-  return { direction: points > 0 ? "up" : points < 0 ? "down" : "same", points: Math.abs(points), since: first.month };
+  return { direction: points > 0 ? "up" : points < 0 ? "down" : "same", points: Math.abs(points), since: first.month, until: last.month };
 }
 
 export interface NetWorthParts {
@@ -317,6 +320,11 @@ const MONTH_NAMES: Record<Locale, Record<"long" | "short", string[]>> = {
 };
 
 const localDigits = (value: number, locale: Locale) => (locale === "bn" ? toBanglaDigits(value) : String(value));
+
+// "42%", "৪২%": a share or a rate in the reader's digits. Only money keeps
+// Latin digits (lib/i18n/digits.ts), so a percent reads like the Bangla
+// dates and counts beside it.
+export const percentLabel = (value: number, locale: Locale): string => `${localDigits(value, locale)}%`;
 
 // "2026-10" → "October" / "Oct" in the reader's language, "October 2026"
 // with the year. Server and client print the very same text.

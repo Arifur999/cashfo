@@ -25,3 +25,47 @@ export function cancelledLabel(transaction: Pick<Transaction, "status" | "revers
   if (transaction.status === "VOIDED") return "Voided";
   return null;
 }
+
+// The pages that open a transaction with ?from=<their own address> so its
+// back link returns to them as they were left (the person, period and
+// page in the query), and what the link calls each one (English keys for
+// t()). Anything else -- another site, an admin page, a path that only
+// looks like one of these -- is ignored and the link goes to Transactions.
+const BACK_TARGETS: { path: RegExp; label: string }[] = [
+  { path: /^\/balance\/ledger\/?$/, label: "Statement" },
+  { path: /^\/balance\/transfer\/?$/, label: "Transfer" },
+  { path: /^\/balance\/wallet(\/[^/]+)?\/?$/, label: "My wallets" },
+  { path: /^\/balance\/overview\/?$/, label: "Balance" },
+  { path: /^\/loan-management\/transactions\/?$/, label: "Loan payments" },
+  { path: /^\/loan-management\/ledger\/?$/, label: "Loan statement" },
+  { path: /^\/accounts\/[^/]+\/?$/, label: "Account" },
+  { path: /^\/contacts\/[^/]+\/?$/, label: "Contact" },
+];
+
+const LOCAL_ORIGIN = "http://smartly.local";
+
+export interface TransactionBackLink {
+  href: string;
+  label: string;
+}
+
+// A transaction page's ?from=, checked: only a same-site path to one of the
+// pages above, kept with its query. Null for anything else.
+export function transactionBackLink(from: unknown): TransactionBackLink | null {
+  if (typeof from !== "string" || from.length > 2048 || !from.startsWith("/") || from.startsWith("//") || /[\\\s]/.test(from) || /\p{Cc}/u.test(from)) return null;
+  let url: URL;
+  try {
+    url = new URL(from, LOCAL_ORIGIN);
+  } catch {
+    return null;
+  }
+  if (url.origin !== LOCAL_ORIGIN) return null;
+  const target = BACK_TARGETS.find((candidate) => candidate.path.test(url.pathname));
+  return target ? { href: `${url.pathname}${url.search}`, label: target.label } : null;
+}
+
+// Another transaction's address that keeps the way back (the original a
+// reversal undid, the entry a correction replaced).
+export function transactionPageHref(id: string, back: TransactionBackLink | null): string {
+  return back ? `/transactions/${id}?${new URLSearchParams({ from: back.href })}` : `/transactions/${id}`;
+}

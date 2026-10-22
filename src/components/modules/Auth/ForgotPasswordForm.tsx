@@ -26,6 +26,8 @@ const ForgotPasswordForm = () => {
   const [sentTo, setSentTo] = useState<string | null>(null);
   // Set by "Use a different email", so the field takes the focus back.
   const returning = useRef(false);
+  // Around the email field, to find its input without relying on its id.
+  const emailRef = useRef<HTMLDivElement>(null);
 
   const { run, error, clearError, isPending } = useAuthAction(requestPasswordResetAction);
 
@@ -42,7 +44,7 @@ const ForgotPasswordForm = () => {
   useEffect(() => {
     if (!sentTo && returning.current) {
       returning.current = false;
-      document.getElementById("email")?.focus();
+      emailRef.current?.querySelector("input")?.focus();
     }
   }, [sentTo]);
 
@@ -67,19 +69,21 @@ const ForgotPasswordForm = () => {
     <>
       <AuthHeading title="Forgot your password?" subtitle="It happens. Enter the email you sign in with and we'll send you a link to choose a new one." />
       <AppForm onSubmit={form.handleSubmit} className="space-y-4">
-        <form.Field name="email" validators={{ onChange: forgotPasswordFormZodSchema.shape.email }}>
-          {(field) => (
-            <AppField
-              field={field}
-              label={translate("Email")}
-              type="email"
-              size="xl"
-              autoComplete="email"
-              placeholder="you@example.com"
-              description={translate("We'll send a link to this address if it has a Smartly account.")}
-            />
-          )}
-        </form.Field>
+        <div ref={emailRef}>
+          <form.Field name="email" validators={{ onChange: forgotPasswordFormZodSchema.shape.email }}>
+            {(field) => (
+              <AppField
+                field={field}
+                label={translate("Email")}
+                type="email"
+                size="xl"
+                autoComplete="email"
+                placeholder="you@example.com"
+                description={translate("We'll send a link to this address if it has a Smartly account.")}
+              />
+            )}
+          </form.Field>
+        </div>
 
         <FormErrorCallout error={error} />
 

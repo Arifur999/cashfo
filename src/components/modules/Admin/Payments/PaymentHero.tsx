@@ -6,7 +6,7 @@ import { PAYMENT_STATUS_LABEL, paymentLine, shortPaymentId } from "@/lib/payment
 import type { IPaymentDetail } from "@/types/payment.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
-import { refundExtent } from "./paymentsDisplay";
+import { paymentBadge, refundExtent } from "./paymentsDisplay";
 
 interface PaymentHeroProps {
   payment: IPaymentDetail;
@@ -26,7 +26,8 @@ const PaymentHero = async ({ payment, actions }: PaymentHeroProps) => {
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-mono text-h2 text-ink">{shortPaymentId(payment.id)}</h1>
-            <StatusBadgeCell status={payment.status} label={PAYMENT_STATUS_LABEL[payment.status]} dot />
+            {/* Amber while waiting; a partial refund keeps "Refunded" with its own chip. */}
+            <StatusBadgeCell status={payment.status} label={PAYMENT_STATUS_LABEL[payment.status]} tone={paymentBadge({ status: payment.status }).tone} dot />
             {partlyRefunded && payment.refund && (
               <Chip tone="warning" size="sm">
                 {t("Partly refunded: {amount}", { amount: formatAmount(payment.refund.amount, payment.currency) })}

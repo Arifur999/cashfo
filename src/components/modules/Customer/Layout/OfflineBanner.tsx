@@ -13,7 +13,7 @@ import { useOnline } from "./useOnline";
 // saving waits for the internet to come back (useOnline() holds a page's
 // own Save buttons meanwhile).
 export function OfflineBanner() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const online = useOnline();
   const pathname = usePathname();
   // When the page on screen was loaded: reset by each page opened online.
@@ -25,7 +25,7 @@ export function OfflineBanner() {
   if (online) return null;
   return (
     <Banner tone="warning" icon={<WifiOff />}>
-      {t("You are offline. Showing what was loaded at {time}; changes are paused.", { time: formatDate(loaded.at, "h:mm aaa") })}
+      {t("You are offline. Showing what was loaded at {time}; changes are paused.", { time: formatDate(loaded.at, "h:mm aaa", "—", locale) })}
     </Banner>
   );
 }

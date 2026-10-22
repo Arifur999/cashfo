@@ -4,7 +4,7 @@ import { referralsDictionary } from "@/lib/i18n/dictionary/referrals";
 import { savingsGoalsDictionary } from "@/lib/i18n/dictionary/savings-goals";
 import { translate } from "@/lib/i18n/translate";
 import type { ReferralEntry } from "./api";
-import { filterCounts, filterReferrals, friendDay, initials, inviteLink, joinedOn, linkText, listsEveryFriend, nextReadyOn, paidOut, pendingFriends, readyOn, REFERRAL_FILTERS, shareLinks, sortReferrals, STATUS_META } from "./referralDisplay";
+import { DATED_NOTES, filterCounts, filterReferrals, friendDay, initials, inviteLink, joinedOn, linkText, listsEveryFriend, nextReadyOn, paidOut, pendingFriends, readyOn, REFERRAL_FILTERS, shareLinks, sortReferrals, STATUS_META, statusNote } from "./referralDisplay";
 
 const entry = (id: string, status: ReferralEntry["status"], createdAt: string): ReferralEntry => ({ id, name: id, status, rewardAmount: "100.00", createdAt });
 
@@ -107,11 +107,25 @@ describe("the friends list", () => {
     expect(STATUS_META.PENDING.tone).toBe("warning");
   });
 
+  it("dates each note where the API says when: ready, confirmed, paid out", () => {
+    // 20:00 UTC is already the next day in Dhaka.
+    expect(statusNote({ status: "PENDING", createdAt: "2026-09-05T20:00:00.000Z" })).toEqual({ note: "Ready on {date}", day: "2026-10-06" });
+    expect(statusNote({ status: "CONFIRMED", createdAt: "2026-08-01T06:00:00.000Z", confirmedAt: "2026-08-31T20:00:00.000Z" })).toEqual({ note: "Ready since {date}", day: "2026-09-01" });
+    expect(statusNote({ status: "WITHDRAWN", createdAt: "2026-08-01T06:00:00.000Z", confirmedAt: "2026-08-31T06:00:00.000Z", withdrawnAt: "2026-10-02T06:00:00.000Z" })).toEqual({ note: "Withdrawn {date}", day: "2026-10-02" });
+  });
+
+  it("falls back to the plain note when an older API sends no day, or one it can't read", () => {
+    expect(statusNote({ status: "CONFIRMED", createdAt: "2026-08-01T06:00:00.000Z" })).toEqual({ note: "Ready to withdraw", day: null });
+    expect(statusNote({ status: "WITHDRAWN", createdAt: "2026-08-01T06:00:00.000Z", withdrawnAt: null })).toEqual({ note: "Moved to your wallet", day: null });
+    expect(statusNote({ status: "WITHDRAWN", createdAt: "2026-08-01T06:00:00.000Z", withdrawnAt: "not a date" })).toEqual({ note: "Moved to your wallet", day: null });
+  });
+
   it("words every status, filter and note in Bangla, in English without the context", () => {
-    const keys = [...REFERRAL_FILTERS.map((option) => option.label), ...Object.values(STATUS_META).flatMap((meta) => [meta.label, meta.note])];
+    const keys = [...REFERRAL_FILTERS.map((option) => option.label), ...Object.values(STATUS_META).flatMap((meta) => [meta.label, meta.note]), ...Object.values(DATED_NOTES), "No friends yet", "Copy link@@tile"];
     for (const key of keys) expect(bnDictionary[key], key).toBeTruthy();
     expect(translate("en", "Available@@referral")).toBe("Available");
     expect(translate("en", "Paid out@@referral")).toBe("Paid out");
+    expect(translate("en", "Copy link@@tile")).toBe("Copy link");
   });
 
   // The keys are one namespace and referrals is spread after savings, so a

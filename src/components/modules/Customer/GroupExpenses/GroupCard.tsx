@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Building2, Check, CircleAlert, House, Lock, MoreVertical, Settings, Trash2 } from "lucide-react";
+import { ArrowRight, Building2, Check, CircleAlert, House, Lock, MoreHorizontal, Settings, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Card from "@/components/smartly/Card";
@@ -12,6 +12,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { BUDGET_TONE_PROGRESS, BUDGET_TONE_TEXT, budgetStatus, cashInHand, countLabel, whoPaysWhom } from "@/lib/customer/groupDisplay";
 import { mealText } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { GroupCardData } from "./groupTypes";
@@ -63,7 +64,7 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
               {t(mess ? "Mess" : "Family")}
             </Chip>
           </span>
-          <div className="flex items-center gap-3 text-small text-ink-muted">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-ink-muted">
             {active.length > 0 && (
               <span className="flex">
                 {active.slice(0, 5).map((member) => (
@@ -71,7 +72,7 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
                 ))}
               </span>
             )}
-            <span className={cn("truncate", active.length > 0 && "pl-1.5")}>
+            <span className={cn("min-w-0", active.length > 0 && "pl-1.5")}>
               {countLabel(t, locale, active.length, "{count} member", "{count} members")} ·{" "}
               {mess ? t("{meals} meals in {month}", { meals: mealText(Number(settlement.mealUnits), locale), month }) : `${t("{count} shares", { count: mealText(shares, locale) })} · ${t(closed ? "{month} closed" : "{month} open", { month })}`}
             </span>
@@ -79,7 +80,7 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger aria-label={t("More actions for {name}", { name: workspace.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
-            <MoreVertical className="size-4.5" aria-hidden="true" />
+            <MoreHorizontal className="size-4.5" aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
             <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
@@ -107,15 +108,15 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
           <span className="text-ink-2">{status ? t("{month} budget {amount}", { month, amount: formatCurrency(status.budget, currency) }) : t("No budget set for this month")}</span>
           {status && (
             <span className={cn("font-semibold tabular-nums", BUDGET_TONE_TEXT[status.tone])}>
-              {status.left < 0 ? t("{percent}% · {amount} over", { percent: status.percent, amount: formatCurrency(-status.left, currency) }) : t("{percent}% · {amount} left", { percent: status.percent, amount: formatCurrency(status.left, currency) })}
+              {status.left < 0 ? t("{percent}% · {amount} over", { percent: formatCount(status.percent, locale), amount: formatCurrency(-status.left, currency) }) : t("{percent}% · {amount} left", { percent: formatCount(status.percent, locale), amount: formatCurrency(status.left, currency) })}
             </span>
           )}
         </div>
         {/* No budget, no bar: an empty "Budget used" bar would say 0% of nothing. */}
-        {status && <ProgressBar value={status.percent} tone={BUDGET_TONE_PROGRESS[status.tone]} label={t("Budget used")} />}
+        {status && <ProgressBar value={status.percent} tone={BUDGET_TONE_PROGRESS[status.tone]} label={t("Budget used")} valueText={t("{percent}% used", { percent: formatCount(status.percent, locale) })} />}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-b-lg border-t border-divider bg-strip px-5 py-3 text-small">
+      <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 rounded-b-lg border-t border-divider bg-strip px-5 py-3 text-small">
         <span className={cn("flex min-w-0 items-start gap-2 font-medium [&_svg]:mt-px [&_svg]:size-4 [&_svg]:shrink-0", note.tone)}>
           {note.icon}
           <span>
@@ -141,7 +142,7 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
 
 function Stat({ label, value, tone, divided = false }: { label: string; value: string; tone?: string; divided?: boolean }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1 px-3 py-4 md:px-5", divided && "border-r border-divider")}>
+    <div className={cn("flex min-w-0 flex-col justify-between gap-1 px-3 py-4 md:px-5", divided && "border-r border-divider")}>
       <span className="text-caption font-normal text-ink-muted">{label}</span>
       <span className={cn("text-title wrap-break-word text-ink tabular-nums md:text-h3", tone)}>{value}</span>
     </div>

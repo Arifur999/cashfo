@@ -3,6 +3,8 @@ import Link from "next/link";
 import { publicPageTitle } from "@/components/modules/Legal/publicPageTitle";
 import Button from "@/components/smartly/Button";
 import StatePage from "@/components/smartly/StatePage";
+import { BRAND_NAME } from "@/lib/brand";
+import { fillText } from "@/lib/i18n/fill";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { getTranslationOverrides } from "@/lib/i18n/overrides";
@@ -21,24 +23,26 @@ export default async function RootNotFound() {
 
   return (
     <LocaleProvider initialLocale={locale} overrides={overrides}>
-      {/* The skip link's target and the page's main landmark. */}
-      <main id="main-content" tabIndex={-1} lang={locale} className="flex flex-1 flex-col outline-none">
-        <StatePage
-          icon={<Compass />}
-          tone="insights"
-          reference="404"
-          title={t("We can't find that page")}
-          description={t("It may have moved, or the link was typed wrong.")}
-          actions={
-            <Button size="xl" asChild>
-              <Link href="/">
-                <House />
-                {t("Go to Home")}
-              </Link>
-            </Button>
-          }
-        />
-      </main>
+      {/* Its own main landmark, the skip link's target, in the page's
+          language. */}
+      <StatePage
+        main
+        locale={locale}
+        homeLabel={fillText(t("{brand} home"), { brand: BRAND_NAME })}
+        icon={<Compass />}
+        tone="insights"
+        reference="404"
+        title={t("We can't find that page")}
+        description={t("It may have moved, or the link was typed wrong.")}
+        actions={
+          <Button size="xl" asChild>
+            <Link href="/">
+              <House />
+              {t("Go to Home")}
+            </Link>
+          </Button>
+        }
+      />
     </LocaleProvider>
   );
 }

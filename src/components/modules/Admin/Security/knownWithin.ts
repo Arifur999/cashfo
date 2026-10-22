@@ -21,13 +21,3 @@ export const hrefWithoutUnknownWithin = (pathname: string, params: SearchParamsR
   const rest = next.toString();
   return rest ? `${pathname}?${rest}` : pathname;
 };
-
-// The address with a list's filters (and its page) taken off, other params
-// (an open ?entry=) kept: the way out when a filter the server refuses would
-// fail every retry.
-export const hrefWithoutFilters = (pathname: string, current: URLSearchParams, filterKeys: readonly string[]): string => {
-  const next = new URLSearchParams(current.toString());
-  for (const key of [...filterKeys, "page"]) next.delete(key);
-  const rest = next.toString();
-  return rest ? `${pathname}?${rest}` : pathname;
-};

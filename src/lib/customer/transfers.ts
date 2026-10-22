@@ -1,3 +1,5 @@
+import { localName } from "@/lib/i18n/message";
+import type { Locale } from "@/lib/i18n/translate";
 import type { Transaction, TransactionsSummary } from "./api";
 
 // The subtype of the wallets savings goals are kept in. A goal's Add funds
@@ -22,15 +24,16 @@ export interface TransferParties {
 
 // A transfer is exactly two entries: the CREDIT side is the wallet the
 // money left, the DEBIT side the wallet it landed in -- the same convention
-// createTransferAction posts with.
-export function transferParties(transaction: Pick<Transaction, "entries">): TransferParties {
+// createTransferAction posts with. The names are in the reader's language
+// ("নগদ" for Cash in Bangla), as the wallet pickers show them.
+export function transferParties(transaction: Pick<Transaction, "entries">, locale: Locale = "en"): TransferParties {
   const credit = transaction.entries.find((entry) => entry.entryType === "CREDIT");
   const debit = transaction.entries.find((entry) => entry.entryType === "DEBIT");
   return {
     fromId: credit?.accountId ?? null,
-    from: credit?.account?.name ?? "—",
+    from: credit?.account ? localName(locale, credit.account) : "—",
     toId: debit?.accountId ?? null,
-    to: debit?.account?.name ?? "—",
+    to: debit?.account ? localName(locale, debit.account) : "—",
     fromSavings: credit?.account?.accountSubtype === SAVINGS_SUBTYPE,
     toSavings: debit?.account?.accountSubtype === SAVINGS_SUBTYPE,
   };

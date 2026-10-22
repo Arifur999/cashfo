@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { SavingsGoal } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { goalColor, remainingOf } from "@/lib/customer/savingsDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GoalRing } from "./GoalRing";
@@ -29,18 +30,18 @@ interface GoalPickerProps {
 // list is plain buttons (aria-pressed on the chosen one): a listbox would
 // need arrow keys, and an option can't hold a button.
 export function GoalPicker({ goals, options, value, onChange, currency, id, labelId, disabled = false }: GoalPickerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const selected = goals.find((goal) => goal.id === value);
 
   const standing = (goal: SavingsGoal) =>
     goal.status === "PAUSED"
       ? t("{amount} saved · paused", { amount: formatCurrency(goal.currentAmount, currency) })
-      : t("{percent}% · {amount} to go", { percent: goal.progressPercent, amount: formatCurrency(remainingOf(goal), currency) });
+      : t("{percent}% · {amount} to go", { percent: formatCount(goal.progressPercent, locale), amount: formatCurrency(remainingOf(goal), currency) });
   // Decoration: the line under the name already says the percentage.
   const ring = (goal: SavingsGoal) => (
     <span aria-hidden="true" className="shrink-0">
-      <GoalRing percent={goal.progressPercent} color={goalColor(goals.indexOf(goal), goal.status)} size={34} label={`${goal.progressPercent}%`} />
+      <GoalRing percent={goal.progressPercent} color={goalColor(goals.indexOf(goal), goal.status)} size={34} label={`${formatCount(goal.progressPercent, locale)}%`} />
     </span>
   );
 

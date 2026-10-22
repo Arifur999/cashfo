@@ -2,8 +2,9 @@
 
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
-import { monthName, type MonthRate, type RateTrend } from "@/lib/customer/insights";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { monthName, type MonthRate, percentLabel, type RateTrend } from "@/lib/customer/insights";
+import { formatCount } from "@/lib/i18n/digits";
+import { type Locale, useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural, type Translate } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +22,14 @@ interface SavingsRateChartProps {
   partialMonth: string | null;
 }
 
-// "Yes · up 9 points since May", "Not yet · …", or "Same as May".
-function trendText(trend: RateTrend, month: string, t: Translate): string {
-  if (trend.direction === "same") return t("Same as {month}", { month });
-  if (trend.direction === "up") return plural(t, trend.points, "Yes · up {points} point since {month}", "Yes · up {points} points since {month}", { points: trend.points, month });
-  return plural(t, trend.points, "Not yet · down {points} point since {month}", "Not yet · down {points} points since {month}", { points: trend.points, month });
+// "Sep: up 9 points since May", "Sep: down …", or "Sep: same as May". It
+// names the month it judges (the last finished one), as the tile above may
+// say the month under way is up while that month is down.
+function trendText(trend: RateTrend, t: Translate, locale: Locale): string {
+  const values = { latest: monthName(trend.until, locale, "short"), month: monthName(trend.since, locale, "short"), points: formatCount(trend.points, locale) };
+  if (trend.direction === "same") return t("{latest}: same as {month}", values);
+  if (trend.direction === "up") return plural(t, trend.points, "{latest}: up {points} point since {month}", "{latest}: up {points} points since {month}", values, locale);
+  return plural(t, trend.points, "{latest}: down {points} point since {month}", "{latest}: down {points} points since {month}", values, locale);
 }
 
 // "Am I saving more?": the share of income kept, one bar a month for the
@@ -40,7 +44,7 @@ export function SavingsRateChart({ rates, trend, partialMonth }: SavingsRateChar
   const height = (rate: number) => Math.round((rate / axisMax) * PLOT);
   const shortName = (r: MonthRate) => (r.month === partialMonth ? t("{month} so far", { month: monthName(r.month, locale, "short") }) : monthName(r.month, locale, "short"));
   // The figures for a screen reader, which reads the chart as one image.
-  const figures = rates.map((r) => `${shortName(r)} ${r.rate === null ? "—" : `${r.rate}%`}`).join(", ");
+  const figures = rates.map((r) => `${shortName(r)} ${r.rate === null ? "—" : percentLabel(r.rate, locale)}`).join(", ");
 
   return (
     <Card padding="lg" className="flex flex-col gap-4">
@@ -49,18 +53,18 @@ export function SavingsRateChart({ rates, trend, partialMonth }: SavingsRateChar
           <h2 className="text-h3 text-ink">{t("Am I saving more?")}</h2>
           <span className="text-small text-ink-muted">{t("Share of income you kept, each month")}</span>
         </div>
-        {trend && <Chip tone={trend.direction === "up" ? "income" : trend.direction === "down" ? "expense" : "neutral"}>{trendText(trend, monthName(trend.since, locale, "short"), t)}</Chip>}
+        {trend && <Chip tone={trend.direction === "up" ? "income" : trend.direction === "down" ? "expense" : "neutral"}>{trendText(trend, t, locale)}</Chip>}
       </div>
 
       <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-2">
         <div aria-hidden="true" className="relative text-right text-caption font-normal text-ink-muted tabular-nums" style={{ height: HEIGHT }}>
           <span className="absolute right-0" style={{ top: LABEL_ROOM - 8 }}>
-            {axisMax}%
+            {percentLabel(axisMax, locale)}
           </span>
           <span className="absolute right-0" style={{ top: LABEL_ROOM + PLOT / 2 - 8 }}>
-            {axisMax / 2}%
+            {percentLabel(axisMax / 2, locale)}
           </span>
-          <span className="absolute right-0 -bottom-2">0</span>
+          <span className="absolute right-0 -bottom-2">{formatCount(0, locale)}</span>
         </div>
         <div role="img" aria-label={t("Share of income kept by month: {months}", { months: figures })} className="relative grid items-end border-b border-line" style={{ height: HEIGHT, gridTemplateColumns: `repeat(${rates.length}, minmax(0, 1fr))` }}>
           <span aria-hidden="true" className="absolute inset-x-0 h-px bg-chart-grid" style={{ top: LABEL_ROOM }} />
@@ -72,7 +76,8 @@ export function SavingsRateChart({ rates, trend, partialMonth }: SavingsRateChar
             const bar = point.rate === null || point.rate === 0 ? 0 : Math.max(2, height(point.rate));
             return (
               <div key={point.month} className="relative flex flex-col items-center gap-2">
-                <span className={cn("text-caption font-bold tabular-nums", overspent ? "text-expense" : current ? "text-ink" : "text-ink-muted")}>{point.rate === null ? "—" : `${point.rate}%`}</span>
+                {/* Over the gridlines, on the card's own colour, so a line at its height doesn't strike it through. */}
+                <span className={cn("relative z-1 rounded-sm bg-surface px-1 text-caption font-bold tabular-nums", overspent ? "text-expense" : current ? "text-ink" : "text-ink-muted")}>{point.rate === null ? "—" : percentLabel(point.rate, locale)}</span>
                 <span className={cn("w-10 rounded-t-md", current ? "bg-emerald" : "bg-mint-300", point.month === partialMonth && "opacity-60")} style={{ height: bar }} />
               </div>
             );

@@ -3,10 +3,26 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { adminCrumb } from "@/lib/adminBreadcrumb";
+import { MANAGE_OWNERS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/ManageOwners/manageOwnersTable.config";
+import { PAYMENTS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Payments/paymentsTable.config";
+import { TICKETS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Support/Tickets/ticketsTable.config";
+import { USERS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/UserManagement/usersTable.config";
+import { WORKSPACES_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Workspaces/workspacesTable.config";
+import { adminCrumb, type ListQueryKeys } from "@/lib/adminBreadcrumb";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import type { NavSection } from "@/lib/navItem";
+import { LIST_BACK_PARAM, type NavSection } from "@/lib/navItem";
 import { useRecordTitle } from "./BreadcrumbTitle";
+
+// Each list's own query keys, so a record page's parent link reopens the
+// list as it was left (its ?back=), the same way the page's own way back
+// does. A list not named here opens without its saved state.
+const RECORD_LIST_KEYS: ListQueryKeys = {
+  "/admin/users": USERS_TABLE_BASE_CONFIG.queryKeys,
+  "/admin/manage-owners": MANAGE_OWNERS_TABLE_BASE_CONFIG.queryKeys,
+  "/admin/workspaces": WORKSPACES_TABLE_BASE_CONFIG.queryKeys,
+  "/admin/support": TICKETS_TABLE_BASE_CONFIG.queryKeys,
+  "/admin/payments": PAYMENTS_TABLE_BASE_CONFIG.queryKeys,
+};
 
 // Where the admin is, as the design's top bar says it: the parent in muted
 // text, a chevron, then the page ("Security › Sign-ins", "Users › Sharmin
@@ -17,7 +33,7 @@ const AdminBreadcrumb = ({ sections, adminName }: { sections: NavSection[]; admi
   const searchParams = useSearchParams();
   const { translate } = useLocale();
   const recordTitle = useRecordTitle();
-  const crumb = adminCrumb(pathname, { from: searchParams.get("from"), sections });
+  const crumb = adminCrumb(pathname, { from: searchParams.get("from"), back: searchParams.get(LIST_BACK_PARAM), listKeys: RECORD_LIST_KEYS, sections });
 
   if (!crumb) {
     return <div className="flex-1" />;

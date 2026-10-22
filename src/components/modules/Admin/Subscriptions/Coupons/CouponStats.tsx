@@ -21,10 +21,8 @@ const CouponStats = ({ month }: { month: string }) => {
     return query.isError ? <LoadError title="Couldn't load these figures" onRetry={() => void query.refetch()} /> : null;
   }
 
-  const { codes } = stats.active;
   // Codes are data and keep their digits; only "and 3 more" is a count.
-  const activeCodes =
-    codes.length > 2 ? translate("{first}, {second} and {count} more", { first: codes[0], second: codes[1], count: formatCount(codes.length - 2, locale) }) : codesLine(codes, translate);
+  const activeCodes = codesLine(stats.active.codes, translate, locale);
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

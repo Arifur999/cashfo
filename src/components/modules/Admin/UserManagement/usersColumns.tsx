@@ -27,7 +27,7 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     id: "businessName",
     accessorKey: "businessName",
     header: "Workspace",
-    cell: ({ row }) => <OwnWorkspaceCell name={row.original.businessName} count={row.original.workspaceCount} />,
+    cell: ({ row }) => <OwnWorkspaceCell workspace={row.original} count={row.original.workspaceCount} />,
     meta: { width: 170, exportValue: (row) => row.businessName ?? "" },
   },
   {

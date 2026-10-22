@@ -69,6 +69,10 @@ export interface HomeData {
 
   // The budget category closest to (or past) its limit this month.
   budgetFocus: BudgetCategorySummary | null;
+  // The month's total budget and all spent this month (percent of it,
+  // rounded); null when no total is set. The card's figure when no category
+  // has a limit.
+  budgetTotal: { budget: number; spent: number; percent: number } | null;
   hasBudget: boolean;
   daysLeftInMonth: number;
 

@@ -48,7 +48,7 @@ export function SehriIftarCard({ day, todayDay, year }: SehriIftarCardProps) {
               <tile.icon className="size-4" aria-hidden="true" />
               {t(tile.label)}
             </span>
-            <span className="text-h2 leading-[normal] font-bold text-ink tabular-nums">{timeLabel(clockOf(tile.at), t)}</span>
+            <span className="text-h2 leading-[normal] font-bold text-ink tabular-nums">{timeLabel(clockOf(tile.at), t, locale)}</span>
           </div>
         ))}
       </div>

@@ -4,7 +4,7 @@ import { flexRender, type Column, type Header, type Table as TanStackTable } fro
 import Link from "next/link";
 import { useEffect, useId, useRef } from "react";
 import ErrorState from "@/components/smartly/ErrorState";
-import { LIST_DIVIDER, LIST_HEAD, LIST_HOVER, LIST_INSET } from "@/components/smartly/list/recipes";
+import { LIST_DIVIDER, LIST_HEAD, LIST_INSET } from "@/components/smartly/list/recipes";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { keptTableWidth } from "@/lib/table/columnWidths";
@@ -218,9 +218,10 @@ const DataTableContent = <TData,>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() ? "selected" : undefined}
-                    // The list recipes' divider and hover; a highlight (a double
-                    // charge's amber) comes last so it wins.
-                    className={cn("group/row bg-surface", LIST_DIVIDER, LIST_HOVER, clickable && "cursor-pointer", href !== undefined && LINK_FOCUS, rowClassName?.(row.original))}
+                    // The list recipes' divider and the table's own row hover
+                    // (bg-hover in light, the old cream/surface blend in dark);
+                    // a highlight (a double charge's amber) comes last so it wins.
+                    className={cn("group/row bg-surface", LIST_DIVIDER, "hover:bg-row-hover", clickable && "cursor-pointer", href !== undefined && LINK_FOCUS, rowClassName?.(row.original))}
                     onClick={clickable ? () => onRowClick?.(row.original) : undefined}
                     onKeyDown={
                       clickable

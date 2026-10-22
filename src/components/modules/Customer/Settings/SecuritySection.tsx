@@ -16,8 +16,10 @@ import LoadMore from "@/components/smartly/LoadMore";
 import { Switch } from "@/components/ui/switch";
 import type { LoginHistoryEntry, UserSessionSummary } from "@/lib/customer/api";
 import { getLoginHistoryAction, getSessionsAction, revokeSessionAction } from "@/lib/customer/authActions";
+import { sendSetPasswordLinkAction } from "@/lib/customer/passwordVaultActions";
 import { formatTimeAgo, monthsSince } from "@/lib/customer/date";
 import { knownIp, signInResult, triedThePassword } from "@/lib/customer/settingsDisplay";
+import { settle } from "@/lib/customer/vaultDisplay";
 import { formatRelativeDateTime } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import type { Translate } from "@/lib/i18n/message";
@@ -25,6 +27,7 @@ import type { Locale } from "@/lib/i18n/translate";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { SupportAccessCard } from "./SupportAccessCard";
 
 // Rows shown at first, and added by each "Show more".
 const DEVICE_STEP = 6;
@@ -88,8 +91,11 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
   const [busyId, setBusyId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   // A Google-only account has no password to change (older APIs don't say:
-  // then it is offered as before).
+  // then it is offered as before). It is offered the email link that sets
+  // the first one instead, the forgot-password flow's.
   const hasPassword = user.hasPassword !== false;
+  const [linkSentTo, setLinkSentTo] = useState<string | null>(null);
+  const [isSending, startSending] = useTransition();
 
   // The page read again (after a password change, a language switch): its
   // lists win, unless that read failed while these are fine.
@@ -161,6 +167,19 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
     });
   }
 
+  function sendSetPasswordLink() {
+    if (isSending) return;
+    startSending(async () => {
+      const result = await settle(sendSetPasswordLinkAction());
+      if (result.success && result.data) {
+        setLinkSentTo(result.data.email);
+        toast.success(t("We sent a link to {email}. Open it to set your password.", { email: result.data.email }));
+      } else {
+        toast.error(t(result.message ?? "We couldn't send the link. Please try again."));
+      }
+    });
+  }
+
   // Changing the password signed every other device out, and "Last
   // changed" now reads this month.
   function passwordChanged() {
@@ -192,14 +211,24 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
         </IconTile>
         <span className="flex min-w-40 flex-1 flex-col gap-0.5">
           <h2 className="text-title font-semibold text-ink">{t("Password")}</h2>
-          <span className="text-small text-ink-muted">{hasPassword ? passwordAge(user.passwordChangedAt ?? null, t, locale) : t("You sign in with Google, so there is no password to change.")}</span>
+          {/* Polite: the link's address is said where the button was pressed. */}
+          <span className="text-small text-ink-muted" aria-live="polite">
+            {hasPassword ? passwordAge(user.passwordChangedAt ?? null, t, locale) : linkSentTo ? t("We sent a link to {email}. Open it to set your password.", { email: linkSentTo }) : t("You sign in with Google. Set a password to sign in with your email too.")}
+          </span>
         </span>
-        {hasPassword && (
+        {hasPassword ? (
           <Button variant="secondary" size="sm" onClick={() => setPasswordOpen(true)} className="h-9.5 max-sm:w-full pointer-coarse:h-11">
             {t("Change password")}
           </Button>
+        ) : (
+          <Button variant="secondary" size="sm" onClick={sendSetPasswordLink} disabled={isSending} aria-busy={isSending || undefined} className="h-9.5 max-sm:w-full pointer-coarse:h-11">
+            {isSending ? <Loader size={14} label="Loading..." /> : <Mail />}
+            {t(linkSentTo ? "Send the link again" : "Set a password")}
+          </Button>
         )}
       </Card>
+
+      <SupportAccessCard />
 
       <Card padding="none" className="overflow-hidden">
         <div className="flex items-start gap-4 px-4 pt-5 pb-4 md:px-6">
@@ -284,7 +313,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
                     )}
                   </span>
                   <span className="text-small text-ink-muted tabular-nums">
-                    {session.isCurrent ? t("Active now") : t("Last active {when}", { when: formatTimeAgo(session.lastUsedAt, t) })}
+                    {session.isCurrent ? t("Active now") : t("Last active {when}", { when: formatTimeAgo(session.lastUsedAt, t, locale) })}
                     {" · "}
                     {/* An IPv6 address is one long word: it breaks rather than run under the button. */}
                     <span className="break-all">{ip ? t("IP {ip}", { ip }) : t("IP unknown")}</span>
@@ -332,7 +361,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
           <ListEmpty title={t("No login history yet.")} className="py-6 text-small" />
         ) : (
           tries.slice(0, historyLimit).map((entry) => {
-            const when = formatRelativeDateTime(entry.createdAt, { t });
+            const when = formatRelativeDateTime(entry.createdAt, { t, locale });
             return (
               // The section's own width decides: from 672px the device and the
               // time get columns of their own, narrower they sit under the result.

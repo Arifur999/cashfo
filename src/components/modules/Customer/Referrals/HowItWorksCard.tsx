@@ -31,8 +31,10 @@ export function HowItWorksCard({ reward }: HowItWorksCardProps) {
           <span className="flex size-7.5 shrink-0 items-center justify-center rounded-full bg-mint-50 text-emerald">
             <step.icon className="size-4" aria-hidden="true" />
           </span>
+          {/* A fixed title line: the taka sign's fallback font would stand
+              "You earn ৳100" taller than the other two. */}
           <span className="flex flex-col gap-0.5">
-            <span className="text-body font-semibold text-ink">{step.title}</span>
+            <span className="text-body leading-5 font-semibold text-ink">{step.title}</span>
             <span className="text-small leading-normal text-ink-muted">{step.body}</span>
           </span>
         </li>

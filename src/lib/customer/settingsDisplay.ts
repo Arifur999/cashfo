@@ -149,7 +149,7 @@ export const FAQS: Faq[] = [
   { id: "budget", question: "How do budgets work?", answer: "Open Budget and give each kind of spending a monthly limit. Each category then shows what is left, or how far over it went. When one passes 90% of its limit, the bell tells you; you can turn that off under App preferences, Reminders." },
   { id: "group", question: "How is my share worked out in Group expenses?", answer: "Each expense is shared the way it was added: equally, by shares, by meals or in exact amounts, among the members in the group that day. Your balance is what you put in minus your share of what was spent, and Settle up shows who pays whom." },
   { id: "vault", question: "I forgot my vault password. Are my saved logins gone?", answer: "Yes. The logins are locked with the vault password itself, so a reset can only start over: you set a new vault password with your account password and the old entries are deleted." },
-  { id: "referral", question: "When can I withdraw referral earnings?", answer: "A reward counts 30 days after your friend joined, as long as their account is still active. Everything counted so far can be withdrawn in one go into any of your wallets or savings pots." },
+  { id: "referral", question: "When can I withdraw referral earnings?", answer: "A reward counts 30 days after your friend joined. Everything counted so far can be withdrawn in one go into any of your wallets or savings wallets." },
   { id: "bangla", question: "Can I use the app in Bangla?", answer: "Yes. Tap বাংলা at the top of any page (in the menu on a phone), or pick it under App preferences so every device opens in Bangla." },
 ];
 
@@ -185,7 +185,7 @@ export const GUIDES: Guide[] = [
 ];
 
 export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" }[] = [
-  { title: "Terms of service", page: "terms" },
+  { title: "Terms of use", page: "terms" },
   { title: "Privacy policy", page: "privacy" },
   { title: "Refund policy", page: "refund-policy" },
 ];

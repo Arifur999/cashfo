@@ -4,7 +4,7 @@ import ResetLinkProblem from "@/components/modules/Auth/ResetLinkProblem";
 import ResetPasswordForm from "@/components/modules/Auth/ResetPasswordForm";
 import { publicPageTitle } from "@/components/modules/Legal/publicPageTitle";
 import { LOGIN_ROUTE } from "@/lib/authUtils";
-import { getResetLinkStatus } from "./resetLinkStatus";
+import { getResetLinkStatus } from "@/services/passwordReset.services";
 
 export const generateMetadata = publicPageTitle("Choose a new password");
 

@@ -21,6 +21,9 @@ const REFUSALS: { status?: number; pattern: RegExp; message: string }[] = [
   // The drawer already stops a purchase a wallet can't cover; this is a
   // balance that changed in another tab meanwhile.
   { pattern: /only has .* cannot spend/i, message: "That wallet doesn't have enough money. Pick another wallet." },
+  // Undo sale: the proceeds were spent from that wallet since the sale.
+  { pattern: /only has .* the sale's .* can't be taken back/i, message: "The wallet the sale went into no longer holds that money, so the sale can't be undone." },
+  { status: 409, pattern: /^this sale changed meanwhile/i, message: "This sale changed meanwhile. Reload and try again." },
   { pattern: /^account not found in this workspace$/i, message: "That wallet isn't in this workspace. Pick another wallet." },
   { status: 404, pattern: /^asset category not found$/i, message: "This asset type was already deleted." },
 ];
@@ -114,9 +117,9 @@ export async function updateAssetValueAction(businessId: string, id: string, inp
 }
 
 // A correction to an asset entered wrongly. Only what is sent changes; null
-// clears the note. The backend takes purchaseDate only for an asset no
-// wallet paid for, before it is revalued or sold (a paid purchase keeps its
-// posting's date), and says so otherwise.
+// clears the note. The backend takes purchaseDate only for an owned asset
+// no wallet paid for (a paid purchase keeps its posting's date), never
+// later than a value recorded since, and says so otherwise.
 export interface UpdateAssetInput {
   name?: string;
   category?: string;
@@ -166,14 +169,14 @@ export async function createAssetCategoryAction(businessId: string, input: Asset
   return callApi(async () => {
     const res = await customerApi.post<AssetCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to save category");
+  }, "Failed to save the asset type");
 }
 
 export async function updateAssetCategoryAction(businessId: string, id: string, input: Partial<AssetCategoryInput>): Promise<ActionResult<AssetCategoryOption>> {
   return callApi(async () => {
     const res = await customerApi.patch<AssetCategoryOption>(`${API_BASE_URL}/api/businesses/${businessId}/assets/categories/${id}`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to save category");
+  }, "Failed to save the asset type");
 }
 
 export async function deleteAssetCategoryAction(businessId: string, id: string): Promise<ActionResult> {

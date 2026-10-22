@@ -28,7 +28,7 @@ const LoginKpis = () => {
         size="sm"
         label="Failed sign-ins, 24 hours"
         value={count(summary?.failedLast24h)}
-        note={summary && <Note tone={concentrated ? "expense" : "muted"}>{busiestNetworkNote(summary, translate)}</Note>}
+        note={summary && <Note tone={concentrated ? "expense" : "muted"}>{busiestNetworkNote(summary, translate, locale)}</Note>}
       />
       <Kpi
         size="sm"
@@ -40,7 +40,7 @@ const LoginKpis = () => {
           </Note>
         }
       />
-      <Kpi size="sm" label="Paused right now" value={count(summary ? paused : undefined)} note={summary && <Note tone={paused > 0 ? "warning" : "muted"}>{pausedNote(summary, translate)}</Note>} />
+      <Kpi size="sm" label="Paused right now" value={count(summary ? paused : undefined)} note={summary && <Note tone={paused > 0 ? "warning" : "muted"}>{pausedNote(summary, translate, locale)}</Note>} />
     </div>
   );
 };

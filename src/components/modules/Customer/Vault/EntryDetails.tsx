@@ -9,7 +9,7 @@ import { SOFT_TONE } from "@/components/smartly/tones";
 import type { VaultEntrySummary } from "@/lib/customer/api";
 import { formatDate, monthsSince } from "@/lib/customer/date";
 import { avatarLetter, hostOf, normalizeUrl, type VaultIssue } from "@/lib/customer/vaultDisplay";
-import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { VAULT_CATEGORY_CHIP, VAULT_CATEGORY_LABELS, VAULT_CATEGORY_TONE } from "./vaultCategoryDisplay";
@@ -52,7 +52,7 @@ export function EntryDetails({ entry, issues, revealed, busy, onToggleReveal, on
   );
   const changed = months === 0 ? t("Password changed less than a month ago") : t(months === 1 ? "Password changed {count} month ago" : "Password changed {count} months ago", { count: monthCount });
   // "Oct 2026", and in Bangla the month's own name with Bangla digits.
-  const added = locale === "bn" ? `${t(formatDate(entry.createdAt, "MMMM"))} ${toLocaleDigits(formatDate(entry.createdAt, "yyyy"), locale)}` : formatDate(entry.createdAt, "MMM yyyy");
+  const added = formatDate(entry.createdAt, locale === "bn" ? "MMMM yyyy" : "MMM yyyy", locale);
 
   const rows: { label: string; value: React.ReactNode; actions: React.ReactNode; wraps?: boolean }[] = [];
   if (host) {

@@ -90,7 +90,7 @@ interface TimeButtonProps {
 
 // "🕒 Time", or the time picked; the browser's own time picker opens.
 export function TimeButton({ value, onChange, className }: TimeButtonProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const picker = useRef<HTMLInputElement>(null);
   function open() {
     try {
@@ -103,7 +103,7 @@ export function TimeButton({ value, onChange, className }: TimeButtonProps) {
     <span className={cn("relative flex shrink-0", className)}>
       <button type="button" onClick={open} className={cn("flex h-10 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-small font-semibold hover:bg-surface-sunken pointer-coarse:h-11", value ? "text-ink tabular-nums" : "text-ink-2")}>
         <Clock className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
-        {value ? timeLabel(value, t) : t("Time")}
+        {value ? timeLabel(value, t, locale) : t("Time")}
       </button>
       <input ref={picker} type="time" value={value ?? ""} onChange={(event) => onChange(event.target.value || null)} aria-label={t("Time")} tabIndex={-1} className="pointer-events-none absolute inset-0 opacity-0" />
     </span>
@@ -130,7 +130,7 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
           <PriorityDot priority={item.priority} />
           {t(PRIORITY_LABEL[item.priority])}
         </span>
-        {moved ? <span className="truncate font-semibold text-warning">{moved}</span> : item.dueTime && <span className="font-medium tabular-nums">{timeLabel(item.dueTime, t)}</span>}
+        {moved ? <span className="truncate font-semibold text-warning">{moved}</span> : item.dueTime && <span className="font-medium tabular-nums">{timeLabel(item.dueTime, t, locale)}</span>}
       </span>
     );
   }
@@ -140,7 +140,7 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
       {item.dueTime && (
         <span className="flex items-center gap-1 tabular-nums">
           <Clock className="size-3" aria-hidden="true" />
-          {timeLabel(item.dueTime, t)}
+          {timeLabel(item.dueTime, t, locale)}
         </span>
       )}
       {item.repeat && (

@@ -81,7 +81,9 @@ export function EditWorkspaceModal({ business, onClose }: EditWorkspaceModalProp
         onClose();
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to update workspace"));
+        // The API's own refusal (or the action's fallback) is English;
+        // its Bangla is in settings-workspace.ts.
+        toast.error(t(result.message ?? "Failed to update workspace"));
       }
     });
   }

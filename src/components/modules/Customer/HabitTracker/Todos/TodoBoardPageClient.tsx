@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import Chip from "@/components/smartly/Chip";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import Input from "@/components/smartly/form/Input";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListGroupRow, ListRow, ListRowActions } from "@/components/smartly/list";
@@ -75,6 +76,11 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   const heading = name ? `${t(name)} · ${dayLabel(day, locale)}` : dayLabel(day, locale);
   // An open task on a past day comes to today; on today or later it moves on.
   const past = day < today;
+  // A past copy of a repeating task stays put when its rule already has a
+  // copy on today: moving it would leave the task there twice.
+  const todayRules = new Set((past ? (listFor(lists, today)?.items ?? []) : []).flatMap((item) => (item.repeat ? [item.repeat.id] : [])));
+  const canMove = (item: TodoItem) => !item.completed && !(past && item.repeat && todayRules.has(item.repeat.id));
+  const movable = open.filter(canMove);
   const next = upcoming(lists, day);
   const tomorrowName = relativeName(shiftDay(day, 1), today);
 
@@ -158,7 +164,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   // "High · 10:00 am · every Thursday" under an upcoming task, with its day
   // first when it is later in the week.
   const upcomingSub = (item: TodoItem, when?: string) =>
-    [when && dayLabel(when, locale, "short"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t), item.repeat && repeatLabel(item.repeat, t, locale, true)].filter(Boolean).join(" · ");
+    [when && dayLabel(when, locale, "short"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t, locale), item.repeat && repeatLabel(item.repeat, t, locale, true)].filter(Boolean).join(" · ");
 
   async function moveOn(item: TodoItem, quiet = false): Promise<boolean> {
     if (!list) return false;
@@ -198,7 +204,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   function moveAll() {
     withBusy("all", async () => {
       let moved = 0;
-      for (const item of open) if (await (past ? bringToToday(item, true) : moveOn(item, true))) moved++;
+      for (const item of movable) if (await (past ? bringToToday(item, true) : moveOn(item, true))) moved++;
       if (moved > 0) toast.success(t(past ? (moved === 1 ? "{count} task moved to today" : "{count} tasks moved to today") : moved === 1 ? "{count} task moved to tomorrow" : "{count} tasks moved to tomorrow", { count: count(moved) }));
       router.refresh();
       if (past) void todayTasks.reload();
@@ -245,7 +251,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
         </label>
       </ListCell>
       <ListRowActions>
-        {!item.completed && (
+        {canMove(item) && (
           <Button type="button" variant="outline" size="sm" onClick={() => moveOne(item)} disabled={busy.has(item.id)} title={moveLabel} aria-label={`${moveLabel}: ${item.text}`} className="h-8 border-line px-2.5 text-ink-2 sm:px-3 pointer-coarse:h-11">
             {past ? <ArrowLeft className="size-3.5" strokeWidth={2.5} /> : <ArrowRight className="size-3.5" strokeWidth={2.5} />}
             <span className="hidden sm:inline">{past ? t("Today") : t("Tomorrow")}</span>
@@ -271,11 +277,23 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   );
 
   // The second band draws a line between its group and the rows above it.
-  const group = (key: string, title: string, items: TodoItem[], footer?: React.ReactNode, below = false) =>
+  // The chip counts the whole group, though a long one shows a page at a time.
+  const group = (key: string, title: string, items: TodoItem[], shown = items.length, footer?: React.ReactNode, below = false) =>
     items.length > 0 && (
       <div key={key} role="rowgroup">
-        <ListGroupRow label={title} aside={count(items.length)} className={cn(below && "border-t border-line")} />
-        {items.map(row)}
+        {/* The count sits beside its group's name, as a chip. */}
+        <ListGroupRow
+          label={
+            <span className="inline-flex items-center gap-2">
+              {title}
+              <Chip tone="neutral" size="sm" className="tabular-nums">
+                {count(items.length)}
+              </Chip>
+            </span>
+          }
+          className={cn(below && "border-t border-line")}
+        />
+        {items.slice(0, shown).map(row)}
         {footer}
       </div>
     );
@@ -331,10 +349,11 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
               <ListFooter className="bg-strip">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="text-small text-ink-2">{open.length === 0 ? t("Everything is done for this day.") : t(open.length === 1 ? "{count} task is still open." : "{count} tasks are still open.", { count: count(open.length) })}</span>
-                  {open.length > 0 && (
+                  {movable.length > 0 && (
                     <Button variant="secondary" size="sm" onClick={moveAll} disabled={busy.has("all")} className="pointer-coarse:h-11">
                       {past ? <ArrowLeft className="size-4" strokeWidth={2.5} /> : <ArrowRight className="size-4" strokeWidth={2.5} />}
-                      {past ? t(open.length === 1 ? "Move it to today" : open.length === 2 ? "Move both to today" : "Move all to today") : t(open.length === 1 ? "Move it to tomorrow" : open.length === 2 ? "Move both to tomorrow" : "Move all to tomorrow")}
+                      {/* "All" only when it is all: a repeating task already on today stays. */}
+                      {past && movable.length < open.length ? t("Move {count} to today", { count: count(movable.length) }) : past ? t(movable.length === 1 ? "Move it to today" : movable.length === 2 ? "Move both to today" : "Move all to today") : t(movable.length === 1 ? "Move it to tomorrow" : movable.length === 2 ? "Move both to tomorrow" : "Move all to tomorrow")}
                     </Button>
                   )}
                 </div>
@@ -350,7 +369,8 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
               {group(
                 "done",
                 t("Done"),
-                done.slice(0, shownDone),
+                done,
+                shownDone,
                 done.length > STEP && (
                   <div role="row">
                     <div role="cell" className="border-t border-divider px-4 py-3 md:px-6">

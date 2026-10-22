@@ -9,7 +9,7 @@ import IconTile from "@/components/smartly/IconTile";
 import SectionHeader from "@/components/smartly/SectionHeader";
 import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { formatCurrency } from "@/lib/customer/currency";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { HomePartError } from "./HomePartError";
@@ -67,7 +67,7 @@ export function HomeVaultInsights({ data }: { data: HomeData }) {
 }
 
 function Insights({ data }: { data: HomeData }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { topIncome, topExpense, currency } = data;
 
   if (!topIncome && !topExpense) {
@@ -99,13 +99,13 @@ function Insights({ data }: { data: HomeData }) {
   return (
     <>
       {topIncome && (
-        <InsightRow icon={<TrendingUp />} tone="insights" title={t("{name} is {percent}% of your income this month.", { name: topIncome.name, percent: topIncome.percent })} text={t("Your biggest source of money in.")} />
+        <InsightRow icon={<TrendingUp />} tone="insights" title={t("{name} is {percent}% of your income this month.", { name: topIncome.name, percent: toLocaleDigits(String(topIncome.percent), locale) })} text={t("Your biggest source of money in.")} />
       )}
       {topExpense && (
         <InsightRow
           icon={createElement(expenseIcon)}
           tone="loans"
-          title={t("{name} is your biggest spend: {percent}%.", { name: topExpense.name, percent: topExpense.percent })}
+          title={t("{name} is your biggest spend: {percent}%.", { name: topExpense.name, percent: toLocaleDigits(String(topExpense.percent), locale) })}
           text={spendLine}
           divided={Boolean(topIncome)}
         />

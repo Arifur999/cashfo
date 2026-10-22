@@ -6,8 +6,10 @@ export const adminNotificationsDictionary: Record<string, string> = {
   "The emails, SMS and in-app messages the platform sends, and campaigns to groups of users.":
     "প্ল্যাটফর্ম যে ইমেইল, SMS ও অ্যাপের ভেতরের মেসেজ পাঠায়, আর ব্যবহারকারীদের দলে পাঠানো ক্যাম্পেইন।",
   "Loading notifications...": "নোটিফিকেশন লোড হচ্ছে...",
-  "These templates and campaigns aren't used for sending yet. The welcome, password-reset and support-reply emails and the in-app bell go out with built-in wording and don't appear in Send history.":
-    "এই টেমপ্লেট ও ক্যাম্পেইন এখনো পাঠানোর কাজে ব্যবহার হয় না। স্বাগত, পাসওয়ার্ড রিসেট ও সাপোর্টের উত্তরের ইমেইল আর অ্যাপের বেল নিজস্ব লেখায় যায়, এবং পাঠানোর ইতিহাসে দেখা যায় না।",
+  // The tabs' warning: a short lead, then the detail a phone skips.
+  "Templates and campaigns don't send yet.": "টেমপ্লেট ও ক্যাম্পেইন এখনো পাঠানো হয় না।",
+  "The welcome, password-reset and support-reply emails and the in-app bell use built-in wording and don't appear in Send history.":
+    "স্বাগত, পাসওয়ার্ড রিসেট ও সাপোর্টের উত্তরের ইমেইল আর অ্যাপের বেল নিজস্ব লেখায় যায়, এবং পাঠানোর ইতিহাসে দেখা যায় না।",
   Templates: "টেমপ্লেট",
   Campaigns: "ক্যাম্পেইন",
   "Send history": "পাঠানোর ইতিহাস",

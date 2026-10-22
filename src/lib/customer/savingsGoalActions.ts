@@ -118,7 +118,8 @@ export async function listActiveSavingsWalletsAction(businessId: string): Promis
 }
 
 // The plain list, empty when it could not be loaded -- for pickers elsewhere
-// (Assets, Referrals) that only need something to offer.
+// (Assets) that only need something to offer. It reads an outage as an
+// empty list, so a new picker should take listActiveSavingsWalletsAction().
 export async function getActiveSavingsWalletsAction(businessId: string): Promise<Account[]> {
   const result = await listActiveSavingsWalletsAction(businessId);
   return result.data ?? [];

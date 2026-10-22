@@ -13,9 +13,17 @@ const NotificationsLayout = ({ children }: LayoutProps<"/admin/notifications">) 
       <PageHeader {...NOTIFICATIONS_PAGE} actions={<NotificationsHeaderAction />} />
       <NotificationTabs />
       {/* What really reaches users today, so editing here isn't mistaken
-          for changing it (the backend sends with its own wording). */}
+          for changing it (the backend sends with its own wording). The
+          short lead is always there; a phone skips the detail, which would
+          push the list below the fold on every tab. */}
       <Callout variant="warning" role="status">
-        <T>These templates and campaigns aren&apos;t used for sending yet. The welcome, password-reset and support-reply emails and the in-app bell go out with built-in wording and don&apos;t appear in Send history.</T>
+        <b className="font-semibold">
+          <T>Templates and campaigns don&apos;t send yet.</T>
+        </b>
+        <span className="hidden sm:inline">
+          {" "}
+          <T>The welcome, password-reset and support-reply emails and the in-app bell use built-in wording and don&apos;t appear in Send history.</T>
+        </span>
       </Callout>
       {children}
     </div>

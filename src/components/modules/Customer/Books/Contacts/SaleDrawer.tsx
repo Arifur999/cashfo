@@ -15,7 +15,7 @@ import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDispl
 import type { Account } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { limitMoneyDecimals } from "@/lib/customer/money";
-import { getExpenseAccountsAction, getIncomeAccountsAction } from "@/lib/customer/quickEntryActions";
+import { listExpenseAccountsAction, listIncomeAccountsAction } from "@/lib/customer/quickEntryActions";
 import { recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -45,7 +45,8 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
   // The income or expense accounts, fetched each time the drawer opens;
   // null while they load.
   const [accounts, setAccounts] = useState<Account[] | null>(null);
-  // The request itself failed (no network): Try again, not "Loading..." for good.
+  // The request failed (an outage, a timeout, no network): Try again, not
+  // "Loading..." for good or a false "No income account yet".
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [isPending, startTransition] = useTransition();
@@ -68,9 +69,16 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    (kind === "sale" ? getIncomeAccountsAction(businessId) : getExpenseAccountsAction(businessId))
-      .then((list) => {
+    // The list* actions report a failed request (5xx, 429, PIN lock, timeout)
+    // as success: false, so an outage shows Try again, not "No income account yet".
+    (kind === "sale" ? listIncomeAccountsAction(businessId) : listExpenseAccountsAction(businessId))
+      .then((result) => {
         if (cancelled) return;
+        if (!result.success) {
+          setFailed(true);
+          return;
+        }
+        const list = result.data ?? [];
         setAccounts(list);
         // Purchases go to a stock or purchases account when there is one, not
         // to whatever expense account happens to come first.

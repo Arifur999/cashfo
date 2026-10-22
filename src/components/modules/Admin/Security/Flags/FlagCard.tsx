@@ -14,7 +14,6 @@ import { queryKeys } from "@/lib/queryKeys";
 import { FLAG_STATUS_CHIP, FLAG_STATUS_LABEL, FLAG_TYPE_LABEL, flagClosedBy, flagDetails, flagNextStep, flagTriesLink, isOpenFlag, SEVERITY_META } from "@/lib/securityFlags";
 import { cn } from "@/lib/utils";
 import type { FlagStatus, ISecurityFlag, SuspiciousActivityType } from "@/types/securityFlag.types";
-import { withTriesWindow } from "./flagFilters";
 
 const TYPE_ICON: Record<SuspiciousActivityType, LucideIcon> = {
   MULTIPLE_FAILED_LOGINS: Lock,
@@ -49,7 +48,7 @@ const FlagCard = ({ flag, onChanged }: FlagCardProps) => {
   const next = flagNextStep(flag);
   const titleId = useId();
   const { translate, locale } = useLocale();
-  const tries = flagTriesLink(flag, translate);
+  const tries = flagTriesLink(flag, translate, { locale });
   const details = flagDetails(flag, { t: translate });
   const closedBy = flagClosedBy(flag, { t: translate });
 
@@ -98,7 +97,7 @@ const FlagCard = ({ flag, onChanged }: FlagCardProps) => {
           <span className="flex flex-wrap gap-2 text-small wrap-anywhere text-ink-muted">
             {details && <span>{details}</span>}
             {tries && (
-              <Link href={withTriesWindow(tries.href)} className="font-semibold text-emerald hover:underline">
+              <Link href={tries.href} className="font-semibold text-emerald hover:underline">
                 {tries.label}
               </Link>
             )}

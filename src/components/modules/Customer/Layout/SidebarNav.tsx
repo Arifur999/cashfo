@@ -9,6 +9,7 @@ import { useFeature } from "@/components/modules/Customer/Providers/PlatformProv
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { MosqueIcon } from "@/components/smartly/icons";
 import { findNavLocation, NAV_FOOT, visibleNavSections, type NavIcon, type NavItem, type NavLeaf, type NavTone } from "@/lib/customer/nav";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -155,7 +156,7 @@ export function useNavSections({ allRoles = false }: { allRoles?: boolean } = {}
 export function SidebarNav({ compact = true, className, style, navRef }: SidebarNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { openCount } = useTodayTasks();
   const sections = useNavSections();
   // Found among every item, so a page hidden from this member lights no row.
@@ -202,7 +203,7 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
             <Icon className={cn("shrink-0", compact ? "size-4.5" : "size-4.75", lit ? "opacity-100" : "opacity-85")} strokeWidth={1.9} />
             <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
             {item.badge === "todayTasks" && openCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-mint-200/16 px-2 text-caption font-bold text-mint-200 tabular-nums">{openCount}</span>
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-mint-200/16 px-2 text-caption font-bold text-mint-200 tabular-nums">{formatCount(openCount, locale)}</span>
             )}
             {item.tag && <span className="flex h-5.5 items-center rounded-full bg-mint-glow px-2 text-caption font-bold text-forest">{t(item.tag)}</span>}
           </Link>

@@ -17,6 +17,7 @@ import {
   movement,
   netWorth,
   percentChange,
+  percentLabel,
   periodLabels,
   periodTotals,
   previousRange,
@@ -174,13 +175,13 @@ describe("monthRates and rateTrend", () => {
   });
 
   it("says whether the share kept went up since the first month", () => {
-    expect(rateTrend(monthRates(income, expense))).toEqual({ direction: "down", points: 5, since: "2026-05" });
+    expect(rateTrend(monthRates(income, expense))).toEqual({ direction: "down", points: 5, since: "2026-05", until: "2026-06" });
     expect(rateTrend(monthRates(monthly("INCOME", ["2026-07"], [100]), monthly("EXPENSE", ["2026-07"], [50])))).toBeNull();
   });
 
   it("calls a flat rate the same, not up by nothing", () => {
     const flat = monthRates(monthly("INCOME", ["2026-05", "2026-06"], [100, 200]), monthly("EXPENSE", ["2026-05", "2026-06"], [50, 100]));
-    expect(rateTrend(flat)).toEqual({ direction: "same", points: 0, since: "2026-05" });
+    expect(rateTrend(flat)).toEqual({ direction: "same", points: 0, since: "2026-05", until: "2026-06" });
   });
 
   it("leaves the month under way out of a trend until it is over", () => {
@@ -262,6 +263,12 @@ describe("periodLabels, rangeLabel and monthName", () => {
     expect(monthName("2026-10", "bn", "long", true)).toBe("অক্টোবর ২০২৬");
     expect(rangeLabel("2026-10-01", "2026-10-21", "bn")).toBe("১–২১ অক্টোবর ২০২৬");
     expect(periodLabels({ dateFrom: "2026-01-01", dateTo: "2026-10-21" }, { dateFrom: "2025-01-01", dateTo: "2025-10-21" }, "this-year", "bn").heads).toEqual(["২০২৫", "২০২৬"]);
+  });
+
+  it("writes a percent in the reader's digits", () => {
+    expect(percentLabel(42, "en")).toBe("42%");
+    expect(percentLabel(42, "bn")).toBe("৪২%");
+    expect(percentLabel(-1.3, "bn")).toBe("-১.৩%");
   });
 });
 

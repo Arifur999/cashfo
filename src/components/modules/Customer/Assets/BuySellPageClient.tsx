@@ -112,7 +112,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className="truncate font-medium text-ink">{asset.name}</span>
                       <span className="truncate text-caption font-normal text-ink-muted">
-                        {t(asset.category)} · {t("Bought {month}", { month: formatDate(asset.purchaseDate, "MMM yyyy") })}
+                        {t(asset.category)} · {t("Bought {month}", { month: formatDate(asset.purchaseDate, "MMM yyyy", locale) })}
                       </span>
                     </span>
                   </ListCell>
@@ -153,12 +153,12 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                   <button type="button" onClick={() => setViewing(lastSold)} aria-label={t("Open {name}", { name: lastSold.name })} className="truncate text-left text-body font-medium text-ink after:absolute after:inset-0 after:rounded-md hover:underline">
                     {lastSold.name}
                   </button>
-                  <span className="text-caption font-normal text-ink-muted">{lastSold.soldAt ? t("Sold {date}", { date: formatDate(lastSold.soldAt) }) : t("Sold")}</span>
+                  <span className="text-caption font-normal text-ink-muted">{lastSold.soldAt ? t("Sold {date}", { date: formatDate(lastSold.soldAt, "d MMM yyyy", locale) }) : t("Sold")}</span>
                 </span>
                 <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(lastSold.soldPrice ?? 0, currency)}</span>
               </div>
               <div className={cn("flex items-center justify-between gap-3 rounded-md p-3 text-caption", RESULT_BOX[lastChip.tone])}>
-                <span className="font-normal">{t("Paid {amount} in {month}", { amount: formatCurrency(lastSold.purchasePrice, currency), month: formatDate(lastSold.purchaseDate, "MMM yyyy") })}</span>
+                <span className="font-normal">{t("Paid {amount} in {month}", { amount: formatCurrency(lastSold.purchasePrice, currency), month: formatDate(lastSold.purchaseDate, "MMM yyyy", locale) })}</span>
                 <span className="font-semibold whitespace-nowrap tabular-nums">
                   {formatSignedCurrency(lastGain.amount, currency)} ({lastChip.label})
                 </span>

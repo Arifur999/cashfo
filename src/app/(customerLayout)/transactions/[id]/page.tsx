@@ -21,11 +21,12 @@ import { getBudgetCategoryNames } from "@/lib/customer/budgets";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatCurrency } from "@/lib/customer/currency";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
+import { TRANSACTION_TYPE_LABELS, transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
 import { categoryIndex, categoryLabel, describeTransaction, editableEntry, type OwningFeature, owningFeature, recordTimeLabel, reversalTitle, rowTitle, systemText, transactionDayLabel } from "@/lib/customer/transactionRows";
 import { getTransaction } from "@/lib/customer/transactions";
 import { toDateInputValue } from "@/lib/date";
 import { getTranslator } from "@/lib/i18n/locale";
+import { localName } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 
 // The list's name, read from nothing: Next runs generateMetadata for every
@@ -66,8 +67,11 @@ const ENTRY_COLUMNS = "md:grid-cols-[minmax(0,1fr)_120px_120px]";
 
 // One transaction: what it was, where the money went, and -- folded away
 // for a personal workspace -- how the books recorded it.
-export default async function TransactionDetailPage({ params }: PageProps<"/transactions/[id]">) {
+export default async function TransactionDetailPage({ params, searchParams }: PageProps<"/transactions/[id]">) {
   const { id } = await params;
+  // Opened from a statement, a loan's payments or an account: the way back
+  // goes there, as it was left. Anything else goes back to Transactions.
+  const back = transactionBackLink((await searchParams).from);
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -89,7 +93,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
   // Wallets by the name the reader sees ("নগদ" for Cash in Bangla).
   const lang = displayLanguage(locale);
   const accountNames = Object.fromEntries(wallets.map((wallet) => [wallet.id, accountDisplayName(wallet, lang)]));
-  const row = describeTransaction(transaction, categoryIndex([...incomeCategories, ...expenseCategories]), accountNames);
+  const row = describeTransaction(transaction, categoryIndex([...incomeCategories, ...expenseCategories]), accountNames, locale);
   const title = rowTitle(row, t);
   const note = transaction.reversalOfId ? reversalTitle(transaction.description) : transaction.description;
   const tone = transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
@@ -135,7 +139,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
               </Chip>
               {transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}
               {transaction.reversalOfId && (
-                <Link href={`/transactions/${transaction.reversalOfId}`} className="font-semibold text-emerald hover:underline">
+                <Link href={transactionPageHref(transaction.reversalOfId, back)} className="font-semibold text-emerald hover:underline">
                   {t("See the original")}
                 </Link>
               )}
@@ -161,7 +165,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
       <TopbarExtras record={title} />
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
-          <BackToTransactions label={t("Transactions")} />
+          <BackToTransactions label={t(back?.label ?? "Transactions")} href={back?.href} />
           {/* What the page is; the entry's own name below is its heading. */}
           <p className="text-h1 text-ink">{t("Transaction")}</p>
         </div>
@@ -228,7 +232,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
                 {transaction.entries.map((entry) => (
                   <ListRow key={entry.id} columns={ENTRY_COLUMNS} density="dense">
                     <ListCell className="flex min-w-0 flex-col">
-                      <b className="truncate font-semibold text-ink">{accountNames[entry.accountId] ?? entry.account?.name ?? entry.accountId}</b>
+                      <b className="truncate font-semibold text-ink">{accountNames[entry.accountId] ?? (entry.account ? localName(locale, entry.account) : entry.accountId)}</b>
                       <span className="text-caption font-normal text-ink-muted">{t(accountKind(entry.account))}</span>
                     </ListCell>
                     <ListCell align="end" className={cn("font-bold tabular-nums", entry.entryType !== "DEBIT" && "max-md:hidden")}>
@@ -262,7 +266,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
                 tone="bg-info"
                 title={t("Corrected from {amount}", { amount: formatCurrency(Number(transaction.correctedFrom.amount), currency) })}
                 when={recordTimeLabel(transaction.createdAt, locale, t)}
-                link={{ href: `/transactions/${transaction.correctedFrom.id}`, label: t("See the original") }}
+                link={{ href: transactionPageHref(transaction.correctedFrom.id, back), label: t("See the original") }}
               />
             ) : (
               <HistoryRow tone="bg-emerald" title={t("Added")} when={recordTimeLabel(transaction.createdAt, locale, t)} />
@@ -272,7 +276,7 @@ export default async function TransactionDetailPage({ params }: PageProps<"/tran
                 tone="bg-expense-fill"
                 title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}` : ""}`}
                 when={recordTimeLabel(transaction.voidedAt, locale, t)}
-                link={transaction.correctedBy ? { href: `/transactions/${transaction.correctedBy.id}`, label: t("See the corrected entry ({amount})", { amount: formatCurrency(Number(transaction.correctedBy.amount), currency) }) } : undefined}
+                link={transaction.correctedBy ? { href: transactionPageHref(transaction.correctedBy.id, back), label: t("See the corrected entry ({amount})", { amount: formatCurrency(Number(transaction.correctedBy.amount), currency) }) } : undefined}
               />
             )}
           </Card>

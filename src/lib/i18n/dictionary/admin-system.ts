@@ -71,8 +71,10 @@ export const adminSystemDictionary: Record<string, string> = {
   "See all": "সব দেখুন",
   "Limit hit once today": "আজ একবার সীমা ছুঁয়েছে",
   "Limit hit {count} times today": "আজ {count} বার সীমা ছুঁয়েছে",
-  "Limit hit once today, by {name}": "আজ একবার সীমা ছুঁয়েছে, {name} থেকে",
-  "Limit hit {count} times today, most often by {name}": "আজ {count} বার সীমা ছুঁয়েছে, সবচেয়ে বেশি {name} থেকে",
+  "Limit hit once today. Most often over the limit, all time: {name}":
+    "আজ একবার সীমা ছুঁয়েছে। সব সময় মিলিয়ে সবচেয়ে বেশিবার সীমা ছুঁয়েছে: {name}",
+  "Limit hit {count} times today. Most often over the limit, all time: {name}":
+    "আজ {count} বার সীমা ছুঁয়েছে। সব সময় মিলিয়ে সবচেয়ে বেশিবার সীমা ছুঁয়েছে: {name}",
   "Not recorded yet: the API enforces its limits but doesn't log them here. Paused sign-ins are under {link}.":
     "এখনো নথিভুক্ত হয় না: এপিআই সীমাগুলো মেনে চলে, কিন্তু এখানে তার লগ রাখে না। থামানো সাইন-ইনগুলো দেখুন {link}-এ।",
   "Security › Sign-ins": "সিকিউরিটি › সাইন-ইন",
@@ -178,11 +180,16 @@ export const adminSystemDictionary: Record<string, string> = {
   "Error details": "ত্রুটির বিস্তারিত",
   Server: "সার্ভার",
   "Admin panel": "অ্যাডমিন প্যানেল",
+  // The customer app's error screen reports under the admin panel's source.
+  "Customer app": "গ্রাহক অ্যাপ",
+  "Admin panel or customer app": "অ্যাডমিন প্যানেল বা গ্রাহক অ্যাপ",
   "Background job": "ব্যাকগ্রাউন্ড কাজ",
-  "· last {time}": "· শেষ {time}",
+  "last {time}": "শেষ {time}",
   time: "বার",
   times: "বার",
-  "How often": "কতবার",
+  // The count beside "5 times · first …" (the habit tracker's "How often" is
+  // a schedule).
+  "How often@@count": "কতবার",
   "Once · {time}": "একবার · {time}",
   "{count} times · first {first}, last {last}": "{count} বার · প্রথম {first}, শেষ {last}",
   Request: "অনুরোধ",

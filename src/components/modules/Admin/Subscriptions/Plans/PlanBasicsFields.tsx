@@ -37,7 +37,7 @@ interface PlanBasicsFieldsProps {
 }
 
 // Name and trial on one row, price and billing on the next, as the design
-// lays the drawer out.
+// lays the drawer out, then the plan's place among the others.
 const PlanBasicsFields = ({ form, plan }: PlanBasicsFieldsProps) => {
   const free = plan?.billingCycle === "FREE";
   return (
@@ -72,6 +72,18 @@ const PlanBasicsFields = ({ form, plan }: PlanBasicsFieldsProps) => {
           <form.Field name="billingCycle">{(field) => <AppSelectField field={field} label="Billing" options={BILLING_CYCLE_OPTIONS} />}</form.Field>
         )}
       </div>
+      {/* Where the plan sits on the board and the pricing page. A new plan
+          left blank goes last; an edited one starts at its own place. */}
+      <form.Field name="displayOrder" validators={{ onChange: schema.shape.displayOrder }}>
+        {(field) => (
+          <AppField
+            field={field}
+            label="Display order"
+            inputMode="numeric"
+            description={plan ? "Where it sits among the plans, 0 first." : "Where it sits among the plans, 0 first. Leave it blank to put it last."}
+          />
+        )}
+      </form.Field>
     </>
   );
 };

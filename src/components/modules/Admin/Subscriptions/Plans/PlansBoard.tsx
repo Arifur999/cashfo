@@ -9,7 +9,6 @@ import { useRowDialogs } from "@/hooks/useRowDialogs";
 import { queryKeys } from "@/lib/queryKeys";
 import { planAnalyticsQuery, plansQuery } from "@/queries/plan.queries";
 import type { ISubscriptionPlan } from "@/types/plan.types";
-import { useHeld } from "../useHeld";
 import PaidPeopleChart from "./PaidPeopleChart";
 import PlanCard from "./PlanCard";
 import PlanDrawer from "./PlanDrawer";
@@ -19,10 +18,9 @@ const PlansBoard = ({ canManage }: { canManage: boolean }) => {
   const { translate } = useLocale();
   const plansRead = useQuery(plansQuery());
   const analyticsRead = useQuery(planAnalyticsQuery());
-  const { activeRow, openDialog, closeDialog, getDialogProps } = useRowDialogs<ISubscriptionPlan, "edit" | "archive" | "delete">();
-  // Kept while a drawer or dialog closes, so it doesn't turn into "New plan"
-  // or "Delete ?" on its way out.
-  const plan = useHeld(activeRow);
+  // The row stays while a drawer or dialog closes, so it doesn't turn into
+  // "New plan" or "Delete ?" on its way out.
+  const { activeRow: plan, openDialog, closeDialog, getDialogProps } = useRowDialogs<ISubscriptionPlan, "edit" | "archive" | "delete">();
 
   const archive = useActionMutation({
     action: archivePlanAction,

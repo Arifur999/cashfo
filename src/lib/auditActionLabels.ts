@@ -15,6 +15,8 @@ const ACTION_LABELS: Record<string, string> = {
   USER_BANNED: "Banned a user",
   USER_IMPERSONATION_STARTED: "Started viewing as a customer",
   USER_IMPERSONATION_ENDED: "Stopped viewing as a customer",
+  // A wrong or missing support code: logged so a run of guesses shows.
+  USER_IMPERSONATION_REFUSED: "Refused to view as a customer",
   USER_PLAN_CHANGED: "Changed a user's plan",
   BUSINESS_PLAN_CHANGED: "Changed a workspace's plan",
   OWNER_DATA_RESET: "Reset an owner's workspace data",

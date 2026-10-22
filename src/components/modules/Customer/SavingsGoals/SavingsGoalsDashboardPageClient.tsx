@@ -2,8 +2,8 @@
 
 import { ArrowLeftRight, CalendarDays, Ellipsis, Eye, Lock, Pause, Pencil, PiggyBank, Play, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import AmountText from "@/components/smartly/AmountText";
@@ -60,6 +60,8 @@ const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 te
 export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, currency, canManage, hasSavingsWallet, archivedWallets, today }: SavingsGoalsDashboardPageClientProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [tab, setTab] = useState<Tab>("ALL");
   // Each drawer remembers which goal it is open on, by id; the goal itself is
@@ -70,6 +72,23 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
   const [detailId, setDetailId] = useState<string | null>(null);
   const [withdrawId, setWithdrawId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // ?new=1 opens the New goal drawer for a reader who can add one, also when
+  // the link is followed from this page.
+  const asked = canManage && searchParams.get("new") === "1";
+  const [prevAsked, setPrevAsked] = useState(false);
+  if (asked !== prevAsked) {
+    setPrevAsked(asked);
+    if (asked) setGoalDrawer("create");
+  }
+  // Then the URL forgets it, so Back or a refresh doesn't open it again.
+  useEffect(() => {
+    if (!searchParams.has("new")) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("new");
+    const query = params.toString();
+    window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
+  }, [pathname, searchParams]);
 
   const byId = (id: string | null) => (id === null ? null : (goals.find((goal) => goal.id === id) ?? null));
   const indexOf = (goal: SavingsGoal | null) => (goal ? Math.max(0, goals.findIndex((item) => item.id === goal.id)) : 0);
@@ -131,7 +150,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
       return (
         <SetupBanner
           title={one ? t("Your savings wallet is archived") : t("Your savings wallets are archived")}
-          text={!canManage ? t("Ask the workspace owner to restore it.") : one ? t("Restore it to add money to your goals or withdraw from them again.") : t("Restore one to add money to your goals or withdraw from them again.")}
+          text={!canManage ? (one ? t("Ask the workspace owner to restore it.") : t("Ask the workspace owner to restore one of them.")) : one ? t("Restore it to add money to your goals or withdraw from them again.") : t("Restore one to add money to your goals or withdraw from them again.")}
           action={
             canManage && (
               <>
@@ -204,14 +223,16 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
         <>
           <Card padding="none" className="grid md:grid-cols-[1.3fr_1fr_0.8fr]">
             <div className="flex items-center gap-5 px-6 py-5">
-              <GoalRing percent={totals.percent} color={totals.saved > 0 ? "var(--emerald)" : "var(--line)"} size={setup ? 96 : 112} label={t("{percent}% of all goals saved", { percent: totals.percent })}>
-                <span className={cn("text-h2", totals.saved === 0 && "text-ink-muted")}>{totals.percent}%</span>
+              <GoalRing percent={totals.percent} color={totals.saved > 0 ? "var(--emerald)" : "var(--line)"} size={setup ? 96 : 112} label={t("{percent}% of all goals saved", { percent: formatCount(totals.percent, locale) })}>
+                <span className={cn("text-h2", totals.saved === 0 && "text-ink-muted")}>{formatCount(totals.percent, locale)}%</span>
                 {!setup && <span className="text-caption font-normal text-ink-muted">{t("of all goals")}</span>}
               </GoalRing>
               <div className="flex min-w-0 flex-col gap-2">
                 <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Saved so far")}</span>
                 <AmountText value={totals.saved} currency={currency} size="h2" className={cn("text-h1 leading-[normal]", totals.saved === 0 && "text-ink-muted")} />
-                <span className="text-small leading-[normal] text-ink-muted tabular-nums">
+                {/* Pretty wrapping keeps "৳1,30,000 to go" together rather
+                    than leaving "go" alone on the second line beside the ring. */}
+                <span className="text-small leading-[normal] text-pretty text-ink-muted tabular-nums">
                   {totals.count === 0
                     ? t("All your goals are withdrawn")
                     : totals.saved > 0
@@ -226,7 +247,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                 <span className="text-h2 leading-[normal] text-ink tabular-nums">{formatCurrency(overview.monthlyTarget, currency)}</span>
                 <span className="text-caption leading-[normal] font-normal text-ink-muted">
                   {activeGoals.length === 1
-                    ? t("To reach {name} by {date}", { name: activeGoals[0].name, date: formatDate(activeGoals[0].targetDate, "MMM yyyy") })
+                    ? t("To reach {name} by {date}", { name: activeGoals[0].name, date: formatDate(activeGoals[0].targetDate, "MMM yyyy", locale) })
                     : t(activeCount === 1 ? "Across {count} active goal" : "Across {count} active goals", { count: formatCount(activeCount, locale) })}
                 </span>
               </div>
@@ -234,7 +255,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
               <div className="flex flex-col justify-center gap-3 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Saved this month")}</span>
-                  <span className="text-caption leading-[normal] font-semibold text-ink-2">{t("{percent}% of target", { percent: overview.monthlyProgressPercent })}</span>
+                  <span className="text-caption leading-[normal] font-semibold text-ink-2">{t("{percent}% of target", { percent: formatCount(overview.monthlyProgressPercent, locale) })}</span>
                 </div>
                 <span className="text-body font-medium text-ink-muted tabular-nums">
                   {fillNodes(t("{saved} of {target}"), { saved: <span className="text-h2 leading-[normal] text-ink">{formatCurrency(overview.savedThisMonth, currency)}</span>, target: formatCurrency(overview.monthlyTarget, currency) })}
@@ -247,7 +268,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
             )}
             <div className="flex flex-col justify-center gap-2 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
               <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Savings rate")}</span>
-              <span className={cn("text-h1", !hasRate && "text-h2 text-ink-muted", "leading-[normal]")}>{hasRate ? `${overview.savingsRatePercent}%` : "—"}</span>
+              <span className={cn("text-h1", !hasRate && "text-h2 text-ink-muted", "leading-[normal]")}>{hasRate ? `${formatCount(overview.savingsRatePercent, locale)}%` : "—"}</span>
               <span className="text-caption leading-[normal] font-normal text-ink-muted">
                 {hasRate ? t("of this month's income ({amount})", { amount: formatCurrency(overview.incomeThisMonth, currency) }) : t("Shows once you save and earn")}
               </span>
@@ -278,17 +299,20 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                     percent={percent}
                     color={goalColor(index, goal.status)}
                     size={92}
-                    label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency) }) : t("{percent}% saved", { percent })}
+                    label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency) }) : t("{percent}% saved", { percent: formatCount(percent, locale) })}
                   >
-                    <span className="text-h3 font-bold">{closed && percent >= 100 ? "✓" : `${percent}%`}</span>
+                    <span className="text-h3 font-bold">{closed && percent >= 100 ? "✓" : `${formatCount(percent, locale)}%`}</span>
                   </GoalRing>
                   <div className="flex min-w-0 flex-1 flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="truncate text-title leading-[normal] text-ink">{goal.name}</span>
-                      <Chip tone={badge.chip} size="sm" className="font-semibold">
-                        {t(badge.label)}
-                      </Chip>
-                      <span className="flex-1" />
+                    {/* The name keeps two lines beside the ring on a phone; the
+                        chip drops under it when the two don't fit side by side. */}
+                    <div className="flex items-start gap-3">
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="line-clamp-2 min-w-0 text-title leading-[normal] wrap-break-word text-ink">{goal.name}</span>
+                        <Chip tone={badge.chip} size="sm" className="font-semibold">
+                          {t(badge.label)}
+                        </Chip>
+                      </div>
                       {canManage && (
                         <DropdownMenu>
                           <DropdownMenuTrigger
@@ -343,7 +367,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-caption leading-[normal] font-normal text-ink-muted">
                       <span className="flex items-center gap-1">
                         {!setup && <CalendarDays className="size-3.5" aria-hidden="true" />}
-                        {formatDate(goal.targetDate, "MMM yyyy")} · {paused ? t("paused") : closed ? t("withdrawn") : completed ? t("Reached") : timeLeftText(goal.targetDate, today, t, locale)}
+                        {formatDate(goal.targetDate, "MMM yyyy", locale)} · {paused ? t("paused") : closed ? t("withdrawn") : completed ? t("Reached") : timeLeftText(goal.targetDate, today, t, locale)}
                       </span>
                       {/* A reached goal has no monthly amount left to keep up. */}
                       {!completed && (
@@ -410,6 +434,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
         today={today}
         canManage={canManage}
         canAddMoney={hasSavingsWallet}
+        hasArchivedWallets={archivedWallets.length > 0}
         busy={isPending}
         onEdit={(goal) => {
           setDetailId(null);

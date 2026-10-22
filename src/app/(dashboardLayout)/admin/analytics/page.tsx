@@ -1,9 +1,8 @@
-import { resolveRange } from "@/components/modules/Admin/Analytics/analyticsLabels";
 import AnalyticsRangePicker from "@/components/modules/Admin/Analytics/AnalyticsRangePicker";
 import AnalyticsView from "@/components/modules/Admin/Analytics/AnalyticsView";
 import PageHeader from "@/components/shared/PageHeader";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
-import { toAnalyticsRangeQuery } from "@/lib/analyticsRange";
+import { resolveAnalyticsRange, toAnalyticsRangeQuery } from "@/lib/analyticsRange";
 import { getAppToday } from "@/lib/date";
 import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
 import { adminPageTitle } from "@/lib/i18n/locale";
@@ -17,7 +16,7 @@ const AnalyticsPage = async ({ searchParams }: PageProps<"/admin/analytics">) =>
   const today = getAppToday();
   // A range longer than the API takes falls back to 30 days here and in the
   // view alike, so the prefetch still matches.
-  const rangeQuery = toAnalyticsRangeQuery(resolveRange({ range: firstValue(params.range), from: firstValue(params.from), to: firstValue(params.to) }, today));
+  const rangeQuery = toAnalyticsRangeQuery(resolveAnalyticsRange({ range: firstValue(params.range), from: firstValue(params.from), to: firstValue(params.to) }, today));
 
   return (
     <div className="space-y-4">

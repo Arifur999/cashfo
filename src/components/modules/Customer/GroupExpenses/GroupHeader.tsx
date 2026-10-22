@@ -2,12 +2,13 @@
 
 import { Banknote, Building2, Calendar, ChevronDown, House, LayoutDashboard, Lock, type LucideIcon, Plus, Receipt, Scale, Settings, UserPlus, Users, UtensilsCrossed, Wallet } from "lucide-react";
 import Link, { useLinkStatus } from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
+import { useScrollFades } from "@/hooks/useScrollFades";
 import type { GroupMember, GroupSettings } from "@/lib/customer/api";
 import { countLabel, GROUP_TAB_LABELS, groupTabsFor, type GroupTab } from "@/lib/customer/groupDisplay";
 import { mealText } from "@/lib/customer/groupMeals";
@@ -52,42 +53,6 @@ const KIND = {
   FAMILY: { label: "Family", icon: House, tone: "insights" as const, chip: "insights" as const },
 };
 
-// The tab bar scrolls sideways on a phone; its edges fade while there is
-// more beyond them. A section opened from elsewhere (a card's Settings) may
-// sit past the edge, so the one on show is brought to the middle of the
-// bar whenever `current` changes, without moving the page.
-function useSideFades<T extends HTMLElement>(current: string) {
-  const ref = useRef<T>(null);
-  const [fades, setFades] = useState({ left: false, right: false });
-  useEffect(() => {
-    const bar = ref.current;
-    const link = bar?.querySelector<HTMLElement>('[aria-current="page"]');
-    if (!bar || !link || bar.scrollWidth <= bar.clientWidth) return;
-    bar.scrollLeft = link.offsetLeft - (bar.clientWidth - link.offsetWidth) / 2;
-  }, [current]);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const update = () => {
-      const left = el.scrollLeft > 4;
-      const right = el.scrollWidth - el.scrollLeft - el.clientWidth > 4;
-      setFades((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
-    };
-    update();
-    el.addEventListener("scroll", update, { passive: true });
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => {
-      el.removeEventListener("scroll", update);
-      observer.disconnect();
-    };
-  }, []);
-  const left = fades.left ? "transparent 0, #000 32px" : "#000 0";
-  const right = fades.right ? "#000 calc(100% - 32px), transparent 100%" : "#000 100%";
-  const mask = `linear-gradient(to right, ${left}, ${right})`;
-  return { ref, style: { maskImage: mask, WebkitMaskImage: mask } };
-}
-
 // The line under a tab: solid on the one on show, pulsing on the one just
 // pressed while its page loads. Always drawn, so nothing shifts.
 function TabLine({ on }: { on: boolean }) {
@@ -111,7 +76,17 @@ export function GroupHeader({ businessId, name, members, settings, tab, monthKey
   // "5 members · Manager Khaled" (the manager keeps a mess's cash), "3
   // members · 8 shares · cash with Khaled".
   const sub = (mess ? [people, holder && t("Manager {name}", { name: holder })] : [people, t("{count} shares", { count: mealText(shares, locale) }), holder && t("cash with {name}", { name: holder })]).filter(Boolean).join(" · ");
-  const { ref: tabsRef, style: tabsStyle } = useSideFades<HTMLElement>(tab);
+  // The tab bar scrolls sideways on a phone; its edges fade while there is
+  // more beyond them. A section opened from elsewhere (a card's Settings)
+  // may sit past the edge, so the one on show is brought to the middle of
+  // the bar whenever the tab changes, without moving the page.
+  const { ref: tabsRef, style: tabsStyle } = useScrollFades<HTMLElement>({ axis: "x", fade: 32 });
+  useEffect(() => {
+    const bar = tabsRef.current;
+    const link = bar?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!bar || !link || bar.scrollWidth <= bar.clientWidth) return;
+    bar.scrollLeft = link.offsetLeft - (bar.clientWidth - link.offsetWidth) / 2;
+  }, [tabsRef, tab]);
 
   return (
     <div className="flex flex-col gap-4">

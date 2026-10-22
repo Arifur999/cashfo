@@ -71,7 +71,8 @@ export function NeedsYou({ items }: { items: Attention[] }) {
         </h2>
         {quiet && <p className="text-small text-ink-muted">{translate("Nothing needs you right now.")}</p>}
       </div>
-      <div className={cn("grid gap-3 sm:grid-cols-2", ATTENTION_COLUMNS[items.length] ?? "xl:grid-cols-4")}>
+      {/* The same 16px gutter as the KPI row under it, so the two rows' edges line up. */}
+      <div className={cn("grid gap-4 sm:grid-cols-2", ATTENTION_COLUMNS[items.length] ?? "xl:grid-cols-4")}>
         {items.map((item) => {
           // Nothing waiting, or nothing known: no alarm colour.
           const calm = item.count === null || item.count === 0;

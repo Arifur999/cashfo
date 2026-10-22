@@ -4,9 +4,11 @@ import { formatAmount } from "@/lib/currency";
 import { formatDate } from "@/lib/date";
 import type { IRefund } from "@/types/payment.types";
 import T from "@/components/shared/T";
+import { getTranslator } from "@/lib/i18n/locale";
 
 // The refund that went out: how much, when, and why.
-const RefundDetailsCard = ({ refund, currency }: { refund: IRefund; currency: string }) => {
+const RefundDetailsCard = async ({ refund, currency }: { refund: IRefund; currency: string }) => {
+  const { locale } = await getTranslator("admin");
   return (
     <Card asChild padding="md" className="flex flex-col gap-3">
       <section aria-labelledby="refund">
@@ -17,7 +19,7 @@ const RefundDetailsCard = ({ refund, currency }: { refund: IRefund; currency: st
           <StatusBadgeCell status={refund.status} />
         </div>
         <p className="text-body text-ink">
-          <T values={{ amount: <b className="font-semibold tabular-nums">{formatAmount(refund.amount, currency)}</b>, date: formatDate(refund.createdAt, "d MMM yyyy, h:mm aaa") }}>
+          <T values={{ amount: <b className="font-semibold tabular-nums">{formatAmount(refund.amount, currency)}</b>, date: formatDate(refund.createdAt, "d MMM yyyy, h:mm aaa", "—", locale) }}>
             {"{amount} sent back on {date}."}
           </T>
         </p>

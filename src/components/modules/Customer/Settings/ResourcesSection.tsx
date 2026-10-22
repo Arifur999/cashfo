@@ -26,7 +26,7 @@ interface ResourcesSectionProps {
 
 // Short guides, the legal pages, the customer's data and the version.
 export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [preparing, setPreparing] = useState(false);
 
   // The zip takes a moment to build: the button says so while it does, and
@@ -92,7 +92,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
                 {t(link.title)}
                 <span className="sr-only"> ({t("opens in a new tab")})</span>
               </span>
-              {updated && <span className="text-small text-ink-muted">{t("Updated {date}", { date: formatDate(updated) })}</span>}
+              {updated && <span className="text-small text-ink-muted">{t("Updated {date}", { date: formatDate(updated, undefined, locale) })}</span>}
               <ExternalLink className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
             </a>
           );

@@ -44,7 +44,8 @@ const STEPS = [
 
 // A bar's amount in a few characters, so six of them fit side by side on a
 // phone: 850, 2.9k, 13k, 1.2L, 13L, 1.2Cr. One decimal below 10, whole above.
-// Latin digits and no symbol, like every amount (the card says it is money).
+// Latin digits, like every amount, and no symbol: compactMoney adds the taka
+// sign where the bars are money.
 export function compactAmount(value: number): string {
   const sign = value < 0 ? "-" : "";
   const abs = Math.abs(value);
@@ -54,6 +55,13 @@ export function compactAmount(value: number): string {
     if (shown < step.below) return `${sign}${shown}${step.suffix}`;
   }
   return `${sign}${Math.round(abs)}`;
+}
+
+// A money bar's figure as the board writes it: "৳4.4k", "৳0", "-৳2.9k". No
+// space after the sign, unlike formatAmount, so it still fits a phone's slot.
+export function compactMoney(value: number): string {
+  const figure = compactAmount(Math.abs(value));
+  return `${value < 0 && figure !== "0" ? "-" : ""}৳${figure}`;
 }
 
 // The System page calls a backup worth a look after two days; no backup at

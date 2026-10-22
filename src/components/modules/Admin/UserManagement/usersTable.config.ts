@@ -41,10 +41,12 @@ const SORT_OPTIONS = [
 // loaded (memoize the result -- it must stay stable).
 export const buildUsersTableConfig = (plans: IPlanOption[], statusCounts?: Record<OwnerStatus, number>): ServerDataTableConfig => ({
   ...USERS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Search name, email, phone or workspace" },
+  // Short enough to fit a phone; it still finds a name, email, phone or workspace.
+  search: { placeholder: "Search people or workspaces" },
   filters: [
     { id: "status", type: "tabs", label: "Status", options: enumTabs(OWNER_STATUSES, statusCounts) },
-    { id: "planId", type: "single-select", label: "Plan", allLabel: "All plans", options: plans.map((plan) => ({ value: plan.id, label: plan.name })) },
+    // A plan's name is data ("Business"), never a word to translate.
+    { id: "planId", type: "single-select", label: "Plan", allLabel: "All plans", options: plans.map((plan) => ({ value: plan.id, label: plan.name, raw: true })) },
     // "Joined@@date" is the date they joined (যোগদান), not "has joined".
     { id: "joined", type: "single-select", label: "Joined@@date", allLabel: "Any time", options: JOINED_OPTIONS },
     { id: "lastActive", type: "single-select", label: "Last sign-in", allLabel: "Any time", options: LAST_SIGN_IN_OPTIONS },

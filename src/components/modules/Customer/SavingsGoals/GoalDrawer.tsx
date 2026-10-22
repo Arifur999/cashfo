@@ -130,7 +130,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
   );
 
   // The preview's second line: how many months, to save how much, by when.
-  const monthsText = (forms: { one: string; many: string }, amount: number) => t(months === 1 ? forms.one : forms.many, { count: formatCount(months, locale), amount: formatCurrency(amount, currency), date: formatDate(targetDate) });
+  const monthsText = (forms: { one: string; many: string }, amount: number) => t(months === 1 ? forms.one : forms.many, { count: formatCount(months, locale), amount: formatCurrency(amount, currency), date: formatDate(targetDate, undefined, locale) });
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
@@ -198,19 +198,19 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
                   </Button>
                 </div>
                 {/* A channel means nothing until there is a day to remind on. */}
-                <fieldset disabled={!reminderDate} className={cn("m-0 min-w-0 border-0 p-0", !reminderDate && "opacity-60")}>
-                  <SegmentedControl
-                    options={[
-                      { value: "EMAIL", label: t("Email") },
-                      { value: "PHONE", label: t("SMS") },
-                    ]}
-                    value={reminderChannel}
-                    onChange={setReminderChannel}
-                    label={t("Remind me by")}
-                    size="lg"
-                    stretch
-                  />
-                </fieldset>
+                <SegmentedControl
+                  options={[
+                    { value: "EMAIL", label: t("Email") },
+                    { value: "PHONE", label: t("SMS") },
+                  ]}
+                  value={reminderChannel}
+                  onChange={setReminderChannel}
+                  label={t("Remind me by")}
+                  size="lg"
+                  stretch
+                  disabled={!reminderDate}
+                  className="min-w-0"
+                />
               </div>
               <span className="flex items-center gap-2 text-caption font-normal text-ink-muted">
                 <Info className="size-3.5 shrink-0" aria-hidden="true" />

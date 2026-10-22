@@ -42,7 +42,7 @@ export default async function LegalPageView({ page }: { page: LegalPage }) {
           )}
         </header>
         {englishOnly && blocks.length > 0 && (
-          <Banner tone="neutral" inline icon={<Languages />} className="font-normal">
+          <Banner tone="neutral" inline role="note" icon={<Languages />} className="font-normal">
             {t("This page is only in English for now.")}
           </Banner>
         )}

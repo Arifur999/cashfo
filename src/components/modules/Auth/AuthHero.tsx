@@ -24,7 +24,9 @@ const RINGS = (
 // gradient. Login shows a few sample cards floating under the headline,
 // register four feature cards, and the narrower pages three short rows.
 // Forest to emerald rather than the aurora, whose mint end left the text
-// low in the panel under 3:1; the darker feature cards keep it at AA too.
+// low in the panel under 3:1. The feature cards are a lighter, translucent
+// white over it, and their small mint line still clears AA (about 5:1 at
+// the gradient's lightest corner).
 export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
   const { locale, t } = useLocale();
 
@@ -50,7 +52,7 @@ export function AuthHero({ variant }: { variant: AuthHeroVariant }) {
               { icon: <CircleCheckBig />, color: "text-pillar-habits", title: "Habits and prayers", text: "Namaz, Ramadan, reading and your daily to-do list." },
               { icon: <Lock />, color: "text-info", title: "A vault for every password", text: "Its own password, and it locks itself after a few minutes." },
             ].map((item) => (
-              <li key={item.title} className="flex items-start gap-4 rounded-lg bg-forest/30 p-4 ring-1 ring-white/10 ring-inset">
+              <li key={item.title} className="flex items-start gap-4 rounded-lg bg-white/10 p-4 ring-1 ring-white/12 ring-inset">
                 <IconTile tone="white" className={cn("bg-surface", item.color)}>
                   {item.icon}
                 </IconTile>

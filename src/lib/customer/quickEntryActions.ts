@@ -17,13 +17,16 @@ async function authHeaders() {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
+// Without a fallbackMessage a failure carries the API's own message only:
+// message stays undefined when there is none, so the caller's
+// t(result.message ?? "...") shows its own words (as in accountActions.ts).
+async function callApi<T>(fn: () => Promise<T>, fallbackMessage?: string): Promise<ActionResult<T>> {
   try {
     const data = await fn();
     return { success: true, data };
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage) };
+      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage ?? "") || undefined };
     }
     return { success: false, message: fallbackMessage };
   }
@@ -49,12 +52,17 @@ export async function getMoneyAccountsAction(businessId: string): Promise<Accoun
 }
 
 export async function getIncomeAccountsAction(businessId: string): Promise<Account[]> {
-  try {
+  const result = await listIncomeAccountsAction(businessId);
+  return result.data ?? [];
+}
+
+// The same list for a form that says "No income account yet" when it is
+// empty: a failed request comes back as success: false, never as none.
+export async function listIncomeAccountsAction(businessId: string): Promise<ActionResult<Account[]>> {
+  return callApi(async () => {
     const res = await customerApi.get<Account[]>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/income-accounts`, { headers: await authHeaders() });
     return res.data;
-  } catch {
-    return [];
-  }
+  }, "Failed to load your income accounts");
 }
 
 export async function getExpenseAccountsAction(businessId: string): Promise<Account[]> {
@@ -117,11 +125,13 @@ export interface AddTransferInput {
   description?: string;
 }
 
+// No fallback: Balance's Move money and Quick entry each word the failure
+// their own way (t(result.message ?? ...)).
 export async function createTransferAction(businessId: string, input: AddTransferInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
     const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/transfer`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to create transfer");
+  });
 }
 
 // Edit (decision D2): the API voids the entry ('Corrected') and posts the

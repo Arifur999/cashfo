@@ -14,12 +14,14 @@ const asNameClash = <TData>(result: ApiResult<TData>): ApiResult<TData> =>
 
 // The API refuses to delete a plan anything still points at, and its answer
 // carries the counts ("0 workspace(s), 12 payment(s) and ..."), so it can't
-// be looked up in the dictionary as it comes. Any plan that ever sold gets it.
+// be looked up in the dictionary as it comes. Any plan that ever sold gets it,
+// on sale or not (an archived plan offers Delete too), so the words hold for
+// both.
 const PLAN_IN_USE = /^Cannot delete this plan\b/;
 
 const asInUse = <TData>(result: ApiResult<TData>): ApiResult<TData> =>
   !result.success && PLAN_IN_USE.test(result.message)
-    ? { success: false, message: "Payments, coupons or workspaces still use this plan. Take it off sale instead." }
+    ? { success: false, message: "Payments, coupons or workspaces still use this plan, so it can't be deleted. Keep it off sale instead." }
     : result;
 
 export const createPlanAction = async (values: unknown) =>

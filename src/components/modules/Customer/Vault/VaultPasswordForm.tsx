@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, Check, Circle, Info, KeyRound, Mail, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, Circle, Info, KeyRound, Mail, Settings, ShieldCheck, TriangleAlert } from "lucide-react";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
@@ -80,7 +81,7 @@ function FormTitle({ mode }: { mode: VaultPasswordMode }) {
         {mode === "change" ? <KeyRound /> : <ShieldCheck />}
       </IconTile>
       <div className="flex flex-col gap-0.5">
-        <h2 id="vault-form-title" className="text-h2 text-ink">
+        <h2 id="vault-form-title" className="text-h2 font-semibold text-ink">
           {t(copy.title)}
         </h2>
         <span className="text-body text-ink-muted">{t(copy.sub)}</span>
@@ -100,7 +101,8 @@ function BackButton({ onBack, disabled }: { onBack: () => void; disabled?: boole
 }
 
 // A Google-only account: no account password, so nothing to prove it's
-// them yet. Says so before any typing, and mails the link that sets one.
+// them yet. Says so before any typing, mails the link that sets one, and
+// points to Settings › Security, where the account's password lives.
 function NoAccountPassword({ mode, onBack }: Pick<VaultPasswordFormProps, "mode" | "onBack">) {
   const { t } = useLocale();
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -131,6 +133,12 @@ function NoAccountPassword({ mode, onBack }: Pick<VaultPasswordFormProps, "mode"
           <Button size="xl" variant="action" onClick={send} disabled={isPending} className="w-full">
             {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <Mail />}
             {t(sentTo ? "Send the link again" : "Email me a link to set one")}
+          </Button>
+          <Button size="xl" variant="secondary" asChild className="w-full">
+            <Link href="/settings/security">
+              <Settings />
+              {t("Open Settings › Security")}
+            </Link>
           </Button>
           {mode !== "setup" && <BackButton onBack={onBack} disabled={isPending} />}
         </div>
@@ -222,7 +230,6 @@ function PasswordForm({ mode, entryCount, onUnlocked, onDone, onBack }: VaultPas
               aria-describedby={wrong?.field === "account" ? "vault-account-error" : mode === "setup" ? "vault-account-hint" : undefined}
               autoComplete="current-password"
               autoFocus
-              className="max-md:text-body-lg"
             />
           </Field>
           {mode === "change" && (
@@ -236,12 +243,11 @@ function PasswordForm({ mode, entryCount, onUnlocked, onDone, onBack }: VaultPas
                 }}
                 invalid={wrong?.field === "current"}
                 autoComplete="off"
-                className="max-md:text-body-lg"
               />
             </Field>
           )}
           <Field htmlFor="vault-new" label={label(t("New vault password"))}>
-            <PasswordField id="vault-new" value={password} onChange={setPassword} autoComplete="new-password" aria-describedby="vault-rules" className="max-md:text-body-lg" />
+            <PasswordField id="vault-new" value={password} onChange={setPassword} autoComplete="new-password" aria-describedby="vault-rules" />
           </Field>
           <StrengthMeter password={password} className="-mt-2" />
           <ul id="vault-rules" className="-mt-1 grid gap-x-3 gap-y-2 sm:grid-cols-2" aria-label={t("Rules")}>
@@ -272,7 +278,6 @@ function PasswordForm({ mode, entryCount, onUnlocked, onDone, onBack }: VaultPas
               autoComplete="new-password"
               placeholder={t("Type the new vault password again")}
               aria-describedby={confirm.length > 0 ? "vault-confirm-hint" : undefined}
-              className="max-md:text-body-lg"
             />
           </Field>
           {mode === "reset" && (

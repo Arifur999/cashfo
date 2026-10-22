@@ -175,7 +175,7 @@ function Topbar() {
               aria-hidden="true"
               className="absolute top-1.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-forest px-1 text-caption font-bold text-white tabular-nums md:static md:h-5 md:min-w-5 md:px-2 dark:bg-emerald dark:text-on-action"
             >
-              {openCount}
+              {formatCount(openCount, locale)}
             </span>
           )}
         </button>

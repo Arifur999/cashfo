@@ -33,7 +33,7 @@ interface InvoiceDocumentProps {
 // refunded payment's sheet says so, and how much went back, so a printed
 // copy never claims it was all kept.
 const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: InvoiceDocumentProps) => {
-  const { t } = await getTranslator("admin");
+  const { t, locale } = await getTranslator("admin");
   const currency = invoice.payment?.currency;
   const subtotal = invoice.lineItems.reduce((sum, item) => sum + item.amount, 0);
   const discount = Math.max(0, Math.round((subtotal - Number(invoice.totalAmount)) * 100) / 100);
@@ -73,7 +73,7 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
         </div>
         <div className="flex flex-col">
           <span className="text-caption font-semibold text-ink-muted"><T>Date</T></span>
-          <b className="font-semibold text-ink">{formatDate(invoice.createdAt, "d MMM yyyy")}</b>
+          <b className="font-semibold text-ink">{formatDate(invoice.createdAt, "d MMM yyyy", "—", locale)}</b>
           {invoice.payment && <span className="text-ink-2">{t("Payment {id}", { id: shortPaymentId(invoice.payment.id) })}</span>}
         </div>
         <div className="flex flex-col">
@@ -109,7 +109,7 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
           </span>
           {refund && (
             <span className="text-small text-ink-2">
-              {t("Refunded {amount} on {date}.", { amount: formatAmount(refund.amount, currency), date: formatDate(refund.createdAt, "d MMM yyyy") })}
+              {t("Refunded {amount} on {date}.", { amount: formatAmount(refund.amount, currency), date: formatDate(refund.createdAt, "d MMM yyyy", "—", locale) })}
             </span>
           )}
         </div>

@@ -4,7 +4,7 @@ import Chip from "@/components/smartly/Chip";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowLink, ListSummaryRow, type SummaryKind } from "@/components/smartly/list";
 import Pagination from "@/components/smartly/Pagination";
 import type { Account, AccountLedger, AccountSummary } from "@/lib/customer/api";
-import { booksDate, ledgerWords, type LedgerFigures } from "@/lib/customer/booksDisplay";
+import { booksDate, ledgerWords, reversedDates, type LedgerFigures } from "@/lib/customer/booksDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { ledgerDirection } from "@/lib/customer/ledger";
 import { cancelledLabel } from "@/lib/customer/transactionDisplay";
@@ -47,6 +47,8 @@ export function LedgerTable({ id, account, ledger, figures, summary, currency, t
   const adjustment = Number(summary.adjustment);
   const dash = <span className="text-ink-muted">—</span>;
   const day = (value: string) => booksDate(value, locale, { today, weekday: true });
+  // A reversal says which day's entry it undid, when that one is on the page.
+  const reverses = reversedDates(ledger.entries);
 
   // The period's change as a sum: in − out, the transfers, and what a void
   // in another period left behind, each term written out.
@@ -124,6 +126,7 @@ export function LedgerTable({ id, account, ledger, figures, summary, currency, t
                   </Chip>
                 )}
               </span>
+              {reverses.has(row.transactionId) && <span className="truncate text-caption text-ink-muted">{t("Reverses the entry of {date}", { date: day(reverses.get(row.transactionId) ?? row.date) })}</span>}
               {row.referenceNo && <span className="truncate font-mono text-caption text-ink-muted xl:hidden">{row.referenceNo}</span>}
             </ListCell>
             <ListCell className="hidden truncate font-mono text-caption text-ink-muted xl:block">{row.referenceNo ?? ""}</ListCell>

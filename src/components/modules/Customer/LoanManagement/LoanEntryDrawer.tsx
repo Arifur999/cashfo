@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -14,6 +15,7 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, Contact } from "@/lib/customer/api";
 import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
@@ -28,7 +30,6 @@ import { cn } from "@/lib/utils";
 import { ContactPicker } from "./ContactPicker";
 import DayInput from "@/components/smartly/form/DayInput";
 import { radioProps } from "./radio";
-import { useOnline } from "./useOnline";
 
 interface LoanEntryDrawerProps {
   open: boolean;
@@ -61,7 +62,7 @@ const REPAYMENTS: Partial<Record<LoanEntryKind, { over: string; none: string; no
 // money, so a wallet is always required. Profit never moves the loan. A
 // repayment can't be more than is owed on its side, as the API checks.
 export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency, initialContactId, initialKind }: LoanEntryDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const online = useOnline();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -204,6 +205,10 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         }
         toast.success(t("Entry saved"));
         router.refresh();
+        // The old detail is stale now: until the fresh one is in, the cap
+        // reads as being checked and Save waits, rather than allowing
+        // what was owed before this entry.
+        setDetail(null);
         setSaves((count) => count + 1);
         if (another) {
           setAmount("");
@@ -408,7 +413,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                     </div>
                     {picked && (
                       <div className="flex justify-between gap-3">
-                        <span className="truncate text-ink-2">{t(profitPaid ? "{category} expense, {month}" : "{category} income, {month}", { category: picked, month: formatDate(`${date}T00:00:00.000Z`, "MMM") })}</span>
+                        <span className="truncate text-ink-2">{t(profitPaid ? "{category} expense, {month}" : "{category} income, {month}", { category: picked, month: formatDate(`${date}T00:00:00.000Z`, "MMM", locale) })}</span>
                         <span className={cn("font-semibold", profitPaid ? "text-warning" : "text-income")}>+ {money(value)}</span>
                       </div>
                     )}
@@ -429,7 +434,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                 )}
                 {wallet && walletAfter !== null && (
                   <div className="flex justify-between gap-3">
-                    <span className="truncate text-ink-2">{wallet.name}</span>
+                    <span className="truncate text-ink-2">{accountDisplayName(wallet, displayLanguage(locale))}</span>
                     <span>
                       <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency)} → </span>
                       <span className="font-semibold text-ink">{formatCurrency(walletAfter, currency)}</span>

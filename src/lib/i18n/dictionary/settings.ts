@@ -20,6 +20,9 @@ export const settingsDictionary: Record<string, string> = {
   "App preferences": "অ্যাপের পছন্দ",
   "Help & support": "সাহায্য ও সহায়তা",
   "Resources & legal": "রিসোর্স ও আইনি",
+  // Settings now says "Terms of use", but the admin Content dashboard still
+  // names the page "Terms of service" ("{doc} has no Bangla version").
+  "Terms of service": "সেবার শর্তাবলি",
   "Smartly · version {version}": "Smartly · সংস্করণ {version}",
   "Smartly for web · version {version}": "ওয়েবের জন্য Smartly · সংস্করণ {version}",
   // After a link that opens elsewhere, for screen readers.
@@ -57,7 +60,11 @@ export const settingsDictionary: Record<string, string> = {
   "Last changed this month": "এই মাসে বদলানো হয়েছে",
   "Last changed {count} month ago": "শেষ বদলানো হয়েছে {count} মাস আগে",
   "Last changed {count} months ago": "শেষ বদলানো হয়েছে {count} মাস আগে",
-  "You sign in with Google, so there is no password to change.": "আপনি Google দিয়ে সাইন ইন করেন, তাই বদলানোর মতো কোনো পাসওয়ার্ড নেই।",
+  // A Google-only account: no password yet, so the card mails the link
+  // that sets the first one (the forgot-password flow).
+  "You sign in with Google. Set a password to sign in with your email too.": "আপনি Google দিয়ে সাইন ইন করেন। ইমেইল দিয়েও সাইন ইন করতে একটি পাসওয়ার্ড সেট করুন।",
+  "Set a password": "পাসওয়ার্ড সেট করুন",
+  "We sent a link to {email}. Open it to set your password.": "{email}-এ একটি লিংক পাঠিয়েছি। সেটি খুলে আপনার পাসওয়ার্ড সেট করুন।",
   "Change password": "পাসওয়ার্ড বদলান",
   "Your current password, then the new one twice.": "আপনার বর্তমান পাসওয়ার্ড, তারপর নতুনটি দুবার।",
   "Current password": "বর্তমান পাসওয়ার্ড",
@@ -127,9 +134,6 @@ export const settingsDictionary: Record<string, string> = {
   "For weekly budgets and the meal sheet.": "সাপ্তাহিক বাজেট আর মিল শিটের জন্য।",
   // The sample amount and date under Numbers and dates.
   "Preview@@format": "নমুনা",
-  // Also the Wallet and Category drawers' card preview, which have no word
-  // of their own for it yet.
-  Preview: "নমুনা",
   "Weeks run Saturday to Friday": "সপ্তাহ শনি থেকে শুক্র",
   Reminders: "মনে করিয়ে দেওয়া",
   "Shown in the bell, inside the app.": "অ্যাপের ভেতরে, নোটিফিকেশনে দেখা যায়।",
@@ -230,7 +234,7 @@ export const settingsDictionary: Record<string, string> = {
   "I forgot my vault password. Are my saved logins gone?": "ভল্ট পাসওয়ার্ড ভুলে গেছি। সংরক্ষিত লগইনগুলো কি চলে গেছে?",
   "Yes. The logins are locked with the vault password itself, so a reset can only start over: you set a new vault password with your account password and the old entries are deleted.": "হ্যাঁ। লগইনগুলো ভল্ট পাসওয়ার্ড দিয়েই লক করা, তাই রিসেট মানে নতুন করে শুরু: অ্যাকাউন্ট পাসওয়ার্ড দিয়ে নতুন ভল্ট পাসওয়ার্ড সেট করবেন আর পুরোনো এন্ট্রিগুলো মুছে যাবে।",
   "When can I withdraw referral earnings?": "রেফারেলের আয় কখন তুলতে পারব?",
-  "A reward counts 30 days after your friend joined, as long as their account is still active. Everything counted so far can be withdrawn in one go into any of your wallets or savings pots.": "বন্ধু যোগ দেওয়ার ৩০ দিন পর পুরস্কার গোনা হয়, যদি তাদের অ্যাকাউন্ট সচল থাকে। এ পর্যন্ত গোনা সব একবারে আপনার যেকোনো ওয়ালেট বা সঞ্চয়ে তোলা যায়।",
+  "A reward counts 30 days after your friend joined. Everything counted so far can be withdrawn in one go into any of your wallets or savings wallets.": "বন্ধু যোগ দেওয়ার ৩০ দিন পর পুরস্কার গোনা হয়। এ পর্যন্ত গোনা সব একবারে আপনার যেকোনো ওয়ালেট বা সঞ্চয়ের ওয়ালেটে তোলা যায়।",
   "Can I use the app in Bangla?": "অ্যাপটি কি বাংলায় ব্যবহার করা যায়?",
   "Yes. Tap বাংলা at the top of any page (in the menu on a phone), or pick it under App preferences so every device opens in Bangla.": "হ্যাঁ। যেকোনো পাতার উপরে (ফোনে মেনুতে) বাংলা চাপুন, বা অ্যাপের পছন্দে বেছে নিন যাতে প্রতিটি ডিভাইস বাংলায় খোলে।",
   "More answers": "আরও উত্তর",
@@ -259,7 +263,6 @@ export const settingsDictionary: Record<string, string> = {
   "Delete my account": "অ্যাকাউন্ট মুছে ফেলুন",
   "Removes your account and everything in it. You have 7 days to change your mind.": "আপনার অ্যাকাউন্ট আর এর সবকিছু মুছে যাবে। মত বদলাতে ৭ দিন সময় পাবেন।",
   "Delete account": "অ্যাকাউন্ট মুছুন",
-  "Terms of service": "সেবার শর্তাবলি",
 
   // Workspaces
   // The first card's title: the page's own h1 already says "Workspaces".
@@ -282,4 +285,22 @@ export const settingsDictionary: Record<string, string> = {
   "Workspace deleted": "ওয়ার্কস্পেস মোছা হয়েছে",
   "Failed to delete workspace": "ওয়ার্কস্পেস মুছতে ব্যর্থ হয়েছে",
   Group: "গ্রুপ",
+
+  // Settings › Security › Support access: the customer's consent code for
+  // "View as customer".
+  "Support access": "সাপোর্ট অ্যাক্সেস",
+  "Support can see your account, read-only, only with a code you make here. We never ask for your password.": "এখানে আপনি কোড বানালে তবেই সাপোর্ট আপনার অ্যাকাউন্ট দেখতে পারবে, শুধু দেখার জন্য। আমরা কখনো আপনার পাসওয়ার্ড চাই না।",
+  "Give support a code": "সাপোর্টকে কোড দিন",
+  "Make a new code": "নতুন কোড বানান",
+  "Read this code to Smartly support. It works once.": "এই কোডটি Smartly সাপোর্টকে বলুন। এটি একবারই কাজ করে।",
+  "Works until {time}": "{time} পর্যন্ত কাজ করবে",
+  "Support is viewing your account right now.": "সাপোর্ট এখন আপনার অ্যাকাউন্ট দেখছে।",
+  "A support code is waiting until {time}.": "{time} পর্যন্ত একটি সাপোর্ট কোড চালু আছে।",
+  "Support last opened your account {time}.": "সাপোর্ট শেষবার আপনার অ্যাকাউন্ট খুলেছিল: {time}।",
+  "Turn off and end support's view": "বন্ধ করুন ও সাপোর্টের দেখা শেষ করুন",
+  "Turn off support access": "সাপোর্ট অ্যাক্সেস বন্ধ করুন",
+  "Support access is off": "সাপোর্ট অ্যাক্সেস বন্ধ হয়েছে",
+  "Couldn't load support access": "সাপোর্ট অ্যাক্সেস লোড করা যায়নি",
+  "Couldn't make a support code": "সাপোর্ট কোড বানানো যায়নি",
+  "Couldn't turn off support access": "সাপোর্ট অ্যাক্সেস বন্ধ করা যায়নি",
 };

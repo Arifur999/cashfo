@@ -9,9 +9,10 @@ export const adminPeopleDictionary: Record<string, string> = {
     "যাঁদের Smartly অ্যাকাউন্ট আছে, সবাই। প্ল্যান বদলাতে, পাসওয়ার্ড রিসেট করতে বা সাময়িক বন্ধ করতে একজনকে খুলুন।",
   "Loading users...": "ব্যবহারকারী লোড হচ্ছে...",
   "Loading user...": "ব্যবহারকারী লোড হচ্ছে...",
-  "Search name, email, phone or workspace": "নাম, ইমেইল, ফোন বা ওয়ার্কস্পেস খুঁজুন",
+  // Finds a name, email, phone or workspace; short enough for a phone.
+  "Search people or workspaces": "মানুষ বা ওয়ার্কস্পেস খুঁজুন",
   "No users match these filters.": "এই ফিল্টারে কোনো ব্যবহারকারী মেলেনি।",
-  "Couldn't load the users. Try again in a moment.": "ব্যবহারকারীদের তালিকা লোড করা যায়নি। একটু পরে আবার চেষ্টা করুন।",
+  "Couldn't load the users": "ব্যবহারকারীদের তালিকা লোড করা যায়নি",
   "Using for": "ব্যবহার করছেন",
   "Joined today": "আজ যোগ দিয়েছেন",
   "{count} more workspace": "আরও {count}টি ওয়ার্কস্পেস",
@@ -81,6 +82,10 @@ export const adminPeopleDictionary: Record<string, string> = {
   "Nobody has an extra workspace yet.": "এখনো কারও বাড়তি ওয়ার্কস্পেস নেই।",
   "{count} workspaces": "{count}টি ওয়ার্কস্পেস",
   "Biggest add-on first": "সবচেয়ে বড় অ্যাড-অন আগে",
+  // The Workspaces list's other orders, beside "Name, A to Z".
+  "Most workspaces first": "সবচেয়ে বেশি ওয়ার্কস্পেস আগে",
+  "Most extra workspaces first": "সবচেয়ে বেশি বাড়তি ওয়ার্কস্পেস আগে",
+  "Plan, A to Z": "প্ল্যান, A থেকে Z",
   "No users own more than one workspace yet.": "এখনো কারও একাধিক ওয়ার্কস্পেস নেই।",
   "Add-on = extra business workspaces × the plan's monthly price × 50% (a yearly plan counts as a twelfth of its price). Group workspaces and the Free plan add nothing. This is an estimate; nobody is charged for it yet.":
     "অ্যাড-অন = বাড়তি ব্যবসার ওয়ার্কস্পেস × প্ল্যানের মাসিক দাম × ৫০% (বার্ষিক প্ল্যানে দামের বারো ভাগের এক ভাগ ধরা হয়)। গ্রুপ ওয়ার্কস্পেস আর Free প্ল্যানে কিছু যোগ হয় না। এটি একটি অনুমান; এখনো কারও কাছ থেকে টাকা নেওয়া হয় না।",
@@ -96,7 +101,7 @@ export const adminPeopleDictionary: Record<string, string> = {
   "{who}, and only after the owner asks in writing. Each reset is saved in the audit log.": "{who}, আর শুধু মালিক লিখিতভাবে চাইলে। প্রতিটি রিসেট অডিট লগে সংরক্ষিত হয়।",
   "Only super admins can reset data": "শুধু সুপার অ্যাডমিন ডেটা রিসেট করতে পারেন",
   "No owners match.": "কোনো মালিক মেলেনি।",
-  "Couldn't load the owners. Try again in a moment.": "মালিকদের তালিকা লোড করা যায়নি। একটু পরে আবার চেষ্টা করুন।",
+  "Couldn't load the owners": "মালিকদের তালিকা লোড করা যায়নি",
   // Short, and the toast's and the confirm button's রিসেট.
   "Reset data": "ডেটা রিসেট করুন",
   "Reset {name}'s personal workspace?": "{name}-এর ব্যক্তিগত ওয়ার্কস্পেস রিসেট করবেন?",
@@ -123,4 +128,11 @@ export const adminPeopleDictionary: Record<string, string> = {
   "They're signed out on every device and sign in again with a temporary password you give them. You'll see it once.": "সব ডিভাইস থেকে তাঁকে সাইন আউট করা হবে; আপনার দেওয়া অস্থায়ী পাসওয়ার্ড দিয়ে তিনি আবার সাইন ইন করবেন। পাসওয়ার্ডটি আপনি একবারই দেখবেন।",
   "Failed to reset the password": "পাসওয়ার্ড রিসেট করা যায়নি",
   "Reset a user's password": "ব্যবহারকারীর পাসওয়ার্ড রিসেট করেছেন",
+
+  // View as customer needs the customer's support code.
+  "Support code from the customer": "গ্রাহকের দেওয়া সাপোর্ট কোড",
+  "Ask the customer to open Settings › Security › Support access and read you the code. It works once, for 15 minutes. Never ask for their password.": "গ্রাহককে সেটিংস › নিরাপত্তা › সাপোর্ট অ্যাক্সেস খুলে কোডটি বলতে বলুন। এটি একবারই, ১৫ মিনিটের জন্য কাজ করে। কখনো তাঁর পাসওয়ার্ড চাইবেন না।",
+  "Enter the 6-digit support code the customer gave you": "গ্রাহকের দেওয়া ৬ অঙ্কের সাপোর্ট কোড দিন",
+  "There is no support code to use. Ask the customer to make one in Settings > Security.": "ব্যবহার করার মতো কোনো সাপোর্ট কোড নেই। গ্রাহককে সেটিংস > নিরাপত্তা থেকে একটি বানাতে বলুন।",
+  "That isn't the customer's support code. Check it with them and try again.": "এটি গ্রাহকের সাপোর্ট কোড নয়। তাঁর সাথে মিলিয়ে আবার চেষ্টা করুন।",
 };

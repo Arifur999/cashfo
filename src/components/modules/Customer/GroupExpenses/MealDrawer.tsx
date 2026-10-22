@@ -12,6 +12,7 @@ import { ListCard, ListCell, ListHead, ListHeadCell, ListRow, ListTotalRow } fro
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupMeal, GroupMember } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { countLabel, dayLabel, type MonthRange } from "@/lib/customer/groupDisplay";
 import { changedMeals, type MealEntry, mealsOnDay, mealText, mealValue, type MealUnits, NO_MEALS } from "@/lib/customer/groupMeals";
 import { setGroupMealsAction } from "@/lib/customer/groupExpensesActions";
@@ -19,7 +20,6 @@ import { shiftDay } from "@/lib/customer/habitDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { attempt } from "./attempt";
 import { CloseX } from "./GroupBits";
 import type { ClosedGuard } from "./groupTypes";
 
@@ -122,7 +122,7 @@ export function MealDrawer({ day: openDay, onClose, businessId, members, meals, 
       setClosedOk(true);
     }
     startTransition(async () => {
-      const result = await attempt(() => setGroupMealsAction(businessId, { date: day, entries: changed }), t("No connection. Nothing was saved; try again."));
+      const result = await attempt(() => setGroupMealsAction(businessId, { date: day, entries: changed }), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       if (!result.success) {
         toast.error(result.message ?? t("Failed to save the meals"));
         return;

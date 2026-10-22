@@ -38,6 +38,16 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "Workspace updated": "ওয়ার্কস্পেস আপডেট হয়েছে",
   "Failed to update workspace": "ওয়ার্কস্পেস আপডেট করতে ব্যর্থ হয়েছে",
   "Edit Workspace": "ওয়ার্কস্পেস সম্পাদনা করুন",
+
+  // What POST and PATCH /api/businesses refuse with; both dialogs toast
+  // the message through t(). The 50 is MAX_WORKSPACES_PER_USER in the
+  // backend's businesses.service.ts.
+  "You can have at most 50 workspaces besides your personal one. Delete one you no longer use first.":
+    "ব্যক্তিগতটি ছাড়া সর্বোচ্চ ৫০টি ওয়ার্কস্পেস রাখা যায়। আগে অদরকারি একটি মুছে ফেলুন।",
+  "This already exists": "এটি আগে থেকেই আছে",
+  "PIN must be 4 to 6 digits": "পিন ৪ থেকে ৬ সংখ্যার হতে হবে",
+  "Workspace not found": "ওয়ার্কস্পেস পাওয়া যায়নি",
+  "Only the workspace owner can do this": "শুধু ওয়ার্কস্পেসের মালিক এটি করতে পারেন",
   "Change PIN": "পিন পরিবর্তন করুন",
   "Leave blank to keep the current PIN unchanged.": "বর্তমান পিন অপরিবর্তিত রাখতে খালি রাখুন।",
 
@@ -79,7 +89,10 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   Personal: "ব্যক্তিগত",
   "New workspace": "নতুন ওয়ার্কস্পেস",
 
-  // src/components/workspace/ChooseWorkspaceClient.tsx
+  // src/components/modules/Customer/Workspace/ChooseWorkspaceClient.tsx
+  // ("{count} wallet" and "{count} wallets" are worded in dashboard.ts)
+  "Trial — {count} day left": "ট্রায়াল — আর {count} দিন বাকি",
+  "Trial — {count} days left": "ট্রায়াল — আর {count} দিন বাকি",
   day: "দিন",
   days: "দিন",
   left: "বাকি",
@@ -97,7 +110,7 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   Open: "খুলুন",
   "Enter the PIN for {name}": "{name}-এর পিন লিখুন",
   "Open workspace": "ওয়ার্কস্পেস খুলুন",
-  "has a PIN so others using this device can't open its books.": "-এ পিন দেওয়া আছে, যাতে এই ডিভাইসের অন্য কেউ এর খাতা খুলতে না পারে।",
+  "{name} has a PIN so others using this device can't open its books.": "{name}-এ পিন দেওয়া আছে, যাতে এই ডিভাইসের অন্য কেউ এর খাতা খুলতে না পারে।",
   "Remove the PIN with your account password": "অ্যাকাউন্টের পাসওয়ার্ড দিয়ে পিন সরান",
   "Forgot the PIN?": "পিন ভুলে গেছেন?",
   "Reset it with your account password": "অ্যাকাউন্টের পাসওয়ার্ড দিয়ে রিসেট করুন",

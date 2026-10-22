@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { toDateInputValue } from "@/lib/date";
-import { banglaDayMonth, banglaShortDay, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { banglaDayMonth, banglaShortDay, BN_MONTHS_LONG, BN_MONTHS_SHORT, BN_WEEKDAYS_LONG, toBanglaDigits } from "@/lib/i18n/banglaDates";
 import { formatCount } from "@/lib/i18n/digits";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
@@ -45,12 +45,9 @@ export const WEEKDAY_INITIAL = ["S@@Sunday initial", "M@@Monday initial", "T@@Tu
 // of every week, Sunday first.
 export const WEEKDAY_PLURAL = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
 
-// The Bangla board's day and month names, fixed here like banglaDates.ts's:
-// the browser's ICU data words them differently between versions, and the
+// The Bangla day and month names come fixed from banglaDates.ts: the
+// browser's ICU data words them differently between versions, and the
 // server and the hydrating browser must print the same text.
-const BN_WEEKDAYS_LONG = ["রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"];
-const BN_MONTHS_LONG = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
-const BN_MONTHS_SHORT = ["জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টে", "অক্টো", "নভে", "ডিসে"];
 const EN_MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // How a day is written: "full" Wednesday, 21 October 2026 · "long"

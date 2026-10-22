@@ -4,7 +4,16 @@ import { adminPeopleDictionary } from "@/lib/i18n/dictionary/admin-people";
 import { type FillValues, fillText } from "@/lib/i18n/fill";
 import { inEnglish } from "@/lib/i18n/message";
 import { translate } from "@/lib/i18n/translate";
-import { BACK_PARAM, countPhrase, daysSince, daysUsedLabel, listBackHref, moreWorkspacesLabel, PERSONAL_WORKSPACE_NAME, withListState, workspaceLabel } from "./peopleDisplay";
+import {
+  daysSince,
+  daysUsedLabel,
+  isPersonalWorkspace,
+  moreWorkspacesLabel,
+  ownWorkspaceLabel,
+  PERSONAL_WORKSPACE_NAME,
+  workspaceLabel,
+  workspaceNamesLabel,
+} from "./peopleDisplay";
 
 // The admin panel's Bangla, as the Translate a Bangla reader's pages get.
 const bangla = (key: string, values?: FillValues) => {
@@ -32,17 +41,54 @@ describe("workspaceLabel", () => {
   });
 });
 
-describe("countPhrase", () => {
-  it("picks the English form by count", () => {
-    expect(countPhrase(inEnglish, "en", 1, "{count} day", "{count} days")).toBe("1 day");
-    expect(countPhrase(inEnglish, "en", 0, "{count} day", "{count} days")).toBe("0 days");
-    expect(countPhrase(inEnglish, "en", 1234, "{count} day", "{count} days")).toBe("1,234 days");
+// The API says what kind each workspace is; the stored name "Personal" is
+// only the rule for a response that doesn't.
+describe("isPersonalWorkspace", () => {
+  it("goes by the kind when the response has it", () => {
+    expect(isPersonalWorkspace("Home", "PERSONAL")).toBe(true);
+    expect(isPersonalWorkspace(PERSONAL_WORKSPACE_NAME, "BUSINESS")).toBe(false);
+    expect(isPersonalWorkspace(PERSONAL_WORKSPACE_NAME, "GROUP")).toBe(false);
   });
 
-  // The pager under the same card prints ১–১০, so the counts above it must too.
-  it("writes the count in Bangla digits for a Bangla reader", () => {
-    expect(countPhrase(bangla, "bn", 12, "{count} day", "{count} days")).toBe("১২ দিন");
-    expect(countPhrase(bangla, "bn", 1234, "{count} more workspace", "{count} more workspaces")).toBe("আরও ১,২৩৪টি ওয়ার্কস্পেস");
+  it("falls back to the stored name without a kind", () => {
+    expect(isPersonalWorkspace(PERSONAL_WORKSPACE_NAME)).toBe(true);
+    expect(isPersonalWorkspace(PERSONAL_WORKSPACE_NAME, null)).toBe(true);
+    expect(isPersonalWorkspace("Rahim Traders", undefined)).toBe(false);
+  });
+});
+
+describe("ownWorkspaceLabel", () => {
+  it("names a renamed personal workspace by its kind", () => {
+    expect(ownWorkspaceLabel({ businessName: "Home", businessType: "PERSONAL" }, inEnglish, "Personal workspace")).toBe("Personal workspace");
+    expect(ownWorkspaceLabel({ businessName: "Home", businessType: "PERSONAL" }, bangla)).toBe("ব্যক্তিগত");
+  });
+
+  it("keeps a business called Personal as written", () => {
+    expect(ownWorkspaceLabel({ businessName: PERSONAL_WORKSPACE_NAME, businessType: "BUSINESS" }, bangla)).toBe(PERSONAL_WORKSPACE_NAME);
+  });
+
+  it("reads an older row by its name, and a row without a workspace as none", () => {
+    expect(ownWorkspaceLabel({ businessName: PERSONAL_WORKSPACE_NAME }, bangla, "Personal workspace")).toBe("ব্যক্তিগত ওয়ার্কস্পেস");
+    expect(ownWorkspaceLabel({ businessName: null, businessType: null }, inEnglish)).toBeNull();
+  });
+});
+
+describe("workspaceNamesLabel", () => {
+  it("labels each workspace by its kind when the row lists them", () => {
+    const row = {
+      workspaceNames: ["Home", "Personal", "Mess"],
+      workspaces: [
+        { name: "Home", type: "PERSONAL" as const },
+        { name: "Personal", type: "BUSINESS" as const },
+        { name: "Mess", type: "GROUP" as const },
+      ],
+    };
+    expect(workspaceNamesLabel(row, inEnglish)).toBe("Personal, Personal, Mess");
+    expect(workspaceNamesLabel(row, bangla)).toBe("ব্যক্তিগত, Personal, Mess");
+  });
+
+  it("falls back to the plain names, and skips an empty one", () => {
+    expect(workspaceNamesLabel({ workspaceNames: ["Personal", "Rahim Traders", ""] }, bangla)).toBe("ব্যক্তিগত, Rahim Traders");
   });
 });
 
@@ -80,50 +126,13 @@ describe("moreWorkspacesLabel", () => {
     expect(moreWorkspacesLabel(2, inEnglish, "en")).toBe("2 more workspaces");
     expect(moreWorkspacesLabel(2, bangla, "bn")).toBe("আরও ২টি ওয়ার্কস্পেস");
   });
-});
 
-describe("withListState", () => {
-  it("leaves the link alone when the list has no query", () => {
-    expect(withListState("/admin/users/u-1", "")).toBe("/admin/users/u-1");
-    expect(withListState("/admin/users/u-1?from=owners", "")).toBe("/admin/users/u-1?from=owners");
-  });
-
-  it("carries the list's query as one encoded param", () => {
-    expect(withListState("/admin/users/u-1", "status=SUSPENDED&page=3")).toBe(`/admin/users/u-1?${BACK_PARAM}=status%3DSUSPENDED%26page%3D3`);
-  });
-
-  it("keeps a param the link already has", () => {
-    expect(withListState("/admin/users/u-1?from=workspaces", "page=2")).toBe("/admin/users/u-1?from=workspaces&back=page%3D2");
-  });
-});
-
-describe("listBackHref", () => {
-  const keys = ["search", "status", "planId", "page", "limit"];
-
-  it("is the plain list without a ?back=", () => {
-    expect(listBackHref("/admin/users", undefined, keys)).toBe("/admin/users");
-    expect(listBackHref("/admin/users", "", keys)).toBe("/admin/users");
-  });
-
-  it("restores the list's filters and page", () => {
-    expect(listBackHref("/admin/users", "status=SUSPENDED&planId=p-1&page=3", keys)).toBe("/admin/users?status=SUSPENDED&planId=p-1&page=3");
-  });
-
-  it("round-trips what withListState carried", () => {
-    const link = withListState("/admin/users/u-1", "search=rahim+khan&page=2");
-    const back = new URLSearchParams(link.split("?")[1]).get(BACK_PARAM) ?? undefined;
-    expect(listBackHref("/admin/users", back, keys)).toBe("/admin/users?search=rahim+khan&page=2");
-  });
-
-  it("drops what isn't the list's own, and empty values", () => {
-    expect(listBackHref("/admin/users", "status=ACTIVE&from=owners&back=x&utm_source=mail&search=", keys)).toBe("/admin/users?status=ACTIVE");
-  });
-
-  // It is read as a query, never as a URL, so it can't point off the list.
-  it("can't lead anywhere but the list", () => {
-    expect(listBackHref("/admin/users", "https://evil.example/steal", keys)).toBe("/admin/users");
-    expect(listBackHref("/admin/users", "//evil.example?page=2", keys)).toBe("/admin/users");
-    expect(listBackHref("/admin/workspaces", "page=2&status=ACTIVE", ["page", "limit"])).toBe("/admin/workspaces?page=2");
+  // The pager under the same card prints ১–১০, so the counts above it must too.
+  it("writes the count in the reader's digits", () => {
+    expect(moreWorkspacesLabel(1234, inEnglish, "en")).toBe("1,234 more workspaces");
+    expect(moreWorkspacesLabel(1234, bangla, "bn")).toBe("আরও ১,২৩৪টি ওয়ার্কস্পেস");
+    expect(daysUsedLabel(1234, inEnglish, "en")).toBe("1,234 days");
+    expect(daysUsedLabel(12, bangla, "bn")).toBe("১২ দিন");
   });
 });
 
@@ -147,8 +156,9 @@ describe("people pages' Bangla", () => {
     "Account turned back on",
     "Account suspended",
     "They're signed out on every device straight away and can't sign in until you turn the account back on.",
-    "Couldn't load the users. Try again in a moment.",
-    "Couldn't load the owners. Try again in a moment.",
+    "Couldn't load the users",
+    "Couldn't load the owners",
+    "Search people or workspaces",
     "Couldn't load workspaces",
     "Try again in a moment.",
     "Couldn't load the plans. Reload the page and try again.",

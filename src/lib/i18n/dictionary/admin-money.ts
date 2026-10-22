@@ -46,7 +46,9 @@ export const adminMoneyDictionary: Record<string, string> = {
 
   // The list
   "All payments": "সব পেমেন্ট",
-  "Payment ID, name, email, invoice or gateway ref": "পেমেন্ট আইডি, নাম, ইমেইল, ইনভয়েস বা গেটওয়ের রেফারেন্স",
+  // The search still matches the id as the list prints it (PAY-3F2A1C9B),
+  // with or without PAY-; the placeholder stays short to fit its box.
+  "ID, name, email or ref": "আইডি, নাম, ইমেইল বা রেফারেন্স",
   Person: "ব্যক্তি",
   "Paid with": "যেভাবে পরিশোধ",
   "No payments match these filters.": "এই ফিল্টারে কোনো পেমেন্ট মেলেনি।",
@@ -71,6 +73,8 @@ export const adminMoneyDictionary: Record<string, string> = {
   "paid with {gateway}": "{gateway} দিয়ে পরিশোধ",
   "via {gateway}": "{gateway} দিয়ে",
   "Partly refunded: {amount}": "আংশিক ফেরত: {amount}",
+  // A list row's status chip, when less than was paid went back.
+  "Partly refunded": "আংশিক ফেরত",
   "Same person, same plan": "একই ব্যক্তি, একই প্ল্যান",
   "Same person, same plan, {count} minute apart": "একই ব্যক্তি, একই প্ল্যান, {count} মিনিটের ব্যবধানে",
   "Same person, same plan, {count} minutes apart": "একই ব্যক্তি, একই প্ল্যান, {count} মিনিটের ব্যবধানে",
@@ -150,7 +154,6 @@ export const adminMoneyDictionary: Record<string, string> = {
   "MRR, ARR and churn count the workspaces on paid plans now. The change on last month, the chart, paid people and the average per person come from payments, so the two can differ.":
     "MRR, ARR আর গ্রাহক হারানো গোনা হয় এখন পেইড প্ল্যানে থাকা ওয়ার্কস্পেস থেকে। গত মাসের তুলনা, চার্ট, পেইড মানুষ আর প্রতি জনের গড় আসে পেমেন্ট থেকে, তাই দুটি আলাদা হতে পারে।",
   "MRR at the end of each month": "প্রতি মাসের শেষে MRR",
-  "MRR at the end of each month: {months}": "প্রতি মাসের শেষে MRR: {months}",
   "In taka, from payments": "টাকায়, পেমেন্ট থেকে",
   "up {percent}% since {month}": "{month} থেকে {percent}% বেশি",
   "down {percent}% since {month}": "{month} থেকে {percent}% কম",

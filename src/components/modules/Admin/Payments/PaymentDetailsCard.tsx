@@ -15,7 +15,7 @@ const MOMENT_LABEL = { FAILED: "Tried at", PENDING: "Started at", SUCCESS: "Paid
 // The facts of the payment, as the design lists them: id, the gateway's
 // reference, plan, amount with the coupon, when, the invoice.
 const PaymentDetailsCard = async ({ payment }: { payment: IPaymentDetail }) => {
-  const { t } = await getTranslator("admin");
+  const { t, locale } = await getTranslator("admin");
   const discount = payment.discountApplied ? Number(payment.discountApplied) : 0;
   const rows: { label: string; value: React.ReactNode }[] = [
     { label: "Payment ID", value: <code className="font-mono">{shortPaymentId(payment.id)}</code> },
@@ -30,7 +30,7 @@ const PaymentDetailsCard = async ({ payment }: { payment: IPaymentDetail }) => {
         code: payment.couponCode ?? "",
       }),
     },
-    { label: MOMENT_LABEL[payment.status], value: formatDate(payment.paidAt ?? payment.createdAt, "d MMM yyyy, h:mm:ss aaa") },
+    { label: MOMENT_LABEL[payment.status], value: formatDate(payment.paidAt ?? payment.createdAt, "d MMM yyyy, h:mm:ss aaa", "—", locale) },
     {
       label: "Invoice",
       value: payment.invoice ? (

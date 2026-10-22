@@ -1,17 +1,13 @@
 import { type AuditDiffRow, diffAuditValues } from "@/lib/auditDiff";
-import { auditFieldLabel } from "@/lib/auditRecords";
-
-// Bookkeeping that says nothing about what an admin changed: the same set the
-// log's On column leaves out (QUIET_FIELDS in lib/auditRecords.ts, copied
-// here until that file exports it).
-const QUIET_FIELDS = new Set(["sensitive", "updatedAt", "createdAt"]);
+import { auditFieldLabel, QUIET_FIELDS } from "@/lib/auditRecords";
 
 export interface AuditValueRow extends AuditDiffRow {
   // "max workspaces" for featureLimits.maxWorkspaces, as the On column says it.
   label: string;
   // Changed, added or removed.
   differs: boolean;
-  // A timestamp or the sensitive mark.
+  // A timestamp or the sensitive mark: the bookkeeping the log's On column
+  // leaves out too.
   quiet: boolean;
 }
 

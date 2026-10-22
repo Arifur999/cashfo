@@ -147,6 +147,15 @@ export const isInitialValueNote = (note: string | null | undefined): boolean => 
 // either order; the purchase's own row counts as the older one.
 const newestFirst = (a: AssetValueHistoryEntry, b: AssetValueHistoryEntry): number => b.recordedAt.localeCompare(a.recordedAt) || Number(isInitialValueNote(a.note)) - Number(isInitialValueNote(b.note));
 
+// The latest day an already-owned asset's purchase date may move to
+// ("YYYY-MM-DD"): today, or the first value recorded after the purchase
+// when that is earlier, since nothing is valued before it was bought. The
+// purchase's own row moves with the date, so it doesn't count.
+export function latestPurchaseDay(asset: Pick<Asset, "valueHistory">, today: string): string {
+  const later = [...asset.valueHistory].sort(newestFirst).slice(0, -1);
+  return later.reduce((earliest, entry) => (entry.recordedAt.slice(0, 10) < earliest ? entry.recordedAt.slice(0, 10) : earliest), today);
+}
+
 export interface TimelineEntry {
   id: string;
   // ISO from the history, "YYYY-MM-DD" for the value about to be saved.

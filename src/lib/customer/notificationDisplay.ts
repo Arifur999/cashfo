@@ -72,7 +72,7 @@ export function notificationView(item: UserNotification, t: Translate, locale: L
       return {
         kind: "loan",
         title: loanTitle(text(data.name), data.direction === "PAYABLE", daysUntil(due, now), t, locale),
-        body: t("{amount} on {date}.", { amount: money(data.amount), date: formatDate(`${due}T00:00:00Z`, "EEE, d MMM") }),
+        body: t("{amount} on {date}.", { amount: money(data.amount), date: formatDate(`${due}T00:00:00Z`, "EEE, d MMM", "—", locale) }),
         href: Number(data.loan) === 1 ? `/loan-management/ledger?contactId=${contact}` : `/contacts/${contact}`,
       };
     }
@@ -104,14 +104,15 @@ export function notificationView(item: UserNotification, t: Translate, locale: L
 
 // "12 min ago" within the hour, "11:20 am" later today, "Yesterday", then
 // "Thu, 1 Oct" (or "2 Jun 2025" from another year), as the board dates them.
-// The minutes are a count, so they come in the reader's digits.
+// The minutes are a count and the dates are the reader's, so a Bangla
+// reader gets Bangla digits and month names.
 export function notificationTime(iso: string, t: Translate, locale: Locale = "en", now: Date = new Date()): string {
   const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
   if (minutes < 1) return t("just now");
   if (minutes < 60) return t("{count} min ago", { count: formatCount(minutes, locale) });
   const day = toDateInputValue(iso);
   const today = toDateInputValue(now);
-  if (day === today) return formatDate(iso, "h:mm aaa");
+  if (day === today) return formatDate(iso, "h:mm aaa", "—", locale);
   if (day === toDateInputValue(new Date(now.getTime() - DAY_MS))) return t("Yesterday");
-  return formatDate(iso, day.slice(0, 4) === today.slice(0, 4) ? "EEE, d MMM" : "d MMM yyyy");
+  return formatDate(iso, day.slice(0, 4) === today.slice(0, 4) ? "EEE, d MMM" : "d MMM yyyy", "—", locale);
 }

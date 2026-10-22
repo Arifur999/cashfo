@@ -6,11 +6,11 @@ import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Loader from "@/components/shared/Loader";
+import Avatar from "@/components/smartly/Avatar";
 import Button from "@/components/smartly/Button";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { uploadAvatarAction } from "@/lib/customer/authActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { getInitials } from "@/lib/text";
 
 interface ChangeAvatarDialogProps {
   open: boolean;
@@ -96,16 +96,9 @@ export function ChangeAvatarDialog({ open, onClose }: ChangeAvatarDialogProps) {
         </div>
         <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{t("JPG, PNG, WEBP or GIF, up to 5 MB. A square photo looks best.")}</AlertDialogDescription>
         <div className="flex flex-col items-center gap-4 px-6 py-5">
-          {shown ? (
-            // A local preview or a backend-served upload, so a plain <img>.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={shown} alt="" className="size-30 rounded-full object-cover" />
-          ) : (
-            // The top bar's avatar (forest, mint initials), as large as the preview.
-            <span aria-hidden="true" className="flex size-30 items-center justify-center rounded-full bg-forest text-display text-mint-200">
-              {getInitials(user.name) || "?"}
-            </span>
-          )}
+          {/* A local preview or the photo; without one, the top bar's avatar
+              (forest, mint initials) as large as the preview. */}
+          <Avatar name={user.name} src={shown} size={120} alt="" className="font-extrabold" />
           <input ref={fileInput} type="file" accept={ALLOWED_TYPES.join(",")} className="hidden" onChange={picked} />
           <Button type="button" variant="secondary" onClick={() => fileInput.current?.click()} disabled={isPending} className="pointer-coarse:h-11">
             <ImagePlus />

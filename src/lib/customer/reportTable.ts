@@ -11,7 +11,8 @@ import type { DayRange } from "./insights";
 export const REPORT_PERIODS = ["this-month", "last-month", "last-3-months", "this-year", "last-year", "this-tax-year", "last-tax-year"] as const;
 export type ReportPeriod = (typeof REPORT_PERIODS)[number];
 
-// The income years name their span: "This income year (Jul 2026–Jun 2027)".
+// The income years name their span as the return does: "This income year
+// (2026–27)" (incomeYearSpan), short enough to sit beside "Last 3 months".
 // Income year (আয়বর্ষ), as the Income Tax Act 2023 and the return say, not
 // tax year (করবর্ষ), which is the year after: July 2025 to June 2026 is
 // income year 2025–26, assessed in tax year 2026–27.
@@ -46,6 +47,12 @@ export function incomeYear(today: string, offset = 0): DayRange {
   const year = Number(today.slice(0, 4));
   const start = (Number(today.slice(5, 7)) >= 7 ? year : year - 1) + offset;
   return { dateFrom: `${start}-07-01`, dateTo: `${start + 1}-06-30` };
+}
+
+// An income year's name, "2025–26", in English digits (the page puts it in
+// the reader's).
+export function incomeYearSpan(range: DayRange): string {
+  return `${range.dateFrom.slice(0, 4)}–${range.dateTo.slice(2, 4)}`;
 }
 
 // The days a period covers, counted from `today` ("YYYY-MM-DD" in the app's

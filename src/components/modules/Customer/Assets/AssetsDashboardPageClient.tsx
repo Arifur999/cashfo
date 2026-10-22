@@ -37,9 +37,10 @@ interface AssetsDashboardPageClientProps {
 
 type Status = "all" | "owned" | "sold";
 
-// Asset, bought, paid, value today, change, status. The table keeps its
-// columns on phones and scrolls sideways there.
-const COLUMNS = "grid-cols-[minmax(0,1fr)_120px_140px_140px_110px_90px]";
+// Asset, bought, paid, value today, change, status. Phones restack each row
+// as the other asset lists do: the name and type on the left, the value and
+// its change on the right (a sold row's subtitle already says "Sold").
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_120px_140px_140px_110px_90px]";
 
 // The four figures: two to a row up to xl (a lakh or crore total needs the
 // room), four across from there. 18px on phones, 28px from md.
@@ -147,7 +148,9 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                     <span key={slice.name} className="h-full" style={{ width: `${slice.share}%`, background: categoryVisual(categories, slice.name).color }} />
                   ))}
                 </div>
-                <ul className="grid gap-x-8 gap-y-4 md:grid-cols-2">
+                {/* Two columns once there are two types to fill them; one
+                    spans the card, its figure under "Today's value". */}
+                <ul className={cn("grid gap-x-8 gap-y-4", slices.length > 1 && "md:grid-cols-2")}>
                   {slices.map((slice) => (
                     <li key={slice.name} className="flex items-center gap-3">
                       <AssetTypeTile visual={categoryVisual(categories, slice.name)} size="sm" />
@@ -199,10 +202,9 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
             label={t("All assets")}
             title={t("All assets")}
             actions={<SegmentedControl options={[{ value: "all", label: segment("All", assets.length) }, { value: "owned", label: segment("Owned", summary.owned.length) }, { value: "sold", label: segment("Sold", summary.sold.length) }]} value={status} onChange={setStatus} label="Status" />}
-            tableClassName="overflow-x-auto"
           >
-            <div role="rowgroup" className="min-w-220">
-              <ListHead columns={COLUMNS} showOnPhone>
+            <div role="rowgroup">
+              <ListHead columns={COLUMNS}>
                 <ListHeadCell>{t("Asset")}</ListHeadCell>
                 <ListHeadCell>{t("Bought")}</ListHeadCell>
                 <ListHeadCell align="end">{t("Paid@@price")}</ListHeadCell>
@@ -228,20 +230,24 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                         ) : (
                           <span className="truncate font-medium text-ink">{asset.name}</span>
                         )}
-                        <span className="truncate text-caption font-normal text-ink-muted">{sold && asset.soldAt ? `${t(asset.category)} · ${t("Sold {date}", { date: formatDate(asset.soldAt) })}` : t(asset.category)}</span>
+                        <span className="truncate text-caption font-normal text-ink-muted">{sold && asset.soldAt ? `${t(asset.category)} · ${t("Sold {date}", { date: formatDate(asset.soldAt, "d MMM yyyy", locale) })}` : t(asset.category)}</span>
                       </span>
                     </ListCell>
-                    <ListCell className="text-small text-ink-2">{formatDate(asset.purchaseDate)}</ListCell>
-                    <ListCell align="end" className="text-ink-2 tabular-nums">
+                    <ListCell className="hidden text-small text-ink-2 md:block">{formatDate(asset.purchaseDate, "d MMM yyyy", locale)}</ListCell>
+                    <ListCell align="end" className="hidden text-ink-2 tabular-nums md:block">
                       {formatCurrency(asset.purchasePrice, currency)}
                     </ListCell>
-                    {/* Once sold, the figure is the sale price, and says so. */}
+                    {/* Once sold, the figure is the sale price, and says so. A
+                        phone shows the change under it, in place of its column. */}
                     <ListCell align="end" className="flex flex-col items-end gap-px">
                       {sold && <span className="text-caption font-normal text-ink-muted">{t("Sale price")}</span>}
                       <span className={cn("font-semibold tabular-nums", sold ? "text-ink-2" : "text-ink")}>{formatCurrency(assetWorth(asset), currency)}</span>
+                      <span className="md:hidden">{chipOf(chip.tone, chip.label)}</span>
                     </ListCell>
-                    <ListCell align="end">{chipOf(chip.tone, chip.label)}</ListCell>
-                    <ListCell align="end">
+                    <ListCell align="end" className="hidden md:flex md:justify-end">
+                      {chipOf(chip.tone, chip.label)}
+                    </ListCell>
+                    <ListCell align="end" className="hidden md:block">
                       <Chip tone={sold ? "neutral" : "income"} size="sm" className="font-semibold">
                         {sold ? t("Sold") : t("Owned")}
                       </Chip>
@@ -250,8 +256,6 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                 );
               })}
             </div>
-            {/* Outside the 880px rows, so it is as wide as the card and a
-                phone sees it without scrolling sideways. */}
             {shown.length === 0 && <ListEmpty title={t("Nothing here.")} />}
           </ListCard>
         </>

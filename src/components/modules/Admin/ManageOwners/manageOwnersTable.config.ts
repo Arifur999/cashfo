@@ -14,6 +14,6 @@ export const MANAGE_OWNERS_TABLE_BASE_CONFIG = {
 // search is the same one Users has, in the same words.
 export const buildManageOwnersTableConfig = (statusCounts?: Record<OwnerStatus, number>): ServerDataTableConfig => ({
   ...MANAGE_OWNERS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Search name, email, phone or workspace" },
+  search: { placeholder: "Search people or workspaces" },
   filters: [{ id: "status", type: "tabs", label: "Status", options: enumTabs(OWNER_STATUSES, statusCounts) }],
 });

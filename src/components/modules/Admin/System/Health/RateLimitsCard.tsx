@@ -15,8 +15,10 @@ import NotRecordedNote from "../RateLimits/NotRecordedNote";
 const BUSIEST_SHOWN = 3;
 
 // The banner as one sentence each way, so Bangla can order its clauses.
+// The backend ranks topOffenders over all time, not today, so the name is
+// labelled as the all-time leader and never as today's caller.
 const hitsSentence = (hits: number, byWhom: boolean) => {
-  if (byWhom) return hits === 1 ? "Limit hit once today, by {name}" : "Limit hit {count} times today, most often by {name}";
+  if (byWhom) return hits === 1 ? "Limit hit once today. Most often over the limit, all time: {name}" : "Limit hit {count} times today. Most often over the limit, all time: {name}";
   return hits === 1 ? "Limit hit once today" : "Limit hit {count} times today";
 };
 

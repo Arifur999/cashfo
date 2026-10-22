@@ -1,10 +1,10 @@
 "use client";
 
 import { Info, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import ChoiceCard from "@/components/smartly/ChoiceCard";
+import ChoiceCard, { ChoiceCardGroup } from "@/components/smartly/ChoiceCard";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
@@ -42,6 +42,7 @@ const sameDays = (a: number[], b: number[]) => a.length === b.length && a.every(
 export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDelete }: TaskDrawerProps) {
   const { t, locale } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
+  const repeatId = useId();
   const [text, setText] = useState("");
   const [date, setDate] = useState(day);
   const [time, setTime] = useState<string | null>(null);
@@ -162,12 +163,17 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
             </fieldset>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Repeat")}</legend>
-              {options.map((option) => (
-                <ChoiceCard key={option.value} checked={repeat === option.value} onSelect={() => setRepeat(option.value)} title={t(option.title)} sub={option.sub} subPlacement="inline">
-                  {option.value === "WEEKLY" && <WeekdayPicker value={weekdays} onChange={setWeekdays} labels="long" className="pl-8" />}
-                </ChoiceCard>
-              ))}
+              <legend id={repeatId} className="mb-2 text-body font-medium text-ink">
+                {t("Repeat")}
+              </legend>
+              {/* One tab stop; the arrow keys move the choice, as native radios do. */}
+              <ChoiceCardGroup aria-labelledby={repeatId}>
+                {options.map((option) => (
+                  <ChoiceCard key={option.value} checked={repeat === option.value} onSelect={() => setRepeat(option.value)} title={t(option.title)} sub={option.sub} subPlacement="inline">
+                    {option.value === "WEEKLY" && <WeekdayPicker value={weekdays} onChange={setWeekdays} labels="long" className="pl-8" />}
+                  </ChoiceCard>
+                ))}
+              </ChoiceCardGroup>
             </fieldset>
 
             <p className="flex gap-3 rounded-md border border-line bg-strip px-4 py-3 text-small leading-normal text-ink-2">

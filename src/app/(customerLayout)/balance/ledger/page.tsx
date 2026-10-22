@@ -6,6 +6,7 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import type { Account } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { statementBackPath } from "@/lib/customer/ledger";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
@@ -78,6 +79,7 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
       periodFrom={dateFrom}
       periodTo={dateTo}
       today={getAppToday()}
+      backHref={statementBackPath(params.from)}
     />
   );
 }

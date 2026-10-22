@@ -29,8 +29,10 @@ type RegisterFormValues = IRegisterFormValues & { inviteCode: string };
 
 const schema = registerFormZodSchema.shape;
 const inviteCodeSchema = z.string().trim().max(INVITE_CODE_MAX_LENGTH, `At most ${INVITE_CODE_MAX_LENGTH} characters`);
-// The invite field's input id (AppField uses the field's name).
 const INVITE_FIELD = "inviteCode";
+
+// The legal links' names never break across lines.
+const TERMS_LINK = "font-semibold whitespace-nowrap text-brand-ink underline-offset-2 hover:underline";
 
 // Links inside the red callout: its own colour, underlined.
 const CALLOUT_LINK = "inline-flex min-h-11 items-center text-current underline hover:text-current";
@@ -52,6 +54,8 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
   const { run, error, isPending } = useAuthAction(registerAction);
   const [inviteOpen, setInviteOpen] = useState(false);
   const focusInvite = useRef(false);
+  // Around the invite field, to find its input without relying on its id.
+  const inviteRef = useRef<HTMLDivElement>(null);
 
   const form = useForm({
     defaultValues: { name: "", email: "", phone: "", password: "", confirmPassword: "", inviteCode: referralCode ?? "" } satisfies RegisterFormValues,
@@ -72,7 +76,7 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
   useEffect(() => {
     if (inviteOpen && focusInvite.current) {
       focusInvite.current = false;
-      document.getElementById(INVITE_FIELD)?.focus();
+      inviteRef.current?.querySelector("input")?.focus();
     }
   }, [inviteOpen]);
 
@@ -150,36 +154,39 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
           {/* The code the Referrals page hands out, for whoever got it as
               text rather than as a link. */}
           {inviteOpen ? (
-            <form.Field name={INVITE_FIELD} validators={{ onChange: inviteCodeSchema }}>
-              {(field) => (
-                <AppField
-                  field={field}
-                  size="auth"
-                  label={
-                    <>
-                      {translate("Invite code")} <span className="font-normal text-ink-muted">({translate("optional")})</span>
-                    </>
-                  }
-                  prepend={<Gift />}
-                  autoComplete="off"
-                  placeholder="A1B2C3D4"
-                />
-              )}
-            </form.Field>
+            <div ref={inviteRef}>
+              <form.Field name={INVITE_FIELD} validators={{ onChange: inviteCodeSchema }}>
+                {(field) => (
+                  <AppField
+                    field={field}
+                    size="auth"
+                    label={
+                      <>
+                        {translate("Invite code")} <span className="font-normal text-ink-muted">({translate("optional")})</span>
+                      </>
+                    }
+                    prepend={<Gift />}
+                    autoComplete="off"
+                    placeholder="A1B2C3D4"
+                  />
+                )}
+              </form.Field>
+            </div>
           ) : (
             !inviteCode && (
-              // 44px to tap; pulled up a little so it reads with the fields.
-              <button type="button" onClick={openInvite} className="-mt-2 inline-flex min-h-11 items-center self-start rounded-sm text-small font-semibold text-emerald hover:text-emerald-hover hover:underline">
+              // 44px to tap; pulled up a little so it reads with the fields,
+              // and as far from the terms below as from the field above.
+              <button type="button" onClick={openInvite} className="-mt-2 mb-2 inline-flex min-h-11 items-center self-start rounded-sm text-small font-semibold text-emerald hover:text-emerald-hover hover:underline">
                 {translate("Have an invite code?")}
               </button>
             )
           )}
 
-          <p className="text-caption font-normal text-ink-muted">
+          <p className="text-caption font-normal text-pretty text-ink-muted">
             <T
               values={{
-                terms: <LegalPageLink page="terms" newTab className="font-semibold text-brand-ink underline-offset-2 hover:underline" />,
-                privacy: <LegalPageLink page="privacy" newTab className="font-semibold text-brand-ink underline-offset-2 hover:underline" />,
+                terms: <LegalPageLink page="terms" newTab className={TERMS_LINK} />,
+                privacy: <LegalPageLink page="privacy" newTab className={TERMS_LINK} />,
               }}
             >
               {"By creating an account, you agree to our {terms} and {privacy}."}

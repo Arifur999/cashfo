@@ -351,4 +351,6 @@ export const loanManagementDictionary: Record<string, string> = {
   "Paid profit": "লাভ দিয়েছেন",
   "Received profit": "লাভ পেয়েছেন",
   "No change": "কোনো বদল নেই",
+  "Contact restored": "পরিচিতি ফিরিয়ে আনা হয়েছে",
+  "Failed to restore contact": "পরিচিতি ফিরিয়ে আনা যায়নি",
 };

@@ -34,7 +34,12 @@ export function StreaksCard({ rows }: StreaksCardProps) {
         <span className="text-caption text-ink-muted">{t("days in a row")}</span>
       </div>
       {rows.length === 0 ? (
-        <span className="py-3 text-small text-ink-muted">{t("Tick something today and again tomorrow to start a streak.")}</span>
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-6 text-center">
+          <span className="flex size-10 items-center justify-center rounded-full bg-surface-sunken text-ink-muted">
+            <Flame className="size-5" aria-hidden="true" />
+          </span>
+          <span className="max-w-60 text-small text-ink-muted">{t("Tick something today and again tomorrow to start a streak.")}</span>
+        </div>
       ) : (
         <ul className="flex flex-col gap-2">
           {rows.map((row) => {
@@ -48,7 +53,7 @@ export function StreaksCard({ rows }: StreaksCardProps) {
                 </span>
                 <span className="flex min-w-0 flex-col gap-1">
                   <span className="truncate text-small font-medium text-ink">{row.kind === "habit" ? row.name : t(row.name)}</span>
-                  <span className="h-1.25 overflow-hidden rounded-full bg-surface-sunken">
+                  <span className="h-1.25 overflow-hidden rounded-full bg-surface-sunken dark:bg-line">
                     <span className={cn("block h-full rounded-full", !bar && fixed.bar)} style={{ width: `${Math.round((row.days / max) * 100)}%`, background: bar }} />
                   </span>
                 </span>

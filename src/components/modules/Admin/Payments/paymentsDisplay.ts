@@ -1,8 +1,11 @@
 import { toDateInputValue } from "@/lib/date";
-import { formatCount } from "@/lib/i18n/digits";
 import type { FillValues } from "@/lib/i18n/fill";
-import type { Translate } from "@/lib/i18n/message";
+import { plural, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
+import { PAYMENT_STATUS_LABEL } from "@/lib/payments";
+import type { BadgeTone } from "@/lib/statusBadge";
+import type { PaginationMeta } from "@/types/api.types";
+import type { PaymentStatus } from "@/types/payment.types";
 import { PAYMENTS_TABLE_BASE_CONFIG } from "./paymentsTable.config";
 
 // Plain helpers for the money pages (Payments, a payment, Invoices, Revenue,
@@ -13,7 +16,7 @@ import { PAYMENTS_TABLE_BASE_CONFIG } from "./paymentsTable.config";
 // ("১,২৩৪টি পেমেন্ট"). English picks the form by count; Bangla words both
 // keys alike.
 export const countPhrase = (t: Translate, locale: Locale, count: number, one: string, many: string, values?: FillValues): string =>
-  t(count === 1 ? one : many, { ...values, count: formatCount(count, locale) });
+  plural(t, count, one, many, values, locale);
 
 export const PAYMENTS_LIST_HREF = "/admin/payments";
 
@@ -49,12 +52,18 @@ export const paymentsListHref = (back: string | string[] | null | undefined): st
   return query ? `${PAYMENTS_LIST_HREF}?${query}` : PAYMENTS_LIST_HREF;
 };
 
-// What narrows the payments list besides its status tab. The tabs' counts
-// are all-time totals per status, so beside any of these they would
-// contradict the rows under them.
+// What narrows the payments list besides its status tab: with any of these
+// set, an empty list says no payments match, not that there are none yet.
 export const PAYMENT_NARROWING_KEYS = ["search", "gateway", "planId", "dateFrom", "dateTo"] as const;
 
 export const hasAnyParam = (params: { get: (key: string) => string | null }, keys: readonly string[]): boolean => keys.some((key) => Boolean(params.get(key)));
+
+// The payments list's meta: the page, and how many payments each status
+// tab holds under the list's other filters. Absent from an API older than
+// the field, and then the tabs show no counts.
+export type PaymentsListMeta = PaginationMeta & { statusCounts?: Record<PaymentStatus, number> };
+
+export const listStatusCounts = (meta: PaginationMeta | undefined): Record<PaymentStatus, number> | undefined => (meta as PaymentsListMeta | undefined)?.statusCounts;
 
 // The "Failed, last 7 days" figure counts from this moment a week ago. The
 // list filters by whole Dhaka days, so its link starts on that moment's day
@@ -76,6 +85,19 @@ export type RefundExtent = "none" | "full" | "part";
 export const refundExtent = (amount: string | number, refund: { amount: string | number } | null | undefined): RefundExtent => {
   if (!refund) return "none";
   return Number(refund.amount) < Number(amount) ? "part" : "full";
+};
+
+// A payment's status chip. "Waiting" is amber, as the board draws it: it
+// needs watching. Given the refund (a list row), a refund of less than was
+// paid reads "Partly refunded", also amber, so the full amount beside it
+// isn't taken for what went back. The tone is left out where the shared
+// status colours already fit.
+export const paymentBadge = (payment: { status: PaymentStatus; amount?: string | number; refund?: { amount: string | number } | null }): { label: string; tone?: BadgeTone } => {
+  if (payment.status === "PENDING") return { label: PAYMENT_STATUS_LABEL.PENDING, tone: "warning" };
+  if (payment.status === "REFUNDED" && payment.amount !== undefined && refundExtent(payment.amount, payment.refund) === "part") {
+    return { label: "Partly refunded", tone: "warning" };
+  }
+  return { label: PAYMENT_STATUS_LABEL[payment.status] };
 };
 
 // The same person's other payments the payment's page is sent: the API

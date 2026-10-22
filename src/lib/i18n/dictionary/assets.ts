@@ -195,6 +195,8 @@ export const assetsDictionary: Record<string, string> = {
   "Sale undone": "বিক্রি ফিরিয়ে নেওয়া হয়েছে",
   "Failed to undo the sale": "বিক্রি ফেরানো যায়নি",
   "This asset has not been sold.": "এই সম্পদটি বিক্রি হয়নি।",
+  "The wallet the sale went into no longer holds that money, so the sale can't be undone.": "বিক্রির টাকা যে ওয়ালেটে জমা হয়েছিল, সেখানে সেই টাকা আর নেই, তাই বিক্রিটি ফিরিয়ে নেওয়া যাবে না।",
+  "This sale changed meanwhile. Reload and try again.": "এর মধ্যে বিক্রিটি বদলে গেছে। পেজটি আবার লোড করে চেষ্টা করুন।",
 
   // Update value (UpdateValueDrawer.tsx, AssetValueHistory.tsx)
   "Current value": "বর্তমান মূল্য",
@@ -227,7 +229,9 @@ export const assetsDictionary: Record<string, string> = {
   // The backend's answers, also the date's hint when it can't change.
   "Undo the sale first, then delete the asset.": "আগে বিক্রিটি ফিরিয়ে নিন, তারপর সম্পদটি মুছুন।",
   "A purchase paid from a wallet keeps its date. Delete the asset and add it again to change it.": "ওয়ালেট থেকে টাকা দিয়ে কেনা সম্পদের তারিখ বদলায় না। বদলাতে হলে সম্পদটি মুছে আবার যোগ করুন।",
-  "The purchase date can only change before the asset is revalued or sold.": "মূল্য আপডেট বা বিক্রির আগেই শুধু কেনার তারিখ বদলানো যায়।",
+  "A sold asset keeps its purchase date. Undo the sale to change it.": "বিক্রি হওয়া সম্পদের কেনার তারিখ বদলায় না। বদলাতে হলে আগে বিক্রিটি ফিরিয়ে নিন।",
+  "The purchase date can't be later than a value recorded for the asset.": "সম্পদের লেখা কোনো মূল্যের তারিখের পরে কেনার তারিখ দেওয়া যায় না।",
+  "It can't be later than the first value recorded after it, on {date}.": "এরপর প্রথম যে মূল্য লেখা হয়েছে ({date}), তার পরের তারিখ দেওয়া যায় না।",
 
   // CategoryDrawer colour names and shared category strings
   "Category updated": "ক্যাটাগরি আপডেট হয়েছে",

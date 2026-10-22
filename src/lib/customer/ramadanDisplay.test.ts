@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { HabitMonthTracker } from "./api";
 import { challengeMark, challengeSummary, challengeWindow, dayDone } from "./challengeDisplay";
-import { ashraSummary, parasOn, quranKhatam, ramadanCell, ramadanDays, ramadanStartIn, ramadanSummary, ramadanWindow, setupYears, summaryNote, withParas } from "./ramadanDisplay";
+import { ashraSummary, parasOn, quranKhatam, ramadanCell, ramadanDays, ramadanStartIn, ramadanSummary, ramadanWindow, setupDefaultYear, setupYears, summaryNote, withParas } from "./ramadanDisplay";
 
 const ramadan = (checks: [number, string][], overrides: Partial<HabitMonthTracker> = {}): HabitMonthTracker => ({
   id: "r",
@@ -99,12 +99,22 @@ describe("ramadan", () => {
     expect(withParas(ramadan([]), 4, 2).checks).toEqual([]);
   });
 
-  it("offers the years with no sheet: around the next Ramadan, or the six up to an earlier one", () => {
+  it("offers the years with no sheet: around the next Ramadan, or any other nearby one once it has its sheet", () => {
     const sheets = [{ year: 2026 }, { year: 2027 }];
     expect(setupYears(sheets, 2027)).toEqual([2025, 2028, 2029, 2030]);
-    expect(setupYears(sheets, 2026, true)).toEqual([2021, 2022, 2023, 2024, 2025]);
-    // Every one of them taken: nothing earlier left to add.
-    expect(setupYears([...sheets, ...[2021, 2022, 2023, 2024, 2025].map((year) => ({ year }))], 2026, true)).toEqual([]);
+    // Another Ramadan: earlier ones and the ones after the next.
+    expect(setupYears(sheets, 2027, "another")).toEqual([2021, 2022, 2023, 2024, 2025, 2028, 2029, 2030]);
+    // Every one of them taken: nothing left to add.
+    expect(setupYears([...sheets, ...[2021, 2022, 2023, 2024, 2025, 2028, 2029, 2030].map((year) => ({ year }))], 2027, "another")).toEqual([]);
+  });
+
+  it("opens the dialog on the nearest free year: forward for the next one, back first for another", () => {
+    expect(setupDefaultYear([2025, 2028, 2029, 2030], 2027)).toBe(2028);
+    expect(setupDefaultYear([2021, 2025], 2027)).toBe(2025);
+    expect(setupDefaultYear([2021, 2025, 2028], 2027, "another")).toBe(2025);
+    // Every earlier one taken: the first after the next.
+    expect(setupDefaultYear([2028, 2030], 2027, "another")).toBe(2028);
+    expect(setupDefaultYear([], 2027, "another")).toBe(2027);
   });
 });
 

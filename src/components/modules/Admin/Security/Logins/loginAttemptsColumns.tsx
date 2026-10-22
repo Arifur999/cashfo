@@ -10,8 +10,8 @@ const OUTCOME_TONE = { income: "text-emerald", expense: "text-expense", warning:
 
 // Why it failed, and what followed, in the reader's language.
 const OutcomeCell = ({ row }: { row: LoginAttemptGroup }) => {
-  const { translate } = useLocale();
-  const { text, note, tone } = attemptOutcome(row, { t: translate });
+  const { translate, locale } = useLocale();
+  const { text, note, tone } = attemptOutcome(row, { t: translate, locale });
   return (
     <span className="flex flex-col gap-px">
       <span className={cn("font-semibold", OUTCOME_TONE[tone])}>{text}</span>
@@ -21,8 +21,8 @@ const OutcomeCell = ({ row }: { row: LoginAttemptGroup }) => {
 };
 
 const WhenCell = ({ row }: { row: LoginAttemptGroup }) => {
-  const { translate } = useLocale();
-  return formatTimeRange(row.firstAt, row.lastAt, { t: translate });
+  const { translate, locale } = useLocale();
+  return formatTimeRange(row.firstAt, row.lastAt, { t: translate, locale });
 };
 
 // "5 tries" on a burst, or "At least 20 tries" when it runs past this page.

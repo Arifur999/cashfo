@@ -39,7 +39,6 @@ export const adminDashboardDictionary: Record<string, string> = {
   "Revenue, last 6 months": "আয়, গত ৬ মাস",
   "So far this month {amount}": "এ মাসে এ পর্যন্ত {amount}",
   // A bar chart's name for a screen reader, with every bar's month and amount.
-  "Revenue each month: {values}": "প্রতি মাসের আয়: {values}",
   "No revenue yet.": "এখনো কোনো আয় নেই।",
   "Accounts by plan": "প্ল্যান অনুযায়ী অ্যাকাউন্ট",
   "No plans yet.": "এখনো কোনো প্ল্যান নেই।",
@@ -88,7 +87,6 @@ export const adminDashboardDictionary: Record<string, string> = {
   "{count} paid workspaces lost this month": "এ মাসে {count}টি পেইড ওয়ার্কস্পেস চলে গেছে",
   "MRR, last 6 months": "MRR, গত ৬ মাস",
   "Recurring revenue from paid plans": "পেইড প্ল্যান থেকে নিয়মিত আয়",
-  "MRR each month: {values}": "প্রতি মাসের MRR: {values}",
   "Revenue by plan": "প্ল্যান অনুযায়ী আয়",
   "Last 12 months": "গত ১২ মাস",
   "All failed payments": "সব ব্যর্থ পেমেন্ট",
@@ -131,7 +129,7 @@ export const adminDashboardDictionary: Record<string, string> = {
   "Password changed. Your other devices were signed out.": "পাসওয়ার্ড বদলানো হয়েছে। আপনার অন্য ডিভাইসগুলো থেকে সাইন আউট করা হয়েছে।",
   // Settings: what each General field does today.
   "Couldn't load the settings": "সেটিংস লোড করা যায়নি",
-  "Not shown anywhere yet: emails and the browser tab still say Smartly.": "এখনো কোথাও দেখানো হয় না: ইমেইল আর ব্রাউজার ট্যাবে এখনো Smartly লেখা থাকে।",
+  "Signs every email (welcome, password reset, support replies). The browser tab still says Smartly.": "প্রতিটি ইমেইলে (স্বাগত, পাসওয়ার্ড রিসেট, সাপোর্টের উত্তর) এই নাম যায়। ব্রাউজার ট্যাবে এখনো Smartly লেখা থাকে।",
   "Shown on the maintenance page": "রক্ষণাবেক্ষণের পাতায় দেখানো হয়",
   "Saved for later: new workspaces still start in BDT.": "পরের জন্য রাখা হয়: নতুন ওয়ার্কস্পেস এখনো BDT দিয়েই শুরু হয়।",
   "Saved for later: the app still counts its days on Dhaka time.": "পরের জন্য রাখা হয়: অ্যাপ এখনো ঢাকার সময় ধরেই দিন গোনে।",

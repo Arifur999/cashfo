@@ -3,7 +3,7 @@
 import Kpi from "@/components/shared/Kpi";
 import T from "@/components/shared/T";
 import Card from "@/components/smartly/Card";
-import { formatCurrency } from "@/lib/currency";
+import { formatAmount } from "@/lib/currency";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { IWorkspaceOverviewSummary } from "@/types/workspace.types";
@@ -22,7 +22,7 @@ const WorkspaceKpis = ({ summary }: { summary: IWorkspaceOverviewSummary }) => {
       <Kpi label="People with extra workspaces" value={count(summary.totalUsers)} note={<T values={{ count: count(summary.totalAccounts) }}>{"Out of {count} accounts"}</T>} />
       {/* "Extra" is any workspace besides the person's own personal one, whatever their plan allows. */}
       <Kpi label="Extra workspaces" value={count(summary.totalAdditionalWorkspaces)} note="Besides each person's own personal workspace" />
-      <Kpi label="Possible add-on revenue" value={formatCurrency(summary.totalEstimatedMonthlyAddOnRevenue)} note="A month, if add-ons were charged" />
+      <Kpi label="Possible add-on revenue" value={formatAmount(summary.totalEstimatedMonthlyAddOnRevenue)} note="A month, if add-ons were charged" />
       <Card padding="none" className="flex flex-col gap-2 px-5 py-4">
         <span className="text-small text-ink-muted">
           <T>How many workspaces they have</T>

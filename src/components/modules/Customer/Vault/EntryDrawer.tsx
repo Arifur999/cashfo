@@ -43,6 +43,9 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
   const { t, locale } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   const [generatorOpen, setGeneratorOpen] = useState(false);
+  // The password reads as text on its eye, and whenever Generate fills it,
+  // so a new password shows in the open.
+  const [shown, setShown] = useState(false);
   // A save was tried with something missing: the fields say what.
   const [tried, setTried] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -54,6 +57,7 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
     if (open) {
       setGeneratorOpen(false);
       setTried(false);
+      setShown(false);
     }
   }
 
@@ -75,7 +79,10 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
 
   function toggleGenerator() {
     // Opening it makes a password straight away when none is typed yet.
-    if (!generatorOpen && draft && draft.password === "") set({ password: firstGenerated() });
+    if (!generatorOpen && draft && draft.password === "") {
+      set({ password: firstGenerated() });
+      setShown(true);
+    }
     setGeneratorOpen(!generatorOpen);
   }
 
@@ -194,6 +201,8 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
                   invalid={!!passwordError}
                   aria-describedby={passwordError ? "ve-pass-error" : editing ? "ve-pass-hint" : undefined}
                   mono
+                  visible={shown}
+                  onVisibleChange={setShown}
                   onCopy={draft.password ? copyPassword : undefined}
                   autoComplete="new-password"
                   name="vault-secret"
@@ -207,10 +216,17 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
             </Field>
             {/* Advice only: a short PIN is saved like any other password. */}
             {detail && <StrengthMeter password={draft.password} detail={t(detail.key, { count: formatCount(detail.count, locale) })} className="-mt-2" />}
-            {generatorOpen && <PasswordGenerator onGenerate={(password) => set({ password })} />}
+            {generatorOpen && (
+              <PasswordGenerator
+                onGenerate={(password) => {
+                  set({ password });
+                  setShown(true);
+                }}
+              />
+            )}
 
             <Field htmlFor="ve-notes" label={label(t("Notes"), true)}>
-              <Textarea id="ve-notes" rows={2} value={draft.notes} onChange={(event) => set({ notes: event.target.value })} maxLength={1000} className="max-md:text-body-lg" />
+              <Textarea id="ve-notes" rows={2} value={draft.notes} onChange={(event) => set({ notes: event.target.value })} maxLength={1000} />
             </Field>
 
             {draft.holderOpen ? (

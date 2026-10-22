@@ -17,15 +17,19 @@ async function authHeaders() {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
+// A failure carries the API's own message only. Without one, message stays
+// undefined and the caller shows its own words in the reader's language
+// (t(result.message ?? "Failed to ...")), which an English fallback made
+// here would always win over.
+async function callApi<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
   try {
     const data = await fn();
     return { success: true, data };
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage) };
+      return { success: false, message: getApiErrorMessage(error.response?.data, "") || undefined };
     }
-    return { success: false, message: fallbackMessage };
+    return { success: false };
   }
 }
 
@@ -45,7 +49,7 @@ export async function createAccountAction(businessId: string, input: AccountForm
   return callApi(async () => {
     const res = await customerApi.post<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to create account");
+  });
 }
 
 // What an edit may change -- the backend refuses accountType (an account's
@@ -63,19 +67,19 @@ export async function updateAccountAction(businessId: string, id: string, input:
   return callApi(async () => {
     const res = await customerApi.patch<Account>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}`, input, { headers: await authHeaders() });
     return res.data;
-  }, "Failed to update account");
+  });
 }
 
 export async function archiveAccountAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}/archive`, {}, { headers: await authHeaders() });
-  }, "Failed to archive account");
+  });
 }
 
 export async function unarchiveAccountAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${id}/unarchive`, {}, { headers: await authHeaders() });
-  }, "Failed to reactivate account");
+  });
 }
 
 // Permanently deletes the account if it has no real transaction history, or
@@ -88,5 +92,5 @@ export async function removeAccountAction(businessId: string, id: string): Promi
       headers: await authHeaders(),
     });
     return response.data;
-  }, "Failed to remove account");
+  });
 }

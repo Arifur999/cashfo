@@ -20,6 +20,7 @@ import { budgetCategoryIcon, BUDGET_CATEGORY_ICONS, iconLabelKey, iconMatches, I
 import { CATEGORY_TONE_COLORS, categoryTone, pickerColor } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { fillNodes } from "@/lib/i18n/fill";
+import { plural } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,9 @@ interface CategoryDrawerProps {
   // The names already taken, so a second "Groceries" is caught before the
   // save rather than refused by it.
   existingNames?: string[];
+  // An asset type's assets, when editing one: until the backend renames
+  // them with it, they keep the old name, and the drawer says so.
+  assetCount?: number;
 }
 
 const QUICK_LIMITS = [2000, 5000, 10000, 20000];
@@ -56,8 +60,8 @@ const ICON_ROWS = 4;
 // Add or edit a category in the design's drawer: a live preview of the
 // tile, the name, the monthly limit with quick chips and the budget warning
 // (an expense), the icon grid with search, and the colour dots.
-export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", variant = "budget", editing, currency, unassigned = null, totalBudget = null, existingNames }: CategoryDrawerProps) {
-  const { t } = useLocale();
+export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", variant = "budget", editing, currency, unassigned = null, totalBudget = null, existingNames, assetCount = 0 }: CategoryDrawerProps) {
+  const { t, locale } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const isAsset = variant === "asset";
@@ -108,6 +112,8 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
   // How much of the budget this limit would take beyond what is unassigned
   // (editing adds back the category's current limit first).
   const currentLimit = editing?.monthlyLimit ? Number(editing.monthlyLimit) : 0;
+  // Renaming an asset type its assets are filed under.
+  const renamesAssets = isAsset && !!editing && assetCount > 0 && !!trimmed && trimmed !== editing.name;
   const over = !noLimit && unassigned !== null && limitValue > unassigned + currentLimit ? limitValue - (unassigned + currentLimit) : 0;
 
   function submit(event: React.FormEvent) {
@@ -127,11 +133,11 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
           ? await updateBudgetCategoryAction(businessId, editing.id, input)
           : await createBudgetCategoryAction(businessId, { type, ...input });
       if (result.success) {
-        toast.success(editing ? t("Category updated") : t("Category added"));
+        toast.success(t(isAsset ? (editing ? "Asset type updated" : "Asset type added") : editing ? "Category updated" : "Category added"));
         onClose();
         router.refresh();
       } else {
-        toast.error(t(result.message ?? "Failed to save category"));
+        toast.error(t(result.message ?? (isAsset ? "Failed to save the asset type" : "Failed to save category")));
       }
     });
   }
@@ -142,7 +148,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
   const overflows = icons.length > (wide ? 8 : 6) * ICON_ROWS;
   const tone = categoryTone(color);
   const chosenDot = pickerColor(color);
-  const title = isAsset || isGroup ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income source" : "Edit expense category") : t(isIncome ? "Add income source" : "Add expense category");
+  const title = isAsset ? (editing ? t("Edit asset type") : t("Add asset type")) : isGroup ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income source" : "Edit expense category") : t(isIncome ? "Add income source" : "Add expense category");
 
   const limitSection = !noLimit && (
     <div className="flex flex-col gap-2">
@@ -212,24 +218,31 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
               <div className="flex items-center gap-3">
                 <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
-                  <span className="truncate text-title text-ink">{trimmed || t(isIncome ? "New source" : "New category")}</span>
-                  <span className="text-caption font-normal text-ink-muted">{isAsset ? t("Asset category") : isGroup ? t("Expense category") : isIncome ? t("Income source") : t("Limit {amount}", { amount: formatCurrency(limitValue, currency) })}</span>
+                  <span className="truncate text-title text-ink">{trimmed || t(isAsset ? "New asset type" : isIncome ? "New source" : "New category")}</span>
+                  <span className="text-caption font-normal text-ink-muted">{isAsset ? t("Asset type") : isGroup ? t("Expense category") : isIncome ? t("Income source") : t("Limit {amount}", { amount: formatCurrency(limitValue, currency) })}</span>
                 </span>
                 {!noLimit && <span className="text-caption font-semibold text-emerald">{t("{amount} left", { amount: formatCurrency(limitValue, currency) })}</span>}
               </div>
-              <ProgressBar value={0} size="sm" label={t("Preview")} />
+              {/* An asset type has nothing to fill a bar with. */}
+              {!isAsset && <ProgressBar value={0} size="sm" label={t("Preview")} />}
             </div>
 
-            <Field htmlFor="cat-name" label={<span className="text-body font-medium text-ink">{t("Name")}</span>} error={taken ? t("A category with this name already exists") : undefined}>
+            <Field htmlFor="cat-name" label={<span className="text-body font-medium text-ink">{t("Name")}</span>} error={taken ? t(isAsset ? "An asset type with that name already exists" : "A category with this name already exists") : undefined}>
               <Input id="cat-name" size="md" value={name} invalid={taken} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isAsset ? "Vehicle" : isGroup ? "Bazar" : isIncome ? "Salary" : "Groceries")} />
             </Field>
+            {renamesAssets && (
+              <p className="-mt-2 flex gap-2 text-caption leading-relaxed text-warning">
+                <TriangleAlert className="mt-0.5 size-3.25 shrink-0" strokeWidth={2.25} aria-hidden="true" />
+                {plural(t, assetCount, "{count} asset keeps the old name", "{count} assets keep the old name", undefined, locale)}
+              </p>
+            )}
 
             {/* The limit is what an expense category can't save without, so it comes first. */}
             {limitSection}
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
               <legend className="mb-2 text-body font-medium text-ink">{t("Icon")}</legend>
-              <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t("Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} />
+              <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t(isAsset ? "Search icons, e.g. car, land, gold" : "Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} />
               <div className="grid max-h-48 grid-cols-6 gap-2 overflow-y-auto md:grid-cols-8">
                 {icons.length === 0 ? (
                   <p className="col-span-6 py-4 text-center text-small text-ink-muted md:col-span-8">{t("No matching icon")}</p>
@@ -293,7 +306,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
               </Button>
               <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
                 {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-                {editing ? t("Save changes") : t(isIncome && !isAsset && !isGroup ? "Add source" : "Add category")}
+                {editing ? t("Save changes") : t(isAsset ? "Add asset type" : isIncome && !isGroup ? "Add source" : "Add category")}
               </Button>
             </div>
           </div>

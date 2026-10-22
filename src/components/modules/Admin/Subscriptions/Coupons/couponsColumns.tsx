@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import Localized from "@/components/shared/Localized";
-import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { COUPON_STATUS_LABEL, discountText, usesCap, validityText, worksOn } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ const UsesCell = ({ coupon }: { coupon: ICoupon }) => {
         <T
           values={{
             used: <b className="font-semibold">{formatCount(timesRedeemed, locale)}</b>,
-            cap: <span className="text-ink-muted">{toLocaleDigits(usesCap(maxRedemptions, translate), locale)}</span>,
+            cap: <span className="text-ink-muted">{usesCap(maxRedemptions, translate, locale)}</span>,
           }}
         >
           {maxRedemptions === null ? "{used} {cap}@@unlimited" : "{used} {cap}"}
@@ -35,6 +35,18 @@ const UsesCell = ({ coupon }: { coupon: ICoupon }) => {
           />
         </span>
       )}
+    </span>
+  );
+};
+
+// When it runs, in the reader's language ("৪ সেপ্টে – ৩১ ডিসে ২০২৬"), cut
+// short with the whole of it on hover.
+const ValidityCell = ({ coupon }: { coupon: ICoupon }) => {
+  const { locale } = useLocale();
+  const text = validityText(coupon.validFrom, coupon.validUntil, locale);
+  return (
+    <span className="block truncate text-ink-2" title={text}>
+      {text}
     </span>
   );
 };
@@ -100,14 +112,7 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     id: "validUntil",
     accessorKey: "validUntil",
     header: "Valid",
-    cell: ({ row }) => {
-      const text = validityText(row.original.validFrom, row.original.validUntil);
-      return (
-        <span className="block truncate text-ink-2" title={text}>
-          {text}
-        </span>
-      );
-    },
+    cell: ({ row }) => <ValidityCell coupon={row.original} />,
     meta: { width: 170, exportValue: (row) => validityText(row.validFrom, row.validUntil) },
   },
   {

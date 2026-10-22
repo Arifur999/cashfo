@@ -4,6 +4,7 @@ import { PiggyBank, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
@@ -47,6 +48,8 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
   const { t } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
+  // Offline, Save waits for the connection instead of failing on send.
+  const online = useOnline();
   const [type, setType] = useState<WalletType>("bank");
   const [name, setName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -78,13 +81,14 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid || isPending) return;
+    if (!valid || isPending || !online) return;
     startTransition(async () => {
       try {
         const result = editing
-          ? // "" clears the account number; left out (a cash wallet, which
-            // shows no field) it stays as it was.
-            await updateAccountAction(businessId, editing.id, { name: name.trim(), ...(numbered && { accountNumber: accountNumber.trim() }), accountSubtype: subtype })
+          ? // "" clears the account number. Cash has none, so a wallet
+            // turned into Cash (or a cash one holding a stray number) loses it,
+            // as the preview above already shows.
+            await updateAccountAction(businessId, editing.id, { name: name.trim(), accountNumber: numbered ? accountNumber.trim() : "", accountSubtype: subtype })
           : await createAccountAction(businessId, {
               name: name.trim(),
               accountNumber: (numbered && accountNumber.trim()) || undefined,
@@ -97,7 +101,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
           onClose();
           router.refresh();
         } else {
-          toast.error(result.message ?? (editing ? t("Failed to update wallet") : t("Failed to create wallet")));
+          toast.error(t(result.message ?? (editing ? "Failed to update wallet" : "Failed to create wallet")));
         }
       } catch {
         // No answer at all (offline): nothing was saved, and the form keeps what was typed.
@@ -221,7 +225,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
+            <Button type="submit" variant="action" disabled={!valid || isPending || !online} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
               {editing ? t("Save changes") : t("Create wallet")}
             </Button>

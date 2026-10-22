@@ -1,8 +1,8 @@
 import { formatCount } from "@/lib/i18n/digits";
-import type { Translate } from "@/lib/i18n/message";
+import { localName, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 import { paginate } from "@/lib/table/paginate";
-import type { ContactBalanceDetail, ContactType, DirectionBreakdown, LoanBalanceDirection, LoanStatementRow, Transaction } from "./api";
+import type { ContactBalanceDetail, ContactType, LoanBalanceDirection, LoanStatementRow, Transaction } from "./api";
 import { toEnglishDigits } from "./money";
 import { cancelledLabel } from "./transactionDisplay";
 import { WALLET_TYPES } from "./walletVisuals";
@@ -92,9 +92,9 @@ export const LOAN_ENTRY_META: Record<LoanEntryKind, LoanEntryMeta> = {
 
 export const LOAN_ENTRY_KINDS = Object.keys(LOAN_ENTRY_META) as LoanEntryKind[];
 
-// A statement row as the API sends it. reversalOfId and cancelled came
-// later, so an older backend leaves them out.
-export type StatementRow = LoanStatementRow & { reversalOfId?: string | null; cancelled?: boolean };
+// A statement row as the API sends it (an older backend leaves out
+// reversalOfId and cancelled).
+export type StatementRow = LoanStatementRow;
 
 // A voided posting, or the reversal that undid it: listed, never counted.
 export const isCancelledRow = (row: StatementRow): boolean => row.cancelled ?? (row.status === "VOIDED" || !!row.reversalOfId);
@@ -238,8 +238,7 @@ export function balanceAfterEntry(balance: number | string, kind: LoanEntryKind,
 
 // The balance-detail API's two sides, with what is still unpaid of the
 // contact's opening balance on each (an older backend leaves it out).
-type DetailSide = DirectionBreakdown & { openingRemaining?: string };
-export type LoanBalanceDetail = Omit<ContactBalanceDetail, "receivable" | "payable"> & { receivable: DetailSide; payable: DetailSide };
+export type LoanBalanceDetail = ContactBalanceDetail;
 
 // The most a repayment can be, as the API checks it: what is still owed on
 // that side (its loans, and its part of the opening balance). "Got money
@@ -266,11 +265,12 @@ const walletEntry = (transaction: Pick<Transaction, "entries">) => transaction.e
 // Reads a loan entry back out of a transaction: the type says loan or
 // repayment, and the wallet side says which way the money went. A reversal
 // keeps the kind of the entry it undid (its wallet side is flipped). Null
-// for anything that isn't one of the four.
-export function loanEntryOf(transaction: Pick<Transaction, "transactionType" | "entries"> & { reversalOfId?: string | null }): LoanEntry | null {
+// for anything that isn't one of the four. The wallet is named in the
+// reader's language.
+export function loanEntryOf(transaction: Pick<Transaction, "transactionType" | "entries"> & { reversalOfId?: string | null }, locale: Locale = "en"): LoanEntry | null {
   const money = walletEntry(transaction);
   const amount = Number(money?.amount ?? transaction.entries[0]?.amount ?? 0);
-  const wallet = money?.account?.name ?? null;
+  const wallet = money?.account ? localName(locale, money.account) : null;
   switch (transaction.transactionType) {
     case "SALE":
       return { kind: "GIVE_LOAN", amount, wallet };
@@ -296,11 +296,16 @@ export interface LoanProfit {
 
 // A loan's profit or interest: an expense (paid) or an income (received)
 // posted with the contact; what it was filed under, and the wallet.
-export function loanProfitOf(transaction: Pick<Transaction, "transactionType" | "entries">): LoanProfit | null {
+export function loanProfitOf(transaction: Pick<Transaction, "transactionType" | "entries">, locale: Locale = "en"): LoanProfit | null {
   if (transaction.transactionType !== "INCOME" && transaction.transactionType !== "EXPENSE") return null;
   const money = walletEntry(transaction);
   const filed = transaction.entries.find((entry) => entry !== money);
-  return { paid: transaction.transactionType === "EXPENSE", amount: Number(money?.amount ?? filed?.amount ?? 0), wallet: money?.account?.name ?? null, category: filed?.categoryId ?? filed?.account?.name ?? null };
+  return {
+    paid: transaction.transactionType === "EXPENSE",
+    amount: Number(money?.amount ?? filed?.amount ?? 0),
+    wallet: money?.account ? localName(locale, money.account) : null,
+    category: filed?.categoryId ?? (filed?.account ? localName(locale, filed.account) : null),
+  };
 }
 
 export interface LoanPaymentRow {
@@ -316,10 +321,11 @@ export interface LoanPaymentRow {
   cancelled: "Voided" | "Reversal" | null;
 }
 
-// One row of Loan payments, read from its transaction.
-export function loanPaymentRow(transaction: Pick<Transaction, "transactionType" | "entries" | "status" | "reversalOfId">): LoanPaymentRow {
-  const entry = loanEntryOf(transaction);
-  const profit = loanProfitOf(transaction);
+// One row of Loan payments, read from its transaction, its wallet named in
+// the reader's language.
+export function loanPaymentRow(transaction: Pick<Transaction, "transactionType" | "entries" | "status" | "reversalOfId">, locale: Locale = "en"): LoanPaymentRow {
+  const entry = loanEntryOf(transaction, locale);
+  const profit = loanProfitOf(transaction, locale);
   const inward = profit ? !profit.paid : entry ? LOAN_ENTRY_META[entry.kind].flow === "in" : null;
   const amount = profit?.amount ?? entry?.amount ?? 0;
   const moved = inward === null ? null : transaction.reversalOfId ? !inward : inward;

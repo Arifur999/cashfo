@@ -50,12 +50,15 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
   const grid = useRovingGrid(tracker.items.length, tracker.totalDays, { row: 0, col: startDay - 1 });
   const count = (n: number) => formatCount(n, locale);
 
-  // Today in view, whatever the width.
+  // Today in view, whatever the width. Measured against the scroller itself
+  // (offsetLeft would count the sidebar and the page's gutters too, and push
+  // today under the pinned row names), with today's column in the middle.
   useEffect(() => {
     const box = scroller.current;
     const head = todayHead.current;
     if (!box || !head || box.scrollWidth <= box.clientWidth) return;
-    box.scrollLeft = Math.max(0, head.offsetLeft - box.clientWidth / 2);
+    const left = head.getBoundingClientRect().left - box.getBoundingClientRect().left + box.scrollLeft;
+    box.scrollLeft = Math.max(0, left - box.clientWidth / 2 + head.offsetWidth / 2);
   }, []);
 
   // Back on the box once its menu closes, so the arrow keys carry on.

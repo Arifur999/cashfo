@@ -14,6 +14,7 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Switch } from "@/components/ui/switch";
 import type { GroupExpenseCategoryOption, GroupKind, GroupSettings, GroupSplit } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { updateBusinessAction } from "@/lib/customer/businessActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { groupMonthOf, monthRangeOf, poolsMeals, rangeLabel, SPLIT_LABELS, SPLITS, splitTotals } from "@/lib/customer/groupDisplay";
@@ -21,9 +22,9 @@ import { updateGroupExpenseCategoryAction, updateGroupMemberAction, updateGroupS
 import { mealText, unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
 import { toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { attempt } from "./attempt";
 import { CategoryTile } from "./GroupBits";
 import type { GroupPageData } from "./groupTypes";
 import { ShareStepper } from "./ShareStepper";
@@ -107,7 +108,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
     setSaving(section);
     setSaved(null);
     startTransition(async () => {
-      const result = await attempt(action, t("No connection. Nothing was saved; try again."));
+      const result = await attempt(action, t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       setSaving(null);
       if (!result.success) {
         toast.error(result.message ?? failed);
@@ -243,7 +244,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
                   <ShareStepper value={shares} name={member.name} disabled={isPending} onChange={(next) => run("shares", () => updateGroupMemberAction(data.businessId, member.id, { shareUnits: next }), t("Failed to update member"))} />
                   {/* Their part of the month's by-shares costs, by name, as each expense split it. */}
                   <span className="flex w-20 flex-col items-end text-right tabular-nums">
-                    <span className="text-small text-ink-2">{totalShares ? `${((shares / totalShares) * 100).toFixed(1)}%` : "—"}</span>
+                    <span className="text-small text-ink-2">{totalShares ? toLocaleDigits(`${((shares / totalShares) * 100).toFixed(1)}%`, locale) : "—"}</span>
                     {theirs !== undefined && <span className="text-caption text-ink-muted">{money(theirs)}</span>}
                   </span>
                 </div>

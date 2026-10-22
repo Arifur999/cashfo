@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
@@ -13,11 +14,12 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import TabBar from "@/components/smartly/TabBar";
 import { archiveAccountAction, removeAccountAction, unarchiveAccountAction, type ActionResult } from "@/lib/customer/accountActions";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { walletShares } from "@/lib/customer/walletShares";
-import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 import { TransferDrawer } from "./TransferDrawer";
 import { WalletCard } from "./WalletCard";
@@ -50,6 +52,10 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
   // The wallet an archive, unarchive or remove is working on.
   const [busyId, setBusyId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  // Offline, Archive and Remove wait for the connection instead of failing
+  // on send.
+  const online = useOnline();
+  const nameOf = (wallet: Account) => accountDisplayName(wallet, displayLanguage(locale));
 
   // ?new=1 (Balance's Add wallet, the Move money drawer's Add a wallet)
   // opens the add drawer.
@@ -80,13 +86,12 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
   const totalOpening = sum(active, (wallet) => wallet.openingBalance);
   const editing = typeof drawer === "object" ? drawer : null;
   const busy = isPending ? busyId : null;
-  const activeCount = formatCount(active.length, locale);
   const archivedNote = inArchived !== 0 ? t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency) }) : null;
 
   // One action on one wallet at a time: its card dims and its menu waits
   // until the answer comes back.
   function act<T>(wallet: Account, action: () => Promise<ActionResult<T>>, done: (result: ActionResult<T>) => void, failed: string) {
-    if (isPending) return;
+    if (isPending || !online) return;
     setBusyId(wallet.id);
     startTransition(async () => {
       try {
@@ -95,7 +100,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
           done(result);
           router.refresh();
         } else {
-          toast.error(result.message ?? t(failed));
+          toast.error(t(result.message ?? failed));
         }
       } catch {
         // No answer at all (offline): nothing changed.
@@ -125,12 +130,12 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
     const confirmed = await confirm(
       isArchived
         ? {
-            title: t("Delete {name} for good?", { name: wallet.name }),
+            title: t("Delete {name} for good?", { name: nameOf(wallet) }),
             message: t("Only a wallet nothing was ever posted to can be deleted. One with transactions stays archived, so your history stays whole."),
             confirmLabel: "Delete wallet",
           }
         : {
-            title: t("Remove {name}?", { name: wallet.name }),
+            title: t("Remove {name}?", { name: nameOf(wallet) }),
             message: t("A wallet with transactions is archived instead of deleted, so your history stays whole."),
             confirmLabel: "Remove wallet",
           },
@@ -201,10 +206,10 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
 
       {/* Phone: the total, the share bar and the add button in one card. */}
       <Card padding="sm" elevated={false} className="flex flex-col gap-3 md:hidden">
-        <span className="text-small leading-[normal] text-ink-muted">{t(active.length === 1 ? "Available across {count} wallet" : "Available across {count} wallets", { count: activeCount })}</span>
+        <span className="text-small leading-[normal] text-ink-muted">{plural(t, active.length, "Available across {count} wallet", "Available across {count} wallets", undefined, locale)}</span>
         <AmountText value={available} currency={currency} size="display" className="wrap-anywhere" />
         {archivedNote && <span className="-mt-2 text-caption text-ink-muted">{archivedNote}</span>}
-        <WalletShareBar slices={walletShares(wallets)} size="sm" label={t("Share of balance by wallet")} />
+        <WalletShareBar slices={walletShares(wallets.map((wallet) => ({ ...wallet, name: nameOf(wallet) })))} size="sm" label={t("Share of balance by wallet")} />
         <div className="flex gap-3">
           {moveButton("lg", "flex-1")}
           {canManage && (
@@ -222,7 +227,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
           <span className="text-small font-medium text-ink-muted">{t("Available balance")}</span>
           <AmountText value={available} currency={currency} size="h2" className="text-h1 wrap-anywhere" />
           <span className="text-caption font-normal text-ink-muted">
-            {t(active.length === 1 ? "Across {count} active wallet" : "Across {count} active wallets", { count: activeCount })}
+            {plural(t, active.length, "Across {count} active wallet", "Across {count} active wallets", undefined, locale)}
             {archivedNote && ` · ${archivedNote}`}
           </span>
         </Card>
@@ -258,6 +263,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
               currency={currency}
               canManage={canManage}
               busy={busy === wallet.id}
+              offline={!online}
               onEdit={() => setDrawer(wallet)}
               onToggleArchive={() => toggleArchive(wallet)}
               onRemove={() => remove(wallet)}

@@ -43,7 +43,7 @@ const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSetti
         </h2>
         <div className="grid gap-4 px-5 pt-4 pb-5 sm:grid-cols-2">
           <form.Field name="platformName" validators={{ onChange: schema.shape.platformName }}>
-            {(field) => <AppField field={field} label="Platform name" disabled={disabled} description="Not shown anywhere yet: emails and the browser tab still say Smartly." />}
+            {(field) => <AppField field={field} label="Platform name" disabled={disabled} description="Signs every email (welcome, password reset, support replies). The browser tab still says Smartly." />}
           </form.Field>
           <form.Field name="supportEmail" validators={{ onChange: schema.shape.supportEmail }}>
             {(field) => <AppField field={field} label="Support email" type="email" disabled={disabled} description="Shown on the maintenance page" />}

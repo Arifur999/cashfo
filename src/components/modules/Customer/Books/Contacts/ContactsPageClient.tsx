@@ -80,8 +80,12 @@ export function ContactsPageClient({ businessId, contacts, receivableAging, canM
             tone: late.amount > 0 ? "warning" : "neutral",
             note: (
               <>
-                {counted(late.contacts, "{count} customer", "{count} customers")} ·{" "}
-                <Link href="/dena-pawna" className="-my-1 inline-flex py-1 font-semibold text-emerald hover:underline pointer-coarse:py-3">
+                {/* On a phone the link takes its own line, with no dot left hanging. */}
+                {counted(late.contacts, "{count} customer", "{count} customers")}
+                <span aria-hidden="true" className="max-sm:hidden">
+                  {" · "}
+                </span>
+                <Link href="/dena-pawna" className="-my-1 inline-flex py-1 font-semibold max-sm:mt-0 max-sm:flex max-sm:w-fit text-emerald hover:underline pointer-coarse:py-3">
                   {t("See receivables & payables")}
                 </Link>
               </>

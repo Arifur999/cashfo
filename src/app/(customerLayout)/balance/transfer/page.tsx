@@ -78,6 +78,7 @@ export default async function BalanceTransferPage({ searchParams }: PageProps<"/
       range={range}
       periodFrom={dateFrom}
       periodTo={dateTo}
+      excludeSavings={!!walletOnly}
       today={getAppToday()}
       pageSizes={PAGE_SIZES}
       defaultPageSize={PAGE_SIZE}

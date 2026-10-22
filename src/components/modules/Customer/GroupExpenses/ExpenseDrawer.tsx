@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useAmountField } from "@/hooks/useAmountField";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GroupExpense, GroupExpenseCategoryOption, GroupMember, GroupPaidFrom, GroupSplit } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
@@ -24,7 +25,6 @@ import { createGroupExpenseAction, updateGroupExpenseAction } from "@/lib/custom
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { attempt } from "./attempt";
 import { dayInMonth } from "./ContributionDrawer";
 import { CloseX, FOCUS_WITHIN } from "./GroupBits";
 import type { ClosedGuard } from "./groupTypes";
@@ -155,7 +155,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
     }
     startTransition(async () => {
       const input = { amount: String(value), date, category: category || undefined, description: description.trim() || undefined, paidByMemberId: paidById || undefined, paidFrom, split, splits };
-      const result = await attempt(() => (editing ? updateGroupExpenseAction(businessId, editing.id, { ...input, description: description.trim(), paidByMemberId: paidById }) : createGroupExpenseAction(businessId, input)), t("No connection. Nothing was saved; try again."));
+      const result = await attempt(() => (editing ? updateGroupExpenseAction(businessId, editing.id, { ...input, description: description.trim(), paidByMemberId: paidById }) : createGroupExpenseAction(businessId, input)), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       if (!result.success) {
         toast.error(result.message ?? t("Failed to save the expense"));
         return;

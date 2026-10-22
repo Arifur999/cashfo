@@ -47,10 +47,10 @@ const NameCell = ({ flag }: { flag: IFeatureFlag }) => {
 
 // How many people get it, with its bar, in the reader's language.
 const RolloutCell = ({ flag }: { flag: IFeatureFlag }) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   return (
     <span className="flex w-40 flex-col gap-1">
-      <span className={cn("text-small font-semibold", flag.isEnabled ? "text-ink" : "text-ink-muted")}>{rolloutLabel(flag, translate)}</span>
+      <span className={cn("text-small font-semibold", flag.isEnabled ? "text-ink" : "text-ink-muted")}>{rolloutLabel(flag, translate, locale)}</span>
       <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
         <span className={cn("block h-full rounded-full", flag.isEnabled ? "bg-emerald" : "bg-line-strong")} style={{ width: `${flag.rolloutPercent}%` }} />
       </span>

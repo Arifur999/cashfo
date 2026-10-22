@@ -35,6 +35,13 @@ describe("transferParties", () => {
     expect(transferParties(deposit("1000"))).toMatchObject({ to: "Islami Bank DPS", fromSavings: false, toSavings: true });
   });
 
+  it("names the wallets in the reader's language, English where there is no Bangla name", () => {
+    const named = { entries: [{ ...entry("CREDIT", "a", "Cash"), account: { id: "a", name: "Cash", nameBn: "নগদ", accountType: "ASSET" as const, accountSubtype: "cash" } }, entry("DEBIT", "b", "UCB Bank")] };
+    expect(transferParties(named, "bn")).toMatchObject({ from: "নগদ", to: "UCB Bank" });
+    expect(transferParties(named, "en")).toMatchObject({ from: "Cash", to: "UCB Bank" });
+    expect(transferParties(named)).toMatchObject({ from: "Cash" });
+  });
+
   it("shows dashes when an entry is missing", () => {
     expect(transferParties({ entries: [] })).toEqual({ fromId: null, from: "—", toId: null, to: "—", fromSavings: false, toSavings: false });
   });

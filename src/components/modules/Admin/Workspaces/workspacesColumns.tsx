@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CountCell, PersonLinkCell, WorkspaceNamesCell } from "@/components/modules/Admin/UserManagement/PeopleCells";
 import PlanChipCell from "@/components/shared/cell/PlanChipCell";
-import { formatCurrency } from "@/lib/currency";
+import { formatAmount } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import type { IWorkspaceOverviewItem } from "@/types/workspace.types";
 
@@ -9,7 +9,8 @@ const NUMBER = { align: "right" as const };
 
 // The design's Workspaces list: the owner (a link to their page) over their
 // workspaces' names, plan, how many workspaces, how many extra, and the
-// add-on they could pay. Counts in the reader's digits; money stays Latin.
+// add-on they could pay. Counts in the reader's digits; money stays Latin,
+// with paisa only when there are some ("৳ 0", "৳ 1,198.50").
 export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
   {
     id: "name",
@@ -18,7 +19,7 @@ export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-col gap-px">
         <PersonLinkCell userId={row.original.userId} name={row.original.name} from="workspaces" />
-        <WorkspaceNamesCell names={row.original.workspaceNames} />
+        <WorkspaceNamesCell row={row.original} />
       </span>
     ),
     meta: { exportValue: (row) => `${row.name} <${row.email}>` },
@@ -50,7 +51,7 @@ export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
     header: "Add-on, a month",
     cell: ({ row }) => (
       <span className={cn("font-semibold tabular-nums", Number(row.original.estimatedMonthlyAddOnRevenue) > 0 ? "text-ink" : "text-ink-muted")}>
-        {formatCurrency(row.original.estimatedMonthlyAddOnRevenue)}
+        {formatAmount(row.original.estimatedMonthlyAddOnRevenue)}
       </span>
     ),
     meta: { ...NUMBER, width: 170 },

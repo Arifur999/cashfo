@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import Banner from "@/components/smartly/Banner";
 import { cn } from "@/lib/utils";
 import type { AnnouncementType } from "@/types/announcement.types";
-import { ANNOUNCEMENT_TYPE_META, BANNER_TONE } from "./announcementOptions";
+import { ANNOUNCEMENT_TYPE_META, bannerTone } from "./announcementOptions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface AnnouncementPreviewProps {
@@ -23,11 +23,11 @@ interface AnnouncementPreviewProps {
 // and the close button each banner carries (drawn, not working, here).
 const AnnouncementPreview = ({ type, title, body, titleLang, bodyLang, className }: AnnouncementPreviewProps) => {
   const { translate } = useLocale();
-  const { icon: Icon, tone } = ANNOUNCEMENT_TYPE_META[type];
+  const { icon: Icon } = ANNOUNCEMENT_TYPE_META[type];
 
   return (
     // A figure, not the Banner's live status: it changes with every keystroke.
-    <Banner tone={BANNER_TONE[tone]} inline icon={<Icon />} role="figure" aria-label={translate("Banner preview")} className={className}>
+    <Banner tone={bannerTone(type)} inline icon={<Icon />} role="figure" aria-label={translate("Banner preview")} className={className}>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1 wrap-break-word">
           <p lang={titleLang} className={cn("font-semibold", titleLang && "font-bn")}>

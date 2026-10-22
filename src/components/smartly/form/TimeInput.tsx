@@ -20,7 +20,7 @@ interface TimeInputProps {
 // A form's time field, the twin of DayInput: "12:30 pm" beside a clock, a
 // click opens the browser's own time picker, and a set time can be cleared.
 const TimeInput = ({ id, value, onChange, size = "md", placeholder = "", className }: TimeInputProps) => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const picker = useRef<HTMLInputElement>(null);
 
   function open() {
@@ -34,7 +34,7 @@ const TimeInput = ({ id, value, onChange, size = "md", placeholder = "", classNa
   return (
     <InputFrame size={size} onClick={open} className={cn("relative cursor-pointer px-3", className)}>
       <Clock className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-      <span className={cn("min-w-0 flex-1 truncate tabular-nums", !value && "text-ink-faint")}>{value ? timeLabel(value, t) : placeholder}</span>
+      <span className={cn("min-w-0 flex-1 truncate tabular-nums", !value && "text-ink-faint")}>{value ? timeLabel(value, t, locale) : placeholder}</span>
       {value && (
         <button
           type="button"

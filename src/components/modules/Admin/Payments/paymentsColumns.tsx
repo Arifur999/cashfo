@@ -1,8 +1,6 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { formatAmount } from "@/lib/currency";
 import Localized from "@/components/shared/Localized";
@@ -13,38 +11,26 @@ import { GATEWAY_CHIP_CLASS, PAYMENT_STATUS_LABEL, paymentNote, shortPaymentId }
 import { humanizeEnum } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 import type { IPayment } from "@/types/payment.types";
-import { paymentHref } from "./paymentsDisplay";
+import { paymentBadge } from "./paymentsDisplay";
 
 const NOTE_TONE = { muted: "text-ink-muted", danger: "text-expense", warning: "text-warning" } as const;
 
-// The short id as a real link, so a payment opens in a new tab with Ctrl or
-// the middle button and reads as a link to a screen reader. It carries the
-// list's query, so the payment's page leads back to these rows; the click
-// stops here instead of reaching the row's own.
-const PaymentIdLink = ({ id }: { id: string }) => {
-  const searchParams = useSearchParams();
-  const label = shortPaymentId(id);
-  return (
-    <Link
-      href={paymentHref(id, searchParams.toString())}
-      title={label}
-      onClick={(event) => event.stopPropagation()}
-      className="block truncate font-mono text-small font-semibold text-ink hover:underline"
-    >
-      {label}
-    </Link>
-  );
-};
-
 // The design's Payments list: the short id, the person over what matters
-// about the payment, plan, how they paid, the amount, status, and when.
+// about the payment, plan, how they paid, the amount, status, and when. The
+// whole row is the link to the payment (the table's rowHref), named by the
+// id in the first cell. The row link takes the pointer over plain text, so
+// no cell relies on a hover title: When prints the moment itself.
 export const paymentsColumns: ColumnDef<IPayment>[] = [
   {
     id: "id",
     accessorFn: (row) => shortPaymentId(row.id),
     header: "Payment",
     enableSorting: false,
-    cell: ({ row }) => <PaymentIdLink id={row.original.id} />,
+    cell: ({ row }) => (
+      <span className="block truncate font-mono text-small font-semibold text-ink">
+        {shortPaymentId(row.original.id)}
+      </span>
+    ),
     // The whole id in the CSV, to match against other records.
     meta: { width: 96, exportValue: (row) => row.id },
   },
@@ -70,9 +56,7 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     accessorFn: (row) => row.plan.name,
     header: "Plan",
     cell: ({ row }) => (
-      <span className="block truncate text-ink-2" title={row.original.plan.name}>
-        {row.original.plan.name}
-      </span>
+      <span className="block truncate text-ink-2">{row.original.plan.name}</span>
     ),
     meta: { width: 110 },
   },
@@ -102,17 +86,22 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     id: "status",
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={PAYMENT_STATUS_LABEL[row.original.status]} dot />,
-    meta: { width: 150, exportValue: (row) => PAYMENT_STATUS_LABEL[row.status] },
+    // Amber for Waiting, and "Partly refunded" when less than was paid
+    // went back. Room for that chip with its dot, and no more.
+    cell: ({ row }) => {
+      const badge = paymentBadge(row.original);
+      return <StatusBadgeCell status={row.original.status} label={badge.label} tone={badge.tone} dot />;
+    },
+    meta: { width: 128, exportValue: (row) => PAYMENT_STATUS_LABEL[row.status] },
   },
   {
     id: "createdAt",
     accessorKey: "createdAt",
     header: "When",
-    // Cut short where the column is narrow, the full moment on hover.
+    // "Today, 2:10 pm", "27 Sep, 1:03 pm": the moment itself, no tooltip.
     cell: ({ row }) => (
-      <span className="block truncate text-small text-ink-2" title={formatDate(row.original.createdAt, "d MMM yyyy, h:mm aaa")}>
-        <RelativeTime value={row.original.createdAt} />
+      <span className="block truncate text-small text-ink-2">
+        <RelativeTime value={row.original.createdAt} as="dateTime" />
       </span>
     ),
     meta: { width: 122, exportValue: (row) => formatDate(row.createdAt, "yyyy-MM-dd HH:mm") },

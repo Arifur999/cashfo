@@ -134,6 +134,8 @@ export const chromeDictionary: Record<string, string> = {
   // The keyboard shortcuts under Settings › Help & support
   "Open the Add menu": "যোগ করার মেনু খুলুন",
   "Search and go": "খুঁজুন ও সেখানে যান",
+  // The wide search box in the top bar (its full name is read out)
+  "Search…": "খুঁজুন…",
 
   // The bell and its feed
   Notifications: "নোটিফিকেশন",

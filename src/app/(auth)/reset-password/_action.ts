@@ -23,5 +23,7 @@ export const resetPasswordAction = async (values: unknown): Promise<ApiErrorResp
     return toActionError(error, "We couldn't save your new password. Please try again.");
   }
 
-  redirect(CUSTOMER_HOME_ROUTE);
+  // The customer shell (Layout/ShellNotice.tsx) says so in a toast and
+  // drops the param.
+  redirect(`${CUSTOMER_HOME_ROUTE}?notice=password-changed`);
 };

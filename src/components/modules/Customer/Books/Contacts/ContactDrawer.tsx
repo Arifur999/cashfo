@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Camera, CircleAlert, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, Camera, CircleAlert, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type ChangeEvent } from "react";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import Textarea from "@/components/smartly/form/Textarea";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Contact, ContactType } from "@/lib/customer/api";
 import { CONTACT_TYPE_WORD } from "@/lib/customer/booksDisplay";
-import { archiveContactAction, createContactAction, deleteContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
+import { archiveContactAction, createContactAction, deleteContactAction, unarchiveContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { limitMoneyDecimals } from "@/lib/customer/money";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -91,6 +91,7 @@ export function ContactDrawer({ open, editing, hasEntries = true, businessId, cu
   const owed = Math.abs(balance) >= 0.005;
   const unsettled = !owed ? null : balance > 0 ? t("They still owe you {amount}. It can be archived once that is settled.", { amount: formatCurrency(balance, currency) }) : t("You still owe them {amount}. It can be archived once that is settled.", { amount: formatCurrency(-balance, currency) });
   const removeBlocked = owed && hasEntries;
+  const archived = editing?.status === "ARCHIVED";
 
   async function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -147,6 +148,17 @@ export function ContactDrawer({ open, editing, hasEntries = true, businessId, cu
       const result = await archiveContactAction(businessId, editing.id);
       if (result.success) finish(t("Archived. They stay in the books, marked archived."));
       else toast.error(t(result.message ?? "Failed to archive contact"));
+    });
+  }
+
+  // The drawer only opens for the owner or an accountant, the two roles the
+  // API lets bring a contact back.
+  function unarchive() {
+    if (!editing) return;
+    startTransition(async () => {
+      const result = await unarchiveContactAction(businessId, editing.id);
+      if (result.success) finish(t("Active again. New entries can be recorded with them."));
+      else toast.error(t(result.message ?? "Failed to reactivate contact"));
     });
   }
 
@@ -249,14 +261,20 @@ export function ContactDrawer({ open, editing, hasEntries = true, businessId, cu
         {editing && (
           <div className="mt-2 flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
             <span className="flex flex-col gap-0.5">
-              <b className="text-body font-semibold text-ink">{t("Archive or remove")}</b>
-              <span className="text-small text-ink-muted">{t("Archiving keeps their history and marks them archived. It is possible only when nothing is owed either way.")}</span>
+              <b className="text-body font-semibold text-ink">{t(archived ? "Make active again or remove" : "Archive or remove")}</b>
+              <span className="text-small text-ink-muted">{t(archived ? "Their history stays here. Make them active again to record new sales, purchases and payments with them." : "Archiving keeps their history and marks them archived. It is possible only when nothing is owed either way.")}</span>
             </span>
             <span className="flex flex-wrap gap-2">
               {editing.status === "ACTIVE" && (
                 <Button type="button" variant="secondary" size="sm" onClick={archive} disabled={isPending || owed} aria-describedby={unsettled ? "ct-unsettled" : undefined}>
                   <Archive />
                   {t("Archive")}
+                </Button>
+              )}
+              {archived && (
+                <Button type="button" variant="secondary" size="sm" onClick={unarchive} disabled={isPending}>
+                  <ArchiveRestore />
+                  {t("Make active again")}
                 </Button>
               )}
               <Button type="button" variant="ghost" size="sm" onClick={() => setRemoving(true)} disabled={isPending || removeBlocked} aria-describedby={removeBlocked && unsettled ? "ct-unsettled" : undefined} className="text-expense hover:bg-expense-soft hover:text-expense">

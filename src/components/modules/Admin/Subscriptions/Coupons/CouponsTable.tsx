@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { PowerOff, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { deleteCouponAction, turnOffCouponAction } from "@/app/(dashboardLayout)/admin/coupons/_action";
-import LoadError from "@/components/modules/Admin/Payments/LoadError";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
@@ -15,7 +14,6 @@ import { queryKeys } from "@/lib/queryKeys";
 import { couponsQuery } from "@/queries/coupon.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import type { ICoupon } from "@/types/coupon.types";
-import { useHeld } from "../useHeld";
 import { toCouponFormValues } from "./couponForm.defaults";
 import CouponForm from "./CouponForm";
 import CouponRedemptionsDialog from "./CouponRedemptionsDialog";
@@ -32,10 +30,9 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
   const { data: plansResponse } = useQuery(plansQuery());
   const plans = useMemo(() => plansResponse?.data ?? [], [plansResponse]);
   const columns = useMemo(() => buildCouponsColumns(new Map(plans.map((plan) => [plan.id, plan.name]))), [plans]);
-  const { activeRow, openDialog, closeDialog, getDialogProps } = useRowDialogs<ICoupon, "redemptions" | "edit" | "turnOff" | "delete">();
-  // Kept while a drawer or dialog closes, so "Edit PUJA15" doesn't go blank
-  // (or "Delete PUJA15?" turn into "Delete ?") on its way out.
-  const coupon = useHeld(activeRow);
+  // The row stays while a drawer or dialog closes, so "Edit PUJA15" doesn't
+  // go blank (or "Delete PUJA15?" turn into "Delete ?") on its way out.
+  const { activeRow: coupon, openDialog, closeDialog, getDialogProps } = useRowDialogs<ICoupon, "redemptions" | "edit" | "turnOff" | "delete">();
 
   const turnOff = useActionMutation({
     action: turnOffCouponAction,
@@ -73,16 +70,17 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
     [canManage, openDialog],
   );
 
-  // An outage is never "No coupons yet": the list says it couldn't load.
-  if (couponsRead.isError && !couponsRead.data) {
-    return <LoadError title="Couldn't load coupons" onRetry={() => void couponsRead.refetch()} />;
-  }
-
   return (
     <>
       <DataTable
         data={couponsRead.data?.data}
         columns={columns}
+        // An outage is never "No coupons yet": the list says it couldn't
+        // load, with Try again.
+        isError={couponsRead.isError && !couponsRead.data}
+        onRetry={() => void couponsRead.refetch()}
+        errorTitle="Couldn't load coupons"
+        errorDescription="The server didn't answer. Nothing was changed."
         // The actions column fits "Who used it" and its menu in Bangla too.
         layout={{ gap: 16, rowHeight: 62, headPadding: 12, actionsWidth: 200 }}
         getRowId={(row) => row.id}

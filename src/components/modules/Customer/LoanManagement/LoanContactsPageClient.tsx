@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Ellipsis, Pencil, Plus, ScrollText, Search, Trash2, Users } from "lucide-react";
+import { Archive, ArchiveRestore, Ellipsis, Pencil, Plus, ScrollText, Search, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -18,7 +18,7 @@ import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Contact, ContactType, LoanBalanceDirection } from "@/lib/customer/api";
-import { archiveContactAction, deleteContactAction } from "@/lib/customer/contactActions";
+import { archiveContactAction, deleteContactAction, unarchiveContactAction } from "@/lib/customer/contactActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { contactMatches, DIRECTION_META, LOAN_KIND_LABELS, LOAN_KINDS, loanDirection, loanErrorText } from "@/lib/customer/loanDisplay";
@@ -103,6 +103,23 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
     });
   }
 
+  // Back on the active list, the entry form and the counts.
+  function restore(contact: Contact) {
+    startTransition(async () => {
+      try {
+        const result = await unarchiveContactAction(businessId, contact.id);
+        if (result.success) {
+          toast.success(t("Contact restored"));
+          router.refresh();
+        } else {
+          toast.error(loanErrorText(result.message, "Failed to restore contact", t, (amount) => formatCurrency(amount, currency)));
+        }
+      } catch {
+        toast.error(t("Couldn't save. Check your connection and try again."));
+      }
+    });
+  }
+
   // Added by mistake and never used: gone for good. With any history the
   // API archives instead, and says so. A balance they were added with goes
   // with them, so the confirm names it.
@@ -145,10 +162,10 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   // "Last entry 3 Mar", with the year once it isn't this one.
   const thisYear = getAppToday().slice(0, 4);
   const lastLine = (contact: Contact) => {
-    if (contact.lastActivityAt === undefined) return t("Added {date}", { date: formatDate(contact.createdAt) });
+    if (contact.lastActivityAt === undefined) return t("Added {date}", { date: formatDate(contact.createdAt, undefined, locale) });
     if (!contact.lastActivityAt) return t("No entries yet");
     const sameYear = formatDate(contact.lastActivityAt, "yyyy") === thisYear;
-    return t("Last entry {date}", { date: formatDate(contact.lastActivityAt, sameYear ? "d MMM" : "d MMM yyyy") });
+    return t("Last entry {date}", { date: formatDate(contact.lastActivityAt, sameYear ? "d MMM" : "d MMM yyyy", locale) });
   };
 
   return (
@@ -180,7 +197,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3">
-            <SegmentedControl variant="soft" options={tabs} value={currentTab} onChange={setTab} label={t("Balance")} className="max-md:w-full max-md:overflow-x-auto pointer-coarse:[&>button]:h-11" />
+            <SegmentedControl variant="soft" options={tabs} value={currentTab} onChange={setTab} label={t("Balance")} size="coarse" className="max-md:w-full max-md:overflow-x-auto" />
             <NativeSelect size="sm" value={kind} onChange={(event) => setKind(event.target.value as ContactType | "")} aria-label={t("Kind")} className="text-small pointer-coarse:h-11">
               <option value="">{t("All types")}</option>
               {LOAN_KINDS.map((option) => (
@@ -189,9 +206,9 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                 </option>
               ))}
             </NativeSelect>
-            <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="w-full md:w-65" />
-            <span className="flex-1" />
-            <span className="text-small text-ink-muted tabular-nums">
+            <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="min-w-0 flex-1 md:w-65 md:flex-none" />
+            <span className="hidden flex-1 md:block" />
+            <span className="text-small text-ink-muted tabular-nums max-md:w-full">
               {t("Pawna")} <span className="font-semibold text-income">{formatCurrency(pawna, currency)}</span> · {t("Dena")} <span className="font-semibold text-expense">{formatCurrency(dena, currency)}</span>
             </span>
           </div>
@@ -251,6 +268,12 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                                 {t("Statement")}
                               </Link>
                             </DropdownMenuItem>
+                            {isArchived && (
+                              <DropdownMenuItem onSelect={() => restore(contact)} className={MENU_ITEM}>
+                                <ArchiveRestore aria-hidden="true" />
+                                {t("Restore")}
+                              </DropdownMenuItem>
+                            )}
                             {!isArchived && (
                               <>
                                 <DropdownMenuSeparator className="my-1 bg-line" />
@@ -290,13 +313,14 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                     </div>
                     <div className="flex items-center justify-between gap-2 text-caption font-normal text-ink-muted">
                       <span className="min-w-0 truncate">{lastLine(contact)}</span>
-                      <span className="flex shrink-0 gap-1">
+                      {/* The board's text links, 44px tall under a finger. */}
+                      <span className="flex shrink-0 gap-3">
                         {canManage && !isArchived && (
-                          <Button variant="soft" size="sm" onClick={() => setEntryFor(contact.id)} className="pointer-coarse:h-11">
+                          <Button variant="link" size="sm" onClick={() => setEntryFor(contact.id)} className="h-auto px-0 font-semibold pointer-coarse:h-11 pointer-coarse:px-2">
                             {t("New entry")}
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" asChild className="pointer-coarse:h-11">
+                        <Button variant="link" size="sm" asChild className="h-auto px-0 font-semibold text-ink-2 hover:text-ink pointer-coarse:h-11 pointer-coarse:px-2">
                           <Link href={`/loan-management/ledger?contactId=${contact.id}`}>{t("Statement")}</Link>
                         </Button>
                       </span>

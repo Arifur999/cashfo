@@ -81,7 +81,7 @@ export function PinCard({ businessId, businessName, isOwner, onOpened, cancelLab
         </h2>
       </div>
       <p className="text-body leading-[21px] text-ink-2">
-        {forgot ? t("Enter your account password to remove the PIN.") : `${businessName} ${t("has a PIN so others using this device can't open its books.")}`}
+        {forgot ? t("Enter your account password to remove the PIN.") : t("{name} has a PIN so others using this device can't open its books.", { name: businessName })}
       </p>
 
       {forgot ? (

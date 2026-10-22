@@ -68,8 +68,9 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
   const pickable = groups.map((group) => ({ group, rows: flattenAccounts(group.accounts).filter(({ account }) => account.status === "ACTIVE") })).filter(({ rows }) => rows.length > 0);
 
   // What the bar under the lines says: why Save is still off, or that the
-  // entry is ready.
-  const status = totals.debit + totals.credit === 0 ? { ok: false, text: t("Fill in at least two lines") } : !totals.balanced ? { ok: false, text: t("Off by {amount}", { amount: formatCurrency(Math.abs(totals.difference), currency) }) } : missingAccount ? { ok: false, text: t("Pick an account on every line with an amount") } : !totals.complete ? { ok: false, text: t("Fill in at least two lines") } : { ok: true, text: t("Balanced: debits equal credits") };
+  // entry is ready. An untouched form starts quiet: nothing is wrong yet.
+  const status: { tone: "start" | "warn" | "ok"; text: string } = totals.debit + totals.credit === 0 ? { tone: "start", text: t("Fill in at least two lines") } : !totals.balanced ? { tone: "warn", text: t("Off by {amount}", { amount: formatCurrency(Math.abs(totals.difference), currency) }) } : missingAccount ? { tone: "warn", text: t("Pick an account on every line with an amount") } : !totals.complete ? { tone: "warn", text: t("Fill in at least two lines") } : { tone: "ok", text: t("Balanced: debits equal credits") };
+  const statusTone = { start: { band: "bg-strip", text: "text-ink-muted" }, warn: { band: "bg-warning-soft", text: "text-warning" }, ok: { band: "bg-mint-50", text: "text-brand-ink" } }[status.tone];
 
   function update(index: number, patch: Partial<JournalLine>) {
     setLines((current) => current.map((line, i) => (i === index ? { ...line, ...patch } : line)));
@@ -136,7 +137,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
           <ListCard
             label={t("Lines")}
             header={
-              <div className="grid gap-4 border-b border-line p-5 md:grid-cols-2 xl:grid-cols-[200px_200px_minmax(0,1fr)]">
+              <div className="grid gap-4 border-b border-line px-4 py-5 md:grid-cols-2 md:px-6 xl:grid-cols-[200px_200px_minmax(0,1fr)]">
                 <Field htmlFor="je-date" label={t("Date")}>
                   <DayInput id="je-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
                 </Field>
@@ -150,17 +151,17 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
             }
             footer={
               <>
-                <div className="border-t border-divider px-4 py-3 md:px-5">
+                <div className="border-t border-divider px-4 py-3 md:px-6">
                   <Button variant="ghost" size="sm" onClick={() => setLines((current) => [...current, emptyLine()])} className="pointer-coarse:h-11">
                     <Plus />
                     {t("Add line")}
                   </Button>
                 </div>
-                <div className={cn("flex flex-col gap-2 border-t border-line px-4 py-4 md:grid md:px-5", LINE, status.ok ? "bg-mint-50" : "bg-warning-soft")}>
+                <div className={cn("flex flex-col gap-2 border-t border-line px-4 py-4 md:grid md:px-6", LINE, statusTone.band)}>
                   {/* Only the sentence is announced: the totals change on every
                       keystroke, and a button doesn't belong in a live region. */}
-                  <span role="status" className={cn("flex items-center gap-2 text-body font-semibold md:col-span-2", status.ok ? "text-brand-ink" : "text-warning")}>
-                    {status.ok ? <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden="true" /> : <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />}
+                  <span role="status" className={cn("flex items-center gap-2 text-body font-semibold md:col-span-2", statusTone.text)}>
+                    {status.tone === "ok" ? <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden="true" /> : status.tone === "warn" ? <AlertTriangle className="size-4 shrink-0" aria-hidden="true" /> : <Info className="size-4 shrink-0" aria-hidden="true" />}
                     {status.text}
                   </span>
                   <span className="flex justify-between gap-4 text-body font-bold text-ink tabular-nums md:contents">
@@ -213,10 +214,18 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
                     <Input size="sm" value={entry.note} onChange={(event) => update(index, { note: event.target.value })} maxLength={120} placeholder={t("Line note")} aria-label={line("Line {number} note", index)} frameClassName="h-10.5" />
                   </ListCell>
                   <div className="grid grid-cols-2 gap-2 md:contents">
-                    <ListCell>
+                    {/* Below md the column heads are hidden, so each amount
+                        names itself; the input's aria-label already does. */}
+                    <ListCell className="flex flex-col gap-1 md:block">
+                      <span aria-hidden="true" className="text-caption font-medium text-ink-muted md:hidden">
+                        {t("Debit")}
+                      </span>
                       <Input size="sm" inputMode="decimal" value={entry.debit} onChange={(event) => update(index, { debit: limitMoneyDecimals(event.target.value), credit: event.target.value ? "" : entry.credit })} placeholder="0" aria-label={line("Line {number} debit", index)} leading={symbol} className="text-right tabular-nums" frameClassName="h-10.5" />
                     </ListCell>
-                    <ListCell>
+                    <ListCell className="flex flex-col gap-1 md:block">
+                      <span aria-hidden="true" className="text-caption font-medium text-ink-muted md:hidden">
+                        {t("Credit")}
+                      </span>
                       <Input size="sm" inputMode="decimal" value={entry.credit} onChange={(event) => update(index, { credit: limitMoneyDecimals(event.target.value), debit: event.target.value ? "" : entry.debit })} placeholder="0" aria-label={line("Line {number} credit", index)} leading={symbol} className="text-right tabular-nums" frameClassName="h-10.5" />
                     </ListCell>
                   </div>
