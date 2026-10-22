@@ -1,23 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import LegalLinks from "@/components/modules/Legal/LegalLinks";
 import LocalePill from "@/components/shared/LocalePill";
 import Logo from "@/components/smartly/Logo";
-import { LOGIN_ROUTE, REGISTER_ROUTE, SESSION_EXPIRED_REASON } from "@/lib/authUtils";
+import { LOGIN_ROUTE, REGISTER_ROUTE } from "@/lib/authUtils";
 import { BRAND_NAME } from "@/lib/brand";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
-import { AuthHero, AuthHeroCard, type AuthHeroVariant } from "./AuthHero";
+import { AuthPhoto, type AuthPhotoVariant } from "./AuthPhoto";
 import MaintenanceNotice, { MaintenanceContext, type MaintenanceState } from "./MaintenanceNotice";
 
-// Which hero sits on the left: the sample cards for sign-in, the four
-// feature cards for sign-up, the short list for the rest (a session that
-// ended included).
-const heroFor = (pathname: string, reason: string | null): AuthHeroVariant => {
-  if (pathname === LOGIN_ROUTE) return reason === SESSION_EXPIRED_REASON ? "narrow" : "login";
+// Which photo sits beside the form: the sunlit seedling for signing in and
+// the password pages, the seedling in open hands for signing up.
+const photoFor = (pathname: string): AuthPhotoVariant => {
+  if (pathname === LOGIN_ROUTE) return "login";
   return pathname === REGISTER_ROUTE ? "register" : "narrow";
 };
 
@@ -32,44 +30,53 @@ interface AuthShellProps {
 
 // The frame every sign-in page shares, drawn once by the (auth) layout so
 // moving between sign-in, sign-up and the password pages swaps only the form
-// column: the forest hero on wide screens (760px for sign-in and sign-up,
-// 640px otherwise), and a column with the language pill, the page's form,
-// and the legal links. Phones get the logo and the pill in a header;
-// sign-in adds a small hero card under it (the phone sign-up board goes
-// straight to its heading, closer and tighter).
+// column: a mint-to-sky ground with slow drifting lights, and one card that
+// rises in -- the page's photo on one side (a banner on phones), and the
+// logo, language pill, form and legal links on the other, the form's parts
+// arriving one after another.
 const AuthShell = ({ maintenance, children }: AuthShellProps) => {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { t } = useLocale();
-  const hero = heroFor(pathname, searchParams.get("reason"));
+  const photo = photoFor(pathname);
 
   return (
-    <div className={cn("group/auth grid min-h-screen bg-surface", hero === "narrow" ? "lg:grid-cols-[minmax(0,44%)_minmax(0,1fr)] xl:grid-cols-[640px_minmax(0,1fr)]" : "lg:grid-cols-[minmax(0,52%)_minmax(0,1fr)] xl:grid-cols-[760px_minmax(0,1fr)]")}>
-      <AuthHero variant={hero} />
-      <div className="relative flex min-h-screen min-w-0 flex-col">
-        <header className="flex items-center justify-between px-5 py-4 lg:absolute lg:top-8 lg:right-10 lg:p-0">
-          <Link href="/" aria-label={t("{brand} home", { brand: BRAND_NAME })} className="rounded-md lg:hidden">
-            <Logo height={38} alt="" />
-          </Link>
-          <LocalePill fullNames />
-        </header>
-        {hero === "login" && <AuthHeroCard />}
-        {/* id + tabIndex give the root layout's skip link a focus target. */}
-        <main id="main-content" tabIndex={-1} className={cn("flex flex-1 items-start justify-center px-5 pb-12 outline-none md:items-center lg:px-12 lg:pt-24", hero === "register" ? "pt-4 md:pt-8" : "pt-8")}>
-          <div className={cn("flex w-full flex-col", hero === "narrow" ? "max-w-105" : "max-w-100", hero === "register" ? "gap-6 md:gap-8" : "gap-8")}>
-            {/* One read for the notice and the form, so they always agree. */}
-            <MaintenanceContext value={maintenance}>
-              <Suspense fallback={null}>
-                <MaintenanceNotice />
-              </Suspense>
-              {children}
-            </MaintenanceContext>
+    <div className="auth-backdrop relative min-h-dvh overflow-hidden">
+      <span aria-hidden="true" className="auth-light -top-24 -left-24 size-120 bg-mint-300" />
+      <span aria-hidden="true" className="auth-light top-1/3 -right-32 size-130 bg-info/40" style={{ animationDelay: "-8s", animationDuration: "32s" }} />
+      <span aria-hidden="true" className="auth-light -bottom-40 left-1/4 size-110 bg-emerald/30" style={{ animationDelay: "-15s", animationDuration: "38s" }} />
+
+      <div className="relative flex min-h-dvh items-center justify-center px-3 py-4 sm:px-6 md:py-8 lg:px-8 lg:py-10">
+        <div className="auth-card grid w-full max-w-280 overflow-hidden rounded-[28px] bg-surface shadow-overlay ring-1 ring-white/70 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <AuthPhoto variant={photo} />
+
+          <div className="flex min-w-0 flex-col px-5 pt-4 pb-5 sm:px-8 lg:px-12 lg:pt-8 lg:pb-7 xl:px-16">
+            {/* As wide as the form, so the logo lines up with its left edge. */}
+            <header className="mx-auto flex w-full max-w-100 items-center justify-between gap-4">
+              <Link href="/" aria-label={t("{brand} home", { brand: BRAND_NAME })} className="rounded-md">
+                <Logo height={36} alt="" />
+              </Link>
+              <LocalePill fullNames />
+            </header>
+
+            {/* id + tabIndex give the root layout's skip link a focus target. */}
+            <main id="main-content" tabIndex={-1} className="flex flex-1 items-center justify-center py-8 outline-none lg:py-10">
+              <div className="auth-stagger flex w-full max-w-100 flex-col gap-7">
+                {/* One read for the notice and the form, so they always agree. */}
+                <MaintenanceContext value={maintenance}>
+                  <Suspense fallback={null}>
+                    <MaintenanceNotice />
+                  </Suspense>
+                  {children}
+                </MaintenanceContext>
+              </div>
+            </main>
+
+            <footer>
+              {/* A new tab, so reading the terms doesn't throw away a half-typed form. */}
+              <LegalLinks newTab />
+            </footer>
           </div>
-        </main>
-        <footer className="px-5 pb-6 lg:px-12">
-          {/* A new tab, so reading the terms doesn't throw away a half-typed form. */}
-          <LegalLinks newTab />
-        </footer>
+        </div>
       </div>
     </div>
   );
