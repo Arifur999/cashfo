@@ -1,6 +1,6 @@
 name: Deploy
 
-# main -> CI must pass -> ghcr.io/arifur999/cashfo. The VPS does the rest:
+# main -> CI must pass -> ghcr.io/arifur999/cashfo-web. The VPS does the rest:
 # cashfo_backend's deploy/agent/smartly-deploy.sh notices the new image
 # within two minutes and rolls back if the release never turns healthy.
 #
@@ -36,7 +36,7 @@ jobs:
       skip-image-build: true
 
   publish:
-    name: Publish cashfo
+    name: Publish cashfo-web
     needs: quality
     # "Run workflow" can be started on any branch; only main may become
     # :latest, which the server releases within two minutes.
@@ -58,9 +58,11 @@ jobs:
         with:
           context: .
           push: true
+          # Not ghcr.io/arifur999/cashfo: that package was public, and GitHub
+          # cannot make a public package private again.
           tags: |
-            ghcr.io/arifur999/cashfo:${{ github.sha }}
-            ghcr.io/arifur999/cashfo:latest
+            ghcr.io/arifur999/cashfo-web:${{ github.sha }}
+            ghcr.io/arifur999/cashfo-web:latest
           # com.softech.project lets the VPS prune only smartly's old images.
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
