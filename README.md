@@ -112,4 +112,4 @@ All dates render and filter in the platform timezone (`NEXT_PUBLIC_APP_TIME_ZONE
 
 ## Deploying
 
-`main` is the live site, `smartly.softech.agency`. Every pull request runs CI (`.github/workflows/ci.yml`: lint, typecheck, tests, build, Docker image); a merge to `main` publishes `ghcr.io/arifur999/cashfo`, and the VPS pulls it within two minutes and rolls back if it doesn't come up healthy. The server side -- compose stack, nginx, release agent, backups -- lives in the backend repo: `cashfo_backend/deploy/README.md`.
+`main` is the live site, `smartly.softech.agency`. Every pull request runs CI (`.github/workflows/ci.yml`: lint, typecheck, tests, build, Docker image); a merge to `main` publishes `ghcr.io/arifur999/cashfo-web`, and the VPS pulls it within two minutes and rolls back if it doesn't come up healthy. The server side -- compose stack, nginx, release agent, backups -- lives in the backend repo: `cashfo_backend/deploy/README.md`.
