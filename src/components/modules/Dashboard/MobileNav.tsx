@@ -24,7 +24,7 @@ const MobileNav = ({ sections, admin }: { sections: NavSection[]; admin: IAdminU
         </button>
       </SheetTrigger>
       {/* 316px, as the board draws it; the side variant outranks the sheet's own w-3/4. */}
-      <SheetContent side="left" showCloseButton={false} className="max-w-[85vw] gap-0 border-none bg-night-panel p-0 text-white shadow-[28px_0_60px_-16px_rgba(0,0,0,0.4)] data-[side=left]:w-79 data-[side=left]:sm:max-w-79">
+      <SheetContent side="left" showCloseButton={false} className="max-w-[85vw] gap-0 border-none bg-aurora-panel p-0 text-white shadow-[28px_0_60px_-16px_rgba(0,0,0,0.4)] data-[side=left]:w-79 data-[side=left]:sm:max-w-79">
         <SheetHeader className="sr-only">
           <SheetTitle>{translate("Main navigation")}</SheetTitle>
         </SheetHeader>

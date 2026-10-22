@@ -21,7 +21,7 @@ const DashboardSidebar = async () => {
   const badges = navBadgesFor(sections, admin.role);
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-sidebar-admin shrink-0 flex-col bg-night-panel px-3 pt-5 pb-4 text-white lg:flex print:hidden">
+    <aside className="sticky top-0 hidden h-screen w-sidebar-admin shrink-0 flex-col bg-aurora-panel px-3 pt-5 pb-4 text-white lg:flex print:hidden">
       <SidebarBrand />
       <QueryPrefetch prefetch={(client) => Promise.all(badges.map((kind) => prefetchNavBadge[kind](client)))}>
         <SidebarNav sections={sections} role={admin.role} />
