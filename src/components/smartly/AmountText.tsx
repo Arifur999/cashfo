@@ -1,4 +1,7 @@
+"use client";
+
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 const SIZES = {
@@ -27,13 +30,15 @@ interface AmountTextProps extends Omit<React.ComponentProps<"span">, "children">
   signed?: boolean;
 }
 
-// Money, always in tabular figures so columns of it line up.
+// Money, always in tabular figures so columns of it line up, in the reader's
+// digits (Bangla readers get "৳ ১২,৫০০").
 const AmountText = ({ value, currency = "BDT", size = "md", tone = "neutral", signed = false, className, ...props }: AmountTextProps) => {
+  const { locale } = useLocale();
   const amount = Number(value);
   const resolvedTone = tone === "auto" ? (amount > 0 ? "income" : amount < 0 ? "expense" : "neutral") : tone;
   return (
     <span className={cn("tabular-nums", SIZES[size], TONES[resolvedTone], className)} {...props}>
-      {signed ? formatSignedCurrency(amount, currency) : formatCurrency(amount, currency)}
+      {signed ? formatSignedCurrency(amount, currency, locale) : formatCurrency(amount, currency, locale)}
     </span>
   );
 };

@@ -44,7 +44,7 @@ function loanTitle(name: string, owed: boolean, days: number, t: Translate, loca
 // workspace it is about.
 export function notificationView(item: UserNotification, t: Translate, locale: Locale, currency = "BDT", now: Date = new Date()): NotificationView {
   const data = item.data;
-  const money = (value: string | number | null | undefined) => formatCurrency(Number(value ?? 0), currency);
+  const money = (value: string | number | null | undefined) => formatCurrency(Number(value ?? 0), currency, locale);
   const percentOf = (value: string | number | null | undefined) => formatCount(Number(value ?? 0), locale);
   const thisMonth = toDateInputValue(now).slice(0, 7);
   // A month named in a sentence. One that isn't within the coming year (a

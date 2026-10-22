@@ -45,12 +45,12 @@ describe("plan lines", () => {
     expect(limitText(1500)).toBe("1,500");
   });
 
-  it("writes the counts in the reader's digits, never the money", () => {
+  it("writes the counts and the money in the reader's digits", () => {
     const t = (key: string, values?: Record<string, string | number>) => `${key}|${Object.values(values ?? {}).join("|")}`;
     expect(limitText(1500, t, "bn")).toBe("১,৫০০");
     expect(trialsLine("MONTHLY", 6, t, "bn")).toBe("{count} of them are on a trial now|৬");
     expect(trialLine({ billingCycle: "MONTHLY", trialDays: 14, price: "299.00", currency: "BDT" }, t, "bn")).toBe("{days}-day free trial|১৪");
-    expect(trialLine({ billingCycle: "YEARLY", trialDays: 0, price: "2999.00", currency: "BDT" }, t, "bn")).toBe(`{trial} · about {amount} a month|No free trial||৳${NBSP}250`);
+    expect(trialLine({ billingCycle: "YEARLY", trialDays: 0, price: "2999.00", currency: "BDT" }, t, "bn")).toBe(`{trial} · about {amount} a month|No free trial||৳${NBSP}২৫০`);
   });
 });
 

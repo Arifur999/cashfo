@@ -1,3 +1,4 @@
+import type { Locale } from "@/lib/i18n/translate";
 import type { Account, LanguagePreference } from "./api";
 import { formatCurrency, formatSignedCurrency } from "./currency";
 
@@ -16,8 +17,8 @@ export function accountDisplayName(account: { name: string; nameBn?: string | nu
 // A balance as it is shown: "৳ 2,500", and an overdrawn one with a true
 // minus ("− ৳ 1,81,600"), as the signed figures beside it are written,
 // rather than a hyphen pressed against the symbol.
-export function balanceText(value: number | string, currency: string): string {
-  return Number(value) < 0 ? formatSignedCurrency(value, currency) : formatCurrency(value, currency);
+export function balanceText(value: number | string, currency: string, locale: Locale = "en"): string {
+  return Number(value) < 0 ? formatSignedCurrency(value, currency, locale) : formatCurrency(value, currency, locale);
 }
 
 export const ACCOUNT_TYPE_LABELS: Record<Account["accountType"], string> = {
