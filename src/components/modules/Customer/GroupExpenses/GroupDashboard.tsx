@@ -38,7 +38,7 @@ const MEALS_COLUMNS = "md:grid-cols-[minmax(0,1fr)_56px_104px_104px_112px]";
 export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSetBudget }: GroupDashboardProps) {
   const { t, locale } = useLocale();
   const { currency, range, settlement } = data;
-  const money = (value: number | string) => formatCurrency(value, currency);
+  const money = (value: number | string) => formatCurrency(value, currency, locale);
   const month = monthName(range.key, locale);
   const spent = Number(settlement.totalExpense);
   const deposits = data.contributions.filter((c) => Number(c.amount) > 0);
@@ -191,7 +191,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                 {money(totalCost)}
               </span>
               <span role="cell" className={cn("text-right", view.cash < 0 ? "text-expense" : "text-income")}>
-                {formatSignedCurrency(view.cash, currency)}
+                {formatSignedCurrency(view.cash, currency, locale)}
               </span>
             </ListTotalRow>
           )}
@@ -216,7 +216,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                     <span className="truncate text-body font-semibold text-ink" title={`${from?.name ?? ""} → ${to?.name ?? ""}`}>
                       {t("{from} pays {to}", { from: shortName(from?.name), to: shortName(to?.name) })}
                     </span>
-                    <span className="truncate text-caption font-normal text-ink-muted">{t("Clears {name}'s {amount}", { name: shortName(from?.name), amount: formatSignedCurrency(view.balances[transfer.fromId] ?? 0, currency) })}</span>
+                    <span className="truncate text-caption font-normal text-ink-muted">{t("Clears {name}'s {amount}", { name: shortName(from?.name), amount: formatSignedCurrency(view.balances[transfer.fromId] ?? 0, currency, locale) })}</span>
                   </span>
                   <span className="text-title font-bold text-ink tabular-nums">{money(transfer.amount)}</span>
                 </div>

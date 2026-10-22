@@ -2,7 +2,7 @@ import type { ICoupon } from "@/types/coupon.types";
 import type { BillingCycle, ISubscriptionPlan } from "@/types/plan.types";
 import { formatCurrency } from "./currency";
 import { formatDate } from "./date";
-import { formatCount } from "./i18n/digits";
+import { formatCount, toLocaleDigits } from "./i18n/digits";
 import { inEnglish, type Translate } from "./i18n/message";
 import type { Locale } from "./i18n/translate";
 
@@ -23,15 +23,15 @@ export const planAccentClass = (name: string) => PLAN_ACCENT[name] ?? "bg-ink-mu
 export const billingPeriod = (cycle: BillingCycle, t: Translate = inEnglish) => ({ FREE: "", MONTHLY: t("a month"), YEARLY: t("a year") })[cycle];
 
 // A whole-taka price, or the paisa when there are any: "৳ 299", "৳ 12.50".
-export const money = (amount: number | string, currency?: string) =>
-  formatCurrency(amount, currency, Number.isInteger(Number(amount)) ? 0 : 2);
+export const money = (amount: number | string, currency?: string, locale: Locale = "en") =>
+  formatCurrency(amount, currency, Number.isInteger(Number(amount)) ? 0 : 2, locale);
 
 // "No trial needed", "7-day free trial", or for a yearly plan
 // "14-day free trial · about ৳ 250 a month".
 export const trialLine = (plan: Pick<ISubscriptionPlan, "billingCycle" | "trialDays" | "price" | "currency">, t: Translate = inEnglish, locale: Locale = "en") => {
   if (plan.billingCycle === "FREE") return t("No trial needed");
   const trial = plan.trialDays > 0 ? t("{days}-day free trial", { days: formatCount(plan.trialDays, locale) }) : t("No free trial");
-  return plan.billingCycle === "YEARLY" ? t("{trial} · about {amount} a month", { trial, amount: formatCurrency(Number(plan.price) / 12, plan.currency, 0) }) : trial;
+  return plan.billingCycle === "YEARLY" ? t("{trial} · about {amount} a month", { trial, amount: formatCurrency(Number(plan.price) / 12, plan.currency, 0, locale) }) : trial;
 };
 
 // "6 of them are on a trial now", "Everyone starts here", "No trials running".
@@ -52,9 +52,11 @@ export const worksOn = (planIds: string[], names: Map<string, string>, t: Transl
   return t("{plans} and {last}", { plans: labels.slice(0, -1).join(", "), last: labels[labels.length - 1] });
 };
 
-// "20% off", "৳ 100 off".
-export const discountText = (coupon: Pick<ICoupon, "discountType" | "discountValue">, t: Translate = inEnglish) =>
-  coupon.discountType === "PERCENTAGE" ? t("{percent}% off", { percent: Number(coupon.discountValue) }) : t("{amount} off", { amount: money(coupon.discountValue) });
+// "20% off", "৳ 100 off"; with the locale, in the reader's digits.
+export const discountText = (coupon: Pick<ICoupon, "discountType" | "discountValue">, t: Translate = inEnglish, locale: Locale = "en") =>
+  coupon.discountType === "PERCENTAGE"
+    ? t("{percent}% off", { percent: toLocaleDigits(String(Number(coupon.discountValue)), locale) })
+    : t("{amount} off", { amount: money(coupon.discountValue, undefined, locale) });
 
 // What a price comes to with the coupon, never below zero.
 export const discountedPrice = (price: number, coupon: Pick<ICoupon, "discountType" | "discountValue">) => {

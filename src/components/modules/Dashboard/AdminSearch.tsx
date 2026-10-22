@@ -62,7 +62,7 @@ const AdminSearch = () => {
             items: result.payments.map((payment) => ({
               key: `p:${payment.id}`,
               badge: t("Payment"),
-              title: `${shortPaymentId(payment.id)} · ${formatAmount(payment.amount, payment.currency)}`,
+              title: `${shortPaymentId(payment.id)} · ${formatAmount(payment.amount, payment.currency, locale)}`,
               sub: [payment.name, humanizeEnum(payment.gateway), t(humanizeEnum(payment.status))].filter(Boolean).join(" · "),
               mark: <CommandMark>৳</CommandMark>,
               href: `/admin/payments/${payment.id}`,

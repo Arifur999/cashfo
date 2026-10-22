@@ -21,10 +21,11 @@ const progressText = (campaign: ICampaign, t: Translate, locale: Locale) => {
   return null;
 };
 
-// "10 Oct, 10:00 am" for a schedule, "Not scheduled" for a draft.
-const whenText = (campaign: ICampaign, t: Translate) => {
-  if (campaign.scheduledFor) return formatRelativeDateTime(campaign.scheduledFor, { t });
-  return campaign.status === "DRAFT" ? t("Not scheduled") : formatDate(campaign.createdAt, "d MMM");
+// "10 Oct, 10:00 am" for a schedule, "Not scheduled" for a draft; with the
+// locale, in the reader's months and digits (the export leaves it out).
+const whenText = (campaign: ICampaign, t: Translate, locale: Locale = "en") => {
+  if (campaign.scheduledFor) return formatRelativeDateTime(campaign.scheduledFor, { t, locale });
+  return campaign.status === "DRAFT" ? t("Not scheduled") : formatDate(campaign.createdAt, "d MMM", "—", locale);
 };
 
 // Who gets it, wrapping onto two lines rather than into the next column.
@@ -44,9 +45,9 @@ const StatusCell = ({ campaign }: { campaign: ICampaign }) => {
     <span className="flex flex-col items-start gap-0.75">
       <StatusBadgeCell status={campaign.status} label={CAMPAIGN_STATUS_LABEL[campaign.status]} />
       {pastDue ? (
-        <span className="text-caption font-semibold whitespace-normal text-warning">{translate("Due {time} · not sent", { time: whenText(campaign, translate) })}</span>
+        <span className="text-caption font-semibold whitespace-normal text-warning">{translate("Due {time} · not sent", { time: whenText(campaign, translate, locale) })}</span>
       ) : (
-        <span className="text-caption text-ink-muted">{whenText(campaign, translate)}</span>
+        <span className="text-caption text-ink-muted">{whenText(campaign, translate, locale)}</span>
       )}
       {progress && <span className="text-caption text-ink-muted">{progress}</span>}
     </span>

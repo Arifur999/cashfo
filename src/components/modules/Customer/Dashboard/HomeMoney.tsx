@@ -98,7 +98,7 @@ function SavingsCard({ data }: { data: HomeData }) {
                 // {target}" puts the small target before the headline figure.
                 fillNodes(t("{saved} of {target}@@home"), {
                   saved: <AmountText value={data.savingsSaved} currency={currency} size="lg" className="leading-8" />,
-                  target: formatCurrency(data.savingsTarget, currency),
+                  target: formatCurrency(data.savingsTarget, currency, locale),
                 })
               ) : (
                 <AmountText value={data.savingsSaved} currency={currency} size="lg" className="leading-8" />
@@ -147,7 +147,7 @@ function AssetsCard({ data }: { data: HomeData }) {
                 : fillNodes(t("{change} since you bought them"), {
                     change: (
                       <b className={data.assetsGain > 0 ? "text-income" : "text-expense"}>
-                        {data.assetsGain > 0 ? "↑" : "↓"} {formatCurrency(Math.abs(data.assetsGain), currency)}
+                        {data.assetsGain > 0 ? "↑" : "↓"} {formatCurrency(Math.abs(data.assetsGain), currency, locale)}
                       </b>
                     ),
                   })}
@@ -224,15 +224,15 @@ function BudgetFocus({ name, icon, limit, spent, percent, currency, daysLeft }: 
           <span className="truncate">{name}</span>
         </b>
         <span className="shrink-0 text-small text-ink-muted tabular-nums">
-          {fillNodes(t("{spent} of {limit}"), { spent: <b className="text-ink">{formatCurrency(spent, currency)}</b>, limit: formatCurrency(limit, currency) })}
+          {fillNodes(t("{spent} of {limit}"), { spent: <b className="text-ink">{formatCurrency(spent, currency, locale)}</b>, limit: formatCurrency(limit, currency, locale) })}
         </span>
       </span>
       <ProgressBar value={percent} tone="budget" label={name} />
       <span className={cn("text-small", percent > 90 ? "font-semibold text-expense" : percent >= 70 ? "font-semibold text-warning" : "text-ink-muted")}>
         {t("{percent}% used", { percent: toLocaleDigits(String(Math.round(percent)), locale) })} ·{" "}
         {left >= 0
-          ? t(daysLeft === 1 ? "{amount} left for {count} day" : "{amount} left for {count} days", { amount: formatCurrency(left, currency), count: formatCount(daysLeft, locale) })
-          : t("{amount} over", { amount: formatCurrency(-left, currency) })}
+          ? t(daysLeft === 1 ? "{amount} left for {count} day" : "{amount} left for {count} days", { amount: formatCurrency(left, currency, locale), count: formatCount(daysLeft, locale) })
+          : t("{amount} over", { amount: formatCurrency(-left, currency, locale) })}
       </span>
     </>
   );

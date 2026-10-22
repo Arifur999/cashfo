@@ -22,6 +22,17 @@ const OnCell = ({ entry }: { entry: IAuditLogEntry }) => {
   );
 };
 
+// "2:48 pm" today, else with the day; the full date and time on hover. Both
+// in the reader's language.
+const WhenCell = ({ at }: { at: string }) => {
+  const { locale } = useLocale();
+  return (
+    <span className="text-small whitespace-nowrap text-ink-2" title={formatDateTime(at, "—", locale)}>
+      <RelativeTime value={at} as="log" />
+    </span>
+  );
+};
+
 // "Open", named for its row ("Open entry: Suspended a user"), so a screen
 // reader's list of buttons isn't "Open, Open, Open".
 const OpenCell = ({ entry, onOpen }: { entry: IAuditLogEntry; onOpen: (entry: IAuditLogEntry) => void }) => {
@@ -53,11 +64,7 @@ export const buildAuditLogColumns = (onOpen: (entry: IAuditLogEntry) => void): C
     id: "createdAt",
     accessorKey: "createdAt",
     header: "When",
-    cell: ({ row }) => (
-      <span className="text-small whitespace-nowrap text-ink-2" title={formatDateTime(row.original.createdAt)}>
-        <RelativeTime value={row.original.createdAt} as="log" />
-      </span>
-    ),
+    cell: ({ row }) => <WhenCell at={row.original.createdAt} />,
     meta: { width: 100, exportValue: (row) => formatDateTime(row.createdAt) },
   },
   {

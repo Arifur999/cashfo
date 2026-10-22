@@ -1,3 +1,4 @@
+import type { Locale } from "@/lib/i18n/translate";
 import type { IPayment, IPaymentDetail, PaymentGateway, PaymentStatus } from "@/types/payment.types";
 import { formatAmount } from "./currency";
 import { formatDate } from "./date";
@@ -43,6 +44,7 @@ export const paymentNote = (
   payment: Pick<IPayment, "status" | "failureReason" | "gateway" | "couponCode" | "discountApplied" | "duplicateOfId" | "invoice"> &
     Partial<Pick<IPayment, "amount" | "currency" | "refund">>,
   t: Translate = inEnglish,
+  locale: Locale = "en",
 ): { text: string; tone: NoteTone } => {
   if (payment.duplicateOfId) return { text: t("Looks like a double charge"), tone: "warning" };
   if (payment.status === "FAILED") return { text: payment.failureReason ?? t("The payment did not go through"), tone: "danger" };
@@ -51,12 +53,12 @@ export const paymentNote = (
     const { refund, amount } = payment;
     // Less than was paid went back: the amount beside "Refunded" isn't all of it.
     if (refund && amount !== undefined && Number(refund.amount) < Number(amount)) {
-      return { text: t("Partly refunded: {amount}", { amount: formatAmount(refund.amount, payment.currency) }), tone: "muted" };
+      return { text: t("Partly refunded: {amount}", { amount: formatAmount(refund.amount, payment.currency, locale) }), tone: "muted" };
     }
     return { text: t("Refunded"), tone: "muted" };
   }
   if (payment.discountApplied && Number(payment.discountApplied) > 0) {
-    const off = t("{amount} off", { amount: formatAmount(payment.discountApplied, payment.currency) });
+    const off = t("{amount} off", { amount: formatAmount(payment.discountApplied, payment.currency, locale) });
     return { text: payment.couponCode ? `${payment.couponCode} · ${off}` : off, tone: "muted" };
   }
   if (payment.gateway === "MANUAL") return { text: t("Entered by hand"), tone: "muted" };
@@ -71,7 +73,7 @@ export interface PaymentStep {
 
 // "What happened", in order: started, handed to the gateway, confirmed or
 // refused or still waiting, invoiced, refunded.
-export const paymentSteps = (payment: IPaymentDetail, t: Translate = inEnglish): PaymentStep[] => {
+export const paymentSteps = (payment: IPaymentDetail, t: Translate = inEnglish, locale: Locale = "en"): PaymentStep[] => {
   const gateway = t(humanizeEnum(payment.gateway));
   const steps: PaymentStep[] = [
     { what: t(payment.gateway === "MANUAL" ? "Entered by hand" : "Payment started from the app"), at: payment.createdAt, tone: "neutral" },
@@ -90,16 +92,16 @@ export const paymentSteps = (payment: IPaymentDetail, t: Translate = inEnglish):
   }
   if (payment.invoice) steps.push({ what: t("Invoice {number} made", { number: payment.invoice.invoiceNumber }), at: payment.invoice.createdAt, tone: "success" });
   if (payment.refund) {
-    steps.push({ what: t("Refunded {amount}", { amount: formatAmount(payment.refund.amount, payment.currency) }), at: payment.refund.createdAt, tone: "neutral" });
+    steps.push({ what: t("Refunded {amount}", { amount: formatAmount(payment.refund.amount, payment.currency, locale) }), at: payment.refund.createdAt, tone: "neutral" });
   }
   return steps;
 };
 
 // "Monthly Pro · paid with bKash · 1 Oct 2026, 10:14 am · Mahbub Alam"
-export const paymentLine = (payment: IPaymentDetail, t: Translate = inEnglish) =>
+export const paymentLine = (payment: IPaymentDetail, t: Translate = inEnglish, locale: Locale = "en") =>
   [
     payment.plan.name,
     t(payment.status === "SUCCESS" || payment.status === "REFUNDED" ? "paid with {gateway}" : "via {gateway}", { gateway: t(humanizeEnum(payment.gateway)) }),
-    formatDate(payment.paidAt ?? payment.createdAt, "d MMM yyyy, h:mm aaa"),
+    formatDate(payment.paidAt ?? payment.createdAt, "d MMM yyyy, h:mm aaa", "—", locale),
     payment.platformUser?.name ?? t("Unknown person"),
   ].join(" · ");

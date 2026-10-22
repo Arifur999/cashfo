@@ -2,6 +2,7 @@ import Card from "@/components/smartly/Card";
 import MiniBars from "@/components/shared/MiniBars";
 import { formatCurrency } from "@/lib/currency";
 import { formatMonthName } from "@/lib/date";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import type { IMrrHistoryPoint } from "@/types/revenue.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
@@ -12,7 +13,7 @@ import { compactAmount, shortMonthKey } from "./revenueDisplay";
 // workspaces are on, so the two can differ), and labelled in compact taka
 // so the bars' figures fit a phone.
 const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
-  const { t } = await getTranslator("admin");
+  const { t, locale } = await getTranslator("admin");
   const first = history[0]?.mrr ?? 0;
   const last = history[history.length - 1]?.mrr ?? 0;
   const growth = first > 0 ? Math.round(((last - first) / first) * 100) : null;
@@ -27,7 +28,7 @@ const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
         </div>
         {growth !== null && history.length > 1 && (
           <span className="text-small text-ink-muted">
-            {t(growth >= 0 ? "up {percent}% since {month}" : "down {percent}% since {month}", { percent: Math.abs(growth), month: t(formatMonthName(history[0].month)) })}
+            {t(growth >= 0 ? "up {percent}% since {month}" : "down {percent}% since {month}", { percent: formatCount(Math.abs(growth), locale), month: t(formatMonthName(history[0].month)) })}
           </span>
         )}
       </div>
@@ -43,9 +44,9 @@ const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
           bars={history.map((point, index) => ({
             label: t(shortMonthKey(point.month)),
             value: point.mrr,
-            short: compactAmount(point.mrr),
+            short: toLocaleDigits(compactAmount(point.mrr), locale),
             highlight: index === history.length - 1,
-            spoken: `${t(formatMonthName(point.month))} ${formatCurrency(point.mrr, undefined, 0)}`,
+            spoken: `${t(formatMonthName(point.month))} ${formatCurrency(point.mrr, undefined, 0, locale)}`,
           }))}
         />
       )}

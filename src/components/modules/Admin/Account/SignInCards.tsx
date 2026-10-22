@@ -19,6 +19,7 @@ import { failureReasonLabel } from "@/lib/loginAttempts";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { mySessionsQuery, mySignInsQuery } from "@/queries/myAccount.queries";
+import { deviceLabelText } from "@/lib/deviceLabel";
 
 const isPhone = (label: string) => /iOS|Android|Mobile/.test(label);
 
@@ -69,7 +70,7 @@ export const DevicesCard = () => {
                 <span className="flex min-w-0 grow flex-col">
                   {/* "Chrome on Windows · this computer", then where: "Bangladesh · 203.0.113.24". */}
                   <span className="truncate text-body font-semibold text-ink">
-                    {session.current ? `${session.deviceLabel} · ${translate(isPhone(session.deviceLabel) ? "this phone" : "this computer")}` : session.deviceLabel}
+                    {session.current ? `${deviceLabelText(session.deviceLabel, translate)} · ${translate(isPhone(session.deviceLabel) ? "this phone" : "this computer")}` : deviceLabelText(session.deviceLabel, translate)}
                   </span>
                   <span className="truncate text-small text-ink-muted tabular-nums" title={translate("Signed in {when}", { when: formatDateTime(session.signedInAt, "—", locale) })}>
                     {[session.place, session.ipAddress].filter(Boolean).join(" · ") || translate("Unknown place")}
@@ -132,7 +133,7 @@ export const RecentSignInsCard = () => {
                   <span className="truncate text-ink" title={attempt.deviceLabel}>
                     {attempt.success ? translate("Signed in") : failureReasonLabel(attempt.failureReason, translate)}
                   </span>
-                  {!attempt.success && attempt.deviceLabel && <span className="truncate text-caption text-ink-muted">{attempt.deviceLabel}</span>}
+                  {!attempt.success && attempt.deviceLabel && <span className="truncate text-caption text-ink-muted">{deviceLabelText(attempt.deviceLabel, translate)}</span>}
                   <span className="truncate text-caption text-ink-muted tabular-nums sm:hidden" title={attempt.ipAddress}>
                     {attempt.ipAddress} · {when}
                   </span>

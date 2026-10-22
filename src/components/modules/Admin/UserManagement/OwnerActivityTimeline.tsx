@@ -10,7 +10,7 @@ import type { IOwnerActivityLogEntry } from "@/types/owner.types";
 // with the lists' divider; the text keeps the body's own line height, which
 // gives Bangla's vowel signs room when a long action wraps.
 const OwnerActivityTimeline = async ({ entries }: { entries: IOwnerActivityLogEntry[] }) => {
-  const { t } = await getTranslator("admin");
+  const { t, locale } = await getTranslator("admin");
   return (
     <section aria-labelledby="owner-history" className="flex flex-col gap-3 rounded-lg border border-line bg-surface px-5 py-4 shadow-card">
       <h2 id="owner-history" className="text-title text-ink">
@@ -28,7 +28,7 @@ const OwnerActivityTimeline = async ({ entries }: { entries: IOwnerActivityLogEn
               <span className="flex-1 text-ink">
                 <b className="font-semibold">{entry.adminName}</b> <span className="text-ink-2">{t(auditActionLabel(entry.action)).toLowerCase()}</span>
               </span>
-              <span className="shrink-0 text-small text-ink-muted">{formatRelativeDay(entry.createdAt, { t })}</span>
+              <span className="shrink-0 text-small text-ink-muted">{formatRelativeDay(entry.createdAt, { t, locale })}</span>
             </li>
           ))}
         </ol>

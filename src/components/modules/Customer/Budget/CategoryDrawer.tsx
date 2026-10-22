@@ -170,7 +170,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
       <div className="flex flex-wrap gap-2">
         {QUICK_LIMITS.map((amount) => (
           <button key={amount} type="button" onClick={() => setLimit(String(amount))} className="h-7.5 rounded-full border border-line bg-surface px-3 text-caption font-medium text-ink-2 tabular-nums hover:border-line-strong pointer-coarse:h-11 pointer-coarse:px-4">
-            {formatCurrency(amount, currency).replace(/\.00$/, "")}
+            {formatCurrency(amount, currency, locale).replace(/\.00$/, "")}
           </button>
         ))}
       </div>
@@ -183,9 +183,9 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
           <TriangleAlert className="mt-0.5 size-3.25 shrink-0" strokeWidth={2.25} aria-hidden="true" />
           <span>
             {fillNodes(t("Only {free} of your {budget} budget is unassigned. This limit goes {over} over it."), {
-              free: formatCurrency((unassigned ?? 0) + currentLimit, currency),
-              budget: formatCurrency(totalBudget, currency),
-              over: formatCurrency(over, currency),
+              free: formatCurrency((unassigned ?? 0) + currentLimit, currency, locale),
+              budget: formatCurrency(totalBudget, currency, locale),
+              over: formatCurrency(over, currency, locale),
             })}
           </span>
         </span>
@@ -219,9 +219,9 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                 <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="truncate text-title text-ink">{trimmed || t(isAsset ? "New asset type" : isIncome ? "New source" : "New category")}</span>
-                  <span className="text-caption font-normal text-ink-muted">{isAsset ? t("Asset type") : isGroup ? t("Expense category") : isIncome ? t("Income source") : t("Limit {amount}", { amount: formatCurrency(limitValue, currency) })}</span>
+                  <span className="text-caption font-normal text-ink-muted">{isAsset ? t("Asset type") : isGroup ? t("Expense category") : isIncome ? t("Income source") : t("Limit {amount}", { amount: formatCurrency(limitValue, currency, locale) })}</span>
                 </span>
-                {!noLimit && <span className="text-caption font-semibold text-emerald">{t("{amount} left", { amount: formatCurrency(limitValue, currency) })}</span>}
+                {!noLimit && <span className="text-caption font-semibold text-emerald">{t("{amount} left", { amount: formatCurrency(limitValue, currency, locale) })}</span>}
               </div>
               {/* An asset type has nothing to fill a bar with. */}
               {!isAsset && <ProgressBar value={0} size="sm" label={t("Preview")} />}

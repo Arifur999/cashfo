@@ -85,11 +85,27 @@ const shortValue = (value: string | undefined, t: Translate) => {
   return value.length > 24 ? `${value.slice(0, 23)}…` : value;
 };
 
+// The reasons the API writes in code rather than words, by action: a refused
+// "View as customer" (cashfo_backend/src/admin-owners/owner-impersonation.service.ts).
+const REASON_CODE_LABEL: Record<string, Record<string, string>> = {
+  USER_IMPERSONATION_REFUSED: {
+    "no-code": "No support code was active",
+    "wrong-code": "Wrong support code",
+  },
+};
+
+// An entry's reason as people say it: a code the API wrote ("no-code") in
+// words, in the reader's language; a reason an admin typed stays as typed.
+export const auditReasonText = (action: string | undefined, reason: string, t: Translate = inEnglish): string => {
+  const label = action ? REASON_CODE_LABEL[action]?.[reason] : undefined;
+  return label ? t(label) : reason;
+};
+
 // One line on what changed: the reason given ("spam invites"), the one field
 // that moved ("trial days 7 → 14"), or how many did.
-export const auditChangeSummary = (entry: Pick<IAuditLogEntry, "oldValue" | "newValue">, t: Translate = inEnglish): string | null => {
+export const auditChangeSummary = (entry: Pick<IAuditLogEntry, "oldValue" | "newValue"> & Partial<Pick<IAuditLogEntry, "action">>, t: Translate = inEnglish): string | null => {
   const reason = entry.newValue && typeof entry.newValue === "object" ? (entry.newValue as { reason?: unknown }).reason : undefined;
-  if (typeof reason === "string" && reason.trim()) return reason.trim();
+  if (typeof reason === "string" && reason.trim()) return auditReasonText(entry.action, reason.trim(), t);
   const changed = diffAuditValues(entry.oldValue, entry.newValue).filter((row) => row.changed && !QUIET_FIELDS.has(row.field.split(".").pop() ?? row.field));
   if (changed.length === 0) return null;
   if (changed.length === 1) {

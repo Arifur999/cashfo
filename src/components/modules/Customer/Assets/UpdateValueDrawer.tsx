@@ -21,6 +21,7 @@ import type { ActionResult } from "@/lib/customer/authActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { getAppToday } from "@/lib/date";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AssetTypeTile } from "./AssetTypeTile";
@@ -144,7 +145,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
     if (isPending || !asset) return;
     const confirmed = await confirm({
       title: t("Delete {name}?", { name: asset.name }),
-      message: fromWallet ? t("The {amount} you paid goes back into the wallet it came from.", { amount: formatCurrency(paid, currency) }) : t("It was added as already owned, so no wallet changes."),
+      message: fromWallet ? t("The {amount} you paid goes back into the wallet it came from.", { amount: formatCurrency(paid, currency, locale) }) : t("It was added as already owned, so no wallet changes."),
       confirmLabel: "Delete asset",
     });
     if (confirmed) run("delete", () => deleteAssetAction(businessId, asset.id), "Asset deleted", "Failed to delete the asset");
@@ -196,12 +197,12 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
               <div className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-strip p-4 tabular-nums">
                 <span className="flex flex-col gap-0.5 *:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("Current value")}</span>
-                  <span className="text-title text-ink">{formatCurrency(current, currency)}</span>
+                  <span className="text-title text-ink">{formatCurrency(current, currency, locale)}</span>
                   <span className="text-caption font-normal text-ink-muted">{since ? t("since {date}", { date: formatDate(since, "d MMM yyyy", locale) }) : t("Not checked since bought")}</span>
                 </span>
                 <span className="flex flex-col gap-0.5 *:leading-[normal]">
                   <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
-                  <span className="text-title text-ink">{formatCurrency(paid, currency)}</span>
+                  <span className="text-title text-ink">{formatCurrency(paid, currency, locale)}</span>
                   <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}</span>
                 </span>
               </div>
@@ -214,16 +215,16 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
                     {!backdated && (
                       <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-caption font-semibold tabular-nums", CHIP[sinceLast.tone])}>
                         {sinceLast.tone === "income" ? <TrendingUp className="size-3.5" aria-hidden="true" /> : sinceLast.tone === "expense" ? <TrendingDown className="size-3.5" aria-hidden="true" /> : null}
-                        {changed ? t("{change} since the last value", { change: `${next > current ? "+" : "−"} ${formatCurrency(Math.abs(next - current), currency)} (${sinceLast.label})` }) : t("Same as the last value")}
+                        {changed ? t("{change} since the last value", { change: `${next > current ? "+" : "−"} ${formatCurrency(Math.abs(next - current), currency, locale)} (${toLocaleDigits(sinceLast.label, locale)})` }) : t("Same as the last value")}
                       </span>
                     )}
-                    <span className="inline-flex items-center rounded-full bg-surface-sunken px-3 py-1 text-caption font-semibold text-ink-2 tabular-nums">{t("{change} vs what you paid", { change: vsPaid.label })}</span>
+                    <span className="inline-flex items-center rounded-full bg-surface-sunken px-3 py-1 text-caption font-semibold text-ink-2 tabular-nums">{t("{change} vs what you paid", { change: toLocaleDigits(vsPaid.label, locale) })}</span>
                   </div>
                 )}
                 {backdated && (
                   <p className="flex items-start gap-2 text-caption text-ink-muted">
                     <Info className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                    {t("An earlier date fills in the history; the value today stays {amount}.", { amount: formatCurrency(current, currency) })}
+                    {t("An earlier date fills in the history; the value today stays {amount}.", { amount: formatCurrency(current, currency, locale) })}
                   </p>
                 )}
               </Field>

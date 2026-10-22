@@ -10,8 +10,8 @@ import type { IWorkspaceOverviewSummary } from "@/types/workspace.types";
 
 // The design's three figures and, beside them, how many workspaces the
 // people with extras have: one bar per count, the longest full width.
-// Counts are in the reader's digits, like the pager under the list; the
-// money stays Latin.
+// Counts and money are in the reader's digits, like the pager under the
+// list.
 const WorkspaceKpis = ({ summary }: { summary: IWorkspaceOverviewSummary }) => {
   const { locale } = useLocale();
   const count = (value: number) => formatCount(value, locale);
@@ -22,7 +22,7 @@ const WorkspaceKpis = ({ summary }: { summary: IWorkspaceOverviewSummary }) => {
       <Kpi label="People with extra workspaces" value={count(summary.totalUsers)} note={<T values={{ count: count(summary.totalAccounts) }}>{"Out of {count} accounts"}</T>} />
       {/* "Extra" is any workspace besides the person's own personal one, whatever their plan allows. */}
       <Kpi label="Extra workspaces" value={count(summary.totalAdditionalWorkspaces)} note="Besides each person's own personal workspace" />
-      <Kpi label="Possible add-on revenue" value={formatAmount(summary.totalEstimatedMonthlyAddOnRevenue)} note="A month, if add-ons were charged" />
+      <Kpi label="Possible add-on revenue" value={formatAmount(summary.totalEstimatedMonthlyAddOnRevenue, undefined, locale)} note="A month, if add-ons were charged" />
       <Card padding="none" className="flex flex-col gap-2 px-5 py-4">
         <span className="text-small text-ink-muted">
           <T>How many workspaces they have</T>

@@ -56,7 +56,7 @@ export function SuperDashboard({ adminName, hour, summary, activity, tickets, fa
   const count = (value: number) => formatCount(value, locale);
   const percent = (value: number) => toLocaleDigits(`${value}%`, locale);
   const change = overview?.mrrChangePct ?? null;
-  const mrrText = summary.mrr !== null ? formatAmount(summary.mrr) : "—";
+  const mrrText = summary.mrr !== null ? formatAmount(summary.mrr, undefined, locale) : "—";
   const trend = revenue ? revenue.revenueTrend.slice(-6) : [];
   const attention: Attention[] = [
     {
@@ -115,7 +115,7 @@ export function SuperDashboard({ adminName, hour, summary, activity, tickets, fa
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         {/* The month still running is only part of a month, so it gets no change on the last. */}
-        <Section title={translate("Revenue, last 6 months")} aside={revenue && <T values={{ amount: <b className="text-ink">{formatAmount(revenue.thisMonthRevenue)}</b> }}>{"So far this month {amount}"}</T>}>
+        <Section title={translate("Revenue, last 6 months")} aside={revenue && <T values={{ amount: <b className="text-ink">{formatAmount(revenue.thisMonthRevenue, undefined, locale)}</b> }}>{"So far this month {amount}"}</T>}>
           {revenue === null ? (
             <LoadFailed />
           ) : allZero(trend.map((point) => point.amount)) ? (
@@ -126,9 +126,9 @@ export function SuperDashboard({ adminName, hour, summary, activity, tickets, fa
               bars={trend.map((point, index) => ({
                 label: shortMonth(point.month, locale),
                 value: point.amount,
-                short: compactMoney(point.amount),
+                short: toLocaleDigits(compactMoney(point.amount), locale),
                 highlight: index === trend.length - 1,
-                spoken: `${monthLabel(point.month, locale, translate)} ${formatAmount(point.amount)}`,
+                spoken: `${monthLabel(point.month, locale, translate)} ${formatAmount(point.amount, undefined, locale)}`,
               }))}
             />
           )}

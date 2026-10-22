@@ -49,8 +49,8 @@ const FlagCard = ({ flag, onChanged }: FlagCardProps) => {
   const titleId = useId();
   const { translate, locale } = useLocale();
   const tries = flagTriesLink(flag, translate, { locale });
-  const details = flagDetails(flag, { t: translate });
-  const closedBy = flagClosedBy(flag, { t: translate });
+  const details = flagDetails(flag, { t: translate, locale });
+  const closedBy = flagClosedBy(flag, { t: translate, locale });
 
   const { run, isPending } = useActionMutation({
     action: (status: FlagStatus) => updateFlagStatusAction(flag.id, { status }),

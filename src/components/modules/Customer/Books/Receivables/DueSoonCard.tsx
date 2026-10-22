@@ -68,7 +68,7 @@ export function DueSoonCard({ items, currency, canManage, today, onPay }: DueSoo
               </span>
             </ListCell>
             <ListCell align="end">
-              <b className={cn("tabular-nums whitespace-nowrap", receivable ? "text-income" : "text-expense")}>{formatCurrency(item.remainingAmount, currency)}</b>
+              <b className={cn("tabular-nums whitespace-nowrap", receivable ? "text-income" : "text-expense")}>{formatCurrency(item.remainingAmount, currency, locale)}</b>
             </ListCell>
             {hasPay && (
               <ListRowActions>

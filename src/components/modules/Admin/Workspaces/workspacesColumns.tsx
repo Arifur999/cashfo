@@ -1,15 +1,23 @@
+"use client";
+
 import type { ColumnDef } from "@tanstack/react-table";
 import { CountCell, PersonLinkCell, WorkspaceNamesCell } from "@/components/modules/Admin/UserManagement/PeopleCells";
 import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import { formatAmount } from "@/lib/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { IWorkspaceOverviewItem } from "@/types/workspace.types";
 
 const NUMBER = { align: "right" as const };
 
+const AddOn = ({ amount }: { amount: string }) => {
+  const { locale } = useLocale();
+  return formatAmount(amount, undefined, locale);
+};
+
 // The design's Workspaces list: the owner (a link to their page) over their
 // workspaces' names, plan, how many workspaces, how many extra, and the
-// add-on they could pay. Counts in the reader's digits; money stays Latin,
+// add-on they could pay. Counts and money in the reader's digits, money
 // with paisa only when there are some ("৳ 0", "৳ 1,198.50").
 export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
   {
@@ -51,7 +59,7 @@ export const workspacesColumns: ColumnDef<IWorkspaceOverviewItem>[] = [
     header: "Add-on, a month",
     cell: ({ row }) => (
       <span className={cn("font-semibold tabular-nums", Number(row.original.estimatedMonthlyAddOnRevenue) > 0 ? "text-ink" : "text-ink-muted")}>
-        {formatAmount(row.original.estimatedMonthlyAddOnRevenue)}
+        <AddOn amount={row.original.estimatedMonthlyAddOnRevenue} />
       </span>
     ),
     meta: { ...NUMBER, width: 170 },

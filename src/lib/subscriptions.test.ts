@@ -13,6 +13,8 @@ import {
   validityText,
   worksOn,
 } from "./subscriptions";
+import { fillText } from "./i18n/fill";
+import { translate } from "./i18n/translate";
 
 const NBSP = " ";
 
@@ -45,12 +47,12 @@ describe("plan lines", () => {
     expect(limitText(1500)).toBe("1,500");
   });
 
-  it("writes the counts in the reader's digits, never the money", () => {
+  it("writes the counts and the money in the reader's digits", () => {
     const t = (key: string, values?: Record<string, string | number>) => `${key}|${Object.values(values ?? {}).join("|")}`;
     expect(limitText(1500, t, "bn")).toBe("১,৫০০");
     expect(trialsLine("MONTHLY", 6, t, "bn")).toBe("{count} of them are on a trial now|৬");
     expect(trialLine({ billingCycle: "MONTHLY", trialDays: 14, price: "299.00", currency: "BDT" }, t, "bn")).toBe("{days}-day free trial|১৪");
-    expect(trialLine({ billingCycle: "YEARLY", trialDays: 0, price: "2999.00", currency: "BDT" }, t, "bn")).toBe(`{trial} · about {amount} a month|No free trial||৳${NBSP}250`);
+    expect(trialLine({ billingCycle: "YEARLY", trialDays: 0, price: "2999.00", currency: "BDT" }, t, "bn")).toBe(`{trial} · about {amount} a month|No free trial||৳${NBSP}২৫০`);
   });
 });
 
@@ -72,6 +74,11 @@ describe("coupon lines", () => {
   it("words the discount and applies it", () => {
     expect(discountText({ discountType: "PERCENTAGE", discountValue: "20.00" })).toBe("20% off");
     expect(discountText({ discountType: "FIXED_AMOUNT", discountValue: "100.00" })).toBe(`৳${NBSP}100 off`);
+    // In Bangla the amount and the percent come in Bangla digits too.
+    const bn = (key: string, values?: Record<string, string | number>) => fillText(translate("bn", key), values ?? {});
+    expect(discountText({ discountType: "PERCENTAGE", discountValue: "20.00" }, bn, "bn")).toBe("২০% ছাড়");
+    expect(discountText({ discountType: "PERCENTAGE", discountValue: "12.50" }, bn, "bn")).toBe("১২.৫% ছাড়");
+    expect(discountText({ discountType: "FIXED_AMOUNT", discountValue: "50.00" }, bn, "bn")).toBe(`৳${NBSP}৫০ ছাড়`);
     expect(discountedPrice(299, { discountType: "PERCENTAGE", discountValue: "15" })).toBe(254.15);
     expect(discountedPrice(50, { discountType: "FIXED_AMOUNT", discountValue: "100" })).toBe(0);
   });

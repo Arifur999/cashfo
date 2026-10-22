@@ -139,6 +139,8 @@ export const chromeDictionary: Record<string, string> = {
 
   // The bell and its feed
   Notifications: "নোটিফিকেশন",
+  // AppToaster.tsx: the close button on a toast, read out
+  "Close notification": "নোটিফিকেশন বন্ধ করুন",
   "{count} new": "{count}টি নতুন",
   "Mark all as read": "সব পড়া হয়েছে",
   Unread: "পড়া হয়নি",

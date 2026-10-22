@@ -46,7 +46,7 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
     : closed
       ? { icon: <Lock />, text: t("{month} is closed and locked.", { month }), tone: "text-ink-2" }
       : transfers.length > 0
-        ? { icon: <CircleAlert />, text: countLabel(t, locale, transfers.length, "{count} payment settles {month} · {amount} in total", "{count} payments settle {month} · {amount} in total", { month, amount: formatCurrency(owed, currency) }), tone: "text-warning" }
+        ? { icon: <CircleAlert />, text: countLabel(t, locale, transfers.length, "{count} payment settles {month} · {amount} in total", "{count} payments settle {month} · {amount} in total", { month, amount: formatCurrency(owed, currency, locale) }), tone: "text-warning" }
         : { icon: <Check />, text: spent > 0 ? t("Everyone is even so far") : t("Nothing recorded yet this month"), tone: "text-ink-2" };
 
   return (
@@ -98,17 +98,17 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
       </div>
 
       <div className="grid grid-cols-3 border-y border-divider">
-        <Stat label={t("Spent in {month}", { month })} value={formatCurrency(spent, currency)} divided />
-        <Stat label={t("Cash in hand")} value={formatCurrency(cash, currency)} tone={cash < 0 ? "text-expense" : undefined} divided />
+        <Stat label={t("Spent in {month}", { month })} value={formatCurrency(spent, currency, locale)} divided />
+        <Stat label={t("Cash in hand")} value={formatCurrency(cash, currency, locale)} tone={cash < 0 ? "text-expense" : undefined} divided />
         <Stat label={t("To settle")} value={transfers.length === 0 ? t("Even") : countLabel(t, locale, transfers.length, "{count} payment", "{count} payments")} tone={transfers.length > 0 ? "text-warning" : undefined} />
       </div>
 
       <div className="flex flex-col gap-2 px-5 py-4">
         <div className="flex flex-wrap justify-between gap-x-3 text-small">
-          <span className="text-ink-2">{status ? t("{month} budget {amount}", { month, amount: formatCurrency(status.budget, currency) }) : t("No budget set for this month")}</span>
+          <span className="text-ink-2">{status ? t("{month} budget {amount}", { month, amount: formatCurrency(status.budget, currency, locale) }) : t("No budget set for this month")}</span>
           {status && (
             <span className={cn("font-semibold tabular-nums", BUDGET_TONE_TEXT[status.tone])}>
-              {status.left < 0 ? t("{percent}% · {amount} over", { percent: formatCount(status.percent, locale), amount: formatCurrency(-status.left, currency) }) : t("{percent}% · {amount} left", { percent: formatCount(status.percent, locale), amount: formatCurrency(status.left, currency) })}
+              {status.left < 0 ? t("{percent}% · {amount} over", { percent: formatCount(status.percent, locale), amount: formatCurrency(-status.left, currency, locale) }) : t("{percent}% · {amount} left", { percent: formatCount(status.percent, locale), amount: formatCurrency(status.left, currency, locale) })}
             </span>
           )}
         </div>

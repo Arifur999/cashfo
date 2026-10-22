@@ -31,7 +31,7 @@ interface ContactPickerProps {
 // through it and Enter picks, as a combobox does. Archived contacts come
 // last, still there for their statement.
 export function ContactPicker({ contacts, value, onChange, currency, size = "md", id, disabled = false, label }: ContactPickerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -79,7 +79,7 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
   const balanceLine = (contact: Contact) => {
     const direction = loanDirection(contact.currentBalance);
     const meta = DIRECTION_META[direction];
-    return direction === "SETTLED" ? t(meta.label) : `${t(meta.label)} ${formatCurrency(Math.abs(Number(contact.currentBalance)), currency)}`;
+    return direction === "SETTLED" ? t(meta.label) : `${t(meta.label)} ${formatCurrency(Math.abs(Number(contact.currentBalance)), currency, locale)}`;
   };
   const kindOf = (contact: Contact) => (contact.status === "ARCHIVED" ? `${t(LOAN_KIND_LABELS[contact.type])} · ${t("Archived")}` : t(LOAN_KIND_LABELS[contact.type]));
 

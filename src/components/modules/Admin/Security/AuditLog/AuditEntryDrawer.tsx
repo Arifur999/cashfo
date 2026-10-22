@@ -158,7 +158,7 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
         <h3 id="audit-changed" className="text-body font-semibold text-ink">
           <T>What changed</T>
         </h3>
-        <AuditValueDiff oldValue={entry.oldValue} newValue={entry.newValue} />
+        <AuditValueDiff oldValue={entry.oldValue} newValue={entry.newValue} action={entry.action} />
       </section>
 
       <section aria-labelledby="audit-saved" className="flex flex-col gap-2">

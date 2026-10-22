@@ -46,7 +46,7 @@ const OtherPaymentsCard = async ({ payments, email, back }: OtherPaymentsCardPro
                   </>
                 )}
               </span>
-              <b className={cn("font-semibold tabular-nums", payment.status === "SUCCESS" ? "text-ink" : "text-ink-muted")}>{formatAmount(payment.amount, payment.currency)}</b>
+              <b className={cn("font-semibold tabular-nums", payment.status === "SUCCESS" ? "text-ink" : "text-ink-muted")}>{formatAmount(payment.amount, payment.currency, locale)}</b>
             </Link>
           ))
         )}

@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useId, useState } from "react";
 import T from "@/components/shared/T";
 import { LIST_DIVIDER, LIST_HEAD } from "@/components/smartly/list/recipes";
+import { auditReasonText } from "@/lib/auditRecords";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { auditValueRows } from "./auditValueRows";
@@ -15,15 +16,17 @@ const CELL = cn("border-t px-3 py-3 align-top break-all", LIST_DIVIDER);
 
 // The fields an action changed, before struck out in red and after in green;
 // the ones that stayed the same, and bookkeeping such as updatedAt, fold away
-// behind a link.
-const AuditValueDiff = ({ oldValue, newValue }: { oldValue: unknown; newValue: unknown }) => {
+// behind a link. `action` lets a reason the API wrote as a code ("no-code")
+// read in words, as the log's On column says it.
+const AuditValueDiff = ({ oldValue, newValue, action }: { oldValue: unknown; newValue: unknown; action?: string }) => {
   const { translate, locale } = useLocale();
   const [showAll, setShowAll] = useState(false);
   const regionId = useId();
   const { all, changed, folded, foldedMoved } = auditValueRows(oldValue, newValue);
   const visible = showAll ? all : changed;
   // An absent side is a dash; a saved null reads as the On column says it.
-  const shown = (value: string | undefined) => (value === undefined ? "—" : value === "null" ? translate("none") : value);
+  const shown = (value: string | undefined, field: string) =>
+    value === undefined ? "—" : value === "null" ? translate("none") : field === "reason" ? auditReasonText(action, value, translate) : value;
 
   if (all.length === 0) {
     return (
@@ -77,9 +80,9 @@ const AuditValueDiff = ({ oldValue, newValue }: { oldValue: unknown; newValue: u
                         )}
                       </th>
                       <td className={cn(CELL, marked && row.before !== undefined ? "bg-expense-soft font-semibold text-expense" : "text-ink-2")}>
-                        {marked && row.before !== undefined ? <s>{shown(row.before)}</s> : shown(row.before)}
+                        {marked && row.before !== undefined ? <s>{shown(row.before, row.field)}</s> : shown(row.before, row.field)}
                       </td>
-                      <td className={cn(CELL, marked && row.after !== undefined ? "bg-mint-50 font-semibold text-brand-ink" : "text-ink-2")}>{shown(row.after)}</td>
+                      <td className={cn(CELL, marked && row.after !== undefined ? "bg-mint-50 font-semibold text-brand-ink" : "text-ink-2")}>{shown(row.after, row.field)}</td>
                     </tr>
                   );
                 })}

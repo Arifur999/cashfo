@@ -79,7 +79,7 @@ const CampaignForm = ({ defaultValues = NEW_CAMPAIGN_DEFAULTS, audienceNote, onD
   const templates = useQuery(notificationTemplatesQuery()).data?.data;
   const plans = useQuery(plansQuery()).data?.data;
   const templateOptions = useMemo(() => buildTemplateOptions(templates ?? []), [templates]);
-  const { translate } = useLocale();
+  const { locale, translate } = useLocale();
   const planOptions = useMemo(() => buildPlanOptions(plans ?? [], translate), [plans, translate]);
   const [when, setWhen] = useState<When>("later");
 
@@ -187,7 +187,7 @@ const CampaignForm = ({ defaultValues = NEW_CAMPAIGN_DEFAULTS, audienceNote, onD
               className="grid gap-2 sm:grid-cols-2"
             >
               <ChoiceCard value="now" title="Send now" sub="Starts in about 2 minutes" />
-              <ChoiceCard value="later" title="Later" sub={scheduledFor ? formatRelativeDateTime(scheduledFor, { t: translate }) : "Pick a date and time"} />
+              <ChoiceCard value="later" title="Later" sub={scheduledFor ? formatRelativeDateTime(scheduledFor, { t: translate, locale }) : "Pick a date and time"} />
             </RadioGroup.Root>
           )}
         </form.Subscribe>

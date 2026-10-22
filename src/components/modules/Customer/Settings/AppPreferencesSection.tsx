@@ -167,7 +167,7 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
         )}
         <div className="flex flex-wrap items-center gap-3 border-t border-divider bg-mint-50 px-6 py-3">
           <span className="text-small font-semibold text-emerald">{t("Preview@@format")}</span>
-          <span className="text-body-lg font-semibold text-ink tabular-nums">{formatCurrency(123456, "BDT")}</span>
+          <span className="text-body-lg font-semibold text-ink tabular-nums">{formatCurrency(123456, "BDT", locale)}</span>
           <span className="text-ink-muted">·</span>
           <span className="text-body-lg font-semibold text-ink">{formatDate(today, "EEE, d MMM yyyy", locale)}</span>
           <span className="text-ink-muted">·</span>

@@ -36,8 +36,8 @@ export function GoalPicker({ goals, options, value, onChange, currency, id, labe
 
   const standing = (goal: SavingsGoal) =>
     goal.status === "PAUSED"
-      ? t("{amount} saved · paused", { amount: formatCurrency(goal.currentAmount, currency) })
-      : t("{percent}% · {amount} to go", { percent: formatCount(goal.progressPercent, locale), amount: formatCurrency(remainingOf(goal), currency) });
+      ? t("{amount} saved · paused", { amount: formatCurrency(goal.currentAmount, currency, locale) })
+      : t("{percent}% · {amount} to go", { percent: formatCount(goal.progressPercent, locale), amount: formatCurrency(remainingOf(goal), currency, locale) });
   // Decoration: the line under the name already says the percentage.
   const ring = (goal: SavingsGoal) => (
     <span aria-hidden="true" className="shrink-0">

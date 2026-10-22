@@ -18,6 +18,7 @@ import type { Tone } from "@/components/smartly/tones";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { INSIGHT_PERIOD_LABELS, INSIGHT_PERIODS, monthlyAverage, movement, percentLabel, type InsightPeriod, type Movement, type RankedRow } from "@/lib/customer/insights";
+import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { type Locale, useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural, type Translate } from "@/lib/i18n/message";
@@ -143,7 +144,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                 icon={<TrendingUp />}
                 tone="insights"
                 say={topSource ? t("{name} is {percent} of your income {period}.", { name: topSource.name, percent: percentLabel(Math.round(topSource.share), locale), period: when }) : t("No money in yet.")}
-                why={topSource ? secondSourceLine(data, t) : t("Record an income and this fills in.")}
+                why={topSource ? secondSourceLine(data, t, locale) : t("Record an income and this fills in.")}
               />
               <SayCard icon={kept.icon} tone={kept.tone} className="max-md:order-first" say={kept.say} why={kept.why} />
               <SayCard
@@ -178,7 +179,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                   <div className="flex flex-col gap-0.5">
                     <h2 className="text-h3 text-ink">{t("Where your money comes from")}</h2>
                     <span className="text-small text-ink-muted">
-                      {plural(t, data.sources.length, "{count} income source · {amount}", "{count} income sources · {amount}", { amount: formatCurrency(totals.income, currency) }, locale)}
+                      {plural(t, data.sources.length, "{count} income source · {amount}", "{count} income sources · {amount}", { amount: formatCurrency(totals.income, currency, locale) }, locale)}
                     </span>
                   </div>
                   <CardLink href="/income-category">{t("Income sources")}</CardLink>
@@ -194,7 +195,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                 )}
                 {data.concentration && (
                   <Banner tone="warning" inline icon={<TriangleAlert />}>
-                    <b>{t("{percent} of your income comes from {name} alone.", { percent: percentLabel(data.concentration.percent, locale), name: data.concentration.name })}</b> {secondSourceLine(data, t)}
+                    <b>{t("{percent} of your income comes from {name} alone.", { percent: percentLabel(data.concentration.percent, locale), name: data.concentration.name })}</b> {secondSourceLine(data, t, locale)}
                   </Banner>
                 )}
               </Card>
@@ -204,7 +205,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                   <div className="flex flex-col gap-0.5">
                     <h2 className="text-h3 text-ink">{t("Where it goes")}</h2>
                     <span className="text-small text-ink-muted">
-                      {plural(t, data.spend.length, "{count} category · {amount}", "{count} categories · {amount}", { amount: formatCurrency(totals.expense, currency) }, locale)}
+                      {plural(t, data.spend.length, "{count} category · {amount}", "{count} categories · {amount}", { amount: formatCurrency(totals.expense, currency, locale) }, locale)}
                     </span>
                   </div>
                   <CardLink href="/categories">{t("Budget")}</CardLink>
@@ -227,7 +228,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                         >
                           <span className={cn("size-2.5 shrink-0 rounded-[3px] bg-current", categoryTone(row.color).fg)} />
                           <span className="flex-1 truncate text-ink">{row.name}</span>
-                          <b className="text-ink tabular-nums">{formatCurrency(row.amount, currency)}</b>
+                          <b className="text-ink tabular-nums">{formatCurrency(row.amount, currency, locale)}</b>
                           <span className="w-10 text-right text-ink-muted tabular-nums">{percentLabel(Math.round(row.share), locale)}</span>
                         </Link>
                       ))}
@@ -236,12 +237,12 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                 )}
                 {data.drop ? (
                   <Banner tone="mint" inline icon={<TrendingDown />}>
-                    {fillNodes(t("{name} fell by {amount} against {previous}."), { name: <b>{data.drop.name}</b>, amount: <b>{formatCurrency(-data.drop.change, currency)}</b>, previous: labels.previous })}
+                    {fillNodes(t("{name} fell by {amount} against {previous}."), { name: <b>{data.drop.name}</b>, amount: <b>{formatCurrency(-data.drop.change, currency, locale)}</b>, previous: labels.previous })}
                   </Banner>
                 ) : (
                   rise && (
                     <Banner tone="warning" inline icon={<TrendingUp />}>
-                      {fillNodes(t("{name} rose by {amount} against {previous}."), { name: <b>{rise.name}</b>, amount: <b>{formatCurrency(rise.change, currency)}</b>, previous: labels.previous })}
+                      {fillNodes(t("{name} rose by {amount} against {previous}."), { name: <b>{rise.name}</b>, amount: <b>{formatCurrency(rise.change, currency, locale)}</b>, previous: labels.previous })}
                     </Banner>
                   )
                 )}
@@ -298,19 +299,19 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
 // The middle card: the share kept, or that more went out than came in.
 function keptSay(data: InsightsData, when: string, t: Translate, locale: Locale): { tone: Tone; icon: React.ReactNode; say: string; why: string } {
   const { totals, previous, labels, currency } = data;
-  const spent = formatCurrency(totals.expense, currency);
+  const spent = formatCurrency(totals.expense, currency, locale);
   if (totals.income > 0 && totals.left < 0) {
     return {
       tone: "expense",
       icon: <TriangleAlert />,
-      say: t("You spent {amount} more than you earned.", { amount: formatCurrency(-totals.left, currency) }),
-      why: t("{spent} went out against {earned} {period}.", { spent, earned: formatCurrency(totals.income, currency), period: when }),
+      say: t("You spent {amount} more than you earned.", { amount: formatCurrency(-totals.left, currency, locale) }),
+      why: t("{spent} went out against {earned} {period}.", { spent, earned: formatCurrency(totals.income, currency, locale), period: when }),
     };
   }
   if (totals.rate === null) {
     return { tone: "money", icon: <PiggyBank />, say: t("Nothing earned yet."), why: totals.expense > 0 ? t("{spent} went out {period}.", { spent, period: when }) : t("Once money comes in, this shows the share you kept.") };
   }
-  const values = { amount: formatCurrency(totals.left, currency), period: when, before: previous.rate === null ? "" : percentLabel(previous.rate, locale), previous: labels.previous };
+  const values = { amount: formatCurrency(totals.left, currency, locale), period: when, before: previous.rate === null ? "" : percentLabel(previous.rate, locale), previous: labels.previous };
   const why =
     previous.rate === null
       ? t("That is {amount} {period}.", values)
@@ -329,11 +330,11 @@ function keptSay(data: InsightsData, when: string, t: Translate, locale: Locale)
 function SpendWhy({ data, row }: { data: InsightsData; row: RankedRow }) {
   const { t, locale } = useLocale();
   const percent = percentLabel(Math.round(row.share), locale);
-  const total = { percent, amount: formatCurrency(row.amount, data.currency) };
+  const total = { percent, amount: formatCurrency(row.amount, data.currency, locale) };
   if (data.period === "last-month") return t("{percent} of spending · {amount} in all.", total);
   const perMonth = monthlyAverage(row.amount, data.months);
   if (perMonth === null) return t("{percent} of spending · {amount} so far.", total);
-  const average = { percent, amount: formatCurrency(perMonth, data.currency) };
+  const average = { percent, amount: formatCurrency(perMonth, data.currency, locale) };
   return (
     <>
       <span className="md:hidden">{t("{percent} of spending, about {amount} a month.", average)}</span>
@@ -344,11 +345,11 @@ function SpendWhy({ data, row }: { data: InsightsData; row: RankedRow }) {
 
 // "Freelance went from ৳ 8,000 to ৳ 12,000." -- how the runner-up moved,
 // or that there is none.
-function secondSourceLine(data: InsightsData, t: Translate): string {
+function secondSourceLine(data: InsightsData, t: Translate, locale: Locale): string {
   const second = data.concentration?.second ?? (data.sources[1] ? { name: data.sources[1].name, before: 0, now: data.sources[1].amount } : null);
   if (!second) return t("It is your only source so far.");
-  if (!second.before) return t("{name} brought {amount}.", { name: second.name, amount: formatCurrency(second.now, data.currency) });
-  return t("{name} went from {before} to {now}.", { name: second.name, before: formatCurrency(second.before, data.currency), now: formatCurrency(second.now, data.currency) });
+  if (!second.before) return t("{name} brought {amount}.", { name: second.name, amount: formatCurrency(second.now, data.currency, locale) });
+  return t("{name} went from {before} to {now}.", { name: second.name, before: formatCurrency(second.before, data.currency, locale), now: formatCurrency(second.now, data.currency, locale) });
 }
 
 // A card header's link: a 44px target that keeps the header's height.
@@ -365,7 +366,7 @@ function DeltaLine({ move, good, vs, currency }: { move: Movement; good: (change
   const { t, locale } = useLocale();
   if (move.kind === "new" || move.kind === "same") return <span>{t("Nothing before to compare with")}</span>;
   const arrow = move.change > 0 ? "↑" : move.change < 0 ? "↓" : "=";
-  const figure = move.kind === "percent" ? percentLabel(Math.abs(move.percent), locale) : formatCurrency(Math.abs(move.change), currency);
+  const figure = move.kind === "percent" ? percentLabel(Math.abs(move.percent), locale) : formatCurrency(Math.abs(move.change), currency, locale);
   return (
     <span>
       {fillNodes(t("{change} vs {previous}"), {
@@ -402,14 +403,14 @@ function SourceRow({ row, currency, href }: { row: RankedRow; currency: string; 
   const { locale } = useLocale();
   return (
     <Link href={href} className="-mx-2 grid grid-cols-[24px_minmax(0,1fr)_110px_56px] items-center gap-3 rounded-md px-2 py-1.5 text-body transition-colors hover:bg-hover">
-      <span className="text-small font-bold text-ink-muted tabular-nums">{row.rank}</span>
+      <span className="text-small font-bold text-ink-muted tabular-nums">{formatCount(row.rank, locale)}</span>
       <span className="flex min-w-0 flex-col gap-2">
         <span className="truncate font-semibold text-ink">{row.name}</span>
         <span className={cn("block h-2 overflow-hidden rounded-full bg-surface-sunken", categoryTone(row.color).fg)}>
           <span className="block h-full rounded-full bg-current" style={{ width: `${row.width}%` }} />
         </span>
       </span>
-      <span className="text-right font-semibold text-ink tabular-nums">{formatCurrency(row.amount, currency)}</span>
+      <span className="text-right font-semibold text-ink tabular-nums">{formatCurrency(row.amount, currency, locale)}</span>
       <span className="text-right text-ink-muted tabular-nums">{percentLabel(Math.round(row.share), locale)}</span>
     </Link>
   );
@@ -423,7 +424,7 @@ function ChangeRow({ name, before, now, move, currency, good }: { name: string; 
     move.kind === "percent"
       ? `${move.percent > 0 ? "+ " : move.percent < 0 ? "− " : ""}${percentLabel(Math.abs(move.percent), locale)}`
       : move.kind === "amount"
-        ? formatSignedCurrency(move.change, currency)
+        ? formatSignedCurrency(move.change, currency, locale)
         : move.kind === "new"
           ? t("new")
           : "—";
@@ -434,10 +435,10 @@ function ChangeRow({ name, before, now, move, currency, good }: { name: string; 
         {name}
       </ListCell>
       <ListCell align="end" className="whitespace-nowrap text-ink-muted">
-        {formatCurrency(before, currency)}
+        {formatCurrency(before, currency, locale)}
       </ListCell>
       <ListCell align="end" className="whitespace-nowrap font-semibold text-ink">
-        {formatCurrency(now, currency)}
+        {formatCurrency(now, currency, locale)}
       </ListCell>
       <ListCell align="end" className={cn("whitespace-nowrap font-bold", tone)}>
         {text}

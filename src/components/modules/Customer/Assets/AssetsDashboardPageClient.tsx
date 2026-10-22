@@ -17,7 +17,7 @@ import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { assetGain, assetsSummary, assetWorth, biggestChanges, categoryVisual, gainChip, type GainChip, valueByCategory } from "@/lib/customer/assetDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -68,7 +68,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
   const owned = formatCount(summary.owned.length, locale);
   const chipOf = (tone: GainChip["tone"], label: string) => (
     <Chip tone={tone} size="sm" className="font-semibold">
-      {label}
+      {toLocaleDigits(label, locale)}
     </Chip>
   );
   // "All 7", the count in the reader's digits; one span, so the segment's
@@ -130,8 +130,8 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
             <Card padding="sm" className={TILE}>
               <span className={TILE_LABEL}>{t("Sold")}</span>
               <span className={cn(FIGURE, "text-ink tabular-nums")}>{formatCount(summary.sold.length, locale)}</span>
-              <span className="truncate text-caption font-normal text-ink-muted">{lastSold ? t("{name}, sold for {amount}", { name: lastSold.name, amount: formatCurrency(lastSold.soldPrice ?? 0, currency) }) : t("Nothing sold yet")}</span>
-              {lastSold && <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption font-normal text-ink-muted">{fillNodes(t("{change} on sales"), { change: chipOf(soldGain.tone, formatSignedCurrency(summary.soldGain.amount, currency)) })}</span>}
+              <span className="truncate text-caption font-normal text-ink-muted">{lastSold ? t("{name}, sold for {amount}", { name: lastSold.name, amount: formatCurrency(lastSold.soldPrice ?? 0, currency, locale) }) : t("Nothing sold yet")}</span>
+              {lastSold && <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption font-normal text-ink-muted">{fillNodes(t("{change} on sales"), { change: chipOf(soldGain.tone, formatSignedCurrency(summary.soldGain.amount, currency, locale)) })}</span>}
             </Card>
           </section>
 
@@ -159,8 +159,8 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                         <span className="text-caption font-normal text-ink-muted">{t(slice.count === 1 ? "{count} asset" : "{count} assets", { count: formatCount(slice.count, locale) })}</span>
                       </span>
                       <span className="flex flex-col items-end gap-px">
-                        <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(slice.value, currency)}</span>
-                        <span className="text-caption font-normal text-ink-muted tabular-nums">{Math.round(slice.share)}%</span>
+                        <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(slice.value, currency, locale)}</span>
+                        <span className="text-caption font-normal text-ink-muted tabular-nums">{toLocaleDigits(`${Math.round(slice.share)}%`, locale)}</span>
                       </span>
                     </li>
                   ))}
@@ -235,13 +235,13 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                     </ListCell>
                     <ListCell className="hidden text-small text-ink-2 md:block">{formatDate(asset.purchaseDate, "d MMM yyyy", locale)}</ListCell>
                     <ListCell align="end" className="hidden text-ink-2 tabular-nums md:block">
-                      {formatCurrency(asset.purchasePrice, currency)}
+                      {formatCurrency(asset.purchasePrice, currency, locale)}
                     </ListCell>
                     {/* Once sold, the figure is the sale price, and says so. A
                         phone shows the change under it, in place of its column. */}
                     <ListCell align="end" className="flex flex-col items-end gap-px">
                       {sold && <span className="text-caption font-normal text-ink-muted">{t("Sale price")}</span>}
-                      <span className={cn("font-semibold tabular-nums", sold ? "text-ink-2" : "text-ink")}>{formatCurrency(assetWorth(asset), currency)}</span>
+                      <span className={cn("font-semibold tabular-nums", sold ? "text-ink-2" : "text-ink")}>{formatCurrency(assetWorth(asset), currency, locale)}</span>
                       <span className="md:hidden">{chipOf(chip.tone, chip.label)}</span>
                     </ListCell>
                     <ListCell align="end" className="hidden md:flex md:justify-end">

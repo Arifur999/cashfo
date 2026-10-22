@@ -8,7 +8,7 @@ import Loader from "@/components/shared/Loader";
 import Avatar from "@/components/smartly/Avatar";
 import { SOFT_TONE, type Tone } from "@/components/smartly/tones";
 import { APP_VERSION, ownWorkspaces, REMINDERS_ANCHOR, SETTINGS_GROUPS, SETTINGS_SECTIONS, type SettingsSection } from "@/lib/customer/settingsDisplay";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { SECTION_ICONS, useSignOut } from "./SettingsNav";
@@ -89,7 +89,7 @@ export function SettingsMobileMenu() {
         {signingOut ? <Loader size={18} label={t("Signing out...")} /> : <LogOut className="size-4.5" aria-hidden="true" />}
         {signingOut ? t("Signing out...") : t("Sign out")}
       </button>
-      <span className="text-center text-caption text-ink-muted">{t("Smartly · version {version}", { version: APP_VERSION })}</span>
+      <span className="text-center text-caption text-ink-muted">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, locale) })}</span>
     </div>
   );
 }

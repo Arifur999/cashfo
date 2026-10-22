@@ -1,6 +1,9 @@
 // Every money value in the panel renders through this. Decimal columns arrive
 // from the backend as fixed-2dp strings ("1500.00"), so strings are accepted
 // and parsed here rather than at each call site.
+import { toLocaleDigits } from "@/lib/i18n/digits";
+import type { Locale } from "@/lib/i18n/translate";
+
 export const DEFAULT_CURRENCY = "BDT";
 
 // Taka is written the way the design writes it, "৳ 6,214.50": our own symbol
@@ -25,22 +28,24 @@ const getFormatter = (currency: string, fractionDigits: number) => {
 };
 
 // "৳ 299", "৳ 2,699.10": the paisa only when there are some, as the design
-// writes payments and prices in its lists.
-export const formatAmount = (amount: number | string | null | undefined, currency = DEFAULT_CURRENCY): string => {
+// writes payments and prices in its lists. The reader's language comes last:
+// Bangla gets Bangla digits. Leave it out where the text must stay Latin (a
+// CSV export).
+export const formatAmount = (amount: number | string | null | undefined, currency = DEFAULT_CURRENCY, locale: Locale = "en"): string => {
   const value = typeof amount === "string" ? Number(amount) : amount;
   const safeValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
-  return formatCurrency(safeValue, currency, Number.isInteger(safeValue) ? 0 : 2);
+  return formatCurrency(safeValue, currency, Number.isInteger(safeValue) ? 0 : 2, locale);
 };
 
 // formatCurrency(1500) -> "৳ 1,500.00"; formatCurrency(5, "USD") -> "$5.00";
 // non-numeric input falls back to 0.
-export const formatCurrency = (amount: number | string | null | undefined, currency = DEFAULT_CURRENCY, fractionDigits = 2): string => {
+export const formatCurrency = (amount: number | string | null | undefined, currency = DEFAULT_CURRENCY, fractionDigits = 2, locale: Locale = "en"): string => {
   const value = typeof amount === "string" ? Number(amount) : amount;
   const safeValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
   const symbol = SYMBOLS[currency];
   if (!symbol) {
-    return getFormatter(currency, fractionDigits).format(safeValue);
+    return toLocaleDigits(getFormatter(currency, fractionDigits).format(safeValue), locale);
   }
   // The sign leads, as it is read: "-৳ 1,500.00".
-  return `${safeValue < 0 ? "-" : ""}${symbol} ${getFormatter(currency, fractionDigits).format(Math.abs(safeValue))}`;
+  return toLocaleDigits(`${safeValue < 0 ? "-" : ""}${symbol} ${getFormatter(currency, fractionDigits).format(Math.abs(safeValue))}`, locale);
 };

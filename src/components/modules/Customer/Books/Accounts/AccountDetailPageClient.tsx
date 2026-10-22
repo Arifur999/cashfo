@@ -106,7 +106,7 @@ export function AccountDetailPageClient({ businessId, account, accounts, ledger,
   const dayLabel = (key: string, date: string | undefined, fallback: string) => (date ? t(key, { date: booksDate(date, locale, { today }) }) : t(fallback));
   // What the strip's four figures leave out: transfers between wallets, and
   // a void whose reversal fell in another period.
-  const closingNote = [adjustment !== 0 ? t("{amount} transfers", { amount: formatSignedCurrency(adjustment, currency) }) : null, figures.voided !== 0 ? t("{amount} voided or reversed", { amount: formatSignedCurrency(figures.voided, currency) }) : null].filter(Boolean).join(" · ");
+  const closingNote = [adjustment !== 0 ? t("{amount} transfers", { amount: formatSignedCurrency(adjustment, currency, locale) }) : null, figures.voided !== 0 ? t("{amount} voided or reversed", { amount: formatSignedCurrency(figures.voided, currency, locale) }) : null].filter(Boolean).join(" · ");
 
   return (
     <PageFrame className="gap-6">
@@ -147,10 +147,10 @@ export function AccountDetailPageClient({ businessId, account, accounts, ledger,
       <StatStrip
         busy={loading}
         stats={[
-          { label: dayLabel("Opening, {date}", dateFrom, "Opening balance"), value: formatCurrency(figures.opening, currency) },
-          { label: t(words.in), value: formatSignedCurrency(summary.totalIn, currency), tone: words.money ? "income" : "neutral" },
-          { label: t(words.out), value: formatSignedCurrency(-Number(summary.totalOut), currency), tone: words.money ? "expense" : "neutral" },
-          { label: dayLabel("Closing, {date}", dateTo, "Closing balance"), value: formatCurrency(figures.closing, currency), note: closingNote || undefined },
+          { label: dayLabel("Opening, {date}", dateFrom, "Opening balance"), value: formatCurrency(figures.opening, currency, locale) },
+          { label: t(words.in), value: formatSignedCurrency(summary.totalIn, currency, locale), tone: words.money ? "income" : "neutral" },
+          { label: t(words.out), value: formatSignedCurrency(-Number(summary.totalOut), currency, locale), tone: words.money ? "expense" : "neutral" },
+          { label: dayLabel("Closing, {date}", dateTo, "Closing balance"), value: formatCurrency(figures.closing, currency, locale), note: closingNote || undefined },
         ]}
       />
 

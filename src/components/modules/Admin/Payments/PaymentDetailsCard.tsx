@@ -25,8 +25,8 @@ const PaymentDetailsCard = async ({ payment }: { payment: IPaymentDetail }) => {
       label: "Amount",
       // The paisa only when there are some, the coupon's share included.
       value: t(discount > 0 ? (payment.couponCode ? "{amount} ({off} off with {code})" : "{amount} ({off} off)") : "{amount} (no coupon)", {
-        amount: formatAmount(payment.amount, payment.currency),
-        off: formatAmount(discount, payment.currency),
+        amount: formatAmount(payment.amount, payment.currency, locale),
+        off: formatAmount(discount, payment.currency, locale),
         code: payment.couponCode ?? "",
       }),
     },

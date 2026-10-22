@@ -61,12 +61,12 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, t
 
   const facts = [
     { label: t("Period"), value: rangeLabel(range, locale) },
-    { label: t("Total expense"), value: formatCurrency(settlement.totalExpense, currency) },
+    { label: t("Total expense"), value: formatCurrency(settlement.totalExpense, currency, locale) },
     { label: t("Members"), value: formatCount(settlement.memberCount, locale) },
     // Split by shares, exact amounts or with someone joining mid-month, nobody pays an even part.
-    Number(settlement.mealUnits) > 0 ? { label: t("Meal rate"), value: formatCurrency(settlement.mealRate, currency) } : { label: t("Share each"), value: sharedEqually ? formatCurrency(sharedCostEach(settlement), currency) : "—" },
-    { label: t("Net contributions"), value: formatCurrency(contributions, currency) },
-    { label: t("Cash in hand"), value: formatCurrency(cashInHand(settlement), currency) },
+    Number(settlement.mealUnits) > 0 ? { label: t("Meal rate"), value: formatCurrency(settlement.mealRate, currency, locale) } : { label: t("Share each"), value: sharedEqually ? formatCurrency(sharedCostEach(settlement), currency, locale) : "—" },
+    { label: t("Net contributions"), value: formatCurrency(contributions, currency, locale) },
+    { label: t("Cash in hand"), value: formatCurrency(cashInHand(settlement), currency, locale) },
   ];
 
   function confirm() {
@@ -141,7 +141,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, t
                   pending,
                   "{count} settle-up payment is still open. Record it first so everyone starts {month} at {zero}, or close now and settle by hand.",
                   "{count} settle-up payments are still open. Record them first so everyone starts {month} at {zero}, or close now and settle by hand.",
-                  { month: nextMonth, zero: formatCurrency(0, currency) },
+                  { month: nextMonth, zero: formatCurrency(0, currency, locale) },
                 )}
               </p>
             )}

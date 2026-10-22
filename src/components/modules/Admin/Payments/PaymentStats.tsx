@@ -5,18 +5,19 @@ import Card from "@/components/smartly/Card";
 import Kpi from "@/components/shared/Kpi";
 import { formatCurrency } from "@/lib/currency";
 import { formatMonthName } from "@/lib/date";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { GATEWAY_BAR_CLASS } from "@/lib/payments";
 import { humanizeEnum } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 import { paymentStatsQuery } from "@/queries/payment.queries";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { Locale } from "@/lib/i18n/translate";
 import LoadError from "./LoadError";
 import { countPhrase, PAYMENTS_LIST_HREF } from "./paymentsDisplay";
 
 // Totals over many payments, in whole taka.
-const money = (value: string) => formatCurrency(value, undefined, 0);
+const money = (value: string, locale: Locale) => formatCurrency(value, undefined, 0, locale);
 
 interface PaymentStatsProps {
   // The day the "last 7 days" start (yyyy-MM-dd), read by the page.
@@ -48,14 +49,14 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
         <Kpi
           size="sm"
           label={translate("Collected in {month}", { month: last })}
-          value={money(stats.lastMonth.collected)}
+          value={money(stats.lastMonth.collected, locale)}
           note={
             <span className={change !== null && change >= 0 ? "text-emerald" : change !== null ? "text-expense" : undefined}>
               {change === null
                 ? lastPayments
                 : translate(change >= 0 ? "{payments} · up {percent}% on the month before" : "{payments} · down {percent}% on the month before", {
                     payments: lastPayments,
-                    percent: Math.abs(change),
+                    percent: toLocaleDigits(String(Math.abs(change)), locale),
                   })}
             </span>
           }
@@ -63,7 +64,7 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
         <Kpi
           size="sm"
           label={translate("{month} so far", { month: translate(formatMonthName(stats.thisMonth.month)) })}
-          value={money(stats.thisMonth.collected)}
+          value={money(stats.thisMonth.collected, locale)}
           note={translate("{payments} in {days}", {
             payments: payments(stats.thisMonth.payments),
             days: countPhrase(translate, locale, stats.thisMonth.days, "{count} day", "{count} days"),
@@ -75,7 +76,7 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
           href={`${PAYMENTS_LIST_HREF}?status=FAILED&dateFrom=${failedSince}`}
           label="Failed, last 7 days"
           value={count(stats.failedLast7Days.count)}
-          note={<span className={stats.failedLast7Days.count > 0 ? "text-expense" : undefined}>{translate("{amount} not collected yet", { amount: money(stats.failedLast7Days.amount) })}</span>}
+          note={<span className={stats.failedLast7Days.count > 0 ? "text-expense" : undefined}>{translate("{amount} not collected yet", { amount: money(stats.failedLast7Days.amount, locale) })}</span>}
         />
         {/* No link: the list goes by the day a payment was made, not the
             day it was refunded, so no filter shows a month's refunds. */}
@@ -83,7 +84,7 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
           size="sm"
           label={translate("Refunds in {month}", { month: last })}
           value={count(stats.refundsLastMonth.count)}
-          note={<span className={stats.refundsLastMonth.count > 0 ? "text-warning" : undefined}>{translate("{amount} sent back", { amount: money(stats.refundsLastMonth.amount) })}</span>}
+          note={<span className={stats.refundsLastMonth.count > 0 ? "text-warning" : undefined}>{translate("{amount} sent back", { amount: money(stats.refundsLastMonth.amount, locale) })}</span>}
         />
       </div>
       <Card padding="none" className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:gap-4">

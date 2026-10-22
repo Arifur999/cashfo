@@ -117,8 +117,23 @@ export const SYSTEM_TEXTS = new Set([...SYSTEM_CATEGORIES, "Referral Program wit
 
 export const categoryLabel = (name: string, t: Translate): string => (SYSTEM_CATEGORIES.has(name) ? t(name) : name);
 
+// The notes the assets feature writes around the reader's own asset name
+// ("Asset sale: Kitchen fridge"): the words translate, the name stays.
+const SYSTEM_PREFIXES: [RegExp, string][] = [
+  [/^Asset purchase: ([^]+)$/, "Asset purchase: {name}"],
+  [/^Asset sale: ([^]+)$/, "Asset sale: {name}"],
+  [/^Asset deleted: ([^]+)$/, "Asset deleted: {name}"],
+];
+
 // A row's title or note: translated when the backend wrote it, else as typed.
-export const systemText = (text: string, t: Translate): string => (SYSTEM_TEXTS.has(text) ? t(text) : text);
+export const systemText = (text: string, t: Translate): string => {
+  if (SYSTEM_TEXTS.has(text)) return t(text);
+  for (const [pattern, key] of SYSTEM_PREFIXES) {
+    const match = text.match(pattern);
+    if (match) return t(key, { name: match[1] });
+  }
+  return text;
+};
 
 // What a row is called on screen: its title, else its type.
 export const rowTitle = (row: Pick<TransactionRow, "title" | "transaction">, t: Translate): string =>

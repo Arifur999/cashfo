@@ -88,6 +88,12 @@ export const settingsDictionary: Record<string, string> = {
   "Last active {when}": "সর্বশেষ সক্রিয় {when}",
   "IP unknown": "আইপি জানা নেই",
   "Sign out of {device}": "{device} থেকে সাইন আউট করুন",
+  // lib/deviceLabel.ts: the backend's English device label, reworded
+  "{browser} on {os}": "{os}-এ {browser}",
+  "(Mobile)": "(মোবাইল)",
+  "Unknown browser": "অজানা ব্রাউজার",
+  "Unknown OS": "অজানা সিস্টেম",
+  "Unknown device": "অজানা ডিভাইস",
   "{count} device signed out": "{count}টি ডিভাইস সাইন আউট হয়েছে",
   "{count} devices signed out": "{count}টি ডিভাইস সাইন আউট হয়েছে",
   "{count} device couldn't be signed out. Try again.": "{count}টি ডিভাইস সাইন আউট করা যায়নি। আবার চেষ্টা করুন।",

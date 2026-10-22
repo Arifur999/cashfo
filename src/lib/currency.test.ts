@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatAmount, formatCurrency } from "./currency";
+import { toBanglaDigits } from "@/lib/i18n/banglaDates";
 
 const NBSP = " ";
 
@@ -36,5 +37,12 @@ describe("formatAmount", () => {
 
   it("treats what is not a number as zero", () => {
     expect(formatAmount(null)).toBe(`৳${NBSP}0`);
+  });
+});
+
+describe("formatAmount in Bangla", () => {
+  it("prints Bangla digits", () => {
+    expect(formatAmount(2699.1, "BDT", "bn")).toBe(toBanglaDigits(formatAmount(2699.1)));
+    expect(formatAmount(299, "BDT", "bn")).toContain("২৯৯");
   });
 });

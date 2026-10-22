@@ -76,21 +76,22 @@ export const flagTriesLink = (
   };
 };
 
-// The grey line under the text: the network, and who is looking into it.
+// The grey line under the text: the network, and who is looking into it;
+// with the locale, the time in the reader's digits.
 export const flagDetails = (
   flag: Pick<ISecurityFlag, "status" | "relatedIp" | "reviewer" | "reviewedAt">,
-  { now = new Date(), t = inEnglish }: Pick<RelativeDateOptions, "now" | "t"> = {},
+  { now = new Date(), t = inEnglish, locale }: Pick<RelativeDateOptions, "now" | "t" | "locale"> = {},
 ): string | null => {
   const parts: string[] = [];
   if (flag.relatedIp) parts.push(t("IP {ip}", { ip: flag.relatedIp }));
   if (flag.status === "REVIEWING" && flag.reviewer) {
-    parts.push(t("{name} is looking into it since {time}", { name: flag.reviewer.name, time: formatLogTime(flag.reviewedAt, { now, t }) }));
+    parts.push(t("{name} is looking into it since {time}", { name: flag.reviewer.name, time: formatLogTime(flag.reviewedAt, { now, t, locale }) }));
   }
   return parts.length > 0 ? parts.join(" · ") : null;
 };
 
-// Who closed a flag, and when: "Nadia Rahman · 28 Sep".
-export const flagClosedBy = (flag: Pick<ISecurityFlag, "status" | "reviewer" | "reviewedAt">, options: Pick<RelativeDateOptions, "now" | "t"> = {}): string | null => {
+// Who closed a flag, and when: "Nadia Rahman · 28 Sep" ("২৮ সেপ্টে" in Bangla).
+export const flagClosedBy = (flag: Pick<ISecurityFlag, "status" | "reviewer" | "reviewedAt">, options: Pick<RelativeDateOptions, "now" | "t" | "locale"> = {}): string | null => {
   if (isOpenFlag(flag) || !flag.reviewer) return null;
   return `${flag.reviewer.name} · ${formatDayName(flag.reviewedAt, options)}`;
 };

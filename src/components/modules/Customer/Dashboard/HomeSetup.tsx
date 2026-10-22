@@ -107,7 +107,7 @@ export function HomeSetup({ data, onAddTransaction }: HomeSetupProps) {
         <div className="relative flex flex-col gap-3">
           {/* Active wallets only, as on the hero: Balance's word for it. */}
           <span className="text-body text-mint-200">{t("Available balance")}</span>
-          <span className="text-display tabular-nums md:text-display-xl">{formatCurrency(data.balance, currency)}</span>
+          <span className="text-display tabular-nums md:text-display-xl">{formatCurrency(data.balance, currency, locale)}</span>
           <h2 id="setup-title" className="text-h2 leading-7">
             {t("Let's set up your money")}
           </h2>

@@ -47,7 +47,7 @@ describe("notificationView", () => {
     expect(behind("2027-09-30")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by September.");
     expect(behind("2027-10-31")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by October 2027.");
     expect(behind("2028-01-31")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by January 2028.");
-    expect(behind("2028-01-31", "bn")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by January ২০২৮.");
+    expect(behind("2028-01-31", "bn")).toBe("Car is behind. Save ৳ ৫,০০০ a month to reach it by January ২০২৮.");
     expect(behind("2026-08-31")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by August 2026.");
   });
 

@@ -54,15 +54,15 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           label="MRR"
-          value={mrr !== null ? formatAmount(mrr) : "—"}
+          value={mrr !== null ? formatAmount(mrr, undefined, locale) : "—"}
           chip={change !== null ? { text: `${change > 0 ? "+" : ""}${toLocaleDigits(`${change}%`, locale)}`, tone: change > 0 ? "income" : change < 0 ? "expense" : "neutral" } : null}
           note={change !== null ? "vs last month" : mrr !== null ? undefined : COULD_NOT_LOAD}
         />
         {/* Only part of the month is in, so it gets no change on the last. */}
         <Kpi
           label="This month so far"
-          value={revenue ? formatAmount(revenue.thisMonthRevenue) : "—"}
-          note={revenue ? translate("{amount} last month", { amount: formatAmount(revenue.lastMonthRevenue) }) : COULD_NOT_LOAD}
+          value={revenue ? formatAmount(revenue.thisMonthRevenue, undefined, locale) : "—"}
+          note={revenue ? translate("{amount} last month", { amount: formatAmount(revenue.lastMonthRevenue, undefined, locale) }) : COULD_NOT_LOAD}
         />
         <Kpi
           label="Failed payments"
@@ -94,9 +94,9 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
               bars={history.map((point, index) => ({
                 label: shortMonth(point.month, locale),
                 value: point.mrr,
-                short: compactMoney(point.mrr),
+                short: toLocaleDigits(compactMoney(point.mrr), locale),
                 highlight: index === history.length - 1,
-                spoken: `${monthLabel(point.month, locale, translate)} ${formatAmount(point.mrr)}`,
+                spoken: `${monthLabel(point.month, locale, translate)} ${formatAmount(point.mrr, undefined, locale)}`,
               }))}
             />
           )}
@@ -124,7 +124,7 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
                     </span>
                   </ListCell>
                   <ListCell align="end" className="font-bold text-expense tabular-nums">
-                    {formatAmount(payment.amount, payment.currency)}
+                    {formatAmount(payment.amount, payment.currency, locale)}
                   </ListCell>
                 </ListRow>
               ))}
@@ -146,7 +146,7 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
                 <ListRow key={entry.planId} density="dense" className={cn(SECTION_ROW, "py-2")}>
                   <ListCell className="text-ink">{entry.planName}</ListCell>
                   <ListCell align="end" className="font-bold text-ink tabular-nums">
-                    {formatAmount(entry.amount)}
+                    {formatAmount(entry.amount, undefined, locale)}
                   </ListCell>
                 </ListRow>
               ))}

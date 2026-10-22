@@ -387,13 +387,13 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         </div>
         {!wide && showBudget && (
           <span className="self-center text-small text-ink-muted">
-            {fillNodes(t("{category}: {amount} left after this"), { category, amount: <b className={hint.figure}>{formatCurrency(budgetLeft - value, currency)}</b> })}
+            {fillNodes(t("{category}: {amount} left after this"), { category, amount: <b className={hint.figure}>{formatCurrency(budgetLeft - value, currency, locale)}</b> })}
           </span>
         )}
         {editing && value !== editing.amount && (
           <span className={cn("flex items-center gap-1.5 text-small font-semibold text-expense", !wide && "self-center")}>
             <Undo2 className="size-3.5" aria-hidden="true" />
-            {t("Was {amount}", { amount: formatCurrency(editing.amount, currency) })}
+            {t("Was {amount}", { amount: formatCurrency(editing.amount, currency, locale) })}
           </span>
         )}
       </div>
@@ -460,9 +460,9 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           <span>
             {fillNodes(t("{category} has {left} left this month. After this, {after} of {limit} will be left."), {
               category,
-              left: <b className="font-semibold">{formatCurrency(budgetLeft, currency)}</b>,
-              after: <b className={cn("font-semibold", hint.figure)}>{formatCurrency(budgetLeft - value, currency)}</b>,
-              limit: formatCurrency(budgetLimit, currency),
+              left: <b className="font-semibold">{formatCurrency(budgetLeft, currency, locale)}</b>,
+              after: <b className={cn("font-semibold", hint.figure)}>{formatCurrency(budgetLeft - value, currency, locale)}</b>,
+              limit: formatCurrency(budgetLimit, currency, locale),
             })}
           </span>
         </div>

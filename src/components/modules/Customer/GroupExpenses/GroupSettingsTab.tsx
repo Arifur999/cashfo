@@ -82,7 +82,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
   const sharesTotal = Object.values(byShares).reduce((sum, value) => sum + value, 0);
   const budget = data.budgets.find((b) => `${b.year}-${String(b.month).padStart(2, "0")}` === data.range.key);
   const month = monthName(data.range.key, locale, "long");
-  const money = (value: number | string) => formatCurrency(value, data.currency);
+  const money = (value: number | string) => formatCurrency(value, data.currency, locale);
   const dayWord = (day: number) => (locale === "bn" ? toBanglaDigits(day) : ordinal(day));
   const status = (section: Section) => (saving === section ? "saving" : saved === section ? "saved" : null);
 

@@ -3,12 +3,13 @@ import Kpi from "@/components/shared/Kpi";
 import T from "@/components/shared/T";
 import { formatCurrency } from "@/lib/currency";
 import { formatMonthName } from "@/lib/date";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { formatPercent } from "@/lib/number";
 import type { IRevenueOverview } from "@/types/revenue.types";
 import { getTranslator } from "@/lib/i18n/locale";
+import type { Locale } from "@/lib/i18n/translate";
 
-const money = (value: number) => formatCurrency(value, undefined, 0);
+const money = (value: number, locale: Locale) => formatCurrency(value, undefined, 0, locale);
 
 // The design's four figures: MRR, ARR, paid people, churn. They come from
 // two places today (the plans workspaces are on, and payments), so a line
@@ -27,18 +28,18 @@ const RevenueKpis = async ({ overview }: { overview: IRevenueOverview }) => {
         <Kpi
           size="sm"
           label="MRR"
-          value={money(overview.mrr)}
+          value={money(overview.mrr, locale)}
           note={
             change === null ? (
               "Monthly recurring revenue"
             ) : (
               <span className={change >= 0 ? "text-emerald" : "text-expense"}>
-                {t(change >= 0 ? "Up {percent}% on last month" : "Down {percent}% on last month", { percent: Math.abs(change) })}
+                {t(change >= 0 ? "Up {percent}% on last month" : "Down {percent}% on last month", { percent: toLocaleDigits(String(Math.abs(change)), locale) })}
               </span>
             )
           }
         />
-        <Kpi size="sm" label="ARR" value={money(overview.arr)} note="MRR × 12" />
+        <Kpi size="sm" label="ARR" value={money(overview.arr, locale)} note="MRR × 12" />
         <Kpi
           size="sm"
           label="Paid people"
@@ -53,7 +54,7 @@ const RevenueKpis = async ({ overview }: { overview: IRevenueOverview }) => {
         <Kpi
           size="sm"
           label={t("Churn, {month}", { month })}
-          value={formatPercent(churn.churnRatePercent)}
+          value={toLocaleDigits(formatPercent(churn.churnRatePercent), locale)}
           note={
             <span className={churn.churnedThisMonth > 0 ? "text-warning" : undefined}>
               {t("{left} of the {started} who started the month", { left: count(churn.churnedThisMonth), started: count(churn.startOfMonthPaidCount) })}

@@ -141,7 +141,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
     return { net, note: null };
   };
 
-  const netText = (net: number) => <span className={cn("tabular-nums", net > 0 ? "text-income" : net < 0 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(net, currency)}</span>;
+  const netText = (net: number) => <span className={cn("tabular-nums", net > 0 ? "text-income" : net < 0 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(net, currency, locale)}</span>;
 
   const pager = (focusTargetId: string) => (
     <Pagination

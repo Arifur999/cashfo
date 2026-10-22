@@ -303,7 +303,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
                         {split === "EXACT" ? (
                           <Input size="sm" inputMode="decimal" value={exact[member.id] ?? ""} onChange={(event) => setExact({ ...exact, [member.id]: event.target.value.replace(/[^\d.]/g, "") })} placeholder="0" aria-label={t("{name}'s amount", { name: member.name })} frameClassName="w-28" className="text-right tabular-nums" />
                         ) : (
-                          <span className="w-24 text-right text-small font-semibold text-ink-2 tabular-nums">{on && value > 0 ? formatCurrency(split === "SHARES" ? (value * (units[member.id] ?? 1)) / (unitTotal || 1) : each, currency) : "—"}</span>
+                          <span className="w-24 text-right text-small font-semibold text-ink-2 tabular-nums">{on && value > 0 ? formatCurrency(split === "SHARES" ? (value * (units[member.id] ?? 1)) / (unitTotal || 1) : each, currency, locale) : "—"}</span>
                         )}
                       </div>
                     );
@@ -312,7 +312,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
               )}
               {noSharers && <span className="text-small font-semibold text-warning">{t("Tick at least one member to share it")}</span>}
               {split === "EXACT" && value > 0 && exactLeft !== 0 && (
-                <span className={cn("text-small font-semibold", exactLeft > 0 ? "text-warning" : "text-expense")}>{exactLeft > 0 ? t("{amount} still to give out", { amount: formatCurrency(exactLeft / 100, currency) }) : t("{amount} more than the expense", { amount: formatCurrency(-exactLeft / 100, currency) })}</span>
+                <span className={cn("text-small font-semibold", exactLeft > 0 ? "text-warning" : "text-expense")}>{exactLeft > 0 ? t("{amount} still to give out", { amount: formatCurrency(exactLeft / 100, currency, locale) }) : t("{amount} more than the expense", { amount: formatCurrency(-exactLeft / 100, currency, locale) })}</span>
               )}
             </fieldset>
 
@@ -321,25 +321,25 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
               {split === "EQUAL" || mealsEqual ? (
                 <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{countLabel(t, locale, equalCount, "Shared equally · ÷ {count} member", "Shared equally · ÷ {count} members")}</span>
-                  <b className="font-bold text-expense">{value > 0 && equalCount > 0 ? t("− {amount} each", { amount: formatCurrency(each, currency) }) : "—"}</b>
+                  <b className="font-bold text-expense">{value > 0 && equalCount > 0 ? t("− {amount} each", { amount: formatCurrency(each, currency, locale) }) : "—"}</b>
                 </div>
               ) : (
                 <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{t(SPLIT_LABELS[split])}</span>
-                  <b className="font-bold text-expense">{value > 0 ? `− ${formatCurrency(value, currency)}` : "—"}</b>
+                  <b className="font-bold text-expense">{value > 0 ? `− ${formatCurrency(value, currency, locale)}` : "—"}</b>
                 </div>
               )}
               {!fromFund && payer && value > 0 && (
                 <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{t("Credited to {name}", { name: payer.name })}</span>
-                  <b className="font-bold text-income">+ {formatCurrency(value, currency)}</b>
+                  <b className="font-bold text-income">+ {formatCurrency(value, currency, locale)}</b>
                 </div>
               )}
               <div className="flex flex-wrap justify-between gap-x-3">
                 <span className="text-ink-2">{t("Cash in hand")}</span>
                 <span>
-                  <span className="text-ink-muted">{formatCurrency(cashInHand, currency)} → </span>
-                  <b className={cn("font-bold", cashAfter < 0 ? "text-expense" : "text-ink")}>{formatCurrency(cashAfter, currency)}</b>
+                  <span className="text-ink-muted">{formatCurrency(cashInHand, currency, locale)} → </span>
+                  <b className={cn("font-bold", cashAfter < 0 ? "text-expense" : "text-ink")}>{formatCurrency(cashAfter, currency, locale)}</b>
                 </span>
               </div>
               {fromFund && cashAfter < 0 && value > 0 && (

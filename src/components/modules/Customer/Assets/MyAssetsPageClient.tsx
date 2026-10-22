@@ -14,7 +14,7 @@ import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { assetGain, categoryVisual, gainChip, typeChips, updateCount, valueTrail } from "@/lib/customer/assetDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -71,7 +71,7 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
         title={t("My assets")}
         description={fillNodes(t(assets.length === 1 ? "{count} thing you own · {amount} today" : "{count} things you own · {amount} today"), {
           count: formatCount(assets.length, locale),
-          amount: <b className="font-semibold text-ink">{formatCurrency(total, currency)}</b>,
+          amount: <b className="font-semibold text-ink">{formatCurrency(total, currency, locale)}</b>,
         })}
         actions={
           <>
@@ -140,22 +140,22 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
                       <span className="truncate text-caption font-normal text-ink-muted">{t(asset.category)}</span>
                     </span>
                     <Chip tone={chip.tone} size="sm" className="font-semibold">
-                      {chip.label}
+                      {toLocaleDigits(chip.label, locale)}
                     </Chip>
                     {canManage && <Pencil aria-hidden="true" className="size-3.5 shrink-0 text-ink-muted transition-colors group-hover:text-ink" />}
                   </div>
                   <div className="flex items-end justify-between gap-3">
                     <span className="flex flex-col gap-0.5">
                       <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
-                      <span className="text-h2 tracking-[-0.01em] text-ink tabular-nums">{formatCurrency(asset.currentValue, currency)}</span>
+                      <span className="text-h2 tracking-[-0.01em] text-ink tabular-nums">{formatCurrency(asset.currentValue, currency, locale)}</span>
                     </span>
                     {/* In its type's colour, like the tile and the filter dot; the chip above says up or down. */}
-                    <Sparkline values={trail} color={visual.color} label={t("Value over time: {first} to {last}", { first: formatCurrency(trail[0], currency), last: formatCurrency(trail[trail.length - 1], currency) })} />
+                    <Sparkline values={trail} color={visual.color} label={t("Value over time: {first} to {last}", { first: formatCurrency(trail[0], currency, locale), last: formatCurrency(trail[trail.length - 1], currency, locale) })} />
                   </div>
                   <div className="flex items-baseline justify-between gap-3 border-t border-divider pt-3 text-caption font-normal text-ink-muted">
                     <span>
                       {fillNodes(t("Paid {amount} · {month}"), {
-                        amount: <b className="font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency)}</b>,
+                        amount: <b className="font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency, locale)}</b>,
                         month: formatDate(asset.purchaseDate, "MMM yyyy", locale),
                       })}
                     </span>

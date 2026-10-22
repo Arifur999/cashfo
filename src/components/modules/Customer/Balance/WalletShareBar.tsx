@@ -35,7 +35,7 @@ export function WalletShareBar({ slices, label, size = "md", legend = false, cur
             <li key={slice.id} className="flex items-center gap-2 text-small">
               <span aria-hidden="true" className={cn("size-2.5 rounded-[3px]", slice.bar)} />
               <span className="text-ink-2">{slice.name}</span>
-              <span className="font-semibold text-ink tabular-nums">{formatCurrency(slice.amount, currency)}</span>
+              <span className="font-semibold text-ink tabular-nums">{formatCurrency(slice.amount, currency, locale)}</span>
               <span className="text-ink-muted tabular-nums">{sharePercent(slice.share, locale)}</span>
             </li>
           ))}

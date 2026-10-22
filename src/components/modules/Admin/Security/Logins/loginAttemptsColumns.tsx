@@ -1,5 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDateTime, formatTimeRange } from "@/lib/date";
+import { deviceLabelText } from "@/lib/deviceLabel";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { attemptOutcome, type LoginAttemptGroup } from "@/lib/loginAttempts";
@@ -20,9 +21,20 @@ const OutcomeCell = ({ row }: { row: LoginAttemptGroup }) => {
   );
 };
 
+// When, with the full date and time on hover, both in the reader's language.
 const WhenCell = ({ row }: { row: LoginAttemptGroup }) => {
   const { translate, locale } = useLocale();
-  return formatTimeRange(row.firstAt, row.lastAt, { t: translate, locale });
+  return (
+    <span className="block text-right text-small whitespace-nowrap text-ink-2" title={formatDateTime(row.lastAt, "—", locale)}>
+      {formatTimeRange(row.firstAt, row.lastAt, { t: translate, locale })}
+    </span>
+  );
+};
+
+// "Chrome on Windows", its words in the reader's language.
+const DeviceLine = ({ label }: { label: string }) => {
+  const { translate } = useLocale();
+  return <span className="text-small text-ink-muted">{deviceLabelText(label, translate)}</span>;
 };
 
 // "5 tries" on a burst, or "At least 20 tries" when it runs past this page.
@@ -55,7 +67,7 @@ export const loginAttemptsColumns: ColumnDef<LoginAttemptRow>[] = [
           <span className="truncate font-medium text-ink">{row.original.email}</span>
           {row.original.attempts.length > 1 && <TriesChip row={row.original} />}
         </span>
-        <span className="text-small text-ink-muted">{row.original.deviceLabel}</span>
+        <DeviceLine label={row.original.deviceLabel} />
       </span>
     ),
     meta: { exportValue: (row) => `${row.email} (${row.deviceLabel})` },
@@ -78,11 +90,7 @@ export const loginAttemptsColumns: ColumnDef<LoginAttemptRow>[] = [
     id: "when",
     accessorKey: "lastAt",
     header: "When",
-    cell: ({ row }) => (
-      <span className="block text-right text-small whitespace-nowrap text-ink-2" title={formatDateTime(row.original.lastAt)}>
-        <WhenCell row={row.original} />
-      </span>
-    ),
+    cell: ({ row }) => <WhenCell row={row.original} />,
     meta: { width: 130, align: "right", exportValue: (row) => formatDateTime(row.lastAt) },
   },
 ];

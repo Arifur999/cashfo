@@ -12,7 +12,7 @@ import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { countLabel, dayLabel, expenseShare, paidIn, SPLIT_LABELS, splitText } from "@/lib/customer/groupDisplay";
 import { mealText } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CloseX } from "./GroupBits";
@@ -48,7 +48,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
   const monthLabel = monthName(range.key, locale, "long", true);
   const row = member ? data.settlement.members.find((r) => r.groupMemberId === member.id) : undefined;
   const memberCount = data.settlement.memberCount || view.activeMembers.length || 1;
-  const money = (value: number | string) => formatCurrency(value, currency);
+  const money = (value: number | string) => formatCurrency(value, currency, locale);
 
   const entries: Entry[] = member
     ? [
@@ -64,7 +64,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
           .filter(({ share }) => Math.abs(share) > 0.004)
           .map(({ e, share }) => {
             const how = splitText(e, data.members);
-            return { date: e.date.slice(0, 10), title: t("{category} share", { category: e.category }), sub: `${money(e.amount)} · ${how.only ? t("Only {name}", { name: how.only }) : `${t(SPLIT_LABELS[how.kind])}${how.detail ? ` ${how.detail}` : ""}`}${e.description ? ` · ${e.description}` : ""}`, amount: -share };
+            return { date: e.date.slice(0, 10), title: t("{category} share", { category: e.category }), sub: `${money(e.amount)} · ${how.only ? t("Only {name}", { name: how.only }) : `${t(SPLIT_LABELS[how.kind])}${how.detail ? ` ${toLocaleDigits(how.detail, locale)}` : ""}`}${e.description ? ` · ${e.description}` : ""}`, amount: -share };
           }),
         // Meals are charged once, at the month's rate.
         ...(row && Number(row.mealCost) > 0 ? [{ date: range.to, title: t("Meals"), sub: `${mealText(Number(row.mealUnits), locale)} × ${money(data.settlement.mealRate)}`, amount: -Number(row.mealCost) }] : []),
@@ -94,14 +94,14 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
       sub: row && Number(row.mealCost) > 0 ? t("{meals} meals + {shared} shared", { meals: money(row.mealCost), shared: money(row.otherShare) }) : view.sharedEqually ? `${money(Number(data.settlement.totalExpense) - Number(data.settlement.mealExpense))} ÷ ${formatCount(memberCount, locale)}` : t("As each expense is shared"),
       tone: "text-ink",
     },
-    { label: t("Balance"), value: formatSignedCurrency(balance, currency), sub: even ? t("Settled") : owes ? t("Has to pay") : t("Gets back"), tone: even ? "text-ink" : owes ? "text-expense" : "text-income" },
+    { label: t("Balance"), value: formatSignedCurrency(balance, currency, locale), sub: even ? t("Settled") : owes ? t("Has to pay") : t("Gets back"), tone: even ? "text-ink" : owes ? "text-expense" : "text-income" },
   ];
 
   function statementText(): string {
     if (!member) return "";
     const head = `${data.name} · ${monthLabel}\n${member.name}\n`;
-    const body = lines.map((l) => `${dayLabel(l.date, locale, true)}  ${l.title}  ${formatSignedCurrency(l.amount, currency)}`).join("\n");
-    const foot = `\n${t("Balance")}: ${formatSignedCurrency(balance, currency)} (${even ? t("Settled") : owes ? t("Has to pay") : t("Gets back")})`;
+    const body = lines.map((l) => `${dayLabel(l.date, locale, true)}  ${l.title}  ${formatSignedCurrency(l.amount, currency, locale)}`).join("\n");
+    const foot = `\n${t("Balance")}: ${formatSignedCurrency(balance, currency, locale)} (${even ? t("Settled") : owes ? t("Has to pay") : t("Gets back")})`;
     return `${head}\n${body}\n${foot}`;
   }
 
@@ -158,7 +158,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
               {/* What they put in counts their own-pocket payments too, as their balance does. */}
               <span className={cn("text-caption font-normal tabular-nums", even ? "text-ink-muted" : owes ? "text-expense" : "text-income")}>{t("{paid} paid in − {cost} cost", { paid: money(row ? paidIn(row) : 0), cost: money(share) })}</span>
             </div>
-            <span className={cn("text-h1 tabular-nums", even ? "text-ink" : owes ? "text-expense" : "text-income")}>{formatSignedCurrency(balance, currency)}</span>
+            <span className={cn("text-h1 tabular-nums", even ? "text-ink" : owes ? "text-expense" : "text-income")}>{formatSignedCurrency(balance, currency, locale)}</span>
           </div>
 
           <ListCard label={t("{name}'s statement", { name: member?.name ?? "" })} elevated={false} className="shrink-0">
@@ -180,11 +180,11 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
                   </span>
                 </ListCell>
                 <ListCell align="end" className="flex flex-col items-end">
-                  <span className={cn("font-semibold", line.amount > 0 ? "text-income" : "text-ink")}>{formatSignedCurrency(line.amount, currency)}</span>
-                  <span className={cn("text-caption md:hidden", line.balance < -0.004 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(line.balance, currency)}</span>
+                  <span className={cn("font-semibold", line.amount > 0 ? "text-income" : "text-ink")}>{formatSignedCurrency(line.amount, currency, locale)}</span>
+                  <span className={cn("text-caption md:hidden", line.balance < -0.004 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(line.balance, currency, locale)}</span>
                 </ListCell>
                 <ListCell align="end" className={cn("hidden md:block", line.balance < -0.004 ? "text-expense" : "text-ink-2")}>
-                  {formatSignedCurrency(line.balance, currency)}
+                  {formatSignedCurrency(line.balance, currency, locale)}
                 </ListCell>
               </ListRow>
             ))}

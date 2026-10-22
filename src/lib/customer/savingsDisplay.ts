@@ -172,13 +172,13 @@ const PATTERNS: { pattern: RegExp; key: string }[] = [
   { pattern: /^"(.+)" has been withdrawn -- pick another goal/, key: "{name} has been withdrawn. Pick another goal to move the money to." },
 ];
 
-export function savingsError(message: string | undefined, fallback: string, t: Translate, currency: string): string {
+export function savingsError(message: string | undefined, fallback: string, t: Translate, currency: string, locale: Locale = "en"): string {
   if (!message) return t(fallback);
   for (const { pattern, key } of PATTERNS) {
     const match = message.match(pattern);
     if (match) {
       const [, name, amount, needed] = match;
-      return t(key, { name, amount: amount ? formatCurrency(amount, currency) : "", needed: needed ? formatCurrency(needed, currency) : "" });
+      return t(key, { name, amount: amount ? formatCurrency(amount, currency, locale) : "", needed: needed ? formatCurrency(needed, currency, locale) : "" });
     }
   }
   return t(message);

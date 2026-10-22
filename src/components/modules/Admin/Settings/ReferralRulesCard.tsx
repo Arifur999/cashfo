@@ -18,10 +18,10 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // The reward can carry paisa (৳ 49.99): formatAmount shows them only then.
 const RewardForm = ({ amount, onDone }: { amount: number; onDone: () => void }) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   const { run, isPending } = useActionMutation({
     action: updateSettingsAction,
-    successMessage: (updated) => translate("Referrers now earn {amount}", { amount: formatAmount(updated.referralRewardAmount) }),
+    successMessage: (updated) => translate("Referrers now earn {amount}", { amount: formatAmount(updated.referralRewardAmount, undefined, locale) }),
     invalidateKeys: [queryKeys.settings.all],
     refreshRoute: false,
   });
@@ -54,6 +54,7 @@ const RewardForm = ({ amount, onDone }: { amount: number; onDone: () => void }) 
 // friend's first payment, a discount for the friend) are a NEW item, so this
 // is the flat reward the platform pays now, changed in a small dialog.
 const ReferralRulesCard = ({ amount, canManage }: { amount: number; canManage: boolean }) => {
+  const { locale } = useLocale();
   const [open, setOpen] = useState(false);
 
   return (
@@ -79,7 +80,7 @@ const ReferralRulesCard = ({ amount, canManage }: { amount: number; canManage: b
         )
       }
     >
-      <T values={{ amount: <b className="font-semibold text-ink">{formatAmount(amount)}</b> }}>{"Referrers earn {amount} for each friend who signs up with their link."}</T>
+      <T values={{ amount: <b className="font-semibold text-ink">{formatAmount(amount, undefined, locale)}</b> }}>{"Referrers earn {amount} for each friend who signs up with their link."}</T>
     </SettingsSideCard>
   );
 };

@@ -14,7 +14,7 @@ const DOT = { neutral: "bg-ink-muted", success: "bg-emerald", danger: "bg-expens
 // days after the payment).
 const PaymentTimeline = async ({ payment }: { payment: IPaymentDetail }) => {
   const { t, locale } = await getTranslator("admin");
-  const steps = paymentSteps(payment, t);
+  const steps = paymentSteps(payment, t, locale);
   const firstAt = steps[0]?.at ?? payment.createdAt;
   return (
     <Card asChild padding="md" className="flex flex-col gap-3">

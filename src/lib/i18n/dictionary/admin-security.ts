@@ -86,6 +86,9 @@ export const adminSecurityDictionary: Record<string, string> = {
   "Started viewing as a customer": "গ্রাহক হিসেবে দেখা শুরু করেছেন",
   "Refused to view as a customer": "গ্রাহক হিসেবে দেখার অনুমতি মেলেনি",
   "Stopped viewing as a customer": "গ্রাহক হিসেবে দেখা বন্ধ করেছেন",
+  // Why a "View as customer" was refused (the entry's reason code).
+  "No support code was active": "কোনো সাপোর্ট কোড চালু ছিল না",
+  "Wrong support code": "ভুল সাপোর্ট কোড",
   "Refunded a payment": "একটি পেমেন্ট ফেরত দিয়েছেন",
   "Retried a payment": "একটি পেমেন্ট আবার চেষ্টা করেছেন",
   "Created a coupon": "একটি কুপন তৈরি করেছেন",

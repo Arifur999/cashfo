@@ -9,6 +9,7 @@ import Loader from "@/components/shared/Loader";
 import { APP_VERSION, sectionFor, SETTINGS_GROUPS, SETTINGS_SECTIONS, type SettingsSectionKey } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 
 export const SECTION_ICONS: Record<SettingsSectionKey, LucideIcon> = {
   profile: UserRound,
@@ -35,7 +36,7 @@ export function useSignOut() {
 // The rail on the left of every Settings page: the sections in three
 // groups, sign out, and the version.
 export function SettingsNav() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { signingOut, signOut } = useSignOut();
   const current = sectionFor(usePathname());
 
@@ -64,7 +65,7 @@ export function SettingsNav() {
           {signingOut ? <Loader size={16} label={t("Signing out...")} /> : <LogOut className="size-4.5" aria-hidden="true" />}
           {signingOut ? t("Signing out...") : t("Sign out")}
         </button>
-        <span className="px-3 pb-0.5 text-caption text-ink-muted">{t("Smartly · version {version}", { version: APP_VERSION })}</span>
+        <span className="px-3 pb-0.5 text-caption text-ink-muted">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, locale) })}</span>
       </div>
     </nav>
   );

@@ -174,7 +174,7 @@ export function ChooseWorkspaceClient({ user, workspaces, initialId, unlockedIds
                   <span className="text-small text-ink-muted">{t(isBusiness ? "Business workspace" : "Personal workspace")}</span>
                 </div>
                 <div className="flex flex-col gap-0.5 border-t border-divider pt-4">
-                  <span className="text-title font-bold tabular-nums">{figure ? formatCurrency(figure.balance, business.currency) : t(ROLE_LABEL[business.role])}</span>
+                  <span className="text-title font-bold tabular-nums">{figure ? formatCurrency(figure.balance, business.currency, locale) : t(ROLE_LABEL[business.role])}</span>
                   <span className={cn("text-caption font-normal text-ink-muted", trial?.expired && "text-expense")}>
                     {trial ? trial.text : figure ? plural(t, figure.wallets, "{count} wallet", "{count} wallets", undefined, locale) : business.currency}
                   </span>

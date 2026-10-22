@@ -15,8 +15,8 @@ const AudienceCell = ({ targetPlan, planNames }: { targetPlan: string | null; pl
 };
 
 const ScheduleCell = ({ announcement }: { announcement: IAnnouncement }) => {
-  const { translate } = useLocale();
-  return <span className="text-small whitespace-normal text-ink-2">{scheduleText(announcement, translate)}</span>;
+  const { translate, locale } = useLocale();
+  return <span className="text-small whitespace-normal text-ink-2">{scheduleText(announcement, translate, locale)}</span>;
 };
 
 // The design's announcements list: the kind as a chip with its icon, the

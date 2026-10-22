@@ -106,7 +106,7 @@ export function BudgetPageClient({ businessId, overview, monthTotal, currency, c
   const unassigned = total !== null ? total - allocated : null;
   const isCurrentMonth = today.startsWith(`${year}-${String(month).padStart(2, "0")}`);
   const daysLeft = isCurrentMonth ? daysLeftInMonth(today) : 0;
-  const money = (value: number) => formatCurrency(value, currency);
+  const money = (value: number) => formatCurrency(value, currency, locale);
   const percent = (value: number) => formatCount(Math.round(value), locale);
 
   function goToMonth(nextMonth: number, nextYear: number) {

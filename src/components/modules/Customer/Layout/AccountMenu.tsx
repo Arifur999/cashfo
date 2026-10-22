@@ -33,7 +33,7 @@ const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 
 // withdraw) and help, lock and sign out.
 export function AccountMenu() {
   const { user, activeBusiness, logout } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -130,7 +130,7 @@ export function AccountMenu() {
                 {/* brand-ink: the focused row turns sunken, where emerald text is too faint.
                     In the open workspace's currency, as Invite & earn shows it: a
                     withdrawal lands in its wallet. */}
-                {earnings !== null && Number(earnings) > 0 && <span className="text-small font-bold text-brand-ink tabular-nums">{formatCurrency(earnings, activeBusiness?.currency ?? "BDT")}</span>}
+                {earnings !== null && Number(earnings) > 0 && <span className="text-small font-bold text-brand-ink tabular-nums">{formatCurrency(earnings, activeBusiness?.currency ?? "BDT", locale)}</span>}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild className={ITEM}>

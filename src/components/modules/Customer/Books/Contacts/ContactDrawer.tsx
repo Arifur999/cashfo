@@ -41,7 +41,7 @@ interface ContactDrawerProps {
 // Add or edit a customer or supplier: who they are, how to reach them and,
 // for a new one, what is already owed either way.
 export function ContactDrawer({ open, editing, hasEntries = true, businessId, currency, onClose, onRemoved }: ContactDrawerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const photoInput = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
@@ -89,7 +89,7 @@ export function ContactDrawer({ open, editing, hasEntries = true, businessId, cu
   // there are entries with them, since it archives then.
   const balance = Number(editing?.currentBalance ?? 0);
   const owed = Math.abs(balance) >= 0.005;
-  const unsettled = !owed ? null : balance > 0 ? t("They still owe you {amount}. It can be archived once that is settled.", { amount: formatCurrency(balance, currency) }) : t("You still owe them {amount}. It can be archived once that is settled.", { amount: formatCurrency(-balance, currency) });
+  const unsettled = !owed ? null : balance > 0 ? t("They still owe you {amount}. It can be archived once that is settled.", { amount: formatCurrency(balance, currency, locale) }) : t("You still owe them {amount}. It can be archived once that is settled.", { amount: formatCurrency(-balance, currency, locale) });
   const removeBlocked = owed && hasEntries;
   const archived = editing?.status === "ARCHIVED";
 

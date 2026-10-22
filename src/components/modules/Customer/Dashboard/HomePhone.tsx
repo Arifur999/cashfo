@@ -76,7 +76,7 @@ export function PhoneMoneyCards({ data }: { data: HomeData }) {
           <span className={LABEL}>{t("Savings goals")}</span>
           <AmountText value={data.savingsSaved} currency={currency} className={FIGURE} />
           <ProgressBar value={data.savingsProgress} size="sm" label={t("Savings goals")} />
-          <span className={NOTE}>{data.savingsTarget > 0 ? t("{percent}% of {amount}", { percent: toLocaleDigits(String(data.savingsProgress), locale), amount: formatCurrency(data.savingsTarget, currency) }) : t("No goals yet")}</span>
+          <span className={NOTE}>{data.savingsTarget > 0 ? t("{percent}% of {amount}", { percent: toLocaleDigits(String(data.savingsProgress), locale), amount: formatCurrency(data.savingsTarget, currency, locale) }) : t("No goals yet")}</span>
         </CompactCard>
       )}
       {data.unavailable.includes("budget") ? (
@@ -86,7 +86,7 @@ export function PhoneMoneyCards({ data }: { data: HomeData }) {
           {budget ? (
             <>
               <span className={cn(LABEL, "truncate")}>{budget.label}</span>
-              <span className={cn(FIGURE, "tabular-nums")}>{budget.left >= 0 ? t("{amount} left", { amount: formatCurrency(budget.left, currency) }) : t("{amount} over", { amount: formatCurrency(-budget.left, currency) })}</span>
+              <span className={cn(FIGURE, "tabular-nums")}>{budget.left >= 0 ? t("{amount} left", { amount: formatCurrency(budget.left, currency, locale) }) : t("{amount} over", { amount: formatCurrency(-budget.left, currency, locale) })}</span>
               <ProgressBar value={budget.percent} tone="budget" size="sm" label={budget.name} />
               <span className={cn(NOTE, BUDGET_NOTE[budgetTone(budget.percent)])}>{t("{percent}% used", { percent: toLocaleDigits(String(Math.round(budget.percent)), locale) })}</span>
             </>

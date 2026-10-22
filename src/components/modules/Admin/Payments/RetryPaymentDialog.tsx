@@ -23,7 +23,7 @@ interface RetryPaymentDialogProps {
 // charged: the payment only goes back to Waiting. The pending state keeps a
 // second press from sending a second request.
 const RetryPaymentDialog = ({ payment, open, onOpenChange }: RetryPaymentDialogProps) => {
-  const { translate } = useLocale();
+  const { translate, locale } = useLocale();
   const retry = useActionMutation({
     action: retryPaymentAction,
     successMessage: "Payment set back to Waiting",
@@ -39,7 +39,7 @@ const RetryPaymentDialog = ({ payment, open, onOpenChange }: RetryPaymentDialogP
       description={
         payment
           ? translate("Nothing is charged now. The {amount} payment goes back to Waiting until {gateway} confirms it, and it can't be marked as paid from here.", {
-              amount: formatAmount(payment.amount, payment.currency),
+              amount: formatAmount(payment.amount, payment.currency, locale),
               gateway: translate(humanizeEnum(payment.gateway)),
             })
           : ""

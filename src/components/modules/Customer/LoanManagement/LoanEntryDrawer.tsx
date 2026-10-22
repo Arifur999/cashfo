@@ -154,7 +154,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   // label (the New transaction drawer's rule).
   const expenseAccountId = expenseAccounts.find((a) => a.name.toLowerCase().includes(picked.toLowerCase()))?.id ?? expenseAccounts[0]?.id ?? "";
   const value = Number(amount) || 0;
-  const money = (figure: number) => formatCurrency(figure, currency);
+  const money = (figure: number) => formatCurrency(figure, currency, locale);
 
   // undefined while it loads, null when it couldn't be told.
   const contactDetail = detail && detail.contactId === contactId ? detail.data : undefined;
@@ -436,8 +436,8 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                   <div className="flex justify-between gap-3">
                     <span className="truncate text-ink-2">{accountDisplayName(wallet, displayLanguage(locale))}</span>
                     <span>
-                      <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency)} → </span>
-                      <span className="font-semibold text-ink">{formatCurrency(walletAfter, currency)}</span>
+                      <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, locale)} → </span>
+                      <span className="font-semibold text-ink">{formatCurrency(walletAfter, currency, locale)}</span>
                     </span>
                   </div>
                 )}

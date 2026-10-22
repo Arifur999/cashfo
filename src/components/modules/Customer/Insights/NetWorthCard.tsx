@@ -72,7 +72,7 @@ export function NetWorthCard({ worth, currency }: NetWorthCardProps) {
           <span className="bg-expense-fill" style={{ width: `${100 - worth.haveShare}%` }} />
         </div>
         <span className="text-caption font-normal text-ink-muted">
-          {t("Green: what you have and are owed, {have} · Red: what you owe, {owe}", { have: formatCurrency(worth.have, currency), owe: formatCurrency(worth.youOwe, currency) })}
+          {t("Green: what you have and are owed, {have} · Red: what you owe, {owe}", { have: formatCurrency(worth.have, currency, locale), owe: formatCurrency(worth.youOwe, currency, locale) })}
         </span>
       </div>
     </Card>

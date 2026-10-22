@@ -28,6 +28,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { SupportAccessCard } from "./SupportAccessCard";
+import { deviceLabelText } from "@/lib/deviceLabel";
 
 // Rows shown at first, and added by each "Show more".
 const DEVICE_STEP = 6;
@@ -192,7 +193,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
     const ip = knownIp(entry.ipAddress);
     return (
       <>
-        {entry.deviceLabel}
+        {deviceLabelText(entry.deviceLabel, t)}
         {ip && (
           <>
             {" · "}
@@ -305,7 +306,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
                 </ListCell>
                 <ListCell className="flex flex-col gap-0.5">
                   <span className="flex min-w-0 items-center gap-2 font-semibold text-ink">
-                    <span className="truncate">{session.deviceLabel}</span>
+                    <span className="truncate">{deviceLabelText(session.deviceLabel, t)}</span>
                     {session.isCurrent && (
                       <Chip tone="income" size="sm">
                         {t("This device")}
@@ -321,7 +322,7 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
                 </ListCell>
                 {!session.isCurrent && (
                   <ListRowActions>
-                    <Button variant="secondary" size="sm" onClick={() => signOut(session)} disabled={isPending} aria-label={t("Sign out of {device}", { device: session.deviceLabel })} className="h-8.5 pointer-coarse:h-11">
+                    <Button variant="secondary" size="sm" onClick={() => signOut(session)} disabled={isPending} aria-label={t("Sign out of {device}", { device: deviceLabelText(session.deviceLabel, t) })} className="h-8.5 pointer-coarse:h-11">
                       {busyId === session.id && <Loader size={14} />}
                       {busyId === session.id ? t("Signing out...") : t("Sign out")}
                     </Button>

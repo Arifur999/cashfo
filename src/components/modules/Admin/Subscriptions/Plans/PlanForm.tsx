@@ -41,7 +41,7 @@ const PlanForm = ({ plan, people, onDone }: PlanFormProps) => {
       <PlanBasicsFields form={form} plan={plan} />
       {plan && plan.billingCycle !== "FREE" && (
         <Callout variant="info">
-          <T values={{ count: formatCount(people ?? 0, locale), price: money(plan.price, plan.currency) }}>{priceNote(people)}</T>
+          <T values={{ count: formatCount(people ?? 0, locale), price: money(plan.price, plan.currency, locale) }}>{priceNote(people)}</T>
         </Callout>
       )}
       <PlanLimitsFields form={form} />

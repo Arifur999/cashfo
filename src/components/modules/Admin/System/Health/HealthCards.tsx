@@ -63,7 +63,7 @@ const HealthCards = () => {
     ...(isError || health?.status === "error"
       ? { tone: "down", state: "Not answering", sub: "The API or its database is down" }
       : health
-        ? { tone: "ok", state: "Working", sub: translate("Answered in {ms} ms · {time}", { ms: formatCount(health.latencyMs, locale), time: formatLogTime(health.timestamp, { t: translate }) }) }
+        ? { tone: "ok", state: "Working", sub: translate("Answered in {ms} ms · {time}", { ms: formatCount(health.latencyMs, locale), time: formatLogTime(health.timestamp, { t: translate, locale }) }) }
         : { tone: "unknown", state: "Checking...", sub: "" }),
   };
   const services: ServiceHealth[] = [

@@ -58,7 +58,7 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
     {
       done: view.budget !== null,
       title: t("Set this month's budget"),
-      body: view.budget ? t("{amount} for this month. The group is warned at 90%.", { amount: formatCurrency(view.budget.budget, data.currency) }) : t("What the group plans to spend this month. The bar on every page turns amber at 90% and red when over."),
+      body: view.budget ? t("{amount} for this month. The group is warned at 90%.", { amount: formatCurrency(view.budget.budget, data.currency, locale) }) : t("What the group plans to spend this month. The bar on every page turns amber at 90% and red when over."),
       actions: [{ label: view.budget ? t("Change") : t("Set budget"), onClick: onSetBudget, primary: false }],
     },
     {

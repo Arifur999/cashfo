@@ -14,7 +14,7 @@ import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { assetGain, categoryVisual, gainChip, isStale, lastValued, updateCount } from "@/lib/customer/assetDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paginate } from "@/lib/table/paginate";
 import { cn } from "@/lib/utils";
@@ -121,10 +121,10 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
                   </span>
                 </ListCell>
                 <ListCell align="end" className="hidden text-ink-2 tabular-nums md:block">
-                  {formatCurrency(asset.purchasePrice, currency)}
+                  {formatCurrency(asset.purchasePrice, currency, locale)}
                 </ListCell>
                 <ListCell align="end" className="font-semibold text-ink tabular-nums">
-                  {formatCurrency(asset.currentValue, currency)}
+                  {formatCurrency(asset.currentValue, currency, locale)}
                 </ListCell>
                 <ListCell className="col-span-2 flex flex-col gap-0.5 md:col-span-1">
                   {/* Out of date shows as an icon and words, not colour alone. */}
@@ -137,7 +137,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
                 </ListCell>
                 <ListCell align="end" className="hidden md:block">
                   <Chip tone={chip.tone} size="sm" className="font-semibold">
-                    {chip.label}
+                    {toLocaleDigits(chip.label, locale)}
                   </Chip>
                 </ListCell>
                 {canManage ? (

@@ -19,7 +19,7 @@ const RefundDetailsCard = async ({ refund, currency }: { refund: IRefund; curren
           <StatusBadgeCell status={refund.status} />
         </div>
         <p className="text-body text-ink">
-          <T values={{ amount: <b className="font-semibold tabular-nums">{formatAmount(refund.amount, currency)}</b>, date: formatDate(refund.createdAt, "d MMM yyyy, h:mm aaa", "—", locale) }}>
+          <T values={{ amount: <b className="font-semibold tabular-nums">{formatAmount(refund.amount, currency, locale)}</b>, date: formatDate(refund.createdAt, "d MMM yyyy, h:mm aaa", "—", locale) }}>
             {"{amount} sent back on {date}."}
           </T>
         </p>

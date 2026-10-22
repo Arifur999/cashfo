@@ -121,9 +121,9 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
       <div className="relative flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 flex-col gap-3 md:gap-0.5">
           <span className="hidden text-caption font-normal text-white/78 md:block">{savings ? t("Balance") : t("Current balance")}</span>
-          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-h2 md:font-bold xl:text-h1">{balanceText(wallet.currentBalance, currency)}</span>
+          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-h2 md:font-bold xl:text-h1">{balanceText(wallet.currentBalance, currency, locale)}</span>
           <span className="text-caption font-normal text-white/78 tabular-nums max-md:leading-[normal]">
-            {t("Opening")} {formatCurrency(wallet.openingBalance, currency)}
+            {t("Opening")} {formatCurrency(wallet.openingBalance, currency, locale)}
           </span>
         </div>
         <Link href={statementHref} className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/16 px-3 py-2 text-caption font-semibold text-white hover:bg-white/24 max-md:hidden">

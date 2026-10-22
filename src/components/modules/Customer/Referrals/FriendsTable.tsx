@@ -118,7 +118,7 @@ export function FriendsTable({ info, currency, today }: FriendsTableProps) {
             const meta = STATUS_META[entry.status];
             const note = statusNote(entry);
             const waiting = entry.status === "PENDING";
-            const reward = formatCurrency(entry.rewardAmount, currency);
+            const reward = formatCurrency(entry.rewardAmount, currency, locale);
             return (
               <ListRow key={entry.id} columns={COLUMNS}>
                 <ListCell className="flex min-w-0 items-center gap-3">

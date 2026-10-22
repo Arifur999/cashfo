@@ -29,9 +29,9 @@ const MESSENGER_WAIT_MS = 2000;
 // board has a QR code, which isn't built; More opens the phone's own share
 // sheet).
 export function InviteLinkCard({ code, origin, rewardPerReferral, currency }: InviteLinkCardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const link = inviteLink(origin, code);
-  const reward = formatCurrency(rewardPerReferral, currency);
+  const reward = formatCurrency(rewardPerReferral, currency, locale);
   const message = t("Join me on Smartly, the money and habits app. Sign up with my link:");
   const share = shareLinks(link, message, t("Try Smartly"));
   // A second tap while the first still waits shouldn't stack a second toast.

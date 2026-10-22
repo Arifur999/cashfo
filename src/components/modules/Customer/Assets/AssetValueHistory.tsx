@@ -31,7 +31,7 @@ export function AssetValueHistory({ entries, currency, today }: AssetValueHistor
           const label = entry.kind === "new" ? t(entry.date === today ? "Today, {date} · new" : "{date} · new", { date }) : date;
           // The backend's own first-row notes read as "Bought".
           const note = entry.kind === "new" ? entry.note || t("This update") : isInitialValueNote(entry.note) || (entry.kind === "first" && !entry.note) ? t("Bought") : entry.note || t("Checked");
-          return <HistoryRow key={entry.id} date={label} note={note} value={formatCurrency(entry.value, currency)} kind={entry.kind} line={index < entries.length - 1} />;
+          return <HistoryRow key={entry.id} date={label} note={note} value={formatCurrency(entry.value, currency, locale)} kind={entry.kind} line={index < entries.length - 1} />;
         })}
       </ol>
     </section>

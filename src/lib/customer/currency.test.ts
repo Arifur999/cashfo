@@ -74,3 +74,22 @@ describe("formatGrouped", () => {
     expect(formatGrouped(-500, "BDT")).toBe("-500");
   });
 });
+
+describe("money in Bangla", () => {
+  it("prints Bangla digits, grouped the same way", () => {
+    expect(formatCurrency(1250000, "BDT", "bn")).toBe("৳\u00A0১২,৫০,০০০");
+    expect(formatCurrency(2699.1, "BDT", "bn")).toBe("৳\u00A0২,৬৯৯.১০");
+    expect(formatSignedCurrency(-52300, "BDT", "bn")).toBe("− ৳\u00A0৫২,৩০০");
+    expect(formatGrouped(82000, "BDT", "bn")).toBe("৮২,০০০");
+  });
+
+  it("keeps Latin digits when no language is given", () => {
+    expect(formatCurrency(1500, "BDT")).toBe("৳\u00A01,500");
+  });
+
+  it("writes chart units in Bangla", () => {
+    expect(formatCompactAmount(150000, "bn")).toBe("১.৫ লা");
+    expect(formatCompactAmount(50000, "bn")).toBe("৫০ হা");
+    expect(formatCompactAmount(50000)).toBe("50K");
+  });
+});
