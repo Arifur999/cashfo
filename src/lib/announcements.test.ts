@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { audienceText, scheduleText } from "./announcements";
+import { fillText } from "./i18n/fill";
+import { translate } from "./i18n/translate";
 
 // Dhaka is UTC+6: 18:00Z the day before is local midnight.
 describe("scheduleText", () => {
@@ -16,6 +18,13 @@ describe("scheduleText", () => {
     expect(scheduleText({ startAt: "2026-10-10T03:00:00.000Z", endAt: "2026-10-31T17:59:00.000Z" })).toBe("10 Oct, 9:00 am – 31 Oct, 11:59 pm");
     expect(scheduleText({ startAt: "2026-12-19T18:00:00.000Z", endAt: "2027-01-05T17:59:00.000Z" })).toBe("20 Dec – 5 Jan 2027");
     expect(scheduleText({ startAt: "2026-10-09T18:00:00.000Z", endAt: null })).toBe("From 10 Oct");
+  });
+
+  it("writes the dates and times in Bangla for a Bangla reader", () => {
+    const bn = (key: string, values?: Record<string, string | number>) => fillText(translate("bn", key), values ?? {});
+    expect(scheduleText({ startAt: "2026-09-24T18:00:00.000Z", endAt: "2026-10-09T17:59:00.000Z" }, bn, "bn")).toBe("২৫ সেপ্টে – ৯ অক্টো");
+    expect(scheduleText({ startAt: "2026-10-03T20:00:00.000Z", endAt: "2026-10-03T21:00:00.000Z" }, bn, "bn")).toBe("৪ অক্টো, ২:০০ – ৩:০০ পূর্বাহ্ণ");
+    expect(scheduleText({ startAt: "2026-10-09T18:00:00.000Z", endAt: null }, bn, "bn")).toBe("১০ অক্টো থেকে");
   });
 });
 

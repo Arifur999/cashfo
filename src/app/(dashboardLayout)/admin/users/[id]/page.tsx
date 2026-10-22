@@ -12,7 +12,7 @@ import T from "@/components/shared/T";
 import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
 import { canManage } from "@/lib/authUtils";
 import { formatDate } from "@/lib/date";
-import { adminPageTitle } from "@/lib/i18n/locale";
+import { adminPageTitle, getLocale } from "@/lib/i18n/locale";
 import { LIST_BACK_PARAM, LIST_PAGE_KEYS, listBackHref, userListFor } from "@/lib/navItem";
 import { getUserInfo } from "@/services/auth.services";
 import { getOwnerById } from "@/services/owner.services";
@@ -39,7 +39,7 @@ const UserDetailPage = async ({ params, searchParams }: PageProps<"/admin/users/
   // list's filters and page ride along in ?back= (see usePersonHref).
   const list = userListFor(single(query.from));
   const backHref = listBackHref(list.href, query[LIST_BACK_PARAM], [...(LIST_QUERY_KEYS.get(list.href) ?? []), ...LIST_PAGE_KEYS]);
-  const [owner, plans, admin] = await Promise.all([
+  const [owner, plans, admin, locale] = await Promise.all([
     fetchOrNotFound(getOwnerById(id)),
     // Every admin may read the plans; if the request fails the list is
     // empty, and Change plan says so instead of offering nothing.
@@ -47,6 +47,7 @@ const UserDetailPage = async ({ params, searchParams }: PageProps<"/admin/users/
       .then((response) => response.data)
       .catch(() => []),
     getUserInfo(),
+    getLocale(),
   ]);
 
   return (
@@ -72,7 +73,7 @@ const UserDetailPage = async ({ params, searchParams }: PageProps<"/admin/users/
       {owner.status === "SUSPENDED" && owner.suspendedReason && (
         <Callout variant="warning">
           {/* The day and time the way the rest of the page writes them. */}
-          <T values={{ suspended: <strong><T>Suspended</T></strong>, date: formatDate(owner.suspendedAt, "d MMM yyyy, h:mm aaa"), reason: owner.suspendedReason }}>
+          <T values={{ suspended: <strong><T>Suspended</T></strong>, date: formatDate(owner.suspendedAt, "d MMM yyyy, h:mm aaa", "—", locale), reason: owner.suspendedReason }}>
             {"{suspended} {date} — {reason}"}
           </T>
         </Callout>

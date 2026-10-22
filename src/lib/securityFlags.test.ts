@@ -62,6 +62,7 @@ describe("flag lines", () => {
       "IP 198.51.100.77 · Nadia Rahman is looking into it since 9:15 am",
     );
     expect(flagClosedBy(flag({ status: "RESOLVED", reviewer: nadia, reviewedAt: "2026-09-28T05:00:00Z" }), { now })).toBe("Nadia Rahman · 28 Sep");
+    expect(flagClosedBy(flag({ status: "RESOLVED", reviewer: nadia, reviewedAt: "2026-09-28T05:00:00Z" }), { now, locale: "bn" })).toBe("Nadia Rahman · ২৮ সেপ্টে");
     expect(flagClosedBy(flag({ reviewer: nadia }), { now })).toBeNull();
     expect(isOpenFlag(flag({ status: "REVIEWING" }))).toBe(true);
   });

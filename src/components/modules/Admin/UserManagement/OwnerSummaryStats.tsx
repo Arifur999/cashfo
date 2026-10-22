@@ -22,12 +22,12 @@ const OwnerSummaryStats = async ({ owner }: { owner: IOwnerDetail }) => {
       sub: own === null ? t("No workspace yet") : others > 0 ? t("{name} and {count} more", { name: own, count: formatCount(others, locale) }) : own,
     },
     { label: "Plan", value: owner.planName ?? t("None"), sub: t(owner.planName ? "Current plan" : "No plan on the account") },
-    { label: "Member since", value: formatDate(owner.createdAt, "d MMM yyyy"), sub: days > 0 ? t("Using for {days}", { days: used }) : used },
+    { label: "Member since", value: formatDate(owner.createdAt, "d MMM yyyy", "—", locale), sub: days > 0 ? t("Using for {days}", { days: used }) : used },
     {
       // Set when they sign in, and a session lasts a week: it isn't when
       // they last used the app, so it doesn't say "active".
       label: "Last sign-in",
-      value: owner.lastLoginAt ? formatRelativeDay(owner.lastLoginAt, { t }) : t("Never"),
+      value: owner.lastLoginAt ? formatRelativeDay(owner.lastLoginAt, { t, locale }) : t("Never"),
       sub: t(owner.lastLoginAt ? "Changes only when they sign in" : "Has not signed in yet"),
     },
   ];
