@@ -23,7 +23,7 @@ export function AuthPhoto({ variant }: { variant: AuthPhotoVariant }) {
   const photo = PHOTOS[variant];
 
   return (
-    <div className="relative m-2 h-40 overflow-hidden rounded-[20px] bg-forest sm:h-52 lg:m-3 lg:h-auto lg:min-h-160">
+    <div className="relative m-2 h-40 overflow-hidden rounded-[20px] bg-forest sm:h-52 lg:m-3 lg:h-auto lg:min-h-130">
       <Image key={photo.src} src={photo.src} alt="" fill priority sizes="(min-width: 1024px) 560px, 100vw" className="auth-photo object-cover" />
       <div aria-hidden="true" className="auth-photo-shade absolute inset-0" />
       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-5 sm:gap-2 lg:p-10">
