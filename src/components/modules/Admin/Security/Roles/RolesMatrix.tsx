@@ -62,7 +62,7 @@ const RolesMatrix = () => {
       scrollable
     >
       <ListHead columns={COLUMNS} showOnPhone className="pl-0 md:pl-0">
-        <ListHeadCell className={cn(STICKY, "items-center bg-table-head")}>
+        <ListHeadCell className={cn(STICKY, "items-center border-white/12 bg-aurora-deep")}>
           <T>Area</T>
         </ListHeadCell>
         {ADMIN_ROLES.map((role) => (

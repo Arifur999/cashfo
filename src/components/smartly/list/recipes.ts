@@ -8,8 +8,10 @@
 // same inset, so a footer's summary lines up with the rows above it.
 export const LIST_INSET = "px-4 md:px-6";
 
-// Column heads: the table-head band, 12px, no capitals.
-export const LIST_HEAD = "bg-table-head px-4 text-caption font-medium text-ink-muted md:px-6";
+// Column heads: the Aurora band (white words, the sidebar's green), 12px,
+// no capitals. Group bands and totals below stay light, so the head reads as
+// the table's title row.
+export const LIST_HEAD = "bg-aurora-head px-4 text-caption font-medium text-white/90 md:px-6";
 
 // A group band (a day, a month, an account type).
 export const LIST_GROUP = "bg-table-head px-4 text-caption font-semibold text-ink-2 md:px-6";

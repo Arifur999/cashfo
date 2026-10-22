@@ -13,13 +13,13 @@ interface ListHeadProps extends React.ComponentProps<"div"> {
   showOnPhone?: boolean;
 }
 
-// The column heads: a 40px table-head band with the line under it.
+// The column heads: a 40px Aurora band with a thin mint line under it.
 const ListHead = ({ columns, sticky = false, showOnPhone = false, className, ...props }: ListHeadProps) => (
   <div
     role="row"
     data-slot="list-head"
     className={cn(
-      "h-10 items-center gap-x-4 border-b border-line",
+      "h-10 items-center gap-x-4 border-b border-aurora-edge",
       showOnPhone ? "grid" : "hidden md:grid",
       LIST_HEAD,
       columns,

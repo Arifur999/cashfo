@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 // Sticky styling for pinned columns (select pinned left, actions pinned
 // right), so the row's controls stay reachable while a wide table scrolls
 // sideways. A sticky cell must be opaque to cover what scrolls underneath
-// it: a head takes the list recipes' head band (bg-table-head), a cell its
+// it: a head takes the Aurora's colour at its end of the row, a cell its
 // row's own colour, and rows are opaque (the surface, bg-row-hover, or a
 // highlight such as a double charge's amber).
 export const getPinnedClassName = <TData,>(column: Column<TData, unknown>, isHeader = false) => {
@@ -15,7 +15,7 @@ export const getPinnedClassName = <TData,>(column: Column<TData, unknown>, isHea
 
   return cn(
     "sticky z-[1]",
-    isHeader ? "bg-table-head" : "bg-inherit",
+    isHeader ? (pinned === "left" ? "bg-aurora-deep" : "bg-aurora-mid") : "bg-inherit",
     pinned === "left" ? "left-0" : "right-0",
   );
 };

@@ -401,7 +401,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               <ListHeadCell>{t("Habit")}</ListHeadCell>
               <ListHeadCell aria-label={t("This week")} className="flex justify-between px-0.5">
                 {week.map((d, i) => (
-                  <span key={d} aria-hidden="true" className={cn("w-4.5 text-center", d === day && "font-bold text-emerald")}>
+                  <span key={d} aria-hidden="true" className={cn("w-4.5 text-center", d === day && "rounded-sm bg-white/18 font-bold text-white")}>
                     {t(WEEKDAY_INITIAL[(WEEK_START + i) % 7])}
                   </span>
                 ))}

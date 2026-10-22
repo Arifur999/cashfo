@@ -54,8 +54,10 @@ const MIN_TABLE_PX = 720;
 // capitals), less the list's inset: GAP_CLASS and EDGE_CLASS pad each cell,
 // 20px at the card's edges.
 const INSET = new Set(LIST_INSET.split(" "));
+// The Aurora runs across the whole row (on the <tr>), not cell by cell.
+const HEAD_BAND = "bg-aurora-head";
 const HEAD = LIST_HEAD.split(" ")
-  .filter((name) => !INSET.has(name))
+  .filter((name) => !INSET.has(name) && name !== HEAD_BAND)
   .join(" ");
 
 // A row that is a link (rowHref). Every cell but the checkbox and the
@@ -172,9 +174,9 @@ const DataTableContent = <TData,>({
             </colgroup>
           )}
           {/* The column heads (HEAD, each cell opaque), stuck to the top of the rows box. */}
-          <TableHeader className="sticky top-0 z-10 [&_tr]:border-line">
+          <TableHeader className="sticky top-0 z-10 [&_tr]:border-aurora-edge">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              <TableRow key={headerGroup.id} className={cn(HEAD_BAND, "hover:bg-transparent")}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}

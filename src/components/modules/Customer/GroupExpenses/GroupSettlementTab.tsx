@@ -234,7 +234,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
                 <ListHeadCell align="end">{t("Shared cost")}</ListHeadCell>
               </>
             )}
-            <ListHeadCell align="end" className="font-semibold text-ink-2">
+            <ListHeadCell align="end" className="font-semibold text-white">
               {t("Total cost")}
             </ListHeadCell>
             <ListHeadCell align="end" className={paidInCell}>
