@@ -600,3 +600,122 @@
     transform: rotate(360deg);
   }
 }
+
+/* The sign-in pages' ground: a soft mint-green wash with three blurred
+   lights drifting slowly over it, and the card's entrance. Light only: the
+   sign-in pages never take the dark theme. */
+.auth-backdrop {
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--mint-200) 70%, transparent) 0%, transparent 55%),
+    radial-gradient(110% 90% at 100% 100%, color-mix(in oklab, var(--mint-300) 32%, transparent) 0%, transparent 60%),
+    linear-gradient(160deg, var(--mint-50) 0%, var(--page) 45%, color-mix(in oklab, var(--mint-200) 45%, var(--page)) 100%);
+}
+
+.auth-light {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: auth-drift 26s ease-in-out infinite alternate;
+}
+
+@keyframes auth-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6vw, -4vh, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-4vw, 5vh, 0) scale(0.95);
+  }
+}
+
+/* The card rises in; its photo settles from a slight zoom, then breathes. */
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes auth-settle {
+  from {
+    transform: scale(1.12);
+  }
+  to {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes auth-breathe {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.07) translate3d(-1%, -1%, 0);
+  }
+}
+
+@keyframes auth-line {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.auth-card {
+  animation: auth-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-photo {
+  animation:
+    auth-settle 1.6s cubic-bezier(0.22, 1, 0.36, 1) both,
+    auth-breathe 18s ease-in-out 1.6s infinite alternate;
+}
+
+.auth-line {
+  animation: auth-line 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The form column's parts arrive one after another. */
+.auth-stagger > * {
+  animation: auth-line 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.auth-stagger > :nth-child(1) {
+  animation-delay: 0.15s;
+}
+.auth-stagger > :nth-child(2) {
+  animation-delay: 0.25s;
+}
+.auth-stagger > :nth-child(3) {
+  animation-delay: 0.35s;
+}
+.auth-stagger > :nth-child(n + 4) {
+  animation-delay: 0.45s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-light,
+  .auth-card,
+  .auth-photo,
+  .auth-line,
+  .auth-stagger > * {
+    animation: none;
+  }
+}
+
+/* The photo's shade: forest from the bottom, so the two lines on it read
+   white at AA over any part of the picture. */
+.auth-photo-shade {
+  background: linear-gradient(to top, color-mix(in oklab, var(--forest) 92%, transparent) 0%, color-mix(in oklab, var(--forest) 55%, transparent) 32%, transparent 62%);
+}

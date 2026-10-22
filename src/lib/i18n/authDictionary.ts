@@ -239,4 +239,12 @@ export const bnAuthDictionary: Record<string, string> = {
   "This reset link no longer works": "এই রিসেট লিংকটি আর কাজ করে না",
   "A link lasts 30 minutes, works once, and only the newest one works. Request a new link and open it from the latest email.":
     "একটি লিংক ৩০ মিনিট থাকে, একবারই কাজ করে, আর শুধু সবচেয়ে নতুনটিই চলে। নতুন লিংক চেয়ে সর্বশেষ ইমেইল থেকে খুলুন।",
+
+  // The two lines on each sign-in page's photo.
+  "Track. Save. Grow.": "হিসাব। সঞ্চয়। বৃদ্ধি।",
+  "Welcome back to calm money.": "নিশ্চিন্ত হিসাবের জগতে আবার স্বাগতম।",
+  "Plant your first seed.": "প্রথম বীজটি বুনুন।",
+  "Every taka you track grows into a plan.": "যে টাকার হিসাব রাখেন, তা-ই একদিন পরিকল্পনা হয়ে বেড়ে ওঠে।",
+  "Back in a moment.": "এক মুহূর্তেই ফিরছেন।",
+  "We'll get you into your account safely.": "আমরা নিরাপদে আপনাকে অ্যাকাউন্টে ফিরিয়ে দেব।",
 };

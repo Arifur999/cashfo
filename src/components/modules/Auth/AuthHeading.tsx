@@ -31,7 +31,7 @@ const AuthHeading = ({ title, subtitle, size = "display", focusOnMount = false }
 
   return (
     <div className="flex flex-col gap-2">
-      <h1 ref={ref} tabIndex={focusOnMount ? -1 : undefined} className={cn("text-h1 text-ink outline-none lg:text-display", bnHeading(locale))}>
+      <h1 ref={ref} tabIndex={focusOnMount ? -1 : undefined} className={cn("text-h1 text-ink outline-none", bnHeading(locale))}>
         {translate(title)}
       </h1>
       {subtitle && <p className={cn("text-ink-muted", size === "display" ? "text-body lg:text-body-lg" : "text-body")}>{translate(subtitle)}</p>}
