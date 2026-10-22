@@ -492,8 +492,25 @@
    text -- type stays on the deep end. */
 @utility bg-aurora-panel {
   background-image:
-    radial-gradient(75% 24% at 100% 100%, rgb(123 211 168 / 0.6) 0%, rgb(123 211 168 / 0) 100%),
+    radial-gradient(55% 14% at 100% 100%, rgb(123 211 168 / 0.5) 0%, rgb(123 211 168 / 0) 100%),
     linear-gradient(165deg, #0b3d2e 0px, #1f7a5a 760px, #24855f 100%);
+}
+/* Every table's column heads, in the sidebar's Aurora: deep forest into
+   emerald across the row, white words on it (5:1 even at the light end), a
+   thin mint line under it. The same in both themes, like the sidebar.
+   bg-aurora-deep / bg-aurora-mid are its two ends, for a sticky head cell
+   that must be opaque at that end of the row. */
+@utility bg-aurora-head {
+  background-image: linear-gradient(90deg, #0b3d2e 0%, #1f7a5a 100%);
+}
+@utility bg-aurora-deep {
+  background-color: #0b3d2e;
+}
+@utility bg-aurora-mid {
+  background-color: #1f7a5a;
+}
+@utility border-aurora-edge {
+  border-color: rgb(123 211 168 / 0.45);
 }
 @utility bg-fresh {
   background-image: linear-gradient(135deg, var(--page) 0%, var(--mint-50) 100%);

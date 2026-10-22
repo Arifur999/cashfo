@@ -23,6 +23,6 @@ describe("cn", () => {
 
   it("treats the gradients as background images, not colours", () => {
     expect(cn("bg-aurora bg-surface")).toBe("bg-aurora bg-surface");
-    expect(cn("bg-night", "bg-night-panel")).toBe("bg-night-panel");
+    expect(cn("bg-night", "bg-aurora-panel")).toBe("bg-aurora-panel");
   });
 });

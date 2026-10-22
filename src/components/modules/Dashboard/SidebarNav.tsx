@@ -33,7 +33,7 @@ const SidebarNav = ({ sections, role, onNavigate, className }: SidebarNavProps) 
     <nav aria-label={translate("Admin")} className={cn("flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden", className)}>
       {sections.map((section) => (
         <div key={section.title} className="flex flex-col gap-0.5">
-          <span className="flex h-8 items-center px-3 pt-3 pb-2 text-caption font-bold tracking-widest text-mint-200/62 uppercase">{translate(section.title)}</span>
+          <span className="flex h-8 items-center px-3 pt-3 pb-2 text-caption font-bold tracking-widest text-mint-200/90 uppercase">{translate(section.title)}</span>
           {section.items.map((item) => {
             const on = isNavItemActive(item, menuPath);
             const viewOnly = isNavItemViewOnly(item, role);
@@ -45,7 +45,7 @@ const SidebarNav = ({ sections, role, onNavigate, className }: SidebarNavProps) 
                 aria-current={on ? "page" : undefined}
                 className={cn(
                   "relative flex h-9.5 items-center gap-3 rounded-md px-3 text-body transition-colors",
-                  on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/74 hover:bg-white/6 hover:text-white",
+                  on ? "bg-black/22 font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]" : "font-medium text-white/88 hover:bg-black/12 hover:text-white",
                 )}
               >
                 {on && <span aria-hidden="true" className="absolute top-2.25 -left-3 h-5 w-0.75 rounded-r-[3px] bg-night-marker" />}

@@ -22,7 +22,7 @@ import { workspaceKind } from "./workspaceKind";
 
 // The foot rows, drawn like SidebarFoot's own (its mint focus ring too:
 // the site's green one is lost on the Night panel).
-const FOOT_ROW = cn("relative flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-body font-medium text-white/88 transition-colors hover:bg-white/10 hover:text-white [&_svg]:size-4.75 [&_svg]:shrink-0", NIGHT_FOCUS);
+const FOOT_ROW = cn("relative flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-body font-medium text-white/88 transition-colors hover:bg-black/12 hover:text-white [&_svg]:size-4.75 [&_svg]:shrink-0", NIGHT_FOCUS);
 // The links under the workspace list.
 const CARD_LINK = cn("flex h-10 items-center gap-3 rounded-md px-2.5 text-small font-semibold text-mint-200 hover:bg-white/6 hover:text-white [&_svg]:size-4 [&_svg]:shrink-0", NIGHT_FOCUS);
 
