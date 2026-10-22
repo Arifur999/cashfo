@@ -51,6 +51,12 @@ const ValidityCell = ({ coupon }: { coupon: ICoupon }) => {
   );
 };
 
+// "20% off", "৳ 100 off", in the reader's language and digits.
+const DiscountCell = ({ coupon }: { coupon: ICoupon }) => {
+  const { translate, locale } = useLocale();
+  return <span className="font-semibold">{discountText(coupon, translate, locale)}</span>;
+};
+
 // The design's coupons list: the code as a dashed tag, what it takes off,
 // which plans, how used up it is, when it runs, and its status. Built per
 // plan list, since "Works on" shows names for plan ids. Cells that can't
@@ -77,7 +83,7 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     id: "discount",
     accessorFn: (row) => discountText(row),
     header: "Discount",
-    cell: ({ row }) => <span className="font-semibold">{<Localized>{(t) => discountText(row.original, t)}</Localized>}</span>,
+    cell: ({ row }) => <DiscountCell coupon={row.original} />,
     // Sort by the amount, not the formatted text.
     sortingFn: (a, b) => Number(a.original.discountValue) - Number(b.original.discountValue),
     meta: { width: 110 },

@@ -2,7 +2,7 @@ import type { ICoupon } from "@/types/coupon.types";
 import type { BillingCycle, ISubscriptionPlan } from "@/types/plan.types";
 import { formatCurrency } from "./currency";
 import { formatDate } from "./date";
-import { formatCount } from "./i18n/digits";
+import { formatCount, toLocaleDigits } from "./i18n/digits";
 import { inEnglish, type Translate } from "./i18n/message";
 import type { Locale } from "./i18n/translate";
 
@@ -52,9 +52,11 @@ export const worksOn = (planIds: string[], names: Map<string, string>, t: Transl
   return t("{plans} and {last}", { plans: labels.slice(0, -1).join(", "), last: labels[labels.length - 1] });
 };
 
-// "20% off", "৳ 100 off".
-export const discountText = (coupon: Pick<ICoupon, "discountType" | "discountValue">, t: Translate = inEnglish) =>
-  coupon.discountType === "PERCENTAGE" ? t("{percent}% off", { percent: Number(coupon.discountValue) }) : t("{amount} off", { amount: money(coupon.discountValue) });
+// "20% off", "৳ 100 off"; with the locale, in the reader's digits.
+export const discountText = (coupon: Pick<ICoupon, "discountType" | "discountValue">, t: Translate = inEnglish, locale: Locale = "en") =>
+  coupon.discountType === "PERCENTAGE"
+    ? t("{percent}% off", { percent: toLocaleDigits(String(Number(coupon.discountValue)), locale) })
+    : t("{amount} off", { amount: money(coupon.discountValue, undefined, locale) });
 
 // What a price comes to with the coupon, never below zero.
 export const discountedPrice = (price: number, coupon: Pick<ICoupon, "discountType" | "discountValue">) => {

@@ -13,6 +13,8 @@ import {
   validityText,
   worksOn,
 } from "./subscriptions";
+import { fillText } from "./i18n/fill";
+import { translate } from "./i18n/translate";
 
 const NBSP = " ";
 
@@ -72,6 +74,11 @@ describe("coupon lines", () => {
   it("words the discount and applies it", () => {
     expect(discountText({ discountType: "PERCENTAGE", discountValue: "20.00" })).toBe("20% off");
     expect(discountText({ discountType: "FIXED_AMOUNT", discountValue: "100.00" })).toBe(`৳${NBSP}100 off`);
+    // In Bangla the amount and the percent come in Bangla digits too.
+    const bn = (key: string, values?: Record<string, string | number>) => fillText(translate("bn", key), values ?? {});
+    expect(discountText({ discountType: "PERCENTAGE", discountValue: "20.00" }, bn, "bn")).toBe("২০% ছাড়");
+    expect(discountText({ discountType: "PERCENTAGE", discountValue: "12.50" }, bn, "bn")).toBe("১২.৫% ছাড়");
+    expect(discountText({ discountType: "FIXED_AMOUNT", discountValue: "50.00" }, bn, "bn")).toBe(`৳${NBSP}৫০ ছাড়`);
     expect(discountedPrice(299, { discountType: "PERCENTAGE", discountValue: "15" })).toBe(254.15);
     expect(discountedPrice(50, { discountType: "FIXED_AMOUNT", discountValue: "100" })).toBe(0);
   });
