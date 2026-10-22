@@ -33,7 +33,7 @@ const CouponStats = ({ month }: { month: string }) => {
         value={formatCount(stats.usedThisMonth, locale)}
         note={countPhrase(translate, locale, stats.paymentsThisMonth, "Out of {count} payment", "Out of {count} payments")}
       />
-      <Kpi size="sm" label="Money taken off" value={formatCurrency(stats.moneyOffThisMonth, undefined, 0)} note={translate("In {month}", { month: translate(month) })} />
+      <Kpi size="sm" label="Money taken off" value={formatCurrency(stats.moneyOffThisMonth, undefined, 0, locale)} note={translate("In {month}", { month: translate(month) })} />
       <Kpi
         size="sm"
         label="Most used ever"

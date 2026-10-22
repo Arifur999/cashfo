@@ -54,7 +54,7 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
 
       <div className="flex flex-col gap-0.5">
         <span className="flex items-baseline gap-1">
-          <span className="text-h1 text-ink">{money(plan.price, plan.currency)}</span>
+          <span className="text-h1 text-ink">{money(plan.price, plan.currency, locale)}</span>
           {period && <span className="text-small text-ink-muted">{period}</span>}
         </span>
         <span className="text-small text-ink-muted">{trialLine(plan, translate, locale)}</span>

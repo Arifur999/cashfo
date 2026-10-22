@@ -18,13 +18,13 @@ const RevenueFacts = async ({ overview }: { overview: IRevenueOverview }) => {
   const facts = [
     {
       label: "Average per paid person",
-      value: t("{amount} a month", { amount: formatCurrency(perPerson, undefined, 0) }),
+      value: t("{amount} a month", { amount: formatCurrency(perPerson, undefined, 0, locale) }),
       sub: countPhrase(t, locale, paidNow, "MRR ÷ {count} paid person", "MRR ÷ {count} paid people"),
     },
-    { label: "Coupons cost", value: formatCurrency(overview.couponsCostThisMonth, undefined, 0), sub: t("In {month}, taken off payments that used a coupon", { month }) },
+    { label: "Coupons cost", value: formatCurrency(overview.couponsCostThisMonth, undefined, 0, locale), sub: t("In {month}, taken off payments that used a coupon", { month }) },
     {
       label: "Sent back",
-      value: formatCurrency(overview.refundsThisMonth.amount, undefined, 0),
+      value: formatCurrency(overview.refundsThisMonth.amount, undefined, 0, locale),
       sub: countPhrase(t, locale, overview.refundsThisMonth.count, "{count} refund in {month}", "{count} refunds in {month}", { month }),
     },
   ];

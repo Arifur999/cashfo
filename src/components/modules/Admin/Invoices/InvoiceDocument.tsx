@@ -91,25 +91,25 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
         {invoice.lineItems.map((item, index) => (
           <div key={`${item.description}-${index}`} className="grid grid-cols-[minmax(0,1fr)_120px] gap-x-3 border-b border-line py-4 text-body">
             <span className="font-semibold text-ink">{item.description}</span>
-            <span className="text-right text-ink tabular-nums">{formatAmount(item.amount, currency)}</span>
+            <span className="text-right text-ink tabular-nums">{formatAmount(item.amount, currency, locale)}</span>
           </div>
         ))}
         <div className="flex flex-col items-end gap-2 pt-4 text-body tabular-nums">
           <span className={TOTAL_ROW}>
             <span className="text-ink-muted"><T>Subtotal</T></span>
-            <span className="text-ink">{formatAmount(subtotal, currency)}</span>
+            <span className="text-ink">{formatAmount(subtotal, currency, locale)}</span>
           </span>
           <span className={TOTAL_ROW}>
             <span className="text-ink-muted"><T>Discount</T></span>
-            <span className="text-ink">{formatAmount(discount, currency)}</span>
+            <span className="text-ink">{formatAmount(discount, currency, locale)}</span>
           </span>
           <span className={cn(TOTAL_ROW, "border-t border-line pt-2 text-h3 text-ink")}>
             <span><T>Total paid</T></span>
-            <span>{formatAmount(invoice.totalAmount, currency)}</span>
+            <span>{formatAmount(invoice.totalAmount, currency, locale)}</span>
           </span>
           {refund && (
             <span className="text-small text-ink-2">
-              {t("Refunded {amount} on {date}.", { amount: formatAmount(refund.amount, currency), date: formatDate(refund.createdAt, "d MMM yyyy", "—", locale) })}
+              {t("Refunded {amount} on {date}.", { amount: formatAmount(refund.amount, currency, locale), date: formatDate(refund.createdAt, "d MMM yyyy", "—", locale) })}
             </span>
           )}
         </div>

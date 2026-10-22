@@ -22,7 +22,7 @@ export function PlanShareCard({ analytics, plans }: PlanShareCardProps) {
   const shares = analytics ? planShares(analytics.perPlan) : [];
   const price = (name: string) => {
     const plan = plans?.find((candidate) => candidate.name === name);
-    return plan ? formatAmount(plan.price, plan.currency) : null;
+    return plan ? formatAmount(plan.price, plan.currency, locale) : null;
   };
   return (
     <Section title={translate("Accounts by plan")} className="h-full">

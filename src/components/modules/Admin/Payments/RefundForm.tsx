@@ -53,7 +53,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
   };
 
   const options: { value: HowMuch; title: string; sub: string }[] = [
-    { value: "all", title: "All of it", sub: formatAmount(maxAmount, payment.currency) },
+    { value: "all", title: "All of it", sub: formatAmount(maxAmount, payment.currency, locale) },
     { value: "part", title: "Part of it", sub: "Type an amount" },
   ];
 
@@ -65,7 +65,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
             values={{
               gateway: <b className="font-semibold text-ink">{translate(humanizeEnum(payment.gateway))}</b>,
               name: payment.platformUser?.name ?? translate("The person"),
-              amount: <b className="font-semibold text-ink">{formatAmount(maxAmount, payment.currency)}</b>,
+              amount: <b className="font-semibold text-ink">{formatAmount(maxAmount, payment.currency, locale)}</b>,
               date: formatDate(payment.paidAt ?? payment.createdAt, "d MMM", "—", locale),
             }}
           >
@@ -101,7 +101,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
               label="Amount"
               inputMode="decimal"
               prepend={<span className="text-body text-ink-muted">৳</span>}
-              description={translate("Up to {amount}.", { amount: formatAmount(maxAmount, payment.currency) })}
+              description={translate("Up to {amount}.", { amount: formatAmount(maxAmount, payment.currency, locale) })}
             />
           )}
         </form.Field>
@@ -116,7 +116,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
         {(amount) => (
           <FormDialogFooter
             isPending={isPending}
-            submitLabel={translate("Refund {amount}", { amount: formatAmount(Number(amount) || 0, payment.currency) })}
+            submitLabel={translate("Refund {amount}", { amount: formatAmount(Number(amount) || 0, payment.currency, locale) })}
             pendingLabel="Refunding..."
             variant="destructive"
           />

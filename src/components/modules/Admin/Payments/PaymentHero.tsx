@@ -18,7 +18,7 @@ interface PaymentHeroProps {
 // how much went back, so the full amount beside "Refunded" doesn't read as
 // all of it.
 const PaymentHero = async ({ payment, actions }: PaymentHeroProps) => {
-  const { t } = await getTranslator("admin");
+  const { t, locale } = await getTranslator("admin");
   const partlyRefunded = refundExtent(payment.amount, payment.refund) === "part";
   return (
     <Card asChild padding="md" className="flex flex-col gap-4 lg:flex-row lg:items-center">
@@ -30,7 +30,7 @@ const PaymentHero = async ({ payment, actions }: PaymentHeroProps) => {
             <StatusBadgeCell status={payment.status} label={PAYMENT_STATUS_LABEL[payment.status]} tone={paymentBadge({ status: payment.status }).tone} dot />
             {partlyRefunded && payment.refund && (
               <Chip tone="warning" size="sm">
-                {t("Partly refunded: {amount}", { amount: formatAmount(payment.refund.amount, payment.currency) })}
+                {t("Partly refunded: {amount}", { amount: formatAmount(payment.refund.amount, payment.currency, locale) })}
               </Chip>
             )}
             {payment.duplicateOfId && (
@@ -39,9 +39,9 @@ const PaymentHero = async ({ payment, actions }: PaymentHeroProps) => {
               </Chip>
             )}
           </div>
-          <p className="text-body text-ink-2">{paymentLine(payment, t)}</p>
+          <p className="text-body text-ink-2">{paymentLine(payment, t, locale)}</p>
         </div>
-        <span className="text-h1 text-ink tabular-nums">{formatAmount(payment.amount, payment.currency)}</span>
+        <span className="text-h1 text-ink tabular-nums">{formatAmount(payment.amount, payment.currency, locale)}</span>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </section>
     </Card>

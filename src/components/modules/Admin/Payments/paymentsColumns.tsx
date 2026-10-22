@@ -3,17 +3,28 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { formatAmount } from "@/lib/currency";
-import Localized from "@/components/shared/Localized";
 import RelativeTime from "@/components/shared/RelativeTime";
 import T from "@/components/shared/T";
 import { formatDate } from "@/lib/date";
 import { GATEWAY_CHIP_CLASS, PAYMENT_STATUS_LABEL, paymentNote, shortPaymentId } from "@/lib/payments";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { humanizeEnum } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 import type { IPayment } from "@/types/payment.types";
 import { paymentBadge } from "./paymentsDisplay";
 
 const NOTE_TONE = { muted: "text-ink-muted", danger: "text-expense", warning: "text-warning" } as const;
+
+const PaymentNoteLine = ({ payment }: { payment: IPayment }) => {
+  const { translate, locale } = useLocale();
+  const note = paymentNote(payment, translate, locale);
+  return <span className={cn("truncate text-caption", NOTE_TONE[note.tone])}>{note.text}</span>;
+};
+
+const Amount = ({ amount, currency }: { amount: string; currency: string }) => {
+  const { locale } = useLocale();
+  return formatAmount(amount, currency, locale);
+};
 
 // The design's Payments list: the short id, the person over what matters
 // about the payment, plan, how they paid, the amount, status, and when. The
@@ -41,12 +52,7 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-col gap-px">
         <span className="truncate font-semibold text-ink">{row.original.platformUser?.name ?? <T>Unknown person</T>}</span>
-        <Localized>
-          {(t) => {
-            const note = paymentNote(row.original, t);
-            return <span className={cn("truncate text-caption", NOTE_TONE[note.tone])}>{note.text}</span>;
-          }}
-        </Localized>
+        <PaymentNoteLine payment={row.original} />
       </span>
     ),
     meta: { exportValue: (row) => `${row.platformUser?.name ?? "Unknown"} <${row.platformUser?.email ?? ""}>` },
@@ -77,7 +83,7 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     header: "Amount",
     cell: ({ row }) => (
       <span className={cn("font-semibold tabular-nums", row.original.status === "REFUNDED" ? "text-ink-muted" : "text-ink")}>
-        {formatAmount(row.original.amount, row.original.currency)}
+        <Amount amount={row.original.amount} currency={row.original.currency} />
       </span>
     ),
     meta: { width: 110, align: "right" },

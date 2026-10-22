@@ -23,7 +23,7 @@ interface InvoiceSidebarProps {
 // current page. A plain column, not an <aside>: it sits inside the page's
 // main, and its two sections are named landmarks of their own.
 const InvoiceSidebar = async ({ invoice, recent, back }: InvoiceSidebarProps) => {
-  const { t } = await getTranslator("admin");
+  const { t, locale } = await getTranslator("admin");
   return (
     <div className="flex flex-col gap-3 print:hidden">
       <Card asChild padding="none" className="flex flex-col gap-3 px-5 py-4">
@@ -57,7 +57,7 @@ const InvoiceSidebar = async ({ invoice, recent, back }: InvoiceSidebarProps) =>
                     <code className={cn("font-mono", current ? "font-bold" : "font-medium")}>{item.invoiceNumber}</code>
                     <span className="truncate text-ink-muted">{splitIssuedTo(item.issuedTo).name}</span>
                   </span>
-                  <b className="font-semibold tabular-nums">{formatAmount(item.totalAmount)}</b>
+                  <b className="font-semibold tabular-nums">{formatAmount(item.totalAmount, undefined, locale)}</b>
                 </Link>
               );
             })}

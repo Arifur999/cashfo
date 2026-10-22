@@ -17,6 +17,11 @@ const IssuedOn = ({ date }: { date: string }) => {
   );
 };
 
+const Total = ({ amount }: { amount: string }) => {
+  const { locale } = useLocale();
+  return <span className="font-semibold tabular-nums">{formatAmount(amount, undefined, locale)}</span>;
+};
+
 // Every invoice, newest first: its number, who it went to, how much, when.
 // The whole row is the link to the invoice (the table's rowHref), named by
 // its number. "Issued to" takes the room the fixed columns leave.
@@ -48,7 +53,7 @@ export const invoicesColumns: ColumnDef<IInvoiceListItem>[] = [
     id: "totalAmount",
     accessorKey: "totalAmount",
     header: "Amount",
-    cell: ({ row }) => <span className="font-semibold tabular-nums">{formatAmount(row.original.totalAmount)}</span>,
+    cell: ({ row }) => <Total amount={row.original.totalAmount} />,
     meta: { width: 120, align: "right" },
   },
   {

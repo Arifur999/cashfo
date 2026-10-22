@@ -1,6 +1,7 @@
 import Card from "@/components/smartly/Card";
 import { countPhrase } from "@/components/modules/Admin/Payments/paymentsDisplay";
 import { formatCurrency } from "@/lib/currency";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { formatMonthName } from "@/lib/date";
 import { planAccentClass } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,7 @@ const ByPlanCard = async ({ overview }: { overview: IRevenueOverview }) => {
     <Card padding="none" className="flex flex-col gap-4 px-5 py-4">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-title text-ink">{t("{month} by plan", { month: t(formatMonthName(overview.month)) })}</h2>
-        <b className="text-body font-semibold text-ink tabular-nums">{formatCurrency(total, undefined, 0)}</b>
+        <b className="text-body font-semibold text-ink tabular-nums">{formatCurrency(total, undefined, 0, locale)}</b>
       </div>
       {overview.byPlan.length === 0 ? (
         <p className="text-small text-ink-muted"><T>No payments yet this month.</T></p>
@@ -34,7 +35,7 @@ const ByPlanCard = async ({ overview }: { overview: IRevenueOverview }) => {
                   <span className="text-ink-muted">{countPhrase(t, locale, plan.payments, "{count} payment", "{count} payments")}</span>
                 </span>
                 <span className="tabular-nums">
-                  <b className="font-semibold text-ink">{formatCurrency(amount, undefined, 0)}</b> <span className="text-ink-muted">{Math.round(share)}%</span>
+                  <b className="font-semibold text-ink">{formatCurrency(amount, undefined, 0, locale)}</b> <span className="text-ink-muted">{toLocaleDigits(`${Math.round(share)}%`, locale)}</span>
                 </span>
               </div>
               <span className="h-2.5 overflow-hidden rounded-full bg-surface-sunken">
@@ -48,7 +49,7 @@ const ByPlanCard = async ({ overview }: { overview: IRevenueOverview }) => {
           the total above only nets the ones on this month's payments. */}
       {refunds.count > 0 && (
         <span className="text-small text-ink-muted">
-          {countPhrase(t, locale, refunds.count, "{count} refund this month: {amount}", "{count} refunds this month: {amount}", { amount: formatCurrency(refunds.amount, undefined, 0) })}
+          {countPhrase(t, locale, refunds.count, "{count} refund this month: {amount}", "{count} refunds this month: {amount}", { amount: formatCurrency(refunds.amount, undefined, 0, locale) })}
         </span>
       )}
     </Card>
