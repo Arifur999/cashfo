@@ -2,7 +2,6 @@ import AuthFooterPrompt from "@/components/modules/Auth/AuthFooterPrompt";
 import AuthHeading from "@/components/modules/Auth/AuthHeading";
 import GoogleSignInButton from "@/components/modules/Auth/GoogleSignInButton";
 import LoginForm from "@/components/modules/Auth/LoginForm";
-import RenameNotice from "@/components/modules/Auth/RenameNotice";
 import SignInNotices from "@/components/modules/Auth/SignInNotices";
 import { publicPageTitle } from "@/components/modules/Legal/publicPageTitle";
 import OrDivider from "@/components/shared/OrDivider";
@@ -35,8 +34,6 @@ const LoginPage = async ({ searchParams }: PageProps<"/login">) => {
       <OrDivider />
       <GoogleSignInButton redirectTo={redirectTo} />
       {!sessionExpired && <AuthFooterPrompt prompt="Don't have an account?" widePrompt="New to Smartly?" linkLabel="Create an account" href={REGISTER_ROUTE} />}
-      {/* Under the form, so a phone shows the fields first. */}
-      {!sessionExpired && <RenameNotice />}
     </>
   );
 };

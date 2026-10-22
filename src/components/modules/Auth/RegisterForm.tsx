@@ -84,72 +84,78 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
     <>
       {inviteCode && !inviteOpen && <InviteCodeNotice code={inviteCode} onChange={closed ? undefined : openInvite} />}
       <AppForm onSubmit={form.handleSubmit}>
-        <fieldset disabled={closed} className="m-0 min-w-0 space-y-4 border-0 p-0">
-          <form.Field name="name" validators={{ onChange: schema.name }}>
-            {(field) => <AppField field={field} size="auth" label={translate("Name")} prepend={<User />} autoComplete="name" placeholder={translate("Your name")} />}
-          </form.Field>
+        <fieldset disabled={closed} className="m-0 min-w-0 space-y-3.5 border-0 p-0">
+          {/* Two short fields to a row from sm, so the form fits without
+              scrolling: name beside phone, then the password pair. */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <form.Field name="name" validators={{ onChange: schema.name }}>
+              {(field) => <AppField field={field} size="auth" label={translate("Name")} prepend={<User />} autoComplete="name" placeholder={translate("Your name")} />}
+            </form.Field>
+
+            <form.Field name="phone" validators={{ onChange: schema.phone }}>
+              {(field) => (
+                <AppField
+                  field={field}
+                  size="auth"
+                  label={
+                    <>
+                      {translate("Phone")} <span className="font-normal text-ink-muted">({translate("optional")})</span>
+                    </>
+                  }
+                  type="tel"
+                  prepend={<Phone />}
+                  autoComplete="tel"
+                  placeholder="01XXX-XXXXXX"
+                />
+              )}
+            </form.Field>
+          </div>
 
           <form.Field name="email" validators={{ onChange: schema.email }}>
             {(field) => <AppField field={field} size="auth" label={translate("Email")} type="email" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
           </form.Field>
 
-          <form.Field name="phone" validators={{ onChange: schema.phone }}>
-            {(field) => (
-              <AppField
-                field={field}
-                size="auth"
-                label={
-                  <>
-                    {translate("Phone")} <span className="font-normal text-ink-muted">({translate("optional")})</span>
-                  </>
-                }
-                type="tel"
-                prepend={<Phone />}
-                autoComplete="tel"
-                placeholder="01XXX-XXXXXX"
-              />
-            )}
-          </form.Field>
+          <div className="grid items-start gap-4 sm:grid-cols-2">
+            <form.Field name="password" validators={{ onChange: schema.password }}>
+              {(field) => (
+                <AppPasswordField
+                  field={field}
+                  size="auth"
+                  label={translate("Password")}
+                  prepend={<Lock />}
+                  autoComplete="new-password"
+                  description={<PasswordStrengthMeter password={field.state.value} />}
+                />
+              )}
+            </form.Field>
 
-          <form.Field name="password" validators={{ onChange: schema.password }}>
-            {(field) => (
-              <AppPasswordField
-                field={field}
-                size="auth"
-                label={translate("Password")}
-                prepend={<Lock />}
-                autoComplete="new-password"
-                description={<PasswordStrengthMeter password={field.state.value} />}
-              />
-            )}
-          </form.Field>
-
-          <form.Field
-            name="confirmPassword"
-            validators={{
-              onChangeListenTo: ["password"],
-              onChange: ({ value, fieldApi }) =>
-                firstZodError(schema.confirmPassword, value) ?? getPasswordMismatchError(fieldApi.form.getFieldValue("password"), value),
-            }}
-          >
-            {(field) => (
-              <AppPasswordField
-                field={field}
-                size="auth"
-                label={translate("Confirm password")}
-                prepend={<Lock />}
-                autoComplete="new-password"
-                description={
-                  field.state.value && field.state.value === field.form.getFieldValue("password") ? (
-                    <span className="flex items-center gap-1 text-brand-ink">
-                      <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
-                      {translate("Passwords match")}
-                    </span>
-                  ) : undefined
-                }
-              />
-            )}
-          </form.Field>
+            <form.Field
+              name="confirmPassword"
+              validators={{
+                onChangeListenTo: ["password"],
+                onChange: ({ value, fieldApi }) =>
+                  firstZodError(schema.confirmPassword, value) ?? getPasswordMismatchError(fieldApi.form.getFieldValue("password"), value),
+              }}
+            >
+              {(field) => (
+                <AppPasswordField
+                  field={field}
+                  size="auth"
+                  label={translate("Confirm password")}
+                  prepend={<Lock />}
+                  autoComplete="new-password"
+                  description={
+                    field.state.value && field.state.value === field.form.getFieldValue("password") ? (
+                      <span className="flex items-center gap-1 text-brand-ink">
+                        <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+                        {translate("Passwords match")}
+                      </span>
+                    ) : undefined
+                  }
+                />
+              )}
+            </form.Field>
+          </div>
 
           {/* The code the Referrals page hands out, for whoever got it as
               text rather than as a link. */}
@@ -176,7 +182,7 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
             !inviteCode && (
               // 44px to tap; pulled up a little so it reads with the fields,
               // and as far from the terms below as from the field above.
-              <button type="button" onClick={openInvite} className="-mt-2 mb-2 inline-flex min-h-11 items-center self-start rounded-sm text-small font-semibold text-emerald hover:text-emerald-hover hover:underline">
+              <button type="button" onClick={openInvite} className="-my-2 inline-flex min-h-11 items-center self-start rounded-sm text-small font-semibold text-emerald hover:text-emerald-hover hover:underline">
                 {translate("Have an invite code?")}
               </button>
             )
@@ -209,7 +215,7 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
 
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-              <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Creating account...")} size="lg" className="mt-2 text-body-lg max-md:h-13">
+              <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Creating account...")} size="lg" className="mt-1 text-body-lg max-md:h-13">
                 {translate("Create account")}
                 <ArrowRight className="size-4" strokeWidth={2.25} aria-hidden="true" />
               </AppSubmitButton>
