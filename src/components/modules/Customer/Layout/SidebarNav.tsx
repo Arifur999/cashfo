@@ -8,6 +8,7 @@ import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { MosqueIcon } from "@/components/smartly/icons";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { findNavLocation, NAV_FOOT, visibleNavSections, type NavIcon, type NavItem, type NavLeaf, type NavTone } from "@/lib/customer/nav";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -129,9 +130,23 @@ function useOpenGroups() {
   return { open, toggle };
 }
 
+// A folded sidebar's row: just its icon, with the name in a tooltip on the
+// right (and still the link's accessible name).
+function RailTip({ label, show, children }: { label: string; show: boolean; children: React.ReactElement }) {
+  if (!show) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 interface SidebarNavProps {
   // Phone rows are 44px with 16px text; the desktop sidebar's 40px with 14px.
   compact?: boolean;
+  // The desktop sidebar folded to its icons: no names, no group pages.
+  collapsed?: boolean;
   className?: string;
   style?: React.CSSProperties;
   navRef?: React.Ref<HTMLElement>;
@@ -153,7 +168,7 @@ export function useNavSections({ allRoles = false }: { allRoles?: boolean } = {}
 // The menu itself, shared by the desktop sidebar and the phone drawer. A
 // group's label opens its first page; its chevron shows or hides its pages
 // without leaving this one.
-export function SidebarNav({ compact = true, className, style, navRef }: SidebarNavProps) {
+export function SidebarNav({ compact = true, collapsed = false, className, style, navRef }: SidebarNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t, locale } = useLocale();
@@ -183,6 +198,27 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
     const expanded = inGroup || (!!item.subs && groups.open.includes(item.href));
     const Chevron = expanded ? ChevronDown : ChevronRight;
     const subsId = `${baseId}-pages${item.href.replace(/[^\w-]/g, "-")}`;
+    const badge = item.badge === "todayTasks" && openCount > 0;
+    if (collapsed) {
+      return (
+        <RailTip key={`${item.label}:${item.href}`} label={t(item.label)} show>
+          <Link
+            href={leafHref(item)}
+            aria-current={self ? "page" : undefined}
+            aria-label={t(item.label)}
+            className={cn(
+              "relative flex h-10 items-center justify-center rounded-md transition-colors",
+              NIGHT_FOCUS,
+              lit ? "bg-mint-200/14 text-white" : "text-white/74 hover:bg-white/6 hover:text-white",
+            )}
+          >
+            {lit && <span aria-hidden="true" className={cn(MARKER, "top-2.5 h-5")} />}
+            <Icon className={cn("size-4.75 shrink-0", lit ? "opacity-100" : "opacity-85")} strokeWidth={1.9} aria-hidden="true" />
+            {badge && <span aria-hidden="true" className="absolute top-2 right-2.5 size-2 rounded-full bg-mint-200" />}
+          </Link>
+        </RailTip>
+      );
+    }
     return (
       <div key={`${item.label}:${item.href}`} className="flex flex-col">
         <div className="relative flex">
@@ -202,7 +238,7 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
             {self && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}
             <Icon className={cn("shrink-0", compact ? "size-4.5" : "size-4.75", lit ? "opacity-100" : "opacity-85")} strokeWidth={1.9} />
             <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
-            {item.badge === "todayTasks" && openCount > 0 && (
+            {badge && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-mint-200/16 px-2 text-caption font-bold text-mint-200 tabular-nums">{formatCount(openCount, locale)}</span>
             )}
             {item.tag && <span className="flex h-5.5 items-center rounded-full bg-mint-glow px-2 text-caption font-bold text-forest">{t(item.tag)}</span>}
@@ -261,7 +297,14 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
       <div ref={rows} className={cn("flex flex-col", compact && "gap-0.5")}>
         {sections.map((section) => (
           <div key={section.label ?? "home"} className={cn("flex flex-col", compact && "gap-0.5")}>
-            {section.label && (
+            {section.label && collapsed && (
+              // Folded: a short line marks where a section starts.
+              <span className="flex h-5 items-center justify-center">
+                <span aria-hidden="true" className="h-px w-6 bg-mint-200/16" />
+                <span className="sr-only">{t(section.label)}</span>
+              </span>
+            )}
+            {section.label && !collapsed && (
               <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-200/62 uppercase", compact ? "h-9 pb-2" : "pb-1 leading-[normal]")}>
                 <span aria-hidden="true" className={cn("size-1.5 rounded-full", NIGHT_DOT[section.tone])} />
                 {t(section.label)}
@@ -276,7 +319,7 @@ export function SidebarNav({ compact = true, className, style, navRef }: Sidebar
 }
 
 // Invite & earn and Settings, under the scrolling menu.
-export function SidebarFoot({ compact = true }: { compact?: boolean }) {
+export function SidebarFoot({ compact = true, collapsed = false }: { compact?: boolean; collapsed?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useLocale();
@@ -288,22 +331,25 @@ export function SidebarFoot({ compact = true }: { compact?: boolean }) {
         const Icon = ICONS[item.icon];
         const on = location?.item === item;
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={on ? "page" : undefined}
-            className={cn(
-              "relative flex items-center gap-3 rounded-md px-3 transition-colors",
-              NIGHT_FOCUS,
-              compact ? "h-10 text-body" : "h-11 text-body",
-              on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/74 hover:bg-white/6 hover:text-white",
-            )}
-          >
-            {on && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}
-            <Icon className={cn("shrink-0", compact ? "size-4.5" : "size-4.75")} strokeWidth={1.9} />
-            <span className="flex-1">{t(item.label)}</span>
-            {item.tag && <span className="flex h-5.5 items-center rounded-full bg-mint-glow px-2 text-caption font-bold text-forest">{t(item.tag)}</span>}
-          </Link>
+          <RailTip key={item.href} label={t(item.label)} show={collapsed}>
+            <Link
+              href={item.href}
+              aria-current={on ? "page" : undefined}
+              aria-label={collapsed ? t(item.label) : undefined}
+              className={cn(
+                "relative flex items-center rounded-md transition-colors",
+                NIGHT_FOCUS,
+                collapsed ? "h-10 justify-center" : cn("gap-3 px-3", compact ? "h-10 text-body" : "h-11 text-body"),
+                on ? "bg-mint-200/14 font-semibold text-white" : "font-medium text-white/74 hover:bg-white/6 hover:text-white",
+              )}
+            >
+              {on && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}
+              <Icon className={cn("shrink-0", compact ? "size-4.5" : "size-4.75")} strokeWidth={1.9} aria-hidden={collapsed || undefined} />
+              {!collapsed && <span className="flex-1">{t(item.label)}</span>}
+              {!collapsed && item.tag && <span className="flex h-5.5 items-center rounded-full bg-mint-glow px-2 text-caption font-bold text-forest">{t(item.tag)}</span>}
+              {collapsed && item.tag && <span aria-hidden="true" className="absolute top-2 right-2.5 size-2 rounded-full bg-mint-glow" />}
+            </Link>
+          </RailTip>
         );
       })}
     </div>

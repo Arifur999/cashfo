@@ -167,4 +167,7 @@ export const chromeDictionary: Record<string, string> = {
   "Welcome,": "স্বাগতম,",
   "The full app (transactions, accounts, budgets) is being built next -- this page just confirms your account and workspace switching work.":
     "সম্পূর্ণ অ্যাপ (লেনদেন, হিসাব, বাজেট) পরবর্তীতে তৈরি করা হবে -- এই পেজটি শুধু নিশ্চিত করে যে আপনার অ্যাকাউন্ট ঠিকমতো কাজ করছে।",
+  // The sidebar's fold button.
+  "Collapse sidebar": "সাইডবার ছোট করুন",
+  "Expand sidebar": "সাইডবার বড় করুন",
 };

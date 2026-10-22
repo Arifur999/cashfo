@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AnnouncementBanner } from "@/components/modules/Customer/Layout/AnnouncementBanner";
 import { AppSidebar } from "@/components/modules/Customer/Layout/AppSidebar";
@@ -21,6 +21,7 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { isFeatureOn } from "@/lib/customer/features";
 import { getPrayerSettings } from "@/lib/customer/habits";
 import { getPlatform } from "@/lib/customer/platform";
+import { readSidebarCollapsed, SIDEBAR_COLLAPSED_COOKIE } from "@/lib/customer/sidebarState";
 import { chooseWorkspaceHref, needsWorkspaceChoice, switchableWorkspaces, workspaceName } from "@/lib/customer/workspaceSwitch";
 import { getLocale } from "@/lib/i18n/locale";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
@@ -84,6 +85,8 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   const locked = choices.filter((business) => business.hasPinLock);
   const unlocked = viewAs ? locked.map(() => true) : await Promise.all(locked.map((business) => hasWorkspaceUnlock(business.id)));
   const unlockedBusinessIds = locked.filter((_, index) => unlocked[index]).map((business) => business.id);
+  // The sidebar folded to icons, as this browser left it.
+  const sidebarCollapsed = readSidebarCollapsed((await cookies()).get(SIDEBAR_COLLAPSED_COOKIE)?.value);
 
   // A PIN-locked workspace asks for its PIN first, on whatever page was
   // opened, and stays on it once it opens.
@@ -116,7 +119,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                     {/* The Night sidebar on the left; the top bar and the one
                         scrolling region on the right. */}
                     <div className="flex h-screen overflow-hidden bg-page print:block print:h-auto print:overflow-visible">
-                      <AppSidebar />
+                      <AppSidebar initialCollapsed={sidebarCollapsed} />
                       <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
                         {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
                         <AppTopbar />
