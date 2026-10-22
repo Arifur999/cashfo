@@ -39,6 +39,21 @@ const nextConfig: NextConfig = {
     },
   },
 
+  // The push service worker (public/sw.js) is always fetched fresh, so a
+  // change to it reaches every device, and it may load nothing from elsewhere.
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+        ],
+      },
+    ];
+  },
+
   // Query strings carry over, so ?redirect= and ?error= survive.
   async redirects() {
     return [
