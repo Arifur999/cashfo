@@ -60,6 +60,9 @@ export interface NewTodoItem {
   text: string;
   priority?: TodoPriority;
   dueTime?: string | null;
+  // Minutes before dueTime to be reminded (0 = at the time, at most 120);
+  // null = no reminder.
+  remindBefore?: number | null;
 }
 
 export async function addTodoItemAction(listId: string, item: NewTodoItem): Promise<ActionResult<TodoList>> {
@@ -76,8 +79,12 @@ export interface TodoItemChanges {
   completed?: boolean;
   priority?: TodoPriority;
   dueTime?: string | null;
+  // Minutes before dueTime to be reminded (0 = at the time, at most 120);
+  // null = no reminder.
+  remindBefore?: number | null;
   date?: string;
-  repeat?: { kind: TodoRepeatKind; weekdays?: number[] } | null;
+  // A repeat's copies remind as the task does unless remindBefore says otherwise.
+  repeat?: { kind: TodoRepeatKind; weekdays?: number[]; remindBefore?: number | null } | null;
 }
 
 export async function updateTodoItemAction(listId: string, itemId: string, input: TodoItemChanges): Promise<ActionResult<TodoList>> {

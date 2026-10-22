@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { inEnglish } from "@/lib/i18n/message";
+import { fillText } from "@/lib/i18n/fill";
+import { inEnglish, type Translate } from "@/lib/i18n/message";
+import { translate } from "@/lib/i18n/translate";
 import type { UserNotification } from "./api";
 import { notificationTime, notificationView } from "./notificationDisplay";
 
@@ -86,5 +88,34 @@ describe("notificationTime in Bangla", () => {
   it("dates a loan reminder in the reader's language", () => {
     const item = row("LOAN_DUE", { name: "Islami Bank", contactId: "c1", loan: 1, direction: "PAYABLE", amount: "5000.00", dueDate: "2026-10-05" });
     expect(notificationView(item, inEnglish, "bn", "BDT", now).body).toContain("সোম, ৫ অক্টো");
+  });
+});
+
+describe("notificationView for a habit reminder", () => {
+  const inBangla: Translate = (key, values) => fillText(translate("bn", key), values ?? {});
+  const reminder = (data: UserNotification["data"]) => ({ ...row("REMINDER", data), businessId: null });
+
+  it("words a prayer reminder from its data and opens its page", () => {
+    const fajr = reminder({ kind: "NAMAZ", targetKey: "fajr", prayer: "fajr", name: "Fajr", at: "04:52", minutesBefore: 10, url: "/habit-tracker/habits?category=Namaz" });
+    expect(notificationView(fajr, inEnglish, "en")).toEqual({ kind: "reminder", title: "Fajr in 10 minutes", body: "Fajr is at 4:52 am.", href: "/habit-tracker/habits?category=Namaz" });
+    expect(notificationView(fajr, inBangla, "bn")).toMatchObject({ title: "১০ মিনিট পরে ফজর", body: "ফজর ৪:৫২ পূর্বাহ্ণ-এ।" });
+    expect(notificationView(reminder({ kind: "NAMAZ", targetKey: "asr", at: "15:40", minutesBefore: 0 }), inEnglish, "en").title).toBe("Time for Asr");
+  });
+
+  it("words Sehri and Iftar", () => {
+    expect(notificationView(reminder({ kind: "RAMADAN", targetKey: "sehri", at: "04:30", minutesBefore: 30 }), inEnglish, "en")).toMatchObject({ title: "Sehri ends in 30 minutes", body: "Sehri ends at 4:30 am.", href: "/habit-tracker/habits?category=Ramadan" });
+    expect(notificationView(reminder({ kind: "RAMADAN", targetKey: "iftar", at: "17:45", minutesBefore: 0 }), inEnglish, "en")).toMatchObject({ title: "Time for Iftar", body: "Iftar is at 5:45 pm." });
+  });
+
+  it("titles a habit, challenge, book, skill or to-do with its own name", () => {
+    expect(notificationView(reminder({ kind: "HABIT", targetKey: "h1", name: "Walk 30 min", at: "07:00", url: "/habit-tracker/daily" }), inEnglish, "en")).toEqual({ kind: "reminder", title: "Walk 30 min", body: "Time for your habit.", href: "/habit-tracker/daily" });
+    expect(notificationView(reminder({ kind: "BOOK", targetKey: "b1", name: "Atomic Habits", at: "21:00" }), inBangla, "bn")).toMatchObject({ title: "Atomic Habits", body: "পড়ার সময় হয়েছে।", href: "/habit-tracker/habits?category=Book" });
+    expect(notificationView(reminder({ kind: "TODO", targetKey: "t1", name: "Call the bank", at: "15:00", minutesBefore: 15 }), inEnglish, "en")).toMatchObject({ title: "Call the bank", body: "Due at 3:00 pm, in 15 min.", href: "/habit-tracker/todos" });
+    expect(notificationView(reminder({ kind: "TODO", targetKey: "t1", name: "Call the bank", at: "15:00", minutesBefore: 15 }), inBangla, "bn").body).toBe("১৫ মিনিট পরে, ৩:০০ অপরাহ্ণ-এ করার কথা।");
+  });
+
+  it("never follows a link out of the app", () => {
+    expect(notificationView(reminder({ kind: "SKILL", targetKey: "s1", name: "Guitar", url: "https://evil.example" }), inEnglish, "en").href).toBe("/habit-tracker/habits?category=Course");
+    expect(notificationView(reminder({ name: "Something new", url: "//evil.example" }), inEnglish, "en")).toEqual({ kind: "reminder", title: "Something new", body: "", href: null });
   });
 });

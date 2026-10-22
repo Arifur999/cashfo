@@ -22,7 +22,7 @@ import { workspaceKind } from "./workspaceKind";
 
 // The foot rows, drawn like SidebarFoot's own (its mint focus ring too:
 // the site's green one is lost on the Night panel).
-const FOOT_ROW = cn("relative flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-body font-medium text-white/88 transition-colors hover:bg-black/12 hover:text-white [&_svg]:size-4.75 [&_svg]:shrink-0", NIGHT_FOCUS);
+const FOOT_ROW = cn("relative flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-body font-medium text-white transition-colors hover:bg-black/12 hover:text-white [&_svg]:size-4.75 [&_svg]:shrink-0", NIGHT_FOCUS);
 // The links under the workspace list.
 const CARD_LINK = cn("flex h-10 items-center gap-3 rounded-md px-2.5 text-small font-semibold text-mint-200 hover:bg-white/6 hover:text-white [&_svg]:size-4 [&_svg]:shrink-0", NIGHT_FOCUS);
 
@@ -90,11 +90,11 @@ export function NavDrawer() {
                 <Avatar name={user.name} src={user.avatarUrl} size={32} tone="mint" />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-body font-bold">{name}</span>
-                  <span className="text-caption font-normal text-mint-200/80">
+                  <span className="text-caption font-normal text-mint-200">
                     {t(workspaceKind(activeBusiness))} · {t("switch")}
                   </span>
                 </span>
-                <ChevronDown className={cn("size-4 text-white/70 transition-transform", workspacesOpen && "rotate-180")} aria-hidden="true" />
+                <ChevronDown className={cn("size-4 text-white/90 transition-transform", workspacesOpen && "rotate-180")} aria-hidden="true" />
               </button>
               {workspacesOpen && (
                 <div id={listId} className="flex max-h-[40vh] flex-col gap-0.5 overflow-y-auto border-t border-mint-200/12 px-1.5 pt-1.5 pb-2">

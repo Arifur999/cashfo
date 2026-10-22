@@ -14,13 +14,14 @@ import LoadMore from "@/components/smartly/LoadMore";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { HabitMonthTracker } from "@/lib/customer/api";
+import type { HabitMonthTracker, Reminder } from "@/lib/customer/api";
 import { CHALLENGE_PRESETS, challengeMark, challengeSummary, challengeWindow, dailyItems, DAY_ITEM, dayDone, MAX_STRIP_DAYS, stripTotals, ticksTheDay } from "@/lib/customer/challengeDisplay";
 import { actionError, daysText, dayText } from "@/lib/customer/habitDisplay";
 import { deleteChallengeAction, setChallengeDayAction } from "@/lib/customer/habitsActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { useReminderBook } from "../Reminders";
 import { CHECK_FOCUS } from "../Tracker/PanelParts";
 import { withCheck } from "../trackerChecks";
 import { NewChallengeDialog } from "./NewChallengeDialog";
@@ -30,6 +31,8 @@ interface ChallengesHomePageClientProps {
   today: string;
   // ?new=1: opened from "Start a challenge", so the new-challenge dialog is up.
   openNew?: boolean;
+  // Saved reminders, for a new challenge's; null when they couldn't be read.
+  reminders: Reminder[] | null;
 }
 
 const NOTICE_KEY = "smartly.challenges.renamed";
@@ -54,10 +57,11 @@ const readNotice = () => {
 
 // Habits › Challenges (what "Others" was): the ones going on with today's
 // items to tick, ready-made lengths to start a new one, and the finished.
-export function ChallengesHomePageClient({ trackers: serverTrackers, today, openNew = false }: ChallengesHomePageClientProps) {
+export function ChallengesHomePageClient({ trackers: serverTrackers, today, openNew = false, reminders: savedReminders }: ChallengesHomePageClientProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const [dialog, setDialog] = useState<{ open: boolean; days: number | null }>({ open: openNew, days: null });
+  const reminders = useReminderBook(savedReminders);
   const [removing, setRemoving] = useState<HabitMonthTracker | null>(null);
   const [shownFinished, setShownFinished] = useState(STEP);
   const [busy, setBusy] = useState<Set<string>>(new Set());
@@ -345,7 +349,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
         )}
       </ListCard>
 
-      <NewChallengeDialog open={dialog.open} onClose={() => setDialog({ open: false, days: null })} presetDays={dialog.days === 0 ? 10 : dialog.days} />
+      <NewChallengeDialog open={dialog.open} onClose={() => setDialog({ open: false, days: null })} presetDays={dialog.days === 0 ? 10 : dialog.days} reminders={reminders} />
       <ConfirmDialog open={removing !== null} onClose={() => !isPending && setRemoving(null)} onConfirm={remove} icon={<Trash2 />} title={t("Remove {name}?", { name: removing?.name ?? t("Challenge") })} description={t("Its days and ticks go with it. This can't be undone.")} confirmLabel={t("Remove")} isPending={isPending} />
     </PageFrame>
   );

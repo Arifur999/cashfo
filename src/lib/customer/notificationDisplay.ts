@@ -4,9 +4,11 @@ import { localName, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 import type { UserNotification } from "./api";
 import { formatCurrency } from "./currency";
+import { timeLabel } from "./date";
+import { appPath, isClock, isReminderKind, PRAYER_LABEL, reminderHref, type NamazKey } from "./reminderDisplay";
 
 // The kinds of row, each with its own icon and tile colour.
-export type NotificationKind = "budget" | "loan" | "savings" | "announcement" | "support";
+export type NotificationKind = "budget" | "loan" | "savings" | "announcement" | "support" | "reminder";
 
 export interface NotificationView {
   kind: NotificationKind;
@@ -37,6 +39,46 @@ function loanTitle(name: string, owed: boolean, days: number, t: Translate, loca
   if (days === 0) return t(owed ? "Payment to {name} is due today" : "{name} should pay you today", { name });
   if (days === 1) return t(owed ? "Payment to {name} is due tomorrow" : "{name} should pay you tomorrow", { name });
   return t(owed ? "Payment to {name} is due in {count} days" : "{name} should pay you in {count} days", { name, count: formatCount(days, locale) });
+}
+
+// A habit-area reminder (the scheduler's REMINDER row). data carries
+// { kind, targetKey, name, at, prayer?, minutesBefore?, url }: `at` is the
+// time of the thing itself (the prayer, Sehri's end, Iftar, the to-do's due
+// time, the habit's time), `minutesBefore` how early it was sent, and
+// `name` the habit, challenge, book, skill or to-do as the person typed it.
+function reminderView(data: UserNotification["data"], t: Translate, locale: Locale): NotificationView {
+  const kind = text(data.kind);
+  const targetKey = text(data.targetKey);
+  const name = text(data.name).trim() || t("Reminder");
+  const before = Math.max(0, Number(data.minutesBefore ?? 0) || 0);
+  const at = text(data.at);
+  const time = isClock(at) ? timeLabel(at, t, locale) : "";
+  const count = formatCount(before, locale);
+  const href = appPath(data.url) ?? (isReminderKind(kind) ? reminderHref(kind, targetKey) : null);
+  const view = (title: string, body: string): NotificationView => ({ kind: "reminder", title, body, href });
+  switch (kind) {
+    case "NAMAZ": {
+      const key = text(data.prayer || targetKey).toLowerCase();
+      const prayer = Object.hasOwn(PRAYER_LABEL, key) ? t(PRAYER_LABEL[key as NamazKey]) : name;
+      return view(before > 0 ? t("{prayer} in {count} minutes", { prayer, count }) : t("Time for {prayer}", { prayer }), time ? t("{prayer} is at {time}.", { prayer, time }) : "");
+    }
+    case "RAMADAN":
+      if (targetKey === "sehri") return view(before > 0 ? t("Sehri ends in {count} minutes", { count }) : t("Sehri ends now"), time ? t("Sehri ends at {time}.", { time }) : "");
+      return view(before > 0 ? t("Iftar in {count} minutes", { count }) : t("Time for Iftar"), time ? t("Iftar is at {time}.", { time }) : "");
+    case "TODO":
+      if (!time) return view(name, t("A task on your to-do list."));
+      return view(name, before > 0 ? t("Due at {time}, in {count} min.", { time, count }) : t("Due now, at {time}.", { time }));
+    case "HABIT":
+      return view(name, t("Time for your habit."));
+    case "CHALLENGE":
+      return view(name, t("Time for your challenge."));
+    case "BOOK":
+      return view(name, t("Time to read."));
+    case "SKILL":
+      return view(name, t("Time to learn."));
+    default:
+      return view(name, "");
+  }
 }
 
 // A row's words, built from its data in the reader's language, counts and
@@ -99,6 +141,8 @@ export function notificationView(item: UserNotification, t: Translate, locale: L
         href: null,
       };
     }
+    case "REMINDER":
+      return reminderView(data, t, locale);
   }
 }
 

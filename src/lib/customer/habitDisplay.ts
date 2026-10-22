@@ -179,7 +179,7 @@ export const amountLabel = (value: number, unit: string | null | undefined, t: T
   [formatCount(value, locale), unitLabel(unit, t)].filter(Boolean).join(" ");
 
 // A run of consecutive weekdays reads as a range; anything else lists them.
-function daysPhrase(days: number[], t: Translate): string {
+export function daysPhrase(days: number[], t: Translate): string {
   const sorted = [...new Set(days)].sort((a, b) => a - b);
   if (sorted.length === 7) return t("Every day");
   if (sorted.length === 0) return t("No day planned");

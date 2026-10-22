@@ -8,18 +8,23 @@ import Chip from "@/components/smartly/Chip";
 import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import type { HabitMonthTracker } from "@/lib/customer/api";
+import type { HabitMonthTracker, Reminder } from "@/lib/customer/api";
 import { daysText, dayText, nextRamadan } from "@/lib/customer/habitDisplay";
 import { ramadanSummary, ramadanWindow, type SetupRange, setupYears } from "@/lib/customer/ramadanDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { useReminderBook } from "../Reminders";
+import { RamadanRemindersCard } from "./RamadanReminders";
 import { RamadanSetupDialog } from "./RamadanSetupDialog";
 import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface RamadanHomePageClientProps {
   trackers: HabitMonthTracker[];
   today: string;
+  // Saved reminders (Sehri's and Iftar's are set here); null when they
+  // couldn't be read.
+  reminders: Reminder[] | null;
 }
 
 const STATUS_CHIP = { upcoming: "neutral", going: "mint", completed: "income" } as const;
@@ -27,10 +32,11 @@ const STATUS_LABEL = { upcoming: "Coming up", going: "Going on", completed: "Com
 
 // Habits › Ramadan: when the next one begins, and a card for every Ramadan
 // tracked, each opening its sheet.
-export function RamadanHomePageClient({ trackers, today }: RamadanHomePageClientProps) {
+export function RamadanHomePageClient({ trackers, today, reminders: savedReminders }: RamadanHomePageClientProps) {
   const { t, locale } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const [setupOpen, setSetupOpen] = useState(false);
+  const reminders = useReminderBook(savedReminders);
   // Which Ramadan the dialog sets up: the next one, or another one (earlier
   // or later). Kept after it closes, so its years don't change while it
   // fades out.
@@ -134,6 +140,8 @@ export function RamadanHomePageClient({ trackers, today }: RamadanHomePageClient
           })}
         </div>
       )}
+
+      {reminders.available && <RamadanRemindersCard book={reminders} />}
 
       <RamadanSetupDialog open={setupOpen} onClose={() => setSetupOpen(false)} existing={trackers} defaultYear={nextYear} range={range} />
     </PageFrame>

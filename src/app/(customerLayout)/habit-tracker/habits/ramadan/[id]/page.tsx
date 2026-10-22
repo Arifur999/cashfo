@@ -3,6 +3,7 @@ import { RamadanSheetPageClient } from "@/components/modules/Customer/HabitTrack
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getHabitTracker, getHabitTrackers } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getReminders } from "@/lib/customer/reminders";
 import { getAppToday } from "@/lib/date";
 
 // The list's name, read from nothing: Next runs generateMetadata for every
@@ -19,8 +20,8 @@ export default async function RamadanSheetPage({ params }: PageProps<"/habit-tra
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const [tracker, all] = await Promise.all([getHabitTracker(id), getHabitTrackers("Ramadan")]);
+  const [tracker, all, reminders] = await Promise.all([getHabitTracker(id), getHabitTrackers("Ramadan"), getReminders()]);
   if (!tracker || tracker.category !== "Ramadan") notFound();
 
-  return <RamadanSheetPageClient tracker={tracker} all={all} today={getAppToday()} />;
+  return <RamadanSheetPageClient tracker={tracker} all={all} today={getAppToday()} reminders={reminders?.reminders ?? null} />;
 }

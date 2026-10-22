@@ -11,13 +11,14 @@ import IconTile from "@/components/smartly/IconTile";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { HabitMonthTracker } from "@/lib/customer/api";
+import type { HabitMonthTracker, Reminder } from "@/lib/customer/api";
 import { challengeMark, challengeSummary, challengeWindow, dailyItems, DAY_ITEM, dayDone, doneDays, ticksTheDay } from "@/lib/customer/challengeDisplay";
 import { actionError, daysText, dayText } from "@/lib/customer/habitDisplay";
 import { deleteChallengeAction, removeTrackerItemAction, setChallengeDayAction } from "@/lib/customer/habitsActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { SavedReminderEditor, useReminderBook } from "../Reminders";
 import { AddRowDialog } from "../Tracker/AddRowDialog";
 import { CHECK_FOCUS } from "../Tracker/PanelParts";
 import { RecordEyebrow } from "../Tracker/RecordEyebrow";
@@ -28,13 +29,16 @@ import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras"
 interface ChallengeDetailPageClientProps {
   tracker: HabitMonthTracker;
   today: string;
+  // Saved reminders (this challenge's is edited here); null when they
+  // couldn't be read.
+  reminders: Reminder[] | null;
 }
 
 type Tick = { day: number; items: string[]; checked: boolean };
 
 // One challenge: where it stands, every day as a box (tap a past day to
 // fix it), and today's items to tick.
-export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPageClientProps) {
+export function ChallengeDetailPageClient({ tracker, today, reminders: savedReminders }: ChallengeDetailPageClientProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -44,6 +48,7 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
   const [busyDay, setBusyDay] = useState<number | null>(null);
   const [confirm, setConfirm] = useState<{ kind: "remove-row"; item: string } | { kind: "delete" } | null>(null);
   const count = (n: number) => formatCount(n, locale);
+  const reminders = useReminderBook(savedReminders);
 
   const window = challengeWindow(sheet, today);
   const summary = challengeSummary(sheet, window);
@@ -208,34 +213,43 @@ export function ChallengeDetailPageClient({ tracker, today }: ChallengeDetailPag
           </div>
         </Card>
 
-        <Card padding="none" className="flex flex-col gap-3 p-5">
-          <div className="flex flex-col gap-0.5">
-            <h2 className="text-h3 text-ink">{window.status === "finished" ? t("Finished") : t("Today · day {day}", { day: count(window.today) })}</h2>
-            <span className="text-small text-ink-muted">{dayText(today, locale, "short")}</span>
-          </div>
-          {window.status === "going" &&
-            items.map((item) => {
-              const checked = sheet.checks.some((c) => c.day === window.today && c.item === item);
-              return (
-                <label key={item} className={cn("flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-4 py-3 text-body transition-colors", CHECK_FOCUS, checked ? "border-mint-200 bg-mint-50" : "border-line hover:border-line-strong")}>
-                  <input type="checkbox" checked={checked} aria-disabled={busyDay !== null || undefined} onChange={() => tick({ day: window.today, items: [item], checked: !checked })} className="sr-only" />
-                  <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-sm", checked ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface")}>{checked && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}</span>
-                  <span className="min-w-0 wrap-break-word text-ink">{dayItself && item === DAY_ITEM ? t("Done for today") : item}</span>
-                </label>
-              );
-            })}
-          {window.status === "going" && todayDone && (
-            <div className="flex items-start gap-3 rounded-md bg-mint-50 px-4 py-3 text-small leading-snug text-brand-ink">
-              <Check className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              <span>{t(summary.streak === 1 ? "Done for today. {count} day in a row." : "Done for today. {count} days in a row.", { count: count(summary.streak) })}</span>
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card padding="none" className="flex flex-col gap-3 p-5">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-h3 text-ink">{window.status === "finished" ? t("Finished") : t("Today · day {day}", { day: count(window.today) })}</h2>
+              <span className="text-small text-ink-muted">{dayText(today, locale, "short")}</span>
             </div>
+            {window.status === "going" &&
+              items.map((item) => {
+                const checked = sheet.checks.some((c) => c.day === window.today && c.item === item);
+                return (
+                  <label key={item} className={cn("flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-4 py-3 text-body transition-colors", CHECK_FOCUS, checked ? "border-mint-200 bg-mint-50" : "border-line hover:border-line-strong")}>
+                    <input type="checkbox" checked={checked} aria-disabled={busyDay !== null || undefined} onChange={() => tick({ day: window.today, items: [item], checked: !checked })} className="sr-only" />
+                    <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-sm", checked ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface")}>{checked && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}</span>
+                    <span className="min-w-0 wrap-break-word text-ink">{dayItself && item === DAY_ITEM ? t("Done for today") : item}</span>
+                  </label>
+                );
+              })}
+            {window.status === "going" && todayDone && (
+              <div className="flex items-start gap-3 rounded-md bg-mint-50 px-4 py-3 text-small leading-snug text-brand-ink">
+                <Check className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <span>{t(summary.streak === 1 ? "Done for today. {count} day in a row." : "Done for today. {count} days in a row.", { count: count(summary.streak) })}</span>
+              </div>
+            )}
+            {window.status === "finished" && (
+              <p className="text-small leading-relaxed text-ink-2">
+                {t("{done} of {total} days done", { done: count(summary.done), total: count(sheet.totalDays) })} · {count(summary.pct)}%. {t("Start another from the challenges page.")}
+              </p>
+            )}
+          </Card>
+
+          {/* A finished challenge keeps its card only while a reminder is still on, to turn it off. */}
+          {reminders.available && (window.status !== "finished" || reminders.find("CHALLENGE", sheet.id)?.enabled) && (
+            <Card padding="none" className="p-5">
+              <SavedReminderEditor key={sheet.id} kind="CHALLENGE" targetKey={sheet.id} book={reminders} label={<span className="text-h3">{t("Reminder")}</span>} description={t("A nudge to tick today's items. Skipped once they're ticked.")} />
+            </Card>
           )}
-          {window.status === "finished" && (
-            <p className="text-small leading-relaxed text-ink-2">
-              {t("{done} of {total} days done", { done: count(summary.done), total: count(sheet.totalDays) })} · {count(summary.pct)}%. {t("Start another from the challenges page.")}
-            </p>
-          )}
-        </Card>
+        </div>
       </div>
 
       <AddRowDialog

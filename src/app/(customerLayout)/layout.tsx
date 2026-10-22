@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { PushResync } from "@/components/modules/Customer/HabitTracker/Reminders/PushResync";
 import { AnnouncementBanner } from "@/components/modules/Customer/Layout/AnnouncementBanner";
 import { AppSidebar } from "@/components/modules/Customer/Layout/AppSidebar";
 import { AppTopbar } from "@/components/modules/Customer/Layout/AppTopbar";
@@ -133,6 +134,8 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                     </div>
                     <QuickAddFab />
                     <ShellNotice />
+                    {/* Keeps this device's push subscription in the reader's language. */}
+                    <PushResync enabled={!user.impersonatedBy} />
                   </AddActionsProvider>
                 </TopbarProvider>
               </TodayTasksProvider>

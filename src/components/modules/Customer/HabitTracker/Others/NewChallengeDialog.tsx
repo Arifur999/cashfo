@@ -15,6 +15,7 @@ import { createChallengeAction } from "@/lib/customer/habitsActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { draftFromReminder, type ReminderBook, ReminderSection } from "../Reminders";
 import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 
 interface NewChallengeDialogProps {
@@ -22,6 +23,8 @@ interface NewChallengeDialogProps {
   onClose: () => void;
   // The length picked on the page, if any.
   presetDays: number | null;
+  // The page's saved reminders: the new challenge's is saved once it exists.
+  reminders?: ReminderBook;
 }
 
 const MAX_DAYS = 365;
@@ -30,7 +33,7 @@ const MAX_ITEM = 40;
 
 // A new challenge: a name, how many days, and the daily items to tick
 // (one is enough; none means the day itself is ticked).
-export function NewChallengeDialog({ open, onClose, presetDays }: NewChallengeDialogProps) {
+export function NewChallengeDialog({ open, onClose, presetDays, reminders }: NewChallengeDialogProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -38,6 +41,7 @@ export function NewChallengeDialog({ open, onClose, presetDays }: NewChallengeDi
   const [custom, setCustom] = useState("");
   const [items, setItems] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
+  const [reminder, setReminder] = useState(() => draftFromReminder("CHALLENGE", null));
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -50,6 +54,7 @@ export function NewChallengeDialog({ open, onClose, presetDays }: NewChallengeDi
       setCustom(presetDays && !CHALLENGE_PRESETS.some((p) => p.days === presetDays) ? String(presetDays) : "");
       setItems([]);
       setDraft("");
+      setReminder(draftFromReminder("CHALLENGE", null));
     }
   }
 
@@ -82,6 +87,11 @@ export function NewChallengeDialog({ open, onClose, presetDays }: NewChallengeDi
       // Made, even if an item was refused: open it, and say what went wrong.
       if (result.success) toast.success(t("Challenge created"));
       else toast.error(actionError(result.message, "Failed to save habit", t, locale));
+      // Its reminder needs the new id, so it is saved now.
+      if (reminders?.available) {
+        const saved = await reminders.saveDraft("CHALLENGE", result.data.id, reminder);
+        if (!saved.success) toast.error(t("Saved, but not its reminder. Open it again to set the reminder."));
+      }
       onClose();
       router.push(`/habit-tracker/habits/others/${result.data.id}`);
     });
@@ -138,6 +148,7 @@ export function NewChallengeDialog({ open, onClose, presetDays }: NewChallengeDi
                 </div>
                 <span className="text-caption font-normal text-ink-muted">{t("A day counts as done when every item is ticked. With no items, you tick the day itself.")}</span>
               </div>
+              {reminders && <ReminderSection kind="CHALLENGE" targetKey={null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("Skipped on a day you've already ticked.")} />}
             </div>
           </div>
           <PanelFooter>

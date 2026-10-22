@@ -52,7 +52,7 @@ export interface CurrentUser {
 
 // The bell's feed (GET /api/notifications). The text is built in the app
 // from `data` (lib/customer/notificationDisplay.ts), in either language.
-export type UserNotificationType = "BUDGET" | "LOAN_DUE" | "SAVINGS" | "ANNOUNCEMENT" | "SUPPORT_REPLY";
+export type UserNotificationType = "BUDGET" | "LOAN_DUE" | "SAVINGS" | "ANNOUNCEMENT" | "SUPPORT_REPLY" | "REMINDER";
 
 export interface UserNotification {
   id: string;
@@ -74,6 +74,60 @@ export interface ReminderPreferences {
   budget: boolean;
   loans: boolean;
   savings: boolean;
+}
+
+// Habit-area reminders (/api/reminders): a time to be told about a habit, a
+// challenge, a book or a skill, or a few minutes before a prayer, Sehri or
+// Iftar. They reach the bell (a REMINDER row) and, on every device that
+// turned notifications on, a push notification. To-dos keep theirs on the
+// task itself (TodoItem.remindBefore), not here.
+export type ReminderKind = "HABIT" | "CHALLENGE" | "TODO" | "NAMAZ" | "RAMADAN" | "BOOK" | "SKILL";
+// Told at set times of the day, on set weekdays.
+export type TimedReminderKind = "HABIT" | "CHALLENGE" | "BOOK" | "SKILL";
+// Told a few minutes before a time the app works out (the prayer times).
+export type OffsetReminderKind = "NAMAZ" | "RAMADAN";
+export type SavedReminderKind = TimedReminderKind | OffsetReminderKind;
+
+export interface Reminder {
+  id: string;
+  kind: SavedReminderKind;
+  // Habit.id (HABIT), HabitMonthTracker.id (CHALLENGE), Book.id (BOOK),
+  // Skill.id (SKILL); "fajr" | "dhuhr" | "asr" | "maghrib" | "isha" (NAMAZ);
+  // "sehri" | "iftar" (RAMADAN).
+  targetKey: string;
+  enabled: boolean;
+  // "HH:MM" on a 24-hour Dhaka clock, 1 to 6 of them; empty for NAMAZ/RAMADAN.
+  times: string[];
+  // 0 = Sunday ... 6 = Saturday; empty = every day.
+  weekdays: number[];
+  // NAMAZ/RAMADAN: this many minutes before the time (0 to 120).
+  minutesBefore: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// GET /api/reminders: the master switch and every saved reminder.
+export interface RemindersOverview {
+  remindHabits: boolean;
+  reminders: Reminder[];
+}
+
+// PUT /api/reminders, saved by (kind, targetKey).
+export interface ReminderInput {
+  kind: SavedReminderKind;
+  targetKey: string;
+  enabled: boolean;
+  times?: string[];
+  weekdays?: number[];
+  minutesBefore?: number;
+}
+
+// POST /api/push/subscriptions: one device's push address, and the language
+// its notifications are written in.
+export interface PushSubscriptionInput {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  locale: "en" | "bn";
 }
 
 // Settings > Help: messages to the support team (/api/support/messages).
@@ -1317,6 +1371,9 @@ export interface TodoItem {
   priority: TodoPriority;
   // "HH:MM" on a 24-hour clock, or null for any time that day.
   dueTime: string | null;
+  // Minutes before dueTime to be reminded (0 = at the time); null or absent
+  // = no reminder. Only meaningful with a dueTime.
+  remindBefore?: number | null;
   // "YYYY-MM-DD" the task was first planned for, once it has moved.
   movedFrom: string | null;
   repeat: TodoRepeatRule | null;
@@ -1327,6 +1384,7 @@ export interface TodoRepeat extends TodoRepeatRule {
   text: string;
   priority: TodoPriority;
   dueTime: string | null;
+  remindBefore?: number | null;
   startsOn: string;
 }
 

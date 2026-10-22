@@ -3,6 +3,7 @@ import { ChallengeDetailPageClient } from "@/components/modules/Customer/HabitTr
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getHabitTracker } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getReminders } from "@/lib/customer/reminders";
 import { getAppToday } from "@/lib/date";
 
 // The list's name, read from nothing: Next runs generateMetadata for every
@@ -19,8 +20,8 @@ export default async function ChallengePage({ params }: PageProps<"/habit-tracke
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const tracker = await getHabitTracker(id);
+  const [tracker, reminders] = await Promise.all([getHabitTracker(id), getReminders()]);
   if (!tracker || tracker.category !== "Others") notFound();
 
-  return <ChallengeDetailPageClient tracker={tracker} today={getAppToday()} />;
+  return <ChallengeDetailPageClient tracker={tracker} today={getAppToday()} reminders={reminders?.reminders ?? null} />;
 }

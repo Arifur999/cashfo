@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowRight, Check, ChevronDown, Clock, Flag, Repeat } from "lucide-react";
+import { ArrowRight, BellRing, Check, ChevronDown, Clock, Flag, Repeat } from "lucide-react";
 import { useRef } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { TodoItem, TodoPriority } from "@/lib/customer/api";
 import { timeLabel } from "@/lib/customer/date";
+import { minutesBeforeLabel } from "@/lib/customer/reminderDisplay";
 import { movedLabel, PRIORITIES, PRIORITY_LABEL, repeatLabel } from "@/lib/customer/todoDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -123,6 +124,8 @@ interface TaskMetaProps {
 export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
   const { t, locale } = useLocale();
   const moved = item.movedFrom ? movedLabel(item.movedFrom, day, t, locale) : null;
+  // "Reminder: 10 min before", for the bell beside the time.
+  const reminder = item.dueTime && item.remindBefore != null ? t("Reminder: {when}", { when: minutesBeforeLabel(item.remindBefore, t, locale) }) : null;
   if (look === "plain") {
     return (
       <span className="flex items-center gap-2 text-caption whitespace-nowrap text-ink-muted">
@@ -141,6 +144,12 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
         <span className="flex items-center gap-1 tabular-nums">
           <Clock className="size-3" aria-hidden="true" />
           {timeLabel(item.dueTime, t, locale)}
+          {reminder && (
+            <span title={reminder} className="ml-0.5 flex items-center">
+              <BellRing className="size-3" aria-hidden="true" />
+              <span className="sr-only">{reminder}</span>
+            </span>
+          )}
         </span>
       )}
       {item.repeat && (

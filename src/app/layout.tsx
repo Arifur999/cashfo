@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anek_Bangla, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import AppToaster from "@/components/smartly/AppToaster";
@@ -35,6 +35,18 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND_NAME}`,
   },
   description: "Income, expenses, loans, savings, passwords and habits, together.",
+  // Added to an iPhone's Home Screen (app/manifest.ts, app/apple-icon.png),
+  // it opens full screen under its own name -- and only then may it send
+  // push notifications.
+  appleWebApp: { capable: true, title: BRAND_NAME, statusBarStyle: "default" },
+};
+
+// The browser bar in the page's own colour: globals.css's --page, light and dark.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f6f4" },
+    { media: "(prefers-color-scheme: dark)", color: "#08120e" },
+  ],
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

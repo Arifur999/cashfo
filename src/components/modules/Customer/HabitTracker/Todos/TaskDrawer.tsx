@@ -18,6 +18,7 @@ import { dayOfMonthWord, PRIORITIES, PRIORITY_LABEL, repeatLabel } from "@/lib/c
 import type { TodoItemChanges } from "@/lib/customer/todosActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { RemindBeforeSelect, ReminderPushHint } from "../Reminders";
 import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 import { PRIORITY_TONE, PriorityDot } from "./TaskBits";
 
@@ -46,6 +47,8 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
   const [text, setText] = useState("");
   const [date, setDate] = useState(day);
   const [time, setTime] = useState<string | null>(null);
+  // Minutes before the time to be reminded; null = no reminder.
+  const [remindBefore, setRemindBefore] = useState<number | null>(null);
   const [priority, setPriority] = useState<TodoPriority>("MEDIUM");
   const [repeat, setRepeat] = useState<RepeatChoice>("NONE");
   const [weekdays, setWeekdays] = useState<number[]>([]);
@@ -59,6 +62,7 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
       setText(item.text);
       setDate(day);
       setTime(item.dueTime);
+      setRemindBefore(item.remindBefore ?? null);
       setPriority(item.priority);
       setRepeat(item.repeat?.kind ?? "NONE");
       setWeekdays(item.repeat?.weekdays.length ? item.repeat.weekdays : [weekdayOf(day)]);
@@ -86,6 +90,9 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
     if (text.trim() !== item.text) changes.text = text.trim();
     if (date !== day) changes.date = date;
     if (time !== item.dueTime) changes.dueTime = time;
+    // No time, no reminder: one left on a task whose time went is dropped.
+    const remind = time ? remindBefore : null;
+    if (remind !== (item.remindBefore ?? null)) changes.remindBefore = remind;
     if (priority !== item.priority) changes.priority = priority;
     const was = item.repeat;
     if (repeat === "NONE") {
@@ -146,6 +153,16 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
                 );
               })}
             </div>
+
+            {/* A reminder needs a time to count back from. */}
+            {time && (
+              <div className="flex flex-col gap-2">
+                <Field htmlFor="task-remind" label={label(t("Remind me"))}>
+                  <RemindBeforeSelect id="task-remind" value={remindBefore} onChange={setRemindBefore} className="w-full sm:w-60" />
+                </Field>
+                {remindBefore !== null && <ReminderPushHint />}
+              </div>
+            )}
 
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-2 text-body font-medium text-ink">{t("Priority")}</legend>

@@ -1,9 +1,9 @@
 "use client";
 
-import { Banknote, Bell, ChartPie, CheckCheck, Megaphone, MessageCircle, PiggyBank, Settings } from "lucide-react";
+import { AlarmClock, Banknote, Bell, ChartPie, CheckCheck, Megaphone, MessageCircle, PiggyBank, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useEffectEvent, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
@@ -24,14 +24,21 @@ const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
   savings: { icon: PiggyBank, tone: "money" },
   announcement: { icon: Megaphone, tone: "info" },
   support: { icon: MessageCircle, tone: "money" },
+  reminder: { icon: AlarmClock, tone: "habits" },
 };
+
+// While the tab is in view the feed is read again this often, so a habit
+// reminder shows without a reload; and when the tab comes back into view,
+// unless it was read in the last little while.
+const REFRESH_EVERY_MS = 2 * 60_000;
+const REFRESH_AT_MOST_EVERY_MS = 15_000;
 
 type Filter = "all" | "unread";
 
-// The bell in the top bar and its feed: budget, loan and savings reminders
-// and announcements, newest first. Always there, so the reminder settings
-// stay one tap away; an empty feed says so. A row about another workspace
-// switches to it before opening.
+// The bell in the top bar and its feed: budget, loan and savings reminders,
+// habit reminders and announcements, newest first. Always there, so the
+// reminder settings stay one tap away; an empty feed says so. A row about
+// another workspace switches to it before opening.
 export function NotificationsBell() {
   const router = useRouter();
   const { t, locale } = useLocale();
@@ -42,19 +49,38 @@ export function NotificationsBell() {
   const [filter, setFilter] = useState<Filter>("all");
   const [, startTransition] = useTransition();
 
+  const lastRead = useRef(0);
+
   // Read again each time the panel opens. A failed read keeps what is shown.
-  const load = () =>
-    getNotificationsAction().then((result) => {
+  const load = () => {
+    lastRead.current = Date.now();
+    return getNotificationsAction().then((result) => {
       if (!result.success || !result.data) return;
       setItems(result.data.data);
       setUnread(result.data.unreadCount);
     });
+  };
   const loadOnMount = useEffectEvent(load);
+  const loadIfStale = useEffectEvent(() => {
+    if (document.visibilityState === "visible" && Date.now() - lastRead.current >= REFRESH_AT_MOST_EVERY_MS) void load();
+  });
 
   // The first read, once the shell is up; the checks behind it may take a
-  // moment and no page waits for them.
+  // moment and no page waits for them. Then again every two minutes while
+  // the tab is in view, and when it comes back into view or focus.
   useEffect(() => {
     void loadOnMount();
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void loadOnMount();
+    }, REFRESH_EVERY_MS);
+    const onWake = () => loadIfStale();
+    window.addEventListener("focus", onWake);
+    document.addEventListener("visibilitychange", onWake);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", onWake);
+      document.removeEventListener("visibilitychange", onWake);
+    };
   }, []);
 
   const workspaces = user.businesses.filter((business) => business.type !== "GROUP");

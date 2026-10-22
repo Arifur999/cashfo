@@ -21,6 +21,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AmountPopover } from "../Tracker/AmountPopover";
+import { useReminderBook } from "../Reminders";
 import { CloseButton } from "../Tracker/PanelParts";
 import { StatCard } from "../Tracker/StatCard";
 import type { DailyHabitsData } from "./dailyTypes";
@@ -55,6 +56,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const router = useRouter();
   const wide = useMediaQuery(SIDE_PANEL);
   const { today, day, habits, todayRows, stats, logs, panelMonth, panelLogs, bestLogs } = data;
+  const reminders = useReminderBook(data.reminders);
   const isToday = day === today;
   const active = habits.filter((h) => !h.isArchived);
   const archived = habits.filter((h) => h.isArchived);
@@ -437,7 +439,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         </SheetContent>
       </Sheet>
 
-      <HabitDrawer open={drawer.open} onClose={() => setDrawer({ open: false, editing: null })} editing={drawer.editing} />
+      <HabitDrawer open={drawer.open} onClose={() => setDrawer({ open: false, editing: null })} editing={drawer.editing} reminders={reminders} />
     </PageFrame>
   );
 }

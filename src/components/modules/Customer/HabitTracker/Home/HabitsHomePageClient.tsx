@@ -10,6 +10,7 @@ import { last7, prayerStreak, restingToday, streakRows } from "@/lib/customer/ha
 import { nowReading } from "@/lib/customer/libraryDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { HabitDrawer } from "../Daily/HabitDrawer";
+import { useReminderBook } from "../Reminders";
 import { ChallengesCard } from "./ChallengesCard";
 import { DailyHabitsCard } from "./DailyHabitsCard";
 import type { HabitsHomeData } from "./homeTypes";
@@ -36,6 +37,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   const { hijriAdjust } = usePrayerSettings().settings;
   const { today } = data;
   const [habitOpen, setHabitOpen] = useState(false);
+  const reminders = useReminderBook(data.reminders);
   const taskField = useRef<HTMLInputElement>(null);
 
   const reading = data.books ? nowReading(data.books.books) : null;
@@ -102,7 +104,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
         <RamadanCard trackers={data.ramadan} today={today} />
       </div>
 
-      <HabitDrawer open={habitOpen} onClose={() => setHabitOpen(false)} editing={null} />
+      <HabitDrawer open={habitOpen} onClose={() => setHabitOpen(false)} editing={null} reminders={reminders} />
     </PageFrame>
   );
 }

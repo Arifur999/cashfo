@@ -15,7 +15,7 @@ const SidebarFoot = ({ admin }: { admin: IAdminUser }) => {
       <Avatar name={admin.name} size={36} tone="glow" className="text-caption" />
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-small font-semibold text-white">{admin.name}</span>
-        <span className="text-caption font-normal text-mint-200/90">{roleLine}</span>
+        <span className="text-caption font-normal text-mint-200">{roleLine}</span>
       </span>
     </div>
   );
