@@ -44,7 +44,7 @@ const AuthShell = ({ maintenance, children }: AuthShellProps) => {
 
   return (
     <div className="auth-backdrop relative min-h-dvh overflow-hidden">
-      <span aria-hidden="true" className="auth-light -top-24 -left-24 size-120 bg-mint-300" />
+      <span aria-hidden="true" className="auth-light -top-24 -left-24 size-120 bg-mint-200/70" />
       <span aria-hidden="true" className="auth-light top-1/3 -right-32 size-130 bg-mint-200" style={{ animationDelay: "-8s", animationDuration: "32s" }} />
       <span aria-hidden="true" className="auth-light -bottom-40 left-1/4 size-110 bg-emerald/25" style={{ animationDelay: "-15s", animationDuration: "38s" }} />
 
