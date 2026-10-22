@@ -2,6 +2,7 @@
 
 import { Check, CircleAlert, CircleOff, Copy, Info, X } from "lucide-react";
 import { Toaster, type ToasterProps } from "sonner";
+import { translate, type Locale } from "@/lib/i18n/translate";
 import { cn } from "@/lib/utils";
 
 const icon = (className: string, glyph: React.ReactNode) => <span className={cn("flex size-7 items-center justify-center rounded-full [&_svg]:size-4", className)}>{glyph}</span>;
@@ -13,8 +14,11 @@ const icon = (className: string, glyph: React.ReactNode) => <span className={cn(
 // leave after 5 seconds, 8 when there is an Undo. The toast is dark in both themes, so the green and
 // amber icons take the night palette's fixed colours; the red is the danger
 // fill.
-const AppToaster = (props: ToasterProps) => (
+// The root layout sits outside LocaleProvider, so it passes the reader's
+// language for the region's and the close button's read-out names.
+const AppToaster = ({ locale = "en", ...props }: ToasterProps & { locale?: Locale }) => (
   <Toaster
+    containerAriaLabel={translate(locale, "Notifications")}
     position="bottom-left"
     duration={5000}
     gap={12}
@@ -31,6 +35,7 @@ const AppToaster = (props: ToasterProps) => (
     closeButton
     toastOptions={{
       unstyled: true,
+      closeButtonAriaLabel: translate(locale, "Close notification"),
       classNames: {
         toast: "flex w-full max-w-105 items-center gap-3 rounded-lg bg-ink px-4 py-3 font-sans text-body text-white shadow-float dark:bg-surface-raised dark:text-ink dark:ring-1 dark:ring-line",
         content: "flex min-w-0 flex-1 flex-col gap-0.5",

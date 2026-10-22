@@ -72,7 +72,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <QueryProvider>
           <TooltipProvider>{children}</TooltipProvider>
-          <AppToaster />
+          <AppToaster locale={locale} />
         </QueryProvider>
       </body>
     </html>
