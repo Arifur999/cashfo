@@ -219,7 +219,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
             className={cn(
               cn("relative flex h-10 items-center justify-center rounded-md transition-colors", SHORT),
               NIGHT_FOCUS,
-              lit ? cn(ACTIVE_ROW, "text-white") : cn("text-white/88 hover:text-white", HOVER_ROW),
+              lit ? cn(ACTIVE_ROW, "text-white") : cn("text-white hover:text-white", HOVER_ROW),
             )}
           >
             {lit && <span aria-hidden="true" className={cn(MARKER, "top-2.5 h-5")} />}
@@ -241,7 +241,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
               compact ? cn("h-10 text-body", SHORT) : "h-11 text-body-lg",
               // Room for the chevron's own button.
               item.subs && (compact ? "pr-11" : "pr-12"),
-              lit ? "font-semibold text-white" : cn("font-medium text-white/88 hover:text-white", HOVER_ROW),
+              lit ? "font-semibold text-white" : cn("font-medium text-white hover:text-white", HOVER_ROW),
               self && ACTIVE_ROW,
             )}
           >
@@ -265,7 +265,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
                 "absolute top-0 right-0 flex items-center justify-center rounded-md transition-colors",
                 NIGHT_FOCUS,
                 compact ? "size-10" : "size-11",
-                lit ? "text-white/80" : cn("text-white/70 hover:text-white", HOVER_ROW),
+                lit ? "text-white" : cn("text-white/90 hover:text-white", HOVER_ROW),
               )}
             >
               <Chevron className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
@@ -285,7 +285,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
                     "relative flex items-center rounded-md pr-3 pl-10 transition-colors",
                     NIGHT_FOCUS,
                     compact ? "h-8.5 text-small [@media(max-height:860px)]:h-8" : "h-10 text-body",
-                    on ? cn(ACTIVE_ROW, "font-semibold text-white") : "font-medium text-white/85 hover:text-white",
+                    on ? cn(ACTIVE_ROW, "font-semibold text-white") : "font-medium text-white/95 hover:text-white",
                   )}
                 >
                   <span aria-hidden="true" className="absolute top-0 bottom-0 left-5.25 w-px bg-mint-200/16" />
@@ -315,7 +315,7 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
               </span>
             )}
             {section.label && !collapsed && (
-              <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-200/90 uppercase", compact ? "h-9 pb-2 [@media(max-height:860px)]:h-7 [@media(max-height:860px)]:pt-2.5 [@media(max-height:860px)]:pb-1" : "pb-1 leading-[normal]")}>
+              <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-200 uppercase", compact ? "h-9 pb-2 [@media(max-height:860px)]:h-7 [@media(max-height:860px)]:pt-2.5 [@media(max-height:860px)]:pb-1" : "pb-1 leading-[normal]")}>
                 <span aria-hidden="true" className={cn("size-1.5 rounded-full", NIGHT_DOT[section.tone])} />
                 {t(section.label)}
               </span>
@@ -350,7 +350,7 @@ export function SidebarFoot({ compact = true, collapsed = false }: { compact?: b
                 "relative flex items-center rounded-md transition-colors",
                 NIGHT_FOCUS,
                 collapsed ? cn("h-10 justify-center", SHORT) : cn("gap-3 px-3", compact ? cn("h-10 text-body", SHORT) : "h-11 text-body"),
-                on ? cn(ACTIVE_ROW, "font-semibold text-white") : cn("font-medium text-white/88 hover:text-white", HOVER_ROW),
+                on ? cn(ACTIVE_ROW, "font-semibold text-white") : cn("font-medium text-white hover:text-white", HOVER_ROW),
               )}
             >
               {on && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}
