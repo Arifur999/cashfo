@@ -12,7 +12,7 @@ import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { describeTransaction, relativeDayKey, type CategoryMeta } from "@/lib/customer/transactionRows";
+import { categoryLabel, describeTransaction, relativeDayKey, systemText, type CategoryMeta } from "@/lib/customer/transactionRows";
 import { toDateInputValue } from "@/lib/date";
 import { banglaDayMonth, banglaShortDay } from "@/lib/i18n/banglaDates";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -59,7 +59,7 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
         <ListEmpty title={t("No transactions yet.")} />
       ) : (
         transactions.map((transaction, index) => {
-          const row = describeTransaction(transaction, categoriesById);
+          const row = describeTransaction(transaction, categoriesById, {}, locale);
           const isTransfer = transaction.transactionType === "TRANSFER";
           const tone = isTransfer ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
           const icon = isTransfer ? ArrowLeftRight : row.category ? categoryIconFor(row.category) : Receipt;
@@ -75,7 +75,7 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
               <ListCell className="flex flex-col">
                 <span className="flex min-w-0 items-center gap-2">
                   <ListRowLink href={`/transactions/${transaction.id}`} className={cn("truncate text-body leading-5 font-semibold text-ink", row.cancelled && "line-through")}>
-                    {row.title ?? t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}
+                    {row.title ? systemText(row.title, t) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}
                   </ListRowLink>
                   {row.cancelled && (
                     <Chip tone="expense" size="sm" className="hidden font-semibold md:inline-flex">
@@ -85,7 +85,7 @@ export function RecentTransactionsCard({ transactions, categoriesById, currency,
                 </span>
                 <span className="truncate text-small leading-4.5 text-ink-muted">
                   {row.cancelled && <span className="md:hidden">{t(row.cancelled)} · </span>}
-                  {row.category && <span className="hidden md:inline">{row.category.name} · </span>}
+                  {row.category && <span className="hidden md:inline">{categoryLabel(row.category.name, t)} · </span>}
                   {row.wallet && <>{row.wallet} · </>}
                   {when ? t(when) : <ByWidth phone={dayMonth(day)} wide={shortDay(day)} />}
                 </span>

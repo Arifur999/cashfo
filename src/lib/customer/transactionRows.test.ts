@@ -206,6 +206,7 @@ describe("categoryLabel / systemText / rowTitle", () => {
     expect(categoryLabel("Food & Dining", t)).toBe("Food & Dining");
     expect(systemText("Referral Program withdrawal", t)).toBe("bn:Referral Program withdrawal");
     expect(systemText("Lunch with team", t)).toBe("Lunch with team");
+    expect(systemText("Asset sale: Kitchen fridge", (key, values) => `bn:${key}|${values?.name}`)).toBe("bn:Asset sale: {name}|Kitchen fridge");
   });
 
   it("titles a row by its note or category, else by its type", () => {

@@ -59,6 +59,10 @@ export const incomeExpenseDictionary: Record<string, string> = {
   // transactionRows.ts): an asset sale's and a referral payout's category,
   // and the payout's note.
   "Asset Sale": "সম্পদ বিক্রি",
+  // transactionRows.ts systemText: the notes the assets feature writes
+  "Asset purchase: {name}": "সম্পদ কেনা: {name}",
+  "Asset sale: {name}": "সম্পদ বিক্রি: {name}",
+  "Asset deleted: {name}": "সম্পদ মুছে ফেলা: {name}",
   "Referral Bonus": "রেফারেল বোনাস",
   "Referral Program withdrawal": "রেফারেলের পুরস্কার তোলা",
   "All categories": "সব ক্যাটাগরি",
