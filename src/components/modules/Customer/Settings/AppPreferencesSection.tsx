@@ -1,8 +1,10 @@
 "use client";
 
-import { CircleAlert, Monitor, Moon, RotateCw, Sun } from "lucide-react";
+import { ChevronRight, CircleAlert, Monitor, Moon, RotateCw, Sun } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useTheme, type ThemePreference } from "@/components/modules/Customer/Providers/ThemeProvider";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -10,19 +12,29 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Switch } from "@/components/ui/switch";
-import type { ReminderPreferences } from "@/lib/customer/api";
+import type { ReminderPreferences, RemindersOverview } from "@/lib/customer/api";
 import { saveLanguageAction } from "@/lib/customer/authActions";
 import { getReminderPreferencesAction, saveReminderPreferencesAction } from "@/lib/customer/notificationsActions";
+import { activeReminderRows } from "@/lib/customer/reminderDisplay";
+import { getRemindersAction, saveRemindHabitsAction } from "@/lib/customer/remindersActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { REMINDERS_ANCHOR } from "@/lib/customer/settingsDisplay";
 import { useLocale, type Locale } from "@/lib/i18n/LocaleProvider";
+import { PushDeviceRow } from "./PushDeviceRow";
 
 interface AppPreferencesSectionProps {
   today: string;
   // null when they couldn't be read: the card says so, with Try again, and
   // the switches stay locked until they are read.
   reminders: ReminderPreferences | null;
+  // Habit reminders (GET /api/reminders): the master switch and the saved
+  // ones; null when they couldn't be read, like `reminders`.
+  habitReminders: RemindersOverview | null;
+  // What each habit reminder is about, by id (habit, challenge, book, skill).
+  reminderNames: Record<string, string>;
+  // The server's push key; null when push isn't set up there.
+  pushPublicKey: string | null;
 }
 
 // Preferences that have no switch yet: shown as the design draws them,
@@ -44,11 +56,15 @@ const REMINDERS: { key: keyof ReminderPreferences; title: string; body: string }
 
 // Language, theme (while the dark_mode flag is on), and how numbers and
 // dates will look.
-export function AppPreferencesSection({ today, reminders: initialReminders }: AppPreferencesSectionProps) {
+export function AppPreferencesSection({ today, reminders: initialReminders, habitReminders: initialHabitReminders, reminderNames, pushPublicKey }: AppPreferencesSectionProps) {
   const { t, locale, toggleLocale } = useLocale();
   const { preference, setTheme, allowDark } = useTheme();
+  const { user } = useAuth();
   const [reminders, setReminders] = useState(initialReminders);
+  const [habitReminders, setHabitReminders] = useState(initialHabitReminders);
   const [readingReminders, setReadingReminders] = useState(false);
+  const readOnly = Boolean(user.impersonatedBy);
+  const habitRows = habitReminders ? activeReminderRows(habitReminders.reminders, reminderNames, t, locale) : [];
 
   // The phone menu's Reminders row lands on /settings/app#reminders after
   // Settings' loading screen, which already used up the router's hash scroll.
@@ -69,12 +85,28 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
     });
   }
 
+  // The master switch for every habit-area reminder; the same save-or-put-back.
+  function changeRemindHabits(on: boolean) {
+    if (!habitReminders) return;
+    const before = habitReminders;
+    setHabitReminders({ ...habitReminders, remindHabits: on });
+    saveRemindHabitsAction(on).then((result) => {
+      if (result.success) return;
+      setHabitReminders(before);
+      toast.error(t(result.message ?? "Failed to save reminders"));
+    });
+  }
+
   async function readReminders() {
     setReadingReminders(true);
     try {
-      const result = await getReminderPreferencesAction();
-      if (result.success && result.data) setReminders(result.data);
-      else toast.error(t("Couldn't load your reminders."));
+      const [result, habitResult] = await Promise.all([
+        reminders ? null : getReminderPreferencesAction(),
+        habitReminders ? null : getRemindersAction(),
+      ]);
+      if (result?.success && result.data) setReminders(result.data);
+      if (habitResult?.success && habitResult.data) setHabitReminders(habitResult.data);
+      if ((result && !result.success) || (habitResult && !habitResult.success)) toast.error(t("Couldn't load your reminders."));
     } catch {
       toast.error(t("Couldn't load your reminders."));
     } finally {
@@ -178,9 +210,9 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
       <Card id={REMINDERS_ANCHOR} padding="none" className="scroll-mt-4 overflow-hidden">
         <div className="flex flex-col gap-0.5 px-6 py-4">
           <h2 className="text-title font-semibold text-ink">{t("Reminders")}</h2>
-          <span className="text-small text-ink-muted">{t("Shown in the bell, inside the app.")}</span>
+          <span className="text-small text-ink-muted">{t("In the bell, and as notifications on the devices you turn them on for.")}</span>
         </div>
-        {reminders === null && (
+        {(reminders === null || habitReminders === null) && (
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border-t border-divider bg-warning-soft px-6 py-3 text-small text-warning">
             <span className="flex items-center gap-2">
               <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
@@ -192,7 +224,39 @@ export function AppPreferencesSection({ today, reminders: initialReminders }: Ap
             </Button>
           </div>
         )}
+        <PushDeviceRow publicKey={pushPublicKey} readOnly={readOnly} />
         {REMINDERS.map((item) => row(item.title, item.body, <Switch checked={reminders?.[item.key] ?? false} disabled={!reminders} onCheckedChange={(on) => changeReminder(item.key, on)} aria-label={t(item.title)} />))}
+        {row(
+          "Habit reminders",
+          "Daily habits, challenges, to-dos, prayers, Sehri and Iftar, books and skills, at the times you set on each.",
+          <Switch checked={habitReminders?.remindHabits ?? false} disabled={!habitReminders} onCheckedChange={changeRemindHabits} aria-label={t("Habit reminders")} />,
+        )}
+        {habitReminders && (
+          <div className="flex flex-col gap-2 px-6 pb-4">
+            <span className="text-small font-semibold text-ink-2">{t("Your habit reminders")}</span>
+            {habitRows.length === 0 ? (
+              <span className="text-small text-ink-muted">{t("None yet. Set one on a habit, a challenge, a to-do, Namaz, Ramadan, a book or a skill.")}</span>
+            ) : (
+              <ul className={habitReminders.remindHabits ? "flex flex-col" : "flex flex-col opacity-60"}>
+                {habitRows.map((item) => (
+                  <li key={item.id} className="border-t border-divider first:border-t-0">
+                    <Link href={item.href} className="flex min-h-11 items-center gap-3 py-2 hover:text-emerald">
+                      <Chip tone="habits" size="sm">
+                        {item.kindLabel}
+                      </Chip>
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5 @xl:flex-row @xl:items-baseline @xl:gap-2">
+                        <span className="truncate text-body font-semibold text-ink">{item.name}</span>
+                        <span className="text-small text-ink-muted tabular-nums">{item.summary}</span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!habitReminders.remindHabits && habitRows.length > 0 && <span className="text-caption text-ink-muted">{t("Paused while Habit reminders is off.")}</span>}
+          </div>
+        )}
         {row("Monthly summary by email", "Income, spending and savings for last month.", <Switch checked={false} disabled aria-label={t("Monthly summary by email")} />, true)}
       </Card>
     </div>
