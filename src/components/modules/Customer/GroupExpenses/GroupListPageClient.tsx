@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { GroupCard } from "./GroupCard";
 import type { GroupCardData } from "./groupTypes";
 import { NewGroupDrawer } from "./NewGroupDrawer";
+import { formatCount } from "@/lib/i18n/digits";
 
 interface GroupListPageClientProps {
   groups: GroupCardData[];
@@ -38,7 +39,7 @@ const KINDS = [
 // Money › Group expenses: every group the person is in, with its month's
 // figures, and how a group keeps the account straight.
 export function GroupListPageClient({ groups }: GroupListPageClientProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleting, setDeleting] = useState<GroupCardData | null>(null);
@@ -98,7 +99,7 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
         <div className="grid gap-4 md:grid-cols-3">
           {STEPS.map((step, i) => (
             <div key={step.title} className="flex gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-mint-50 text-small font-bold text-emerald">{i + 1}</span>
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-mint-50 text-small font-bold text-emerald">{formatCount(i + 1, locale)}</span>
               <div className="flex flex-col gap-0.75">
                 <span className="text-body font-semibold text-ink">{t(step.title)}</span>
                 <span className="text-small leading-relaxed text-ink-muted">{t(step.body)}</span>
