@@ -30,7 +30,7 @@ interface AuthShellProps {
 
 // The frame every sign-in page shares, drawn once by the (auth) layout so
 // moving between sign-in, sign-up and the password pages swaps only the form
-// column: a mint-to-sky ground with slow drifting lights, and one card that
+// column: a soft mint-green ground with slow drifting lights, and one card that
 // rises in -- the page's photo on one side (a banner on phones), and the
 // logo, language pill, form and legal links on the other, the form's parts
 // arriving one after another.
@@ -42,8 +42,8 @@ const AuthShell = ({ maintenance, children }: AuthShellProps) => {
   return (
     <div className="auth-backdrop relative min-h-dvh overflow-hidden">
       <span aria-hidden="true" className="auth-light -top-24 -left-24 size-120 bg-mint-300" />
-      <span aria-hidden="true" className="auth-light top-1/3 -right-32 size-130 bg-info/40" style={{ animationDelay: "-8s", animationDuration: "32s" }} />
-      <span aria-hidden="true" className="auth-light -bottom-40 left-1/4 size-110 bg-emerald/30" style={{ animationDelay: "-15s", animationDuration: "38s" }} />
+      <span aria-hidden="true" className="auth-light top-1/3 -right-32 size-130 bg-mint-200" style={{ animationDelay: "-8s", animationDuration: "32s" }} />
+      <span aria-hidden="true" className="auth-light -bottom-40 left-1/4 size-110 bg-emerald/25" style={{ animationDelay: "-15s", animationDuration: "38s" }} />
 
       <div className="relative flex min-h-dvh items-center justify-center px-3 py-4 sm:px-6 md:py-8 lg:px-8 lg:py-10">
         <div className="auth-card grid w-full max-w-280 overflow-hidden rounded-[28px] bg-surface shadow-overlay ring-1 ring-white/70 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
