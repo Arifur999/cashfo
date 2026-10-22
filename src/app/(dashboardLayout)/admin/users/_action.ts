@@ -27,16 +27,20 @@ export const changeOwnerPlanAction = async (userId: string, values: unknown) =>
 // owner and lands in the customer app; the admin's own session waits in a
 // cookie until the banner there ends the view. Only a failure comes back --
 // success redirects, and the customer's tokens never reach the browser.
-export const viewAsCustomerAction = async (userId: string): Promise<ApiErrorResponse | undefined> => {
+// It needs the 6-digit support code the customer made for it.
+export const viewAsCustomerAction = async (userId: string, code: unknown): Promise<ApiErrorResponse | undefined> => {
   const invalid = requireId(userId, "owner");
   if (invalid) {
     return invalid;
+  }
+  if (typeof code !== "string" || !/^\d{6}$/.test(code.trim())) {
+    return { success: false, message: "Enter the 6-digit support code the customer gave you" };
   }
   const adminRefreshToken = await getRefreshToken();
   if (!adminRefreshToken) {
     return { success: false, message: "Your session has ended. Sign in again first." };
   }
-  const started = await runAction("Failed to open the customer view", () => startOwnerView(userId));
+  const started = await runAction("Failed to open the customer view", () => startOwnerView(userId, code.trim()));
   if (!started.success) {
     return started;
   }

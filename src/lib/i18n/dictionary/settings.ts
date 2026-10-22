@@ -285,4 +285,22 @@ export const settingsDictionary: Record<string, string> = {
   "Workspace deleted": "ওয়ার্কস্পেস মোছা হয়েছে",
   "Failed to delete workspace": "ওয়ার্কস্পেস মুছতে ব্যর্থ হয়েছে",
   Group: "গ্রুপ",
+
+  // Settings › Security › Support access: the customer's consent code for
+  // "View as customer".
+  "Support access": "সাপোর্ট অ্যাক্সেস",
+  "Support can see your account, read-only, only with a code you make here. We never ask for your password.": "এখানে আপনি কোড বানালে তবেই সাপোর্ট আপনার অ্যাকাউন্ট দেখতে পারবে, শুধু দেখার জন্য। আমরা কখনো আপনার পাসওয়ার্ড চাই না।",
+  "Give support a code": "সাপোর্টকে কোড দিন",
+  "Make a new code": "নতুন কোড বানান",
+  "Read this code to Smartly support. It works once.": "এই কোডটি Smartly সাপোর্টকে বলুন। এটি একবারই কাজ করে।",
+  "Works until {time}": "{time} পর্যন্ত কাজ করবে",
+  "Support is viewing your account right now.": "সাপোর্ট এখন আপনার অ্যাকাউন্ট দেখছে।",
+  "A support code is waiting until {time}.": "{time} পর্যন্ত একটি সাপোর্ট কোড চালু আছে।",
+  "Support last opened your account {time}.": "সাপোর্ট শেষবার আপনার অ্যাকাউন্ট খুলেছিল: {time}।",
+  "Turn off and end support's view": "বন্ধ করুন ও সাপোর্টের দেখা শেষ করুন",
+  "Turn off support access": "সাপোর্ট অ্যাক্সেস বন্ধ করুন",
+  "Support access is off": "সাপোর্ট অ্যাক্সেস বন্ধ হয়েছে",
+  "Couldn't load support access": "সাপোর্ট অ্যাক্সেস লোড করা যায়নি",
+  "Couldn't make a support code": "সাপোর্ট কোড বানানো যায়নি",
+  "Couldn't turn off support access": "সাপোর্ট অ্যাক্সেস বন্ধ করা যায়নি",
 };

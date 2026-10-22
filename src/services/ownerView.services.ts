@@ -14,8 +14,9 @@ export interface IOwnerViewTokens {
 }
 
 // "View as customer" (super admins): a one-hour, read-only session of the
-// owner, as customer tokens.
-export const startOwnerView = async (userId: string) => httpClient.post<IOwnerViewTokens>(`/admin/owners/${userId}/impersonate`);
+// owner, as customer tokens -- only with the support code the customer made
+// in Settings > Security.
+export const startOwnerView = async (userId: string, code: string) => httpClient.post<IOwnerViewTokens>(`/admin/owners/${userId}/impersonate`, { code });
 
 // Called while the cookies still hold the customer's tokens, so the admin's
 // own access token is passed in.

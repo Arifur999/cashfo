@@ -128,4 +128,11 @@ export const adminPeopleDictionary: Record<string, string> = {
   "They're signed out on every device and sign in again with a temporary password you give them. You'll see it once.": "সব ডিভাইস থেকে তাঁকে সাইন আউট করা হবে; আপনার দেওয়া অস্থায়ী পাসওয়ার্ড দিয়ে তিনি আবার সাইন ইন করবেন। পাসওয়ার্ডটি আপনি একবারই দেখবেন।",
   "Failed to reset the password": "পাসওয়ার্ড রিসেট করা যায়নি",
   "Reset a user's password": "ব্যবহারকারীর পাসওয়ার্ড রিসেট করেছেন",
+
+  // View as customer needs the customer's support code.
+  "Support code from the customer": "গ্রাহকের দেওয়া সাপোর্ট কোড",
+  "Ask the customer to open Settings › Security › Support access and read you the code. It works once, for 15 minutes. Never ask for their password.": "গ্রাহককে সেটিংস › নিরাপত্তা › সাপোর্ট অ্যাক্সেস খুলে কোডটি বলতে বলুন। এটি একবারই, ১৫ মিনিটের জন্য কাজ করে। কখনো তাঁর পাসওয়ার্ড চাইবেন না।",
+  "Enter the 6-digit support code the customer gave you": "গ্রাহকের দেওয়া ৬ অঙ্কের সাপোর্ট কোড দিন",
+  "There is no support code to use. Ask the customer to make one in Settings > Security.": "ব্যবহার করার মতো কোনো সাপোর্ট কোড নেই। গ্রাহককে সেটিংস > নিরাপত্তা থেকে একটি বানাতে বলুন।",
+  "That isn't the customer's support code. Check it with them and try again.": "এটি গ্রাহকের সাপোর্ট কোড নয়। তাঁর সাথে মিলিয়ে আবার চেষ্টা করুন।",
 };

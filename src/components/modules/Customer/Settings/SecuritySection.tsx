@@ -27,6 +27,7 @@ import type { Locale } from "@/lib/i18n/translate";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { SupportAccessCard } from "./SupportAccessCard";
 
 // Rows shown at first, and added by each "Show more".
 const DEVICE_STEP = 6;
@@ -226,6 +227,8 @@ export function SecuritySection({ initialSessions, initialHistory }: SecuritySec
           </Button>
         )}
       </Card>
+
+      <SupportAccessCard />
 
       <Card padding="none" className="overflow-hidden">
         <div className="flex items-start gap-4 px-4 pt-5 pb-4 md:px-6">

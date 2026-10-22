@@ -84,6 +84,7 @@ export const adminSecurityDictionary: Record<string, string> = {
   "Changed a workspace's plan": "একটি ওয়ার্কস্পেসের প্ল্যান বদলেছেন",
   "Reset an owner's workspace data": "একজন মালিকের ওয়ার্কস্পেসের ডেটা মুছে নতুন করে শুরু করেছেন",
   "Started viewing as a customer": "গ্রাহক হিসেবে দেখা শুরু করেছেন",
+  "Refused to view as a customer": "গ্রাহক হিসেবে দেখার অনুমতি মেলেনি",
   "Stopped viewing as a customer": "গ্রাহক হিসেবে দেখা বন্ধ করেছেন",
   "Refunded a payment": "একটি পেমেন্ট ফেরত দিয়েছেন",
   "Retried a payment": "একটি পেমেন্ট আবার চেষ্টা করেছেন",
