@@ -33,7 +33,7 @@ interface VaultCheckupProps {
 // Each group's look and words, in the board's order.
 const GROUPS: { issue: VaultIssue; title: string; why: string; tag: string; icon: typeof Copy; tile: string; count: string; bar: string; legend: string }[] = [
   { issue: "reused", title: "Same password on more than one site", why: "These logins share a password with another. If one site leaks it, the others are open too.", tag: "Reused", icon: Copy, tile: "bg-expense-soft text-expense", count: "text-expense", bar: "bg-expense-fill", legend: "{count} reused" },
-  { issue: "weak", title: "Weak password", why: "Short or easy to guess. Use Generate when you change it.", tag: "Weak", icon: TriangleAlert, tile: "bg-pillar-loans-soft text-pillar-loans", count: "text-pillar-loans", bar: "bg-pillar-loans", legend: "{count} weak" },
+  { issue: "weak", title: "Weak password", why: "Short or easy to guess. Use Generate when you change it.", tag: "Weak", icon: TriangleAlert, tile: "bg-orange-soft text-orange", count: "text-orange", bar: "bg-orange-fill", legend: "{count} weak" },
   { issue: "old", title: "Not changed for over a year", why: "Old passwords are more likely to have leaked somewhere. Bank and email logins matter most.", tag: "", icon: Clock, tile: "bg-warning-soft text-warning", count: "text-warning", bar: "bg-warning-fill", legend: "{count} older than a year" },
 ];
 

@@ -89,6 +89,10 @@
   --info: #2563eb;
   --info-soft: #dbeafe;
   /* The blue note box: its wash, edge and text (Transfer, Sell asset). */
+  /* Orange: a weak password, the Shopping colour. */
+  --orange: #c2410c;
+  --orange-fill: #f97316;
+  --orange-soft: #ffedd5;
   --info-50: #eff6ff;
   --info-line: #bfdbfe;
   --info-ink: #1e40af;
@@ -241,6 +245,9 @@
   --warning-ink: #f5cf86;
   --info: #86abf2;
   --info-soft: #14234a;
+  --orange: #fb923c;
+  --orange-fill: #f97316;
+  --orange-soft: #3a1d0a;
   --info-50: #0f1a33;
   --info-line: #1e3a6b;
   --info-ink: #a9c4f5;
@@ -509,6 +516,9 @@ html:not(.dark) [data-app="habit"] {
   --color-warning-ink: var(--warning-ink);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-orange: var(--orange);
+  --color-orange-fill: var(--orange-fill);
+  --color-orange-soft: var(--orange-soft);
   --color-info-50: var(--info-50);
   --color-info-line: var(--info-line);
   --color-info-ink: var(--info-ink);
