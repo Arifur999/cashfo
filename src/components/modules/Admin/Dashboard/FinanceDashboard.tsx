@@ -14,7 +14,7 @@ import type { IChurnData, IRevenueOverview, IRevenueSummary } from "@/types/reve
 import { dayLabel, monthLabel, shortMonth } from "./dashboardDates";
 import { allZero, compactMoney } from "./dashboardFigures";
 import { COULD_NOT_LOAD, Greeting, Kpi, LoadFailed, MiniBars, SECTION_ROW, Section, SectionLink, SectionTable, Unavailable } from "./pieces";
-import { PlanShareCard } from "./PlanShareCard";
+import { PlanShareCard, planRows } from "./PlanShareCard";
 
 // Every null below is a call that failed: the card says so rather than
 // showing an empty or all-clear state.
@@ -153,7 +153,13 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
             </SectionTable>
           )}
         </Section>
-        <PlanShareCard analytics={plans} plans={planList} />
+        {plans === null ? (
+          <Section title={translate("Accounts by plan")}>
+            <LoadFailed />
+          </Section>
+        ) : (
+          <PlanShareCard plans={planRows(plans, planList)} deletedLeftOut={null} />
+        )}
       </div>
     </div>
   );

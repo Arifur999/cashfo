@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allZero, backupIsDue, compactAmount, compactMoney, openRequests, queueOrder, waitingSince } from "./dashboardFigures";
+import { allZero, axisTicks, backupIsDue, compactAmount, compactMoney, openRequests, queueOrder, reportCsv, revenueBarLabel, waitingSince } from "./dashboardFigures";
 
 const ticket = (id: string, priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT", createdAt: string, lastMessageAt: string | null = null) => ({ id, priority, createdAt, lastMessageAt });
 
@@ -93,5 +93,26 @@ describe("backups and empty charts", () => {
     expect(allZero([0, 0, 0])).toBe(true);
     expect(allZero([0, 12, 0])).toBe(false);
     expect(allZero([])).toBe(true);
+  });
+});
+
+describe("the dashboard's charts and report", () => {
+  it("labels a revenue bar as the board does", () => {
+    expect(revenueBarLabel(41280)).toBe("৳ 41.3k");
+    expect(revenueBarLabel(724853)).toBe("৳ 7.2L");
+    expect(revenueBarLabel(850)).toBe("৳ 850");
+    expect(revenueBarLabel(0)).toBe("৳ 0");
+  });
+
+  it("puts five dates under a month of days, the last one today", () => {
+    expect(axisTicks(30)).toEqual([0, 7, 15, 22, 29]);
+    expect(axisTicks(3)).toEqual([0, 1, 2]);
+    expect(axisTicks(0)).toEqual([]);
+  });
+
+  it("writes the report as a spreadsheet reads it", () => {
+    expect(reportCsv([{ section: "Users", item: "Total users", value: 1284 }, { section: "Plans", item: 'Monthly Pro, "old"', value: "132" }])).toBe(
+      ["Section,Item,Value", "Users,Total users,1284", 'Plans,"Monthly Pro, ""old""",132'].join("\n"),
+    );
   });
 });
