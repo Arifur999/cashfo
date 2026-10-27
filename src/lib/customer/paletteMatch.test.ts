@@ -99,6 +99,7 @@ describe("palettePages", () => {
       ],
     },
     { label: "Habits", tone: "habits", items: [{ label: "Namaz", href: "/habit-tracker/habits", query: { category: "Namaz" }, icon: "namaz" }] },
+    { label: "Overview", tone: "habits", app: "habit", quiet: true, items: [{ label: "Dashboard", href: "/habit-tracker", icon: "dashboard" }] },
   ];
   const foot: NavItem[] = [
     { label: "Invite & earn", href: "/referrals", icon: "gift" },
@@ -117,6 +118,10 @@ describe("palettePages", () => {
     expect(find("Balance", ["Money", "Wallets"])?.href).toBe("/balance/overview");
     expect(find("Statement", ["Money", "Wallets"])?.href).toBe("/balance/ledger");
     expect(find("Statement", ["Money", "Loans"])?.href).toBe("/loan-management/ledger");
+  });
+
+  it("names the Habit Tracker above its Dashboard, not its Overview section", () => {
+    expect(find("Dashboard", ["Habit Tracker"])?.href).toBe("/habit-tracker");
   });
 
   it("keeps a page's query and its group's colour", () => {
