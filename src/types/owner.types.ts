@@ -13,6 +13,8 @@ export interface IOwnerOverviewItem {
   businessType?: "PERSONAL" | "BUSINESS" | "GROUP" | null;
   planId: string | null;
   planName: string | null;
+  // The end of a running free trial ("Trial ends 4 Oct" under the plan).
+  trialEndsAt?: string | null;
   workspaceCount: number;
   lastLoginAt: string | null;
   // Real (from User.createdAt) -- there's deliberately no "days left" or
@@ -35,6 +37,8 @@ export interface IOwnerActivityLogEntry {
   action: string;
   entityType: string;
   adminName: string;
+  // The reason the admin typed (suspend, plan change), if any.
+  reason?: string | null;
   createdAt: string;
 }
 

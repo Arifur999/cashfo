@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import Chip from "@/components/smartly/Chip";
+import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { UserOrigin } from "@/lib/navItem";
@@ -37,6 +39,18 @@ export const OwnWorkspaceCell = ({ workspace, count = 1, long = false }: OwnWork
           <span className="sr-only">{more}</span>
         </Chip>
       )}
+    </span>
+  );
+};
+
+// The plan chip, with "Trial ends 4 Oct" under it while a free trial runs.
+export const PlanCell = ({ plan, trialEndsAt }: { plan: string | null; trialEndsAt?: string | null }) => {
+  const { t, locale } = useLocale();
+  if (!trialEndsAt || !plan) return <PlanChipCell plan={plan} />;
+  return (
+    <span className="flex flex-col items-start gap-0.5">
+      <PlanChipCell plan={plan} />
+      <span className="text-[11.5px] leading-tight whitespace-nowrap text-warning">{t("Trial ends {date}", { date: formatDate(trialEndsAt, "d MMM", "—", locale) })}</span>
     </span>
   );
 };

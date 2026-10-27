@@ -1,10 +1,9 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import DateCell from "@/components/shared/cell/DateCell";
-import PlanChipCell from "@/components/shared/cell/PlanChipCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
-import { DaysUsedCell, OwnWorkspaceCell } from "./PeopleCells";
+import { DaysUsedCell, OwnWorkspaceCell, PlanCell } from "./PeopleCells";
 import { OWNER_STATUS_LABEL } from "./usersTable.config";
 
 // The design's Users list: who, phone, their workspace (and how many more),
@@ -35,7 +34,7 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     id: "planName",
     accessorKey: "planName",
     header: "Plan",
-    cell: ({ row }) => <PlanChipCell plan={row.original.planName} />,
+    cell: ({ row }) => <PlanCell plan={row.original.planName} trialEndsAt={row.original.trialEndsAt} />,
     meta: { width: 116 },
   },
   {

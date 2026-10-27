@@ -205,6 +205,7 @@ export const adminPeopleDictionary: Record<string, string> = {
   "was refused a view as this customer": "এই গ্রাহক হিসেবে দেখার অনুমতি পাননি",
   "Billing tab": "বিলিং ট্যাব",
   "Trial ends": "ট্রায়াল শেষ",
+  "Trial ends {date}": "ট্রায়াল শেষ {date}",
   "Renews": "নবায়ন",
   "Ends": "শেষ",
   "Paid so far": "এখন পর্যন্ত পরিশোধ",
