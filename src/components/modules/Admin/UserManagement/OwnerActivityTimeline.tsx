@@ -33,6 +33,8 @@ const OwnerActivityTimeline = async ({ entries, limit }: { entries: IOwnerActivi
                 <span aria-hidden="true" className={cn("mt-1.5 size-2 shrink-0 rounded-full", DOT[line?.tone ?? "info"])} />
                 <span className="flex-1 text-ink">
                   <b className="font-semibold">{entry.adminName}</b> {line ? t(line.text) : t(auditActionLabel(entry.action)).toLowerCase()}
+                  {/* The reason they typed, quoted as the board shows it. */}
+                  {entry.reason && <span className="wrap-break-word">: “{entry.reason}”</span>}
                 </span>
                 <span className="shrink-0 text-[12.5px] text-ink-faint">{formatDate(entry.createdAt, "d MMM yyyy", "—", locale)}</span>
               </li>
