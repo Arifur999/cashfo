@@ -41,6 +41,13 @@ describe("createCouponServerZodSchema", () => {
   it("rejects an end date before the start date", () => {
     expect(createCouponServerZodSchema.safeParse({ ...values, validUntil: "2026-09-30" }).success).toBe(false);
   });
+
+  it("sends once per person, off unless ticked", () => {
+    const off = createCouponServerZodSchema.safeParse(values);
+    expect(off.success && off.data.oncePerPerson).toBe(false);
+    const on = createCouponServerZodSchema.safeParse({ ...values, oncePerPerson: true });
+    expect(on.success && on.data.oncePerPerson).toBe(true);
+  });
 });
 
 describe("updateCouponServerZodSchema", () => {

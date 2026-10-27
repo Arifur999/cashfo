@@ -27,8 +27,8 @@ const CouponPreview = ({ code, discountType, discountValue, applicablePlans, pla
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-mint-200 bg-mint-50 px-4 py-3">
-      <span className="text-caption font-semibold text-emerald">
+    <div className="flex flex-col gap-2 rounded-[14px] border border-mint-200 bg-emerald-soft px-3.5 py-3">
+      <span className="text-caption font-bold tracking-[0.04em] text-brand-ink uppercase">
         <T values={{ code: code.trim().toUpperCase() || <T>this coupon</T> }}>{"With {code}"}</T>
       </span>
       {rows.map((plan) => (

@@ -82,7 +82,9 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
         errorTitle="Couldn't load coupons"
         errorDescription="The server didn't answer. Nothing was changed."
         // The actions column fits "Who used it" and its menu in Bangla too.
-        layout={{ gap: 16, rowHeight: 62, headPadding: 12, actionsWidth: 200 }}
+        // The board's grid: the code takes what is left, every other column its
+        // own px (the actions fit "Who used it" in Bangla too).
+        layout={{ gap: 12, rowHeight: 62, headPadding: 12, actionsWidth: 150, flexMinWidth: 140 }}
         getRowId={(row) => row.id}
         isLoading={couponsRead.isLoading}
         isFetching={couponsRead.isFetching}

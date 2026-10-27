@@ -42,7 +42,6 @@ const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-title text-ink"><T>Paid people at the end of each month</T></h2>
-          <span className="text-small text-ink-muted"><T>Counted from payments</T></span>
         </div>
         <span className="flex flex-wrap gap-4 text-small text-ink-2">
           {paidPlans.map((plan) => (

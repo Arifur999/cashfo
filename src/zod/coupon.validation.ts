@@ -27,6 +27,8 @@ export const couponFormZodSchema = z.object({
   validUntil: z.string().regex(DAY_PATTERN, "Pick an end date"),
   applicablePlans: z.array(z.string()),
   isActive: z.boolean(),
+  // Each person may use it once; off unless ticked.
+  oncePerPerson: z.boolean().default(false),
 });
 
 export type ICouponFormValues = z.infer<typeof couponFormZodSchema>;
@@ -49,6 +51,7 @@ const toCouponPayload = (values: ICouponFormValues): ICouponPayload => ({
   validUntil: endOfDayIso(values.validUntil),
   applicablePlans: values.applicablePlans,
   isActive: values.isActive,
+  oncePerPerson: values.oncePerPerson,
 });
 
 const withCrossFieldRules = couponFormZodSchema.superRefine((values, ctx) => {

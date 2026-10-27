@@ -28,6 +28,8 @@ export interface ICoupon {
   // Plan ids; empty means the coupon applies to every plan.
   applicablePlans: string[];
   isActive: boolean;
+  // Each customer may use it once. Absent from an API older than the field.
+  oncePerPerson?: boolean;
   createdAt: string;
   status: CouponStatus;
 }
@@ -52,4 +54,5 @@ export interface ICouponPayload {
   validUntil: string;
   applicablePlans: string[];
   isActive?: boolean;
+  oncePerPerson?: boolean;
 }
