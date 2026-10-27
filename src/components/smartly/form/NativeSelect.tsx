@@ -14,16 +14,15 @@ interface NativeSelectProps extends Omit<React.ComponentProps<"select">, "size">
   frameClassName?: string;
 }
 
-// The browser's own select in the design's frame: the line-strong border,
-// 12px radius, the chevron on the right, the emerald focus ring.
+// The browser's own select in the design's frame: the field edge, 10px
+// corners, the chevron on the right, the focus edge and halo.
 const NativeSelect = ({ size = "md", invalid = false, frameClassName, className, ...props }: NativeSelectProps) => (
   <span className={cn("relative inline-flex min-w-0", frameClassName)}>
     <select
       aria-invalid={invalid || undefined}
       className={cn(
-        "w-full appearance-none rounded-md border bg-surface pr-9 pl-3 font-medium text-ink outline-none transition-[border-color,box-shadow]",
-        "focus:border-emerald focus:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)] disabled:opacity-60",
-        invalid ? "border-expense" : "border-line-strong",
+        "w-full appearance-none rounded-field border bg-surface pr-9 pl-3 font-medium text-ink outline-none transition-[border-color,box-shadow] disabled:opacity-60",
+        invalid ? "border-expense focus:error-halo" : "border-input focus:border-focus-ring focus:focus-halo",
         SIZES[size],
         className,
       )}

@@ -20,10 +20,10 @@ interface AppSelectFieldProps {
   disabled?: boolean;
 }
 
-// The same frame as a text field (InputFrame): white, the strong line, 44px,
-// emerald with a mint ring while focused.
+// The same frame as a text field (InputFrame): white, the field edge, 10px
+// corners, 44px, the focus edge and halo while focused or open.
 const FIELD_TRIGGER =
-  "h-11 w-full rounded-md bg-surface px-4 text-body text-ink hover:bg-surface data-[size=default]:h-11 data-placeholder:text-ink-faint focus-visible:border-emerald focus-visible:ring-4 focus-visible:ring-mint-50";
+  "h-11 w-full rounded-field bg-surface px-3 text-body text-ink hover:bg-surface data-[size=default]:h-11 data-placeholder:text-ink-faint focus-visible:border-focus-ring focus-visible:ring-0 focus-visible:focus-halo data-[state=open]:border-focus-ring data-[state=open]:focus-halo";
 
 const AppSelectField = ({ field, label, options, placeholder = "Select...", description, disabled }: AppSelectFieldProps) => {
   const { translate } = useLocale();
@@ -36,7 +36,7 @@ const AppSelectField = ({ field, label, options, placeholder = "Select...", desc
           disabled={disabled}
           name={field.name}
         >
-          <SelectTrigger {...control} onBlur={field.handleBlur} className={cn(FIELD_TRIGGER, hasError ? "border-expense" : "border-line-strong")}>
+          <SelectTrigger {...control} onBlur={field.handleBlur} className={cn(FIELD_TRIGGER, hasError ? "border-expense" : "border-input")}>
             <SelectValue placeholder={translate(placeholder)} />
           </SelectTrigger>
           <SelectContent>

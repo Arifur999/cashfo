@@ -78,19 +78,19 @@ export function Modal({ open, onClose, title, children, size = "md" }: ModalProp
         ref={panelRef}
         tabIndex={-1}
         onKeyDown={keepTabInside}
-        className={`w-full rounded-2xl bg-surface p-6 shadow-overlay outline-none ${SIZE_CLASSES[size]}`}
+        className={`w-full rounded-[20px] bg-surface p-6 shadow-overlay outline-none ${SIZE_CLASSES[size]}`}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 id={titleId} className="text-lg font-semibold text-ink">
+          <h2 id={titleId} className="text-h3 text-ink">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={t("Close")}
-            className="rounded-lg p-1 text-ink-muted hover:bg-surface-sunken hover:text-ink"
+            className="-mr-1.5 flex size-8.5 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink"
           >
-            <X className="h-5 w-5" />
+            <X className="size-4.5" aria-hidden="true" />
           </button>
         </div>
         {children}

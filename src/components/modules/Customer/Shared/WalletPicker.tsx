@@ -56,7 +56,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
   const nameOf = (wallet: Account) => accountDisplayName(wallet, displayLanguage(locale));
   const isSavings = (wallet: Account) => variant === "savings" || savingsWallets.includes(wallet);
   const tile = (wallet: Account, big = false) => (
-    <span className={cn("flex shrink-0 items-center justify-center rounded-md", big ? "size-9" : "size-8", isSavings(wallet) ? "bg-pillar-habits-soft text-pillar-habits" : tone === "sand" ? "bg-surface-sunken text-ink-2" : "bg-mint-50 text-emerald")}>
+    <span className={cn("flex shrink-0 items-center justify-center", big ? "size-9 rounded-field" : "size-8 rounded-sm", isSavings(wallet) ? "bg-pillar-habits-soft text-pillar-habits" : tone === "sand" ? "bg-surface-sunken text-ink-2" : "bg-mint-50 text-emerald")}>
       {isSavings(wallet) ? <PiggyBank className="size-4" aria-hidden="true" /> : createElement(walletIcon(wallet), { className: "size-4", "aria-hidden": true })}
     </span>
   );
@@ -90,7 +90,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <label id={`${id}-label`} className={cn(size === "compact" ? "text-small font-semibold text-ink-2" : "text-body font-medium text-ink", "leading-[normal]")}>
         {label}
       </label>
@@ -101,7 +101,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
             aria-labelledby={`${id}-label ${id}-value`}
             aria-haspopup="listbox"
             disabled={loading || all.length === 0}
-            className={cn("flex min-w-0 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 text-left disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : "h-13")}
+            className={cn("flex min-w-0 items-center gap-3 rounded-field border border-input bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : "h-13")}
           >
             {selected && size === "compact" ? (
               <>

@@ -22,16 +22,15 @@ interface InputFrameProps extends React.ComponentProps<"div"> {
   invalid?: boolean;
 }
 
-// The box around a text control: the line-strong border, 12px radius, the
-// emerald border and mint ring while focused, the red border when wrong.
-// The focus border is drawn as a shadow so nothing shifts by half a pixel.
+// The box around a text control (design-v4): the field edge (--input), 10px
+// corners, 12px in from the sides; while focused the edge turns the focus
+// colour with a 3px halo of it, and red with a red halo when wrong.
 const InputFrame = ({ size = "lg", invalid = false, className, ...props }: InputFrameProps) => (
   <div
     data-invalid={invalid || undefined}
     className={cn(
-      "flex items-center gap-2 rounded-md border bg-surface px-4 text-ink transition-[border-color,box-shadow]",
-      "focus-within:border-emerald focus-within:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]",
-      invalid ? "border-expense shadow-[0_0_0_0.5px_var(--expense)]" : "border-line-strong",
+      "flex items-center gap-2 rounded-field border bg-surface px-3 text-ink transition-[border-color,box-shadow]",
+      invalid ? "border-expense focus-within:error-halo" : "border-input focus-within:border-focus-ring focus-within:focus-halo",
       INPUT_HEIGHTS[size],
       className,
     )}

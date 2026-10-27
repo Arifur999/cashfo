@@ -17,9 +17,9 @@ interface AmountInputProps {
   describedBy?: string;
 }
 
-// A drawer's amount box: the currency sign in a sand cell on the left and
-// the figure large beside it, grouped as it is typed ("16,50,000"). 58px
-// tall: the boards draw it 56px inside its border.
+// A drawer's amount box (design-v4): 56px with 8px corners, the currency
+// sign in a 52px strip cell on the left and the figure large and bold beside
+// it, grouped as it is typed ("16,50,000").
 const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid = false, describedBy }: AmountInputProps) => {
   const field = useAmountField(value, onChange, currency);
   return (
@@ -33,9 +33,9 @@ const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid
       autoFocus={autoFocus}
       invalid={invalid}
       {...(describedBy && { "aria-describedby": invalid ? `${id}-error ${describedBy}` : describedBy })}
-      leading={<span className="flex h-14 w-13 items-center justify-center border-r border-line bg-strip text-h2 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-      frameClassName="h-14.5 gap-0 overflow-hidden pl-0"
-      className="pl-4 text-h2 tabular-nums"
+      leading={<span className="flex h-14 w-13 items-center justify-center border-r border-line bg-strip text-[20px] font-semibold text-ink-soft">{currencySymbol(currency)}</span>}
+      frameClassName="h-14 gap-0 overflow-hidden rounded-sm pl-0"
+      className="pl-3.5 text-[24px] font-bold tabular-nums"
     />
   );
 };

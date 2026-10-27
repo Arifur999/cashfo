@@ -128,7 +128,7 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
         onClick={() => (open ? setOpen(false) : openPicker())}
         // The design's control frame (smartly InputFrame): line-strong edge,
         // emerald border and mint ring while focused.
-        className="flex w-full items-center gap-1.5 whitespace-nowrap rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-left text-sm text-ink outline-none focus:border-emerald focus:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]"
+        className="flex h-11 w-full items-center gap-1.5 whitespace-nowrap rounded-field border border-input bg-surface px-3 text-left text-body text-ink outline-none transition-[border-color,box-shadow] focus:border-focus-ring focus:focus-halo"
       >
         <Calendar className="h-4 w-4 shrink-0 text-ink-muted" />
         {selected ? (
