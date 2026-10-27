@@ -328,6 +328,14 @@ export const INCOME_CATEGORY_ICONS = [
   "other-income",
 ] as const satisfies readonly (typeof BUDGET_CATEGORY_ICONS)[number][];
 
+// The expense picker's first two rows, in the design's order (design-v4
+// CategoryDrawer): groceries, food, home, car, electricity, health, mobile,
+// internet, shopping, education, travel, clothing, coffee, gifts, films,
+// fuel. Every other icon follows in BUDGET_CATEGORY_ICONS's order.
+const PICKER_FIRST = ["shopping-cart", "utensils", "house", "car", "zap", "heart", "smartphone", "wifi", "shopping-bag", "graduation-cap", "plane", "shirt", "coffee", "gift", "film", "fuel"] as const satisfies readonly (typeof BUDGET_CATEGORY_ICONS)[number][];
+
+export const EXPENSE_PICKER_ICONS: readonly (typeof BUDGET_CATEGORY_ICONS)[number][] = [...PICKER_FIRST, ...BUDGET_CATEGORY_ICONS.filter((key) => !(PICKER_FIRST as readonly string[]).includes(key))];
+
 // Original 8 plus a few more distinct Tailwind hues.
 export const BUDGET_CATEGORY_COLORS = [
   "blue",

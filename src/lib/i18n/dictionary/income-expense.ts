@@ -48,7 +48,7 @@ export const incomeExpenseDictionary: Record<string, string> = {
     "প্রথম আয় বা খরচ যোগ করুন। কয়েক সেকেন্ড লাগে, আর এখান থেকেই হোম, বাজেট ও রিপোর্ট ভরে উঠবে।",
   "Add first transaction": "প্রথম লেনদেন যোগ করুন",
   "Set up categories first": "আগে ক্যাটাগরি সাজিয়ে নিন",
-  "Tip: press {key} anywhere to open the Add menu": "টিপ: যেকোনো জায়গায় {key} চাপলেই যোগ করার মেনু খোলে",
+  "Tip: press {key} anywhere to add a transaction": "টিপ: যেকোনো জায়গায় {key} চাপলেই লেনদেন যোগ করতে পারবেন",
   "View details": "বিস্তারিত দেখুন",
   "Void transaction": "লেনদেন বাতিল করুন",
   // A day band whose day goes on past this page, when its total can't be read.
@@ -67,6 +67,10 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Referral Program withdrawal": "রেফারেলের পুরস্কার তোলা",
   "All categories": "সব ক্যাটাগরি",
   "All wallets": "সব ওয়ালেট",
+  // The design calls a wallet an account on Transactions (the filter and
+  // the column); in Bangla it stays ওয়ালেট, not the books' হিসাব.
+  "All accounts@@wallet": "সব ওয়ালেট",
+  "Account@@wallet": "ওয়ালেট",
   "Any date": "যেকোনো তারিখ",
   "Remove date filter": "তারিখের ফিল্টার সরান",
   "Last month": "গত মাস",
@@ -252,6 +256,33 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Delete source": "উৎস মুছুন",
   "Source deleted": "উৎস মুছে ফেলা হয়েছে",
   "Past transactions keep their category; only the source goes.": "আগের লেনদেনের ক্যাটাগরি থাকবে; শুধু উৎসটি যাবে।",
+
+  // Budget planning (design-v4 Budget, BudgetIncome): the shared header, its
+  // tabs, and the Income categories tab
+  "Budget planning": "বাজেট পরিকল্পনা",
+  "Set a monthly limit for each kind of spending, and see where your income comes from.": "প্রতিটি ধরনের খরচের জন্য মাসিক সীমা ঠিক করুন, আর দেখুন আপনার আয় কোথা থেকে আসে।",
+  "Category type": "ক্যাটাগরির ধরন",
+  "Expense categories": "খরচের ক্যাটাগরি",
+  "Income categories": "আয়ের ক্যাটাগরি",
+  "For {month}": "{month}-এর জন্য",
+  "Add income category": "আয়ের ক্যাটাগরি যোগ করুন",
+  "Edit income category": "আয়ের ক্যাটাগরি বদলান",
+  "Earned in {month}": "{month}-এ আয়",
+  "Income categories have no limit. They show where your money comes from.": "আয়ের ক্যাটাগরির কোনো সীমা নেই। এগুলো দেখায় আপনার টাকা কোথা থেকে আসে।",
+  "{name} grew {percent}% since last month": "গত মাস থেকে {name} {percent}% বেড়েছে",
+  "{name} grew {percent}% from {previous}": "{previous} থেকে {name} {percent}% বেড়েছে",
+  "Income by category: {list}": "ক্যাটাগরি অনুযায়ী আয়: {list}",
+  "{amount} came in without a category": "{amount} এসেছে কোনো ক্যাটাগরি ছাড়া",
+  "No income categories yet": "এখনো কোনো আয়ের ক্যাটাগরি নেই",
+  "Salary, business, rent, commission…": "বেতন, ব্যবসা, ভাড়া, কমিশন…",
+  "This year {amount}": "এই বছর {amount}",
+  "{year}: {amount}": "{year}: {amount}",
+  "{year} so far: {amount}": "{year}-এ এ পর্যন্ত {amount}",
+  "{percent}% of this month’s income": "এই মাসের আয়ের {percent}%",
+  "{percent}% of {month}’s income": "{month}-এর আয়ের {percent}%",
+  "No income here yet this month": "এই মাসে এখানে এখনো আয় নেই",
+  "No income here in {month}": "{month}-এ এখানে কোনো আয় নেই",
+  "Past transactions keep this category's name.": "আগের লেনদেনে এই ক্যাটাগরির নাম থেকে যাবে।",
 
   // The category drawer (Budget, Income sources, Asset types, Group expenses)
   "Add category": "ক্যাটাগরি যোগ করুন",

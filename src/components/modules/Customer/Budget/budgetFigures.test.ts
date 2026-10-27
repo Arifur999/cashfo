@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { budgetReference, fastestGrowing, hrefWithout, monthBounds, outsideCategories, readBudgetMonth, sourceHistory, sourceHistoryRange } from "./budgetFigures";
+import { budgetReference, budgetTabHref, fastestGrowing, hrefWithout, incomeShares, monthBounds, outsideCategories, readBudgetMonth, sourceHistory, sourceHistoryRange } from "./budgetFigures";
 
 describe("hrefWithout", () => {
   it("drops the keys and keeps the rest, repeats too", () => {
@@ -100,5 +100,33 @@ describe("fastestGrowing", () => {
   it("is null when nothing grew, or there is nothing to grow from", () => {
     expect(fastestGrowing([{ name: "Salary", amount: 80000 }], { Salary: 85000 })).toBeNull();
     expect(fastestGrowing([{ name: "Salary", amount: 80000 }], {})).toBeNull();
+  });
+});
+
+describe("budgetTabHref", () => {
+  it("keeps the month and stays on Budget planning's address", () => {
+    expect(budgetTabHref("expense", "/categories", 10, 2026)).toBe("/categories?month=10&year=2026");
+    expect(budgetTabHref("income", "/categories", 10, 2026)).toBe("/categories?tab=income&month=10&year=2026");
+  });
+
+  it("keeps the Income Category address for its own tab", () => {
+    expect(budgetTabHref("income", "/income-category", 9, 2026)).toBe("/income-category?month=9&year=2026");
+    expect(budgetTabHref("expense", "/income-category", 9, 2026)).toBe("/categories?month=9&year=2026");
+  });
+});
+
+describe("incomeShares", () => {
+  const category = (id: string, spent: string) => ({ id, name: id, color: "green", spent });
+
+  it("is each category's earnings over the month's total, without the ones that earned nothing", () => {
+    const shares = incomeShares([category("salary", "85000"), category("freelance", "12000"), category("bonus", "0")], 100000);
+    expect(shares.map((s) => [s.id, s.share])).toEqual([
+      ["salary", 85],
+      ["freelance", 12],
+    ]);
+  });
+
+  it("is empty when nothing came in", () => {
+    expect(incomeShares([category("salary", "0")], 0)).toEqual([]);
   });
 });

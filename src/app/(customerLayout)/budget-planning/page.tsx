@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-// Retired -- Budget planning became Budget (/categories), the spending
-// limits, while income moved to Income sources. Kept as a redirect stub
+// Retired -- Budget planning moved to /categories (expense limits, with an
+// Income categories tab). Kept as a redirect stub
 // (rather than deleted outright) so old bookmarks and back-button history
 // don't 404; it keeps the month asked for.
 export default async function BudgetPlanningPage({ searchParams }: PageProps<"/budget-planning">) {
