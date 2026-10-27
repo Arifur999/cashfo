@@ -129,7 +129,6 @@ export const chromeDictionary: Record<string, string> = {
   "Goes to Today’s tasks": "আজকের কাজের তালিকায় যাবে",
   "Save a login": "লগইন সংরক্ষণ করুন",
   "Opens the vault first": "প্রথমে ভল্ট খুলবে",
-  "Press N anywhere to open this menu": "যেকোনো জায়গায় N চাপলে এই মেনু খুলবে",
   "Add transaction": "লেনদেন যোগ করুন",
   // The keyboard shortcuts under Settings › Help & support
   "Open the Add menu": "যোগ করার মেনু খুলুন",

@@ -13,7 +13,10 @@ const VAULT_PAGE = "/password-manager";
 // Settings has nothing to add. The vault keeps this corner to itself: a
 // locked one asks for its password first, and an open one floats its own
 // + for a new login on this very spot (an empty one adds from its tiles).
-const shownOn = (pathname: string) => !(pathname === "/settings" || pathname.startsWith("/settings/") || pathname === VAULT_PAGE);
+// A group's pages and the Referral Program have none on their boards (a
+// group's meal sheet keeps its Save bar flush at the bottom).
+const NONE_UNDER = ["/settings", "/group-expenses", "/referrals"];
+const shownOn = (pathname: string) => pathname !== VAULT_PAGE && !NONE_UNDER.some((base) => pathname === base || pathname.startsWith(`${base}/`));
 
 // The floating + on phones, bottom right, opening the Add sheet: everything
 // the top bar's Add menu offers. On wider screens that menu covers it.
