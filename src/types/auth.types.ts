@@ -16,6 +16,8 @@ export interface IAdminUser {
   // When their password was last set (My account); null for a Google-only
   // account.
   passwordChangedAt?: string | null;
+  // Two-step sign-in is on (GET /admin/auth/me).
+  twoFactorEnabled?: boolean;
 }
 
 export interface ISignInPayload {
