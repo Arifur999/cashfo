@@ -3,7 +3,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import type { DataTableActions, DataTableExportColumn, DataTableSimplePager } from "@/components/shared/table/dataTable.types";
+import type { DataTableActions, DataTableSimplePager } from "@/components/shared/table/dataTable.types";
 import ShowingRange from "@/components/shared/table/ShowingRange";
 import DataTable from "@/components/shared/table/DataTable";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
@@ -13,19 +13,12 @@ import { shortPaymentId } from "@/lib/payments";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { paymentsListQuery } from "@/queries/payment.queries";
 import { plansQuery } from "@/queries/plan.queries";
-import { getPayments } from "@/services/payment.services";
 import type { IPayment } from "@/types/payment.types";
 import { paymentsColumns } from "./paymentsColumns";
 import { hasAnyParam, listStatusCounts, PAYMENT_NARROWING_KEYS, paymentHref } from "./paymentsDisplay";
 import { buildPaymentsTableConfig, PAYMENTS_TABLE_BASE_CONFIG } from "./paymentsTable.config";
+import { MarkPaymentPaidDialog } from "./MarkPaymentDialogs";
 import RetryPaymentDialog from "./RetryPaymentDialog";
-
-// Export reads every payment that matches, a page at a time, with the
-// list's own fetch.
-const fetchPaymentsPage = async (queryString: string) => {
-  const { data, meta } = await getPayments(queryString);
-  return { rows: data, meta };
-};
 
 // "Showing 1–10 of 1,912 payments", then Previous and Next.
 const PAGER: DataTableSimplePager = {
@@ -37,14 +30,6 @@ const PAGER: DataTableSimplePager = {
     </ShowingRange>
   ),
 };
-
-// What the CSV has that the rows don't: what to look a payment up by on the
-// gateway's side, the coupon it used and why it failed.
-const EXPORT_COLUMNS: readonly DataTableExportColumn<IPayment>[] = [
-  { label: "Gateway reference", value: (row) => row.gatewayReferenceId },
-  { label: "Coupon code", value: (row) => row.couponCode },
-  { label: "Failure reason", value: (row) => row.failureReason },
-];
 
 // Each column keeps its px, and Person gives way down to 150px before the
 // table scrolls sideways (1,056px in all, inside the list card on a 1366
@@ -65,11 +50,12 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
   const query = useQuery({ ...paymentsListQuery(queryString), placeholderData: keepPreviousData });
   const statusCounts = listStatusCounts(query.data?.meta);
   const config = useMemo(() => buildPaymentsTableConfig(plans ?? [], statusCounts), [plans, statusCounts]);
-  const { dataTableProps } = useServerDataTable<IPayment>(config, { fetchPage: fetchPaymentsPage });
+  // The page header's Export downloads the API's spreadsheet of these rows.
+  const { dataTableProps } = useServerDataTable<IPayment>(config);
 
   // Retry asks first, as on the payment's page. The row is kept while the
   // dialog closes, so its title doesn't empty out while it animates away.
-  const { activeRow, openDialog, getDialogProps } = useRowDialogs<IPayment, "retry">();
+  const { activeRow, openDialog, getDialogProps } = useRowDialogs<IPayment, "retry" | "paid">();
 
   const actions = useMemo<DataTableActions<IPayment>>(
     () => ({
@@ -82,6 +68,12 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
           label: "Retry",
           onClick: (row) => openDialog("retry", row),
           hidden: (row) => !canRetry || row.status !== "FAILED",
+        },
+        // A waiting checkout is confirmed by hand once the money is in.
+        {
+          label: "Mark paid",
+          onClick: (row) => openDialog("paid", row),
+          hidden: (row) => !canRetry || row.status !== "PENDING",
         },
       ],
     }),
@@ -102,8 +94,6 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
         columns={paymentsColumns}
         layout={LAYOUT}
         getRowId={(row) => row.id}
-        exportFileName="payments"
-        exportColumns={EXPORT_COLUMNS}
         actions={actions}
         pager={PAGER}
         // Each row is a link to its payment's page, which leads back to this
@@ -114,6 +104,7 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
         emptyMessage={filtered ? "No payments match these filters." : "No payments yet."}
       />
       <RetryPaymentDialog payment={activeRow} {...getDialogProps("retry")} />
+      <MarkPaymentPaidDialog payment={activeRow} {...getDialogProps("paid")} />
     </>
   );
 };

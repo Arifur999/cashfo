@@ -12,7 +12,7 @@ import { paymentsListQuery, paymentStatsQuery } from "@/queries/payment.queries"
 import { plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
 import { adminPageTitle } from "@/lib/i18n/locale";
-import { ExportButton, ExportProvider } from "@/components/shared/ExportAction";
+import ExportLink from "@/components/modules/Admin/Payments/ExportLink";
 
 export const generateMetadata = adminPageTitle("Payments");
 
@@ -32,26 +32,28 @@ const PaymentsPage = async ({ searchParams }: PageProps<"/admin/payments">) => {
   // Read here, on the server: a client component mustn't read the clock
   // while it renders.
   const failedSince = failedSinceDay();
+  // Export takes the list's filters (not its page) to the API's spreadsheet.
+  const exportQuery = new URLSearchParams(queryString);
+  exportQuery.delete("page");
+  exportQuery.delete("limit");
 
   return (
-    <ExportProvider>
-      <div className="space-y-4">
-        <PageHeader {...PAYMENTS_PAGE} actions={<ExportButton hint="Download every payment that matches the filters as CSV" />} />
-        <PaymentsTabs showRevenue={canManage(admin?.role, "revenue")} />
-        <QueryPrefetch
-          prefetch={(client) =>
-            Promise.all([
-              client.prefetchQuery(paymentsListQuery(queryString)),
-              client.prefetchQuery(paymentStatsQuery()),
-              client.prefetchQuery(plansQuery()),
-            ])
-          }
-        >
-          <PaymentStats failedSince={failedSince} />
-          <PaymentsTable canRetry={canManage(admin?.role, "payments")} />
-        </QueryPrefetch>
-      </div>
-    </ExportProvider>
+    <div className="space-y-4">
+      <PageHeader {...PAYMENTS_PAGE} actions={<ExportLink href={`${PAYMENTS_LIST_HREF}/export${exportQuery.size ? `?${exportQuery}` : ""}`} />} />
+      <PaymentsTabs showRevenue={canManage(admin?.role, "revenue")} />
+      <QueryPrefetch
+        prefetch={(client) =>
+          Promise.all([
+            client.prefetchQuery(paymentsListQuery(queryString)),
+            client.prefetchQuery(paymentStatsQuery()),
+            client.prefetchQuery(plansQuery()),
+          ])
+        }
+      >
+        <PaymentStats failedSince={failedSince} />
+        <PaymentsTable canRetry={canManage(admin?.role, "payments")} />
+      </QueryPrefetch>
+    </div>
   );
 };
 

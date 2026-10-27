@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
+import { Info } from "lucide-react";
 import { useState } from "react";
 import { refundPaymentAction } from "@/app/(dashboardLayout)/admin/payments/_action";
 import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
@@ -20,12 +21,25 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 type HowMuch = "all" | "part";
 
+// Whether the refund takes the plan away: a full refund of the plan they
+// are on, for a period that hasn't ended, drops them to Free (the API's
+// rule); anything else leaves the plan as it is.
+const planAfterRefund = (payment: IPaymentDetail, full: boolean): string => {
+  const current = payment.subscription;
+  const periodOpen = !payment.periodEnd || new Date(payment.periodEnd).getTime() > Date.now();
+  if (full && payment.userId && current && current.planId === payment.planId && current.status !== "CANCELLED" && current.status !== "EXPIRED" && periodOpen) {
+    return "{name} goes back to the Free plan now, because this payment paid for {plan}.";
+  }
+  return current ? "{name} stays on {current}." : "";
+};
+
 // Mounted inside the dialog content, so each open starts at the full
 // amount. All of it, or part of it with an amount, then the reason.
 const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () => void }) => {
   const maxAmount = Number(payment.amount);
   const [howMuch, setHowMuch] = useState<HowMuch>("all");
   const { translate, locale } = useLocale();
+  const firstName = (payment.platformUser?.name ?? "").split(/\s+/)[0] || translate("The person");
   // A money amount above zero and no more than was paid ("More than this
   // payment"; "Up to {amount}." under the field says where that is), and
   // the reason.
@@ -109,9 +123,19 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
       <form.Field name="reason" validators={{ onChange: rules.reason }}>
         {(field) => <AppTextareaField field={field} label="Reason" rows={2} placeholder="Why the money is going back" />}
       </form.Field>
-      <p className="rounded-md border border-line bg-strip px-4 py-3 text-small leading-relaxed text-ink-2">
-        <T>The refund and the reason go into the audit log. Nothing is sent to the gateway from here: send the money back there, then record it.</T>
-      </p>
+      {/* What happens to their plan (a full refund of the period they are
+          in takes it away, as the API does), then where the money goes. */}
+      <form.Subscribe selector={(state) => state.values.amount}>
+        {(amount) => (
+          <p className="flex gap-2.5 rounded-[14px] border border-line bg-strip px-3.5 py-3 text-small leading-normal text-ink-2">
+            <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+            <span>
+              {translate(planAfterRefund(payment, Number(amount) >= maxAmount), { name: firstName, plan: payment.plan.name, current: payment.subscription?.planName ?? "" })}{" "}
+              <T>The refund and the reason go into the audit log. Nothing is sent to the gateway from here: send the money back there, then record it.</T>
+            </span>
+          </p>
+        )}
+      </form.Subscribe>
       <form.Subscribe selector={(state) => state.values.amount}>
         {(amount) => (
           <FormDialogFooter

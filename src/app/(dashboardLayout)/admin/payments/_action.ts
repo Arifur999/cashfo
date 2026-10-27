@@ -1,8 +1,8 @@
 "use server";
 
 import { requireId, runAction, runValidatedAction } from "@/lib/runAction";
-import { refundPayment, retryPayment } from "@/services/payment.services";
-import { refundServerZodSchema } from "@/zod/payment.validation";
+import { markPaymentFailed, markPaymentPaid, refundPayment, retryPayment } from "@/services/payment.services";
+import { markPaymentFailedServerZodSchema, markPaymentPaidServerZodSchema, refundServerZodSchema } from "@/zod/payment.validation";
 
 export const refundPaymentAction = async (paymentId: string, values: unknown) =>
   requireId(paymentId, "payment") ??
@@ -10,3 +10,11 @@ export const refundPaymentAction = async (paymentId: string, values: unknown) =>
 
 export const retryPaymentAction = async (paymentId: string) =>
   requireId(paymentId, "payment") ?? runAction("Failed to retry payment", () => retryPayment(paymentId));
+
+export const markPaymentPaidAction = async (paymentId: string, values: unknown) =>
+  requireId(paymentId, "payment") ??
+  runValidatedAction(markPaymentPaidServerZodSchema, values, "Failed to mark the payment paid", (payload) => markPaymentPaid(paymentId, payload));
+
+export const markPaymentFailedAction = async (paymentId: string, values: unknown) =>
+  requireId(paymentId, "payment") ??
+  runValidatedAction(markPaymentFailedServerZodSchema, values, "Failed to mark the payment failed", ({ reason }) => markPaymentFailed(paymentId, reason));

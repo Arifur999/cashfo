@@ -8,6 +8,7 @@ import PaymentHero from "@/components/modules/Admin/Payments/PaymentHero";
 import { listQuery, paymentsListHref } from "@/components/modules/Admin/Payments/paymentsDisplay";
 import PaymentTimeline from "@/components/modules/Admin/Payments/PaymentTimeline";
 import RefundDetailsCard from "@/components/modules/Admin/Payments/RefundDetailsCard";
+import RelatedTicketsCard from "@/components/modules/Admin/Payments/RelatedTicketsCard";
 import BackLink from "@/components/shared/BackLink";
 import { canManage } from "@/lib/authUtils";
 import { fetchOrNotFound } from "@/lib/axios/fetchOrNotFound";
@@ -44,6 +45,8 @@ const PaymentDetailPage = async ({ params, searchParams }: PageProps<"/admin/pay
         <div className="flex flex-col gap-4">
           <PaidByCard payment={payment} />
           <OtherPaymentsCard payments={payment.otherPayments} email={payment.platformUser?.email} back={fromList} />
+          {/* A double charge names its ticket in the note above. */}
+          {!payment.duplicateOfId && payment.relatedTickets && payment.relatedTickets.length > 0 && <RelatedTicketsCard tickets={payment.relatedTickets} />}
         </div>
       </div>
     </div>

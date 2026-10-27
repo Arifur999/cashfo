@@ -31,6 +31,14 @@ const PaymentDetailsCard = async ({ payment }: { payment: IPaymentDetail }) => {
       }),
     },
     { label: MOMENT_LABEL[payment.status], value: formatDate(payment.paidAt ?? payment.createdAt, "d MMM yyyy, h:mm:ss aaa", "—", locale) },
+    // Typed in at Mark paid: the number or account the money came from.
+    ...(payment.payerAccount ? [{ label: "Paid from", value: <code className="font-mono">{payment.payerAccount}</code> }] : []),
+    // The period a paid payment bought.
+    ...(payment.periodStart && payment.periodEnd
+      ? [{ label: "Covers", value: `${formatDate(payment.periodStart, "d MMM", "—", locale)} – ${formatDate(payment.periodEnd, "d MMM yyyy", "—", locale)}` }]
+      : []),
+    // A checkout still waiting lapses unless someone marks it paid.
+    ...(payment.status === "PENDING" && payment.expiresAt ? [{ label: "Lapses at", value: formatDate(payment.expiresAt, "d MMM yyyy, h:mm aaa", "—", locale) }] : []),
     {
       label: "Invoice",
       value: payment.invoice ? (
