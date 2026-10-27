@@ -23,6 +23,8 @@ interface DayInputProps {
   // The line that explains the day, read out with the field (a Field's
   // `${id}-hint`).
   "aria-describedby"?: string;
+  // In place of the calendar (a reminder's bell).
+  icon?: React.ReactNode;
   className?: string;
 }
 
@@ -31,7 +33,7 @@ interface DayInputProps {
 // input underneath keeps the value, the limits and keyboard entry (it takes
 // focus from the label and the Tab key), so it carries the field's name and
 // description too.
-const DayInput = ({ id, value, onChange, min, max, size = "md", invalid = false, placeholder = "", className, ...props }: DayInputProps) => {
+const DayInput = ({ id, value, onChange, min, max, size = "md", invalid = false, placeholder = "", icon, className, ...props }: DayInputProps) => {
   const { t, locale } = useLocale();
   const picker = useRef<HTMLInputElement>(null);
   const label = formDayLabel(value, getAppToday(), t("Today"), locale);
@@ -48,7 +50,7 @@ const DayInput = ({ id, value, onChange, min, max, size = "md", invalid = false,
 
   return (
     <InputFrame size={size} invalid={invalid} onClick={open} className={cn("relative cursor-pointer px-3", className)}>
-      <CalendarDays className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+      {icon ?? <CalendarDays className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />}
       <span className={cn("min-w-0 flex-1 truncate", !label && "text-ink-faint")}>{label || placeholder}</span>
       <input
         ref={picker}

@@ -19,7 +19,8 @@ const SIZES = {
   56: "size-14 text-h3",
 } as const;
 
-// A bank or an NGO without a photo shows what it is, as the boards draw it.
+// A bank or an NGO without a photo shows what it is, as the boards draw it:
+// on a rounded square (12px corners at 44px, 8px at 30px), not a circle.
 const KIND_TILE: Partial<Record<ContactType, { icon: typeof Landmark; tone: string }>> = {
   BANK: { icon: Landmark, tone: "bg-info-soft text-info" },
   NGO: { icon: Users, tone: "bg-pillar-insights-soft text-pillar-insights" },
@@ -47,7 +48,7 @@ export function PersonAvatar({ name, src, kind, size = 36, coloured = false, cla
   const tile = kind ? KIND_TILE[kind] : undefined;
   if (tile) {
     return (
-      <span aria-hidden="true" className={cn("inline-flex shrink-0 items-center justify-center rounded-full [&_svg]:size-1/2", SIZES[size], tile.tone, className)}>
+      <span aria-hidden="true" className={cn("inline-flex shrink-0 items-center justify-center rounded-[27%] [&_svg]:size-1/2", SIZES[size], tile.tone, className)}>
         {createElement(tile.icon, { strokeWidth: 2 })}
       </span>
     );
