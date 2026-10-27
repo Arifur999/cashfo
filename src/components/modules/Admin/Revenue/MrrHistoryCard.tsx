@@ -22,10 +22,7 @@ const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
   return (
     <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-title text-ink"><T>MRR at the end of each month</T></h2>
-          <span className="text-small text-ink-muted"><T>In taka, from payments</T></span>
-        </div>
+        <h2 className="text-title text-ink"><T>MRR at the end of each month</T></h2>
         {growth !== null && history.length > 1 && (
           <span className="text-small text-ink-muted">
             {t(growth >= 0 ? "up {percent}% since {month}" : "down {percent}% since {month}", { percent: formatCount(Math.abs(growth), locale), month: t(formatMonthName(history[0].month)) })}
@@ -44,7 +41,7 @@ const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
           bars={history.map((point, index) => ({
             label: t(shortMonthKey(point.month)),
             value: point.mrr,
-            short: toLocaleDigits(compactAmount(point.mrr), locale),
+            short: `৳ ${toLocaleDigits(compactAmount(point.mrr), locale)}`,
             highlight: index === history.length - 1,
             spoken: `${t(formatMonthName(point.month))} ${formatCurrency(point.mrr, undefined, 0, locale)}`,
           }))}

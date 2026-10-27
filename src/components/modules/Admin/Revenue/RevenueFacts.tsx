@@ -1,14 +1,16 @@
 import Card from "@/components/smartly/Card";
 import { countPhrase } from "@/components/modules/Admin/Payments/paymentsDisplay";
 import { formatCurrency } from "@/lib/currency";
+import { formatCount } from "@/lib/i18n/digits";
 import { formatMonthName } from "@/lib/date";
 import type { IRevenueOverview } from "@/types/revenue.types";
 import { getTranslator } from "@/lib/i18n/locale";
 import { paymentsMrrNow } from "./revenueDisplay";
 
 // Three facts under the charts: what a paid person brings, what coupons
-// cost, what went back.
-const RevenueFacts = async ({ overview }: { overview: IRevenueOverview }) => {
+// cost, and how many new paid people came from a friend (what went back,
+// when the referrals couldn't be read; the by-plan card says it too).
+const RevenueFacts = async ({ overview, fromReferrals }: { overview: IRevenueOverview; fromReferrals: number | null }) => {
   const { t, locale } = await getTranslator("admin");
   const month = t(formatMonthName(overview.month));
   // Both sides from payments: their MRR now over the people they count as
@@ -22,11 +24,17 @@ const RevenueFacts = async ({ overview }: { overview: IRevenueOverview }) => {
       sub: countPhrase(t, locale, paidNow, "MRR ÷ {count} paid person", "MRR ÷ {count} paid people"),
     },
     { label: "Coupons cost", value: formatCurrency(overview.couponsCostThisMonth, undefined, 0, locale), sub: t("In {month}, taken off payments that used a coupon", { month }) },
-    {
-      label: "Sent back",
-      value: formatCurrency(overview.refundsThisMonth.amount, undefined, 0, locale),
-      sub: countPhrase(t, locale, overview.refundsThisMonth.count, "{count} refund in {month}", "{count} refunds in {month}", { month }),
-    },
+    fromReferrals === null
+      ? {
+          label: "Sent back",
+          value: formatCurrency(overview.refundsThisMonth.amount, undefined, 0, locale),
+          sub: countPhrase(t, locale, overview.refundsThisMonth.count, "{count} refund in {month}", "{count} refunds in {month}", { month }),
+        }
+      : {
+          label: "From referrals",
+          value: t("{count} of {total}", { count: formatCount(fromReferrals, locale), total: formatCount(Math.max(fromReferrals, overview.paidPeople.joinedThisMonth), locale) }),
+          sub: t("New paid people in {month} who came from a friend", { month }),
+        },
   ];
 
   return (
