@@ -668,6 +668,10 @@ html:not(.dark) [data-app="habit"] {
 @utility bg-wallet-green {
   background-image: linear-gradient(135deg, #1c7567 0%, #0f4039 100%);
 }
+/* The Habit Tracker's hero on phones (next prayer): its teal deepening. */
+@utility bg-habit-depth {
+  background-image: linear-gradient(135deg, #0f766e 0%, #0a4d47 100%);
+}
 @utility bg-wallet-teal {
   background-image: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
 }
@@ -712,6 +716,11 @@ html:not(.dark) [data-app="habit"] {
     [data-slot="sheet-content"][data-side="right"] {
       border-radius: 24px 0 0 24px;
       overflow: hidden;
+    }
+    /* The Habit Tracker boards draw their drawers square. */
+    [data-app="habit"] [data-slot="sheet-content"][data-side="right"],
+    [data-app="habit"][data-slot="sheet-content"][data-side="right"] {
+      border-radius: 0;
     }
   }
 }

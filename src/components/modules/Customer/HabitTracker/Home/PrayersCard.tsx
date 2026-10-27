@@ -227,7 +227,7 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
 
   return (
     <>
-      <section aria-labelledby="m-prayers" className="flex flex-col gap-3.5 rounded-[14px] bg-forest-depth p-4 text-white shadow-float md:hidden">
+      <section aria-labelledby="m-prayers" className="flex flex-col gap-3.5 rounded-[14px] bg-habit-depth p-4 text-white shadow-float md:hidden">
         <div className="flex items-start justify-between gap-2.5">
           <div className="flex min-w-0 flex-col gap-0.5">
             <span id="m-prayers" className="text-caption leading-[normal] font-semibold tracking-[0.04em] uppercase opacity-85">
