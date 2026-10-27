@@ -1,6 +1,6 @@
 import type { ServerDataTableConfig } from "@/hooks/useServerDataTable";
-import { enumTabs } from "@/lib/statusBadge";
-import { OWNER_STATUSES, type OwnerStatus } from "@/types/owner.types";
+import { ownerStatusTabs } from "@/components/modules/Admin/UserManagement/usersTable.config";
+import type { OwnerStatus } from "@/types/owner.types";
 
 // What the page needs to build the identical query string on the server.
 // The design opens on Active, with no All tab.
@@ -10,10 +10,9 @@ export const MANAGE_OWNERS_TABLE_BASE_CONFIG = {
 } as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaults">;
 
 // The status tabs carry the counts the list response brings back, so the
-// full config is built once a page has loaded (memoize the result). The
-// search is the same one Users has, in the same words.
-export const buildManageOwnersTableConfig = (statusCounts?: Record<OwnerStatus, number>): ServerDataTableConfig => ({
+// full config is built once a page has loaded (memoize the result).
+export const buildManageOwnersTableConfig = (statusCounts?: Record<OwnerStatus, number>, openStatus?: string | null): ServerDataTableConfig => ({
   ...MANAGE_OWNERS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Search people or workspaces" },
-  filters: [{ id: "status", type: "tabs", label: "Status", options: enumTabs(OWNER_STATUSES, statusCounts) }],
+  search: { placeholder: "Search by name, business, email, phone" },
+  filters: [{ id: "status", type: "tabs", label: "Status", options: ownerStatusTabs(statusCounts, openStatus) }],
 });

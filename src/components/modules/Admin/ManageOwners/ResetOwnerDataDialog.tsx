@@ -1,32 +1,40 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Download, Trash2, TriangleAlert } from "lucide-react";
+import { useState } from "react";
 import { resetOwnerDataAction } from "@/app/(dashboardLayout)/admin/manage-owners/_action";
-import Callout from "@/components/shared/Callout";
+import { downloadOwnerCopy } from "@/components/modules/Admin/UserManagement/ownerCopy";
+import { isPersonalWorkspace } from "@/components/modules/Admin/UserManagement/peopleDisplay";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import T from "@/components/shared/T";
+import Button from "@/components/smartly/Button";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural } from "@/lib/i18n/message";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
 
-// What the dialog names and checks: who, their email to type, and how many
-// other workspaces it leaves alone. A list row and a person's page have both.
-export type ResetOwnerTarget = Pick<IOwnerOverviewItem, "userId" | "name" | "email" | "workspaceCount">;
+// What the dialog names and checks: who, the workspace it wipes (their
+// default one), and how many other workspaces it leaves alone. A list row
+// and a person's page have both.
+export type ResetOwnerTarget = Pick<IOwnerOverviewItem, "userId" | "name" | "email" | "workspaceCount" | "businessName"> & Partial<Pick<IOwnerOverviewItem, "businessType">>;
 
 interface ResetOwnerDataDialogProps {
   owner: ResetOwnerTarget | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // MANAGE_ROLES ownerData: the copy offered first (the reset's own rule).
+  canDownloadCopy?: boolean;
 }
 
-// The one irreversible action on the people pages. The backend wipes the
-// person's personal (default) workspace only -- every account's is called
-// "Personal", so the dialog names the person, not the workspace, and the
-// admin types their email, which no one else has, to confirm.
-const ResetOwnerDataDialog = ({ owner, open, onOpenChange }: ResetOwnerDataDialogProps) => {
+// The AdminOwnerResetDialog board: the one irreversible action on the
+// people pages. It names the workspace it wipes, offers a copy of the data
+// first, and the admin types the workspace's name to confirm. Every
+// account's own workspace is called "Personal", which proves nothing, so
+// for that one the admin types the person's email instead.
+const ResetOwnerDataDialog = ({ owner, open, onOpenChange, canDownloadCopy = true }: ResetOwnerDataDialogProps) => {
   const { translate, locale } = useLocale();
+  const [copying, setCopying] = useState(false);
   const { run, isPending } = useActionMutation({
     action: (userId: string) => resetOwnerDataAction(userId),
     successMessage: "Owner data reset",
@@ -37,19 +45,20 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange }: ResetOwnerDataDialo
   // words don't change while it fades out.
   if (!owner) return null;
   const others = owner.workspaceCount - 1;
+  const personal = isPersonalWorkspace(owner.businessName, owner.businessType);
+  const workspace = owner.businessName && !personal ? owner.businessName : translate("{name}'s personal workspace", { name: owner.name });
 
   return (
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={translate("Reset {name}'s personal workspace?", { name: owner.name })}
+      icon={TriangleAlert}
+      wide
+      title={translate("Reset all data in {workspace}?", { workspace })}
       description={
         <>
-          {/* Everything the backend deletes, and what it puts back. */}
-          <T values={{ name: <b className="font-semibold text-ink">{owner.name}</b>, email: owner.email }}>
-            {
-              "This permanently deletes every account, transaction, contact, savings goal, asset, asset type, budget category, income goal and the monthly budget in {name}'s ({email}) personal workspace, then puts back the starting accounts. Their login and password vault stay as they are."
-            }
+          <T values={{ workspace: <b className="font-semibold text-ink">{workspace}</b> }}>
+            {"This permanently deletes all transactions, accounts, contacts, savings goals, assets, and budget categories for {workspace}. Their account login stays intact."}
           </T>
           {others > 0 && <> {plural(translate, others, "Their other workspace is not touched.", "Their other {count} workspaces are not touched.", undefined, locale)}</>}
         </>
@@ -59,20 +68,38 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange }: ResetOwnerDataDialo
       confirmIcon={Trash2}
       pendingLabel="Resetting..."
       isPending={isPending}
-      // Irreversible, so their email (unique, where the workspace name is
-      // "Personal" for everyone) must be typed out first.
-      confirmationText={owner.email}
-      confirmationLabel={translate("Type their email to confirm:")}
-      confirmationMatchedText="Matches their email"
+      confirmationText={personal || !owner.businessName ? owner.email : owner.businessName}
+      confirmationLabel={translate(personal || !owner.businessName ? "Type their email to confirm:" : "Type the workspace name to confirm:")}
+      confirmationMatchedText={personal || !owner.businessName ? "Matches their email" : "Matches the workspace name"}
+      footerStart={
+        canDownloadCopy && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            className="px-3.5"
+            disabled={copying || isPending}
+            onClick={async () => {
+              setCopying(true);
+              await downloadOwnerCopy(owner.userId, translate);
+              setCopying(false);
+            }}
+          >
+            <Download className="size-4 text-ink-2" aria-hidden="true" />
+            {translate(copying ? "Preparing..." : "Download a copy")}
+          </Button>
+        )
+      }
       onConfirm={async () => {
         if (await run(owner.userId)) {
           onOpenChange(false);
         }
       }}
     >
-      <Callout variant="danger" className="font-semibold">
-        <T>This can&apos;t be undone.</T>
-      </Callout>
+      <p className="flex items-start gap-2.5 rounded-field border border-expense-line bg-expense-soft/50 px-3.5 py-3 text-[13.5px] leading-[normal] font-semibold text-expense">
+        <TriangleAlert className="mt-px size-4.25 shrink-0" aria-hidden="true" />
+        <T>This can&apos;t be undone. Download a copy first if the owner might want it back.</T>
+      </p>
     </ConfirmDialog>
   );
 };
