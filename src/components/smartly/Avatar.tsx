@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 
 const SIZES = {
   32: "size-8 text-caption",
+  // The top bar's account button (design-v4).
+  38: "size-9.5 text-small",
   36: "size-9 text-small",
   44: "size-11 text-body-lg",
   // Settings: the phone menu's card, the profile, the photo dialog's preview.
@@ -16,6 +18,9 @@ const TONES = {
   forest: "bg-forest text-mint-200 font-bold",
   // Mint glow with forest lettering: the admin's, in the Night sidebar.
   glow: "bg-mint-glow text-forest font-extrabold",
+  // The primary's tint with its own colour: design-v4's avatars (the sidebar's
+  // profile row, the top bar's account button), teal in the Habit Tracker.
+  soft: "bg-mint-50 text-emerald font-bold",
   // Mint on the Night drawer.
   mint: "bg-mint-200 text-forest font-bold",
 } as const;

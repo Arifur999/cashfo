@@ -28,9 +28,12 @@ const TEXT_STYLES = [
 
 export const cn = createCn({
   extend: {
+    // rounded-card (18px) and rounded-panel (22px), design-v4: without these
+    // a later rounded-lg would not replace them.
+    theme: { radius: ["card", "panel"] },
     classGroups: {
       "font-size": [{ text: TEXT_STYLES }],
-      shadow: [{ shadow: ["card", "float", "overlay", "drawer", "button"] }],
+      shadow: [{ shadow: ["card", "float", "overlay", "drawer", "button", "control"] }],
       "bg-image": [{ bg: ["aurora", "aurora-panel", "aurora-head", "night", "forest-depth", "fresh", "mint-glow", "wallet-forest", "wallet-teal", "wallet-charcoal", "wallet-mint", "savings-violet"] }],
     },
   },
