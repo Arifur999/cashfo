@@ -16,6 +16,7 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
   const maintenance: Promise<MaintenanceState> = getPublicPlatform().then((platform) => ({
     enabled: platform.maintenance?.enabled === true,
     message: platform.maintenance?.message ?? "",
+    messageBn: platform.maintenance?.messageBn ?? null,
   }));
 
   return (

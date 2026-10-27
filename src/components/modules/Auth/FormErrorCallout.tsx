@@ -1,10 +1,10 @@
 "use client";
 
-import { CircleAlert, RefreshCw } from "lucide-react";
-import Banner from "@/components/smartly/Banner";
+import { RefreshCw } from "lucide-react";
 import Button from "@/components/smartly/Button";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import AuthAlert from "./AuthAlert";
 import type { AuthFormError } from "./authFormError";
 
 interface FormErrorCalloutProps {
@@ -27,7 +27,7 @@ const FormErrorCallout = ({ error, children }: FormErrorCalloutProps) => {
   }
   const filled = values && Object.fromEntries(Object.entries(values).map(([name, value]) => [name, typeof value === "number" ? formatCount(value, locale) : value]));
   return (
-    <Banner tone="danger" inline role="alert" icon={<CircleAlert />} className="font-medium">
+    <AuthAlert tone="error">
       <p>{translate(message, filled)}</p>
       {children && <div className="mt-1.5 font-normal">{children}</div>}
       {reload && (
@@ -36,7 +36,7 @@ const FormErrorCallout = ({ error, children }: FormErrorCalloutProps) => {
           {translate("Reload the page")}
         </Button>
       )}
-    </Banner>
+    </AuthAlert>
   );
 };
 

@@ -1,23 +1,92 @@
 "use client";
 
+import { Languages } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import LegalLinks from "@/components/modules/Legal/LegalLinks";
-import LocalePill from "@/components/shared/LocalePill";
+import SegmentedControl from "@/components/smartly/SegmentedControl";
 import Logo from "@/components/smartly/Logo";
-import { LOGIN_ROUTE, REGISTER_ROUTE } from "@/lib/authUtils";
+import { REGISTER_ROUTE } from "@/lib/authUtils";
 import { BRAND_NAME } from "@/lib/brand";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { useLocale, type Locale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { AuthPhoto, type AuthPhotoVariant } from "./AuthPhoto";
+import AuthHeroPanel, { APP_GRADIENT_PHONE, type AuthVariant } from "./AuthHeroPanel";
 import MaintenanceNotice, { MaintenanceContext, type MaintenanceState } from "./MaintenanceNotice";
 
-// Which photo sits beside the form: the sunlit seedling for signing in and
-// the password pages, the seedling in open hands for signing up.
-const photoFor = (pathname: string): AuthPhotoVariant => {
-  if (pathname === LOGIN_ROUTE) return "login";
-  return pathname === REGISTER_ROUTE ? "register" : "narrow";
+// Which frame a page gets: the admin panel's for its invite and reset pages,
+// Register's for signing up, Main's for signing in and everything else.
+const variantFor = (pathname: string): AuthVariant => {
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return "admin";
+  return pathname === REGISTER_ROUTE ? "register" : "login";
+};
+
+// English | বাংলা on the app's pages (Main, LoginMobile): a sunken track
+// with a white thumb, 32px segments wide and 36px ones on a phone.
+const LocaleSwitch = () => {
+  const { locale, toggleLocale, t } = useLocale();
+  const choose = (next: Locale) => {
+    if (next !== locale) toggleLocale();
+  };
+  return (
+    <SegmentedControl
+      options={[
+        { value: "en" as const, label: <><span className="lg:hidden">EN</span><span className="hidden lg:inline">English</span></> },
+        { value: "bn" as const, lang: "bn", label: <><span className="lg:hidden">বাং</span><span className="hidden lg:inline">বাংলা</span></> },
+      ]}
+      value={locale}
+      onChange={choose}
+      label={t("Language")}
+      variant="pill"
+      className="p-0.75 lg:p-1 [&>button]:h-9 [&>button]:min-w-11 [&>button]:px-3 lg:[&>button]:h-8 lg:[&>button]:px-3.5"
+    />
+  );
+};
+
+// The admin pages' one button (AdminLogin): the other language, by name.
+const LocaleButton = () => {
+  const { locale, toggleLocale, t } = useLocale();
+  return (
+    <button
+      type="button"
+      onClick={toggleLocale}
+      aria-label={t(locale === "bn" ? "Switch language to English" : "Switch language to Bangla")}
+      className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-body font-medium whitespace-nowrap text-ink-2 hover:bg-surface-sunken"
+    >
+      <Languages className="size-4" aria-hidden="true" />
+      {locale === "bn" ? "English" : <span lang="bn">বাংলা</span>}
+    </button>
+  );
+};
+
+// LoginMobile's banner over the form: the line from the wide panel, and
+// four pairs of bars.
+const PhoneBanner = () => {
+  const { t } = useLocale();
+  return (
+    <div className="px-5 pt-1.5 lg:hidden">
+      <div className="relative mx-auto flex max-w-100 items-end justify-between gap-4 overflow-hidden rounded-2xl p-5 text-white" style={{ background: APP_GRADIENT_PHONE }}>
+        <span aria-hidden="true" className="absolute -top-17.5 -right-15 size-45 rounded-full border border-white/14" />
+        <div className="relative flex max-w-47.5 flex-col gap-1.5">
+          <p className="text-[19px] leading-[1.25] font-bold tracking-[-0.01em]">{t("Every taka, clearly accounted for.")}</p>
+          <p className="text-small leading-[1.45] text-white/84">{t("Income, expenses, savings and loans in one place.")}</p>
+        </div>
+        <div aria-hidden="true" className="relative flex h-18 items-end gap-1.5">
+          {[
+            [38, 26],
+            [50, 30],
+            [44, 34],
+            [66, 32],
+          ].map(([income, expense], index) => (
+            <div key={index} className="flex items-end gap-0.75">
+              <span className="w-1.75 rounded-t-[3px] bg-white" style={{ height: income }} />
+              <span className="w-1.75 rounded-t-[3px] bg-white/45" style={{ height: expense }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 interface AuthShellProps {
@@ -29,58 +98,58 @@ interface AuthShellProps {
   children: React.ReactNode;
 }
 
-// The frame every sign-in page shares, drawn once by the (auth) layout so
-// moving between sign-in, sign-up and the password pages swaps only the form
-// column: a soft mint-green ground with slow drifting lights, and one card that
-// rises in -- the page's photo on one side (a banner on phones), and the
-// logo, language pill, form and legal links on the other, the form's parts
-// arriving one after another.
+// The frame every sign-in page shares (design-v4 Main, Register, LoginMobile,
+// RegisterMobile, and AdminLogin for the admin pages), drawn once by the
+// (auth) layout so moving between them swaps only the form column: the
+// gradient panel on the left from lg, the language switch at the top right,
+// and the form column centred in the rest. Phones get a header with the
+// logo and the switch instead, and the sign-in pages a small banner.
 const AuthShell = ({ maintenance, children }: AuthShellProps) => {
   const pathname = usePathname();
   const { t } = useLocale();
-  const photo = photoFor(pathname);
-  // Sign-up sets two fields to a row, so its column is a little wider.
-  const width = photo === "register" ? "max-w-110" : "max-w-100";
+  const variant = variantFor(pathname);
+  const admin = variant === "admin";
 
   return (
-    <div className="auth-backdrop relative min-h-dvh overflow-hidden">
-      <span aria-hidden="true" className="auth-light -top-24 -left-24 size-120 bg-mint-200/70" />
-      <span aria-hidden="true" className="auth-light top-1/3 -right-32 size-130 bg-mint-200" style={{ animationDelay: "-8s", animationDuration: "32s" }} />
-      <span aria-hidden="true" className="auth-light -bottom-40 left-1/4 size-110 bg-emerald/25" style={{ animationDelay: "-15s", animationDuration: "38s" }} />
+    <div className={cn("min-h-dvh lg:grid", admin ? "bg-strip lg:grid-cols-[minmax(0,7fr)_minmax(0,11fr)]" : "bg-surface lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)]")}>
+      <AuthHeroPanel variant={variant} />
 
-      <div className="relative flex min-h-dvh items-center justify-center px-3 py-4 sm:px-6 md:py-8 lg:px-8 lg:py-10">
-        <div className="auth-card grid w-full max-w-270 overflow-hidden rounded-[28px] bg-surface shadow-overlay ring-1 ring-white/70 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)]">
-          <AuthPhoto variant={photo} />
+      <div className="relative flex min-h-dvh min-w-0 flex-col">
+        <header className="flex items-center justify-between gap-4 px-5 py-3.5 lg:hidden">
+          <Link href="/" aria-label={t("{brand} home", { brand: BRAND_NAME })} className="flex items-center gap-2.5 rounded-md">
+            <Logo variant="icon" height={32} alt="" className="rounded-lg" />
+            <span className="flex flex-col">
+              <span className="text-title tracking-[-0.01em] text-ink">{BRAND_NAME}</span>
+              {admin && <span className="text-caption text-ink-muted">{t("Admin panel")}</span>}
+            </span>
+          </Link>
+          {admin ? <LocaleButton /> : <LocaleSwitch />}
+        </header>
+        <div className={cn("absolute hidden lg:block", admin ? "top-6 right-7" : "top-8 right-10")}>{admin ? <LocaleButton /> : <LocaleSwitch />}</div>
 
-          <div className="flex min-w-0 flex-col px-5 pt-4 pb-5 sm:px-8 lg:px-10 lg:pt-6 lg:pb-5 xl:px-14">
-            {/* As wide as the form, so the logo lines up with its left edge. */}
-            <header className={cn("mx-auto flex w-full items-center justify-between gap-4", width)}>
-              <Link href="/" aria-label={t("{brand} home", { brand: BRAND_NAME })} className="rounded-md">
-                <Logo height={36} alt="" />
-              </Link>
-              <LocalePill fullNames />
-            </header>
+        {variant === "login" && <PhoneBanner />}
 
-            {/* id + tabIndex give the root layout's skip link a focus target. */}
-            <main id="main-content" tabIndex={-1} className="flex flex-1 items-center justify-center py-6 outline-none">
-              <div className={cn("auth-stagger flex w-full flex-col gap-5", width)}>
-                {/* One read for the notice and the form, so they always agree. */}
-                <MaintenanceContext value={maintenance}>
-                  <Suspense fallback={null}>
-                    <MaintenanceNotice />
-                  </Suspense>
-                  {children}
-                </MaintenanceContext>
-              </div>
-            </main>
-
-            {/* A little wider than sign-in's form, so the four links keep one line. */}
-            <footer className="mx-auto w-full max-w-110">
-              {/* A new tab, so reading the terms doesn't throw away a half-typed form. */}
-              <LegalLinks newTab />
-            </footer>
+        {/* id + tabIndex give the root layout's skip link a focus target. */}
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className={cn("flex flex-1 flex-col px-5 outline-none lg:items-center lg:justify-center lg:px-12", variant === "register" ? "pt-4 pb-7 lg:py-12" : "pt-7 pb-8 lg:py-12")}
+        >
+          <div className={cn("mx-auto flex w-full flex-1 flex-col lg:flex-none", admin ? "max-w-105 gap-5.5" : "max-w-100 gap-7 lg:gap-8", variant === "register" && "gap-6 lg:gap-7")}>
+            {/* One read for the notice and the form, so they always agree. */}
+            <MaintenanceContext value={maintenance}>
+              <Suspense fallback={null}>
+                <MaintenanceNotice />
+              </Suspense>
+              {children}
+            </MaintenanceContext>
           </div>
-        </div>
+        </main>
+
+        <footer className="px-5 pb-3">
+          {/* A new tab, so reading the terms doesn't throw away a half-typed form. */}
+          <LegalLinks newTab className="mx-auto max-w-110" />
+        </footer>
       </div>
     </div>
   );

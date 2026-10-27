@@ -8,6 +8,9 @@ export interface AuthFormError {
   values?: FillValues;
   // The page is older than the site it talks to: only a reload helps.
   reload?: boolean;
+  // The API's reason for the refusal (CODE_WRONG...), and the tries left.
+  reason?: string;
+  attemptsLeft?: number;
 }
 
 export const UNREACHABLE_MESSAGE = "Unable to reach the server. Please try again.";
@@ -51,3 +54,7 @@ export const normalizeInviteCode = (value: unknown): string | undefined => {
   }
   return value.trim().slice(0, INVITE_CODE_MAX_LENGTH).toUpperCase() || undefined;
 };
+
+// A message's figures in the reader's digits ("১৫ মিনিট").
+export const localizeValues = (values: FillValues | undefined, toDigits: (value: number) => string): FillValues | undefined =>
+  values && Object.fromEntries(Object.entries(values).map(([name, value]) => [name, typeof value === "number" ? toDigits(value) : value]));
