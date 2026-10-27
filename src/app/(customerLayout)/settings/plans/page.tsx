@@ -1,6 +1,6 @@
-import { Star } from "lucide-react";
 import type { Metadata } from "next";
-import EmptyState from "@/components/smartly/EmptyState";
+import { PlansPage } from "@/components/modules/Customer/Settings/Plans/PlansPage";
+import { getBillingOverviewAction, getBillingPaymentsAction, getBillingPlansAction } from "@/lib/customer/billingActions";
 import { getTranslator } from "@/lib/i18n/locale";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -8,10 +8,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("Plans") };
 }
 
-// Where the sidebar's Upgrade and See plans go (PLANS_ROUTE). A placeholder
-// until the plans page (design-v4 UpgradePlan) is built: the app sells no
-// plan yet, so it says so inside the Settings shell, which heads it "Plans".
+// Settings › Plans (design-v4 UpgradePlan), where every Upgrade and See
+// plans button goes (PLANS_ROUTE), and where the billing emails and bell
+// rows link. The plans, the customer's own subscription and the first page
+// of payments are read here; a failed read arrives as null and the page
+// says so with Try again.
 export default async function SettingsPlansPage() {
-  const { t } = await getTranslator();
-  return <EmptyState icon={<Star />} title={t("Paid plans are coming soon.")} />;
+  const [plans, overview, payments] = await Promise.all([getBillingPlansAction(), getBillingOverviewAction(), getBillingPaymentsAction(1, 10)]);
+  return (
+    <PlansPage
+      plans={plans.success ? (plans.data ?? null) : null}
+      overview={overview.success ? (overview.data ?? null) : null}
+      payments={payments.success ? (payments.data ?? null) : null}
+    />
+  );
 }
