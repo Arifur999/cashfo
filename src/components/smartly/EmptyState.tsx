@@ -12,7 +12,8 @@ interface EmptyStateProps {
   className?: string;
 }
 
-// Nothing here yet: one sentence, one action, on the fresh wash.
-const EmptyState = ({ tone = "white", ...props }: EmptyStateProps) => <StatePanel tone={tone} background="fresh" {...props} />;
+// Nothing here yet: one sentence, one action, on plain white with the icon
+// on the primary's tint (design-v4 LedgerEmpty).
+const EmptyState = ({ tone = "money", ...props }: EmptyStateProps) => <StatePanel tone={tone} {...props} />;
 
 export default EmptyState;

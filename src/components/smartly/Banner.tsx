@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 
 const TONES = {
-  warning: "bg-warning-soft text-warning",
+  // design-v4's amber hint: the pale fill and the deep brown words.
+  warning: "bg-warning-50 text-warning-ink",
   info: "bg-info-soft text-info",
   mint: "bg-mint-50 text-brand-ink",
   danger: "bg-expense-soft text-expense",
@@ -25,8 +26,9 @@ const Banner = ({ tone = "warning", icon, inline = false, className, children, .
     role="status"
     className={cn(
       "flex gap-3 px-4 py-3 text-small",
-      inline ? "items-start rounded-md" : "items-center font-semibold",
+      inline ? "items-start rounded-field leading-normal" : "items-center font-semibold",
       TONES[tone],
+      inline && tone === "warning" && "border border-warning-line",
       className,
     )}
     {...props}

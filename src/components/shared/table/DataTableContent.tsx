@@ -50,14 +50,13 @@ const DESIGN_WIDTH = 1136;
 // Below this a gridded table scrolls sideways instead of crushing its columns.
 const MIN_TABLE = "min-w-180";
 const MIN_TABLE_PX = 720;
-// The column heads every list draws (LIST_HEAD: the table-head band, 12px, no
-// capitals), less the list's inset: GAP_CLASS and EDGE_CLASS pad each cell,
-// 20px at the card's edges.
+// The column heads every list draws (LIST_HEAD: the light table-head band,
+// 12px, no capitals), less the list's inset: GAP_CLASS and EDGE_CLASS pad
+// each cell, 20px at the card's edges. Each head cell is opaque, so the
+// head can stick over the rows.
 const INSET = new Set(LIST_INSET.split(" "));
-// The Aurora runs across the whole row (on the <tr>), not cell by cell.
-const HEAD_BAND = "bg-aurora-head";
 const HEAD = LIST_HEAD.split(" ")
-  .filter((name) => !INSET.has(name) && name !== HEAD_BAND)
+  .filter((name) => !INSET.has(name))
   .join(" ");
 
 // A row that is a link (rowHref). Every cell but the checkbox and the
@@ -174,9 +173,9 @@ const DataTableContent = <TData,>({
             </colgroup>
           )}
           {/* The column heads (HEAD, each cell opaque), stuck to the top of the rows box. */}
-          <TableHeader className="sticky top-0 z-10 [&_tr]:border-aurora-edge">
+          <TableHeader className="sticky top-0 z-10 [&_tr]:border-line">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className={cn(HEAD_BAND, "hover:bg-transparent")}>
+              <TableRow key={headerGroup.id} className="bg-table-head hover:bg-table-head">
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}

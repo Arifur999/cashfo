@@ -36,15 +36,16 @@ interface PaginationProps {
   className?: string;
 }
 
-// 32px squares with the 12px radius; 44px under a finger.
-const SQUARE = "inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-small font-semibold tabular-nums transition-colors pointer-coarse:h-11 pointer-coarse:min-w-11";
+// 32px rounds (design-v4); 44px under a finger.
+const SQUARE = "inline-flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-small font-semibold tabular-nums transition-colors pointer-coarse:h-11 pointer-coarse:min-w-11";
 const ARROW = cn(SQUARE, "px-0");
-const TEXT = "inline-flex h-8 items-center justify-center rounded-md border px-3 text-small font-semibold transition-colors pointer-coarse:h-11";
+const TEXT = "inline-flex h-8 items-center justify-center rounded-full border px-3 text-small font-semibold transition-colors pointer-coarse:h-11";
 const IDLE = "border-line bg-surface text-ink-2 hover:bg-surface-sunken";
-// The page on show. Pressing it does nothing, so no hand cursor.
-const CURRENT = "cursor-default border-primary bg-primary text-primary-foreground";
-// A dead end reads faint, never half-transparent.
-const OFF = "cursor-not-allowed border-line bg-surface text-ink-faint";
+// The page on show, in the deep forest (emerald in dark). Pressing it does
+// nothing, so no hand cursor.
+const CURRENT = "cursor-default border-forest bg-forest text-white dark:border-emerald dark:bg-emerald dark:text-on-action";
+// A dead end: faded, as the boards draw it.
+const OFF = "cursor-not-allowed border-line bg-surface text-ink-2 opacity-50";
 
 // Inside a focusTargetId, focus goes to the table, which a screen reader
 // names ("Transactions, table"), not to the card around it.
@@ -194,7 +195,7 @@ const Pagination = ({
         // No focus move here: arrowing through a closed select changes it
         // on every press, and focus must stay put while that happens.
         onChange={(event) => onPageSizeChange(Number(event.target.value))}
-        className="h-8 border-line pr-8 pl-2.5 text-small text-ink-2 pointer-coarse:h-11"
+        className="h-8 rounded-full border-line pr-8 pl-3 text-small text-ink-2 pointer-coarse:h-11"
       >
         {sizes.map((size) => (
           <option key={size} value={size}>

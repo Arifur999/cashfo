@@ -2,12 +2,15 @@ import { cn } from "@/lib/utils";
 import { SOFT_TONE, type Tone } from "./tones";
 
 const SIZES = {
-  // Tile size → its icon size, radius and shape, as the design draws them.
-  32: "size-8 rounded-md [&_svg]:size-4",
-  36: "size-9 rounded-md [&_svg]:size-4.5",
-  40: "size-10 rounded-md [&_svg]:size-5",
-  44: "size-11 rounded-full [&_svg]:size-5",
+  // Tile size → its icon size, radius and shape, as the design-v4 boards
+  // draw them: 8px corners at 32, 10px at 36 to 44, 12px at 48.
+  32: "size-8 rounded-sm [&_svg]:size-4",
+  36: "size-9 rounded-field [&_svg]:size-4.5",
+  40: "size-10 rounded-field [&_svg]:size-5",
+  44: "size-11 rounded-field [&_svg]:size-5",
   48: "size-12 rounded-md [&_svg]:size-5.5",
+  // An empty state's tile (LedgerEmpty).
+  56: "size-14 rounded-[14px] [&_svg]:size-6",
   72: "size-18 rounded-xl [&_svg]:size-8.5",
 } as const;
 

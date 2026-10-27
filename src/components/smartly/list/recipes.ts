@@ -8,10 +8,9 @@
 // same inset, so a footer's summary lines up with the rows above it.
 export const LIST_INSET = "px-4 md:px-6";
 
-// Column heads: the Aurora band (white words, the sidebar's green), 12px,
-// no capitals. Group bands and totals below stay light, so the head reads as
-// the table's title row.
-export const LIST_HEAD = "bg-aurora-head px-4 text-caption font-medium text-white/90 md:px-6";
+// Column heads (design-v4): the light table-head band between two lines,
+// 12px medium muted words, no capitals; the same on the admin lists.
+export const LIST_HEAD = "bg-table-head px-4 text-caption font-medium text-ink-muted md:px-6";
 
 // A group band (a day, a month, an account type).
 export const LIST_GROUP = "bg-table-head px-4 text-caption font-semibold text-ink-2 md:px-6";
@@ -26,7 +25,8 @@ export const LIST_DIVIDER = "border-divider";
 export const LIST_HOVER = "hover:bg-hover";
 
 // The strip under a list that holds Pagination, LoadMore or a note.
-export const LIST_FOOTER = "border-t border-line px-4 py-3 text-small text-ink-muted md:px-6";
+// The boards draw it under the last row's own faint divider, no darker line.
+export const LIST_FOOTER = "border-t border-divider px-4 py-3 text-small text-ink-muted md:px-6";
 
 // The first column of a table that scrolls sideways stays put while the rest
 // scrolls under it. It sits over those cells (z-1) but under a sticky

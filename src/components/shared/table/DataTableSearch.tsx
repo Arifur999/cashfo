@@ -38,7 +38,7 @@ const DataTableSearch = ({ value, onDebouncedChange, placeholder: placeholderKey
   };
 
   return (
-    <InputGroup className={cn("h-9.5 w-full rounded-md border-line-strong bg-surface", width === "sm" ? "sm:w-60" : "sm:w-95")}>
+    <InputGroup className={cn("h-9.5 w-full rounded-field border-input bg-surface has-[[data-slot=input-group-control]:focus-visible]:border-focus-ring has-[[data-slot=input-group-control]:focus-visible]:ring-0 has-[[data-slot=input-group-control]:focus-visible]:focus-halo dark:bg-surface", width === "sm" ? "sm:w-60" : "sm:w-95")}>
       <InputGroupAddon>
         <Search aria-hidden="true" />
       </InputGroupAddon>
