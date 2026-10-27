@@ -20,7 +20,8 @@ interface WithdrawDialogProps {
   open: boolean;
   onClose: () => void;
   businessId: string;
-  availableBalance: string;
+  // What the old sign-up bonuses still hold.
+  amount: number;
   currency: string;
   // A business workspace's name, said in the picker's label; null in the
   // reader's own personal workspace.
@@ -35,9 +36,10 @@ interface WalletLoad {
   failed: boolean;
 }
 
-// Move every available reward into one of the user's own wallets or
-// savings wallets, in one posting.
-export function WithdrawDialog({ open, onClose, businessId, availableBalance, currency, workspaceName }: WithdrawDialogProps) {
+// The old way, kept for the old ৳ 100 sign-up bonuses: move what they still
+// hold into one of the user's own wallets or savings wallets, in one
+// posting, as Referral income.
+export function WithdrawDialog({ open, onClose, businessId, amount, currency, workspaceName }: WithdrawDialogProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
   // The wallets, fetched each time the dialog opens (and on Try again);
@@ -80,7 +82,6 @@ export function WithdrawDialog({ open, onClose, businessId, availableBalance, cu
   const savings = load?.savings ?? [];
   const loading = open && load === null;
   const failed = !!load?.failed;
-  const amount = Number(availableBalance);
   const target = [...wallets, ...savings].find((account) => account.id === accountId) ?? null;
 
   function retry() {
@@ -117,17 +118,17 @@ export function WithdrawDialog({ open, onClose, businessId, availableBalance, cu
       <AlertDialogContent className="w-110 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
-            <AlertDialogTitle className="text-h3 text-ink">{t("Withdraw your rewards")}</AlertDialogTitle>
+            <AlertDialogTitle className="text-h3 text-ink">{t("Move your sign-up bonus")}</AlertDialogTitle>
             <button type="button" onClick={onClose} disabled={isPending} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken disabled:opacity-50">
               <X className="size-4.5" aria-hidden="true" />
             </button>
           </div>
           <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">
-            {t("Everything available goes in one go. Pick where it lands.")}
+            {t("The old sign-up bonus goes in one go, as Referral income. Pick where it lands.")}
           </AlertDialogDescription>
           <div className="flex flex-col gap-4 px-6 py-4">
             <div className="flex items-baseline justify-between rounded-md bg-mint-50 px-4 py-3">
-              <span className="text-small font-medium text-ink-2">{t("Available to withdraw")}</span>
+              <span className="text-small font-medium text-ink-2">{t("Sign-up bonus")}</span>
               <span className="text-h3 font-bold text-emerald tabular-nums">{formatCurrency(amount, currency, locale)}</span>
             </div>
             {/* No error of its own for an empty list: the picker then says

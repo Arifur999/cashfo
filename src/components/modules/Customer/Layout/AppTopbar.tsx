@@ -133,7 +133,7 @@ function Topbar() {
       {/* Phones: the page's own name on the titled pages, else the app's. */}
       {titled && crumb ? (
         <span className="flex min-w-0 flex-1 flex-col md:hidden">
-          <span className="truncate text-title font-semibold text-ink">{t(crumb.heading)}</span>
+          <span className="truncate text-title font-semibold text-ink">{extras?.title ?? t(crumb.heading)}</span>
           {extras?.subtitle}
         </span>
       ) : habit ? (
