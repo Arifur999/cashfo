@@ -30,7 +30,7 @@ export function LockCountdown({ expiresAt, look }: LockCountdownProps) {
     <span
       role="timer"
       aria-label={t("Vault locks in {time}", { time })}
-      className={cn("flex items-center tabular-nums", look === "bar" ? "gap-1 text-caption font-normal text-emerald" : "h-9.5 gap-2 rounded-full bg-mint-50 px-3 text-small font-semibold text-brand-ink")}
+      className={cn("flex items-center tabular-nums", look === "bar" ? "gap-1 text-caption font-normal text-emerald" : "h-9.5 gap-2 rounded-full border border-emerald-line bg-emerald-soft px-3 text-small font-semibold text-brand-ink")}
     >
       <span className={cn("rounded-full bg-emerald", look === "bar" ? "size-1.75" : "size-2")} aria-hidden="true" />
       {t("Unlocked · locks in {time}", { time })}

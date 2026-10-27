@@ -18,6 +18,7 @@ import {
   hostOf,
   isLockedMessage,
   issuesOf,
+  nameParts,
   normalizeUrl,
   NO_CONNECTION_MESSAGE,
   parseExpiry,
@@ -66,13 +67,19 @@ describe("passwords", () => {
   });
 
   it("checks the vault password rules", () => {
-    const rules = vaultRules("Vault1234", "Vault1234", "ChangeMe123!");
-    expect(rules.map((r) => r.ok)).toEqual([true, true, true, true]);
+    const rules = vaultRules("Vault1234", "Vault1234", "ChangeMe123!", "Shirin Akter");
+    expect(rules.map((r) => r.ok)).toEqual([true, true, true, true, true]);
     expect(rulesMet(rules)).toBe(true);
     expect(rulesMet(vaultRules("Vault1234", "Vault123", "ChangeMe123!"))).toBe(false);
     expect(vaultRules("ChangeMe123!", "ChangeMe123!", "ChangeMe123!").find((r) => r.key === "notAccount")?.ok).toBe(false);
     expect(vaultRules("onlyletters", "onlyletters", "x").find((r) => r.key === "mix")?.ok).toBe(false);
-    expect(vaultRules("ab1", "ab1", "x").find((r) => r.key === "length")?.ok).toBe(false);
+    // Eight characters at least, as the API asks now.
+    expect(vaultRules("abc1234", "abc1234", "x").find((r) => r.key === "length")?.ok).toBe(false);
+    expect(vaultRules("abcd1234", "abcd1234", "x").find((r) => r.key === "length")?.ok).toBe(true);
+    // The name's runs of three letters or more, in any case; "Md" alone is no name part.
+    expect(vaultRules("shirin2026", "shirin2026", "x", "Shirin Akter").find((r) => r.key === "noName")?.ok).toBe(false);
+    expect(vaultRules("garden md 77", "garden md 77", "x", "Md Rafiq").find((r) => r.key === "noName")?.ok).toBe(true);
+    expect(nameParts("Md. Rafiqul Islam")).toEqual(["rafiqul", "islam"]);
   });
 
   it("generates a password of the asked length from the sets picked", () => {

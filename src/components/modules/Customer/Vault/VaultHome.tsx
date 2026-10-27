@@ -448,15 +448,14 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
 
   return (
     // Focus lands here after the unlock: a named region a screen reader announces.
-    <PageFrame ref={frame} tabIndex={-1} role="region" aria-label={t("Password vault")} className={cn(empty ? "gap-6" : "gap-4", "outline-none")}>
+    <PageFrame ref={frame} tabIndex={-1} role="region" aria-label={t("Password Manager")} className={cn(empty ? "gap-6" : "gap-4.5", "outline-none")}>
       <TopbarExtras record={showCheckup ? t("Security checkup") : undefined} subtitle={subtitle} action={lockButton} />
       {/* Phones name the page in the top bar, so the heading is for screen readers there. */}
-      <h1 className="sr-only md:hidden">{t("Password vault")}</h1>
+      {/* The checkup (design-v4 VaultHealth) has no header: the top bar names it, a back link leads home. */}
+      <h1 className={cn("sr-only", !showCheckup && "md:hidden")}>{t(showCheckup ? "Security checkup" : "Password Manager")}</h1>
       <PageHeader
-        className="max-md:hidden"
-        eyebrow={t("Vault")}
-        tone="vault"
-        title={t("Password vault")}
+        className={cn("max-md:hidden", showCheckup && "hidden")}
+        title={t("Password Manager")}
         description={t("Logins for your other accounts: Facebook, bank, email and more.")}
         actions={
           <>
@@ -533,7 +532,7 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
           </div>
 
           {checkup && flagged.size > 0 && (
-            <button type="button" onClick={openCheckup} className="flex items-center gap-2 rounded-md border border-warning-fill/40 bg-warning-soft px-3 py-2.5 text-left text-small text-warning xl:hidden">
+            <button type="button" onClick={openCheckup} className="flex items-center gap-2 rounded-[10px] border border-warning-line bg-warning-50 px-3 py-2.5 text-left text-small text-warning-ink xl:hidden">
               <ShieldAlert className="size-4 shrink-0" aria-hidden="true" />
               <span className="flex-1">{summary}</span>
               <span className="font-semibold">{t("Security checkup")}</span>
@@ -555,7 +554,7 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
                   );
                 })}
               </div>
-              <span id="vault-categories" className="mx-3 mt-3 mb-2 text-caption font-semibold text-ink-muted">
+              <span id="vault-categories" className="mx-2.5 mt-3 mb-1.5 text-[11px] leading-normal font-semibold tracking-[0.06em] text-ink-muted uppercase">
                 {t("Categories")}
               </span>
               <div role="group" aria-labelledby="vault-categories" className="flex flex-col gap-0.5">
@@ -574,12 +573,12 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
                 })}
               </div>
               {checkup && (
-                <button type="button" onClick={openCheckup} className={cn("mt-3 flex flex-col gap-1 rounded-md border p-3 text-left", flagged.size ? "border-warning-fill/40 bg-warning-soft text-warning" : "border-line bg-mint-50 text-brand-ink")}>
-                  <span className="flex items-center gap-2 text-small font-bold">
-                    {flagged.size ? <ShieldAlert className="size-4" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}
+                <button type="button" onClick={openCheckup} className={cn("mt-3 flex flex-col gap-1 rounded-[10px] border p-3 text-left", flagged.size ? "border-warning-line bg-warning-50 text-warning-ink" : "border-emerald-line bg-emerald-soft text-brand-ink")}>
+                  <span className="flex items-center gap-1.5 text-small font-bold">
+                    {flagged.size ? <ShieldAlert className="size-3.75 text-warning" aria-hidden="true" /> : <ShieldCheck className="size-3.75" aria-hidden="true" />}
                     {t("Security checkup")}
                   </span>
-                  <span className="text-small leading-normal">{summary}</span>
+                  <span className="text-[12.5px] leading-[1.45]">{summary}</span>
                 </button>
               )}
             </div>

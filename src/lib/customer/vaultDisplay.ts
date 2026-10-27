@@ -8,8 +8,11 @@ import type { VaultCheckup, VaultEntryCategory, VaultEntrySummary } from "./api"
 import type { ActionResult } from "./authActions";
 import type { VaultEntryInput } from "./passwordVaultActions";
 
-export const MIN_VAULT_PASSWORD = 6;
+// The API's rule for a vault password (backend vault-password-rule.ts).
+export const MIN_VAULT_PASSWORD = 8;
 export const MAX_VAULT_PASSWORD = 128;
+// What the strength meter calls too short for any password.
+const MIN_STRENGTH_LENGTH = 6;
 
 export type StrengthLabel = "Too short" | "Weak" | "Fair" | "Good" | "Strong";
 
@@ -22,7 +25,7 @@ export interface Strength {
 // A rough measure: length and the kinds of characters used.
 export function passwordStrength(password: string): Strength {
   if (password.length === 0) return { score: 0, label: "Too short" };
-  if (password.length < MIN_VAULT_PASSWORD) return { score: 1, label: "Too short" };
+  if (password.length < MIN_STRENGTH_LENGTH) return { score: 1, label: "Too short" };
   let kinds = 0;
   if (/[a-z]/.test(password)) kinds++;
   if (/[A-Z]/.test(password)) kinds++;
@@ -49,22 +52,42 @@ export function passwordDetail(password: string): { key: string; count: number }
 }
 
 export interface Rule {
-  key: "length" | "mix" | "notAccount" | "match";
+  key: "length" | "mix" | "noName" | "notAccount" | "match";
   // Dictionary key.
   label: string;
   ok: boolean;
 }
 
-// The rules a new vault password must meet (the API's own, plus the two the
-// page can check on its own).
-export function vaultRules(password: string, confirm: string, accountPassword: string): Rule[] {
+// The parts of a name a vault password may not contain: each run of
+// letters three or more long, as the API counts them ("Md" and "Al" would
+// refuse too many ordinary passwords).
+export function nameParts(name: string | null | undefined): string[] {
+  return [...new Set((name ?? "").toLocaleLowerCase().match(/\p{L}{3,}/gu) ?? [])];
+}
+
+// The rules a new vault password must meet, the API's own (backend
+// vault-password-rule.ts): 8 to 128 characters, letters and numbers, not
+// the person's name, not the account password; and the two boxes match.
+// With no account password typed (a reset from a Google-only account) the
+// API is the one to check that rule.
+export function vaultRules(password: string, confirm: string, accountPassword: string, name?: string | null): Rule[] {
+  const lower = password.toLocaleLowerCase();
   return [
-    { key: "length", label: "At least 6 characters", ok: password.length >= MIN_VAULT_PASSWORD && password.length <= MAX_VAULT_PASSWORD },
-    { key: "mix", label: "Letters and numbers", ok: /[A-Za-z]/.test(password) && /\d/.test(password) },
+    { key: "length", label: "At least 8 characters", ok: password.length >= MIN_VAULT_PASSWORD && password.length <= MAX_VAULT_PASSWORD },
+    { key: "mix", label: "Letters and numbers", ok: /\p{L}/u.test(password) && /\d/.test(password) },
+    { key: "noName", label: "Doesn't contain your name", ok: password.length > 0 && !nameParts(name).some((part) => lower.includes(part)) },
     { key: "notAccount", label: "Not your account password", ok: password.length > 0 && password !== accountPassword },
     { key: "match", label: "Both match", ok: password.length > 0 && password === confirm },
   ];
 }
+
+// The API's reasons for refusing a new vault password, as the rule each
+// one breaks (VAULT_PASSWORD_WEAK covers both the length and the mix).
+export const VAULT_PASSWORD_REASONS: Record<string, Rule["key"]> = {
+  VAULT_PASSWORD_WEAK: "length",
+  VAULT_PASSWORD_HAS_NAME: "noName",
+  VAULT_PASSWORD_IS_ACCOUNT_PASSWORD: "notAccount",
+};
 
 export const rulesMet = (rules: Rule[]): boolean => rules.every((rule) => rule.ok);
 
@@ -115,6 +138,14 @@ export function parseExpiry(expiresIn: string): number {
   return n * (unit === "ms" ? 1 : unit === "s" ? 1000 : unit === "m" ? 60_000 : unit === "h" ? 3_600_000 : 86_400_000);
 }
 
+// The lock times offered (PATCH /api/vault/settings takes 1 to 30
+// minutes; the server may cap them lower).
+export const LOCK_MINUTE_CHOICES = [1, 2, 5, 10, 15, 30] as const;
+
+// How long an unlock lasts, in milliseconds: the seconds the API sends,
+// else its span string.
+export const unlockSpanMs = (unlock: { expiresIn: string; expiresInSec?: number }): number => (unlock.expiresInSec && unlock.expiresInSec > 0 ? unlock.expiresInSec * 1000 : parseExpiry(unlock.expiresIn));
+
 // "8:24" from milliseconds left; never negative.
 export function countdownText(msLeft: number): string {
   const total = Math.max(0, Math.ceil(msLeft / 1000));
@@ -136,11 +167,12 @@ export const NO_CONNECTION_MESSAGE = "Check your internet and try again. Nothing
 // answering. Read that as one more failed answer, so a spinner never hangs
 // and the page never falls to the error screen (losing the unlock and
 // whatever was being typed).
-export async function settle<T>(call: Promise<ActionResult<T>>): Promise<ActionResult<T>> {
+// The result keeps its own type (a vault call's carries the API's reason).
+export async function settle<R extends ActionResult<unknown>>(call: Promise<R>): Promise<R> {
   try {
     return await call;
   } catch {
-    return { success: false, message: NO_CONNECTION_MESSAGE };
+    return { success: false, message: NO_CONNECTION_MESSAGE } as R;
   }
 }
 
@@ -301,7 +333,7 @@ export const QUICK_LOGINS: QuickLogin[] = [
   { title: "Facebook", category: "SOCIAL", website: "facebook.com", letter: "F", kind: "Social", tint: TINT.blue },
   { title: "Gmail", category: "EMAIL", website: "mail.google.com", letter: "G", kind: "Email", tint: TINT.red },
   { title: "bKash", category: "MOBILE_BANKING", website: "bkash.com", letter: "b", kind: "Mobile banking", tint: TINT.rose },
-  { title: "Islami Bank", category: "BANK", website: "islamibankbd.com", letter: "I", kind: "Bank", tint: TINT.mint },
+  { title: "Dutch-Bangla Bank", category: "BANK", website: "dutchbanglabank.com", letter: "D", kind: "Bank", tint: TINT.mint },
   { title: "Daraz", category: "SHOPPING", website: "daraz.com.bd", letter: "D", kind: "Shopping", tint: TINT.amber },
   { title: "Home Wi-Fi", category: "WIFI", website: "", letter: "W", kind: "Wi-Fi", tint: TINT.teal, translate: true },
   { title: "Office email", category: "WORK", website: "", letter: "O", kind: "Work", tint: TINT.blue, translate: true },

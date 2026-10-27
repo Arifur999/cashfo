@@ -9,8 +9,11 @@ import PageHeader from "@/components/smartly/PageHeader";
 import StatePanel from "@/components/smartly/StatePanel";
 import type { VaultEntrySummary } from "@/lib/customer/api";
 import { listVaultEntriesAction } from "@/lib/customer/passwordVaultActions";
-import { draftFor, isLockedMessage, parseExpiry, settle } from "@/lib/customer/vaultDisplay";
+import type { VaultUnlock } from "@/lib/customer/passwordVaultActions";
+import { draftFor, isLockedMessage, settle, unlockSpanMs } from "@/lib/customer/vaultDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 import { VaultGate } from "./VaultGate";
 import { VaultHome, type DrawerState, type VaultLoad } from "./VaultHome";
 import { VaultPasswordForm, type VaultPasswordMode } from "./VaultPasswordForm";
@@ -26,6 +29,15 @@ interface VaultPageClientProps {
   entryCount?: number;
   // false for a Google-only account, which has no account password to give.
   hasAccountPassword?: boolean;
+  // How long one unlock lasts: the person's choice (null = the server's),
+  // and what it really is; the status may lack both (an older backend).
+  lockMinutes?: number | null;
+  effectiveMinutes?: number;
+  // Unlock tries left now, and the seconds a locked-out vault still waits.
+  triesLeft?: number;
+  retryAfterSec?: number;
+  // A vault password may not contain the person's name.
+  userName?: string;
   // A super admin's read-only support view, which the API refuses to unlock.
   readOnly?: boolean;
 }
@@ -35,23 +47,27 @@ type Mode = "unlock" | VaultPasswordMode | "open";
 interface Session {
   token: string;
   expiresAt: number;
+  // How long this unlock lasts.
+  spanMs: number;
 }
 
 // How long before the lock the page says so, while there is time to save.
 const WARN_BEFORE_MS = 60_000;
 
-// Vault › Password vault. The unlocked token lives only here, in React
+// Vault › Password Manager. The unlocked token lives only here, in React
 // state, so leaving the page locks the vault. So does the drawer's draft:
 // in memory, never stored, and kept through a lock for the next unlock.
-export function VaultPageClient({ hasVaultPassword, entryCount, hasAccountPassword, readOnly = false }: VaultPageClientProps) {
-  const { t } = useLocale();
+export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinutes = null, effectiveMinutes = 10, retryAfterSec = 0, userName, readOnly = false }: VaultPageClientProps) {
+  const { t, locale } = useLocale();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>(hasVaultPassword === false ? "setup" : "unlock");
   const [session, setSession] = useState<Session | null>(null);
   const [entries, setEntries] = useState<VaultEntrySummary[]>([]);
   const [load, setLoad] = useState<VaultLoad>("loading");
-  // For a reset's warning: the page's count, then the list's as last seen.
-  const [count, setCount] = useState(entryCount);
+  // The lock time, as the status said and as changed on the unlock form.
+  const [lockTime, setLockTime] = useState({ lockMinutes, effectiveMinutes });
+  // When a vault locked out by wrong tries at page load takes tries again.
+  const [lockedUntil] = useState(() => (retryAfterSec > 0 ? Date.now() + retryAfterSec * 1000 : 0));
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
   // The token the answers on their way belong to; a lock in between drops them.
   const live = useRef<string | null>(null);
@@ -103,7 +119,6 @@ export function VaultPageClient({ hasVaultPassword, entryCount, hasAccountPasswo
 
   function lock(message?: string) {
     live.current = null;
-    if (load === "ready") setCount(entries.length);
     setSession(null);
     setEntries([]);
     setLoad("loading");
@@ -116,7 +131,10 @@ export function VaultPageClient({ hasVaultPassword, entryCount, hasAccountPasswo
   // Checked against the clock every second, so a phone woken from sleep
   // locks at once; nothing is drawn again until the warning or the lock
   // (the countdown on screen ticks on its own).
-  const expire = useEffectEvent(() => lock(t("The vault locked itself after 10 minutes.")));
+  const expire = useEffectEvent(() => {
+    const minutes = session ? Math.max(1, Math.round(session.spanMs / 60_000)) : 10;
+    lock(t(minutes === 1 ? "The vault locked itself after {count} minute." : "The vault locked itself after {count} minutes.", { count: formatCount(minutes, locale) }));
+  });
   const warn = useEffectEvent(() => toast.warning(t(drawer?.open ? "The vault locks in 1 minute. Save what you're editing." : "The vault locks in 1 minute.")));
   useEffect(() => {
     if (!session) return;
@@ -149,26 +167,19 @@ export function VaultPageClient({ hasVaultPassword, entryCount, hasAccountPasswo
     });
   }
 
-  function unlocked(token: string, expiresIn: string) {
+  function unlocked({ vaultToken: token, ...span }: VaultUnlock) {
     live.current = token;
-    setSession({ token, expiresAt: Date.now() + parseExpiry(expiresIn) });
+    const spanMs = unlockSpanMs(span);
+    setSession({ token, expiresAt: Date.now() + spanMs, spanMs });
     setMode("open");
     loadEntries(token);
-  }
-
-  // A reset empties the vault: a login being edited went with it, though a
-  // new one being typed can still be saved.
-  function passwordSet(formMode: VaultPasswordMode) {
-    if (formMode !== "reset") return;
-    setCount(0);
-    setDrawer((current) => (current && !current.draft.editing ? current : null));
   }
 
   const header = (
     <>
       {/* Phones name the page in the top bar, so the heading is for screen readers there. */}
-      <h1 className="sr-only md:hidden">{t("Password vault")}</h1>
-      <PageHeader className="max-md:hidden" eyebrow={t("Vault")} tone="vault" title={t("Password vault")} description={t("Logins for your other accounts: Facebook, bank, email and more.")} />
+      <h1 className="sr-only md:hidden">{t("Password Manager")}</h1>
+      <PageHeader className="max-md:hidden" title={t("Password Manager")} description={t("Logins for your other accounts: Facebook, bank, email and more.")} />
     </>
   );
 
@@ -205,27 +216,30 @@ export function VaultPageClient({ hasVaultPassword, entryCount, hasAccountPasswo
   const formMode: VaultPasswordMode | null = mode === "setup" || mode === "change" || mode === "reset" ? mode : null;
 
   return (
-    <PageFrame className="gap-6 max-md:pt-4">
+    <PageFrame className={cn(formMode ? "gap-6" : "gap-7", "max-md:pt-4")}>
       {header}
       <VaultGate>
         {formMode ? (
           <VaultPasswordForm
             key={formMode}
             mode={formMode}
-            entryCount={count}
             hasAccountPassword={hasAccountPassword}
-            onUnlocked={(token, expiresIn) => {
-              passwordSet(formMode);
-              unlocked(token, expiresIn);
-            }}
-            onDone={() => {
-              passwordSet(formMode);
-              setMode("unlock");
-            }}
+            userName={userName}
+            onUnlocked={unlocked}
+            onDone={() => setMode("unlock")}
             onBack={() => setMode("unlock")}
           />
         ) : (
-          <VaultUnlockForm onUnlocked={unlocked} onForgot={() => setMode("reset")} onChange={() => setMode("change")} onNoVault={() => setMode("setup")} />
+          <VaultUnlockForm
+            onUnlocked={unlocked}
+            onForgot={() => setMode("reset")}
+            onChange={() => setMode("change")}
+            onNoVault={() => setMode("setup")}
+            lockMinutes={lockTime.lockMinutes}
+            effectiveMinutes={lockTime.effectiveMinutes}
+            onLockTime={(next, effective) => setLockTime({ lockMinutes: next, effectiveMinutes: effective })}
+            lockedUntil={lockedUntil}
+          />
         )}
       </VaultGate>
     </PageFrame>

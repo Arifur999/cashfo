@@ -128,7 +128,7 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
         </SheetHeader>
 
         <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col" autoComplete="off">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-4" : "px-4 py-3")}>
+          <div className={cn("flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto", wide ? "px-6 py-4" : "px-4 py-3")}>
             {draft.kept && (
               <Banner inline tone="mint" icon={<Info />}>
                 {t("We kept the login you were editing.")}
@@ -138,7 +138,7 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
             {/* Real radios: Tab reaches the picked one, arrows move along. */}
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-2 text-body font-medium text-ink">{t("Category")}</legend>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {VAULT_CATEGORIES.map((value) => {
                   const Icon = VAULT_CATEGORY_ICONS[value];
                   const on = value === draft.category;
@@ -146,9 +146,9 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
                     <label
                       key={value}
                       className={cn(
-                        "flex h-7.5 cursor-pointer items-center gap-2 rounded-full border py-0 pr-3 pl-2 text-small text-ink pointer-coarse:h-11",
+                        "flex h-7.5 cursor-pointer items-center gap-1.5 rounded-full border py-0 pr-2.5 pl-1.5 text-[12.5px] text-ink pointer-coarse:h-11",
                         "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring",
-                        on ? "border-[1.5px] border-emerald bg-mint-50 font-bold" : "border-line bg-surface font-medium hover:border-line-strong",
+                        on ? "border-[1.5px] border-emerald bg-emerald-soft font-bold" : "border-line bg-surface font-medium hover:border-line-strong",
                       )}
                     >
                       <input type="radio" name="vault-category" value={value} checked={on} onChange={() => set({ category: value })} className="sr-only" />
@@ -182,11 +182,11 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
                   }
                 />
               </Field>
-              <Field htmlFor="ve-site" label={label(t("Website"), true)}>
+              <Field htmlFor="ve-site" label={label(t("Website"))}>
                 <Input id="ve-site" size={size} type="text" inputMode="url" value={draft.website} onChange={(event) => set({ website: event.target.value })} maxLength={200} placeholder="rokomari.com" autoComplete="off" name="vault-site" />
               </Field>
             </div>
-            <Field htmlFor="ve-user" label={label(t("Username or email"), true)}>
+            <Field htmlFor="ve-user" label={label(t("Username or email"))}>
               <Input id="ve-user" size={size} value={draft.username} onChange={(event) => set({ username: event.target.value })} maxLength={200} autoComplete="off" name="vault-user" />
             </Field>
 
@@ -208,14 +208,14 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
                   name="vault-secret"
                   frameClassName="flex-1"
                 />
-                <Button type="button" variant="soft" onClick={toggleGenerator} aria-expanded={generatorOpen} className={wide ? "h-11" : "h-13"}>
+                <Button type="button" variant="soft" onClick={toggleGenerator} aria-expanded={generatorOpen} className={cn("border border-emerald-line px-3 text-[13.5px]", wide ? "h-11" : "h-13")}>
                   <Sparkles />
                   {t("Generate")}
                 </Button>
               </div>
             </Field>
             {/* Advice only: a short PIN is saved like any other password. */}
-            {detail && <StrengthMeter password={draft.password} detail={t(detail.key, { count: formatCount(detail.count, locale) })} className="-mt-2" />}
+            {detail && <StrengthMeter password={draft.password} detail={t(detail.key, { count: formatCount(detail.count, locale) })} fixedBars className="-mt-1.5" />}
             {generatorOpen && (
               <PasswordGenerator
                 onGenerate={(password) => {
@@ -249,8 +249,8 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
             )}
           </div>
 
-          <div className={cn("flex items-center justify-end gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 py-3")}>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+          <div className={cn("flex items-center justify-end gap-2.5 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 py-3")}>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
             <Button type="submit" variant="action" disabled={isPending} className="px-5">
