@@ -73,21 +73,21 @@ export function BookNotesCard({ book, notes, today }: BookNotesCardProps) {
   const added = (note: BookNote) => (toDateInputValue(note.createdAt) === today ? t("Added today") : t("Added {date}", { date: instantText(note.createdAt, locale) }));
 
   return (
-    <Card padding="none" className="flex min-w-0 flex-col gap-3 p-5">
+    <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-md px-5 py-4.5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="min-w-0 truncate text-title font-semibold text-ink">{t("Notes from {title}", { title: book.title })}</h2>
-        <span className="shrink-0 text-small text-ink-muted">{t(notes.length === 1 ? "{count} note" : "{count} notes", { count: count(notes.length) })}</span>
+        <span className="shrink-0 text-[12.5px] text-ink-muted">{t(notes.length === 1 ? "{count} note" : "{count} notes", { count: count(notes.length) })}</span>
       </div>
       {notes.length === 0 ? (
         <p className="text-small text-ink-muted">{t("Keep the lines you like and your thoughts as you read.")}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {shown.map((note) => (
-            <li key={note.id} className="group flex gap-3 rounded-md border border-warning-soft bg-warning-soft p-3">
-              {note.page !== null && <span className="flex h-5.5 shrink-0 items-center rounded-sm border border-warning-fill/40 bg-surface px-2 text-caption font-bold text-warning tabular-nums">{t("p. {page}", { page: count(note.page) })}</span>}
+            <li key={note.id} className="group flex gap-3 rounded-field border border-warning-soft bg-warning-50 px-3 py-2.5">
+              {note.page !== null && <span className="flex h-5.5 shrink-0 items-center rounded-[6px] border border-warning-line bg-surface px-1.75 text-[11.5px] font-bold text-warning-ink tabular-nums">{t("p. {page}", { page: count(note.page) })}</span>}
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-body leading-[1.45] wrap-break-word text-ink">{note.text}</span>
-                <span className="text-caption text-warning">{added(note)}</span>
+                <span className="text-[13.5px] leading-[1.45] wrap-break-word text-ink">{note.text}</span>
+                <span className="text-[11.5px] text-warning-ink">{added(note)}</span>
               </span>
               {/* Shown on hover and focus with a mouse; always under a finger or on a phone. */}
               <button type="button" onClick={() => setRemoving(note)} disabled={isPending} aria-label={t("Remove the note")} className="flex size-6 shrink-0 items-center justify-center self-start rounded-sm text-warning opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-surface focus-visible:opacity-100 disabled:opacity-40 max-md:opacity-100 pointer-coarse:size-9 pointer-coarse:opacity-100">
@@ -104,8 +104,8 @@ export function BookNotesCard({ book, notes, today }: BookNotesCardProps) {
       )}
       <form onSubmit={add} className="mt-auto flex gap-2">
         <Input size="sm" value={text} onChange={(event) => setText(event.target.value)} maxLength={500} placeholder={t("Write a note or a line you liked…")} aria-label={t("New note")} frameClassName="min-w-0 flex-1 px-3 pointer-coarse:h-11" />
-        <Input size="sm" inputMode="numeric" value={page} onChange={(event) => setPage(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 5))} placeholder={t("Page")} aria-label={t("Page")} aria-invalid={pageNumber !== null && pageNumber > book.totalPages} frameClassName="w-18 px-3 pointer-coarse:h-11" />
-        <Button type="submit" variant="soft" size="sm" disabled={!valid || isPending} className="h-9.5 px-4 pointer-coarse:h-11">
+        <Input size="sm" inputMode="numeric" value={page} onChange={(event) => setPage(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 5))} placeholder={t("Page")} aria-label={t("Page")} aria-invalid={pageNumber !== null && pageNumber > book.totalPages} frameClassName="w-18 px-2.5 pointer-coarse:h-11" />
+        <Button type="submit" variant="soft" size="sm" disabled={!valid || isPending} className="h-9.5 px-3.5 pointer-coarse:h-11">
           {t("Add")}
         </Button>
       </form>

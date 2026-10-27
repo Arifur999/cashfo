@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Info, MoreVertical, Plus, Target, Trash2, X } from "lucide-react";
+import { Check, Info, MoreVertical, Plus, Target, Trash2, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useOptimistic, useState, useSyncExternalStore, useTransition } from "react";
@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useReminderBook } from "../Reminders";
 import { CHECK_FOCUS } from "../Tracker/PanelParts";
 import { withCheck } from "../trackerChecks";
+import { ChallengeTile } from "./ChallengeTile";
 import { NewChallengeDialog } from "./NewChallengeDialog";
 
 interface ChallengesHomePageClientProps {
@@ -37,7 +38,7 @@ interface ChallengesHomePageClientProps {
 
 const NOTICE_KEY = "smartly.challenges.renamed";
 const NOTICE_EVENT = "smartly:challenges-notice";
-const FINISHED_COLUMNS = "md:grid-cols-[minmax(0,1fr)_200px_240px_80px]";
+const FINISHED_COLUMNS = "md:grid-cols-[minmax(0,1fr)_220px_260px_90px]";
 const FINISHED_ID = "finished-challenges";
 const STEP = 50;
 
@@ -134,14 +135,14 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
   const visibleFinished = finished.slice(0, shownFinished);
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 md:pt-7">
       <PageHeader
         eyebrow={t("Habits")}
         tone="habits"
         title={t("Challenges")}
         description={t("Pick a number of days, then tick it off each day until you reach the end.")}
         actions={
-          <Button onClick={() => setDialog({ open: true, days: null })}>
+          <Button onClick={() => setDialog({ open: true, days: null })} className="rounded-sm">
             <Plus strokeWidth={2.25} />
             {t("New challenge")}
           </Button>
@@ -149,14 +150,14 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
       />
 
       {notice && (
-        // Its own box, not the shared Banner: the board draws it bordered and in the body size.
-        <div role="note" className="flex items-center gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body text-ink-2">
-          <Info className="size-5 shrink-0 text-ink-muted" aria-hidden="true" />
+        // Its own box, not the shared Banner: the board draws it as a plain slate strip.
+        <div role="note" className="flex items-center gap-2.5 rounded-field bg-surface-sunken px-3.5 py-2.5 text-[13.5px] text-ink-2">
+          <Info className="size-4 shrink-0 text-ink-soft" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             <b className="font-semibold text-ink">{t("\"Others\" is now called Challenges.")}</b> {t("Everything you made there is here.")}
           </span>
-          <button type="button" onClick={dismiss} aria-label={t("Dismiss")} className="flex size-8 shrink-0 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
-            <X className="size-4" aria-hidden="true" />
+          <button type="button" onClick={dismiss} aria-label={t("Dismiss")} className="flex size-7 shrink-0 items-center justify-center rounded-[6px] text-ink-muted hover:bg-surface hover:text-ink pointer-coarse:size-11">
+            <X className="size-3.75" aria-hidden="true" />
           </button>
         </div>
       )}
@@ -166,7 +167,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
           {t("Going on now")}
         </h2>
         {going.length === 0 ? (
-          <Card padding="none" className="flex flex-col items-center gap-2 px-5 py-8 text-center">
+          <Card padding="none" className="flex flex-col items-center gap-2 rounded-md px-5 py-8 text-center">
             <IconTile tone="habits" size={44}>
               <Target />
             </IconTile>
@@ -183,19 +184,17 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
               const long = tracker.totalDays > MAX_STRIP_DAYS;
               const totals = long ? stripTotals(tracker, window) : null;
               return (
-                <Card key={tracker.id} padding="none" className="flex min-w-0 flex-col gap-4 p-5">
+                <Card key={tracker.id} padding="none" className="flex min-w-0 flex-col gap-4 rounded-md px-5 py-4.5">
                   <div className="flex items-center gap-3">
-                    <IconTile tone="habits" size={40}>
-                      <Target />
-                    </IconTile>
+                    <ChallengeTile name={tracker.name} />
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <Link href={`/habit-tracker/habits/others/${tracker.id}`} className="truncate text-title font-semibold text-ink hover:text-brand-ink">
                         {name}
                       </Link>
-                      <span className="text-small text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, locale, "dayMonth"), end: dayText(window.end, locale, "dayMonth") })}</span>
+                      <span className="text-[12.5px] text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, locale, "dayMonth"), end: dayText(window.end, locale, "dayMonth") })}</span>
                     </span>
                     <DropdownMenu>
-                      <DropdownMenuTrigger aria-label={t("More for {name}", { name })} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
+                      <DropdownMenuTrigger aria-label={t("More for {name}", { name })} className="flex size-8 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
                         <MoreVertical className="size-4.5" aria-hidden="true" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
@@ -210,11 +209,11 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
                     </DropdownMenu>
                   </div>
 
-                  <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-4 max-[380px]:grid-cols-1">
+                  <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-4.5 max-[380px]:grid-cols-1">
                     <span role="img" aria-label={t("Day {day} of {total}", { day: count(window.today), total: count(tracker.totalDays) })} className="relative size-28 max-[380px]:mx-auto">
                       <svg viewBox="0 0 112 112" className="size-28 -rotate-90">
-                        <circle cx="56" cy="56" r="48" className="fill-none stroke-surface-sunken" strokeWidth="10" />
-                        <circle cx="56" cy="56" r="48" className="fill-none stroke-emerald" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${(window.today / tracker.totalDays) * circumference} ${circumference}`} />
+                        <circle cx="56" cy="56" r="48" className="fill-none stroke-line" strokeWidth="9" />
+                        <circle cx="56" cy="56" r="48" className="fill-none stroke-emerald" strokeWidth="9" strokeLinecap="round" strokeDasharray={`${(window.today / tracker.totalDays) * circumference} ${circumference}`} />
                       </svg>
                       <span className="absolute inset-0 flex flex-col items-center justify-center gap-px">
                         <span className="text-h2 text-ink">{t("Day {day}", { day: count(window.today) })}</span>
@@ -222,22 +221,22 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
                       </span>
                     </span>
                     <div className="flex min-w-0 flex-col gap-2">
-                      <span className="text-small font-semibold text-ink-muted">{t("Today")}</span>
+                      <span className="text-[12.5px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Today")}</span>
                       {items.map((item) => {
                         const checked = tracker.checks.some((c) => c.day === window.today && c.item === item);
                         return (
-                          <label key={item} className={cn("flex min-h-9.5 cursor-pointer items-center gap-3 rounded-md border px-3 py-1.5 transition-colors pointer-coarse:min-h-11", CHECK_FOCUS, checked ? "border-mint-200 bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
+                          <label key={item} className={cn("flex min-h-9.5 cursor-pointer items-center gap-2.5 rounded-[9px] border px-3 py-1.5 transition-colors pointer-coarse:min-h-11", CHECK_FOCUS, checked ? "border-emerald-line bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
                             <input type="checkbox" checked={checked} disabled={busy.has(`${tracker.id}:${item}`)} onChange={() => toggleToday(tracker, window.today, item, !checked)} className="sr-only" />
-                            <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-sm", checked ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface")}>{checked && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}</span>
+                            <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-[6px]", checked ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface")}>{checked && <Check className="size-3.25" strokeWidth={3.5} aria-hidden="true" />}</span>
                             <span className="min-w-0 flex-1 text-body font-medium wrap-break-word text-ink">{dayItself && item === DAY_ITEM ? t("Done for today") : item}</span>
                           </label>
                         );
                       })}
-                      <span className="text-small text-ink-2">{progressLine(tracker, window)}</span>
+                      <span className="text-[12.5px] text-ink-soft">{progressLine(tracker, window)}</span>
                     </div>
                   </div>
 
-                  <div className="flex min-w-0 flex-col gap-2">
+                  <div className="flex min-w-0 flex-col gap-1.5">
                     {totals ? (
                       // Too many days for a segment each: done, missed and still to come.
                       <div role="img" aria-label={t("{name}: {done} days done, {missed} missed, {left} still to come", { name, done: count(totals.done), missed: count(totals.missed), left: count(totals.toCome) })} className="flex h-3.5 overflow-hidden rounded-[3px] bg-surface-sunken">
@@ -248,11 +247,11 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
                       <div role="img" aria-label={t("{name}: day {day} of {total}", { name, day: count(window.today), total: count(tracker.totalDays) })} className="flex min-w-0 gap-0.75 overflow-hidden">
                         {Array.from({ length: tracker.totalDays }, (_, i) => i + 1).map((day) => {
                           const mark = challengeMark(tracker, window, day);
-                          return <span key={day} title={`${t("Day {day}", { day: count(day) })}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "still to come")}`} className={cn("h-3.5 min-w-0 flex-1 rounded-[3px]", mark === "done" ? "bg-emerald" : mark === "missed" ? "bg-expense-soft" : "bg-surface-sunken", day === window.today && "ring-2 ring-forest ring-inset dark:ring-emerald")} />;
+                          return <span key={day} title={`${t("Day {day}", { day: count(day) })}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "still to come")}`} className={cn("h-3.5 min-w-0 flex-1 rounded-[3px]", mark === "done" ? "bg-emerald" : mark === "missed" ? "bg-expense-soft" : "bg-surface-sunken", day === window.today && "ring-2 ring-brand-ink ring-inset")} />;
                         })}
                       </div>
                     )}
-                    <div className="flex justify-between gap-2 text-caption font-normal text-ink-muted">
+                    <div className="flex justify-between gap-2 text-[11.5px] text-ink-muted">
                       <span>{t("Day {day}", { day: count(1) })}</span>
                       <span>{t(window.daysLeft === 1 ? "{count} day to go" : "{count} days to go", { count: count(window.daysLeft) })}</span>
                       <span>{t("Day {day}", { day: count(tracker.totalDays) })}</span>
@@ -270,23 +269,23 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
           <h2 id="ch-new" className="text-title font-semibold text-ink">
             {t("Start a new one")}
           </h2>
-          <span className="text-small text-ink-muted">{t("Pick a length. You can change the name and the daily items next.")}</span>
+          <span className="text-[12.5px] text-ink-muted">{t("Pick a length. You can change the name and the daily items next.")}</span>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
           {CHALLENGE_PRESETS.map((p) => (
-            <button key={p.days} type="button" onClick={() => setDialog({ open: true, days: p.days })} className="flex flex-col items-start gap-2 rounded-lg border border-line bg-surface p-4 text-left shadow-card transition-colors hover:border-emerald">
-              <span className="flex items-baseline gap-1">
-                <span className="text-h1 text-emerald">{count(p.days)}</span>
-                <span className="text-small font-semibold text-ink-2">{t("days")}</span>
+            <button key={p.days} type="button" onClick={() => setDialog({ open: true, days: p.days })} className="flex flex-col items-start gap-1.5 rounded-md border border-line bg-surface px-4 py-3.5 text-left shadow-card transition-colors hover:border-emerald">
+              <span className="flex items-baseline gap-1.25">
+                <span className="text-[26px] font-bold tracking-[-0.02em] text-emerald">{count(p.days)}</span>
+                <span className="text-small font-semibold text-ink-soft">{t("days")}</span>
               </span>
               <span className="text-body font-semibold text-ink">{t(p.title)}</span>
-              <span className="text-small leading-snug text-ink-muted">{t(p.sub)}</span>
+              <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t(p.sub)}</span>
             </button>
           ))}
-          <button type="button" onClick={() => setDialog({ open: true, days: 0 })} className="flex flex-col items-start gap-2 rounded-lg border border-dashed border-line-strong bg-surface p-4 text-left shadow-card transition-colors hover:border-emerald">
-            <span className="text-h1 text-ink-2">+</span>
+          <button type="button" onClick={() => setDialog({ open: true, days: 0 })} className="flex flex-col items-start gap-1.5 rounded-md border border-dashed border-input bg-surface px-4 py-3.5 text-left shadow-card transition-colors hover:border-emerald">
+            <span className="text-[26px] font-bold tracking-[-0.02em] text-ink-soft">+</span>
             <span className="text-body font-semibold text-ink">{t("Your own length")}</span>
-            <span className="text-small leading-snug text-ink-muted">{t("Choose any number of days.")}</span>
+            <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Choose any number of days.")}</span>
           </button>
         </div>
       </section>
@@ -294,10 +293,11 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
       <ListCard
         id={FINISHED_ID}
         label={t("Finished")}
+        className="rounded-md"
         header={
-          <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-4 md:px-6">
+          <div className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3.5 md:px-5">
             <h2 className="text-title text-ink">{t("Finished")}</h2>
-            <span className="text-small text-ink-muted">{t(finished.length === 1 ? "{count} challenge" : "{count} challenges", { count: count(finished.length) })}</span>
+            <span className="text-[12.5px] text-ink-muted">{t(finished.length === 1 ? "{count} challenge" : "{count} challenges", { count: count(finished.length) })}</span>
           </div>
         }
         footer={
@@ -312,7 +312,8 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
           <ListEmpty title={t("Nothing finished yet.")} />
         ) : (
           <>
-            <ListHead columns={FINISHED_COLUMNS}>
+            {/* The board draws no column heads; they stay for screen readers. */}
+            <ListHead columns={FINISHED_COLUMNS} className="sr-only">
               <ListHeadCell>{t("Challenge")}</ListHeadCell>
               <ListHeadCell>{t("Dates")}</ListHeadCell>
               <ListHeadCell>{t("Days done")}</ListHeadCell>
@@ -321,25 +322,23 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
             {visibleFinished.map(({ tracker, window }) => {
               const summary = challengeSummary(tracker, window);
               return (
-                <ListRow key={tracker.id} columns={FINISHED_COLUMNS} density="relaxed">
+                <ListRow key={tracker.id} columns={FINISHED_COLUMNS} className="min-h-15.5 gap-x-5 md:px-5">
                   <ListCell className="flex min-w-0 items-center gap-3">
-                    <IconTile tone="habits" size={32}>
-                      <Target />
-                    </IconTile>
+                    <ChallengeTile name={tracker.name} size={32} />
                     <ListRowLink href={`/habit-tracker/habits/others/${tracker.id}`} className="flex min-w-0 flex-col gap-px">
                       <span className="truncate text-body font-semibold text-ink">{tracker.name ?? t("Challenge")}</span>
-                      <span className="text-small text-ink-muted">{daysText(tracker.totalDays, t, locale)}</span>
+                      <span className="text-[12.5px] text-ink-muted">{daysText(tracker.totalDays, t, locale)}</span>
                     </ListRowLink>
                   </ListCell>
-                  <ListCell className="hidden text-small text-ink-2 md:block">{t("{from} to {to}", { from: dayText(window.start, locale, "dayMonth"), to: dayText(window.end, locale, "dayMonth") })}</ListCell>
-                  <ListCell className="hidden items-center gap-3 md:flex">
+                  <ListCell className="hidden text-small text-ink-soft md:block">{t("{from} to {to}", { from: dayText(window.start, locale, "dayMonth"), to: dayText(window.end, locale, "dayMonth") })}</ListCell>
+                  <ListCell className="hidden items-center gap-2.5 md:flex">
                     <span className="block h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
                       <span className={cn("block h-full rounded-full", summary.pct >= 80 ? "bg-income" : "bg-warning-fill")} style={{ width: `${summary.pct}%` }} />
                     </span>
-                    <span className="text-small whitespace-nowrap text-ink-2 tabular-nums">{t("{done} of {total} days", { done: count(summary.done), total: count(tracker.totalDays) })}</span>
+                    <span className="text-[12.5px] whitespace-nowrap text-ink-soft tabular-nums">{t("{done} of {total} days", { done: count(summary.done), total: count(tracker.totalDays) })}</span>
                   </ListCell>
-                  <ListCell align="end" className={cn("flex items-center justify-end gap-1 text-body font-bold tabular-nums", summary.pct >= 80 ? "text-income" : "text-warning")}>
-                    <Check className="size-4" aria-hidden="true" />
+                  <ListCell align="end" className={cn("flex items-center justify-end gap-1.25 text-body font-bold tabular-nums", summary.pct >= 80 ? "text-income" : "text-warning")}>
+                    <Trophy className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
                     {count(summary.pct)}%
                   </ListCell>
                 </ListRow>

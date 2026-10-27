@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, BookOpenCheck, Gauge } from "lucide-react";
+import { BookOpen, Check, Gauge } from "lucide-react";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -45,7 +45,7 @@ export function NowReadingCard({ book, pagesToday, today, isPending, onUpdate, o
 
   if (!book) {
     return (
-      <Card padding="none" className="flex flex-col items-center justify-center gap-3 px-6 py-8 text-center">
+      <Card padding="none" className="flex flex-col items-center justify-center gap-3 rounded-md px-6 py-8 text-center">
         <IconTile size={48} tone="habits">
           <BookOpen />
         </IconTile>
@@ -77,31 +77,31 @@ export function NowReadingCard({ book, pagesToday, today, isPending, onUpdate, o
   }
 
   return (
-    <Card padding="none" className="grid gap-6 px-6 py-5 md:grid-cols-[112px_minmax(0,1fr)]">
+    <Card padding="none" className="grid gap-5.5 rounded-md px-5.5 py-5 md:grid-cols-[112px_minmax(0,1fr)]">
       <Cover title={book.title} author={book.author} color={book.color} className="hidden md:flex" />
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-2.5">
         <div className="flex flex-col-reverse items-start gap-2 sm:flex-row sm:justify-between sm:gap-3">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-caption font-semibold text-ink-muted">{t("Now reading")}</span>
-            <span className="line-clamp-2 text-h2 font-bold text-ink sm:truncate">{book.title}</span>
-            {subtitle && <span className="text-body text-ink-2">{subtitle}</span>}
+            <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Now reading")}</span>
+            <span className="line-clamp-2 text-[20px] font-bold text-ink sm:truncate">{book.title}</span>
+            {subtitle && <span className="text-[13.5px] text-ink-soft">{subtitle}</span>}
           </div>
           {pagesToday > 0 ? (
-            <Chip tone="income" className="h-7 gap-2 text-small font-semibold">
-              <BookOpenCheck className="size-4" aria-hidden="true" />
+            <Chip tone="income" className="h-7 gap-1.5 px-2.5 text-[12.5px] font-semibold">
+              <Check className="size-3.25" strokeWidth={3} aria-hidden="true" />
               {t("{count} pages today", { count: count(pagesToday) })}
             </Chip>
           ) : (
             pace !== null && (
-              <Chip tone="income" className="h-7 gap-2 text-small font-semibold">
-                <Gauge className="size-4" aria-hidden="true" />
+              <Chip tone="income" className="h-7 gap-1.5 px-2.5 text-[12.5px] font-semibold">
+                <Gauge className="size-3.5" aria-hidden="true" />
                 {t("About {count} pages a day", { count: count(pace) })}
               </Chip>
             )
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           <div className="flex justify-between gap-3 text-small">
             <span className="font-semibold text-ink tabular-nums">{pageOfText(book, t, locale)}</span>
             <span className="text-ink-muted">{count(pct)}%</span>
@@ -109,18 +109,18 @@ export function NowReadingCard({ book, pagesToday, today, isPending, onUpdate, o
           <span role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${book.title}: ${t("read")}`} className="block h-2 overflow-hidden rounded-full bg-surface-sunken">
             <span className="block h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: palette.from }} />
           </span>
-          <span className="text-small text-ink-muted">{[t("{count} pages left.", { count: count(left) }), finishLine].filter(Boolean).join(" ")}</span>
+          <span className="text-[12.5px] text-ink-muted">{[t("{count} pages left.", { count: count(left) }), finishLine].filter(Boolean).join(" ")}</span>
         </div>
 
-        <form onSubmit={submit} className="mt-auto flex flex-wrap items-end gap-3 border-t border-divider pt-3">
-          <Field htmlFor="lib-page" label={<span className="text-small font-medium text-ink-2">{t("I'm now on page")}</span>} className="gap-1">
-            <Input id="lib-page" size="sm" inputMode="numeric" value={page} onChange={(event) => setPage(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 5))} aria-invalid={page !== "" && pageNumber > book.totalPages} className="text-body-lg font-semibold" frameClassName="w-27.5 pointer-coarse:h-11" />
+        <form onSubmit={submit} className="mt-auto flex flex-wrap items-end gap-2.5 border-t border-divider pt-3">
+          <Field htmlFor="lib-page" label={<span className="text-[12.5px] font-medium text-ink-soft">{t("I'm now on page")}</span>} className="gap-1.25">
+            <Input id="lib-page" size="sm" inputMode="numeric" value={page} onChange={(event) => setPage(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 5))} aria-invalid={page !== "" && pageNumber > book.totalPages} className="text-[15px] font-semibold" frameClassName="w-27.5 pointer-coarse:h-11" />
           </Field>
-          <Button type="submit" variant="action" size="sm" className="h-9.5 pointer-coarse:h-11" disabled={!valid || isPending}>
+          <Button type="submit" variant="action" size="sm" className="h-9.5 text-[13.5px] pointer-coarse:h-11" disabled={!valid || isPending}>
             {t("Update")}
           </Button>
-          <span className="flex-1 basis-40 text-small leading-[1.45] text-ink-muted">{t("The pages you add are counted for today, which keeps your reading streak going.")}</span>
-          <Button type="button" variant="secondary" size="sm" className="h-9.5 pointer-coarse:h-11" onClick={() => onFinish(book)} disabled={isPending}>
+          <span className="flex-1 basis-40 text-[12.5px] leading-[1.45] text-ink-muted">{t("The pages you add are counted for today, which keeps your reading streak going.")}</span>
+          <Button type="button" variant="secondary" size="sm" className="h-9.5 px-3 text-[13.5px] pointer-coarse:h-11" onClick={() => onFinish(book)} disabled={isPending}>
             {t("Mark as finished")}
           </Button>
         </form>

@@ -97,19 +97,21 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
     });
   }
 
-  const pick = (on: boolean) => cn("flex h-11 items-center justify-center rounded-md border text-body font-bold transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong");
+  const pick = (on: boolean) => cn("flex h-11 items-center justify-center rounded-field border text-body font-bold transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong");
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <AlertDialogContent className="w-120 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-120 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border border-line bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} className="flex max-h-[calc(100dvh-32px)] flex-col">
-          <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
-            <AlertDialogTitle className="text-h3 text-ink">{t("New challenge")}</AlertDialogTitle>
-            <CloseButton onClick={onClose} label={t("Close")} />
+          <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-4.5">
+            <div className="flex min-w-0 flex-col gap-1">
+              <AlertDialogTitle className="text-h3 text-ink">{t("New challenge")}</AlertDialogTitle>
+              <AlertDialogDescription className="text-small text-ink-muted">{t("Day 1 is today. Tick it off each day until you reach the end.")}</AlertDialogDescription>
+            </div>
+            <CloseButton onClick={onClose} label={t("Close")} className="-my-0.5 -mr-1.5 size-8.5 rounded-full" />
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-            <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{t("Day 1 is today. Tick it off each day until you reach the end.")}</AlertDialogDescription>
-            <div className="flex flex-col gap-4 px-6 py-4">
+            <div className="flex flex-col gap-4 px-6 py-5">
               <Field htmlFor="ch-name" label={<span className="text-body font-medium text-ink">{t("Challenge name")}</span>}>
                 <Input id="ch-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={60} placeholder={t("No Sugar")} />
               </Field>
@@ -135,7 +137,7 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
                 <span className="text-body font-medium text-ink">
                   {t("Daily items")} <span className="font-normal text-ink-muted">({t("optional")})</span>
                 </span>
-                <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-md border border-line-strong bg-surface px-3 py-1.5 focus-within:border-emerald focus-within:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]">
+                <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-field border border-input bg-surface px-3 py-1.5 focus-within:border-emerald focus-within:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]">
                   {items.map((item) => (
                     <span key={item} className="flex h-7 max-w-full items-center gap-1.5 rounded-full bg-surface-sunken pr-1.5 pl-3 text-small font-medium text-ink">
                       <span className="truncate">{item}</span>

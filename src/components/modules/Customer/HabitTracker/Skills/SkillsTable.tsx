@@ -3,7 +3,7 @@
 import { Check, Pencil, Play, PlusCircle, RotateCcw, Trash2, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import Chip from "@/components/smartly/Chip";
-import { ListCard, ListCell, ListFooter, ListGroupRow, ListHead, ListHeadCell, ListRow, ListRowButton } from "@/components/smartly/list";
+import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowButton } from "@/components/smartly/list";
 import LoadMore from "@/components/smartly/LoadMore";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Skill, SkillStatus, SkillWeekDay } from "@/lib/customer/api";
@@ -54,7 +54,8 @@ const LIST_ID = "all-skills";
 // A long list grows 50 rows at a time.
 const STEP = 50;
 
-// Every skill in one table, grouped by where it stands, with this year's
+// Every skill in one table, the ones being learned first, then the completed
+// and the ones still to start (as the board lists them), with this year's
 // goal in the corner. A row opens a short menu of what can happen to that
 // skill.
 export function SkillsTable({ skills, week, today, year, goalTarget, completedThisYear, onEditGoal, onAction }: SkillsTableProps) {
@@ -83,12 +84,12 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
         <span className="block h-full rounded-full" style={{ width: `${progressPct(skill)}%`, background: palette.to }} />
       </span>
     );
-    const progress = <span className="text-small whitespace-nowrap text-ink-2 tabular-nums">{progressText(skill, t, locale)}</span>;
+    const progress = <span className="text-[12.5px] whitespace-nowrap text-ink-soft tabular-nums">{progressText(skill, t, locale)}</span>;
     return (
       // The row stays lit while its menu is open.
-      <ListRow key={skill.id} columns={COLUMNS} density="regular" className="has-[[data-slot=list-row-button][data-state=open]]:bg-hover">
+      <ListRow key={skill.id} columns={COLUMNS} className="min-h-13.5 text-[13.5px] md:px-5 has-[[data-slot=list-row-button][data-state=open]]:bg-hover">
         <ListCell className="flex min-w-0 flex-col gap-2">
-          <span className="flex min-w-0 items-center gap-3">
+          <span className="flex min-w-0 items-center gap-2.5">
             <SkillTile icon={skill.icon} color={skill.color} size={30} />
             <span className="flex min-w-0 flex-col">
               <DropdownMenu>
@@ -111,23 +112,23 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
             </span>
           </span>
           {/* Phones: the progress under the name. */}
-          <span className="flex items-center gap-3 md:hidden">
+          <span className="flex items-center gap-2.5 md:hidden">
             {bar}
             {progress}
           </span>
         </ListCell>
-        <ListCell className="hidden truncate text-ink-2 xl:block">{skill.source || "—"}</ListCell>
-        <ListCell className="hidden items-center gap-3 md:flex">
+        <ListCell className="hidden truncate text-ink-soft xl:block">{skill.source || "—"}</ListCell>
+        <ListCell className="hidden items-center gap-2.5 md:flex">
           {bar}
           {progress}
         </ListCell>
         <ListCell className="flex flex-col items-end gap-1 md:items-start">
-          <Chip tone={STATUS_TONE[skill.status]} size="sm">
+          <Chip tone={STATUS_TONE[skill.status]} size="sm" className="px-2.25 text-[11.5px]">
             {t(STATUS_LABEL[skill.status])}
           </Chip>
           <span className="text-caption text-ink-muted md:hidden">{lastPractised(skill)}</span>
         </ListCell>
-        <ListCell align="end" className="hidden text-ink-2 md:block">
+        <ListCell align="end" className="hidden text-ink-soft md:block">
           {lastPractised(skill)}
         </ListCell>
       </ListRow>
@@ -138,10 +139,11 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
     <ListCard
       id={LIST_ID}
       label={t("All skills")}
+      className="rounded-md"
       header={
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-4 md:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3.5 md:px-5">
           <h2 className="text-title text-ink">{t("All skills")}</h2>
-          <span className="flex flex-wrap items-center gap-2 text-small text-ink-2">
+          <span className="flex flex-wrap items-center gap-2 text-small text-ink-soft">
             <span>{fillNodes(t("{year} goal: {figure}"), { year: toLocaleDigits(String(year), locale), figure: <b className="font-semibold text-ink">{goalTarget ? t("{done} of {total} completed", { done: count(completedThisYear), total: count(goalTarget) }) : t("not set")}</b> })}</span>
             {goalTarget !== null && (
               <span className="h-1.5 w-22.5 overflow-hidden rounded-full bg-surface-sunken">
@@ -162,23 +164,14 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
         )
       }
     >
-      <ListHead columns={COLUMNS}>
+      <ListHead columns={COLUMNS} className="md:px-5">
         <ListHeadCell>{t("Skill")}</ListHeadCell>
         <ListHeadCell className="hidden xl:block">{t("Where")}</ListHeadCell>
         <ListHeadCell>{t("Progress")}</ListHeadCell>
         <ListHeadCell>{t("Status")}</ListHeadCell>
         <ListHeadCell align="end">{t("Last practised")}</ListHeadCell>
       </ListHead>
-      {STATUS_ORDER.filter((status) => visible.some((skill) => skill.status === status)).map((status, index) => {
-        const all = skills.filter((skill) => skill.status === status).length;
-        return (
-          <div key={status} role="rowgroup">
-            {/* A band after another group draws the line between them. */}
-            <ListGroupRow label={t(STATUS_LABEL[status])} aside={count(all)} className={index > 0 ? "border-t border-line" : undefined} />
-            {visible.filter((skill) => skill.status === status).map(row)}
-          </div>
-        );
-      })}
+      {visible.map(row)}
     </ListCard>
   );
 }

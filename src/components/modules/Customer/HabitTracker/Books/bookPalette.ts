@@ -8,17 +8,19 @@ export interface BookPalette {
   ink: string; // title colour on the cover
 }
 
+// design-v4 draws the covers in deeper, cleaner colours (the LibraryHome
+// board: Atomic Habits in #9A3412 with a #7C2D12 spine).
 export const BOOK_PALETTE: BookPalette[] = [
-  { key: "walnut", label: "Walnut", from: "#7a4b2c", to: "#4a2b18", ink: "#f6e7cf" },
-  { key: "oxblood", label: "Oxblood", from: "#8f3535", to: "#561a1f", ink: "#fbe9de" },
-  { key: "forest", label: "Forest", from: "#3a6b52", to: "#1f412f", ink: "#e8f1df" },
-  { key: "navy", label: "Navy", from: "#2f4f80", to: "#182c4c", ink: "#e6edf8" },
-  { key: "mustard", label: "Mustard", from: "#d09a2f", to: "#96651a", ink: "#2c1b06" },
-  { key: "teal", label: "Teal", from: "#23808a", to: "#134a52", ink: "#e2f4f3" },
-  { key: "plum", label: "Plum", from: "#7b4468", to: "#48233d", ink: "#f6e6f0" },
-  { key: "slate", label: "Slate", from: "#4b5563", to: "#272d36", ink: "#eef1f5" },
-  { key: "terracotta", label: "Terracotta", from: "#c4633f", to: "#82391f", ink: "#fdeee3" },
-  { key: "sage", label: "Sage", from: "#8a9f77", to: "#56694a", ink: "#1f2a17" },
+  { key: "walnut", label: "Walnut", from: "#9a3412", to: "#7c2d12", ink: "#ffedd5" },
+  { key: "oxblood", label: "Oxblood", from: "#b91c1c", to: "#7f1d1d", ink: "#fee2e2" },
+  { key: "forest", label: "Forest", from: "#047857", to: "#065f46", ink: "#d1fae5" },
+  { key: "navy", label: "Navy", from: "#1e3a8a", to: "#172554", ink: "#dbeafe" },
+  { key: "mustard", label: "Mustard", from: "#a16207", to: "#713f12", ink: "#fef9c3" },
+  { key: "teal", label: "Teal", from: "#0f766e", to: "#134e4a", ink: "#ccfbf1" },
+  { key: "plum", label: "Plum", from: "#6d28d9", to: "#4c1d95", ink: "#ede9fe" },
+  { key: "slate", label: "Slate", from: "#334155", to: "#1e293b", ink: "#e2e8f0" },
+  { key: "terracotta", label: "Terracotta", from: "#b45309", to: "#78350f", ink: "#fef3c7" },
+  { key: "sage", label: "Sage", from: "#4d7c0f", to: "#365314", ink: "#ecfccb" },
 ];
 
 export function paletteFor(key: string): BookPalette {

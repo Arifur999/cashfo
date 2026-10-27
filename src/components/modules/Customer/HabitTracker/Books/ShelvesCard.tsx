@@ -52,7 +52,7 @@ export function ShelvesCard({ shelves, onAction }: ShelvesCardProps) {
   const [expanded, setExpanded] = useState<Partial<Record<BookStatus, boolean>>>({});
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+    <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4">
       <h2 className="text-title font-semibold text-ink">{t("Shelves")}</h2>
       <div className="grid gap-5 md:grid-cols-3">
         {SHELVES.map((status) => {
@@ -61,9 +61,9 @@ export function ShelvesCard({ shelves, onAction }: ShelvesCardProps) {
           const shown = open ? books : books.slice(0, SHOWN);
           return (
             <div key={status} className="flex min-w-0 flex-col gap-2">
-              <div className="flex items-center justify-between border-b border-divider pb-2">
-                <span className="text-body font-semibold text-ink">{t(SHELF_LABEL[status])}</span>
-                <Chip tone="neutral" size="sm">
+              <div className="flex items-center justify-between border-b border-divider pb-1.5">
+                <span className="text-[13.5px] font-semibold text-ink">{t(SHELF_LABEL[status])}</span>
+                <Chip tone="neutral" className="h-4.5 px-2 text-ink-soft">
                   {formatCount(books.length, locale)}
                 </Chip>
               </div>
@@ -72,7 +72,7 @@ export function ShelvesCard({ shelves, onAction }: ShelvesCardProps) {
                 <ShelfRow key={book.id} book={book} status={status} onAction={onAction} />
               ))}
               {books.length > SHOWN && (
-                <button type="button" aria-expanded={open} onClick={() => setExpanded({ ...expanded, [status]: !open })} className="flex min-h-8 items-center self-start text-small font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
+                <button type="button" aria-expanded={open} onClick={() => setExpanded({ ...expanded, [status]: !open })} className="flex min-h-8 items-center self-start text-[12.5px] font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
                   {open ? t("Show fewer") : t("See all {count}", { count: formatCount(books.length, locale) })}
                 </button>
               )}
@@ -93,10 +93,10 @@ function ShelfRow({ book, status, onAction }: { book: Book; status: BookStatus; 
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger aria-label={t("{name}: actions", { name: book.title })} className="-mx-2 flex h-11 items-center gap-3 rounded-md px-2 text-left transition-colors hover:bg-hover data-open:bg-hover">
+      <DropdownMenuTrigger aria-label={t("{name}: actions", { name: book.title })} className="-mx-2 flex h-11 items-center gap-2.5 rounded-sm px-2 text-left transition-colors hover:bg-hover data-open:bg-hover">
         <Cover size="spine" title={book.title} color={book.color} />
         <span className="flex min-w-0 flex-1 flex-col gap-px">
-          <span className="truncate text-body font-medium text-ink">{book.title}</span>
+          <span className="truncate text-[13.5px] font-medium text-ink">{book.title}</span>
           {sub && <span className="truncate text-caption text-ink-muted">{sub}</span>}
         </span>
         {/* The figure in ink: a cover colour is too faint to read as text. */}

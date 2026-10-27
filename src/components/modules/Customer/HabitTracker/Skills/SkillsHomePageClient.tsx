@@ -151,14 +151,14 @@ export function SkillsHomePageClient({ overview, today, reminders: savedReminder
   ];
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 md:pt-7">
       <PageHeader
         eyebrow={t("Habits")}
         tone="habits"
         title={t("Skills")}
         description={t("Courses and skills you're learning, counted in lessons or hours.")}
         actions={
-          <Button onClick={openAdd}>
+          <Button onClick={openAdd} className="rounded-sm">
             <Plus strokeWidth={2.25} />
             {t("Add skill")}
           </Button>
@@ -180,7 +180,7 @@ export function SkillsHomePageClient({ overview, today, reminders: savedReminder
               <LearningCard key={skill.id} skill={skill} week={week} today={today} isPending={pendingIds.has(skill.id)} onQuickAdd={(target, amount) => setProgress(target, target.progress + amount)} onLog={(target) => setLogId(target.id)} />
             ))}
             {learning.length < CARDS && (
-              <Card padding="none" className="flex flex-col items-center justify-center gap-2 px-5 py-8 text-center">
+              <Card padding="none" className="flex flex-col items-center justify-center gap-2 rounded-md px-5 py-8 text-center">
                 <span className="text-title font-semibold text-ink">{learning.length === 0 ? t("Nothing on the go") : t("Room for one more")}</span>
                 <span className="text-small text-ink-muted">{t("Start something from the table below, or add a new skill.")}</span>
                 <Button variant="secondary" size="sm" onClick={openAdd} className="mt-1">

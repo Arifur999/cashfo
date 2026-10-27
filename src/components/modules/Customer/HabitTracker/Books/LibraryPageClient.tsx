@@ -105,14 +105,14 @@ export function LibraryPageClient({ overview, today, reminders: savedReminders }
   }
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 md:pt-7">
       <PageHeader
         eyebrow={t("Habits")}
         tone="habits"
-        title={t("My library")}
+        title={t("My Library")}
         description={t("Books you're reading, want to read and have finished.")}
         actions={
-          <Button onClick={openAdd}>
+          <Button onClick={openAdd} className="rounded-sm">
             <Plus strokeWidth={2.25} />
             {t("Add book")}
           </Button>
