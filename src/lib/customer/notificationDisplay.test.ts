@@ -119,3 +119,139 @@ describe("notificationView for a habit reminder", () => {
     expect(notificationView(reminder({ name: "Something new", url: "//evil.example" }), inEnglish, "en")).toEqual({ kind: "reminder", title: "Something new", body: "", href: null });
   });
 });
+
+describe("notificationView for account rows", () => {
+  const inBangla: Translate = (key, values) => fillText(translate("bn", key), values ?? {});
+  const account = (type: UserNotification["type"], data: UserNotification["data"]) => ({ ...row(type, data), businessId: null });
+  const en = (type: UserNotification["type"], data: UserNotification["data"]) => notificationView(account(type, data), inEnglish, "en", "BDT", now);
+  const bn = (type: UserNotification["type"], data: UserNotification["data"]) => notificationView(account(type, data), inBangla, "bn", "BDT", now);
+
+  it("words every billing event and opens Plans", () => {
+    const paid = { event: "PAYMENT_PAID", paymentId: "p1", planName: "Pro", amount: "299.00", periodEnd: "2026-11-28T00:00:00.000Z", invoiceNumber: "INV-1" };
+    expect(en("BILLING", paid)).toEqual({ kind: "payment", title: "Payment received", body: "৳ 299 for Pro. It's active until 28 Nov 2026.", href: "/settings/plans" });
+    expect(bn("BILLING", paid)).toMatchObject({ title: "পেমেন্ট পাওয়া গেছে", body: "Pro-এর জন্য ৳ ২৯৯। ২৮ নভে ২০২৬ পর্যন্ত চালু থাকবে।" });
+    expect(en("BILLING", { ...paid, periodEnd: null }).body).toBe("৳ 299 for Pro. It's active now.");
+
+    const failed = { event: "PAYMENT_FAILED", paymentId: "p1", planName: "Pro", amount: "299.00", reason: "Wrong TrxID" };
+    expect(en("BILLING", failed)).toMatchObject({ kind: "paymentProblem", title: "Payment failed", body: "Your ৳ 299 payment for Pro didn't go through. Reason: Wrong TrxID" });
+    expect(bn("BILLING", failed)).toMatchObject({ title: "পেমেন্ট ব্যর্থ হয়েছে", body: "Pro-এর জন্য আপনার ৳ ২৯৯ পেমেন্ট সম্পন্ন হয়নি। কারণ: Wrong TrxID" });
+
+    const expired = { event: "PAYMENT_EXPIRED", paymentId: "p1", planName: "Pro", amount: "299.00" };
+    expect(en("BILLING", expired)).toMatchObject({ kind: "paymentProblem", title: "Payment not completed", body: "Your ৳ 299 checkout for Pro timed out. You can start it again from Plans." });
+    expect(bn("BILLING", expired).title).toBe("পেমেন্ট সম্পন্ন হয়নি");
+
+    const refunded = { event: "PAYMENT_REFUNDED", paymentId: "p1", planName: "Pro", amount: "299.00", full: 1, planDropped: 1 };
+    expect(en("BILLING", refunded)).toMatchObject({ kind: "refund", title: "Payment refunded", body: "Your ৳ 299 payment for Pro was refunded. You're on the Free plan now." });
+    expect(en("BILLING", { ...refunded, amount: "100.00", full: 0, planDropped: 0 }).body).toBe("৳ 100 of your payment for Pro was refunded.");
+    expect(bn("BILLING", refunded).body).toBe("Pro-এর জন্য আপনার ৳ ২৯৯ পেমেন্ট ফেরত দেওয়া হয়েছে। আপনি এখন ফ্রি প্ল্যানে আছেন।");
+
+    const ending = { event: "PLAN_ENDING", planName: "Pro", endsAt: "2026-10-05T00:00:00.000Z", trial: 0, cancelling: 0 };
+    expect(en("BILLING", ending)).toMatchObject({ kind: "plan", title: "Pro ends soon", body: "It ends on 5 Oct 2026. Pay for the next period to keep it." });
+    expect(en("BILLING", { ...ending, cancelling: 1 }).body).toBe("It ends on 5 Oct 2026, as you asked. You can resume it before then.");
+    expect(en("BILLING", { ...ending, trial: 1 })).toMatchObject({ title: "Your Pro trial ends soon", body: "It ends on 5 Oct 2026. Choose a plan to keep its features." });
+    expect(bn("BILLING", ending)).toMatchObject({ title: "Pro শীঘ্রই শেষ হবে", body: "৫ অক্টো ২০২৬-এ শেষ হবে। চালু রাখতে পরের মেয়াদের টাকা দিন।" });
+
+    const pastDue = { event: "PLAN_PAST_DUE", planName: "Pro", graceEndsAt: "2026-10-04T00:00:00.000Z" };
+    expect(en("BILLING", pastDue)).toMatchObject({ kind: "plan", title: "Pro payment is overdue", body: "Pay by 4 Oct 2026 to keep your plan." });
+    expect(bn("BILLING", pastDue).body).toBe("প্ল্যান রাখতে ৪ অক্টো ২০২৬-এর মধ্যে টাকা দিন।");
+
+    const ended = { event: "PLAN_ENDED", planName: "Pro", endedAt: "2026-10-01T00:00:00.000Z", trial: 0, reason: "EXPIRED" };
+    expect(en("BILLING", ended)).toMatchObject({ kind: "plan", title: "Pro has ended", body: "You're on the Free plan now." });
+    expect(en("BILLING", { ...ended, trial: 1 }).title).toBe("Your Pro trial has ended");
+    expect(bn("BILLING", ended)).toMatchObject({ title: "Pro শেষ হয়েছে", body: "আপনি এখন ফ্রি প্ল্যানে আছেন।" });
+  });
+
+  it("words every referral event", () => {
+    const pending = { event: "COMMISSION_PENDING", referralId: "r1", friendName: "Karim", planName: "Pro", amount: 59.8, paidAmount: "299.00", availableAt: "2026-11-01T00:00:00.000Z" };
+    expect(en("REFERRAL", pending)).toEqual({ kind: "referral", title: "Karim bought Pro", body: "You earned ৳ 59.80. You can withdraw it from 1 Nov 2026.", href: "/referrals" });
+    expect(bn("REFERRAL", pending)).toMatchObject({ title: "Karim Pro কিনেছেন", body: "আপনি ৳ ৫৯.৮০ পেয়েছেন। ১ নভে ২০২৬ থেকে তুলতে পারবেন।" });
+    expect(en("REFERRAL", { ...pending, planName: null }).title).toBe("Karim bought a plan");
+
+    const available = { event: "COMMISSION_AVAILABLE", referralId: "r1", friendName: "Karim", amount: "60.00" };
+    expect(en("REFERRAL", available)).toMatchObject({ kind: "referral", title: "৳ 60 is ready to withdraw", body: "Your reward for inviting Karim." });
+    expect(bn("REFERRAL", available)).toMatchObject({ title: "৳ ৬০ এখন তুলতে পারেন", body: "Karim-কে আমন্ত্রণ জানানোর পুরস্কার।" });
+
+    const missed = { event: "COMMISSION_MISSED", referralId: "r1", friendName: "Karim", planName: "Pro", amount: 60, reason: "REFERRER_NOT_ON_PAID_PLAN" };
+    expect(en("REFERRAL", missed)).toMatchObject({ kind: "referralLost", title: "You missed a reward", body: "Karim bought a plan, but rewards need a paid plan of your own. You missed ৳ 60." });
+    expect(en("REFERRAL", { ...missed, amount: 0 }).body).toBe("Karim bought a plan, but rewards need a paid plan of your own.");
+    expect(bn("REFERRAL", missed).title).toBe("একটি পুরস্কার পাননি");
+
+    const cancelled = { event: "COMMISSION_CANCELLED", referralId: "r1", friendName: "Karim", amount: "60.00", reason: "FRIEND_REFUNDED" };
+    expect(en("REFERRAL", cancelled)).toMatchObject({ kind: "referralLost", title: "A reward was cancelled", body: "Karim's payment was refunded, so the ৳ 60 reward was cancelled." });
+    expect(en("REFERRAL", { ...cancelled, reason: "ADMIN" }).body).toBe("The ৳ 60 reward for inviting Karim was cancelled.");
+    expect(bn("REFERRAL", cancelled).body).toBe("Karim-এর পেমেন্ট ফেরত দেওয়া হয়েছে, তাই ৳ ৬০ পুরস্কার বাতিল হয়েছে।");
+
+    // The invited friend's nudge leads to the plans their discount is on.
+    const nudge = { event: "INVITE_REMINDER", referrerFirstName: "Rahim", friendDiscountPct: 10 };
+    expect(en("REFERRAL", nudge)).toEqual({ kind: "referral", title: "Rahim invited you to a paid plan", body: "Get 10% off your first plan.", href: "/settings/plans" });
+    expect(bn("REFERRAL", nudge)).toMatchObject({ title: "Rahim আপনাকে একটি পেইড প্ল্যানে আমন্ত্রণ জানিয়েছেন", body: "প্রথম প্ল্যানে ১০% ছাড় পান।" });
+    expect(en("REFERRAL", { ...nudge, friendDiscountPct: 0 }).body).toBe("See what each plan offers.");
+  });
+
+  it("words every payout event and opens the withdrawals", () => {
+    const base = { payoutId: "w1", displayId: "WD-0001", amount: "500.00", methodType: "BKASH" };
+    expect(en("PAYOUT", { ...base, event: "PAYOUT_APPROVED" })).toEqual({ kind: "payout", title: "Withdrawal approved", body: "Your ৳ 500 withdrawal is approved and will be sent soon.", href: "/referrals?tab=withdrawals" });
+    expect(bn("PAYOUT", { ...base, event: "PAYOUT_APPROVED" }).body).toBe("আপনার ৳ ৫০০ তোলার অনুরোধ অনুমোদিত হয়েছে, শীঘ্রই পাঠানো হবে।");
+    const paid = { ...base, event: "PAYOUT_PAID", paidAmount: "490.00", trxId: "BK123", paidAt: "2026-10-02T06:00:00.000Z", incomeWallet: null };
+    expect(en("PAYOUT", paid)).toMatchObject({ kind: "payout", title: "Withdrawal sent", body: "৳ 490 was sent to you. Transaction ID: BK123" });
+    expect(bn("PAYOUT", paid)).toMatchObject({ title: "টাকা পাঠানো হয়েছে", body: "আপনাকে ৳ ৪৯০ পাঠানো হয়েছে। ট্রানজেকশন আইডি: BK123" });
+    const rejected = { ...base, event: "PAYOUT_REJECTED", reason: "Wrong number" };
+    expect(en("PAYOUT", rejected)).toMatchObject({ kind: "payoutRejected", title: "Withdrawal rejected", body: "৳ 500 is back in your balance. Reason: Wrong number" });
+    expect(bn("PAYOUT", rejected).title).toBe("টাকা তোলার অনুরোধ বাতিল হয়েছে");
+  });
+
+  it("words every security event and opens Security", () => {
+    expect(en("SECURITY", { event: "TWO_STEP_ON", at: now.toISOString() })).toEqual({
+      kind: "securityOn",
+      title: "Two-step sign-in is on",
+      body: "Signing in now also needs a code from your authenticator app.",
+      href: "/settings/security",
+    });
+    expect(bn("SECURITY", { event: "TWO_STEP_ON" }).title).toBe("দুই ধাপে সাইন ইন চালু হয়েছে");
+    expect(en("SECURITY", { event: "TWO_STEP_OFF" })).toMatchObject({ kind: "securityOff", title: "Two-step sign-in is off", body: "If this wasn't you, change your password now." });
+    expect(bn("SECURITY", { event: "TWO_STEP_OFF" }).body).toBe("এটি আপনি না করে থাকলে এখনই পাসওয়ার্ড বদলান।");
+    expect(en("SECURITY", { event: "TWO_STEP_OFF_BY_SUPPORT" })).toMatchObject({ kind: "securityOff", title: "Support turned off two-step sign-in" });
+    expect(bn("SECURITY", { event: "TWO_STEP_OFF_BY_SUPPORT" }).title).toBe("সাপোর্ট দুই ধাপে সাইন ইন বন্ধ করেছে");
+
+    const device = { event: "NEW_DEVICE", deviceLabel: "Chrome on Windows", ipAddress: "103.1.2.3", country: "Bangladesh" };
+    expect(en("SECURITY", device)).toMatchObject({ kind: "securityAlert", title: "New sign-in to your account", body: "Chrome on Windows in Bangladesh. If this wasn't you, change your password now." });
+    expect(en("SECURITY", { ...device, country: null, ipAddress: null }).body).toBe("Chrome on Windows. If this wasn't you, change your password now.");
+    expect(bn("SECURITY", device)).toMatchObject({ title: "আপনার অ্যাকাউন্টে নতুন সাইন ইন", body: "Bangladesh থেকে Chrome on Windows। এটি আপনি না করে থাকলে এখনই পাসওয়ার্ড বদলান।" });
+
+    const tries = { event: "FAILED_TRIES", count: 12, ipAddress: "103.1.2.3", country: null };
+    expect(en("SECURITY", tries)).toMatchObject({ kind: "securityAlert", title: "Failed sign-in attempts", body: "12 wrong-password tries from 103.1.2.3. If this wasn't you, change your password now." });
+    expect(en("SECURITY", { ...tries, count: 1, ipAddress: null }).body).toBe("1 wrong-password try. If this wasn't you, change your password now.");
+    expect(bn("SECURITY", tries).body).toBe("103.1.2.3 থেকে ১২ বার ভুল পাসওয়ার্ড দিয়ে চেষ্টা। এটি আপনি না করে থাকলে এখনই পাসওয়ার্ড বদলান।");
+  });
+
+  it("shows a campaign's own words and an idea's news", () => {
+    const campaign = { event: "CAMPAIGN", campaignId: "c1", title: "ঈদ অফার", body: "সব প্ল্যানে ২০% ছাড়" };
+    expect(en("CAMPAIGN", campaign)).toEqual({ kind: "campaign", title: "ঈদ অফার", body: "সব প্ল্যানে ২০% ছাড়", href: null });
+    expect(en("CAMPAIGN", { event: "CAMPAIGN", title: "", body: "Hello" }).title).toBe("You have a new notification");
+    expect(bn("CAMPAIGN", { event: "CAMPAIGN", title: null, body: "Hello" }).title).toBe("আপনার একটি নতুন নোটিফিকেশন আছে");
+
+    const idea = { event: "IDEA_STATUS", ideaId: "i1", title: "Dark mode for reports", status: "SHIPPED" };
+    expect(en("IDEA", idea)).toEqual({ kind: "idea", title: "An idea you voted for is live", body: "Dark mode for reports", href: "/settings/help" });
+    expect(en("IDEA", { ...idea, status: "PLANNED" }).title).toBe("An idea you voted for is planned");
+    expect(bn("IDEA", idea).title).toBe("আপনার ভোট দেওয়া একটি আইডিয়া চালু হয়েছে");
+    expect(bn("IDEA", { ...idea, status: "PLANNED" }).title).toBe("আপনার ভোট দেওয়া একটি আইডিয়া পরিকল্পনায় আছে");
+  });
+
+  it("never fails on a type or event it doesn't know", () => {
+    const newType = "SOMETHING_NEW" as UserNotification["type"];
+    expect(notificationView(account(newType, { title: "Hello", body: "World", url: "/dashboard" }), inEnglish, "en")).toEqual({ kind: "other", title: "Hello", body: "World", href: "/dashboard" });
+    expect(notificationView(account(newType, {}), inEnglish, "en")).toEqual({ kind: "other", title: "You have a new notification", body: "", href: null });
+    expect(notificationView(account(newType, {}), inBangla, "bn").title).toBe("আপনার একটি নতুন নোটিফিকেশন আছে");
+    // A link out of the app is never followed.
+    expect(notificationView(account(newType, { url: "https://evil.example" }), inEnglish, "en").href).toBeNull();
+    // A known type with a newer event keeps its page.
+    expect(en("BILLING", { event: "PLAN_UPGRADED", planName: "Pro" })).toEqual({ kind: "other", title: "You have a new notification", body: "", href: "/settings/plans" });
+    expect(en("SECURITY", { event: "PASSKEY_ADDED" })).toMatchObject({ kind: "other", href: "/settings/security" });
+    expect(en("PAYOUT", { event: "PAYOUT_ON_HOLD" })).toMatchObject({ kind: "other", href: "/referrals?tab=withdrawals" });
+    expect(en("IDEA", { event: "IDEA_COMMENT" })).toMatchObject({ kind: "other", href: "/settings/help" });
+    // A row with no data at all.
+    const noData = null as unknown as UserNotification["data"];
+    expect(notificationView(account("BUDGET", noData), inEnglish, "en", "BDT", now).title).toBeTruthy();
+    expect(notificationView(account("BILLING", noData), inEnglish, "en")).toMatchObject({ kind: "other", href: "/settings/plans" });
+  });
+});

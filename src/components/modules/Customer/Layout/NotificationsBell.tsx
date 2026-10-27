@@ -1,6 +1,25 @@
 "use client";
 
-import { AlarmClock, Banknote, Bell, ChartPie, CheckCheck, Megaphone, MessageCircle, PiggyBank, Settings } from "lucide-react";
+import {
+  AlarmClock,
+  Banknote,
+  Bell,
+  CalendarClock,
+  ChartPie,
+  CheckCheck,
+  CreditCard,
+  Gift,
+  Lightbulb,
+  Megaphone,
+  MessageCircle,
+  PiggyBank,
+  RotateCcw,
+  Settings,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldOff,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
@@ -25,6 +44,20 @@ const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
   announcement: { icon: Megaphone, tone: "info" },
   support: { icon: MessageCircle, tone: "money" },
   reminder: { icon: AlarmClock, tone: "habits" },
+  payment: { icon: CreditCard, tone: "money" },
+  paymentProblem: { icon: CreditCard, tone: "expense" },
+  refund: { icon: RotateCcw, tone: "info" },
+  plan: { icon: CalendarClock, tone: "warning" },
+  referral: { icon: Gift, tone: "money" },
+  referralLost: { icon: Gift, tone: "neutral" },
+  payout: { icon: Wallet, tone: "money" },
+  payoutRejected: { icon: Wallet, tone: "expense" },
+  securityOn: { icon: ShieldCheck, tone: "money" },
+  securityOff: { icon: ShieldOff, tone: "warning" },
+  securityAlert: { icon: ShieldAlert, tone: "expense" },
+  campaign: { icon: Megaphone, tone: "insights" },
+  idea: { icon: Lightbulb, tone: "insights" },
+  other: { icon: Bell, tone: "neutral" },
 };
 
 // While the tab is in view the feed is read again this often, so a habit
@@ -36,7 +69,8 @@ const REFRESH_AT_MOST_EVERY_MS = 15_000;
 type Filter = "all" | "unread";
 
 // The bell in the top bar and its feed: budget, loan and savings reminders,
-// habit reminders and announcements, newest first. Always there, so the
+// habit reminders, announcements, and account news (billing, referrals,
+// security, ideas, the team's messages), newest first. Always there, so the
 // reminder settings stay one tap away; an empty feed says so. A row about
 // another workspace switches to it before opening.
 export function NotificationsBell({ className, badgeClassName }: { className?: string; badgeClassName?: string }) {
@@ -182,7 +216,8 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
           {shown.map((item) => {
             const business = item.businessId ? user.businesses.find((b) => b.id === item.businessId) : undefined;
             const view = notificationView(item, t, locale, business?.currency);
-            const { icon: Icon, tone } = KIND_ICON[view.kind];
+            // A kind this build has no tile for still gets the plain bell.
+            const { icon: Icon, tone } = KIND_ICON[view.kind] ?? KIND_ICON.other;
             const where = business && workspaces.length > 1 ? ` · ${business.isDefault ? t("Personal") : business.name}` : "";
             const body = (
               <>

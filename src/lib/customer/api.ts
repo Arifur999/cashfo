@@ -55,7 +55,22 @@ export interface CurrentUser {
 
 // The bell's feed (GET /api/notifications). The text is built in the app
 // from `data` (lib/customer/notificationDisplay.ts), in either language.
-export type UserNotificationType = "BUDGET" | "LOAN_DUE" | "SAVINGS" | "ANNOUNCEMENT" | "SUPPORT_REPLY" | "REMINDER";
+// BILLING, REFERRAL, PAYOUT, SECURITY and IDEA rows say what happened in
+// `data.event`. The backend can add a type (or an event) before the app knows
+// it, so the bell treats any other value as a plain notification.
+export type UserNotificationType =
+  | "BUDGET"
+  | "LOAN_DUE"
+  | "SAVINGS"
+  | "ANNOUNCEMENT"
+  | "SUPPORT_REPLY"
+  | "REMINDER"
+  | "BILLING"
+  | "REFERRAL"
+  | "PAYOUT"
+  | "SECURITY"
+  | "CAMPAIGN"
+  | "IDEA";
 
 export interface UserNotification {
   id: string;
