@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export interface SegmentOption<T extends string> {
   value: T;
   label: React.ReactNode;
-  // Bangla labels declare their language so the Anek face is used.
+  // Bangla labels declare their language so the Bangla face is used.
   lang?: string;
   // A coloured dot before the label (Income / Expense filters).
   dot?: string;

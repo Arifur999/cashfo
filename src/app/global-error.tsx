@@ -1,13 +1,13 @@
 "use client";
 
-import { Anek_Bangla, Plus_Jakarta_Sans } from "next/font/google";
+import { Hind_Siliguri, Inter } from "next/font/google";
 import { BRAND_NAME } from "@/lib/brand";
 
 // The root layout's faces, with the same variables: that layout (and its
 // font classes) is what failed. next/font is compiled at build time into a
 // class name and a stylesheet, so it can't fail here either.
-const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"] });
-const anekBangla = Anek_Bangla({ variable: "--font-anek-bangla", subsets: ["bengali", "latin"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
+const hindSiliguri = Hind_Siliguri({ variable: "--font-hind-siliguri", subsets: ["bengali", "latin"], weight: ["400", "500", "600", "700"] });
 
 // globals.css may not be there, so the palette's light values are written
 // out: page, ink, ink-muted, forest (the button, forest-hover under the pointer),
@@ -15,9 +15,9 @@ const anekBangla = Anek_Bangla({ variable: "--font-anek-bangla", subsets: ["beng
 // button's shadow is shadow-button's.
 const STYLES = `
   .ge-body { margin: 0; min-height: 100vh; display: flex; background: #f3f6f4; color: #0e1a16;
-    font-family: var(--font-jakarta, system-ui), var(--font-anek-bangla, system-ui), system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    font-family: var(--font-inter, system-ui), var(--font-hind-siliguri, system-ui), system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   .ge-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 48px 24px; text-align: center; }
-  .ge-main [lang="bn"] { font-family: var(--font-anek-bangla, system-ui), var(--font-jakarta, system-ui), system-ui, sans-serif; }
+  .ge-main [lang="bn"] { font-family: var(--font-hind-siliguri, system-ui), var(--font-inter, system-ui), system-ui, sans-serif; }
   .ge-ref { margin: 0; color: #56655e; font: 500 13px/18px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
   .ge-title { margin: 0; max-width: 640px; font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; }
   .ge-title-bn { margin: 0; font-size: 20px; line-height: 1.3; font-weight: 600; }
@@ -39,7 +39,7 @@ const STYLES = `
 // app/error.tsx written out in English, then Bangla.
 export default function GlobalError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${anekBangla.variable}`}>
+    <html lang="en" className={`${inter.variable} ${hindSiliguri.variable}`}>
       <head>
         {/* metadata isn't supported here; React puts <title> in the head. */}
         <title>{`Something went wrong | ${BRAND_NAME}`}</title>
