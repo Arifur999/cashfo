@@ -1,22 +1,22 @@
 "use client";
 
-import { ArrowRight, Check, Info } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, CircleCheckBig, Info, Utensils } from "lucide-react";
 import Link from "next/link";
-import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
+import ProgressBar from "@/components/smartly/ProgressBar";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowButton, ListTotalRow } from "@/components/smartly/list";
 import type { GroupMember } from "@/lib/customer/api";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { BUDGET_TONE_BAR, BUDGET_TONE_TEXT, budgetFor, budgetStatus, categorySplits, countLabel, monthRangeOf, paidIn, shortName, SPLIT_LABELS, startDayOf, type Transfer } from "@/lib/customer/groupDisplay";
-import { mealText } from "@/lib/customer/groupMeals";
+import { BUDGET_TONE_BAR, BUDGET_TONE_PROGRESS, BUDGET_TONE_TEXT, budgetFor, budgetStatus, categorySplits, countLabel, dayLabel, mealRateText, monthRangeOf, paidIn, shortName, splitTotals, startDayOf, type Transfer } from "@/lib/customer/groupDisplay";
+import { mealText, mealValue, unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { BalanceCell, CategoryTile, categoryBarClass } from "./GroupBits";
+import { BalanceCell, CategoryTile, categoryBarClass, MemberAvatar } from "./GroupBits";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 interface GroupDashboardProps {
@@ -27,14 +27,24 @@ interface GroupDashboardProps {
   onSetBudget: () => void;
 }
 
-// Member, paid in, cost, balance (its chip under the figure, so the column
-// stays narrow); a group counting meals adds each member's meals.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_104px_104px_112px]";
-const MEALS_COLUMNS = "md:grid-cols-[minmax(0,1fr)_56px_104px_104px_112px]";
+// A way of sharing as the dashboard's rows write it, in lower case.
+export const SPLIT_WORDS = { EQUAL: "equally", SHARES: "by shares", MEALS: "by meals", EXACT: "exact amounts", MIXED: "mixed" } as const;
 
-// A group's month at a glance: the four figures, every member's balance,
-// who pays whom, where the money went, and the last six months against
-// the budget.
+// Member, (meals,) paid in, cost, balance with its chip beside it.
+// Figures with paisa get wider columns.
+const MESS_COLUMNS = "md:grid-cols-[minmax(0,1fr)_56px_100px_96px_146px]";
+const FAMILY_COLUMNS = "md:grid-cols-[minmax(0,1fr)_132px_88px_146px]";
+const MESS_COLUMNS_WIDE = "md:grid-cols-[minmax(0,1fr)_56px_108px_104px_178px]";
+const FAMILY_COLUMNS_WIDE = "md:grid-cols-[minmax(0,1fr)_132px_104px_178px]";
+const hasPaisa = (value: number | string) => Math.round(Number(value) * 100) % 100 !== 0;
+
+const dayBefore = (day: string) => new Date(Date.parse(`${day}T00:00:00.000Z`) - 86_400_000).toISOString().slice(0, 10);
+
+// A group's month at a glance, as the Mess and Family boards draw it: a
+// month that has ended asks to be closed, then the four figures and every
+// member's balance. A mess adds where the money went with its budget and
+// the latest entries; a family who pays whom, where the money went and the
+// last six months against the budget.
 export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSetBudget }: GroupDashboardProps) {
   const { t, locale } = useLocale();
   const { currency, range, settlement } = data;
@@ -51,33 +61,240 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
   const maxMonth = Math.max(...view.byMonth.map((m) => m.amount), 1);
   const lastMonth = view.byMonth[view.byMonth.length - 1];
   const lastStatus = view.budget && lastMonth ? budgetStatus(view.budget.budget, lastMonth.amount) : null;
-  const meals = data.settings.kind === "MESS" || data.settings.mealsOn;
-  const columns = meals ? MEALS_COLUMNS : COLUMNS;
+  const mess = data.settings.kind === "MESS";
+  const meals = mess || data.settings.mealsOn;
+  const wide = rows.some(({ row }) => hasPaisa(row.balance) || hasPaisa(row.share) || hasPaisa(paidIn(row)));
+  const columns = mess ? (wide ? MESS_COLUMNS_WIDE : MESS_COLUMNS) : wide ? FAMILY_COLUMNS_WIDE : FAMILY_COLUMNS;
   const holder = data.settings.cashHolderMemberId ? view.memberById[data.settings.cashHolderMemberId] : undefined;
   const pocket = rows.reduce((sum, r) => sum + Number(r.row.pocketPaid), 0);
   const mealSpend = Number(settlement.mealExpense);
   const splits = categorySplits(data.expenses, view.mealsPooled);
   const startDay = startDayOf(range);
+  // Each member's part of the costs shared by shares (a family's bazar).
+  const byShares = splitTotals(data.expenses, "SHARES", data.members, range, view.mealsPooled);
+  const ended = range.to < data.today;
+  const settlementLink = { pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: range.key } };
 
   const stats = [
     { label: t("Total expense"), value: money(spent), sub: meals && mealSpend > 0 ? t("Bazar {bazar} · other costs {other}", { bazar: money(mealSpend), other: money(spent - mealSpend) }) : top.length > 0 ? top.map((c) => `${c.name} ${money(c.amount)}`).join(" · ") : t("Nothing spent yet") },
     meals
-      ? { label: t("Meal rate"), value: money(settlement.mealRate), sub: Number(settlement.mealUnits) > 0 ? t("{bazar} bazar ÷ {meals} meals", { bazar: money(mealSpend), meals: mealText(Number(settlement.mealUnits), locale) }) : t("No meals marked yet") }
+      ? { label: t("Meal rate"), value: mealRateText(settlement.mealRate, currency, locale), sub: Number(settlement.mealUnits) > 0 ? t("{bazar} bazar ÷ {meals} meals", { bazar: money(mealSpend), meals: mealText(Number(settlement.mealUnits), locale) }) : t("No meals marked yet") }
       : view.budget
         ? {
             label: t("{month} budget", { month }),
             value: money(view.budget.budget),
             sub: view.budget.left < 0 ? t("{percent}% used · {amount} over", { percent: formatCount(view.budget.percent, locale), amount: money(-view.budget.left) }) : t("{percent}% used · {amount} left", { percent: formatCount(view.budget.percent, locale), amount: money(view.budget.left) }),
-            subTone: BUDGET_TONE_TEXT[view.budget.tone],
+            subTone: view.budget.tone === "ok" ? undefined : BUDGET_TONE_TEXT[view.budget.tone],
             subBold: view.budget.tone !== "ok",
           }
         : { label: t("{month} budget", { month }), value: "—", sub: t("No budget set"), action: onSetBudget },
-    { label: t("Cash in hand"), value: money(view.cash), sub: holder ? t("With {name} · matches all balances", { name: holder.name }) : t("matches all balances"), check: true, tone: view.cash < 0 ? "text-expense" : undefined },
+    { label: t("Cash in hand"), value: money(view.cash), sub: holder ? t("With {name} · matches all balances", { name: shortName(holder.name) }) : t("matches all balances"), check: true, tone: view.cash < 0 ? "text-expense" : undefined },
     { label: t("Contributions"), value: money(contributed), sub: pocket > 0 ? t("+ {amount} paid from own pockets", { amount: money(pocket) }) : returned > 0 ? t("{amount} returned", { amount: money(returned) }) : countLabel(t, locale, deposits.length, "{count} deposit", "{count} deposits") },
   ];
 
+  const balances = (
+    <ListCard
+      label={t("Member balances")}
+      className="min-w-0"
+      header={
+        <div className="flex items-center justify-between gap-3 px-4 py-3.5 md:px-5">
+          <h2 className="text-title font-semibold text-ink">{t("Member balances")}</h2>
+          <Link href={settlementLink} className="text-small font-semibold text-emerald hover:text-emerald-hover">
+            {t("Open settlement")}
+          </Link>
+        </div>
+      }
+      footer={
+        rows.length > 0 && (
+          <ListFooter className="flex-row items-center gap-2 py-2.5 text-[12.5px] text-ink-soft md:px-5">
+            <CircleCheckBig className="size-3.5 shrink-0 text-emerald" strokeWidth={2.5} aria-hidden="true" />
+            <span>{holder ? t("Balances add up to {cash}, the cash {name} is holding. The account checks out.", { cash: money(view.cash), name: shortName(holder.name) }) : t("Balances add up to {cash}, the cash in hand. The account checks out.", { cash: money(view.cash) })}</span>
+          </ListFooter>
+        )
+      }
+    >
+      <ListHead columns={columns} className="h-8.5 gap-x-3.5 border-t md:px-5">
+        <ListHeadCell>{t("Member")}</ListHeadCell>
+        {mess && <ListHeadCell align="end">{t("Meals")}</ListHeadCell>}
+        <ListHeadCell align="end">{t("Paid in")}</ListHeadCell>
+        <ListHeadCell align="end">{t("Cost")}</ListHeadCell>
+        <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
+      </ListHead>
+      {rows.length === 0 && <ListEmpty title={t("Add members to see their balances.")} />}
+      {rows.map(({ row, member }) => {
+        const own = Number(row.pocketPaid);
+        const shareCost = byShares[row.groupMemberId] ?? 0;
+        // How the cost is made up: meals and the shared rest (a mess), by
+        // shares and the shared rest (a family), or what came from a pocket.
+        const sub = mess
+          ? own > 0
+            ? t("{amount} bazar from own pocket", { amount: money(own) })
+            : t("{meals} meals + {shared} shared", { meals: money(row.mealCost), shared: money(row.otherShare) })
+          : shareCost > 0
+            ? t("{amount} by shares + {shared} shared", { amount: money(shareCost), shared: money(Number(row.share) - shareCost) })
+            : t("{amount} shared", { amount: money(row.share) });
+        return (
+          <ListRow key={row.groupMemberId} columns={columns} density={mess ? "regular" : "relaxed"} className="gap-x-3.5 text-body tabular-nums md:px-5 md:py-1.5">
+            <ListCell className="flex items-center gap-2.5">
+              <MemberAvatar member={member ?? { id: row.groupMemberId, name: row.name, photoUrl: null }} members={data.members} size={mess ? 32 : 34} />
+              <span className={cn("flex min-w-0 flex-col", mess ? "gap-px" : "gap-0.5")}>
+                <span className="flex min-w-0 items-center gap-1.5">
+                  {member ? (
+                    <ListRowButton onClick={() => onStatement(member)} aria-label={t("{name}'s statement", { name: row.name })} className={cn("truncate text-ink", mess ? "font-medium" : "font-semibold")}>
+                      {shortName(row.name)}
+                    </ListRowButton>
+                  ) : (
+                    <span className="truncate font-medium text-ink">{shortName(row.name)}</span>
+                  )}
+                  {mess
+                    ? member &&
+                      member.id === holder?.id && (
+                        <Chip tone="neutral" size="sm" className="text-ink-soft">
+                          {t("Manager")}
+                        </Chip>
+                      )
+                    : member && (
+                        <Chip tone="neutral" size="sm" className="text-ink-soft">
+                          {countLabel(t, locale, Number(member.shareUnits), "{count} share", "{count} shares")}
+                        </Chip>
+                      )}
+                </span>
+                {/* Paid in counts own-pocket money, as the balance does. */}
+                <span className="truncate text-caption font-normal text-ink-muted md:hidden">{t("{paid} paid in · {cost} cost", { paid: money(paidIn(row)), cost: money(row.share) })}</span>
+                <span className="hidden truncate text-caption font-normal text-ink-muted md:block">{sub}</span>
+              </span>
+            </ListCell>
+            {mess && (
+              <ListCell align="end" className="hidden text-ink-2 md:block">
+                {mealText(Number(row.mealUnits), locale)}
+              </ListCell>
+            )}
+            <ListCell align="end" className="hidden md:block">
+              {mess ? (
+                money(paidIn(row))
+              ) : (
+                <span className="flex flex-col items-end gap-px">
+                  <span>{money(paidIn(row))}</span>
+                  <span className="text-[11.5px] whitespace-nowrap text-ink-muted">{own > 0 ? t("incl. {amount} own pocket", { amount: money(own) }) : t("contributions")}</span>
+                </span>
+              )}
+            </ListCell>
+            <ListCell align="end" className="hidden md:block">
+              {money(row.share)}
+            </ListCell>
+            <ListCell>
+              <BalanceCell value={Number(row.balance)} currency={currency} className="max-md:flex-col max-md:items-end max-md:gap-1" />
+            </ListCell>
+          </ListRow>
+        );
+      })}
+      {rows.length > 0 && (
+        <ListTotalRow columns={columns} className="min-h-12.5 gap-x-3.5 tabular-nums md:px-5">
+          <span role="cell">{t("Total")}</span>
+          {mess && (
+            <span role="cell" className="hidden text-right md:block">
+              {mealText(Number(settlement.mealUnits), locale)}
+            </span>
+          )}
+          <span role="cell" className="hidden text-right md:block">
+            {money(totalPaid)}
+          </span>
+          <span role="cell" className="hidden text-right md:block">
+            {money(totalCost)}
+          </span>
+          <span role="cell" className={cn("text-right", view.cash < 0 ? "text-expense" : "text-income")}>
+            {formatSignedCurrency(view.cash, currency, locale)}
+          </span>
+        </ListTotalRow>
+      )}
+    </ListCard>
+  );
+
+  const whereItWent = (
+    <Card padding="none" className={cn("flex min-w-0 flex-col px-5 py-4", mess ? "gap-3.5" : "gap-3")}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-title font-semibold text-ink">{t("Where the money went")}</h2>
+        <span className="text-caption font-normal text-ink-muted">{mess ? month : t("{month} · how each is shared", { month })}</span>
+      </div>
+      {view.byCategory.length === 0 && <p className="py-4 text-center text-small text-ink-muted">{t("No expense yet this month.")}</p>}
+      {view.byCategory.map((cat) => {
+        // How this month's costs in it were really shared.
+        const how = splits[cat.name] ?? "MIXED";
+        return (
+          <div key={cat.name} className={cn("flex flex-col", mess ? "gap-1.5" : "gap-1.25")}>
+            <div className="flex items-center gap-2 text-small">
+              <CategoryTile name={cat.name} categories={data.categories} size={24} />
+              <span className="truncate font-medium text-ink">{cat.name}</span>
+              {mess ? (
+                <span className="shrink-0 text-caption text-ink-faint">{t(SPLIT_WORDS[how])}</span>
+              ) : (
+                <Chip tone={how === "SHARES" ? "mint" : "neutral"} size="sm" className={how === "SHARES" ? undefined : "text-ink-soft"}>
+                  {t(SPLIT_WORDS[how])}
+                </Chip>
+              )}
+              <span className="flex-1" />
+              <span className="font-semibold text-ink tabular-nums">{money(cat.amount)}</span>
+              <span className="w-11 text-right text-ink-muted tabular-nums">{toLocaleDigits(`${cat.share}%`, locale)}</span>
+            </div>
+            <span className={cn("block h-1.5 overflow-hidden rounded-full bg-surface-sunken", categoryBarClass(cat.name, data.categories))}>
+              <span className="block h-full rounded-full bg-current" style={{ width: `${cat.share}%` }} />
+            </span>
+          </div>
+        );
+      })}
+      {/* A mess keeps its budget under the spend. */}
+      {mess && (
+        <div className="mt-1 flex flex-col gap-2 border-t border-divider pt-3.5">
+          {view.budget ? (
+            <>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-small">
+                <span className="font-semibold text-ink">{t("Budget {amount}", { amount: money(view.budget.budget) })}</span>
+                <span className={cn("font-semibold tabular-nums", view.budget.tone === "ok" ? "text-ink-2" : BUDGET_TONE_TEXT[view.budget.tone])}>
+                  {view.budget.left < 0 ? t("{percent}% used · {amount} over", { percent: formatCount(view.budget.percent, locale), amount: money(-view.budget.left) }) : t("{percent}% used · {amount} left", { percent: formatCount(view.budget.percent, locale), amount: money(view.budget.left) })}
+                </span>
+              </div>
+              <ProgressBar value={view.budget.percent} tone={BUDGET_TONE_PROGRESS[view.budget.tone]} label={t("Budget used")} valueText={t("{percent}% used", { percent: formatCount(view.budget.percent, locale) })} />
+              <span className="text-caption text-ink-muted">
+                {view.budget.tone === "over"
+                  ? t("Over the budget by {amount}.", { amount: money(-view.budget.left) })
+                  : view.budget.tone === "warning"
+                    ? t(ended ? "Past 90% of the budget with the month already over." : "Past 90% of the budget with the month still running.")
+                    : t(ended ? "The month ended inside the budget." : "Inside the budget so far.")}
+              </span>
+            </>
+          ) : (
+            <div className="flex items-center justify-between gap-3 text-small">
+              <span className="text-ink-muted">{t("No budget set for this month")}</span>
+              <button type="button" onClick={onSetBudget} className="relative font-semibold text-emerald after:absolute after:-inset-2 hover:underline">
+                {t("Set one")}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+
   return (
     <div className="flex flex-col gap-5">
+      {/* A month that is over and still open asks to be closed. */}
+      {ended && !view.closed && !view.empty && (
+        <div role="status" className="flex flex-col gap-3 rounded-field border border-emerald/25 bg-mint-50/60 px-4 py-3 sm:flex-row sm:items-center">
+          <span className="flex min-w-0 flex-1 items-start gap-3 text-body text-ink sm:items-center">
+            <CalendarCheck className="mt-px size-4.5 shrink-0 text-emerald sm:mt-0" aria-hidden="true" />
+            <span>
+              <b className="font-semibold">{range.to === dayBefore(data.today) ? t("{month} ended yesterday.", { month }) : t("{month} has ended.", { month })}</b> {t("Check the balances, record any payments, then close the month to lock it.")}
+            </span>
+          </span>
+          <Button asChild size="sm" className="h-8.5 gap-1.5 self-end rounded-sm px-3.5 sm:self-auto">
+            <Link href={settlementLink}>
+              {t("Review and close")}
+              <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* A running group's empty month keeps its dashboard, with one line saying so. */}
       {view.empty && (
         <Banner tone="neutral" inline icon={<Info />}>
@@ -87,17 +304,17 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label} padding="none" className="flex min-w-0 flex-col gap-2 px-5 py-4">
+          <Card key={stat.label} padding="none" className="flex min-w-0 flex-col gap-1.5 px-5 py-4">
             <span className="text-small font-medium text-ink-muted">{stat.label}</span>
-            <span className={cn("text-h1 wrap-break-word tabular-nums", stat.tone)}>{stat.value}</span>
+            <span className={cn("text-[26px] leading-normal font-bold tracking-[-0.02em] wrap-break-word text-ink tabular-nums", stat.tone)}>{stat.value}</span>
             {stat.action ? (
               // A small link with a finger-sized reach around it.
               <button type="button" onClick={stat.action} className="relative self-start text-caption font-semibold text-emerald after:absolute after:-inset-2 hover:underline pointer-coarse:after:-inset-3">
                 {stat.sub} · {t("Set one")}
               </button>
             ) : (
-              <span className={cn("flex items-center gap-1 text-caption", stat.subBold ? "font-semibold" : "font-normal", stat.subTone ?? "text-ink-muted")}>
-                {stat.check && <Check className="size-3.5 shrink-0 text-income" aria-hidden="true" />}
+              <span className={cn("flex items-center gap-1.25 text-caption", stat.subBold ? "font-semibold" : "font-normal", stat.subTone ?? "text-ink-muted")}>
+                {stat.check && <Check className="size-3.25 shrink-0 text-emerald" strokeWidth={3} aria-hidden="true" />}
                 {stat.sub}
               </span>
             )}
@@ -105,215 +322,187 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
         ))}
       </div>
 
-      {/* Side by side only where the balances table keeps room for names. */}
-      <div className={cn("grid items-start gap-5", meals ? "2xl:grid-cols-[minmax(0,1fr)_340px]" : "xl:grid-cols-[minmax(0,1fr)_340px]")}>
-        <ListCard
-          label={t("Members' balances")}
-          header={
-            <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-4 md:px-6">
-              <h2 className="text-title font-semibold text-ink">{t("Members' balances")}</h2>
-              <Link href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: range.key } }} className="text-small font-semibold text-emerald hover:text-emerald-hover">
-                {t("Open settlement")}
-              </Link>
-            </div>
-          }
-          footer={
-            rows.length > 0 && (
-              <ListFooter className="flex-row items-center gap-2 text-ink-2">
-                <Check className="size-4 shrink-0 text-income" aria-hidden="true" />
-                <span>{t("Balances add up to {cash}, the cash in hand. The account checks out.", { cash: money(view.cash) })}</span>
-              </ListFooter>
-            )
-          }
-        >
-          <ListHead columns={columns}>
-            <ListHeadCell>{t("Member")}</ListHeadCell>
-            {meals && <ListHeadCell align="end">{t("Meals")}</ListHeadCell>}
-            <ListHeadCell align="end">{t("Paid in")}</ListHeadCell>
-            <ListHeadCell align="end">{t("Cost")}</ListHeadCell>
-            <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
-          </ListHead>
-          {rows.length === 0 && <ListEmpty title={t("Add members to see their balances.")} />}
-          {rows.map(({ row, member }) => (
-            <ListRow key={row.groupMemberId} columns={columns} density="relaxed" className="tabular-nums">
-              <ListCell className="flex items-center gap-3">
-                <PersonAvatar name={row.name} src={member?.photoUrl} size={34} coloured />
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="flex min-w-0 items-center gap-2">
-                    {member ? (
-                      <ListRowButton onClick={() => onStatement(member)} aria-label={t("{name}'s statement", { name: row.name })} className="truncate font-semibold text-ink">
-                        {row.name}
-                      </ListRowButton>
-                    ) : (
-                      <span className="truncate font-semibold text-ink">{row.name}</span>
-                    )}
-                    {member && member.id === holder?.id && (
-                      <Chip tone="neutral" size="sm" className="font-semibold">
-                        {t("Manager")}
-                      </Chip>
-                    )}
-                  </span>
-                  {/* Paid in counts own-pocket money, as the balance does. */}
-                  <span className="truncate text-caption font-normal text-ink-muted md:hidden">{t("{paid} paid in · {cost} cost", { paid: money(paidIn(row)), cost: money(row.share) })}</span>
-                  <span className="hidden truncate text-caption font-normal text-ink-muted md:block">
-                    {Number(row.pocketPaid) > 0 ? t("{amount} from own pocket", { amount: money(row.pocketPaid) }) : meals ? t("{meals} meals + {shared} shared", { meals: money(row.mealCost), shared: money(row.otherShare) }) : (member?.phone ?? t("Active member"))}
-                  </span>
-                </span>
-              </ListCell>
-              {meals && (
-                <ListCell align="end" className="hidden text-ink-2 md:block">
-                  {mealText(Number(row.mealUnits), locale)}
-                </ListCell>
-              )}
-              <ListCell align="end" className="hidden md:block">
-                {money(paidIn(row))}
-              </ListCell>
-              <ListCell align="end" className="hidden md:block">
-                {money(row.share)}
-              </ListCell>
-              <ListCell>
-                <BalanceCell stacked value={Number(row.balance)} currency={currency} />
-              </ListCell>
-            </ListRow>
-          ))}
-          {rows.length > 0 && (
-            <ListTotalRow columns={columns} className="tabular-nums">
-              <span role="cell">{t("Total")}</span>
-              {meals && (
-                <span role="cell" className="hidden text-right md:block">
-                  {mealText(Number(settlement.mealUnits), locale)}
-                </span>
-              )}
-              <span role="cell" className="hidden text-right md:block">
-                {money(totalPaid)}
-              </span>
-              <span role="cell" className="hidden text-right md:block">
-                {money(totalCost)}
-              </span>
-              <span role="cell" className={cn("text-right", view.cash < 0 ? "text-expense" : "text-income")}>
-                {formatSignedCurrency(view.cash, currency, locale)}
-              </span>
-            </ListTotalRow>
-          )}
-        </ListCard>
-
-        <Card padding="none" className="flex flex-col overflow-hidden">
-          <div className="flex flex-col gap-0.5 border-b border-divider px-5 py-4">
-            <h2 className="text-title font-semibold text-ink">{t("Who pays whom")}</h2>
-            <span className="text-small text-ink-muted">{t("The fewest payments that make {month} even", { month })}</span>
+      {mess ? (
+        <>
+          {/* Side by side only where the balances table keeps room for names. */}
+          <div className="grid items-start gap-5 min-[1380px]:grid-cols-[minmax(0,1fr)_380px]">
+            {balances}
+            {whereItWent}
           </div>
-          {view.transfers.map((transfer) => {
-            const from = view.memberById[transfer.fromId];
-            const to = view.memberById[transfer.toId];
-            return (
-              <div key={`${transfer.fromId}-${transfer.toId}`} className="flex flex-col gap-3 border-b border-divider px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <PersonAvatar name={from?.name ?? "?"} src={from?.photoUrl} size={34} coloured />
-                  <ArrowRight className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-                  <PersonAvatar name={to?.name ?? "?"} src={to?.photoUrl} size={34} coloured />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    {/* Short names keep the line short, past a leading "Md.". */}
-                    <span className="truncate text-body font-semibold text-ink" title={`${from?.name ?? ""} → ${to?.name ?? ""}`}>
-                      {t("{from} pays {to}", { from: shortName(from?.name), to: shortName(to?.name) })}
-                    </span>
-                    <span className="truncate text-caption font-normal text-ink-muted">{t("Clears {name}'s {amount}", { name: shortName(from?.name), amount: formatSignedCurrency(view.balances[transfer.fromId] ?? 0, currency, locale) })}</span>
+          <LatestEntries data={data} />
+        </>
+      ) : (
+        <>
+          <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+            {balances}
+            <Card padding="none" className="flex min-w-0 flex-col overflow-hidden">
+              <div className="flex flex-col gap-0.5 border-b border-divider px-5 py-3.5">
+                <h2 className="text-title font-semibold text-ink">{t("Who pays whom")}</h2>
+                <span className="text-[12.5px] text-ink-muted">{t("The fewest payments that make {month} even", { month })}</span>
+              </div>
+              {view.transfers.map((transfer) => {
+                const from = view.memberById[transfer.fromId];
+                const to = view.memberById[transfer.toId];
+                return (
+                  <div key={`${transfer.fromId}-${transfer.toId}`} className="flex flex-col gap-2.5 border-b border-divider px-5 py-4">
+                    <div className="flex items-center gap-2.5">
+                      <MemberAvatar member={from} members={data.members} size={34} />
+                      <ArrowRight className="size-5.5 shrink-0 text-ink-faint" role="img" aria-label={t("pays")} />
+                      <MemberAvatar member={to} members={data.members} size={34} />
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        {/* Short names keep the line short, past a leading "Md.". */}
+                        <span className="truncate text-body font-semibold text-ink" title={`${from?.name ?? ""} → ${to?.name ?? ""}`}>
+                          {t("{from} pays {to}", { from: shortName(from?.name), to: shortName(to?.name) })}
+                        </span>
+                        <span className="truncate text-caption font-normal text-ink-muted">{t("Clears {name}'s {amount}", { name: shortName(from?.name), amount: formatSignedCurrency(view.balances[transfer.fromId] ?? 0, currency, locale) })}</span>
+                      </span>
+                      <span className="text-h3 font-bold text-ink tabular-nums">{money(transfer.amount)}</span>
+                    </div>
+                    {/* A closed month takes no new payment, as on Settlement. */}
+                    {!view.closed && (
+                      <Button variant="secondary" size="sm" onClick={() => onRecordPayment(transfer)} className="h-8.5 self-end pointer-coarse:h-11">
+                        {t("Record payment")}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+              <div className="flex flex-1 items-start gap-2 bg-strip px-5 py-3.5 text-small leading-normal text-ink-soft">
+                <Info className="mt-0.5 size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
+                <span>
+                  {view.transfers.length === 0
+                    ? spent > 0
+                      ? t("Everyone is even. Nothing to settle.")
+                      : t("Record contributions and expenses, and the payments that settle the month show up here.")
+                    : holder && view.cash > 0.004
+                      ? view.transfers.length === 1
+                        ? t("{name} already holds the {cash} cash in hand, so after this payment everyone is even.", { name: shortName(holder.name), cash: money(view.cash) })
+                        : t("{name} already holds the {cash} cash in hand, so after these {count} payments everyone is even.", { name: shortName(holder.name), cash: money(view.cash), count: formatCount(view.transfers.length, locale) })
+                      : view.transfers.length === 1
+                        ? t("After this payment everyone is even. Or carry the balances into next month when you close.")
+                        : t("After these {count} payments everyone is even. Or carry the balances into next month when you close.", { count: formatCount(view.transfers.length, locale) })}
+                </span>
+              </div>
+            </Card>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            {whereItWent}
+
+            <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-title font-semibold text-ink">{t("Last 6 months against the budget")}</h2>
+                {view.budget && (
+                  <span className="flex shrink-0 items-center gap-1.5 text-caption font-normal text-ink-muted">
+                    <span className="h-3 w-0.5 bg-ink" aria-hidden="true" />
+                    {t("Budget {amount}", { amount: money(view.budget.budget) })}
                   </span>
-                  <span className="text-title font-bold text-ink tabular-nums">{money(transfer.amount)}</span>
-                </div>
-                {/* A closed month takes no new payment, as on Settlement. */}
-                {!view.closed && (
-                  <Button variant="secondary" size="sm" onClick={() => onRecordPayment(transfer)} className="self-end pointer-coarse:h-11">
-                    {t("Record payment")}
-                  </Button>
                 )}
               </div>
-            );
-          })}
-          <div className="flex flex-1 items-start gap-2 bg-strip px-5 py-4 text-small leading-relaxed text-ink-2">
-            <Info className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-            <span>
-              {view.transfers.length === 0
-                ? spent > 0
-                  ? t("Everyone is even. Nothing to settle.")
-                  : t("Record contributions and expenses, and the payments that settle the month show up here.")
-                : view.transfers.length === 1
-                  ? t("After this payment everyone is even. Or carry the balances into next month when you close.")
-                  : t("After these {count} payments everyone is even. Or carry the balances into next month when you close.", { count: formatCount(view.transfers.length, locale) })}
-            </span>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-title font-semibold text-ink">{t("Where the money went")}</h2>
-            <span className="text-caption font-normal text-ink-muted">{month}</span>
-          </div>
-          {view.byCategory.length === 0 && <p className="py-4 text-center text-small text-ink-muted">{t("No expense yet this month.")}</p>}
-          {view.byCategory.map((cat) => {
-            // How this month's costs in it were really shared.
-            const how = splits[cat.name];
-            return (
-              <div key={cat.name} className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 text-small">
-                  <CategoryTile name={cat.name} categories={data.categories} size={24} />
-                  <span className="truncate font-medium text-ink">{cat.name}</span>
-                  <Chip tone={how === "EQUAL" ? "neutral" : "mint"} size="sm" className="font-semibold">
-                    {t(!how || how === "MIXED" ? "Mixed" : SPLIT_LABELS[how])}
-                  </Chip>
-                  <span className="flex-1" />
-                  <span className="font-semibold text-ink tabular-nums">{money(cat.amount)}</span>
-                  <span className="w-11 text-right text-ink-muted tabular-nums">{toLocaleDigits(`${cat.share}%`, locale)}</span>
-                </div>
-                <span className={cn("block h-1.5 overflow-hidden rounded-full bg-surface-sunken", categoryBarClass(cat.name, data.categories))}>
-                  <span className="block h-full rounded-full bg-current" style={{ width: `${cat.share}%` }} />
+              {view.byMonth.map((point) => {
+                const monthBudget = budgetFor(data.budgets, monthRangeOf(point.month, startDay));
+                const status = monthBudget ? budgetStatus(Number(monthBudget.budgetAmount), point.amount) : null;
+                const scale = status ? status.budget * 1.1 : maxMonth;
+                const last = point.month === range.key;
+                return (
+                  <div key={point.month} className="grid h-7.5 grid-cols-[40px_minmax(0,1fr)_76px_52px] items-center gap-2.5 text-small tabular-nums">
+                    <span className={cn("text-ink-soft", last ? "font-bold" : "font-medium")}>{monthName(point.month, locale, "short")}</span>
+                    <span className="relative h-3.5 rounded-xs bg-surface-sunken">
+                      <span className={cn("absolute inset-y-0 left-0 rounded-xs", status ? BUDGET_TONE_BAR[status.tone] : "bg-emerald")} style={{ width: `${Math.min(100, (point.amount / scale) * 100)}%` }} />
+                      {status && <span className="absolute -inset-y-1 w-0.5 bg-ink" style={{ left: "90.9%" }} aria-hidden="true" />}
+                    </span>
+                    <span className={cn("text-right text-ink", last ? "font-bold" : "font-medium")}>{money(point.amount)}</span>
+                    <span className={cn("text-right font-semibold", status?.tone === "over" ? "text-expense" : "text-ink-muted")}>{status ? `${formatCount(status.percent, locale)}%` : "—"}</span>
+                  </div>
+                );
+              })}
+              {lastStatus && (
+                <span className="text-caption font-normal text-ink-muted">
+                  {lastStatus.left < 0
+                    ? top[0]
+                      ? t("{month} went {amount} over, mostly {category} ({spent}).", { month, amount: money(-lastStatus.left), category: top[0].name, spent: money(top[0].amount) })
+                      : t("{month} went {amount} over the budget.", { month, amount: money(-lastStatus.left) })
+                    : top[0]
+                      ? t("{month} is {amount} under the budget so far, mostly {category} ({spent}).", { month, amount: money(lastStatus.left), category: top[0].name, spent: money(top[0].amount) })
+                      : t("{month} is {amount} under the budget so far.", { month, amount: money(lastStatus.left) })}
                 </span>
-              </div>
-            );
-          })}
-        </Card>
-
-        <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-title font-semibold text-ink">{t("Last 6 months against the budget")}</h2>
-            {view.budget && (
-              <span className="flex shrink-0 items-center gap-2 text-caption font-normal text-ink-muted">
-                <span className="h-3 w-0.5 bg-ink" aria-hidden="true" />
-                {t("Budget {amount}", { amount: money(view.budget.budget) })}
-              </span>
-            )}
+              )}
+            </Card>
           </div>
-          {view.byMonth.map((point) => {
-            const monthBudget = budgetFor(data.budgets, monthRangeOf(point.month, startDay));
-            const status = monthBudget ? budgetStatus(Number(monthBudget.budgetAmount), point.amount) : null;
-            const scale = status ? status.budget * 1.1 : maxMonth;
-            const last = point.month === range.key;
-            return (
-              <div key={point.month} className="grid h-7.5 grid-cols-[40px_minmax(0,1fr)_76px_52px] items-center gap-3 text-small tabular-nums">
-                <span className={cn("text-ink-2", last ? "font-bold" : "font-medium")}>{monthName(point.month, locale, "short")}</span>
-                <span className="relative h-3.5 rounded-sm bg-surface-sunken">
-                  <span className={cn("absolute inset-y-0 left-0 rounded-sm", status ? BUDGET_TONE_BAR[status.tone] : "bg-emerald")} style={{ width: `${Math.min(100, (point.amount / scale) * 100)}%` }} />
-                  {status && <span className="absolute -inset-y-1 w-0.5 bg-ink" style={{ left: "90.9%" }} aria-hidden="true" />}
-                </span>
-                <span className={cn("text-right text-ink", last ? "font-bold" : "font-medium")}>{money(point.amount)}</span>
-                <span className={cn("text-right font-semibold", status ? BUDGET_TONE_TEXT[status.tone] : "text-ink-muted")}>{status ? `${formatCount(status.percent, locale)}%` : "—"}</span>
-              </div>
-            );
-          })}
-          {lastStatus && (
-            <span className="text-caption font-normal text-ink-muted">
-              {lastStatus.left < 0
-                ? top[0]
-                  ? t("{month} went {amount} over the budget, mostly {category} ({spent}).", { month, amount: money(-lastStatus.left), category: top[0].name, spent: money(top[0].amount) })
-                  : t("{month} went {amount} over the budget.", { month, amount: money(-lastStatus.left) })
-                : top[0]
-                  ? t("{month} is {amount} under the budget so far, mostly {category} ({spent}).", { month, amount: money(lastStatus.left), category: top[0].name, spent: money(top[0].amount) })
-                  : t("{month} is {amount} under the budget so far.", { month, amount: money(lastStatus.left) })}
-            </span>
-          )}
-        </Card>
-      </div>
+        </>
+      )}
     </div>
+  );
+}
+
+// A mess's newest entries: the expenses and the days' meal marks, newest
+// first, four of them.
+function LatestEntries({ data }: { data: GroupPageData }) {
+  const { t, locale } = useLocale();
+  const money = (value: number | string) => formatCurrency(value, data.currency, locale);
+  const units = unitsOf(data.settings);
+  const active = data.members.filter((member) => member.status === "ACTIVE").length;
+  const days = new Map<string, { total: number; people: number }>();
+  for (const meal of data.meals) {
+    const value = mealValue(meal, units);
+    if (value <= 0) continue;
+    const day = days.get(meal.date.slice(0, 10)) ?? { total: 0, people: 0 };
+    days.set(meal.date.slice(0, 10), { total: day.total + value, people: day.people + 1 });
+  }
+  const entries = [
+    ...data.expenses.map((expense) => {
+      const who = expense.paidFrom === "MEMBER" && expense.paidByMember ? t("{name}'s pocket", { name: shortName(expense.paidByMember.name) }) : t("from fund");
+      const how = expense.split === "EQUAL" ? t("split equally") : t(SPLIT_WORDS[expense.split]);
+      return {
+        key: expense.id,
+        day: expense.date.slice(0, 10),
+        order: expense.createdAt,
+        title: expense.category,
+        amount: money(expense.amount),
+        sub: [dayLabel(expense.date, locale), expense.description || who, how].join(" · "),
+        tile: <CategoryTile name={expense.category} categories={data.categories} size={32} />,
+      };
+    }),
+    ...[...days].map(([day, marked]) => ({
+      key: `meals-${day}`,
+      day,
+      order: "",
+      title: t("Meals marked"),
+      amount: t("{count} meals", { count: mealText(marked.total, locale) }),
+      sub: `${dayLabel(day, locale)} · ${marked.people >= active ? t("all {count} members", { count: formatCount(active, locale) }) : countLabel(t, locale, marked.people, "{count} member", "{count} members")}`,
+      tile: (
+        <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-warning-soft text-warning">
+          <Utensils className="size-4" />
+        </span>
+      ),
+    })),
+  ]
+    .sort((a, b) => b.day.localeCompare(a.day) || b.order.localeCompare(a.order))
+    .slice(0, 4);
+  if (entries.length === 0) return null;
+
+  return (
+    <Card padding="none" className="flex flex-col gap-3 px-5 pt-3.5 pb-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-title font-semibold text-ink">{t("Latest entries")}</h2>
+        <Link href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "expenses", month: data.range.key } }} className="text-small font-semibold text-emerald hover:text-emerald-hover">
+          {t("See all expenses")}
+        </Link>
+      </div>
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {entries.map((entry) => (
+          <li key={entry.key} className="flex min-w-0 gap-2.5 rounded-[14px] border border-divider bg-strip p-3">
+            {entry.tile}
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="flex justify-between gap-2 text-small">
+                <span className="truncate font-semibold text-ink">{entry.title}</span>
+                <span className="font-semibold whitespace-nowrap text-ink tabular-nums">{entry.amount}</span>
+              </span>
+              <span className="truncate text-caption text-ink-muted">{entry.sub}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }

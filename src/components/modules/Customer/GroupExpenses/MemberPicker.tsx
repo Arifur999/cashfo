@@ -3,12 +3,12 @@
 import { Command } from "cmdk";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { useState } from "react";
-import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { GroupMember } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { MemberAvatar } from "./GroupBits";
 
 interface MemberPickerProps {
   members: GroupMember[];
@@ -78,7 +78,7 @@ export function MemberPicker({ members, value, onChange, currency, balances, exc
         >
           {selected ? (
             <>
-              <PersonAvatar name={selected.name} src={selected.photoUrl} size={size === "xl" ? 32 : 28} coloured />
+              <MemberAvatar member={selected} members={members} size={size === "xl" ? 32 : 26} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-body font-semibold text-ink">{selected.name}</span>
                 {size === "xl" && <span className={cn("truncate text-caption font-normal tabular-nums", balanceLine(selected).className)}>{balanceLine(selected).text}</span>}
@@ -105,7 +105,7 @@ export function MemberPicker({ members, value, onChange, currency, balances, exc
               const line = balanceLine(member);
               return (
                 <Command.Item key={member.id} value={member.id} onSelect={() => pick(member.id)} className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 data-selected:bg-surface-sunken">
-                  <PersonAvatar name={member.name} src={member.photoUrl} size={30} coloured />
+                  <MemberAvatar member={member} members={members} size={30} className="text-[11px]" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-body font-semibold text-ink">{member.name}</span>
                     <span className={cn("truncate text-caption font-normal tabular-nums", line.className)}>{line.text}</span>

@@ -24,18 +24,18 @@ const MAX = 100;
 export function ShareStepper({ value, onChange, name, disabled = false, size = "md" }: ShareStepperProps) {
   const { t, locale } = useLocale();
   const set = (next: number) => onChange(Math.min(MAX, Math.max(MIN, Math.round(next / STEP) * STEP)));
-  const button = cn("flex h-full items-center justify-center bg-strip transition-colors hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:w-11", size === "sm" ? "w-7" : "w-8.5");
+  const button = cn("flex h-full items-center justify-center bg-strip text-ink-soft transition-colors hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:w-11", size === "sm" ? "w-7" : "w-8");
   return (
-    <span className={cn("flex shrink-0 items-center overflow-hidden rounded-md border border-line-strong", size === "sm" ? "h-8 pointer-coarse:h-11" : "h-9.5 pointer-coarse:h-11")}>
+    <span className={cn("flex shrink-0 items-center overflow-hidden rounded-sm border border-input", size === "sm" ? "h-8 pointer-coarse:h-11" : "h-9 pointer-coarse:h-11")}>
       <button type="button" aria-label={name ? t("Fewer shares for {name}", { name }) : t("Fewer share units")} disabled={disabled || value <= MIN} onClick={() => set(value - STEP)} className={button}>
-        <Minus className="size-3.5" aria-hidden="true" />
+        <Minus className="size-3" strokeWidth={2.5} aria-hidden="true" />
       </button>
-      <span aria-live="polite" className={cn("text-center font-semibold tabular-nums", size === "sm" ? "w-8 text-body" : "w-9 text-body-lg")}>
+      <span aria-live="polite" className={cn("text-center font-semibold tabular-nums", size === "sm" ? "w-8 text-body" : "w-8.5 text-[15px] leading-normal font-bold")}>
         <span className="sr-only">{name ? t("{name}'s share units:", { name }) : t("Share units:")} </span>
         {mealText(value, locale)}
       </span>
       <button type="button" aria-label={name ? t("More shares for {name}", { name }) : t("More share units")} disabled={disabled || value >= MAX} onClick={() => set(value + STEP)} className={button}>
-        <Plus className="size-3.5" aria-hidden="true" />
+        <Plus className="size-3" strokeWidth={2.5} aria-hidden="true" />
       </button>
     </span>
   );

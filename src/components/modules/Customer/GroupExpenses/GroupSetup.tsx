@@ -1,22 +1,25 @@
 "use client";
 
 import { Check } from "lucide-react";
+import Link from "next/link";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import ProgressBar from "@/components/smartly/ProgressBar";
-import { formatCurrency } from "@/lib/customer/currency";
+import { categoryTone } from "@/lib/customer/categoryTone";
+import { namesList, shortName } from "@/lib/customer/groupDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { SPLIT_WORDS } from "./GroupDashboard";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 interface GroupSetupProps {
   data: GroupPageData;
   view: GroupView;
   onAddMember: () => void;
-  onSetBudget: () => void;
   onAddContribution: () => void;
+  onAddMeals: () => void;
   onAddExpense: () => void;
 }
 
@@ -38,10 +41,12 @@ const SHARE_OF_COSTS: Record<BazarRule, string> = {
 
 // A brand-new group: four short steps, and how a balance is worked out.
 // The dashboard takes over as soon as money is recorded.
-export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribution, onAddExpense }: GroupSetupProps) {
+export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMeals, onAddExpense }: GroupSetupProps) {
   const { t, locale } = useLocale();
-  const names = view.activeMembers.map((m) => m.name);
-  const listed = names.length > 3 ? t("{names} and {count} more", { names: names.slice(0, 3).join(", "), count: formatCount(names.length - 3, locale) }) : names.join(", ");
+  const names = view.activeMembers.map((m) => shortName(m.name));
+  const listed = names.length > 3 ? t("{names} and {count} more", { names: names.slice(0, 3).join(", "), count: formatCount(names.length - 3, locale) }) : namesList(t, names);
+  const mess = data.settings.kind === "MESS";
+  const meals = mess || data.settings.mealsOn;
   // New groups get their bazar rule when created (NewGroupDrawer); say the one it has.
   const bazar = data.categories.find((c) => /bazar|grocery/i.test(c.name))?.defaultSplit;
   const rule: BazarRule = bazar === "MEALS" && data.settings.mealsOn ? "MEALS" : bazar === "SHARES" ? "SHARES" : "EQUAL";
@@ -56,23 +61,34 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
       actions: [{ label: names.length > 0 ? t("Add more") : t("Add members"), onClick: onAddMember, primary: names.length === 0 }],
     },
     {
-      done: view.budget !== null,
-      title: t("Set this month's budget"),
-      body: view.budget ? t("{amount} for this month. The group is warned at 90%.", { amount: formatCurrency(view.budget.budget, data.currency, locale) }) : t("What the group plans to spend this month. The bar on every page turns amber at 90% and red when over."),
-      actions: [{ label: view.budget ? t("Change") : t("Set budget"), onClick: onSetBudget, primary: false }],
+      done: false,
+      title: t("Check how costs are shared"),
+      body: t(mess ? "These defaults suit most messes. Change a category if, say, rooms pay different rent." : "These defaults suit most families. Change a category if a cost should be shared another way."),
+      rules: true,
+      actions: [{ label: t("Review rules"), href: { pathname: `/group-expenses/${data.businessId}`, query: { tab: "settings", month: data.range.key } }, primary: false }],
     },
     {
       done: false,
       title: t("Record the first contributions"),
-      body: t("The money each member hands over at the start of the month."),
+      body: t(mess ? "The money each member hands to the manager at the start of the month." : "The money each member hands over at the start of the month."),
       actions: [{ label: t("Add contribution"), onClick: onAddContribution, primary: names.length > 0 }],
     },
-    {
-      done: false,
-      title: t("Add the first expense"),
-      body: t(EXPENSE_STEP[rule]),
-      actions: [{ label: t("Add expense"), onClick: onAddExpense, primary: false }],
-    },
+    meals
+      ? {
+          done: false,
+          title: t("Count meals and add the first bazar"),
+          body: t("Meals can be marked for the whole mess in one go, once a day."),
+          actions: [
+            { label: t("Add meals"), onClick: onAddMeals, primary: false },
+            { label: t("Add expense"), onClick: onAddExpense, primary: false },
+          ],
+        }
+      : {
+          done: false,
+          title: t("Add the first expense"),
+          body: t(EXPENSE_STEP[rule]),
+          actions: [{ label: t("Add expense"), onClick: onAddExpense, primary: false }],
+        },
   ];
   const doneCount = steps.filter((s) => s.done).length;
 
@@ -89,19 +105,40 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
         </div>
         <ol className="flex flex-col">
           {steps.map((step, i) => (
-            <li key={step.title} className="flex flex-wrap gap-4 border-b border-divider px-6 py-5 last:border-b-0 sm:flex-nowrap">
-              <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-full text-small font-bold", step.done ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface text-ink-2")}>{step.done ? <Check className="size-4" strokeWidth={3} aria-hidden="true" /> : formatCount(i + 1, locale)}</span>
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className={cn("text-body-lg font-semibold", step.done ? "text-ink-muted line-through" : "text-ink")}>{step.title}</span>
-                <span className="text-small leading-relaxed text-ink-muted">{step.body}</span>
+            <li key={step.title} className="flex flex-wrap gap-4 border-b border-divider px-6 py-4.5 last:border-b-0 sm:flex-nowrap">
+              <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-full text-small font-bold", step.done ? "bg-emerald text-on-action" : "border-[1.5px] border-input bg-surface text-ink-soft")}>{step.done ? <Check className="size-3.75" strokeWidth={3} aria-hidden="true" /> : formatCount(i + 1, locale)}</span>
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <div className="flex flex-col gap-0.75">
+                  <span className={cn("text-[15px] leading-normal font-semibold", step.done ? "text-ink-muted line-through" : "text-ink")}>{step.title}</span>
+                  <span className="text-small leading-normal text-ink-muted">{step.body}</span>
+                </div>
+                {"rules" in step && data.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {data.categories.map((category) => {
+                      const tone = categoryTone(category.color);
+                      const how = category.defaultSplit === "MEALS" && !data.settings.mealsOn ? "EQUAL" : category.defaultSplit;
+                      return (
+                        <span key={category.id} className={cn("flex h-7 items-center gap-1.5 rounded-full px-2.5 text-caption font-semibold", tone.bg, tone.fg)}>
+                          {category.name} <span className="font-medium opacity-80">· {t(SPLIT_WORDS[how])}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
               {/* Under the text on a phone, in line with it. */}
-              <div className="flex shrink-0 gap-2 max-sm:basis-full max-sm:pl-11.5">
-                {step.actions.map((action) => (
-                  <Button key={action.label} variant={action.primary ? "primary" : "secondary"} size="sm" onClick={action.onClick}>
-                    {action.label}
-                  </Button>
-                ))}
+              <div className="flex shrink-0 items-start gap-2 max-sm:basis-full max-sm:pl-11.5">
+                {step.actions.map((action) =>
+                  "href" in action ? (
+                    <Button key={action.label} asChild variant="secondary" size="sm">
+                      <Link href={action.href}>{action.label}</Link>
+                    </Button>
+                  ) : (
+                    <Button key={action.label} variant={action.primary ? "primary" : "secondary"} size="sm" onClick={action.onClick}>
+                      {action.label}
+                    </Button>
+                  ),
+                )}
               </div>
             </li>
           ))}
@@ -110,30 +147,49 @@ export function GroupSetup({ data, view, onAddMember, onSetBudget, onAddContribu
 
       <Card padding="none" className="flex flex-col gap-4 p-5">
         <h2 className="text-title font-semibold text-ink">{t("How each balance is worked out")}</h2>
-        <div className="flex flex-col gap-2 rounded-md bg-strip p-4 text-small leading-relaxed">
+        <div className="flex flex-col gap-2 rounded-[14px] bg-strip p-3.5 text-small leading-normal">
           <span className="flex justify-between">
             <span className="text-ink-2">{t("Contributions")}</span>
             <span className="font-semibold text-income">+</span>
           </span>
           <span className="flex justify-between">
-            <span className="text-ink-2">{t("Paid from own pocket")}</span>
+            <span className="text-ink-2">{t("Expenses paid from own pocket")}</span>
             <span className="font-semibold text-income">+</span>
           </span>
-          <span className="flex justify-between">
-            <span className="text-ink-2">{t("Share of the month's costs")}</span>
-            <span className="font-semibold text-expense">−</span>
-          </span>
+          {meals ? (
+            <>
+              <span className="flex justify-between">
+                <span className="text-ink-2">{t("Meals × meal rate")}</span>
+                <span className="font-semibold text-expense">−</span>
+              </span>
+              <span className="flex justify-between">
+                <span className="text-ink-2">{t("Share of rent, bills and other costs")}</span>
+                <span className="font-semibold text-expense">−</span>
+              </span>
+            </>
+          ) : (
+            <span className="flex justify-between">
+              <span className="text-ink-2">{t("Share of the month's costs")}</span>
+              <span className="font-semibold text-expense">−</span>
+            </span>
+          )}
           <span className="h-px bg-line" />
           <span className="flex justify-between font-semibold text-ink">
             <span>{t("Balance")}</span>
             <span>= {t("gets back or has to pay")}</span>
           </span>
         </div>
-        <p className="text-small leading-relaxed text-ink-2">
-          <b className="font-semibold text-ink">{t("Share of costs")}</b> = {t(SHARE_OF_COSTS[rule])}
-        </p>
-        <p className="text-small leading-relaxed text-ink-2">
-          {fillNodes(t("{term} is what the fund should be holding. It always equals all balances added together, so the account checks itself."), { term: <b className="font-semibold text-ink">{t("Cash in hand")}</b> })}
+        {meals ? (
+          <p className="text-small leading-[1.55] text-ink-soft">
+            <b className="font-semibold text-ink">{t("Meal rate")}</b> = {t("all bazar ÷ all meals in the month. If bazar costs ৳ 19,840 and the mess ate 320 meals, one meal costs ৳ 62.00.")}
+          </p>
+        ) : (
+          <p className="text-small leading-[1.55] text-ink-soft">
+            <b className="font-semibold text-ink">{t("Share of costs")}</b> = {t(SHARE_OF_COSTS[rule])}
+          </p>
+        )}
+        <p className="text-small leading-[1.55] text-ink-soft">
+          {fillNodes(t(data.settings.cashHolderMemberId ? "{term} is what the manager should be holding. It always equals all balances added together, so the account checks itself." : "{term} is what the fund should be holding. It always equals all balances added together, so the account checks itself."), { term: <b className="font-semibold text-ink">{t("Cash in hand")}</b> })}
         </p>
       </Card>
     </div>
