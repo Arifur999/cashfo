@@ -1,8 +1,16 @@
+import type { AdminRole } from "./auth.types";
+
 export interface IDashboardAuditLog {
   id: string;
   action: string;
   entityType: string;
+  // What the change was on, in words ("Yearly Pro", a payer, a person).
+  entityLabel?: string | null;
   adminName: string;
+  // Colours the avatar; absent from older responses.
+  adminRole?: AdminRole | null;
+  // The reason the admin typed, if any.
+  reason?: string | null;
   createdAt: string;
 }
 
