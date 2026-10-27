@@ -12,62 +12,62 @@
    ========================================================================= */
 :root {
   /* Brand */
-  --forest: #0b3d2e;
-  --forest-hover: #145a43;
-  --emerald: #1f7a5a;
-  --emerald-hover: #17664a;
+  --forest: #0f3f38;
+  --forest-hover: #155c51;
+  --emerald: #1c7567;
+  --emerald-hover: #155c51;
   /* Emerald and income text (both #1f7a5a) is 4.35:1 on sunken, under AA:
      text on a sunken fill uses brand-ink (src/app/tokens.contrast.test.ts). */
-  --brand-ink: #17664a;
-  --jade: #14b57a;
-  --mint-50: #e7f5ee;
-  --mint-200: #bfebd7;
-  --mint-300: #7bd3a8;
+  --brand-ink: #155c51;
+  --jade: #2a9d8a;
+  --mint-50: #dcede9;
+  --mint-200: #bbd9d3;
+  --mint-300: #6faca1;
   --on-action: #ffffff;
 
   /* Grounds and lines (Cool mist, 20 Oct 2026). One job each, so a table
      head never matches the page behind its card. */
   /* The shell behind the cards. */
-  --page: #f3f6f4;
+  --page: #f4f5f5;
   /* Column heads, and the group, opening and total rows of a list. */
-  --table-head: #e9efec;
+  --table-head: #f8f8f8;
   /* Bands inside a card: footers, notes, stat tiles, input addons and
      read-only fields. */
-  --strip: #f7f9f8;
+  --strip: #f8f8f8;
   /* A row or list item under the pointer. */
-  --hover: #f1f5f3;
+  --hover: #f8f9f9;
   /* A shared DataTable row under the pointer: the same hover in light. */
   --row-hover: var(--hover);
   --surface: #ffffff;
   --surface-raised: #ffffff;
   /* Tracks, button and icon hovers, the menu highlight and neutral chips. */
-  --surface-sunken: #e4ebe7;
+  --surface-sunken: #f4f5f5;
   /* The edge of a card or control. */
-  --line: #dce4e0;
+  --line: #e1e7e6;
   /* The separator between rows inside a card. */
-  --divider: #e6ece9;
-  --line-strong: #7c8882;
+  --divider: #eef1f0;
+  --line-strong: #838f8c;
 
   /* Ink */
-  --ink: #0e1a16;
-  --ink-2: #33433c;
-  --ink-muted: #56655e;
-  --ink-faint: #8e9a93;
-  --focus-ring: #1f7a5a;
+  --ink: #12201d;
+  --ink-2: #33413e;
+  --ink-muted: #5f6b68;
+  --ink-faint: #8a9693;
+  --focus-ring: #1c7567;
 
   /* Meaning */
-  --income: #1f7a5a;
-  --income-soft: #e7f5ee;
-  --expense: #b42a2a;
-  --expense-fill: #c63a32;
-  --expense-soft: #fbeae6;
+  --income: #1c7567;
+  --income-soft: #dcede9;
+  --expense: #d32222;
+  --expense-fill: #dc2626;
+  --expense-soft: #fee2e2;
   /* The border of an over-budget card or a red outline button. */
-  --expense-line: #f2c9c0;
-  --warning: #8f5600;
-  --warning-fill: #e8a317;
-  --warning-soft: #fbf0d9;
-  --info: #2558b8;
-  --info-soft: #e7eefa;
+  --expense-line: #fecaca;
+  --warning: #b45309;
+  --warning-fill: #f59e0b;
+  --warning-soft: #fef3c7;
+  --info: #2563eb;
+  --info-soft: #dbeafe;
   /* The payment gateways' own colours, for their tags on the Payments page. */
   --gateway-bkash: #e2136e;
   --gateway-nagad: #d9480f;
@@ -85,20 +85,20 @@
   --pillar-insights-soft: #e2f2f4;
 
   /* Charts and category colours */
-  --chart-income: #1f7a5a;
-  --chart-expense: #e8857a;
-  --chart-savings: #7bd3a8;
-  --chart-grid: #dce4e0;
+  --chart-income: #1c7567;
+  --chart-expense: #f87171;
+  --chart-savings: #bbd9d3;
+  --chart-grid: #e1e7e6;
   --chart-other: #c4cec9;
-  --cat-1: #1f7a5a;
-  --cat-2: #a04f14;
-  --cat-3: #6244c4;
-  --cat-4: #2558b8;
-  --cat-5: #0b6f80;
-  --cat-6: #b0477a;
+  --cat-1: #1c7567;
+  --cat-2: #ea580c;
+  --cat-3: #7c3aed;
+  --cat-4: #2563eb;
+  --cat-5: #0d9488;
+  --cat-6: #db2777;
   /* A prayer marked on time: the emerald washed out (the sheet boards'
      primary at 78% white). */
-  --emerald-tint: #cee2db;
+  --emerald-tint: #cfe3df;
   /* The fifth avatar tint (rose), beside mint, blue, amber and violet. */
   --rose: #b0477a;
   --rose-soft: #f9e6ef;
@@ -106,15 +106,15 @@
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
      --shadow-* namespace) */
-  --elevation-card: 0 1px 2px rgba(14, 26, 22, 0.06), 0 1px 1px rgba(14, 26, 22, 0.04);
-  --elevation-float: 0 10px 28px -8px rgba(11, 61, 46, 0.18), 0 2px 6px rgba(14, 26, 22, 0.06);
-  --elevation-overlay: 0 28px 60px -16px rgba(11, 61, 46, 0.3);
+  --elevation-card: 0 1px 2px rgba(18, 32, 29, 0.04), 0 6px 20px rgba(18, 32, 29, 0.05);
+  --elevation-float: 0 16px 40px rgba(18, 32, 29, 0.14), 0 2px 6px rgba(18, 32, 29, 0.06);
+  --elevation-overlay: 0 24px 60px rgba(18, 32, 29, 0.22);
   /* The overlay's shadow turned on its side: a right-hand drawer casts it
      left, over the page. Dark keeps this value, as the drawers always had. */
-  --elevation-drawer: -28px 0 60px -16px rgba(11, 61, 46, 0.3);
-  --elevation-button: 0 8px 18px -8px rgba(11, 61, 46, 0.55);
+  --elevation-drawer: -16px 0 40px rgba(18, 32, 29, 0.18);
+  --elevation-button: 0 1px 2px rgba(18, 32, 29, 0.1);
   /* The wash behind dialogs and drawers. */
-  --scrim: rgba(14, 26, 22, 0.48);
+  --scrim: rgba(18, 32, 29, 0.45);
 
   /* shadcn's tokens, mapped onto the palette above so its primitives and
      the design's own components agree. */
@@ -125,7 +125,7 @@
   --card-foreground: var(--ink);
   --popover: var(--surface-raised);
   --popover-foreground: var(--ink);
-  --primary: var(--forest);
+  --primary: var(--emerald);
   --primary-foreground: var(--on-action);
   --secondary: var(--surface-sunken);
   --secondary-foreground: var(--ink);
@@ -137,7 +137,7 @@
   --accent-foreground: var(--ink);
   --destructive: var(--expense-fill);
   --border: var(--line);
-  --input: var(--line-strong);
+  --input: #c9d3d1;
   --ring: var(--focus-ring);
   --chart-1: var(--chart-income);
   --chart-2: var(--chart-expense);
@@ -155,11 +155,11 @@
 }
 
 .dark {
-  --emerald: #4cc995;
-  --emerald-hover: #7bd3a8;
-  --brand-ink: #7bd3a8;
-  --jade: #2fd6a0;
-  --mint-50: #0f2a20;
+  --emerald: #4fb8a6;
+  --emerald-hover: #7fcdbf;
+  --brand-ink: #7fcdbf;
+  --jade: #3cc9b0;
+  --mint-50: #0e2a26;
   --on-action: #04140e;
 
   /* The split grounds are only split in light: here every band keeps the
@@ -184,10 +184,10 @@
   --ink-2: #c3d2ca;
   --ink-muted: #93a89d;
   --ink-faint: #61776b;
-  --focus-ring: #7bd3a8;
+  --focus-ring: #7fcdbf;
 
-  --income: #4cc995;
-  --income-soft: #0f2a20;
+  --income: #4fb8a6;
+  --income-soft: #0e2a26;
   --expense: #f08080;
   --expense-fill: #e5484d;
   --expense-soft: #3a1715;
@@ -207,12 +207,12 @@
   --pillar-insights: #5cccdb;
   --pillar-insights-soft: #0b2e33;
 
-  --chart-income: #4cc995;
+  --chart-income: #4fb8a6;
   --chart-expense: #e5484d;
   --chart-savings: #2fd6a0;
   --chart-grid: #20332b;
   --chart-other: #3a4d44;
-  --cat-1: #4cc995;
+  --cat-1: #4fb8a6;
   --cat-2: #f0a46a;
   --cat-3: #b6a2ff;
   --cat-4: #86abf2;
@@ -256,9 +256,9 @@
 
 @theme inline {
   /* Type */
-  --font-sans: var(--font-jakarta), var(--font-anek-bangla), system-ui, sans-serif;
-  --font-heading: var(--font-jakarta), var(--font-anek-bangla), system-ui, sans-serif;
-  --font-bn: var(--font-anek-bangla), var(--font-jakarta), system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-hind-siliguri), system-ui, sans-serif;
+  --font-heading: var(--font-inter), var(--font-hind-siliguri), system-ui, sans-serif;
+  --font-bn: var(--font-hind-siliguri), var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* Text styles: text-display-xl, text-h1, text-body, text-amount ... each
