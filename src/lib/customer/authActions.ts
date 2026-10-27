@@ -58,6 +58,8 @@ export async function saveLanguageAction(preferredLanguage: LanguagePreference):
 export interface ChangePasswordInput {
   currentPassword: string;
   newPassword: string;
+  // Left out, the API signs the other devices out.
+  signOutOthers?: boolean;
 }
 
 export async function changePasswordAction(input: ChangePasswordInput): Promise<ActionResult> {

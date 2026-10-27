@@ -367,7 +367,8 @@ export const settingsDictionary: Record<string, string> = {
   "Couldn't save your alerts": "আপনার সতর্কতা সংরক্ষণ করা যায়নি",
   "Sign out of my other device": "আমার অন্য ডিভাইস থেকে সাইন-আউট",
   "Sign out of my {count} other devices": "আমার অন্য {count}টি ডিভাইস থেকে সাইন-আউট",
-  "Always done when the password changes, so anyone who knew the old one is out.": "পাসওয়ার্ড বদলালে সবসময় এটা হয়, তাই পুরোনোটা যে জানত সে আর ঢুকতে পারবে না।",
+  "Do this if you think someone else knows your old password.": "অন্য কেউ আপনার পুরোনো পাসওয়ার্ড জানে মনে হলে এটা করুন।",
+  "Password updated.": "পাসওয়ার্ড আপডেট হয়েছে।",
 
   // Two-step sign-in
   Recommended: "প্রস্তাবিত",

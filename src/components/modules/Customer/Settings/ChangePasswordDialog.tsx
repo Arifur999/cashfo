@@ -20,9 +20,9 @@ import { cn } from "@/lib/utils";
 interface ChangePasswordDialogProps {
   open: boolean;
   onClose: () => void;
-  // The password changed: every other device is signed out by now.
+  // The password changed (and the other devices signed out, if ticked).
   onChanged?: () => void;
-  // The other devices signed in, which the change signs out.
+  // The other devices signed in, which the change may sign out.
   otherDevices?: number;
 }
 
@@ -34,6 +34,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
   const [current, setCurrent] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [signOutOthers, setSignOutOthers] = useState(true);
   const [isPending, startTransition] = useTransition();
 
   const [prevOpen, setPrevOpen] = useState(false);
@@ -43,6 +44,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
       setCurrent("");
       setPassword("");
       setConfirm("");
+      setSignOutOthers(true);
     }
   }
 
@@ -54,9 +56,10 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
     event.preventDefault();
     if (!valid || isPending) return;
     startTransition(async () => {
-      const result = await changePasswordAction({ currentPassword: current, newPassword: password });
+      const signedOut = otherDevices > 0 && signOutOthers;
+      const result = await changePasswordAction({ currentPassword: current, newPassword: password, signOutOthers: otherDevices > 0 ? signOutOthers : true });
       if (result.success) {
-        toast.success(t("Password updated. Your other devices were signed out."));
+        toast.success(t(signedOut ? "Password updated. Your other devices were signed out." : "Password updated."));
         onChanged?.();
         onClose();
       } else {
@@ -112,20 +115,27 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
             >
               <PasswordField id="cp-confirm" size="md" className="text-body-lg" value={confirm} onChange={setConfirm} autoComplete="new-password" />
             </Field>
-            {/* The API signs every other device out with the change, so the
-                board's checkbox is shown ticked and can't be cleared. */}
+            {/* Ticked to start with: the API signs the other devices out
+                unless this is cleared. */}
             {otherDevices > 0 && (
-              <div className="flex gap-2.5 rounded-[14px] border border-line bg-strip px-3.5 py-3">
-                <span role="checkbox" aria-checked="true" aria-disabled="true" aria-labelledby="cp-others" className="mt-px flex size-4.5 shrink-0 items-center justify-center rounded-[5px] bg-emerald text-on-action">
-                  <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+              <label className="flex cursor-pointer gap-2.5 rounded-[14px] border border-line bg-strip px-3.5 py-3">
+                <input type="checkbox" checked={signOutOthers} onChange={(event) => setSignOutOthers(event.target.checked)} disabled={isPending} className="peer sr-only" />
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "mt-px flex size-4.5 shrink-0 items-center justify-center rounded-[5px] border peer-focus-visible:focus-halo",
+                    signOutOthers ? "border-emerald bg-emerald text-on-action" : "border-input bg-surface",
+                  )}
+                >
+                  {signOutOthers && <Check className="size-3" strokeWidth={3} />}
                 </span>
                 <span className="flex flex-col gap-0.5">
-                  <span id="cp-others" className="text-body font-semibold text-ink">
+                  <span className="text-body font-semibold text-ink">
                     {t(otherDevices === 1 ? "Sign out of my other device" : "Sign out of my {count} other devices", { count: formatCount(otherDevices, locale) })}
                   </span>
-                  <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Always done when the password changes, so anyone who knew the old one is out.")}</span>
+                  <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Do this if you think someone else knows your old password.")}</span>
                 </span>
-              </div>
+              </label>
             )}
           </div>
           <div className="flex items-center justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
