@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Card from "@/components/smartly/Card";
 import Input from "@/components/smartly/form/Input";
-import IconTile from "@/components/smartly/IconTile";
 import Kbd from "@/components/smartly/Kbd";
 import type { SupportConversation } from "@/lib/customer/api";
 import { FAQS, searchFaqs, SHORTCUTS } from "@/lib/customer/settingsDisplay";
@@ -27,7 +26,7 @@ interface HelpSectionProps {
 }
 
 // Yes / No under an answer: 30px for a mouse, 44px under a finger.
-const PILL = "h-7.5 rounded-full border border-line-strong bg-surface px-3 text-small font-semibold text-ink-2 hover:bg-surface-sunken pointer-coarse:h-11 pointer-coarse:px-4";
+const PILL = "h-7 rounded-full border border-input bg-surface px-2.5 text-[12.5px] font-semibold text-ink hover:bg-surface-sunken pointer-coarse:h-11 pointer-coarse:px-4";
 // A link-styled button, in a sentence or under one: 44px tall under a finger.
 const TEXT_BUTTON = "inline-flex items-center rounded-sm font-semibold text-emerald hover:underline pointer-coarse:min-h-11";
 // Under a card's text: the 44px box overlaps the gap and the padding, so a
@@ -99,10 +98,10 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
       {/* On a phone the example is set a size down (the typed text keeps
           16px, so iOS doesn't zoom) and ends with an ellipsis if it still
           doesn't fit, rather than being cut mid-word. */}
-      <Input size="xl" className="text-ellipsis max-md:placeholder:text-body" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Search help, for example: void a transaction")} aria-label={t("Search help")} leading={<Search />} />
+      <Input size="lg" frameClassName="rounded-md" className="text-[15px] text-ellipsis max-md:placeholder:text-body" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Search help, for example: void a transaction")} aria-label={t("Search help")} leading={<Search />} />
       {/* Two columns once the section itself is 672px wide: from 1024px the
           sidebar and the rail leave it far less than the window. */}
-      <div className="grid items-start gap-4 @2xl:grid-cols-[minmax(0,1fr)_330px]">
+      <div className="grid items-start gap-4.5 @2xl:grid-cols-[minmax(0,1fr)_330px]">
         <Card padding="none" className="overflow-hidden">
           <h2 className="px-5 py-4 text-title font-semibold text-ink">{t("Common questions")}</h2>
           {shown.length === 0 && (
@@ -117,15 +116,15 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
             const expanded = open === faq.id;
             const answer = helped[faq.id];
             return (
-              <div key={faq.id} className={cn("border-t border-divider", expanded && "bg-mint-50/50")}>
+              <div key={faq.id} className={cn("border-t border-divider", expanded && "bg-emerald-soft/60")}>
                 {/* The ring is drawn inside: the card's clip would cut it at the edges. */}
                 <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : faq.id)} className="flex min-h-13 w-full items-center gap-3 px-5 py-2 text-left focus-visible:-outline-offset-2">
                   <span className={cn("flex-1 text-body font-semibold", expanded ? "text-emerald" : "text-ink")}>{t(faq.question)}</span>
-                  <ChevronDown className={cn("size-4.5 shrink-0 text-ink-muted transition-transform motion-reduce:transition-none", expanded && "rotate-180")} aria-hidden="true" />
+                  <ChevronDown className={cn("size-4 shrink-0 transition-transform motion-reduce:transition-none", expanded ? "rotate-180 text-emerald" : "text-ink-muted")} aria-hidden="true" />
                 </button>
                 {expanded && (
-                  <div className="flex flex-col gap-3 px-5 pb-4">
-                    <p className="text-body leading-relaxed text-ink-2">{t(faq.answer)}</p>
+                  <div className="flex flex-col gap-2.5 px-5 pb-4">
+                    <p className="text-[13.5px] leading-[1.6] text-ink-2">{t(faq.answer)}</p>
                     {answer ? (
                       <span role="status" className="text-small text-ink-muted">
                         {answer === "yes" ? (
@@ -140,7 +139,7 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
                         )}
                       </span>
                     ) : (
-                      <span className="flex flex-wrap items-center gap-2 text-small text-ink-muted">
+                      <span className="flex flex-wrap items-center gap-3 text-[12.5px] text-ink-muted">
                         {t("Did this help?")}
                         <button type="button" onClick={() => setHelped((current) => ({ ...current, [faq.id]: "yes" }))} className={PILL}>
                           {t("Yes")}
@@ -155,6 +154,13 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
               </div>
             );
           })}
+          {/* Admin › Content keeps every answer on /faq. */}
+          <a href="/faq" target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center gap-2 border-t border-divider px-5 text-small font-semibold text-emerald hover:underline focus-visible:-outline-offset-2">
+            <BookOpen className="size-4" aria-hidden="true" />
+            {t("More answers in the FAQ")}
+            <ExternalLink className="size-3.5" aria-hidden="true" />
+            <span className="sr-only">({t("opens in a new tab")})</span>
+          </a>
         </Card>
 
         <div className="flex flex-col gap-4">
@@ -167,40 +173,25 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
               setMessagesOpen(true);
             }}
           />
-          <Card padding="none" elevated={false} className="flex gap-3 p-4">
-            <IconTile tone="warning" size={36}>
-              <Lightbulb />
-            </IconTile>
-            <span className="flex min-w-0 flex-col gap-2">
-              <h2 className="text-body font-semibold text-ink">{t("Have an idea?")}</h2>
-              <span className="text-small leading-normal text-ink-muted">{t("Suggest a feature and vote on what others asked for.")}</span>
+          <Card padding="none" className="flex gap-3 p-4">
+            <span className="flex size-8.5 shrink-0 items-center justify-center rounded-field bg-warning-soft text-warning [&_svg]:size-4">
+              <Lightbulb aria-hidden="true" />
+            </span>
+            <span className="flex min-w-0 flex-col gap-1.5">
+              <h2 className="text-[14.5px] font-semibold text-ink">{t("Have an idea?")}</h2>
+              <span className="text-[12.5px] leading-normal text-ink-muted">{t("Suggest a feature and vote on what others asked for.")}</span>
               <button type="button" onClick={() => setIdeasOpen(true)} className={cn(CARD_LINK, TEXT_BUTTON)}>
                 {t("Share an idea")}
               </button>
             </span>
           </Card>
-          {/* Admin › Content keeps the full list of answers on /faq. */}
-          <Card padding="none" elevated={false} className="flex gap-3 p-4">
-            <IconTile tone="info" size={36}>
-              <BookOpen />
-            </IconTile>
-            <span className="flex min-w-0 flex-col gap-2">
-              <h2 className="text-body font-semibold text-ink">{t("More answers")}</h2>
-              <span className="text-small leading-normal text-ink-muted">{t("Every question we have answered, kept up to date.")}</span>
-              <a href="/faq" target="_blank" rel="noopener noreferrer" className={cn(CARD_LINK, "gap-1", TEXT_BUTTON)}>
-                {t("Open the FAQ")}
-                <ExternalLink className="size-3.5" aria-hidden="true" />
-                <span className="sr-only">({t("opens in a new tab")})</span>
-              </a>
-            </span>
-          </Card>
           {/* The shortcuts need a keyboard: a phone or tablet has none to press. */}
-          <Card padding="none" elevated={false} className="flex flex-col gap-3 p-4 pointer-coarse:hidden">
-            <h2 className="text-body font-semibold text-ink">{t("Keyboard shortcuts")}</h2>
+          <Card padding="none" className="flex flex-col gap-2.5 p-4 pointer-coarse:hidden">
+            <h2 className="text-[14.5px] font-semibold text-ink">{t("Keyboard shortcuts")}</h2>
             {SHORTCUTS.map((shortcut) => (
               <span key={shortcut.key} className="flex items-center justify-between gap-3 text-small text-ink-2">
                 {t(shortcut.what)}
-                <Kbd>{shortcut.key}</Kbd>
+                <Kbd className="rounded-[6px] border-b-2 bg-strip font-sans text-caption font-semibold text-ink">{shortcut.key}</Kbd>
               </span>
             ))}
           </Card>

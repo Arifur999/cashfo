@@ -265,6 +265,7 @@ export const NAV_FOOT: NavItem[] = [
     subs: [
       { label: "Profile", href: "/settings/profile" },
       { label: "Security", href: "/settings/security" },
+      { label: "Plans", href: "/settings/plans" },
       { label: "Workspaces", href: "/settings/workspaces" },
       { label: "App preferences", href: "/settings/app" },
       { label: "Help & support", href: "/settings/help" },

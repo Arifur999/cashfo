@@ -83,7 +83,7 @@ export function PushDeviceRow({ publicKey, readOnly = false }: PushDeviceRowProp
     );
 
   return (
-    <div className="flex flex-col gap-3 border-t border-divider px-6 py-4 @xl:flex-row @xl:items-center @xl:gap-5" aria-busy={busy || status === "loading"}>
+    <div className="flex flex-col gap-3 border-t border-divider px-4 py-3 md:px-5.5 @xl:flex-row @xl:items-center @xl:gap-4" aria-busy={busy || status === "loading"}>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex flex-wrap items-center gap-2 text-body font-semibold text-ink">
           {t("Notifications on this device")}
@@ -98,7 +98,7 @@ export function PushDeviceRow({ publicKey, readOnly = false }: PushDeviceRowProp
             </Chip>
           )}
         </span>
-        <span className="text-small leading-normal text-ink-muted">{t(BODY[status])}</span>
+        <span className="text-[12.5px] leading-normal text-ink-muted">{t(BODY[status])}</span>
       </span>
       {control && <span className="shrink-0">{control}</span>}
     </div>

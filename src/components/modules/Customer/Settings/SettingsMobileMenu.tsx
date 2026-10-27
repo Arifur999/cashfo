@@ -1,17 +1,19 @@
 "use client";
 
-import { Bell, ChevronRight, Languages, LogOut, Moon, type LucideIcon } from "lucide-react";
+import { Bell, BookOpen, ChevronRight, CircleHelp, Hash, Languages, LogOut, Moon, Shield, Smartphone, Star, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
 import Loader from "@/components/shared/Loader";
 import Avatar from "@/components/smartly/Avatar";
 import { SOFT_TONE, type Tone } from "@/components/smartly/tones";
-import { APP_VERSION, ownWorkspaces, REMINDERS_ANCHOR, SETTINGS_GROUPS, SETTINGS_SECTIONS, type SettingsSection } from "@/lib/customer/settingsDisplay";
+import { PLANS_ROUTE } from "@/lib/customer/nav";
+import { DEFAULT_PREFERENCES, digitsInForce, sampleAmount } from "@/lib/customer/securityDisplay";
+import { APP_VERSION, DEVICES_ANCHOR, NUMBERS_ANCHOR, REMINDERS_ANCHOR } from "@/lib/customer/settingsDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { SECTION_ICONS, useSignOut } from "./SettingsNav";
+import { useSignOut } from "./SettingsNav";
 
 interface MenuRow {
   key: string;
@@ -20,41 +22,61 @@ interface MenuRow {
   icon: LucideIcon;
   tone: Tone;
   value?: string;
+  // The value in the tile's colour (Security while two-step is off).
+  valueTone?: "warning";
+  lang?: string;
 }
 
-const TONE: Partial<Record<SettingsSection["key"], Tone>> = { security: "warning", workspaces: "money", help: "info", resources: "neutral" };
+interface SettingsMobileMenuProps {
+  // Devices signed in and bell reminders on; null when unread (no count shown).
+  devices: number | null;
+  remindersOn: number | null;
+}
 
-// Settings on a phone: the profile card, then every section as a row. The
-// phone board splits App preferences into its Language and Theme rows (the
-// Theme one only while the dark_mode flag is on), and Reminders gets its own
-// row, so the notification switches can be found by name.
-export function SettingsMobileMenu() {
+
+// Settings on a phone (design-v4 SettingsMobile): the profile card, then
+// every setting as a row with where it stands. Theme shows only while the
+// dark_mode flag is on. Plans has a row too (the board has none, but the
+// phone has no other way there besides Home's upgrade card).
+export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuProps) {
   const { t, locale } = useLocale();
   const { user } = useAuth();
   const { signingOut, signOut } = useSignOut();
   const { preference, allowDark } = useTheme();
+  const prefs = user.preferences ?? DEFAULT_PREFERENCES;
+  const twoStepOn = Boolean(user.twoFactorEnabled);
 
-  const appRows = (href: string): MenuRow[] => {
-    const rows: MenuRow[] = [{ key: "language", href, label: "Language", icon: Languages, tone: "money", value: locale === "bn" ? "বাংলা" : "English" }];
-    if (allowDark) {
-      rows.push({ key: "theme", href, label: "Theme", icon: Moon, tone: "neutral", value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") });
-    }
-    rows.push({ key: "reminders", href: `${href}#${REMINDERS_ANCHOR}`, label: "Reminders", icon: Bell, tone: "rose" });
-    return rows;
-  };
-
-  const rowsOf = (group: SettingsSection["group"]): MenuRow[] =>
-    SETTINGS_SECTIONS.filter((section) => section.group === group && section.key !== "profile").flatMap((section): MenuRow[] =>
-      section.key === "app"
-        ? appRows(section.href)
-        : [{ key: section.key, href: section.href, label: section.label, icon: SECTION_ICONS[section.key], tone: TONE[section.key] ?? "neutral", value: section.key === "workspaces" ? formatCount(ownWorkspaces(user.businesses).length, locale) : undefined }],
-    );
+  const groups: { label: string; rows: MenuRow[] }[] = [
+    {
+      label: "Account@@user",
+      rows: [
+        { key: "security", href: "/settings/security", label: "Security", icon: Shield, tone: "warning", value: t(twoStepOn ? "2-step on" : "2-step off"), valueTone: twoStepOn ? undefined : "warning" },
+        { key: "devices", href: `/settings/security#${DEVICES_ANCHOR}`, label: "Devices", icon: Smartphone, tone: "money", value: devices === null ? undefined : t("{count} signed in", { count: formatCount(devices, locale) }) },
+        { key: "plans", href: PLANS_ROUTE, label: "Plans", icon: Star, tone: "money" },
+      ],
+    },
+    {
+      label: "App",
+      rows: [
+        { key: "language", href: "/settings/app", label: "Language", icon: Languages, tone: "money", value: locale === "bn" ? "বাংলা" : "English", lang: locale === "bn" ? "bn" : undefined },
+        ...(allowDark ? [{ key: "theme", href: "/settings/app", label: "Theme", icon: Moon, tone: "neutral" as const, value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") }] : []),
+        { key: "numbers", href: `/settings/app#${NUMBERS_ANCHOR}`, label: "Numbers and dates", icon: Hash, tone: "income", value: sampleAmount(123456, prefs.numberGrouping, digitsInForce(prefs.digitStyle, locale)) },
+        { key: "reminders", href: `/settings/app#${REMINDERS_ANCHOR}`, label: "Reminders", icon: Bell, tone: "rose", value: remindersOn === null ? undefined : t("{count} on", { count: formatCount(remindersOn, locale) }) },
+      ],
+    },
+    {
+      label: "Support",
+      rows: [
+        { key: "help", href: "/settings/help", label: "Help and support", icon: CircleHelp, tone: "info" },
+        { key: "resources", href: "/settings/resources", label: "Resources and legal", icon: BookOpen, tone: "neutral" },
+      ],
+    },
+  ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <Link href="/settings/profile" className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4 text-ink">
-        {/* The top bar's avatar (forest, mint initials), a size up. */}
-        <Avatar name={user.name} src={user.avatarUrl} size={48} alt="" />
+    <div className="flex flex-col gap-3.5">
+      <Link href="/settings/profile" className="flex items-center gap-3 rounded-card border border-line-card bg-surface p-3.5 text-ink shadow-card">
+        <Avatar name={user.name} src={user.avatarUrl} size={48} tone="soft" alt="" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-body-lg font-semibold">
             <span className="sr-only">{t("Profile")}: </span>
@@ -62,34 +84,37 @@ export function SettingsMobileMenu() {
           </span>
           <span className="truncate text-small text-ink-muted">{user.email}</span>
         </span>
-        <ChevronRight className="size-4.5 text-ink-muted" aria-hidden="true" />
+        <ChevronRight className="size-4.5 text-ink-faint" aria-hidden="true" />
       </Link>
 
-      {SETTINGS_GROUPS.map((group) => (
-        <section key={group} className="flex flex-col gap-2">
-          <h2 className="px-1 text-caption font-semibold text-ink-muted">{t(group)}</h2>
-          <div className="overflow-hidden rounded-lg border border-line bg-surface">
-            {rowsOf(group).map((row) => (
-              // 52px plus the divider, as the board draws a row. The ring is
-              // drawn inside, where the card's rounded clip can't cut it.
-              <Link key={row.key} href={row.href} className="box-content flex min-h-13 items-center gap-3 border-t border-divider px-4 text-ink first:border-t-0 hover:bg-hover focus-visible:-outline-offset-2">
-                <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", SOFT_TONE[row.tone])}>
+      {groups.map((group) => (
+        <section key={group.label} className="flex flex-col gap-1.5">
+          <h2 className="px-1 text-[11.5px] font-semibold tracking-[0.06em] text-ink-muted uppercase">{t(group.label)}</h2>
+          <div className="overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
+            {group.rows.map((row) => (
+              // The ring is drawn inside, where the card's rounded clip can't cut it.
+              <Link key={row.key} href={row.href} className="flex min-h-control-lg items-center gap-3 border-t border-divider px-3.5 text-ink first:border-t-0 hover:bg-hover focus-visible:-outline-offset-2">
+                <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-sm [&_svg]:size-4", SOFT_TONE[row.tone])}>
                   <row.icon aria-hidden="true" />
                 </span>
-                <span className="flex-1 text-body font-medium">{t(row.label)}</span>
-                {row.value && <span className="text-body text-ink-muted">{row.value}</span>}
-                <ChevronRight className="size-4 text-ink-muted" aria-hidden="true" />
+                <span className="flex-1 text-[15px] font-medium">{t(row.label)}</span>
+                {row.value && (
+                  <span lang={row.lang} className={cn("text-[13.5px]", row.valueTone === "warning" ? "text-warning" : "text-ink-muted")}>
+                    {row.value}
+                  </span>
+                )}
+                <ChevronRight className="size-4 text-ink-faint" aria-hidden="true" />
               </Link>
             ))}
           </div>
         </section>
       ))}
 
-      <button type="button" onClick={signOut} disabled={signingOut} aria-busy={signingOut || undefined} className="flex h-12.5 items-center justify-center gap-2 rounded-lg border border-expense/30 bg-surface text-body-lg font-semibold text-expense disabled:cursor-wait disabled:opacity-70">
+      <button type="button" onClick={signOut} disabled={signingOut} aria-busy={signingOut || undefined} className="flex h-12.5 items-center justify-center gap-2 rounded-[14px] border border-expense-line bg-surface text-[15px] font-semibold text-expense disabled:cursor-wait disabled:opacity-70">
         {signingOut ? <Loader size={18} label={t("Signing out...")} /> : <LogOut className="size-4.5" aria-hidden="true" />}
         {signingOut ? t("Signing out...") : t("Sign out")}
       </button>
-      <span className="text-center text-caption text-ink-muted">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, locale) })}</span>
+      <span className="text-center text-caption text-ink-faint">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, locale) })}</span>
     </div>
   );
 }

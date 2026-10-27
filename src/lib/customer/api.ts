@@ -48,9 +48,41 @@ export interface CurrentUser {
   // When the account was opened (the Dashboard's "Since Jan 2025"); absent
   // from a backend that doesn't send it yet.
   createdAt?: string;
+  // Whether the address was confirmed from the emailed link.
+  emailVerified?: boolean;
+  // Settings > App > Numbers and dates; absent from an older backend.
+  preferences?: DisplayPreferences;
+  // Settings > Security > Alerts.
+  alerts?: SecurityAlerts;
+  // Settings > App > Reminders' monthly summary email.
+  monthlySummaryEmail?: boolean;
+  // Two-step sign-in with an authenticator app is on.
+  twoFactorEnabled?: boolean;
   businesses: UserBusiness[];
   // Set when this is a super admin's read-only "View as customer" session.
   impersonatedBy?: { name: string; email: string | null } | null;
+}
+
+export type DigitStyle = "LATIN" | "BENGALI";
+export type NumberGrouping = "LAKH" | "INTERNATIONAL";
+export type DateStyle = "D_MMM_YYYY" | "DD_MM_YYYY" | "YYYY_MM_DD";
+export type WeekStart = "SATURDAY" | "SUNDAY" | "MONDAY";
+
+// How amounts and dates are written (PATCH /api/auth/preferences). A null
+// digitStyle follows the language.
+export interface DisplayPreferences {
+  digitStyle: DigitStyle | null;
+  numberGrouping: NumberGrouping;
+  dateStyle: DateStyle;
+  weekStart: WeekStart;
+}
+
+// GET|PATCH /api/auth/alerts. emailReady: the platform can send email now.
+export interface SecurityAlerts {
+  alertNewDevice: boolean;
+  alertFailedTries: boolean;
+  askCodeBeforeReset: boolean;
+  emailReady?: boolean;
 }
 
 // The bell's feed (GET /api/notifications). The text is built in the app
@@ -92,6 +124,10 @@ export interface ReminderPreferences {
   budget: boolean;
   loans: boolean;
   savings: boolean;
+  // The monthly summary email; left as it is when not sent.
+  monthlySummaryEmail?: boolean;
+  // Read only: whether the platform can send email yet.
+  emailReady?: boolean;
 }
 
 // Habit-area reminders (/api/reminders): a time to be told about a habit, a

@@ -51,6 +51,10 @@ export async function getReminderPreferencesAction(): Promise<ActionResult<Remin
   return callApi(async () => (await customerApi.get<ReminderPreferences>(`${API_BASE_URL}/api/notifications/preferences`, { headers: await authHeaders() })).data, "Failed to load reminders");
 }
 
+// Only the switches go back: the read answer also carries emailReady, which
+// the API's whitelist would refuse.
 export async function saveReminderPreferencesAction(preferences: ReminderPreferences): Promise<ActionResult<ReminderPreferences>> {
-  return callApi(async () => (await customerApi.put<ReminderPreferences>(`${API_BASE_URL}/api/notifications/preferences`, preferences, { headers: await authHeaders() })).data, "Failed to save reminders");
+  const { budget, loans, savings, monthlySummaryEmail } = preferences;
+  const body = { budget, loans, savings, ...(monthlySummaryEmail !== undefined && { monthlySummaryEmail }) };
+  return callApi(async () => (await customerApi.put<ReminderPreferences>(`${API_BASE_URL}/api/notifications/preferences`, body, { headers: await authHeaders() })).data, "Failed to save reminders");
 }
