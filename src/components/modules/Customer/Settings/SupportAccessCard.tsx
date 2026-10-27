@@ -75,8 +75,8 @@ export function SupportAccessCard() {
   const canTurnOff = !!code || !!status?.active || !!status?.viewOpen;
 
   return (
-    <Card padding="none" className="flex flex-col gap-4 px-4 py-5 md:px-6">
-      <div className="flex flex-wrap items-start gap-4">
+    <Card padding="none" className="flex flex-col gap-3.5 px-4 py-4.5 md:px-5.5">
+      <div className="flex flex-wrap items-start gap-3.5">
         <IconTile size={40} tone="info">
           <Headset />
         </IconTile>
