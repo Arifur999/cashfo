@@ -9,12 +9,10 @@ export const INPUT_HEIGHTS = {
   md: "h-11 text-body max-md:text-body-lg",
   lg: "h-12 text-body max-md:text-body-lg",
   xl: "h-13 text-body-lg",
-  // The sign-up forms: 48px with 16px text on a phone, 44px on wider
-  // screens, as RegisterMobile and Register draw them.
-  auth: "h-12 text-body-lg md:h-11 md:text-body",
-  // The sign-in form: 48px on a phone (LoginMobile), 52px wider (Main,
-  // SignedOut), 16px text in both; the wider boards draw no field icons.
-  signIn: "h-12 text-body-lg md:h-13",
+  // The sign-in pages: 48px with 16px text on a phone, 44px on wider
+  // screens, as LoginMobile/RegisterMobile and Main/Register draw them --
+  // the icon 14px in and the text at 42px.
+  auth: "h-12 gap-2.5 pl-3.5 text-body-lg md:h-11 md:text-body",
 } as const;
 
 interface InputFrameProps extends React.ComponentProps<"div"> {
