@@ -1,9 +1,10 @@
 "use client";
 
-import { Info, PiggyBank, X } from "lucide-react";
+import { Bell, Info, Target, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -12,8 +13,6 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import Textarea from "@/components/smartly/form/Textarea";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { SavingsGoal, SavingsReminderChannel } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
@@ -34,12 +33,12 @@ interface GoalDrawerProps {
   today: string;
 }
 
-// New or edited savings goal: what for, how much, by when -- with the
-// monthly amount that works out to -- plus an optional reminder and a note.
+// New or edited savings goal, in the design's 460px drawer (the shared
+// frame): what for, how much, by when -- with the monthly amount that works
+// out to -- plus an optional reminder and a note.
 export function GoalDrawer({ open, onClose, businessId, editing, currency, today }: GoalDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
-  const wide = useMediaQuery("(min-width: 768px)");
   const [name, setName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [targetDate, setTargetDate] = useState("");
@@ -133,107 +132,110 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
   const monthsText = (forms: { one: string; many: string }, amount: number) => t(months === 1 ? forms.one : forms.many, { count: formatCount(months, locale), amount: formatCurrency(amount, currency, locale), date: formatDate(targetDate, undefined, locale) });
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent
-        side={wide ? "right" : "bottom"}
-        showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
-      >
-        <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
-          <div className="flex flex-col gap-1">
-            <SheetTitle className="text-h3 text-ink">{editing ? t("Edit goal") : t("New savings goal")}</SheetTitle>
-            <p className="text-small leading-[normal] text-ink-muted">{t("What are you saving for, and by when?")}</p>
-          </div>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken pointer-coarse:size-11">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
-        </SheetHeader>
+    <Drawer
+      open={open}
+      width={460}
+      title={editing ? t("Edit goal") : t("New savings goal")}
+      description={t("What are you saving for, and by when?")}
+      busy={isPending}
+      onClose={onClose}
+      onSubmit={submit}
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+            {t("Cancel")}
+          </Button>
+          <Button type="submit" disabled={!valid || isPending} className="px-4.5">
+            {isPending && <Loader size={16} onDark label={t("Loading...")} />}
+            {editing ? t("Save changes") : t("Create goal")}
+          </Button>
+        </>
+      }
+    >
+      {/* The board's 18px between fields. */}
+      <div className="flex flex-col gap-4.5">
+        <Field htmlFor="goal-name" label={label(t("Goal name"))}>
+          <Input id="goal-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={t("Family trip to Sylhet")} />
+        </Field>
 
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-            <Field htmlFor="goal-name" label={label(t("Goal name"))}>
-              <Input id="goal-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={t("Family trip to Sylhet")} />
-            </Field>
+        <div className="grid items-start gap-2.5 md:grid-cols-[minmax(0,1fr)_170px]">
+          <Field htmlFor="goal-target" label={label(t("Target amount"))}>
+            <AmountInput id="goal-target" value={targetAmount} onChange={setTargetAmount} currency={currency} size="lg" />
+          </Field>
+          <Field htmlFor="goal-date" label={label(t("Reach it by"))}>
+            <DayInput id="goal-date" size="lg" value={targetDate} onChange={setTargetDate} min={minDay(editing?.targetDate)} placeholder={t("Pick a day")} />
+          </Field>
+        </div>
 
-            <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_170px]">
-              <Field htmlFor="goal-target" label={label(t("Target amount"))}>
-                <AmountInput id="goal-target" value={targetAmount} onChange={setTargetAmount} currency={currency} />
-              </Field>
-              <Field htmlFor="goal-date" label={label(t("Reach it by"))}>
-                {/* As tall as the amount box beside it. */}
-                <DayInput id="goal-date" size="lg" value={targetDate} onChange={setTargetDate} min={minDay(editing?.targetDate)} className="h-14.5" />
-              </Field>
-            </div>
-
-            {target > 0 && months > 0 && (
-              <div className="flex items-center gap-4 rounded-lg bg-mint-50 p-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface text-emerald">
-                  <PiggyBank className="size-5" aria-hidden="true" />
+        {target > 0 && months > 0 && (
+          <div className="flex items-center gap-3.5 rounded-md bg-mint-50 px-4 py-3.5">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-surface text-emerald">
+              <Target className="size-4.5" aria-hidden="true" />
+            </span>
+            {toSave > 0 ? (
+              <span className="flex flex-col gap-0.5">
+                <span className="text-body text-ink">{fillNodes(t("Save about {amount} a month"), { amount: <b className="font-bold">{formatCurrency(Math.ceil(monthly), currency, locale)}</b> })}</span>
+                <span className="text-caption font-normal text-ink-2">
+                  {editing
+                    ? monthsText({ one: "for {count} month to save the {amount} left by {date}", many: "for {count} months to save the {amount} left by {date}" }, toSave)
+                    : monthsText({ one: "for {count} month to reach {amount} by {date}", many: "for {count} months to reach {amount} by {date}" }, target)}
                 </span>
-                {toSave > 0 ? (
-                  <span className="flex flex-col gap-0.5">
-                    <span className="text-body text-ink">{fillNodes(t("Save about {amount} a month"), { amount: <b className="font-bold">{formatCurrency(Math.ceil(monthly), currency, locale)}</b> })}</span>
-                    <span className="text-caption font-normal text-ink-2">
-                      {editing
-                        ? monthsText({ one: "for {count} month to save the {amount} left by {date}", many: "for {count} months to save the {amount} left by {date}" }, toSave)
-                        : monthsText({ one: "for {count} month to reach {amount} by {date}", many: "for {count} months to reach {amount} by {date}" }, target)}
-                    </span>
-                  </span>
-                ) : (
-                  <span className="text-body text-ink">{fillNodes(t("Already reached with {amount} saved"), { amount: <b className="font-bold">{formatCurrency(saved, currency, locale)}</b> })}</span>
-                )}
-              </div>
-            )}
-
-            <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-body leading-[normal] font-medium text-ink">
-                {t("Reminder")} <span className="font-normal text-ink-muted">({t("optional")})</span>
-              </legend>
-              <div className="grid gap-3 md:grid-cols-[214px_minmax(0,1fr)]">
-                <div className="flex min-w-0 items-center gap-2">
-                  <DayInput size="md" value={reminderDate} onChange={setReminderDate} min={minDay(editing?.reminderDate)} aria-label={t("Reminder date")} className="min-w-0 flex-1" />
-                  {/* The date field can't be emptied by itself. */}
-                  <Button type="button" variant="secondary" size="icon-lg" onClick={() => setReminderDate("")} disabled={!reminderDate} aria-label={t("Remove reminder")} title={t("Remove reminder")}>
-                    <X className="size-4" />
-                  </Button>
-                </div>
-                {/* A channel means nothing until there is a day to remind on. */}
-                <SegmentedControl
-                  options={[
-                    { value: "EMAIL", label: t("Email") },
-                    { value: "PHONE", label: t("SMS") },
-                  ]}
-                  value={reminderChannel}
-                  onChange={setReminderChannel}
-                  label={t("Remind me by")}
-                  size="lg"
-                  stretch
-                  disabled={!reminderDate}
-                  className="min-w-0"
-                />
-              </div>
-              <span className="flex items-center gap-2 text-caption font-normal text-ink-muted">
-                <Info className="size-3.5 shrink-0" aria-hidden="true" />
-                {t("Saved for later. The app doesn't send email or SMS reminders yet.")}
               </span>
-            </fieldset>
-
-            <Field htmlFor="goal-desc" label={label(t("Description"), true)}>
-              <Textarea id="goal-desc" rows={3} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} placeholder={t("e.g. Train tickets, hotel for 3 nights, tea garden visit")} className="resize-none px-3" />
-            </Field>
+            ) : (
+              <span className="text-body text-ink">{fillNodes(t("Already reached with {amount} saved"), { amount: <b className="font-bold">{formatCurrency(saved, currency, locale)}</b> })}</span>
+            )}
           </div>
+        )}
 
-          <div className={cn("flex items-center justify-end gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-6")}>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-              {t("Cancel")}
-            </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
-              {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {editing ? t("Save changes") : t("Create goal")}
-            </Button>
+        <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
+          <legend className="mb-2 text-body leading-[normal] font-medium text-ink">
+            {t("Reminder")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+          </legend>
+          <div className="grid gap-2.5 md:grid-cols-[170px_minmax(0,1fr)]">
+            {/* The board's pill with a bell; once a day is set, an x in it
+                takes the reminder off (the date field can't be emptied by itself). */}
+            <div className="relative flex min-w-0">
+              <DayInput
+                size="md"
+                value={reminderDate}
+                onChange={setReminderDate}
+                min={minDay(editing?.reminderDate)}
+                aria-label={t("Reminder date")}
+                placeholder={t("Pick a day")}
+                icon={<Bell className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />}
+                className={cn("min-w-0 flex-1 rounded-full", reminderDate && "pr-9")}
+              />
+              {reminderDate && (
+                <button type="button" onClick={() => setReminderDate("")} aria-label={t("Remove reminder")} title={t("Remove reminder")} className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink">
+                  <X className="size-3.5" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+            {/* A channel means nothing until there is a day to remind on. */}
+            <SegmentedControl
+              options={[
+                { value: "EMAIL", label: t("Email") },
+                { value: "PHONE", label: t("SMS") },
+              ]}
+              value={reminderChannel}
+              onChange={setReminderChannel}
+              label={t("Remind me by")}
+              size="lg"
+              stretch
+              disabled={!reminderDate}
+              className="min-w-0"
+            />
           </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+          <span className="flex items-center gap-1.5 text-caption font-normal text-ink-muted">
+            <Info className="size-3.25 shrink-0" aria-hidden="true" />
+            {t("Saved for later. The app doesn't send email or SMS reminders yet.")}
+          </span>
+        </fieldset>
+
+        <Field htmlFor="goal-desc" label={label(t("Description"), true)}>
+          <Textarea id="goal-desc" rows={3} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} placeholder={t("e.g. Train tickets, hotel for 3 nights, tea garden visit")} className="resize-none px-3" />
+        </Field>
+      </div>
+    </Drawer>
   );
 }

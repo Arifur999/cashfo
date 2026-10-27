@@ -212,6 +212,7 @@ export const balanceDictionary: Record<string, string> = {
   "Back to Chart of Accounts": "হিসাবচিত্রে ফিরে যান",
   // The Statement opened from Savings summary (?from=/savings-goals/overview).
   "Back to Savings summary": "সঞ্চয়ের সারসংক্ষেপে ফিরে যান",
+  "Back to Savings overview": "সঞ্চয়ের ওভারভিউতে ফিরে যান",
   "Money In": "জমা",
   "Money Out": "উত্তোলন",
   "All time": "সর্বসময়",

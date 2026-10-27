@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowLeftRight, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { ArrowLeftRight, Minus, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
+import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
 import LoadMore from "@/components/smartly/LoadMore";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { SavingsGoal, SavingsGoalDetail, SavingsGoalEntry } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
@@ -133,7 +133,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
   // Only what is true of the goal as it stands: a finished or paid-out goal
   // has no months left and no monthly amount to keep up.
   const facts: FactProps[] = [{ label: t("Reach by"), value: formatDate(goal.targetDate, "MMM yyyy", locale), sub: paused ? t("paused") : closed ? t("Paid out") : completed ? t("Reached") : leftLabel }];
-  if (active || paused) facts.push({ label: t("Monthly target"), value: paused ? "—" : formatCurrency(goal.monthlyTarget, currency, locale), sub: paused ? t("while paused") : t("as planned") });
+  if (active || paused) facts.push({ label: t("Monthly target"), value: paused ? "—" : formatCurrency(Math.ceil(Number(goal.monthlyTarget)), currency, locale), sub: paused ? t("while paused") : t("as planned") });
   if (active) facts.push({ label: t("Lately"), value: trend ? t(trend.short) : "—", sub: trend ? t("than before") : t("too early to say"), className: trend?.text });
 
   // The plan's monthly figure is an even pace from the start; this is what
@@ -174,9 +174,9 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
     const Icon = ENTRY_ICON[entry.type];
     const title = entry.relatedGoalName && meta.withGoal ? t(meta.withGoal, { goal: entry.relatedGoalName }) : t(meta.title);
     return (
-      <li key={entry.id} className="flex items-center gap-3 border-b border-divider py-3">
-        <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", ENTRY_TILE[meta.tone])}>
-          <Icon className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+      <li key={entry.id} className="flex items-center gap-3 border-b border-divider py-2.5">
+        <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-sm", ENTRY_TILE[meta.tone])}>
+          <Icon className="size-3.75" strokeWidth={2.25} aria-hidden="true" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-px">
           <span className="truncate text-small font-medium text-ink">{title}</span>
@@ -196,119 +196,27 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
   };
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
-      <SheetContent
-        side={wide ? "right" : "bottom"}
-        showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
-      >
-        <SheetHeader className={cn("flex-row items-center gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
-          <SheetTitle className="truncate text-h3 text-ink">{goal.name}</SheetTitle>
-          <Chip tone={badge.chip} size="sm" className="font-semibold">
-            {t(badge.label)}
-          </Chip>
-          <span className="flex-1" />
-          {canManage && !closed && (
-            <button type="button" onClick={() => onEdit(goal)} aria-label={t("Edit goal")} title={t("Edit goal")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken pointer-coarse:size-11">
-              <Pencil className="size-4" aria-hidden="true" />
-            </button>
-          )}
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken pointer-coarse:size-11">
-            <X className="size-4.5" aria-hidden="true" />
+    <Drawer
+      open={open}
+      width={480}
+      title={goal.name}
+      titleAside={
+        <Chip tone={badge.chip} size="sm" className="shrink-0 font-semibold">
+          {t(badge.label)}
+        </Chip>
+      }
+      actions={
+        canManage &&
+        !closed && (
+          <button type="button" onClick={() => onEdit(goal)} aria-label={t("Edit goal")} title={t("Edit goal")} className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+            <Pencil className="size-4" aria-hidden="true" />
           </button>
-        </SheetHeader>
-
-        <div className={cn("flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-          <div className="flex items-center gap-6">
-            <GoalRing
-              percent={percent}
-              color={goalColor(goalIndex, goal.status)}
-              size={128}
-              label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency, locale) }) : t("{percent}% saved", { percent: formatCount(percent, locale) })}
-            >
-              <span className="text-h1">{closed && percent >= 100 ? "✓" : `${formatCount(percent, locale)}%`}</span>
-              <span className="text-caption font-normal text-ink-muted">{closed ? t("withdrawn") : t("saved")}</span>
-            </GoalRing>
-            <div className="flex flex-col gap-3 tabular-nums">
-              <div className="flex flex-col gap-px">
-                <span className="text-caption font-normal text-ink-muted">{closed ? t("Withdrawn") : t("Saved")}</span>
-                <span className="text-h2 text-ink">{formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency, locale)}</span>
-              </div>
-              <div className="flex gap-5">
-                <div className="flex flex-col gap-px">
-                  <span className="text-caption font-normal text-ink-muted">{t("Target")}</span>
-                  <span className="text-body font-semibold text-ink">{formatCurrency(goal.targetAmount, currency, locale)}</span>
-                </div>
-                {closed ? (
-                  <div className="flex flex-col gap-px">
-                    <span className="text-caption font-normal text-ink-muted">{t("Withdrawn on")}</span>
-                    <span className="text-body font-semibold text-ink">{payout ? formatDate(payout.date, undefined, locale) : "—"}</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-px">
-                    <span className="text-caption font-normal text-ink-muted">{t("To go")}</span>
-                    <span className="text-body font-semibold text-ink">{formatCurrency(toGo, currency, locale)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className={cn("grid gap-2", facts.length === 3 ? "grid-cols-3" : facts.length === 2 ? "grid-cols-2" : "grid-cols-1")}>
-            {facts.map((fact) => (
-              <Fact key={fact.label} {...fact} />
-            ))}
-          </div>
-
-          {neededNote && <p className="rounded-md border border-line bg-strip px-3 py-2.5 text-small text-ink-2">{neededNote}</p>}
-
-          {goal.description && <p className="text-body text-ink-2">{goal.description}</p>}
-
-          <section className="flex flex-col">
-            <h3 id={`${historyId}-title`} className="mb-3 text-body font-semibold text-ink">
-              {t("History")}
-            </h3>
-            {detail ? (
-              entries.length === 0 ? (
-                <p className="py-6 text-center text-small text-ink-muted">{t("Nothing added yet.")}</p>
-              ) : (
-                <>
-                  <ul id={historyId} aria-labelledby={`${historyId}-title`} className="flex flex-col focus-visible:outline-offset-2">
-                    {entries.slice(0, visible).map(entryRow)}
-                  </ul>
-                  {entries.length > HISTORY_STEP && (
-                    <LoadMore
-                      shown={Math.min(visible, entries.length)}
-                      total={entries.length}
-                      step={HISTORY_STEP}
-                      onMore={() => setVisible((count) => count + HISTORY_STEP)}
-                      onLess={visible > HISTORY_STEP ? () => setVisible(HISTORY_STEP) : undefined}
-                      focusTargetId={historyId}
-                      className="pt-3"
-                    />
-                  )}
-                </>
-              )
-            ) : failed ? (
-              <div className="flex flex-col items-center gap-3 py-6 text-center">
-                <p role="alert" className="text-small text-ink-muted">
-                  {t("Couldn't load this goal's history.")}
-                </p>
-                <Button variant="secondary" size="sm" onClick={() => setAttempt((count) => count + 1)} className="pointer-coarse:h-11">
-                  <RefreshCw aria-hidden="true" />
-                  {t("Try again")}
-                </Button>
-              </div>
-            ) : (
-              <div className="flex justify-center py-8">
-                <Loader size={20} label={t("Loading...")} />
-              </div>
-            )}
-          </section>
-        </div>
-
-        {canManage && (
-          <div className={cn("flex flex-col gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-6")}>
+        )
+      }
+      onClose={onClose}
+      footer={
+        canManage && (
+          <div className="flex w-full flex-col gap-3">
             {(deleteReason || addReason) && (
               <div className="flex flex-col gap-1 text-caption font-normal text-ink-muted">
                 {deleteReason && <p id={deleteReasonId}>{deleteReason}</p>}
@@ -335,28 +243,116 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
                   aria-label={t("Delete goal")}
                   aria-describedby={deleteReason ? deleteReasonId : undefined}
                   title={hasHistory ? undefined : t("Delete goal")}
+                  className="text-ink-muted"
                 >
-                  <Trash2 className="size-4" />
+                  <Trash2 className="size-3.75" />
                 </Button>
               )}
               <span className="flex-1" />
               {!closed && (
-                <Button variant="action" onClick={() => onAddMoney(goal)} disabled={!canAddMoney || paused} aria-describedby={addReason ? addReasonId : undefined}>
-                  <Plus strokeWidth={2.5} className="size-4" />
+                <Button onClick={() => onAddMoney(goal)} disabled={!canAddMoney || paused} aria-describedby={addReason ? addReasonId : undefined}>
+                  <Plus strokeWidth={2.5} className="size-3.75" />
                   {t("Add money")}
                 </Button>
               )}
             </div>
           </div>
+        )
+      }
+    >
+      <div className="flex items-center gap-5.5">
+        <GoalRing
+          percent={percent}
+          color={goalColor(goalIndex, goal.status)}
+          size={128}
+          label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency, locale) }) : t("{percent}% saved", { percent: formatCount(percent, locale) })}
+        >
+          <span className="text-[26px] leading-[normal] font-bold">{closed && percent >= 100 ? "✓" : `${formatCount(percent, locale)}%`}</span>
+          <span className="text-[11px] font-normal text-ink-muted">{closed ? t("withdrawn") : t("saved")}</span>
+        </GoalRing>
+        <div className="flex flex-col gap-2.5 tabular-nums">
+          <div className="flex flex-col gap-px">
+            <span className="text-caption font-normal text-ink-muted">{closed ? t("Withdrawn") : t("Saved")}</span>
+            <span className="text-h2 text-ink">{formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency, locale)}</span>
+          </div>
+          <div className="flex gap-5">
+            <div className="flex flex-col gap-px">
+              <span className="text-caption font-normal text-ink-muted">{t("Target")}</span>
+              <span className="text-body font-semibold text-ink">{formatCurrency(goal.targetAmount, currency, locale)}</span>
+            </div>
+            {closed ? (
+              <div className="flex flex-col gap-px">
+                <span className="text-caption font-normal text-ink-muted">{t("Withdrawn on")}</span>
+                <span className="text-body font-semibold text-ink">{payout ? formatDate(payout.date, undefined, locale) : "—"}</span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-px">
+                <span className="text-caption font-normal text-ink-muted">{t("To go")}</span>
+                <span className="text-body font-semibold text-ink">{formatCurrency(toGo, currency, locale)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className={cn("grid gap-2", facts.length === 3 ? "grid-cols-3" : facts.length === 2 ? "grid-cols-2" : "grid-cols-1")}>
+        {facts.map((fact) => (
+          <Fact key={fact.label} {...fact} />
+        ))}
+      </div>
+
+      {neededNote && <p className="rounded-md border border-line bg-strip px-3 py-2.5 text-small text-ink-2">{neededNote}</p>}
+
+      {goal.description && <p className="text-body text-ink-2">{goal.description}</p>}
+
+      <section className="flex flex-col">
+        <h3 id={`${historyId}-title`} className="mb-2.5 text-body font-semibold text-ink">
+          {t("History")}
+        </h3>
+        {detail ? (
+          entries.length === 0 ? (
+            <p className="py-6 text-center text-small text-ink-muted">{t("Nothing added yet.")}</p>
+          ) : (
+            <>
+              <ul id={historyId} aria-labelledby={`${historyId}-title`} className="flex flex-col focus-visible:outline-offset-2">
+                {entries.slice(0, visible).map(entryRow)}
+              </ul>
+              {entries.length > HISTORY_STEP && (
+                <LoadMore
+                  shown={Math.min(visible, entries.length)}
+                  total={entries.length}
+                  step={HISTORY_STEP}
+                  onMore={() => setVisible((count) => count + HISTORY_STEP)}
+                  onLess={visible > HISTORY_STEP ? () => setVisible(HISTORY_STEP) : undefined}
+                  focusTargetId={historyId}
+                  className="pt-3"
+                />
+              )}
+            </>
+          )
+        ) : failed ? (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <p role="alert" className="text-small text-ink-muted">
+              {t("Couldn't load this goal's history.")}
+            </p>
+            <Button variant="secondary" size="sm" onClick={() => setAttempt((count) => count + 1)} className="pointer-coarse:h-11">
+              <RefreshCw aria-hidden="true" />
+              {t("Try again")}
+            </Button>
+          </div>
+        ) : (
+          <div className="flex justify-center py-8">
+            <Loader size={20} label={t("Loading...")} />
+          </div>
         )}
-      </SheetContent>
-    </Sheet>
+      </section>
+    </Drawer>
   );
 }
 
 function Fact({ label, value, sub, className }: FactProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5 rounded-md border border-line bg-strip p-3">
+    <div className="flex min-w-0 flex-col gap-0.5 rounded-[14px] border border-line bg-strip p-3">
       <span className="text-caption font-normal text-ink-muted">{label}</span>
       <span className={cn("text-body font-semibold text-ink tabular-nums", className)}>{value}</span>
       <span className="text-caption font-normal text-ink-muted">{sub}</span>

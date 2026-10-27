@@ -42,7 +42,7 @@ describe("goalColor", () => {
   it("cycles the ring colours and greys a paused goal", () => {
     expect(goalColor(0, "ACTIVE")).toBe(goalColor(5, "ACTIVE"));
     expect(goalColor(1, "ACTIVE")).not.toBe(goalColor(2, "ACTIVE"));
-    expect(goalColor(0, "PAUSED")).toBe("var(--ink-muted)");
+    expect(goalColor(0, "PAUSED")).toBe("var(--ink-faint)");
   });
 });
 

@@ -33,7 +33,7 @@ const COLUMNS = "md:grid-cols-[minmax(0,1fr)_repeat(3,140px)_160px]";
 const MIDDLE = "max-md:hidden";
 const BALANCE = "max-md:col-start-2 max-md:row-start-1";
 
-// Savings summary: what sits in the savings wallets altogether, how it is
+// Savings overview: what sits in the savings wallets altogether, how it is
 // spread, and what went in and out of each one. Goals are targets; this is
 // the money.
 export default async function SavingsOverviewPage() {
@@ -69,7 +69,7 @@ export default async function SavingsOverviewPage() {
 
   return (
     <PageFrame className="gap-6">
-      <PageHeader eyebrow={`${t("Money")} · ${t("Savings")}`} title={t("Savings summary")} description={t("Goals are targets. Savings wallets are where the money actually sits.")} />
+      <PageHeader eyebrow={`${t("Money")} · ${t("Savings")}`} title={t("Savings overview")} description={t("Goals are targets. Savings wallets are where the money actually sits.")} />
 
       {rows.length === 0 ? (
         <EmptyState

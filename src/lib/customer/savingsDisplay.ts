@@ -5,12 +5,13 @@ import type { Account, SavingsEntryType, SavingsGoal, SavingsGoalStatus, Savings
 import { formatCurrency } from "./currency";
 import type { WalletPalette } from "./walletVisuals";
 
-// The ring colours the design gives goals, cycled by position; a paused or
-// withdrawn goal goes grey.
-const GOAL_COLORS = ["var(--pillar-insights)", "var(--emerald)", "var(--pillar-loans)", "var(--pillar-habits)", "var(--info)"];
+// The ring colours the design gives goals, cycled by position (the board's
+// first two wear the primary, the third orange); a paused or withdrawn goal
+// goes grey.
+const GOAL_COLORS = ["var(--emerald)", "var(--emerald)", "var(--cat-2)", "var(--cat-3)", "var(--cat-4)"];
 
 export function goalColor(index: number, status: SavingsGoalStatus): string {
-  if (status === "PAUSED" || status === "WITHDRAWN") return "var(--ink-muted)";
+  if (status === "PAUSED" || status === "WITHDRAWN") return "var(--ink-faint)";
   return GOAL_COLORS[((index % GOAL_COLORS.length) + GOAL_COLORS.length) % GOAL_COLORS.length];
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, CalendarDays, Ellipsis, Eye, Lock, Pause, Pencil, PiggyBank, Play, Plus, Trash2 } from "lucide-react";
+import { ArrowLeftRight, CalendarDays, Ellipsis, Eye, Lock, Pause, Pencil, PiggyBank, Play, Plus, Target, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -244,7 +244,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
             {setup ? (
               <div className="flex flex-col justify-center gap-2 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
                 <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Monthly target")}</span>
-                <span className="text-h2 leading-[normal] text-ink tabular-nums">{formatCurrency(overview.monthlyTarget, currency, locale)}</span>
+                <span className="text-h2 leading-[normal] text-ink tabular-nums">{formatCurrency(Math.ceil(Number(overview.monthlyTarget)), currency, locale)}</span>
                 <span className="text-caption leading-[normal] font-normal text-ink-muted">
                   {activeGoals.length === 1
                     ? t("To reach {name} by {date}", { name: activeGoals[0].name, date: formatDate(activeGoals[0].targetDate, "MMM yyyy", locale) })
@@ -258,7 +258,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                   <span className="text-caption leading-[normal] font-semibold text-ink-2">{t("{percent}% of target", { percent: formatCount(overview.monthlyProgressPercent, locale) })}</span>
                 </div>
                 <span className="text-body font-medium text-ink-muted tabular-nums">
-                  {fillNodes(t("{saved} of {target}"), { saved: <span className="text-h2 leading-[normal] text-ink">{formatCurrency(overview.savedThisMonth, currency, locale)}</span>, target: formatCurrency(overview.monthlyTarget, currency, locale) })}
+                  {fillNodes(t("{saved} of {target}"), { saved: <span className="text-h2 leading-[normal] text-ink">{formatCurrency(overview.savedThisMonth, currency, locale)}</span>, target: formatCurrency(Math.ceil(Number(overview.monthlyTarget)), currency, locale) })}
                 </span>
                 <ProgressBar value={overview.monthlyProgressPercent} label={t("Saved this month")} />
                 <span className="text-caption leading-[normal] font-normal text-ink-muted">
@@ -303,11 +303,11 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                   >
                     <span className="text-h3 font-bold">{closed && percent >= 100 ? "✓" : `${formatCount(percent, locale)}%`}</span>
                   </GoalRing>
-                  <div className="flex min-w-0 flex-1 flex-col gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col gap-2.5">
                     {/* The name keeps two lines beside the ring on a phone; the
                         chip drops under it when the two don't fit side by side. */}
-                    <div className="flex items-start gap-3">
-                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
                         <span className="line-clamp-2 min-w-0 text-title leading-[normal] wrap-break-word text-ink">{goal.name}</span>
                         <Chip tone={badge.chip} size="sm" className="font-semibold">
                           {t(badge.label)}
@@ -317,7 +317,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             aria-label={t("Actions for {name}", { name: goal.name })}
-                            className="flex size-7.5 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11"
+                            className="flex size-7.5 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11"
                           >
                             <Ellipsis className="size-4.5" aria-hidden="true" />
                           </DropdownMenuTrigger>
@@ -364,16 +364,16 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                         target: formatCurrency(goal.targetAmount, currency, locale),
                       })}
                     </span>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-caption leading-[normal] font-normal text-ink-muted">
-                      <span className="flex items-center gap-1">
-                        {!setup && <CalendarDays className="size-3.5" aria-hidden="true" />}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-caption leading-[normal] font-normal text-ink-muted">
+                      <span className="flex items-center gap-1.25">
+                        {!setup && <CalendarDays className="size-3.25" aria-hidden="true" />}
                         {formatDate(goal.targetDate, "MMM yyyy", locale)} · {paused ? t("paused") : closed ? t("withdrawn") : completed ? t("Reached") : timeLeftText(goal.targetDate, today, t, locale)}
                       </span>
                       {/* A reached goal has no monthly amount left to keep up. */}
                       {!completed && (
-                        <span className="flex items-center gap-1">
-                          {!setup && <PiggyBank className="size-3.5" aria-hidden="true" />}
-                          {paused ? t("No monthly target while paused") : closed ? t("Paid out") : t("Save {amount} a month", { amount: formatCurrency(goal.monthlyTarget, currency, locale) })}
+                        <span className="flex items-center gap-1.25">
+                          {!setup && <Target className="size-3.25" aria-hidden="true" />}
+                          {paused ? t("No monthly target while paused") : closed ? t("Paid out") : t("Save {amount} a month", { amount: formatCurrency(Math.ceil(Number(goal.monthlyTarget)), currency, locale) })}
                         </span>
                       )}
                       {trend && <span className={cn("font-semibold", trend.text)}>{t(trend.label)}</span>}
@@ -409,9 +409,12 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                 </Card>
               );
             })}
-            {canManage && (!tabbed || tab === "ALL") && (
-              <button type="button" onClick={() => setGoalDrawer("create")} className="flex min-h-33 flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-line-strong bg-surface transition-colors hover:border-emerald">
-                <span className="flex size-10 items-center justify-center rounded-full bg-mint-50 text-emerald">
+            {/* In the grid's empty cell (an odd number of goals, as SavingsSetup
+                draws it); with every cell full, New goal is the header's button
+                alone, as SavingsDashboard has it. */}
+            {canManage && (!tabbed || tab === "ALL") && shown.length % 2 === 1 && (
+              <button type="button" onClick={() => setGoalDrawer("create")} className="flex min-h-33 flex-col items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-md:hidden">
+                <span className="flex size-10 items-center justify-center rounded-field bg-emerald-soft text-emerald">
                   <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
                 </span>
                 <span className="text-body leading-[normal] font-semibold text-ink">{t("New goal")}</span>
@@ -460,12 +463,12 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
 // The note above the goals while money can't go in yet.
 function SetupBanner({ title, text, action }: { title: string; text: string; action?: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-mint-200 bg-mint-50 p-5 md:flex-row md:items-center md:gap-5 md:px-6">
-      <span className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-surface text-emerald shadow-[0_4px_12px_rgba(14,26,22,0.08)]">
+    <section className="flex flex-col gap-4 rounded-[14px] border border-emerald-line bg-emerald-soft p-5 md:flex-row md:items-center md:gap-5 md:px-6">
+      <span className="flex size-14 shrink-0 items-center justify-center rounded-[14px] bg-surface text-emerald shadow-[0_4px_12px_rgba(14,26,22,0.08)]">
         <PiggyBank className="size-6.5" aria-hidden="true" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h2 className="text-h3 leading-[normal] tracking-normal text-ink">{title}</h2>
+        <h2 className="text-[17px] leading-[normal] font-semibold tracking-normal text-ink">{title}</h2>
         <p className="max-w-170 text-body leading-[1.55] text-ink-2">{text}</p>
       </div>
       {action && <div className="flex shrink-0 flex-wrap items-center gap-3">{action}</div>}
