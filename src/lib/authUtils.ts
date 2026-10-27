@@ -7,6 +7,15 @@ export const LOGIN_ROUTE = "/login";
 export const REGISTER_ROUTE = "/register";
 export const FORGOT_PASSWORD_ROUTE = "/forgot-password";
 export const RESET_PASSWORD_ROUTE = "/reset-password";
+// The sign-in page at its two-step code, where a Google sign-in with
+// two-step on lands (app/(auth)/login/google/route.ts).
+export const TWO_STEP_LOGIN_ROUTE = `${LOGIN_ROUTE}?step=two-step`;
+// The emailed link that confirms a customer's email address.
+export const VERIFY_EMAIL_ROUTE = "/verify-email";
+// The admin pages an email opens without a session: accepting an invite to
+// the admin team, and an admin's password reset.
+export const ADMIN_INVITE_ROUTE = "/admin/invite";
+export const ADMIN_RESET_PASSWORD_ROUTE = "/admin/reset-password";
 // Where Google sign-in returns to: trades better-auth's session cookie for
 // the site's own tokens (app/(auth)/login/google/route.ts).
 export const GOOGLE_SIGN_IN_ROUTE = "/login/google";
@@ -32,9 +41,10 @@ export const SESSION_EXPIRED_LOGIN_ROUTE = `${LOGIN_ROUTE}?reason=${SESSION_EXPI
 
 // Signed-in visitors are sent home from these.
 export const guestOnlyRoutes = [LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROUTE];
-// Open to everyone, signed in or not: a reset link works for whoever opens
-// it, and the Google landing route replaces whatever session was there.
-export const openRoutes = [RESET_PASSWORD_ROUTE, GOOGLE_SIGN_IN_ROUTE, MAINTENANCE_ROUTE, ...LEGAL_ROUTES];
+// Open to everyone, signed in or not: a reset, invite or verification link
+// works for whoever opens it, and the Google landing route replaces
+// whatever session was there.
+export const openRoutes = [RESET_PASSWORD_ROUTE, GOOGLE_SIGN_IN_ROUTE, MAINTENANCE_ROUTE, VERIFY_EMAIL_ROUTE, ADMIN_INVITE_ROUTE, ADMIN_RESET_PASSWORD_ROUTE, ...LEGAL_ROUTES];
 
 export const isGuestOnlyRoute = (pathname: string) => guestOnlyRoutes.includes(pathname);
 export const isPublicRoute = (pathname: string) => isGuestOnlyRoute(pathname) || openRoutes.includes(pathname);

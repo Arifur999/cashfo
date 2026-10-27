@@ -96,6 +96,13 @@ export type IResetPasswordFormValues = z.infer<typeof resetPasswordFormZodSchema
 export const resetPasswordServerZodSchema = z.object({
   token: z.string().trim().min(1, "This reset link is incomplete. Request a new one."),
   newPassword: newPasswordSchema,
+  // The emailed code, when the account asks for one before a reset.
+  challengeId: z.uuid().optional(),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Enter the 6-digit code from the email")
+    .optional(),
 }) satisfies z.ZodType<IResetPasswordPayload>;
 
 // An admin's own password (POST /admin/auth/change-password): the current

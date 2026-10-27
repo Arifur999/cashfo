@@ -1,6 +1,6 @@
 import "server-only";
 import { isBetterAuthCookie } from "./betterAuthCookies";
-import { deleteCookie, deleteCookiesWhere, getCookie, setCookie } from "./cookiesUtils";
+import { deleteCookie, deleteCookiesWhere, getAllCookies, getCookie, setCookie } from "./cookiesUtils";
 import { jwtUtils } from "./jwtUtils";
 
 // The cookie names are a contract with proxy.ts, which reads them on every
@@ -113,3 +113,73 @@ export const clearStashedAdminSession = async () => {
   await deleteCookie(STASHED_ADMIN_REFRESH_COOKIE);
   await deleteCookie(VIEWED_OWNER_COOKIE);
 };
+
+// "Don't ask again on this computer for 30 days": the token the two-step
+// sign-in answers with, one cookie per account (trustedDevice_<account id>),
+// so two people sharing a computer each keep theirs. Every sign-in sends
+// them all (x-trusted-device); the API knows whose is whose. They outlive a
+// sign-out on purpose -- the computer stays trusted until the 30 days end
+// or the account removes it in Settings.
+const TRUSTED_DEVICE_COOKIE_PREFIX = "trustedDevice_";
+// The API reads at most this many.
+const MAX_TRUSTED_DEVICE_TOKENS = 10;
+const TRUSTED_DEVICE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+
+export const setTrustedDevice = async (accountId: string, token: string, expiresAt?: string) => {
+  const seconds = expiresAt ? Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000) : Number.NaN;
+  await setCookie(`${TRUSTED_DEVICE_COOKIE_PREFIX}${accountId}`, token, Number.isFinite(seconds) && seconds > 0 ? seconds : TRUSTED_DEVICE_MAX_AGE_SECONDS);
+};
+
+const trustedDeviceHeaderOf = (tokens: string[]): Record<string, string> => {
+  const kept = tokens.filter(Boolean).slice(0, MAX_TRUSTED_DEVICE_TOKENS);
+  return kept.length > 0 ? { "x-trusted-device": kept.join(",") } : {};
+};
+
+// For Server Actions and Server Components.
+export const getTrustedDeviceHeader = async (): Promise<Record<string, string>> =>
+  trustedDeviceHeaderOf(
+    (await getAllCookies()).filter((cookie) => cookie.name.startsWith(TRUSTED_DEVICE_COOKIE_PREFIX)).map((cookie) => cookie.value),
+  );
+
+// For a route handler, from its request's cookies.
+export const trustedDeviceHeaderFrom = (cookieList: { name: string; value: string }[]): Record<string, string> =>
+  trustedDeviceHeaderOf(cookieList.filter((cookie) => cookie.name.startsWith(TRUSTED_DEVICE_COOKIE_PREFIX)).map((cookie) => cookie.value));
+
+// A sign-in waiting on its second step (the code, or an admin's two-step
+// set-up): the API's one-time token and what the sign-in had chosen
+// (keep me signed in, where to go), kept here rather than in the page, so
+// the token never reaches the browser's script and a Google sign-in, which
+// arrives by redirect, can hand it over too. It lasts as long as the API's
+// set-up token (15 minutes); the code's own 5 minutes are the API's to keep.
+const SIGN_IN_STEP_COOKIE = "signInStep";
+const SIGN_IN_STEP_MAX_AGE_SECONDS = 15 * 60;
+
+export interface SignInStep {
+  kind: "code" | "setup";
+  // The challengeToken (code) or the setupToken (set-up).
+  token: string;
+  email: string;
+  audience: "admin" | "user";
+  persist: boolean;
+  redirectTo?: string;
+  // Said by the customer app once signed in (ShellNotice).
+  notice?: string;
+}
+
+export const setSignInStep = (step: SignInStep) => setCookie(SIGN_IN_STEP_COOKIE, JSON.stringify(step), SIGN_IN_STEP_MAX_AGE_SECONDS);
+
+export const getSignInStep = async (): Promise<SignInStep | null> => {
+  const raw = await getCookie(SIGN_IN_STEP_COOKIE);
+  if (!raw) return null;
+  try {
+    const step = JSON.parse(raw) as Partial<SignInStep>;
+    if ((step.kind === "code" || step.kind === "setup") && typeof step.token === "string" && typeof step.email === "string" && (step.audience === "admin" || step.audience === "user")) {
+      return { kind: step.kind, token: step.token, email: step.email, audience: step.audience, persist: step.persist !== false, redirectTo: typeof step.redirectTo === "string" ? step.redirectTo : undefined, notice: typeof step.notice === "string" ? step.notice : undefined };
+    }
+  } catch {
+    // A cookie this code didn't write: no step.
+  }
+  return null;
+};
+
+export const clearSignInStep = () => deleteCookie(SIGN_IN_STEP_COOKIE);

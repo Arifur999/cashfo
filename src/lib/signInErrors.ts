@@ -7,6 +7,11 @@ const SIGN_IN_ERRORS: Record<string, string> = {
   access_denied: "Google sign-in was cancelled.",
   email_not_found: "Google didn't share an email address with us.",
   signup_disabled: "No account uses that Google address yet.",
+  // Admin > Settings has new sign-ups turned off (backend SIGNUPS_CLOSED).
+  // A password reset whose two-step code step ended or was left
+  // (components/modules/Auth/ResetPasswordFlow.tsx).
+  password_changed: "Your new password is saved. Sign in with it to carry on.",
+  signups_closed: "New sign-ups are closed for now. If you already have an account, sign in.",
 };
 
 const FALLBACK_MESSAGE = "Google sign-in didn't finish. Please try again.";

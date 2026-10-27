@@ -1,4 +1,4 @@
-import { FORGOT_PASSWORD_ROUTE, LEGAL_ROUTES, LOGIN_ROUTE, MAINTENANCE_ROUTE, REGISTER_ROUTE, RESET_PASSWORD_ROUTE } from "./authUtils";
+import { FORGOT_PASSWORD_ROUTE, LEGAL_ROUTES, LOGIN_ROUTE, MAINTENANCE_ROUTE, REGISTER_ROUTE, RESET_PASSWORD_ROUTE, VERIFY_EMAIL_ROUTE } from "./authUtils";
 
 // Dark mode is the customer app's: the admin panel and the sign-in pages
 // stay light. The choice lives in localStorage; until one is made, the OS
@@ -15,7 +15,7 @@ export const THEME_ALLOWED_KEY = "theme-allowed";
 export const themeAllowedValue = (allowDark: boolean): string => (allowDark ? "1" : "0");
 
 // Paths that never go dark, as one regex for the inline script below.
-const LIGHT_ONLY_PREFIXES = ["/admin", LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROUTE, RESET_PASSWORD_ROUTE, MAINTENANCE_ROUTE, ...LEGAL_ROUTES];
+const LIGHT_ONLY_PREFIXES = ["/admin", LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROUTE, RESET_PASSWORD_ROUTE, VERIFY_EMAIL_ROUTE, MAINTENANCE_ROUTE, ...LEGAL_ROUTES];
 const LIGHT_ONLY_PATTERN = `^(${LIGHT_ONLY_PREFIXES.join("|")})(/|$)`;
 
 // Runs in <head> before the page paints (root layout), so a dark-mode

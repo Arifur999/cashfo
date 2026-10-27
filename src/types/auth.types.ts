@@ -32,6 +32,45 @@ export interface ISignInResponse {
   account: { id: string; name: string; email: string; role: Role };
   // Customers only: the workspace the app opens first.
   defaultBusinessId?: string;
+  // Customers only: this sign-in restored an account that was waiting out
+  // the 30 days after "Delete my account".
+  restoredFromDeletion?: boolean;
+}
+
+// What a sign-in answers instead of tokens while two-step sign-in still has
+// a step to go (backend TwoStepService): the code from the authenticator
+// app, or -- for an admin while two-step is required for every admin and
+// theirs isn't on yet -- setting it up first.
+export interface ITwoStepRequired {
+  twoStepRequired: true;
+  challengeToken: string;
+  audience: TokenAudience;
+  expiresAt: string;
+  email: string;
+}
+
+export interface ITwoStepSetupRequired {
+  twoStepSetupRequired: true;
+  setupToken: string;
+  audience: "admin";
+  expiresAt: string;
+  email: string;
+}
+
+export type ITwoStepPending = ITwoStepRequired | ITwoStepSetupRequired;
+
+export const isTwoStepPending = (answer: object): answer is ITwoStepPending => "twoStepRequired" in answer || "twoStepSetupRequired" in answer;
+
+// POST /api/auth/sign-in/two-step, and an admin's two-step set-up finished
+// at sign-in: the usual sign-in, plus the 30-day token when the computer was
+// trusted.
+export interface ITwoStepSignInResponse extends ISignInResponse {
+  trustedDeviceToken?: string;
+  trustedDeviceExpiresAt?: string;
+  // After a backup code: how many are left.
+  backupCodesLeft?: number;
+  // After setting two-step up at sign-in: the ten backup codes, shown once.
+  backupCodes?: string[];
 }
 
 export interface IRegisterPayload {
@@ -47,6 +86,9 @@ export interface IRegisterPayload {
 export interface IResetPasswordPayload {
   token: string;
   newPassword: string;
+  // The emailed code, when the account asks for one before a reset.
+  challengeId?: string;
+  code?: string;
 }
 
 // What register and reset-password answer with: they sign a customer in.
@@ -55,6 +97,7 @@ export interface ICustomerSignInResponse {
   refreshToken: string;
   user: { id: string; name: string; email: string; preferredLanguage: LanguagePreference };
   defaultBusinessId: string;
+  restoredFromDeletion?: boolean;
 }
 
 // What the backend signs into the access token (SessionTokensService).

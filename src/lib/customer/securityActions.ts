@@ -1,8 +1,8 @@
 "use server";
 
 import axios from "axios";
-import { cookies } from "next/headers";
 import { TOO_MANY_ATTEMPTS_MESSAGE } from "@/lib/actionError";
+import { getTrustedDeviceHeader } from "@/lib/tokenUtils";
 import { API_BASE_URL, getApiErrorMessage, type DisplayPreferences, type SecurityAlerts } from "./api";
 import type { ActionResult } from "./authActions";
 import { customerApi } from "./apiClient";
@@ -35,14 +35,7 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 
 // The trustedDevice_<accountId> cookies this browser holds (set by the
 // two-step sign-in), so the API can tell which trusted computer is this one.
-async function trustedDeviceHeader(): Promise<Record<string, string>> {
-  const tokens = (await cookies())
-    .getAll()
-    .filter((cookie) => cookie.name.startsWith("trustedDevice_") && cookie.value)
-    .map((cookie) => cookie.value)
-    .slice(0, 10);
-  return tokens.length > 0 ? { "x-trusted-device": tokens.join(",") } : {};
-}
+const trustedDeviceHeader = getTrustedDeviceHeader;
 
 // ---- Two-step sign-in ----
 
