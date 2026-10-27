@@ -163,12 +163,22 @@ export const MANAGE_ROLES = {
   support: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
   notificationTemplates: ["SUPER_ADMIN", "CONTENT_ADMIN"],
   notificationCampaigns: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
+  // Resetting an owner's money data, and the copy of it offered first.
   ownerData: ["SUPER_ADMIN"],
-  // Suspending/activating a customer, and changing their plan.
+  // Suspending/activating a customer, a temporary password, signing them
+  // out of every device and cancelling a deletion they asked for.
   ownerStatus: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
   ownerPlan: ["SUPER_ADMIN", "FINANCE_ADMIN"],
+  // "Notes for admins" on a user's page (every admin reads them), and the
+  // Users list's CSV export.
+  ownerNotes: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
+  ownerExport: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
+  // Turning off a customer's two-step sign-in when they lost their phone.
+  ownerTwoStep: ["SUPER_ADMIN"],
   // "View as customer", a read-only look at the customer app as the owner.
   ownerView: ["SUPER_ADMIN"],
+  // Approving, rejecting and paying referral payouts, and their settings.
+  referralPayouts: ["SUPER_ADMIN", "FINANCE_ADMIN"],
   settings: ["SUPER_ADMIN"],
   revenue: ["SUPER_ADMIN", "FINANCE_ADMIN"],
 } satisfies Record<string, AdminRole[]>;

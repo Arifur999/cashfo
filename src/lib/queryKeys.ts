@@ -39,4 +39,16 @@ export const queryKeys = {
   campaigns: createDomainKeys("campaigns"),
   analytics: createDomainKeys("analytics"),
   myAccount: createDomainKeys("my-account"),
+  // The admin menu's payout count: under "referrals", so whatever refreshes
+  // the referrals domain refreshes the count too.
+  referralPayoutStats: ["referrals", "payouts", "stats"] as const,
+  // Admin > Referrals & Payouts: the payout desk, every referral and the
+  // settings, all under "referrals" so one invalidation refreshes the page
+  // and the menu's count together.
+  referralPayouts: {
+    list: (queryString = "") => ["referrals", "payouts", "list", queryString] as const,
+    detail: (id: string) => ["referrals", "payouts", "detail", id] as const,
+  },
+  referrals: createDomainKeys("referrals"),
+  referralSettings: ["referrals", "settings"] as const,
 } as const;
