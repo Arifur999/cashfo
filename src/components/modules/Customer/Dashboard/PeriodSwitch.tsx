@@ -120,7 +120,7 @@ export function PeriodSwitch({ value, dateFrom, dateTo, today, variant, classNam
                 <Input size="sm" type="date" value={draft.to} min={draft.from || undefined} onChange={(event) => setDraft((d) => ({ ...d, to: event.target.value }))} />
               </label>
             </div>
-            <Button type="submit" size="sm" disabled={!valid} className="self-end rounded-full">
+            <Button type="submit" size="sm" disabled={!valid} className="self-end">
               {t("Show")}
             </Button>
           </form>

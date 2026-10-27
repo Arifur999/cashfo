@@ -50,7 +50,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
     <PageFrame className="gap-4 md:gap-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="flex min-w-0 flex-col gap-0.5 md:gap-1">
-          <h1 className={cn("leading-[1.3] font-semibold text-ink", setup ? "text-[20px] tracking-[-0.01em] md:text-[24px] md:tracking-[-0.02em]" : "text-[20px] tracking-[-0.01em] md:text-[30px] md:leading-[1.2] md:tracking-[-0.03em]")}>{title}</h1>
+          <h1 className={cn("leading-[1.3] font-semibold text-ink", setup ? "text-[20px] tracking-[-0.01em] md:text-page-title" : "text-[20px] tracking-[-0.01em] md:text-[30px] md:leading-[1.2] md:tracking-[-0.03em]")}>{title}</h1>
           <p className="text-[13px] leading-[normal] text-ink-muted md:text-body">
             {setup ? (
               t("Welcome to Money Tracker. Let's get your money organized.")

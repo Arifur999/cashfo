@@ -49,11 +49,10 @@ const PRESETS: { value: DateRangePreset; label: string }[] = [
   { value: "all", label: "All time" },
 ];
 
-// The board's filter bar: 38px dropdowns with the 10px radius and the light
-// input line, sized to the choice on show; and the type pill's 32px
-// segments, the unpicked ones in medium weight.
-const BAR_SELECT = "rounded-[10px] border-input pr-8.5 field-sizing-content text-small";
-const BAR_SEGMENTS = "[&>button]:h-8 [&>button[aria-pressed=false]]:font-medium [&>button[aria-pressed=false]]:text-ink-soft";
+// The board's filter bar: 38px dropdowns sized to the choice on show, and
+// the type pill's 32px segments.
+const BAR_SELECT = "pr-8.5 field-sizing-content text-small";
+const BAR_SEGMENTS = "[&>button]:h-8";
 
 // The earliest day a typed date is applied from: while a year is typed
 // digit by digit, the field reads 0002, 0020, 0202 first.
@@ -306,7 +305,7 @@ export function TransactionFilters({ accounts, categories, navigate, baseQuery }
         leading={<Search />}
         placeholder={placeholder}
         aria-label={t("Search transactions")}
-        frameClassName="h-12 md:h-9.5 md:w-65 md:rounded-[10px] md:border-input md:pl-3"
+        frameClassName="h-12 md:h-9.5 md:w-65"
       />
     </form>
   );

@@ -156,7 +156,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
       <label htmlFor="cat-limit" className={label}>
         {t("Monthly limit")}
       </label>
-      <div className="flex h-13 items-stretch overflow-hidden rounded-sm border border-input bg-surface focus-within:border-emerald focus-within:shadow-[0_0_0_3px_var(--mint-50)] dark:border-line-strong">
+      <div className="flex h-13 items-stretch overflow-hidden rounded-sm border border-input bg-surface transition-[border-color,box-shadow] focus-within:border-focus-ring focus-within:focus-halo">
         <span className="flex w-12 shrink-0 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-soft">{currencySymbol(currency)}</span>
         <input
           id="cat-limit"
@@ -195,7 +195,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
       <SheetContent
         side={wide ? "right" : "bottom"}
         showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 rounded-l-xl shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
+        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
       >
         {/* The phone sheet's handle, as the transaction drawer has. */}
         {!wide && <span aria-hidden="true" className="mt-2 block h-1.25 w-10 shrink-0 self-center rounded-full bg-line-strong" />}
@@ -225,7 +225,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             </div>
 
             <Field htmlFor="cat-name" label={<span className={label}>{t("Name")}</span>} error={taken ? t(isAsset ? "An asset type with that name already exists" : "A category with this name already exists") : undefined}>
-              <Input id="cat-name" size="md" value={name} invalid={taken} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isAsset ? "Vehicle" : isGroup ? "Bazar" : isIncome ? "Salary" : "Groceries")} frameClassName={cn("rounded-[10px] px-3.5", !taken && "border-input dark:border-line-strong")} />
+              <Input id="cat-name" size="md" value={name} invalid={taken} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isAsset ? "Vehicle" : isGroup ? "Bazar" : isIncome ? "Salary" : "Groceries")} frameClassName="px-3.5" />
             </Field>
             {renamesAssets && (
               <p className="-mt-2 flex gap-2 text-caption leading-relaxed text-warning">
@@ -236,7 +236,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
 
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
               <legend className={cn("mb-2", label)}>{t("Icon")}</legend>
-              <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t(isAsset ? "Search icons, e.g. car, land, gold" : "Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} frameClassName="h-9 rounded-[10px] border-input px-3 text-small dark:border-line-strong" />
+              <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t(isAsset ? "Search icons, e.g. car, land, gold" : "Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} frameClassName="h-9 text-small" />
               {/* Two rows show; the rest scroll. 2px of room so a chosen icon's ring isn't cut. */}
               <div className="-m-0.5 grid max-h-23.5 grid-cols-6 gap-1.5 overflow-y-auto p-0.5 md:grid-cols-8 pointer-coarse:max-h-24.5">
                 {icons.length === 0 ? (
@@ -298,10 +298,10 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
           <div className={cn("flex flex-col gap-2 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 pt-3 pb-6")}>
             {missing && <p className="text-caption text-ink-muted">{t(missing)}</p>}
             <div className="flex items-center justify-end gap-2.5">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={isPending} className="rounded-full border-input dark:border-line-strong">
+              <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
                 {t("Cancel")}
               </Button>
-              <Button type="submit" disabled={!valid || isPending} className="rounded-full px-4.5">
+              <Button type="submit" disabled={!valid || isPending} className="px-4.5">
                 {isPending && <Loader size={16} onDark label={t("Loading...")} />}
                 {editing ? t(isAsset || isGroup ? "Save changes" : "Save") : t(isAsset ? "Add asset type" : "Add category")}
               </Button>

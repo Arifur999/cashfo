@@ -70,13 +70,6 @@ const HOVER_ACTIONS = "transition-opacity [@media(hover:hover)]:opacity-0 group-
 // The board's 32px round buttons, ringed rather than bordered.
 const ROW_ACTION = "flex size-8 items-center justify-center rounded-full bg-surface shadow-[0_0_0_1px_var(--line)] pointer-coarse:size-11";
 
-// The board's light column heads (#F8F8F8, muted 12px words) in place of
-// the shared Aurora band.
-const LIGHT_HEAD = "border-line bg-table-head bg-none text-ink-muted";
-
-// The design-v4 page title: 24px semibold on a 1.3 line.
-const V4_TITLE = "[&_h1]:text-[24px] [&_h1]:leading-[1.3] [&_h1]:font-semibold [&_h1]:tracking-[-0.02em]";
-
 // Transactions: the filters, the totals strip, and the list grouped by
 // day with each day's net, newest first.
 export function TransactionsPageClient({ businessId, transactions, accounts, categories, meta, pageSize, pageSizes, defaultPageSize, currency, today, totals, dayTotals, splitDays, canManage }: TransactionsPageClientProps) {
@@ -167,7 +160,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   // A view-only member is told why there is nothing to add with, rather
   // than finding out from a refused save.
   const addButton = canManage ? (
-    <Button variant="action" onClick={() => setAddOpen(true)} className="gap-1.5 rounded-full shadow-button">
+    <Button variant="action" onClick={() => setAddOpen(true)} className="gap-1.5">
       <Plus strokeWidth={2.5} className="size-4" />
       {t("New transaction")}
     </Button>
@@ -187,7 +180,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         hideDescriptionOnPhone
         actions={addButton}
         hideActionsOnPhone
-        className={cn("md:mb-1", V4_TITLE)}
+        className="md:mb-1"
       />
 
       {!blank && <TransactionFilters accounts={accounts} categories={categories} navigate={navigate} baseQuery={baseQuery} />}
@@ -229,23 +222,23 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           </p>
           <div className="mt-2.5 flex flex-wrap justify-center gap-2.5">
             {canManage && (
-              <Button variant="action" onClick={() => setAddOpen(true)} className="gap-1.5 rounded-full">
+              <Button variant="action" onClick={() => setAddOpen(true)} className="gap-1.5">
                 <Plus strokeWidth={2.5} className="size-3.75" />
                 {filtered ? t("New transaction") : t("Add first transaction")}
               </Button>
             )}
             {filtered ? (
-              <Button variant="secondary" asChild className="rounded-sm border-input">
+              <Button variant="secondary" asChild className="rounded-sm">
                 <Link href={clearHref}>{t("Clear filters")}</Link>
               </Button>
             ) : (
-              <Button variant="secondary" asChild className="rounded-sm border-input">
+              <Button variant="secondary" asChild className="rounded-sm">
                 <Link href="/categories">{t("Set up categories first")}</Link>
               </Button>
             )}
           </div>
-          {/* N opens the Add menu, whose first three picks (I, E, T) add a
-              transaction; phones have no keyboard to press it on. */}
+          {/* N opens the New transaction drawer (Layout/AddMenu); phones
+              have no keyboard to press it on. */}
           {!filtered && canManage && (
             <p className="mt-3.5 hidden items-center gap-1.5 text-caption text-ink-muted md:flex">
               {fillNodes(t("Tip: press {key} anywhere to add a transaction"), {
@@ -265,7 +258,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             footer={<ListFooter>{pager(LIST_ID)}</ListFooter>}
           >
             {/* Above the rows' buttons (z-10) as they scroll under it. */}
-            <ListHead columns={COLUMNS} sticky className={LIGHT_HEAD}>
+            <ListHead columns={COLUMNS} sticky>
               <ListHeadCell>{t("Transaction")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Category")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Account@@wallet")}</ListHeadCell>

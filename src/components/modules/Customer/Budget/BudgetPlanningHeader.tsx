@@ -34,14 +34,14 @@ export function BudgetPlanningHeader({ tab, path, month, year, counts, onMonthCh
     <>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Budget planning")}</h1>
+          <h1 className="text-page-title text-ink">{t("Budget planning")}</h1>
           <p className="text-body text-ink-muted">{t("Set a monthly limit for each kind of spending, and see where your income comes from.")}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2.5">
           {/* Across the page on a phone, with the add button as a round "+" beside it. */}
           <MonthSwitcher month={month} year={year} onChange={onMonthChange} className="max-md:flex-1 max-md:justify-between" />
           {onAdd && (
-            <Button onClick={onAdd} className="gap-1.5 rounded-full max-md:w-10 max-md:px-0">
+            <Button onClick={onAdd} className="gap-1.5 max-md:w-10 max-md:px-0">
               <Plus strokeWidth={2.5} className="size-4" />
               <span className="max-md:sr-only">{t(tab === "expense" ? "Add expense category" : "Add income category")}</span>
             </Button>

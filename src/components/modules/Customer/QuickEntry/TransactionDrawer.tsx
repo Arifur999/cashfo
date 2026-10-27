@@ -58,18 +58,11 @@ const KIND_META: Record<EntryKind, { label: string; icon: React.ReactNode; selec
   TRANSFER: { label: "Transfer", icon: <ArrowLeftRight className="text-info" />, selected: "[&>button[aria-pressed=true]]:text-info", save: "Move money", done: "Transfer completed", failed: "Failed to create transfer" },
 };
 
-// The board's fields: the light input line and the 10px radius; focused,
-// the emerald border with an 18% emerald ring.
-const FIELD_FRAME = "rounded-[10px] border-input focus-within:border-emerald focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--emerald)_18%,transparent)]";
-
 // A category tile: 76px, the 10px radius, the category's icon on its own
 // colour in a 32px square, the name on one line under it.
 const TILE = "flex h-19 min-w-0 flex-col items-center justify-center gap-1.5 rounded-[10px] p-1.5 transition-colors";
 const TILE_ICON = "flex size-8 items-center justify-center rounded-sm [&_svg]:size-4";
 const TILE_NAME = "max-w-full truncate text-center text-caption";
-
-// The footer's pill buttons, 40px high.
-const FOOT_BUTTON = "h-10 rounded-full text-body font-semibold";
 
 // What an entry does to one wallet: income adds to the wallet it goes
 // into, an expense takes from the one it is paid from, a transfer does both.
@@ -361,7 +354,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           size="lg"
           stretch
           className={cn(
-            "gap-1 [&_svg]:size-3.75 [&>button]:gap-1.5 [&>button]:text-body [&>button]:pointer-coarse:h-11 [&>button[aria-pressed=false]]:font-medium [&>button[aria-pressed=false]]:text-ink-soft [&>button[aria-pressed=true]]:shadow-[0_1px_3px_rgba(18,32,29,0.12)]",
+            "gap-1 [&_svg]:size-3.75 [&>button]:gap-1.5 [&>button]:text-body [&>button]:pointer-coarse:h-11 [&>button[aria-pressed=true]]:shadow-[0_1px_3px_rgba(18,32,29,0.12)]",
             KIND_META[kind].selected,
           )}
         />
@@ -385,7 +378,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         <div
           className={cn(
             "flex items-center rounded-md",
-            wide ? cn("h-16 gap-2.5 border bg-surface px-4", FIELD_FRAME) : "justify-center gap-2 py-2",
+            // The amount box in the shared field frame's look (InputFrame).
+            wide ? "h-16 gap-2.5 rounded-field border border-input bg-surface px-4 transition-[border-color,box-shadow] focus-within:border-focus-ring focus-within:focus-halo" : "justify-center gap-2 py-2",
           )}
         >
           <span aria-hidden="true" className={cn("font-semibold", wide ? "text-[26px]" : "text-h1", kind === "INCOME" ? "text-income" : kind === "EXPENSE" ? "text-expense-fill" : "text-ink-muted")}>
@@ -496,7 +490,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           {isTransfer && <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />}
           <div className="grid grid-cols-[170px_minmax(0,1fr)] gap-2.5">
             <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
-              <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} className={FIELD_FRAME} />
+              <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
             </Field>
             <Field
               htmlFor="txn-note"
@@ -506,7 +500,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
                 </span>
               }
             >
-              <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} frameClassName={cn("px-3", FIELD_FRAME)} />
+              <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
             </Field>
           </div>
         </>
@@ -530,10 +524,10 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const footer = editing ? (
     <div className={cn("flex items-center gap-2 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 pt-3 pb-8")}>
       <span className="flex-1 text-small text-ink-muted">{plural(t, changes, "{count} change", "{count} changes", undefined, locale)}</span>
-      <Button type="button" variant="ghost" onClick={onClose} disabled={isPending} className={cn(FOOT_BUTTON, "px-2.5 text-ink-soft")}>
+      <Button type="button" variant="ghost" onClick={onClose} disabled={isPending} className="px-2.5">
         {t("Cancel")}
       </Button>
-      <Button type="submit" variant="action" disabled={!valid || isPending} className={cn(FOOT_BUTTON, "px-3.5 shadow-button")}>
+      <Button type="submit" variant="action" disabled={!valid || isPending} className="px-3.5">
         {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <Check strokeWidth={2.5} />}
         {t("Save changes")}
       </Button>
@@ -548,15 +542,15 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           size={wide ? "md" : "xl"}
           onClick={() => save(true)}
           disabled={!valid || isPending}
-          className={cn("px-3", wide ? cn(FOOT_BUTTON, "border-input") : "h-13 flex-1")}
+          className={cn("px-3", !wide && "h-13 flex-1")}
         >
           {t("Save & add another")}
         </Button>
         <span className="hidden flex-1 md:block" />
-        <Button type="button" variant="ghost" onClick={onClose} className={cn(FOOT_BUTTON, "hidden px-2.5 text-ink-soft md:inline-flex")}>
+        <Button type="button" variant="ghost" onClick={onClose} className="hidden px-2.5 md:inline-flex">
           {t("Cancel")}
         </Button>
-        <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={cn(wide ? cn(FOOT_BUTTON, "px-3.5 shadow-button") : "h-13 flex-1 px-4")}>
+        <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={wide ? "px-3.5" : "h-13 flex-1 px-4"}>
           {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : !wide && <Check strokeWidth={2.5} />}
           {wide ? t(KIND_META[kind].save) : t("Save")}
           {wide && (
