@@ -68,6 +68,8 @@ export interface RecordPaymentInput {
   date: string;
   moneyAccountId: string;
   description?: string;
+  // The slip or cheque number, as the statement's Reference column shows it.
+  referenceNo?: string;
   appliedToTransactionId?: string;
 }
 

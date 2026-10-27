@@ -87,6 +87,8 @@ export interface AddIncomeInput {
   description?: string;
   categoryId?: string;
   note?: string;
+  // A receipt or slip number (the loan statement's Reference column).
+  referenceNo?: string;
   // A loan's profit or interest: the bank or person it came from.
   contactId?: string;
 }
@@ -106,6 +108,8 @@ export interface AddExpenseInput {
   description?: string;
   categoryId?: string;
   note?: string;
+  // A receipt or slip number (the loan statement's Reference column).
+  referenceNo?: string;
   // A loan's profit or interest: the bank or person it went to.
   contactId?: string;
 }

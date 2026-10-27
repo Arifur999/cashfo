@@ -119,7 +119,7 @@ export function statementBackPath(value: unknown): string | null {
 
 // What the Back link says: the page's name where it is known, else "Back".
 const BACK_LABELS: Record<string, string> = {
-  "/savings-goals/overview": "Back to Savings summary",
+  "/savings-goals/overview": "Back to Savings overview",
 };
 
 export function statementBackLabel(path: string): string {

@@ -63,13 +63,16 @@ const PAGE_SIZE = 50;
 
 // From xl the board's columns, sized to fit beside the sidebar at 1280:
 // date, description (the reference under it), category, principal in and
-// out, profit, balance. Below xl each row is the phone's two lines.
-const COLUMNS = "xl:grid-cols-[88px_minmax(0,1fr)_84px_104px_104px_100px_132px]";
+// out, profit, balance. Below xl each row is the phone's two lines. From
+// 1400 (the board's 1440) the reference has a column of its own.
+const COLUMNS = "xl:grid-cols-[88px_minmax(0,1fr)_84px_104px_104px_100px_132px] min-[87.5rem]:grid-cols-[100px_100px_minmax(0,1fr)_96px_110px_110px_110px_140px] min-[87.5rem]:gap-x-3.5";
+// The Reference column, from 1400.
+const WIDE = "hidden min-[87.5rem]:block print:hidden";
 // On paper (about 720px wide): no category column, tighter gaps.
 const PRINT_COLUMNS = "print:grid-cols-[76px_minmax(0,1fr)_92px_92px_84px_116px] print:gap-x-3";
 const GRID = cn(COLUMNS, PRINT_COLUMNS);
 // A label across everything but the balance.
-const BEFORE_BALANCE = "xl:col-span-6 print:col-span-5";
+const BEFORE_BALANCE = "xl:col-span-6 min-[87.5rem]:col-span-7 print:col-span-5";
 
 // Loan statement: one bank or person, the period, how the balance went
 // from opening to closing, and every entry in between with the balance
@@ -181,6 +184,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
     return (
       <ListRow key={row.transactionId} id={rowId(row)} columns={GRID} muted={cancelled} className="xl:min-h-13 print:break-inside-avoid">
         <ListCell className="hidden text-small text-ink-2 xl:block print:block">{formatDate(row.date, undefined, locale)}</ListCell>
+        <ListCell className={cn(WIDE, "truncate text-small", row.referenceNo ? "text-ink-2" : "text-ink-muted")}>{row.referenceNo || "—"}</ListCell>
         <ListCell className="flex min-w-0 flex-col gap-0.5">
           <span className="flex min-w-0 items-center gap-2">
             <ListRowLink href={`/transactions/${row.transactionId}`} className={cn("truncate", written ? "text-ink" : "text-ink-2", cancelled && "line-through")}>
@@ -198,7 +202,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
             )}
           </span>
           <span className="truncate text-caption font-normal text-ink-muted xl:hidden print:hidden">{[formatDate(row.date, undefined, locale), row.referenceNo].filter(Boolean).join(" · ")}</span>
-          {row.referenceNo && <span className="hidden truncate text-caption font-normal text-ink-muted xl:block print:block">{row.referenceNo}</span>}
+          {row.referenceNo && <span className="hidden truncate text-caption font-normal text-ink-muted xl:block min-[87.5rem]:hidden print:block">{row.referenceNo}</span>}
         </ListCell>
         <ListCell className="hidden xl:block print:hidden">
           <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className="font-bold">
@@ -247,9 +251,10 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               aria-expanded={open}
               aria-controls={open ? item.rows.map(rowId).join(" ") : undefined}
               onClick={() => toggle(item.key)}
-              className={cn("grid min-h-13 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 bg-warning-soft py-2 text-left text-body tabular-nums transition-colors hover:bg-warning-soft/70 focus-visible:-outline-offset-2", LIST_INSET, COLUMNS)}
+              className={cn("grid min-h-13 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 bg-warning-50 py-2 text-left text-body tabular-nums transition-colors hover:bg-warning-soft/60 focus-visible:-outline-offset-2", LIST_INSET, COLUMNS)}
             >
               <span className="hidden text-small text-warning xl:block">{months}</span>
+              <span className="hidden text-small text-ink-muted min-[87.5rem]:block">—</span>
               <span className="flex min-w-0 items-center gap-2 font-semibold text-warning">
                 <ChevronRight className={cn("size-4 shrink-0 transition-transform motion-reduce:transition-none", open && "rotate-90")} aria-hidden="true" />
                 <span className="flex min-w-0 flex-col">
@@ -280,7 +285,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
       <span className="text-caption font-semibold">
         {way === "paid" ? t(months === 1 ? "Profit paid · {count} month" : "Profit paid · {count} months", { count: formatCount(months, locale) }) : t(months === 1 ? "Profit received · {count} month" : "Profit received · {count} months", { count: formatCount(months, locale) })}
       </span>
-      <span className="text-h2 font-bold tabular-nums">{formatCurrency(amount, currency, locale)}</span>
+      <span className={cn("text-h2 font-bold tabular-nums", way === "paid" ? "text-warning" : "text-income")}>{formatCurrency(amount, currency, locale)}</span>
       <span className="text-caption">{way === "paid" ? t("Counted as expense. Doesn't change what you owe.") : t("Counted as income. Doesn't change what they owe.")}</span>
     </div>
   );
@@ -413,7 +418,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               </div>
             </Card>
             {hasProfit && (
-              <div className="flex flex-col justify-center gap-4 rounded-lg border border-warning-fill/40 bg-warning-soft px-5 py-4 text-warning">
+              <div className="flex flex-col justify-center gap-4 rounded-md border border-warning-line bg-warning-50 px-5 py-4 text-warning-ink">
                 {profit.paid > 0 && profitBlock(profit.paid, profit.paidMonths, "paid")}
                 {profit.received > 0 && profitBlock(profit.received, profit.receivedMonths, "received")}
               </div>
@@ -442,6 +447,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
           >
             <ListHead columns={GRID} className="md:hidden xl:grid print:grid">
               <ListHeadCell>{t("Date")}</ListHeadCell>
+              <ListHeadCell className={WIDE}>{t("Reference")}</ListHeadCell>
               <ListHeadCell>{t("Description")}</ListHeadCell>
               <ListHeadCell className="print:hidden">{t("Category")}</ListHeadCell>
               <ListHeadCell align="end">{t("Principal in")}</ListHeadCell>
@@ -471,7 +477,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
             {items.map((item) => (item.kind === "more" ? renderFold(item) : renderRow(item.row)))}
             {lastPage ? (
               <ListSummaryRow kind="closing" columns={GRID} className="min-h-13 text-body font-semibold">
-                <ListCell className="font-bold text-ink xl:col-span-3 print:col-span-2">
+                <ListCell className="font-bold text-ink xl:col-span-3 min-[87.5rem]:col-span-4 print:col-span-2">
                   {t("Closing balance")} · {formatDate(periodTo, undefined, locale)}
                 </ListCell>
                 <ListCell align="end" className="hidden text-ink tabular-nums xl:block print:block">

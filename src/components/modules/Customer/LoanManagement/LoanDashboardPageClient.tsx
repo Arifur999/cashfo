@@ -111,7 +111,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
         title={
           <>
             <span className="md:hidden">{t("Dena-pawna")}</span>
-            <span className="hidden md:inline">{t("Loans")}</span>
+            <span className="hidden md:inline">{t("Loans & Dena-Pawna")}</span>
           </>
         }
         description={
@@ -342,7 +342,8 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
             )}
           </span>
           <span className="truncate text-caption font-normal text-ink-muted xl:hidden">{contact ? [t(LOAN_KIND_LABELS[contact.type]), contact.notes].filter(Boolean).join(" · ") : (row.contactPhone ?? "")}</span>
-          <span className="hidden truncate text-caption font-normal text-ink-muted xl:block">{row.contactPhone || contact?.email || contact?.address || "—"}</span>
+          {/* A bank or NGO by what the loan is ("House loan"), a person by their number. */}
+          <span className="hidden truncate text-caption font-normal text-ink-muted xl:block">{(contact && (contact.type === "BANK" || contact.type === "NGO") && contact.notes) || row.contactPhone || contact?.email || contact?.address || "—"}</span>
           {/* Tablet and small laptop: the board's four figures, on a line of their own. */}
           {movements.length > 0 && <span className="hidden truncate text-caption font-normal text-ink-muted tabular-nums md:block xl:hidden">{movements.join(" · ")}</span>}
         </span>

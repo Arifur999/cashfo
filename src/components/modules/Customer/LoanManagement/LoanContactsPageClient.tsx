@@ -71,7 +71,9 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   const shown = (currentTab === "ARCHIVED" ? archived : active)
     .filter((contact) => currentTab === "ALL" || currentTab === "ARCHIVED" || loanDirection(contact.currentBalance) === currentTab)
     .filter((contact) => !kind || contact.type === kind)
-    .filter((contact) => contactMatches(contact.name, contact.phone, search));
+    .filter((contact) => contactMatches(contact.name, contact.phone, search))
+    // Biggest balance first, either way, as the board lists them.
+    .sort((a, b) => Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance)));
   const filtered = currentTab !== "ALL" || kind !== "" || search.trim() !== "";
 
   // How many cards are out, for the filters they were grown under: a new
@@ -163,7 +165,8 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   const thisYear = getAppToday().slice(0, 4);
   const lastLine = (contact: Contact) => {
     if (contact.lastActivityAt === undefined) return t("Added {date}", { date: formatDate(contact.createdAt, undefined, locale) });
-    if (!contact.lastActivityAt) return t("No entries yet");
+    // Never an entry: what they were added with, when there was something.
+    if (!contact.lastActivityAt) return Number(contact.openingBalance) !== 0 ? t("Opening balance") : t("No entries yet");
     const sameYear = formatDate(contact.lastActivityAt, "yyyy") === thisYear;
     return t("Last entry {date}", { date: formatDate(contact.lastActivityAt, sameYear ? "d MMM" : "d MMM yyyy", locale) });
   };
@@ -173,7 +176,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
       <PageHeader
         eyebrow={t("Loans")}
         tone="loans"
-        title={t("People & banks")}
+        title={t("Contacts")}
         description={t("Everyone you have dena-pawna with: people, banks, NGOs, customers and suppliers.")}
         actions={
           canManage && (
@@ -206,7 +209,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                 </option>
               ))}
             </NativeSelect>
-            <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="min-w-0 flex-1 md:w-65 md:flex-none" />
+            <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name, phone…")} aria-label={t("Search contacts")} frameClassName="min-w-0 flex-1 md:w-65 md:flex-none" />
             <span className="hidden flex-1 md:block" />
             <span className="text-small text-ink-muted tabular-nums max-md:w-full">
               {t("Pawna")} <span className="font-semibold text-income">{formatCurrency(pawna, currency, locale)}</span> · {t("Dena")} <span className="font-semibold text-expense">{formatCurrency(dena, currency, locale)}</span>
@@ -230,7 +233,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                 const isArchived = contact.status === "ARCHIVED";
                 const settled = direction === "SETTLED";
                 return (
-                  <Card key={contact.id} className={cn("flex min-w-0 flex-col gap-4", isArchived && "opacity-60")}>
+                  <Card key={contact.id} padding="none" className={cn("flex min-w-0 flex-col gap-3.5 p-4.5", isArchived && "opacity-60")}>
                     <div className="flex items-center gap-3">
                       <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={44} />
                       <span className="flex min-w-0 flex-1 flex-col gap-0.75">
@@ -240,7 +243,8 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                             {isArchived ? t("Archived") : t(LOAN_KIND_LABELS[contact.type])}
                           </Chip>
                         </span>
-                        <span className="truncate text-caption font-normal text-ink-muted">{contact.phone || contact.email || contact.address || t("No contact info")}</span>
+                        {/* A bank or NGO by what the loan is ("House loan"), a person by their number. */}
+                        <span className="truncate text-caption font-normal text-ink-muted">{(institution(contact) && contact.notes) || contact.phone || contact.email || contact.address || contact.notes || t("No contact info")}</span>
                       </span>
                       {canManage && (
                         <DropdownMenu>
@@ -301,10 +305,10 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                         </DropdownMenu>
                       )}
                     </div>
-                    <div className={cn("flex items-end justify-between gap-3 rounded-md px-4 py-3", meta.box)}>
+                    <div className={cn("flex items-end justify-between gap-3 rounded-field px-3.5 py-3", meta.box)}>
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <span className={cn("text-caption font-normal", settled ? "text-ink-muted" : meta.text)}>{t(meta.label)}</span>
-                        <span className={cn("truncate text-h2 tracking-[-0.01em] tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(contact.currentBalance)), currency, locale)}</span>
+                        <span className={cn("truncate text-[22px] leading-[normal] font-bold tracking-[-0.01em] tabular-nums", settled ? "text-ink-faint" : meta.text)}>{formatCurrency(Math.abs(Number(contact.currentBalance)), currency, locale)}</span>
                       </span>
                       {/* A white pill, as the board draws it: the tone's own fill is the tile's colour. */}
                       <Chip tone={meta.chip} size="sm" className="bg-surface font-bold">
@@ -347,3 +351,6 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
     </PageFrame>
   );
 }
+
+// A bank or an NGO: its card names the loan rather than a phone number.
+const institution = (contact: Contact) => contact.type === "BANK" || contact.type === "NGO";

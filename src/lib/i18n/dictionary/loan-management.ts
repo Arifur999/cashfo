@@ -353,4 +353,11 @@ export const loanManagementDictionary: Record<string, string> = {
   "No change": "কোনো বদল নেই",
   "Contact restored": "পরিচিতি ফিরিয়ে আনা হয়েছে",
   "Failed to restore contact": "পরিচিতি ফিরিয়ে আনা যায়নি",
+
+  // design-v4: the page names and the entry drawer's Reference.
+  "Loans & Dena-Pawna": "ঋণ ও দেনা-পাওনা",
+  "Loan transactions": "ঋণের লেনদেন",
+  "Search name, phone…": "নাম, ফোন খুঁজুন…",
+  "e.g. Loan no. BL-2231": "যেমন: ঋণ নং BL-2231",
+  "e.g. Sep profit · slip 4471": "যেমন: সেপ্টেম্বরের লাভ · স্লিপ 4471",
 };
