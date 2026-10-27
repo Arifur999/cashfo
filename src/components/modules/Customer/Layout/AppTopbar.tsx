@@ -185,7 +185,12 @@ function Topbar() {
       </div>
 
       <TodayTasksPanel open={tasksOpen} onOpenChange={setTasksOpen}>
-        <button type="button" aria-label={tasksLabel} title={t("Today’s tasks")} className={cn("relative flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink max-md:order-1", iconButton)}>
+        <button type="button" aria-label={tasksLabel} title={t("Today’s tasks")} className={cn(
+            "relative flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink max-md:order-1",
+            iconButton,
+            // Open, it takes the primary's edge, wash and halo (TodayTasks boards).
+            "md:data-[state=open]:border md:data-[state=open]:border-emerald md:data-[state=open]:bg-mint-50 md:data-[state=open]:text-emerald md:data-[state=open]:focus-halo",
+          )}>
           <ListChecks className="size-5 md:size-4.5" strokeWidth={2} aria-hidden="true" />
           {openCount > 0 && (
             <span

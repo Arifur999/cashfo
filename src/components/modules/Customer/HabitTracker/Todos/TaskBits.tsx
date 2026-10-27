@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BellRing, Check, ChevronDown, Clock, Flag, Repeat } from "lucide-react";
+import { ArrowRightToLine, BellRing, Check, ChevronDown, Clock, Flag, Repeat } from "lucide-react";
 import { useRef } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { TodoItem, TodoPriority } from "@/lib/customer/api";
@@ -27,7 +27,7 @@ export function PriorityDot({ priority, className }: { priority: TodoPriority; c
 export function PriorityChip({ priority }: { priority: TodoPriority }) {
   const { t } = useLocale();
   return (
-    <span className={cn("flex h-5 items-center gap-1 rounded-full px-2 font-semibold", PRIORITY_TONE[priority].chip)}>
+    <span className={cn("flex h-5 items-center gap-1.25 rounded-full px-2 font-semibold", PRIORITY_TONE[priority].chip)}>
       <PriorityDot priority={priority} />
       {t(PRIORITY_LABEL[priority])}
     </span>
@@ -54,8 +54,8 @@ export function PriorityMenu({ value, onChange, look = "label", className }: Pri
         aria-label={name}
         title={name}
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken",
-          look === "label" ? "h-10 gap-2 px-3 text-small font-semibold pointer-coarse:h-11" : "size-9.5 pointer-coarse:size-11",
+          "flex shrink-0 items-center justify-center rounded-sm border border-input bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken",
+          look === "label" ? "h-10 gap-1.5 px-3 text-small font-semibold pointer-coarse:h-11" : "size-9.5 pointer-coarse:size-11",
           className,
         )}
       >
@@ -102,8 +102,8 @@ export function TimeButton({ value, onChange, className }: TimeButtonProps) {
   }
   return (
     <span className={cn("relative flex shrink-0", className)}>
-      <button type="button" onClick={open} className={cn("flex h-10 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-small font-semibold hover:bg-surface-sunken pointer-coarse:h-11", value ? "text-ink tabular-nums" : "text-ink-2")}>
-        <Clock className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
+      <button type="button" onClick={open} className={cn("flex h-10 items-center gap-1.5 rounded-sm border border-input bg-surface px-3 text-small font-semibold hover:bg-surface-sunken pointer-coarse:h-11", value ? "text-ink tabular-nums" : "text-ink-soft")}>
+        <Clock className="size-3.5 text-ink-muted" strokeWidth={2} aria-hidden="true" />
         {value ? timeLabel(value, t, locale) : t("Time")}
       </button>
       <input ref={picker} type="time" value={value ?? ""} onChange={(event) => onChange(event.target.value || null)} aria-label={t("Time")} tabIndex={-1} className="pointer-events-none absolute inset-0 opacity-0" />
@@ -138,7 +138,7 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
     );
   }
   return (
-    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-muted">
+    <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-caption text-ink-muted">
       <PriorityChip priority={item.priority} />
       {item.dueTime && (
         <span className="flex items-center gap-1 tabular-nums">
@@ -160,7 +160,7 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
       )}
       {moved && (
         <span className="flex items-center gap-1 font-semibold text-warning">
-          <ArrowRight className="size-3" strokeWidth={2.25} aria-hidden="true" />
+          <ArrowRightToLine className="size-3" strokeWidth={2.25} aria-hidden="true" />
           {moved}
         </span>
       )}
