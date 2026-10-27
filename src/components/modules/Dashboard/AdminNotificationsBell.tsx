@@ -53,8 +53,11 @@ const AdminNotificationsBell = () => {
     void loadOnMount();
   }, []);
 
+  // Hold the bell's place while the feed loads, so the search and the
+  // account pill don't jump sideways when it arrives.
+  if (!feed) return <span aria-hidden="true" className="size-11 shrink-0 md:size-9.5" />;
   // A content admin has nothing to act on here.
-  if (!feed || feed.groups.length === 0) return null;
+  if (feed.groups.length === 0) return null;
 
   const unread = feed.unreadCount;
   const rows = feed.data.map((item, index) => ({ item, unread: index < unread }));
