@@ -50,11 +50,26 @@ interface TransactionDrawerProps {
 
 const TILE_LIMIT = 7;
 
-const KIND_META: Record<EntryKind, { label: string; icon: React.ReactNode; save: string; done: string; failed: string }> = {
-  INCOME: { label: "Income", icon: <ArrowUpRight className="text-income" strokeWidth={2.25} />, save: "Save income", done: "Income added", failed: "Failed to add income" },
-  EXPENSE: { label: "Expense", icon: <ArrowDownLeft className="text-expense" strokeWidth={2.25} />, save: "Save expense", done: "Expense added", failed: "Failed to add expense" },
-  TRANSFER: { label: "Transfer", icon: <ArrowLeftRight className="text-info" />, save: "Move money", done: "Transfer completed", failed: "Failed to create transfer" },
+// The board's tab arrows: money coming in points down-left, money going out
+// up-right. The picked tab's words take the kind's colour (selected).
+const KIND_META: Record<EntryKind, { label: string; icon: React.ReactNode; selected: string; save: string; done: string; failed: string }> = {
+  INCOME: { label: "Income", icon: <ArrowDownLeft className="text-income" strokeWidth={2.25} />, selected: "[&>button[aria-pressed=true]]:text-income", save: "Save income", done: "Income added", failed: "Failed to add income" },
+  EXPENSE: { label: "Expense", icon: <ArrowUpRight className="text-expense-fill" strokeWidth={2.25} />, selected: "[&>button[aria-pressed=true]]:text-expense", save: "Save expense", done: "Expense added", failed: "Failed to add expense" },
+  TRANSFER: { label: "Transfer", icon: <ArrowLeftRight className="text-info" />, selected: "[&>button[aria-pressed=true]]:text-info", save: "Move money", done: "Transfer completed", failed: "Failed to create transfer" },
 };
+
+// The board's fields: the light input line and the 10px radius; focused,
+// the emerald border with an 18% emerald ring.
+const FIELD_FRAME = "rounded-[10px] border-input focus-within:border-emerald focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--emerald)_18%,transparent)]";
+
+// A category tile: 76px, the 10px radius, the category's icon on its own
+// colour in a 32px square, the name on one line under it.
+const TILE = "flex h-19 min-w-0 flex-col items-center justify-center gap-1.5 rounded-[10px] p-1.5 transition-colors";
+const TILE_ICON = "flex size-8 items-center justify-center rounded-sm [&_svg]:size-4";
+const TILE_NAME = "max-w-full truncate text-center text-caption";
+
+// The footer's pill buttons, 40px high.
+const FOOT_BUTTON = "h-10 rounded-full text-body font-semibold";
 
 // What an entry does to one wallet: income adds to the wallet it goes
 // into, an expense takes from the one it is paid from, a transfer does both.
@@ -73,7 +88,7 @@ const PHONE_LABEL = "text-small font-semibold text-ink-2";
 // a quiet note under 70%, amber to 90%, red past it.
 const HINT_TONE = {
   income: { box: "border-line bg-strip text-ink-2", icon: <Info className="mt-px size-4 shrink-0 text-ink-muted" aria-hidden="true" />, figure: "text-ink" },
-  warning: { box: "border-warning/30 bg-warning-soft text-warning", icon: <TriangleAlert className="mt-px size-4 shrink-0" aria-hidden="true" />, figure: "text-warning" },
+  warning: { box: "border-warning-fill/40 bg-warning-soft/60 text-warning", icon: <TriangleAlert className="mt-px size-4 shrink-0" aria-hidden="true" />, figure: "text-warning" },
   expense: { box: "border-expense-line bg-expense-soft text-expense", icon: <TriangleAlert className="mt-px size-4 shrink-0" aria-hidden="true" />, figure: "text-expense" },
 } as const;
 
@@ -342,9 +357,13 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           value={kind}
           onChange={switchKind}
           label="Type"
+          variant="pill"
           size="lg"
           stretch
-          className="[&_svg]:size-3.75 [&>button]:pointer-coarse:h-11"
+          className={cn(
+            "gap-1 [&_svg]:size-3.75 [&>button]:gap-1.5 [&>button]:text-body [&>button]:pointer-coarse:h-11 [&>button[aria-pressed=false]]:font-medium [&>button[aria-pressed=false]]:text-ink-soft [&>button[aria-pressed=true]]:shadow-[0_1px_3px_rgba(18,32,29,0.12)]",
+            KIND_META[kind].selected,
+          )}
         />
       )}
 
@@ -359,20 +378,20 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         </Banner>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         <label htmlFor={amountId} className="hidden text-body font-medium text-ink md:block">
           {t("Amount")}
         </label>
         <div
           className={cn(
             "flex items-center rounded-md",
-            wide ? "h-16 gap-3 border border-line-strong bg-surface px-4 focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]" : "justify-center gap-2 py-2",
+            wide ? cn("h-16 gap-2.5 border bg-surface px-4", FIELD_FRAME) : "justify-center gap-2 py-2",
           )}
         >
-          <span aria-hidden="true" className={cn("text-h1 font-semibold", kind === "INCOME" ? "text-income" : kind === "EXPENSE" ? "text-expense" : "text-ink-muted")}>
+          <span aria-hidden="true" className={cn("font-semibold", wide ? "text-[26px]" : "text-h1", kind === "INCOME" ? "text-income" : kind === "EXPENSE" ? "text-expense-fill" : "text-ink-muted")}>
             {kind === "INCOME" ? "+" : kind === "EXPENSE" ? "−" : "↔"}
           </span>
-          <span className="text-h1 font-semibold text-ink-2">{currencySymbol(currency)}</span>
+          <span className={cn("font-semibold", wide ? "text-[26px] text-ink-soft" : "text-h1 text-ink-2")}>{currencySymbol(currency)}</span>
           <input
             id={amountId}
             type="text"
@@ -382,7 +401,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             autoFocus
             aria-label={t("Amount")}
             style={wide ? undefined : { width: `${Math.max(1, amountField.value.length)}ch` }}
-            className={cn("min-w-0 bg-transparent font-bold text-ink tabular-nums outline-none placeholder:text-ink-faint", wide ? "flex-1 text-h1 tracking-[-0.02em]" : "box-content text-display-xl leading-[normal] caret-emerald")}
+            className={cn("min-w-0 bg-transparent font-bold text-ink tabular-nums outline-none placeholder:text-ink-faint", wide ? "flex-1 text-[30px] tracking-[-0.02em]" :"box-content text-display-xl leading-[normal] caret-emerald")}
           />
         </div>
         {!wide && showBudget && (
@@ -404,7 +423,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           {loading ? (
             <div className="grid grid-cols-4 gap-2">
               {Array.from({ length: 8 }, (_, i) => (
-                <span key={i} className="h-21 animate-pulse rounded-md bg-surface-sunken" />
+                <span key={i} className="h-19 animate-pulse rounded-[10px] bg-surface-sunken" />
               ))}
             </div>
           ) : categoriesFailed ? null : options.length === 0 ? (
@@ -420,20 +439,23 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
                     type="button"
                     aria-pressed={on}
                     onClick={() => setCategory(option.name)}
-                    className={cn("flex h-21 flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border border-line bg-surface hover:border-line-strong")}
+                    title={option.name}
+                    className={cn(TILE, on ? "border-[1.5px] border-emerald bg-emerald-soft" : "border border-line bg-surface hover:border-input")}
                   >
-                    <span className={cn("flex size-8 items-center justify-center rounded-full [&_svg]:size-4", tone.bg, tone.fg)}>{createElement(categoryIconFor(option), { "aria-hidden": true })}</span>
-                    {/* The caption's own line height: a fixed 16px clipped Bangla's lower vowel signs. */}
-                    <span className={cn("line-clamp-2 max-w-full text-center text-caption", on ? "font-semibold text-emerald" : "font-medium text-ink-2")}>{option.name}</span>
+                    <span className={cn(TILE_ICON, tone.bg, tone.fg)}>{createElement(categoryIconFor(option), { "aria-hidden": true })}</span>
+                    {/* One line, cut with an ellipsis as the board does; the
+                        caption's own line height, as a fixed 16px clipped
+                        Bangla's lower vowel signs. */}
+                    <span className={cn(TILE_NAME, on ? "font-semibold text-emerald" : "font-medium text-ink-2")}>{option.name}</span>
                   </button>
                 );
               })}
               {!showAll && options.length > TILE_LIMIT + 1 && (
-                <button type="button" onClick={() => setShowAll(true)} className="flex h-21 flex-col items-center justify-center gap-1 rounded-md border border-line bg-surface px-1 py-1.5 hover:border-line-strong">
-                  <span className="flex size-8 items-center justify-center rounded-full bg-surface-sunken text-ink-2">
-                    <LayoutGrid className="size-4" aria-hidden="true" />
+                <button type="button" onClick={() => setShowAll(true)} className={cn(TILE, "border border-line bg-surface hover:border-input")}>
+                  <span className={cn(TILE_ICON, "bg-surface-sunken text-ink-soft")}>
+                    <LayoutGrid aria-hidden="true" />
                   </span>
-                  <span className="text-caption font-medium text-ink-2">{t("More…")}</span>
+                  <span className={cn(TILE_NAME, "font-medium text-ink-2")}>{t("More…")}</span>
                 </button>
               )}
             </div>
@@ -455,7 +477,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       )}
 
       {wide && showBudget && (
-        <div className={cn("flex gap-3 rounded-md border px-4 py-3 text-small leading-relaxed", hint.box)}>
+        <div className={cn("flex gap-2.5 rounded-[10px] border px-3.5 py-3 text-small leading-normal", hint.box)}>
           {hint.icon}
           <span>
             {fillNodes(t("{category} has {left} left this month. After this, {after} of {limit} will be left."), {
@@ -472,9 +494,9 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         <>
           <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} />
           {isTransfer && <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />}
-          <div className="grid grid-cols-[170px_minmax(0,1fr)] gap-3">
+          <div className="grid grid-cols-[170px_minmax(0,1fr)] gap-2.5">
             <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
-              <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
+              <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} className={FIELD_FRAME} />
             </Field>
             <Field
               htmlFor="txn-note"
@@ -484,7 +506,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
                 </span>
               }
             >
-              <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
+              <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} frameClassName={cn("px-3", FIELD_FRAME)} />
             </Field>
           </div>
         </>
@@ -506,32 +528,39 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const missing = pickCategory && <p className="text-caption text-ink-muted">{t("Pick a category to save")}</p>;
 
   const footer = editing ? (
-    <div className={cn("flex items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-8")}>
+    <div className={cn("flex items-center gap-2 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 pt-3 pb-8")}>
       <span className="flex-1 text-small text-ink-muted">{plural(t, changes, "{count} change", "{count} changes", undefined, locale)}</span>
-      <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+      <Button type="button" variant="ghost" onClick={onClose} disabled={isPending} className={cn(FOOT_BUTTON, "px-2.5 text-ink-soft")}>
         {t("Cancel")}
       </Button>
-      <Button type="submit" disabled={!valid || isPending} className="px-4">
+      <Button type="submit" variant="action" disabled={!valid || isPending} className={cn(FOOT_BUTTON, "px-3.5 shadow-button")}>
         {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <Check strokeWidth={2.5} />}
         {t("Save changes")}
       </Button>
     </div>
   ) : (
-    <div className={cn("flex flex-col gap-2 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-8")}>
+    <div className={cn("flex flex-col gap-2 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 pt-3 pb-8")}>
       {missing}
       <div className={cn("flex items-center", wide ? "gap-2" : "gap-3")}>
-        <Button type="button" variant="secondary" size={wide ? "md" : "xl"} onClick={() => save(true)} disabled={!valid || isPending} className={cn("px-3", !wide && "h-13 flex-1")}>
+        <Button
+          type="button"
+          variant="secondary"
+          size={wide ? "md" : "xl"}
+          onClick={() => save(true)}
+          disabled={!valid || isPending}
+          className={cn("px-3", wide ? cn(FOOT_BUTTON, "border-input") : "h-13 flex-1")}
+        >
           {t("Save & add another")}
         </Button>
         <span className="hidden flex-1 md:block" />
-        <Button type="button" variant="secondary" onClick={onClose} className="hidden px-3 md:inline-flex">
+        <Button type="button" variant="ghost" onClick={onClose} className={cn(FOOT_BUTTON, "hidden px-2.5 text-ink-soft md:inline-flex")}>
           {t("Cancel")}
         </Button>
-        <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={cn("px-4", !wide && "h-13 flex-1")}>
+        <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={cn(wide ? cn(FOOT_BUTTON, "px-3.5 shadow-button") : "h-13 flex-1 px-4")}>
           {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : !wide && <Check strokeWidth={2.5} />}
           {wide ? t(KIND_META[kind].save) : t("Save")}
           {wide && (
-            <Kbd aria-hidden="true" className="rounded-[4px] border-0 bg-white/18 px-1 py-0 font-sans text-caption text-white">
+            <Kbd aria-hidden="true" className="rounded-[4px] border-0 bg-white/18 px-1.25 py-px font-sans text-[11px] font-semibold text-white">
               Enter
             </Kbd>
           )}
@@ -548,7 +577,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       }}
       className="flex min-h-0 flex-1 flex-col"
     >
-      <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-2")}>{body}</div>
+      <div className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto", wide ? "gap-4.5 px-6 py-5" : "gap-4 px-4 py-2")}>{body}</div>
       {footer}
     </form>
   );
@@ -560,11 +589,11 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         showCloseButton={false}
         className={cn(
           "gap-0 border-0 bg-surface p-0 text-ink",
-          wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl shadow-[0_-20px_60px_-16px_rgba(11,61,46,0.35)] data-[side=bottom]:h-[90vh]",
+          wide ? "w-115 rounded-l-xl shadow-drawer data-[side=right]:sm:max-w-115" :"rounded-t-xl shadow-[0_-20px_60px_-16px_rgba(11,61,46,0.35)] data-[side=bottom]:h-[90vh]",
         )}
       >
         {!wide && <span aria-hidden="true" className="mt-2 block h-1.25 w-10 shrink-0 self-center rounded-full bg-line-strong" />}
-        <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-2 pb-1")}>
+        <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-4.5" : "px-4 pt-2 pb-1")}>
           {editing ? (
             <span className="flex min-w-0 flex-col gap-1">
               <SheetTitle className="text-h3 text-ink">{t("Edit transaction")}</SheetTitle>
@@ -577,11 +606,11 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           )}
           <span className="flex items-center gap-2">
             {wide && !editing && (
-              <Kbd aria-hidden="true" className="rounded-[4px] bg-strip font-sans text-caption font-semibold text-ink-muted">
+              <Kbd aria-hidden="true" className="rounded-[4px] bg-strip px-1.5 py-0.5 font-sans text-[11px] font-semibold text-ink-muted">
                 Esc
               </Kbd>
             )}
-            <button type="button" onClick={onClose} aria-label={t("Close")} className={cn("flex items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken", wide ? "size-9 pointer-coarse:size-11" : "size-11")}>
+            <button type="button" onClick={onClose} aria-label={t("Close")} className={cn("flex items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken",wide ? "size-9 pointer-coarse:size-11" : "size-11")}>
               <X className={wide ? "size-4.5" : "size-5"} aria-hidden="true" />
             </button>
           </span>
