@@ -40,12 +40,14 @@ const CALLOUT_LINK = "inline-flex min-h-11 items-center text-current underline h
 interface RegisterFormProps {
   // From a ?ref= invite link, already trimmed and capped.
   referralCode?: string;
+  // The API knows no such code (the link's code, as given).
+  inviteUnknown?: boolean;
 }
 
 // A customer account, by the form or with Google; the invite code (from a
 // ?ref= link, or typed from a friend's message) goes with either. The
 // language it is created in becomes the account's preferred language.
-const RegisterForm = ({ referralCode }: RegisterFormProps) => {
+const RegisterForm = ({ referralCode, inviteUnknown = false }: RegisterFormProps) => {
   // Maintenance mode: the API refuses sign-up, so nothing can be typed and
   // Google can't start one either -- what the notice above says. The same
   // read as that notice; the form waits on it in the page's skeleton.
@@ -82,7 +84,6 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
 
   return (
     <>
-      {inviteCode && !inviteOpen && <InviteCodeNotice code={inviteCode} onChange={closed ? undefined : openInvite} />}
       <AppForm onSubmit={form.handleSubmit}>
         <fieldset disabled={closed} className="m-0 min-w-0 space-y-3.5 border-0 p-0">
           {/* Two short fields to a row from sm, so the form fits without
@@ -156,6 +157,10 @@ const RegisterForm = ({ referralCode }: RegisterFormProps) => {
               )}
             </form.Field>
           </div>
+
+          {/* The code that came with the link, under the fields as the
+              board has it; the API only knows it if it is the link's own. */}
+          {inviteCode && !inviteOpen && <InviteCodeNotice code={inviteCode} unknown={inviteUnknown && inviteCode === referralCode} onChange={closed ? undefined : openInvite} />}
 
           {/* The code the Referrals page hands out, for whoever got it as
               text rather than as a link. */}

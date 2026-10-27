@@ -229,6 +229,13 @@ export const bnAuthDictionary: Record<string, string> = {
   "Have an invite code?": "ইনভাইট কোড আছে?",
   "Invite code": "ইনভাইট কোড",
   "Signing up with invite code {code}": "ইনভাইট কোড {code} দিয়ে সাইন আপ করছেন",
+  "Invite code {code} added": "ইনভাইট কোড {code} যোগ হয়েছে",
+  "Invite code {code} wasn't found. You can still sign up.": "ইনভাইট কোড {code} পাওয়া যায়নি। তবুও সাইন আপ করতে পারবেন।",
+  // Who invited them, over the form (InviteSignupMobile).
+  Invitation: "আমন্ত্রণ",
+  "{name} invited you": "{name} আপনাকে আমন্ত্রণ জানিয়েছেন",
+  "Get {discount} your first plan. It's applied for you when you buy.": "প্রথম প্ল্যানে পাবেন {discount}। কেনার সময় নিজে থেকেই যোগ হবে।",
+  "Sign up to start managing your money together.": "সাইন আপ করে টাকার হিসাব রাখা শুরু করুন।",
 
   // "Check your email", once the reset link is on its way.
   "Only the newest link works.": "শুধু সবচেয়ে নতুন লিংকটিই কাজ করবে।",
