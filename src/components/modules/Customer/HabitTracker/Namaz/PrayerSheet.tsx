@@ -28,7 +28,7 @@ const STATE_WORD = { jamaat: "with jama'at", onTime: "on time", qaza: "qaza, pra
 const pad = (n: number) => String(n).padStart(2, "0");
 
 // The row names stay put while the days scroll under them.
-const STICKY = "sticky left-0 z-10 shrink-0 border-r border-divider bg-surface pr-3";
+const STICKY = "sticky left-0 z-10 shrink-0 border-r border-divider bg-surface pr-2.5";
 
 // The Namaz month sheet: one row per prayer, one box per day showing how it
 // was prayed, the weekday above each day with Fridays tinted and today
@@ -82,10 +82,10 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
               ref={today ? todayHead : undefined}
               role="columnheader"
               title={`${today ? `${t("Today")}, ` : ""}${t(WEEKDAY_SHORT[weekday])} ${count(day)}${friday ? ` · ${t("Jumu'ah")}` : ""}`}
-              className={cn("flex w-6.75 shrink-0 flex-col items-center gap-px rounded-sm py-0.75 text-caption font-semibold tabular-nums", today ? "bg-emerald text-on-action" : friday ? "bg-warning-soft text-warning" : "text-ink-muted")}
+              className={cn("flex w-6.75 shrink-0 flex-col items-center gap-px rounded-[6px] py-0.75 text-caption font-semibold tabular-nums", today ? "bg-emerald text-on-action" : friday ? "bg-warning-soft text-warning" : "text-ink-muted")}
             >
               <span>{count(day)}</span>
-              <span className="text-caption leading-none font-semibold opacity-80">{t(WEEKDAY_MIN[weekday])}</span>
+              <span className="text-[9.5px] leading-none font-semibold opacity-80">{t(WEEKDAY_MIN[weekday])}</span>
             </span>
           );
         })}
@@ -95,7 +95,7 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
         return (
           <div key={item} role="row" className="flex items-center gap-0.75">
             <span role="rowheader" className={cn(STICKY, "flex w-30 items-baseline justify-between")}>
-              <span className="truncate text-body font-semibold text-ink">{rowLabel(item)}</span>
+              <span className="truncate text-[13.5px] font-semibold text-ink">{rowLabel(item)}</span>
               <span className="text-caption font-normal text-ink-muted tabular-nums">
                 {count(summary?.prayed ?? 0)}/{count(summary?.due ?? 0)}
               </span>
@@ -125,6 +125,7 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
                   day={dayKey(day)}
                   state={state}
                   marked={tracker.checks.some((c) => c.day === day && c.item === item)}
+                  anchorClassName="rounded-[8px] ring-[2.5px] ring-emerald ring-offset-[0.5px] ring-offset-surface"
                   onPick={(status) => {
                     closeMenu({ day, item });
                     onMark(day, item, status);
@@ -137,8 +138,8 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
           </div>
         );
       })}
-      <div role="row" className="mt-1 flex items-center gap-0.75 border-t border-dashed border-line pt-2">
-        <span role="rowheader" className={cn(STICKY, "w-30 text-small font-semibold text-ink-2")}>
+      <div role="row" className="mt-1.25 flex items-center gap-0.75 border-t border-dashed border-line pt-2">
+        <span role="rowheader" className={cn(STICKY, "w-30 text-[12.5px] font-semibold text-ink-soft")}>
           {totalsLabel}
         </span>
         {totals.map((total) => (

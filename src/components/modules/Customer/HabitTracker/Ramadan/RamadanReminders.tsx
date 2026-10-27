@@ -24,7 +24,7 @@ export function RamadanRemindersCard({ book, className }: { book: ReminderBook; 
   const { t } = useLocale();
   const { settings } = usePrayerSettings();
   return (
-    <Card padding="none" className={cn("flex min-w-0 flex-col gap-4 px-5 py-4", className)}>
+    <Card padding="none" className={cn("flex min-w-0 flex-col gap-4 rounded-md px-5 py-4", className)}>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="flex items-center gap-2 text-title font-semibold text-ink">
@@ -33,8 +33,8 @@ export function RamadanRemindersCard({ book, className }: { book: ReminderBook; 
           </h2>
           <span className="text-small text-ink-muted">{t("Only on the days of Ramadan, worked out for {city} from your prayer time settings. Not in {city}? Set your city first.", { city: t(settings.city) })}</span>
         </div>
-        <Link href={PRAYER_SETTINGS_HREF} className="flex min-h-9 shrink-0 items-center gap-2 rounded-md px-2 text-small font-semibold text-brand-ink hover:bg-surface-sunken pointer-coarse:min-h-11">
-          <Settings2 className="size-4" aria-hidden="true" />
+        <Link href={PRAYER_SETTINGS_HREF} className="-mx-2 flex min-h-9 shrink-0 items-center gap-1.5 rounded-sm px-2 text-small font-semibold text-emerald hover:bg-surface-sunken pointer-coarse:min-h-11">
+          <Settings2 className="size-3.5" aria-hidden="true" />
           {t("Prayer time settings")}
         </Link>
       </div>

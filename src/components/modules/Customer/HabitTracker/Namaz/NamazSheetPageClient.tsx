@@ -3,7 +3,7 @@
 import { Calendar, Check, ChevronLeft, ChevronRight, Flame, Sunrise, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useOptimistic, useState, useTransition } from "react";
+import { Fragment, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -12,7 +12,7 @@ import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import IconTile from "@/components/smartly/IconTile";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import type { HabitMonthTracker, PrayerStatus } from "@/lib/customer/api";
+import type { HabitMonthTracker, PrayerStatus, QazaSummary } from "@/lib/customer/api";
 import { actionError, WEEKDAY_PLURAL } from "@/lib/customer/habitDisplay";
 import { deleteHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
@@ -34,6 +34,8 @@ interface NamazSheetPageClientProps {
   // The sheets of the month before and after, if they exist.
   previous: HabitMonthTracker | null;
   next: HabitMonthTracker | null;
+  // What is still owed, for the Missed figure; null when it couldn't be read.
+  qaza?: QazaSummary | null;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -48,20 +50,26 @@ const INSIGHT_ICON: Record<Insight["key"], React.ReactNode> = {
 };
 
 // What each box means, in the order the menu offers them, drawn by the boxes'
-// own looks.
+// own looks. Today's open box is the dashed one in the brand.
 const LEGEND: { state: BoxState; label: string }[] = [
-  { state: "jamaat", label: "Jama'at" },
+  { state: "jamaat", label: "With jama'at" },
   { state: "onTime", label: "On time" },
   { state: "qaza", label: "Qaza" },
-  { state: "missed", label: "Not prayed" },
-  { state: "open", label: "Today, not marked yet" },
-  { state: "locked", label: "Later" },
+  { state: "missed", label: "Missed" },
+  { state: "locked", label: "Not yet" },
+];
+// How a prayer's month splits, as its bar and its lines show it.
+const SPLIT: { key: "jamaat" | "onTime" | "qaza" | "missed"; label: string; bar: string }[] = [
+  { key: "jamaat", label: "With jama'at", bar: "bg-emerald" },
+  { key: "onTime", label: "On time", bar: "bg-emerald-tint" },
+  { key: "qaza", label: "Qaza", bar: "bg-warning-fill/70" },
+  { key: "missed", label: "Missed", bar: "bg-expense-fill/40" },
 ];
 
 // One month of the five prayers: the sheet with a box per prayer per day,
 // the month's figures, each prayer on its own, and what stands out. An
 // earlier month with nothing marked (added by mistake) can be deleted.
-export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPageClientProps) {
+export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: NamazSheetPageClientProps) {
   const { t, locale } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
@@ -128,17 +136,19 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
     previousSummary && previousSummary.due > 0
       ? t(summary.pct >= previousSummary.pct ? "{pct}% of the month, up from {previous}% in {month}" : "{pct}% of the month, down from {previous}% in {month}", { pct: count(summary.pct), previous: count(previousSummary.pct), month: monthWord(previous?.month ?? undefined) })
       : current
-        ? t("Every prayer on the days past")
+        ? t("Every prayer so far this month")
         : t("{pct}% of the month", { pct: count(summary.pct) });
+  const jamaatShare = summary.prayedSoFar > 0 ? Math.round((summary.jamaat / summary.prayedSoFar) * 100) : 0;
+  const missedSub = summary.missed === 0 ? t("Nothing new to make up") : qaza ? t("Added to qaza · {count} still to make up", { count: count(qaza.totalLeft) }) : t("Added to qaza");
 
   const monthLink = (target: HabitMonthTracker | null, label: string, icon: React.ReactNode, edge: boolean) =>
     target ? (
-      <Link href={`/habit-tracker/habits/namaz/${target.id}`} aria-label={label} className={cn("flex size-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:size-11", edge && "border-r border-line")}>
+      <Link href={`/habit-tracker/habits/namaz/${target.id}`} aria-label={label} className={cn("flex size-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:size-11", edge && "border-r border-line")}>
         {icon}
       </Link>
     ) : (
       // No sheet that way: a dead button, out of the Tab order.
-      <button type="button" disabled aria-label={label} className={cn("flex size-9.5 items-center justify-center text-ink-faint pointer-coarse:size-11", edge && "border-r border-line")}>
+      <button type="button" disabled aria-label={label} className={cn("flex size-9.5 items-center justify-center text-input pointer-coarse:size-11", edge && "border-r border-line")}>
         {icon}
       </button>
     );
@@ -146,44 +156,45 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
   return (
     <PageFrame className="gap-5">
       <TopbarExtras record={monthName(key, locale, "long", true)} />
-      <PageHeader
-        eyebrow={<RecordEyebrow href="/habit-tracker/habits?category=Namaz" back={t("All months")} pillar={t("Habits")} />}
-        tone="habits"
-        title={monthName(key, locale, "long", true)}
-        description={hijriRange(year, month, locale, hijriAdjust)}
-        actions={
-          <>
-            {current && (
-              <Chip tone="mint" className="h-8 gap-2 text-small">
-                <span className="size-1.75 rounded-full bg-emerald" aria-hidden="true" />
-                {t("This month, opened automatically")}
-              </Chip>
-            )}
-            {deletable && (
-              <Button variant="secondary" onClick={() => setConfirmDelete(true)} className="text-expense hover:text-expense">
-                <Trash2 />
-                {t("Delete this sheet")}
-              </Button>
-            )}
-            <div role="group" aria-label={t("Month")} className="flex overflow-hidden rounded-md border border-line-strong bg-surface">
-              {monthLink(previous, t(MONTH_NAMES[(month + 10) % 12]), <ChevronLeft className="size-4" aria-hidden="true" />, true)}
-              {monthLink(next, t(MONTH_NAMES[month % 12]), <ChevronRight className="size-4" aria-hidden="true" />, false)}
-            </div>
-          </>
-        }
-      />
+      <div className="flex flex-col gap-1">
+        <RecordEyebrow href="/habit-tracker/habits?category=Namaz" back={t("All months")} />
+        <PageHeader
+          title={monthName(key, locale, "long", true)}
+          description={hijriRange(year, month, locale, hijriAdjust, true)}
+          actions={
+            <>
+              {current && (
+                <Chip tone="mint" className="h-8 gap-1.5 px-3 text-small text-emerald">
+                  <span className="size-1.75 rounded-full bg-emerald" aria-hidden="true" />
+                  {t("This month, opened automatically")}
+                </Chip>
+              )}
+              {deletable && (
+                <Button variant="secondary" onClick={() => setConfirmDelete(true)} className="rounded-sm px-3.5 text-expense hover:text-expense">
+                  <Trash2 />
+                  {t("Delete this sheet")}
+                </Button>
+              )}
+              <div role="group" aria-label={t("Month")} className="flex overflow-hidden rounded-sm border border-input bg-surface">
+                {monthLink(previous, t(MONTH_NAMES[(month + 10) % 12]), <ChevronLeft className="size-4" aria-hidden="true" />, true)}
+                {monthLink(next, t(MONTH_NAMES[month % 12]), <ChevronRight className="size-4" aria-hidden="true" />, false)}
+              </div>
+            </>
+          }
+        />
+      </div>
 
-      <Card padding="none" className="flex min-w-0 flex-col gap-4 px-5 pt-4 pb-5">
+      <Card padding="none" className="flex min-w-0 flex-col gap-3.5 rounded-md px-5 pt-4 pb-4.5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-title font-semibold text-ink">{t("Prayer sheet")}</h2>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-small text-ink-2">
+          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-[12.5px] text-ink-soft">
             {LEGEND.map((entry) => (
-              <span key={entry.state} className="flex items-center gap-2">
+              <span key={entry.state} className="flex items-center gap-1.5">
                 <BoxSwatch state={entry.state} />
                 {t(entry.label)}
               </span>
             ))}
-            <span className="text-ink-muted sm:border-l sm:border-line sm:pl-4">{t("Tap a box to change it")}</span>
+            <span className="text-ink-muted sm:border-l sm:border-line sm:pl-3.5">{t("Tap a box to change it")}</span>
           </div>
         </div>
         <PrayerSheet tracker={sheet} onMark={mark} totalsLabel={t("Prayed that day")} rowLabel={(item) => t(item)} />
@@ -191,37 +202,40 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label={t("Prayed")} value={t("{done} of {total}", { done: count(summary.prayed), total: count(summary.due) })} sub={prayedSub} />
-        <StatCard label={t("Perfect days")} value={count(summary.perfectDays)} sub={t("All five on time")} />
-        <StatCard label={t("Full days in a row")} value={count(summary.perfectRun)} sub={current ? t("All five prayed, counting up to today") : t("All five prayed, at the end of the month")} />
-        <StatCard label={t("Missed")} value={count(summary.missed)} sub={summary.missed === 0 ? t("Nothing to make up") : t("Tap a missed box to fix a wrong mark")} tone={summary.missed === 0 ? "text-income" : "text-expense"} />
+        <StatCard label={t("With jama'at")} value={count(summary.jamaat)} sub={t("{pct}% of the prayers prayed", { pct: count(jamaatShare) })} />
+        <StatCard label={t("Perfect days")} value={count(summary.perfectDays)} sub={t("All five on time or with jama'at")} />
+        <StatCard label={t("Missed")} value={count(summary.missed)} sub={missedSub} tone={summary.missed === 0 ? "text-income" : "text-expense"} />
       </div>
 
       <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Card padding="none" className="flex min-w-0 flex-col gap-3 px-5 py-4">
+        <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-md px-5 py-4">
           <h2 className="text-title font-semibold text-ink">{t("Each prayer")}</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
             {prayers.map((p) => {
               const tag = summary.due > 0 && p.missed > 0 && p.item === worst?.item ? "most-missed" : summary.due > 0 && p.item === best?.item && p.prayed > 0 && best.item !== worst?.item ? "strongest" : null;
               return (
-                <div key={p.item} className={cn("flex min-w-0 flex-col gap-2 rounded-md border bg-surface p-3", tag === "most-missed" ? "border-expense/25" : "border-line")}>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-body font-semibold text-ink">{t(p.item)}</span>
+                <div key={p.item} className={cn("flex min-w-0 flex-col gap-2 rounded-[10px] border bg-surface p-3", tag === "most-missed" ? "border-expense/25" : "border-line")}>
+                  <div className="flex flex-wrap items-center justify-between gap-x-1.5 gap-y-1">
+                    <span className="text-[13.5px] font-semibold text-ink">{t(p.item)}</span>
                     {tag && (
-                      <Chip tone={tag === "most-missed" ? "expense" : "mint"} size="sm">
+                      <Chip tone={tag === "most-missed" ? "expense" : "mint"} size="sm" className={cn("px-1.5 text-[10.5px]", tag === "strongest" && "text-emerald")}>
                         {t(tag === "most-missed" ? "Most missed" : "Strongest")}
                       </Chip>
                     )}
                   </div>
-                  <span className="text-small font-medium text-ink-muted tabular-nums">{fillNodes(t("{done} of {total}"), { done: <span className="text-h2 text-ink">{count(p.prayed)}</span>, total: count(p.due) })}</span>
+                  <span className="text-[12.5px] font-medium text-ink-muted tabular-nums">{fillNodes(t("{done} of {total}"), { done: <span className="text-[20px] leading-[normal] font-bold text-ink">{count(p.prayed)}</span>, total: count(p.due) })}</span>
                   <span className="flex h-2 overflow-hidden rounded-full bg-surface-sunken">
-                    <span className="bg-emerald" style={{ width: `${p.due ? (p.prayed / p.due) * 100 : 0}%` }} />
-                    <span className="bg-expense-soft" style={{ width: `${p.due ? (p.missed / p.due) * 100 : 0}%` }} />
+                    {SPLIT.map((part) => (
+                      <span key={part.key} className={part.bar} style={{ width: `${p.due ? (p[part.key] / p.due) * 100 : 0}%` }} />
+                    ))}
                   </span>
-                  <span className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-0.75 text-caption font-normal text-ink-2 tabular-nums">
-                    <span>{t("Prayed")}</span>
-                    <span className="font-semibold text-ink">{count(p.prayed)}</span>
-                    <span>{t("Missed")}</span>
-                    <span className="font-semibold text-ink">{count(p.missed)}</span>
+                  <span className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-0.75 text-caption font-normal text-ink-soft tabular-nums">
+                    {SPLIT.map((part) => (
+                      <Fragment key={part.key}>
+                        <span>{t(part.label)}</span>
+                        <span className="font-semibold text-ink">{count(p[part.key])}</span>
+                      </Fragment>
+                    ))}
                   </span>
                 </div>
               );
@@ -229,16 +243,16 @@ export function NamazSheetPageClient({ tracker, previous, next }: NamazSheetPage
           </div>
         </Card>
 
-        <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+        <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4">
           <h2 className="text-title font-semibold text-ink">{t("What stands out")}</h2>
           {insights.length === 0 && <p className="text-small text-ink-muted">{t("Mark a few days and the month starts to speak.")}</p>}
           <ul className="flex flex-col gap-3">
             {insights.map((insight, i) => (
-              <li key={i} className="flex gap-3 text-small leading-snug text-ink-2">
-                <IconTile tone={insight.tone} size={32} className="rounded-sm [&_svg]:size-3.5">
+              <li key={i} className="flex gap-2.5 text-small leading-[1.45] text-ink-2">
+                <IconTile tone={insight.tone} size={32} className="size-6.5 rounded-[7px] [&_svg]:size-3.5">
                   {INSIGHT_ICON[insight.key]}
                 </IconTile>
-                <span className="pt-1">{insightText(insight)}</span>
+                <span className="pt-0.5">{insightText(insight)}</span>
               </li>
             ))}
           </ul>

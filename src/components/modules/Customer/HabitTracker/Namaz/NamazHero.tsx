@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CheckCheck, Clock3, MapPin, RefreshCw, Sunrise, Timer, X } from "lucide-react";
+import { Check, CheckCheck, Clock3, MapPin, RefreshCw, Sun, Timer, X } from "lucide-react";
 import { useState } from "react";
 import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 import { useMinuteClock } from "@/hooks/useMinuteClock";
@@ -26,15 +26,19 @@ interface NamazHeroProps {
 }
 
 const MARKED: Partial<Record<CellState, { word: string; icon: React.ReactNode }>> = {
-  jamaat: { word: "Jama'at", icon: <CheckCheck className="size-3.5" strokeWidth={2.5} /> },
-  onTime: { word: "On time", icon: <Check className="size-3.5" strokeWidth={2.75} /> },
-  qaza: { word: "Qaza", icon: <Clock3 className="size-3.5" strokeWidth={2.25} /> },
-  missed: { word: "Not prayed", icon: <X className="size-3.5" strokeWidth={2.75} /> },
+  jamaat: { word: "Jama'at", icon: <CheckCheck className="size-3" strokeWidth={2.75} /> },
+  onTime: { word: "On time", icon: <Check className="size-3" strokeWidth={2.75} /> },
+  qaza: { word: "Qaza", icon: <Clock3 className="size-3" strokeWidth={2.75} /> },
+  missed: { word: "Not prayed", icon: <X className="size-3" strokeWidth={2.75} /> },
 };
 
-// The hero's two greens are fixed (bg-forest-depth), so the white tile of
-// the next prayer keeps the brand green on it in dark mode too.
+// The hero's two teals are fixed (bg-wallet-teal, the Habit Tracker's
+// #0F766E deepening), so the white tile of the next prayer keeps the brand
+// teal on it in dark mode too.
 const BRAND_INK = "text-emerald dark:text-forest";
+// A time tile: 11px round, 12px in, 6px between its lines.
+const TILE = "flex min-w-0 flex-col gap-1.5 rounded-[11px] border p-2.5 sm:p-3";
+const STATUS = "flex items-start gap-1 text-[11.5px] leading-[normal] font-semibold [&_svg]:mt-px [&_svg]:shrink-0";
 
 // "In 53 min", or "In 2 h 10 min".
 function wait(minutes: number, t: (key: string, values?: Record<string, string | number>) => string, count: (n: number) => string): string {
@@ -57,12 +61,14 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
   const next = now ? nextPrayer(settings, today, shiftDay(today, 1), now) : null;
   const left = next && now ? minutesUntil(next.at, now) : null;
 
+  // "4:35 am" in one 17px line; a tile too narrow for it (a phone in Bangla)
+  // drops the "am" under the figure.
   const time = (name: TimeName) => {
     const parts = clockParts(times[name]);
     return (
-      <span className="flex min-w-0 flex-wrap items-baseline gap-x-1">
-        <span className="text-h3 font-bold tabular-nums">{toLocaleDigits(parts.clock, locale)}</span>
-        <span className="text-caption font-semibold opacity-90">{t(parts.meridiem)}</span>
+      <span className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-[17px] leading-[normal] font-bold tabular-nums">
+        <span>{toLocaleDigits(parts.clock, locale)}</span>
+        <span>{t(parts.meridiem)}</span>
       </span>
     );
   };
@@ -71,11 +77,11 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
     const isNext = next?.prayer === name && next.at.getTime() === times[name].getTime();
     if (name === "Sunrise") {
       return (
-        <div key={name} className="flex min-w-0 flex-col gap-2 rounded-md border border-white/18 bg-white/12 p-2.5 text-white sm:p-3">
-          <span className="truncate text-small font-semibold opacity-90">{t(name)}</span>
+        <div key={name} className={cn(TILE, "border-white/18 bg-white/12 text-white")}>
+          <span className="truncate text-[12.5px] font-semibold opacity-90">{t(name)}</span>
           {time(name)}
-          <span className="flex items-start gap-1 text-caption font-semibold">
-            <Sunrise className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+          <span className={STATUS}>
+            <Sun className="size-3" strokeWidth={2.75} aria-hidden="true" />
             {t("Fajr ends")}
           </span>
         </div>
@@ -85,7 +91,7 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
     const marked = current?.checks.some((c) => c.day === todayDay && c.item === name) ?? false;
     const shown = marked ? MARKED[state] : undefined;
     const started = now === null || times[name] <= now;
-    const status = shown ? { word: t(shown.word), icon: shown.icon } : isNext && left !== null ? { word: wait(left, t, count), icon: <Timer className="size-3.5" strokeWidth={2.25} /> } : started ? { word: t("Tap to mark"), icon: null } : { word: t("Later"), icon: <Clock3 className="size-3.5" strokeWidth={2.25} /> };
+    const status = shown ? { word: t(shown.word), icon: shown.icon } : isNext && left !== null ? { word: wait(left, t, count), icon: <Timer className="size-3" strokeWidth={2.75} /> } : started ? { word: t("Tap to mark"), icon: null } : { word: t("Later"), icon: <Clock3 className="size-3" strokeWidth={2.75} /> };
     const button = (
       <button
         key={name}
@@ -97,11 +103,11 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
         onClick={() => setMarking(name)}
         aria-haspopup="dialog"
         aria-label={`${t(name)}, ${timeLabel(clockOf(times[name]), t, locale)}, ${status.word}`}
-        className={cn("flex w-full min-w-0 flex-col gap-2 rounded-md border p-2.5 text-left transition-colors disabled:cursor-default sm:p-3", isNext && !isPrayed(state) ? cn("border-white bg-white", BRAND_INK) : "border-white/18 bg-white/12 text-white enabled:hover:bg-white/20")}
+        className={cn(TILE, "w-full text-left transition-colors disabled:cursor-default", isNext && !isPrayed(state) ? cn("border-white bg-white", BRAND_INK) : "border-white/18 bg-white/12 text-white enabled:hover:bg-white/20")}
       >
-        <span className="truncate text-small font-semibold opacity-90">{t(name)}</span>
+        <span className="truncate text-[12.5px] font-semibold opacity-90">{t(name)}</span>
         {time(name)}
-        <span className="flex items-start gap-1 text-caption font-semibold [&_svg]:mt-px [&_svg]:shrink-0">
+        <span className={STATUS}>
           {status.icon}
           {status.word}
         </span>
@@ -128,29 +134,31 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
   }
 
   return (
-    <section aria-labelledby="next-title" className="grid items-center gap-6 rounded-lg bg-forest-depth p-4 text-white shadow-float sm:p-6 xl:grid-cols-[300px_minmax(0,1fr)]">
-      <div className="flex min-w-0 flex-col gap-2">
-        <span id="next-title" className="text-small font-semibold opacity-85">
+    <section aria-labelledby="next-title" className="grid items-center gap-6 rounded-[14px] bg-wallet-teal p-4 text-white shadow-[0_8px_24px_color-mix(in_srgb,var(--habit)_25%,transparent)] sm:px-6 sm:py-5.5 xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <span id="next-title" className="text-small font-semibold tracking-[0.04em] uppercase opacity-85">
           {t("Next prayer")}
         </span>
-        <span className="flex flex-wrap items-baseline gap-x-3">
-          <span className="text-display leading-[normal] font-bold tracking-[-0.02em]">{next ? t(next.prayer) : " "}</span>
-          <span className="text-h2 font-semibold tabular-nums">{next ? timeLabel(clockOf(next.at), t, locale) : ""}</span>
+        <span className="flex flex-wrap items-baseline gap-x-2.5">
+          <span className="text-[34px] leading-[normal] font-bold tracking-[-0.02em]">{next ? t(next.prayer) : " "}</span>
+          <span className="text-[20px] leading-[normal] font-semibold tabular-nums">{next ? timeLabel(clockOf(next.at), t, locale) : ""}</span>
         </span>
-        <span className={cn("flex h-7 items-center gap-2 self-start rounded-full bg-white/18 px-3 text-small font-semibold", left === null && "invisible")}>
-          <Timer className="size-4" aria-hidden="true" />
+        <span className={cn("flex h-7 items-center gap-1.5 self-start rounded-full bg-white/18 px-3 text-small font-semibold", left === null && "invisible")}>
+          <Timer className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
           {left !== null && (left < 60 ? t("Starts in {minutes} minutes", { minutes: count(left) }) : t("Starts in {hours} h {minutes} min", { hours: count(Math.floor(left / 60)), minutes: count(left % 60) }))}
         </span>
-        <span className="mt-2 flex flex-wrap items-center gap-2 text-small opacity-90">
-          <MapPin className="size-4" aria-hidden="true" />
-          {t(settings.city)} · {t("{method} method", { method: t(methodShort(settings.method)) })} · {t(settings.asrSchool === "HANAFI" ? "Hanafi Asr" : "Shafi'i Asr")} ·{" "}
-          <button type="button" onClick={onSettings} className="font-semibold text-white underline pointer-coarse:min-h-11">
-            {t("Change")}
-          </button>
+        <span className="mt-1.5 flex items-start gap-1.5 text-[12.5px] leading-[normal] opacity-90">
+          <MapPin className="mt-px size-3.25 shrink-0" aria-hidden="true" />
+          <span>
+            {t(settings.city)} · {t("{method} method", { method: t(methodShort(settings.method)) })} · {t(settings.asrSchool === "HANAFI" ? "Hanafi Asr" : "Shafi'i Asr")} ·{" "}
+            <button type="button" onClick={onSettings} className="font-semibold text-white underline pointer-coarse:min-h-11">
+              {t("Change")}
+            </button>
+          </span>
         </span>
       </div>
       <div className="flex min-w-0 flex-col gap-3">
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 xl:grid-cols-6">{TIME_NAMES.map(tile)}</div>
+        <div className="grid grid-cols-3 gap-2 sm:gap-2.5 xl:grid-cols-6">{TIME_NAMES.map(tile)}</div>
         {openFailed && (
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small font-semibold">
             {t("Couldn't open this month's sheet")}
