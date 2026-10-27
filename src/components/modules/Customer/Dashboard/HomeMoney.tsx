@@ -1,239 +1,268 @@
 "use client";
 
-import { Box, ChartPie, PiggyBank } from "lucide-react";
+import { Box, CalendarDays, Plus } from "lucide-react";
 import Link from "next/link";
 import { createElement } from "react";
-import AmountText from "@/components/smartly/AmountText";
-import ByWidth from "@/components/smartly/ByWidth";
-import Card from "@/components/smartly/Card";
-import IconTile from "@/components/smartly/IconTile";
-import ProgressBar from "@/components/smartly/ProgressBar";
-import SectionHeader from "@/components/smartly/SectionHeader";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
+import { BUDGET_TONE_BAR, budgetTone } from "@/lib/budgetTone";
 import { formatCurrency } from "@/lib/customer/currency";
+import { walletIcon, walletType } from "@/lib/customer/walletVisuals";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CARD } from "./HomeHero";
+import type { HomeData, HomeWallet } from "./homeTypes";
 import { HomePartError } from "./HomePartError";
-import { PhoneMoneyCards } from "./HomePhone";
-import { SectionLink } from "./SectionLink";
-import type { HomeData } from "./homeTypes";
-import { IncomeSavedChart } from "./IncomeSavedChart";
-import { RecentTransactionsCard } from "./RecentTransactionsCard";
 
-// The money section: the six months beside the newest transactions, then
-// savings goals, assets and the budget closest to its limit.
-export function HomeMoney({ data }: { data: HomeData }) {
-  const { t } = useLocale();
-  const { currency } = data;
+// The wallets the card lists; Manage shows the rest.
+const WALLET_ROWS = 5;
+const LINK = "text-[13px] leading-[normal] font-semibold text-emerald hover:text-emerald-hover";
+const TITLE = "text-title leading-[normal] font-semibold text-ink";
+
+const WALLET_KIND: Record<ReturnType<typeof walletType>, string> = { cash: "Cash in hand", bank: "Bank account", mfs: "Mobile wallet" };
+
+// A wallet's tile: green for cash, blue then teal for banks, bKash pink,
+// Nagad orange and violet for any other mobile wallet.
+function walletTile(wallet: HomeWallet, bankIndex: number): string {
+  const kind = walletType({ accountSubtype: wallet.subtype });
+  if (kind === "cash") return "bg-mint-50 text-emerald";
+  if (kind === "bank") return bankIndex % 2 === 0 ? "bg-info-soft text-info" : "bg-pillar-insights-soft text-pillar-insights";
+  if (/bkash|বিকাশ/i.test(wallet.name)) return "bg-rose-soft text-gateway-bkash";
+  if (/nagad|নগদ/i.test(wallet.name)) return "bg-pillar-loans-soft text-gateway-nagad";
+  return "bg-pillar-habits-soft text-pillar-habits";
+}
+
+function CardHead({ title, href, link }: { title: string; href?: string; link?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <h2 className={TITLE}>{title}</h2>
+      {href && link && (
+        <Link href={href} className={LINK}>
+          {link}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+// Wallets: each active wallet with what it holds, Add wallet, and the
+// total at the foot.
+export function WalletsCard({ data }: { data: HomeData }) {
+  const { t, locale } = useLocale();
+  let banks = 0;
+  const shown = data.wallets.slice(0, WALLET_ROWS);
+  const onlyCash = data.wallets.length > 0 && data.wallets.every((w) => walletType({ accountSubtype: w.subtype }) === "cash");
 
   return (
-    <section aria-labelledby="h-money" className="flex flex-col gap-3 md:gap-4">
-      <SectionHeader
-        id="h-money"
-        eyebrow={t("Money")}
-        title={<ByWidth phone={t("Recent transactions")} wide={t("Income & expense")} />}
-        aside={<SectionLink href="/transactions" phone={t("See all")} wide={t("See all transactions")} arrow />}
-      />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        <IncomeSavedChart points={data.chart} currency={currency} className="hidden md:flex" />
-        <RecentTransactionsCard transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={currency} today={data.today} />
+    <section className={cn(CARD, "hidden flex-col overflow-hidden md:flex")}>
+      <div className="flex items-center justify-between px-6 pt-5 pb-3">
+        <h2 className={TITLE}>{t("Wallets")}</h2>
+        <Link href="/balance/wallet" className={LINK}>
+          {t("Manage")}
+        </Link>
       </div>
-      <PhoneMoneyCards data={data} />
-      <div className="hidden gap-4 sm:grid-cols-2 md:grid lg:grid-cols-3 lg:gap-6">
-        <SavingsCard data={data} />
-        <AssetsCard data={data} />
-        <BudgetCard data={data} />
+      {shown.length === 0 && <p className="px-6 py-3 text-[13px] text-ink-muted">{t("No wallets yet.")}</p>}
+      <ul>
+        {shown.map((wallet) => {
+          const kind = walletType({ accountSubtype: wallet.subtype });
+          const tile = walletTile(wallet, kind === "bank" ? banks++ : 0);
+          return (
+            <li key={wallet.id}>
+              <Link href={`/balance/ledger?accountId=${wallet.id}`} className="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-table-head">
+                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.5", tile)}>{createElement(walletIcon({ accountSubtype: wallet.subtype }), { strokeWidth: 2, "aria-hidden": true })}</span>
+                <span className="flex min-w-0 grow flex-col gap-px">
+                  <span className="truncate text-body leading-[normal] font-medium text-ink">{wallet.name}</span>
+                  <span className="text-caption text-ink-muted">{t(WALLET_KIND[kind])}</span>
+                </span>
+                <span className="text-body leading-[normal] font-semibold text-ink tabular-nums">{formatCurrency(wallet.balance, data.currency, locale)}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      {data.canManage && (
+        <div className="px-6 pt-2">
+          {/* ?new=1 asks My wallets to open its Add wallet drawer straight away. */}
+          <Link
+            href="/balance/wallet?new=1"
+            className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-input text-[13px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink"
+          >
+            <Plus className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
+            {t(onlyCash ? "Add bank or mobile wallet" : "Add wallet")}
+          </Link>
+        </div>
+      )}
+      <div className="grow" />
+      <div className="mt-4 flex items-center justify-between border-t border-line bg-table-head px-6 py-4">
+        <span className="text-[13px] leading-[normal] text-ink-muted">{t("Total balance")}</span>
+        <span className="text-title leading-[normal] font-bold text-ink tabular-nums">{formatCurrency(data.balance, data.currency, locale)}</span>
       </div>
     </section>
   );
 }
 
-// A card's name with its tile, at the top of each of the three.
-function CardLabel({ icon, tone, children }: { icon: React.ReactNode; tone: "money" | "warning"; children: React.ReactNode }) {
-  return (
-    <span className="flex items-center gap-3 text-small font-medium text-ink-muted">
-      <IconTile tone={tone}>{icon}</IconTile>
-      {children}
-    </span>
-  );
-}
+const BUDGET_TEXT = { income: "text-emerald", warning: "text-warning", expense: "text-expense" } as const;
 
-// A card that couldn't be read keeps its place and its name, and no more
-// height than the two beside it.
-function FailedCard({ label }: { label: React.ReactNode }) {
-  return (
-    <Card className="flex flex-col gap-3">
-      {label}
-      <HomePartError compact />
-    </Card>
-  );
-}
-
-function SavingsCard({ data }: { data: HomeData }) {
+// Monthly budget: the categories closest to their limit this month.
+export function BudgetCard({ data }: { data: HomeData }) {
   const { t, locale } = useLocale();
-  const { currency } = data;
-  const label = (
-    <CardLabel icon={<PiggyBank />} tone="money">
-      {t("Savings goals")}
-    </CardLabel>
-  );
-  if (data.unavailable.includes("savings")) return <FailedCard label={label} />;
+  const money = (value: number) => formatCurrency(value, data.currency, locale);
+  const budget = data.budget;
 
   return (
-    <Card interactive asChild className="flex flex-col gap-3">
-      <Link href="/savings-goals/dashboard">
-        {label}
-        {data.goalCount === 0 ? (
-          <>
-            <span className="text-title font-semibold text-ink">{t("No savings goal yet")}</span>
-            <span className="text-small text-ink-muted">{t("Name something you are saving for and set a date.")}</span>
-          </>
-        ) : (
-          <>
-            <span className="text-small text-ink-muted">
-              {data.savingsTarget > 0 ? (
-                // Home's own key: the Bangla of Savings goals' "{saved} of
-                // {target}" puts the small target before the headline figure.
-                fillNodes(t("{saved} of {target}@@home"), {
-                  saved: <AmountText value={data.savingsSaved} currency={currency} size="lg" className="leading-8" />,
-                  target: formatCurrency(data.savingsTarget, currency, locale),
-                })
-              ) : (
-                <AmountText value={data.savingsSaved} currency={currency} size="lg" className="leading-8" />
-              )}
-            </span>
-            <ProgressBar value={data.savingsProgress} label={t("Savings goals")} />
-            <span className="text-small text-ink-muted">
-              {t(data.goalCount === 1 ? "{count} goal" : "{count} goals", { count: formatCount(data.goalCount, locale) })} · {t("{percent}% reached", { percent: toLocaleDigits(String(data.savingsProgress), locale) })}
-            </span>
-          </>
-        )}
-      </Link>
-    </Card>
-  );
-}
-
-function AssetsCard({ data }: { data: HomeData }) {
-  const { t, locale } = useLocale();
-  const { currency } = data;
-  const label = (
-    <CardLabel icon={<Box />} tone="money">
-      {t("Assets")}
-    </CardLabel>
-  );
-  if (data.unavailable.includes("assets")) return <FailedCard label={label} />;
-
-  return (
-    <Card interactive asChild className="flex flex-col gap-3">
-      <Link href="/assets-management/dashboard">
-        {label}
-        {data.assetCount === 0 ? (
-          <>
-            <span className="text-title font-semibold text-ink">{t("No assets yet")}</span>
-            {/* The card is the link; this says where it leads. */}
-            {data.canManage && <span className="text-small font-semibold text-emerald">{t("Add an asset")} →</span>}
-          </>
-        ) : (
-          <>
-            <AmountText value={data.assetsValue} currency={currency} size="lg" className="leading-8" />
-            <span className="text-small text-ink-muted">
-              {t(data.assetCount === 1 ? "{count} asset" : "{count} assets", { count: formatCount(data.assetCount, locale) })}
-              {" · "}
-              {/* No green arrow over a zero: an unchanged value is no gain. */}
-              {data.assetsGain === 0
-                ? t("Worth what you paid for them")
-                : fillNodes(t("{change} since you bought them"), {
-                    change: (
-                      <b className={data.assetsGain > 0 ? "text-income" : "text-expense"}>
-                        {data.assetsGain > 0 ? "↑" : "↓"} {formatCurrency(Math.abs(data.assetsGain), currency, locale)}
-                      </b>
-                    ),
-                  })}
-            </span>
-          </>
-        )}
-      </Link>
-    </Card>
-  );
-}
-
-function BudgetCard({ data }: { data: HomeData }) {
-  const { t } = useLocale();
-  const label = (
-    <CardLabel icon={<ChartPie />} tone="warning">
-      {t("Budget")} · {data.monthName}
-    </CardLabel>
-  );
-  if (data.unavailable.includes("budget")) return <FailedCard label={label} />;
-
-  return (
-    <Card interactive asChild className="flex flex-col gap-3">
-      <Link href="/categories">
-        {label}
-        {data.budgetFocus ? (
-          <BudgetFocus
-            name={data.budgetFocus.name}
-            icon={data.budgetFocus.icon ?? ""}
-            limit={Number(data.budgetFocus.monthlyLimit ?? 0)}
-            spent={Number(data.budgetFocus.spent)}
-            percent={data.budgetFocus.percent}
-            currency={data.currency}
-            daysLeft={data.daysLeftInMonth}
-          />
-        ) : data.budgetTotal ? (
-          // Only a total for the month: everything spent against it.
-          <BudgetFocus name={t("Monthly budget")} limit={data.budgetTotal.budget} spent={data.budgetTotal.spent} percent={data.budgetTotal.percent} currency={data.currency} daysLeft={data.daysLeftInMonth} />
-        ) : data.hasBudget ? (
-          <>
-            <span className="text-title font-semibold text-ink">{t("Your budget is planned")}</span>
-            <span className="text-small text-ink-muted">{t("Smartly warns you when a category reaches 70%.")}</span>
-          </>
-        ) : (
-          <>
-            <span className="text-title font-semibold text-ink">{t("No budget yet")}</span>
-            <span className="text-small text-ink-muted">{t("Set a monthly limit and Smartly warns you at 70%.")}</span>
-          </>
-        )}
-      </Link>
-    </Card>
-  );
-}
-
-// A limit and what went against it: the category closest to its limit, or
-// the month's total budget (no icon) when no category has one.
-interface BudgetFocusProps {
-  name: string;
-  icon?: string;
-  limit: number;
-  spent: number;
-  percent: number;
-  currency: string;
-  daysLeft: number;
-}
-
-function BudgetFocus({ name, icon, limit, spent, percent, currency, daysLeft }: BudgetFocusProps) {
-  const { t, locale } = useLocale();
-  const left = limit - spent;
-  return (
-    <>
-      <span className="flex items-baseline justify-between gap-2">
-        <b className="flex min-w-0 items-center gap-2 text-title leading-5.5 font-semibold text-ink">
-          {icon !== undefined && createElement(budgetCategoryIcon(icon), { className: "size-4 shrink-0 text-ink-muted", "aria-hidden": true })}
-          <span className="truncate">{name}</span>
-        </b>
-        <span className="shrink-0 text-small text-ink-muted tabular-nums">
-          {fillNodes(t("{spent} of {limit}"), { spent: <b className="text-ink">{formatCurrency(spent, currency, locale)}</b>, limit: formatCurrency(limit, currency, locale) })}
+    <section className={cn(CARD, "flex flex-col gap-4.5 p-6")}>
+      <CardHead title={t("Monthly budget")} href="/categories" link={t("Budget Planning")} />
+      {data.unavailable.includes("budget") || !budget ? (
+        <HomePartError compact />
+      ) : budget.lines.length === 0 ? (
+        <div className="flex flex-col items-start gap-2">
+          <span className="text-body font-semibold text-ink">{t(budget.hasBudget ? "Your budget is planned" : "No budget yet")}</span>
+          <span className="text-[13px] leading-normal text-ink-muted">{t("Give each spending category a limit so you're warned early.")}</span>
+          {data.canManage && !budget.hasBudget && (
+            <Link href="/categories" className="mt-1 flex h-9 items-center rounded-full border border-input bg-surface px-3.5 text-[13px] font-semibold text-ink hover:bg-surface-sunken">
+              {t("Set budget")}
+            </Link>
+          )}
+        </div>
+      ) : (
+        budget.lines.map((line) => {
+          const tone = budgetTone(line.percent);
+          const left = line.limit - line.spent;
+          return (
+            <div key={line.name} className="flex flex-col gap-2">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="truncate text-body leading-[normal] font-medium text-ink">{line.name}</span>
+                <span className="shrink-0 text-caption whitespace-nowrap text-ink-muted tabular-nums">
+                  <b className="font-semibold text-ink">{money(line.spent)}</b> / {money(line.limit)}
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-surface-sunken">
+                <div className={cn("h-full rounded-full", BUDGET_TONE_BAR[tone])} style={{ width: `${Math.min(100, Math.max(0, line.percent))}%` }} />
+              </div>
+              <div className="flex justify-between gap-2 text-caption">
+                <span className="text-ink-muted">{left >= 0 ? t("{amount} left", { amount: money(left) }) : t("{amount} over", { amount: money(-left) })}</span>
+                <span className={cn("font-semibold", BUDGET_TEXT[tone])}>{t("{percent}% used", { percent: toLocaleDigits(String(Math.round(line.percent)), locale) })}</span>
+              </div>
+            </div>
+          );
+        })
+      )}
+      {budget && budget.lines.length > 0 && (
+        <span className="flex items-center gap-1.5 text-caption text-ink-muted">
+          <CalendarDays className="size-3.5" strokeWidth={2} aria-hidden="true" />
+          {t(budget.daysLeft === 1 ? "{count} day left in {month}" : "{count} days left in {month}", { count: formatCount(budget.daysLeft, locale), month: budget.monthName })}
         </span>
-      </span>
-      <ProgressBar value={percent} tone="budget" label={name} />
-      <span className={cn("text-small", percent > 90 ? "font-semibold text-expense" : percent >= 70 ? "font-semibold text-warning" : "text-ink-muted")}>
-        {t("{percent}% used", { percent: toLocaleDigits(String(Math.round(percent)), locale) })} ·{" "}
-        {left >= 0
-          ? t(daysLeft === 1 ? "{amount} left for {count} day" : "{amount} left for {count} days", { amount: formatCurrency(left, currency, locale), count: formatCount(daysLeft, locale) })
-          : t("{amount} over", { amount: formatCurrency(-left, currency, locale) })}
-      </span>
-    </>
+      )}
+    </section>
+  );
+}
+
+// Savings goals: all of them together, then the two furthest along.
+export function SavingsCard({ data }: { data: HomeData }) {
+  const { t, locale } = useLocale();
+  const money = (value: number) => formatCurrency(value, data.currency, locale);
+  const { savings } = data;
+
+  return (
+    <section className={cn(CARD, "flex flex-col gap-4.5 p-6")}>
+      <CardHead title={t("Savings goals")} href="/savings-goals/dashboard" link={t("View all")} />
+      {data.unavailable.includes("savings") ? (
+        <HomePartError compact />
+      ) : savings.count === 0 ? (
+        <div className="flex flex-col items-start gap-2">
+          <span className="text-body font-semibold text-ink">{t("No savings goal yet")}</span>
+          <span className="text-[13px] leading-normal text-ink-muted">{t("Save towards something that matters and track progress.")}</span>
+          {data.canManage && (
+            <Link href="/savings-goals/dashboard?new=1" className="mt-1 flex h-9 items-center rounded-full border border-input bg-surface px-3.5 text-[13px] font-semibold text-ink hover:bg-surface-sunken">
+              {t("Create goal")}
+            </Link>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-[24px] leading-[normal] font-bold tracking-[-0.02em] text-ink tabular-nums">{money(savings.saved)}</span>
+              <span className="text-[13px] leading-[normal] text-ink-muted">{t("saved of {target}", { target: money(savings.target) })}</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-surface-sunken">
+              <div className="h-full rounded-full bg-emerald" style={{ width: `${Math.min(100, savings.progress)}%` }} />
+            </div>
+            <span className="text-caption text-ink-muted">{t("{percent}% of all goals reached", { percent: toLocaleDigits(String(savings.progress), locale) })}</span>
+          </div>
+          {savings.goals.length > 0 && (
+            <div className="flex flex-col gap-3 border-t border-divider pt-4">
+              {savings.goals.map((goal) => (
+                <div key={goal.id} className="flex flex-col gap-1.5">
+                  <div className="flex justify-between gap-2 text-[13px] leading-[normal]">
+                    <span className="truncate font-medium text-ink">{goal.name}</span>
+                    <span className="shrink-0 text-ink-muted tabular-nums">
+                      {money(goal.saved)} / {money(goal.target)}
+                    </span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-surface-sunken">
+                    <div className="h-full rounded-full bg-emerald" style={{ width: `${Math.min(100, Math.max(0, goal.percent))}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+// The tiles' 18px figure, a step smaller for a long one ("৳ 21,31,800")
+// so it fits the half-width tile whole.
+const figureSize = (text: string) => (text.length > 10 ? "text-[15px]" : "text-[18px]");
+
+// Loans & assets: what others owe you and what you owe (while Loans is on),
+// and what your assets are worth.
+export function LoansAssetsCard({ data }: { data: HomeData }) {
+  const { t, locale } = useLocale();
+  const money = (value: number) => formatCurrency(value, data.currency, locale);
+  const { loans, assets } = data;
+  const loansFailed = data.unavailable.includes("loans");
+
+  return (
+    <section className={cn(CARD, "flex flex-col gap-4.5 p-6")}>
+      {loans || loansFailed ? (
+        <CardHead title={t("Loans & assets")} href="/loan-management/dashboard" link={t("Loan Management")} />
+      ) : (
+        <CardHead title={t("Assets")} href="/assets-management/dashboard" link={t("Assets Management")} />
+      )}
+      {loansFailed ? (
+        <HomePartError compact />
+      ) : (
+        loans && (
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/loan-management/dashboard" className="flex min-w-0 flex-col gap-1 rounded-[14px] bg-emerald-soft p-3.5 transition-colors hover:bg-mint-50">
+              <span className="text-caption text-brand-ink">{t("Pawna · you'll receive")}</span>
+              <span className={cn("leading-[normal] font-bold whitespace-nowrap text-emerald tabular-nums", figureSize(money(loans.pawna)))}>+ {money(loans.pawna)}</span>
+              <span className="text-caption text-ink-muted">{t(loans.oweYou === 1 ? "from {count} person" : "from {count} people", { count: formatCount(loans.oweYou, locale) })}</span>
+            </Link>
+            <Link href="/loan-management/dashboard" className="flex min-w-0 flex-col gap-1 rounded-[14px] bg-expense-soft/60 p-3.5 transition-colors hover:bg-expense-soft">
+              <span className="text-caption text-expense">{t("Dena · you owe")}</span>
+              <span className={cn("leading-[normal] font-bold whitespace-nowrap text-expense tabular-nums", figureSize(money(loans.dena)))}>− {money(loans.dena)}</span>
+              <span className="text-caption text-ink-muted">{t(loans.youOwe === 1 ? "to {count} person" : "to {count} people", { count: formatCount(loans.youOwe, locale) })}</span>
+            </Link>
+          </div>
+        )
+      )}
+      {data.unavailable.includes("assets") ? (
+        <HomePartError compact />
+      ) : (
+        <Link href="/assets-management/dashboard" className={cn("flex items-center gap-3 transition-opacity hover:opacity-80", (loans || loansFailed) && "border-t border-divider pt-4")}>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-surface-sunken text-ink-soft">
+            <Box className="size-4.5" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <span className="flex min-w-0 grow flex-col gap-px">
+            <span className="text-[13px] leading-[normal] text-ink-muted">{t("Total asset value")}</span>
+            <span className="text-caption text-ink-muted">{t(assets.count === 1 ? "{count} active asset" : "{count} active assets", { count: formatCount(assets.count, locale) })}</span>
+          </span>
+          <span className="text-title leading-[normal] font-bold text-ink tabular-nums">{money(assets.value)}</span>
+        </Link>
+      )}
+    </section>
   );
 }

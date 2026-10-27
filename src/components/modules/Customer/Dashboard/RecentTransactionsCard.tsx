@@ -1,109 +1,174 @@
 "use client";
 
-import { ArrowLeftRight, Receipt } from "lucide-react";
-import { createElement } from "react";
-import AmountText from "@/components/smartly/AmountText";
-import ByWidth from "@/components/smartly/ByWidth";
-import Chip from "@/components/smartly/Chip";
-import IconTile from "@/components/smartly/IconTile";
-import { ListCard, ListCell, ListEmpty, ListRow, ListRowLink } from "@/components/smartly/list";
+import { ArrowLeftRight, ArrowRight, Ban, Eye, Plus, Receipt, ReceiptText } from "lucide-react";
+import Link from "next/link";
+import { createElement, useState } from "react";
+import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
 import type { Transaction } from "@/lib/customer/api";
 import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { categoryLabel, describeTransaction, relativeDayKey, systemText, type CategoryMeta } from "@/lib/customer/transactionRows";
+import { categoryLabel, describeTransaction, rowTitle, systemText, type CategoryMeta, type TransactionRow } from "@/lib/customer/transactionRows";
 import { toDateInputValue } from "@/lib/date";
-import { banglaDayMonth, banglaShortDay } from "@/lib/i18n/banglaDates";
+import { banglaDayMonth } from "@/lib/i18n/banglaDates";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CARD } from "./HomeHero";
 
 interface RecentTransactionsCardProps {
+  businessId: string;
   transactions: Transaction[];
   categoriesById: Record<string, CategoryMeta>;
   currency: string;
-  today: string;
+  canManage: boolean;
+  // Opens the transaction drawer (the empty card's button).
+  onAdd: () => void;
 }
 
-// The latest transactions, one row each on the shared list rows (their
-// divider, hover and focus ring): the category's tile, what it was, where
-// and when, and the amount in its colour. Phones show four rows under
-// Home's own "Recent transactions" heading, without the category. A
-// cancelled row is set back as on Transactions: struck through, its
-// amount grey, with a red Voided chip (on phones, the word in the line
-// under the title, where a long title can't push it out of sight). Phones
-// write the day without its weekday, so that word and the wallet route
-// never push the date out of the line.
-const PHONE_ROWS = 4;
-const COLUMNS = "grid-cols-[36px_minmax(0,1fr)_auto] gap-x-3";
+const COLUMNS = "grid-cols-[minmax(0,1fr)_150px_64px_120px_68px] gap-x-4";
+// The phone board lists five.
+const PHONE_ROWS = 5;
+// The row's round View / Void buttons: shown on hover or focus, and always
+// on a touch screen, so a tap never lands on an unseen Void.
+const ROW_ACTION = "flex size-7.5 items-center justify-center rounded-full bg-surface ring-1 ring-line transition-colors [&_svg]:size-3.75";
 
-export function RecentTransactionsCard({ transactions, categoriesById, currency, today }: RecentTransactionsCardProps) {
+// The newest transactions: the category's tile, what it was, the wallet,
+// the day and the amount in its colour. A cancelled row is set back as on
+// Transactions: struck through and grey, with its Voided chip.
+export function RecentTransactionsCard({ businessId, transactions, categoriesById, currency, canManage, onAdd }: RecentTransactionsCardProps) {
   const { t, locale } = useLocale();
-  const oldest = transactions[transactions.length - 1];
-  // "30 Sep" / "Wed, 30 Sep", or the Bangla board's own short words.
+  const [voiding, setVoiding] = useState<TransactionRow | null>(null);
   const dayMonth = (day: string) => (locale === "bn" ? banglaDayMonth(day) : formatDate(`${day}T00:00:00.000Z`, "d MMM", locale));
-  const shortDay = (day: string) => (locale === "bn" ? banglaShortDay(day) : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM", locale));
+  const rows = transactions.map((transaction) => describeTransaction(transaction, categoriesById, {}, locale));
+
+  const viewAll = (
+    <Link href="/transactions" className="flex items-center gap-1 py-2 text-[13px] leading-[normal] font-semibold text-emerald hover:text-emerald-hover md:py-0">
+      {t("View all")}
+      <ArrowRight className="hidden size-3.5 md:block" strokeWidth={2.25} aria-hidden="true" />
+    </Link>
+  );
+
+  if (rows.length === 0) {
+    return (
+      <section className={cn(CARD, "flex flex-col overflow-hidden xl:col-span-2")}>
+        <div className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5">
+          <h2 className="text-title leading-[normal] font-semibold text-ink">{t("Recent transactions")}</h2>
+        </div>
+        <div className="flex grow flex-col items-center justify-center gap-2 border-t border-line px-6 pt-10 pb-12 text-center">
+          <span className="flex size-14 items-center justify-center rounded-full bg-surface-sunken text-ink-muted">
+            <ReceiptText className="size-6" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <span className="mt-1 text-[15px] leading-[normal] font-semibold text-ink">{t("No transactions yet")}</span>
+          <span className="max-w-90 text-[13px] leading-normal text-ink-muted">{t("Income and expenses you add will be listed here, newest first.")}</span>
+          {canManage && (
+            <button type="button" onClick={onAdd} className="mt-2 flex h-9.5 items-center gap-1.5 rounded-full bg-emerald px-4 text-body font-semibold text-on-action hover:bg-emerald-hover">
+              <Plus className="size-3.75" strokeWidth={2.5} aria-hidden="true" />
+              {t("Add your first transaction")}
+            </button>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  const look = (row: TransactionRow) => {
+    const isTransfer = row.transaction.transactionType === "TRANSFER";
+    const tone = isTransfer ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
+    const icon = isTransfer ? ArrowLeftRight : row.category ? categoryIconFor(row.category) : Receipt;
+    const title = row.title ? systemText(row.title, t) : t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType]);
+    const kind = isTransfer ? t("Transfer") : row.category ? categoryLabel(row.category.name, t) : t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType]);
+    const amount = isTransfer ? formatCurrency(Math.abs(row.signedAmount), currency, locale) : formatSignedCurrency(row.signedAmount, currency, locale);
+    const amountTone = row.cancelled || isTransfer ? "text-ink-muted" : row.signedAmount >= 0 ? "text-emerald" : "text-expense";
+    return { tone, icon, title, kind, amount, amountTone, day: dayMonth(toDateInputValue(row.transaction.transactionDate)) };
+  };
 
   return (
-    <ListCard
-      label={t("Recent transactions")}
-      className="flex flex-col max-md:shadow-none"
-      header={
-        <div className="hidden items-center justify-between gap-3 border-b border-line px-4 pt-5 pb-3 md:flex md:px-6">
-          <h3 className="text-h3 leading-6 text-ink">{t("Recent transactions")}</h3>
-          {oldest && <span className="text-small text-ink-muted">{t("Since {date}", { date: dayMonth(toDateInputValue(oldest.transactionDate)) })}</span>}
+    <section className={cn(CARD, "flex flex-col overflow-hidden xl:col-span-2")}>
+      <div className="flex items-center justify-between px-4 pt-4 pb-2 md:px-6 md:py-5">
+        <h2 className="text-title leading-[normal] font-semibold text-ink">{t("Recent transactions")}</h2>
+        {viewAll}
+      </div>
+
+      {/* Desktop: the board's table. */}
+      <div role="table" aria-label={t("Recent transactions")} className="hidden md:block">
+        <div role="row" className={cn("grid border-y border-line bg-table-head px-6 py-2.5 text-caption font-medium text-ink-muted", COLUMNS)}>
+          <span role="columnheader">{t("Transaction")}</span>
+          <span role="columnheader">{t("Account")}</span>
+          <span role="columnheader">{t("Date")}</span>
+          <span role="columnheader" className="text-right">
+            {t("Amount")}
+          </span>
+          <span role="columnheader" className="sr-only">
+            {t("Actions")}
+          </span>
         </div>
-      }
-    >
-      {transactions.length === 0 ? (
-        <ListEmpty title={t("No transactions yet.")} />
-      ) : (
-        transactions.map((transaction, index) => {
-          const row = describeTransaction(transaction, categoriesById, {}, locale);
-          const isTransfer = transaction.transactionType === "TRANSFER";
-          const tone = isTransfer ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
-          const icon = isTransfer ? ArrowLeftRight : row.category ? categoryIconFor(row.category) : Receipt;
-          const day = toDateInputValue(transaction.transactionDate);
-          const when = relativeDayKey(day, today);
+        {rows.map((row) => {
+          const v = look(row);
           return (
-            <ListRow key={transaction.id} density="relaxed" muted={Boolean(row.cancelled)} columns={COLUMNS} className={cn(index >= PHONE_ROWS && "hidden md:grid")}>
-              <ListCell>
-                <IconTile tone="neutral" className={cn(tone.bg, tone.fg)}>
-                  {createElement(icon)}
-                </IconTile>
-              </ListCell>
-              <ListCell className="flex flex-col">
-                <span className="flex min-w-0 items-center gap-2">
-                  <ListRowLink href={`/transactions/${transaction.id}`} className={cn("truncate text-body leading-5 font-semibold text-ink", row.cancelled && "line-through")}>
-                    {row.title ? systemText(row.title, t) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}
-                  </ListRowLink>
-                  {row.cancelled && (
-                    <Chip tone="expense" size="sm" className="hidden font-semibold md:inline-flex">
-                      {t(row.cancelled)}
-                    </Chip>
-                  )}
+            <div key={row.transaction.id} role="row" className={cn("group grid h-14 items-center border-b border-divider px-6 transition-colors last:border-b-0 hover:bg-table-head", COLUMNS)}>
+              <div role="cell" className="flex min-w-0 items-center gap-3">
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.25", v.tone.bg, v.tone.fg, row.cancelled && "opacity-60")}>{createElement(v.icon, { strokeWidth: 2, "aria-hidden": true })}</span>
+                <span className="flex min-w-0 flex-col gap-px">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Link href={`/transactions/${row.transaction.id}`} className={cn("truncate text-body leading-[normal] font-medium text-ink hover:underline", row.cancelled && "text-ink-muted line-through")}>
+                      {v.title}
+                    </Link>
+                    {row.cancelled && <span className="shrink-0 rounded-full bg-expense-soft px-1.5 py-px text-[11px] leading-[normal] font-semibold text-expense">{t(row.cancelled)}</span>}
+                  </span>
+                  <span className="truncate text-caption text-ink-muted">{v.kind}</span>
                 </span>
-                <span className="truncate text-small leading-4.5 text-ink-muted">
-                  {row.cancelled && <span className="md:hidden">{t(row.cancelled)} · </span>}
-                  {row.category && <span className="hidden md:inline">{categoryLabel(row.category.name, t)} · </span>}
-                  {row.wallet && <>{row.wallet} · </>}
-                  {when ? t(when) : <ByWidth phone={dayMonth(day)} wide={shortDay(day)} />}
-                </span>
-              </ListCell>
-              <ListCell align="end">
-                <AmountText
-                  value={row.signedAmount}
-                  currency={currency}
-                  signed={!isTransfer}
-                  tone={row.cancelled || isTransfer ? "neutral" : "auto"}
-                  size="md"
-                  className={cn("leading-5.5 font-bold whitespace-nowrap", row.cancelled && "text-ink-muted line-through")}
-                />
-              </ListCell>
-            </ListRow>
+              </div>
+              <span role="cell" className="truncate text-[13px] leading-[normal] text-ink-soft">
+                {row.wallet ?? "—"}
+              </span>
+              <span role="cell" className="text-[13px] leading-[normal] whitespace-nowrap text-ink-muted">
+                {v.day}
+              </span>
+              <span role="cell" className={cn("text-right text-body leading-[normal] font-semibold whitespace-nowrap tabular-nums", v.amountTone, row.cancelled && "line-through")}>
+                {v.amount}
+              </span>
+              <span role="cell" className="flex justify-end gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100">
+                <Link href={`/transactions/${row.transaction.id}`} aria-label={t("View details")} title={t("View details")} className={cn(ROW_ACTION, "text-ink-soft hover:bg-surface-sunken")}>
+                  <Eye strokeWidth={2} aria-hidden="true" />
+                </Link>
+                {canManage && row.transaction.voidable && (
+                  <button type="button" onClick={() => setVoiding(row)} aria-label={t("Void transaction")} title={t("Void transaction")} className={cn(ROW_ACTION, "text-expense-fill hover:bg-expense-soft")}>
+                    <Ban strokeWidth={2} aria-hidden="true" />
+                  </button>
+                )}
+              </span>
+            </div>
           );
-        })
+        })}
+      </div>
+
+      {/* Phones: one link a row, the category and day under the title. */}
+      <ul className="md:hidden">
+        {rows.slice(0, PHONE_ROWS).map((row) => {
+          const v = look(row);
+          return (
+            <li key={row.transaction.id}>
+              <Link href={`/transactions/${row.transaction.id}`} className="flex min-h-15 items-center gap-3 border-t border-divider px-4 text-ink active:bg-table-head">
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4", v.tone.bg, v.tone.fg, row.cancelled && "opacity-60")}>{createElement(v.icon, { strokeWidth: 2, "aria-hidden": true })}</span>
+                <span className="flex min-w-0 grow flex-col gap-px">
+                  <span className={cn("truncate text-body leading-[normal] font-medium", row.cancelled && "text-ink-muted line-through")}>{v.title}</span>
+                  <span className="truncate text-caption text-ink-muted">
+                    {row.cancelled && <>{t(row.cancelled)} · </>}
+                    {v.kind} · {v.day}
+                  </span>
+                </span>
+                <span className={cn("text-body leading-[normal] font-semibold whitespace-nowrap tabular-nums", v.amountTone, row.cancelled && "line-through")}>{v.amount}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+
+      {voiding && (
+        <VoidTransactionDialog open onClose={() => setVoiding(null)} businessId={businessId} transactionId={voiding.transaction.id} title={rowTitle(voiding, t)} />
       )}
-    </ListCard>
+    </section>
   );
 }

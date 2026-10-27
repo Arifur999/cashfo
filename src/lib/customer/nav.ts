@@ -275,6 +275,10 @@ export const NAV_FOOT: NavItem[] = [
 
 export const SETTINGS_ROUTE = "/settings";
 
+// Where every Upgrade / Manage plan button goes: the plans page in Settings
+// (built with the customer plan API).
+export const PLANS_ROUTE = "/settings/plans";
+
 // Which app a page belongs to: everything under /habit-tracker is the
 // Habit Tracker.
 export const navAppFor = (pathname: string): NavApp => (pathname === HABIT_HOME || pathname.startsWith(`${HABIT_HOME}/`) ? "habit" : "money");

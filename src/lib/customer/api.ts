@@ -45,6 +45,9 @@ export interface CurrentUser {
   passwordChangedAt: string | null;
   // False for a Google-only account, which has no password to change yet.
   hasPassword?: boolean;
+  // When the account was opened (the Dashboard's "Since Jan 2025"); absent
+  // from a backend that doesn't send it yet.
+  createdAt?: string;
   businesses: UserBusiness[];
   // Set when this is a super admin's read-only "View as customer" session.
   impersonatedBy?: { name: string; email: string | null } | null;
