@@ -1,6 +1,8 @@
 "use client";
 
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { X } from "lucide-react";
+import Button from "@/components/smartly/Button";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -27,8 +29,9 @@ interface FormDrawerProps {
 }
 
 // A form that slides in from the right, as the design draws plan and coupon
-// editing: a titled head, the fields, and the strip foot pinned to the
-// bottom (give the form FormDialogFooter's `pinned`). Like FormDialog, a
+// editing: a titled head with its round close button, the fields, and the
+// strip foot pinned to the bottom (give the form FormDialogFooter's
+// `pinned`). Its 24px corners come from globals.css. Like FormDialog, a
 // stray outside click doesn't throw the form away; Escape still closes.
 const FormDrawer = ({ open, onOpenChange, title, description, trigger, width = "md", closeOnOutsideClick = false, children }: FormDrawerProps) => {
   const { translate } = useLocale();
@@ -38,12 +41,20 @@ const FormDrawer = ({ open, onOpenChange, title, description, trigger, width = "
       {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
       <SheetContent
         side="right"
-        className={cn("w-full! gap-0 border-l-0 bg-surface p-0 text-ink shadow-overlay", WIDTH_CLASSES[width])}
+        showCloseButton={false}
+        className={cn("w-full! gap-0 border-l-0 bg-surface p-0 text-ink shadow-drawer", WIDTH_CLASSES[width])}
         onInteractOutside={closeOnOutsideClick ? undefined : (event) => event.preventDefault()}
       >
-        <SheetHeader className="gap-0.5 border-b border-line px-6 py-5 pr-14">
-          <SheetTitle className="text-h3 text-ink">{translate(title)}</SheetTitle>
-          <SheetDescription className={description ? "text-small text-ink-muted" : "sr-only"}>{shownDescription ?? translate(title)}</SheetDescription>
+        <SheetHeader className="flex-row items-start justify-between gap-3 border-b border-line px-6 py-4.5">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <SheetTitle className="text-h3 text-ink">{translate(title)}</SheetTitle>
+            <SheetDescription className={description ? "text-small text-ink-muted" : "sr-only"}>{shownDescription ?? translate(title)}</SheetDescription>
+          </div>
+          <SheetClose asChild>
+            <Button variant="ghost" size="icon-xs" aria-label={translate("Close")} className="-my-0.5 -mr-1.5 size-8.5 text-ink-muted">
+              <X className="size-4.5" aria-hidden="true" />
+            </Button>
+          </SheetClose>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex min-h-full flex-col px-6 py-5">{children}</div>

@@ -135,7 +135,7 @@ const TabsNav = ({ tabs, label = "Section" }: { tabs: TabDef[]; label?: string }
             {tab.count !== undefined && (
               <span
                 className={cn(
-                  "rounded-full px-2 text-caption tabular-nums",
+                  "rounded-full px-1.5 text-[11.5px] tabular-nums",
                   tab.countTone === "danger" && "bg-expense-soft font-bold text-expense",
                   tab.countTone === "warning" && "bg-warning-soft font-bold text-warning",
                   (!tab.countTone || tab.countTone === "neutral") && "bg-surface-sunken font-semibold text-ink-2",

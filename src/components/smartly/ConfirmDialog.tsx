@@ -25,8 +25,8 @@ interface ConfirmDialogProps {
 }
 
 // Confirm before anything that cannot be undone or affects money: the
-// design's 460px dialog with the round tile, the question, and the two
-// buttons. The confirm button has focus, so Enter confirms as it did with
+// design's 480px dialog (VoidDialog) with the 44px tile, the question, and
+// the two pills on the right. The confirm button has focus, so Enter confirms as it did with
 // window.confirm.
 const ConfirmDialog = ({ open, onClose, onConfirm, title, description, confirmLabel, cancelLabel, danger = true, icon, isPending = false }: ConfirmDialogProps) => {
   const { t } = useLocale();
@@ -39,18 +39,18 @@ const ConfirmDialog = ({ open, onClose, onConfirm, title, description, confirmLa
           event.preventDefault();
           confirmRef.current?.focus();
         }}
-        className="w-115 max-w-[calc(100vw-32px)] gap-4 rounded-lg border border-line bg-surface p-6 shadow-overlay ring-0"
+        className="w-120 max-w-[calc(100vw-32px)] gap-4.5 rounded-[14px] border-0 bg-surface p-6 shadow-overlay ring-0"
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3.5">
           <IconTile tone={danger ? "expense" : "money"} size={44}>
             {icon ?? <Trash2 />}
           </IconTile>
-          <div className="flex min-w-0 flex-col gap-2">
+          <div className="flex min-w-0 flex-col gap-1.5">
             <AlertDialogTitle className="text-h3 text-ink">{title}</AlertDialogTitle>
-            <AlertDialogDescription className="text-body leading-[21px] break-words text-ink-2">{description}</AlertDialogDescription>
+            <AlertDialogDescription className="text-body leading-[1.55] break-words text-ink-soft">{description}</AlertDialogDescription>
           </div>
         </div>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-2.5">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
             {cancelLabel ?? t("Cancel")}
           </Button>

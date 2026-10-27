@@ -4,10 +4,11 @@ import { AlertCircle, AlertTriangle, Info, type LucideIcon } from "lucide-react"
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
-// The design's notes: a pale fill, a faint line of the same hue, its ink.
+// The design's notes: a pale fill, a faint line of the same hue, its ink
+// (the amber one as design-v4 draws its hint boxes).
 const VARIANTS: Record<"info" | "warning" | "danger", { icon: LucideIcon; className: string }> = {
   info: { icon: Info, className: "border-info/20 bg-info-soft text-info" },
-  warning: { icon: AlertTriangle, className: "border-warning/25 bg-warning-soft text-warning" },
+  warning: { icon: AlertTriangle, className: "border-warning-line bg-warning-50 text-warning-ink" },
   danger: { icon: AlertCircle, className: "border-expense/20 bg-expense-soft text-expense" },
 };
 
@@ -24,7 +25,7 @@ const Callout = ({ variant = "info", role, className, children }: CalloutProps) 
   const { icon: Icon, className: variantClassName } = VARIANTS[variant];
 
   return (
-    <div role={role} className={cn("flex items-start gap-3 rounded-md border px-4 py-3 text-small leading-relaxed", variantClassName, className)}>
+    <div role={role} className={cn("flex items-start gap-2.5 rounded-field border px-3.5 py-3 text-small leading-normal", variantClassName, className)}>
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
       <div className="min-w-0">{typeof children === "string" ? translate(children) : children}</div>
     </div>
