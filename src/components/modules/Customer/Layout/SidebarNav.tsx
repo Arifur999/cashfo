@@ -1,40 +1,74 @@
 "use client";
 
-import { ArrowLeftRight,BookOpen,BookText,Box,CalendarCheck,ChartColumn,ChartPie,ChevronDown,ChevronRight,CircleCheckBig,Clock,CreditCard,Gift,GraduationCap,House,KeyRound,ListChecks,type LucideProps,Moon,PenLine,PiggyBank,Settings,Table2,Target,TrendingUp,Users,UsersRound,Wallet } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Banknote,
+  BookOpen,
+  BookText,
+  Box,
+  ChartColumn,
+  ChartPie,
+  ChevronDown,
+  ChevronRight,
+  CircleCheckBig,
+  Clock,
+  Gift,
+  GraduationCap,
+  House,
+  KeyRound,
+  Landmark,
+  LayoutDashboard,
+  ListChecks,
+  type LucideProps,
+  MoonStar,
+  PenLine,
+  PiggyBank,
+  Settings,
+  TrendingUp,
+  Trophy,
+  Users,
+  UsersRound,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useId, useRef, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { MosqueIcon } from "@/components/smartly/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { findNavLocation, NAV_FOOT, visibleNavSections, type NavIcon, type NavItem, type NavLeaf, type NavTone } from "@/lib/customer/nav";
+import { findNavLocation, menuSections, NAV_SECTIONS, navAppFor, visibleNavSections, type NavApp, type NavIcon, type NavItem, type NavLocation, type NavSection } from "@/lib/customer/nav";
+import { leafHref } from "@/lib/customer/paletteMatch";
+import { getHabitsTodayCountAction } from "@/lib/customer/shellActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
+// The menus' icons: the boards' own lucide glyphs.
+export const NAV_ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
+  dashboard: LayoutDashboard,
   home: House,
   transactions: ArrowLeftRight,
+  balance: Landmark,
   wallet: Wallet,
   budget: ChartPie,
   income: TrendingUp,
-  loans: CreditCard,
+  loans: Banknote,
   savings: PiggyBank,
   assets: Box,
   group: Users,
   today: CircleCheckBig,
-  daily: CalendarCheck,
+  daily: CircleCheckBig,
   namaz: MosqueIcon,
-  ramadan: Moon,
+  ramadan: MoonStar,
   library: BookOpen,
   skills: GraduationCap,
   todo: ListChecks,
   vault: KeyRound,
-  insights: ChartColumn,
-  reports: Table2,
-  challenges: Target,
+  insights: ChartPie,
+  reports: ChartColumn,
+  challenges: Trophy,
   ledger: BookText,
   people: UsersRound,
   clock: Clock,
@@ -43,36 +77,28 @@ const ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
   settings: Settings,
 };
 
-// The Night sidebar is dark in both themes, so its dots use the dark
-// palette outright (the night-* colours in globals.css).
-const NIGHT_DOT: Record<NavTone, string> = {
-  money: "bg-night-money",
-  loans: "bg-night-loans",
-  habits: "bg-night-habits",
-  vault: "bg-night-vault",
-  insights: "bg-night-insights",
-  neutral: "bg-night-neutral",
-};
+// Uses the shell's providers for what the menu depends on: the workspace
+// (Books) and the member's role in it (Journal entry) and the feature flags
+// (Loan Management). allRoles keeps the items a staff member can't use, for
+// working out which page is open: a staff member who opens Journal entry by
+// its address is on Journal entry, not on the nearest row the menu shows.
+export function useNavSections({ allRoles = false }: { allRoles?: boolean } = {}) {
+  const { activeBusiness } = useAuth();
+  const loansOn = useFeature("loan_management");
+  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
+  return visibleNavSections({ workspaceType: activeBusiness?.type, isFeatureOn: (key) => (key === "loan_management" ? loansOn : true), canManage: allRoles || canManage });
+}
 
-const MARKER = "absolute -left-3 w-0.75 rounded-r-[3px] bg-night-marker";
-
-// On the aurora a lighter pill melted into the emerald: the open page sits
-// in a darker pill with a faint edge (white on it is about 6:1), and hover
-// darkens a little less. Black, not a theme token: the panel looks the same
-// in both themes.
-const ACTIVE_ROW = "bg-black/22 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]";
-const HOVER_ROW = "hover:bg-black/12";
-// On a short screen (a laptop with the browser's bars) rows close up a
-// little, so more of the menu shows before it scrolls.
-const SHORT = "[@media(max-height:860px)]:h-9";
-
-// The site's focus ring is dark green, which the night panel swallows; the
-// mint one reads on it. Drawn inside the row, since the scrolling menu
-// clips anything outside it. Every control on the panel takes it: the
-// sidebar's logo and the phone drawer's own rows too.
-export const NIGHT_FOCUS = "focus-visible:outline-mint-200 focus-visible:-outline-offset-2";
-
-const leafHref = (leaf: NavLeaf) => (leaf.query ? `${leaf.href}?${new URLSearchParams(leaf.query)}` : leaf.href);
+// The page on screen, as the menus name it, and which app it is in. A page
+// this workspace hides (Books outside a business, Loans switched off) still
+// has a name.
+export function useNavLocation(): { app: NavApp; location: NavLocation | null } {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const sections = useNavSections({ allRoles: true });
+  const location = findNavLocation(pathname, searchParams, sections) ?? findNavLocation(pathname, searchParams, NAV_SECTIONS);
+  return { app: navAppFor(pathname), location };
+}
 
 // The groups the customer opened with their chevron, by href, kept in this
 // browser so they stay open across pages and reloads (the group of the
@@ -131,7 +157,7 @@ const parseOpenGroups = (stored: string): string[] => {
   }
 };
 
-function useOpenGroups() {
+export function useOpenGroups() {
   const open = parseOpenGroups(useSyncExternalStore(subscribeOpenGroups, readOpenGroups, nothingRemembered));
   const toggle = (key: string) => {
     const current = parseOpenGroups(readOpenGroups());
@@ -140,9 +166,38 @@ function useOpenGroups() {
   return { open, toggle };
 }
 
+// Whether a Money Tracker group shows its pages: the page on screen's group
+// always, the others while the customer keeps them open.
+export function useExpandedGroups(location: NavLocation | null) {
+  const groups = useOpenGroups();
+  const isExpanded = (item: NavItem) => !!item.subs && (location?.item === item || groups.open.includes(item.href));
+  return { isExpanded, toggle: groups.toggle };
+}
+
+// Today's habits done out of those planned, for Daily habits' "3/5". Read
+// when the Habit Tracker menu shows and again after each page change there
+// (a tick on the dashboard or the daily page moves it).
+function useHabitsToday(enabled: boolean): { done: number; total: number } | null {
+  const pathname = usePathname();
+  const [count, setCount] = useState<{ done: number; total: number } | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    void getHabitsTodayCountAction()
+      .catch(() => null)
+      .then((result) => {
+        if (!cancelled) setCount(result);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, pathname]);
+  return enabled ? count : null;
+}
+
 // A folded sidebar's row: just its icon, with the name in a tooltip on the
 // right (and still the link's accessible name).
-function RailTip({ label, show, children }: { label: string; show: boolean; children: React.ReactElement }) {
+export function RailTip({ label, show, children }: { label: string; show: boolean; children: React.ReactElement }) {
   if (!show) return children;
   return (
     <Tooltip>
@@ -152,106 +207,80 @@ function RailTip({ label, show, children }: { label: string; show: boolean; chil
   );
 }
 
-interface SidebarNavProps {
-  // Phone rows are 44px with 16px text; the desktop sidebar's 40px with 14px.
-  compact?: boolean;
-  // The desktop sidebar folded to its icons: no names, no group pages.
+interface MenuProps {
+  // Folded to its icons (the desktop sidebar's rail).
   collapsed?: boolean;
+  // The phone drawer: 44px rows, for a finger.
+  touch?: boolean;
   className?: string;
   style?: React.CSSProperties;
   navRef?: React.Ref<HTMLElement>;
 }
 
-// Uses the shell's providers for what the menu depends on: the workspace
-// (Books) and the member's role in it (Journal entry), the feature flags
-// (Loans) and today's open tasks (the badge). allRoles keeps the items a
-// staff member can't use, for working out which page is open: a staff
-// member who opens Journal entry by its address is on Journal entry, not
-// on the nearest row the menu does show.
-export function useNavSections({ allRoles = false }: { allRoles?: boolean } = {}) {
-  const { activeBusiness } = useAuth();
-  const loansOn = useFeature("loan_management");
-  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
-  return visibleNavSections({ workspaceType: activeBusiness?.type, isFeatureOn: (key) => (key === "loan_management" ? loansOn : true), canManage: allRoles || canManage });
-}
-
-// The menu itself, shared by the desktop sidebar and the phone drawer. A
-// group's label opens its first page; its chevron shows or hides its pages
-// without leaving this one.
-export function SidebarNav({ compact = true, collapsed = false, className, style, navRef }: SidebarNavProps) {
+// Brings the open page's row into view when the menu mounts (the phone
+// drawer opening too) and after each navigation; "nearest" leaves a row
+// already in view where it is.
+function useCurrentRowInView() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { t, locale } = useLocale();
-  const { openCount } = useTodayTasks();
-  const sections = useNavSections();
-  // Found among every item, so a page hidden from this member lights no row.
-  const location = findNavLocation(pathname, searchParams, useNavSections({ allRoles: true }));
-  const groups = useOpenGroups();
-  const baseId = useId();
-
-  // The menu scrolls, and a page low in it (Habits on a laptop, Vault) sat
-  // out of sight: bring the open page's row into view when the menu mounts
-  // (the phone drawer opening too) and after each navigation. "nearest"
-  // leaves a row already in view where it is.
+  const searchKey = useSearchParams().toString();
   const rows = useRef<HTMLDivElement>(null);
-  const searchKey = searchParams.toString();
   useEffect(() => {
     rows.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: "nearest" });
   }, [pathname, searchKey]);
+  return rows;
+}
+
+const SCROLLER = "relative min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+
+// The Money Tracker menu (AppSidebar): section names, rows of 38px, and a
+// group's pages on a line under it, the open one in a tinted pill. A
+// group's name opens its first page; its chevron shows or hides its pages
+// without leaving this one.
+export function MoneyMenu({ collapsed = false, touch = false, className, style, navRef }: MenuProps) {
+  const { t } = useLocale();
+  const sections = menuSections(useNavSections(), "money");
+  const { location } = useNavLocation();
+  const { isExpanded, toggle } = useExpandedGroups(location);
+  const baseId = useId();
+  const rows = useCurrentRowInView();
 
   const renderItem = (item: NavItem) => {
-    const Icon = ICONS[item.icon];
+    const Icon = NAV_ICONS[item.icon];
     const self = location?.item === item && !location.sub;
     const inGroup = !!item.subs && location?.item === item;
-    const lit = self || inGroup;
-    // The group of the page on screen can't be closed.
-    const expanded = inGroup || (!!item.subs && groups.open.includes(item.href));
-    const Chevron = expanded ? ChevronDown : ChevronRight;
-    const subsId = `${baseId}-pages${item.href.replace(/[^\w-]/g, "-")}`;
-    const badge = item.badge === "todayTasks" && openCount > 0;
+    const expanded = isExpanded(item);
     if (collapsed) {
+      const lit = self || inGroup;
       return (
-        <RailTip key={`${item.label}:${item.href}`} label={t(item.label)} show>
+        <RailTip key={item.href} label={t(item.label)} show>
           <Link
             href={leafHref(item)}
             aria-current={self ? "page" : undefined}
             aria-label={t(item.label)}
-            className={cn(
-              cn("relative flex h-10 items-center justify-center rounded-md transition-colors", SHORT),
-              NIGHT_FOCUS,
-              lit ? cn(ACTIVE_ROW, "text-white") : cn("text-white hover:text-white", HOVER_ROW),
-            )}
+            className={cn("flex h-9.5 shrink-0 items-center justify-center rounded-md transition-colors", lit ? "bg-emerald-soft text-emerald" : "text-ink-muted hover:bg-surface-sunken hover:text-ink")}
           >
-            {lit && <span aria-hidden="true" className={cn(MARKER, "top-2.5 h-5")} />}
-            <Icon className={cn("size-4.75 shrink-0", lit ? "opacity-100" : "opacity-85")} strokeWidth={1.9} aria-hidden="true" />
-            {badge && <span aria-hidden="true" className="absolute top-2 right-2.5 size-2 rounded-full bg-mint-200" />}
+            <Icon className="size-4.5" strokeWidth={2} aria-hidden="true" />
           </Link>
         </RailTip>
       );
     }
+    const subsId = `${baseId}-pages${item.href.replace(/[^\w-]/g, "-")}`;
+    const Chevron = expanded ? ChevronDown : ChevronRight;
     return (
-      <div key={`${item.label}:${item.href}`} className="flex flex-col">
+      <div key={item.href} className="flex flex-col">
         <div className="relative flex">
           <Link
             href={leafHref(item)}
             aria-current={self ? "page" : undefined}
             className={cn(
-              "relative flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 transition-colors",
-              NIGHT_FOCUS,
-              compact ? cn("h-10 text-body", SHORT) : "h-11 text-body-lg",
-              // Room for the chevron's own button.
-              item.subs && (compact ? "pr-11" : "pr-12"),
-              lit ? "font-semibold text-white" : cn("font-medium text-white hover:text-white", HOVER_ROW),
-              self && ACTIVE_ROW,
+              "flex min-w-0 flex-1 items-center gap-2.5 rounded-md pl-3 text-body whitespace-nowrap transition-colors",
+              touch ? "h-11" : "h-9.5",
+              item.subs ? "pr-9" : "pr-2.5",
+              self ? "bg-emerald-soft font-semibold text-emerald" : inGroup ? "font-semibold text-ink hover:bg-surface-sunken" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
             )}
           >
-            {self && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}
-            <Icon className={cn("shrink-0", compact ? "size-4.5" : "size-4.75", lit ? "opacity-100" : "opacity-85")} strokeWidth={1.9} />
+            <Icon className={cn("size-4.5 shrink-0", self || inGroup ? "text-emerald" : "text-ink-muted")} strokeWidth={2} aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
-            {badge && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-mint-200/16 px-2 text-caption font-bold text-mint-200 tabular-nums">{formatCount(openCount, locale)}</span>
-            )}
-            {item.tag && <span className="flex h-5.5 items-center rounded-full bg-mint-glow px-2 text-caption font-bold text-forest">{t(item.tag)}</span>}
           </Link>
           {item.subs && (
             <button
@@ -260,20 +289,15 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
               aria-controls={subsId}
               aria-label={t("{group} pages", { group: t(item.label) })}
               disabled={inGroup}
-              onClick={() => groups.toggle(item.href)}
-              className={cn(
-                "absolute top-0 right-0 flex items-center justify-center rounded-md transition-colors",
-                NIGHT_FOCUS,
-                compact ? "size-10" : "size-11",
-                lit ? "text-white" : cn("text-white/90 hover:text-white", HOVER_ROW),
-              )}
+              onClick={() => toggle(item.href)}
+              className={cn("absolute top-0 right-0 flex w-9 items-center justify-center rounded-md text-ink-faint transition-colors enabled:hover:text-ink", touch ? "h-11" : "h-9.5")}
             >
-              <Chevron className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+              <Chevron className="size-4" strokeWidth={2} aria-hidden="true" />
             </button>
           )}
         </div>
         {item.subs && (
-          <div id={subsId} hidden={!expanded} className="flex flex-col">
+          <div id={subsId} hidden={!expanded} className="mt-0.5 mb-1 ml-5.25 flex flex-col gap-0.5 border-l border-line pl-3">
             {item.subs.map((sub) => {
               const on = location?.sub === sub;
               return (
@@ -282,15 +306,12 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
                   href={leafHref(sub)}
                   aria-current={on ? "page" : undefined}
                   className={cn(
-                    "relative flex items-center rounded-md pr-3 pl-10 transition-colors",
-                    NIGHT_FOCUS,
-                    compact ? "h-8.5 text-small [@media(max-height:860px)]:h-8" : "h-10 text-body",
-                    on ? cn(ACTIVE_ROW, "font-semibold text-white") : "font-medium text-white/95 hover:text-white",
+                    "relative flex items-center rounded-[10px] px-2.5 text-[13.5px] whitespace-nowrap transition-colors",
+                    touch ? "h-10" : "h-8",
+                    on ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-soft hover:bg-surface-sunken hover:text-ink",
                   )}
                 >
-                  <span aria-hidden="true" className="absolute top-0 bottom-0 left-5.25 w-px bg-mint-200/16" />
-                  {on && <span aria-hidden="true" className="absolute top-2.75 left-4.75 h-3 w-1.25 rounded-full bg-night-marker" />}
-                  {t(sub.label)}
+                  <span className="min-w-0 truncate">{t(sub.label)}</span>
                 </Link>
               );
             })}
@@ -301,24 +322,20 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
   };
 
   return (
-    <nav ref={navRef} aria-label={t("Main")} style={style} className={cn("relative min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", className)}>
-      {/* The sidebar spaces its rows 2px apart; the phone drawer stacks its
-          44px rows and sets the section names on their natural line. */}
-      <div ref={rows} className={cn("flex flex-col", compact && "gap-0.5")}>
-        {sections.map((section) => (
-          <div key={section.label ?? "home"} className={cn("flex flex-col", compact && "gap-0.5")}>
-            {section.label && collapsed && (
-              // Folded: a short line marks where a section starts.
-              <span className="flex h-5 items-center justify-center">
-                <span aria-hidden="true" className="h-px w-6 bg-mint-200/16" />
-                <span className="sr-only">{t(section.label)}</span>
-              </span>
-            )}
-            {section.label && !collapsed && (
-              <span className={cn("flex items-center gap-2 px-3 pt-4 text-caption font-bold tracking-[0.1em] text-mint-200 uppercase", compact ? "h-9 pb-2 [@media(max-height:860px)]:h-7 [@media(max-height:860px)]:pt-2.5 [@media(max-height:860px)]:pb-1" : "pb-1 leading-[normal]")}>
-                <span aria-hidden="true" className={cn("size-1.5 rounded-full", NIGHT_DOT[section.tone])} />
-                {t(section.label)}
-              </span>
+    <nav ref={navRef} aria-label={t("Main")} style={style} className={cn(SCROLLER, className)}>
+      <div ref={rows} className="flex flex-col gap-3">
+        {sections.map((section, index) => (
+          <div key={section.label ?? index} className="flex flex-col gap-0.5">
+            {collapsed ? (
+              index > 0 && (
+                // Folded: a short line marks where a section starts.
+                <span className="flex h-2 items-center justify-center">
+                  <span aria-hidden="true" className="h-px w-6 bg-line" />
+                  <span className="sr-only">{t(section.label ?? "")}</span>
+                </span>
+              )
+            ) : (
+              <SectionLabel section={section} className="px-3 pb-1" />
             )}
             {section.items.map(renderItem)}
           </div>
@@ -328,40 +345,95 @@ export function SidebarNav({ compact = true, collapsed = false, className, style
   );
 }
 
-// Invite & earn and Settings, under the scrolling menu.
-export function SidebarFoot({ compact = true, collapsed = false }: { compact?: boolean; collapsed?: boolean }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+function SectionLabel({ section, className }: { section: NavSection; className?: string }) {
   const { t } = useLocale();
-  const location = findNavLocation(pathname, searchParams, useNavSections({ allRoles: true }));
+  if (!section.label) return null;
+  return <span className={cn("text-[11px] leading-[normal] font-semibold tracking-[0.06em] text-ink-muted uppercase", className)}>{t(section.label)}</span>;
+}
+
+// Whether any Money Tracker group shows its pages: the foot's Upgrade card
+// steps aside then, so the menu is never pushed out of view (the
+// AppSidebar board's rule).
+export function useMoneyGroupOpen(): boolean {
+  const sections = menuSections(useNavSections(), "money");
+  const { location } = useNavLocation();
+  const { isExpanded } = useExpandedGroups(location);
+  return sections.some((section) => section.items.some(isExpanded));
+}
+
+// The Habit Tracker menu (HabitSidebar): 40px rows, the open page in a
+// tinted pill with a bar at the panel's edge, and the counts on Daily
+// habits (done today of planned) and To Do List (open tasks today).
+export function HabitMenu({ collapsed = false, touch = false, className, style, navRef }: MenuProps) {
+  const { t, locale } = useLocale();
+  const sections = menuSections(useNavSections(), "habit");
+  const { location } = useNavLocation();
+  const { openCount } = useTodayTasks();
+  const habits = useHabitsToday(true);
+  const rows = useCurrentRowInView();
+
+  const badgeOf = (item: NavItem): { text: string; title: string } | null => {
+    if (item.badge === "todayTasks" && openCount > 0) {
+      return { text: formatCount(openCount, locale), title: t("Today’s tasks, {count} left", { count: formatCount(openCount, locale) }) };
+    }
+    if (item.badge === "habitsToday" && habits && habits.total > 0) {
+      const done = formatCount(habits.done, locale);
+      const total = formatCount(habits.total, locale);
+      return { text: `${done}/${total}`, title: t("{done} of {total} habits done today", { done, total }) };
+    }
+    return null;
+  };
 
   return (
-    <div className="flex flex-col gap-0.5">
-      {NAV_FOOT.map((item) => {
-        const Icon = ICONS[item.icon];
-        const on = location?.item === item;
-        return (
-          <RailTip key={item.href} label={t(item.label)} show={collapsed}>
-            <Link
-              href={item.href}
-              aria-current={on ? "page" : undefined}
-              aria-label={collapsed ? t(item.label) : undefined}
-              className={cn(
-                "relative flex items-center rounded-md transition-colors",
-                NIGHT_FOCUS,
-                collapsed ? cn("h-10 justify-center", SHORT) : cn("gap-3 px-3", compact ? cn("h-10 text-body", SHORT) : "h-11 text-body"),
-                on ? cn(ACTIVE_ROW, "font-semibold text-white") : cn("font-medium text-white hover:text-white", HOVER_ROW),
-              )}
-            >
-              {on && <span aria-hidden="true" className={cn(MARKER, "h-5", compact ? "top-2.5" : "top-3")} />}
-              <Icon className={cn("shrink-0", compact ? "size-4.5" : "size-4.75")} strokeWidth={1.9} aria-hidden={collapsed || undefined} />
-              {!collapsed && <span className="flex-1">{t(item.label)}</span>}
-              {!collapsed && item.tag && <span className="flex h-5.5 items-center rounded-full bg-mint-glow px-2 text-caption font-bold text-forest">{t(item.tag)}</span>}
-              {collapsed && item.tag && <span aria-hidden="true" className="absolute top-2 right-2.5 size-2 rounded-full bg-mint-glow" />}
-            </Link>
-          </RailTip>
-        );
-      })}
-    </div>
+    <nav ref={navRef} aria-label={t("Habit Tracker")} style={style} className={cn(SCROLLER, className)}>
+      <div ref={rows} className={cn("flex flex-col", collapsed ? "gap-3" : "gap-4.5")}>
+        {sections.map((section, index) => (
+          <div key={section.label ?? index} className="flex flex-col gap-0.5">
+            {collapsed ? (
+              index > 0 && (
+                <span className="flex h-2 items-center justify-center">
+                  <span aria-hidden="true" className="h-px w-6 bg-line" />
+                  <span className="sr-only">{t(section.label ?? "")}</span>
+                </span>
+              )
+            ) : (
+              <SectionLabel section={section} className="px-3 pb-1.5" />
+            )}
+            {section.items.map((item) => {
+              const Icon = NAV_ICONS[item.icon];
+              const on = location?.item === item;
+              const badge = badgeOf(item);
+              return (
+                <RailTip key={leafHref(item)} label={t(item.label)} show={collapsed}>
+                  <Link
+                    href={leafHref(item)}
+                    aria-current={on ? "page" : undefined}
+                    aria-label={collapsed ? t(item.label) : undefined}
+                    className={cn(
+                      "relative flex shrink-0 items-center rounded-sm text-body transition-colors",
+                      touch ? "h-11" : "h-10",
+                      collapsed ? "justify-center" : "gap-3 px-3",
+                      on ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
+                    )}
+                  >
+                    <Icon className={cn("size-4.5 shrink-0", on ? "text-emerald" : "text-ink-muted")} strokeWidth={2} aria-hidden="true" />
+                    {!collapsed && <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>}
+                    {badge &&
+                      (collapsed ? (
+                        <span aria-hidden="true" className="absolute top-1.5 right-2 size-2 rounded-full bg-emerald" />
+                      ) : (
+                        <span title={badge.title} className={cn("min-w-5 rounded-full px-1.75 py-px text-center text-caption font-semibold tabular-nums", on ? "bg-surface text-emerald" : "bg-surface-sunken text-ink-soft")}>
+                          <span aria-hidden="true">{badge.text}</span>
+                          <span className="sr-only">{badge.title}</span>
+                        </span>
+                      ))}
+                  </Link>
+                </RailTip>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </nav>
   );
 }

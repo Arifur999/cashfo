@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/modules/Customer/Layout/AppSidebar";
 import { AppTopbar } from "@/components/modules/Customer/Layout/AppTopbar";
 import { OfflineBanner } from "@/components/modules/Customer/Layout/OfflineBanner";
 import { OwnerViewBanner } from "@/components/modules/Customer/Layout/OwnerViewBanner";
+import { ShellFrame } from "@/components/modules/Customer/Layout/ShellFrame";
 import { ShellNotice } from "@/components/modules/Customer/Layout/ShellNotice";
 import { TopbarProvider } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { QuickAddFab } from "@/components/modules/Customer/Layout/QuickAddFab";
@@ -117,9 +118,10 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
               <TodayTasksProvider>
                 <TopbarProvider>
                   <AddActionsProvider>
-                    {/* The Night sidebar on the left; the top bar and the one
+                    {/* The app's sidebar on the left (Money Tracker or Habit
+                        Tracker, by the page); the top bar and the one
                         scrolling region on the right. */}
-                    <div className="flex h-screen overflow-hidden bg-page print:block print:h-auto print:overflow-visible">
+                    <ShellFrame>
                       <AppSidebar initialCollapsed={sidebarCollapsed} />
                       <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
                         {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
@@ -131,7 +133,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                           {children}
                         </main>
                       </div>
-                    </div>
+                    </ShellFrame>
                     <QuickAddFab />
                     <ShellNotice />
                     {/* Keeps this device's push subscription in the reader's language. */}

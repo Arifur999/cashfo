@@ -172,4 +172,25 @@ export const chromeDictionary: Record<string, string> = {
   // The sidebar's fold button.
   "Collapse sidebar": "সাইডবার ছোট করুন",
   "Expand sidebar": "সাইডবার বড় করুন",
+
+  // design-v4 shell: the Money Tracker menu (AppSidebar), the Habit
+  // Tracker menu (HabitSidebar) and the top bar (AppTopbar).
+  "Plan & track": "পরিকল্পনা ও ট্র্যাকিং",
+  "Income Category": "আয়ের ক্যাটাগরি",
+  "Group Expense": "গ্রুপ খরচ",
+  Worship: "ইবাদত",
+  "Plan@@habits": "পরিকল্পনা",
+  "To Do List": "করণীয় তালিকা",
+  "Prayers, habits and tasks": "নামাজ, অভ্যাস ও কাজ",
+  "Upgrade to Pro": "Pro-তে আপগ্রেড করুন",
+  "No monthly limit on transactions, plus PDF reports, income goals and up to 5 workspaces.":
+    "লেনদেনে মাসিক কোনো সীমা নেই, সাথে PDF রিপোর্ট, আয়ের লক্ষ্য আর ৫টি পর্যন্ত ওয়ার্কস্পেস।",
+  "See plans": "প্ল্যান দেখুন",
+  Upgrade: "আপগ্রেড",
+  "Free plan": "ফ্রি প্ল্যান",
+  "Paid plans are coming soon.": "পেইড প্ল্যান শীঘ্রই আসছে।",
+  "Search or jump to…": "খুঁজুন বা সরাসরি যান…",
+  "Switch to Habit Tracker": "হ্যাবিট ট্র্যাকারে যান",
+  "Switch to Money Tracker": "মানি ট্র্যাকারে যান",
+  "{done} of {total} habits done today": "আজ {total}টি অভ্যাসের মধ্যে {done}টি হয়েছে",
 };

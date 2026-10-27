@@ -1,9 +1,7 @@
 "use client";
 
-import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
-import Button from "@/components/smartly/Button";
 import IconTile from "@/components/smartly/IconTile";
 import Kbd from "@/components/smartly/Kbd";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -17,8 +15,11 @@ const isBusy = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.closest("[role=dialog], [role=alertdialog], [role=menu]") !== null);
 
-// The top bar's Add button: one menu for everything you can add. N opens
-// it anywhere; the letter on each row picks it.
+// One menu for everything you can add, opened with N anywhere; the letter
+// on each row picks it. The design-v4 top bar has no Add button (New
+// transaction lives on the Dashboard and Transactions pages, the phone has
+// its +), so the menu hangs off an invisible anchor at the top bar's right
+// edge, under the account button.
 export function AddMenu() {
   return (
     <WithAddActions>
@@ -35,17 +36,20 @@ function AddMenuButton() {
   // A pick opens a drawer or a panel of its own; focus stays with that
   // rather than going back to the Add button (which would close the panel).
   const picked = useRef(false);
-  const button = useRef<HTMLButtonElement>(null);
+  const anchor = useRef<HTMLSpanElement>(null);
+  // Where the focus was when N opened the menu: it goes back there when
+  // the menu closes without a pick (the anchor can't take it).
+  const opener = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       // Autofill fires keydowns with no key at all.
       if (typeof event.key !== "string") return;
-      // Below md the button is hidden (the + sheet stands in for it), and a
-      // menu opened there would hang off nothing.
-      if (!button.current?.offsetParent) return;
+      // Below md the anchor is hidden (the + sheet stands in for the menu).
+      if (!anchor.current?.offsetParent) return;
       if (event.key.toLowerCase() === "n" && !event.ctrlKey && !event.metaKey && !event.altKey && !isBusy(event.target)) {
         event.preventDefault();
+        opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         setOpen(true);
       }
     };
@@ -75,19 +79,17 @@ function AddMenuButton() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button ref={button} variant="soft" className="pl-3">
-          <Plus strokeWidth={2.25} />
-          {t("Add")}
-        </Button>
+        <span ref={anchor} aria-hidden="true" tabIndex={-1} className="pointer-events-none absolute right-8 bottom-0 block size-px" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
         sideOffset={8}
         onKeyDown={onMenuKeyDown}
         onCloseAutoFocus={(event) => {
-          if (!picked.current) return;
-          picked.current = false;
           event.preventDefault();
+          if (picked.current) picked.current = false;
+          else if (opener.current?.isConnected) opener.current.focus();
+          opener.current = null;
         }}
         className="w-85 rounded-lg border border-line bg-surface p-0 shadow-overlay ring-0"
       >

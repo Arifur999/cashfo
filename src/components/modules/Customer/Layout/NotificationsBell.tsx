@@ -39,7 +39,7 @@ type Filter = "all" | "unread";
 // habit reminders and announcements, newest first. Always there, so the
 // reminder settings stay one tap away; an empty feed says so. A row about
 // another workspace switches to it before opening.
-export function NotificationsBell() {
+export function NotificationsBell({ className, badgeClassName }: { className?: string; badgeClassName?: string }) {
   const router = useRouter();
   const { t, locale } = useLocale();
   const { user, activeBusinessId } = useAuth();
@@ -136,13 +136,14 @@ export function NotificationsBell() {
       <PopoverTrigger
         aria-label={label}
         title={t("Notifications")}
-        className="relative flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 md:size-10 md:border md:border-line md:bg-surface md:hover:bg-surface-sunken data-open:bg-surface-sunken"
+        // The top bar gives it the shape of its other icon buttons.
+        className={cn("relative flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink", className)}
       >
-        <Bell className="size-5 md:size-4.5" aria-hidden="true" />
+        <Bell className="size-5 md:size-4.5" strokeWidth={2} aria-hidden="true" />
         {unread > 0 && (
           <span
             aria-hidden="true"
-            className="absolute top-1 right-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-expense-fill px-1 text-caption leading-4 font-bold text-white tabular-nums shadow-[0_0_0_2px_var(--surface)] md:-top-1.25 md:-right-1.25"
+            className={cn("absolute flex items-center justify-center rounded-full bg-expense-fill font-bold text-white tabular-nums", badgeClassName)}
           >
             {formatCount(unread, locale)}
           </span>

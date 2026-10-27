@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, CircleHelp, Gift, LayoutGrid, Lock, LogOut, Settings, SlidersHorizontal } from "lucide-react";
+import { CircleHelp, Gift, LayoutGrid, Lock, LogOut, Settings, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
@@ -31,7 +31,7 @@ const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 
 // workspace they can open (the open one ticked), the chooser and the
 // workspace settings, then settings, referrals (with what is ready to
 // withdraw) and help, lock and sign out.
-export function AccountMenu() {
+export function AccountMenu({ className }: { className?: string }) {
   const { user, activeBusiness, logout } = useAuth();
   const { t, locale } = useLocale();
   const router = useRouter();
@@ -41,7 +41,6 @@ export function AccountMenu() {
   // closes: the focus goes back to this button instead.
   const triggerRef = useRef<HTMLButtonElement>(null);
   const switcher = useWorkspaceSwitch({ onSwitched: () => setOpen(false), returnFocusRef: triggerRef });
-  const firstName = user.name.trim().split(/\s+/)[0] || user.name;
   const kind = workspaceKind(activeBusiness);
   // Read each time the menu opens, not on every page: after a withdrawal
   // the reward ready to take has changed. The last figure shows meanwhile.
@@ -69,14 +68,11 @@ export function AccountMenu() {
         <DropdownMenuTrigger
           ref={triggerRef}
           aria-label={`${t("Account menu")} — ${user.name}, ${t(kind)}`}
-          className="flex h-11 shrink-0 items-center gap-3 rounded-full pr-0 pl-1 md:ml-1 md:pr-3 data-open:bg-surface-sunken"
+          // The avatar alone (AppTopbar board): 36px on a phone, 38px with a
+          // white ring from md up.
+          className={cn("flex shrink-0 items-center justify-center rounded-full", className)}
         >
-          <Avatar name={user.name} src={user.avatarUrl} size={36} />
-          <span className="hidden flex-col items-start md:flex">
-            <span className="text-small font-semibold whitespace-nowrap text-ink">{firstName}</span>
-            <span className="text-caption font-normal whitespace-nowrap text-ink-muted">{t(kind)}</span>
-          </span>
-          <ChevronDown className="hidden size-4 text-ink-muted md:block" aria-hidden="true" />
+          <Avatar name={user.name} src={user.avatarUrl} size={36} tone="soft" alt="" className="md:size-9.5 md:border-2 md:border-surface md:shadow-button" />
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"

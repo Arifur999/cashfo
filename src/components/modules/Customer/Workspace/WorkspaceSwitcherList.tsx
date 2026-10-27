@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, Lock, Store, User } from "lucide-react";
-import { NIGHT_FOCUS } from "@/components/modules/Customer/Layout/SidebarNav";
 import Loader from "@/components/shared/Loader";
 import IconTile from "@/components/smartly/IconTile";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -13,7 +12,7 @@ import type { WorkspaceSwitch } from "./useWorkspaceSwitch";
 interface WorkspaceSwitcherListProps {
   switcher: WorkspaceSwitch;
   // "menu": rows of the account menu, inside its DropdownMenu; "drawer":
-  // the phone drawer's Night panel.
+  // the phone drawer's white panel.
   variant: "menu" | "drawer";
 }
 
@@ -79,20 +78,16 @@ export function WorkspaceSwitcherList({ switcher, variant }: WorkspaceSwitcherLi
         aria-busy={row.pending || undefined}
         disabled={switcher.busy && !row.pending}
         onClick={() => switcher.choose(business)}
-        className={cn(
-          "flex min-h-12 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left transition-colors disabled:opacity-60",
-          NIGHT_FOCUS,
-          row.active ? "bg-mint-200/14 text-white" : "text-white/80 hover:bg-white/6 hover:text-white",
-        )}
+        className={cn("flex min-h-12 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-ink transition-colors disabled:opacity-60", row.active ? "bg-emerald-soft" : "hover:bg-surface-sunken")}
       >
-        <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/8 text-mint-200 [&_svg]:size-4">
+        <IconTile tone={isBusiness ? "loans" : row.active ? "white" : "money"} size={32}>
           {isBusiness ? <Store /> : <User />}
-        </span>
+        </IconTile>
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-body font-semibold">{row.name}</span>
-          <span className="text-caption font-normal text-mint-200/70">{caption}</span>
+          <span className="text-caption font-normal text-ink-muted">{caption}</span>
         </span>
-        <RowEnd row={row} onDark />
+        <RowEnd row={row} onDark={false} />
       </button>
     );
   });
