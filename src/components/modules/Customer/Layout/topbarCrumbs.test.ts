@@ -14,8 +14,9 @@ const locate = (url: string) => {
 };
 
 describe("topbarTrail", () => {
-  it("keeps a section as plain text", () => {
-    expect(topbarTrail(locate("/group-expenses"), false)).toEqual([{ label: "Plan & track" }]);
+  it("keeps a Habit Tracker section as plain text, and names no Money Tracker section", () => {
+    expect(topbarTrail(locate("/group-expenses"), false)).toEqual([]);
+    expect(topbarTrail(locate("/referrals/withdraw"), true)).toEqual([{ label: "Referral Program", href: "/referrals" }]);
     expect(topbarTrail(locate("/habit-tracker/daily"), false)).toEqual([{ label: "Habits" }]);
   });
 

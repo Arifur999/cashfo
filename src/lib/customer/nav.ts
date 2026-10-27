@@ -55,6 +55,9 @@ export interface NavLeaf {
   // Query values href needs: the habit pages share one route and differ
   // by ?category=.
   query?: Record<string, string>;
+  // The page's own name where the menu shortens it ("Referrals" heads its
+  // page as "Referral Program").
+  heading?: string;
 }
 
 export interface NavItem extends NavLeaf {
@@ -199,7 +202,7 @@ export const NAV_SECTIONS: NavSection[] = [
     label: "Account@@user",
     tone: "neutral",
     items: [
-      { label: "Referrals", href: "/referrals", icon: "gift" },
+      { label: "Referrals", heading: "Referral Program", href: "/referrals", icon: "gift" },
       { label: "Password Manager", href: "/password-manager", icon: "vault", tone: "vault" },
     ],
   },
@@ -380,15 +383,17 @@ export interface Breadcrumb {
 }
 
 // What the top bar shows for a location, as the boards draw it: a group's
-// page under its group ("Balance › Wallet"), a page of its own under its
-// section ("Habits › Daily habits"), and the first section's pages on
-// their own ("Dashboard").
+// page under its group ("Balance › Wallet"), a Habit Tracker page of its
+// own under its section ("Habits › Daily habits"), and the Money Tracker's
+// pages of their own and the first section's pages alone ("Group Expense",
+// "Dashboard"). The pages the menu leaves out keep their section (Books).
 export function breadcrumbFor(location: NavLocation): Breadcrumb {
   const { section, item, sub } = location;
-  const crumbs = sub ? [item.label] : section?.label && !section.quiet ? [section.label] : [];
+  const namesSection = !!section?.label && !section.quiet && (sectionApp(section) === "habit" || !!section.hidden);
+  const crumbs = sub ? [item.label] : namesSection && section?.label ? [section.label] : [];
   return {
     crumbs,
-    heading: sub?.label ?? item.label,
+    heading: sub?.heading ?? sub?.label ?? item.heading ?? item.label,
     tone: item.tone ?? section?.tone ?? "money",
   };
 }
