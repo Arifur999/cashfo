@@ -77,8 +77,8 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
   }
 
   // The day's own colour: today mint, the weekend shaded.
-  // The same marks on the Aurora head: today lifted, weekends deepened.
-  const headTint = (day: string) => (day === data.today ? "bg-white/16" : weekend(day) ? "bg-black/14" : "");
+  // The same marks on the light head.
+  const headTint = (day: string) => (day === data.today ? "bg-mint-50" : weekend(day) ? "bg-surface-sunken" : "");
   const dayTint = (day: string) => (day === data.today ? "bg-mint-50" : weekend(day) ? "bg-surface-sunken" : "");
 
   return (
@@ -127,8 +127,8 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
             padding keeps a day the arrow keys move to clear of that column. */}
         <div className="scroll-pl-40 overflow-x-auto">
           <div ref={sheetRef} role="table" aria-label={t("Meal sheet for {month}", { month: monthName(data.range.key, locale, "long", true) })} onKeyDown={move} className="w-max min-w-full">
-            <div role="row" className={cn(LIST_HEAD, "grid h-11.5 items-stretch border-b border-aurora-edge px-0 md:px-0")} style={grid}>
-              <span role="columnheader" className="sticky left-0 z-10 flex items-center border-r border-white/12 bg-aurora-deep pl-4">
+            <div role="row" className={cn(LIST_HEAD, "grid h-11.5 items-stretch border-b border-line px-0 md:px-0")} style={grid}>
+              <span role="columnheader" className="sticky left-0 z-10 flex items-center border-r border-line bg-table-head pl-4">
                 {t("Member")}
               </span>
               {days.map((day, col) => {
@@ -143,7 +143,7 @@ export function GroupMealsTab({ data, onDay }: GroupMealsTabProps) {
                       onFocus={() => setFocus({ row: 0, col })}
                       aria-label={name}
                       title={name}
-                      className={cn("flex size-full flex-col items-center justify-center gap-px tabular-nums hover:bg-white/12 focus-visible:-outline-offset-2", day === data.today && "font-bold text-white")}
+                      className={cn("flex size-full flex-col items-center justify-center gap-px tabular-nums hover:bg-surface-sunken focus-visible:-outline-offset-2", day === data.today && "font-bold text-emerald")}
                     >
                       <span aria-hidden="true" className="font-medium opacity-80">
                         {DAY_INITIALS[locale][dayOf(day).getUTCDay()]}

@@ -7,6 +7,7 @@ import { createCn } from "cn/config";
 // components/ui merge the same way.
 const TEXT_STYLES = [
   "display-xl",
+  "page-title",
   "display",
   "h1",
   "h2",
@@ -28,13 +29,13 @@ const TEXT_STYLES = [
 
 export const cn = createCn({
   extend: {
-    // rounded-card (18px) and rounded-panel (22px), design-v4: without these
-    // a later rounded-lg would not replace them.
-    theme: { radius: ["card", "panel"] },
+    // rounded-field (10px), rounded-card (18px) and rounded-panel (22px),
+    // design-v4: without these a later rounded-lg would not replace them.
+    theme: { radius: ["field", "card", "panel"] },
     classGroups: {
       "font-size": [{ text: TEXT_STYLES }],
       shadow: [{ shadow: ["card", "float", "overlay", "drawer", "button", "control"] }],
-      "bg-image": [{ bg: ["aurora", "aurora-panel", "aurora-head", "night", "forest-depth", "fresh", "mint-glow", "wallet-forest", "wallet-teal", "wallet-charcoal", "wallet-mint", "savings-violet"] }],
+      "bg-image": [{ bg: ["aurora", "aurora-panel","night", "forest-depth", "fresh", "mint-glow", "wallet-forest", "wallet-teal", "wallet-charcoal", "wallet-mint", "savings-violet"] }],
     },
   },
 });

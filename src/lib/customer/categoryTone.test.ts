@@ -15,17 +15,14 @@ describe("categoryTone", () => {
 });
 
 describe("CATEGORY_TONE_COLORS / pickerColor", () => {
-  it("offers one colour per tile, each drawn differently", () => {
-    const tiles = CATEGORY_TONE_COLORS.map((color) => JSON.stringify(categoryTone(color)));
-    expect(new Set(tiles).size).toBe(CATEGORY_TONE_COLORS.length);
+  it("offers one colour per dot, each inked differently", () => {
+    const inks = CATEGORY_TONE_COLORS.map((color) => categoryTone(color).fg);
+    expect(new Set(inks).size).toBe(CATEGORY_TONE_COLORS.length);
   });
 
-  it("shows a twin's saved colour as the dot that draws the same tile", () => {
-    for (const twin of ["lime", "cyan", "indigo", "violet"]) {
-      const dot = pickerColor(twin);
-      expect(dot).not.toBeNull();
-      expect(categoryTone(dot)).toEqual(categoryTone(twin));
-    }
+  it("offers all twelve saved colour names as their own dots", () => {
+    expect(CATEGORY_TONE_COLORS).toHaveLength(12);
+    for (const color of ["lime", "cyan", "indigo", "violet"]) expect(pickerColor(color)).toBe(color);
     expect(pickerColor("green")).toBe("green");
     expect(pickerColor("mauve")).toBeNull();
     expect(pickerColor(null)).toBeNull();
