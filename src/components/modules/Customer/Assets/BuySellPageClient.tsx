@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, Package, Plus } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Package, Plus, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { createElement, useState } from "react";
 import Button from "@/components/smartly/Button";
@@ -10,7 +10,8 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
 import { usePageParam } from "@/hooks/usePageParam";
-import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
+import type { Account, Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { assetGain, assetsSummary, categoryVisual, gainChip } from "@/lib/customer/assetDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
@@ -29,6 +30,8 @@ interface BuySellPageClientProps {
   businessId: string;
   assets: Asset[];
   categories: AssetCategoryOption[];
+  // Every money and savings wallet, to name where the last sale went.
+  wallets: Account[];
   currency: string;
   canManage: boolean;
 }
@@ -44,7 +47,7 @@ const RESULT_BOX = { income: "bg-mint-50 text-income", expense: "bg-expense-soft
 // Buy & sell: the two moves that touch a wallet -- buying something (the
 // price leaves a wallet) and selling something owned (the price lands in
 // one) -- with the last sale beside them.
-export function BuySellPageClient({ businessId, assets, categories, currency, canManage }: BuySellPageClientProps) {
+export function BuySellPageClient({ businessId, assets, categories, wallets, currency, canManage }: BuySellPageClientProps) {
   const { t, locale } = useLocale();
   // Which way Add asset opens: buying now, or something already owned.
   const [adding, setAdding] = useState<"buy" | "own" | null>(null);
@@ -56,17 +59,20 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
   const lastSold = summary.sold[0];
   const lastGain = lastSold ? assetGain(lastSold) : null;
   const lastChip = lastGain ? gainChip(lastGain.percent) : null;
+  // "into Cash": the wallet the last sale was paid into, while it exists.
+  const soldWallet = lastSold?.soldAccountId ? wallets.find((wallet) => wallet.id === lastSold.soldAccountId) : undefined;
+  const soldInto = soldWallet ? accountDisplayName(soldWallet, displayLanguage(locale)) : null;
 
   return (
     <PageFrame className="gap-6">
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Assets")}`}
-        title={t("Buy & sell")}
+        title={t("Buy & sell assets")}
         description={t("Buying takes money out of a wallet. Selling puts the sale price into one.")}
         actions={
           canManage && (
             <Button onClick={() => setAdding("buy")}>
-              <Plus strokeWidth={2.5} className="size-4" />
+              <ShoppingCart className="size-4" />
               {t("Buy asset")}
             </Button>
           )
@@ -80,7 +86,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
           label={t("Sell an asset")}
           className="md:col-span-2"
           header={
-            <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-4 md:px-6 md:py-5">
+            <div className="flex items-center justify-between gap-3 px-4 py-4 md:px-6 md:py-4.5">
               <h2 className="text-title text-ink">{t("Sell an asset")}</h2>
               <span className="text-small text-ink-muted">{t("{count} you own", { count: formatCount(summary.owned.length, locale) })}</span>
             </div>
@@ -106,17 +112,17 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                 </ListHeadCell>
               </ListHead>
               {list.rows.map((asset) => (
-                <ListRow key={asset.id} columns={COLUMNS}>
+                <ListRow key={asset.id} columns={COLUMNS} className="md:min-h-15">
                   <ListCell className="flex min-w-0 items-center gap-3">
                     <AssetTypeTile visual={categoryVisual(categories, asset.category)} />
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className="truncate font-medium text-ink">{asset.name}</span>
                       <span className="truncate text-caption font-normal text-ink-muted">
-                        {t(asset.category)} · {t("Bought {month}", { month: formatDate(asset.purchaseDate, "MMM yyyy", locale) })}
+                        {t(asset.category)} · {t("bought {month}", { month: formatDate(asset.purchaseDate, "MMM yyyy", locale) })}
                       </span>
                     </span>
                   </ListCell>
-                  <ListCell align="end" className="hidden text-ink-2 tabular-nums md:block">
+                  <ListCell align="end" className="hidden text-ink-soft tabular-nums md:block">
                     {formatCurrency(asset.purchasePrice, currency, locale)}
                   </ListCell>
                   <ListCell align="end" className="font-semibold text-ink tabular-nums">
@@ -124,7 +130,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                   </ListCell>
                   {canManage ? (
                     <ListRowActions className="col-span-2 md:col-span-1">
-                      <Button variant="secondary" size="sm" onClick={() => setSelling(asset)} aria-label={t("Sell {name}", { name: asset.name })} className="px-4 pointer-coarse:h-11">
+                      <Button variant="secondary" size="sm" onClick={() => setSelling(asset)} aria-label={t("Sell {name}", { name: asset.name })} className="h-8 px-3.5 pointer-coarse:h-11">
                         {t("Sell")}
                       </Button>
                     </ListRowActions>
@@ -139,7 +145,7 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
 
         <div className="flex flex-col gap-6">
           {lastSold && lastGain && lastChip && (
-            <Card className="flex flex-col gap-4">
+            <Card className="flex flex-col gap-3.5">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-title text-ink">{t("Recently sold")}</h2>
                 <Link href="/assets-management/dashboard?status=sold" className="text-small font-semibold text-emerald hover:text-emerald-hover">
@@ -147,17 +153,20 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
                 </Link>
               </div>
               <div className="relative flex items-center gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink-2">{createElement(categoryVisual(categories, lastSold.category).icon, { className: "size-4.5", "aria-hidden": true })}</span>
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-field bg-surface-sunken text-ink-soft">{createElement(categoryVisual(categories, lastSold.category).icon, { className: "size-4.25", "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   {/* The whole line opens the sale. */}
                   <button type="button" onClick={() => setViewing(lastSold)} aria-label={t("Open {name}", { name: lastSold.name })} className="truncate text-left text-body font-medium text-ink after:absolute after:inset-0 after:rounded-md hover:underline">
                     {lastSold.name}
                   </button>
-                  <span className="text-caption font-normal text-ink-muted">{lastSold.soldAt ? t("Sold {date}", { date: formatDate(lastSold.soldAt, "d MMM yyyy", locale) }) : t("Sold")}</span>
+                  <span className="text-caption font-normal text-ink-muted">
+                    {lastSold.soldAt ? t("Sold {date}", { date: formatDate(lastSold.soldAt, "d MMM yyyy", locale) }) : t("Sold")}
+                    {soldInto && ` · ${t("into {wallet}", { wallet: soldInto })}`}
+                  </span>
                 </span>
                 <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(lastSold.soldPrice ?? 0, currency, locale)}</span>
               </div>
-              <div className={cn("flex items-center justify-between gap-3 rounded-md p-3 text-caption", RESULT_BOX[lastChip.tone])}>
+              <div className={cn("flex items-center justify-between gap-3 rounded-sm px-3 py-2.5 text-caption", RESULT_BOX[lastChip.tone])}>
                 <span className="font-normal">{t("Paid {amount} in {month}", { amount: formatCurrency(lastSold.purchasePrice, currency, locale), month: formatDate(lastSold.purchaseDate, "MMM yyyy", locale) })}</span>
                 <span className="font-semibold whitespace-nowrap tabular-nums">
                   {formatSignedCurrency(lastGain.amount, currency, locale)} ({toLocaleDigits(lastChip.label, locale)})
@@ -170,24 +179,19 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
             <h2 className="text-title text-ink">{t("Where the money goes")}</h2>
             <Explainer icon={<ArrowUpRight />} tone="bg-expense-soft text-expense" title={t("Buy")} text={t("The price leaves the wallet you pick, and the asset joins your list.")} />
             <Explainer icon={<ArrowDownLeft />} tone="bg-mint-50 text-emerald" title={t("Sell")} text={t("The full sale price is recorded as income in the wallet you pick.")} />
+            {/* Adding what is already owned stays one tap away: the link, or
+                Buy asset's "I already own it". */}
             <Explainer
-              icon={<Package />}
-              tone="bg-surface-sunken text-ink-2"
+              icon={<Plus />}
+              tone="bg-surface-sunken text-ink-soft"
               title={t("Already own it?")}
               text={fillNodes(t("Add it from {myAssets}. No money moves."), {
                 myAssets: (
                   <Link href="/assets-management/current" className="font-semibold text-emerald hover:text-emerald-hover">
-                    {t("My assets")}
+                    {t("Current Asset list")}
                   </Link>
                 ),
               })}
-              action={
-                canManage && (
-                  <button type="button" onClick={() => setAdding("own")} className="mt-1 self-start text-small font-semibold text-emerald hover:text-emerald-hover hover:underline pointer-coarse:min-h-11">
-                    {t("Add what you own")}
-                  </button>
-                )
-              }
             />
           </Card>
         </div>
@@ -200,14 +204,13 @@ export function BuySellPageClient({ businessId, assets, categories, currency, ca
   );
 }
 
-function Explainer({ icon, tone, title, text, action }: { icon: React.ReactNode; tone: string; title: string; text: React.ReactNode; action?: React.ReactNode }) {
+function Explainer({ icon, tone, title, text }: { icon: React.ReactNode; tone: string; title: string; text: React.ReactNode }) {
   return (
     <div className="flex gap-3">
-      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", tone)}>{icon}</span>
+      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-sm [&_svg]:size-3.75 [&_svg]:stroke-[2.25]", tone)}>{icon}</span>
       <span className="flex flex-col gap-0.5">
         <span className="text-body font-semibold text-ink">{title}</span>
-        <span className="text-small leading-relaxed text-ink-muted">{text}</span>
-        {action}
+        <span className="text-small leading-normal text-ink-muted">{text}</span>
       </span>
     </div>
   );

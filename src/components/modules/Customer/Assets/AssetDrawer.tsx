@@ -1,9 +1,10 @@
 "use client";
 
-import { CircleAlert, X } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
@@ -12,8 +13,6 @@ import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, AssetCategoryOption } from "@/lib/customer/api";
 import { addOwnedAssetAction, purchaseAssetAction } from "@/lib/customer/assetActions";
@@ -47,7 +46,6 @@ type Mode = "buy" | "own";
 export function AssetDrawer({ open, onClose, businessId, categories, totalValue, currency, initialMode = "buy", initialCategory }: AssetDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
-  const wide = useMediaQuery("(min-width: 768px)");
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -131,120 +129,112 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
   );
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent
-        side={wide ? "right" : "bottom"}
-        showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
-      >
-        <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
-          <div className="flex flex-col gap-1">
-            <SheetTitle className="text-h3 text-ink">{t("Add an asset")}</SheetTitle>
-            <SheetDescription className="text-small leading-[normal] text-ink-muted">{t("Something you're buying now, or something you already own.")}</SheetDescription>
-          </div>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
-        </SheetHeader>
+    <Drawer
+      open={open}
+      width={460}
+      title={t("Add an asset")}
+      description={t("Something you're buying now, or something you already own.")}
+      busy={isPending}
+      onClose={onClose}
+      onSubmit={submit}
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+            {t("Cancel")}
+          </Button>
+          <Button type="submit" disabled={!valid || isPending} className="px-4.5">
+            {isPending && <Loader size={16} onDark label={t("Loading...")} />}
+            {buying ? (value > 0 ? t("Buy for {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Buy asset")) : t("Add asset")}
+          </Button>
+        </>
+      }
+    >
+      {/* The board's tighter 16px rhythm for this longer form. */}
+      <div className="-my-1 flex flex-col gap-4">
+        <SegmentedControl
+          options={[
+            { value: "buy", label: t("Buying it now") },
+            { value: "own", label: t("I already own it") },
+          ]}
+          value={mode}
+          onChange={setMode}
+          label={t("How did you get it")}
+          size="lg"
+          stretch
+        />
 
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-            <SegmentedControl
-              options={[
-                { value: "buy", label: t("Buying it now") },
-                { value: "own", label: t("I already own it") },
-              ]}
-              value={mode}
-              onChange={setMode}
-              label={t("How did you get it")}
-              size="lg"
-              stretch
+        <Field htmlFor="asset-name" label={label(t("Asset name"))}>
+          <Input id="asset-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("Gold ring, 22K")} />
+        </Field>
+
+        <TypeChoice categories={categories} value={category} onChange={setCategory} onClose={onClose} />
+
+        <Field htmlFor="asset-price" label={label(buying ? t("Price") : t("What you paid"))}>
+          <AmountInput id="asset-price" value={price} onChange={setPrice} currency={currency} />
+        </Field>
+
+        {!buying && (
+          <Field htmlFor="asset-worth" label={label(t("Value today"), true)} hint={t("Change it if it's worth more or less now.")}>
+            <AmountInput id="asset-worth" value={worth ?? price} onChange={setWorth} currency={currency} describedBy="asset-worth-hint" />
+          </Field>
+        )}
+
+        {buying && (
+          <div className="flex flex-col gap-2">
+            <WalletPicker
+              label={t("Pay from")}
+              balanceLabel="Available@@balance"
+              tone="sand"
+              wallets={wallets}
+              savingsWallets={savingsWallets}
+              value={wallet?.id ?? ""}
+              onChange={setPickedWalletId}
+              after={null}
+              minBalance={value}
+              currency={currency}
+              loading={loading}
+              error={walletsError}
+              onClose={onClose}
             />
-
-            <Field htmlFor="asset-name" label={label(t("Asset name"))}>
-              <Input id="asset-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("Gold ring, 22K")} />
-            </Field>
-
-            <TypeChoice categories={categories} value={category} onChange={setCategory} onClose={onClose} />
-
-            <Field htmlFor="asset-price" label={label(buying ? t("Price") : t("What you paid"))}>
-              <AmountInput id="asset-price" value={price} onChange={setPrice} currency={currency} />
-            </Field>
-
-            {!buying && (
-              <Field htmlFor="asset-worth" label={label(t("Value today"), true)} hint={t("Change it if it's worth more or less now.")}>
-                <AmountInput id="asset-worth" value={worth ?? price} onChange={setWorth} currency={currency} describedBy="asset-worth-hint" />
-              </Field>
+            {!loading && short && wallet && (
+              <p role="alert" className="flex items-center gap-2 text-caption text-expense">
+                <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
+                {all.some(covers) ? t("Not enough in {wallet}. Pick another wallet.", { wallet: walletName }) : t("None of your wallets has that much.")}
+              </p>
             )}
+          </div>
+        )}
 
-            {buying && (
-              <div className="flex flex-col gap-2">
-                <WalletPicker
-                  label={t("Pay from")}
-                  balanceLabel="Available@@balance"
-                  tone="sand"
-                  wallets={wallets}
-                  savingsWallets={savingsWallets}
-                  value={wallet?.id ?? ""}
-                  onChange={setPickedWalletId}
-                  after={null}
-                  minBalance={value}
-                  currency={currency}
-                  loading={loading}
-                  error={walletsError}
-                  onClose={onClose}
-                />
-                {!loading && short && wallet && (
-                  <p role="alert" className="flex items-center gap-2 text-caption text-expense">
-                    <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
-                    {all.some(covers) ? t("Not enough in {wallet}. Pick another wallet.", { wallet: walletName }) : t("None of your wallets has that much.")}
-                  </p>
-                )}
+        <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
+          <Field htmlFor="asset-date" label={label(buying ? t("Date") : t("Bought on"))}>
+            <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={lastDay} />
+          </Field>
+          <Field htmlFor="asset-note" label={label(t("Note"), true)}>
+            <Input id="asset-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />
+          </Field>
+        </div>
+
+        {value > 0 && (
+          <div className="flex flex-col gap-2 rounded-md border border-line bg-strip p-4 text-small tabular-nums">
+            {buying && wallet && (
+              <div className="flex justify-between gap-3">
+                <span className="truncate text-ink-2">{walletName}</span>
+                <span>
+                  <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, locale)} → </span>
+                  <span className={cn("font-semibold", short ? "text-expense" : "text-ink")}>{formatCurrency(Number(wallet.currentBalance) - value, currency, locale)}</span>
+                </span>
               </div>
             )}
-
-            <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
-              <Field htmlFor="asset-date" label={label(buying ? t("Date") : t("Bought on"))}>
-                <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={lastDay} />
-              </Field>
-              <Field htmlFor="asset-note" label={label(t("Note"), true)}>
-                <Input id="asset-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />
-              </Field>
+            <div className="flex justify-between gap-3">
+              <span className="text-ink-2">{t("Your assets")}</span>
+              <span>
+                <span className="text-ink-muted">{formatCurrency(totalValue, currency, locale)} → </span>
+                <span className="font-semibold text-ink">{formatCurrency(totalValue + (buying ? value : worthValue), currency, locale)}</span>
+              </span>
             </div>
-
-            {value > 0 && (
-              <div className="flex flex-col gap-2 rounded-md border border-line bg-strip p-4 text-small tabular-nums">
-                {buying && wallet && (
-                  <div className="flex justify-between gap-3">
-                    <span className="truncate text-ink-2">{walletName}</span>
-                    <span>
-                      <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, locale)} → </span>
-                      <span className={cn("font-semibold", short ? "text-expense" : "text-ink")}>{formatCurrency(Number(wallet.currentBalance) - value, currency, locale)}</span>
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">{t("Your assets")}</span>
-                  <span>
-                    <span className="text-ink-muted">{formatCurrency(totalValue, currency, locale)} → </span>
-                    <span className="font-semibold text-ink">{formatCurrency(totalValue + (buying ? value : worthValue), currency, locale)}</span>
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
-
-          <div className={cn("flex items-center justify-end gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-6")}>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-              {t("Cancel")}
-            </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
-              {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {buying ? (value > 0 ? t("Buy for {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Buy asset")) : t("Add asset")}
-            </Button>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+        )}
+      </div>
+    </Drawer>
   );
 }

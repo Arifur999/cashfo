@@ -1,9 +1,10 @@
 "use client";
 
-import { Info, Trash2, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Info, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import Loader from "@/components/shared/Loader";
@@ -12,8 +13,6 @@ import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { deleteAssetAction, updateAssetAction, updateAssetValueAction, type UpdateAssetInput } from "@/lib/customer/assetActions";
 import { categoryVisual, gainChip, lastValued, latestPurchaseDay, newValueFloor, valueTimeline } from "@/lib/customer/assetDisplay";
@@ -49,7 +48,6 @@ const CHIP = { income: "bg-mint-50 text-emerald", expense: "bg-expense-soft text
 export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency }: UpdateValueDrawerProps) {
   const { t, locale } = useLocale();
   const router = useRouter();
-  const wide = useMediaQuery("(min-width: 768px)");
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [mode, setMode] = useState<Mode>("value");
   const [value, setValue] = useState("");
@@ -158,142 +156,131 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
   );
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent
-        side={wide ? "right" : "bottom"}
-        showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-115 shadow-drawer data-[side=right]:sm:max-w-115" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
-      >
-        <SheetHeader className={cn("flex-row items-center gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
-          <AssetTypeTile visual={visual} size="lg" />
-          <span className="flex min-w-0 flex-1 flex-col gap-px">
-            <SheetTitle className="text-h3 text-ink">{mode === "value" ? t("Update value") : t("Edit details")}</SheetTitle>
-            <SheetDescription className="truncate text-small leading-[normal] text-ink-muted">
-              {asset.name} · {t(asset.category)}
-            </SheetDescription>
-          </span>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
-        </SheetHeader>
+    <Drawer
+      open={open}
+      width={460}
+      icon={<AssetTypeTile visual={visual} size="lg" className="rounded-field" />}
+      title={mode === "value" ? t("Update value") : t("Edit details")}
+      description={`${asset.name} · ${t(asset.category)}`}
+      busy={isPending}
+      onClose={onClose}
+      onSubmit={submit}
+      footer={
+        // On a phone Delete takes a row of its own under the buttons, so
+        // Save never runs off the edge, whatever the language.
+        <div className="flex w-full flex-wrap items-center gap-2.5">
+          {mode === "details" && (
+            <Button type="button" variant="ghost" onClick={remove} disabled={isPending} className="text-expense hover:bg-expense-soft hover:text-expense max-sm:order-last max-sm:w-full">
+              {isPending && running === "delete" ? <Loader size={16} label={t("Deleting...")} /> : <Trash2 />}
+              {t("Delete asset")}
+            </Button>
+          )}
+          <div className="ml-auto flex items-center gap-2.5">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" disabled={(mode === "value" ? !valid : !detailsValid) || isPending} className="px-4.5">
+              {isPending && running === "save" && <Loader size={16} onDark label={t("Loading...")} />}
+              {mode === "value" ? t("Save new value") : t("Save changes")}
+            </Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="-my-1 flex flex-col gap-4">
+        <SegmentedControl
+          options={[
+            { value: "value", label: "Value" },
+            { value: "details", label: "Details" },
+          ]}
+          value={mode}
+          onChange={setMode}
+          label="What to change"
+          size="lg"
+          stretch
+        />
 
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-            <SegmentedControl
-              options={[
-                { value: "value", label: "Value" },
-                { value: "details", label: "Details" },
-              ]}
-              value={mode}
-              onChange={setMode}
-              label="What to change"
-              size="lg"
-              stretch
-            />
-
-            {/* Both parts stay mounted, so the new value keeps its focus
-                and nothing typed is lost on a switch. */}
-            <div hidden={mode !== "value"} className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-strip p-4 tabular-nums">
-                <span className="flex flex-col gap-0.5 *:leading-[normal]">
-                  <span className="text-caption font-normal text-ink-muted">{t("Current value")}</span>
-                  <span className="text-title text-ink">{formatCurrency(current, currency, locale)}</span>
-                  <span className="text-caption font-normal text-ink-muted">{since ? t("since {date}", { date: formatDate(since, "d MMM yyyy", locale) }) : t("Not checked since bought")}</span>
-                </span>
-                <span className="flex flex-col gap-0.5 *:leading-[normal]">
-                  <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
-                  <span className="text-title text-ink">{formatCurrency(paid, currency, locale)}</span>
-                  <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}</span>
-                </span>
-              </div>
-
-              <Field htmlFor="upd-value" label={label(t("New value"))}>
-                <AmountInput id="upd-value" value={value} onChange={setValue} currency={currency} autoFocus />
-                {next > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {/* A value for an earlier day leaves today's alone; the line below says so. */}
-                    {!backdated && (
-                      <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-caption font-semibold tabular-nums", CHIP[sinceLast.tone])}>
-                        {sinceLast.tone === "income" ? <TrendingUp className="size-3.5" aria-hidden="true" /> : sinceLast.tone === "expense" ? <TrendingDown className="size-3.5" aria-hidden="true" /> : null}
-                        {changed ? t("{change} since the last value", { change: `${next > current ? "+" : "−"} ${formatCurrency(Math.abs(next - current), currency, locale)} (${toLocaleDigits(sinceLast.label, locale)})` }) : t("Same as the last value")}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center rounded-full bg-surface-sunken px-3 py-1 text-caption font-semibold text-ink-2 tabular-nums">{t("{change} vs what you paid", { change: toLocaleDigits(vsPaid.label, locale) })}</span>
-                  </div>
-                )}
-                {backdated && (
-                  <p className="flex items-start gap-2 text-caption text-ink-muted">
-                    <Info className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                    {t("An earlier date fills in the history; the value today stays {amount}.", { amount: formatCurrency(current, currency, locale) })}
-                  </p>
-                )}
-              </Field>
-
-              <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
-                <Field htmlFor="upd-date" label={label(t("Date"))}>
-                  <DayInput id="upd-date" size="md" value={date} onChange={setDate} min={floor} max={today} />
-                </Field>
-                <Field htmlFor="upd-note" label={label(t("Note"), true)}>
-                  <Input id="upd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Mouza rate went up")} className="px-0" frameClassName="px-3" />
-                </Field>
-              </div>
-
-              <AssetValueHistory entries={timeline} currency={currency} today={today} />
-            </div>
-
-            <div hidden={mode !== "details"} className="flex flex-col gap-4">
-              <Field htmlFor="upd-name" label={label(t("Asset name"))}>
-                <Input id="upd-name" size="md" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} placeholder={t("Gold ring, 22K")} />
-              </Field>
-
-              <TypeChoice categories={categories} value={category} onChange={setCategory} onClose={onClose} keep={asset.category} />
-
-              <Field
-                htmlFor="upd-bought"
-                label={label(t("Bought on"))}
-                hint={
-                  redate
-                    ? boughtMax < today
-                      ? t("It can't be later than the first value recorded after it, on {date}.", { date: formatDate(boughtMax, "d MMM yyyy", locale) })
-                      : undefined
-                    : t(fromWallet ? "A purchase paid from a wallet keeps its date. Delete the asset and add it again to change it." : "A sold asset keeps its purchase date. Undo the sale to change it.")
-                }
-              >
-                {redate ? (
-                  <DayInput id="upd-bought" size="md" value={bought} onChange={setBought} max={boughtMax} aria-describedby={boughtMax < today ? "upd-bought-hint" : undefined} />
-                ) : (
-                  <Input id="upd-bought" size="md" value={formatDate(asset.purchaseDate, "d MMM yyyy", locale)} readOnly aria-describedby="upd-bought-hint" className="text-ink-2" frameClassName="border-line bg-strip px-3" />
-                )}
-              </Field>
-
-              <Field htmlFor="upd-notes" label={label(t("Note"), true)}>
-                <Input id="upd-notes" size="md" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />
-              </Field>
-            </div>
+        {/* Both parts stay mounted, so the new value keeps its focus
+            and nothing typed is lost on a switch. */}
+        <div hidden={mode !== "value"} className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-3 rounded-[14px] border border-line bg-strip p-4 tabular-nums">
+            <span className="flex flex-col gap-0.5 *:leading-[normal]">
+              <span className="text-caption font-normal text-ink-muted">{t("Current value")}</span>
+              <span className="text-title text-ink">{formatCurrency(current, currency, locale)}</span>
+              <span className="text-caption font-normal text-ink-muted">{since ? t("since {date}", { date: formatDate(since, "d MMM yyyy", locale) }) : t("Not checked since bought")}</span>
+            </span>
+            <span className="flex flex-col gap-0.5 *:leading-[normal]">
+              <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
+              <span className="text-title text-ink">{formatCurrency(paid, currency, locale)}</span>
+              <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}</span>
+            </span>
           </div>
 
-          <div className={cn("flex flex-wrap items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-6")}>
-            {/* On a phone it takes a row of its own under the buttons, so
-                Save never runs off the edge, whatever the language. */}
-            {mode === "details" && (
-              <Button type="button" variant="ghost" onClick={remove} disabled={isPending} className="text-expense hover:bg-expense-soft hover:text-expense max-sm:order-last max-sm:w-full">
-                {isPending && running === "delete" ? <Loader size={16} label={t("Deleting...")} /> : <Trash2 />}
-                {t("Delete asset")}
-              </Button>
+          <Field htmlFor="upd-value" label={label(t("New value"))}>
+            <AmountInput id="upd-value" value={value} onChange={setValue} currency={currency} autoFocus />
+            {next > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {/* A value for an earlier day leaves today's alone; the line below says so. */}
+                {!backdated && (
+                  <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-caption font-semibold tabular-nums", CHIP[sinceLast.tone])}>
+                    {sinceLast.tone === "income" ? <TrendingUp className="size-3.5" aria-hidden="true" /> : sinceLast.tone === "expense" ? <TrendingDown className="size-3.5" aria-hidden="true" /> : null}
+                    {changed ? t("{change} since the last value", { change: `${next > current ? "+" : "−"} ${formatCurrency(Math.abs(next - current), currency, locale)} (${toLocaleDigits(sinceLast.label, locale)})` }) : t("Same as the last value")}
+                  </span>
+                )}
+                <span className="inline-flex items-center rounded-full bg-surface-sunken px-3 py-1 text-caption font-semibold text-ink-2 tabular-nums">{t("{change} vs what you paid", { change: toLocaleDigits(vsPaid.label, locale) })}</span>
+              </div>
             )}
-            <div className="ml-auto flex items-center gap-3">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" variant="action" disabled={(mode === "value" ? !valid : !detailsValid) || isPending} className="px-5">
-                {isPending && running === "save" && <Loader size={16} onDark label={t("Loading...")} />}
-                {mode === "value" ? t("Save new value") : t("Save changes")}
-              </Button>
-            </div>
+            {backdated && (
+              <p className="flex items-start gap-2 text-caption text-ink-muted">
+                <Info className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                {t("An earlier date fills in the history; the value today stays {amount}.", { amount: formatCurrency(current, currency, locale) })}
+              </p>
+            )}
+          </Field>
+
+          <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
+            <Field htmlFor="upd-date" label={label(t("Date"))}>
+              <DayInput id="upd-date" size="md" value={date} onChange={setDate} min={floor} max={today} />
+            </Field>
+            <Field htmlFor="upd-note" label={label(t("Note"), true)}>
+              <Input id="upd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Mouza rate went up")} className="px-0" frameClassName="px-3" />
+            </Field>
           </div>
-        </form>
-        {confirmDialog}
-      </SheetContent>
-    </Sheet>
+
+          <AssetValueHistory entries={timeline} currency={currency} today={today} />
+        </div>
+
+        <div hidden={mode !== "details"} className="flex flex-col gap-4">
+          <Field htmlFor="upd-name" label={label(t("Asset name"))}>
+            <Input id="upd-name" size="md" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} placeholder={t("Gold ring, 22K")} />
+          </Field>
+
+          <TypeChoice categories={categories} value={category} onChange={setCategory} onClose={onClose} keep={asset.category} />
+
+          <Field
+            htmlFor="upd-bought"
+            label={label(t("Bought on"))}
+            hint={
+              redate
+                ? boughtMax < today
+                  ? t("It can't be later than the first value recorded after it, on {date}.", { date: formatDate(boughtMax, "d MMM yyyy", locale) })
+                  : undefined
+                : t(fromWallet ? "A purchase paid from a wallet keeps its date. Delete the asset and add it again to change it." : "A sold asset keeps its purchase date. Undo the sale to change it.")
+            }
+          >
+            {redate ? (
+              <DayInput id="upd-bought" size="md" value={bought} onChange={setBought} max={boughtMax} aria-describedby={boughtMax < today ? "upd-bought-hint" : undefined} />
+            ) : (
+              <Input id="upd-bought" size="md" value={formatDate(asset.purchaseDate, "d MMM yyyy", locale)} readOnly aria-describedby="upd-bought-hint" className="text-ink-2" frameClassName="border-line bg-strip px-3" />
+            )}
+          </Field>
+
+          <Field htmlFor="upd-notes" label={label(t("Note"), true)}>
+            <Input id="upd-notes" size="md" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />
+          </Field>
+        </div>
+      </div>
+      {confirmDialog}
+    </Drawer>
   );
 }

@@ -148,7 +148,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
   const overflows = icons.length > (wide ? 8 : 6) * ICON_ROWS;
   const tone = categoryTone(color);
   const chosenDot = pickerColor(color);
-  const title = isAsset ? (editing ? t("Edit asset type") : t("Add asset type")) : isGroup ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income category" : "Edit expense category") : t(isIncome ? "Add income category" : "Add expense category");
+  const title = isAsset || isGroup ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income category" : "Edit expense category") : t(isIncome ? "Add income category" : "Add expense category");
   const label = "text-body font-medium text-ink";
 
   const limitSection = !noLimit && (
@@ -303,7 +303,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
               </Button>
               <Button type="submit" disabled={!valid || isPending} className="px-4.5">
                 {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-                {editing ? t(isAsset || isGroup ? "Save changes" : "Save") : t(isAsset ? "Add asset type" : "Add category")}
+                {editing ? t(isAsset || isGroup ? "Save changes" : "Save") : t("Add category")}
               </Button>
             </div>
           </div>

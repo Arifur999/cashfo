@@ -1,6 +1,6 @@
 "use client";
 
-import { Package, Pencil, Plus, Search } from "lucide-react";
+import { FileText, Package, Plus, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
@@ -11,8 +11,8 @@ import Input from "@/components/smartly/form/Input";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
-import { assetGain, categoryVisual, gainChip, typeChips, updateCount, valueTrail } from "@/lib/customer/assetDisplay";
-import { formatCurrency } from "@/lib/customer/currency";
+import { assetGain, categoryVisual, gainChip, typeChips, updateCount } from "@/lib/customer/assetDisplay";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils";
 import { AssetDrawer } from "./AssetDrawer";
 import { AssetTypeTile } from "./AssetTypeTile";
 import { ReadOnlyNote } from "./ReadOnlyNote";
-import { Sparkline } from "./Sparkline";
 import { UpdateValueDrawer } from "./UpdateValueDrawer";
 
 interface MyAssetsPageClientProps {
@@ -68,7 +67,7 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
     <PageFrame className="gap-5">
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Assets")}`}
-        title={t("My assets")}
+        title={t("Current assets")}
         description={fillNodes(t(assets.length === 1 ? "{count} thing you own · {amount} today" : "{count} things you own · {amount} today"), {
           count: formatCount(assets.length, locale),
           amount: <b className="font-semibold text-ink">{formatCurrency(total, currency, locale)}</b>,
@@ -91,7 +90,7 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
         <EmptyState icon={<Package />} title={t("Nothing owned yet")} description={t("Add what you already own, or buy something new, and it shows up here.")} action={canManage && <Button onClick={() => setAddOpen(true)}>{t("Add asset")}</Button>} className="min-h-80" />
       ) : (
         <>
-          <div role="group" aria-label={t("Filter by type")} className="flex flex-wrap gap-2">
+          <div role="group" aria-label={t("Filter by category")} className="flex flex-wrap gap-2">
             <FilterChip on={active === ""} onClick={() => setCategory("")} count={formatCount(assets.length, locale)}>
               {t("All")}
             </FilterChip>
@@ -120,48 +119,54 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
             )}
             {shown.map((asset) => {
               const visual = categoryVisual(categories, asset.category);
-              const chip = gainChip(assetGain(asset).percent);
+              const gain = assetGain(asset);
+              const chip = gainChip(gain.percent);
               const updates = updateCount(asset);
-              const trail = valueTrail(asset);
+              const since = formatDate(asset.purchaseDate, "MMM yyyy", locale);
               return (
-                <Card key={asset.id} interactive={canManage} className={cn("group relative flex flex-col gap-3", canManage && CARD_FOCUS)}>
-                  <div className="flex items-center gap-3">
-                    <AssetTypeTile visual={visual} size="lg" />
-                    <span className="flex min-w-0 flex-1 flex-col gap-px">
+                <Card key={asset.id} padding="none" interactive={canManage} className={cn("group relative flex flex-col gap-4 p-4.5", canManage && CARD_FOCUS)}>
+                  <div className="flex items-start gap-3">
+                    <AssetTypeTile visual={visual} size="xl" glossy />
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.75 pt-0.5">
                       {canManage ? (
                         // The whole card is this one button: a div card, so
                         // the figures inside stay plain text.
-                        <button type="button" data-slot="card-action" onClick={() => setValuing(asset)} aria-label={t("Update value of {name}", { name: asset.name })} className="truncate text-left text-title text-ink after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none">
+                        <button type="button" data-slot="card-action" onClick={() => setValuing(asset)} aria-label={t("Update value of {name}", { name: asset.name })} className="truncate text-left text-[15px] leading-[normal] font-semibold text-ink after:absolute after:inset-0 after:rounded-card focus-visible:outline-none">
                           {asset.name}
                         </button>
                       ) : (
-                        <span className="truncate text-title text-ink">{asset.name}</span>
+                        <span className="truncate text-[15px] leading-[normal] font-semibold text-ink">{asset.name}</span>
                       )}
-                      <span className="truncate text-caption font-normal text-ink-muted">{t(asset.category)}</span>
+                      <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">{t("{type} · since {month}", { type: t(asset.category), month: since })}</span>
                     </span>
                     <Chip tone={chip.tone} size="sm" className="font-semibold">
                       {toLocaleDigits(chip.label, locale)}
                     </Chip>
-                    {canManage && <Pencil aria-hidden="true" className="size-3.5 shrink-0 text-ink-muted transition-colors group-hover:text-ink" />}
                   </div>
-                  <div className="flex items-end justify-between gap-3">
-                    <span className="flex flex-col gap-0.5">
-                      <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
-                      <span className="text-h2 tracking-[-0.01em] text-ink tabular-nums">{formatCurrency(asset.currentValue, currency, locale)}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
+                    <span className="text-[26px] leading-[normal] font-bold tracking-[-0.02em] text-ink tabular-nums">{formatCurrency(asset.currentValue, currency, locale)}</span>
+                    <span className={cn("text-[12.5px] leading-[normal] font-semibold tabular-nums", gain.amount > 0 ? "text-income" : gain.amount < 0 ? "text-expense" : "text-ink-muted")}>
+                      {gain.amount === 0 ? t("Same as you paid") : t("{amount} since you bought it", { amount: formatSignedCurrency(gain.amount, currency, locale) })}
                     </span>
-                    {/* In its type's colour, like the tile and the filter dot; the chip above says up or down. */}
-                    <Sparkline values={trail} color={visual.color} label={t("Value over time: {first} to {last}", { first: formatCurrency(trail[0], currency, locale), last: formatCurrency(trail[trail.length - 1], currency, locale) })} />
                   </div>
-                  <div className="flex items-baseline justify-between gap-3 border-t border-divider pt-3 text-caption font-normal text-ink-muted">
-                    <span>
-                      {fillNodes(t("Paid {amount} · {month}"), {
-                        amount: <b className="font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency, locale)}</b>,
-                        month: formatDate(asset.purchaseDate, "MMM yyyy", locale),
-                      })}
+                  {/* Two cells on a hairline grid: what was paid, and how often the value was checked since. */}
+                  <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[14px] bg-line-card">
+                    <div className="flex flex-col gap-0.5 bg-strip px-3 py-2.5">
+                      <dt className="text-[11.5px] leading-[normal] text-ink-muted">{t("You paid")}</dt>
+                      <dd className="text-[13.5px] leading-[normal] font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency, locale)}</dd>
+                    </div>
+                    <div className="flex flex-col gap-0.5 bg-strip px-3 py-2.5">
+                      <dt className="text-[11.5px] leading-[normal] text-ink-muted">{t("Value updates")}</dt>
+                      <dd className="text-[13.5px] leading-[normal] font-semibold text-ink-2">{updates === 0 ? t("None yet") : t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, locale) })}</dd>
+                    </div>
+                  </dl>
+                  {asset.notes && (
+                    <span className="-mt-1 flex min-w-0 items-center gap-1.5 text-[12.5px] leading-[normal] text-ink-soft">
+                      <FileText className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />
+                      <span className="truncate">{asset.notes}</span>
                     </span>
-                    <span className="text-right">{updates === 0 ? t("Not checked since bought") : t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, locale) })}</span>
-                  </div>
-                  {asset.notes && <span className="-mt-1 truncate text-caption font-normal text-ink-muted">{asset.notes}</span>}
+                  )}
                 </Card>
               );
             })}
@@ -177,9 +182,9 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
 
 function FilterChip({ on, onClick, count, dot, children }: { on: boolean; onClick: () => void; count: string; dot?: string; children: React.ReactNode }) {
   return (
-    <button type="button" aria-pressed={on} onClick={onClick} className={cn("flex h-8.5 items-center gap-2 rounded-full border px-3 text-small transition-colors pointer-coarse:h-11", on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
+    <button type="button" aria-pressed={on} onClick={onClick} className={cn("flex h-8.5 items-center gap-1.5 rounded-full border px-3 text-small transition-colors pointer-coarse:h-11", on ? "border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
       {dot && <span aria-hidden="true" className="size-2 rounded-full" style={{ background: dot }} />}
-      {children} <span className={cn("tabular-nums", on ? "text-emerald" : "text-ink-muted")}>{count}</span>
+      {children} <span className={cn("tabular-nums", on ? "text-emerald" : "text-ink-faint")}>{count}</span>
     </button>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Package, Pencil, Plus } from "lucide-react";
+import { Package, Plus, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -46,7 +46,7 @@ const COLUMNS = "md:grid-cols-[minmax(0,1fr)_120px_140px_140px_110px_90px]";
 // room), four across from there. 18px on phones, 28px from md.
 const TILE = "flex min-w-0 flex-col gap-2 md:p-5";
 const TILE_LABEL = "text-small font-medium text-ink-muted";
-const FIGURE = "text-h3 wrap-anywhere max-md:font-bold md:text-h1";
+const FIGURE = "text-h3 wrap-anywhere max-md:font-bold md:text-h1 md:leading-[normal]";
 
 // Assets: what everything owned is worth today against what was paid, the
 // spread by type, the biggest moves, and every asset owned or sold.
@@ -91,7 +91,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
               {summary.owned.length > 0 && (
                 <Button variant="secondary" asChild>
                   <Link href="/assets-management/update">
-                    <Pencil className="text-ink-2" />
+                    <TrendingUp className="text-ink-soft" />
                     {t("Update a value")}
                   </Link>
                 </Button>
@@ -119,27 +119,27 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
             <Card padding="sm" className={TILE}>
               <span className={TILE_LABEL}>{t("You paid")}</span>
               <AmountText value={summary.totalPaid} currency={currency} size="h2" className={FIGURE} />
-              <span className="text-caption font-normal text-ink-muted">{t("Purchase price of the {count} you own", { count: owned })}</span>
+              <span className="text-caption font-normal text-ink-muted">{t("Purchase price of the same {count}", { count: owned })}</span>
             </Card>
             <Card padding="sm" className={TILE}>
               <span className={TILE_LABEL}>{summary.gain.amount < 0 ? t("Loss so far") : t("Gain so far")}</span>
               <AmountText value={summary.gain.amount} currency={currency} size="h2" tone="auto" signed className={FIGURE} />
               {/* What has been sold counts on the Sold tile, not here. */}
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption font-normal text-ink-muted">{fillNodes(t("{change} on what you still own"), { change: chipOf(gain.tone, gain.label) })}</span>
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption font-normal text-ink-muted">{fillNodes(t("{change} on what you paid"), { change: chipOf(gain.tone, gain.label) })}</span>
             </Card>
             <Card padding="sm" className={TILE}>
               <span className={TILE_LABEL}>{t("Sold")}</span>
               <span className={cn(FIGURE, "text-ink tabular-nums")}>{formatCount(summary.sold.length, locale)}</span>
-              <span className="truncate text-caption font-normal text-ink-muted">{lastSold ? t("{name}, sold for {amount}", { name: lastSold.name, amount: formatCurrency(lastSold.soldPrice ?? 0, currency, locale) }) : t("Nothing sold yet")}</span>
+              <span className="truncate text-caption font-normal text-ink-muted">{lastSold ? t("{name}, for {amount}", { name: lastSold.name, amount: formatCurrency(lastSold.soldPrice ?? 0, currency, locale) }) : t("Nothing sold yet")}</span>
               {lastSold && <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption font-normal text-ink-muted">{fillNodes(t("{change} on sales"), { change: chipOf(soldGain.tone, formatSignedCurrency(summary.soldGain.amount, currency, locale)) })}</span>}
             </Card>
           </section>
 
           {summary.owned.length > 0 && (
             <div className="grid gap-6 md:grid-cols-3">
-              <Card padding="lg" className="flex flex-col gap-4 md:col-span-2">
+              <Card padding="lg" className="flex flex-col gap-4.5 md:col-span-2">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-title text-ink">{t("Value by type")}</h2>
+                  <h2 className="text-title text-ink">{t("Value by category")}</h2>
                   <span className="text-small text-ink-muted">{t("Today's value")}</span>
                 </div>
                 {/* The list under the bar carries every figure. */}
@@ -150,7 +150,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
                 </div>
                 {/* Two columns once there are two types to fill them; one
                     spans the card, its figure under "Today's value". */}
-                <ul className={cn("grid gap-x-8 gap-y-4", slices.length > 1 && "md:grid-cols-2")}>
+                <ul className={cn("grid gap-x-8 gap-y-3.5", slices.length > 1 && "md:grid-cols-2")}>
                   {slices.map((slice) => (
                     <li key={slice.name} className="flex items-center gap-3">
                       <AssetTypeTile visual={categoryVisual(categories, slice.name)} size="sm" />
@@ -201,7 +201,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
           <ListCard
             label={t("All assets")}
             title={t("All assets")}
-            actions={<SegmentedControl options={[{ value: "all", label: segment("All", assets.length) }, { value: "owned", label: segment("Owned", summary.owned.length) }, { value: "sold", label: segment("Sold", summary.sold.length) }]} value={status} onChange={setStatus} label="Status" />}
+            actions={<SegmentedControl options={[{ value: "all", label: segment("All", assets.length) }, { value: "owned", label: segment("Owned", summary.owned.length) }, { value: "sold", label: segment("Sold", summary.sold.length) }]} value={status} onChange={setStatus} label={t("Status")} />}
           >
             <div role="rowgroup">
               <ListHead columns={COLUMNS}>

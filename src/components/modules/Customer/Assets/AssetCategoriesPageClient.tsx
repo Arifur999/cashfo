@@ -16,7 +16,7 @@ import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { deleteAssetCategoryAction } from "@/lib/customer/assetActions";
 import { categoryVisual } from "@/lib/customer/assetDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AssetTypeTile } from "./AssetTypeTile";
@@ -25,7 +25,7 @@ import { ReadOnlyNote } from "./ReadOnlyNote";
 interface AssetCategoriesPageClientProps {
   businessId: string;
   categories: AssetCategoryOption[];
-  // Owned assets, for each type's count and value.
+  // Every asset, for each category's count, value and what was sold.
   assets: Asset[];
   currency: string;
   canManage: boolean;
@@ -40,7 +40,7 @@ const CARD_FOCUS = [
 ].join(" ");
 
 // 30px icon buttons, 44px under a finger.
-const ICON_BUTTON = "flex size-7.5 items-center justify-center rounded-md text-ink-2 disabled:opacity-50 pointer-coarse:size-11";
+const ICON_BUTTON = "flex size-7.5 items-center justify-center rounded-full text-ink-muted disabled:opacity-50 pointer-coarse:size-11";
 
 // Asset types: one card each with how many assets it holds and what they
 // are worth (the card opens My assets on that type), plus the drawer to add
@@ -56,16 +56,18 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
   const busyId = isDeleting ? deletingId : null;
   // The backend keeps the last type: an asset needs one to be filed under.
   const last = categories.length <= 1;
+  // What everything owned is worth, for each category's share.
+  const totalValue = assets.reduce((sum, asset) => sum + (asset.status === "SOLD" ? 0 : Number(asset.currentValue)), 0);
 
   async function remove(category: AssetCategoryOption) {
     if (isDeleting || last) return;
     const name = t(category.name);
-    if (!(await confirm({ title: t("Delete {name}?", { name }), message: t("Assets already in it keep the name; it just can't be picked for new ones."), confirmLabel: "Delete asset type" }))) return;
+    if (!(await confirm({ title: t("Delete {name}?", { name }), message: t("Assets already in it keep the name; it just can't be picked for new ones."), confirmLabel: "Delete category" }))) return;
     setDeletingId(category.id);
     startTransition(async () => {
       const result = await deleteAssetCategoryAction(businessId, category.id);
       if (result.success) {
-        toast.success(t("Asset type deleted"));
+        toast.success(t("Category deleted"));
         router.refresh();
       } else {
         toast.error(t(result.message ?? "Failed to delete the asset type"));
@@ -77,13 +79,13 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
     <PageFrame className="gap-5">
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Assets")}`}
-        title={t("Asset types")}
-        description={t("Group what you own. Open a type to see its assets.")}
+        title={t("Asset categories")}
+        description={t("Group what you own. Click a category to see its assets.")}
         actions={
           canManage && (
             <Button onClick={() => setDrawer("create")}>
               <Plus strokeWidth={2.5} className="size-4" />
-              {t("Add asset type")}
+              {t("Add category")}
             </Button>
           )
         }
@@ -93,26 +95,30 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {categories.map((category) => {
           const name = t(category.name);
-          const owned = assets.filter((asset) => asset.category === category.name);
+          const visual = categoryVisual(categories, category.name);
+          const owned = assets.filter((asset) => asset.category === category.name && asset.status !== "SOLD");
+          const sold = assets.filter((asset) => asset.category === category.name && asset.status === "SOLD").length;
           const value = owned.reduce((sum, asset) => sum + Number(asset.currentValue), 0);
+          const share = totalValue > 0 ? (value / totalValue) * 100 : 0;
           const busy = busyId === category.id;
+          const countText = owned.length === 0 && sold === 0 ? t("No assets yet") : t(owned.length === 1 ? "{count} asset" : "{count} assets", { count: formatCount(owned.length, locale) });
           return (
-            <Card key={category.id} interactive aria-busy={busy || undefined} className={cn("relative flex flex-col gap-4", CARD_FOCUS)}>
+            <Card key={category.id} padding="none" interactive aria-busy={busy || undefined} className={cn("relative flex flex-col gap-3.5 p-4.5", CARD_FOCUS)}>
               <div className="flex items-start justify-between">
-                <AssetTypeTile visual={categoryVisual(categories, category.name)} size="xl" />
+                <AssetTypeTile visual={visual} size="2xl" glossy className="rounded-[18px] [&_svg]:size-8" />
                 {canManage && (
                   // Above the card's link, so they stay their own buttons.
                   <span className="relative z-10 flex gap-0.5">
-                    <button type="button" onClick={() => setDrawer(category)} disabled={busy} aria-label={t("Edit {name}", { name })} title={t("Edit")} className={cn(ICON_BUTTON, "hover:bg-surface-sunken")}>
+                    <button type="button" onClick={() => setDrawer(category)} disabled={busy} aria-label={t("Edit {name}", { name })} title={t("Edit")} className={cn(ICON_BUTTON, "hover:bg-surface-sunken hover:text-ink")}>
                       <Pencil className="size-3.75" aria-hidden="true" />
                     </button>
-                    {/* The last type says why it stays (its title is read as the description). */}
+                    {/* The last category says why it stays (its title is read as the description). */}
                     <button
                       type="button"
                       onClick={() => remove(category)}
                       disabled={busy || last}
                       aria-label={t("Delete {name}", { name })}
-                      title={last ? t("Keep at least one asset type.") : t("Delete")}
+                      title={last ? t("Keep at least one category.") : t("Delete")}
                       className={cn(ICON_BUTTON, "enabled:hover:bg-expense-soft enabled:hover:text-expense")}
                     >
                       {busy ? <Loader size={14} label={t("Deleting...")} /> : <Trash2 className="size-3.75" aria-hidden="true" />}
@@ -120,31 +126,41 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
                   </span>
                 )}
               </div>
-              <Link href={`/assets-management/current?category=${encodeURIComponent(category.name)}`} data-slot="type-link" className="flex flex-col gap-1 after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none">
+              <Link href={`/assets-management/current?category=${encodeURIComponent(category.name)}`} data-slot="type-link" className="flex flex-col gap-1 after:absolute after:inset-0 after:rounded-card focus-visible:outline-none">
                 <span className="text-title text-ink">{name}</span>
-                <span className="text-small text-ink-muted">{t(owned.length === 1 ? "{count} asset" : "{count} assets", { count: formatCount(owned.length, locale) })}</span>
+                <span className="text-small text-ink-muted">
+                  {countText}
+                  {sold > 0 && ` · ${t("{count} sold", { count: formatCount(sold, locale) })}`}
+                </span>
               </Link>
-              <div className="flex items-baseline justify-between gap-3 border-t border-divider pt-3">
-                <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
-                <span className={cn("text-title font-bold tabular-nums", value > 0 ? "text-ink" : "text-ink-muted")}>{formatCurrency(value, currency, locale)}</span>
+              {/* What it holds today, and its share of everything owned. */}
+              <div className="flex flex-col gap-2 rounded-[14px] bg-strip px-3.5 py-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
+                  <span className={cn("text-title font-bold tabular-nums", value > 0 ? "text-ink" : "text-ink-muted")}>{formatCurrency(value, currency, locale)}</span>
+                </div>
+                <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-line-card">
+                  <div className="h-full rounded-full" style={{ width: `${share}%`, background: visual.color }} />
+                </div>
+                <span className="text-caption font-normal text-ink-muted">{value > 0 ? t("{percent} of everything you own", { percent: toLocaleDigits(`${Math.round(share)}%`, locale) }) : t("Nothing in it yet")}</span>
               </div>
             </Card>
           );
         })}
         {canManage && (
-          <button type="button" onClick={() => setDrawer("create")} className="flex min-h-47.5 flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-line-strong bg-surface transition-colors hover:border-emerald">
-            <span className="flex size-11 items-center justify-center rounded-full bg-mint-50 text-emerald">
+          <button type="button" onClick={() => setDrawer("create")} className="flex min-h-47.5 flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald">
+            <span className="flex size-11 items-center justify-center rounded-field bg-mint-50 text-emerald">
               <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
             </span>
-            <span className="text-body font-semibold text-ink">{t("Add asset type")}</span>
+            <span className="text-body font-semibold text-ink">{t("Add category")}</span>
             <span className="text-caption font-normal text-ink-muted">{t("e.g. Shares, Business, Livestock")}</span>
           </button>
         )}
       </div>
 
-      <span className="flex items-center gap-2 text-small text-ink-muted">
+      <span className="flex items-center gap-1.5 text-small text-ink-muted">
         <Info className="size-3.5 shrink-0" aria-hidden="true" />
-        {t("Deleting an asset type doesn't change the assets already in it.")}
+        {t("Deleting a category doesn't change the assets already in it.")}
       </span>
 
       <CategoryDrawer open={drawer !== "closed"} onClose={() => setDrawer("closed")} businessId={businessId} variant="asset" editing={typeof drawer === "object" ? drawer : null} currency={currency} />
