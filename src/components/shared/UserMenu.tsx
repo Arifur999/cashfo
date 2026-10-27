@@ -23,7 +23,7 @@ interface UserMenuProps {
 
 const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 py-2 text-body font-medium text-ink focus:bg-surface-sunken [&_svg]:size-4.5 [&_svg]:text-ink-2";
 
-// The signed-in account in the top bar, with Sign out -- for admins and
+// The signed-in account in the top bar, with Log out -- for admins and
 // customers alike -- and, for admins (who have a role), Change password.
 const UserMenu = ({ name, email, role }: UserMenuProps) => {
   const { translate } = useLocale();
@@ -34,13 +34,17 @@ const UserMenu = ({ name, email, role }: UserMenuProps) => {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger aria-label={translate("Account menu")} className="flex h-11 shrink-0 items-center gap-3 rounded-full pr-0 pl-1 md:pr-2 data-open:bg-surface-sunken">
-          <Avatar name={name} size={36} />
-          <span className="hidden flex-col items-start md:flex">
-            <span className="max-w-40 truncate text-small font-semibold whitespace-nowrap text-ink">{name}</span>
-            {adminRole && <span className={cn("text-caption font-semibold whitespace-nowrap", ADMIN_ROLE_TONE[adminRole])}>{translate(adminRoleLabel(adminRole))}</span>}
+        {/* The AdminTopbar board's account pill: initials on forest, the name, the role in its colour. */}
+        <DropdownMenuTrigger
+          aria-label={translate("Account menu, {name}", { name })}
+          className="flex h-11 shrink-0 items-center gap-2.5 rounded-full pr-0 pl-1 md:bg-surface md:pr-3 md:shadow-control md:hover:bg-hover data-open:bg-surface-sunken"
+        >
+          <Avatar name={name} size={36} className="text-caption font-bold text-white" />
+          <span className="hidden flex-col items-start gap-px md:flex">
+            <span className="max-w-40 truncate text-[13.5px] leading-[normal] font-semibold whitespace-nowrap text-ink">{name}</span>
+            {adminRole && <span className={cn("text-[11.5px] leading-[normal] font-semibold whitespace-nowrap", ADMIN_ROLE_TONE[adminRole])}>{translate(adminRoleLabel(adminRole))}</span>}
           </span>
-          <ChevronDown className="hidden size-4 text-ink-muted md:block" aria-hidden="true" />
+          <ChevronDown className="hidden size-3.75 text-ink-muted md:block" strokeWidth={2.25} aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={8} className="w-80 rounded-lg border border-line bg-surface p-0 shadow-overlay ring-0">
           <div className="flex items-center gap-3 p-4">
@@ -76,7 +80,7 @@ const UserMenu = ({ name, email, role }: UserMenuProps) => {
               className={cn(ITEM, "text-expense focus:text-expense [&_svg]:text-expense")}
             >
               {isLoggingOut ? <Loader size={14} label="Signing out..." /> : <LogOut aria-hidden="true" />}
-              {translate("Sign out")}
+              {translate(adminRole ? "Log out" : "Sign out")}
             </DropdownMenuItem>
           </div>
         </DropdownMenuContent>

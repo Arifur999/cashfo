@@ -14,6 +14,19 @@ describe("adminFeedRow", () => {
     });
   });
 
+  it("words a payout request to review, and one approved to send", () => {
+    expect(adminFeedRow(row("PAYOUT_REQUESTED", { payoutId: "p-1", displayId: "WD-12", name: "Tanvir Ahmed", amount: "1540.00", method: "BKASH", status: "REQUESTED" }))).toEqual({
+      title: "Payout request: Tanvir Ahmed",
+      body: "WD-12 · ৳ 1,540 · bKash",
+      tone: "warning",
+    });
+    expect(adminFeedRow(row("PAYOUT_REQUESTED", { payoutId: "p-1", displayId: "WD-12", name: "Tanvir Ahmed", amount: "1540.00", method: null, status: "APPROVED" })).title).toBe("Payout to send: Tanvir Ahmed");
+  });
+
+  it("words a payment that hasn't gone through yet", () => {
+    expect(adminFeedRow(row("PAYMENT_PENDING", { name: null, plan: "Monthly Pro", gateway: "NAGAD", amount: "299.00" })).title).toBe("Payment waiting: a customer");
+  });
+
   it("counts how long a ticket has waited, in hours then days", () => {
     const waiting = (since: string) => adminFeedRow(row("TICKET_WAITING", { ticketId: "4f2a1abc", subject: "Charged twice", category: "BILLING", since }), undefined, now);
     expect(waiting("2026-10-02T04:00:00.000Z")).toEqual({ title: "Ticket #4F2A1 waiting 6 hours", body: 'Billing · "Charged twice"', tone: "info" });

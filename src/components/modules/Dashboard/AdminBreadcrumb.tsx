@@ -55,7 +55,7 @@ const AdminBreadcrumb = ({ sections, adminName }: { sections: NavSection[]; admi
         </li>
         {page && (
           <li className="flex min-w-0 items-center gap-2">
-            <ChevronRight className="hidden size-3.5 shrink-0 text-line-strong sm:block" aria-hidden="true" />
+            <ChevronRight className="hidden size-3.5 shrink-0 text-ink-faint sm:block" aria-hidden="true" />
             <span aria-current="page" className="truncate text-title text-ink">
               {page}
             </span>

@@ -1,5 +1,6 @@
 import type { IAdminFeedItem } from "@/types/adminFeed.types";
 import type { SuspiciousActivityType } from "@/types/securityFlag.types";
+import { formatAmount } from "./currency";
 import { formatDate } from "./date";
 import { formatCount } from "./i18n/digits";
 import { inEnglish, plural, type Translate } from "./i18n/message";
@@ -9,7 +10,8 @@ import { humanizeEnum } from "./statusBadge";
 import { shortTicketId } from "./tickets";
 
 // The tile beside a row: red for money lost or a security flag, blue for a
-// customer waiting, amber for paused sign-ins, grey for errors.
+// customer waiting, amber for paused sign-ins and money waiting on an
+// admin (a payout to review, a payment not through yet), grey for errors.
 export type AdminFeedTone = "expense" | "info" | "warning" | "neutral";
 
 export interface AdminFeedRow {
@@ -40,6 +42,18 @@ export function adminFeedRow(item: IAdminFeedItem, t: Translate = inEnglish, now
         title: t("Payment failed: {name}", { name: text(data.name) || t("a customer") }),
         body: [text(data.plan), data.gateway ? humanizeEnum(text(data.gateway)) : "", text(data.reason)].filter(Boolean).join(" · "),
         tone: "expense",
+      };
+    case "PAYMENT_PENDING":
+      return {
+        title: t("Payment waiting: {name}", { name: text(data.name) || t("a customer") }),
+        body: [text(data.plan), data.gateway ? humanizeEnum(text(data.gateway)) : "", data.amount ? formatAmount(text(data.amount), undefined, locale) : ""].filter(Boolean).join(" · "),
+        tone: "warning",
+      };
+    case "PAYOUT_REQUESTED":
+      return {
+        title: t(data.status === "APPROVED" ? "Payout to send: {name}" : "Payout request: {name}", { name: text(data.name) || t("a customer") }),
+        body: [text(data.displayId), data.amount ? formatAmount(text(data.amount), undefined, locale) : "", data.method ? humanizeEnum(text(data.method)) : ""].filter(Boolean).join(" · "),
+        tone: "warning",
       };
     case "TICKET_WAITING":
       return { title: waitingTitle(text(data.ticketId), text(data.since), now, t, locale), body: `${t(humanizeEnum(text(data.category)))} · "${text(data.subject)}"`, tone: "info" };

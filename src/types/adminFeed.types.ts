@@ -1,7 +1,7 @@
 // The admin top bar's bell (GET /admin/feed) and search (GET /admin/search).
 
 export type AdminFeedGroup = "MONEY" | "SUPPORT" | "SYSTEM";
-export type AdminFeedKind = "PAYMENT_FAILED" | "TICKET_WAITING" | "SECURITY_FLAG" | "SIGN_INS_PAUSED" | "ERRORS";
+export type AdminFeedKind = "PAYMENT_FAILED" | "PAYMENT_PENDING" | "PAYOUT_REQUESTED" | "TICKET_WAITING" | "SECURITY_FLAG" | "SIGN_INS_PAUSED" | "ERRORS";
 
 export interface IAdminFeedItem {
   id: string;

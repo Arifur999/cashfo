@@ -10,7 +10,8 @@ import SidebarBrand from "./SidebarBrand";
 import SidebarFoot from "./SidebarFoot";
 import SidebarNav from "./SidebarNav";
 
-// Below `lg` the Night sidebar slides in from the left.
+// Below `lg` the deep-teal sidebar slides in from the left, from the top
+// bar's menu button.
 const MobileNav = ({ sections, admin }: { sections: NavSection[]; admin: IAdminUser }) => {
   const [open, setOpen] = useState(false);
   const { translate } = useLocale();
@@ -24,14 +25,14 @@ const MobileNav = ({ sections, admin }: { sections: NavSection[]; admin: IAdminU
         </button>
       </SheetTrigger>
       {/* 316px, as the board draws it; the side variant outranks the sheet's own w-3/4. */}
-      <SheetContent side="left" showCloseButton={false} className="max-w-[85vw] gap-0 border-none bg-aurora-panel p-0 text-white shadow-[28px_0_60px_-16px_rgba(0,0,0,0.4)] data-[side=left]:w-79 data-[side=left]:sm:max-w-79">
+      <SheetContent side="left" showCloseButton={false} className="max-w-[85vw] gap-0 border-none bg-forest p-0 text-white shadow-[28px_0_60px_-16px_rgba(0,0,0,0.4)] data-[side=left]:w-79 data-[side=left]:sm:max-w-79">
         <SheetHeader className="sr-only">
           <SheetTitle>{translate("Main navigation")}</SheetTitle>
         </SheetHeader>
         <div className="flex h-full flex-col px-3 pt-4 pb-4">
           <div className="flex items-center justify-between">
             <SidebarBrand onNavigate={close} />
-            <button type="button" onClick={close} aria-label={translate("Close menu")} className="mb-3 flex size-11 items-center justify-center rounded-md bg-white/8 text-white">
+            <button type="button" onClick={close} aria-label={translate("Close menu")} className="-mt-4 flex size-11 items-center justify-center rounded-full bg-white/8 text-white">
               <X className="size-5" aria-hidden="true" />
             </button>
           </div>

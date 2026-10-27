@@ -52,7 +52,7 @@ const titleAt = (href: string, sections: NavSection[]): string | null => {
   for (const item of sections.flatMap((section) => section.items)) {
     const tab = item.tabs?.find((candidate) => candidate.href === href);
     if (tab) return tab.title;
-    if (item.href === href) return item.title;
+    if (item.href === href) return item.crumb ?? item.title;
   }
   return null;
 };
@@ -98,7 +98,10 @@ const recordCrumb = (path: string, { from, back, listKeys }: RecordOrigin, secti
 const pageCrumb = ({ section, item, tab }: NavLocation): AdminCrumb => {
   // A page without tabs sits in its menu group, and a tab named like its
   // page is that page (Payments' own list): the group is no page to link to.
-  if (!tab || tab.title === item.title) return { parent: section.title, page: item.title };
+  // So are the tabs of an item the boards file under its group ("Support &
+  // content › Tickets").
+  if (!tab || tab.title === item.title) return { parent: section.title, page: item.crumb ?? item.title };
+  if (item.crumbFromGroup) return { parent: section.title, page: tab.title };
   // The page links to its first tab, from that tab too.
   return { parent: item.title, parentHref: navItemHref(item), page: tab.title };
 };
