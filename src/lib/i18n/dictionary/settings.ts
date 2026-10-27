@@ -20,8 +20,8 @@ export const settingsDictionary: Record<string, string> = {
   "App preferences": "অ্যাপের পছন্দ",
   "Help & support": "সাহায্য ও সহায়তা",
   "Resources & legal": "রিসোর্স ও আইনি",
-  // Settings now says "Terms of use", but the admin Content dashboard still
-  // names the page "Terms of service" ("{doc} has no Bangla version").
+  // The terms page's name everywhere: Settings, the public /terms page and
+  // the admin Content dashboard.
   "Terms of service": "সেবার শর্তাবলি",
   "Smartly · version {version}": "Smartly · সংস্করণ {version}",
   "Smartly for web · version {version}": "ওয়েবের জন্য Smartly · সংস্করণ {version}",

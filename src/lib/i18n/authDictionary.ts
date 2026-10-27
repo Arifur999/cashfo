@@ -119,7 +119,7 @@ export const bnAuthDictionary: Record<string, string> = {
   "Created your account with Google? Use Continue with Google.": "Google দিয়ে অ্যাকাউন্ট খুলেছিলেন? \"Google দিয়ে চালিয়ে যান\" ব্যবহার করুন।",
 
   // components/modules/Legal/* and the maintenance page and notice -- the
-  // pages anyone can open. The pages' own names (Terms of use, Privacy
+  // pages anyone can open. The pages' own names (Terms of service, Privacy
   // policy ...) are worded in settings-workspace.ts.
   Legal: "আইনি তথ্য",
   // A saved version is live at once, so it is in effect from when it was saved.

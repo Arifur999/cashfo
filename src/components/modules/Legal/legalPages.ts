@@ -13,7 +13,7 @@ export interface LegalPageEntry {
 // server shell can read it as well as the menu. The policies show their
 // version in the menu; the questions page changes too often for one to help.
 export const LEGAL_PAGES: readonly LegalPageEntry[] = [
-  { page: "terms", href: "/terms", label: "Terms of use", versioned: true },
+  { page: "terms", href: "/terms", label: "Terms of service", versioned: true },
   { page: "privacy", href: "/privacy", label: "Privacy policy", versioned: true },
   { page: "refund-policy", href: "/refund-policy", label: "Refund policy", versioned: true },
   { page: "faq", href: "/faq", label: "Common questions", versioned: false },
