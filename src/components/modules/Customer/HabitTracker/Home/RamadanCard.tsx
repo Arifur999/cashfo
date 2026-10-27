@@ -9,12 +9,11 @@ import { usePrayerSettings } from "@/components/modules/Customer/Providers/Praye
 import Card from "@/components/smartly/Card";
 import type { HabitMonthTracker } from "@/lib/customer/api";
 import { timeLabel } from "@/lib/customer/date";
-import { actionError, dayText, nextRamadan } from "@/lib/customer/habitDisplay";
+import { actionError, daysText, dayText, nextRamadan } from "@/lib/customer/habitDisplay";
 import { setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { clockOf, prayerTimesFor } from "@/lib/customer/prayerTimes";
-import { ramadanSummary, ramadanWindow } from "@/lib/customer/ramadanDisplay";
+import { quranKhatam, ramadanSummary, ramadanWindow } from "@/lib/customer/ramadanDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { withCheck } from "../trackerChecks";
@@ -57,9 +56,9 @@ export function RamadanCard({ trackers, today }: RamadanCardProps) {
       });
 
     return (
-      <Card padding="none" className="flex flex-col gap-3 bg-[linear-gradient(160deg,var(--mint-50)_0%,var(--surface)_70%)] px-5 py-4">
+      <Card padding="none" className="flex flex-col gap-3 rounded-md bg-[linear-gradient(160deg,var(--mint-50)_0%,var(--surface)_70%)] px-4.5 py-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-title font-semibold text-ink">{t("Ramadan {year}", { year: year(goingSheet.window.hijriYear ?? going.year) })}</h2>
+          <h2 className="text-[15px] leading-[normal] font-semibold text-ink">{t("Ramadan {year}", { year: year(goingSheet.window.hijriYear ?? going.year) })}</h2>
           <MoonStar className="size-4.5 text-emerald" aria-hidden="true" />
         </div>
         <span className="text-h2 text-brand-ink tabular-nums">{t("Day {day} of {total}", { day: formatCount(day, locale), total: formatCount(going.totalDays, locale) })}</span>
@@ -88,25 +87,27 @@ export function RamadanCard({ trackers, today }: RamadanCardProps) {
   const roza = summary?.items.find((item) => item.item === ROZA) ?? summary?.items[0] ?? null;
   const quran = summary?.items.find((item) => item.item === "Quran");
   const quranDaily = !!quran && quran.of > 0 && quran.done === quran.of;
-  const lastLine = roza ? t(quranDaily ? "Last Ramadan: {done} of {total} fasts, Quran every day" : "Last Ramadan: {done} of {total} fasts", { done: formatCount(roza.done, locale), total: formatCount(roza.of, locale) }) : null;
+  // A khatam (all 30 paras read) says the Quran was finished.
+  const finished = last ? quranKhatam(last.tracker).finishedOn !== null : false;
+  const lastLine = roza ? t(finished ? "Last Ramadan: {done} of {total} fasts, Quran finished" : quranDaily ? "Last Ramadan: {done} of {total} fasts, Quran every day" : "Last Ramadan: {done} of {total} fasts", { done: formatCount(roza.done, locale), total: formatCount(roza.of, locale) }) : null;
 
   return (
     // While Ramadan is going on with no sheet yet, phones see it too.
-    <Card padding="none" className={cn("flex flex-col gap-2 bg-[linear-gradient(160deg,var(--mint-50)_0%,var(--surface)_70%)] px-5 py-4", next.daysToGo > 0 && "max-md:hidden")}>
+    <Card padding="none" className={cn("flex flex-col gap-2 rounded-md bg-[linear-gradient(160deg,var(--mint-50)_0%,var(--surface)_70%)] px-4.5 py-4", next.daysToGo > 0 && "max-md:hidden")}>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-title font-semibold text-ink">{t("Ramadan {year}", { year: year(next.year) })}</h2>
+        <h2 className="text-[15px] leading-[normal] font-semibold text-ink">{t("Ramadan {year}", { year: year(next.year) })}</h2>
         <MoonStar className="size-4.5 text-emerald" aria-hidden="true" />
       </div>
       {next.daysToGo === 0 ? (
         <span className="text-h3 text-brand-ink">{t("Going on now")}</span>
       ) : (
         <>
-          {/* One sentence each: the count (its number drawn large), then the day. */}
-          <span className="text-h3 text-ink">{fillNodes(t(next.daysToGo === 1 ? "{count} day to go" : "{count} days to go"), { count: <span className="text-h1 text-emerald tabular-nums">{formatCount(next.daysToGo, locale)}</span> })}</span>
-          <span className="text-small text-ink-2">{t("Begins around {date}, depending on the moon.", { date: dayText(next.startsOn, locale, "dayMonthYear") })}</span>
+          {/* The count drawn large, then the sentence it begins. */}
+          <span className="text-[30px] leading-[normal] font-bold tracking-[-0.02em] text-emerald tabular-nums">{daysText(next.daysToGo, t, locale)}</span>
+          <span className="text-small text-ink-2">{t("to go. It begins around {date}, depending on the moon.", { date: dayText(next.startsOn, locale, "dayMonthYear") })}</span>
         </>
       )}
-      <div className="mt-auto flex flex-col gap-0.75 border-t border-line pt-3 text-small text-ink-2">
+      <div className="mt-auto flex flex-col gap-0.75 border-t border-line pt-2.5 text-[12.5px] leading-[normal] text-ink-soft">
         {lastLine && <span>{lastLine}</span>}
         {last && next.daysToGo > 0 ? (
           <Link href={`/habit-tracker/habits/ramadan/${last.tracker.id}`} className="font-semibold text-emerald hover:underline">

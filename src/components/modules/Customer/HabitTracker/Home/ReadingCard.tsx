@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Flame, Gauge } from "lucide-react";
+import { Flame, Gauge } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import type { Book } from "@/lib/customer/api";
@@ -38,7 +38,7 @@ export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProp
   return (
     <>
       {book && (
-        <Card asChild padding="none" interactive className="flex items-center gap-3 p-4 md:hidden">
+        <Card asChild padding="none" interactive className="flex items-center gap-3 rounded-md p-3.5 md:hidden">
           <Link href={LIBRARY}>
             <Cover size="thumb" title={book.title} color={book.color} />
             <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -51,19 +51,18 @@ export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProp
             </span>
             {streak > 0 && (
               <span className="flex shrink-0 items-center gap-1 text-small font-bold text-ink tabular-nums" aria-label={t("{count}-day streak", { count: count(streak) })}>
-                <Flame className="size-4 text-warning" aria-hidden="true" />
+                <Flame className="size-3.5 text-orange-fill" aria-hidden="true" />
                 {count(streak)}
               </span>
             )}
-            <ChevronRight className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
           </Link>
         </Card>
       )}
-      <Card padding="none" className={cn("flex flex-col gap-3 px-5 py-4", book && "max-md:hidden")}>
+      <Card padding="none" className={cn("flex flex-col gap-3 rounded-md px-4.5 py-4", book && "max-md:hidden")}>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-title font-semibold text-ink">{t("Now reading")}</h2>
+          <h2 className="text-[15px] leading-[normal] font-semibold text-ink">{t("Now reading")}</h2>
           <Link href={LIBRARY} className="flex items-center text-small font-semibold text-emerald hover:underline max-md:min-h-11">
-            {t("My library")}
+            {t("Library")}
           </Link>
         </div>
         {book ? (
@@ -79,11 +78,11 @@ export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProp
                 <span className="mt-0.75">{bar}</span>
               </div>
             </div>
-            <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-divider pt-3 text-small">
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-divider pt-2.5 text-[12.5px] leading-[normal]">
               <span className="flex items-center gap-1 font-semibold text-ink">
                 {streak > 0 ? (
                   <>
-                    <Flame className="size-4 text-warning" aria-hidden="true" />
+                    <Flame className="size-3.25 text-orange-fill" aria-hidden="true" />
                     {t("{count}-day streak", { count: count(streak) })}
                   </>
                 ) : (

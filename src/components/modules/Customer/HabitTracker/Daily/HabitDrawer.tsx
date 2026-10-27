@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Check, Info, Minus, Plus, Trash2 } from "lucide-react";
+import { Archive, Check, Eye, Minus, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -154,12 +154,12 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
   }
 
   const label = (text: string) => <span className="text-body font-medium text-ink">{text}</span>;
-  const chip = "h-7 rounded-full border px-3 text-caption font-semibold transition-colors pointer-coarse:h-11";
+  const chip = "h-6.5 rounded-full border px-2.5 text-caption font-semibold transition-colors pointer-coarse:h-11";
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
       <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:max-h-[92dvh]")}>
-        <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
+        <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-4.5" : "px-4 pt-4 pb-2")}>
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{editing ? t("Edit habit") : t("New habit")}</SheetTitle>
             <span className="text-small leading-[normal] text-ink-muted">{t("It shows up in your daily list on the days you plan.")}</span>
@@ -168,7 +168,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
         </SheetHeader>
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
+          <div className={cn("flex min-h-0 flex-1 flex-col gap-4.5 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <Field htmlFor="hb-name" label={label(t("Name"))}>
               <Input id="hb-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={t("Morning walk")} />
             </Field>
@@ -181,7 +181,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
                   {HABIT_ICONS.map((option) => {
                     const on = option.key === icon;
                     return (
-                      <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} onClick={() => setIcon(option.key)} className={cn("flex size-9 items-center justify-center rounded-md border transition-colors [&_svg]:size-4.5", on ? cn("border-2", tone.bg, tone.fg) : "border-line bg-surface text-ink-2 hover:border-line-strong")} style={on ? { borderColor: budgetCategoryHex(color) } : undefined}>
+                      <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} onClick={() => setIcon(option.key)} className={cn("flex size-9 items-center justify-center rounded-[9px] border transition-colors [&_svg]:size-4.5", on ? cn("border-2", tone.bg, tone.fg) : "border-line bg-surface text-ink-soft hover:border-line-strong")} style={on ? { borderColor: budgetCategoryHex(color) } : undefined}>
                         {createElement(budgetCategoryIcon(option.key), { "aria-hidden": true })}
                       </button>
                     );
@@ -190,7 +190,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
               </fieldset>
               <fieldset className="flex flex-col gap-2">
                 <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Colour")}</legend>
-                <div role="radiogroup" aria-label={t("Colour")} className="grid grid-cols-[repeat(8,28px)] gap-x-3 gap-y-2 sm:grid-cols-[repeat(4,28px)]">
+                <div role="radiogroup" aria-label={t("Colour")} className="grid grid-cols-[repeat(8,28px)] gap-x-2.5 gap-y-2 sm:grid-cols-[repeat(4,28px)]">
                   {HABIT_COLORS.map((option) => {
                     const on = option.key === color;
                     return <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} onClick={() => setColor(option.key)} className="relative size-7 rounded-full transition-shadow after:absolute after:-inset-1.5" style={{ background: budgetCategoryHex(option.key), ...(on && { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${budgetCategoryHex(option.key)}` }) }} />;
@@ -214,17 +214,17 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
                       </span>
                     )}
                     {option.value === "WEEKLY_COUNT" && (
-                      <span className="flex flex-wrap items-center gap-3 pl-8">
-                        <span className="flex h-9 items-center overflow-hidden rounded-md border border-line-strong bg-surface pointer-coarse:h-11">
-                          <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
+                      <span className="flex flex-wrap items-center gap-2.5 pl-7">
+                        <span className="flex h-9 items-center overflow-hidden rounded-sm border border-input bg-surface pointer-coarse:h-11">
+                          <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex h-full w-8.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:w-11">
                             <Minus className="size-4" aria-hidden="true" />
                           </button>
-                          <span className="w-9 border-x border-line text-center text-body-lg font-bold text-ink tabular-nums">{formatCount(count, locale)}</span>
-                          <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
+                          <span className="w-9 border-x border-line text-center text-[15px] leading-8.5 font-bold text-ink tabular-nums">{formatCount(count, locale)}</span>
+                          <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex h-full w-8.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:w-11">
                             <Plus className="size-4" aria-hidden="true" />
                           </button>
                         </span>
-                        <span className="text-body text-ink-2">{t("times a week, on any days")}</span>
+                        <span className="text-[13.5px] leading-[normal] text-ink-2">{t("times a week, on any days")}</span>
                       </span>
                     )}
                   </ChoiceCard>
@@ -232,13 +232,13 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
               </ChoiceCardGroup>
             </fieldset>
 
-            <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4">
+            <div className="flex flex-col gap-2.5 rounded-field border border-line bg-strip p-3.5">
               <div className="flex items-center justify-between gap-3">
                 <label htmlFor="hb-counted" className="flex cursor-pointer flex-col gap-px">
                   <span id="hb-counted-title" className="text-body font-semibold text-ink">
                     {t("Count an amount")}
                   </span>
-                  <span id="hb-counted-sub" className="text-small text-ink-muted">
+                  <span id="hb-counted-sub" className="text-[12.5px] leading-[normal] text-ink-muted">
                     {t("Like 8 glasses or 30 minutes. Leave off for a simple tick.")}
                   </span>
                 </label>
@@ -246,17 +246,17 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
               </div>
               {counted && (
                 <>
-                  <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3">
-                    <Field htmlFor="hb-target" label={<span className="text-small font-medium text-ink-2">{t("Goal each time")}</span>} error={noGoal && target !== "" ? t("Enter a goal of 1 or more.") : undefined}>
+                  <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2.5">
+                    <Field htmlFor="hb-target" label={<span className="text-[12.5px] font-medium text-ink-soft">{t("Goal each time")}</span>} error={noGoal && target !== "" ? t("Enter a goal of 1 or more.") : undefined}>
                       <Input id="hb-target" size="sm" inputMode="numeric" value={target} onChange={(event) => setTarget(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 6))} invalid={noGoal && target !== ""} placeholder="30" />
                     </Field>
-                    <Field htmlFor="hb-unit" label={<span className="text-small font-medium text-ink-2">{t("Unit")}</span>}>
+                    <Field htmlFor="hb-unit" label={<span className="text-[12.5px] font-medium text-ink-soft">{t("Unit")}</span>}>
                       <Input id="hb-unit" size="sm" value={unit} onChange={(event) => setUnit(event.target.value)} maxLength={20} placeholder={t("minutes")} />
                     </Field>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {HABIT_UNITS.map((option) => (
-                      <button key={option} type="button" aria-pressed={savedUnit === option} onClick={() => setUnit(t(option))} className={cn(chip, savedUnit === option ? "border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
+                      <button key={option} type="button" aria-pressed={savedUnit === option} onClick={() => setUnit(t(option))} className={cn(chip, savedUnit === option ? "border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-soft hover:border-line-strong")}>
                         {t(option)}
                       </button>
                     ))}
@@ -268,8 +268,8 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
 
             {reminders && <ReminderSection kind="HABIT" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("Skipped on a day it's already done.")} />}
 
-            <span className="flex items-start gap-2 text-small text-ink-2">
-              <Info className="mt-px size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+            <span className="flex items-start gap-2 text-small text-ink-soft">
+              <Eye className="mt-px size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
               <span>
                 {t("Shows as")}{" "}
                 <b className="font-semibold text-ink">{[name.trim() || t("Habit"), preview.days, preview.amount ? t("{amount} each time", { amount: preview.amount }) : null].filter(Boolean).join(" · ")}</b>

@@ -4,8 +4,8 @@ import { Flame } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import type { SkillsOverview } from "@/lib/customer/api";
-import { daysText } from "@/lib/customer/habitDisplay";
 import { byStatus, practiceLine, progressPct, progressText } from "@/lib/customer/skillsDisplay";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paletteFor } from "../Skills/skillPalette";
 
@@ -21,9 +21,9 @@ export function LearningMini({ overview, today }: LearningMiniProps) {
   const streak = overview?.streak ?? 0;
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+    <Card padding="none" className="flex flex-col gap-3 rounded-md px-4.5 py-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-title font-semibold text-ink">{t("Now learning")}</h2>
+        <h2 className="text-[15px] leading-[normal] font-semibold text-ink">{t("Now learning")}</h2>
         <Link href="/habit-tracker/habits?category=Course" className="text-small font-semibold text-emerald hover:underline">
           {t("Skills")}
         </Link>
@@ -34,7 +34,7 @@ export function LearningMini({ overview, today }: LearningMiniProps) {
         learning.map((skill) => {
           const pct = progressPct(skill);
           return (
-            <div key={skill.id} className="flex flex-col gap-1">
+            <div key={skill.id} className="flex flex-col gap-1.25">
               <div className="flex justify-between gap-2 text-small">
                 <span className="truncate font-semibold text-ink">{skill.name}</span>
                 <span className="shrink-0 text-ink-muted tabular-nums">{progressText(skill, t, locale)}</span>
@@ -47,9 +47,9 @@ export function LearningMini({ overview, today }: LearningMiniProps) {
           );
         })
       )}
-      <div className="mt-auto flex items-center gap-1 border-t border-divider pt-3 text-small font-semibold text-ink">
-        <Flame className={streak > 0 ? "size-4 text-warning" : "size-4 text-ink-muted"} aria-hidden="true" />
-        {streak > 0 ? t("Practice streak: {days}", { days: daysText(streak, t, locale) }) : t("No practice streak yet")}
+      <div className="mt-auto flex items-center gap-1.25 border-t border-divider pt-2.5 text-[12.5px] leading-[normal] font-semibold text-ink">
+        <Flame className={streak > 0 ? "size-3.25 text-orange-fill" : "size-3.25 text-ink-muted"} aria-hidden="true" />
+        {streak > 0 ? t("{count}-day practice streak", { count: formatCount(streak, locale) }) : t("No practice streak yet")}
       </div>
     </Card>
   );

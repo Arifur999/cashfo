@@ -10,7 +10,7 @@ import type { Habit, HabitMonthLog } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
-import { actionError, amountLabel, bestStreak, countsOn, countTone, dayMark, dayText, HABIT_UNITS, instantText, monthGrid, ruleLabel, streakText, unitLabel, WEEK_START, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
+import { actionError, amountLabel, bestStreak, countsOn, countTone, dayMark, dayText, HABIT_UNITS, instantText, monthGrid, ruleLine, streakText, unitLabel, WEEK_START, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
@@ -69,7 +69,6 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
 
   const count = (n: number) => formatCount(n, locale);
   const tone = categoryTone(habit.color);
-  const rule = ruleLabel(habit, t, locale);
   const [year, monthNumber] = month.split("-").map(Number);
   const cells = monthGrid(year, monthNumber);
   const monthDays = cells.filter((c): c is string => c !== null && c <= today);
@@ -98,7 +97,7 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
   ];
 
   const canGoNext = month < today.slice(0, 7);
-  const subtitle = [rule.amount ? (habit.frequencyType === "DAILY" ? t("{amount} a day", { amount: rule.amount }) : `${rule.amount} · ${rule.days}`) : rule.days, t("Added {date}", { date: instantText(habit.createdAt, locale) })].join(" · ");
+  const subtitle = [ruleLine(habit, t, locale), t("added {date}", { date: instantText(habit.createdAt, locale) })].join(" · ");
 
   function saveNote() {
     if (day !== today || draft === (note ?? "") || isPending) return;
@@ -118,38 +117,38 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
   const Heading = inSheet ? "h3" : "h2";
 
   return (
-    <Card padding="none" elevated={!inSheet} className={cn("flex flex-col gap-4 p-5", inSheet && "border-0")}>
+    <Card padding="none" elevated={!inSheet} className={cn("flex flex-col gap-4 rounded-md px-5 py-4.5", inSheet && "border-0")}>
       <div className="flex items-center gap-3">
-        <span className={cn("flex size-10.5 shrink-0 items-center justify-center rounded-md [&_svg]:size-5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
+        <span className={cn("flex size-10.5 shrink-0 items-center justify-center rounded-[11px] [&_svg]:size-5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <Heading className="truncate text-title font-semibold text-ink">{habit.name}</Heading>
-          <span className="truncate text-small text-ink-muted">{subtitle}</span>
+          <Heading className="truncate text-title leading-[normal] font-semibold text-ink">{habit.name}</Heading>
+          <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">{subtitle}</span>
         </span>
-        <button type="button" onClick={onEdit} aria-label={t("Edit {name}", { name: habit.name })} className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+        <button type="button" onClick={onEdit} aria-label={t("Edit {name}", { name: habit.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-sm border border-line bg-surface text-ink-soft hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
           <Pencil className="size-4" aria-hidden="true" />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         {facts.map((fact) => (
-          <div key={fact.label} className="flex min-w-0 flex-col gap-0.5 rounded-md bg-strip px-3 py-3">
-            <span className="text-caption font-normal text-ink-muted">{fact.label}</span>
-            <span className="text-title font-bold text-ink tabular-nums">{fact.value}</span>
+          <div key={fact.label} className="flex min-w-0 flex-col gap-0.5 rounded-field bg-strip px-3 py-2.5">
+            <span className="text-caption leading-[normal] font-normal text-ink-muted">{fact.label}</span>
+            <span className="text-[17px] leading-[normal] font-bold text-ink tabular-nums">{fact.value}</span>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
-          <button type="button" onClick={() => onMonthChange(shiftMonth(month, -1))} aria-label={monthName(shiftMonth(month, -1), locale, "long", true)} className="flex size-9 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken pointer-coarse:size-11">
+          <button type="button" onClick={() => onMonthChange(shiftMonth(month, -1))} aria-label={monthName(shiftMonth(month, -1), locale, "long", true)} className="flex size-7.5 items-center justify-center rounded-sm text-ink-soft hover:bg-surface-sunken pointer-coarse:size-11">
             <ChevronLeft className="size-4" aria-hidden="true" />
           </button>
           <span className="text-body font-semibold text-ink">{monthName(month, locale, "long", true)}</span>
-          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(shiftMonth(month, 1))} aria-label={monthName(shiftMonth(month, 1), locale, "long", true)} className="flex size-9 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
+          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(shiftMonth(month, 1))} aria-label={monthName(shiftMonth(month, 1), locale, "long", true)} className="flex size-7.5 items-center justify-center rounded-sm text-ink-soft hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
             <ChevronRight className="size-4" aria-hidden="true" />
           </button>
         </div>
-        <div aria-hidden="true" className="grid grid-cols-7 gap-1 text-center text-caption font-semibold text-ink-muted">
+        <div aria-hidden="true" className="grid grid-cols-7 gap-1.25 text-center text-[11.5px] leading-[normal] font-semibold text-ink-faint">
           {Array.from({ length: 7 }, (_, i) => (WEEK_START + i) % 7).map((d) => (
             <span key={d} className={cn(d === 5 && "text-warning")}>
               {t(WEEKDAY_MIN[d])}
@@ -157,7 +156,7 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
           ))}
         </div>
         {/* One picture with a summary; each day's state is in its title. */}
-        <div role="img" aria-label={t("{month}: {done} of {total} planned days done", { month: monthName(month, locale, "long", true), done: count(doneThisMonth), total: count(plannedThisMonth) })} className="grid grid-cols-7 gap-1">
+        <div role="img" aria-label={t("{month}: {done} of {total} planned days done", { month: monthName(month, locale, "long", true), done: count(doneThisMonth), total: count(plannedThisMonth) })} className="grid grid-cols-7 gap-1.25">
           {cells.map((cell, i) => {
             if (!cell) return <span key={i} className="h-9.5" />;
             const mark = dayMark(habit, shownLogs, cell, today);
@@ -173,20 +172,20 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
                 key={cell}
                 title={`${dayText(cell, locale, "dayMonth")}: ${counted && value !== null ? amountLabel(value, habit.unit, t, locale) : t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "rest" ? "not planned" : mark === "open" ? "still open" : "not yet")}`}
                 className={cn(
-                  "flex h-9.5 flex-col items-center justify-center rounded-md text-caption font-semibold tabular-nums",
+                  "flex h-9.5 flex-col items-center justify-center rounded-sm text-[11.5px] leading-[normal] font-semibold tabular-nums",
                   fill ? cn(tone.fg, fill === "full" ? "bg-current" : fill === "near" ? "bg-current/45" : tone.bg) : mark === "done" ? cn("bg-current", tone.fg) : MARK_CLASS[mark],
                   current && "ring-2 ring-emerald ring-offset-1 ring-offset-surface",
                 )}
               >
                 {/* Ink in the surface colour on a filled day: white, or the night in dark mode. */}
                 <span className={cn(strong ? "text-surface" : fill === "near" ? "text-ink" : "")}>{count(Number(cell.slice(8)))}</span>
-                {counted && value !== null && <span className={cn("text-caption leading-none font-medium opacity-85", strong ? "text-surface" : fill === "near" ? "text-ink" : "")}>{count(value)}</span>}
+                {counted && value !== null && <span className={cn("text-[10px] leading-none font-medium opacity-85", strong ? "text-surface" : fill === "near" ? "text-ink" : "")}>{count(value)}</span>}
               </span>
             );
           })}
         </div>
         {counted && target > 0 && (
-          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-caption font-normal text-ink-muted">
+          <div className="flex flex-wrap items-center justify-end gap-x-1.5 gap-y-1 text-[11.5px] leading-[normal] font-normal text-ink-muted">
             {/* Only a chip unit is capitalised; a typed one ("ml", "km") stays as typed. */}
             <span className={cn("inline-block", habit.unit && HABIT_UNITS.includes(habit.unit.trim()) && "first-letter:uppercase")}>{habit.unit ? `${unitLabel(habit.unit, t)}:` : t("Amount:")}</span>
             {near < target && (
@@ -212,7 +211,7 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
       </div>
 
       {day === today && (
-        <div className="flex flex-col gap-2 border-t border-divider pt-4">
+        <div className="flex flex-col gap-1.5 border-t border-divider pt-3.5">
           <label htmlFor={inSheet ? "hb-note-sheet" : "hb-note"} className="text-small font-semibold text-ink">
             {t("Note for today")} <span className="font-normal text-ink-muted">({t("optional")})</span>
           </label>
