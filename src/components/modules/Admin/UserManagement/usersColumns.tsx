@@ -5,6 +5,7 @@ import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
 import { DaysUsedCell, OwnWorkspaceCell } from "./PeopleCells";
+import { OWNER_STATUS_LABEL } from "./usersTable.config";
 
 // The design's Users list: who, phone, their workspace (and how many more),
 // plan, when they last signed in, how long they have used Smartly, status.
@@ -38,11 +39,10 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     meta: { width: 116 },
   },
   {
-    // lastLoginAt moves only when they sign in (a session lasts a week), so
-    // it is named for that, not for "active".
+    // lastLoginAt: when they last signed in, which the board calls active.
     id: "lastLoginAt",
     accessorKey: "lastLoginAt",
-    header: "Last sign-in",
+    header: "Last active",
     cell: ({ row }) => <DateCell date={row.original.lastLoginAt} relative />,
     meta: { width: 124 },
   },
@@ -57,7 +57,7 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     id: "status",
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.status} dot />,
+    cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={OWNER_STATUS_LABEL[row.original.status]} dot />,
     meta: { width: 96 },
   },
 ];

@@ -6,6 +6,11 @@ import { inEnglish } from "@/lib/i18n/message";
 import { translate } from "@/lib/i18n/translate";
 import {
   daysSince,
+  isPhoneDevice,
+  ownerHistoryLine,
+  ownerTabOf,
+  walletKindsLabel,
+  workspacePlanLabel,
   daysUsedLabel,
   isPersonalWorkspace,
   moreWorkspacesLabel,
@@ -203,5 +208,36 @@ describe("people pages' Bangla", () => {
     expect(translate("bn", "Suspend@@action", undefined, "admin")).not.toBe(translate("bn", "Suspended@@status", undefined, "admin"));
     expect(translate("en", "Suspend@@action")).toBe("Suspend");
     expect(translate("en", "Joined@@date")).toBe("Joined");
+  });
+});
+
+describe("a person's page", () => {
+  it("says how their workspaces sit against the plan", () => {
+    expect(workspacePlanLabel(2, 1, inEnglish, "en")).toBe("1 more than the plan includes");
+    expect(workspacePlanLabel(1, 3, inEnglish, "en")).toBe("Within the plan");
+    expect(workspacePlanLabel(4, null, inEnglish, "en")).toBe("The plan has no limit");
+  });
+
+  it("names their wallets by kind", () => {
+    expect(walletKindsLabel({ cash: 1, bank: 2, mfs: 1, savings: 0 }, inEnglish, "en")).toBe("Cash, 2 banks, 1 mobile wallet");
+    expect(walletKindsLabel({ cash: 0, bank: 0, mfs: 0, savings: 0 }, inEnglish, "en")).toBe("No wallets yet");
+  });
+
+  it("words what admins did, and leaves unknown actions to the audit labels", () => {
+    expect(ownerHistoryLine("USER_SUSPENDED")).toEqual({ text: "suspended the account", tone: "expense" });
+    expect(ownerHistoryLine("SOMETHING_NEW")).toBeNull();
+  });
+
+  it("reads ?tab=, Overview when absent or unknown", () => {
+    expect(ownerTabOf("billing")).toBe("billing");
+    expect(ownerTabOf(["notes", "billing"])).toBe("notes");
+    expect(ownerTabOf("constructor")).toBe("overview");
+    expect(ownerTabOf(undefined)).toBe("overview");
+  });
+
+  it("tells a phone from a computer by its label", () => {
+    expect(isPhoneDevice("Chrome on Android")).toBe(true);
+    expect(isPhoneDevice("Chrome on Windows")).toBe(false);
+    expect(isPhoneDevice(null)).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ArrowLeftRight, ShieldOff, UserCheck } from "lucide-react";
+import { ArrowLeftRight, Ban, Undo2, UserCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
@@ -41,7 +41,8 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
   const queryString = buildTableQueryString(searchParams, USERS_TABLE_BASE_CONFIG);
   const query = useQuery({ ...ownersListQuery(queryString), placeholderData: keepPreviousData });
   const statusCounts = query.data?.data.statusCounts;
-  const config = useMemo(() => buildUsersTableConfig(plans, statusCounts), [plans, statusCounts]);
+  const openStatus = searchParams.get("status");
+  const config = useMemo(() => buildUsersTableConfig(plans, statusCounts, openStatus), [plans, statusCounts, openStatus]);
   const { dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config, { fetchPage: fetchUsersPage });
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IOwnerOverviewItem, OwnerDialog>();
 
@@ -56,13 +57,15 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
           label: "Change plan",
           icon: ArrowLeftRight,
           onClick: (row) => openDialog("changePlan", row),
-          hidden: (row) => !canChangePlan || row.status === "DELETED",
+          hidden: (row) => !canChangePlan || row.status === "DELETED" || row.status === "PENDING_DELETION",
         },
-        { label: "Activate", icon: UserCheck, onClick: (row) => openDialog("activate", row), hidden: (row) => !canChangeStatus || row.status !== "SUSPENDED" },
+        { label: "Turn back on", icon: UserCheck, onClick: (row) => openDialog("activate", row), hidden: (row) => !canChangeStatus || row.status !== "SUSPENDED" },
+        // Inside the 30 days after they asked to delete their account.
+        { label: "Cancel the deletion", icon: Undo2, onClick: (row) => openDialog("restore", row), hidden: (row) => !canChangeStatus || row.status !== "PENDING_DELETION" },
         {
           // The button's verb, apart from the Suspended status (both are সাময়িক বন্ধ otherwise).
           label: "Suspend@@action",
-          icon: ShieldOff,
+          icon: Ban,
           destructive: true,
           onClick: (row) => openDialog("suspend", row),
           hidden: (row) => !canChangeStatus || row.status !== "ACTIVE",

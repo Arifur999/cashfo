@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { CUSTOMER_HOME_ROUTE } from "@/lib/authUtils";
 import { requireId, runAction, runValidatedAction } from "@/lib/runAction";
 import { getRefreshToken, setAuthCookies, stashAdminSession } from "@/lib/tokenUtils";
-import { activateOwner, changeOwnerPlan, resetOwnerPassword, suspendOwner } from "@/services/owner.services";
+import { activateOwner, addOwnerNote, changeOwnerPlan, deleteOwnerNote, disableOwnerTwoStep, resetOwnerPassword, restoreOwner, signOutOwnerEverywhere, suspendOwner } from "@/services/owner.services";
 import { startOwnerView } from "@/services/ownerView.services";
 import type { ApiErrorResponse } from "@/types/api.types";
-import { changeOwnerPlanServerZodSchema, suspendOwnerServerZodSchema } from "@/zod/owner.validation";
+import { changeOwnerPlanServerZodSchema, ownerNoteZodSchema, suspendOwnerServerZodSchema } from "@/zod/owner.validation";
 
 export const suspendOwnerAction = async (userId: string, values: unknown) =>
   requireId(userId, "owner") ??
@@ -22,6 +22,21 @@ export const resetOwnerPasswordAction = async (userId: string) =>
 export const changeOwnerPlanAction = async (userId: string, values: unknown) =>
   requireId(userId, "owner") ??
   runValidatedAction(changeOwnerPlanServerZodSchema, values, "Failed to change plan", (payload) => changeOwnerPlan(userId, payload));
+
+export const restoreOwnerAction = async (userId: string) =>
+  requireId(userId, "owner") ?? runAction("Failed to cancel the deletion", () => restoreOwner(userId));
+
+export const signOutOwnerEverywhereAction = async (userId: string) =>
+  requireId(userId, "owner") ?? runAction("Failed to sign them out", () => signOutOwnerEverywhere(userId));
+
+export const disableOwnerTwoStepAction = async (userId: string) =>
+  requireId(userId, "owner") ?? runAction("Failed to turn off two-step verification", () => disableOwnerTwoStep(userId));
+
+export const addOwnerNoteAction = async (userId: string, values: unknown) =>
+  requireId(userId, "owner") ?? runValidatedAction(ownerNoteZodSchema, values, "Failed to save the note", (payload) => addOwnerNote(userId, payload));
+
+export const deleteOwnerNoteAction = async (userId: string, noteId: string) =>
+  requireId(userId, "owner") ?? requireId(noteId, "note") ?? runAction("Failed to remove the note", () => deleteOwnerNote(userId, noteId));
 
 // "View as customer": the browser switches to a read-only session of the
 // owner and lands in the customer app; the admin's own session waits in a
