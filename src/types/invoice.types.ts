@@ -19,6 +19,8 @@ export interface IInvoice {
   lineItems: IInvoiceLineItem[];
   totalAmount: string;
   pdfUrl: string | null;
+  // When it was last emailed to the customer (Mark paid sends it).
+  emailedAt?: string | null;
   createdAt: string;
 }
 
@@ -38,5 +40,9 @@ export interface IInvoiceDetail extends IInvoice {
     status: PaymentStatus;
     refund?: IRefundSummary | null;
     plan: { id: string; name: string };
+    // The period it paid for, and the number the money came from.
+    periodStart?: string | null;
+    periodEnd?: string | null;
+    payerAccount?: string | null;
   };
 }
