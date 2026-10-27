@@ -11,6 +11,7 @@ import { ShellNotice } from "@/components/modules/Customer/Layout/ShellNotice";
 import { TopbarProvider } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { QuickAddFab } from "@/components/modules/Customer/Layout/QuickAddFab";
 import { AuthProvider } from "@/components/modules/Customer/Providers/AuthProvider";
+import { PlanProvider } from "@/components/modules/Customer/Providers/PlanProvider";
 import { PlatformProvider } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { PrayerSettingsProvider } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 import { ThemeProvider } from "@/components/modules/Customer/Providers/ThemeProvider";
@@ -20,6 +21,7 @@ import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/Wor
 import { CUSTOMER_HOME_ROUTE, MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { resolveActiveWorkspace } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { getSidebarPlan } from "@/lib/customer/billing";
 import { isFeatureOn } from "@/lib/customer/features";
 import { getPrayerSettings } from "@/lib/customer/habits";
 import { getPlatform } from "@/lib/customer/platform";
@@ -59,7 +61,13 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
     redirect(await signInAgainRoute());
   }
 
-  const [workspace, locale, overrides, prayerSettings] = await Promise.all([resolveActiveWorkspace(user.businesses), getLocale(), getTranslationOverrides(), getPrayerSettings()]);
+  const [workspace, locale, overrides, prayerSettings, plan] = await Promise.all([
+    resolveActiveWorkspace(user.businesses),
+    getLocale(),
+    getTranslationOverrides(),
+    getPrayerSettings(),
+    getSidebarPlan(),
+  ]);
   const allowDark = isFeatureOn(platform.flags, "dark_mode");
   const viewAs = Boolean(user.impersonatedBy);
   const choices = switchableWorkspaces(user.businesses);
@@ -114,34 +122,36 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
       <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId} unlockedBusinessIds={unlockedBusinessIds}>
         <LocaleProvider initialLocale={locale} overrides={overrides}>
           <PlatformProvider value={{ flags: platform.flags, supportEmail: platform.supportEmail }}>
-            <PrayerSettingsProvider initial={prayerSettings}>
-              <TodayTasksProvider>
-                <TopbarProvider>
-                  <AddActionsProvider>
-                    {/* The app's sidebar on the left (Money Tracker or Habit
-                        Tracker, by the page); the top bar and the one
-                        scrolling region on the right. */}
-                    <ShellFrame>
-                      <AppSidebar initialCollapsed={sidebarCollapsed} />
-                      <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
-                        {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
-                        <AppTopbar />
-                        {/* id + tabIndex give the root layout's skip link a target. */}
-                        <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
-                          <OfflineBanner />
-                          <AnnouncementBanner announcements={platform.announcements} />
-                          {children}
-                        </main>
-                      </div>
-                    </ShellFrame>
-                    <QuickAddFab />
-                    <ShellNotice />
-                    {/* Keeps this device's push subscription in the reader's language. */}
-                    <PushResync enabled={!user.impersonatedBy} />
-                  </AddActionsProvider>
-                </TopbarProvider>
-              </TodayTasksProvider>
-            </PrayerSettingsProvider>
+            <PlanProvider value={plan}>
+              <PrayerSettingsProvider initial={prayerSettings}>
+                <TodayTasksProvider>
+                  <TopbarProvider>
+                    <AddActionsProvider>
+                      {/* The app's sidebar on the left (Money Tracker or Habit
+                          Tracker, by the page); the top bar and the one
+                          scrolling region on the right. */}
+                      <ShellFrame>
+                        <AppSidebar initialCollapsed={sidebarCollapsed} />
+                        <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
+                          {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
+                          <AppTopbar />
+                          {/* id + tabIndex give the root layout's skip link a target. */}
+                          <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
+                            <OfflineBanner />
+                            <AnnouncementBanner announcements={platform.announcements} />
+                            {children}
+                          </main>
+                        </div>
+                      </ShellFrame>
+                      <QuickAddFab />
+                      <ShellNotice />
+                      {/* Keeps this device's push subscription in the reader's language. */}
+                      <PushResync enabled={!user.impersonatedBy} />
+                    </AddActionsProvider>
+                  </TopbarProvider>
+                </TodayTasksProvider>
+              </PrayerSettingsProvider>
+            </PlanProvider>
           </PlatformProvider>
         </LocaleProvider>
       </AuthProvider>

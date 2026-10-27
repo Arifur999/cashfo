@@ -58,9 +58,9 @@ export interface HomeData {
   greeting: "Good morning" | "Good afternoon" | "Good evening";
   firstName: string;
 
-  // The profile card: the photo, the plan (null: the Free plan) and the
+  // The profile card: the photo and the
   // month the account was opened ("Jan 2025"; null when the API doesn't say).
-  profile: { name: string; avatarUrl: string | null; plan: string | null; since: string | null };
+  profile: { name: string; avatarUrl: string | null; since: string | null };
 
   // The period the figures cover, and how it reads ("October 2026").
   period: { key: DashboardPeriodKey; dateFrom: string; dateTo: string; label: string };

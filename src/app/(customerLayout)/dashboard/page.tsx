@@ -195,7 +195,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     profile: {
       name: user.name,
       avatarUrl: user.avatarUrl,
-      plan: null,
       since: user.createdAt ? monthName(user.createdAt.slice(0, 7), locale, "short", true) : null,
     },
     period: { key: period.key, dateFrom: period.dateFrom, dateTo: period.dateTo, label: periodLabel },

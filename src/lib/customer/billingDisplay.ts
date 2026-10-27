@@ -245,6 +245,20 @@ export function planState(subscription: Subscription): PlanState {
   }
 }
 
+// The sidebar's plan chip (AppSidebar board): no name means "Free plan" and
+// the Upgrade card; otherwise the plan's name, marked while it is a trial.
+// A plan that ended counts as free again.
+export interface SidebarPlan {
+  name: string | null;
+  trial: boolean;
+}
+
+export function sidebarPlan(subscription: Subscription): SidebarPlan {
+  const state = planState(subscription);
+  if (state === "free" || state === "ended") return { name: null, trial: false };
+  return { name: subscription.planName, trial: state === "trial" };
+}
+
 // A paid plan with an end date can be stopped at its end (or the stop undone).
 export const canCancel = (subscription: Subscription): boolean => subscription.isPaid && Boolean(subscription.currentPeriodEnd);
 

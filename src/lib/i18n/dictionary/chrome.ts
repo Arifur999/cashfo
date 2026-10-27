@@ -255,6 +255,7 @@ export const chromeDictionary: Record<string, string> = {
   "See plans": "প্ল্যান দেখুন",
   Upgrade: "আপগ্রেড",
   "Free plan": "ফ্রি প্ল্যান",
+  "{plan} · trial": "{plan} · ট্রায়াল",
   "Paid plans are coming soon.": "পেইড প্ল্যান শীঘ্রই আসছে।",
   "Search or jump to…": "খুঁজুন বা সরাসরি যান…",
   "Switch to Habit Tracker": "হ্যাবিট ট্র্যাকারে যান",

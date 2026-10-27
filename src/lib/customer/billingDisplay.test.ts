@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canCancel, familyName, familyPlan, featureMissing, featureValue, heroFamily, paymentStatusView, planFamilies, planState, usagePercent, usageTone, yearlySaving, type BillingPlan, type Subscription } from "./billingDisplay";
+import { canCancel, familyName, familyPlan, featureMissing, featureValue, heroFamily, paymentStatusView, planFamilies, planState, sidebarPlan, usagePercent, usageTone, yearlySaving, type BillingPlan, type Subscription } from "./billingDisplay";
 
 const plan = (over: Partial<BillingPlan>): BillingPlan => ({ id: "x", name: "Free", slug: "free", billingCycle: "FREE", price: "0.00", currency: "BDT", trialDays: 0, featureLimits: {}, displayOrder: 0, ...over });
 
@@ -63,6 +63,13 @@ describe("subscription state", () => {
     expect(planState(sub({ status: "EXPIRED" }))).toBe("ended");
     expect(canCancel(sub({}))).toBe(true);
     expect(canCancel(sub({ isPaid: false }))).toBe(false);
+  });
+
+  it("names the plan in the sidebar, a trial marked and an ended plan as free", () => {
+    expect(sidebarPlan(sub({ billingCycle: "FREE", isPaid: false }))).toEqual({ name: null, trial: false });
+    expect(sidebarPlan(sub({ status: "TRIALING", isPaid: false }))).toEqual({ name: "Monthly Pro", trial: true });
+    expect(sidebarPlan(sub({ status: "PAST_DUE" }))).toEqual({ name: "Monthly Pro", trial: false });
+    expect(sidebarPlan(sub({ status: "EXPIRED" }))).toEqual({ name: null, trial: false });
   });
 
   it("words a payment's status", () => {

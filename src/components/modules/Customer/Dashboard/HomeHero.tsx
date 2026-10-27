@@ -3,6 +3,7 @@
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Camera, PiggyBank, ShieldCheck, Star, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
+import { usePlanChip } from "@/components/modules/Customer/Providers/PlanProvider";
 import { workspaceKind } from "@/components/modules/Customer/Layout/workspaceKind";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { PLANS_ROUTE } from "@/lib/customer/nav";
@@ -71,7 +72,7 @@ export function ProfileCard({ data, onAdd }: { data: HomeData; onAdd: (kind: Add
   const { t, locale } = useLocale();
   const { user, activeBusiness } = useAuth();
   const { profile } = data;
-  const free = profile.plan === null;
+  const { free, label: planLabel } = usePlanChip();
   const workspace = activeBusiness && activeBusiness.type !== "PERSONAL" ? workspaceName(activeBusiness, user.name) : t(`${workspaceKind(activeBusiness)} workspace`);
   const initials = profile.name
     .split(/\s+/)
@@ -103,7 +104,7 @@ export function ProfileCard({ data, onAdd }: { data: HomeData; onAdd: (kind: Add
         </Link>
         <span className="absolute bottom-3 left-3 inline-flex h-7 items-center gap-1.5 rounded-full bg-night-ink px-3 text-caption font-semibold text-white">
           <ShieldCheck className="size-3.25 text-mint-200" strokeWidth={2.25} aria-hidden="true" />
-          {free ? t("Free plan") : profile.plan}
+          {planLabel}
         </span>
         {profile.since && (
           <span className="absolute right-3 bottom-3 inline-flex h-7 items-center rounded-full bg-white/72 px-2.5 text-caption font-semibold text-forest">{t("Since {date}", { date: profile.since })}</span>

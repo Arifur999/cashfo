@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
+import { usePlanChip } from "@/components/modules/Customer/Providers/PlanProvider";
 import Avatar from "@/components/smartly/Avatar";
 import Logo from "@/components/smartly/Logo";
 import { useScrollFades } from "@/hooks/useScrollFades";
@@ -154,8 +155,8 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
   // The Upgrade card steps aside while a group shows its pages.
   const groupOpen = useMoneyGroupOpen() || compact;
   const settingsOn = pathname === SETTINGS_ROUTE || pathname.startsWith(`${SETTINGS_ROUTE}/`);
-  // Everyone is on the free plan until the app sells one.
-  const free = true;
+  // The plan's chip, and the Upgrade card and button only on the free plan.
+  const { free, label: planLabel } = usePlanChip();
   const toggleLabel = t(collapsed ? "Expand sidebar" : "Collapse sidebar");
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
@@ -214,7 +215,7 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
         <Avatar name={user.name} src={user.avatarUrl} size={36} tone="soft" alt="" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-[13.5px] leading-[normal] font-semibold text-ink">{user.name}</span>
-          <span className={cn("self-start rounded-full px-1.75 py-px text-[11px] leading-[normal] font-semibold whitespace-nowrap", free ? "bg-surface-sunken text-ink-soft" : "bg-mint-50 text-brand-ink")}>{t("Free plan")}</span>
+          <span className={cn("self-start rounded-full px-1.75 py-px text-[11px] leading-[normal] font-semibold whitespace-nowrap", free ? "bg-surface-sunken text-ink-soft" : "bg-mint-50 text-brand-ink")}>{planLabel}</span>
         </span>
         {free && groupOpen ? (
           <Link href={PLANS_ROUTE} className="flex h-7.5 shrink-0 items-center rounded-full bg-forest px-3 text-[12.5px] font-semibold whitespace-nowrap text-white hover:bg-forest-hover">
