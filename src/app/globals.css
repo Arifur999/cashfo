@@ -88,6 +88,10 @@
   --warning-ink: #78350f;
   --info: #2563eb;
   --info-soft: #dbeafe;
+  /* The blue note box: its wash, edge and text (Transfer, Sell asset). */
+  --info-50: #eff6ff;
+  --info-line: #bfdbfe;
+  --info-ink: #1e40af;
   /* The payment gateways' own colours, for their tags on the Payments page. */
   --gateway-bkash: #e2136e;
   --gateway-nagad: #d9480f;
@@ -237,6 +241,9 @@
   --warning-ink: #f5cf86;
   --info: #86abf2;
   --info-soft: #14234a;
+  --info-50: #0f1a33;
+  --info-line: #1e3a6b;
+  --info-ink: #a9c4f5;
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
 
@@ -502,6 +509,9 @@ html:not(.dark) [data-app="habit"] {
   --color-warning-ink: var(--warning-ink);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-info-50: var(--info-50);
+  --color-info-line: var(--info-line);
+  --color-info-ink: var(--info-ink);
   --color-gateway-bkash: var(--gateway-bkash);
   --color-gateway-nagad: var(--gateway-nagad);
   --color-pillar-money: var(--pillar-money);
@@ -643,13 +653,16 @@ html:not(.dark) [data-app="habit"] {
 }
 /* The four wallet cards, in the order the design cycles them. */
 @utility bg-wallet-forest {
-  background-image: linear-gradient(135deg, #1f7a5a 0%, #0b3d2e 100%);
+  background-image: linear-gradient(135deg, #1c7567 0%, #0f3f38 100%);
+}
+@utility bg-wallet-green {
+  background-image: linear-gradient(135deg, #1c7567 0%, #0f4039 100%);
 }
 @utility bg-wallet-teal {
-  background-image: linear-gradient(135deg, #0b6f80 0%, #0a4f5c 100%);
+  background-image: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
 }
 @utility bg-wallet-charcoal {
-  background-image: linear-gradient(135deg, #33433c 0%, #0e1a16 100%);
+  background-image: linear-gradient(135deg, #33413e 0%, #12201d 100%);
 }
 @utility bg-wallet-mint {
   background-image: linear-gradient(135deg, #14b57a 0%, #1f7a5a 100%);
