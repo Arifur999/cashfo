@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Loader from "@/components/shared/Loader";
+import { PLANS_ROUTE } from "@/lib/customer/nav";
 import { APP_VERSION, sectionFor, SETTINGS_GROUPS, SETTINGS_SECTIONS, type SettingsSectionKey } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,9 @@ export function useSignOut() {
 export function SettingsNav() {
   const { t, locale } = useLocale();
   const { signingOut, signOut } = useSignOut();
-  const current = sectionFor(usePathname());
+  const pathname = usePathname();
+  // Plans (where Upgrade goes) has no row here, so nothing is lit there.
+  const current = pathname === PLANS_ROUTE ? null : sectionFor(pathname);
 
   return (
     <nav aria-label={t("Settings sections")} className="flex min-h-105 flex-col rounded-lg border border-line bg-surface p-3">

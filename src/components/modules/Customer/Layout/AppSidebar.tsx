@@ -4,13 +4,12 @@ import { ArrowRight, LogOut, PanelLeftClose, PanelLeftOpen, Settings, Sprout, St
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Avatar from "@/components/smartly/Avatar";
 import Logo from "@/components/smartly/Logo";
 import { useScrollFades } from "@/hooks/useScrollFades";
 import { BRAND_NAME } from "@/lib/brand";
-import { HABIT_APP_LABEL, HABIT_HOME, MONEY_HOME, navAppFor, SETTINGS_ROUTE, type NavApp } from "@/lib/customer/nav";
+import { HABIT_APP_LABEL, HABIT_HOME, MONEY_HOME, navAppFor, PLANS_ROUTE, SETTINGS_ROUTE, type NavApp } from "@/lib/customer/nav";
 import { sidebarCookie } from "@/lib/customer/sidebarState";
 import { workspaceName } from "@/lib/customer/workspaceSwitch";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -134,12 +133,6 @@ export function BrandBlock({ app, collapsed = false, as = "link" }: { app: NavAp
   );
 }
 
-// No plan is sold in the app yet (see the report): the Upgrade buttons say so.
-function useUpgrade() {
-  const { t } = useLocale();
-  return () => toast(t("Paid plans are coming soon."));
-}
-
 const ROUND_ICON = "flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors";
 
 // The Money Tracker's foot: the Upgrade to Pro card (only while no group
@@ -160,7 +153,6 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
   const pathname = usePathname();
   // The Upgrade card steps aside while a group shows its pages.
   const groupOpen = useMoneyGroupOpen() || compact;
-  const upgrade = useUpgrade();
   const settingsOn = pathname === SETTINGS_ROUTE || pathname.startsWith(`${SETTINGS_ROUTE}/`);
   // Everyone is on the free plan until the app sells one.
   const free = true;
@@ -212,10 +204,10 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
             </h2>
           </span>
           <p className="relative text-[12.5px] leading-[1.45] text-brand-ink">{t("No monthly limit on transactions, plus PDF reports, income goals and up to 5 workspaces.")}</p>
-          <button type="button" onClick={upgrade} className="relative mt-1 flex h-8 items-center gap-1.5 self-start rounded-full bg-forest px-3.5 text-small font-semibold text-white hover:bg-forest-hover">
+          <Link href={PLANS_ROUTE} className="relative mt-1 flex h-8 items-center gap-1.5 self-start rounded-full bg-forest px-3.5 text-small font-semibold text-white hover:bg-forest-hover">
             {t("See plans")}
             <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
-          </button>
+          </Link>
         </section>
       )}
       <div className="flex items-center gap-2.5 py-1 pr-1 pl-0.5">
@@ -225,9 +217,9 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
           <span className={cn("self-start rounded-full px-1.75 py-px text-[11px] leading-[normal] font-semibold whitespace-nowrap", free ? "bg-surface-sunken text-ink-soft" : "bg-mint-50 text-brand-ink")}>{t("Free plan")}</span>
         </span>
         {free && groupOpen ? (
-          <button type="button" onClick={upgrade} className="flex h-7.5 shrink-0 items-center rounded-full bg-forest px-3 text-[12.5px] font-semibold whitespace-nowrap text-white hover:bg-forest-hover">
+          <Link href={PLANS_ROUTE} className="flex h-7.5 shrink-0 items-center rounded-full bg-forest px-3 text-[12.5px] font-semibold whitespace-nowrap text-white hover:bg-forest-hover">
             {t("Upgrade")}
-          </button>
+          </Link>
         ) : (
           <button type="button" onClick={logout} aria-label={t("Sign out")} title={t("Sign out")} className="flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink">
             <LogOut className="size-4.25" strokeWidth={2} aria-hidden="true" />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import { PLANS_ROUTE } from "@/lib/customer/nav";
 import { sectionFor, sectionOf } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,9 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isIndex = pathname === "/settings";
   const section = sectionOf(sectionFor(pathname));
+  // Plans (where Upgrade goes) is no section of the rail's, but is headed
+  // like one.
+  const sectionLabel = pathname === PLANS_ROUTE ? "Plans" : section.label;
   const subtitle = t("Your account, your security and how the app looks.");
 
   return (
@@ -33,17 +37,17 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
               headed like /settings/profile. One is display:none at each
               width, so there is only ever one h1. */}
           <PageHeader eyebrow={t("Settings")} tone="neutral" title={t("Settings")} description={subtitle} className="max-md:sr-only lg:hidden" />
-          <PageHeader eyebrow={t("Settings")} tone="neutral" title={t(section.label)} description={subtitle} className="hidden lg:flex" />
+          <PageHeader eyebrow={t("Settings")} tone="neutral" title={t(sectionLabel)} description={subtitle} className="hidden lg:flex" />
         </>
       ) : (
         <>
-          <PageHeader eyebrow={t("Settings")} tone="neutral" title={t(section.label)} description={subtitle} className="hidden lg:flex" />
+          <PageHeader eyebrow={t("Settings")} tone="neutral" title={t(sectionLabel)} description={subtitle} className="hidden lg:flex" />
           <div className="flex flex-col gap-1 lg:hidden">
             <Link href="/settings" className="-ml-1 flex min-h-11 w-fit items-center gap-1 rounded-md px-1 text-body font-medium text-ink-2">
               <ChevronLeft className="size-4.5" aria-hidden="true" />
               {t("Settings")}
             </Link>
-            <h1 className="text-h2 text-ink">{t(section.label)}</h1>
+            <h1 className="text-h2 text-ink">{t(sectionLabel)}</h1>
           </div>
         </>
       )}
