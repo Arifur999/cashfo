@@ -43,9 +43,13 @@ interface ConfirmDialogProps {
   confirmationMatchedText?: string;
   // Extra content between the description and the buttons.
   children?: React.ReactNode;
+  // A button at the left of the foot (Reset data's "Download a copy").
+  footerStart?: React.ReactNode;
+  // 520px instead of 500, for a foot with three buttons (AdminOwnerResetDialog).
+  wide?: boolean;
 }
 
-type ConfirmBodyProps = Omit<ConfirmDialogProps, "open" | "onOpenChange" | "title" | "description" | "icon">;
+type ConfirmBodyProps = Omit<ConfirmDialogProps, "open" | "onOpenChange" | "title" | "description" | "icon" | "wide">;
 
 // The 40px pills of the design's dialog foot.
 const BUTTON = "h-10 rounded-full px-4 text-body font-semibold";
@@ -64,6 +68,7 @@ const ConfirmBody = ({
   confirmationLabel,
   confirmationMatchedText,
   children,
+  footerStart,
 }: ConfirmBodyProps) => {
   const { translate } = useLocale();
   const inputId = useId();
@@ -101,8 +106,9 @@ const ConfirmBody = ({
         </div>
       )}
       {/* The design's dialog foot: a strip across the bottom of the card. */}
-      <AlertDialogFooter className="mt-0 flex-row items-center justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
-        <AlertDialogCancel disabled={isPending} className={cn(BUTTON, "border-input bg-surface text-ink hover:bg-surface-sunken")}>
+      <AlertDialogFooter className="mt-0 flex-row flex-wrap items-center justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
+        {footerStart && <div className="mr-auto">{footerStart}</div>}
+        <AlertDialogCancel disabled={isPending} className={cn(BUTTON, "border-input bg-surface px-3.5 text-ink hover:bg-surface-sunken")}>
           {translate("Cancel")}
         </AlertDialogCancel>
         <AlertDialogAction
@@ -128,7 +134,7 @@ const ConfirmBody = ({
 // the caller closes it on success. Drawn as the design's confirm card
 // (AdminSuspendDialog): 500px, 20px corners, the icon on a 44px tile, the
 // question, the explanation, then the strip foot.
-const ConfirmDialog = ({ open, onOpenChange, title, description, icon, isPending = false, ...bodyProps }: ConfirmDialogProps) => {
+const ConfirmDialog = ({ open, onOpenChange, title, description, icon, isPending = false, wide = false, ...bodyProps }: ConfirmDialogProps) => {
   const { translate } = useLocale();
   const destructive = bodyProps.variant === "destructive";
   const Icon = icon ?? (destructive ? AlertTriangle : Info);
@@ -141,7 +147,7 @@ const ConfirmDialog = ({ open, onOpenChange, title, description, icon, isPending
         if (!isPending) onOpenChange(nextOpen);
       }}
     >
-      <AlertDialogContent className="max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-[20px] bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-125!">
+      <AlertDialogContent className={cn("max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-[20px] bg-surface p-0 text-ink shadow-overlay ring-0", wide ? "sm:max-w-130!" : "sm:max-w-125!")}>
         <div className="flex gap-3.5 px-6 pt-5.5 pb-2">
           <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-field", destructive ? "bg-expense-soft text-expense" : "bg-mint-50 text-emerald")}>
             <Icon className="size-5.5" aria-hidden="true" />

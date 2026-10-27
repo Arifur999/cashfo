@@ -34,7 +34,9 @@ const STATUS_TONES: Record<string, BadgeTone> = {
   SENDING: "warning",
   PLANNED: "accent",
   WAITING_ON_USER: "accent",
-  SUSPENDED: "orange",
+  SUSPENDED: "danger",
+  // A customer who asked to delete their account, inside the 30 days.
+  PENDING_DELETION: "warning",
   USED_UP: "warning",
   FAILED: "danger",
   DISABLED: "danger",
