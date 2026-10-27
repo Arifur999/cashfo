@@ -50,10 +50,11 @@ export function parseHours(text: string): number | null {
 export const hoursInput = (minutes: number): string => String(Number((minutes / 60).toFixed(2)));
 
 // The one quick-add button on a learning card, per unit. `amount` is in the
-// skill's own unit; `label` is a dictionary key.
-export const QUICK_ADD: Record<SkillUnit, { amount: number; label: string }> = {
-  LESSONS: { amount: 1, label: "+1 lesson" },
-  HOURS: { amount: 30, label: "+30 min" },
+// skill's own unit; `label` is a dictionary key, and `short` the words the
+// Skills board sets after the button's plus icon.
+export const QUICK_ADD: Record<SkillUnit, { amount: number; label: string; short: string }> = {
+  LESSONS: { amount: 1, label: "+1 lesson", short: "1 lesson" },
+  HOURS: { amount: 30, label: "+30 min", short: "30 min" },
 };
 
 // "2 lessons", "1 lesson", "1.5 hours", "1 hour", "30 min", each one

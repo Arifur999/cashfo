@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HabitMonthTracker } from "./api";
-import { challengeWindow, dailyItems, DAY_ITEM, dayDone, doneDays, MAX_STRIP_DAYS, presetFor, stripTotals, ticksTheDay } from "./challengeDisplay";
+import { challengeLook, challengeWindow, dailyItems, DAY_ITEM, dayDone, doneDays, MAX_STRIP_DAYS, presetFor, stripTotals, ticksTheDay } from "./challengeDisplay";
 
 const challenge = (items: string[], checks: [number, string][], totalDays = 30): HabitMonthTracker => ({
   id: "c",
@@ -57,5 +57,22 @@ describe("presetFor", () => {
   it("finds the ready-made length a challenge was started with", () => {
     expect(presetFor(40)?.title).toBe("The classic 40");
     expect(presetFor(10)).toBeNull();
+  });
+});
+
+describe("challengeLook", () => {
+  it("picks the board's icon and tint from the name", () => {
+    expect(challengeLook("No Sugar")).toEqual({ icon: "ban", tint: "rose" });
+    expect(challengeLook("Wake up at 5 am")).toEqual({ icon: "alarm", tint: "amber" });
+    expect(challengeLook("Read 20 pages")).toEqual({ icon: "book", tint: "orange" });
+    expect(challengeLook("No social media after Isha")).toEqual({ icon: "phone", tint: "indigo" });
+    expect(challengeLook("সকালে হাঁটা").icon).toBe("alarm");
+  });
+
+  it("gives any other name the target, in the same tint every time", () => {
+    const look = challengeLook("Learn a poem");
+    expect(look.icon).toBe("target");
+    expect(challengeLook("Learn a poem")).toEqual(look);
+    expect(challengeLook(null).icon).toBe("target");
   });
 });

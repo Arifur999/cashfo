@@ -204,6 +204,14 @@ export function ruleLabel(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "w
   return { days, amount };
 }
 
+// The rule as one line under a habit's name: "8 glasses a day" for an
+// everyday amount, "3 times a week · 30 minutes", "Sunday to Thursday".
+export function ruleLine(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "weeklyCount" | "targetValue" | "unit">, t: Translate = inEnglish, locale: Locale = "en"): string {
+  const rule = ruleLabel(habit, t, locale);
+  if (!rule.amount) return rule.days;
+  return habit.frequencyType === "DAILY" ? t("{amount} a day", { amount: rule.amount }) : `${rule.days} · ${rule.amount}`;
+}
+
 // The step a counted habit's − and + move by: one for a small goal, a round
 // tenth or so of a large one (30 minutes moves by 2, 10,000 steps by 1,000).
 const ROUND_STEPS = [1, 2, 5, 10, 15, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000];

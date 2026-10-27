@@ -148,7 +148,7 @@ function TimedReminderEditor({ value, onChange, label, description, defaultTime,
                     onClick={() => removeTime(index)}
                     disabled={disabled}
                     aria-label={t("Remove {time}", { time: timeLabel(time, t, locale) })}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:size-11"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:size-11"
                   >
                     <X className="size-4" aria-hidden="true" />
                   </button>
@@ -160,7 +160,7 @@ function TimedReminderEditor({ value, onChange, label, description, defaultTime,
                 type="button"
                 onClick={addTime}
                 disabled={disabled}
-                className="flex h-11 items-center gap-1.5 rounded-md px-3 text-small font-semibold text-emerald hover:bg-mint-50 disabled:opacity-50"
+                className="flex h-11 items-center gap-1.5 rounded-sm px-3 text-small font-semibold text-emerald hover:bg-mint-50 disabled:opacity-50"
               >
                 <Plus className="size-4" aria-hidden="true" />
                 {t("Add a time")}

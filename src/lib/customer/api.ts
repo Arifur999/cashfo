@@ -1254,8 +1254,10 @@ export interface HabitStat {
   // (days, or weeks for a weekly-count habit); never below currentStreak.
   bestStreak?: number;
   last30DaysCompleted: number;
-  // Against 30 days; the UI recomputes it against the planned days.
-  completionRate: number;
+  // Share of the planned days in the last 30 (null when none were planned);
+  // the UI still works its own % out from the month logs.
+  completionRate: number | null;
+  last30DaysPlanned?: number;
 }
 
 // GET /api/habits/month?month=YYYY-MM: every habit (archived too) and the

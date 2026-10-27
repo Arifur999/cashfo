@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Habit, HabitMonthLog, HabitMonthTracker, HabitToday } from "./api";
-import { doneToday, fullDays, last7, prayedOn, prayerMarks, prayerStreak, restingToday, streakRows } from "./habitsHome";
+import { doneThisWeek, doneToday, fullDays, last7, prayedOn, prayerMarks, prayerStreak, restingToday, streakRows } from "./habitsHome";
 
 const TODAY = "2026-10-15";
 
@@ -22,9 +22,14 @@ const row = (h: Habit, streak: number, completed: boolean | null): HabitToday =>
 
 describe("prayers", () => {
   it("marks a day's prayers from its sheet", () => {
-    expect(prayerMarks([sheet()], "2026-10-14", TODAY)).toEqual(["prayed", "prayed", "prayed", "prayed", "prayed"]);
-    expect(prayerMarks([sheet()], "2026-10-10", TODAY)).toEqual(["prayed", "prayed", "prayed", "prayed", "missed"]);
-    expect(prayerMarks([sheet()], TODAY, TODAY)).toEqual(["prayed", "open", "open", "open", "open"]);
+    expect(prayerMarks([sheet()], "2026-10-14", TODAY)).toEqual(["onTime", "onTime", "onTime", "onTime", "onTime"]);
+    expect(prayerMarks([sheet()], "2026-10-10", TODAY)).toEqual(["onTime", "onTime", "onTime", "onTime", "missed"]);
+    expect(prayerMarks([sheet()], TODAY, TODAY)).toEqual(["onTime", "open", "open", "open", "open"]);
+    // How a prayer was prayed carries through to the grid, and a qaza counts as prayed.
+    const marked = sheet();
+    marked.checks = marked.checks.map((c) => (c.day === 13 && c.item === "Dhuhr" ? { ...c, status: "JAMAAT" as const } : c.day === 13 && c.item === "Fajr" ? { ...c, status: "QAZA" as const } : c));
+    expect(prayerMarks([marked], "2026-10-13", TODAY).slice(0, 2)).toEqual(["qaza", "jamaat"]);
+    expect(prayedOn([marked], "2026-10-13", TODAY)).toBe(5);
     expect(prayerMarks([sheet()], "2026-10-16", TODAY)).toEqual(["none", "none", "none", "none", "none"]);
     // No sheet for September: nothing to say.
     expect(prayerMarks([sheet()], "2026-09-30", TODAY)).toEqual(["none", "none", "none", "none", "none"]);
@@ -77,5 +82,19 @@ describe("the last seven days", () => {
     expect(restingToday([water, walk], TODAY)).toEqual([]);
     const friday = habit({ id: "friday", frequencyType: "WEEKLY_DAYS", weeklyDays: [5] });
     expect(restingToday([water, friday], TODAY).map((h) => h.id)).toEqual(["friday"]);
+  });
+});
+
+describe("a few times a week", () => {
+  it("counts the days done in the week, Saturday to Friday", () => {
+    const logs: HabitMonthLog[] = [
+      { habitId: "gym", date: "2026-10-09", completed: true, value: null }, // Friday: the week before
+      { habitId: "gym", date: "2026-10-10", completed: true, value: null }, // Saturday
+      { habitId: "gym", date: "2026-10-12", completed: false, value: 10 },
+      { habitId: "gym", date: "2026-10-14", completed: true, value: null },
+      { habitId: "walk", date: "2026-10-14", completed: true, value: null },
+    ];
+    expect(doneThisWeek("gym", logs, TODAY)).toBe(2);
+    expect(doneThisWeek("gym", logs, "2026-10-09")).toBe(1);
   });
 });
