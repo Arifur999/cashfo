@@ -662,6 +662,10 @@ html:not(.dark) [data-app="habit"] {
   background-image: linear-gradient(135deg, #bfebd7 0%, #7bd3a8 100%);
 }
 /* The four wallet cards, in the order the design cycles them. */
+/* The Referral Program's earnings card: the primary, 32% darker at its end. */
+@utility bg-referral-hero {
+  background-image: linear-gradient(135deg, #1c7567 0%, #135046 100%);
+}
 @utility bg-wallet-forest {
   background-image: linear-gradient(135deg, #1c7567 0%, #0f3f38 100%);
 }
