@@ -73,8 +73,8 @@ const PERIODS: { value: DateRangePreset; label: string }[] = [
 
 // From → To and the note share the free width, so a long note isn't cut
 // beside an empty stretch of the wallets' column.
-const COLUMNS = "md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_120px_96px]";
-const ICON_BUTTON = "flex size-8 items-center justify-center rounded-md pointer-coarse:size-11";
+const COLUMNS = "md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_120px_76px] xl:grid-cols-[96px_minmax(0,1fr)_240px_120px_76px]";
+const ICON_BUTTON = "flex size-8 items-center justify-center rounded-full pointer-coarse:size-11";
 // A voided transfer and the reversal that undid it are set back as a whole,
 // as the board draws them: every cell fades (the wallet tiles, the amount,
 // the chip) but the actions, which stay at full strength. A faded cell is a
@@ -197,7 +197,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
     <PageFrame className="gap-6">
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Wallets")}`}
-        title={t("Transfer")}
+        title={t("Balance transfer")}
         description={t("Move money between your own wallets.")}
         actions={
           <>
@@ -210,7 +210,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
             {canManage && (
               <Button onClick={() => setDrawerOpen(true)} className="print:hidden">
                 <Plus strokeWidth={2.5} className="size-4" />
-                {t("Move money")}
+                {t("New transfer")}
               </Button>
             )}
           </>
@@ -237,23 +237,23 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card className="flex min-w-0 flex-col gap-2">
           <span className="text-small font-medium text-ink-muted">{t("Moved in this period")}</span>
-          <AmountText value={totals.moved} currency={currency} size="h2" className="text-h1 wrap-anywhere" />
+          <AmountText value={totals.moved} currency={currency} size="h2" className="text-h1 wrap-anywhere leading-[normal]" />
           <span className="text-caption font-normal text-ink-muted">
-            {totals.savings > 0 ? t("Not counting {amount} put into savings goals", { amount: formatCurrency(totals.savings, currency, locale) }) : t("Voided transfers aren't counted")}
+            {totals.savings > 0 ? t("Not counting {amount} put into savings goals", { amount: formatCurrency(totals.savings, currency, locale) }) : plural(t, totals.standing, "Across {count} transfer", "Across {count} transfers", undefined, locale)}
           </span>
         </Card>
         <Card className="flex min-w-0 flex-col gap-2">
           <span className="text-small font-medium text-ink-muted">{t("Transfers")}</span>
-          <span className="text-h1 text-ink tabular-nums">{formatCount(totals.standing, locale)}</span>
+          <span className="text-h1 leading-[normal] text-ink tabular-nums">{formatCount(totals.standing, locale)}</span>
           <span className="text-caption font-normal text-ink-muted">{countCaption}</span>
         </Card>
-        <div className="flex gap-4 rounded-lg border border-info/25 bg-info-soft p-5 md:col-span-2 xl:col-span-1">
+        <div className="flex gap-3.5 rounded-md border border-info-line bg-info-50 p-5 md:col-span-2 xl:col-span-1">
           <IconTile tone="info">
             <Info />
           </IconTile>
           <div className="flex flex-col gap-1">
-            <span className="text-body font-semibold text-info">{t("Your total balance doesn't change")}</span>
-            <span className="text-small leading-relaxed text-info">{t("Moving money between your wallets never changes your total, and it's never income or expense. Money put into a savings goal moves to Savings Goals.")}</span>
+            <span className="text-body font-semibold text-info-ink">{t("Your total balance doesn't change")}</span>
+            <span className="text-small leading-normal text-info-ink">{t("A transfer only moves money between your wallets. It's never counted as income or expense.")}</span>
           </div>
         </div>
       </section>
@@ -262,10 +262,17 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
         id="transfer-list"
         label={t("Transfer history")}
         title={t("Transfer history")}
-        description={meta.total > 0 ? t("Newest first") : undefined}
         actions={<SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={updateRange} label={t("Period")} className="print:hidden max-md:flex max-md:w-full max-md:[&>button]:flex-1 max-md:[&>button]:px-1.5" />}
         footer={
-          meta.total > 0 && (
+          meta.total > 0 &&
+          // One short page: the board's count and order (no pager, and no
+          // page size worth choosing); otherwise the pager.
+          (!paged && meta.total <= Math.min(...pageSizes) ? (
+            <ListFooter className="flex-row items-center justify-between gap-3 py-3.5 print:hidden">
+              <span>{plural(t, meta.total, "Showing {count} transfer", "Showing {count} transfers", undefined, locale)}</span>
+              <span>{t("Newest first")}</span>
+            </ListFooter>
+          ) : (
             <ListFooter className="print:hidden">
               <Pagination
                 page={meta.page}
@@ -278,7 +285,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
                 focusTargetId="transfer-list"
               />
             </ListFooter>
-          )
+          ))
         }
       >
         {transfers.length === 0 ? (
@@ -314,7 +321,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
               <ListHeadCell>{t("Note")}</ListHeadCell>
               <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
               <ListHeadCell align="end" className="print:hidden">
-                <span className="sr-only">{t("Actions")}</span>
+                {t("Actions")}
               </ListHeadCell>
             </ListHead>
             {listed.map((transfer) => {
@@ -327,10 +334,10 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
               return (
                 // Phones: From → To and the amount, then the date and the
                 // actions, then the note.
-                <ListRow key={transfer.id} columns={COLUMNS} muted={voided} className={cn(voided && CANCELLED_ROW)}>
-                  <ListCell className="text-caption text-ink-2 max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.transactionDate, undefined, locale)}</ListCell>
+                <ListRow key={transfer.id} columns={COLUMNS} muted={voided} className={cn("md:min-h-15", voided && CANCELLED_ROW)}>
+                  <ListCell className="text-caption text-ink-soft max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.transactionDate, undefined, locale)}</ListCell>
                   <ListCell className="max-md:col-start-1 max-md:row-start-1">
-                    <ListRowLink href={href} aria-label={t("{from} to {to}, {amount}", { from: parties.from, to: parties.to, amount })} className="flex min-w-0 items-center gap-3">
+                    <ListRowLink href={href} aria-label={t("{from} to {to}, {amount}", { from: parties.from, to: parties.to, amount })} className="flex min-w-0 items-center gap-2.5">
                       <Party name={parties.from} savings={parties.fromSavings} found={parties.fromId ? walletById.get(parties.fromId) : undefined} />
                       <ArrowRight className="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
                       <Party name={parties.to} savings={parties.toSavings} found={parties.toId ? walletById.get(parties.toId) : undefined} />
@@ -353,7 +360,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
                     {amount}
                   </ListCell>
                   <ListRowActions className="max-md:col-start-2 max-md:row-start-2 print:hidden">
-                    <Link href={href} aria-label={t("View details")} title={t("View details")} className={cn(ICON_BUTTON, "text-ink-2 hover:bg-surface-sunken")}>
+                    <Link href={href} aria-label={t("View details")} title={t("View details")} className={cn(ICON_BUTTON, "text-ink-soft hover:bg-surface-sunken")}>
                       <Eye className="size-4" aria-hidden="true" />
                     </Link>
                     {canManage && transfer.voidable && (
@@ -382,14 +389,14 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
           onClose={() => setVoiding(null)}
           businessId={businessId}
           transactionId={voiding.id}
-          title={t("Transfer")}
+          title={t("Balance transfer")}
           heading={t("Void this transfer?")}
           description={t("Both wallets go back to their balances from before this transfer. It stays in your history, marked as voided.")}
           confirmLabel="Void transfer"
           doneLabel="Transfer voided"
           reasonHint="At least {count} characters. It's saved with the transfer."
           detail={
-            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body">
+            <div className="flex items-center justify-between gap-3 rounded-[14px] border border-line bg-strip px-3.5 py-3 text-body">
               <span className="flex min-w-0 items-center gap-2 font-medium text-ink">
                 <span className="truncate">{voidingParties.from}</span>
                 <ArrowRight className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />
@@ -420,7 +427,7 @@ function Party({ name, found, savings }: PartyProps) {
   const tile = savings ? "bg-pillar-habits-soft text-pillar-habits" : found ? walletPalette(found.index).tile : "bg-surface-sunken text-ink-2 dark:bg-surface-raised";
   return (
     <span className="flex min-w-0 items-center gap-2">
-      <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-md [&_svg]:size-3.5", tile)}>{createElement(savings ? PiggyBank : found ? walletIcon(found.wallet) : ArrowLeftRight, { "aria-hidden": true })}</span>
+      <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-sm [&_svg]:size-3.5", tile)}>{createElement(savings ? PiggyBank : found ? walletIcon(found.wallet) : ArrowLeftRight, { "aria-hidden": true })}</span>
       <span className="truncate font-medium whitespace-nowrap text-ink">{name}</span>
     </span>
   );

@@ -62,8 +62,8 @@ const PERIODS: { value: DateRangePreset; label: string }[] = [
 // sideways, as before. Paper gets narrower columns and 12px type, so an A4
 // page holds every column instead of cutting off Out and Balance.
 const COLUMNS =
-  "grid-cols-[36px_104px_96px_104px_minmax(0,1fr)_112px_112px_124px] min-w-240 print:min-w-0 print:grid-cols-[24px_76px_72px_64px_minmax(0,1fr)_88px_88px_96px] print:gap-x-2 print:text-caption";
-const ROW = "tabular-nums print:min-h-0 print:py-1";
+  "grid-cols-[28px_104px_96px_104px_minmax(0,1fr)_112px_112px_124px] min-w-240 print:min-w-0 print:grid-cols-[24px_76px_72px_64px_minmax(0,1fr)_88px_88px_96px] print:gap-x-2 print:text-caption";
+const ROW = "tabular-nums md:min-h-14 print:min-h-0 print:py-1";
 // One half of a void (the voided entry, or the reversal that undid it) is
 // set back as a whole: every cell fades, the chips and figures with it.
 // A faded cell is a layer of its own that would cover the row's stretched
@@ -144,6 +144,19 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
   const openingLabel = periodFrom ? t("Balance on {date}", { date: formatDate(periodFrom, undefined, locale) }) : t("Opening balance");
   const here = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
   const paged = ledger ? ledger.meta.totalPages > 1 : false;
+  // The In and Out columns added up for the closing line, only when the
+  // whole period is on this page (a page's own sums would read as the
+  // period's).
+  const columnSums =
+    ledger && account && !paged && ledger.entries.length > 0
+      ? ledger.entries.reduce(
+          (sum, row) => {
+            const side = ledgerDirection(row.entryType, account.accountType);
+            return { ...sum, [side]: sum[side] + Number(row.amount) };
+          },
+          { in: 0, out: 0 },
+        )
+      : null;
 
   const lineText = (line: StatementLine): { label: string; note?: string } => {
     switch (line.kind) {
@@ -174,13 +187,13 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
       )}
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Wallets")}`}
-        title={t("Statement")}
+        title={t("Account ledger")}
         description={t("Every movement through one account, with a running balance.")}
         actions={
-          pdfExportOn &&
-          ready && (
-            <Button variant="secondary" onClick={() => window.print()} className="print:hidden">
-              <Printer className="size-4 text-ink-2" />
+          // Greyed until there is a ledger to print (the empty board).
+          pdfExportOn && (
+            <Button variant="secondary" onClick={() => window.print()} disabled={!ready} title={ready ? undefined : t("Pick an account first")} className="disabled:pointer-events-auto disabled:cursor-not-allowed disabled:border-line disabled:text-ink-faint disabled:opacity-100 print:hidden">
+              <Printer className={cn("size-4", ready ? "text-ink-soft" : "text-ink-faint")} />
               {t("Print / PDF")}
             </Button>
           )
@@ -197,14 +210,14 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
       )}
 
       <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:flex-wrap md:items-end print:hidden">
-        <div className="flex min-w-0 flex-1 flex-col gap-2 md:min-w-72">
-          <label id="ledger-account-label" htmlFor="ledger-account" className="text-small leading-[normal] font-medium text-ink-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-72">
+          <label id="ledger-account-label" htmlFor="ledger-account" className="text-small leading-[normal] font-medium text-ink-soft">
             {t("Account")}
           </label>
           <AccountPicker id="ledger-account" labelId="ledger-account-label" wallets={wallets} others={others} value={accountId} onChange={(id) => updateParams({ accountId: id })} preferredLanguage={preferredLanguage} currency={currency} />
         </div>
-        <div className="flex flex-col gap-2">
-          <span className="text-small leading-[normal] font-medium text-ink-2">{t("Period")}</span>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-small leading-[normal] font-medium text-ink-soft">{t("Period")}</span>
           <SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={setRange} label={t("Period")} size="lg" className="max-md:grid max-md:w-full max-md:grid-cols-3" />
         </div>
         {range === "custom" && (
@@ -238,19 +251,19 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
       </Card>
 
       {!ready || !lines ? (
-        <Card padding="none" className="flex flex-col items-center gap-3 p-10 text-center">
-          <span className="flex size-14 items-center justify-center rounded-lg bg-mint-50 text-emerald">
+        <Card padding="none" className="flex flex-col items-center gap-2.5 p-10 text-center">
+          <span className="flex size-14 items-center justify-center rounded-[14px] bg-mint-50 text-emerald">
             <ScrollText className="size-6" aria-hidden="true" />
           </span>
-          <h2 className="mt-2 text-h3 leading-[normal] tracking-normal text-ink">{t("Pick an account to see its statement")}</h2>
+          <h2 className="mt-1.5 text-h3 leading-[normal] tracking-normal text-ink">{t("Pick an account to see its ledger")}</h2>
           <p className="max-w-115 text-body leading-[1.55] text-ink-muted">{t("You'll see its opening balance, every movement and the running balance, ready to print.")}</p>
           {wallets.length > 0 && (
             <>
-              <span className="mt-4 text-caption leading-[normal] font-semibold text-ink-muted">{t("Your wallets")}</span>
+              <span className="mt-4.5 text-caption leading-[normal] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Your wallets")}</span>
               <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-auto md:grid-cols-4">
                 {wallets.map((wallet, index) => (
-                  <button key={wallet.id} type="button" onClick={() => updateParams({ accountId: wallet.id })} className="flex h-16 items-center gap-3 rounded-md border border-line bg-surface px-4 text-left shadow-card transition-colors hover:border-line-strong md:w-50">
-                    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md [&_svg]:size-4", walletPalette(index).tile)}>{createElement(walletIcon(wallet), { "aria-hidden": true })}</span>
+                  <button key={wallet.id} type="button" onClick={() => updateParams({ accountId: wallet.id })} className="flex h-16 items-center gap-2.5 rounded-field border border-line bg-surface px-3.5 text-left shadow-xs transition-colors hover:border-line-strong md:w-50">
+                    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-sm [&_svg]:size-3.75", walletPalette(index).tile)}>{createElement(walletIcon(wallet), { "aria-hidden": true })}</span>
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className="truncate text-body leading-[normal] font-semibold text-ink">{accountDisplayName(wallet, preferredLanguage)}</span>
                       <span className={cn("text-caption leading-[normal] font-normal tabular-nums", Number(wallet.currentBalance) < 0 ? "text-expense" : "text-ink-muted")}>{balanceText(wallet.currentBalance, currency, locale)}</span>
@@ -260,11 +273,11 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
               </div>
             </>
           )}
-          <span className="mt-2 text-caption leading-[normal] font-normal text-ink-muted">{t("Income, expense and other accounts are in the search above.")}</span>
+          <span className="mt-1.5 text-caption leading-[normal] font-normal text-ink-muted">{t("Income, expense and other accounts are in the search above.")}</span>
         </Card>
       ) : (
         <>
-          <Card role="group" aria-label={t("From the opening balance to the closing balance")} className={cn("grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3", oneLine && "xl:flex xl:items-stretch xl:gap-3")}>
+          <Card role="group" aria-label={t("From the opening balance to the closing balance")} className={cn("grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 md:py-4.5", oneLine && "xl:flex xl:items-stretch xl:gap-2.5")}>
             <EquationCell oneLine={oneLine} label={openingLabel} value={balanceText(ledger.balanceBroughtForward, currency, locale)} />
             {oneLine && <Operator>+</Operator>}
             <EquationCell oneLine={oneLine} op="+" spoken={t("plus@@equation")} label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={formatCurrency(summary.totalIn, currency, locale)} className={money ? "text-income" : undefined} />
@@ -284,18 +297,18 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
               </>
             )}
             {oneLine && <Operator equals>=</Operator>}
-            <div className={cn("col-span-full flex min-w-0 flex-col gap-1 rounded-md bg-mint-50 px-4 py-2", oneLine && "xl:col-auto xl:-my-2 xl:-mr-2.5 xl:flex-[1.2]")}>
+            <div className={cn("col-span-full flex min-w-0 flex-col gap-1 rounded-field bg-mint-50 px-3.5 py-2", oneLine && "xl:col-auto xl:-my-2 xl:-mr-2.5 xl:flex-[1.2]")}>
               <span className="text-caption font-semibold text-emerald">
                 <span className="sr-only">{t("equals@@equation")} </span>
                 {t("Closing balance")}
               </span>
-              <span className={cn("text-ink tabular-nums wrap-anywhere", oneLine ? "text-h3 sm:text-h2 xl:text-h3 2xl:text-h2" : "text-h3 sm:text-h2")}>{balanceText(ledger.closingBalance, currency, locale)}</span>
+              <span className="text-h3 font-bold text-ink tabular-nums wrap-anywhere sm:text-h2">{balanceText(ledger.closingBalance, currency, locale)}</span>
             </div>
           </Card>
 
           <ListCard
             id="statement-list"
-            label={t("Statement")}
+            label={t("Account ledger")}
             scrollable
             tableClassName="overflow-x-auto print:overflow-visible"
             footer={
@@ -335,20 +348,20 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                     {formatCurrency(row.amount, currency, locale)}
                   </ListCell>
                 ) : (
-                  <ListCell align="end" className="text-ink-muted">
+                  <ListCell align="end" className="text-ink-faint">
                     —
                   </ListCell>
                 );
               return (
                 <ListRow key={row.entryId} columns={COLUMNS} muted={voided} className={cn(ROW, voided && CANCELLED_ROW)}>
-                  <ListCell className="text-ink-muted">{formatCount(lines.firstRow + index, locale)}</ListCell>
-                  <ListCell className="text-ink-2">{formatDate(row.date, undefined, locale)}</ListCell>
+                  <ListCell className="text-ink-faint">{formatCount(lines.firstRow + index, locale)}</ListCell>
+                  <ListCell className="text-ink-soft">{formatDate(row.date, undefined, locale)}</ListCell>
                   <ListCell>
                     <Chip tone={LEDGER_TYPE_TONE[row.transactionType]} size="sm" className="font-semibold">
                       {t(TRANSACTION_TYPE_LABELS[row.transactionType])}
                     </Chip>
                   </ListCell>
-                  <ListCell className={cn("truncate text-small print:text-caption", row.referenceNo ? "text-ink-2" : "text-ink-muted")}>{row.referenceNo ?? "—"}</ListCell>
+                  <ListCell className={cn("truncate text-small print:text-caption", row.referenceNo ? "text-ink-2" : "text-ink-faint")}>{row.referenceNo ?? "—"}</ListCell>
                   <ListCell className="flex items-center gap-2">
                     <ListRowLink href={transactionHref(row.transactionId, here)} aria-label={row.description ? undefined : t("View details")} className={cn("truncate print:whitespace-normal", voided && "line-through")}>
                       {row.description ?? "—"}
@@ -367,7 +380,22 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                 </ListRow>
               );
             })}
-            <BalanceLine kind={lines.bottom.kind} {...lineText(lines.bottom)} value={balanceText(lines.bottom.balance, currency, locale)} strong={lines.bottom.kind === "closing"} />
+            <BalanceLine
+              kind={lines.bottom.kind}
+              {...lineText(lines.bottom)}
+              value={balanceText(lines.bottom.balance, currency, locale)}
+              strong={lines.bottom.kind === "closing"}
+              sums={
+                columnSums && lines.bottom.kind === "closing"
+                  ? {
+                      in: formatCurrency(columnSums.in, currency, locale),
+                      out: formatCurrency(columnSums.out, currency, locale),
+                      inClassName: money ? "text-income" : "text-ink",
+                      outClassName: money ? "text-expense" : "text-ink",
+                    }
+                  : undefined
+              }
+            />
           </ListCard>
         </>
       )}
@@ -382,19 +410,33 @@ interface BalanceLineProps {
   value: string;
   // The period's closing, set like a total.
   strong?: boolean;
+  // The In and Out columns added up, under them on the closing line (the
+  // board's totals), when every row of the period is on this one page.
+  sums?: { in: string; out: string; inClassName?: string; outClassName?: string };
 }
 
 // A balance line on the table-head band: the opening or brought-forward
 // figure above the rows, carried forward or closing below them, under the
-// Balance column.
-function BalanceLine({ kind, label, note, value, strong = false }: BalanceLineProps) {
+// Balance column. The words start under Date, as the board sets them.
+function BalanceLine({ kind, label, note, value, strong = false, sums }: BalanceLineProps) {
   return (
-    <ListSummaryRow kind={kind} columns={COLUMNS} className="min-h-12 text-body print:min-h-0">
-      <ListCell aria-colspan={7} className="col-span-7 flex flex-col">
-        <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-2")}>{label}</span>
+    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("min-h-12 text-body print:min-h-0", strong && "min-h-13")}>
+      <ListCell aria-hidden="true" />
+      <ListCell aria-colspan={sums ? 4 : 6} className={cn("flex flex-col", sums ? "col-span-4" : "col-span-6")}>
+        <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-soft")}>{label}</span>
         {note && <span className="text-caption text-ink-muted">{note}</span>}
       </ListCell>
-      <ListCell align="end" className={cn("font-semibold text-ink tabular-nums", strong && "text-title font-bold print:text-small")}>
+      {sums && (
+        <>
+          <ListCell align="end" className={cn("font-semibold tabular-nums", sums.inClassName)}>
+            {sums.in}
+          </ListCell>
+          <ListCell align="end" className={cn("font-semibold tabular-nums", sums.outClassName)}>
+            {sums.out}
+          </ListCell>
+        </>
+      )}
+      <ListCell align="end" className={cn("font-semibold text-ink tabular-nums", strong && "text-[15px] font-bold print:text-small")}>
         {value}
       </ListCell>
     </ListSummaryRow>
@@ -430,7 +472,7 @@ function EquationCell({ label, value, op, spoken, note, oneLine, className }: Eq
           {label}
         </span>
       </span>
-      <span className={cn("text-ink tabular-nums wrap-anywhere", oneLine ? "text-h3 sm:text-h2 xl:text-h3 2xl:text-h2" : "text-h3 sm:text-h2", className)}>{value}</span>
+      <span className={cn("text-h3 font-bold text-ink tabular-nums wrap-anywhere sm:text-[20px]", className)}>{value}</span>
       {note && <span className="text-caption text-ink-muted">{note}</span>}
     </div>
   );

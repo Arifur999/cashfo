@@ -187,7 +187,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
             {t("Wallets")}
           </>
         }
-        title={t("My wallets")}
+        title={t("Wallets")}
         description={t("The cash, bank and mobile accounts that hold your money.")}
         hideDescriptionOnPhone
         actions={
@@ -224,8 +224,8 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
       {/* Two cards a row until there's room for three, so a lakh figure is never cut short. */}
       <section className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-3">
         <Card className="flex min-w-0 flex-col gap-2">
-          <span className="text-small font-medium text-ink-muted">{t("Available balance")}</span>
-          <AmountText value={available} currency={currency} size="h2" className="text-h1 wrap-anywhere" />
+          <span className="text-small font-medium text-ink-muted">{t("Total balance")}</span>
+          <AmountText value={available} currency={currency} size="h2" className="text-h1 wrap-anywhere leading-[normal]" />
           <span className="text-caption font-normal text-ink-muted">
             {plural(t, active.length, "Across {count} active wallet", "Across {count} active wallets", undefined, locale)}
             {archivedNote && ` · ${archivedNote}`}
@@ -233,12 +233,12 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
         </Card>
         <Card className="flex min-w-0 flex-col gap-2">
           <span className="text-small font-medium text-ink-muted">{t("Opening balances")}</span>
-          <AmountText value={totalOpening} currency={currency} size="h2" className="text-h1 wrap-anywhere" />
+          <AmountText value={totalOpening} currency={currency} size="h2" className="text-h1 wrap-anywhere leading-[normal]" />
           <span className="text-caption font-normal text-ink-muted">{t("What the wallets held when you added them")}</span>
         </Card>
         <Card className="flex min-w-0 flex-col gap-2 md:col-span-2 xl:col-span-1">
           <span className="text-small font-medium text-ink-muted">{t("Change since opening")}</span>
-          <AmountText value={available - totalOpening} currency={currency} size="h2" tone="auto" signed className="text-h1 wrap-anywhere" />
+          <AmountText value={available - totalOpening} currency={currency} size="h2" tone="auto" signed className="text-h1 wrap-anywhere leading-[normal]" />
           <span className="text-caption font-normal text-ink-muted">{t("Current balance minus opening balances")}</span>
         </Card>
       </section>
@@ -270,11 +270,11 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
             />
           ))}
           {current === "active" && canManage && (
-            <button type="button" onClick={() => setDrawer("create")} className="hidden min-h-50 flex-col items-center justify-center gap-3 rounded-xl border-[1.5px] border-dashed border-line-strong bg-surface transition-colors hover:border-emerald md:flex">
-              <span className="flex size-11 items-center justify-center rounded-full bg-mint-50 text-emerald">
+            <button type="button" onClick={() => setDrawer("create")} className="hidden min-h-50 flex-col items-center justify-center gap-2.5 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald md:flex">
+              <span className="flex size-11 items-center justify-center rounded-field bg-mint-50 text-emerald">
                 <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
               </span>
-              <span className="text-title text-ink">{t("Add wallet")}</span>
+              <span className="text-[15px] leading-[normal] font-semibold text-ink">{t("Add wallet")}</span>
               <span className="text-small text-ink-muted">{t("Cash, bank account or mobile wallet")}</span>
             </button>
           )}

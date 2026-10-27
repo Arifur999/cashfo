@@ -63,7 +63,7 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
   function tileFor(account: Account) {
     const index = wallets.findIndex((wallet) => wallet.id === account.id);
     return (
-      <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-md [&_svg]:size-3.5", index >= 0 ? walletPalette(index).tile : "bg-surface-sunken text-ink-2")}>
+      <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-sm [&_svg]:size-3.5", index >= 0 ? walletPalette(index).tile : "bg-surface-sunken text-ink-2")}>
         {createElement(index >= 0 ? walletIcon(account) : accountIcon(account), { "aria-hidden": true })}
       </span>
     );
@@ -90,9 +90,9 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
   return (
     <Popover open={open} onOpenChange={openChange}>
       <PopoverAnchor asChild>
-        <div className={cn("flex h-11 items-center gap-2 rounded-md border bg-surface pr-2 pl-3 transition-[border-color,box-shadow]", open ? "border-emerald shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]" : "border-line-strong")}>
+        <div className={cn("flex h-11 items-center gap-2 rounded-sm border bg-surface pr-2 pl-2.5 transition-[border-color,box-shadow]", open ? "border-focus-ring focus-halo" : "border-input")}>
           <PopoverTrigger asChild>
-            <button type="button" id={id} aria-labelledby={labelId ? `${labelId} ${id}` : undefined} className="flex h-full min-w-0 flex-1 items-center gap-3 text-left">
+            <button type="button" id={id} aria-labelledby={labelId ? `${labelId} ${id}` : undefined} className="flex h-full min-w-0 flex-1 items-center gap-2.5 text-left">
               {selected ? (
                 <>
                   {tileFor(selected)}
@@ -110,7 +110,7 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
             </button>
           </PopoverTrigger>
           {selected && (
-            <button type="button" onClick={() => onChange("")} aria-label={t("Clear account")} className="flex size-7 shrink-0 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+            <button type="button" onClick={() => onChange("")} aria-label={t("Clear account")} className="flex size-7 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
               <X className="size-3.5" aria-hidden="true" />
             </button>
           )}

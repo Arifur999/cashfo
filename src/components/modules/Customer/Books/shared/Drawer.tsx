@@ -7,8 +7,9 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 // The design-v4 drawer widths: 460 for most forms, 480 and 520 for the
-// wider ones.
+// wider ones, 440 for the narrow Add wallet and Move money drawers.
 const WIDTHS = {
+  440: "w-110 data-[side=right]:sm:max-w-110",
   460: "w-115 data-[side=right]:sm:max-w-115",
   480: "w-120 data-[side=right]:sm:max-w-120",
   520: "w-130 data-[side=right]:sm:max-w-130",
@@ -20,6 +21,8 @@ interface DrawerProps {
   // The line under the title ("Where do you keep this money?").
   description?: React.ReactNode;
   width?: keyof typeof WIDTHS;
+  // A tile before the title (the asset's type in Update value).
+  icon?: React.ReactNode;
   // Closing is refused while a save is in flight.
   busy?: boolean;
   onClose: () => void;
@@ -35,14 +38,15 @@ interface DrawerProps {
 // phone), holding a form with the head (18px title, the 13px line under it,
 // the round close button), a scrolling body and the foot with its buttons on
 // the right, each edged by a line.
-export function Drawer({ open, title, description, width = 480, busy = false, onClose, onSubmit, footer, children }: DrawerProps) {
+export function Drawer({ open, title, description, width = 480, icon, busy = false, onClose, onSubmit, footer, children }: DrawerProps) {
   const { t } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !busy && onClose()}>
       <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? cn(WIDTHS[width], "shadow-drawer") : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
         <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
-          <div className="flex min-w-0 flex-col gap-1">
+          {icon}
+          <div className={cn("flex min-w-0 flex-col gap-1", icon && "mr-auto")}>
             <SheetTitle className="text-h3 text-ink">{title}</SheetTitle>
             <SheetDescription className={description ? "text-small text-ink-muted" : "sr-only"}>{description ?? title}</SheetDescription>
           </div>

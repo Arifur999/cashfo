@@ -32,7 +32,7 @@ interface WalletCardProps {
   offline?: boolean;
 }
 
-const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75";
+const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-2.5 rounded-[6px] px-2.5 text-small font-medium text-ink focus:bg-strip [&_svg]:size-3.75 [&_svg]:text-ink-soft";
 
 // One wallet as a bank card: its kind, name and number, what it holds now
 // and held at the start, a link to its statement, and the actions menu.
@@ -53,7 +53,7 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
     <div
       aria-busy={busy || undefined}
       className={cn(
-        "relative flex flex-col gap-3 overflow-hidden rounded-lg p-4 text-white transition-opacity md:min-h-50 md:justify-between md:gap-0 md:rounded-xl md:p-5 md:shadow-float",
+        "relative flex flex-col gap-3 overflow-hidden rounded-lg p-4 text-white transition-opacity md:min-h-50 md:justify-between md:gap-0 md:p-5 md:shadow-float",
         palette.gradient,
         archived && "saturate-50",
         busy && "opacity-70",
@@ -82,11 +82,11 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
             <DropdownMenuTrigger
               disabled={busy}
               aria-label={t("Actions for {name}", { name })}
-              className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-md bg-white/12 text-white hover:bg-white/20 disabled:cursor-default data-open:bg-white/28 max-md:-mr-2 max-md:size-11 max-md:bg-transparent max-md:text-white/70"
+              className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-white/12 text-white hover:bg-white/20 disabled:cursor-default data-open:bg-white/28 max-md:-mr-2 max-md:size-11 max-md:bg-transparent max-md:text-white/70"
             >
               {busy ? <Loader size={16} onDark label={t("Loading...")} /> : <Ellipsis className="size-4.5" aria-hidden="true" />}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={6} className="w-49 rounded-md border border-line bg-surface p-2 shadow-overlay ring-0">
+            <DropdownMenuContent align="end" sideOffset={6} className="w-49 rounded-field border border-line bg-surface p-1.5 shadow-overlay ring-0">
               <DropdownMenuItem onSelect={onEdit} className={MENU_ITEM}>
                 <Pencil aria-hidden="true" />
                 {t("Edit wallet")}
@@ -94,7 +94,7 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
               <DropdownMenuItem asChild className={MENU_ITEM}>
                 <Link href={statementHref}>
                   <ScrollText aria-hidden="true" />
-                  {t("View statement")}
+                  {t("View ledger")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onToggleArchive} disabled={offline} className={MENU_ITEM}>
@@ -112,7 +112,7 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
       </div>
 
       <div className="relative hidden flex-col gap-1 md:flex">
-        <span className="truncate text-h3 tracking-[-0.01em]">{name}</span>
+        <span className="truncate text-[17px] leading-[normal] font-semibold tracking-[-0.01em]">{name}</span>
         <span className="text-small tracking-[0.08em] text-white/75 tabular-nums">{((savings || walletType(wallet) !== "cash") && maskAccountNumber(wallet.accountNumber)) || t("No account number")}</span>
       </div>
 
@@ -121,20 +121,20 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
       <div className="relative flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 flex-col gap-3 md:gap-0.5">
           <span className="hidden text-caption font-normal text-white/78 md:block">{savings ? t("Balance") : t("Current balance")}</span>
-          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-h2 md:font-bold xl:text-h1">{balanceText(wallet.currentBalance, currency, locale)}</span>
+          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-h2 md:font-bold xl:text-[26px] xl:tracking-[-0.02em]">{balanceText(wallet.currentBalance, currency, locale)}</span>
           <span className="text-caption font-normal text-white/78 tabular-nums max-md:leading-[normal]">
             {t("Opening")} {formatCurrency(wallet.openingBalance, currency, locale)}
           </span>
         </div>
-        <Link href={statementHref} className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/16 px-3 py-2 text-caption font-semibold text-white hover:bg-white/24 max-md:hidden">
-          {t("Statement")}
+        <Link href={statementHref} className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-white/16 px-2.5 py-1.5 text-caption font-semibold text-white hover:bg-white/24 max-md:hidden">
+          {t("Ledger")}
           <ArrowRight className="size-3" strokeWidth={2.5} aria-hidden="true" />
         </Link>
       </div>
 
       {/* Phones: the whole card opens the statement; the menu sits above.
           The ring is drawn inside, where the card's rounded clip can't cut it. */}
-      <Link href={statementHref} aria-label={t("View the statement of {name}", { name })} className="absolute inset-0 rounded-lg focus-visible:-outline-offset-2 md:hidden" />
+      <Link href={statementHref} aria-label={t("View the ledger of {name}", { name })} className="absolute inset-0 rounded-lg focus-visible:-outline-offset-2 md:hidden" />
     </div>
   );
 }
