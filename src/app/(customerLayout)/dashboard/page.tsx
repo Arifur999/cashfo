@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { getBudgetCategoryNames, getBudgetOverview } from "@/lib/customer/budgets";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
 import { isFeatureOn } from "@/lib/customer/features";
+import { getFmt } from "@/lib/customer/fmt";
 import { greetingFor, greetingName, homeDates, hourIn } from "@/lib/customer/greeting";
 import { getPrayerSettings } from "@/lib/customer/habits";
 import { balanceAsOfTotal, balanceChangePercent, daysLeftInMonth, loanCounts, previousMonthEnd, savingsTotals, windowStart } from "@/lib/customer/homeInsights";
@@ -87,6 +88,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   if (!user) redirect("/login");
 
   const locale = await getLocale();
+  const fmt = await getFmt();
   const now = new Date();
   const greeting = greetingFor(hourIn(APP_TIME_ZONE, now));
   const firstName = greetingName(user.name);
@@ -97,7 +99,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   // what they can do rather than sending them round again.
   if (!activeBusinessId) {
     const prayerSettings = await getPrayerSettings();
-    const dates = homeDates(now, locale, APP_TIME_ZONE, prayerSettings.hijriAdjust);
+    const dates = homeDates(now, fmt, APP_TIME_ZONE, prayerSettings.hijriAdjust);
     return <HomeNoWorkspace greeting={greeting} firstName={firstName} day={dates.day} hasGroup={user.businesses.some((b) => b.type === "GROUP")} />;
   }
 
@@ -180,10 +182,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   const periodLabel =
     period.key === "this-year"
-      ? toLocaleDigits(String(year), locale)
+      ? toLocaleDigits(String(year), fmt)
       : period.key === "custom"
-        ? rangeLabel(period.dateFrom, period.dateTo, locale)
-        : monthName(period.dateFrom.slice(0, 7), locale, "long", true);
+        ? rangeLabel(period.dateFrom, period.dateTo, fmt)
+        : monthName(period.dateFrom.slice(0, 7), fmt, "long", true);
 
   const data: HomeData = {
     businessId: activeBusinessId,
@@ -195,10 +197,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     profile: {
       name: user.name,
       avatarUrl: user.avatarUrl,
-      since: user.createdAt ? monthName(user.createdAt.slice(0, 7), locale, "short", true) : null,
+      since: user.createdAt ? monthName(user.createdAt.slice(0, 7), fmt, "short", true) : null,
     },
     period: { key: period.key, dateFrom: period.dateFrom, dateTo: period.dateTo, label: periodLabel },
-    lastMonthShort: monthName(lastMonthKey, locale, "short"),
+    lastMonthShort: monthName(lastMonthKey, fmt, "short"),
     balance,
     balanceChangePercent: balanceChangePercent(balance, start.ok ? start.value : null),
     income: money.income,
@@ -207,8 +209,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     expenseChange: changePercent(money.expense, before.expense),
     chart: monthRates(chartIncome, chartExpense).map((rate) => ({
       month: rate.month,
-      label: monthName(rate.month, locale, "short"),
-      name: monthName(rate.month, locale, "long", true),
+      label: monthName(rate.month, fmt, "short"),
+      name: monthName(rate.month, fmt, "long", true),
       income: rate.income,
       expense: rate.expense,
     })),
@@ -222,7 +224,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             .sort((a, b) => b.percent - a.percent)
             .slice(0, BUDGET_ROWS)
             .map((c) => ({ name: c.name, spent: Number(c.spent), limit: Number(c.monthlyLimit), percent: c.percent })),
-          monthName: monthName(today.slice(0, 7), locale),
+          monthName: monthName(today.slice(0, 7), fmt),
           daysLeft: daysLeftInMonth(today),
           hasBudget,
         }

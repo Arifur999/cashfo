@@ -4,6 +4,7 @@ import { ChartColumn, Plus } from "lucide-react";
 import { useId, useState } from "react";
 import { formatCompactAmount, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { toLocaleDigits } from "@/lib/i18n/digits";
+import { withLocale, redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { quarterAxis } from "./dashboardFigures";
@@ -51,15 +52,16 @@ function Legend({ size }: { size: "md" | "sm" }) {
 // month in full colour on a band and the earlier ones muted. Hovering (or
 // focusing) a month shows its figures and what was saved.
 export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseChartProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const listId = useId();
   const [active, setActive] = useState<number | null>(null);
   const top = Math.max(0, ...points.map((p) => Math.max(p.income, p.expense)));
   const axis = quarterAxis(top);
-  const money = (value: number) => formatCurrency(value, currency, locale);
+  const money = (value: number) => formatCurrency(value, currency, fmt);
   // The figures in the reader's digits, the units in the reader's words: a
-  // Bangla unit is a whole word ("৫০ হাজার"), so it gets a space.
-  const axisLabel = (value: number) => toLocaleDigits(formatCompactAmount(value).replace(/(Cr|L|K)$/, (unit) => (locale === "bn" ? " " : "") + t(`${unit}@@axis`)), locale);
+  // Bangla unit is a whole word ("৫০ হাজার"), so it gets a space. Lakh and
+  // crore, or million and billion for a reader who groups in threes.
+  const axisLabel = (value: number) => toLocaleDigits(formatCompactAmount(value, withLocale(fmt, "en")).replace(/(Cr|L|K|M|B)$/, (unit) => (locale === "bn" ? " " : "") + t(`${unit}@@axis`)), fmt);
   const describe = (p: HomeChartPoint) => t("{month}: income {income}, expense {expense}", { month: p.name, income: money(p.income), expense: money(p.expense) });
   const current = points.length - 1;
   const shown = active !== null ? points[active] : null;
@@ -68,7 +70,7 @@ export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseCha
     <div className="flex items-start justify-between gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-title leading-[normal] font-semibold text-ink">{t("Income vs Expense")}</h2>
-        <span className="text-[13px] leading-[normal] text-ink-muted">{t("Last 6 months")}</span>
+        <span className="text-[13px] leading-[normal] text-ink-muted">{redigit(t("Last 6 months"), fmt)}</span>
       </div>
       {axis && <Legend size="md" />}
     </div>
@@ -115,7 +117,7 @@ export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseCha
           {/* Bangla's axis words ("৫০ হাজার") need a wider column. */}
           <div aria-hidden="true" className="-mt-2 flex w-10 flex-col justify-between pb-5 text-right text-caption whitespace-nowrap text-ink-muted tabular-nums [.font-bn_&]:w-14">
             {axis.map((value, i) => (
-              <span key={i}>{value === 0 ? toLocaleDigits("0", locale) : axisLabel(value)}</span>
+              <span key={i}>{value === 0 ? toLocaleDigits("0", fmt) : axisLabel(value)}</span>
             ))}
           </div>
           <div className="flex grow flex-col">
@@ -195,7 +197,7 @@ export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseCha
 // The dark tooltip over a month: its income, expense and what was saved.
 // It sits beside the month, on whichever side has room.
 function ChartTip({ point, currency, index, count }: { point: HomeChartPoint; currency: string; index: number; count: number }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const saved = point.income - point.expense;
   const center = ((index + 0.5) / count) * 100;
   const left = index >= count / 2;
@@ -210,16 +212,16 @@ function ChartTip({ point, currency, index, count }: { point: HomeChartPoint; cu
       <span className={row}>
         <span className="size-2 rounded-[2px] bg-mint-300" />
         <span className="grow text-white/75">{t("Income")}</span>
-        <span className="font-semibold tabular-nums">{formatCurrency(point.income, currency, locale)}</span>
+        <span className="font-semibold tabular-nums">{formatCurrency(point.income, currency, fmt)}</span>
       </span>
       <span className={row}>
         <span className="size-2 rounded-[2px] bg-night-coral" />
         <span className="grow text-white/75">{t("Expense")}</span>
-        <span className="font-semibold tabular-nums">{formatCurrency(point.expense, currency, locale)}</span>
+        <span className="font-semibold tabular-nums">{formatCurrency(point.expense, currency, fmt)}</span>
       </span>
       <span className={cn(row, "border-t border-white/12 pt-2")}>
         <span className="grow text-white/75">{t("Saved")}</span>
-        <span className={cn("font-bold tabular-nums", saved < 0 ? "text-night-coral" : "text-mint-200")}>{formatSignedCurrency(saved, currency, locale)}</span>
+        <span className={cn("font-bold tabular-nums", saved < 0 ? "text-night-coral" : "text-mint-200")}>{formatSignedCurrency(saved, currency, fmt)}</span>
       </span>
     </div>
   );

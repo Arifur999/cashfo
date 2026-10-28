@@ -1,5 +1,5 @@
 import { APP_TIME_ZONE } from "@/lib/date";
-import type { Locale } from "@/lib/i18n/translate";
+import { type FormatLocale, langOf, writeDigits } from "@/lib/i18n/formatPrefs";
 
 // "Good morning" until noon, "Good afternoon" until 6 pm, then "Good
 // evening" -- English keys for t().
@@ -36,19 +36,20 @@ export function hourIn(zone: string, now: Date = new Date()): number {
 // the Hijri calendar, in the reader's language, for the Home eyebrow (phones
 // show only the first).
 // hijriAdjust shifts the Hijri date a day either way (the prayer settings).
-export function homeDates(now: Date, locale: Locale, zone: string = APP_TIME_ZONE, hijriAdjust = 0): { day: string; hijri: string } {
-  const tag = locale === "bn" ? "bn-BD" : "en-GB";
+export function homeDates(now: Date, locale: FormatLocale, zone: string = APP_TIME_ZONE, hijriAdjust = 0): { day: string; hijri: string } {
+  // Latin digits from Intl, then the reader's own (formatPrefs.ts).
+  const tag = langOf(locale) === "bn" ? "bn-BD-u-nu-latn" : "en-GB";
   // Put together from its parts: ICU versions disagree about the comma
   // after the weekday.
   const parts = new Intl.DateTimeFormat(tag, { timeZone: zone, weekday: "long", day: "numeric", month: "long" }).formatToParts(now);
   const piece = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
-  const day = `${piece("weekday")}, ${piece("day")} ${piece("month")}`;
-  const hijri = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: zone, day: "numeric", month: "long", year: "numeric" })
+  const day = writeDigits(`${piece("weekday")}, ${piece("day")} ${piece("month")}`, locale);
+  const hijri = new Intl.DateTimeFormat(`${tag.replace("-u-nu-latn", "")}-u-ca-islamic-umalqura-nu-latn`, { timeZone: zone, day: "numeric", month: "long", year: "numeric" })
     .formatToParts(new Date(now.getTime() - hijriAdjust * 86400000))
     .filter((part) => ["day", "month", "year", "literal"].includes(part.type))
     .map((part) => (part.type === "literal" ? " " : part.value))
     .join("")
     .replace(/\s+/g, " ")
     .trim();
-  return { day, hijri };
+  return { day, hijri: writeDigits(hijri, locale) };
 }

@@ -8,11 +8,9 @@ import type { Transaction } from "@/lib/customer/api";
 import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { categoryLabel, describeTransaction, rowTitle, systemText, type CategoryMeta, type TransactionRow } from "@/lib/customer/transactionRows";
-import { toDateInputValue } from "@/lib/date";
-import { banglaDayMonth } from "@/lib/i18n/banglaDates";
+import { formatDay, toDateInputValue } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CARD } from "./HomeHero";
@@ -38,9 +36,9 @@ const ROW_ACTION = "flex size-7.5 items-center justify-center rounded-full bg-su
 // the day and the amount in its colour. A cancelled row is set back as on
 // Transactions: struck through and grey, with its Voided chip.
 export function RecentTransactionsCard({ businessId, transactions, categoriesById, currency, canManage, onAdd }: RecentTransactionsCardProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const [voiding, setVoiding] = useState<TransactionRow | null>(null);
-  const dayMonth = (day: string) => (locale === "bn" ? banglaDayMonth(day) : formatDate(`${day}T00:00:00.000Z`, "d MMM", locale));
+  const dayMonth = (day: string) => formatDay(day, "d MMM", fmt);
   const rows = transactions.map((transaction) => describeTransaction(transaction, categoriesById, {}, locale));
 
   const viewAll = (
@@ -79,7 +77,7 @@ export function RecentTransactionsCard({ businessId, transactions, categoriesByI
     const icon = isTransfer ? ArrowLeftRight : row.category ? categoryIconFor(row.category) : Receipt;
     const title = row.title ? systemText(row.title, t) : t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType]);
     const kind = isTransfer ? t("Transfer") : row.category ? categoryLabel(row.category.name, t) : t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType]);
-    const amount = isTransfer ? formatCurrency(Math.abs(row.signedAmount), currency, locale) : formatSignedCurrency(row.signedAmount, currency, locale);
+    const amount = isTransfer ? formatCurrency(Math.abs(row.signedAmount), currency, fmt) : formatSignedCurrency(row.signedAmount, currency, fmt);
     const amountTone = row.cancelled || isTransfer ? "text-ink-muted" : row.signedAmount >= 0 ? "text-emerald" : "text-expense";
     return { tone, icon, title, kind, amount, amountTone, day: dayMonth(toDateInputValue(row.transaction.transactionDate)) };
   };

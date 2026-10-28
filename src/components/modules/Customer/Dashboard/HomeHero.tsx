@@ -10,6 +10,7 @@ import { PLANS_ROUTE } from "@/lib/customer/nav";
 import { workspaceName } from "@/lib/customer/workspaceSwitch";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { DashboardPeriodKey } from "./dashboardFigures";
@@ -39,7 +40,7 @@ const SAVED_LABEL: Record<DashboardPeriodKey, string> = {
 
 export type AddKind = "income" | "expense" | "transfer";
 
-const percentText = (value: number, locale: "en" | "bn") => `${toLocaleDigits(Math.abs(value).toFixed(1), locale)}%`;
+const percentText = (value: number, locale: FormatLocale) => `${toLocaleDigits(Math.abs(value).toFixed(1), locale)}%`;
 
 // What share of the period's income was kept; null without income.
 export const savedRate = (income: number, expense: number): number | null => (income > 0 ? Math.max(0, Math.round(((income - expense) / income) * 100)) : null);
@@ -52,13 +53,13 @@ function CornerIcon({ className, children }: { className: string; children: Reac
 // A change against the earlier period: the pill with its arrow, and what it
 // is compared with. Good news (more in, less out) is green, bad news red.
 function ChangeLine({ change, good, text, onDark = false }: { change: number; good: boolean; text: string; onDark?: boolean }) {
-  const { locale } = useLocale();
+  const { fmt } = useLocale();
   const Arrow = change >= 0 ? TrendingUp : TrendingDown;
   return (
     <div className={cn("relative flex items-center gap-2 text-caption", onDark ? "text-mint-200" : "text-ink-muted")}>
       <span className={cn("inline-flex items-center gap-0.75 rounded-full px-2 py-0.5 font-semibold", onDark ? "bg-mint-200/18 text-white/90" : good ? "bg-mint-50 text-emerald" : "bg-expense-soft text-expense")}>
         <Arrow className="size-3" strokeWidth={2.5} aria-hidden="true" />
-        {percentText(change, locale)}
+        {percentText(change, fmt)}
       </span>
       <span>{text}</span>
     </div>
@@ -69,7 +70,7 @@ function ChangeLine({ change, good, text, onDark = false }: { change: number; go
 // initials on mint), the plan and how long they've been here, the name and
 // workspace, the quick add buttons and Upgrade.
 export function ProfileCard({ data, onAdd }: { data: HomeData; onAdd: (kind: AddKind) => void }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user, activeBusiness } = useAuth();
   const { profile } = data;
   const { free, label: planLabel } = usePlanChip();
@@ -115,7 +116,7 @@ export function ProfileCard({ data, onAdd }: { data: HomeData; onAdd: (kind: Add
           {profile.name}
         </h2>
         <span className="truncate text-[13px] leading-[normal] text-ink-muted">
-          {workspace} · {t(data.wallets.length === 1 ? "{count} wallet" : "{count} wallets", { count: formatCount(data.wallets.length, locale) })}
+          {workspace} · {t(data.wallets.length === 1 ? "{count} wallet" : "{count} wallets", { count: formatCount(data.wallets.length, fmt) })}
         </span>
       </div>
       <div className="flex items-center gap-2 px-1.5 pb-1.5">
@@ -145,7 +146,7 @@ export function ProfileCard({ data, onAdd }: { data: HomeData; onAdd: (kind: Add
 // The deep-teal Total balance card: the active wallets now, and how much
 // that grew since the 1st.
 export function BalanceCard({ data }: { data: HomeData }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const change = data.balanceChangePercent;
   return (
     <div className={cn("relative flex flex-col gap-3 overflow-hidden rounded-card bg-forest p-5 text-white", HERO_SHADOW)}>
@@ -159,8 +160,8 @@ export function BalanceCard({ data }: { data: HomeData }) {
           <Wallet strokeWidth={2} aria-hidden="true" />
         </CornerIcon>
       </div>
-      <span className={cn("relative", FIGURE)}>{formatCurrency(data.balance, data.currency, locale)}</span>
-      {change !== null ? <ChangeLine change={change} good={change >= 0} text={t("vs last month")} onDark /> : <span className="relative text-caption text-mint-200">{t(data.wallets.length === 1 ? "In {count} wallet" : "In {count} wallets", { count: formatCount(data.wallets.length, locale) })}</span>}
+      <span className={cn("relative", FIGURE)}>{formatCurrency(data.balance, data.currency, fmt)}</span>
+      {change !== null ? <ChangeLine change={change} good={change >= 0} text={t("vs last month")} onDark /> : <span className="relative text-caption text-mint-200">{t(data.wallets.length === 1 ? "In {count} wallet" : "In {count} wallets", { count: formatCount(data.wallets.length, fmt) })}</span>}
     </div>
   );
 }
@@ -168,7 +169,7 @@ export function BalanceCard({ data }: { data: HomeData }) {
 // Money in or out over the period, with its change against the period
 // before.
 export function FlowCard({ data, kind }: { data: HomeData; kind: "income" | "expense" }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const income = kind === "income";
   const value = income ? data.income : data.expense;
   const change = income ? data.incomeChange : data.expenseChange;
@@ -179,7 +180,7 @@ export function FlowCard({ data, kind }: { data: HomeData; kind: "income" | "exp
         <span className={cn(LABEL, "text-ink-muted")}>{t(income ? "Income" : "Expense")}</span>
         <CornerIcon className={income ? "bg-mint-50 text-emerald" : "bg-expense-soft text-expense-fill"}>{income ? <ArrowDownLeft strokeWidth={2.25} aria-hidden="true" /> : <ArrowUpRight strokeWidth={2.25} aria-hidden="true" />}</CornerIcon>
       </div>
-      <span className={cn(FIGURE, value === 0 ? "text-ink-faint" : income ? "text-emerald" : "text-expense")}>{formatCurrency(value, data.currency, locale)}</span>
+      <span className={cn(FIGURE, value === 0 ? "text-ink-faint" : income ? "text-emerald" : "text-expense")}>{formatCurrency(value, data.currency, fmt)}</span>
       {change !== null ? (
         <ChangeLine change={change} good={income ? change >= 0 : change <= 0} text={t(income ? words.vs : change <= 0 ? words.less : words.more)} />
       ) : (
@@ -191,7 +192,7 @@ export function FlowCard({ data, kind }: { data: HomeData; kind: "income" | "exp
 
 // What was left of the period's income once its spending was out.
 export function SavedCard({ data }: { data: HomeData }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const saved = data.income - data.expense;
   const rate = savedRate(data.income, data.expense);
   return (
@@ -202,7 +203,7 @@ export function SavedCard({ data }: { data: HomeData }) {
           <PiggyBank strokeWidth={2} aria-hidden="true" />
         </CornerIcon>
       </div>
-      <span className={cn(FIGURE, saved < 0 ? "text-expense" : "text-ink")}>{saved < 0 ? formatSignedCurrency(saved, data.currency, locale) : formatCurrency(saved, data.currency, locale)}</span>
+      <span className={cn(FIGURE, saved < 0 ? "text-expense" : "text-ink")}>{saved < 0 ? formatSignedCurrency(saved, data.currency, fmt) : formatCurrency(saved, data.currency, fmt)}</span>
       <div className="flex flex-col gap-1.5">
         <div className="h-2 overflow-hidden rounded-full bg-surface">
           <div className="h-full rounded-full bg-emerald" style={{ width: `${rate ?? 0}%` }} />
@@ -212,7 +213,7 @@ export function SavedCard({ data }: { data: HomeData }) {
             ? t("Shows up after your first income")
             : saved < 0
               ? t("More went out than came in")
-              : fillNodes(t("{rate} of income saved (income − expense)"), { rate: <b className="font-semibold text-ink">{toLocaleDigits(String(rate), locale)}%</b> })}
+              : fillNodes(t("{rate} of income saved (income − expense)"), { rate: <b className="font-semibold text-ink">{toLocaleDigits(String(rate), fmt)}%</b> })}
         </span>
       </div>
     </div>
@@ -222,7 +223,7 @@ export function SavedCard({ data }: { data: HomeData }) {
 // The phone board's versions: a flatter balance card, income and expense
 // side by side, and a one-line Saved card.
 export function PhoneFigures({ data }: { data: HomeData }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const change = data.balanceChangePercent;
   const saved = data.income - data.expense;
   const rate = savedRate(data.income, data.expense);
@@ -240,10 +241,10 @@ export function PhoneFigures({ data }: { data: HomeData }) {
           </span>
           <span className="text-[13px] leading-[normal] text-ink-muted">{t(income ? "Income" : "Expense")}</span>
         </div>
-        <span className={cn("truncate text-[19px] leading-[normal] font-bold tabular-nums", income ? "text-emerald" : "text-expense")}>{formatCurrency(value, data.currency, locale)}</span>
+        <span className={cn("truncate text-[19px] leading-[normal] font-bold tabular-nums", income ? "text-emerald" : "text-expense")}>{formatCurrency(value, data.currency, fmt)}</span>
         {delta !== null && (
           <span className={cn("text-caption font-semibold", good ? "text-emerald" : "text-expense")}>
-            {delta >= 0 ? "↑" : "↓"} {percentText(delta, locale)} <span className="font-normal text-ink-muted">{vs}</span>
+            {delta >= 0 ? "↑" : "↓"} {percentText(delta, fmt)} <span className="font-normal text-ink-muted">{vs}</span>
           </span>
         )}
       </div>
@@ -255,17 +256,17 @@ export function PhoneFigures({ data }: { data: HomeData }) {
       <section aria-label={t("Total balance")} className={cn("relative flex flex-col gap-2.5 overflow-hidden rounded-[20px] bg-forest p-5 text-white", HERO_SHADOW)}>
         <span aria-hidden="true" className="absolute -top-15 -right-12.5 size-45 rounded-full border border-white/14" />
         <span className="relative text-[13px] leading-[normal] text-mint-200">{t("Total balance")}</span>
-        <span className="relative text-[30px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums">{formatCurrency(data.balance, data.currency, locale)}</span>
+        <span className="relative text-[30px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums">{formatCurrency(data.balance, data.currency, fmt)}</span>
         <div className="relative flex items-center justify-between gap-2">
           {change !== null ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-white/16 px-2.5 py-0.75 text-caption font-semibold">
               {change >= 0 ? <TrendingUp className="size-3" strokeWidth={2.5} aria-hidden="true" /> : <TrendingDown className="size-3" strokeWidth={2.5} aria-hidden="true" />}
-              {t("{change} vs last month", { change: percentText(change, locale) })}
+              {t("{change} vs last month", { change: percentText(change, fmt) })}
             </span>
           ) : (
             <span />
           )}
-          <span className="text-caption text-white/84">{t(data.wallets.length === 1 ? "{count} wallet" : "{count} wallets", { count: formatCount(data.wallets.length, locale) })}</span>
+          <span className="text-caption text-white/84">{t(data.wallets.length === 1 ? "{count} wallet" : "{count} wallets", { count: formatCount(data.wallets.length, fmt) })}</span>
         </div>
       </section>
       <div className="grid grid-cols-2 gap-3">
@@ -275,7 +276,7 @@ export function PhoneFigures({ data }: { data: HomeData }) {
       <div className="flex flex-col gap-2.5 rounded-card border border-mint-200 bg-mint-50 px-4 py-3.5 dark:border-emerald-line">
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-[13px] leading-[normal] text-brand-ink">{t(SAVED_LABEL[data.period.key])}</span>
-          <span className={cn("text-[19px] leading-[normal] font-bold tabular-nums", saved < 0 ? "text-expense" : "text-ink")}>{saved < 0 ? formatSignedCurrency(saved, data.currency, locale) : formatCurrency(saved, data.currency, locale)}</span>
+          <span className={cn("text-[19px] leading-[normal] font-bold tabular-nums", saved < 0 ? "text-expense" : "text-ink")}>{saved < 0 ? formatSignedCurrency(saved, data.currency, fmt) : formatCurrency(saved, data.currency, fmt)}</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-surface">
           <div className="h-full rounded-full bg-emerald" style={{ width: `${rate ?? 0}%` }} />
@@ -285,7 +286,7 @@ export function PhoneFigures({ data }: { data: HomeData }) {
             ? t("Shows up after your first income")
             : saved < 0
               ? t("More went out than came in")
-              : fillNodes(t("{rate} of income saved"), { rate: <b className="font-semibold text-ink">{toLocaleDigits(String(rate), locale)}%</b> })}
+              : fillNodes(t("{rate} of income saved"), { rate: <b className="font-semibold text-ink">{toLocaleDigits(String(rate), fmt)}%</b> })}
         </span>
       </div>
     </div>
@@ -295,7 +296,7 @@ export function PhoneFigures({ data }: { data: HomeData }) {
 // A new account's four plain figure cards (the DashboardEmpty board): no
 // comparisons yet, a line saying what will show instead.
 export function SetupFigures({ data }: { data: HomeData }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const tile = "flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.5";
   const cards = [
     {
@@ -303,7 +304,7 @@ export function SetupFigures({ data }: { data: HomeData }) {
       value: data.balance,
       icon: <Wallet strokeWidth={2} aria-hidden="true" />,
       tile: "bg-emerald-soft text-emerald",
-      note: t(data.wallets.length === 1 ? "In {count} wallet" : "In {count} wallets", { count: formatCount(data.wallets.length, locale) }),
+      note: t(data.wallets.length === 1 ? "In {count} wallet" : "In {count} wallets", { count: formatCount(data.wallets.length, fmt) }),
     },
     { label: "Income", value: data.income, icon: <ArrowDownLeft strokeWidth={2.25} aria-hidden="true" />, tile: "bg-mint-50 text-emerald", note: t("No income recorded this month") },
     { label: "Expense", value: data.expense, icon: <ArrowUpRight strokeWidth={2.25} aria-hidden="true" />, tile: "bg-expense-soft text-expense-fill", note: t("No expenses recorded this month") },
@@ -317,7 +318,7 @@ export function SetupFigures({ data }: { data: HomeData }) {
             <span className={cn(LABEL, "text-ink-muted")}>{t(card.label)}</span>
             <span className={cn(tile, card.tile)}>{card.icon}</span>
           </div>
-          <span className={cn("truncate text-[22px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums md:text-[28px]", card.value > 0 ? "text-ink" : "text-ink-faint")}>{formatCurrency(card.value, data.currency, locale)}</span>
+          <span className={cn("truncate text-[22px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums md:text-[28px]", card.value > 0 ? "text-ink" : "text-ink-faint")}>{formatCurrency(card.value, data.currency, fmt)}</span>
           <span className="text-caption text-ink-muted">{card.note}</span>
         </div>
       ))}

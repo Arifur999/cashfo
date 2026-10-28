@@ -21,12 +21,12 @@ const PERIOD_NAME: Record<DashboardPeriodKey, string> = {
 // Spending by category: the period's spending as a donut, the biggest
 // categories beside it with their amount and share.
 export function SpendingCard({ data }: { data: HomeData }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { slices, total } = data.spending;
   const empty = slices.length === 0;
   const name = (slice: (typeof slices)[number]) => (slice.color === null && slice.name === "Other" ? t("Other") : categoryLabel(slice.name, t));
   const label = t("Spending by category");
-  const describe = slices.map((slice) => `${name(slice)} ${toLocaleDigits(String(slice.percent), locale)}%`).join(", ");
+  const describe = slices.map((slice) => `${name(slice)} ${toLocaleDigits(String(slice.percent), fmt)}%`).join(", ");
 
   return (
     <>
@@ -49,7 +49,7 @@ export function SpendingCard({ data }: { data: HomeData }) {
           style={empty ? undefined : { background: donutGradient(slices) }}
         >
           <div className="flex size-31 flex-col items-center justify-center gap-0.5 rounded-full bg-surface">
-            <span className={cn("text-[19px] leading-[normal] font-bold tracking-[-0.01em] tabular-nums", empty ? "text-ink-faint" : "text-ink")}>{formatCurrency(total, data.currency, locale)}</span>
+            <span className={cn("text-[19px] leading-[normal] font-bold tracking-[-0.01em] tabular-nums", empty ? "text-ink-faint" : "text-ink")}>{formatCurrency(total, data.currency, fmt)}</span>
             <span className="text-caption text-ink-muted">{t("Total spent")}</span>
           </div>
         </div>
@@ -64,8 +64,8 @@ export function SpendingCard({ data }: { data: HomeData }) {
               <li key={slice.name} className="grid grid-cols-[10px_minmax(0,1fr)_auto_36px] items-center gap-x-2.5 text-[13px] leading-[normal]">
                 <span className="size-2.5 rounded-[3px]" style={{ background: categoryChartColor(slice.color) }} />
                 <span className="truncate text-ink-2">{name(slice)}</span>
-                <span className="font-semibold text-ink tabular-nums">{formatCurrency(slice.amount, data.currency, locale)}</span>
-                <span className="text-right text-ink-muted tabular-nums">{toLocaleDigits(String(slice.percent), locale)}%</span>
+                <span className="font-semibold text-ink tabular-nums">{formatCurrency(slice.amount, data.currency, fmt)}</span>
+                <span className="text-right text-ink-muted tabular-nums">{toLocaleDigits(String(slice.percent), fmt)}%</span>
               </li>
             ))}
           </ul>
@@ -87,7 +87,7 @@ export function SpendingCard({ data }: { data: HomeData }) {
           >
             <div className="flex size-19 flex-col items-center justify-center rounded-full bg-surface">
               <span className={cn("text-[13px] leading-[normal] font-bold tabular-nums", empty ? "text-ink-faint" : "text-ink")}>
-                {total > 0 ? `${currencySymbol(data.currency).trim()} ${formatCompactAmount(total, locale)}` : formatCurrency(0, data.currency, locale)}
+                {total > 0 ? `${currencySymbol(data.currency).trim()} ${formatCompactAmount(total, fmt)}` : formatCurrency(0, data.currency, fmt)}
               </span>
               <span className="text-[10px] leading-[normal] text-ink-muted">{t("spent")}</span>
             </div>
@@ -100,7 +100,7 @@ export function SpendingCard({ data }: { data: HomeData }) {
                 <li key={slice.name} className="grid grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-x-2 text-caption">
                   <span className="size-2 rounded-[2px]" style={{ background: categoryChartColor(slice.color) }} />
                   <span className="truncate text-ink-2">{name(slice)}</span>
-                  <span className="font-semibold text-ink tabular-nums">{toLocaleDigits(String(slice.percent), locale)}%</span>
+                  <span className="font-semibold text-ink tabular-nums">{toLocaleDigits(String(slice.percent), fmt)}%</span>
                 </li>
               ))}
             </ul>

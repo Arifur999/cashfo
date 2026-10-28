@@ -46,7 +46,7 @@ function writeHidden(businessId: string) {
 // "Set up your money in four steps": a new account's guide, each step
 // ticked off as it is done, the next one in colour. Hidden with ×.
 export function SetupGuide({ data, onAddTransaction }: { data: HomeData; onAddTransaction: () => void }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const hidden = useSyncExternalStore(
     subscribe,
     () => readHidden(data.businessId),
@@ -61,7 +61,7 @@ export function SetupGuide({ data, onAddTransaction }: { data: HomeData; onAddTr
       title: "Add a wallet",
       text: "Cash, a bank account, bKash or Nagad.",
       done: setup.hasWallet,
-      doneText: firstWallet ? t("{wallet} · {amount} added", { wallet: firstWallet.name, amount: formatCurrency(firstWallet.balance, data.currency, locale) }) : t("Your wallet is in."),
+      doneText: firstWallet ? t("{wallet} · {amount} added", { wallet: firstWallet.name, amount: formatCurrency(firstWallet.balance, data.currency, fmt) }) : t("Your wallet is in."),
       cta: "Add wallet",
       // ?new=1 asks My wallets to open its Add wallet drawer straight away.
       href: "/balance/wallet?new=1",
@@ -91,7 +91,7 @@ export function SetupGuide({ data, onAddTransaction }: { data: HomeData; onAddTr
         </div>
         <div className="flex items-center gap-3.5">
           <span className="text-[13px] leading-[normal] whitespace-nowrap text-ink-muted">
-            <b className="font-semibold text-ink">{t("{done} of {total}@@setup", { done: formatCount(done, locale), total: formatCount(steps.length, locale) })}</b> {t("done@@setup")}
+            <b className="font-semibold text-ink">{t("{done} of {total}@@setup", { done: formatCount(done, fmt), total: formatCount(steps.length, fmt) })}</b> {t("done@@setup")}
           </span>
           <span className="h-2 w-30 overflow-hidden rounded-full bg-surface-sunken max-md:grow">
             <span className="block h-full rounded-full bg-emerald" style={{ width: `${(done / steps.length) * 100}%` }} />
@@ -134,7 +134,7 @@ export function SetupGuide({ data, onAddTransaction }: { data: HomeData; onAddTr
                 </span>
               ) : (
                 <span aria-hidden="true" className={cn("flex size-7 items-center justify-center rounded-full text-[13px] font-bold", isNext ? "bg-emerald text-on-action" : "bg-surface-sunken text-ink-soft")}>
-                  {formatCount(index + 1, locale)}
+                  {formatCount(index + 1, fmt)}
                 </span>
               )}
               <span className="sr-only">{step.done ? `${t("Done")}: ` : isNext ? `${t("Next step")}: ` : ""}</span>
