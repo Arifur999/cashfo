@@ -135,8 +135,11 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                         <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
                           {user.impersonatedBy && <OwnerViewBanner customerName={user.name} adminName={user.impersonatedBy.name} />}
                           <AppTopbar />
-                          {/* id + tabIndex give the root layout's skip link a target. */}
-                          <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto outline-none print:overflow-visible">
+                          {/* id + tabIndex give the root layout's skip link a target. relative:
+                              an absolute child (a screen-reader-only label) is placed
+                              in this scroller, not the page, so the page itself never
+                              grows taller than the window and scrolls the sidebar away. */}
+                          <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto outline-none print:overflow-visible">
                             <OfflineBanner />
                             <AnnouncementBanner announcements={platform.announcements} />
                             {children}
