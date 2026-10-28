@@ -51,7 +51,7 @@ const GRID_ID = "loan-people";
 // where the balance stands and the two things you do next. Archived
 // contacts wait in their own tab, out of the counts.
 export function LoanContactsPageClient({ businessId, contacts, currency, canManage, canTrade }: LoanContactsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [tab, setTab] = useState<Tab>("ALL");
@@ -97,7 +97,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
           toast.success(t("Contact archived"));
           router.refresh();
         } else {
-          toast.error(loanErrorText(result.message, "Failed to archive contact", t, (amount) => formatCurrency(amount, currency, locale)));
+          toast.error(loanErrorText(result.message, "Failed to archive contact", t, (amount) => formatCurrency(amount, currency, fmt)));
         }
       } catch {
         toast.error(t("Couldn't save. Check your connection and try again."));
@@ -114,7 +114,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
           toast.success(t("Contact restored"));
           router.refresh();
         } else {
-          toast.error(loanErrorText(result.message, "Failed to restore contact", t, (amount) => formatCurrency(amount, currency, locale)));
+          toast.error(loanErrorText(result.message, "Failed to restore contact", t, (amount) => formatCurrency(amount, currency, fmt)));
         }
       } catch {
         toast.error(t("Couldn't save. Check your connection and try again."));
@@ -127,7 +127,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   // with them, so the confirm names it.
   async function remove(contact: Contact) {
     const direction = loanDirection(contact.currentBalance);
-    const values = { name: contact.name, amount: formatCurrency(Math.abs(Number(contact.currentBalance)), currency, locale) };
+    const values = { name: contact.name, amount: formatCurrency(Math.abs(Number(contact.currentBalance)), currency, fmt) };
     const message =
       direction === "PAWNA"
         ? t("{name} still owes you {amount}. Removing them deletes that balance too, for good.", values)
@@ -142,7 +142,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
           toast.success(result.data?.action === "archived" ? t("This contact has transaction history, so it was archived instead") : t("Contact deleted"));
           router.refresh();
         } else {
-          toast.error(loanErrorText(result.message, "Failed to remove contact", t, (amount) => formatCurrency(amount, currency, locale)));
+          toast.error(loanErrorText(result.message, "Failed to remove contact", t, (amount) => formatCurrency(amount, currency, fmt)));
         }
       } catch {
         toast.error(t("Couldn't save. Check your connection and try again."));
@@ -152,7 +152,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
 
   const counted = (label: string, count: number) => (
     <>
-      {label} <span className="font-medium text-ink-muted tabular-nums">{formatCount(count, locale)}</span>
+      {label} <span className="font-medium text-ink-muted tabular-nums">{formatCount(count, fmt)}</span>
     </>
   );
   const tabs = [
@@ -164,11 +164,11 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   // "Last entry 3 Mar", with the year once it isn't this one.
   const thisYear = getAppToday().slice(0, 4);
   const lastLine = (contact: Contact) => {
-    if (contact.lastActivityAt === undefined) return t("Added {date}", { date: formatDate(contact.createdAt, undefined, locale) });
+    if (contact.lastActivityAt === undefined) return t("Added {date}", { date: formatDate(contact.createdAt, undefined, fmt) });
     // Never an entry: what they were added with, when there was something.
     if (!contact.lastActivityAt) return Number(contact.openingBalance) !== 0 ? t("Opening balance") : t("No entries yet");
     const sameYear = formatDate(contact.lastActivityAt, "yyyy") === thisYear;
-    return t("Last entry {date}", { date: formatDate(contact.lastActivityAt, sameYear ? "d MMM" : "d MMM yyyy", locale) });
+    return t("Last entry {date}", { date: formatDate(contact.lastActivityAt, sameYear ? "d MMM" : "d MMM yyyy", fmt) });
   };
 
   return (
@@ -212,7 +212,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
             <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name, phone…")} aria-label={t("Search contacts")} frameClassName="min-w-0 flex-1 md:w-65 md:flex-none" />
             <span className="hidden flex-1 md:block" />
             <span className="text-small text-ink-muted tabular-nums max-md:w-full">
-              {t("Pawna")} <span className="font-semibold text-income">{formatCurrency(pawna, currency, locale)}</span> · {t("Dena")} <span className="font-semibold text-expense">{formatCurrency(dena, currency, locale)}</span>
+              {t("Pawna")} <span className="font-semibold text-income">{formatCurrency(pawna, currency, fmt)}</span> · {t("Dena")} <span className="font-semibold text-expense">{formatCurrency(dena, currency, fmt)}</span>
             </span>
           </div>
 
@@ -308,7 +308,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                     <div className={cn("flex items-end justify-between gap-3 rounded-field px-3.5 py-3", meta.box)}>
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <span className={cn("text-caption font-normal", settled ? "text-ink-muted" : meta.text)}>{t(meta.label)}</span>
-                        <span className={cn("truncate text-[22px] leading-[normal] font-bold tracking-[-0.01em] tabular-nums", settled ? "text-ink-faint" : meta.text)}>{formatCurrency(Math.abs(Number(contact.currentBalance)), currency, locale)}</span>
+                        <span className={cn("truncate text-[22px] leading-[normal] font-bold tracking-[-0.01em] tabular-nums", settled ? "text-ink-faint" : meta.text)}>{formatCurrency(Math.abs(Number(contact.currentBalance)), currency, fmt)}</span>
                       </span>
                       {/* A white pill, as the board draws it: the tone's own fill is the tile's colour. */}
                       <Chip tone={meta.chip} size="sm" className="bg-surface font-bold">

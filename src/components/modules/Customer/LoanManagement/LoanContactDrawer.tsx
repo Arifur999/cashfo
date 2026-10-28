@@ -52,7 +52,7 @@ const EMAIL = /^\S+@\S+\.\S+$/;
 // them or trade with them, a phone or an email, the address, and -- for a
 // new one -- where the balance stands now.
 export function LoanContactDrawer({ open, onClose, businessId, editing, currency, canTrade }: LoanContactDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const online = useOnline();
   const groupId = useId();
@@ -115,7 +115,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
   // Moving a contact with a loan history to Books takes them, and their
   // entries, out of every Loans page.
   const hasLoanHistory = !!editing && (!!editing.lastActivityAt || Number(editing.currentBalance) !== 0 || Number(editing.openingBalance) !== 0);
-  const money = (figure: number) => formatCurrency(figure, currency, locale);
+  const money = (figure: number) => formatCurrency(figure, currency, fmt);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();

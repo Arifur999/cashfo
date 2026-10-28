@@ -62,7 +62,7 @@ const REPAYMENTS: Partial<Record<LoanEntryKind, { over: string; none: string; no
 // money, so a wallet is always required. Profit never moves the loan. A
 // repayment can't be more than is owed on its side, as the API checks.
 export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency, initialContactId, initialKind }: LoanEntryDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const online = useOnline();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -156,7 +156,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   // label (the New transaction drawer's rule).
   const expenseAccountId = expenseAccounts.find((a) => a.name.toLowerCase().includes(picked.toLowerCase()))?.id ?? expenseAccounts[0]?.id ?? "";
   const value = Number(amount) || 0;
-  const money = (figure: number) => formatCurrency(figure, currency, locale);
+  const money = (figure: number) => formatCurrency(figure, currency, fmt);
 
   // undefined while it loads, null when it couldn't be told.
   const contactDetail = detail && detail.contactId === contactId ? detail.data : undefined;
@@ -435,7 +435,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                 </div>
                 {picked && (
                   <div className="flex justify-between gap-3">
-                    <span className="truncate text-ink-2">{t(profitPaid ? "{category} expense, {month}" : "{category} income, {month}", { category: picked, month: formatDate(`${date}T00:00:00.000Z`, "MMM", locale) })}</span>
+                    <span className="truncate text-ink-2">{t(profitPaid ? "{category} expense, {month}" : "{category} income, {month}", { category: picked, month: formatDate(`${date}T00:00:00.000Z`, "MMM", fmt) })}</span>
                     <span className={cn("font-semibold", profitPaid ? "text-expense" : "text-income")}>+ {money(value)}</span>
                   </div>
                 )}
@@ -458,8 +458,8 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
               <div className="flex justify-between gap-3">
                 <span className="truncate text-ink-2">{accountDisplayName(wallet, displayLanguage(locale))}</span>
                 <span>
-                  <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, locale)} → </span>
-                  <span className="font-semibold text-ink">{formatCurrency(walletAfter, currency, locale)}</span>
+                  <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, fmt)} → </span>
+                  <span className="font-semibold text-ink">{formatCurrency(walletAfter, currency, fmt)}</span>
                 </span>
               </div>
             )}
