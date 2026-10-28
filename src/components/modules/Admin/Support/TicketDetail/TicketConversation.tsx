@@ -1,43 +1,36 @@
 "use client";
 
-import { useMemo, useOptimistic } from "react";
-import type { IAdminOption, ISupportTicketDetail, TicketStatus } from "@/types/ticket.types";
-import TicketMessageBubble, { type ThreadMessage } from "./TicketMessageBubble";
-import TicketReplyForm from "./TicketReplyForm";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-
-const appendMessage = (messages: ThreadMessage[], pending: ThreadMessage) => [...messages, pending];
+import type { ISupportTicketDetail, ITicketMessage } from "@/types/ticket.types";
+import TicketMessageBubble, { type ThreadMessage } from "./TicketMessageBubble";
+import TicketReplyForm from "./TicketReplyForm";
 
 interface TicketConversationProps {
   ticket: ISupportTicketDetail;
-  admins: IAdminOption[];
+  // The messages the customer sees, oldest first (notes for admins sit
+  // beside the thread instead).
+  messages: ThreadMessage[];
+  senderName: (message: ITicketMessage) => string;
   currentAdminId: string | null;
   canReply: boolean;
-  onSetStatus?: (status: TicketStatus) => void;
+  onSending: (message: ThreadMessage) => void;
 }
 
 // The thread on the strip ground, and the reply box under it.
-const TicketConversation = ({ ticket, admins, currentAdminId, canReply, onSetStatus }: TicketConversationProps) => {
-  // A sent reply shows at once; the refetched thread replaces it when the
-  // request settles.
-  const [messages, addPendingMessage] = useOptimistic<ThreadMessage[], ThreadMessage>(ticket.messages, appendMessage);
-  const adminNames = useMemo(() => new Map(admins.map((admin) => [admin.id, admin.name])), [admins]);
+const TicketConversation = ({ ticket, messages, senderName, currentAdminId, canReply, onSending }: TicketConversationProps) => {
   const { translate } = useLocale();
   const requesterName = ticket.platformUser?.name ?? translate("the user");
 
-  const senderName = (message: ThreadMessage) => {
-    if (message.senderType === "USER") return ticket.platformUser?.name ?? translate("User");
-    return adminNames.get(message.senderId) ?? translate(message.senderId === currentAdminId ? "You" : "Support team");
-  };
-
   return (
     <>
-      <div className="flex flex-col gap-4 bg-strip p-5">
+      <div className="flex flex-col gap-3.5 bg-strip px-5 py-4.5">
         {messages.length === 0 ? (
-          <p className="py-8 text-center text-small text-ink-muted"><T>No messages yet.</T></p>
+          <p className="py-8 text-center text-small text-ink-muted">
+            <T>No messages yet.</T>
+          </p>
         ) : (
-          <ol className="flex flex-col gap-4" aria-label={translate("Messages")}>
+          <ol className="flex flex-col gap-3.5" aria-label={translate("Messages")}>
             {messages.map((message) => (
               <li key={message.id}>
                 <TicketMessageBubble message={message} senderName={senderName(message)} />
@@ -46,9 +39,7 @@ const TicketConversation = ({ ticket, admins, currentAdminId, canReply, onSetSta
           </ol>
         )}
       </div>
-      {canReply && (
-        <TicketReplyForm ticketId={ticket.id} currentStatus={ticket.status} requesterName={requesterName.split(" ")[0]} currentAdminId={currentAdminId} onSending={addPendingMessage} onSetStatus={onSetStatus} />
-      )}
+      {canReply && <TicketReplyForm ticket={ticket} requesterName={requesterName.split(" ")[0]} currentAdminId={currentAdminId} onSending={onSending} />}
     </>
   );
 };

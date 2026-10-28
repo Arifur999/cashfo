@@ -6,11 +6,11 @@ export const FEATURE_REQUEST_STATUS_OPTIONS = enumOptions(FEATURE_REQUEST_STATUS
 // The board's columns, in the order a request moves through them, each with
 // the dot colour the design gives it. Declined sits apart.
 export const FEATURE_REQUEST_COLUMNS: { status: FeatureRequestStatus; label: string; dot: string }[] = [
-  { status: "SUBMITTED", label: "New", dot: "bg-ink-muted" },
+  { status: "SUBMITTED", label: "New", dot: "bg-ink-faint" },
   { status: "UNDER_REVIEW", label: "Looking at it", dot: "bg-info" },
   { status: "PLANNED", label: "Planned", dot: "bg-pillar-habits" },
   { status: "IN_PROGRESS", label: "Being built", dot: "bg-warning-fill" },
-  { status: "SHIPPED", label: "Shipped", dot: "bg-emerald" },
+  { status: "SHIPPED", label: "Shipped", dot: "bg-mint-300" },
 ];
 
 export const DECLINED_COLUMN = { status: "DECLINED" as const, label: "Declined", dot: "bg-expense-fill" };

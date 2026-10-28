@@ -69,25 +69,25 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3 text-small text-ink-2">
-        <span className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2.5 text-small text-ink-soft">
+        <span className="flex items-center gap-2.5">
           <Info className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
-          <T>{canManage ? "Drag a card to change its status, or use its menu." : "What people have asked for, most voted first."}</T>
+          <T>{canManage ? "Drag a card to change its status. People who voted hear about it when it moves to Planned or Shipped." : "What people have asked for, most voted first."}</T>
         </span>
         <span className="flex-1" />
         {/* One label; the pressed state, drawn with a tick, says whether the
             column is showing. */}
         <button
           type="button"
-          className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 font-semibold text-ink-2 hover:text-ink pointer-coarse:min-h-11", showDeclined && "bg-mint-50 text-brand-ink")}
+          className={cn("inline-flex items-center gap-1.5 rounded-full font-semibold text-ink-2 hover:text-ink pointer-coarse:min-h-11", showDeclined && "bg-mint-50 px-2 text-brand-ink")}
           onClick={() => setShowDeclined((value) => !value)}
           aria-pressed={showDeclined}
         >
           {showDeclined && <Check className="size-3.5" aria-hidden="true" />}
-          {translate("Show declined ({count})", { count: formatCount(declined.length, locale) })}
+          {translate("Declined ({count})", { count: formatCount(declined.length, locale) })}
         </button>
       </div>
-      <div className={cn("grid items-start gap-3", showDeclined ? "xl:grid-cols-6 md:grid-cols-3" : "xl:grid-cols-5 md:grid-cols-3")}>
+      <div className={cn("grid items-start gap-3", showDeclined ? "md:grid-cols-3 xl:grid-cols-6" : "md:grid-cols-3 xl:grid-cols-5")}>
         {columns.map((column) => {
           const cards = shown.filter((request) => request.status === column.status).sort((a, b) => b.voteCount - a.voteCount);
           return (
@@ -107,11 +107,11 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
                     }
                   : undefined
               }
-              className={cn("flex min-h-40 flex-col gap-2 rounded-lg p-3 transition-colors", over === column.status ? "bg-mint-50" : "bg-surface-sunken")}
+              className={cn("flex min-h-40 flex-col gap-2 rounded-[14px] p-2.5 transition-colors", over === column.status ? "bg-mint-50" : "bg-surface-sunken")}
             >
               <div className="flex items-center gap-2 px-1 py-0.5">
                 <span className={cn("size-2 rounded-full", column.dot)} aria-hidden="true" />
-                <h2 className="grow text-body font-semibold text-ink">
+                <h2 className="grow text-[13.5px] leading-[normal] font-semibold text-ink">
                   <T>{column.label}</T>
                 </h2>
                 <span className="text-caption font-semibold text-ink-muted tabular-nums">{formatCount(cards.length, locale)}</span>
@@ -121,7 +121,6 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
                   key={request.id}
                   request={request}
                   canManage={canManage}
-                  onMove={(status) => move(request.id, status)}
                   onOpen={() => {
                     setOpenId(request.id);
                     setIsDrawerOpen(true);

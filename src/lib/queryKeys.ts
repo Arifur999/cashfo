@@ -51,4 +51,6 @@ export const queryKeys = {
   },
   referrals: createDomainKeys("referrals"),
   referralSettings: ["referrals", "settings"] as const,
+  // Support > Saved replies, the team's canned answers.
+  savedReplies: createDomainKeys("saved-replies"),
 } as const;

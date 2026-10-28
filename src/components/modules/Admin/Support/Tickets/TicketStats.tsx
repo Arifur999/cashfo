@@ -12,13 +12,13 @@ import { ticketStatsQuery } from "@/queries/ticket.queries";
 import type { ITicketStats } from "@/types/ticket.types";
 import { AWAITING_REPLY_HREF, ticketStatusHref } from "../ticketLinks";
 
-// "Need a reply": the tickets whose last message is the customer's and how
-// many have waited over a day, opening those tickets. A backend without
-// those figures counts the open tickets and who has them, as before.
+// "Need a reply": the tickets whose last message is the customer's,
+// opening that tab. A backend without the figure counts the open tickets.
 const needsReplyFigure = (stats: ITicketStats) =>
-  stats.needsReplyCount !== undefined
-    ? { value: stats.needsReplyCount, late: stats.needsReplyOver24hCount, href: AWAITING_REPLY_HREF }
-    : { value: stats.openCount, late: undefined, href: ticketStatusHref("OPEN") };
+  stats.needsReplyCount !== undefined ? { value: stats.needsReplyCount, href: AWAITING_REPLY_HREF } : { value: stats.openCount, href: ticketStatusHref("OPEN") };
+
+// The board's figure card: 14px by 18px around a 23px value.
+const FIGURE = "px-4.5 py-3.5";
 
 // The design's four figures over the queue, each but the last opening the
 // tickets it counts. A client query (prefetched by the page) rather than
@@ -49,40 +49,38 @@ const TicketStats = () => {
   const needsReply = needsReplyFigure(stats);
   // Past the day's goal (24 hours), in amber, or none.
   const lateNote = (late: number) => (
-    <span className={late > 0 ? "text-warning" : undefined}>{late === 0 ? translate("None past the 24-hour goal") : translate("{count} past the 24-hour goal", { count: count(late) })}</span>
+    <span className="text-warning">{late === 0 ? translate("None past the 24-hour goal") : translate("{count} past the 24-hour goal", { count: count(late) })}</span>
   );
 
   return (
     // Two by two on a phone, so the queue isn't four full-width cards down.
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-3.5 xl:grid-cols-4">
       <Kpi
         size="sm"
         href={needsReply.href}
         label="Need a reply"
         value={count(needsReply.value)}
+        className={FIGURE}
         note={
-          needsReply.late !== undefined ? (
-            lateNote(needsReply.late)
-          ) : (
-            <span className={stats.unassignedOpenCount > 0 ? "text-info" : undefined}>
-              {stats.unassignedOpenCount === 0
-                ? translate("Everyone has someone on it")
-                : translate(stats.unassignedOpenCount === 1 ? "{count} has no one assigned" : "{count} have no one assigned", { count: count(stats.unassignedOpenCount) })}
-            </span>
-          )
+          <span className="text-info">
+            {stats.unassignedOpenCount === 0
+              ? translate("Everyone has someone on it")
+              : translate(stats.unassignedOpenCount === 1 ? "{count} has no one assigned" : "{count} have no one assigned", { count: count(stats.unassignedOpenCount) })}
+          </span>
         }
       />
-      <Kpi size="sm" href={ticketStatusHref("IN_PROGRESS")} label="In progress" value={count(stats.inProgressCount)} note={lateNote(stats.inProgressOver24hCount)} />
-      <Kpi size="sm" href={ticketStatusHref("WAITING_ON_USER")} label="Waiting on the user" value={count(stats.waitingOnUserCount)} note="Answered, waiting to hear back" />
+      <Kpi size="sm" className={FIGURE} href={ticketStatusHref("IN_PROGRESS")} label="In progress" value={count(stats.inProgressCount)} note={lateNote(stats.inProgressOver24hCount)} />
+      <Kpi size="sm" className={FIGURE} href={ticketStatusHref("WAITING_ON_USER")} label="Waiting on the user" value={count(stats.waitingOnUserCount)} note="Answered, waiting to hear back" />
       <Kpi
         size="sm"
+        className={FIGURE}
         label="Solved this week"
         value={count(stats.solvedThisWeekCount)}
         // The average is over a month of tickets, and only good news is green.
         note={
           <span className={hasFirstReply ? "text-emerald" : "text-ink-muted"}>
             {hasFirstReply
-              ? translate("First reply in {time} on average (last 30 days)", { time: hoursText(stats.avgFirstReplyHours, translate, locale) })
+              ? translate("First reply in {time} on average", { time: hoursText(stats.avgFirstReplyHours, translate, locale) })
               : translate("No replies in the last 30 days")}
           </span>
         }

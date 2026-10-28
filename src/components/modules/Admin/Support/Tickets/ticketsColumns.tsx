@@ -1,7 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import RelativeTime from "@/components/shared/RelativeTime";
 import T from "@/components/shared/T";
@@ -12,6 +11,7 @@ import { getInitials } from "@/lib/text";
 import { awaitingReply, isLate, shortTicketId, TICKET_STATUS_LABEL } from "@/lib/tickets";
 import { cn } from "@/lib/utils";
 import type { ISupportTicket } from "@/types/ticket.types";
+import { TicketPriorityChip, TicketStatusChip } from "../TicketChips";
 import { ticketHref } from "../ticketLinks";
 
 // The dot beside a ticket the user wrote in last, said out loud too: the
@@ -37,11 +37,11 @@ const SubjectCell = ({ ticket }: { ticket: ISupportTicket }) => {
         href={ticketHref(ticket.id, listQuery)}
         onClick={(event) => event.stopPropagation()}
         title={ticket.subject}
-        className={cn("truncate text-ink hover:underline", awaitingReply(ticket) ? "font-bold" : "font-medium")}
+        className={cn("truncate text-[13.5px] leading-[normal] text-ink hover:underline", awaitingReply(ticket) ? "font-bold" : "font-medium")}
       >
         {ticket.subject}
       </Link>
-      <span className="truncate text-small text-ink-muted">{ticket.platformUser?.name ?? <T>Unknown person</T>}</span>
+      <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">{ticket.platformUser?.name ?? <T>Unknown person</T>}</span>
     </span>
   );
 };
@@ -56,9 +56,9 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     header: "Ticket",
     enableSorting: false,
     cell: ({ row }) => (
-      <span className="flex items-center gap-2">
+      <span className="flex items-center gap-1.5">
         {awaitingReply(row.original) && <NewReplyDot />}
-        <code className="font-mono text-small font-semibold text-ink-2">{shortTicketId(row.original.id)}</code>
+        <code className="font-mono text-[12.5px] leading-[normal] font-semibold text-ink-2">{shortTicketId(row.original.id)}</code>
       </span>
     ),
     meta: { width: 64 },
@@ -83,16 +83,16 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     id: "priority",
     accessorKey: "priority",
     header: "Priority",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.priority} />,
+    cell: ({ row }) => <TicketPriorityChip priority={row.original.priority} />,
     meta: { width: 86 },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={TICKET_STATUS_LABEL[row.original.status]} />,
+    cell: ({ row }) => <TicketStatusChip status={row.original.status} />,
     // Room for "Waiting on user" in either language.
-    meta: { width: 150, exportValue: (row) => TICKET_STATUS_LABEL[row.status] },
+    meta: { width: 130, exportValue: (row) => TICKET_STATUS_LABEL[row.status] },
   },
   {
     id: "assignee",
@@ -103,9 +103,9 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
       return (
         <span className="flex min-w-0 items-center gap-2">
           <Avatar className="size-6.5">
-            <AvatarFallback className={cn("text-caption font-bold", admin ? "bg-info-soft text-info" : "bg-surface-sunken text-ink-muted")}>{admin ? getInitials(admin.name) : "—"}</AvatarFallback>
+            <AvatarFallback className={cn("text-[10px] font-bold", admin ? "bg-info-soft text-info" : "bg-surface-sunken text-ink-faint")}>{admin ? getInitials(admin.name) : "—"}</AvatarFallback>
           </Avatar>
-          <span className={cn("truncate", admin ? "text-ink-2" : "text-ink-muted")}>{admin?.name ?? <T>Not assigned</T>}</span>
+          <span className={cn("truncate text-[13.5px] leading-[normal]", admin ? "text-ink-2" : "text-ink-faint")}>{admin?.name ?? <T>Not assigned</T>}</span>
         </span>
       );
     },
@@ -117,7 +117,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
     header: "Last reply",
     cell: ({ row }) => {
       const late = isLate(row.original);
-      return <span className={cn("text-small whitespace-nowrap", late ? "font-bold text-expense" : "font-medium text-ink-muted")}><RelativeTime value={row.original.lastMessageAt ?? row.original.updatedAt} as="elapsed" /></span>;
+      return <span className={cn("text-[12.5px] leading-[normal] whitespace-nowrap", late ? "font-bold text-expense" : "font-medium text-ink-muted")}><RelativeTime value={row.original.lastMessageAt ?? row.original.updatedAt} as="elapsed" /></span>;
     },
     meta: { width: 92, align: "right", exportValue: (row) => formatDateTime(row.lastMessageAt ?? row.updatedAt) },
   },

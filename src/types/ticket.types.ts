@@ -21,6 +21,8 @@ export interface ITicketMessage {
   // A screenshot the customer attached in the app, opened through
   // /api/support-attachments/<id>.
   attachment?: { id: string; mimeType: string; size: number } | null;
+  // A note for the other admins: never shown to the customer.
+  isInternal?: boolean;
   createdAt: string;
 }
 
@@ -53,6 +55,9 @@ export interface ISupportTicketDetail extends Omit<ISupportTicket, "platformUser
   platformUser: (ITicketUser & { plan: { id: string; name: string } | null }) | null;
   // The person's other tickets: how many, and how many were solved.
   requesterTickets: { total: number; solved: number };
+  // Who wrote in: a customer's account (isCustomer), whose page opens by
+  // this id, or an older ticket's own record. Absent from an older API.
+  requester?: { id: string; name: string; email: string; isCustomer: boolean } | null;
 }
 
 // POST /admin/tickets answers with the bare ticket and its first message --
@@ -109,4 +114,31 @@ export interface IUpdateTicketPayload {
   status?: TicketStatus;
   priority?: TicketPriority;
   category?: TicketCategory;
+}
+
+// One of the support team's canned answers (Support > Saved replies). The
+// Bangla body is optional: without it the English one is used.
+export interface ISavedReply {
+  id: string;
+  title: string;
+  bodyEn: string;
+  bodyBn: string | null;
+  createdBy: { id: string; name: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ISavedReplyPayload {
+  title: string;
+  bodyEn: string;
+  bodyBn: string | null;
+}
+
+// A reply to the customer, or (isInternal) a note for the other admins,
+// with the status the ticket moves to once it is saved.
+export interface ITicketReplyPayload {
+  message: string;
+  isInternal?: boolean;
+  status?: TicketStatus;
+  attachmentUrl?: string;
 }

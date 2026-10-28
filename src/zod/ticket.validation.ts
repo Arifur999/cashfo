@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   type ICreateTicketPayload,
+  type ISavedReplyPayload,
+  type ITicketReplyPayload,
   type IUpdateTicketPayload,
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
@@ -41,7 +43,28 @@ export type ITicketReplyFormValues = z.infer<typeof ticketReplyFormZodSchema>;
 // so the API never stores the padding around a message.
 export const createTicketServerZodSchema = createTicketFormZodSchema satisfies z.ZodType<ICreateTicketPayload>;
 
-export const ticketReplyServerZodSchema = ticketReplyFormZodSchema;
+// The reply as the API takes it: a note for admins (isInternal), the
+// status to set once it is saved, and a link it carries.
+export const ticketReplyServerZodSchema = ticketReplyFormZodSchema.extend({
+  isInternal: z.boolean().optional(),
+  status: z.enum(TICKET_STATUSES).optional(),
+  attachmentUrl: z.url("Enter a link that starts with https://").max(2000).optional(),
+}) satisfies z.ZodType<ITicketReplyPayload>;
+
+export const SAVED_REPLY_TITLE_MAX_LENGTH = 120;
+
+// A saved reply: a short name the team picks it by, and its English and
+// (optional) Bangla text.
+export const savedReplyFormZodSchema = z.object({
+  title: z.string().trim().min(1, "Give it a short name").max(SAVED_REPLY_TITLE_MAX_LENGTH, `At most ${SAVED_REPLY_TITLE_MAX_LENGTH} characters`),
+  bodyEn: messageSchema,
+  bodyBn: z.string().trim().max(TICKET_MESSAGE_MAX_LENGTH, `At most ${TICKET_MESSAGE_MAX_LENGTH} characters`),
+});
+
+export type ISavedReplyFormValues = z.infer<typeof savedReplyFormZodSchema>;
+
+// An empty Bangla body is sent as null: the reply box then uses the English.
+export const savedReplyServerZodSchema = savedReplyFormZodSchema.transform((values) => ({ ...values, bodyBn: values.bodyBn || null })) satisfies z.ZodType<ISavedReplyPayload>;
 
 export const updateTicketServerZodSchema = z
   .object({
