@@ -25,14 +25,14 @@ interface CurrentPlanCardProps {
 // it -- pay to keep a trial, pay a plan that's overdue, renew, stop at the
 // period's end or undo that.
 export function CurrentPlanCard({ subscription, plan, readOnly, busy, onPay, onCancel, onResume }: CurrentPlanCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const state = planState(subscription);
-  const day = (iso: string | null) => (iso ? formatDate(iso, "d MMM yyyy", locale) : "—");
+  const day = (iso: string | null) => (iso ? formatDate(iso, "d MMM yyyy", fmt) : "—");
   const price = subscription.lockedPrice ?? subscription.price;
 
   const view = {
     trial: { chip: t("Free trial"), tone: "mint" as const, line: t("Your free trial ends on {date}. Pay before then to keep {plan}; otherwise you go back to Free.", { date: day(subscription.trialEndsAt), plan: subscription.planName }) },
-    active: { chip: t("Active"), tone: "income" as const, line: t("Paid until {date}. {price} each time it renews.", { date: day(subscription.currentPeriodEnd), price: formatCurrency(price, "BDT", locale) }) },
+    active: { chip: t("Active"), tone: "income" as const, line: t("Paid until {date}. {price} each time it renews.", { date: day(subscription.currentPeriodEnd), price: formatCurrency(price, "BDT", fmt) }) },
     cancelling: { chip: t("Ends soon"), tone: "warning" as const, line: t("Ends on {date}. You go back to the Free plan then.", { date: day(subscription.currentPeriodEnd) }) },
     pastDue: { chip: t("Payment due"), tone: "expense" as const, line: t("Your plan's period is over. Pay by {date} to keep {plan}.", { date: day(subscription.graceEndsAt), plan: subscription.planName }) },
     ended: { chip: t("Ended"), tone: "neutral" as const, line: t("This plan has ended.") },

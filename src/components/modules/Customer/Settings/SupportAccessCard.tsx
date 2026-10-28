@@ -18,7 +18,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // (which also ends a view that is open). Nobody at Smartly ever needs the
 // password for this.
 export function SupportAccessCard() {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user } = useAuth();
   const [status, setStatus] = useState<SupportAccessStatus | null>(null);
   // The code is shown only to the person who made it, until it is used up,
@@ -102,7 +102,7 @@ export function SupportAccessCard() {
           </span>
           <span className="flex min-w-40 flex-1 flex-col text-small text-ink-2">
             <span>{t("Read this code to Smartly support. It works once.")}</span>
-            <span className="text-ink-muted">{t("Works until {time}", { time: formatRelativeDateTime(code.expiresAt, { t, locale }) })}</span>
+            <span className="text-ink-muted">{t("Works until {time}", { time: formatRelativeDateTime(code.expiresAt, { t, locale: fmt }) })}</span>
           </span>
         </div>
       )}
@@ -110,8 +110,8 @@ export function SupportAccessCard() {
       {(status?.viewOpen || (!code && status?.active) || status?.lastViewedAt) && (
         <ul className="flex flex-col gap-1 text-small text-ink-2">
           {status?.viewOpen && <li className="font-semibold text-warning">{t("Support is viewing your account right now.")}</li>}
-          {!code && status?.active && until && <li>{t("A support code is waiting until {time}.", { time: formatRelativeDateTime(until, { t, locale }) })}</li>}
-          {status?.lastViewedAt && <li className="text-ink-muted">{t("Support last opened your account {time}.", { time: formatRelativeDateTime(status.lastViewedAt, { t, locale }) })}</li>}
+          {!code && status?.active && until && <li>{t("A support code is waiting until {time}.", { time: formatRelativeDateTime(until, { t, locale: fmt }) })}</li>}
+          {status?.lastViewedAt && <li className="text-ink-muted">{t("Support last opened your account {time}.", { time: formatRelativeDateTime(status.lastViewedAt, { t, locale: fmt }) })}</li>}
         </ul>
       )}
 

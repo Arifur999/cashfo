@@ -39,7 +39,7 @@ interface SettingsMobileMenuProps {
 // dark_mode flag is on. Plans has a row too (the board has none, but the
 // phone has no other way there besides Home's upgrade card).
 export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const { user } = useAuth();
   const { signingOut, signOut } = useSignOut();
   const { preference, allowDark } = useTheme();
@@ -51,7 +51,7 @@ export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuP
       label: "Account@@user",
       rows: [
         { key: "security", href: "/settings/security", label: "Security", icon: Shield, tone: "warning", value: t(twoStepOn ? "2-step on" : "2-step off"), valueTone: twoStepOn ? undefined : "warning" },
-        { key: "devices", href: `/settings/security#${DEVICES_ANCHOR}`, label: "Devices", icon: Smartphone, tone: "money", value: devices === null ? undefined : t("{count} signed in", { count: formatCount(devices, locale) }) },
+        { key: "devices", href: `/settings/security#${DEVICES_ANCHOR}`, label: "Devices", icon: Smartphone, tone: "money", value: devices === null ? undefined : t("{count} signed in", { count: formatCount(devices, fmt) }) },
         { key: "plans", href: PLANS_ROUTE, label: "Plans", icon: Star, tone: "money" },
       ],
     },
@@ -61,7 +61,7 @@ export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuP
         { key: "language", href: "/settings/app", label: "Language", icon: Languages, tone: "money", value: locale === "bn" ? "বাংলা" : "English", lang: locale === "bn" ? "bn" : undefined },
         ...(allowDark ? [{ key: "theme", href: "/settings/app", label: "Theme", icon: Moon, tone: "neutral" as const, value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") }] : []),
         { key: "numbers", href: `/settings/app#${NUMBERS_ANCHOR}`, label: "Numbers and dates", icon: Hash, tone: "income", value: sampleAmount(123456, prefs.numberGrouping, digitsInForce(prefs.digitStyle, locale)) },
-        { key: "reminders", href: `/settings/app#${REMINDERS_ANCHOR}`, label: "Reminders", icon: Bell, tone: "rose", value: remindersOn === null ? undefined : t("{count} on", { count: formatCount(remindersOn, locale) }) },
+        { key: "reminders", href: `/settings/app#${REMINDERS_ANCHOR}`, label: "Reminders", icon: Bell, tone: "rose", value: remindersOn === null ? undefined : t("{count} on", { count: formatCount(remindersOn, fmt) }) },
       ],
     },
     {
@@ -114,7 +114,7 @@ export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuP
         {signingOut ? <Loader size={18} label={t("Signing out...")} /> : <LogOut className="size-4.5" aria-hidden="true" />}
         {signingOut ? t("Signing out...") : t("Sign out")}
       </button>
-      <span className="text-center text-caption text-ink-faint">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, locale) })}</span>
+      <span className="text-center text-caption text-ink-faint">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, fmt) })}</span>
     </div>
   );
 }

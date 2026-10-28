@@ -29,7 +29,7 @@ interface ResourcesSectionProps {
 // Short guides, the legal pages, the customer's data and the version
 // (design-v4 SettingsResources).
 export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user } = useAuth();
   const [preparing, setPreparing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -79,7 +79,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
                 <span className="flex min-w-0 flex-col gap-0.75">
                   <span className="text-body font-semibold">{t(guide.title)}</span>
                   <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t(guide.body)}</span>
-                  <span className="text-caption text-ink-faint">{t("{count} min read", { count: formatCount(guide.minutes, locale) })}</span>
+                  <span className="text-caption text-ink-faint">{t("{count} min read", { count: formatCount(guide.minutes, fmt) })}</span>
                 </span>
               </Link>
             );
@@ -99,7 +99,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
                 {t(link.title)}
                 <span className="sr-only"> ({t("opens in a new tab")})</span>
               </span>
-              {updated && <span className="text-[12.5px] text-ink-muted">{t("Updated {date}", { date: formatDate(updated, undefined, locale) })}</span>}
+              {updated && <span className="text-[12.5px] text-ink-muted">{t("Updated {date}", { date: formatDate(updated, undefined, fmt) })}</span>}
               <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
             </a>
           );
@@ -129,7 +129,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
         </div>
       </Card>
 
-      <p className="text-[12.5px] text-ink-faint">{t("Smartly for web · version {version}", { version: toLocaleDigits(APP_VERSION, locale) })}</p>
+      <p className="text-[12.5px] text-ink-faint">{t("Smartly for web · version {version}", { version: toLocaleDigits(APP_VERSION, fmt) })}</p>
 
       <DeleteAccountDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onDownload={() => void download()} />
     </div>

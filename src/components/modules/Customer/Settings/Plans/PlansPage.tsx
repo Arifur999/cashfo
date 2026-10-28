@@ -65,7 +65,7 @@ const CARD_SHADOW = "shadow-card";
 // There is no online gateway yet: a checkout gives the steps to send the
 // money, and the team turns the plan on once it arrives.
 export function PlansPage({ plans, overview: initialOverview, payments }: PlansPageProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const readOnly = Boolean(user.impersonatedBy);
@@ -104,8 +104,8 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
   const hasYearly = families.some((family) => family.yearly);
   const trialAvailable = overview.trialAvailable && state === "free";
   const anyTrial = families.some((family) => !family.free && ((familyPlan(family, yearly)?.trialDays ?? 0) > 0));
-  const money = (amount: number | string) => formatCurrency(amount, "BDT", locale);
-  const day = (iso: string, pattern = "d MMM yyyy") => formatDate(iso, pattern, locale);
+  const money = (amount: number | string) => formatCurrency(amount, "BDT", fmt);
+  const day = (iso: string, pattern = "d MMM yyyy") => formatDate(iso, pattern, fmt);
   const currentFamily = families.find((family) => family.monthly?.id === subscription.planId || family.yearly?.id === subscription.planId) ?? null;
 
   function startTrial(plan: BillingPlan) {
@@ -115,7 +115,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
       setBusyPlanId(null);
       if (result.success && result.data) {
         setOverview(result.data);
-        toast.success(t("Your {days}-day free trial of {plan} has started.", { days: formatCount(plan.trialDays, locale), plan: plan.name }));
+        toast.success(t("Your {days}-day free trial of {plan} has started.", { days: formatCount(plan.trialDays, fmt), plan: plan.name }));
         router.refresh();
       } else {
         toast.error(t(result.message ?? "Couldn't start the free trial"));
@@ -167,11 +167,11 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
     }
     if (isCurrent && (state === "trial" || state === "pastDue")) return { label: t("Pay now"), onClick: () => setCheckoutPlan(plan) };
     if (isCurrent) return { label: t("Current plan"), disabled: true };
-    if (trialAvailable && plan.trialDays > 0) return { label: t("Start {days}-day free trial", { days: formatCount(plan.trialDays, locale) }), onClick: () => startTrial(plan), busy: busyPlanId === plan.id };
+    if (trialAvailable && plan.trialDays > 0) return { label: t("Start {days}-day free trial", { days: formatCount(plan.trialDays, fmt) }), onClick: () => startTrial(plan), busy: busyPlanId === plan.id };
     return { label: t("Choose {plan}", { plan: plan.name }), onClick: () => setCheckoutPlan(plan) };
   }
 
-  const featureText = (value: FeatureValue) => (value.kind === "unlimited" ? t("No limit") : value.kind === "count" ? formatCount(value.value, locale) : "");
+  const featureText = (value: FeatureValue) => (value.kind === "unlimited" ? t("No limit") : value.kind === "count" ? formatCount(value.value, fmt) : "");
   const cell = (value: FeatureValue) => (value.kind === "yes" ? t("Included") : value.kind === "no" ? "—" : featureText(value));
 
   const planTitle = subscription.billingCycle === "FREE" ? t("You're on the Free plan.") : t("You're on the {plan} plan.", { plan: subscription.planName });
@@ -208,7 +208,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
       {overview.referralDiscount && (
         <div className="flex items-center gap-3 rounded-card border border-emerald-line bg-emerald-soft px-4 py-3 text-small text-ink-2 md:px-5.5">
           <Gift className="size-4.5 shrink-0 text-emerald" aria-hidden="true" />
-          <span>{t("A friend invited you: you get {percent}% off your first paid plan. It's taken off when you pay.", { percent: formatCount(overview.referralDiscount.percent, locale) })}</span>
+          <span>{t("A friend invited you: you get {percent}% off your first paid plan. It's taken off when you pay.", { percent: formatCount(overview.referralDiscount.percent, fmt) })}</span>
         </div>
       )}
 
@@ -217,7 +217,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-[15px] font-semibold text-ink">{t("Transactions this month on the {plan} plan", { plan: subscription.planName })}</h2>
             <span className="text-body whitespace-nowrap tabular-nums">
-              <b className="font-bold text-ink">{formatCount(usage.transactionsThisMonth, locale)}</b> {usage.transactionLimit >= 0 && <span className="text-ink-muted">{t("of {count}", { count: formatCount(usage.transactionLimit, locale) })}</span>}
+              <b className="font-bold text-ink">{formatCount(usage.transactionsThisMonth, fmt)}</b> {usage.transactionLimit >= 0 && <span className="text-ink-muted">{t("of {count}", { count: formatCount(usage.transactionLimit, fmt) })}</span>}
             </span>
           </div>
           {usage.transactionLimit >= 0 && (
@@ -229,7 +229,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
             {usage.transactionLimit < 0
               ? t("No monthly limit on your plan.")
               : [
-                  tone === "over" ? t("You've reached this month's limit. It starts again on {date}.", { date: day(usage.resetsOn, "d MMMM") }) : t("{count} left until {date}.", { count: formatCount(usage.transactionsLeft ?? 0, locale), date: day(usage.resetsOn, "d MMMM") }),
+                  tone === "over" ? t("You've reached this month's limit. It starts again on {date}.", { date: day(usage.resetsOn, "d MMMM") }) : t("{count} left until {date}.", { count: formatCount(usage.transactionsLeft ?? 0, fmt), date: day(usage.resetsOn, "d MMMM") }),
                   noLimitFamily ? t("{plan} has no monthly limit.", { plan: noLimitFamily.name }) : "",
                 ]
                   .filter(Boolean)
@@ -239,7 +239,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
         <div className="flex gap-6 border-line text-small max-md:border-t max-md:pt-3 md:border-l md:pl-6">
           <span className="flex flex-col gap-0.5">
             <span className="text-ink-muted">{t("Workspaces")}</span>
-            <b className="text-[15px] font-semibold text-ink tabular-nums">{usage.workspaceLimit >= 0 ? t("{used} of {limit}", { used: formatCount(usage.workspaces, locale), limit: formatCount(usage.workspaceLimit, locale) }) : formatCount(usage.workspaces, locale)}</b>
+            <b className="text-[15px] font-semibold text-ink tabular-nums">{usage.workspaceLimit >= 0 ? t("{used} of {limit}", { used: formatCount(usage.workspaces, fmt), limit: formatCount(usage.workspaceLimit, fmt) }) : formatCount(usage.workspaces, fmt)}</b>
           </span>
           <span className="flex flex-col gap-0.5">
             <span className="text-ink-muted">{t("PDF export")}</span>
@@ -258,7 +258,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
           const action = cta(family, plan);
           const isCurrentFamily = family === currentFamily && state !== "ended";
           const price = Number(plan.price);
-          const tag = isCurrentFamily ? t("Your plan") : !family.free && trialAvailable && plan.trialDays > 0 ? t("{days}-day free trial", { days: formatCount(plan.trialDays, locale) }) : null;
+          const tag = isCurrentFamily ? t("Your plan") : !family.free && trialAvailable && plan.trialDays > 0 ? t("{days}-day free trial", { days: formatCount(plan.trialDays, fmt) }) : null;
           const note = family.free
             ? t("No trial needed")
             : plan.billingCycle === "YEARLY"
@@ -269,7 +269,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
           const limit = plan.featureLimits.maxTransactionsPerMonth ?? -1;
           const blurb = family.free
             ? limit >= 0
-              ? t("One workspace and up to {count} transactions a month.", { count: formatCount(limit, locale) })
+              ? t("One workspace and up to {count} transactions a month.", { count: formatCount(limit, fmt) })
               : t("One workspace to start with.")
             : t(BLURBS[key] ?? "Everything this plan includes is listed below.");
           return (

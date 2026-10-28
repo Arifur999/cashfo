@@ -31,7 +31,7 @@ interface DeleteAccountDialogProps {
 // account is locked and signed out everywhere; the dialog says until when
 // it can still be restored, then signs this device out too.
 export function DeleteAccountDialog({ open, onClose, onDownload }: DeleteAccountDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user } = useAuth();
   const hasPassword = user.hasPassword !== false;
   const twoStep = Boolean(user.twoFactorEnabled);
@@ -106,7 +106,7 @@ export function DeleteAccountDialog({ open, onClose, onDownload }: DeleteAccount
             <div className="flex flex-col gap-1">
               <AlertDialogTitle className="text-[19px] font-semibold text-ink">{t("Your account will be deleted")}</AlertDialogTitle>
               <AlertDialogDescription className="text-body leading-normal text-ink-soft">
-                {t("It's locked now and signed out everywhere. Sign in before {date} to keep it; after that it is gone for good.", { date: formatDate(scheduledFor, "d MMM yyyy", locale) })}
+                {t("It's locked now and signed out everywhere. Sign in before {date} to keep it; after that it is gone for good.", { date: formatDate(scheduledFor, "d MMM yyyy", fmt) })}
               </AlertDialogDescription>
             </div>
           </div>
@@ -146,25 +146,25 @@ export function DeleteAccountDialog({ open, onClose, onDownload }: DeleteAccount
               {items.map((item) => (
                 <li key={item.key} className="flex gap-2 text-[13.5px] leading-[1.45] text-ink-2">
                   <X className="mt-0.5 size-3.5 shrink-0 text-expense-fill" strokeWidth={2.5} aria-hidden="true" />
-                  <span>{t(item.text, item.amount ? { amount: formatCurrency(item.amount, "BDT", locale) } : undefined)}</span>
+                  <span>{t(item.text, item.amount ? { amount: formatCurrency(item.amount, "BDT", fmt) } : undefined)}</span>
                 </li>
               ))}
             </ul>
             {preview && (
               <p className="text-caption text-ink-muted sm:ml-14">
                 {t("{wallets} wallets, {transactions} transactions, {goals} savings goals, {assets} assets and {loans} loan contacts.", {
-                  wallets: formatCount(preview.wallets, locale),
-                  transactions: formatCount(preview.transactions, locale),
-                  goals: formatCount(preview.savingsGoals, locale),
-                  assets: formatCount(preview.assets, locale),
-                  loans: formatCount(preview.loanContacts, locale),
+                  wallets: formatCount(preview.wallets, fmt),
+                  transactions: formatCount(preview.transactions, fmt),
+                  goals: formatCount(preview.savingsGoals, fmt),
+                  assets: formatCount(preview.assets, fmt),
+                  loans: formatCount(preview.loanContacts, fmt),
                 })}
               </p>
             )}
             <div className="flex items-start gap-2.5 rounded-field border border-warning-line bg-warning-50 px-3.5 py-3 text-small leading-normal text-warning-ink">
               <Clock className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
               <span>
-                {preview ? t("We keep it for {days} days. Sign in before {date} to cancel. After that it is gone for good.", { days: formatCount(graceDays, locale), date: formatDate(preview.deletionDate, "d MMM yyyy", locale) }) : t("We keep it for {days} days. Sign in before then to cancel. After that it is gone for good.", { days: formatCount(graceDays, locale) })}{" "}
+                {preview ? t("We keep it for {days} days. Sign in before {date} to cancel. After that it is gone for good.", { days: formatCount(graceDays, fmt), date: formatDate(preview.deletionDate, "d MMM yyyy", fmt) }) : t("We keep it for {days} days. Sign in before then to cancel. After that it is gone for good.", { days: formatCount(graceDays, fmt) })}{" "}
                 <button type="button" onClick={onDownload} className="font-semibold text-warning-ink underline pointer-coarse:min-h-11">
                   {t("Download my data first")}
                 </button>

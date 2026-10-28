@@ -22,8 +22,8 @@ import { settle } from "@/lib/customer/vaultDisplay";
 import { formatRelativeDateTime } from "@/lib/date";
 import { deviceLabelText } from "@/lib/deviceLabel";
 import { formatCount } from "@/lib/i18n/digits";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
@@ -47,7 +47,7 @@ const ALERTS: { key: keyof Omit<SecurityAlerts, "emailReady">; title: string; bo
 ];
 
 // "Last changed 4 months ago", or the general advice while it is unknown.
-function passwordAge(changedAt: string | null, t: Translate, locale: Locale): string {
+function passwordAge(changedAt: string | null, t: Translate, locale: FormatLocale): string {
   if (!changedAt) return t("Change it any time. Your other devices are signed out when you do.");
   const months = monthsSince(changedAt, new Date());
   if (months === 0) return t("Last changed this month");
@@ -78,7 +78,7 @@ interface SecuritySectionProps {
 // last tries and the alerts (design-v4 SettingsSecurity). An address not
 // verified yet is asked for first: the alerts and reset links go there.
 export function SecuritySection({ initialSessions, initialHistory, initialTwoStep, initialAlerts }: SecuritySectionProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const readOnly = Boolean(user.impersonatedBy);
@@ -173,8 +173,8 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
       const gone = new Set(targets.filter((_, index) => signedOut(results[index])).map((session) => session.id));
       setSessions((current) => current?.filter((s) => !gone.has(s.id)) ?? current);
       const kept = targets.length - gone.size;
-      if (gone.size > 0) toast.success(t(gone.size === 1 ? "{count} device signed out" : "{count} devices signed out", { count: formatCount(gone.size, locale) }));
-      if (kept > 0) toast.error(t(kept === 1 ? "{count} device couldn't be signed out. Try again." : "{count} devices couldn't be signed out. Try again.", { count: formatCount(kept, locale) }));
+      if (gone.size > 0) toast.success(t(gone.size === 1 ? "{count} device signed out" : "{count} devices signed out", { count: formatCount(gone.size, fmt) }));
+      if (kept > 0) toast.error(t(kept === 1 ? "{count} device couldn't be signed out. Try again." : "{count} devices couldn't be signed out. Try again.", { count: formatCount(kept, fmt) }));
     });
   }
 
@@ -243,7 +243,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
           <h2 className="text-title font-semibold text-ink">{t("Password")}</h2>
           {/* Polite: the link's address is said where the button was pressed. */}
           <span className="text-small text-ink-muted" aria-live="polite">
-            {hasPassword ? passwordAge(user.passwordChangedAt ?? null, t, locale) : linkSentTo ? t("We sent a link to {email}. Open it to set your password.", { email: linkSentTo }) : t("You sign in with Google. Set a password to sign in with your email too.")}
+            {hasPassword ? passwordAge(user.passwordChangedAt ?? null, t, fmt) : linkSentTo ? t("We sent a link to {email}. Open it to set your password.", { email: linkSentTo }) : t("You sign in with Google. Set a password to sign in with your email too.")}
           </span>
         </span>
         {hasPassword ? (
@@ -266,7 +266,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
         <div className={cn("flex flex-wrap items-center gap-3", CARD_HEAD)}>
           <span className="flex min-w-48 flex-1 flex-col gap-0.5">
             <h2 className="text-title font-semibold text-ink">{t("Where you're signed in")}</h2>
-            {sessions && <span className="text-small text-ink-muted">{t(sessions.length === 1 ? "{count} device. Sign out of any you don't recognise." : "{count} devices. Sign out of any you don't recognise.", { count: formatCount(sessions.length, locale) })}</span>}
+            {sessions && <span className="text-small text-ink-muted">{t(sessions.length === 1 ? "{count} device. Sign out of any you don't recognise." : "{count} devices. Sign out of any you don't recognise.", { count: formatCount(sessions.length, fmt) })}</span>}
           </span>
           <Button variant="secondary" size="sm" onClick={signOutOthers} disabled={others.length === 0 || isPending || readOnly} className="border-expense-line px-3 text-small text-expense hover:bg-expense-soft pointer-coarse:h-11">
             {t("Sign out everywhere else")}
@@ -296,7 +296,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
                       )}
                     </span>
                     <span className="text-[12.5px] text-ink-muted tabular-nums">
-                      {session.isCurrent ? t("Active now") : t("Last active {when}", { when: formatTimeAgo(session.lastUsedAt, t, locale) })}
+                      {session.isCurrent ? t("Active now") : t("Last active {when}", { when: formatTimeAgo(session.lastUsedAt, t, fmt) })}
                       {" · "}
                       {/* An IPv6 address is one long word: it breaks rather than run under the button. */}
                       <span className="break-all">{ip ? t("IP {ip}", { ip }) : t("IP unknown")}</span>
@@ -323,7 +323,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
       <Card id="security-history" padding="none" className="overflow-hidden" aria-busy={readingHistory || undefined}>
         <div className={cn("flex flex-col gap-0.5", CARD_HEAD)}>
           <h2 className="text-title font-semibold text-ink">{t("Recent sign-in activity")}</h2>
-          <span className="text-small text-ink-muted">{t(shownTries === 1 ? "The last try to sign in to your account." : "The last {count} tries to sign in to your account.", { count: formatCount(shownTries || HISTORY_STEP, locale) })}</span>
+          <span className="text-small text-ink-muted">{t(shownTries === 1 ? "The last try to sign in to your account." : "The last {count} tries to sign in to your account.", { count: formatCount(shownTries || HISTORY_STEP, fmt) })}</span>
         </div>
         {history === null ? (
           <div className="border-t border-divider">{readingHistory ? READING : <ErrorState bordered={false} title={t("Couldn't load your sign-in activity")} onRetry={() => void readHistory()} />}</div>
@@ -332,7 +332,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
         ) : (
           <ul>
             {tries.slice(0, historyLimit).map((entry) => {
-              const when = formatRelativeDateTime(entry.createdAt, { t, locale });
+              const when = formatRelativeDateTime(entry.createdAt, { t, locale: fmt });
               const device = deviceLabelText(entry.deviceLabel, t);
               return (
                 // From 640px of section the device and the time get columns
@@ -367,7 +367,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
           <div className={cn("flex flex-col gap-2 border-t border-divider py-3 text-small text-ink-muted", ROW_X)}>
             <LoadMore shown={shownTries} total={tries.length} step={HISTORY_STEP} onMore={() => setHistoryLimit((limit) => limit + HISTORY_STEP)} onLess={historyLimit > HISTORY_STEP ? () => setHistoryLimit(HISTORY_STEP) : undefined} focusTargetId="security-history" />
             {/* The list stops at the API's cap: said, so 50 doesn't read as the whole count. */}
-            {tries.length >= HISTORY_CAP && <p>{t("Only the newest {count} tries are listed.", { count: formatCount(HISTORY_CAP, locale) })}</p>}
+            {tries.length >= HISTORY_CAP && <p>{t("Only the newest {count} tries are listed.", { count: formatCount(HISTORY_CAP, fmt) })}</p>}
           </div>
         )}
       </Card>

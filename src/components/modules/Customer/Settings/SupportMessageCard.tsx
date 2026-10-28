@@ -38,7 +38,7 @@ const prefersReducedMotion = () => typeof window.matchMedia === "function" && wi
 // optional screenshot. The answer comes back here and in the bell, which
 // is always true; an email copy only goes out when the platform sends mail.
 export function SupportMessageCard({ conversations, onSent, onOpenMessages, ref }: SupportMessageCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [topic, setTopic] = useState<SupportTopic>("TECHNICAL");
   const [message, setMessage] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
@@ -138,7 +138,7 @@ export function SupportMessageCard({ conversations, onSent, onOpenMessages, ref 
         {/* Shown when they couldn't be read too: opening them is the way to try again. */}
         {conversations !== 0 && (
           <button type="button" onClick={onOpenMessages} className="self-center rounded-sm px-1 text-small font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
-            {conversations === null ? t("Your messages") : t("Your messages ({count})", { count: formatCount(conversations, locale) })}
+            {conversations === null ? t("Your messages") : t("Your messages ({count})", { count: formatCount(conversations, fmt) })}
           </button>
         )}
       </form>

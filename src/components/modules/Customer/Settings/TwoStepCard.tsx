@@ -34,7 +34,7 @@ interface TwoStepCardProps {
 // and once it is on, the backup codes and the computers that skip the code.
 // Code by email waits for email to be switched on.
 export function TwoStepCard({ initialStatus }: TwoStepCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user } = useAuth();
   const readOnly = Boolean(user.impersonatedBy);
   const [status, setStatus] = useState(initialStatus);
@@ -107,7 +107,7 @@ export function TwoStepCard({ initialStatus }: TwoStepCardProps) {
             {t("Authenticator app")}
             {enabled ? (
               <Chip tone="income" size="sm">
-                {status?.enabledAt ? t("On since {date}", { date: formatDate(status.enabledAt, "d MMM yyyy", locale) }) : t("On@@switch")}
+                {status?.enabledAt ? t("On since {date}", { date: formatDate(status.enabledAt, "d MMM yyyy", fmt) }) : t("On@@switch")}
               </Chip>
             ) : (
               <Chip tone="mint" size="sm">
@@ -137,7 +137,7 @@ export function TwoStepCard({ initialStatus }: TwoStepCardProps) {
             <span className="flex min-w-48 flex-1 flex-col gap-0.5">
               <span className="text-body font-semibold text-ink">{t("Backup codes")}</span>
               <span className={cn("text-[12.5px] leading-[1.45]", codesLeft <= 3 ? "text-warning" : "text-ink-muted")}>
-                {t("{left} of {total} left. Each one gets you in once if you lose your phone.", { left: formatCount(codesLeft, locale), total: formatCount(BACKUP_CODES, locale) })}
+                {t("{left} of {total} left. Each one gets you in once if you lose your phone.", { left: formatCount(codesLeft, fmt), total: formatCount(BACKUP_CODES, fmt) })}
               </span>
             </span>
             <Button variant="secondary" size="sm" onClick={() => setDialog("codes")} disabled={readOnly} className="text-[13.5px] pointer-coarse:h-11">
@@ -178,7 +178,7 @@ export function TwoStepCard({ initialStatus }: TwoStepCardProps) {
                           )}
                         </span>
                         <span className="text-caption text-ink-muted tabular-nums">
-                          {[device.place, ip && t("IP {ip}", { ip }), t("Last used {when}", { when: formatTimeAgo(device.lastUsedAt, t, locale) })].filter(Boolean).join(" · ")}
+                          {[device.place, ip && t("IP {ip}", { ip }), t("Last used {when}", { when: formatTimeAgo(device.lastUsedAt, t, fmt) })].filter(Boolean).join(" · ")}
                         </span>
                       </span>
                       <Button variant="secondary" size="xs" onClick={() => remove(device.id)} disabled={isPending || readOnly} aria-label={t("Remove {device}", { device: label })} className="pointer-coarse:h-11">

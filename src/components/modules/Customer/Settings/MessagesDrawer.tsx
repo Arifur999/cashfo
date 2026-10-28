@@ -52,7 +52,7 @@ interface MessagesDrawerProps {
 // The customer's messages to support and the answers, newest first, and
 // one conversation with a box to answer in, kept at the bottom.
 export function MessagesDrawer({ open, conversations, reading = false, onRetry, selectedId, onSelect, onClose, onUpdated }: MessagesDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [reply, setReply] = useState("");
   const [isPending, startTransition] = useTransition();
   const selected = conversations?.find((conversation) => conversation.id === selectedId) ?? null;
@@ -136,7 +136,7 @@ export function MessagesDrawer({ open, conversations, reading = false, onRetry, 
                       <Chip tone={status.tone} size="sm">
                         {t(status.label)}
                       </Chip>
-                      {formatRecentDateTime(conversation.updatedAt, { t, locale })} · {t(count === 1 ? "{count} message" : "{count} messages", { count: formatCount(count, locale) })}
+                      {formatRecentDateTime(conversation.updatedAt, { t, locale: fmt })} · {t(count === 1 ? "{count} message" : "{count} messages", { count: formatCount(count, fmt) })}
                     </span>
                   </span>
                   <ChevronRight className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
@@ -159,7 +159,7 @@ export function MessagesDrawer({ open, conversations, reading = false, onRetry, 
             return (
               <li key={message.id} ref={index === selected.messages.length - 1 ? showNewest : undefined} className={cn("flex max-w-[86%] flex-col gap-1", mine ? "items-end self-end" : "items-start self-start")}>
                 <span className="text-caption text-ink-muted">
-                  <b className="font-semibold text-ink">{mine ? t("You") : t("Smartly support")}</b> · {formatRecentDateTime(message.createdAt, { t, locale })}
+                  <b className="font-semibold text-ink">{mine ? t("You") : t("Smartly support")}</b> · {formatRecentDateTime(message.createdAt, { t, locale: fmt })}
                 </span>
                 <div className={cn("rounded-lg border px-4 py-3 text-body leading-relaxed wrap-break-word whitespace-pre-wrap text-ink", mine ? "border-mint-200 bg-mint-50" : "border-line bg-surface")}>{message.message}</div>
                 {message.attachmentId && (

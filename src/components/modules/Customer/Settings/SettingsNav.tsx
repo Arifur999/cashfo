@@ -39,7 +39,7 @@ export function useSignOut() {
 // row (the workspace switcher and the account menu lead there), so nothing
 // is lit on its page.
 export function SettingsNav() {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { signingOut, signOut } = useSignOut();
   const pathname = usePathname();
   const current = sectionFor(pathname);
@@ -67,7 +67,7 @@ export function SettingsNav() {
           {signingOut ? <Loader size={16} label={t("Signing out...")} /> : <LogOut className="size-4.25 text-expense-fill" aria-hidden="true" />}
           {signingOut ? t("Signing out...") : t("Sign out")}
         </button>
-        <span className="px-2.5 pb-0.5 text-caption text-ink-faint">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, locale) })}</span>
+        <span className="px-2.5 pb-0.5 text-caption text-ink-faint">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, fmt) })}</span>
       </div>
     </nav>
   );

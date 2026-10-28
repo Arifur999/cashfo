@@ -45,7 +45,7 @@ interface WorkspacesSectionProps {
 // switches into one and goes to its Home; a new one offers the same in its
 // toast.
 export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user, activeBusinessId } = useAuth();
   const router = useRouter();
   const switcher = useWorkspaceSwitch({ land: "home" });
@@ -189,7 +189,7 @@ export function WorkspacesSection({ initialBusinesses }: WorkspacesSectionProps)
                   </span>
                   {contact && <span className="truncate text-small text-ink-muted">{contact}</span>}
                   {business.monthlyFee !== null && (
-                    <span className="text-small text-ink-muted">{fillNodes(t("Extra workspace fee: {amount} a month, half your plan"), { amount: <b className="font-semibold text-ink-2">{formatCurrency(business.monthlyFee, business.currency, locale)}</b> })}</span>
+                    <span className="text-small text-ink-muted">{fillNodes(t("Extra workspace fee: {amount} a month, half your plan"), { amount: <b className="font-semibold text-ink-2">{formatCurrency(business.monthlyFee, business.currency, fmt)}</b> })}</span>
                   )}
                   {/* Said in words: a tooltip never shows under a finger or to most screen readers. */}
                   {business.isDefault && <span className="text-caption text-ink-muted">{t("Your personal workspace always stays.")}</span>}

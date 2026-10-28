@@ -29,7 +29,7 @@ const byVotes = (a: FeatureIdea, b: FeatureIdea) => b.voteCount - a.voteCount ||
 // others asked for. Read each time it opens; a list from before stays on
 // show while it is read again.
 export function IdeasDrawer({ open, onClose }: IdeasDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [ideas, setIdeas] = useState<FeatureIdea[] | null>(null);
   // The last read failed: with no list to show, the drawer says so.
   const [failed, setFailed] = useState(false);
@@ -164,7 +164,7 @@ export function IdeasDrawer({ open, onClose }: IdeasDrawerProps) {
                   )}
                 >
                   <ChevronUp className="size-4" aria-hidden="true" />
-                  {formatCount(idea.voteCount, locale)}
+                  {formatCount(idea.voteCount, fmt)}
                 </button>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="text-body font-semibold wrap-break-word text-ink">{idea.title}</span>

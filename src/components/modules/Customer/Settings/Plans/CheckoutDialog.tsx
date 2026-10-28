@@ -37,7 +37,7 @@ const GATEWAY_TONE: Record<Gateway, string> = {
 // money, and a coupon. Continue opens the payment and the page shows the
 // steps; nothing is charged here.
 export function CheckoutDialog({ plan, onClose, couponCode, referralPercent, onStarted }: CheckoutDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [gateway, setGateway] = useState<Gateway>("BKASH");
   const [code, setCode] = useState("");
   const [preview, setPreview] = useState<CouponPreview | null>(null);
@@ -45,7 +45,7 @@ export function CheckoutDialog({ plan, onClose, couponCode, referralPercent, onS
   const [isPending, startTransition] = useTransition();
   const [checking, startChecking] = useTransition();
   const open = plan !== null;
-  const money = (amount: number | string) => formatCurrency(amount, "BDT", locale);
+  const money = (amount: number | string) => formatCurrency(amount, "BDT", fmt);
 
   function check(next: string, forPlan: BillingPlan) {
     const trimmed = next.trim();
@@ -141,7 +141,7 @@ export function CheckoutDialog({ plan, onClose, couponCode, referralPercent, onS
         {!preview && referralPercent && (
           <div className="flex justify-between gap-3">
             <dt className="text-ink-muted">{t("Friend's discount")}</dt>
-            <dd className="text-emerald">{t("{percent}% off", { percent: formatCount(referralPercent, locale) })}</dd>
+            <dd className="text-emerald">{t("{percent}% off", { percent: formatCount(referralPercent, fmt) })}</dd>
           </div>
         )}
         <div className="flex justify-between gap-3 border-t border-line pt-2 font-semibold">

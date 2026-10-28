@@ -31,7 +31,7 @@ interface ProfileSectionProps {
 // Who you are in Smartly (design-v4 SettingsProfile): photo, name, email
 // and phone, then the account's facts.
 export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const [name, setName] = useState(user.name);
@@ -80,8 +80,8 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
 
   const verified = user.emailVerified ?? Boolean(user.emailVerifiedAt);
   const facts = [
-    { label: t("Member since"), value: user.createdAt ? formatDate(user.createdAt, "MMMM yyyy", locale) : "—" },
-    { label: t("Last sign-in"), value: lastSignIn ? formatRelativeDateTime(lastSignIn, { t, locale }) : "—" },
+    { label: t("Member since"), value: user.createdAt ? formatDate(user.createdAt, "MMMM yyyy", fmt) : "—" },
+    { label: t("Last sign-in"), value: lastSignIn ? formatRelativeDateTime(lastSignIn, { t, locale: fmt }) : "—" },
     { label: t("Language"), value: `${locale === "bn" ? "বাংলা" : "English"} · ${t("change in App preferences")}` },
   ];
   const status = nameMissing ? t("Enter your name") : !dirty ? t("Nothing changed yet.") : nameChanged && phoneChanged ? t("You changed your name and phone.") : nameChanged ? t("You changed your name.") : t("You changed your phone.");

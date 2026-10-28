@@ -19,7 +19,7 @@ const PAGE = 10;
 // The customer's payments, newest first, each with its invoice once paid
 // (a PDF through /api/invoices/:id, never the backend straight).
 export function PaymentsCard({ initial }: { initial: BillingPayments }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [rows, setRows] = useState(initial.data);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(initial.meta.total);
@@ -59,15 +59,15 @@ export function PaymentsCard({ initial }: { initial: BillingPayments }) {
           const status = paymentStatusView(row.status);
           return (
             <li key={row.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t border-divider px-4 py-3 md:grid-cols-[110px_minmax(0,1fr)_120px_150px_auto] md:px-5.5">
-              <span className="text-small text-ink-muted tabular-nums max-md:col-span-2">{formatDate(row.paidAt ?? row.createdAt, "d MMM yyyy", locale)}</span>
+              <span className="text-small text-ink-muted tabular-nums max-md:col-span-2">{formatDate(row.paidAt ?? row.createdAt, "d MMM yyyy", fmt)}</span>
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate text-body font-semibold text-ink">{row.planName}</span>
                 <span className="text-caption text-ink-muted">
                   <span lang="en">{row.displayId}</span> · {t(gatewayLabel(row.gateway))}
-                  {row.refund && ` · ${t("Refunded {amount}", { amount: formatCurrency(row.refund.amount, "BDT", locale) })}`}
+                  {row.refund && ` · ${t("Refunded {amount}", { amount: formatCurrency(row.refund.amount, "BDT", fmt) })}`}
                 </span>
               </span>
-              <span className="text-right text-body font-semibold text-ink tabular-nums md:text-left">{formatCurrency(row.amount, "BDT", locale)}</span>
+              <span className="text-right text-body font-semibold text-ink tabular-nums md:text-left">{formatCurrency(row.amount, "BDT", fmt)}</span>
               <span className="max-md:col-start-1">
                 <Chip tone={status.tone} size="sm">
                   {t(status.label)}
@@ -89,7 +89,7 @@ export function PaymentsCard({ initial }: { initial: BillingPayments }) {
       </ul>
       {rows.length < total && (
         <div className="flex items-center justify-between gap-3 border-t border-divider px-4 py-3 text-small text-ink-muted md:px-5.5">
-          <span>{t("Showing {shown} of {total}", { shown: formatCount(rows.length, locale), total: formatCount(total, locale) })}</span>
+          <span>{t("Showing {shown} of {total}", { shown: formatCount(rows.length, fmt), total: formatCount(total, fmt) })}</span>
           <Button variant="secondary" size="xs" onClick={more} disabled={isPending} className="pointer-coarse:h-11">
             {isPending && <Loader size={12} />}
             {t("Show more")}

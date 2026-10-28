@@ -24,7 +24,7 @@ interface PendingPaymentCardProps {
 // stays open. No gateway takes the money online yet, so it says plainly
 // that the team confirms the payment once it arrives.
 export function PendingPaymentCard({ payment, readOnly, onCancelled }: PendingPaymentCardProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const [confirming, setConfirming] = useState(false);
   const [isPending, startTransition] = useTransition();
   const steps = (locale === "bn" ? payment.instructions.bn : payment.instructions.en) || payment.instructions.en;
@@ -53,9 +53,9 @@ export function PendingPaymentCard({ payment, readOnly, onCancelled }: PendingPa
 
   const facts = [
     { label: t("Plan"), value: payment.planName },
-    { label: t("Amount"), value: formatCurrency(payment.amount, "BDT", locale) },
+    { label: t("Amount"), value: formatCurrency(payment.amount, "BDT", fmt) },
     { label: t("Pay with"), value: t(gatewayLabel(payment.gateway)) },
-    { label: t("Open until"), value: formatRelativeDateTime(payment.expiresAt, { t, locale }) },
+    { label: t("Open until"), value: formatRelativeDateTime(payment.expiresAt, { t, locale: fmt }) },
   ];
 
   return (

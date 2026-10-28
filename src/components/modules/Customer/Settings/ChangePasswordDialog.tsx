@@ -29,7 +29,7 @@ interface ChangePasswordDialogProps {
 // A new account password, with the rules ticked off as it is typed
 // (design-v4 ChangePasswordDialog).
 export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 0 }: ChangePasswordDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user } = useAuth();
   const [current, setCurrent] = useState("");
   const [password, setPassword] = useState("");
@@ -131,7 +131,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
                 </span>
                 <span className="flex flex-col gap-0.5">
                   <span className="text-body font-semibold text-ink">
-                    {t(otherDevices === 1 ? "Sign out of my other device" : "Sign out of my {count} other devices", { count: formatCount(otherDevices, locale) })}
+                    {t(otherDevices === 1 ? "Sign out of my other device" : "Sign out of my {count} other devices", { count: formatCount(otherDevices, fmt) })}
                   </span>
                   <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Do this if you think someone else knows your old password.")}</span>
                 </span>

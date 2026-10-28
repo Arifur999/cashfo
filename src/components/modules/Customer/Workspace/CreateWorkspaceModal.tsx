@@ -32,7 +32,7 @@ interface CreateWorkspaceModalProps {
 // Create stays off while the plan has no room for another one.
 export function CreateWorkspaceModal({ open, onClose, onCreated, offerOpen }: CreateWorkspaceModalProps) {
   const router = useRouter();
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -111,7 +111,7 @@ export function CreateWorkspaceModal({ open, onClose, onCreated, offerOpen }: Cr
               <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
               {limits && limits.maxBusinessWorkspaces === 0
                 ? t("Your current plan does not include business workspaces. Upgrade to add one.")
-                : t("Your plan allows up to {count} business workspaces. Upgrade to add more.", { count: formatCount(limits?.maxBusinessWorkspaces ?? 0, locale) })}
+                : t("Your plan allows up to {count} business workspaces. Upgrade to add more.", { count: formatCount(limits?.maxBusinessWorkspaces ?? 0, fmt) })}
             </p>
           )}
 
