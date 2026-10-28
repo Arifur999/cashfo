@@ -5,7 +5,8 @@ import { CreditCard, FolderOpen, type LucideIcon, Mail, Server } from "lucide-re
 import Card from "@/components/smartly/Card";
 import T from "@/components/shared/T";
 import { formatLogTime } from "@/lib/date";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { formatBytes } from "@/lib/number";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
@@ -55,12 +56,16 @@ const HealthCard = ({ service }: { service: ServiceHealth }) => {
 const servicesFrom = (health: ISystemHealth, t: Translate, locale: Locale): Omit<ServiceHealth, "name" | "icon">[] => {
   const time = (value: string) => formatLogTime(value, { t, locale });
   const { database, email, paymentGateway, storage } = health;
+  // "19 MB · " before a line, when the API says how big it is.
+  const size = (bytes: number | null | undefined) => (typeof bytes === "number" ? `${toLocaleDigits(formatBytes(bytes), locale)} · ` : "");
   return [
     database.ok
       ? {
           tone: "ok",
           state: "Working",
-          sub: database.latencyMs === null ? time(health.checkedAt) : t("Answered in {ms} ms · {time}", { ms: formatCount(database.latencyMs, locale), time: time(health.checkedAt) }),
+          sub:
+            size(database.sizeBytes) +
+            (database.latencyMs === null ? time(health.checkedAt) : t("Answered in {ms} ms · {time}", { ms: formatCount(database.latencyMs, locale), time: time(health.checkedAt) })),
         }
       : { tone: "down", state: "Database not answering", sub: t("Checked {time}", { time: time(health.checkedAt) }) },
     !email.configured
@@ -74,7 +79,7 @@ const servicesFrom = (health: ISystemHealth, t: Translate, locale: Locale): Omit
       ? { tone: "ok", state: "Connected", sub: "bKash, Nagad, SSLCommerz" }
       : { tone: "warn", state: "Not set up", sub: "Marked paid by hand" },
     storage.writable
-      ? { tone: storage.imageHostConfigured ? "ok" : "warn", state: "Working", sub: storage.imageHostConfigured ? "Receipts and files" : "Photos need the image host key" }
+      ? { tone: storage.imageHostConfigured ? "ok" : "warn", state: "Working", sub: size(storage.sizeBytes) + t(storage.imageHostConfigured ? "Receipts and files" : "Photos need the image host key") }
       : { tone: "down", state: "Can't save files", sub: t("{folder} is read-only", { folder: storage.path }) },
   ];
 };

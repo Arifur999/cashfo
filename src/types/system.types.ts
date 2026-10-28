@@ -70,13 +70,15 @@ export interface IRateLimitSummary {
 // Each service the platform leans on (GET /admin/system/health).
 export interface ISystemHealth {
   api: "up";
-  database: { ok: boolean; latencyMs: number | null };
+  // sizeBytes: the database on disk (absent from an older API).
+  database: { ok: boolean; latencyMs: number | null; sizeBytes?: number | null };
   // lastSendAt/lastSendOk: the server's latest send since it started.
   email: { configured: boolean; lastSendAt: string | null; lastSendOk: boolean | null };
   paymentGateway: { configured: boolean };
   // writable: the uploads folder takes a file; imageHostConfigured: photos
   // and screenshots go to the image host (imgbb).
-  storage: { writable: boolean; path: string; imageHostConfigured: boolean };
+  // sizeBytes: what the uploads folder holds.
+  storage: { writable: boolean; path: string; imageHostConfigured: boolean; sizeBytes?: number | null };
   lastBackup: string | null;
   errors24h: { count: number; high: number };
   checkedAt: string;
