@@ -4,13 +4,14 @@ import type { Table } from "@tanstack/react-table";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useExportAction } from "@/components/shared/ExportAction";
+import { downloadBlob } from "@/lib/download";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { DataTableProps } from "./dataTable.types";
 import { claimExport, collectAllRows, EXPORT_ROW_CAP } from "./exportAll";
 import { exportRowsCsv, exportTableCsv } from "./exportTableCsv";
 
-type ExportProps<TData> = Pick<DataTableProps<TData>, "exportFileName" | "exportAll" | "exportColumns" | "getRowId">;
+type ExportProps<TData> = Pick<DataTableProps<TData>, "exportFileName" | "exportAll" | "exportHref" | "exportColumns" | "getRowId">;
 type FetchPage<TData> = NonNullable<DataTableProps<TData>["exportAll"]>;
 
 // A wait for the request limit shorter than this passes without a note, so
@@ -18,10 +19,10 @@ type FetchPage<TData> = NonNullable<DataTableProps<TData>["exportAll"]>;
 const NOTED_PAUSE_MS = 2_000;
 
 // What the page header's Export downloads for a DataTable: the selected rows
-// if any; else, for a server list with exportAll, every row that matches the
+// if any; else the API's own file when the list has one (exportHref); else, for a server list with exportAll, every row that matches the
 // filters (read a page at a time, up to 10,000); else every row it holds.
 // The CSV-only columns (exportColumns) follow the table's own either way.
-export function useTableExport<TData>(table: Table<TData>, { exportFileName, exportAll, exportColumns, getRowId }: ExportProps<TData>) {
+export function useTableExport<TData>(table: Table<TData>, { exportFileName, exportAll, exportHref, exportColumns, getRowId }: ExportProps<TData>) {
   const { translate, locale } = useLocale();
   const count = (value: number) => formatCount(value, locale);
   // The export this list has under way. Leaving the page calls it off: no
@@ -101,10 +102,28 @@ export function useTableExport<TData>(table: Table<TData>, { exportFileName, exp
     }
   };
 
+  // The API's file, fetched rather than navigated to, so a refusal is a
+  // toast instead of an error page.
+  const downloadFromApi = async (href: string, fileName: string) => {
+    const response = await fetch(href, { cache: "no-store" }).catch(() => null);
+    if (!response?.ok) {
+      toast.error(
+        translate(
+          response?.status === 403 ? "Your role can't export this list" : response?.status === 429 ? "Too many exports. Wait a minute and try again." : "Couldn't export the rows. Try again.",
+        ),
+      );
+      return;
+    }
+    const named = /filename="?([^";]+)"?/.exec(response.headers.get("content-disposition") ?? "")?.[1];
+    downloadBlob(await response.blob(), named ?? `${fileName}.csv`);
+  };
+
   useExportAction(
     exportFileName
       ? () => {
-          if (exportAll && table.getSelectedRowModel().rows.length === 0) {
+          const nothingSelected = table.getSelectedRowModel().rows.length === 0;
+          if (exportHref && nothingSelected) return downloadFromApi(exportHref(), exportFileName);
+          if (exportAll && nothingSelected) {
             return exportEveryRow(exportFileName, exportAll);
           }
           exportTableCsv(table, exportFileName, exportColumns);

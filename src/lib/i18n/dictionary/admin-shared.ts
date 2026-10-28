@@ -31,6 +31,8 @@ export const adminSharedDictionary: Record<string, string> = {
   "Exported {count} of {total} rows. The list changed while exporting; export again to get the rest.":
     "{total}টির মধ্যে {count}টি সারি নামানো হয়েছে। নামানোর সময় তালিকাটি বদলে গেছে; বাকিগুলো পেতে আবার এক্সপোর্ট করুন।",
   "Couldn't export the rows. Try again.": "সারিগুলো নামানো যায়নি। আবার চেষ্টা করুন।",
+  "Your role can't export this list": "আপনার ভূমিকায় এই তালিকা নামানো যায় না",
+  "Too many exports. Wait a minute and try again.": "খুব বেশিবার নামানো হয়েছে। এক মিনিট পর আবার চেষ্টা করুন।",
   "An export is already running": "একটি এক্সপোর্ট আগে থেকেই চলছে",
   View: "দেখুন",
   "Show all": "সব দেখান",

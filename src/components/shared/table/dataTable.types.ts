@@ -212,6 +212,9 @@ export interface DataTableProps<TData> {
   // reads them all, a page at a time, instead of the page on screen; one
   // export runs at a time, and leaving the page calls it off.
   exportAll?: (page: number) => Promise<ExportPage<TData>>;
+  // A download the API builds (and audits) for every row that matches,
+  // taken instead of exportAll when nothing is selected.
+  exportHref?: () => string;
   // Columns only the CSV has, after the table's own.
   exportColumns?: readonly DataTableExportColumn<TData>[];
   search?: DataTableSearchConfig;

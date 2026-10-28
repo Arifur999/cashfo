@@ -42,6 +42,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
     pager,
     exportFileName,
     exportAll,
+    exportHref,
     exportColumns,
     getRowId,
     search,
@@ -59,7 +60,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
   const table = useDataTable(props);
   const { canReset, reset } = useDataTableReset(table, search, filters);
   const totalRows = pagination ? (meta?.total ?? 0) : table.getFilteredRowModel().rows.length;
-  useTableExport(table, { exportFileName, exportAll, exportColumns, getRowId });
+  useTableExport(table, { exportFileName, exportAll, exportHref, exportColumns, getRowId });
 
   return (
     <section id={listId} className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
