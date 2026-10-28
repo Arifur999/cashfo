@@ -69,7 +69,7 @@ export function SuperDashboard({ adminName, hour, summary, api, now }: SuperDash
       title: translate("Tickets with no reply"),
       sub: since ? translate("The oldest has waited {time}", { time: waitedFor(since, now, translate, locale) }) : translate("Nobody is waiting"),
       link: translate("Open inbox"),
-      href: "/admin/support?status=OPEN",
+      href: "/admin/support?status=NEEDS_REPLY",
       icon: <MessageCircle />,
       tone: "info",
     });

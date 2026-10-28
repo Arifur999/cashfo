@@ -4,6 +4,7 @@ import type { GroupContribution, GroupExpense, GroupMember, GroupSettlementMembe
 import {
   budgetStatus,
   cashInHand,
+  categoryMembers,
   categorySplits,
   closedRecordFor,
   contributionTotals,
@@ -302,5 +303,19 @@ describe("words", () => {
     expect(countLabel(inEnglish, "en", 1, "{count} member", "{count} members")).toBe("1 member");
     expect(countLabel(inEnglish, "en", 1200, "{count} member", "{count} members")).toBe("1,200 members");
     expect(countLabel(inEnglish, "bn", 3, "{count} member", "{count} members")).toBe("৩ members");
+  });
+});
+
+describe("categoryMembers", () => {
+  const khaled = member("k", "Khaled");
+  const rakib = member("r", "Rakib");
+  it("gives the chosen members still in the group, in the group's order", () => {
+    expect(categoryMembers({ defaultMemberIds: ["r", "gone", "k"] }, [khaled, rakib])).toEqual([khaled, rakib]);
+  });
+  it("means everyone when none is chosen, none is left, or the API is older", () => {
+    expect(categoryMembers({ defaultMemberIds: [] }, [khaled, rakib])).toBeNull();
+    expect(categoryMembers({ defaultMemberIds: ["gone"] }, [khaled, rakib])).toBeNull();
+    expect(categoryMembers({}, [khaled])).toBeNull();
+    expect(categoryMembers(undefined, [khaled])).toBeNull();
   });
 });

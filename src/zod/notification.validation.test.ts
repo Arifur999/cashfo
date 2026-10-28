@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  ANY_LANGUAGE,
   ANY_PLAN,
   ANY_STATUS,
+  ANY_TIME,
   campaignServerZodSchema,
   getScheduleInPastError,
   notificationTemplateServerZodSchema,
@@ -26,7 +28,7 @@ describe("notificationTemplateServerZodSchema", () => {
 });
 
 describe("campaignServerZodSchema", () => {
-  const base = { title: "Eid offer", templateKey: "feature_announcement", channel: "IN_APP_PUSH", planId: ANY_PLAN, userStatus: ANY_STATUS, scheduledFor: "" };
+  const base = { title: "Eid offer", templateKey: "feature_announcement", channel: "IN_APP_PUSH", planId: ANY_PLAN, userStatus: ANY_STATUS, lastActiveDays: ANY_TIME, language: ANY_LANGUAGE, scheduledFor: "" };
 
   it("sends an unrestricted draft with an empty target filter", () => {
     const result = campaignServerZodSchema.safeParse(base);
@@ -42,6 +44,12 @@ describe("campaignServerZodSchema", () => {
       targetFilter: { planId: "plan-1", status: "ACTIVE" },
       scheduledFor: "2099-03-01T03:00:00.000Z",
     });
+  });
+
+  it("adds the last-active and language rules when they are set", () => {
+    const result = campaignServerZodSchema.safeParse({ ...base, lastActiveDays: "30", language: "BN" });
+    expect(result.success && result.data.targetFilter).toEqual({ lastActiveWithinDays: 30, language: "BN" });
+    expect(campaignServerZodSchema.safeParse({ ...base, lastActiveDays: "soon" }).success).toBe(false);
   });
 
   it("rejects a schedule in the past and an unknown status", () => {

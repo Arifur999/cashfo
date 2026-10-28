@@ -23,7 +23,7 @@ const RelatedTicketsCard = async ({ tickets }: { tickets: IRelatedTicket[] }) =>
         </h2>
         {tickets.map((ticket) => (
           <Link key={ticket.id} href={`/admin/support/${ticket.id}`} className={ROW}>
-            <code className="font-mono font-semibold text-ink">{shortTicketId(ticket.id)}</code>
+            <code className="font-mono font-semibold text-ink">{shortTicketId(ticket)}</code>
             <span className="flex min-w-0 grow flex-col">
               <span className="truncate text-ink">{ticket.subject}</span>
               <span className="text-caption text-ink-muted">{formatDate(ticket.createdAt, "d MMM yyyy", "—", locale)}</span>

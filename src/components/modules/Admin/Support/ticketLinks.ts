@@ -28,9 +28,9 @@ export const ticketsBackHref = (back: string | readonly string[] | undefined): s
 // One tab of the queue ("Open" opens OPEN).
 export const ticketStatusHref = (status: string): string => `${TICKETS_ROUTE}?${new URLSearchParams({ status }).toString()}`;
 
-// Every ticket still in the queue whose last message is the customer's:
-// what the figures count as needing a reply.
-export const AWAITING_REPLY_HREF = `${TICKETS_ROUTE}?awaitingReply=true`;
+// The "Need a reply" tab: every ticket still in the queue whose last
+// message is the customer's, what the figures count as needing a reply.
+export const AWAITING_REPLY_HREF = `${TICKETS_ROUTE}?status=NEEDS_REPLY`;
 
 // A search of the queue by the requester's email: the open tab while any of
 // their earlier tickets is open (they still need the team), else the solved.

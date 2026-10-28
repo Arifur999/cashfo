@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildAssigneeOptions, buildTicketsTableConfig, UNASSIGNED } from "./Tickets/ticketsTable.config";
+import type { ITicketStats } from "@/types/ticket.types";
+import { buildAssigneeOptions, buildTicketsTableConfig, ticketsQueryString, UNASSIGNED } from "./Tickets/ticketsTable.config";
 import { AWAITING_REPLY_HREF, hasTicketFilters, requesterTicketsHref, ticketHref, ticketsBackHref, ticketStatusHref } from "./ticketLinks";
 
 describe("ticketHref", () => {
@@ -30,7 +31,7 @@ describe("ticketsBackHref", () => {
 describe("the figures' links", () => {
   it("open a tab, or what needs a reply", () => {
     expect(ticketStatusHref("WAITING_ON_USER")).toBe("/admin/support?status=WAITING_ON_USER");
-    expect(AWAITING_REPLY_HREF).toBe("/admin/support?awaitingReply=true");
+    expect(AWAITING_REPLY_HREF).toBe("/admin/support?status=NEEDS_REPLY");
   });
 });
 
@@ -83,13 +84,27 @@ describe("buildAssigneeOptions", () => {
 });
 
 describe("buildTicketsTableConfig", () => {
-  it("names the done tab for both of its statuses", () => {
-    const tabs = buildTicketsTableConfig([]).filters?.find((filter) => filter.id === "status");
-    expect(tabs?.type === "tabs" && tabs.options.find((tab) => tab.value === "DONE")?.label).toBe("Resolved or closed");
+  it("draws the board's five tabs, the need-a-reply count from the stats", () => {
+    const stats = { needsReplyCount: 8, statusCounts: { OPEN: 9, IN_PROGRESS: 6, WAITING_ON_USER: 4, RESOLVED: 20, CLOSED: 3 } } as unknown as ITicketStats;
+    const tabs = buildTicketsTableConfig([], stats).filters?.find((filter) => filter.id === "status");
+    expect(tabs?.type === "tabs" && tabs.options.map((tab) => [tab.label, tab.count])).toEqual([
+      ["All open", 19],
+      ["Need a reply", 8],
+      ["In progress", 6],
+      ["Waiting on user", 4],
+      ["Resolved", 23],
+    ]);
   });
 
-  it("keeps the queue order out of the URL", () => {
-    const sort = buildTicketsTableConfig([]).filters?.find((filter) => filter.id === "sort");
-    expect(sort?.type === "sort" && sort.defaultValue).toBe("queue");
+  it("shows the search box only while the URL searches", () => {
+    expect(buildTicketsTableConfig([]).search).toBeUndefined();
+    expect(buildTicketsTableConfig([], undefined, null, true).search).toBeDefined();
+  });
+});
+
+describe("ticketsQueryString", () => {
+  it("spells the need-a-reply tab out as the queue's filters", () => {
+    expect(ticketsQueryString(new URLSearchParams("status=NEEDS_REPLY"))).toBe("page=1&limit=10&status=IN_QUEUE&awaitingReply=true&sort=waiting");
+    expect(ticketsQueryString(new URLSearchParams(""))).toBe("page=1&limit=10&status=IN_QUEUE");
   });
 });

@@ -1,15 +1,14 @@
 import { redirect } from "next/navigation";
 import { SUPPORT_PAGE } from "@/components/modules/Admin/Support/supportPage";
 import { TICKETS_ROUTE } from "@/components/modules/Admin/Support/ticketLinks";
-import CreateTicketDialog from "@/components/modules/Admin/Support/Tickets/CreateTicketDialog";
+import SupportHeaderActions from "@/components/modules/Admin/Support/SupportHeaderActions";
 import SupportTabs from "@/components/modules/Admin/Support/SupportTabs";
 import TicketStats from "@/components/modules/Admin/Support/Tickets/TicketStats";
-import { TICKETS_TABLE_BASE_CONFIG } from "@/components/modules/Admin/Support/Tickets/ticketsTable.config";
+import { ticketsQueryString } from "@/components/modules/Admin/Support/Tickets/ticketsTable.config";
 import TicketsTable from "@/components/modules/Admin/Support/Tickets/TicketsTable";
 import PageHeader from "@/components/shared/PageHeader";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
-import { buildTableQueryString } from "@/lib/queryString";
 import { pageHref, pastEnd } from "@/lib/table/pageParams";
 import { featureRequestsQuery } from "@/queries/featureRequest.queries";
 import { assignableAdminsQuery, ticketStatsQuery, ticketsListQuery } from "@/queries/ticket.queries";
@@ -22,7 +21,7 @@ export const generateMetadata = adminPageTitle("Tickets");
 
 const SupportPage = async ({ searchParams }: PageProps<"/admin/support">) => {
   const [params, admin] = await Promise.all([searchParams, getUserInfo()]);
-  const queryString = buildTableQueryString(params, TICKETS_TABLE_BASE_CONFIG);
+  const queryString = ticketsQueryString(params);
   // The page is fetched here rather than only prefetched, so a page past
   // the end (an old link, tickets solved since) opens the last one, filters
   // kept, instead of first saying the queue is empty. An outage is left to
@@ -32,8 +31,8 @@ const SupportPage = async ({ searchParams }: PageProps<"/admin/support">) => {
   if (last !== null) redirect(pageHref(TICKETS_ROUTE, params, last));
 
   return (
-    <div className="space-y-4">
-      <PageHeader {...SUPPORT_PAGE} actions={canManage(admin?.role, "support") ? <CreateTicketDialog /> : undefined} />
+    <div className="space-y-4.5">
+      <PageHeader {...SUPPORT_PAGE} actions={<SupportHeaderActions canManage={canManage(admin?.role, "support")} />} />
       <QueryPrefetch
         prefetch={(client) => {
           // Still one request: the rows fetched above seed the table's query.

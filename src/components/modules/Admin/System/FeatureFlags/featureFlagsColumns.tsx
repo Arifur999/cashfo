@@ -19,31 +19,21 @@ interface FeatureFlagColumnsOptions {
 const targetsOf = (flag: IFeatureFlag, planNames: Map<string, string>) =>
   flag.targetPlanIds.length === 0 ? ["All plans"] : flag.targetPlanIds.map((id) => planNames.get(id) ?? "Removed plan");
 
-// What it is, and what switching it changes in the app -- or that nothing
-// reads it yet, so switching it changes nothing.
-const NameCell = ({ flag }: { flag: IFeatureFlag }) => {
-  const { translate } = useLocale();
-  return (
-    <span className="flex max-w-md min-w-0 flex-col gap-0.5">
-      <span className="flex flex-wrap items-center gap-2">
-        <b className="font-semibold text-ink">{flag.name}</b>
-        <code className="rounded-sm bg-surface-sunken px-2 font-mono text-caption text-ink-2">{flag.key}</code>
-      </span>
-      {flag.description && (
-        <span className="truncate text-small text-ink-muted" title={flag.description}>
-          {flag.description}
-        </span>
-      )}
-      {flag.usedFor ? (
-        <span className="text-caption text-ink-2">{translate("In the app: {usedFor}", { usedFor: translate(flag.usedFor) })}</span>
-      ) : (
-        <span className="text-caption font-semibold text-warning">
-          <T>Not used by the app yet</T>
-        </span>
-      )}
+// What it is: its name, its key and what it does. What switching it
+// changes in the app (or that nothing reads it yet) is in its Edit dialog.
+const NameCell = ({ flag }: { flag: IFeatureFlag }) => (
+  <span className="flex min-w-0 flex-col gap-0.5">
+    <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+      <b className="font-semibold text-ink">{flag.name}</b>
+      <code className="rounded-sm bg-surface-sunken px-1.5 font-mono text-[11.5px] text-ink-2">{flag.key}</code>
     </span>
-  );
-};
+    {flag.description && (
+      <span className="truncate text-[12.5px] text-ink-muted" title={flag.description}>
+        {flag.description}
+      </span>
+    )}
+  </span>
+);
 
 // How many people get it, with its bar, in the reader's language.
 const RolloutCell = ({ flag }: { flag: IFeatureFlag }) => {
@@ -70,13 +60,13 @@ const TargetsCell = ({ flag, planNames }: { flag: IFeatureFlag; planNames: Map<s
   );
 };
 
-// "Rollout", named for its row: it changes who gets the flag, not its name.
-const RolloutButton = ({ flag, onEdit }: { flag: IFeatureFlag; onEdit: (flag: IFeatureFlag) => void }) => {
+// "Edit", named for its row: it changes who gets the flag, not its name.
+const EditButton = ({ flag, onEdit }: { flag: IFeatureFlag; onEdit: (flag: IFeatureFlag) => void }) => {
   const { translate } = useLocale();
   return (
     <span className="flex justify-end">
-      <Button variant="secondary" size="sm" aria-label={translate("Edit rollout for {name}", { name: flag.name })} onClick={() => onEdit(flag)}>
-        <T>Rollout</T>
+      <Button variant="secondary" size="xs" className="h-8 px-2.5 text-[12.5px]" aria-label={translate("Edit rollout for {name}", { name: flag.name })} onClick={() => onEdit(flag)}>
+        <T>Edit</T>
       </Button>
     </span>
   );
@@ -97,7 +87,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     accessorFn: (row) => (row.isEnabled ? "On" : "Off"),
     header: "On",
     cell: ({ row }) => <FeatureFlagSwitch flag={row.original} targets={targetsOf(row.original, planNames)} />,
-    meta: { width: 64 },
+    meta: { width: 78 },
   },
   {
     id: "rolloutPercent",
@@ -132,12 +122,12 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     id: "edit",
     header: () => (
       <span className="sr-only">
-        <T>Rollout</T>
+        <T>Edit</T>
       </span>
     ),
-    cell: ({ row }) => <RolloutButton flag={row.original} onEdit={onEdit} />,
+    cell: ({ row }) => <EditButton flag={row.original} onEdit={onEdit} />,
     enableSorting: false,
     enableHiding: false,
-    meta: { width: 96 },
+    meta: { width: 64 },
   },
 ];

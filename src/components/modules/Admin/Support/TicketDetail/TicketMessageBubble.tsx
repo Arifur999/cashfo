@@ -16,19 +16,31 @@ interface TicketMessageBubbleProps {
   senderName: string;
 }
 
-// The design's thread: the user on the left in white, the admin on the
-// right in mint, each with initials, a name and the time.
+// The address a link attachment shows: its host and file, not the whole URL.
+const linkText = (url: string) => {
+  try {
+    const { hostname, pathname } = new URL(url);
+    const file = pathname.split("/").filter(Boolean).pop();
+    return file ? `${hostname} · ${decodeURIComponent(file)}` : hostname;
+  } catch {
+    return url;
+  }
+};
+
+// The board's thread: the user on the left in white, the admin on the
+// right in mint, each with a 34px avatar, a name and the time.
 const TicketMessageBubble = ({ message, senderName }: TicketMessageBubbleProps) => {
   const fromStaff = message.senderType === "ADMIN";
 
   return (
-    <div className={cn("flex gap-3", fromStaff && "flex-row-reverse")}>
+    <div className={cn("flex gap-2.5", fromStaff && "flex-row-reverse")}>
       <Avatar className="size-8.5 shrink-0">
-        <AvatarFallback className={cn("text-caption font-bold", fromStaff ? "bg-info-soft text-info" : "bg-mint-50 text-emerald")}>{getInitials(senderName) || "?"}</AvatarFallback>
+        <AvatarFallback className={cn("text-[11.5px] font-bold", fromStaff ? "bg-info-soft text-info" : "bg-mint-50 text-brand-ink")}>{getInitials(senderName) || "?"}</AvatarFallback>
       </Avatar>
       <div className={cn("flex max-w-[76%] min-w-0 flex-col gap-1", fromStaff ? "items-end" : "items-start")}>
         <span className="text-caption text-ink-muted">
-          <b className="font-semibold text-ink">{senderName}</b> · {message.isPending ? (
+          <b className="font-semibold text-ink">{senderName}</b> ·{" "}
+          {message.isPending ? (
             <T>Sending...</T>
           ) : (
             <time dateTime={message.createdAt}>
@@ -38,8 +50,8 @@ const TicketMessageBubble = ({ message, senderName }: TicketMessageBubbleProps) 
         </span>
         <div
           className={cn(
-            "rounded-lg border px-4 py-3 text-body leading-relaxed wrap-break-word whitespace-pre-wrap text-ink",
-            fromStaff ? "border-mint-200 bg-mint-50" : "border-line bg-surface",
+            "rounded-md border px-3.5 py-3 text-body leading-[1.55] wrap-break-word whitespace-pre-wrap text-ink",
+            fromStaff ? "border-mint-200 bg-emerald-soft" : "border-line bg-surface",
             message.isPending && "opacity-60",
           )}
         >
@@ -51,9 +63,10 @@ const TicketMessageBubble = ({ message, senderName }: TicketMessageBubbleProps) 
             href={message.attachmentUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-md border border-line bg-surface px-3 py-2 text-small text-ink-2 hover:text-ink"
+            className="inline-flex max-w-full items-center gap-2 rounded-md border border-line bg-surface px-2.5 py-2 text-[12.5px] leading-[normal] text-ink-2 hover:text-ink"
           >
-            <Paperclip className="size-3.5" aria-hidden="true" /> <T>Attachment</T>
+            <Paperclip className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
+            <span className="truncate">{linkText(message.attachmentUrl)}</span>
           </a>
         )}
       </div>

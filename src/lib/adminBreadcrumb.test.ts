@@ -15,7 +15,10 @@ const PAGES: [string, AdminCrumb][] = [
   ["/admin/coupons", { parent: "Subscriptions", parentHref: "/admin/plans", page: "Coupons" }],
   // The Payments tab is the Payments page itself.
   ["/admin/payments", { parent: "Money", page: "Payments" }],
+  // Its three tabs keep the page's own name, as the boards title them.
   ["/admin/referrals", { parent: "Money", page: "Referrals & Payouts" }],
+  ["/admin/referrals/list", { parent: "Money", page: "Referrals & Payouts" }],
+  ["/admin/referrals/settings", { parent: "Money", page: "Referrals & Payouts" }],
   ["/admin/invoices", { parent: "Payments", parentHref: "/admin/payments", page: "Invoices" }],
   ["/admin/revenue", { parent: "Payments", parentHref: "/admin/payments", page: "Revenue" }],
   ["/admin/support", { parent: "Support & content", page: "Tickets" }],
@@ -23,7 +26,7 @@ const PAGES: [string, AdminCrumb][] = [
   ["/admin/content/announcements", { parent: "Support & content", page: "Announcements" }],
   ["/admin/content/legal", { parent: "Support & content", page: "Legal pages" }],
   ["/admin/content/translations", { parent: "Support & content", page: "Translations" }],
-  ["/admin/content/categories", { parent: "Support & content", page: "Categories & accounts" }],
+  ["/admin/content/categories", { parent: "Support & content", page: "Categories" }],
   ["/admin/notifications", { parent: "Support & content", page: "Templates" }],
   ["/admin/notifications/campaigns", { parent: "Support & content", page: "Campaigns" }],
   ["/admin/notifications/history", { parent: "Support & content", page: "Send history" }],

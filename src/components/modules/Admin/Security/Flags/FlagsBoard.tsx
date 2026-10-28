@@ -92,6 +92,7 @@ const FlagsBoard = () => {
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedControl<FlagView>
           label="Status"
+          variant="pill"
           value={filters.view}
           onChange={(view) => update({ view })}
           options={[

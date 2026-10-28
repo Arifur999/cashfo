@@ -1,6 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useSyncExternalStore } from "react";
 import Banner from "@/components/smartly/Banner";
 import type { CustomerAnnouncement } from "@/lib/customer/platform";
@@ -28,6 +29,11 @@ const subscribe = (onChange: () => void) => {
     window.removeEventListener(CHANGE_EVENT, onChange);
   };
 };
+
+// Only a page of this app or an https address is followed, whatever the API
+// sends (it checks the same).
+const IN_APP = /^\/(?!\/)\S*$/;
+const HTTPS = /^https:\/\/\S+$/;
 
 // The admin's announcements (Admin > Content > Announcements) that are live
 // for this customer, above every page, each one closable.
@@ -64,6 +70,18 @@ export function AnnouncementBanner({ announcements }: { announcements: CustomerA
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">{title}</p>
                 <p className="mt-0.5 font-normal whitespace-pre-line opacity-90">{body}</p>
+                {a.linkUrl && IN_APP.test(a.linkUrl) && (
+                  <Link href={a.linkUrl} className="mt-1 inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline">
+                    {t("Try it")}
+                    <ArrowRight className="size-3.5" aria-hidden="true" />
+                  </Link>
+                )}
+                {a.linkUrl && HTTPS.test(a.linkUrl) && (
+                  <a href={a.linkUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline">
+                    {t("Try it")}
+                    <ArrowRight className="size-3.5" aria-hidden="true" />
+                  </a>
+                )}
               </div>
               <button type="button" onClick={() => dismiss(a.id)} title={t("Close")} aria-label={t("Close")} className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-sm opacity-70 hover:opacity-100">
                 <X className="size-4" aria-hidden="true" />

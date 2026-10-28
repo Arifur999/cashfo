@@ -10,6 +10,7 @@ const validValues = {
   targetPlan: ALL_PLANS,
   startAt: "2026-10-20T01:00",
   endAt: "2026-10-20T02:00",
+  linkUrl: "",
 };
 
 describe("announcementServerZodSchema", () => {
@@ -27,6 +28,7 @@ describe("announcementServerZodSchema", () => {
         targetPlan: null,
         startAt: "2026-10-19T19:00:00.000Z",
         endAt: "2026-10-19T20:00:00.000Z",
+        linkUrl: null,
       });
     }
   });
@@ -60,5 +62,18 @@ describe("getScheduleError", () => {
     expect(getScheduleError("2026-10-20T01:00", "")).toBeUndefined();
     expect(getScheduleError("2026-10-20T01:00", "2026-10-20T01:30")).toBeUndefined();
     expect(getScheduleError("2026-10-20T01:00", "2026-10-19T23:00")).toBe("Must be after the start");
+  });
+});
+
+describe("an announcement's Try it link", () => {
+  it("keeps a page of the app or an https address", () => {
+    for (const link of ["/habit-tracker", "https://smartly.softech.agency/blog"]) {
+      const result = announcementServerZodSchema.safeParse({ ...validValues, linkUrl: ` ${link} ` });
+      expect(result.success && result.data.linkUrl).toBe(link);
+    }
+  });
+
+  it("refuses one that leaves the site or runs a script", () => {
+    for (const link of ["//evil.example", "http://example.com", "javascript:alert(1)"]) expect(announcementServerZodSchema.safeParse({ ...validValues, linkUrl: link }).success).toBe(false);
   });
 });

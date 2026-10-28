@@ -1,7 +1,7 @@
 import { inEnglish, type Translate } from "@/lib/i18n/message";
 import { humanizeEnum } from "@/lib/statusBadge";
 import type { AudienceUserStatus, ICampaign, ICampaignTargetFilter, INotificationTemplate } from "@/types/notification.types";
-import { ANY_PLAN, ANY_STATUS, type ICampaignFormValues } from "@/zod/notification.validation";
+import { ANY_LANGUAGE, ANY_PLAN, ANY_STATUS, ANY_TIME, type ICampaignFormValues } from "@/zod/notification.validation";
 
 // The statuses a new campaign can target. A customer account is active,
 // suspended or deleted; the API reads the older "banned" and "pending
@@ -16,22 +16,58 @@ export const buildPlanOptions = (plans: { id: string; name: string }[], t: Trans
   ...plans.map((plan) => ({ value: plan.id, label: t("{name} plan", { name: plan.name }) })),
 ];
 
+// The drawer's "Who gets it" rules: the field each one sets, the word
+// between (the board's "is" / "within") and its "no rule" value.
+export const AUDIENCE_RULES = {
+  plan: { label: "Plan", operator: "is", field: "planId", any: ANY_PLAN },
+  lastActive: { label: "Last active", operator: "within", field: "lastActiveDays", any: ANY_TIME },
+  language: { label: "Language", operator: "is", field: "language", any: ANY_LANGUAGE },
+  status: { label: "Account", operator: "is", field: "userStatus", any: ANY_STATUS },
+} as const satisfies Record<string, { label: string; operator: string; field: keyof ICampaignFormValues; any: string }>;
+
+export type AudienceRule = keyof typeof AUDIENCE_RULES;
+
+// The rows a campaign opens with: plan, last active and language, as the
+// board draws them, plus the account rule when a draft used it.
+export const initialRules = (values: Pick<ICampaignFormValues, "userStatus">): AudienceRule[] => [
+  "plan",
+  "lastActive",
+  "language",
+  ...(values.userStatus !== ANY_STATUS ? (["status"] as const) : []),
+];
+
+export const LAST_ACTIVE_OPTIONS = [
+  { value: ANY_TIME, label: "Any time" },
+  ...[1, 7, 14, 30, 60, 90, 180, 365].map((days) => ({ value: String(days), label: days === 1 ? "1 day" : `${days} days` })),
+];
+
+export const LANGUAGE_OPTIONS = [
+  { value: ANY_LANGUAGE, label: "Any" },
+  { value: "EN", label: "English" },
+  { value: "BN", label: "Bangla" },
+];
+
 // Only active templates can be sent; each shows its key and its subject.
 export const buildTemplateOptions = (templates: INotificationTemplate[]) =>
   templates.filter((template) => template.isActive).map((template) => ({ value: template.key, label: template.subjectEn ? `${template.key} · "${template.subjectEn}"` : template.key }));
 
-// { planId, status } -> "Free plan, active", "Everyone", "Suspended accounts".
+// { planId, status } -> "Free plan, active", "Everyone", "Suspended accounts",
+// then when they were last active and their language: "Free plan, active
+// in the last 30 days, Bangla".
 export const describeAudience = (filter: ICampaignTargetFilter, planNames: Map<string, string>, t: Translate = inEnglish) => {
   const plan = filter.planId ? (planNames.has(filter.planId) ? t("{name} plan", { name: planNames.get(filter.planId) ?? "" }) : t("A removed plan")) : null;
   const status = filter.status ? t(humanizeEnum(filter.status)).toLowerCase() : null;
-  if (plan && status) return t("{plan}, {status}", { plan, status });
-  if (plan) return plan;
-  if (status) return t("Everyone {status}", { status });
-  return t("Everyone");
+  const base = plan && status ? t("{plan}, {status}", { plan, status }) : plan ? plan : status ? t("Everyone {status}", { status }) : t("Everyone");
+  const extras = [
+    ...(filter.lastActiveWithinDays ? [filter.lastActiveWithinDays === 1 ? t("active in the last day") : t("active in the last {days} days", { days: filter.lastActiveWithinDays })] : []),
+    ...(filter.language ? [t(filter.language === "BN" ? "Bangla" : "English")] : []),
+  ];
+  return [base, ...extras].join(", ");
 };
 
-// Nothing sends scheduled campaigns yet, so one whose time has passed is
-// still "scheduled": the list says it is due and hasn't gone.
+// A scheduled campaign goes out on the server's timer once its time comes;
+// one still "scheduled" after it couldn't go (its template was switched off,
+// email isn't set up), and the list says it is due and hasn't gone.
 export const isPastDue = (campaign: Pick<ICampaign, "status" | "scheduledFor">, now: Date = new Date()) =>
   campaign.status === "SCHEDULED" && campaign.scheduledFor !== null && new Date(campaign.scheduledFor).getTime() <= now.getTime();
 
@@ -52,5 +88,7 @@ export const campaignToFormValues = (campaign: ICampaign, templates: INotificati
   channel: campaign.channel,
   planId: campaign.targetFilter.planId ?? ANY_PLAN,
   userStatus: campaign.targetFilter.status && !droppedUserStatus(campaign) ? campaign.targetFilter.status : ANY_STATUS,
+  lastActiveDays: campaign.targetFilter.lastActiveWithinDays ? String(campaign.targetFilter.lastActiveWithinDays) : ANY_TIME,
+  language: campaign.targetFilter.language ?? ANY_LANGUAGE,
   scheduledFor: "",
 });

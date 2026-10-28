@@ -15,7 +15,7 @@ export interface CategoryVisual {
 // The tile's ink as a colour: "text-cat-3" draws var(--cat-3). The neutral
 // tile (a type that is gone) draws in the charts' "other" grey.
 const toneColor = (tone: CategoryTone): string => {
-  const token = /^text-(cat-[1-6]|warning|expense)$/.exec(tone.fg)?.[1];
+  const token = /^text-(cat-\d+|warning|expense)$/.exec(tone.fg)?.[1];
   return token ? `var(--${token})` : "var(--chart-other)";
 };
 

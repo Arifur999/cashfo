@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { legalBlocks, toggleHeadingLine } from "./legalText";
+import { legalBlocks, toggleHeadingLine, legalInline, wrapSelection } from "./legalText";
 
 describe("legalBlocks", () => {
   it("parts paragraphs at blank lines and keeps the line breaks inside one", () => {
@@ -46,3 +46,40 @@ describe("toggleHeadingLine", () => {
     expect(toggleHeadingLine("## Title", 1)).toEqual({ text: "Title", caret: 0 });
   });
 });
+
+describe("legalInline", () => {
+  it("reads bold, italic and safe links, the rest as plain text", () => {
+    expect(legalInline("We **never** sell data. Read *this* or [our privacy policy](/privacy), or write to [support](mailto:help@example.com).")).toEqual([
+      { kind: "text", text: "We " },
+      { kind: "bold", text: "never" },
+      { kind: "text", text: " sell data. Read " },
+      { kind: "italic", text: "this" },
+      { kind: "text", text: " or " },
+      { kind: "link", text: "our privacy policy", href: "/privacy" },
+      { kind: "text", text: ", or write to " },
+      { kind: "link", text: "support", href: "mailto:help@example.com" },
+      { kind: "text", text: "." },
+    ]);
+  });
+
+  it("leaves a link to anywhere unsafe as the text it was typed as", () => {
+    expect(legalInline("[click](javascript:alert(1)) and [x](//evil.example)")).toEqual([{ kind: "text", text: "[click](javascript:alert(1)) and [x](//evil.example)" }]);
+  });
+
+  it("keeps a lone star or a price as text", () => {
+    expect(legalInline("5 * 3 = 15")).toEqual([{ kind: "text", text: "5 * 3 = 15" }]);
+  });
+});
+
+describe("wrapSelection", () => {
+  it("wraps the selection and keeps it selected", () => {
+    expect(wrapSelection("We never sell", 3, 8, "bold")).toEqual({ text: "We **never** sell", start: 5, end: 10 });
+  });
+
+  it("makes a link and selects the address to type", () => {
+    const result = wrapSelection("See the policy", 8, 14, "link");
+    expect(result.text).toBe("See the [policy](https://)");
+    expect(result.text.slice(result.start, result.end)).toBe("https://");
+  });
+});
+

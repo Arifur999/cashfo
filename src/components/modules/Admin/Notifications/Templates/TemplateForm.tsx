@@ -2,10 +2,16 @@
 
 import { useForm, useStore } from "@tanstack/react-form";
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
-import { setNotificationTemplateActiveAction, updateNotificationTemplateAction } from "@/app/(dashboardLayout)/admin/notifications/_action";
+import {
+  deleteNotificationTemplateAction,
+  sendNotificationTemplateTestAction,
+  setNotificationTemplateActiveAction,
+  updateNotificationTemplateAction,
+} from "@/app/(dashboardLayout)/admin/notifications/_action";
+import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
-import SegmentedControl from "@/components/smartly/SegmentedControl";
+import Button from "@/components/smartly/Button";
 import { Switch } from "@/components/ui/switch";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { firstZodError } from "@/lib/formValidators";
@@ -22,6 +28,7 @@ import VariableChips from "./VariableChips";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { Mail, Trash2 } from "lucide-react";
 
 const { shape } = notificationTemplateFormZodSchema;
 
@@ -34,10 +41,6 @@ const FIELD_LABEL: Record<TextField, string> = {
   bodyBn: "Message, বাংলা",
 };
 
-const PREVIEW_LANGUAGES = [
-  { value: "en" as const, label: "English" },
-  { value: "bn" as const, label: "বাংলা", lang: "bn" },
-];
 
 export const toTemplateFormValues = (template: INotificationTemplate): INotificationTemplateFormValues => ({
   subjectEn: template.subjectEn ?? "",
@@ -100,6 +103,23 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
     refreshRoute: false,
   });
 
+  // "Send a test to me": the template in the language the preview shows.
+  const test = useActionMutation({
+    action: () => sendNotificationTemplateTestAction(template.id, previewLanguage === "bn" ? "BN" : "EN"),
+    successMessage: (result) => translate("Test sent to {email}", { email: result.sentTo }),
+    refreshRoute: false,
+  });
+
+  // A template made in the panel can go; a built-in one is turned off instead.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const remove = useActionMutation({
+    action: () => deleteNotificationTemplateAction(template.id),
+    successMessage: translate("Deleted {key}", { key: template.key }),
+    invalidateKeys: [queryKeys.notificationTemplates.all],
+    refreshRoute: false,
+    onSuccess: () => setConfirmDelete(false),
+  });
+
   const form = useForm({
     defaultValues: startingDraft ?? saved,
     onSubmit: async ({ value, formApi }) => {
@@ -145,20 +165,20 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
   return (
     // uniqueIds: two templates can be open side by side without their
     // fields sharing ids.
-    <AppForm uniqueIds onSubmit={form.handleSubmit} className="flex flex-col space-y-0 overflow-hidden rounded-lg border border-line bg-surface shadow-card">
-      <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-4">
+    <AppForm uniqueIds onSubmit={form.handleSubmit} className="flex flex-col space-y-0 overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
+      <div className="flex flex-wrap items-center gap-3 border-b border-line px-4.5 py-3.5">
         <div className="flex grow flex-col gap-0.5">
           {/* Focused when the template is picked on a phone (see TemplatesEditor). */}
           <h2 id={headingId} tabIndex={-1} className="scroll-mt-4 font-mono text-title text-ink focus-visible:outline-offset-4">
             {template.key}
           </h2>
-          <span className="text-small text-ink-muted">
+          <span className="text-[12.5px] leading-[normal] text-ink-muted">
             <T>{channel}</T> · <T>{templateWhen(template.key)}</T>
           </span>
         </div>
         {/* The design's On switch: an off template can't be sent. Named the
             same either way; its state says on or off. */}
-        <label className="flex items-center gap-2 text-small font-semibold text-ink-2">
+        <label className="flex items-center gap-2 text-small text-ink-2">
           <T>{isActive ? "On" : "Off"}</T>
           <Switch
             checked={isActive}
@@ -174,7 +194,7 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
           />
         </label>
       </div>
-      <div className="grid gap-4 px-5 py-4 sm:grid-cols-2">
+      <div className="grid gap-3.5 px-4.5 py-4 sm:grid-cols-2">
         {isEmail && (
           <>
             <form.Field name="subjectEn" validators={{ onChange: checkText(shape.subjectEn) }}>
@@ -212,29 +232,49 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
         </form.Field>
       </div>
       {canManage && (
-        <div className="px-5 pb-4">
+        <div className="px-4.5 pb-3.5">
           <VariableChips variables={template.variables} targetLabel={translate(FIELD_LABEL[target])} onPick={insert} />
         </div>
       )}
-      <div className="mx-4 mb-4 flex flex-col gap-2 rounded-md border border-line bg-strip p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-caption font-semibold text-ink-muted"><T>Preview with sample values</T></span>
-          <SegmentedControl label="Preview language" variant="tabs" options={PREVIEW_LANGUAGES} value={previewLanguage} onChange={setPreviewLanguage} />
-        </div>
+      <div className="mx-4.5 mb-4 flex flex-col gap-2 rounded-[14px] border border-line bg-strip p-3.5">
+        {/* "Preview with sample values · English": the language is a switch. */}
+        <span className="text-caption font-semibold tracking-[0.05em] text-ink-muted uppercase">
+          {translate("Preview with sample values")} ·{" "}
+          <button
+            type="button"
+            onClick={() => setPreviewLanguage((language) => (language === "en" ? "bn" : "en"))}
+            aria-label={translate("Preview language: {language}. Switch", { language: previewLanguage === "en" ? "English" : "বাংলা" })}
+            className="uppercase underline decoration-dotted underline-offset-3 hover:text-ink"
+          >
+            {previewLanguage === "en" ? "English" : <span lang="bn" className="font-bn">বাংলা</span>}
+          </button>
+        </span>
         {isEmail && (
           <b lang={bangla ? "bn" : undefined} className={cn("text-body font-semibold text-ink", bangla && "font-bn")}>
             {previewSubject || <T>No subject yet</T>}
           </b>
         )}
-        <span lang={bangla ? "bn" : undefined} className={cn("text-body leading-relaxed whitespace-pre-wrap text-ink-2", bangla && "font-bn")}>
+        <span lang={bangla ? "bn" : undefined} className={cn("text-body leading-[1.55] whitespace-pre-wrap text-ink-2", bangla && "font-bn")}>
           {previewBody || <T>No message yet</T>}
         </span>
       </div>
       {canManage && (
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <div className="flex items-center justify-end gap-3 border-t border-line bg-strip px-5 py-3">
-              {unsaved && <span className="mr-auto text-small text-warning"><T>Unsaved changes</T></span>}
+            <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-line bg-strip px-4.5 py-3">
+              {/* Emails the admin this template, filled in for them. */}
+              <Button variant="secondary" size="sm" className="text-small" onClick={() => test.run(undefined)} disabled={test.isPending} aria-busy={test.isPending || undefined}>
+                <Mail className="size-3.75" aria-hidden="true" />
+                {translate(test.isPending ? "Sending..." : "Send a test to me")}
+              </Button>
+              {!template.builtIn && (
+                <Button variant="ghost" size="sm" className="text-small text-expense hover:bg-expense-soft" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 className="size-3.75" aria-hidden="true" />
+                  {translate("Delete")}
+                </Button>
+              )}
+              <span className="mr-auto" />
+              {unsaved && <span className="text-small text-warning"><T>Unsaved changes</T></span>}
               <AppSubmitButton isPending={isPending || isSubmitting} disabled={!unsaved} pendingLabel="Saving..." variant="action" size="sm" className="w-auto">
                 <T>Save template</T>
               </AppSubmitButton>
@@ -242,6 +282,17 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
           )}
         </form.Subscribe>
       )}
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={(open) => !open && !remove.isPending && setConfirmDelete(false)}
+        title={translate("Delete {key}?", { key: template.key })}
+        description={translate("It goes from the list for good. Campaigns already sent with it keep their record.")}
+        confirmLabel={translate("Delete template")}
+        pendingLabel="Deleting..."
+        variant="destructive"
+        isPending={remove.isPending}
+        onConfirm={() => remove.run(undefined)}
+      />
     </AppForm>
   );
 };

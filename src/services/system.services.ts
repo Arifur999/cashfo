@@ -1,7 +1,7 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import type { IBackupRecord, IBackupStatusSummary, IErrorLog, IRateLimitLog, IRateLimitSummary } from "@/types/system.types";
+import type { ErrorSource, IBackupRecord, IBackupStatusSummary, IErrorLog, IRateLimitLog, IRateLimitSummary, ISystemHealth } from "@/types/system.types";
 
 // Every endpoint here is SUPER_ADMIN only on the API.
 
@@ -24,8 +24,17 @@ export const getRateLimitSummary = async () => httpClient.get<IRateLimitSummary>
 
 // The API's own health check: ok when it can reach the database. Timed from
 // this server, so "answered in 120 ms" is the round trip the panel sees.
+// Any admin may read it (the dashboard's System card).
 export const getHealth = async () => {
   const started = performance.now();
   const response = await httpClient.get<{ status: "ok" | "error"; timestamp: string }>("/health");
   return { ...response, data: { ...response.data, latencyMs: Math.round(performance.now() - started) } };
 };
+
+// System > Health and backups: each service the platform leans on -- the
+// API and its database (how fast), email, a payment gateway and file storage.
+export const getSystemHealth = async () => httpClient.get<ISystemHealth>("/admin/system/health");
+
+// "Mark all fixed": the errors with this message and source (or these ids).
+export const resolveErrorGroup = async (payload: { message?: string; source?: ErrorSource; ids?: string[] }) =>
+  httpClient.post<{ resolved: number }>("/admin/system/errors/resolve-all", payload);

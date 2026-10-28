@@ -11,9 +11,9 @@ import { securityFlagsSummaryQuery } from "@/queries/security.queries";
 // tab's count and the "Last checked" time.
 const SecurityLayout = ({ children }: LayoutProps<"/admin/security">) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <QueryPrefetch prefetch={(client) => client.prefetchQuery(securityFlagsSummaryQuery())}>
-        <div className="space-y-4">
+        <div className="space-y-4.5">
           <PageHeader {...SECURITY_PAGE} actions={<SecurityHeaderAction />} />
           <SecurityTabs />
         </div>

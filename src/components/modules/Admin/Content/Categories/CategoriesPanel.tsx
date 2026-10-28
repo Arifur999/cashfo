@@ -84,16 +84,16 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
 
   return (
     <Card padding="none" className="flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-5 py-4">
+      <div className="flex items-center justify-between gap-3 px-4.5 py-3.5">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-title text-ink"><T>Starting categories</T></h2>
-          <span className="text-small text-ink-muted"><T>Every new workspace gets these. People can change their own later.</T></span>
+          <span className="text-[12.5px] leading-[normal] text-ink-muted"><T>Every new workspace gets these. People can change their own later.</T></span>
         </div>
         {canManage && (
           <CreateCategoryDialog
             direction={direction}
             trigger={
-              <Button variant="secondary" size="sm" className="pointer-coarse:h-11">
+              <Button variant="secondary" size="sm" className="h-8.5 px-3.5 pointer-coarse:h-11">
                 <Plus aria-hidden="true" />
                 <T>Add</T>
               </Button>
@@ -114,9 +114,9 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
         <>
           <SegmentedControl
             label="Direction"
-            variant="tabs"
+            variant="pill"
             size="coarse"
-            className="mx-4 mb-3"
+            className="mx-4.5 mb-2.5 self-start rounded-[9px]"
             options={[
               { value: "EXPENSE" as const, label: count("Expense", total("EXPENSE")) },
               { value: "INCOME" as const, label: count("Income", total("INCOME")) },

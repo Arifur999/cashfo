@@ -7,9 +7,12 @@ import type {
   IAdminOption,
   ICreatedTicket,
   ICreateTicketPayload,
+  ISavedReply,
+  ISavedReplyPayload,
   ISupportTicket,
   ISupportTicketDetail,
   ITicketMessage,
+  ITicketReplyPayload,
   ITicketStats,
   IUpdateTicketPayload,
   IUserSearchResult,
@@ -25,8 +28,17 @@ export const createTicket = async (payload: ICreateTicketPayload) => httpClient.
 
 export const updateTicket = async (id: string, payload: IUpdateTicketPayload) => httpClient.patch<void>(`/admin/tickets/${id}`, payload);
 
-export const addTicketMessage = async (id: string, message: string) =>
-  httpClient.post<ITicketMessage>(`/admin/tickets/${id}/messages`, { message });
+// A reply, or a note for admins (isInternal), and the status to set after.
+export const addTicketMessage = async (id: string, payload: ITicketReplyPayload) =>
+  httpClient.post<ITicketMessage>(`/admin/tickets/${id}/messages`, payload);
+
+export const getSavedReplies = async () => httpClient.get<ISavedReply[]>("/admin/tickets/saved-replies");
+
+export const createSavedReply = async (payload: ISavedReplyPayload) => httpClient.post<ISavedReply>("/admin/tickets/saved-replies", payload);
+
+export const updateSavedReply = async (id: string, payload: ISavedReplyPayload) => httpClient.patch<ISavedReply>(`/admin/tickets/saved-replies/${id}`, payload);
+
+export const deleteSavedReply = async (id: string) => httpClient.delete<{ success: boolean }>(`/admin/tickets/saved-replies/${id}`);
 
 // null unassigns.
 export const assignTicket = async (id: string, adminId: string | null) =>

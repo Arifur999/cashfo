@@ -42,13 +42,13 @@ const AnalyticsView = ({ today }: { today: string }) => {
   const featureQuery = reportQuery(featureUsage);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <AnalyticsKpis summary={summary.data?.data} summaryQuery={reportQuery(summary)} featureUsage={featureUsage.data?.data} featureQuery={featureQuery} range={figuresRange} />
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid items-stretch gap-4.5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <ActivePeopleCard data={engagement.data?.data} query={reportQuery(engagement)} />
         <DevicesCard data={devices.data?.data} query={reportQuery(devices)} />
       </div>
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid items-stretch gap-4.5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <FeatureUsageCard data={featureUsage.data?.data} query={featureQuery} rangeLabel={rangeName(figuresRange, translate, locale)} />
         <PlacesCard data={geography.data?.data} query={reportQuery(geography)} />
       </div>

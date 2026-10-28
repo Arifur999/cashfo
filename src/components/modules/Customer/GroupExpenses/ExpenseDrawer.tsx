@@ -18,7 +18,7 @@ import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt"
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { countLabel, type MonthRange, shortName, SPLIT_LABELS, SPLITS } from "@/lib/customer/groupDisplay";
+import { categoryMembers, countLabel, type MonthRange, shortName, SPLIT_LABELS, SPLITS } from "@/lib/customer/groupDisplay";
 import { createGroupExpenseAction, updateGroupExpenseAction } from "@/lib/customer/groupExpensesActions";
 import { mealText } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
@@ -95,7 +95,9 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
       setSplit(editing?.split ?? categories.find((c) => c.name === startCategory)?.defaultSplit ?? "EQUAL");
       setSplitTouched(!!editing);
       const named = editing?.splits ?? [];
-      setIncluded(named.length > 0 ? named.map((s) => s.groupMemberId) : active.map((m) => m.id));
+      // A new expense starts with its category's chosen few, if it has any.
+      const chosenFew = editing ? null : categoryMembers(categories.find((c) => c.name === startCategory), active);
+      setIncluded(named.length > 0 ? named.map((s) => s.groupMemberId) : (chosenFew ?? active).map((m) => m.id));
       setUnits({ ...defaultUnits, ...Object.fromEntries(named.filter((s) => s.units !== null).map((s) => [s.groupMemberId, Number(s.units)])) });
       setExact(Object.fromEntries(named.filter((s) => s.amount !== null).map((s) => [s.groupMemberId, String(Number(s.amount))])));
       setClosedOk(false);
@@ -104,8 +106,11 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
 
   function pickCategory(name: string) {
     setCategory(name);
-    const fallback = categories.find((c) => c.name === name)?.defaultSplit;
-    if (!splitTouched && fallback) setSplit(fallback);
+    const option = categories.find((c) => c.name === name);
+    if (splitTouched || !option) return;
+    setSplit(option.defaultSplit);
+    // Who shares it follows the category too: its chosen few, or everyone.
+    setIncluded((categoryMembers(option, active) ?? active).map((m) => m.id));
   }
 
   const toggle = (id: string) => setIncluded(included.includes(id) ? included.filter((x) => x !== id) : [...included, id]);
@@ -193,7 +198,14 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
   const others = parts.filter((part) => fromFund || part.member.id !== payer?.id);
   const splitChoices = SPLITS.filter((option) => option !== "MEALS" || meals || split === "MEALS");
   // What the category does by default, said under the members.
-  const categoryDefault = chosen && chosen.defaultSplit === split && split !== "EQUAL" ? t("{category} is shared {how} by default. You can change it for this one expense.", { category: chosen.name, how: t(SPLIT_LABELS[split]).toLowerCase() }) : null;
+  const chosenFew = split === "EQUAL" ? categoryMembers(chosen, active) : null;
+  const categoryDefault = !chosen
+    ? null
+    : chosenFew
+      ? t("{category} is shared only by {names} by default. You can change it for this one expense.", { category: chosen.name, names: chosenFew.map((member) => shortName(member.name)).join(", ") })
+      : chosen.defaultSplit === split && split !== "EQUAL"
+        ? t("{category} is shared {how} by default. You can change it for this one expense.", { category: chosen.name, how: t(SPLIT_LABELS[split]).toLowerCase() })
+        : null;
 
   return (
     <Drawer

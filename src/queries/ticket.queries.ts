@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { getAssignableAdmins, getTicketById, getTicketStats, getTickets, searchCustomers } from "@/services/ticket.services";
+import { getOwnerById } from "@/services/owner.services";
+import { getAssignableAdmins, getSavedReplies, getTicketById, getTicketStats, getTickets, searchCustomers } from "@/services/ticket.services";
 
 export const ticketsListQuery = (queryString: string) =>
   queryOptions({
@@ -40,4 +41,23 @@ export const platformUserSearchQuery = (search: string) =>
     queryFn: () => searchCustomers(search),
     enabled: search.length >= USER_SEARCH_MIN_LENGTH,
     staleTime: 30 * 1000,
+  });
+
+// The support team's saved replies: the header's manager and the reply
+// box's picker share one fetch.
+export const savedRepliesQuery = () =>
+  queryOptions({
+    queryKey: queryKeys.savedReplies.all,
+    queryFn: () => getSavedReplies(),
+    staleTime: 60 * 1000,
+  });
+
+// The person who wrote in, for the ticket's "From" card: how long they
+// have been with us and the language they use. Under their record, so a
+// change on their page refreshes it.
+export const ticketRequesterQuery = (userId: string) =>
+  queryOptions({
+    queryKey: [...queryKeys.owners.detail(userId), "ticket-card"] as const,
+    queryFn: () => getOwnerById(userId),
+    staleTime: 5 * 60 * 1000,
   });

@@ -75,7 +75,7 @@ const AdminSearch = () => {
             items: result.tickets.map((ticket) => ({
               key: `t:${ticket.id}`,
               badge: t("Ticket"),
-              title: `${shortTicketId(ticket.id)} · ${ticket.subject}`,
+              title: `${shortTicketId(ticket)} · ${ticket.subject}`,
               sub: [ticket.name, t(humanizeEnum(ticket.category)), t(humanizeEnum(ticket.status)).toLowerCase()].filter(Boolean).join(" · "),
               mark: <CommandMark>#</CommandMark>,
               href: `/admin/support/${ticket.id}`,

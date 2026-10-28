@@ -99,6 +99,7 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
               label={config.label}
               options={config.options}
               allLabel={config.allLabel}
+              allCount={config.allCount}
               tone={config.tone}
               defaultValue={config.defaultValue}
               value={toSelection(getValue(config))[0]}

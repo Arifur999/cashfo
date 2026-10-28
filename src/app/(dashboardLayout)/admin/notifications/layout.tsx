@@ -1,30 +1,15 @@
 import NotificationsHeaderAction from "@/components/modules/Admin/Notifications/NotificationsHeaderAction";
 import { NOTIFICATIONS_PAGE } from "@/components/modules/Admin/Notifications/notificationsPage";
 import NotificationTabs from "@/components/modules/Admin/Notifications/NotificationTabs";
-import Callout from "@/components/shared/Callout";
 import PageHeader from "@/components/shared/PageHeader";
-import T from "@/components/shared/T";
 
 // Shared by every notifications tab, so switching tabs keeps the header
 // and tab bar in place and only the panel below loads.
 const NotificationsLayout = ({ children }: LayoutProps<"/admin/notifications">) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <PageHeader {...NOTIFICATIONS_PAGE} actions={<NotificationsHeaderAction />} />
       <NotificationTabs />
-      {/* What really reaches users today, so editing here isn't mistaken
-          for changing it (the backend sends with its own wording). The
-          short lead is always there; a phone skips the detail, which would
-          push the list below the fold on every tab. */}
-      <Callout variant="warning" role="status">
-        <b className="font-semibold">
-          <T>Templates and campaigns don&apos;t send yet.</T>
-        </b>
-        <span className="hidden sm:inline">
-          {" "}
-          <T>The welcome, password-reset and support-reply emails and the in-app bell use built-in wording and don&apos;t appear in Send history.</T>
-        </span>
-      </Callout>
       {children}
     </div>
   );

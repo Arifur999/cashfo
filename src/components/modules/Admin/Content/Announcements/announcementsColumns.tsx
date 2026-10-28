@@ -1,17 +1,37 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
-import Chip from "@/components/smartly/Chip";
 import { ANNOUNCEMENT_STATUS_LABEL, audienceText, scheduleText } from "@/lib/announcements";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import type { IAnnouncement } from "@/types/announcement.types";
+import { cn } from "@/lib/utils";
+import type { AnnouncementStatus, IAnnouncement } from "@/types/announcement.types";
 import { ANNOUNCEMENT_TYPE_META } from "./announcementOptions";
+
+// The status chip's wash, words and dot: live mint, scheduled blue, the
+// rest grey.
+const STATUS_LOOK: Record<AnnouncementStatus, { chip: string; dot: string }> = {
+  ACTIVE: { chip: "bg-mint-50 text-brand-ink", dot: "bg-mint-300" },
+  SCHEDULED: { chip: "bg-info-soft text-info", dot: "bg-info" },
+  EXPIRED: { chip: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" },
+  DISABLED: { chip: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" },
+};
+
+const StatusChip = ({ status }: { status: AnnouncementStatus }) => {
+  const { translate } = useLocale();
+  return (
+    <span className={cn("inline-flex items-center gap-1.25 rounded-full px-2 py-0.5 text-caption font-semibold whitespace-nowrap", STATUS_LOOK[status].chip)}>
+      <span aria-hidden="true" className={cn("size-1.5 rounded-full", STATUS_LOOK[status].dot)} />
+      {translate(ANNOUNCEMENT_STATUS_LABEL[status])}
+    </span>
+  );
+};
 
 // Who sees it and when, in the reader's language. A range wraps onto two
 // lines rather than running into the status beside it.
 const AudienceCell = ({ targetPlan, planNames }: { targetPlan: string | null; planNames: Map<string, string> }) => {
   const { translate } = useLocale();
-  return <span className="whitespace-normal text-ink-2">{audienceText(targetPlan, planNames, translate)}</span>;
+  // "Everyone", or "Free plan" as the board says it.
+  const plan = targetPlan ? planNames.get(targetPlan) : undefined;
+  return <span className="text-[13.5px] leading-[normal] whitespace-normal text-ink-2">{plan ? translate("{name} plan", { name: plan }) : audienceText(targetPlan, planNames, translate)}</span>;
 };
 
 const ScheduleCell = ({ announcement }: { announcement: IAnnouncement }) => {
@@ -28,12 +48,12 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => {
-      const { label, icon: Icon, tone } = ANNOUNCEMENT_TYPE_META[row.original.type];
+      const { label, icon: Icon, chip } = ANNOUNCEMENT_TYPE_META[row.original.type];
       return (
-        <Chip tone={tone} size="sm" className="font-semibold">
-          <Icon className="size-3.5" aria-hidden="true" />
+        <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.25 py-0.75 text-caption font-semibold whitespace-nowrap", chip)}>
+          <Icon className="size-3.25" strokeWidth={2.25} aria-hidden="true" />
           <T>{label}</T>
-        </Chip>
+        </span>
       );
     },
     meta: { width: 130, exportValue: (row) => ANNOUNCEMENT_TYPE_META[row.type].label },
@@ -46,7 +66,7 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate font-semibold text-ink">{row.original.title}</span>
         {row.original.titleBn ? (
-          <span lang="bn" className="truncate font-bn text-small text-ink-2">
+          <span lang="bn" className="truncate font-bn text-small text-ink-soft">
             {row.original.titleBn}
           </span>
         ) : (
@@ -76,7 +96,7 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
     id: "status",
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={ANNOUNCEMENT_STATUS_LABEL[row.original.status]} dot />,
+    cell: ({ row }) => <StatusChip status={row.original.status} />,
     meta: { width: 100, exportValue: (row) => ANNOUNCEMENT_STATUS_LABEL[row.status] },
   },
 ];

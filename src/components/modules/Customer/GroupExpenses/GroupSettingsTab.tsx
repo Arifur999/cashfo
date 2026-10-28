@@ -18,13 +18,14 @@ import { updateBusinessAction } from "@/lib/customer/businessActions";
 import { budgetCategoryIcon, budgetCategoryIconLabel, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency, formatGrouped } from "@/lib/customer/currency";
-import { groupMonthOf, monthRangeOf, poolsMeals, rangeLabel, shortName, SPLIT_LABELS, SPLITS, splitTotals } from "@/lib/customer/groupDisplay";
+import { categoryMembers, groupMonthOf, monthRangeOf, poolsMeals, rangeLabel, shortName, SPLIT_LABELS, SPLITS, splitTotals } from "@/lib/customer/groupDisplay";
 import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupMemberAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
 import { mealText, unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CategoryMembersDialog } from "./CategoryMembersDialog";
 import { CategoryTile, MemberAvatar } from "./GroupBits";
 import type { GroupPageData } from "./groupTypes";
 import { ShareStepper } from "./ShareStepper";
@@ -46,6 +47,9 @@ const MEAL_STEPS = [0, 0.5, 1, 1.5, 2];
 // The new-category row's quick picks; Edit opens every icon and colour.
 const NEW_ICONS = ["graduation-cap", "zap", "shopping-cart", "house", "heart"];
 const NEW_COLORS = ["yellow", "teal", "blue", "green", "pink"];
+// The category selects' own choices beside the ways of sharing.
+const ONLY_SELECTED = "ONLY_SELECTED";
+const CHANGE_MEMBERS = "CHANGE_MEMBERS";
 
 // "Saving…", then "Saved" for a moment: a live region, so a screen reader
 // hears it too. Always there, so nothing shifts.
@@ -92,6 +96,13 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
   const [newSplit, setNewSplit] = useState<GroupSplit>("EQUAL");
   const [newIcon, setNewIcon] = useState<string | null>(null);
   const [newColor, setNewColor] = useState(NEW_COLORS[0]);
+  // "Only selected" for the new category: the members ticked so far.
+  const [newMembers, setNewMembers] = useState<string[]>([]);
+  // The category whose sharers are being ticked ("new" for the one being written).
+  const [pickingFor, setPickingFor] = useState<GroupExpenseCategoryOption | "new" | null>(null);
+  // "Only selected" needs someone to leave out.
+  const canPick = active.length > 1;
+  const onlyLabel = (chosen: { name: string }[] | null) => (chosen ? t("Only selected · {names}", { names: chosen.map((member) => shortName(member.name)).join(", ") }) : t("Only selected…"));
   const icon = newIcon ?? suggestIconForCategoryName(newName) ?? NEW_ICONS[0];
   const splitChoices = SPLITS.filter((split) => split !== "EXACT" && (split !== "MEALS" || settings.mealsOn || settings.kind === "MESS"));
   const resetNew = () => {
@@ -99,7 +110,27 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
     setNewSplit("EQUAL");
     setNewIcon(null);
     setNewColor(NEW_COLORS[0]);
+    setNewMembers([]);
   };
+  // A way of sharing picked from a category's list: "Only selected" (and
+  // "Change who shares") open the members; any other clears the chosen few.
+  function pickSplit(category: GroupExpenseCategoryOption, value: string) {
+    if (value === ONLY_SELECTED || value === CHANGE_MEMBERS) {
+      setPickingFor(category);
+      return;
+    }
+    run("categories", () => updateGroupExpenseCategoryAction(data.businessId, category.id, { defaultSplit: value as GroupSplit, defaultMemberIds: [] }), t("Failed to update category"));
+  }
+  function saveMembers(memberIds: string[]) {
+    const target = pickingFor;
+    setPickingFor(null);
+    if (target === "new") {
+      setNewMembers(memberIds);
+      if (memberIds.length > 0) setNewSplit("EQUAL");
+      return;
+    }
+    if (target) run("categories", () => updateGroupExpenseCategoryAction(data.businessId, target.id, { defaultSplit: "EQUAL", defaultMemberIds: memberIds }), t("Failed to update category"));
+  }
   function addCategory() {
     const name = newName.trim();
     if (!name) return;
@@ -110,7 +141,7 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
     run(
       "categories",
       async () => {
-        const result = await createGroupExpenseCategoryAction(data.businessId, { name, icon, color: newColor, defaultSplit: newSplit });
+        const result = await createGroupExpenseCategoryAction(data.businessId, { name, icon, color: newColor, defaultSplit: newSplit, ...(newMembers.length > 0 && { defaultMemberIds: newMembers }) });
         if (result.success) resetNew();
         return result;
       },
@@ -318,17 +349,19 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
               <SaveStatus state={status("categories")} />
             </div>
             {data.categories.length === 0 && <p className="border-t border-divider px-5 py-5 text-center text-small text-ink-muted">{t("No category yet. Bazar, rent, bills… add the ones this group uses.")}</p>}
-            {data.categories.map((category) => (
+            {data.categories.map((category) => {
+              const chosen = categoryMembers(category, active);
+              return (
               <div key={category.id} className="flex min-h-12 items-center gap-3 border-t border-divider px-5 py-1.5">
                 <CategoryTile name={category.name} categories={data.categories} size={28} />
                 <span className="min-w-0 flex-1 truncate text-body font-medium text-ink">{category.name}</span>
                 <NativeSelect
                   size="sm"
-                  value={category.defaultSplit}
-                  onChange={(event) => run("categories", () => updateGroupExpenseCategoryAction(data.businessId, category.id, { defaultSplit: event.target.value as GroupSplit }), t("Failed to update category"))}
+                  value={chosen ? ONLY_SELECTED : category.defaultSplit}
+                  onChange={(event) => pickSplit(category, event.target.value)}
                   aria-label={t("How {name} is shared", { name: category.name })}
                   frameClassName="max-w-48"
-                  className={cn("h-8 truncate border-line text-[12.5px] font-semibold pointer-coarse:h-11", category.defaultSplit === "EQUAL" ? "text-ink-2" : "bg-mint-50 text-brand-ink")}
+                  className={cn("h-8 truncate border-line text-[12.5px] font-semibold pointer-coarse:h-11", category.defaultSplit === "EQUAL" && !chosen ? "text-ink-2" : "bg-mint-50 text-brand-ink")}
                 >
                   {/* By meals stays offered to a category saved that way, and says what it does while meals aren't counted. */}
                   {SPLITS.filter((split) => split !== "EXACT" && (split !== "MEALS" || settings.mealsOn || settings.kind === "MESS" || category.defaultSplit === "MEALS")).map((split) => (
@@ -336,6 +369,8 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                       {split === "MEALS" && !settings.mealsOn ? t("By meals (shared equally while meal counting is off)") : t(SPLIT_LABELS[split])}
                     </option>
                   ))}
+                  {(canPick || chosen) && <option value={ONLY_SELECTED}>{onlyLabel(chosen)}</option>}
+                  {chosen && <option value={CHANGE_MEMBERS}>{t("Change who shares…")}</option>}
                 </NativeSelect>
                 <button type="button" onClick={() => onEditCategory(category)} aria-label={t("Edit {name}", { name: category.name })} className="flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                   <Pencil className="size-3.75" aria-hidden="true" />
@@ -344,7 +379,8 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                   <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
               </div>
-            ))}
+              );
+            })}
             {/* A new category, written in place. */}
             <form
               onSubmit={(event) => {
@@ -358,12 +394,29 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
               </label>
               <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_210px]">
                 <Input id="gs-new-cat" size="sm" value={newName} onChange={(event) => setNewName(event.target.value)} placeholder={t("Bazar")} maxLength={60} frameClassName="h-10" />
-                <NativeSelect size="sm" value={newSplit} onChange={(event) => setNewSplit(event.target.value as GroupSplit)} aria-label={t("How the new category is shared")} frameClassName="w-full" className="h-10 font-normal">
+                <NativeSelect
+                  size="sm"
+                  value={newMembers.length > 0 ? ONLY_SELECTED : newSplit}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (value === ONLY_SELECTED || value === CHANGE_MEMBERS) {
+                      setPickingFor("new");
+                      return;
+                    }
+                    setNewMembers([]);
+                    setNewSplit(value as GroupSplit);
+                  }}
+                  aria-label={t("How the new category is shared")}
+                  frameClassName="w-full"
+                  className="h-10 font-normal"
+                >
                   {splitChoices.map((split) => (
                     <option key={split} value={split}>
                       {t(SPLIT_LABELS[split])}
                     </option>
                   ))}
+                  {canPick && <option value={ONLY_SELECTED}>{onlyLabel(newMembers.length > 0 ? active.filter((member) => newMembers.includes(member.id)) : null)}</option>}
+                  {newMembers.length > 0 && <option value={CHANGE_MEMBERS}>{t("Change who shares…")}</option>}
                 </NativeSelect>
               </div>
               <div className="flex flex-wrap items-center gap-3.5">
@@ -472,6 +525,14 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
             : ""
         }
         confirmLabel={t("Change the start day")}
+      />
+      <CategoryMembersDialog
+        open={pickingFor !== null}
+        category={pickingFor === "new" ? newName.trim() || t("New category") : (pickingFor?.name ?? "")}
+        members={active}
+        initial={pickingFor === "new" ? newMembers : ((pickingFor && categoryMembers(pickingFor, active)) ?? []).map((member) => member.id)}
+        onClose={() => setPickingFor(null)}
+        onSave={saveMembers}
       />
     </div>
   );

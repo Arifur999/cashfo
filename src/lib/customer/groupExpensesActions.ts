@@ -167,6 +167,8 @@ export interface GroupExpenseCategoryInput {
   icon?: string | null;
   color: string;
   defaultSplit?: GroupSplit;
+  // [] = shared by everyone again.
+  defaultMemberIds?: string[];
 }
 
 export async function createGroupExpenseCategoryAction(

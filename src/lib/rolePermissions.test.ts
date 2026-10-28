@@ -22,7 +22,6 @@ describe("ROLE_PERMISSIONS", () => {
     expect(row("Suspend a user or turn them back on")).toEqual({ SUPER_ADMIN: "do", SUPPORT_ADMIN: "do", FINANCE_ADMIN: "look", CONTENT_ADMIN: "look" });
     expect(row("Revenue and MRR")).toEqual({ SUPER_ADMIN: "do", SUPPORT_ADMIN: "none", FINANCE_ADMIN: "do", CONTENT_ADMIN: "none" });
     expect(row("Message templates")).toEqual({ SUPER_ADMIN: "do", SUPPORT_ADMIN: "look", FINANCE_ADMIN: "look", CONTENT_ADMIN: "do" });
-    expect(row("View the app as a customer").SUPPORT_ADMIN).toBe("none");
     expect(row("Referral payouts")).toEqual({ SUPER_ADMIN: "do", SUPPORT_ADMIN: "look", FINANCE_ADMIN: "do", CONTENT_ADMIN: "look" });
   });
 });

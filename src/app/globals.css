@@ -130,6 +130,8 @@
   --cat-8: #4f46e5;
   --cat-9: #0891b2;
   --cat-10: #4e8f5e;
+  /* The boards' category yellow, apart from the warning amber. */
+  --cat-11: #ca8a04;
   /* A prayer marked on time: the emerald washed out (the sheet boards'
      primary at 78% white). */
   --emerald-tint: #cfe3df;
@@ -276,6 +278,7 @@
   --cat-8: #a5b0fb;
   --cat-9: #5fcfe6;
   --cat-10: #8fcb9c;
+  --cat-11: #facc15;
   --rose: #f08fbf;
   --rose-soft: #3a1528;
   --emerald-tint: #1c4536;
@@ -552,6 +555,7 @@ html:not(.dark) [data-app="habit"] {
   --color-cat-8: var(--cat-8);
   --color-cat-9: var(--cat-9);
   --color-cat-10: var(--cat-10);
+  --color-cat-11: var(--cat-11);
 
   /* shadcn */
   --color-background: var(--background);

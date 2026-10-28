@@ -17,6 +17,9 @@ export interface DataTableTabOption {
   value: string;
   // Shown after the label: "Active 1,251".
   count?: number;
+  // The count's colour when it asks for attention ("Missing Bangla 12" in
+  // amber); muted otherwise.
+  countClassName?: string;
 }
 
 export type DataTableFilterConfig = (
@@ -28,7 +31,9 @@ export type DataTableFilterConfig = (
   // the front of the toolbar. The first tab (allLabel) clears the filter.
   // "sunken" drops the outline for the plainer pill some lists use.
   // defaultValue: the tab an empty URL means, with no All tab (Owners).
-  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string; tone?: "bordered" | "sunken"; defaultValue?: string }
+  // allCount: the All tab's own count, when the tabs overlap and their sum
+  // isn't the whole (Translations' Missing Bangla and Changed this week).
+  | { id: string; type: "tabs"; label: string; options: DataTableTabOption[]; allLabel?: string; allCount?: number; tone?: "bordered" | "sunken"; defaultValue?: string }
   // Server-managed date ranges map onto two URL params, dateFrom/dateTo by
   // default (the convention every list endpoint uses).
   | { id: string; type: "date-range"; label: string; fromKey?: string; toKey?: string }

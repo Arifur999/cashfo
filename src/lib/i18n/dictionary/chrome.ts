@@ -261,4 +261,5 @@ export const chromeDictionary: Record<string, string> = {
   "Switch to Habit Tracker": "হ্যাবিট ট্র্যাকারে যান",
   "Switch to Money Tracker": "মানি ট্র্যাকারে যান",
   "{done} of {total} habits done today": "আজ {total}টি অভ্যাসের মধ্যে {done}টি হয়েছে",
+  "Try it": "দেখুন",
 };

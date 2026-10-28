@@ -2,13 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { setAnnouncementEnabledAction } from "@/app/(dashboardLayout)/admin/content/announcements/_action";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
 import DataTable from "@/components/shared/table/DataTable";
-import { useActionMutation } from "@/hooks/useActionMutation";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
-import { queryKeys } from "@/lib/queryKeys";
 import { announcementsQuery } from "@/queries/announcement.queries";
 import { plansQuery } from "@/queries/plan.queries";
 import type { IAnnouncement } from "@/types/announcement.types";
@@ -18,8 +15,8 @@ import { buildAnnouncementsColumns } from "./announcementsColumns";
 import LiveAnnouncementsCard from "./LiveAnnouncementsCard";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
-// What is live now, then every announcement. Edit and turn off sit in the
-// row as the design draws them.
+// What is live now, then every announcement, each with its Edit as the
+// board draws it. Turning one off (or back on) is in its drawer's foot.
 const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
   const { translate } = useLocale();
   const query = useQuery(announcementsQuery());
@@ -29,26 +26,9 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
   const columns = useMemo(() => buildAnnouncementsColumns(planNames), [planNames]);
   const { activeRow: announcement, openDialog, closeDialog, getDialogProps } = useRowDialogs<IAnnouncement, "edit">();
 
-  const { run: setEnabled } = useActionMutation({
-    action: ({ id, isActive }: { id: string; isActive: boolean }) => setAnnouncementEnabledAction(id, isActive),
-    successMessage: (updated) => (updated.isActive ? "Announcement turned on" : "Announcement turned off"),
-    invalidateKeys: [queryKeys.announcements.all],
-    refreshRoute: false,
-  });
-
   const actions = useMemo<DataTableActions<IAnnouncement> | undefined>(
-    () =>
-      canManage
-        ? {
-            display: "inline",
-            onEdit: (row) => openDialog("edit", row),
-            extra: [
-              { label: "Turn on", onClick: (row) => void setEnabled({ id: row.id, isActive: true }), hidden: (row) => row.isActive },
-              { label: "Turn off", destructive: true, onClick: (row) => void setEnabled({ id: row.id, isActive: false }), hidden: (row) => !row.isActive },
-            ],
-          }
-        : undefined,
-    [canManage, openDialog, setEnabled],
+    () => (canManage ? { display: "inline", rowLabel: (row) => row.title, onEdit: (row) => openDialog("edit", row) } : undefined),
+    [canManage, openDialog],
   );
 
   return (
@@ -57,8 +37,8 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
       <DataTable
         data={data?.data}
         columns={columns}
-        // Edit and Turn off side by side, with room for the Bangla words.
-        layout={{ gap: 16, rowHeight: 62, headPadding: 12, actionsWidth: 170 }}
+        // The board's grid: 130 / title / 150 / 190 / 100 / 90.
+        layout={{ gap: 16, rowHeight: 62, headPadding: 12, actionsWidth: 90 }}
         getRowId={(row) => row.id}
         isLoading={isLoading}
         isFetching={isFetching}

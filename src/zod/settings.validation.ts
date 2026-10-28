@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { isValidTimeZone, MONEY_PATTERN } from "@/lib/validators";
+import { isValidTimeZone } from "@/lib/validators";
 import type { IUpdatePlatformSettingsPayload } from "@/types/settings.types";
 
-// A. Form schema -- input values as the form holds them (the reward amount
-// is a string, since inputs produce strings).
-export const updateSettingsFormZodSchema = z.object({
+// A. Form schemas -- input values as the forms hold them.
+const MESSAGE_MAX = 1000;
+
+export const generalSettingsFormZodSchema = z.object({
   platformName: z.string().trim().min(1, "Platform name is required"),
   supportEmail: z.email("Enter a valid email address"),
   defaultCurrency: z
@@ -12,30 +13,21 @@ export const updateSettingsFormZodSchema = z.object({
     .trim()
     .regex(/^[A-Za-z]{3}$/, "Use a 3-letter ISO currency code, e.g. BDT"),
   defaultTimezone: z.string().trim().refine(isValidTimeZone, "Use an IANA timezone, e.g. Asia/Dhaka"),
-  maintenanceMode: z.boolean(),
-  maintenanceMessage: z.string(),
-  referralRewardAmount: z
-    .string()
-    .regex(MONEY_PATTERN, "Enter an amount like 50 or 49.99")
-    .refine((value) => Number(value) > 0, "The reward must be greater than zero"),
-});
-
-export type IUpdateSettingsFormValues = z.infer<typeof updateSettingsFormZodSchema>;
-
-// The Settings page saves its General card and the referral reward
-// separately; maintenance is switched from System.
-export const generalSettingsFormZodSchema = updateSettingsFormZodSchema.pick({
-  platformName: true,
-  supportEmail: true,
-  defaultCurrency: true,
-  defaultTimezone: true,
 });
 export type IGeneralSettingsFormValues = z.infer<typeof generalSettingsFormZodSchema>;
 
-export const referralRewardFormZodSchema = updateSettingsFormZodSchema.pick({ referralRewardAmount: true });
-export type IReferralRewardFormValues = z.infer<typeof referralRewardFormZodSchema>;
+// System > Maintenance mode: what the app shows, in English and Bangla.
+export const maintenanceMessagesFormZodSchema = z.object({
+  maintenanceMessage: z.string().trim().min(1, "Write what the app should say").max(MESSAGE_MAX, "At most 1,000 characters"),
+  maintenanceMessageBn: z.string().trim().max(MESSAGE_MAX, "At most 1,000 characters"),
+});
+export type IMaintenanceMessagesFormValues = z.infer<typeof maintenanceMessagesFormZodSchema>;
 
 // B. Server schema -- coerced to API types and re-validated in the action.
+// Settings saves General, System switches maintenance and Security the
+// admins' two-step rule, each sending only its own fields. The old flat
+// referral reward is no longer changed here (Referrals & Payouts >
+// Settings holds the commission rules).
 export const updateSettingsServerZodSchema = z
   .object({
     platformName: z.string().trim().min(1),
@@ -47,7 +39,10 @@ export const updateSettingsServerZodSchema = z
       .transform((value) => value.toUpperCase()),
     defaultTimezone: z.string().trim().refine(isValidTimeZone, "Unknown timezone"),
     maintenanceMode: z.boolean(),
-    maintenanceMessage: z.string().trim(),
-    referralRewardAmount: z.coerce.number().positive("The reward must be greater than zero"),
+    maintenanceMessage: z.string().trim().max(MESSAGE_MAX),
+    maintenanceMessageBn: z.string().trim().max(MESSAGE_MAX),
+    signupsOpen: z.boolean(),
+    adminTwoStepRequired: z.boolean(),
   })
-  .partial() satisfies z.ZodType<IUpdatePlatformSettingsPayload>;
+  .partial()
+  .strict() satisfies z.ZodType<IUpdatePlatformSettingsPayload>;

@@ -21,20 +21,21 @@ export const LOG_STATUS_LABEL: Record<NotificationLogStatus, string> = {
   FAILED: "Failed",
 };
 
-// What each built-in template is for, for the templates list. None is read
-// by a sender yet: the welcome and support-reply emails and the bell go out
-// with the backend's own wording, and campaigns don't send yet.
+// What each built-in template is for, for the templates list. Campaigns
+// send with their template; the system messages (welcome, payments, support
+// replies) still go out in the backend's own wording, so those say so.
 const TEMPLATE_WHEN: Record<string, string> = {
   welcome: "Not used yet: the built-in welcome email goes out at sign-up",
   subscription_expiring: "Not used yet: meant for 3 days before a paid plan ends",
   payment_successful: "Not used yet: meant for after each successful payment",
   payment_failed: "Not used yet: meant for when a payment fails",
   ticket_reply: "Not used yet: the built-in support-reply email and the bell go out when support replies",
-  feature_announcement: "For campaigns, which don't send yet",
-  promo_offer: "For campaigns, which don't send yet",
+  feature_announcement: "Sent by hand for big new features",
+  promo_offer: "Made for campaigns",
 };
 
-export const templateWhen = (key: string) => TEMPLATE_WHEN[key] ?? "Not used for sending yet";
+// A template an admin made is for campaigns.
+export const templateWhen = (key: string) => TEMPLATE_WHEN[key] ?? "Made for campaigns";
 
 // What a preview puts in each placeholder.
 export const SAMPLE_VALUES: Record<string, string> = {

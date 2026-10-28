@@ -10,6 +10,26 @@ export interface ILegalDocument {
   version: number;
   updatedAt: string;
   updatedBy: string | null;
+  // From the list (newer API): when and by whom the live version went out,
+  // and the one draft being written, if any.
+  publishedAt?: string;
+  publishedBy?: { id: string; name: string } | null;
+  draft?: { id: string; version: number; updatedAt: string } | null;
+}
+
+// One version of a page: every one published, and the open draft.
+export interface ILegalVersion {
+  id: string;
+  type: LegalDocType;
+  version: number;
+  status: "DRAFT" | "PUBLISHED";
+  contentEn: string;
+  contentBn: string | null;
+  createdBy: { id: string; name: string } | null;
+  publishedBy: { id: string; name: string } | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IUpdateLegalDocumentPayload {

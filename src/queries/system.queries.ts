@@ -1,13 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { getFeatureFlags } from "@/services/featureFlag.services";
-import { getBackups, getBackupStatusSummary, getErrorLogs, getHealth, getRateLimitLogs, getRateLimitSummary } from "@/services/system.services";
+import { getBackups, getBackupStatusSummary, getErrorLogs, getSystemHealth, getRateLimitLogs, getRateLimitSummary } from "@/services/system.services";
 
-// API and database, checked when the page opens and again every minute.
+// Each service's health (System), checked when the page opens and again every minute.
 export const healthQuery = () =>
   queryOptions({
     queryKey: queryKeys.health.all,
-    queryFn: () => getHealth(),
+    queryFn: () => getSystemHealth(),
     refetchInterval: 60 * 1000,
   });
 

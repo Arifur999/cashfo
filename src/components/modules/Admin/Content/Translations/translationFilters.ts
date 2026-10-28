@@ -26,8 +26,10 @@ export const buildTranslationFilters = (translations: ITranslation[]): DataTable
       id: "flags",
       type: "tabs",
       label: "Show",
+      // The two overlap (a string can be both), so All counts every string.
+      allCount: translations.length,
       options: [
-        { value: "MISSING", label: "Missing Bangla", count: missing },
+        { value: "MISSING", label: "Missing Bangla", count: missing, countClassName: missing > 0 ? "text-warning" : undefined },
         { value: "CHANGED", label: "Changed this week", count: changed },
       ],
     },

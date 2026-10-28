@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import CreateAdminDialog from "./Admins/CreateAdminDialog";
+import InviteAdminDrawer from "./Admins/InviteAdminDrawer";
 import CheckNow from "./Flags/CheckNow";
 
 // The layout draws one header for every Security tab: the admin team adds
@@ -9,7 +9,7 @@ import CheckNow from "./Flags/CheckNow";
 const SecurityHeaderAction = () => {
   const pathname = usePathname();
   if (pathname === "/admin/security/admins") {
-    return <CreateAdminDialog />;
+    return <InviteAdminDrawer />;
   }
   if (pathname === "/admin/security/flags") {
     return <CheckNow />;

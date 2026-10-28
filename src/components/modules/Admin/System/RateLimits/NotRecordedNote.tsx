@@ -16,14 +16,13 @@ interface NotRecordedNoteProps {
   className?: string;
 }
 
-// The API enforces its rate limits in memory and keeps no log of them yet
-// (cashfo_backend's system.module.ts), so these figures stay empty on the
-// live site. Said plainly, as the backups card does, with where the pauses
-// people really hit are shown.
+// The API logs a request only when it goes over a limit (ApiRateLimitLog),
+// so the counts here are of blocked requests, not of all traffic. Said
+// plainly, with where the sign-in pauses people hit are shown.
 const NotRecordedNote = ({ variant = "banner", className }: NotRecordedNoteProps) => {
   const { translate } = useLocale();
   const footer = variant === "footer";
-  const text = fillNodes(translate("Not recorded yet: the API enforces its limits but doesn't log them here. Paused sign-ins are under {link}."), {
+  const text = fillNodes(translate("Only requests that went over a limit are logged here. Paused sign-ins are under {link}."), {
     link: (
       <Link href={SIGN_INS} className={cn("font-semibold underline-offset-2 hover:underline", footer ? "text-emerald" : "underline")}>
         {translate("Security › Sign-ins")}

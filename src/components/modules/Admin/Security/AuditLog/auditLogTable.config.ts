@@ -22,16 +22,16 @@ export const AUDIT_LOG_TABLE_BASE_CONFIG = {
   defaults: { within: "today" },
 } as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaultLimit" | "defaults">;
 
-// The design's toolbar: who, what, on what and when on the left, "Sensitive
-// only" on the right, named as the columns name them. The admin filter lists
+// The design's toolbar: Admin, Action, Area and When on the left, "Sensitive
+// only" on the right, as the board names them. The admin filter lists
 // every admin account (suspended ones too -- their past actions still
 // matter), so the config is built once they load.
 export const buildAuditLogTableConfig = (admins: IAdminAccount[], translate: Translate, locale: Locale): ServerDataTableConfig => ({
   ...AUDIT_LOG_TABLE_BASE_CONFIG,
   filters: [
     { id: "adminUserId", type: "single-select", label: "Admin", allLabel: "Anyone", options: admins.map((admin) => ({ value: admin.id, label: admin.name })) },
-    { id: "action", type: "single-select", label: "What they did", allLabel: "Everything", options: inReadingOrder(AUDIT_ACTION_OPTIONS, translate, locale) },
-    { id: "entityType", type: "single-select", label: "On@@record", allLabel: "Everything", options: inReadingOrder(RECORD_TYPE_OPTIONS, translate, locale) },
+    { id: "action", type: "single-select", label: "Action", allLabel: "Everything", options: inReadingOrder(AUDIT_ACTION_OPTIONS, translate, locale) },
+    { id: "entityType", type: "single-select", label: "Area", allLabel: "Everything", options: inReadingOrder(RECORD_TYPE_OPTIONS, translate, locale) },
     { id: "within", type: "single-select", label: "When", options: WHEN_OPTIONS },
     { id: "sensitiveOnly", type: "toggle", label: "Sensitive only", align: "end" },
   ],

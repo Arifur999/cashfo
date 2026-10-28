@@ -41,7 +41,7 @@ const LoginAttemptsTable = () => {
       data={rows}
       columns={loginAttemptsColumns}
       // The density scale's regular row.
-      layout={{ rowHeight: 56, designWidth: 800 }}
+      layout={{ rowHeight: 54, designWidth: 800 }}
       getRowId={(row) => row.id}
       rowClassName={(row) => (row.attempts.length > 1 ? "bg-expense-soft hover:bg-expense-soft" : undefined)}
       pager={{

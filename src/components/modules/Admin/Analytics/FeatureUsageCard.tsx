@@ -55,7 +55,7 @@ const FeatureUsageCard = ({ data, query, rangeLabel }: FeatureUsageCardProps) =>
         </ul>
       )}
       <span className="text-small text-ink-muted">
-        <T>Opening reports, habits and the password manager aren&apos;t counted yet.</T>
+        <T>{"The password manager isn't counted yet."}</T>
       </span>
     </Card>
   );
