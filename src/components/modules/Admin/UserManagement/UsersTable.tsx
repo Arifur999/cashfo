@@ -19,8 +19,8 @@ import { usePersonHref } from "./usePersonHref";
 import { usersColumns } from "./usersColumns";
 import { buildUsersTableConfig, USERS_TABLE_BASE_CONFIG } from "./usersTable.config";
 
-// Export reads every user that matches, a page at a time, with the list's
-// own fetch.
+// Selected rows export from the page; every user that matches comes from
+// the API (exportHref), which audits it and keeps it to the roles allowed.
 const fetchUsersPage = async (queryString: string) => {
   const { data, meta } = await getOwners(queryString);
   return { rows: data.items, meta };
@@ -84,6 +84,7 @@ const UsersTable = ({ canChangeStatus, canChangePlan }: { canChangeStatus: boole
         columns={usersColumns}
         getRowId={(row) => row.userId}
         exportFileName="users"
+        exportHref={() => `/admin/users/export${searchParams.size ? `?${searchParams}` : ""}`}
         enableRowSelection
         toolbarRows={2}
         // On a narrow screen the box, phone, workspace and plan keep their
