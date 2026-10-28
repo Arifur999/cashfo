@@ -58,7 +58,7 @@ const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 te
 // Savings goals: how all of them are doing together, then one card per
 // goal with its ring, pace, monthly amount and the next thing to do.
 export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, currency, canManage, hasSavingsWallet, archivedWallets, today }: SavingsGoalsDashboardPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -122,7 +122,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
         toast.success(resuming ? t("Goal resumed") : t("Goal paused"));
         router.refresh();
       } else {
-        toast.error(savingsError(result.message, "Failed to update goal", t, currency, locale));
+        toast.error(savingsError(result.message, "Failed to update goal", t, currency, fmt));
       }
     });
   }
@@ -136,7 +136,7 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
         setDetailId(null);
         router.refresh();
       } else {
-        toast.error(savingsError(result.message, "Failed to delete goal", t, currency, locale));
+        toast.error(savingsError(result.message, "Failed to delete goal", t, currency, fmt));
       }
     });
   }
@@ -223,8 +223,8 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
         <>
           <Card padding="none" className="grid md:grid-cols-[1.3fr_1fr_0.8fr]">
             <div className="flex items-center gap-5 px-6 py-5">
-              <GoalRing percent={totals.percent} color={totals.saved > 0 ? "var(--emerald)" : "var(--line)"} size={setup ? 96 : 112} label={t("{percent}% of all goals saved", { percent: formatCount(totals.percent, locale) })}>
-                <span className={cn("text-h2", totals.saved === 0 && "text-ink-muted")}>{formatCount(totals.percent, locale)}%</span>
+              <GoalRing percent={totals.percent} color={totals.saved > 0 ? "var(--emerald)" : "var(--line)"} size={setup ? 96 : 112} label={t("{percent}% of all goals saved", { percent: formatCount(totals.percent, fmt) })}>
+                <span className={cn("text-h2", totals.saved === 0 && "text-ink-muted")}>{formatCount(totals.percent, fmt)}%</span>
                 {!setup && <span className="text-caption font-normal text-ink-muted">{t("of all goals")}</span>}
               </GoalRing>
               <div className="flex min-w-0 flex-col gap-2">
@@ -236,41 +236,41 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                   {totals.count === 0
                     ? t("All your goals are withdrawn")
                     : totals.saved > 0
-                      ? fillNodes(t("of {total} · {left} to go"), { total: formatCurrency(totals.target, currency, locale), left: <span className="font-semibold text-ink-2">{formatCurrency(totals.toGo, currency, locale)}</span> })
-                      : t(totals.count === 1 ? "of {amount} across {count} goal" : "of {amount} across {count} goals", { amount: formatCurrency(totals.target, currency, locale), count: formatCount(totals.count, locale) })}
+                      ? fillNodes(t("of {total} · {left} to go"), { total: formatCurrency(totals.target, currency, fmt), left: <span className="font-semibold text-ink-2">{formatCurrency(totals.toGo, currency, fmt)}</span> })
+                      : t(totals.count === 1 ? "of {amount} across {count} goal" : "of {amount} across {count} goals", { amount: formatCurrency(totals.target, currency, fmt), count: formatCount(totals.count, fmt) })}
                 </span>
               </div>
             </div>
             {setup ? (
               <div className="flex flex-col justify-center gap-2 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
                 <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Monthly target")}</span>
-                <span className="text-h2 leading-[normal] text-ink tabular-nums">{formatCurrency(Math.ceil(Number(overview.monthlyTarget)), currency, locale)}</span>
+                <span className="text-h2 leading-[normal] text-ink tabular-nums">{formatCurrency(Math.ceil(Number(overview.monthlyTarget)), currency, fmt)}</span>
                 <span className="text-caption leading-[normal] font-normal text-ink-muted">
                   {activeGoals.length === 1
-                    ? t("To reach {name} by {date}", { name: activeGoals[0].name, date: formatDate(activeGoals[0].targetDate, "MMM yyyy", locale) })
-                    : t(activeCount === 1 ? "Across {count} active goal" : "Across {count} active goals", { count: formatCount(activeCount, locale) })}
+                    ? t("To reach {name} by {date}", { name: activeGoals[0].name, date: formatDate(activeGoals[0].targetDate, "MMM yyyy", fmt) })
+                    : t(activeCount === 1 ? "Across {count} active goal" : "Across {count} active goals", { count: formatCount(activeCount, fmt) })}
                 </span>
               </div>
             ) : (
               <div className="flex flex-col justify-center gap-3 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Saved this month")}</span>
-                  <span className="text-caption leading-[normal] font-semibold text-ink-2">{t("{percent}% of target", { percent: formatCount(overview.monthlyProgressPercent, locale) })}</span>
+                  <span className="text-caption leading-[normal] font-semibold text-ink-2">{t("{percent}% of target", { percent: formatCount(overview.monthlyProgressPercent, fmt) })}</span>
                 </div>
                 <span className="text-body font-medium text-ink-muted tabular-nums">
-                  {fillNodes(t("{saved} of {target}"), { saved: <span className="text-h2 leading-[normal] text-ink">{formatCurrency(overview.savedThisMonth, currency, locale)}</span>, target: formatCurrency(Math.ceil(Number(overview.monthlyTarget)), currency, locale) })}
+                  {fillNodes(t("{saved} of {target}"), { saved: <span className="text-h2 leading-[normal] text-ink">{formatCurrency(overview.savedThisMonth, currency, fmt)}</span>, target: formatCurrency(Math.ceil(Number(overview.monthlyTarget)), currency, fmt) })}
                 </span>
                 <ProgressBar value={overview.monthlyProgressPercent} label={t("Saved this month")} />
                 <span className="text-caption leading-[normal] font-normal text-ink-muted">
-                  {t(activeCount === 1 ? "Monthly target across {count} active goal" : "Monthly target across {count} active goals", { count: formatCount(activeCount, locale) })}
+                  {t(activeCount === 1 ? "Monthly target across {count} active goal" : "Monthly target across {count} active goals", { count: formatCount(activeCount, fmt) })}
                 </span>
               </div>
             )}
             <div className="flex flex-col justify-center gap-2 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
               <span className="text-small leading-[normal] font-medium text-ink-muted">{t("Savings rate")}</span>
-              <span className={cn("text-h1", !hasRate && "text-h2 text-ink-muted", "leading-[normal]")}>{hasRate ? `${formatCount(overview.savingsRatePercent, locale)}%` : "—"}</span>
+              <span className={cn("text-h1", !hasRate && "text-h2 text-ink-muted", "leading-[normal]")}>{hasRate ? `${formatCount(overview.savingsRatePercent, fmt)}%` : "—"}</span>
               <span className="text-caption leading-[normal] font-normal text-ink-muted">
-                {hasRate ? t("of this month's income ({amount})", { amount: formatCurrency(overview.incomeThisMonth, currency, locale) }) : t("Shows once you save and earn")}
+                {hasRate ? t("of this month's income ({amount})", { amount: formatCurrency(overview.incomeThisMonth, currency, fmt) }) : t("Shows once you save and earn")}
               </span>
             </div>
           </Card>
@@ -299,9 +299,9 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                     percent={percent}
                     color={goalColor(index, goal.status)}
                     size={92}
-                    label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency, locale) }) : t("{percent}% saved", { percent: formatCount(percent, locale) })}
+                    label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency, fmt) }) : t("{percent}% saved", { percent: formatCount(percent, fmt) })}
                   >
-                    <span className="text-h3 font-bold">{closed && percent >= 100 ? "✓" : `${formatCount(percent, locale)}%`}</span>
+                    <span className="text-h3 font-bold">{closed && percent >= 100 ? "✓" : `${formatCount(percent, fmt)}%`}</span>
                   </GoalRing>
                   <div className="flex min-w-0 flex-1 flex-col gap-2.5">
                     {/* The name keeps two lines beside the ring on a phone; the
@@ -360,20 +360,20 @@ export function SavingsGoalsDashboardPageClient({ businessId, goals, overview, c
                     {/* One sentence, so Bangla can put the target first. */}
                     <span className="text-small leading-[normal] font-medium text-ink-muted tabular-nums">
                       {fillNodes(t("{saved} of {target}"), {
-                        saved: <span className="text-h2 leading-[normal] tracking-[-0.01em] text-ink">{formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency, locale)}</span>,
-                        target: formatCurrency(goal.targetAmount, currency, locale),
+                        saved: <span className="text-h2 leading-[normal] tracking-[-0.01em] text-ink">{formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency, fmt)}</span>,
+                        target: formatCurrency(goal.targetAmount, currency, fmt),
                       })}
                     </span>
                     <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-caption leading-[normal] font-normal text-ink-muted">
                       <span className="flex items-center gap-1.25">
                         {!setup && <CalendarDays className="size-3.25" aria-hidden="true" />}
-                        {formatDate(goal.targetDate, "MMM yyyy", locale)} · {paused ? t("paused") : closed ? t("withdrawn") : completed ? t("Reached") : timeLeftText(goal.targetDate, today, t, locale)}
+                        {formatDate(goal.targetDate, "MMM yyyy", fmt)} · {paused ? t("paused") : closed ? t("withdrawn") : completed ? t("Reached") : timeLeftText(goal.targetDate, today, t, fmt)}
                       </span>
                       {/* A reached goal has no monthly amount left to keep up. */}
                       {!completed && (
                         <span className="flex items-center gap-1.25">
                           {!setup && <Target className="size-3.25" aria-hidden="true" />}
-                          {paused ? t("No monthly target while paused") : closed ? t("Paid out") : t("Save {amount} a month", { amount: formatCurrency(Math.ceil(Number(goal.monthlyTarget)), currency, locale) })}
+                          {paused ? t("No monthly target while paused") : closed ? t("Paid out") : t("Save {amount} a month", { amount: formatCurrency(Math.ceil(Number(goal.monthlyTarget)), currency, fmt) })}
                         </span>
                       )}
                       {trend && <span className={cn("font-semibold", trend.text)}>{t(trend.label)}</span>}

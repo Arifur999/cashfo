@@ -27,7 +27,7 @@ interface SavingsWalletPageClientProps {
 // Savings wallets: the DPS, FDR and other accounts saved money sits in --
 // the same cards and drawer as My wallets, in the savings colours.
 export function SavingsWalletPageClient({ businessId, wallets, canManage, currency, openAdd = false }: SavingsWalletPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -63,7 +63,7 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
   // This page lists active wallets only, so an archived one leaves it (and
   // the Add money and Withdraw pickers) until restored from Savings overview.
   // Money still in it is worth a second look first.
-  const stillHolds = (wallet: Account) => (Number(wallet.currentBalance) !== 0 ? formatCurrency(wallet.currentBalance, currency, locale) : null);
+  const stillHolds = (wallet: Account) => (Number(wallet.currentBalance) !== 0 ? formatCurrency(wallet.currentBalance, currency, fmt) : null);
 
   async function toggleArchive(wallet: Account) {
     const isArchived = wallet.status === "ARCHIVED";

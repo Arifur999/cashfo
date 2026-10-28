@@ -71,7 +71,7 @@ interface FactProps {
 // One goal in full: how far along it is, when and how much a month, how it
 // has been going lately, and everything that moved in or out of it.
 export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, currency, today, canManage, canAddMoney, hasArchivedWallets = false, busy = false, onEdit, onAddMoney, onWithdraw, onTogglePause, onDelete }: GoalDetailDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   const historyId = useId();
   const deleteReasonId = useId();
@@ -125,15 +125,15 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
   const percent = ringPercent(goal);
   const trend = goal.trend ? TREND_META[goal.trend] : null;
   const left = timeLeft(goal.targetDate, today);
-  const leftLabel = timeLeftText(goal.targetDate, today, t, locale);
+  const leftLabel = timeLeftText(goal.targetDate, today, t, fmt);
   // Newest first, so the first one is the payout.
   const payout = entries.find((entry) => entry.type === "WITHDRAWAL");
   const bold = (text: string) => <b className="font-semibold text-ink">{text}</b>;
 
   // Only what is true of the goal as it stands: a finished or paid-out goal
   // has no months left and no monthly amount to keep up.
-  const facts: FactProps[] = [{ label: t("Reach by"), value: formatDate(goal.targetDate, "MMM yyyy", locale), sub: paused ? t("paused") : closed ? t("Paid out") : completed ? t("Reached") : leftLabel }];
-  if (active || paused) facts.push({ label: t("Monthly target"), value: paused ? "—" : formatCurrency(Math.ceil(Number(goal.monthlyTarget)), currency, locale), sub: paused ? t("while paused") : t("as planned") });
+  const facts: FactProps[] = [{ label: t("Reach by"), value: formatDate(goal.targetDate, "MMM yyyy", fmt), sub: paused ? t("paused") : closed ? t("Paid out") : completed ? t("Reached") : leftLabel }];
+  if (active || paused) facts.push({ label: t("Monthly target"), value: paused ? "—" : formatCurrency(Math.ceil(Number(goal.monthlyTarget)), currency, fmt), sub: paused ? t("while paused") : t("as planned") });
   if (active) facts.push({ label: t("Lately"), value: trend ? t(trend.short) : "—", sub: trend ? t("than before") : t("too early to say"), className: trend?.text });
 
   // The plan's monthly figure is an even pace from the start; this is what
@@ -142,8 +142,8 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
   const neededNote =
     active && toGo > 0
       ? left.kind === "past"
-        ? fillNodes(t("Its date has passed, with {amount} still to go."), { amount: bold(formatCurrency(toGo, currency, locale)) })
-        : fillNodes(t("To finish on time, save {amount} a month from now."), { amount: bold(formatCurrency(Math.ceil(neededPerMonth(goal, today)), currency, locale)) })
+        ? fillNodes(t("Its date has passed, with {amount} still to go."), { amount: bold(formatCurrency(toGo, currency, fmt)) })
+        : fillNodes(t("To finish on time, save {amount} a month from now."), { amount: bold(formatCurrency(Math.ceil(neededPerMonth(goal, today)), currency, fmt)) })
       : null;
 
   // The backend deletes only a goal nothing was ever added to or moved out
@@ -166,7 +166,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
 
   const entryLine = (entry: SavingsGoalEntry) => {
     const route = entry.type === "WITHDRAWAL" ? entry.savingsAccountName : [entry.moneyAccountName, entry.savingsAccountName].filter(Boolean).join(" → ");
-    return [formatDate(entry.date, undefined, locale), route || (entry.relatedGoalName ? t("goal transfer") : null)].filter(Boolean).join(" · ");
+    return [formatDate(entry.date, undefined, fmt), route || (entry.relatedGoalName ? t("goal transfer") : null)].filter(Boolean).join(" · ");
   };
 
   const entryRow = (entry: SavingsGoalEntry) => {
@@ -189,7 +189,7 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
           )}
         </span>
         <span className={cn("shrink-0 text-body font-semibold tabular-nums", meta.tone === "income" ? "text-income" : meta.tone === "info" ? "text-info" : "text-expense")}>
-          {meta.flow === "in" ? "+" : "−"} {formatCurrency(entry.amount, currency, locale)}
+          {meta.flow === "in" ? "+" : "−"} {formatCurrency(entry.amount, currency, fmt)}
         </span>
       </li>
     );
@@ -265,30 +265,30 @@ export function GoalDetailDrawer({ open, onClose, businessId, goal, goalIndex, c
           percent={percent}
           color={goalColor(goalIndex, goal.status)}
           size={128}
-          label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency, locale) }) : t("{percent}% saved", { percent: formatCount(percent, locale) })}
+          label={closed ? t("Withdrawn {amount}", { amount: formatCurrency(goal.withdrawnAmount, currency, fmt) }) : t("{percent}% saved", { percent: formatCount(percent, fmt) })}
         >
-          <span className="text-[26px] leading-[normal] font-bold">{closed && percent >= 100 ? "✓" : `${formatCount(percent, locale)}%`}</span>
+          <span className="text-[26px] leading-[normal] font-bold">{closed && percent >= 100 ? "✓" : `${formatCount(percent, fmt)}%`}</span>
           <span className="text-[11px] font-normal text-ink-muted">{closed ? t("withdrawn") : t("saved")}</span>
         </GoalRing>
         <div className="flex flex-col gap-2.5 tabular-nums">
           <div className="flex flex-col gap-px">
             <span className="text-caption font-normal text-ink-muted">{closed ? t("Withdrawn") : t("Saved")}</span>
-            <span className="text-h2 text-ink">{formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency, locale)}</span>
+            <span className="text-h2 text-ink">{formatCurrency(closed ? goal.withdrawnAmount : goal.currentAmount, currency, fmt)}</span>
           </div>
           <div className="flex gap-5">
             <div className="flex flex-col gap-px">
               <span className="text-caption font-normal text-ink-muted">{t("Target")}</span>
-              <span className="text-body font-semibold text-ink">{formatCurrency(goal.targetAmount, currency, locale)}</span>
+              <span className="text-body font-semibold text-ink">{formatCurrency(goal.targetAmount, currency, fmt)}</span>
             </div>
             {closed ? (
               <div className="flex flex-col gap-px">
                 <span className="text-caption font-normal text-ink-muted">{t("Withdrawn on")}</span>
-                <span className="text-body font-semibold text-ink">{payout ? formatDate(payout.date, undefined, locale) : "—"}</span>
+                <span className="text-body font-semibold text-ink">{payout ? formatDate(payout.date, undefined, fmt) : "—"}</span>
               </div>
             ) : (
               <div className="flex flex-col gap-px">
                 <span className="text-caption font-normal text-ink-muted">{t("To go")}</span>
-                <span className="text-body font-semibold text-ink">{formatCurrency(toGo, currency, locale)}</span>
+                <span className="text-body font-semibold text-ink">{formatCurrency(toGo, currency, fmt)}</span>
               </div>
             )}
           </div>

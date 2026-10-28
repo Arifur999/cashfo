@@ -47,7 +47,7 @@ interface WalletLoad {
 // as quick picks), which wallet it leaves, which savings wallet it sits in,
 // and where everything stands after.
 export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, currency }: AddMoneyDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [fromId, setFromId] = useState("");
@@ -121,7 +121,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
         onClose();
         router.refresh();
       } else {
-        toast.error(savingsError(result.message, "Failed to add money", t, currency, locale));
+        toast.error(savingsError(result.message, "Failed to add money", t, currency, fmt));
       }
     });
   }
@@ -138,13 +138,13 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
       width={460}
       icon={
         goal && (
-          <GoalRing percent={goal.progressPercent} color={goalColor(goalIndex, goal.status)} size={52} label={t("{percent}% saved", { percent: formatCount(goal.progressPercent, locale) })} className="-my-1">
-            <span className="text-caption font-bold">{formatCount(goal.progressPercent, locale)}%</span>
+          <GoalRing percent={goal.progressPercent} color={goalColor(goalIndex, goal.status)} size={52} label={t("{percent}% saved", { percent: formatCount(goal.progressPercent, fmt) })} className="-my-1">
+            <span className="text-caption font-bold">{formatCount(goal.progressPercent, fmt)}%</span>
           </GoalRing>
         )
       }
       title={goal ? t("Add money to {name}", { name: goal.name }) : t("Add money")}
-      description={goal && <span className="tabular-nums">{`${t("{saved} of {target}", { saved: formatCurrency(goal.currentAmount, currency, locale), target: formatCurrency(goal.targetAmount, currency, locale) })} · ${t(goalBadge(goal).label)}`}</span>}
+      description={goal && <span className="tabular-nums">{`${t("{saved} of {target}", { saved: formatCurrency(goal.currentAmount, currency, fmt), target: formatCurrency(goal.targetAmount, currency, fmt) })} · ${t(goalBadge(goal).label)}`}</span>}
       busy={isPending}
       onClose={onClose}
       onSubmit={submit}
@@ -155,7 +155,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
           </Button>
           <Button type="submit" disabled={!valid || isPending} className="px-4.5">
             {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-            {value > 0 ? t("Add {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Add money")}
+            {value > 0 ? t("Add {amount}", { amount: formatCurrency(value, currency, fmt) }) : t("Add money")}
           </Button>
         </>
       }
@@ -178,7 +178,7 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
                 >
                   {pick.kind === "monthly" && `${t("Monthly target")} · `}
                   {pick.kind === "rest" && `${t("All that's left")} · `}
-                  {formatCurrency(pick.amount, currency, locale)}
+                  {formatCurrency(pick.amount, currency, fmt)}
                 </button>
               ))}
             </div>
@@ -219,9 +219,9 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
             <div className="flex justify-between gap-3">
               <span className="truncate text-ink-2">{goal.name}</span>
               <span>
-                <span className="text-ink-muted">{formatCount(goal.progressPercent, locale)}% → </span>
+                <span className="text-ink-muted">{formatCount(goal.progressPercent, fmt)}% → </span>
                 <span className="font-semibold text-income">
-                  {formatCount(percentAfter, locale)}% · {formatCurrency(saved + value, currency, locale)}
+                  {formatCount(percentAfter, fmt)}% · {formatCurrency(saved + value, currency, fmt)}
                 </span>
               </span>
             </div>
@@ -229,10 +229,10 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
               <div className="flex justify-between gap-3">
                 <span className="truncate text-ink-2">{accountDisplayName(from, displayLanguage(locale))}</span>
                 <span>
-                  <span className="text-ink-muted">{formatCurrency(from.currentBalance, currency, locale)} → </span>
+                  <span className="text-ink-muted">{formatCurrency(from.currentBalance, currency, fmt)} → </span>
                   {/* Below zero: the wallet doesn't hold this much. */}
                   <span className={cn("font-semibold", fromAfter < 0 ? "text-expense" : "text-ink")}>
-                    {formatCurrency(fromAfter, currency, locale)}
+                    {formatCurrency(fromAfter, currency, fmt)}
                     {fromAfter < 0 && ` · ${t("not enough")}`}
                   </span>
                 </span>
@@ -242,8 +242,8 @@ export function AddMoneyDrawer({ open, onClose, businessId, goal, goalIndex, cur
               <div className="flex justify-between gap-3">
                 <span className="truncate text-ink-2">{accountDisplayName(into, displayLanguage(locale))}</span>
                 <span>
-                  <span className="text-ink-muted">{formatCurrency(into.currentBalance, currency, locale)} → </span>
-                  <span className="font-semibold text-ink">{formatCurrency(Number(into.currentBalance) + value, currency, locale)}</span>
+                  <span className="text-ink-muted">{formatCurrency(into.currentBalance, currency, fmt)} → </span>
+                  <span className="font-semibold text-ink">{formatCurrency(Number(into.currentBalance) + value, currency, fmt)}</span>
                 </span>
               </div>
             )}

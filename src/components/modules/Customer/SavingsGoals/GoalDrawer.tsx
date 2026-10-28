@@ -37,7 +37,7 @@ interface GoalDrawerProps {
 // frame): what for, how much, by when -- with the monthly amount that works
 // out to -- plus an optional reminder and a note.
 export function GoalDrawer({ open, onClose, businessId, editing, currency, today }: GoalDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
@@ -82,7 +82,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
     startTransition(async () => {
       const result = editing ? await updateSavingsGoalAction(businessId, editing.id, editInput(editing)) : await createSavingsGoalAction(businessId, createInput());
       if (!result.success) {
-        toast.error(savingsError(result.message, "Failed to save goal", t, currency, locale));
+        toast.error(savingsError(result.message, "Failed to save goal", t, currency, fmt));
         return;
       }
       toast.success(editing ? t("Goal updated") : t("Goal created"));
@@ -129,7 +129,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
   );
 
   // The preview's second line: how many months, to save how much, by when.
-  const monthsText = (forms: { one: string; many: string }, amount: number) => t(months === 1 ? forms.one : forms.many, { count: formatCount(months, locale), amount: formatCurrency(amount, currency, locale), date: formatDate(targetDate, undefined, locale) });
+  const monthsText = (forms: { one: string; many: string }, amount: number) => t(months === 1 ? forms.one : forms.many, { count: formatCount(months, fmt), amount: formatCurrency(amount, currency, fmt), date: formatDate(targetDate, undefined, fmt) });
 
   return (
     <Drawer
@@ -174,7 +174,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
             </span>
             {toSave > 0 ? (
               <span className="flex flex-col gap-0.5">
-                <span className="text-body text-ink">{fillNodes(t("Save about {amount} a month"), { amount: <b className="font-bold">{formatCurrency(Math.ceil(monthly), currency, locale)}</b> })}</span>
+                <span className="text-body text-ink">{fillNodes(t("Save about {amount} a month"), { amount: <b className="font-bold">{formatCurrency(Math.ceil(monthly), currency, fmt)}</b> })}</span>
                 <span className="text-caption font-normal text-ink-2">
                   {editing
                     ? monthsText({ one: "for {count} month to save the {amount} left by {date}", many: "for {count} months to save the {amount} left by {date}" }, toSave)
@@ -182,7 +182,7 @@ export function GoalDrawer({ open, onClose, businessId, editing, currency, today
                 </span>
               </span>
             ) : (
-              <span className="text-body text-ink">{fillNodes(t("Already reached with {amount} saved"), { amount: <b className="font-bold">{formatCurrency(saved, currency, locale)}</b> })}</span>
+              <span className="text-body text-ink">{fillNodes(t("Already reached with {amount} saved"), { amount: <b className="font-bold">{formatCurrency(saved, currency, fmt)}</b> })}</span>
             )}
           </div>
         )}
