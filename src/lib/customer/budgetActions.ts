@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type BudgetCategory, type BudgetCategoryType, type BudgetOverview } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type BudgetCategory, type BudgetCategoryType, type BudgetOverview, type MonthlyPlan } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -66,9 +66,9 @@ export interface BudgetCategoryFormInput {
   name: string;
   // null = no icon chosen -- persisted as a plain colored circle, no glyph.
   icon: string | null;
-  color: string;
-  // Required for EXPENSE, omitted for INCOME (which has no per-category
-  // goal -- see BudgetCategory.monthlyLimit's schema comment).
+  // Left out, the API picks a colour no category of the type uses yet.
+  color?: string;
+  // An expense category's own monthly limit, optional; never for INCOME.
   monthlyLimit?: number;
 }
 
@@ -106,4 +106,19 @@ export async function deleteBudgetCategoryAction(businessId: string, id: string)
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, { headers: await authHeaders() });
   }, "Failed to delete category");
+}
+
+export interface MonthlyPlanInput {
+  month: number;
+  year: number;
+  incomeTarget: number;
+  expenseBudget: number;
+}
+
+// Budget Planning > Set monthly budget: makes the month's plan or replaces it.
+export async function saveMonthlyPlanAction(businessId: string, input: MonthlyPlanInput): Promise<ActionResult<MonthlyPlan>> {
+  return callApi(async () => {
+    const res = await customerApi.put<MonthlyPlan>(`${API_BASE_URL}/api/businesses/${businessId}/budget/monthly-plan`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the budget");
 }
