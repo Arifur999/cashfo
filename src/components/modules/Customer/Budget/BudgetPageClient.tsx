@@ -64,7 +64,7 @@ const MENU_ITEM = "cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:
 // expense category with its limit, its bar in the under-70 / 70–90 /
 // over-90 colour, and what is left.
 export function BudgetPageClient({ businessId, path, overview, counts, monthTotal, currency, canManage, openAdd, today }: BudgetPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -110,8 +110,8 @@ export function BudgetPageClient({ businessId, path, overview, counts, monthTota
   const unassigned = total !== null ? total - allocated : null;
   const isCurrentMonth = today.startsWith(`${year}-${String(month).padStart(2, "0")}`);
   const daysLeft = isCurrentMonth ? daysLeftInMonth(today) : 0;
-  const money = (value: number) => formatCurrency(value, currency, locale);
-  const percent = (value: number) => formatCount(Math.round(value), locale);
+  const money = (value: number) => formatCurrency(value, currency, fmt);
+  const percent = (value: number) => formatCount(Math.round(value), fmt);
   const add = canManage ? () => setDrawer("create") : undefined;
 
   function goToMonth(nextMonth: number, nextYear: number) {
@@ -192,7 +192,7 @@ export function BudgetPageClient({ businessId, path, overview, counts, monthTota
             </div>
             {total !== null ? <span className="text-amount-lg text-ink tabular-nums">{money(total)}</span> : <span className="text-h3 text-ink-muted">{t("Not set")}</span>}
             {/* The API keeps one budget for every month; this is the one on show. */}
-            <span className="text-caption text-ink-muted">{t("For {month}", { month: monthLabel(month, year, locale) })}</span>
+            <span className="text-caption text-ink-muted">{t("For {month}", { month: monthLabel(month, year, fmt) })}</span>
           </div>
           <div className="flex flex-col gap-2.5 border-t border-line px-5 py-5 md:border-t-0 md:border-l md:px-6">
             <div className="flex items-baseline justify-between gap-3">
@@ -216,7 +216,7 @@ export function BudgetPageClient({ businessId, path, overview, counts, monthTota
               {isCurrentMonth && (
                 <span className="flex items-center gap-1.25">
                   <CalendarDays className="size-3.25" aria-hidden="true" />
-                  {t(daysLeft === 1 ? "{count} day left in {month}" : "{count} days left in {month}", { count: formatCount(daysLeft, locale), month: monthOnlyLabel(month, locale) })}
+                  {t(daysLeft === 1 ? "{count} day left in {month}" : "{count} days left in {month}", { count: formatCount(daysLeft, fmt), month: monthOnlyLabel(month, fmt) })}
                 </span>
               )}
             </div>
@@ -247,13 +247,13 @@ export function BudgetPageClient({ businessId, path, overview, counts, monthTota
               <h2 className="text-title text-ink">{t("Categories")}</h2>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-ink-soft">
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-[3px] bg-income" /> {t("Under {percent}%", { percent: formatCount(70, locale) })}
+                  <span className="size-2.5 rounded-[3px] bg-income" /> {t("Under {percent}%", { percent: formatCount(70, fmt) })}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-[3px] bg-warning-fill" /> {t("{from}–{to}%", { from: formatCount(70, locale), to: formatCount(90, locale) })}
+                  <span className="size-2.5 rounded-[3px] bg-warning-fill" /> {t("{from}–{to}%", { from: formatCount(70, fmt), to: formatCount(90, fmt) })}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-[3px] bg-expense-fill" /> {t("Over {percent}%", { percent: formatCount(90, locale) })}
+                  <span className="size-2.5 rounded-[3px] bg-expense-fill" /> {t("Over {percent}%", { percent: formatCount(90, fmt) })}
                 </span>
               </div>
             </div>

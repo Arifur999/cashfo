@@ -53,7 +53,7 @@ const MENU_ITEM = "cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:
 // month earned with each category's share of it, then a card per income
 // category. Income categories have no limit.
 export function IncomeSourcesPageClient({ businessId, path, overview, counts, lastMonth, thisYear, monthTotal, currency, canManage, openAdd, today }: IncomeSourcesPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -84,9 +84,9 @@ export function IncomeSourcesPageClient({ businessId, path, overview, counts, la
 
   const { month, year } = overview;
   const isCurrentMonth = year === today.year && month === today.month;
-  const monthName = monthLabel(month, year, locale);
-  const previousName = month === 1 ? monthLabel(12, year - 1, locale) : monthLabel(month - 1, year, locale);
-  const yearText = toLocaleDigits(String(year), locale);
+  const monthName = monthLabel(month, year, fmt);
+  const previousName = month === 1 ? monthLabel(12, year - 1, fmt) : monthLabel(month - 1, year, fmt);
+  const yearText = toLocaleDigits(String(year), fmt);
   const categories = overview.categories;
   const categorized = categories.reduce((sum, c) => sum + Number(c.spent), 0);
   // The month's real income; the categories' sums leave some out.
@@ -97,8 +97,8 @@ export function IncomeSourcesPageClient({ businessId, path, overview, counts, la
     categories.map((c) => ({ name: c.name, amount: Number(c.spent) })),
     lastMonth,
   );
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
-  const percent = (value: number) => formatCount(Math.round(value), locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
+  const percent = (value: number) => formatCount(Math.round(value), fmt);
   const shareOf = (amount: number) => (total > 0 ? (amount / total) * 100 : 0);
 
   function goToMonth(nextMonth: number, nextYear: number) {
@@ -150,7 +150,7 @@ export function IncomeSourcesPageClient({ businessId, path, overview, counts, la
         <Card padding="none" className="flex flex-col gap-4 px-5 py-5 md:px-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div className="flex flex-col gap-1.5">
-              <span className="text-small font-medium text-ink-muted">{t("Earned in {month}", { month: isCurrentMonth || year === today.year ? monthOnlyLabel(month, locale) : monthName })}</span>
+              <span className="text-small font-medium text-ink-muted">{t("Earned in {month}", { month: isCurrentMonth || year === today.year ? monthOnlyLabel(month, fmt) : monthName })}</span>
               <span className={cn("text-amount-lg tabular-nums", total > 0 ? "text-income" : "text-ink-faint")}>{total > 0 ? `+ ${money(total)}` : money(0)}</span>
             </div>
             <span className="flex max-w-90 flex-col gap-1 text-small leading-normal text-ink-muted md:text-right">
@@ -221,7 +221,7 @@ export function IncomeSourcesPageClient({ businessId, path, overview, counts, la
                   <div className="flex items-center justify-between gap-3 text-small">
                     <span className="text-ink-muted">
                       {amount > 0
-                        ? t(isCurrentMonth ? "{percent}% of this month’s income" : "{percent}% of {month}’s income", { percent: percent(share), month: monthOnlyLabel(month, locale) })
+                        ? t(isCurrentMonth ? "{percent}% of this month’s income" : "{percent}% of {month}’s income", { percent: percent(share), month: monthOnlyLabel(month, fmt) })
                         : isCurrentMonth
                           ? t("No income here yet this month")
                           : t("No income here in {month}", { month: monthName })}

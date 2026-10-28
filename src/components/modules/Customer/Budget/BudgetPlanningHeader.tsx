@@ -24,7 +24,7 @@ interface BudgetPlanningHeaderProps {
 // (design-v4 Budget / BudgetIncome). The tabs are links, so each keeps its
 // own address and the month on show.
 export function BudgetPlanningHeader({ tab, path, month, year, counts, onMonthChange, onAdd }: BudgetPlanningHeaderProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const tabs = [
     { key: "expense" as const, label: t("Expense categories"), count: counts.expense, icon: ArrowUpRight },
     { key: "income" as const, label: t("Income categories"), count: counts.income, icon: ArrowDownLeft },
@@ -64,7 +64,7 @@ export function BudgetPlanningHeader({ tab, path, month, year, counts, onMonthCh
             >
               <Icon className="size-3.75 max-sm:hidden" strokeWidth={2.25} aria-hidden="true" />
               {label}
-              <span className={cn("rounded-full px-1.75 py-px text-caption tabular-nums", on ? "bg-emerald-soft" : "bg-surface-sunken")}>{formatCount(count, locale)}</span>
+              <span className={cn("rounded-full px-1.75 py-px text-caption tabular-nums", on ? "bg-emerald-soft" : "bg-surface-sunken")}>{formatCount(count, fmt)}</span>
             </Link>
           );
         })}

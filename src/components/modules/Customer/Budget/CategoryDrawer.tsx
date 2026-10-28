@@ -61,7 +61,7 @@ const ICON_ROWS = 2;
 // tile, the name, the icon grid with search, the colour dots, then for an
 // expense the monthly limit with quick chips and the budget warning.
 export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", variant = "budget", editing, currency, unassigned = null, totalBudget = null, existingNames, assetCount = 0 }: CategoryDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const isAsset = variant === "asset";
@@ -171,7 +171,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
       <div className="flex flex-wrap gap-1.5">
         {QUICK_LIMITS.map((amount) => (
           <button key={amount} type="button" onClick={() => setLimit(String(amount))} className="h-7.5 rounded-full border border-line bg-surface px-3 text-caption font-medium text-ink-2 tabular-nums hover:border-line-strong pointer-coarse:h-11 pointer-coarse:px-4">
-            {formatCurrency(amount, currency, locale).replace(/\.00$/, "")}
+            {formatCurrency(amount, currency, fmt).replace(/\.00$/, "")}
           </button>
         ))}
       </div>
@@ -180,9 +180,9 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
           <TriangleAlert className="mt-0.5 size-3.25 shrink-0" strokeWidth={2.25} aria-hidden="true" />
           <span>
             {fillNodes(t("Only {free} of your {budget} budget is unassigned. This limit goes {over} over it."), {
-              free: formatCurrency((unassigned ?? 0) + currentLimit, currency, locale),
-              budget: formatCurrency(totalBudget, currency, locale),
-              over: formatCurrency(over, currency, locale),
+              free: formatCurrency((unassigned ?? 0) + currentLimit, currency, fmt),
+              budget: formatCurrency(totalBudget, currency, fmt),
+              over: formatCurrency(over, currency, fmt),
             })}
           </span>
         </span>
@@ -216,9 +216,9 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                 <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.75", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="truncate text-[15px] font-semibold text-ink">{trimmed || t(isAsset ? "New asset type" : "New category")}</span>
-                  <span className="text-caption text-ink-muted">{isAsset ? t("Asset type") : isGroup ? t("Expense category") : isIncome ? t("Income category") : t("Limit {amount}", { amount: formatCurrency(limitValue, currency, locale) })}</span>
+                  <span className="text-caption text-ink-muted">{isAsset ? t("Asset type") : isGroup ? t("Expense category") : isIncome ? t("Income category") : t("Limit {amount}", { amount: formatCurrency(limitValue, currency, fmt) })}</span>
                 </span>
-                {!noLimit && <span className="text-caption font-semibold text-emerald">{t("{amount} left", { amount: formatCurrency(limitValue, currency, locale) })}</span>}
+                {!noLimit && <span className="text-caption font-semibold text-emerald">{t("{amount} left", { amount: formatCurrency(limitValue, currency, fmt) })}</span>}
               </div>
               {/* An asset type has nothing to fill a bar with. */}
               {!isAsset && <ProgressBar value={0} size="sm" label={t("Preview")} className="bg-line" />}
@@ -230,7 +230,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             {renamesAssets && (
               <p className="-mt-2 flex gap-2 text-caption leading-relaxed text-warning">
                 <TriangleAlert className="mt-0.5 size-3.25 shrink-0" strokeWidth={2.25} aria-hidden="true" />
-                {plural(t, assetCount, "{count} asset keeps the old name", "{count} assets keep the old name", undefined, locale)}
+                {plural(t, assetCount, "{count} asset keeps the old name", "{count} assets keep the old name", undefined, fmt)}
               </p>
             )}
 
