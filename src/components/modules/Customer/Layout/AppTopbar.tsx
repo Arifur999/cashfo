@@ -74,7 +74,7 @@ export function AppTopbar() {
 function Topbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { activeBusinessId } = useAuth();
   const darkModeOn = useFeature("dark_mode");
   const { openCount } = useTodayTasks();
@@ -116,7 +116,7 @@ function Topbar() {
   const trail = location && !extras?.title ? topbarTrail(location, !!record, listHref ?? undefined, { linkList: listHref !== null }) : [];
   const current = extras?.title ?? record ?? extras?.heading ?? (crumb ? t(crumb.heading) : "");
 
-  const tasksLabel = openCount > 0 ? t("Today’s tasks, {count} left", { count: formatCount(openCount, locale) }) : t("Today’s tasks");
+  const tasksLabel = openCount > 0 ? t("Today’s tasks, {count} left", { count: formatCount(openCount, fmt) }) : t("Today’s tasks");
   const iconButton = ICON_BUTTON[app];
   const switchLabel = t(habit ? "Switch to Money Tracker" : "Switch to Habit Tracker");
   const SwitchIcon = habit ? Wallet : ArrowLeftRight;
@@ -197,7 +197,7 @@ function Topbar() {
               aria-hidden="true"
               className={cn("absolute rounded-full bg-emerald text-center font-bold text-on-action tabular-nums", COUNT_BADGE, !habit && "md:shadow-[0_0_0_2px_var(--page)]")}
             >
-              {formatCount(openCount, locale)}
+              {formatCount(openCount, fmt)}
             </span>
           )}
         </button>

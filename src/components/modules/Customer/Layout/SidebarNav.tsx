@@ -365,7 +365,7 @@ export function useMoneyGroupOpen(): boolean {
 // tinted pill with a bar at the panel's edge, and the counts on Daily
 // habits (done today of planned) and To Do List (open tasks today).
 export function HabitMenu({ collapsed = false, touch = false, className, style, navRef }: MenuProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const sections = menuSections(useNavSections(), "habit");
   const { location } = useNavLocation();
   const { openCount } = useTodayTasks();
@@ -374,11 +374,11 @@ export function HabitMenu({ collapsed = false, touch = false, className, style, 
 
   const badgeOf = (item: NavItem): { text: string; title: string } | null => {
     if (item.badge === "todayTasks" && openCount > 0) {
-      return { text: formatCount(openCount, locale), title: t("Today’s tasks, {count} left", { count: formatCount(openCount, locale) }) };
+      return { text: formatCount(openCount, fmt), title: t("Today’s tasks, {count} left", { count: formatCount(openCount, fmt) }) };
     }
     if (item.badge === "habitsToday" && habits && habits.total > 0) {
-      const done = formatCount(habits.done, locale);
-      const total = formatCount(habits.total, locale);
+      const done = formatCount(habits.done, fmt);
+      const total = formatCount(habits.total, fmt);
       return { text: `${done}/${total}`, title: t("{done} of {total} habits done today", { done, total }) };
     }
     return null;

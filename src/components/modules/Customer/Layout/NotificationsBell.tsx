@@ -75,7 +75,7 @@ type Filter = "all" | "unread";
 // another workspace switches to it before opening.
 export function NotificationsBell({ className, badgeClassName }: { className?: string; badgeClassName?: string }) {
   const router = useRouter();
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user, activeBusinessId } = useAuth();
   const [items, setItems] = useState<UserNotification[]>([]);
   const [unread, setUnread] = useState(0);
@@ -163,7 +163,7 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
     });
   }
 
-  const label = unread > 0 ? `${t("Notifications")}, ${t("{count} new", { count: formatCount(unread, locale) })}` : t("Notifications");
+  const label = unread > 0 ? `${t("Notifications")}, ${t("{count} new", { count: formatCount(unread, fmt) })}` : t("Notifications");
 
   return (
     <Popover open={open} onOpenChange={changeOpen}>
@@ -179,7 +179,7 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
             aria-hidden="true"
             className={cn("absolute flex items-center justify-center rounded-full bg-expense-fill font-bold text-white tabular-nums", badgeClassName)}
           >
-            {formatCount(unread, locale)}
+            {formatCount(unread, fmt)}
           </span>
         )}
       </PopoverTrigger>
@@ -202,7 +202,7 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
               className="[&>button]:h-7.5"
               options={[
                 { value: "all", label: t("All") },
-                { value: "unread", label: unread > 0 ? `${t("Unread")} ${formatCount(unread, locale)}` : t("Unread") },
+                { value: "unread", label: unread > 0 ? `${t("Unread")} ${formatCount(unread, fmt)}` : t("Unread") },
               ]}
             />
           </div>
@@ -215,7 +215,7 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
           )}
           {shown.map((item) => {
             const business = item.businessId ? user.businesses.find((b) => b.id === item.businessId) : undefined;
-            const view = notificationView(item, t, locale, business?.currency);
+            const view = notificationView(item, t, fmt, business?.currency);
             // A kind this build has no tile for still gets the plain bell.
             const { icon: Icon, tone } = KIND_ICON[view.kind] ?? KIND_ICON.other;
             const where = business && workspaces.length > 1 ? ` · ${business.isDefault ? t("Personal") : business.name}` : "";
@@ -228,7 +228,7 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
                   <b className="text-body font-semibold text-ink">{view.title}</b>
                   <span className="text-small leading-4.5 text-ink-2">{view.body}</span>
                   <span className="text-caption text-ink-muted">
-                    {notificationTime(item.createdAt, t, locale)}
+                    {notificationTime(item.createdAt, t, fmt)}
                     {where}
                   </span>
                 </span>

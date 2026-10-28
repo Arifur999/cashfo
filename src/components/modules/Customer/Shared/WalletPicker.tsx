@@ -47,7 +47,7 @@ export interface WalletPickerProps {
 
 // The wallet to pay from or into: its icon, name, balance now and after.
 export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, afterInWords = false, minBalance = 0, currency, loading, error, onClose, emptyMessage }: WalletPickerProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const [open, setOpen] = useState(false);
   const all = [...wallets, ...savingsWallets];
   const selected = all.find((w) => w.id === value);
@@ -79,7 +79,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-body font-semibold text-ink">{nameOf(wallet)}</span>
             <span className={cn("text-caption font-normal tabular-nums", short ? "text-warning" : "text-ink-muted")}>
-              {formatCurrency(wallet.currentBalance, currency, locale)}
+              {formatCurrency(wallet.currentBalance, currency, fmt)}
               {short && ` · ${t("not enough")}`}
             </span>
           </span>
@@ -115,8 +115,8 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
                   <span id={`${id}-value`} className="truncate text-body font-semibold text-ink">{nameOf(selected)}</span>
                   <span className="truncate text-caption font-normal text-ink-muted tabular-nums">
                     {isSavings(selected) ? `${t("Savings wallet")} · ` : `${t(balanceLabel)} `}
-                    {formatCurrency(selected.currentBalance, currency, locale)}
-                    {after !== null && (afterInWords ? ` · ${t("{amount} after this", { amount: formatCurrency(after, currency, locale) })}` : ` → ${formatCurrency(after, currency, locale)}`)}
+                    {formatCurrency(selected.currentBalance, currency, fmt)}
+                    {after !== null && (afterInWords ? ` · ${t("{amount} after this", { amount: formatCurrency(after, currency, fmt) })}` : ` → ${formatCurrency(after, currency, fmt)}`)}
                   </span>
                 </span>
               </>

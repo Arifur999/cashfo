@@ -12,14 +12,12 @@ import type { Tone } from "@/components/smartly/tones";
 import { saveLanguageAction } from "@/lib/customer/authActions";
 import { CONTACT_TYPE_LABELS, contactInitials } from "@/lib/customer/contactDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
 import { NAV_FOOT, NAV_FOOT_LABEL, type NavIcon } from "@/lib/customer/nav";
 import { searchPaletteAction, type PaletteContact, type PaletteResults, type PaletteTransaction } from "@/lib/customer/paletteActions";
 import { palettePages, rankMatches, type PalettePage } from "@/lib/customer/paletteMatch";
 import { SETTINGS_SECTIONS } from "@/lib/customer/settingsDisplay";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { toDateInputValue } from "@/lib/date";
-import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { formatDay, toDateInputValue } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { withoutContext } from "@/lib/i18n/message";
@@ -101,7 +99,7 @@ export function CustomerSearch(props: CustomerSearchProps) {
 }
 
 function SearchPalette({ iconClassName, boxClassName, kbdClassName }: CustomerSearchProps) {
-  const { t, locale, toggleLocale } = useLocale();
+  const { t, locale, fmt, toggleLocale } = useLocale();
   const { user, activeBusiness, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const darkModeOn = useFeature("dark_mode");
@@ -218,7 +216,7 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName }: CustomerSe
   const dayText = (iso: string) => {
     const day = toDateInputValue(iso);
     if (!day) return "";
-    return locale === "bn" ? `${banglaDayMonth(day)} ${toBanglaDigits(day.slice(0, 4))}` : formatDate(iso, "d MMM yyyy");
+    return formatDay(day, "d MMM yyyy", fmt);
   };
   // The Add menu's own glyphs for money in, out and between wallets.
   const transactionMark = (type: PaletteTransaction["type"]) =>
@@ -239,7 +237,7 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName }: CustomerSe
       key: `transaction:${transaction.id}`,
       title: transaction.title ?? (typeLabel ? t(typeLabel) : t("Transaction")),
       sub: [dayText(transaction.date), transaction.wallet, transaction.cancelled && t(transaction.cancelled)].filter(Boolean).join(" · "),
-      badge: signed ? formatSignedCurrency(transaction.amount, currency, locale) : formatCurrency(Math.abs(transaction.amount), currency, locale),
+      badge: signed ? formatSignedCurrency(transaction.amount, currency, fmt) : formatCurrency(Math.abs(transaction.amount), currency, fmt),
       mark: transactionMark(transaction.type),
       href: `/transactions/${encodeURIComponent(transaction.id)}`,
     };

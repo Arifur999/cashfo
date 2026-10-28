@@ -1,7 +1,7 @@
 import { formatDate, formatMonthName, toDateInputValue } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { type FormatLocale, langOf } from "@/lib/i18n/formatPrefs";
 import { localName, plural, type Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import type { UserNotification } from "./api";
 import { formatCurrency } from "./currency";
 import { timeLabel } from "./date";
@@ -55,7 +55,7 @@ function monthsAhead(from: string, to: string): number {
   return (toYear - fromYear) * 12 + (toMonth - fromMonth);
 }
 
-function loanTitle(name: string, owed: boolean, days: number, t: Translate, locale: Locale): string {
+function loanTitle(name: string, owed: boolean, days: number, t: Translate, locale: FormatLocale): string {
   if (days < 0) return t(owed ? "Payment to {name} is overdue" : "{name}'s payment to you is overdue", { name });
   if (days === 0) return t(owed ? "Payment to {name} is due today" : "{name} should pay you today", { name });
   if (days === 1) return t(owed ? "Payment to {name} is due tomorrow" : "{name} should pay you tomorrow", { name });
@@ -67,7 +67,7 @@ function loanTitle(name: string, owed: boolean, days: number, t: Translate, loca
 // time of the thing itself (the prayer, Sehri's end, Iftar, the to-do's due
 // time, the habit's time), `minutesBefore` how early it was sent, and
 // `name` the habit, challenge, book, skill or to-do as the person typed it.
-function reminderView(data: UserNotification["data"], t: Translate, locale: Locale): NotificationView {
+function reminderView(data: UserNotification["data"], t: Translate, locale: FormatLocale): NotificationView {
   const kind = text(data.kind);
   const targetKey = text(data.targetKey);
   const name = text(data.name).trim() || t("Reminder");
@@ -106,7 +106,8 @@ function reminderView(data: UserNotification["data"], t: Translate, locale: Loca
 // themselves: the reader's language, their money and their dates.
 interface Words {
   t: Translate;
-  locale: Locale;
+  // The reader's digits and date style (formatPrefs.ts).
+  locale: FormatLocale;
   money: (value: string | number | null | undefined) => string;
   // "28 Oct 2026" in the reader's language; "" for a missing date.
   day: (iso: string | number | null | undefined) => string;
@@ -297,7 +298,7 @@ function otherView(item: UserNotification, t: Translate): NotificationView {
 // workspace it is about. Never throws: a row it can't word (a type or event
 // newer than this build, or data it didn't expect) reads as a plain
 // notification, so one odd row can't take the whole page down.
-export function notificationView(item: UserNotification, t: Translate, locale: Locale, currency = "BDT", now: Date = new Date()): NotificationView {
+export function notificationView(item: UserNotification, t: Translate, locale: FormatLocale, currency = "BDT", now: Date = new Date()): NotificationView {
   try {
     return knownView(item, t, locale, currency, now) ?? otherView(item, t);
   } catch {
@@ -305,7 +306,7 @@ export function notificationView(item: UserNotification, t: Translate, locale: L
   }
 }
 
-function knownView(item: UserNotification, t: Translate, locale: Locale, currency: string, now: Date): NotificationView | null {
+function knownView(item: UserNotification, t: Translate, locale: FormatLocale, currency: string, now: Date): NotificationView | null {
   const data = item.data ?? {};
   const money = (value: string | number | null | undefined) => formatCurrency(Number(value ?? 0) || 0, currency, locale);
   const words: Words = { t, locale, money, day: (iso) => (iso ? formatDate(iso, "d MMM yyyy", "", locale) : "") };
@@ -324,7 +325,7 @@ function knownView(item: UserNotification, t: Translate, locale: Locale, currenc
     case "BUDGET": {
       const left = Number(data.left ?? 0);
       // The category's Bangla name, once the reminder carries it.
-      const category = localName(locale, { name: text(data.category), nameBn: data.categoryBn === undefined ? null : text(data.categoryBn) });
+      const category = localName(langOf(locale), { name: text(data.category), nameBn: data.categoryBn === undefined ? null : text(data.categoryBn) });
       const month = monthOf(text(data.month));
       return left < 0
         ? { kind: "budget", title: t("{category} is over its limit", { category }), body: t("{amount} over the limit for {month}.", { amount: money(-left), month }), href: "/budget-planning" }
@@ -355,7 +356,7 @@ function knownView(item: UserNotification, t: Translate, locale: Locale, currenc
     case "SUPPORT_REPLY":
       return { kind: "support", title: t("Support replied to your message"), body: text(data.subject), href: `/settings/help?message=${encodeURIComponent(text(data.ticketId))}` };
     case "ANNOUNCEMENT": {
-      const bangla = locale === "bn";
+      const bangla = langOf(locale) === "bn";
       return {
         kind: "announcement",
         title: text(bangla && text(data.titleBn).trim() ? data.titleBn : data.title),
@@ -387,7 +388,7 @@ function knownView(item: UserNotification, t: Translate, locale: Locale, currenc
 // "Thu, 1 Oct" (or "2 Jun 2025" from another year), as the board dates them.
 // The minutes are a count and the dates are the reader's, so a Bangla
 // reader gets Bangla digits and month names.
-export function notificationTime(iso: string, t: Translate, locale: Locale = "en", now: Date = new Date()): string {
+export function notificationTime(iso: string, t: Translate, locale: FormatLocale = "en", now: Date = new Date()): string {
   const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
   if (minutes < 1) return t("just now");
   if (minutes < 60) return t("{count} min ago", { count: formatCount(minutes, locale) });
