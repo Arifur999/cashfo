@@ -10,9 +10,9 @@ import { openErrorCountQuery } from "@/queries/system.queries";
 // before this renders. The open-error count feeds the Errors tab.
 const SystemLayout = ({ children }: LayoutProps<"/admin/system">) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <QueryPrefetch prefetch={(client) => client.prefetchQuery(openErrorCountQuery())}>
-        <div className="space-y-4">
+        <div className="space-y-4.5">
           <PageHeader {...SYSTEM_PAGE} actions={<SystemHeaderAction />} />
           <SystemTabs />
         </div>
