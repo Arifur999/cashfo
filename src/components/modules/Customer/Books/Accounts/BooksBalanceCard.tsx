@@ -19,7 +19,7 @@ interface BooksBalanceCardProps {
 // opening balances accounts started with count in the owner's share, so a
 // wallet opened with money in it never reads as a missing entry.
 export function BooksBalanceCard({ balance, currency }: BooksBalanceCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   // On a phone each term is one line, label left and figure right, so the
   // three don't stack into a column of display figures.
   const term = (label: string, value: number, note?: string) => (
@@ -50,10 +50,10 @@ export function BooksBalanceCard({ balance, currency }: BooksBalanceCardProps) {
         {sign("=")}
         {term(t("Owes"), balance.owes)}
         {sign("+")}
-        {term(t("Your share"), balance.share, balance.opening !== 0 ? t("incl. {amount} opening balances", { amount: formatCurrency(balance.opening, currency, locale) }) : undefined)}
+        {term(t("Your share"), balance.share, balance.opening !== 0 ? t("incl. {amount} opening balances", { amount: formatCurrency(balance.opening, currency, fmt) }) : undefined)}
         <Chip tone={balance.balanced ? "income" : "warning"} size="md" className="gap-2 self-start sm:self-center">
           <span className="size-1.75 rounded-full bg-current" aria-hidden="true" />
-          {balance.balanced ? t("Balanced") : t("Off by {amount}", { amount: formatCurrency(Math.abs(balance.gap), currency, locale) })}
+          {balance.balanced ? t("Balanced") : t("Off by {amount}", { amount: formatCurrency(Math.abs(balance.gap), currency, fmt) })}
         </Chip>
       </span>
     </Card>

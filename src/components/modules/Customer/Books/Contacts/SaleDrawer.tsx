@@ -34,7 +34,7 @@ interface SaleDrawerProps {
 // Record a sale or purchase on credit: the money is owed from today and
 // paid off later with Record payment.
 export function SaleDrawer({ open, kind, contact, businessId, currency, onClose }: SaleDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(getAppToday());
@@ -110,7 +110,7 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
       const input = { contactId: contact.id, amount: value, date, dueDate: dueDate || undefined, description: description.trim() || undefined, referenceNo: reference.trim() || undefined, ...(kind === "sale" ? { incomeAccountId: accountId } : { expenseAccountId: accountId }) };
       const result = kind === "sale" ? await recordSaleAction(businessId, input) : await recordPurchaseAction(businessId, input);
       if (result.success) {
-        toast.success(t(kind === "sale" ? "{amount} sold on credit to {name}" : "{amount} bought on credit from {name}", { amount: formatCurrency(value, currency, locale), name: contact.name }));
+        toast.success(t(kind === "sale" ? "{amount} sold on credit to {name}" : "{amount} bought on credit from {name}", { amount: formatCurrency(value, currency, fmt), name: contact.name }));
         onClose();
         router.refresh();
       } else {

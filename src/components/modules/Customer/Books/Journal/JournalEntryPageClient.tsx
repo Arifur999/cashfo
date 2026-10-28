@@ -48,7 +48,7 @@ const INDENT = "   ";
 // Books › New journal entry: a dated, referenced posting of two or more
 // lines whose debits must equal their credits.
 export function JournalEntryPageClient({ businessId, groups, preferredLanguage, currency, canManage }: JournalEntryPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [date, setDate] = useState(getAppToday());
   const [reference, setReference] = useState("");
@@ -69,7 +69,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
 
   // What the bar under the lines says: why Save is still off, or that the
   // entry is ready. An untouched form starts quiet: nothing is wrong yet.
-  const status: { tone: "start" | "warn" | "ok"; text: string } = totals.debit + totals.credit === 0 ? { tone: "start", text: t("Fill in at least two lines") } : !totals.balanced ? { tone: "warn", text: t("Off by {amount}", { amount: formatCurrency(Math.abs(totals.difference), currency, locale) }) } : missingAccount ? { tone: "warn", text: t("Pick an account on every line with an amount") } : !totals.complete ? { tone: "warn", text: t("Fill in at least two lines") } : { tone: "ok", text: t("Balanced: debits equal credits") };
+  const status: { tone: "start" | "warn" | "ok"; text: string } = totals.debit + totals.credit === 0 ? { tone: "start", text: t("Fill in at least two lines") } : !totals.balanced ? { tone: "warn", text: t("Off by {amount}", { amount: formatCurrency(Math.abs(totals.difference), currency, fmt) }) } : missingAccount ? { tone: "warn", text: t("Pick an account on every line with an amount") } : !totals.complete ? { tone: "warn", text: t("Fill in at least two lines") } : { tone: "ok", text: t("Balanced: debits equal credits") };
   const statusTone = { start: { band: "bg-strip", text: "text-ink-muted" }, warn: { band: "bg-warning-soft", text: "text-warning" }, ok: { band: "bg-mint-50", text: "text-brand-ink" } }[status.tone];
 
   function update(index: number, patch: Partial<JournalLine>) {
@@ -95,7 +95,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
       {t("Save entry")}
     </Button>
   );
-  const line = (key: string, index: number) => t(key, { number: formatCount(index + 1, locale) });
+  const line = (key: string, index: number) => t(key, { number: formatCount(index + 1, fmt) });
 
   return (
     <PageFrame className="gap-6">
@@ -167,11 +167,11 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
                   <span className="flex justify-between gap-4 text-body font-bold text-ink tabular-nums md:contents">
                     <span className="md:text-right">
                       <span className="text-caption font-medium text-ink-muted md:hidden">{t("Debit")} </span>
-                      {formatCurrency(totals.debit, currency, locale)}
+                      {formatCurrency(totals.debit, currency, fmt)}
                     </span>
                     <span className="md:text-right">
                       <span className="text-caption font-medium text-ink-muted md:hidden">{t("Credit")} </span>
-                      {formatCurrency(totals.credit, currency, locale)}
+                      {formatCurrency(totals.credit, currency, fmt)}
                     </span>
                   </span>
                   <span className="hidden md:block" />

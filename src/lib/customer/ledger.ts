@@ -1,5 +1,5 @@
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import type { AccountLedger, AccountSummary, AccountType, EntryType, TransactionType } from "./api";
 import { formatDate } from "./date";
 import { isIsoDay } from "./dateRangePresets";
@@ -97,7 +97,7 @@ export function isSettledDay(value: string): boolean {
 
 // The period a statement or a list covers, in words, for its printed copy.
 // The days are written in the reader's language ("১ অক্টো ২০২৬" in Bangla).
-export function periodText(t: Translate, from?: string, to?: string, locale: Locale = "en"): string {
+export function periodText(t: Translate, from?: string, to?: string, locale: FormatLocale = "en"): string {
   const day = (value: string) => formatDate(value, undefined, locale);
   if (from && to) return t("{from} to {to}", { from: day(from), to: day(to) });
   if (from) return t("From {from}", { from: day(from) });

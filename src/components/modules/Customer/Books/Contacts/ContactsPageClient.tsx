@@ -13,6 +13,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { downloadCsv } from "@/lib/download";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
+import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { toCsv } from "@/lib/table/csv";
 import { StatStrip } from "../shared/StatStrip";
@@ -32,13 +33,13 @@ interface ContactsPageClientProps {
 // Books › Customers & suppliers: what is owed each way, then everyone the
 // business trades with.
 export function ContactsPageClient({ businessId, contacts, receivableAging, canManage, currency, today }: ContactsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const loansOn = useFeature("loan_management");
   const [drawer, setDrawer] = useState<{ open: boolean; editing: Contact | null }>({ open: false, editing: null });
   const stats = contactStats(contacts);
   const late = overdueOver30(receivableAging);
   // "{count} customers", the count in the reader's digits.
-  const counted = (n: number, one: string, many: string) => t(n === 1 ? one : many, { count: formatCount(n, locale) });
+  const counted = (n: number, one: string, many: string) => t(n === 1 ? one : many, { count: formatCount(n, fmt) });
 
   function exportCsv() {
     downloadCsv(toCsv([t("Name"), t("Type"), t("Phone"), t("Email"), t("They owe you (negative: you owe them)")], contactsCsvRows(contacts, t)), `customers-and-suppliers-${today}`);
@@ -72,11 +73,11 @@ export function ContactsPageClient({ businessId, contacts, receivableAging, canM
           customer is someone you owe. */}
       <StatStrip
         stats={[
-          { label: t("Owed to you"), value: formatCurrency(stats.receivable, currency, locale), tone: "income", note: counted(stats.receivableFrom, "{count} person", "{count} people") },
-          { label: t("You owe"), value: formatCurrency(stats.payable, currency, locale), tone: "expense", note: counted(stats.payableTo, "{count} person", "{count} people") },
+          { label: t("Owed to you"), value: formatCurrency(stats.receivable, currency, fmt), tone: "income", note: counted(stats.receivableFrom, "{count} person", "{count} people") },
+          { label: t("You owe"), value: formatCurrency(stats.payable, currency, fmt), tone: "expense", note: counted(stats.payableTo, "{count} person", "{count} people") },
           {
-            label: t("Overdue over 30 days"),
-            value: formatCurrency(late.amount, currency, locale),
+            label: redigit(t("Overdue over 30 days"), fmt),
+            value: formatCurrency(late.amount, currency, fmt),
             tone: late.amount > 0 ? "warning" : "neutral",
             note: (
               <>
@@ -91,7 +92,7 @@ export function ContactsPageClient({ businessId, contacts, receivableAging, canM
               </>
             ),
           },
-          { label: t("People and shops"), value: formatCount(stats.total, locale), note: `${counted(stats.customers, "{count} customer", "{count} customers")} · ${counted(stats.suppliers, "{count} supplier", "{count} suppliers")}` },
+          { label: t("People and shops"), value: formatCount(stats.total, fmt), note: `${counted(stats.customers, "{count} customer", "{count} customers")} · ${counted(stats.suppliers, "{count} supplier", "{count} suppliers")}` },
         ]}
       />
 

@@ -57,7 +57,7 @@ const EXPORT_LIMIT = 5000;
 // period, what came in and went out (or, off the wallets, what raised and
 // lowered it) between them, and every entry.
 export function AccountDetailPageClient({ businessId, account, accounts, ledger, summary, canManage, preferredLanguage, currency, today, range, customFrom, customTo, dateFrom, dateTo }: AccountDetailPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pdfExportOn = useFeature("pdf_export");
@@ -90,7 +90,7 @@ export function AccountDetailPageClient({ businessId, account, accounts, ledger,
         toast.error(t("Couldn't export the ledger. Try again."));
         return;
       }
-      if (result.capped) toast.info(t("Only the first {count} entries were exported.", { count: formatCount(EXPORT_LIMIT, locale) }));
+      if (result.capped) toast.info(t("Only the first {count} entries were exported.", { count: formatCount(EXPORT_LIMIT, fmt) }));
       const rows = result.rows.map((row) => {
         const into = ledgerDirection(row.entryType, account.accountType) === "in";
         return [row.date.slice(0, 10), row.description ?? "", row.referenceNo ?? "", into ? Number(row.amount) : "", into ? "" : Number(row.amount), Number(row.runningBalance)];
@@ -103,10 +103,10 @@ export function AccountDetailPageClient({ businessId, account, accounts, ledger,
   }
 
   // "Opening, 1 Oct": the day the figure stands on, when the period has one.
-  const dayLabel = (key: string, date: string | undefined, fallback: string) => (date ? t(key, { date: booksDate(date, locale, { today }) }) : t(fallback));
+  const dayLabel = (key: string, date: string | undefined, fallback: string) => (date ? t(key, { date: booksDate(date, fmt, { today }) }) : t(fallback));
   // What the strip's four figures leave out: transfers between wallets, and
   // a void whose reversal fell in another period.
-  const closingNote = [adjustment !== 0 ? t("{amount} transfers", { amount: formatSignedCurrency(adjustment, currency, locale) }) : null, figures.voided !== 0 ? t("{amount} voided or reversed", { amount: formatSignedCurrency(figures.voided, currency, locale) }) : null].filter(Boolean).join(" · ");
+  const closingNote = [adjustment !== 0 ? t("{amount} transfers", { amount: formatSignedCurrency(adjustment, currency, fmt) }) : null, figures.voided !== 0 ? t("{amount} voided or reversed", { amount: formatSignedCurrency(figures.voided, currency, fmt) }) : null].filter(Boolean).join(" · ");
 
   return (
     <PageFrame className="gap-6">
@@ -147,10 +147,10 @@ export function AccountDetailPageClient({ businessId, account, accounts, ledger,
       <StatStrip
         busy={loading}
         stats={[
-          { label: dayLabel("Opening, {date}", dateFrom, "Opening balance"), value: formatCurrency(figures.opening, currency, locale) },
-          { label: t(words.in), value: formatSignedCurrency(summary.totalIn, currency, locale), tone: words.money ? "income" : "neutral" },
-          { label: t(words.out), value: formatSignedCurrency(-Number(summary.totalOut), currency, locale), tone: words.money ? "expense" : "neutral" },
-          { label: dayLabel("Closing, {date}", dateTo, "Closing balance"), value: formatCurrency(figures.closing, currency, locale), note: closingNote || undefined },
+          { label: dayLabel("Opening, {date}", dateFrom, "Opening balance"), value: formatCurrency(figures.opening, currency, fmt) },
+          { label: t(words.in), value: formatSignedCurrency(summary.totalIn, currency, fmt), tone: words.money ? "income" : "neutral" },
+          { label: t(words.out), value: formatSignedCurrency(-Number(summary.totalOut), currency, fmt), tone: words.money ? "expense" : "neutral" },
+          { label: dayLabel("Closing, {date}", dateTo, "Closing balance"), value: formatCurrency(figures.closing, currency, fmt), note: closingNote || undefined },
         ]}
       />
 
