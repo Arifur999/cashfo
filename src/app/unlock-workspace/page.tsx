@@ -54,7 +54,7 @@ export default async function UnlockWorkspacePage({ searchParams }: PageProps<"/
 
   return (
     <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>
-      <LocaleProvider initialLocale={locale} overrides={overrides}>
+      <LocaleProvider initialLocale={locale} overrides={overrides} preferences={user.preferences}>
         <WorkspaceLockScreen
           businessId={business.id}
           businessName={workspaceName(business, user.name)}

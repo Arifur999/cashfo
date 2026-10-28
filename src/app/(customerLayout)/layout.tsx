@@ -82,7 +82,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
     if (asked) redirect(chooseWorkspaceHref(asked));
     return (
       <ThemeProvider allowDark={allowDark}>
-        <LocaleProvider initialLocale={locale} overrides={overrides}>
+        <LocaleProvider initialLocale={locale} overrides={overrides} preferences={user.preferences}>
           <ChooseWorkspaceRedirect />
         </LocaleProvider>
       </ThemeProvider>
@@ -105,7 +105,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   if (activeBusiness?.hasPinLock && !unlockedBusinessIds.includes(activeBusiness.id)) {
     return (
       <ThemeProvider allowDark={allowDark}>
-        <LocaleProvider initialLocale={locale} overrides={overrides}>
+        <LocaleProvider initialLocale={locale} overrides={overrides} preferences={user.preferences}>
           <WorkspaceLockScreen
             businessId={activeBusiness.id}
             businessName={workspaceName(activeBusiness, user.name)}
@@ -120,7 +120,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   return (
     <ThemeProvider allowDark={allowDark}>
       <AuthProvider initialUser={user} initialActiveBusinessId={activeBusinessId} unlockedBusinessIds={unlockedBusinessIds}>
-        <LocaleProvider initialLocale={locale} overrides={overrides}>
+        <LocaleProvider initialLocale={locale} overrides={overrides} preferences={user.preferences}>
           <PlatformProvider value={{ flags: platform.flags, supportEmail: platform.supportEmail }}>
             <PlanProvider value={plan}>
               <PrayerSettingsProvider initial={prayerSettings}>

@@ -127,7 +127,7 @@ const Pagination = ({
   focusTargetId,
   className,
 }: PaginationProps) => {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const model = pagerModel(page, totalPages, total, pageSize);
   const shownPage = model.current;
   // Set by a click here, so loading the page cold never steals focus.
@@ -175,8 +175,8 @@ const Pagination = ({
     summary === false ? null : summary === undefined ? (
       <p>
         {fillNodes(t("Showing {range} of {total}"), {
-          range: figure(toLocaleDigits(`${formatNumber(model.first)}–${formatNumber(model.last)}`, locale)),
-          total: figure(formatCount(total, locale)),
+          range: figure(toLocaleDigits(`${formatNumber(model.first)}–${formatNumber(model.last)}`, fmt)),
+          total: figure(formatCount(total, fmt)),
         })}
       </p>
     ) : (
@@ -199,14 +199,14 @@ const Pagination = ({
       >
         {sizes.map((size) => (
           <option key={size} value={size}>
-            {formatCount(size, locale)}
+            {formatCount(size, fmt)}
           </option>
         ))}
       </NativeSelect>
     </label>
   );
 
-  const pageOf = t("Page {page} of {total}", { page: formatCount(shownPage, locale), total: formatCount(model.totalPages, locale) });
+  const pageOf = t("Page {page} of {total}", { page: formatCount(shownPage, fmt), total: formatCount(model.totalPages, fmt) });
   const previousLabel = labels?.previous ?? t("Previous page");
   const nextLabel = labels?.next ?? t("Next page");
 
@@ -255,12 +255,12 @@ const Pagination = ({
                         page={item.page}
                         current={item.current}
                         // The page on show says where the reader is; the others where they'd go.
-                        label={item.current ? pageOf : t("Go to page {page}", { page: formatCount(item.page, locale) })}
+                        label={item.current ? pageOf : t("Go to page {page}", { page: formatCount(item.page, fmt) })}
                         className={SQUARE}
                         hrefFor={hrefFor}
                         onGo={go}
                       >
-                        {formatCount(item.page, locale)}
+                        {formatCount(item.page, fmt)}
                       </Control>
                     ),
                   )}

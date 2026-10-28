@@ -34,9 +34,9 @@ interface DayInputProps {
 // focus from the label and the Tab key), so it carries the field's name and
 // description too.
 const DayInput = ({ id, value, onChange, min, max, size = "md", invalid = false, placeholder = "", icon, className, ...props }: DayInputProps) => {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const picker = useRef<HTMLInputElement>(null);
-  const label = formDayLabel(value, getAppToday(), t("Today"), locale);
+  const label = formDayLabel(value, getAppToday(), t("Today"), fmt);
   const describedBy = [invalid && id ? `${id}-error` : undefined, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
 
   function open() {
