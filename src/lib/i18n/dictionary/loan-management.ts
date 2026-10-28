@@ -360,4 +360,21 @@ export const loanManagementDictionary: Record<string, string> = {
   "Search name, phone…": "নাম, ফোন খুঁজুন…",
   "e.g. Loan no. BL-2231": "যেমন: ঋণ নং BL-2231",
   "e.g. Sep profit · slip 4471": "যেমন: সেপ্টেম্বরের লাভ · স্লিপ 4471",
+
+  // The loan redesign (LoanTransactions, the entry popup): search, the
+  // Charge, Type and Balance columns, Edit and Delete.
+  "Search name, note or amount…": "নাম, নোট বা টাকার পরিমাণ খুঁজুন…",
+  "Search loan transactions": "ঋণের লেনদেন খুঁজুন",
+  "Print this list": "এই তালিকা প্রিন্ট করুন",
+  "Bank / Person": "ব্যাংক / ব্যক্তি",
+  Charge: "চার্জ",
+  Received: "প্রাপ্তি",
+  "Edit entry": "এন্ট্রি এডিট করুন",
+  "Edit loan entry": "ঋণের এন্ট্রি এডিট করুন",
+  "Delete entry": "এন্ট্রি মুছুন",
+  "Delete this entry?": "এই এন্ট্রি মুছবেন?",
+  "Entry deleted": "এন্ট্রি মুছে ফেলা হয়েছে",
+  "Its charge of {amount} is removed too.": "এর {amount} চার্জও বাদ যাবে।",
+  "Paid from the same wallet, as an expense": "একই ওয়ালেট থেকে খরচ হিসেবে কাটা হবে",
+  "Charge · expense": "চার্জ · খরচ",
 };
