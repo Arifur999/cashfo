@@ -47,10 +47,6 @@ type SubmitMode = When | "draft";
 
 const isChannel = (value: string): value is NotificationChannel => (NOTIFICATION_CHANNELS as readonly string[]).includes(value);
 
-// There is no SMS provider yet: the API refuses an SMS send, so the card is
-// shown but can't be picked.
-const UNAVAILABLE_CHANNELS: readonly NotificationChannel[] = ["SMS"];
-
 // A choice drawn as the board's card: a radio dot, a name and a line
 // under it, in a radio group (one tab stop, the arrow keys move the choice).
 const ChoiceCard = ({ value, title, sub, disabled = false }: { value: string; title: string; sub: string; disabled?: boolean }) => (
@@ -167,7 +163,7 @@ const CampaignForm = ({ defaultValues = NEW_CAMPAIGN_DEFAULTS, audienceNote, onD
           // The campaign goes out on the template's own channel, unless changed below.
           onChange: ({ value }) => {
             const template = templates?.find((item) => item.key === value);
-            if (template && !UNAVAILABLE_CHANNELS.includes(template.channel)) form.setFieldValue("channel", template.channel);
+            if (template) form.setFieldValue("channel", template.channel);
           },
         }}
       >
@@ -187,10 +183,9 @@ const CampaignForm = ({ defaultValues = NEW_CAMPAIGN_DEFAULTS, audienceNote, onD
               aria-label={translate("Channel")}
               className="grid gap-2 sm:grid-cols-3"
             >
-              {NOTIFICATION_CHANNELS.map((channel) => {
-                const unavailable = UNAVAILABLE_CHANNELS.includes(channel);
-                return <ChoiceCard key={channel} value={channel} title={CHANNEL_META[channel].label} sub={unavailable ? "Not available yet" : CHANNEL_META[channel].note} disabled={unavailable} />;
-              })}
+              {NOTIFICATION_CHANNELS.map((channel) => (
+                <ChoiceCard key={channel} value={channel} title={CHANNEL_META[channel].label} sub={CHANNEL_META[channel].note} />
+              ))}
             </RadioGroup.Root>
             <form.Subscribe selector={(state) => state.values.templateKey}>
               {(templateKey) => <ChannelMismatch template={templates?.find((item) => item.key === templateKey)} picked={field.state.value} />}

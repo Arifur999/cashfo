@@ -19,7 +19,7 @@ export const adminNotificationsDictionary: Record<string, string> = {
   "In-app": "অ্যাপের ভেতরে",
   "In-app push": "অ্যাপের ভেতরে",
   "Free to send": "পাঠাতে খরচ নেই",
-  "Costs per message": "প্রতি মেসেজে খরচ",
+  "Verified phones only · costs per message": "শুধু যাচাই করা ফোনে · প্রতি মেসেজে খরচ",
   "Next time they open the app": "পরের বার অ্যাপ খুললে",
 
   // Templates
@@ -137,7 +137,6 @@ export const adminNotificationsDictionary: Record<string, string> = {
   // Design v4
   "Sent by hand for big new features": "বড় নতুন ফিচারের জন্য হাতে পাঠানো হয়",
   "Made for campaigns": "ক্যাম্পেইনের জন্য বানানো",
-  "Not available yet": "এখনো চালু হয়নি",
   "Starts in a minute": "এক মিনিটের মধ্যে শুরু হবে",
   Rule: "নিয়ম",
   Condition: "শর্ত",

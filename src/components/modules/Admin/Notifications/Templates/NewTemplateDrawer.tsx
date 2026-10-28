@@ -19,8 +19,7 @@ const { shape } = newTemplateFormZodSchema;
 
 const DEFAULTS: INewTemplateFormValues = { key: "", channel: "EMAIL", subjectEn: "", subjectBn: "", bodyEn: "", bodyBn: "" };
 
-// SMS can't be sent yet, so a new template is for email or in-app.
-const CHANNEL_OPTIONS = NOTIFICATION_CHANNELS.filter((channel) => channel !== "SMS").map((channel) => ({ value: channel, label: CHANNEL_META[channel].label }));
+const CHANNEL_OPTIONS = NOTIFICATION_CHANNELS.map((channel) => ({ value: channel, label: CHANNEL_META[channel].label }));
 
 interface NewTemplateDrawerProps {
   open: boolean;
