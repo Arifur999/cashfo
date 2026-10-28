@@ -138,13 +138,14 @@ export const balanceDictionary: Record<string, string> = {
   "From → To": "থেকে → যেখানে",
   // A row's link, read out instead of the arrow between the two wallets.
   "{from} to {to}, {amount}": "{from} থেকে {to}, {amount}",
-  "Void transfer": "ট্রান্সফার বাতিল করুন",
+  "Delete transfer": "ট্রান্সফার মুছুন",
   // In place of Void on a savings goal's deposit: Savings Goals undoes it.
   "Kept by the savings goal": "সঞ্চয় লক্ষ্যে রাখা আছে",
   "Kept by the savings goal. Open Savings Goals": "সঞ্চয় লক্ষ্যে রাখা আছে। সঞ্চয় লক্ষ্য খুলুন",
   "Void this transfer?": "এই ট্রান্সফার বাতিল করবেন?",
-  "Both wallets go back to their balances from before this transfer. It stays in your history, marked as voided.": "দুটি ওয়ালেটই এই ট্রান্সফারের আগের ব্যালেন্সে ফিরে যাবে। এটি বাতিল চিহ্নসহ ইতিহাসে থেকে যাবে।",
-  "Transfer voided": "ট্রান্সফার বাতিল হয়েছে",
+  "Delete this transfer?": "এই ট্রান্সফার মুছবেন?",
+  "Both wallets go back to their balances from before this transfer, and it leaves the list. A record of it stays in the ledger, marked as voided.": "দুটি ওয়ালেটই এই ট্রান্সফারের আগের ব্যালেন্সে ফিরে যাবে, আর এটি তালিকা থেকে সরে যাবে। লেজারে বাতিল চিহ্নসহ এর একটি রেকর্ড থেকে যাবে।",
+  "Transfer deleted": "ট্রান্সফার মুছে ফেলা হয়েছে",
   // Print, which loads the whole period first when the history has pages.
   "Couldn't load the transfers to print": "ছাপার জন্য ট্রান্সফারগুলো আনা যায়নি",
   "Only the latest {count} transfers are printed -- pick a shorter period to print them all.": "শুধু সর্বশেষ {count}টি ট্রান্সফার ছাপা হয়েছে -- সবগুলো ছাপতে ছোট সময়সীমা বেছে নিন।",
