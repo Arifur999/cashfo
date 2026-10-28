@@ -33,7 +33,9 @@ export interface HomeWallet {
 
 // A spending category with a limit this month.
 export interface HomeBudgetLine {
+  // A category's name, or app words (the month's whole budget) to translate.
   name: string;
+  translate?: boolean;
   spent: number;
   limit: number;
   percent: number;

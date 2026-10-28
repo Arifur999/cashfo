@@ -116,7 +116,7 @@ export function BudgetCard({ data }: { data: HomeData }) {
       ) : budget.lines.length === 0 ? (
         <div className="flex flex-col items-start gap-2">
           <span className="text-body font-semibold text-ink">{t(budget.hasBudget ? "Your budget is planned" : "No budget yet")}</span>
-          <span className="text-[13px] leading-normal text-ink-muted">{t("Give each spending category a limit so you're warned early.")}</span>
+          <span className="text-[13px] leading-normal text-ink-muted">{t("Set this month's income target and expense budget so you're warned early.")}</span>
           {data.canManage && !budget.hasBudget && (
             <Link href="/categories" className="mt-1 flex h-9 items-center rounded-full border border-input bg-surface px-3.5 text-[13px] font-semibold text-ink hover:bg-surface-sunken">
               {t("Set budget")}
@@ -130,7 +130,7 @@ export function BudgetCard({ data }: { data: HomeData }) {
           return (
             <div key={line.name} className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-body leading-[normal] font-medium text-ink">{line.name}</span>
+                <span className="truncate text-body leading-[normal] font-medium text-ink">{line.translate ? t(line.name) : line.name}</span>
                 <span className="shrink-0 text-caption whitespace-nowrap text-ink-muted tabular-nums">
                   <b className="font-semibold text-ink">{money(line.spent)}</b> / {money(line.limit)}
                 </span>

@@ -278,7 +278,6 @@ export const dashboardDictionary: Record<string, string> = {
   "Each step takes about a minute. You can come back to this anytime.": "প্রতিটি ধাপে প্রায় এক মিনিট লাগে। যেকোনো সময় এখানে ফিরে আসতে পারেন।",
   "Hide setup guide": "সেটআপ গাইড লুকান",
   "Record an income or an expense to start tracking.": "হিসাব রাখা শুরু করতে একটি আয় বা ব্যয় লিখুন।",
-  "Give each spending category a limit so you're warned early.": "প্রতিটি খরচের খাতে একটি সীমা দিন, যাতে আগেভাগে সতর্ক হতে পারেন।",
   "Create a savings goal": "সঞ্চয়ের লক্ষ্য তৈরি করুন",
   "Save towards something that matters and track progress.": "দরকারি কিছুর জন্য জমান, আর অগ্রগতি দেখুন।",
   "{wallet} · {amount} added": "{wallet} · {amount} যোগ হয়েছে",

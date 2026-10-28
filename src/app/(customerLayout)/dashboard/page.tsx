@@ -9,7 +9,7 @@ import { API_BASE_URL, type CategoryBreakdown, type WalletOverviewRow, type Wall
 import { customerApi } from "@/lib/customer/apiClient";
 import { getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { getBudgetCategoryNames, getBudgetOverview } from "@/lib/customer/budgets";
+import { getBudgetCategoryNames, getBudgetOverview, getMonthlyPlan } from "@/lib/customer/budgets";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
 import { isFeatureOn } from "@/lib/customer/features";
 import { getFmt } from "@/lib/customer/fmt";
@@ -135,7 +135,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   });
   const spendingRead = getCategoryBreakdown(activeBusinessId, "EXPENSE", period.dateFrom, period.dateTo);
 
-  const [walletsOverview, chartIncome, chartExpense, spending, money, before, recent, start, incomeNames, goals, assets, budget, loanDashboard] = await Promise.all([
+  const [walletsOverview, chartIncome, chartExpense, spending, money, before, recent, start, incomeNames, goals, assets, budget, loanDashboard, monthPlan] = await Promise.all([
     walletsRead,
     // The chart, in two calls: one column per month, this month up to today.
     getMonthlyBreakdown(activeBusinessId, "INCOME", chartFrom, today),
@@ -152,6 +152,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     part(() => getAssets(activeBusinessId)),
     part(() => getBudgetOverview(activeBusinessId, month, year)),
     loansOn ? part(() => getLoanDashboard(activeBusinessId)) : null,
+    // Budget Planning's plan for this month (its expense budget), best-effort.
+    getMonthlyPlan(activeBusinessId, year, month).catch(() => null),
   ]);
 
   const unavailable: HomePart[] = [];
@@ -172,7 +174,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   // Every expense category, with its limit and what went against it.
   const expenseCategories = budgetOverview?.categories ?? [];
   const limited = expenseCategories.filter((c) => c.monthlyLimit !== null && Number(c.monthlyLimit) > 0);
-  const hasBudget = limited.length > 0 || Number(budgetOverview?.totalBudget ?? 0) > 0;
+  // This month's plan from Budget Planning: its expense budget is the
+  // card's line when no category has a limit of its own.
+  const planBudget = monthPlan?.expenseBudget ? Number(monthPlan.expenseBudget) : 0;
+  const hasBudget = limited.length > 0 || Number(budgetOverview?.totalBudget ?? 0) > 0 || planBudget > 0;
   const loans = loanDashboard ? read("loans", loanDashboard, null) : null;
   const counts = loanCounts(loans?.rows ?? []);
   const incomeCategories = incomeNames.ok ? incomeNames.value : [];
@@ -220,10 +225,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     wallets: activeWallets.map((wallet) => ({ id: wallet.id, name: locale === "bn" && wallet.nameBn ? wallet.nameBn : wallet.name, subtype: wallet.accountSubtype, balance: Number(wallet.currentBalance) })),
     budget: budgetOverview
       ? {
-          lines: [...limited]
-            .sort((a, b) => b.percent - a.percent)
-            .slice(0, BUDGET_ROWS)
-            .map((c) => ({ name: c.name, spent: Number(c.spent), limit: Number(c.monthlyLimit), percent: c.percent })),
+          lines:
+            limited.length === 0 && planBudget > 0 && monthPlan
+              ? [{ name: "This month's budget", translate: true, spent: Number(monthPlan.spent), limit: planBudget, percent: Math.round((Number(monthPlan.spent) / planBudget) * 100) }]
+              : [...limited]
+                  .sort((a, b) => b.percent - a.percent)
+                  .slice(0, BUDGET_ROWS)
+                  .map((c) => ({ name: c.name, spent: Number(c.spent), limit: Number(c.monthlyLimit), percent: c.percent })),
           monthName: monthName(today.slice(0, 7), fmt),
           daysLeft: daysLeftInMonth(today),
           hasBudget,

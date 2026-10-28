@@ -556,4 +556,6 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "e.g. Weekly groceries": "যেমন সাপ্তাহিক বাজার",
   "Save transaction": "লেনদেন সেভ করুন",
   "Delete transaction": "লেনদেন মুছুন",
+  "This month's budget": "এই মাসের বাজেট",
+  "Set this month's income target and expense budget so you're warned early.": "এই মাসের আয়ের লক্ষ্য আর খরচের বাজেট ঠিক করুন, যাতে আগেভাগে সতর্ক হতে পারেন।",
 };

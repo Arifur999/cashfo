@@ -168,7 +168,7 @@ export function BudgetPlanPageClient({ businessId, currency, canManage, plan, mo
           <p className="px-6 py-8 text-center text-small text-ink-muted">{t("No month has a plan yet. Set this month's budget to start.")}</p>
         ) : (
           <>
-            <div className="hidden grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)_120px_80px] items-center gap-x-6 border-b border-divider bg-table-head px-6 py-2.5 text-caption font-semibold text-ink-muted md:grid">
+            <div className="hidden grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)_120px_140px] items-center gap-x-6 border-b border-divider bg-table-head px-6 py-2.5 text-caption font-semibold text-ink-muted md:grid">
               <span>{t("Month")}</span>
               <span>{t("Income vs target")}</span>
               <span>{t("Expense vs budget")}</span>
@@ -191,7 +191,7 @@ export function BudgetPlanPageClient({ businessId, currency, canManage, plan, mo
                   <li
                     key={`${row.year}-${row.month}`}
                     className={cn(
-                      "grid grid-cols-2 items-center gap-x-6 gap-y-3 border-b border-divider px-6 py-4 last:border-b-0 md:h-18 md:grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)_120px_80px] md:py-0",
+                      "grid grid-cols-2 items-center gap-x-6 gap-y-3 border-b border-divider px-6 py-4 last:border-b-0 md:h-18 md:grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)_120px_140px] md:py-0",
                       row.month === month && row.year === year && "bg-hover",
                     )}
                   >
