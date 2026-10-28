@@ -18,12 +18,12 @@ interface SettingsSideCardProps {
 // The small cards beside Settings' General card: a tinted icon, a title,
 // what it is set to now, and where to change it.
 const SettingsSideCard = ({ icon: Icon, tone, title, children, action }: SettingsSideCardProps) => (
-  <Card className="flex flex-col gap-2">
-    <div className="flex items-center gap-3">
-      <IconTile size={36} tone={TONES[tone]}>
+  <Card padding="none" className="flex flex-col gap-2 px-4.5 py-4">
+    <div className="flex items-center gap-2.5">
+      <IconTile size={36} tone={TONES[tone]} className="size-8.5 rounded-[9px] [&_svg]:size-4.25">
         <Icon />
       </IconTile>
-      <h2 className="text-title text-ink">
+      <h2 className="text-[15px] font-semibold text-ink">
         <T>{title}</T>
       </h2>
     </div>

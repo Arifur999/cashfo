@@ -1,61 +1,24 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Gift } from "lucide-react";
-import { useState } from "react";
-import { updateSettingsAction } from "@/app/(dashboardLayout)/admin/settings/_action";
-import FormDialog from "@/components/shared/dialog/FormDialog";
-import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
-import AppField from "@/components/shared/form/AppField";
-import AppForm from "@/components/shared/form/AppForm";
-import { useActionMutation } from "@/hooks/useActionMutation";
-import { formatAmount } from "@/lib/currency";
-import { queryKeys } from "@/lib/queryKeys";
-import { type IReferralRewardFormValues, referralRewardFormZodSchema as schema } from "@/zod/settings.validation";
-import SettingsSideCard, { SIDE_CARD_LINK } from "./SettingsSideCard";
+import Link from "next/link";
 import T from "@/components/shared/T";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { referralSettingsQuery } from "@/queries/referral.queries";
+import SettingsSideCard, { SIDE_CARD_LINK } from "./SettingsSideCard";
 
-// The reward can carry paisa (৳ 49.99): formatAmount shows them only then.
-const RewardForm = ({ amount, onDone }: { amount: number; onDone: () => void }) => {
-  const { translate, locale } = useLocale();
-  const { run, isPending } = useActionMutation({
-    action: updateSettingsAction,
-    successMessage: (updated) => translate("Referrers now earn {amount}", { amount: formatAmount(updated.referralRewardAmount, undefined, locale) }),
-    invalidateKeys: [queryKeys.settings.all],
-    refreshRoute: false,
-  });
-  const form = useForm({
-    defaultValues: { referralRewardAmount: String(amount) } satisfies IReferralRewardFormValues,
-    onSubmit: async ({ value }) => {
-      if (await run(value)) onDone();
-    },
-  });
-
-  return (
-    <AppForm onSubmit={form.handleSubmit}>
-      <form.Field name="referralRewardAmount" validators={{ onChange: schema.shape.referralRewardAmount }}>
-        {(field) => (
-          <AppField
-            field={field}
-            label="Reward per friend"
-            prepend="৳"
-            inputMode="decimal"
-            description="Credited to a person's referral balance for each friend who signs up with their link. New sign-ups get the new amount."
-          />
-        )}
-      </form.Field>
-      <FormDialogFooter isPending={isPending} submitLabel="Save reward" pendingLabel="Saving..." />
-    </AppForm>
-  );
-};
-
-// What a referral earns today. The design's commission rules (a share of a
-// friend's first payment, a discount for the friend) are a NEW item, so this
-// is the flat reward the platform pays now, changed in a small dialog.
-const ReferralRulesCard = ({ amount, canManage }: { amount: number; canManage: boolean }) => {
+// What a referral earns, read from Referrals & Payouts' commission rules and
+// changed there: a share of a friend's first payment, the friend's discount
+// and how long the money waits. Every admin may read them; the link goes
+// where the money roles change them.
+const ReferralRulesCard = () => {
   const { locale } = useLocale();
-  const [open, setOpen] = useState(false);
+  const query = useQuery(referralSettingsQuery());
+  const rules = query.data?.data;
+  const bold = (value: React.ReactNode) => <b className="font-semibold text-ink">{value}</b>;
+  const pct = (value: number) => `${formatCount(value, locale)}%`;
 
   return (
     <SettingsSideCard
@@ -63,24 +26,33 @@ const ReferralRulesCard = ({ amount, canManage }: { amount: number; canManage: b
       tone="mint"
       title="Referral rules"
       action={
-        canManage && (
-          <FormDialog
-            open={open}
-            onOpenChange={setOpen}
-            title="Referral reward"
-            size="sm"
-            trigger={
-              <button type="button" className={SIDE_CARD_LINK}>
-                <T>Change the reward</T> <ChevronRight aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
-              </button>
-            }
-          >
-            <RewardForm amount={amount} onDone={() => setOpen(false)} />
-          </FormDialog>
-        )
+        <Link href="/admin/referrals/settings" className={SIDE_CARD_LINK}>
+          <T>Change in Referrals & Payouts</T> <ChevronRight aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
+        </Link>
       }
     >
-      <T values={{ amount: <b className="font-semibold text-ink">{formatAmount(amount, undefined, locale)}</b> }}>{"Referrers earn {amount} for each friend who signs up with their link."}</T>
+      {rules ? (
+        <>
+          {!rules.programLive && (
+            <>
+              <T>The program is paused.</T>{" "}
+            </>
+          )}
+          <T values={{ commission: bold(pct(rules.commissionPct)) }}>{"Referrers earn {commission} of a friend's first payment."}</T>{" "}
+          {rules.friendDiscountPct > 0 && (
+            <>
+              <T values={{ discount: bold(`${pct(rules.friendDiscountPct)}`) }}>{"The friend gets {discount} off."}</T>{" "}
+            </>
+          )}
+          {rules.holdDays > 0 ? (
+            <T values={{ days: formatCount(rules.holdDays, locale) }}>{rules.holdDays === 1 ? "Money is ready {days} day later." : "Money is ready {days} days later."}</T>
+          ) : (
+            <T>Money is ready at once.</T>
+          )}
+        </>
+      ) : (
+        <T>{query.isError ? "Couldn't load" : "Loading..."}</T>
+      )}
     </SettingsSideCard>
   );
 };

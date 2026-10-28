@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Construction, Gift, Lock, MessageSquareText } from "lucide-react";
+import { ChevronRight, Lock, Mail, Wrench } from "lucide-react";
 import Link from "next/link";
 import T from "@/components/shared/T";
 import Chip from "@/components/smartly/Chip";
@@ -15,24 +15,18 @@ interface SettingsSideCardsProps {
   loadFailed: boolean;
 }
 
-// The column beside General: referral rules, maintenance (switched from
-// System) and where message wording lives, then who may change what. A
-// setting that isn't loaded says so: maintenance never reads as Off on a
-// guess.
+// The column beside General: referral rules (changed in Referrals &
+// Payouts), maintenance (switched from System) and where message wording
+// lives, then who may change what. A setting that isn't loaded says so:
+// maintenance never reads as Off on a guess.
 const SettingsSideCards = ({ canManage, settings, loadFailed }: SettingsSideCardsProps) => {
   const on = settings?.maintenanceMode === true;
 
   return (
     <aside className="flex flex-col gap-4">
-      {settings ? (
-        <ReferralRulesCard amount={settings.referralRewardAmount} canManage={canManage} />
-      ) : (
-        <SettingsSideCard icon={Gift} tone="mint" title="Referral rules">
-          <T>{loadFailed ? "Couldn't load" : "Loading..."}</T>
-        </SettingsSideCard>
-      )}
+      <ReferralRulesCard />
       <SettingsSideCard
-        icon={Construction}
+        icon={Wrench}
         tone="warning"
         title="Maintenance mode"
         action={
@@ -56,7 +50,7 @@ const SettingsSideCards = ({ canManage, settings, loadFailed }: SettingsSideCard
         )}
       </SettingsSideCard>
       <SettingsSideCard
-        icon={MessageSquareText}
+        icon={Mail}
         tone="info"
         title="Messages to users"
         action={
@@ -67,7 +61,7 @@ const SettingsSideCards = ({ canManage, settings, loadFailed }: SettingsSideCard
       >
         <T>Email, SMS and in-app message wording lives in templates, in English and Bangla.</T>
       </SettingsSideCard>
-      <p role="note" className="flex gap-3 rounded-md border border-line bg-strip px-4 py-3 text-small leading-normal text-ink-2">
+      <p role="note" className="flex gap-2.5 rounded-[14px] border border-divider bg-strip px-3.5 py-3 text-[12.5px] leading-normal text-ink-2">
         <Lock className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         <span>
           <T>Support, Finance and Content admins see this page with the fields locked.</T>
