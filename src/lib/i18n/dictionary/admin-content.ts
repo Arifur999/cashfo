@@ -284,4 +284,11 @@ export const adminContentDictionary: Record<string, string> = {
   "Changes go live in the app within a minute. Keep placeholders like {example} the same in both languages.":
     "পরিবর্তন এক মিনিটের মধ্যে অ্যাপে চালু হয়। {example}-এর মতো প্লেসহোল্ডার দুই ভাষায় একই রাখুন।",
   "Move {name}. Use the up and down arrow keys.": "{name} সরান। উপর-নিচের অ্যারো কী ব্যবহার করুন।",
+  "Announcement deleted": "ঘোষণা মুছে ফেলা হয়েছে",
+  "“Try it” link, optional": "“দেখুন” লিংক, ঐচ্ছিক",
+  "/habit-tracker or https://…": "/habit-tracker বা https://…",
+  "It comes off the app at once and can't be brought back. To show it again later, turn it off instead.": "এটি সঙ্গে সঙ্গে অ্যাপ থেকে সরে যাবে এবং ফেরানো যাবে না। পরে আবার দেখাতে চাইলে বরং এটি বন্ধ করুন।",
+  "Delete announcement": "ঘোষণা মুছুন",
+  "A page of the app (/…) or an https:// address": "অ্যাপের একটি পাতা (/…) বা একটি https:// ঠিকানা",
+  "Failed to delete announcement": "ঘোষণা মোছা যায়নি",
 };

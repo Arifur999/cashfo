@@ -15,6 +15,8 @@ export interface IAnnouncement {
   targetPlan: string | null;
   startAt: string;
   endAt: string | null;
+  // The banner's "Try it": a page of the app or an https address.
+  linkUrl?: string | null;
   isActive: boolean;
   createdBy: string;
   createdAt: string;
@@ -32,4 +34,6 @@ export interface IAnnouncementPayload {
   bodyBn: string | null;
   targetPlan: string | null;
   endAt: string | null;
+  // null: no "Try it" link.
+  linkUrl: string | null;
 }

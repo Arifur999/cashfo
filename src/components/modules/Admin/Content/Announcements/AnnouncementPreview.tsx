@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { AnnouncementType } from "@/types/announcement.types";
@@ -12,6 +12,8 @@ interface AnnouncementPreviewProps {
   body: string;
   // Which of the two is Bangla (the app falls back to the English for a
   // part with no Bangla), for the typeface and screen readers.
+  // Has a "Try it" link.
+  link?: boolean;
   titleLang?: "bn";
   bodyLang?: "bn";
   // "md" is the live banner on the page, "sm" the drawer's preview.
@@ -25,7 +27,7 @@ const withStop = (title: string) => (/[.!?।]$/.test(title.trim()) ? title.trim
 // A banner as the board draws it in the app: the kind's icon and colours,
 // the title in bold running into the message, and the close button each
 // banner carries (drawn, not working, here).
-const AnnouncementPreview = ({ type, title, body, titleLang, bodyLang, size = "md", className }: AnnouncementPreviewProps) => {
+const AnnouncementPreview = ({ type, title, body, link = false, titleLang, bodyLang, size = "md", className }: AnnouncementPreviewProps) => {
   const { translate } = useLocale();
   const { icon: Icon, banner, bannerIcon } = ANNOUNCEMENT_TYPE_META[type];
   const small = size === "sm";
@@ -46,6 +48,12 @@ const AnnouncementPreview = ({ type, title, body, titleLang, bodyLang, size = "m
           {body || translate("The message people will read.")}
         </span>
       </p>
+      {link && (
+        <span className="flex shrink-0 items-center gap-1 font-semibold underline-offset-2">
+          {translate("Try it")}
+          <ArrowRight className={small ? "size-3.5" : "size-4"} aria-hidden="true" />
+        </span>
+      )}
       <X className={cn("shrink-0", small ? "size-3.75" : "size-4", bannerIcon)} aria-hidden="true" />
     </div>
   );

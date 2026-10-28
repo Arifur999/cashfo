@@ -5,6 +5,9 @@ import { ANNOUNCEMENT_TYPES, type IAnnouncementPayload } from "@/types/announcem
 // Radix Select can't hold "", so "every plan" needs a value of its own.
 export const ALL_PLANS = "all";
 
+// "/habit-tracker" (not "//host", which leaves the site) or "https://…", as the API checks.
+export const ANNOUNCEMENT_LINK = /^(\/(?!\/)\S*|https:\/\/\S+)$/;
+
 const optionalText = (maxLength: number) => z.string().trim().max(maxLength, `At most ${maxLength} characters`);
 
 // A. Form schema -- start/end are datetime-local values in platform time.
@@ -17,6 +20,11 @@ export const announcementFormZodSchema = z.object({
   targetPlan: z.string().min(1),
   startAt: z.string().regex(DATE_TIME_INPUT_PATTERN, "Pick when it starts"),
   endAt: z.string().refine((value) => value === "" || DATE_TIME_INPUT_PATTERN.test(value), "Pick when it ends, or leave it open"),
+  linkUrl: z
+    .string()
+    .trim()
+    .max(500, "At most 500 characters")
+    .refine((value) => value === "" || ANNOUNCEMENT_LINK.test(value), "A page of the app (/…) or an https:// address"),
 });
 
 export type IAnnouncementFormValues = z.infer<typeof announcementFormZodSchema>;
@@ -44,5 +52,6 @@ export const announcementServerZodSchema = announcementFormZodSchema
       targetPlan: values.targetPlan === ALL_PLANS ? null : values.targetPlan,
       startAt: dateTimeInputToIso(values.startAt),
       endAt: values.endAt ? dateTimeInputToIso(values.endAt) : null,
+      linkUrl: values.linkUrl || null,
     }),
   );

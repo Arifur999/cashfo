@@ -13,6 +13,7 @@ export const getNewAnnouncementDefaults = (now: Date): IAnnouncementFormValues =
   targetPlan: ALL_PLANS,
   startAt: toDateTimeInputValue(now),
   endAt: "",
+  linkUrl: "",
 });
 
 export const toAnnouncementFormValues = (announcement: IAnnouncement): IAnnouncementFormValues => ({
@@ -24,4 +25,5 @@ export const toAnnouncementFormValues = (announcement: IAnnouncement): IAnnounce
   targetPlan: announcement.targetPlan ?? ALL_PLANS,
   startAt: toDateTimeInputValue(announcement.startAt),
   endAt: toDateTimeInputValue(announcement.endAt),
+  linkUrl: announcement.linkUrl ?? "",
 });

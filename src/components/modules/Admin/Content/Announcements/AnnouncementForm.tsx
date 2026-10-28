@@ -3,7 +3,8 @@
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { createAnnouncementAction, setAnnouncementEnabledAction, updateAnnouncementAction } from "@/app/(dashboardLayout)/admin/content/announcements/_action";
+import { createAnnouncementAction, deleteAnnouncementAction, setAnnouncementEnabledAction, updateAnnouncementAction } from "@/app/(dashboardLayout)/admin/content/announcements/_action";
+import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
@@ -59,6 +60,19 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
     invalidateKeys: [queryKeys.announcements.all],
     refreshRoute: false,
     onSuccess: onDone,
+  });
+
+  // Gone from the apps at once; the audit log keeps what it said.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const remove = useActionMutation({
+    action: () => deleteAnnouncementAction(announcement?.id ?? ""),
+    successMessage: "Announcement deleted",
+    invalidateKeys: [queryKeys.announcements.all],
+    refreshRoute: false,
+    onSuccess: () => {
+      setConfirmDelete(false);
+      onDone();
+    },
   });
 
   const { run, isPending } = useActionMutation({
@@ -122,6 +136,9 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
           {(field) => <AppField field={field} label="Ends" type="datetime-local" />}
         </form.Field>
       </div>
+      <form.Field name="linkUrl" validators={{ onChange: shape.linkUrl }}>
+        {(field) => <AppField field={field} label="“Try it” link, optional" placeholder="/habit-tracker or https://…" />}
+      </form.Field>
       <form.Subscribe selector={(state) => state.values}>
         {(values) => {
           // The app shows a Bangla reader the English of any part not yet in Bangla.
@@ -147,6 +164,7 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
                 type={values.type}
                 title={titleBn ? values.titleBn : values.title}
                 body={bodyBn ? values.bodyBn : values.body}
+                link={values.linkUrl.trim() !== ""}
                 titleLang={titleBn ? "bn" : undefined}
                 bodyLang={bodyBn ? "bn" : undefined}
               />
@@ -164,6 +182,15 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
             pendingLabel="Saving..."
             extra={
               announcement && (
+                <>
+                <Button
+                  variant="ghost"
+                  disabled={remove.isPending || isPending}
+                  className="px-3 text-expense hover:text-expense"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  {translate("Delete")}
+                </Button>
                 <Button
                   variant="ghost"
                   disabled={toggle.isPending || isPending}
@@ -172,11 +199,23 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
                 >
                   {translate(announcement.isActive ? "Turn off" : "Turn on")}
                 </Button>
+                </>
               )
             }
           />
         )}
       </form.Subscribe>
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={(open) => !open && !remove.isPending && setConfirmDelete(false)}
+        title={translate("Delete {title}?", { title: announcement?.title ?? "" })}
+        description={translate("It comes off the app at once and can't be brought back. To show it again later, turn it off instead.")}
+        confirmLabel={translate("Delete announcement")}
+        pendingLabel="Deleting..."
+        variant="destructive"
+        isPending={remove.isPending}
+        onConfirm={() => remove.run(undefined)}
+      />
     </AppForm>
   );
 };

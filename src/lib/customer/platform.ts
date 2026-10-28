@@ -15,6 +15,8 @@ export interface CustomerAnnouncement {
   type: AnnouncementType;
   startAt: string;
   endAt: string | null;
+  // "Try it": a page of the app ("/habit-tracker") or an https address.
+  linkUrl?: string | null;
 }
 
 export interface PublicPlatformInfo {
