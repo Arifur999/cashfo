@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { inEnglish } from "@/lib/i18n/message";
 import { formatDate } from "./date";
-import { isDebitPositive, isSettledDay, ledgerDirection, periodText, readsAsMoney, statementBackLabel, statementBackPath, statementPage, transactionHref, voidedNet } from "./ledger";
+import { isDebitPositive, isSettledDay, ledgerDirection, periodText, readsAsMoney, statementBackLabel, statementBackPath, statementPage, statementParty, transactionHref, voidedNet } from "./ledger";
 
 describe("isDebitPositive", () => {
   it("is true for assets and expenses only", () => {
@@ -164,5 +164,20 @@ describe("transactionHref", () => {
   it("opens the transaction, remembering the list it came from", () => {
     expect(transactionHref("t1")).toBe("/transactions/t1");
     expect(transactionHref("t1", "/balance/ledger?accountId=a&page=2")).toBe("/transactions/t1?from=%2Fbalance%2Fledger%3FaccountId%3Da%26page%3D2");
+  });
+});
+
+describe("statementParty", () => {
+  it("names the other wallet of a transfer, even with a category", () => {
+    expect(statementParty({ transactionType: "TRANSFER", counterAccounts: ["bKash"], category: "Savings" })).toBe("bKash");
+  });
+
+  it("names the category of an income or expense, else the other accounts", () => {
+    expect(statementParty({ transactionType: "EXPENSE", counterAccounts: ["General expense"], category: "Food" })).toBe("Food");
+    expect(statementParty({ transactionType: "JOURNAL", counterAccounts: ["Cash", "Bank"], category: null })).toBe("Cash, Bank");
+  });
+
+  it("is null from a backend that sends neither", () => {
+    expect(statementParty({ transactionType: "INCOME" })).toBeNull();
   });
 });

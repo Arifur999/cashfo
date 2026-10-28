@@ -402,6 +402,11 @@ export interface LedgerRow {
   // The posting this row's transaction reversed (a void's second half).
   reversalOfId?: string | null;
   runningBalance: string;
+  // The accounts on the posting's other side (where the money came from or
+  // went to) and its category, for a printed statement's particulars.
+  // Missing from a backend older than the statement fix.
+  counterAccounts?: string[];
+  category?: string | null;
 }
 
 export interface AccountLedger {

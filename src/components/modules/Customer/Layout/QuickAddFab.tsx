@@ -41,7 +41,7 @@ function Fab() {
       <button
         type="button"
         aria-label={t("Add")}
-        className="fixed right-4 bottom-6 z-30 flex size-14 items-center justify-center rounded-full bg-forest text-white shadow-float md:hidden dark:bg-emerald dark:text-on-action"
+        className="fixed right-4 bottom-6 z-30 flex size-14 items-center justify-center rounded-full bg-forest text-white shadow-float md:hidden print:hidden dark:bg-emerald dark:text-on-action"
       >
         <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
       </button>

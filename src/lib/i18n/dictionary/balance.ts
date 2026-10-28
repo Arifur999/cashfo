@@ -266,4 +266,24 @@ export const balanceDictionary: Record<string, string> = {
   "Account ledger": "হিসাবের লেজার",
   "Pick an account first": "আগে একটি হিসাব বেছে নিন",
   "Pick an account to see its ledger": "লেজার দেখতে একটি হিসাব বেছে নিন",
+
+  // src/components/modules/Customer/Balance/LedgerStatement.tsx -- the
+  // printed statement. "Deposit" reuses its existing key.
+  "Account statement": "হিসাব বিবরণী",
+  "Statement period: {period}": "বিবরণীর সময়কাল: {period}",
+  "Account holder": "হিসাবধারী",
+  "Withdrawal@@statement": "উত্তোলন",
+  "Total deposits": "মোট জমা",
+  "Total withdrawals": "মোট উত্তোলন",
+  "Total increase": "মোট বৃদ্ধি",
+  "Total decrease": "মোট হ্রাস",
+  "This copy holds only the page on screen. Use Print / PDF for the whole period.": "এই কপিতে শুধু স্ক্রিনের পাতাটি আছে। পুরো সময়কালের জন্য প্রিন্ট / পিডিএফ ব্যবহার করুন।",
+  "This copy holds the period's first {count} entries.": "এই কপিতে সময়কালের প্রথম {count}টি এন্ট্রি আছে।",
+  Particulars: "বিবরণ",
+  "Ref.": "রেফ.",
+  "To: {name}": "গেছে: {name}",
+  "From: {name}": "এসেছে: {name}",
+  "This is a computer-generated statement and needs no signature.": "এটি কম্পিউটারে তৈরি বিবরণী, এতে স্বাক্ষরের প্রয়োজন নেই।",
+  "Voided entries and their reversals both stay in the balance, so they cancel out.": "বাতিল এন্ট্রি ও তার রিভার্সাল দুটোই ব্যালেন্সে থাকে, তাই একে অপরকে কাটাকাটি করে।",
+  "Couldn't load the whole statement. Try again.": "পুরো বিবরণী লোড করা যায়নি। আবার চেষ্টা করুন।",
 };

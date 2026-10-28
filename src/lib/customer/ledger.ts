@@ -1,6 +1,6 @@
 import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { AccountLedger, AccountSummary, AccountType, EntryType, TransactionType } from "./api";
+import type { AccountLedger, AccountSummary, AccountType, EntryType, LedgerRow, TransactionType } from "./api";
 import { formatDate } from "./date";
 import { isIsoDay } from "./dateRangePresets";
 
@@ -131,4 +131,13 @@ export function statementBackLabel(path: string): string {
 // period and page instead of the Transactions list.
 export function transactionHref(id: string, from?: string): string {
   return from ? `/transactions/${id}?${new URLSearchParams({ from })}` : `/transactions/${id}`;
+}
+
+// A printed statement's other side: the wallet a transfer went to or came
+// from, else the category (Food, Salary), else the other account. Null from
+// a backend that sends neither.
+export function statementParty(row: Pick<LedgerRow, "transactionType" | "counterAccounts" | "category">): string | null {
+  if (row.transactionType !== "TRANSFER" && row.category) return row.category;
+  const others = row.counterAccounts ?? [];
+  return others.length > 0 ? others.join(", ") : null;
 }
