@@ -52,13 +52,13 @@ const SubjectCell = ({ ticket }: { ticket: ISupportTicket }) => {
 export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
   {
     id: "id",
-    accessorFn: (row) => shortTicketId(row.id),
+    accessorFn: (row) => shortTicketId(row),
     header: "Ticket",
     enableSorting: false,
     cell: ({ row }) => (
       <span className="flex items-center gap-1.5">
         {awaitingReply(row.original) && <NewReplyDot />}
-        <code className="font-mono text-[12.5px] leading-[normal] font-semibold text-ink-2">{shortTicketId(row.original.id)}</code>
+        <code className="font-mono text-[12.5px] leading-[normal] font-semibold text-ink-2">{shortTicketId(row.original)}</code>
       </span>
     ),
     meta: { width: 64 },

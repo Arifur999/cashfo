@@ -4,6 +4,9 @@ import { awaitingReply, earlierTicketsText, hoursText, isLate, openTicketCount, 
 describe("ticket words", () => {
   it("shows the first part of the id with a hash", () => {
     expect(shortTicketId("3f2a1c9b-0000-4000-8000-000000000000")).toBe("#3F2A1");
+    // The ticket's own number wins when the API sends one.
+    expect(shortTicketId({ id: "3f2a1c9b-0000-4000-8000-000000000000", number: 482 })).toBe("#482");
+    expect(shortTicketId({ id: "3f2a1c9b-0000-4000-8000-000000000000" })).toBe("#3F2A1");
   });
 
   it("knows when the user is waiting, and when they have waited too long", () => {

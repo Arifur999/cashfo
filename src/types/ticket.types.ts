@@ -34,6 +34,8 @@ export interface ITicketUser {
 
 export interface ISupportTicket {
   id: string;
+  // "#482": counted up from 1 (absent from an older API).
+  number?: number;
   platformUserId: string;
   subject: string;
   category: TicketCategory;

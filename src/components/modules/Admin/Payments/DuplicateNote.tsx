@@ -32,7 +32,7 @@ const DuplicateNote = async ({ payment, back }: { payment: IPaymentDetail; back?
             plan: payment.plan.name,
             date: earlier ? formatDate(earlier.createdAt, "d MMM", "—", locale) : "",
           })}
-          {ticket && <> {t("{name} also wrote to support: ticket {ticket} “{subject}”.", { name: firstName, ticket: shortTicketId(ticket.id), subject: ticket.subject })}</>}
+          {ticket && <> {t("{name} also wrote to support: ticket {ticket} “{subject}”.", { name: firstName, ticket: shortTicketId(ticket), subject: ticket.subject })}</>}
         </span>
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
@@ -43,7 +43,7 @@ const DuplicateNote = async ({ payment, back }: { payment: IPaymentDetail; back?
         )}
         {ticket && (
           <Button asChild variant="secondary" size="sm" className="shrink-0">
-            <Link href={`/admin/support/${ticket.id}`}>{t("Ticket {id}", { id: shortTicketId(ticket.id) })}</Link>
+            <Link href={`/admin/support/${ticket.id}`}>{t("Ticket {id}", { id: shortTicketId(ticket) })}</Link>
           </Button>
         )}
       </div>

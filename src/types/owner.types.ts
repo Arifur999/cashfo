@@ -96,6 +96,7 @@ export interface IOwnerBilling {
 
 export interface IOwnerTicket {
   id: string;
+  number?: number;
   subject: string;
   status: string;
   priority: string;

@@ -95,7 +95,7 @@ export async function OwnerTicketsCard({ tickets, allHref }: { tickets: IOwnerTi
           {tickets.map((ticket) => (
             <li key={ticket.id}>
               <Link href={`/admin/support/${ticket.id}`} className={ROW}>
-                <span className="w-16 shrink-0 font-mono text-[12.5px] font-semibold text-ink-2">{shortTicketId(ticket.id)}</span>
+                <span className="w-16 shrink-0 font-mono text-[12.5px] font-semibold text-ink-2">{shortTicketId(ticket)}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="truncate font-semibold text-ink">{ticket.subject}</span>
                   <span className="truncate text-caption text-ink-muted">

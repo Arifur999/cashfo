@@ -143,7 +143,7 @@ export async function OwnerSupportCard({ support, ticketsHref }: { support: { op
               className={cn("flex flex-col gap-1 rounded-field border px-3 py-2.5 transition-colors", loud ? "border-expense-line bg-expense-soft/30 hover:bg-expense-soft/60" : "border-line bg-strip hover:bg-hover")}
             >
               <span className="flex items-center justify-between gap-2 text-[12.5px] leading-[normal]">
-                <span className="font-mono font-semibold text-ink">{shortTicketId(ticket.id)}</span>
+                <span className="font-mono font-semibold text-ink">{shortTicketId(ticket)}</span>
                 <span className={cn("rounded-full px-1.75 text-[11px] font-semibold", priority.chip)}>{t(priority.label)}</span>
               </span>
               <span className="text-[13.5px] leading-[normal] font-semibold text-ink">{ticket.subject}</span>

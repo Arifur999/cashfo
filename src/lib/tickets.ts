@@ -34,7 +34,10 @@ export const ticketCount = (statusCounts: Partial<Record<TicketStatus, number>>,
 export const openTicketCount = (statusCounts: Partial<Record<TicketStatus, number>>) => ticketCount(statusCounts, OPEN_TICKET_STATUSES);
 
 // "#3F2A1": the first part of the id, which is what people quote.
-export const shortTicketId = (id: string) => `#${id.slice(0, 5).toUpperCase()}`;
+// "#482" from the ticket's number; an id alone (or an older response
+// without the number) falls back to the id's first characters, "#58E90".
+export const shortTicketId = (ticket: string | { id: string; number?: number | null }) =>
+  typeof ticket !== "string" && ticket.number ? `#${ticket.number}` : `#${(typeof ticket === "string" ? ticket : ticket.id).slice(0, 5).toUpperCase()}`;
 
 // The user wrote last and nobody has answered yet.
 export const awaitingReply = (ticket: Pick<ISupportTicket, "status" | "lastMessageFrom">) =>

@@ -27,7 +27,7 @@ const TicketHeader = ({ ticket }: { ticket: ISupportTicketDetail }) => {
   return (
     <div className="flex flex-col gap-1.5 border-b border-line px-5 py-4">
       <div className="flex flex-wrap items-center gap-2">
-        <code className="font-mono text-small font-semibold text-ink-muted">{shortTicketId(ticket.id)}</code>
+        <code className="font-mono text-small font-semibold text-ink-muted">{shortTicketId(ticket)}</code>
         <TicketPriorityChip priority={ticket.priority} />
         <TicketStatusChip status={ticket.status} />
       </div>

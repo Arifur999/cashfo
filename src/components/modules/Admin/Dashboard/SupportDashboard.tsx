@@ -134,12 +134,12 @@ export function SupportDashboard({ adminName, hour, support, now }: SupportDashb
                         className={cn("grid min-h-14.5 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-b border-divider px-4.5 py-2 text-[13.5px] leading-[normal] text-ink transition-colors last:border-b-0 hover:bg-hover", COLUMNS)}
                       >
                         <span role="cell" className="hidden font-mono text-[12.5px] font-semibold text-ink-2 md:block">
-                          {shortTicketId(ticket.id)}
+                          {shortTicketId(ticket)}
                         </span>
                         <span role="cell" className="flex min-w-0 flex-col gap-0.5">
                           <span className="truncate font-semibold">{ticket.subject}</span>
                           <span className="truncate text-caption text-ink-muted">
-                            <span className="md:hidden">{shortTicketId(ticket.id)} · </span>
+                            <span className="md:hidden">{shortTicketId(ticket)} · </span>
                             {translate(waitingForUs ? "Waiting for you" : "Waiting on the user")}
                             <span className="md:hidden"> · {user}</span>
                           </span>
