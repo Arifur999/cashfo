@@ -17,8 +17,9 @@ import { Switch } from "@/components/ui/switch";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
-import type { ICreatedAdmin } from "@/types/adminAccount.types";
+import type { ICreatedAdmin, ICreatedAdminInvite } from "@/types/adminAccount.types";
 import { createAdminFormZodSchema, type IInviteAdminFormValues, inviteAdminFormZodSchema } from "@/zod/adminAccount.validation";
+import InviteLinkDialog, { type InviteLink } from "./InviteLinkDialog";
 import RoleChoices from "./RoleChoices";
 
 const DEFAULT_VALUES: IInviteAdminFormValues = { name: "", email: "", role: "SUPPORT_ADMIN" };
@@ -30,15 +31,16 @@ type Mode = "invite" | "password";
 const LINK = "font-semibold text-emerald hover:underline";
 
 // Mounted inside the drawer, so each open starts empty.
-const InviteAdminForm = ({ onDone, onCreated }: { onDone: () => void; onCreated: (admin: ICreatedAdmin) => void }) => {
+const InviteAdminForm = ({ onDone, onCreated, onLink }: { onDone: () => void; onCreated: (admin: ICreatedAdmin) => void; onLink: (invite: InviteLink) => void }) => {
   const { translate } = useLocale();
   const [mode, setMode] = useState<Mode>("invite");
   const roleLegend = useId();
   const invite = useActionMutation({
     action: inviteAdminAction,
-    successMessage: (sent) => translate("Invite sent to {email}", { email: sent.email }),
+    successMessage: (sent: ICreatedAdminInvite) => (sent.link ? translate("Invite ready for {email}", { email: sent.email }) : translate("Invite sent to {email}", { email: sent.email })),
     invalidateKeys: [queryKeys.admins.all],
-    onSuccess: onDone,
+    // Email off: the link comes back, to pass on by hand.
+    onSuccess: (sent: ICreatedAdminInvite) => (sent.link ? onLink({ email: sent.email, link: sent.link }) : onDone()),
     refreshRoute: false,
   });
   const create = useActionMutation({
@@ -129,12 +131,17 @@ const InviteAdminForm = ({ onDone, onCreated }: { onDone: () => void; onCreated:
 const InviteAdminDrawer = () => {
   const [open, setOpen] = useState(false);
   const [created, setCreated] = useState<ICreatedAdmin | null>(null);
+  const [inviteLink, setInviteLink] = useState<InviteLink | null>(null);
 
   return (
     <>
       <FormDrawer open={open} onOpenChange={setOpen} title="Invite an admin" trigger={<CreateButton>Invite an admin</CreateButton>}>
         <InviteAdminForm
           onDone={() => setOpen(false)}
+          onLink={(invite) => {
+            setOpen(false);
+            setInviteLink(invite);
+          }}
           onCreated={(admin) => {
             setOpen(false);
             setCreated(admin);
@@ -142,6 +149,7 @@ const InviteAdminDrawer = () => {
         />
       </FormDrawer>
       <TemporaryPasswordDialog password={created?.temporaryPassword ?? null} accountName={created?.name} onClose={() => setCreated(null)} />
+      <InviteLinkDialog invite={inviteLink} onClose={() => setInviteLink(null)} />
     </>
   );
 };

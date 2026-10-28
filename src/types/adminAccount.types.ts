@@ -37,7 +37,8 @@ export interface ICreateAdminInvitePayload {
   role: AdminRole;
 }
 
-export type ICreatedAdminInvite = Pick<IAdminInvite, "id" | "email" | "name" | "role" | "expiresAt">;
+// link: only while email is off -- the super admin passes it on themselves.
+export type ICreatedAdminInvite = Pick<IAdminInvite, "id" | "email" | "name" | "role" | "expiresAt"> & { link?: string };
 
 export interface ICreateAdminPayload {
   name: string;

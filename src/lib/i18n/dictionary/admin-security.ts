@@ -439,4 +439,11 @@ export const adminSecurityDictionary: Record<string, string> = {
   "Signed in {when}": "{when}-এ সাইন ইন",
   "Unknown place": "অজানা জায়গা",
   Now: "এখন",
+  // Invites while email is off: the link handed to the super admin (InviteLinkDialog).
+  "Email isn't set up, so send this link to {email} yourself.": "ইমেইল চালু নেই, তাই লিংকটি {email}-কে নিজে পাঠিয়ে দিন।",
+  "Anyone with this link can join as this admin. It works once and ends in 7 days, and is shown only now.": "এই লিংক যার কাছে থাকবে সে-ই এই অ্যাডমিন হিসেবে যোগ দিতে পারবে। এটি একবারই কাজ করে, ৭ দিনে শেষ হয়, আর শুধু এখনই দেখা যাচ্ছে।",
+  "Invite ready for {email}": "{email}-এর জন্য আমন্ত্রণ তৈরি",
+  "A new invite link is ready": "নতুন আমন্ত্রণ লিংক তৈরি",
+  // CopyButton's "Copy {label}".
+  link: "লিংক",
 };
