@@ -4,7 +4,7 @@ import { formatCurrency } from "./currency";
 import type { FillValues } from "@/lib/i18n/fill";
 import { type FormatLocale, numericDates } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { GroupContribution, GroupExpense, GroupKind, GroupMember, GroupSplit, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
+import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupKind, GroupMember, GroupSplit, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
 
 // The figures a group page derives from what the API already returns:
 // the month's range and whether it is closed, cash in hand, who pays
@@ -49,6 +49,15 @@ export function splitText(expense: Pick<GroupExpense, "split" | "splits">, membe
     return { kind: "EQUAL", detail: `÷ ${named.length > 0 ? named.length : active.length}`, only: null };
   }
   return { kind: expense.split, detail: null, only: null };
+}
+
+// A category's "Only selected" members who are still in the group, in
+// the group's order; null when it is shared by everyone (or none is left).
+export function categoryMembers(category: Pick<GroupExpenseCategoryOption, "defaultMemberIds"> | undefined, active: GroupMember[]): GroupMember[] | null {
+  const ids = category?.defaultMemberIds ?? [];
+  if (ids.length === 0) return null;
+  const chosen = active.filter((member) => ids.includes(member.id));
+  return chosen.length > 0 ? chosen : null;
 }
 
 // The old ?tab=category lived in the sidebar; categories now sit in Settings.

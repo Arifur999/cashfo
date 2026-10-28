@@ -1026,6 +1026,9 @@ export interface GroupExpenseCategoryOption {
   displayOrder: number;
   // How a new expense in it is shared, to start with.
   defaultSplit: GroupSplit;
+  // "Only selected": the members a new expense in it is shared by, equally.
+  // Empty (or absent, from an older API) = everyone.
+  defaultMemberIds?: string[];
   createdAt: string;
   updatedAt: string;
 }
