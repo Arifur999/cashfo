@@ -438,9 +438,11 @@ function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, o
             <div className="flex flex-col gap-3 rounded-[14px] border border-line bg-strip p-3.5">
               <span className="flex items-start gap-2 text-small leading-normal text-ink-2">
                 <Mail className="mt-0.5 size-4 shrink-0 text-emerald" aria-hidden="true" />
-                {t("We sent a 6-digit code to {email}. Enter it to finish. It works for 10 minutes.", { email: challenge.sentTo })}
+                {challenge.channel === "SMS"
+                  ? t("We sent a 6-digit code by SMS to {phone}. Enter it to finish. It works for 10 minutes.", { phone: challenge.sentTo })
+                  : t("We sent a 6-digit code to {email}. Enter it to finish. It works for 10 minutes.", { email: challenge.sentTo })}
               </span>
-              <Field htmlFor="vault-code" label={label(t("Code from the email"))} error={wrongFor("code")}>
+              <Field htmlFor="vault-code" label={label(challenge.channel === "SMS" ? t("Code from the SMS") : t("Code from the email"))} error={wrongFor("code")}>
                 <Input
                   id="vault-code"
                   value={code}

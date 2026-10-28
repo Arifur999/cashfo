@@ -57,6 +57,9 @@ export interface IDashboardSystem {
   api: string;
   database: { ok: boolean; latencyMs: number | null };
   email: { configured: boolean; lastSendAt: string | null; lastSendOk: boolean | null };
+  // Text messages through MRAM; balance is the credit left in taka (null
+  // when unknown). Absent from an older API.
+  sms?: { configured: boolean; lastSendAt: string | null; lastSendOk: boolean | null; balance: number | null };
   paymentGateway: { configured: boolean };
   lastBackup: IDashboardLastBackup | null;
   errors24h: { count: number; high: number };

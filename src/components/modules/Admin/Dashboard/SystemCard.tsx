@@ -40,7 +40,7 @@ interface SystemCardProps {
 // "All working" only when the server says every one is.
 export function SystemCard({ system, api }: SystemCardProps) {
   const { translate, locale } = useLocale();
-  const { database, email, paymentGateway, lastBackup, errors24h } = system;
+  const { database, email, sms, paymentGateway, lastBackup, errors24h } = system;
   const count = (value: number) => formatCount(value, locale);
   const backupSize = lastBackup?.sizeMb != null ? ` · ${count(Math.round(lastBackup.sizeMb))} MB` : "";
 
@@ -61,6 +61,15 @@ export function SystemCard({ system, api }: SystemCardProps) {
       state: translate(!email.configured ? "Not set up" : email.lastSendOk === false ? "Last send failed" : "Sending"),
       tone: !email.configured || email.lastSendOk === false ? "warn" : "ok",
     },
+    ...(sms
+      ? [
+          {
+            name: translate("SMS (MRAM)"),
+            state: translate(!sms.configured ? "Not set up" : sms.lastSendOk === false ? "Last send failed" : "Sending"),
+            tone: !sms.configured || sms.lastSendOk === false ? ("warn" as const) : ("ok" as const),
+          },
+        ]
+      : []),
     { name: translate("Payment gateway"), state: translate(paymentGateway.configured ? "Connected" : "Not set up"), tone: paymentGateway.configured ? "ok" : "warn" },
     lastBackup?.completedAt
       ? { name: translate("Last backup"), state: `${dateTimeLabel(lastBackup.completedAt, locale, { t: translate })}${backupSize}`, tone: "ok", plain: true }

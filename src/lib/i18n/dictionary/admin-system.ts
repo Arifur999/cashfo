@@ -348,4 +348,11 @@ export const adminSystemDictionary: Record<string, string> = {
   "Message in English": "ইংরেজিতে মেসেজ",
   "Message in Bangla": "বাংলায় মেসেজ",
   "Empty: the app's own Bangla notice": "খালি থাকলে: অ্যাপের নিজের বাংলা নোটিশ",
+  // System health: SMS through MRAM.
+  "SMS (MRAM)": "SMS (MRAM)",
+  "Add the MRAM key and sender ID on the server": "সার্ভারে MRAM-এর key আর sender ID দিন",
+  "Credit low": "ক্রেডিট কম",
+  "Last SMS {time}": "শেষ SMS {time}",
+  "{amount} credit": "{amount} ক্রেডিট",
+  "No SMS sent since the server started": "সার্ভার চালু হওয়ার পর কোনো SMS যায়নি",
 };

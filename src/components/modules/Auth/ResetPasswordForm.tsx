@@ -122,13 +122,17 @@ const ResetPasswordForm = ({ token, codeRequired = false, onStep }: ResetPasswor
           <div className="flex items-start gap-2.5">
             <Mail className="mt-0.5 size-4.5 shrink-0 text-emerald" aria-hidden="true" />
             <p className="text-small leading-[1.5] text-ink-2">
-              {challenge ? t("We emailed a 6-digit code to {email}. It works for 10 minutes.", { email: challenge.sentTo }) : t("You asked for a code by email before any password reset. We'll send it to the email on your account.")}
+              {challenge
+                ? challenge.channel === "SMS"
+                  ? t("We sent a 6-digit code by SMS to {phone}. It works for 10 minutes.", { phone: challenge.sentTo })
+                  : t("We emailed a 6-digit code to {email}. It works for 10 minutes.", { email: challenge.sentTo })
+                : t("You asked for a code before any password reset. We'll text it to your verified phone, or email it to you.")}
             </p>
           </div>
           {challenge && (
             <div className="flex flex-col gap-1.5">
               <label htmlFor="reset-code" className="text-body font-medium text-ink">
-                {t("Code from the email")}
+                {challenge.channel === "SMS" ? t("Code from the SMS") : t("Code from the email")}
               </label>
               <Input
                 id="reset-code"

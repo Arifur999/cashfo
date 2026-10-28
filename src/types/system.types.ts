@@ -74,6 +74,9 @@ export interface ISystemHealth {
   database: { ok: boolean; latencyMs: number | null; sizeBytes?: number | null };
   // lastSendAt/lastSendOk: the server's latest send since it started.
   email: { configured: boolean; lastSendAt: string | null; lastSendOk: boolean | null };
+  // Text messages through MRAM; balance is the credit left in taka (null
+  // when unknown). Absent from an older API.
+  sms?: { configured: boolean; lastSendAt: string | null; lastSendOk: boolean | null; balance: number | null };
   paymentGateway: { configured: boolean };
   // writable: the uploads folder takes a file; imageHostConfigured: photos
   // and screenshots go to the image host (imgbb).

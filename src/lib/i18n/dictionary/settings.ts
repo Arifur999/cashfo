@@ -558,4 +558,16 @@ export const settingsDictionary: Record<string, string> = {
   "Waiting for payment": "পেমেন্টের অপেক্ষায়",
   "Not paid": "পরিশোধ হয়নি",
   "Couldn't load your payments": "আপনার পেমেন্ট লোড করা যায়নি",
+  // Settings > Profile: proving the phone by SMS (VerifyPhoneDialog).
+  "Verify your phone": "ফোন নম্বর যাচাই করুন",
+  "Enter the code to finish.": "শেষ করতে কোডটি দিন।",
+  "We'll text a 6-digit code to {phone}.": "{phone}-এ ৬ সংখ্যার একটি কোড SMS করব।",
+  "Verify": "যাচাই করুন",
+  "Send code": "কোড পাঠান",
+  "So only you can add a number to this account.": "যাতে শুধু আপনিই এই অ্যাকাউন্টে নম্বর যোগ করতে পারেন।",
+  "Your phone number is verified": "আপনার ফোন নম্বর যাচাই হয়েছে",
+  "Codes come here by SMS. You can reset your password with it too.": "কোড এই নম্বরে SMS-এ আসে। এটি দিয়ে পাসওয়ার্ডও রিসেট করা যায়।",
+  "Verify by SMS": "SMS দিয়ে যাচাই করুন",
+  "to get codes by SMS and reset your password with it.": "তাহলে কোড SMS-এ আসবে, আর এটি দিয়ে পাসওয়ার্ড রিসেট করা যাবে।",
+  "Save the number, then verify it by SMS.": "নম্বরটি সেভ করুন, তারপর SMS দিয়ে যাচাই করুন।",
 };
