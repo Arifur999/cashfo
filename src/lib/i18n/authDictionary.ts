@@ -377,4 +377,12 @@ export const bnAuthDictionary: Record<string, string> = {
     "সব ডিভাইস থেকে সাইন আউট হয়ে গেছেন। নতুন পাসওয়ার্ড দিয়ে সাইন ইন করুন; দুই ধাপে সাইন-ইন আগের মতোই লাগবে।",
   "For your admin account. You'll be signed out everywhere and sign in again with it.": "আপনার অ্যাডমিন অ্যাকাউন্টের জন্য। সব জায়গা থেকে সাইন আউট হবেন, তারপর এটি দিয়ে আবার সাইন ইন করবেন।",
   "No email? A super admin can set a new password for you from Security › Admin team.": "ইমেইল আসেনি? একজন সুপার অ্যাডমিন সিকিউরিটি › অ্যাডমিন টিম থেকে আপনার জন্য নতুন পাসওয়ার্ড দিতে পারেন।",
+  // Forgot password by a verified phone (PhoneResetForm).
+  "Enter the code we texted you.": "আমরা যে কোড SMS করেছি সেটি দিন।",
+  "Type the phone number you verified in Settings. We will text you a 6-digit code.": "সেটিংসে যে ফোন নম্বর যাচাই করেছেন সেটি লিখুন। আমরা ৬ সংখ্যার একটি কোড SMS করব।",
+  "Text me a code": "কোড SMS করুন",
+  "Use my email instead": "ইমেইল দিয়ে করব",
+  "Use my phone number instead": "ফোন নম্বর দিয়ে করব",
+  "For safety, this screen says the same thing whether or not the number has an account. Only a number verified in Settings > Profile can reset a password.": "নিরাপত্তার জন্য, নম্বরে অ্যাকাউন্ট থাকুক বা না থাকুক, এই পাতা একই কথা বলে। শুধু সেটিংস > প্রোফাইলে যাচাই করা নম্বর দিয়ে পাসওয়ার্ড রিসেট করা যায়।",
+  "You asked for a code before any password reset. We'll text it to your verified phone, or email it to you.": "আপনি চেয়েছেন, পাসওয়ার্ড রিসেটের আগে একটি কোড লাগবে। কোডটি আপনার যাচাই করা ফোনে SMS করব, নয়তো ইমেইল করব।",
 };

@@ -14,6 +14,7 @@ import AuthAlert from "./AuthAlert";
 import AuthHeading from "./AuthHeading";
 import AuthLink from "./AuthLink";
 import FormErrorCallout from "./FormErrorCallout";
+import PhoneResetForm from "./PhoneResetForm";
 import ResetLinkSent from "./ResetLinkSent";
 import { useAuthAction } from "./useAuthAction";
 
@@ -24,6 +25,8 @@ const defaultValues: IForgotPasswordFormValues = { email: "" };
 const ForgotPasswordForm = () => {
   const { translate } = useLocale();
   const [sentTo, setSentTo] = useState<string | null>(null);
+  // "Use my phone instead": the code by SMS to a verified phone.
+  const [byPhone, setByPhone] = useState(false);
   // Set by "Use a different email", so the field takes the focus back.
   const returning = useRef(false);
   // Around the email field, to find its input without relying on its id.
@@ -47,6 +50,8 @@ const ForgotPasswordForm = () => {
       emailRef.current?.querySelector("input")?.focus();
     }
   }, [sentTo]);
+
+  if (byPhone) return <PhoneResetForm onUseEmail={() => setByPhone(false)} />;
 
   if (sentTo) {
     return (
@@ -91,6 +96,9 @@ const ForgotPasswordForm = () => {
           )}
         </form.Subscribe>
       </AppForm>
+      <button type="button" onClick={() => setByPhone(true)} className="self-start text-body font-semibold text-emerald hover:underline">
+        {translate("Use my phone number instead")}
+      </button>
       <AuthAlert tone="note" role="note" icon={Info}>
         {translate("For safety, this screen says the same thing whether or not the email has an account. The link works once; check spam if it hasn't arrived in 2 minutes.")}
       </AuthAlert>
