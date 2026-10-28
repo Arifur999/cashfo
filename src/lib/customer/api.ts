@@ -801,6 +801,35 @@ export interface BudgetOverview {
   categories: BudgetCategorySummary[];
 }
 
+// Budget Planning: one month's income target and expense budget (null when
+// the month has no plan, or a plan from before budgets), and what came in
+// and went out that month.
+export interface MonthlyPlan {
+  id: string | null;
+  month: number;
+  year: number;
+  incomeTarget: string | null;
+  expenseBudget: string | null;
+  earned: string;
+  spent: string;
+}
+
+// Category Set: a category and how many live transactions name it.
+export interface CategorySetRow {
+  id: string;
+  type: BudgetCategoryType;
+  name: string;
+  icon: string | null;
+  color: string;
+  monthlyLimit: string | null;
+  transactionCount: number;
+}
+
+export interface CategorySet {
+  income: CategorySetRow[];
+  expense: CategorySetRow[];
+}
+
 // Savings Goals (/savings-goals/*): a named target funded by real
 // contributions from a money account, landing in one of the business's own
 // Savings Wallets (an Account, accountSubtype "savings" -- see

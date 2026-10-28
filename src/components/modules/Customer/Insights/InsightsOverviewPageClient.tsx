@@ -183,7 +183,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
                       {plural(t, data.sources.length, "{count} income source · {amount}", "{count} income sources · {amount}", { amount: formatCurrency(totals.income, currency, fmt) }, fmt)}
                     </span>
                   </div>
-                  <CardLink href="/income-category">{t("Income sources")}</CardLink>
+                  <CardLink href="/income-expense">{t("Income sources")}</CardLink>
                 </div>
                 {data.sources.length === 0 ? (
                   <p className="text-body text-ink-muted">{t("No money came in {period}.", { period: when })}</p>

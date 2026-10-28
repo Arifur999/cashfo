@@ -44,6 +44,7 @@ export const chromeDictionary: Record<string, string> = {
   // Income & Expense submenu
   Transaction: "লেনদেন",
   "Budget Planning": "বাজেট পরিকল্পনা",
+  "Category Set": "ক্যাটাগরি সেট",
   "Monthly income goal": "মাসিক আয়ের লক্ষ্য",
 
   // Reports submenu

@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleOff, Eye, Lock, Plus, Receipt } from "lucide-react";
+import { Lock, Pencil, Plus, Receipt, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useRef, useState, useTransition } from "react";
@@ -10,7 +10,7 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Kbd from "@/components/smartly/Kbd";
-import { ListCard, ListCell, ListFooter, ListGroupRow, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
+import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
@@ -19,9 +19,12 @@ import type { Account, Transaction } from "@/lib/customer/api";
 import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatSignedCurrency } from "@/lib/customer/currency";
-import { activeFilterCount, categoryIndex, categoryLabel, dayHeading, describeTransaction, groupByDay, isReversedRange, readTransactionFilters, rowTitle, type TransactionRow } from "@/lib/customer/transactionRows";
+import { formatDate } from "@/lib/customer/date";
+import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
+import { activeFilterCount, categoryIndex, categoryLabel, dayHeading, describeTransaction, type EditableEntry, editableEntry, groupByDay, isReversedRange, readTransactionFilters, rowTitle, type TransactionRow } from "@/lib/customer/transactionRows";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
+import { plural } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { pageHref, readPageParam, readPageSizeParam } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
@@ -58,17 +61,15 @@ interface TransactionsPageClientProps {
   canManage: boolean;
 }
 
-// Below xl the category and the wallet go under the title, so the name
-// column never drops under 12rem beside the sidebar (iPads, small laptops).
-const COLUMNS = "md:grid-cols-[minmax(12rem,1fr)_140px_80px] xl:grid-cols-[minmax(12rem,1fr)_190px_160px_140px_80px]";
+// The board's table: Date, Note, Category, Type, Amount, Actions. Below xl
+// the category and the type go under the note, so the note column never
+// drops under 12rem beside the sidebar (iPads, small laptops).
+const COLUMNS = "md:grid-cols-[100px_minmax(12rem,1fr)_140px_96px] xl:grid-cols-[110px_minmax(12rem,1fr)_190px_110px_150px_96px]";
 const LIST_ID = "transactions-list";
 const PHONE_LIST_ID = "transactions-list-phone";
 
-// The row's buttons wait for the pointer on a screen that can hover; on a
-// touch screen they always show, so a tap never lands on an unseen Void.
-const HOVER_ACTIONS = "transition-opacity [@media(hover:hover)]:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100";
-// The board's 32px round buttons, ringed rather than bordered.
-const ROW_ACTION = "flex size-8 items-center justify-center rounded-full bg-surface shadow-[0_0_0_1px_var(--line)] pointer-coarse:size-11";
+// The board's round icon buttons: edit in ink, delete in red.
+const ROW_ACTION = "flex size-11 items-center justify-center rounded-full";
 
 // Transactions: the filters, the totals strip, and the list grouped by
 // day with each day's net, newest first.
@@ -79,6 +80,8 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   const [isPending, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
   const [voiding, setVoiding] = useState<TransactionRow | null>(null);
+  // A row's Edit: the transaction popup filled in with it.
+  const [editing, setEditing] = useState<EditableEntry | null>(null);
 
   const lang = displayLanguage(locale);
   const accountNames = Object.fromEntries(accounts.map((account) => [account.id, accountDisplayName(account, lang)]));
@@ -160,7 +163,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   // A view-only member is told why there is nothing to add with, rather
   // than finding out from a refused save.
   const addButton = canManage ? (
-    <Button variant="action" onClick={() => setAddOpen(true)} className="gap-1.5">
+    <Button onClick={() => setAddOpen(true)} className="gap-1.5 rounded-full px-4.5">
       <Plus strokeWidth={2.5} className="size-4" />
       {t("New transaction")}
     </Button>
@@ -185,24 +188,29 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
 
       {!blank && <TransactionFilters accounts={accounts} categories={categories} navigate={navigate} baseQuery={baseQuery} />}
 
-      {/* Two small cards on a phone; one strip of four on wider screens. */}
+      {/* Two small cards on a phone; the board's strip of three (Income,
+          Expense, Net) on wider screens. */}
       {!blank && (
-        <Card padding="none" aria-busy={isPending || undefined} className={cn("grid grid-cols-2 transition-opacity max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-4", isPending && "opacity-60")}>
+        <Card padding="none" aria-busy={isPending || undefined} className={cn("grid grid-cols-2 transition-opacity max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none md:grid-cols-3", isPending && "opacity-60")}>
           <TotalCell label={t("Income")} phoneLabel={t("Money in")} className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
             <AmountText value={totals.income} currency={currency} size="h2" tone="income" signed className={PHONE_FIGURE} />
           </TotalCell>
           <TotalCell label={t("Expense")} phoneLabel={t("Money out")} divided className="max-md:rounded-lg max-md:border max-md:border-line max-md:bg-surface">
             <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className={PHONE_FIGURE} />
           </TotalCell>
-          <TotalCell label={t("Net")} divided className="max-md:hidden">
-            <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-[20px] md:font-bold" />
-          </TotalCell>
-          <TotalCell label={t("Transactions")} divided className="max-md:hidden">
-            <span className="text-h3 text-ink tabular-nums md:text-[20px] md:font-bold">
-              {formatCount(totals.count, fmt)}
-              {totals.voided > 0 && <span className="text-small font-medium text-ink-muted"> · {t("{count} voided", { count: formatCount(totals.voided, fmt) })}</span>}
-              {totals.scope === "page" && <span className="text-small font-medium text-ink-muted"> · {t("this page")}</span>}
-            </span>
+          <TotalCell
+            label={[
+              t("Net"),
+              plural(t, totals.count, "{count} transaction", "{count} transactions", undefined, fmt),
+              totals.voided > 0 && t("{count} voided", { count: formatCount(totals.voided, fmt) }),
+              totals.scope === "page" && t("this page"),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+            divided
+            className="max-md:hidden"
+          >
+            <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-[22px] md:font-bold" />
           </TotalCell>
         </Card>
       )}
@@ -259,25 +267,23 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           >
             {/* Above the rows' buttons (z-10) as they scroll under it. */}
             <ListHead columns={COLUMNS} sticky>
-              <ListHeadCell>{t("Transaction")}</ListHeadCell>
+              <ListHeadCell>{t("Date")}</ListHeadCell>
+              <ListHeadCell>{t("Note")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Category")}</ListHeadCell>
-              <ListHeadCell className="hidden xl:block">{t("Account@@wallet")}</ListHeadCell>
+              <ListHeadCell className="hidden xl:block">{t("Type")}</ListHeadCell>
               <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
-              <ListHeadCell>
-                <span className="sr-only">{t("Actions")}</span>
-              </ListHeadCell>
+              <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
             </ListHead>
-            {groups.map((group) => {
-              const band = dayBand(group.day, group.net);
-              return (
-                <div key={group.day} role="rowgroup">
-                  <ListGroupRow label={dayHeading(group.day, today, t, fmt)} aside={band.note ? <span className="font-medium text-ink-muted">{band.note}</span> : netText(band.net ?? 0)} />
-                  {group.rows.map((row) => (
-                    <DesktopRow key={row.transaction.id} row={row} currency={currency} canManage={canManage} onVoid={() => setVoiding(row)} />
-                  ))}
-                </div>
-              );
-            })}
+            {groups.flatMap((group) => group.rows).map((row) => (
+              <DesktopRow
+                key={row.transaction.id}
+                row={row}
+                currency={currency}
+                canManage={canManage}
+                onVoid={() => setVoiding(row)}
+                onEdit={() => setEditing(editableEntry(row.transaction, rowTitle(row, t), row.entryCategory))}
+              />
+            ))}
           </ListCard>
 
           {/* Phone: a day heading, then a card of rows, per day. Named, as
@@ -305,6 +311,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       )}
 
       {canManage && <TransactionDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} currency={currency} />}
+      {canManage && editing && <TransactionDrawer open onClose={() => setEditing(null)} businessId={businessId} currency={currency} editing={editing} stayOnEdit />}
       {voiding && (
         <VoidTransactionDialog
           open
@@ -344,59 +351,69 @@ function CategoryTile({ row, size = 36 }: { row: TransactionRow; size?: 36 | 40 
   );
 }
 
-function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow; currency: string; canManage: boolean; onVoid: () => void }) {
-  const { t } = useLocale();
+// The type as the board's pill: Income green, Expense red, anything else
+// (a transfer, a loan or asset posting) plain.
+const TYPE_BADGE: Record<string, string> = { INCOME: "bg-income-soft text-income", EXPENSE: "bg-expense-soft text-expense" };
+
+function DesktopRow({ row, currency, canManage, onVoid, onEdit }: { row: TransactionRow; currency: string; canManage: boolean; onVoid: () => void; onEdit: () => void }) {
+  const { t, fmt } = useLocale();
   const href = `/transactions/${row.transaction.id}`;
-  const tone = row.transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
+  const kind = row.transaction.transactionType;
+  const tone = kind === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   const title = rowTitle(row, t);
   const category = row.category && categoryLabel(row.category.name, t);
-  const details = [category, row.wallet].filter(Boolean).join(" · ");
+  const typeLabel = t(TRANSACTION_TYPE_LABELS[kind]);
+  const editable = canManage && !row.cancelled && editableEntry(row.transaction, title, row.entryCategory) !== null;
   return (
-    // A voided row fades to 60% as the board sets it back; its hover
-    // buttons stay solid.
-    <ListRow columns={COLUMNS} muted={!!row.cancelled} className={cn("group", row.cancelled && "[&>[role=cell]:not([data-slot=list-row-actions])]:opacity-60")}>
-      <ListCell className="flex min-w-0 items-center gap-3">
-        <CategoryTile row={row} />
-        <span className="flex min-w-0 flex-col">
-          <span className="flex min-w-0 items-center gap-2">
-            <ListRowLink href={href} className={cn("truncate text-body font-medium text-ink", row.cancelled && "line-through")}>
-              {title}
-            </ListRowLink>
-            {row.cancelled && (
-              <Chip tone="expense" size="sm" className="h-auto py-0.5 text-[11px] font-semibold">
-                {t(row.cancelled)}
-              </Chip>
-            )}
-          </span>
-          {details && <span className="truncate text-caption text-ink-muted xl:hidden">{details}</span>}
+    // A voided row fades to 60% as the board sets it back; its buttons stay
+    // solid.
+    <ListRow columns={COLUMNS} muted={!!row.cancelled} className={cn("min-h-16", row.cancelled && "[&>[role=cell]:not([data-slot=list-row-actions])]:opacity-60")}>
+      <ListCell className="text-small whitespace-nowrap text-ink-2 tabular-nums">{formatDate(row.transaction.transactionDate, "d MMM yyyy", fmt)}</ListCell>
+      <ListCell className="flex min-w-0 flex-col">
+        <span className="flex min-w-0 items-center gap-2">
+          <ListRowLink href={href} className={cn("truncate text-body font-medium text-ink", row.cancelled && "line-through")}>
+            {title}
+          </ListRowLink>
+          {row.cancelled && (
+            <Chip tone="expense" size="sm" className="h-auto py-0.5 text-[11px] font-semibold">
+              {t(row.cancelled)}
+            </Chip>
+          )}
         </span>
+        <span className="truncate text-caption text-ink-muted xl:hidden">{[category, typeLabel].filter(Boolean).join(" · ")}</span>
       </ListCell>
-      <ListCell className="hidden xl:block">
-        {category && (
-          <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-table-head px-2.5 py-0.75 text-caption font-medium text-ink-2">
-            <span className={cn("size-2 shrink-0 rounded-full bg-current", tone.fg)} />
+      <ListCell className="hidden min-w-0 items-center gap-2 text-body text-ink-2 xl:flex">
+        {category ? (
+          <>
+            <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", tone.fg)} />
             <span className="truncate">{category}</span>
-          </span>
+          </>
+        ) : (
+          <span className="text-ink-muted">—</span>
         )}
       </ListCell>
-      <ListCell className="hidden truncate text-small text-ink-soft xl:block">{row.wallet ?? "—"}</ListCell>
+      <ListCell className="hidden xl:block">
+        <span className={cn("inline-flex rounded-full px-2.5 py-0.75 text-caption font-semibold", TYPE_BADGE[kind] ?? "bg-surface-sunken text-ink-2")}>{typeLabel}</span>
+      </ListCell>
       <ListCell align="end">
         <AmountText
           value={row.signedAmount}
           currency={currency}
-          signed={row.transaction.transactionType !== "TRANSFER"}
-          tone={row.cancelled ? "neutral" : row.transaction.transactionType === "TRANSFER" ? "neutral" : "auto"}
+          signed={kind !== "TRANSFER"}
+          tone={row.cancelled ? "neutral" : kind === "TRANSFER" ? "neutral" : "auto"}
           size="sm"
-          className={cn(row.cancelled && "text-ink-muted line-through")}
+          className={cn("text-[15px] font-semibold", row.cancelled && "text-ink-muted line-through")}
         />
       </ListCell>
-      <ListRowActions className={HOVER_ACTIONS}>
-        <Link href={href} aria-label={t("View details")} title={t("View details")} className={cn(ROW_ACTION, "text-ink-soft hover:bg-surface-sunken")}>
-          <Eye className="size-3.75" aria-hidden="true" />
-        </Link>
+      <ListRowActions>
+        {editable && (
+          <button type="button" onClick={onEdit} aria-label={t("Edit transaction")} title={t("Edit")} className={cn(ROW_ACTION, "text-ink-2 hover:bg-surface-sunken")}>
+            <Pencil className="size-4.25" aria-hidden="true" />
+          </button>
+        )}
         {canManage && row.transaction.voidable && (
-          <button type="button" onClick={onVoid} aria-label={t("Void transaction")} title={t("Void transaction")} className={cn(ROW_ACTION, "text-expense-fill hover:bg-expense-soft")}>
-            <CircleOff className="size-3.75" aria-hidden="true" />
+          <button type="button" onClick={onVoid} aria-label={t("Delete transaction")} title={t("Delete")} className={cn(ROW_ACTION, "text-expense hover:bg-expense-soft")}>
+            <Trash2 className="size-4.25" aria-hidden="true" />
           </button>
         )}
       </ListRowActions>

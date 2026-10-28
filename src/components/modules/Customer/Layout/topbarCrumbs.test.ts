@@ -27,7 +27,7 @@ describe("topbarTrail", () => {
 
   it("links a group to its first page", () => {
     expect(topbarTrail(locate("/balance/ledger"), false)).toEqual([{ label: "Balance", href: "/balance/overview" }]);
-    expect(topbarTrail(locate("/transactions"), false)).toEqual([{ label: "Income & Expense", href: "/transactions" }]);
+    expect(topbarTrail(locate("/transactions"), false)).toEqual([{ label: "Income & Expense", href: "/income-expense" }]);
     expect(topbarTrail(locate("/loan-management/ledger"), false)).toEqual([{ label: "Loan Management", href: "/loan-management/dashboard" }]);
   });
 
@@ -38,7 +38,7 @@ describe("topbarTrail", () => {
 
   it("adds the list a record page came from, at the address it was left", () => {
     expect(topbarTrail(locate("/transactions/abc"), true, "/transactions?page=3")).toEqual([
-      { label: "Income & Expense", href: "/transactions" },
+      { label: "Income & Expense", href: "/income-expense" },
       { label: "Transactions", href: "/transactions?page=3" },
     ]);
     expect(topbarTrail(locate("/contacts/c1"), true)).toEqual([{ label: "Customers & suppliers", href: "/contacts" }]);

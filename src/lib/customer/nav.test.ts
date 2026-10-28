@@ -43,7 +43,7 @@ describe("the two menus", () => {
       [
         "Money",
         [
-          ["Income & Expense", "Transactions", "Budget Planning", "Income Category"],
+          ["Income & Expense", "Overview", "Transactions", "Budget Planning", "Category Set"],
           ["Balance", "Overview", "Balance Transfer", "Ledger", "Wallet"],
         ],
       ],
@@ -163,7 +163,8 @@ describe("findNavLocation", () => {
 
   // Each retired page forwards to the one that took its place.
   it("files the retired planning pages where they now forward", () => {
-    expect(locate("/income-planning")!.sub?.label).toBe("Income Category");
+    expect(locate("/income-planning")!.sub?.label).toBe("Category Set");
+    expect(locate("/income-category")!.sub?.label).toBe("Category Set");
     expect(locate("/budget-planning")!.sub?.label).toBe("Budget Planning");
   });
 });
