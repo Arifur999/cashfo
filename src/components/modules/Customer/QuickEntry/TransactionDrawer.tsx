@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CalendarDays, Check, ChevronDown, Info, LayoutGrid, Lock, TriangleAlert, Undo2, X } from "lucide-react";
+import { ArrowDown, ArrowDownLeft, ArrowLeftRight, ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, Info, LayoutGrid, Lock, TriangleAlert, Undo2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createElement, useEffect, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
+import { KindCards } from "@/components/modules/Customer/IncomeExpense/IEDialog";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
 import Banner from "@/components/smartly/Banner";
@@ -15,8 +16,10 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import Kbd from "@/components/smartly/Kbd";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAmountField } from "@/hooks/useAmountField";
+import { CategoryListbox } from "./CategoryListbox";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { budgetTone } from "@/lib/budgetTone";
 import type { Account, BudgetOverview } from "@/lib/customer/api";
@@ -46,6 +49,9 @@ interface TransactionDrawerProps {
   // A saved entry to edit (decision D2): no tabs, the entry's values filled
   // in, and saving voids it and posts the corrected one.
   editing?: EditableEntry | null;
+  // An edit made from a list: stay on the list (refreshed) rather than open
+  // the corrected entry's page.
+  stayOnEdit?: boolean;
 }
 
 const TILE_LIMIT = 7;
@@ -72,7 +78,14 @@ function walletEffect(walletId: string, kind: EntryKind, accountId: string, toAc
 }
 
 // The desktop board leads with Income; the phone board with Expense.
-const KIND_ORDER: Record<"wide" | "phone", EntryKind[]> = { wide: ["INCOME", "EXPENSE", "TRANSFER"], phone: ["EXPENSE", "INCOME", "TRANSFER"] };
+const KIND_ORDER: Record<"phone", EntryKind[]> = { phone: ["EXPENSE", "INCOME", "TRANSFER"] };
+
+// The desktop popup's kind cards: money in points up, money out down.
+const WIDE_KINDS = [
+  { value: "INCOME" as const, label: "Income", icon: <ArrowUp strokeWidth={2.25} />, tone: "income" as const },
+  { value: "EXPENSE" as const, label: "Expense", icon: <ArrowDown strokeWidth={2.25} />, tone: "expense" as const },
+  { value: "TRANSFER" as const, label: "Transfer", icon: <ArrowLeftRight strokeWidth={2.25} />, tone: "info" as const },
+];
 
 // A phone field's label: 13px semibold over its 52px box.
 const PHONE_LABEL = "text-small font-semibold text-ink-2";
@@ -94,7 +107,7 @@ const NO_FAILURES = { wallets: false, expenseAccounts: false, INCOME: false, EXP
 // board draws it: plain tabs, the amount large in the middle, the wallet and
 // the day side by side. Enter saves; "Save & add another" keeps it open and
 // clears the amount and note.
-export function TransactionDrawer({ open, onClose, businessId, currency, initialKind = "EXPENSE", editing = null }: TransactionDrawerProps) {
+export function TransactionDrawer({ open, onClose, businessId, currency, initialKind = "EXPENSE", editing = null, stayOnEdit = false }: TransactionDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { user } = useAuth();
@@ -275,6 +288,11 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         }
         toast.success(t("Changes saved"));
         onClose();
+        // From a list, the list shows the corrected entry in its place.
+        if (stayOnEdit) {
+          router.refresh();
+          return;
+        }
         // The entry on screen is now the voided original; open the new one,
         // keeping the way back to the page it was opened from.
         router.replace(transactionPageHref(corrected.data.id, transactionBackLink(new URLSearchParams(window.location.search).get("from"))));
@@ -327,8 +345,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   );
 
   const categoryLink = (
-    <Link href={kind === "INCOME" ? "/income-category?addType=INCOME" : "/categories?addType=EXPENSE"} onNavigate={onClose} className="font-semibold text-emerald hover:underline">
-      {t(kind === "INCOME" ? "Add one under Income sources" : "Add one under Budget")}
+    <Link href={`/category-set?new=${kind === "INCOME" ? "INCOME" : "EXPENSE"}`} onNavigate={onClose} className="font-semibold text-emerald hover:underline">
+      {t("Add one under Category Set")}
     </Link>
   );
 
@@ -344,9 +362,13 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         <Banner tone="info" inline icon={<Info />}>
           {t("You're editing a saved transaction. When you save, the original stays in History marked as corrected, and your balances update straight away.")}
         </Banner>
+      ) : wide ? (
+        // The board's two kind cards (a transfer, which the quick add and the
+        // Add menu still open, keeps a third).
+        <KindCards legend="Type" value={kind} onChange={switchKind} options={WIDE_KINDS} compact />
       ) : (
         <SegmentedControl
-          options={KIND_ORDER[wide ? "wide" : "phone"].map((option) => ({ value: option, label: KIND_META[option].label, icon: wide ? KIND_META[option].icon : undefined }))}
+          options={KIND_ORDER.phone.map((option) => ({ value: option, label: KIND_META[option].label }))}
           value={kind}
           onChange={switchKind}
           label="Type"
@@ -415,13 +437,19 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         <fieldset className="m-0 min-w-0 border-0 p-0">
           <legend className={cn("text-body font-medium text-ink", wide ? "mb-2" : "sr-only")}>{t("Category")}</legend>
           {loading ? (
-            <div className="grid grid-cols-4 gap-2">
-              {Array.from({ length: 8 }, (_, i) => (
-                <span key={i} className="h-19 animate-pulse rounded-[10px] bg-surface-sunken" />
-              ))}
-            </div>
+            wide ? (
+              <span className="block h-12 animate-pulse rounded-field bg-surface-sunken" />
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {Array.from({ length: 8 }, (_, i) => (
+                  <span key={i} className="h-19 animate-pulse rounded-[10px] bg-surface-sunken" />
+                ))}
+              </div>
+            )
           ) : categoriesFailed ? null : options.length === 0 ? (
             <p className="text-small text-ink-muted">{fillNodes(t("No categories yet. {link}"), { link: categoryLink })}</p>
+          ) : wide ? (
+            <CategoryListbox id="txn-cat" kind={kind === "INCOME" ? "INCOME" : "EXPENSE"} options={options} value={category} onChange={setCategory} onNavigate={onClose} />
           ) : (
             <div className="grid grid-cols-4 gap-2">
               {visible.map((option) => {
@@ -485,13 +513,28 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       )}
 
       {wide ? (
+        // The board: the date and the account side by side, the note under
+        // them. A transfer's two wallets come first, then the date and note.
         <>
-          <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-          {isTransfer && <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />}
-          <div className="grid grid-cols-[170px_minmax(0,1fr)] gap-2.5">
+          {isTransfer && (
+            <>
+              <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+              <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />
+            </>
+          )}
+          <div className="grid grid-cols-2 gap-3">
             <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
               <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
             </Field>
+            {isTransfer ? (
+              <Field htmlFor="txn-note" label={<span className="text-body font-medium text-ink">{t("Note")}</span>}>
+                <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
+              </Field>
+            ) : (
+              <WalletPicker size="compact" label={t("Account")} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+            )}
+          </div>
+          {!isTransfer && (
             <Field
               htmlFor="txn-note"
               label={
@@ -500,9 +543,9 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
                 </span>
               }
             >
-              <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
+              <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("e.g. Weekly groceries")} maxLength={200} />
             </Field>
-          </div>
+          )}
         </>
       ) : (
         <>
@@ -552,7 +595,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         </Button>
         <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={wide ? "px-3.5" : "h-13 flex-1 px-4"}>
           {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : !wide && <Check strokeWidth={2.5} />}
-          {wide ? t(KIND_META[kind].save) : t("Save")}
+          {wide ? t(isTransfer ? KIND_META.TRANSFER.save : "Save transaction") : t("Save")}
           {wide && (
             <Kbd aria-hidden="true" className="rounded-[4px] border-0 bg-white/18 px-1.25 py-px font-sans text-[11px] font-semibold text-white">
               Enter
@@ -575,6 +618,35 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       {footer}
     </form>
   );
+
+  // Wide screens: the board's popup near the top of the screen (TxnDrawer).
+  if (wide) {
+    return (
+      <Dialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
+        <DialogContent
+          showCloseButton={false}
+          className="top-[max(16px,8vh)] flex max-h-[calc(100dvh-32px)] w-135 translate-y-0 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-none"
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-divider py-4 pr-4 pl-6">
+            {editing ? (
+              <span className="flex min-w-0 flex-col gap-1">
+                <DialogTitle className="text-[18px] font-semibold text-ink">{t("Edit transaction")}</DialogTitle>
+                <DialogDescription className="truncate text-small text-ink-muted">
+                  {editing.title} · {formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM", fmt)}
+                </DialogDescription>
+              </span>
+            ) : (
+              <DialogTitle className="text-[18px] font-semibold text-ink">{t("New transaction")}</DialogTitle>
+            )}
+            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken">
+              <X className="size-4.5" aria-hidden="true" />
+            </button>
+          </div>
+          {form}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>

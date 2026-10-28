@@ -311,7 +311,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       )}
 
       {canManage && <TransactionDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} currency={currency} />}
-      {canManage && editing && <TransactionDrawer open onClose={() => setEditing(null)} businessId={businessId} currency={currency} editing={editing} />}
+      {canManage && editing && <TransactionDrawer open onClose={() => setEditing(null)} businessId={businessId} currency={currency} editing={editing} stayOnEdit />}
       {voiding && (
         <VoidTransactionDialog
           open
