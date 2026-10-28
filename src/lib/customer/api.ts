@@ -566,6 +566,12 @@ export interface Transaction {
   // only the money would leave that feature's figures wrong.
   voidable: boolean;
   entries: TransactionEntry[];
+  // The bank or service charge paid with this entry (a loan entry's
+  // Charge column); null without one. Missing from an older backend.
+  charge?: string | null;
+  // With withLoanBalance: the contact's loan balance just after this row
+  // (positive: they owe you, Pawna; negative: you owe, Dena).
+  loanBalanceAfter?: string | null;
 }
 
 // The other end of an Edit (decision D2), with its amount.

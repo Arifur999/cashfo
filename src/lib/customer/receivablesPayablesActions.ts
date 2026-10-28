@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type ContactBalanceDetail, type Transaction } from "./api";
+import type { LoanEntryKind } from "./loanDisplay";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -46,6 +47,8 @@ export interface RecordInvoiceInput {
   // moves real cash), ignored for a BUSINESS contact's credit sale/
   // purchase (revenue/expense recognized now, cash moves later).
   moneyAccountId?: string;
+  // A bank or service charge paid with a loan entry, out of its wallet.
+  charge?: number;
 }
 
 export async function recordSaleAction(businessId: string, input: RecordInvoiceInput): Promise<ActionResult<Transaction>> {
@@ -71,6 +74,7 @@ export interface RecordPaymentInput {
   // The slip or cheque number, as the statement's Reference column shows it.
   referenceNo?: string;
   appliedToTransactionId?: string;
+  charge?: number;
 }
 
 export async function receivePaymentAction(businessId: string, input: RecordPaymentInput): Promise<ActionResult<Transaction>> {
@@ -83,6 +87,22 @@ export async function receivePaymentAction(businessId: string, input: RecordPaym
 export async function payPaymentAction(businessId: string, input: RecordPaymentInput): Promise<ActionResult<Transaction>> {
   return callApi(async () => {
     const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/payments/pay`, input, { headers: await authHeaders() });
+    return res.data;
+  });
+}
+
+// Edit: the loan entry is voided 'Corrected' and this one posted in its
+// place, as one request. An entry stays the kind it was.
+const CORRECT_PATHS: Record<LoanEntryKind, string> = {
+  GIVE_LOAN: "receivables",
+  TAKE_LOAN: "payables",
+  RECEIVE_PAYMENT: "payments/receive",
+  MAKE_PAYMENT: "payments/pay",
+};
+
+export async function correctLoanEntryAction(businessId: string, transactionId: string, kind: LoanEntryKind, input: RecordInvoiceInput | RecordPaymentInput): Promise<ActionResult<Transaction>> {
+  return callApi(async () => {
+    const res = await customerApi.post<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/${CORRECT_PATHS[kind]}/${transactionId}/correct`, input, { headers: await authHeaders() });
     return res.data;
   });
 }

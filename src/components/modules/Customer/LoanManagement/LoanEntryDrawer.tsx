@@ -20,9 +20,9 @@ import type { Account, Contact } from "@/lib/customer/api";
 import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { balanceAfterEntry, DIRECTION_META, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, loanErrorText, profitCategory, repaymentLimit, type LoanBalanceDetail, type LoanEntryKind } from "@/lib/customer/loanDisplay";
-import { createExpenseAction, createIncomeAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
-import { getContactBalanceDetailAction, payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
+import { balanceAfterEntry, DIRECTION_META, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, loanErrorText, profitCategory, repaymentLimit, walletDeltaOf, type LoanBalanceDetail, type LoanEdit, type LoanEntryKind } from "@/lib/customer/loanDisplay";
+import { correctTransactionAction, createExpenseAction, createIncomeAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { correctLoanEntryAction, getContactBalanceDetailAction, payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -40,6 +40,9 @@ interface LoanEntryDrawerProps {
   currency: string;
   initialContactId?: string;
   initialKind?: LoanEntryKind;
+  // Edit: the entry to change, its values filled in. Saving voids it as
+  // Corrected and posts the changed one in its place.
+  editing?: LoanEdit | null;
 }
 
 type Purpose = "PRINCIPAL" | "PROFIT";
@@ -61,7 +64,7 @@ const REPAYMENTS: Partial<Record<LoanEntryKind, { over: string; none: string; no
 // and what both balances will be once it is saved. Every entry moves real
 // money, so a wallet is always required. Profit never moves the loan. A
 // repayment can't be more than is owed on its side, as the API checks.
-export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency, initialContactId, initialKind }: LoanEntryDrawerProps) {
+export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency, initialContactId, initialKind, editing = null }: LoanEntryDrawerProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const online = useOnline();
@@ -80,6 +83,9 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const [date, setDate] = useState(getAppToday());
   const [amount, setAmount] = useState("");
   const amountField = useAmountField(amount, setAmount, currency);
+  // A bank or service charge paid with it, out of the same wallet.
+  const [charge, setCharge] = useState("");
+  const chargeField = useAmountField(charge, setCharge, currency);
   // The slip or loan number (the board's Reference); the statement shows it
   // in its Reference column.
   const [reference, setReference] = useState("");
@@ -95,7 +101,21 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const [prevOpen, setPrevOpen] = useState(false);
   if (open !== prevOpen) {
     setPrevOpen(open);
-    if (open) {
+    if (open && editing) {
+      // The entry as it was saved.
+      setContactId(editing.contactId);
+      setKind(editing.kind ?? "GIVE_LOAN");
+      setPurpose(editing.profit ? "PROFIT" : "PRINCIPAL");
+      setProfitWay(editing.profit && !editing.profit.paid ? "RECEIVED" : "PAID");
+      setCategory(editing.profit?.category ?? "");
+      setAmount(String(editing.amount));
+      setCharge(editing.charge ? String(editing.charge) : "");
+      setReference(editing.reference);
+      setDate(editing.date);
+      setAccountId(editing.accountId);
+      setWalletsError(null);
+      setLoading(true);
+    } else if (open) {
       // Whoever the page opened it for, or the only one there is; never
       // whoever happens to sort first.
       setContactId(initialContactId && contacts.some((c) => c.id === initialContactId) ? initialContactId : contacts.length === 1 ? contacts[0].id : "");
@@ -104,6 +124,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
       setProfitWay("PAID");
       setCategory("");
       setAmount("");
+      setCharge("");
       setReference("");
       setDate(getAppToday());
       setWalletsError(null);
@@ -156,11 +177,21 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   // label (the New transaction drawer's rule).
   const expenseAccountId = expenseAccounts.find((a) => a.name.toLowerCase().includes(picked.toLowerCase()))?.id ?? expenseAccounts[0]?.id ?? "";
   const value = Number(amount) || 0;
+  const chargeValue = Number(charge) || 0;
   const money = (figure: number) => formatCurrency(figure, currency, fmt);
+  // Edit: what the entry being changed did, taken back out of today's
+  // figures (it is voided as the change is saved).
+  const editingHere = editing && editing.contactId === contactId ? editing : null;
+  const editedPrincipal = editingHere && editingHere.kind ? balanceAfterEntry(0, editingHere.kind, editingHere.amount) : 0;
+  const editedWallet = editing && editing.accountId === accountId ? walletDeltaOf(editing) : 0;
 
   // undefined while it loads, null when it couldn't be told.
   const contactDetail = detail && detail.contactId === contactId ? detail.data : undefined;
-  const limitOf = (option: LoanEntryKind) => (contactDetail ? repaymentLimit(contactDetail, option) : null);
+  // Edit: the entry's own amount is free again on its side.
+  const limitOf = (option: LoanEntryKind) => {
+    const cap = contactDetail ? repaymentLimit(contactDetail, option) : null;
+    return cap === null ? null : cap + (editingHere && editingHere.kind === option ? editingHere.amount : 0);
+  };
   const repayment = !profit ? REPAYMENTS[kind] : undefined;
   const limit = repayment ? limitOf(kind) : null;
   const noneOwed = limit === 0;
@@ -168,12 +199,13 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const checkingLimit = !!repayment && !!contact && contactDetail === undefined;
 
   const flowIn = profit ? !profitPaid : meta.flow === "in";
-  const walletAfter = wallet ? Number(wallet.currentBalance) + (flowIn ? value : -value) : null;
-  const balanceNow = contact ? Number(contact.currentBalance) : 0;
+  const walletBefore = wallet ? Number(wallet.currentBalance) - editedWallet : null;
+  const walletAfter = walletBefore !== null ? walletBefore + (flowIn ? value : -value) - chargeValue : null;
+  const balanceNow = contact ? Number(contact.currentBalance) - editedPrincipal : 0;
   const balanceAfter = profit ? balanceNow : balanceAfterEntry(balanceNow, kind, value);
   const valid = !!contact && value > 0 && accountId.length > 0 && (!profit || !profitPaid || expenseAccountId.length > 0) && !noneOwed && !overLimit && !checkingLimit;
   const canSave = valid && online && !isPending;
-  const saveLabel = profit ? (profitPaid ? "Save profit payment" : "Save profit received") : meta.save;
+  const saveLabel = editing ? "Save changes" : profit ? (profitPaid ? "Save profit payment" : "Save profit received") : meta.save;
   const walletLabel = profit ? (profitPaid ? "Pay from" : "Money came into") : meta.walletLabel;
   const fallback = profit ? "Couldn't save the profit entry" : kind === "GIVE_LOAN" || kind === "TAKE_LOAN" ? "Couldn't save the loan" : "Couldn't save the payment";
 
@@ -187,9 +219,15 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
     startTransition(async () => {
       try {
         const referenceNo = reference.trim() || undefined;
-        const base = { contactId, amount: value, date, referenceNo, moneyAccountId: accountId };
-        const filed = { contactId, amount: value, date, referenceNo, categoryId: picked || undefined };
-        const result = profit
+        const charged = chargeValue > 0 ? chargeValue : undefined;
+        const base = { contactId, amount: value, date, referenceNo, moneyAccountId: accountId, charge: charged };
+        const filed = { contactId, amount: value, date, referenceNo, categoryId: picked || undefined, charge: charged };
+        // Edit keeps the kind: a principal entry stays one, profit stays profit.
+        const result = editing
+          ? editing.profit
+            ? await correctTransactionAction(businessId, editing.transactionId, profitPaid ? "EXPENSE" : "INCOME", profitPaid ? { ...filed, fromAccountId: accountId, expenseAccountId } : { ...filed, toAccountId: accountId })
+            : await correctLoanEntryAction(businessId, editing.transactionId, kind, base)
+          : profit
           ? profitPaid
             ? await createExpenseAction(businessId, { ...filed, fromAccountId: accountId, expenseAccountId })
             : await createIncomeAction(businessId, { ...filed, toAccountId: accountId })
@@ -204,7 +242,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           toast.error(loanErrorText(result.message, fallback, t, money));
           return;
         }
-        toast.success(t("Entry saved"));
+        toast.success(t(editing ? "Changes saved" : "Entry saved"));
         router.refresh();
         // The old detail is stale now: until the fresh one is in, the cap
         // reads as being checked and Save waits, rather than allowing
@@ -213,6 +251,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         setSaves((count) => count + 1);
         if (another) {
           setAmount("");
+          setCharge("");
           setReference("");
           // The entry is saved: a wallet refresh that fails keeps the old
           // figures rather than reading as a failed save, inviting a second one.
@@ -254,7 +293,8 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
     <Drawer
       open={open}
       width={470}
-      title={t("New loan entry")}
+      popup
+      title={t(editing ? "Edit loan entry" : "New loan entry")}
       busy={isPending}
       onClose={onClose}
       onOpenAutoFocus={focusFirst}
@@ -272,9 +312,11 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           )}
           {/* Tight enough that the longest primary (Save profit payment) still fits the 470px drawer. */}
           <div className={cn("flex items-center gap-2", !wide && "flex-wrap")}>
-            <Button type="button" variant="secondary" onClick={() => save(true)} disabled={!canSave} className={cn("px-3", !wide && "order-2 flex-1")}>
-              {t("Save & add another")}
-            </Button>
+            {!editing && (
+              <Button type="button" variant="secondary" onClick={() => save(true)} disabled={!canSave} className={cn("px-3", !wide && "order-2 flex-1")}>
+                {t("Save & add another")}
+              </Button>
+            )}
             <span className="hidden flex-1 md:block" />
             <Button type="button" variant="ghost" onClick={onClose} className="hidden px-3 text-ink-soft md:inline-flex">
               {t("Cancel")}
@@ -310,7 +352,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             ).map((option) => {
               const on = option.value === purpose;
               return (
-                <button key={option.value} {...radioProps(option.value, { values: PURPOSES, value: purpose, onChange: setPurpose })} className={cn("flex h-13 flex-col items-start justify-center gap-px rounded-field border px-3 text-left transition-colors", on ? cn("border-[1.5px]", option.on) : "border-line bg-surface hover:border-line-strong")}>
+                <button key={option.value} {...radioProps(option.value, { values: PURPOSES, value: purpose, onChange: setPurpose, disabled: (candidate) => !!editing && candidate !== purpose })} className={cn("flex h-13 flex-col items-start justify-center gap-px rounded-field border px-3 text-left transition-colors", on ? cn("border-[1.5px]", option.on) : "border-line bg-surface hover:border-line-strong")}>
                   <span className={cn("text-small", on ? cn("font-bold", option.ink) : "font-semibold text-ink")}>{t(option.title)}</span>
                   <span className={cn("text-caption font-normal", on ? option.subInk : "text-ink-muted")}>{t(option.sub)}</span>
                 </button>
@@ -334,7 +376,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                 ).map((option) => {
                   const on = option.value === profitWay;
                   return (
-                    <button key={option.value} {...radioProps(option.value, { values: PROFIT_WAYS, value: profitWay, onChange: setProfitWay })} className={cn("flex h-13 items-center gap-2.5 rounded-field border px-3 text-left transition-colors", on ? cn("border-[1.5px]", option.on) : "border-line bg-surface hover:border-line-strong")}>
+                    <button key={option.value} {...radioProps(option.value, { values: PROFIT_WAYS, value: profitWay, onChange: setProfitWay, disabled: (candidate) => !!editing && candidate !== profitWay })} className={cn("flex h-13 items-center gap-2.5 rounded-field border px-3 text-left transition-colors", on ? cn("border-[1.5px]", option.on) : "border-line bg-surface hover:border-line-strong")}>
                       {option.value === "PAID" ? <ArrowUpRight className="size-4.5 shrink-0 text-expense-fill" strokeWidth={2.25} aria-hidden="true" /> : <ArrowDownLeft className="size-4.5 shrink-0 text-income" strokeWidth={2.25} aria-hidden="true" />}
                       <span className="flex min-w-0 flex-col gap-px">
                         <span className={cn("text-small", on ? cn("font-bold", option.ink) : "font-semibold text-ink")}>{t(option.title)}</span>
@@ -372,17 +414,17 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                 const on = option === kind;
                 const out = LOAN_ENTRY_META[option].flow === "out";
                 // Nothing owed on that side: it shows, with why, but can't be picked.
-                const blocked = limitOf(option) === 0;
+                const blocked = limitOf(option) === 0 || (!!editing && option !== kind);
                 return (
                   <button
                     key={option}
-                    {...radioProps(option, { values: LOAN_ENTRY_KINDS, value: kind, onChange: setKind, disabled: (candidate) => candidate !== kind && limitOf(candidate) === 0 })}
+                    {...radioProps(option, { values: LOAN_ENTRY_KINDS, value: kind, onChange: setKind, disabled: (candidate) => candidate !== kind && (!!editing || limitOf(candidate) === 0) })}
                     className={cn("flex h-14 items-center gap-2.5 rounded-field border px-3 text-left transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong", blocked && !on && "cursor-not-allowed opacity-60 hover:border-line")}
                   >
                     {out ? <ArrowUpRight className="size-4.5 shrink-0 text-expense-fill" strokeWidth={2.25} aria-hidden="true" /> : <ArrowDownLeft className="size-4.5 shrink-0 text-income" strokeWidth={2.25} aria-hidden="true" />}
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className={cn("text-small", on ? "font-bold text-emerald" : "font-semibold text-ink")}>{t(LOAN_ENTRY_META[option].title)}</span>
-                      <span className="truncate text-caption font-normal text-ink-muted">{blocked ? t(REPAYMENTS[option]?.noneSub ?? "") : t(LOAN_ENTRY_META[option].sub)}</span>
+                      <span className="truncate text-caption font-normal text-ink-muted">{blocked && limitOf(option) === 0 ? t(REPAYMENTS[option]?.noneSub ?? "") : t(LOAN_ENTRY_META[option].sub)}</span>
                     </span>
                   </button>
                 );
@@ -403,7 +445,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           </Field>
         </div>
 
-        <div className={cn("grid gap-2.5", profit ? "md:grid-cols-[170px_minmax(0,1fr)]" : "md:grid-cols-[190px_minmax(0,1fr)]")}>
+        <div className="grid gap-2.5 md:grid-cols-[180px_130px_minmax(0,1fr)]">
           <Field htmlFor={amountId} label={label(t("Amount"))} error={overLimit && repayment && limit !== null ? t(repayment.over, { amount: money(limit) }) : undefined}>
             <Input
               id={amountId}
@@ -417,6 +459,9 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
               frameClassName="h-12 gap-0 overflow-hidden rounded-sm pl-0"
               className="pl-3 text-h3 font-bold tabular-nums"
             />
+          </Field>
+          <Field htmlFor="loan-charge" label={label(t("Charge"), true)} hint={chargeValue > 0 ? t("Paid from the same wallet, as an expense") : undefined}>
+            <Input id="loan-charge" type="text" inputMode="decimal" size="lg" {...chargeField} placeholder="0" className="px-0 tabular-nums" frameClassName="px-3" />
           </Field>
           <Field htmlFor="loan-ref" label={label(t("Reference"), true)}>
             <Input id="loan-ref" size="lg" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={100} placeholder={t(profit ? "e.g. Sep profit · slip 4471" : "e.g. Loan no. BL-2231")} className="px-0" frameClassName="px-3" />
@@ -454,11 +499,17 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                 )}
               </div>
             )}
+            {chargeValue > 0 && (
+              <div className="flex justify-between gap-3">
+                <span className="truncate text-ink-2">{t("Charge · expense")}</span>
+                <span className="font-semibold text-expense">− {money(chargeValue)}</span>
+              </div>
+            )}
             {wallet && walletAfter !== null && (
               <div className="flex justify-between gap-3">
                 <span className="truncate text-ink-2">{accountDisplayName(wallet, displayLanguage(locale))}</span>
                 <span>
-                  <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, fmt)} → </span>
+                  <span className="text-ink-muted">{formatCurrency(walletBefore ?? wallet.currentBalance, currency, fmt)} → </span>
                   <span className="font-semibold text-ink">{formatCurrency(walletAfter, currency, fmt)}</span>
                 </span>
               </div>

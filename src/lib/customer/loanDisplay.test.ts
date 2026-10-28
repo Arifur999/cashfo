@@ -9,6 +9,7 @@ import {
   foldProfitRuns,
   isCancelledRow,
   loanDirection,
+  loanEditOf,
   loanEntryOf,
   loanErrorText,
   loanPaymentRow,
@@ -19,6 +20,7 @@ import {
   statementPageEdges,
   statementProfit,
   statementTotals,
+  walletDeltaOf,
   whoPhrase,
   type LoanBalanceDetail,
   type StatementEquation,
@@ -347,5 +349,32 @@ describe("loanErrorText", () => {
     expect(loanErrorText("Failed to record payment", "x", inEnglish, money)).toBe("Couldn't save the payment");
     expect(loanErrorText("Something else", "x", inEnglish, money)).toBe("Something else");
     expect(loanErrorText(undefined, "Couldn't save the loan", inEnglish, money)).toBe("Couldn't save the loan");
+  });
+});
+
+describe("loanEditOf", () => {
+  const base = { id: "t1", contactId: "bank", transactionDate: "2026-03-10T00:00:00.000Z", referenceNo: "BL-2231", charge: "500.00" };
+
+  it("reads a principal entry back for Edit, with its wallet and charge", () => {
+    const took = { ...base, ...txn("PURCHASE", [entry("DEBIT", "bank", "100000", "Islami bank"), entry("CREDIT", null, "100000", "Payable")]) };
+    expect(loanEditOf(took)).toEqual({ transactionId: "t1", contactId: "bank", kind: "TAKE_LOAN", profit: null, accountId: "Islami bank", date: "2026-03-10", amount: 100000, reference: "BL-2231", charge: 500 });
+  });
+
+  it("reads profit paid with its category", () => {
+    const paid = { ...base, charge: null, ...txn("EXPENSE", [entry("CREDIT", "cash", "5000"), { ...entry("DEBIT", null, "5000", "Interest"), categoryId: "Loan profit" }]) };
+    expect(loanEditOf(paid)).toMatchObject({ kind: null, profit: { paid: true, category: "Loan profit" }, amount: 5000, charge: 0 });
+  });
+
+  it("is null without a contact or a wallet", () => {
+    expect(loanEditOf({ ...base, contactId: null, ...txn("SALE", [entry("CREDIT", "cash", "500")]) })).toBeNull();
+    expect(loanEditOf({ ...base, ...txn("SALE", [entry("DEBIT", null, "500", "Receivable")]) })).toBeNull();
+  });
+});
+
+describe("walletDeltaOf", () => {
+  it("moves the wallet by the amount, less the charge", () => {
+    expect(walletDeltaOf({ kind: "TAKE_LOAN", profit: null, amount: 100000, charge: 500 })).toBe(99500);
+    expect(walletDeltaOf({ kind: "GIVE_LOAN", profit: null, amount: 20000, charge: 0 })).toBe(-20000);
+    expect(walletDeltaOf({ kind: null, profit: { paid: true, category: null }, amount: 5000, charge: 50 })).toBe(-5050);
   });
 });

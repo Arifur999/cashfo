@@ -42,6 +42,10 @@ export default async function LoanTransactionsPage({ searchParams }: PageProps<"
       contactCategory: "LOAN",
       // Loans and repayments, and the profit or interest posted with them.
       transactionTypes: ["SALE", "PURCHASE", "PAYMENT", "INCOME", "EXPENSE"],
+      // A charge shows in its entry's Charge column, and each row carries the
+      // balance with that bank or person just after it.
+      excludeCharges: true,
+      withLoanBalance: true,
       dateFrom,
       dateTo,
     }),
