@@ -125,14 +125,16 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         label: "Income & Expense",
-        href: "/transactions",
+        href: "/income-expense",
         icon: "transactions",
         subs: [
+          { label: "Overview", href: "/income-expense" },
           { label: "Transactions", href: "/transactions" },
           // The budget page lives at /categories; its old address forwards there.
           { label: "Budget Planning", href: "/categories", match: ["/budget-planning"] },
-          // Income planning became Income sources; its old address forwards here.
-          { label: "Income Category", href: "/income-category", match: ["/income-planning"] },
+          // Both kinds of category; the old Income Category and Income
+          // planning addresses forward here.
+          { label: "Category Set", href: "/category-set", match: ["/income-category", "/income-planning"] },
         ],
       },
       {
