@@ -43,7 +43,9 @@ const type = (name: string, color = "green", icon: string | null = "mountain"): 
 describe("categoryVisual", () => {
   it("draws a type in its token colour, so dark mode follows", () => {
     expect(categoryVisual([type("Land", "green")], "Land").color).toBe("var(--cat-1)");
-    expect(categoryVisual([type("Gold", "yellow")], "Gold").color).toBe("var(--warning)");
+    expect(categoryVisual([type("Gold", "yellow")], "Gold").color).toBe("var(--cat-11)");
+    // Every category ink, not only the first six.
+    expect(categoryVisual([type("Shares", "purple")], "Shares").color).toBe("var(--cat-7)");
     expect(categoryVisual([type("Land", "green")], "Land").tone).toEqual({ bg: "bg-mint-50", fg: "text-cat-1" });
   });
 

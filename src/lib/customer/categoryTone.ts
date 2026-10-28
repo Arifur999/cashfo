@@ -1,8 +1,7 @@
 // Budget categories carry one of twelve colour names (see
 // budgetCategoryVisuals), and the design-v4 CategoryDrawer offers all
-// twelve as distinct dots: each name maps onto its own ink (cat-1 … cat-10,
-// the warning amber for yellow, the expense red for red) on a soft tile of
-// its hue family.
+// twelve as distinct dots: each name maps onto its own ink (cat-1 … cat-11,
+// the expense red for red) on a soft tile of its hue family.
 export interface CategoryTone {
   bg: string;
   fg: string;
@@ -14,7 +13,7 @@ const TONES: Record<string, CategoryTone> = {
   purple: { bg: "bg-pillar-habits-soft", fg: "text-cat-7" },
   orange: { bg: "bg-pillar-loans-soft", fg: "text-cat-2" },
   pink: { bg: "bg-rose-soft", fg: "text-cat-6" },
-  yellow: { bg: "bg-warning-soft", fg: "text-warning" },
+  yellow: { bg: "bg-warning-soft", fg: "text-cat-11" },
   red: { bg: "bg-expense-soft", fg: "text-expense" },
   indigo: { bg: "bg-info-soft", fg: "text-cat-8" },
   teal: { bg: "bg-pillar-insights-soft", fg: "text-cat-5" },
