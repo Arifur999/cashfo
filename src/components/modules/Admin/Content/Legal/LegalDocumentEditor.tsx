@@ -14,7 +14,7 @@ import { formatRelativeDateTime } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural } from "@/lib/i18n/message";
-import { toggleHeadingLine } from "@/lib/legalText";
+import { toggleHeadingLine, wrapSelection } from "@/lib/legalText";
 import { queryKeys } from "@/lib/queryKeys";
 import { lowerFirst } from "@/lib/text";
 import { cn } from "@/lib/utils";
@@ -43,17 +43,16 @@ const toggleBulletLine = (text: string, caret: number) => {
 
 const UNDO_DEPTH = 100;
 
-type ToolAction = "heading" | "list" | "undo";
+type ToolAction = "heading" | "bold" | "italic" | "list" | "link" | "undo";
 
-// The board's formatting bar. Bold, italic and links have no way to show on
-// the public page yet (it reads plain text with "##" headings), so those
-// three stay drawn but off.
+// The board's formatting bar. The public page reads "##" headings,
+// **bold**, *italic* and [words](https://…) links (lib/legalText).
 const TOOLS: { label: string; icon: LucideIcon; action?: ToolAction; hint?: string }[] = [
   { label: "Heading", icon: Heading, action: "heading", hint: "Make this line a section heading (##)" },
-  { label: "Bold", icon: Bold },
-  { label: "Italic", icon: Italic },
+  { label: "Bold", icon: Bold, action: "bold", hint: "Make the selected words bold (**…**)" },
+  { label: "Italic", icon: Italic, action: "italic", hint: "Make the selected words italic (*…*)" },
   { label: "List", icon: List, action: "list", hint: "Make this line a list item" },
-  { label: "Link", icon: Link2 },
+  { label: "Link", icon: Link2, action: "link", hint: "Link the selected words ([…](https://…))" },
   { label: "Undo", icon: Undo2, action: "undo" },
 ];
 
@@ -134,6 +133,18 @@ const LegalDocumentEditor = ({ document, canManage, onDirtyChange }: LegalDocume
     });
   };
 
+  // Bold, Italic and Link wrap the selection and select what comes next.
+  const wrap = (kind: "bold" | "italic" | "link") => {
+    const editor = editors.current[language];
+    if (!editor) return;
+    const next = wrapSelection(editor.value, editor.selectionStart, editor.selectionEnd, kind);
+    change(language, next.text);
+    requestAnimationFrame(() => {
+      editor.focus();
+      editor.setSelectionRange(next.start, next.end);
+    });
+  };
+
   const undo = () => {
     const previous = history.current[language].pop();
     if (previous === undefined) return;
@@ -174,6 +185,7 @@ const LegalDocumentEditor = ({ document, canManage, onDirtyChange }: LegalDocume
   const runTool = (action: ToolAction) => {
     if (action === "heading") editLine(toggleHeadingLine);
     else if (action === "list") editLine(toggleBulletLine);
+    else if (action === "bold" || action === "italic" || action === "link") wrap(action);
     else undo();
   };
 

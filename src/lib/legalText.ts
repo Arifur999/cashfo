@@ -43,3 +43,47 @@ export function toggleHeadingLine(text: string, caret: number): { text: string; 
   }
   return { text: `${text.slice(0, lineStart)}## ${text.slice(lineStart)}`, caret: caret + 3 };
 }
+
+// What a paragraph says, piece by piece: **bold**, *italic* and
+// [words](link), where a link may only be an https or mailto address or a
+// page of the site ("/privacy"). Anything else stays as the plain text it
+// was typed as; nothing is read as HTML.
+export type LegalInline = { kind: "text" | "bold" | "italic"; text: string } | { kind: "link"; text: string; href: string };
+
+const INLINE = /\*\*(.+?)\*\*|\*(?!\s)(.+?)\*|\[([^\]\n]+)\]\(([^)\s]+)\)/g;
+const SAFE_HREF = /^(https:\/\/\S+|mailto:\S+|\/(?!\/)\S*)$/;
+
+export function legalInline(text: string): LegalInline[] {
+  const pieces: LegalInline[] = [];
+  let last = 0;
+  const plain = (to: number) => {
+    if (to > last) pieces.push({ kind: "text", text: text.slice(last, to) });
+  };
+  for (const match of text.matchAll(INLINE)) {
+    const [whole, bold, italic, label, href] = match;
+    const at = match.index ?? 0;
+    if (label !== undefined && !SAFE_HREF.test(href)) continue;
+    plain(at);
+    if (bold !== undefined) pieces.push({ kind: "bold", text: bold });
+    else if (italic !== undefined) pieces.push({ kind: "italic", text: italic });
+    else pieces.push({ kind: "link", text: label, href });
+    last = at + whole.length;
+  }
+  plain(text.length);
+  return pieces;
+}
+
+// The editor\x27s Bold, Italic and Link buttons: wrap what is selected (or a
+// placeholder word) and say what to select next.
+export function wrapSelection(text: string, start: number, end: number, kind: "bold" | "italic" | "link"): { text: string; start: number; end: number } {
+  const picked = text.slice(start, end) || (kind === "link" ? "link text" : kind === "bold" ? "bold text" : "italic text");
+  const [before, after] = kind === "bold" ? ["**", "**"] : kind === "italic" ? ["*", "*"] : ["[", "](https://)"];
+  const next = text.slice(0, start) + before + picked + after + text.slice(end);
+  if (kind === "link") {
+    // The address is what is left to type.
+    const urlStart = start + before.length + picked.length + 2;
+    return { text: next, start: urlStart, end: urlStart + "https://".length };
+  }
+  return { text: next, start: start + before.length, end: start + before.length + picked.length };
+}
+

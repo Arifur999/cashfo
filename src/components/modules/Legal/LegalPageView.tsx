@@ -5,7 +5,7 @@ import Eyebrow from "@/components/smartly/Eyebrow";
 import { getLegalDocument, type LegalPage } from "@/lib/customer/platform";
 import { formatCount } from "@/lib/i18n/digits";
 import { getTranslator } from "@/lib/i18n/locale";
-import { legalBlocks } from "@/lib/legalText";
+import { legalBlocks, legalInline } from "@/lib/legalText";
 import { cn } from "@/lib/utils";
 import { effectiveDateText } from "./legalDates";
 import { legalPageEntry } from "./legalPages";
@@ -54,7 +54,21 @@ export default async function LegalPageView({ page }: { page: LegalPage }) {
               </h2>
             ) : (
               <p key={index} lang={textLang.lang} className={cn("text-body-lg leading-[27px] whitespace-pre-line text-ink-2", textLang.className)}>
-                {block.text}
+                {legalInline(block.text).map((piece, at) =>
+                  piece.kind === "bold" ? (
+                    <strong key={at} className="font-semibold text-ink">
+                      {piece.text}
+                    </strong>
+                  ) : piece.kind === "italic" ? (
+                    <em key={at}>{piece.text}</em>
+                  ) : piece.kind === "link" ? (
+                    <a key={at} href={piece.href} {...(piece.href.startsWith("https://") && { target: "_blank", rel: "noopener noreferrer" })} className="font-medium text-emerald underline underline-offset-2">
+                      {piece.text}
+                    </a>
+                  ) : (
+                    piece.text
+                  ),
+                )}
               </p>
             ),
           )
