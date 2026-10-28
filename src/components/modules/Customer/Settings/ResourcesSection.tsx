@@ -64,7 +64,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
   }
 
   return (
-    <div className="flex max-w-205 flex-col gap-4.5">
+    <div className="flex flex-col gap-4.5">
       <Card padding="none" className="flex flex-col gap-3.5 px-4 py-4.5 md:px-5">
         <h2 className="text-title font-semibold text-ink">{t("Guides")}</h2>
         <div className="grid gap-3 @lg:grid-cols-2">

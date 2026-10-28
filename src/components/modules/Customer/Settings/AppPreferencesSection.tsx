@@ -169,7 +169,7 @@ export function AppPreferencesSection({ today, reminders: initialReminders, habi
   const emailOff = reminders?.emailReady === false;
 
   return (
-    <div className="flex max-w-200 flex-col gap-4.5">
+    <div className="flex flex-col gap-4.5">
       <Card padding="none" className="overflow-hidden">
         {/* With dark mode switched off there is no look to pick, only the language. */}
         <h2 className={cn("py-4 text-title font-semibold text-ink", PX)}>{allowDark ? t("Language and look") : t("Language")}</h2>

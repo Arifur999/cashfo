@@ -211,7 +211,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
   }
 
   return (
-    <div className="flex max-w-200 flex-col gap-4.5">
+    <div className="flex flex-col gap-4.5">
       {!verified && (
         <Card padding="none" className="flex flex-wrap items-center gap-3.5 border-warning-line bg-warning-50 px-4 py-4 md:px-5.5">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-warning-soft text-warning [&_svg]:size-5">

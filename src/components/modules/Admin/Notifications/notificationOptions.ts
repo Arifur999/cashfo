@@ -3,7 +3,7 @@ import type { CampaignStatus, NotificationChannel, NotificationLogStatus } from 
 // How each channel reads, and the tone of its chip.
 export const CHANNEL_META: Record<NotificationChannel, { label: string; tone: "info" | "warning" | "habits"; note: string }> = {
   EMAIL: { label: "Email", tone: "info", note: "Free to send" },
-  SMS: { label: "SMS", tone: "warning", note: "Costs per message" },
+  SMS: { label: "SMS", tone: "warning", note: "Verified phones only · costs per message" },
   IN_APP_PUSH: { label: "In-app", tone: "habits", note: "Next time they open the app" },
 };
 

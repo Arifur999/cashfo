@@ -55,7 +55,7 @@ export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, 
   // With no answer on hand the step stays open and says why, never "fine".
   if (!checkup) {
     return (
-      <div className="-mt-1 flex max-w-245 flex-col gap-4.5">
+      <div className="-mt-1 flex flex-col gap-4.5">
         {back}
         {failed ? (
           <ErrorState title={t("The security checkup couldn't run.")} onRetry={onRetry} />
@@ -84,7 +84,7 @@ export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, 
       : t("All {total} of your logins look fine", { total: count(entries.length) });
 
   return (
-    <div className="-mt-1 flex max-w-245 flex-col gap-4.5">
+    <div className="-mt-1 flex flex-col gap-4.5">
       {back}
 
       <Card padding="none" className="flex items-center gap-6 px-6 py-5.5">

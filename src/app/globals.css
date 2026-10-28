@@ -619,7 +619,7 @@ html:not(.dark) [data-app="habit"] {
   --shadow-md: var(--elevation-float);
   --shadow-lg: var(--elevation-overlay);
 
-  /* Sizes: h-control-md, w-sidebar, max-w-content */
+  /* Sizes: h-control-md, w-sidebar */
   --spacing-control-sm: 36px;
   --spacing-control-md: 44px;
   --spacing-control-lg: 52px;
@@ -627,7 +627,6 @@ html:not(.dark) [data-app="habit"] {
   --spacing-sidebar-admin: 240px;
   --spacing-topbar: 64px;
   --spacing-topbar-mobile: 56px;
-  --container-content: 1200px;
 }
 
 /* Gradients (bg-aurora, bg-night ...). */

@@ -97,7 +97,7 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
   );
 
   return (
-    <div className="flex max-w-190 flex-col gap-5">
+    <div className="flex flex-col gap-5">
       <Card padding="none" className="overflow-hidden">
         <form onSubmit={submit} noValidate>
           <div className="flex flex-col gap-0.75 px-6 pt-5">
