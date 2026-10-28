@@ -14,7 +14,7 @@ const RevenueFacts = async ({ overview, fromReferrals }: { overview: IRevenueOve
   const { t, locale } = await getTranslator("admin");
   const month = t(formatMonthName(overview.month));
   // Both sides from payments: their MRR now over the people they count as
-  // paid now. (The MRR figure up top counts workspaces' plans instead.)
+  // paid now. (The MRR figure up top counts the paid subscriptions.)
   const paidNow = overview.paidPeople.now;
   const perPerson = paidNow > 0 ? paymentsMrrNow(overview.mrrHistory) / paidNow : 0;
   const facts = [
