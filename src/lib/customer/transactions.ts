@@ -19,6 +19,10 @@ export interface TransactionFilters {
   // Leave out what a savings goal moved (Wallets › Transfer lists money
   // moved between wallets).
   excludeSavings?: boolean;
+  // Leave out the charges paid with loan entries (each shows on its entry).
+  excludeCharges?: boolean;
+  // Add each row's loanBalanceAfter.
+  withLoanBalance?: boolean;
   search?: string;
   page?: number;
   limit?: number;

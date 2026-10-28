@@ -340,6 +340,49 @@ export function loanPaymentRow(transaction: Pick<Transaction, "transactionType" 
   };
 }
 
+// What Edit fills the entry popup with, read back from a standing loan
+// entry: a principal entry's kind, or profit paid or received and what it
+// was filed under; the wallet, date, amount, reference and charge. Null for
+// anything else (no contact, or no wallet to read).
+export interface LoanEdit {
+  transactionId: string;
+  contactId: string;
+  kind: LoanEntryKind | null;
+  profit: { paid: boolean; category: string | null } | null;
+  accountId: string;
+  // yyyy-mm-dd.
+  date: string;
+  amount: number;
+  reference: string;
+  charge: number;
+}
+
+export function loanEditOf(transaction: Pick<Transaction, "id" | "contactId" | "transactionType" | "entries" | "transactionDate" | "referenceNo" | "charge">): LoanEdit | null {
+  const money = walletEntry(transaction);
+  if (!transaction.contactId || !money) return null;
+  const profit = loanProfitOf(transaction);
+  const entry = profit ? null : loanEntryOf(transaction);
+  const amount = profit?.amount ?? entry?.amount;
+  if (amount === undefined) return null;
+  return {
+    transactionId: transaction.id,
+    contactId: transaction.contactId,
+    kind: entry?.kind ?? null,
+    profit: profit ? { paid: profit.paid, category: profit.category } : null,
+    accountId: money.accountId,
+    date: transaction.transactionDate.slice(0, 10),
+    amount,
+    reference: transaction.referenceNo ?? "",
+    charge: Number(transaction.charge ?? 0),
+  };
+}
+
+// What an entry did to its wallet: in or out by the amount, less its charge.
+export function walletDeltaOf(edit: Pick<LoanEdit, "kind" | "profit" | "amount" | "charge">): number {
+  const inward = edit.profit ? !edit.profit.paid : edit.kind ? LOAN_ENTRY_META[edit.kind].flow === "in" : false;
+  return (inward ? edit.amount : -edit.amount) - edit.charge;
+}
+
 export interface LoanTotals {
   in: number;
   out: number;

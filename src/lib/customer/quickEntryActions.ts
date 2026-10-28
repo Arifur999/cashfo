@@ -87,6 +87,8 @@ export interface AddIncomeInput {
   description?: string;
   categoryId?: string;
   note?: string;
+  // A charge paid with a loan's profit, out of the same wallet.
+  charge?: number;
   // A receipt or slip number (the loan statement's Reference column).
   referenceNo?: string;
   // A loan's profit or interest: the bank or person it came from.
@@ -108,6 +110,8 @@ export interface AddExpenseInput {
   description?: string;
   categoryId?: string;
   note?: string;
+  // A charge paid with a loan's profit, out of the same wallet.
+  charge?: number;
   // A receipt or slip number (the loan statement's Reference column).
   referenceNo?: string;
   // A loan's profit or interest: the bank or person it went to.
