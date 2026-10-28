@@ -11,8 +11,8 @@ import { auditValueRows } from "./auditValueRows";
 
 // The list recipes' head band and row divider, at the drawer's tighter 12px
 // inset; the head keeps the line under it.
-const HEAD = cn(LIST_HEAD, "border-b border-line px-3 py-2 text-left md:px-3");
-const CELL = cn("border-t px-3 py-3 align-top break-all", LIST_DIVIDER);
+const HEAD = cn(LIST_HEAD, "border-b border-line px-3 py-2 text-left text-small font-semibold md:px-3");
+const CELL = cn("border-t px-3 py-2.5 align-top break-all", LIST_DIVIDER);
 
 // The fields an action changed, before struck out in red and after in green;
 // the ones that stayed the same, and bookkeeping such as updatedAt, fold away
@@ -103,9 +103,9 @@ const AuditValueDiff = ({ oldValue, newValue, action }: { oldValue: unknown; new
           className="flex items-center gap-1 self-start text-small font-semibold text-emerald hover:underline"
           onClick={() => setShowAll((open) => !open)}
         >
+          <ChevronDown aria-hidden="true" className={cn("size-3.5 transition-transform", showAll && "rotate-180")} />
           {/* Bookkeeping that moved isn't "the same", so the link says less. */}
           <T>{foldedMoved ? (showAll ? "Hide the other fields" : "Show the other fields") : showAll ? "Hide the fields that stayed the same" : "Show the fields that stayed the same"}</T>
-          <ChevronDown aria-hidden="true" className={cn("size-3.5 transition-transform", showAll && "rotate-180")} />
         </button>
       )}
     </div>

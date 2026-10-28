@@ -126,8 +126,8 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
   );
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-3 text-body">
+    <div className="flex flex-1 flex-col gap-4.5">
+      <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3.5 gap-y-2.5 text-[13.5px]">
         <dt className="text-ink-muted">
           <T>Admin</T>
         </dt>
@@ -136,9 +136,9 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
         </dd>
         {!namesNoRecord(entry.action) && (
           <>
-            {/* "On", as the log's column and its filter call it. */}
+            {/* What the entry changed: the record's kind and its name. */}
             <dt className="text-ink-muted">
-              <T>On@@record</T>
+              <T>Changed</T>
             </dt>
             <dd className="font-semibold text-ink">
               {typeLabel}
@@ -155,7 +155,7 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
       </dl>
 
       <section aria-labelledby="audit-changed" className="flex flex-col gap-2">
-        <h3 id="audit-changed" className="text-body font-semibold text-ink">
+        <h3 id="audit-changed" className="text-[13.5px] font-semibold text-ink">
           <T>What changed</T>
         </h3>
         <AuditValueDiff oldValue={entry.oldValue} newValue={entry.newValue} action={entry.action} />
@@ -163,17 +163,17 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
 
       <section aria-labelledby="audit-saved" className="flex flex-col gap-2">
         <span className="flex items-baseline justify-between gap-2">
-          <h3 id="audit-saved" className="text-body font-semibold text-ink">
+          <h3 id="audit-saved" className="text-[13.5px] font-semibold text-ink">
             <T>Saved record</T>
           </h3>
           <span className="text-caption text-ink-muted">
             <T>The whole entry, as it was saved</T>
           </span>
         </span>
-        <pre className="max-h-64 overflow-auto rounded-md bg-ink px-4 py-3 font-mono text-caption leading-relaxed whitespace-pre-wrap text-line-strong">{saved}</pre>
+        <pre className="max-h-64 overflow-auto rounded-field bg-ink px-3.5 py-3 font-mono text-caption leading-[1.6] whitespace-pre-wrap text-line">{saved}</pre>
       </section>
 
-      <div className="-mx-6 mt-auto -mb-5 flex flex-wrap justify-end gap-3 border-t border-line bg-strip px-6 py-4">
+      <div className="sticky bottom-0 -mx-6 mt-auto -mb-5 flex flex-wrap justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
         <CopyButton value={saved} label="the entry as JSON" text="Copy as JSON" size="md" />
         {href && (
           <Button asChild size="md">

@@ -85,10 +85,10 @@ const AuditLogTable = () => {
         {...toTableQueryProps(query)}
         data={query.data?.data}
         columns={columns}
-        // The density scale's regular row. Each column keeps its px, so on a
+        // The board's 50px row. Each column keeps its px, so on a
         // phone a name never runs into what they did: On gives way, then
         // the table scrolls sideways.
-        layout={{ rowHeight: 56, flexMinWidth: 160 }}
+        layout={{ rowHeight: 50, flexMinWidth: 160 }}
         getRowId={(row) => row.id}
         onRowClick={(row) => openEntry(row.id)}
         rowClassName={(row) => (row.id === entryId ? "bg-mint-50 hover:bg-mint-50" : undefined)}

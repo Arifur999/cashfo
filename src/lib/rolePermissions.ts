@@ -44,14 +44,14 @@ export interface RolePermissionRow {
 const row = (area: string, rule: AccessRule, note?: string): RolePermissionRow => ({ area, note, access: each(rule) });
 
 // Security > Roles, "What each role can do", in the AdminRoles board's order
-// and words. The grid draws these rows as they are.
+// and words. The grid draws these rows as they are. ("View the app as a
+// customer" is a super admin's alone, on a person's page; the board leaves
+// it out, and no menu lock reads it.)
 export const ROLE_PERMISSIONS: RolePermissionRow[] = [
   row("Open every page except Security and System", {}, "Users, money, support, content, analytics, settings"),
   row("Suspend a user or turn them back on", { manage: "ownerStatus" }),
   row("Change a user's plan", { manage: "ownerPlan" }),
   row("Reset an owner's data", { manage: "ownerData" }, "Deletes their money records"),
-  // Not on the board's grid; the panel has it (Users > a user > ⋯).
-  row("View the app as a customer", { manage: "ownerView", noLook: true }, "Read-only, and every visit is in the audit log"),
   row("Plans and coupons", { manage: "subscriptions" }),
   row("Payments: refund and retry", { manage: "payments" }),
   row("Revenue and MRR", { path: "/admin/revenue" }),
