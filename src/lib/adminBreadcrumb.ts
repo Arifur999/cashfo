@@ -100,7 +100,7 @@ const pageCrumb = ({ section, item, tab }: NavLocation): AdminCrumb => {
   // page is that page (Payments' own list): the group is no page to link to.
   // So are the tabs of an item the boards file under its group ("Support &
   // content › Tickets").
-  if (!tab || tab.title === item.title) return { parent: section.title, page: item.crumb ?? item.title };
+  if (!tab || tab.title === item.title || item.crumbFromItem) return { parent: section.title, page: item.crumb ?? item.title };
   if (item.crumbFromGroup) return { parent: section.title, page: tab.title };
   // The page links to its first tab, from that tab too.
   return { parent: item.title, parentHref: navItemHref(item), page: tab.title };

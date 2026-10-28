@@ -31,9 +31,12 @@ const Kpi = ({ label, value, chip, note, size = "md", hero = false, href, classN
   const { translate } = useLocale();
   const small = size === "sm";
   const large = size === "lg";
+  // The boards' tiles: 14px 18px round a figure over a list (Sign-ins,
+  // Payments, Tickets, Analytics), 16px 18px for the regular one
+  // (Workspaces); the dashboard's large row keeps its own.
   const frame = cn(
-    "flex flex-col px-5",
-    small ? "gap-1 py-4" : large ? "gap-1.5 py-4.5" : "gap-2 py-4",
+    "flex flex-col",
+    small ? "gap-1 px-4.5 py-3.5" : large ? "gap-1.5 px-5 py-4.5" : "gap-1.5 px-4.5 py-4",
     hero && "border-forest bg-forest shadow-[0_8px_24px_color-mix(in_srgb,var(--forest)_22%,transparent)]",
     className,
   );

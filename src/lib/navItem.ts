@@ -29,6 +29,9 @@ export interface NavItem {
   // The breadcrumb names the menu group above this item's tabs, not the item
   // ("Support & content › Tickets", as the boards write it).
   crumbFromGroup?: boolean;
+  // Every tab keeps the page's own crumb ("Money › Referrals & Payouts" on
+  // Payouts, Referrals and Settings alike).
+  crumbFromItem?: boolean;
   // The page's tabs, first one first. Their paths light this item up too,
   // for a section spread over several routes (Subscriptions is /plans and
   // /coupons).
@@ -96,7 +99,19 @@ export const adminNavSections: NavSection[] = [
           { title: "Revenue", href: "/admin/revenue" },
         ],
       },
-      { title: "Referrals & Payouts", href: "/admin/referrals", icon: "Gift", manage: "referralPayouts", badge: "payoutRequests" },
+      {
+        title: "Referrals & Payouts",
+        href: "/admin/referrals",
+        icon: "Gift",
+        manage: "referralPayouts",
+        badge: "payoutRequests",
+        crumbFromItem: true,
+        tabs: [
+          { title: "Payouts", href: "/admin/referrals", exact: true },
+          { title: "Referrals", href: "/admin/referrals/list" },
+          { title: "Settings", href: "/admin/referrals/settings" },
+        ],
+      },
     ],
   },
   {
