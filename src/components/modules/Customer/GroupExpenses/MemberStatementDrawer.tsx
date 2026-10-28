@@ -12,6 +12,7 @@ import { countLabel, dayLabel, expenseShare, mealRateText, paidIn, shortName, SP
 import { mealText } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { type FormatLocale, langOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CloseX, MemberAvatar } from "./GroupBits";
@@ -38,19 +39,19 @@ interface Entry {
 const COLUMNS = "md:grid-cols-[52px_minmax(0,1fr)_96px_88px]";
 
 // "01 Sep", as the statement's date column writes a day.
-const listDay = (day: string, locale: "en" | "bn") => (locale === "en" ? dayLabel(day, locale).padStart(6, "0") : dayLabel(day, locale));
+const listDay = (day: string, locale: FormatLocale) => (langOf(locale) === "en" ? toLocaleDigits(dayLabel(day, "en").padStart(6, "0"), locale) : dayLabel(day, locale));
 
 // One member's month: what they paid in, what they paid from their own
 // pocket, their part of each cost (as the expense is shared), their meals,
 // and where that leaves them. Sent on WhatsApp as text, or printed.
 export function MemberStatementDrawer({ open, onClose, data, view, member, onRecordPayment }: MemberStatementDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   const { currency, range } = data;
-  const monthLabel = monthName(range.key, locale, "long", true);
+  const monthLabel = monthName(range.key, fmt, "long", true);
   const row = member ? data.settlement.members.find((r) => r.groupMemberId === member.id) : undefined;
   const memberCount = data.settlement.memberCount || view.activeMembers.length || 1;
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const holder = data.settings.cashHolderMemberId ? view.memberById[data.settings.cashHolderMemberId] : undefined;
 
   const entries: Entry[] = member
@@ -67,10 +68,10 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
           .filter(({ share }) => Math.abs(share) > 0.004)
           .map(({ e, share }) => {
             const how = splitText(e, data.members);
-            return { date: e.date.slice(0, 10), title: t("{category} share", { category: e.category }), sub: `${money(e.amount)} · ${how.only ? t("Only {name}", { name: how.only }) : `${t(SPLIT_LABELS[how.kind])}${how.detail ? ` ${toLocaleDigits(how.detail, locale)}` : ""}`}${e.description ? ` · ${e.description}` : ""}`, amount: -share };
+            return { date: e.date.slice(0, 10), title: t("{category} share", { category: e.category }), sub: `${money(e.amount)} · ${how.only ? t("Only {name}", { name: how.only }) : `${t(SPLIT_LABELS[how.kind])}${how.detail ? ` ${toLocaleDigits(how.detail, fmt)}` : ""}`}${e.description ? ` · ${e.description}` : ""}`, amount: -share };
           }),
         // Meals are charged once, at the month's rate.
-        ...(row && Number(row.mealCost) > 0 ? [{ date: range.to, title: t("Meals"), sub: t("{meals} meals × {rate}", { meals: mealText(Number(row.mealUnits), locale), rate: mealRateText(data.settlement.mealRate, currency, locale) }), amount: -Number(row.mealCost) }] : []),
+        ...(row && Number(row.mealCost) > 0 ? [{ date: range.to, title: t("Meals"), sub: t("{meals} meals × {rate}", { meals: mealText(Number(row.mealUnits), fmt), rate: mealRateText(data.settlement.mealRate, currency, fmt) }), amount: -Number(row.mealCost) }] : []),
       ].sort((a, b) => a.date.localeCompare(b.date))
     : [];
   const lines = entries.reduce<(Entry & { balance: number })[]>((acc, entry) => {
@@ -86,11 +87,11 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
   const balance = row ? Number(row.balance) : 0;
   const owes = balance < -0.004;
   const even = Math.abs(balance) < 0.005;
-  const depositsLine = countLabel(t, locale, deposits, "{count} deposit", "{count} deposits");
+  const depositsLine = countLabel(t, fmt, deposits, "{count} deposit", "{count} deposits");
 
   // What came from their pocket, and when: "Bazar on 12 Sep", or how many.
   const pocketRows = member ? data.expenses.filter((e) => e.paidFrom === "MEMBER" && e.paidByMemberId === member.id) : [];
-  const pocketSub = pocketRows.length === 0 ? "—" : pocketRows.length === 1 ? t("{category} on {day}", { category: pocketRows[0].category, day: dayLabel(pocketRows[0].date, locale) }) : countLabel(t, locale, pocketRows.length, "{count} payment", "{count} payments");
+  const pocketSub = pocketRows.length === 0 ? "—" : pocketRows.length === 1 ? t("{category} on {day}", { category: pocketRows[0].category, day: dayLabel(pocketRows[0].date, fmt) }) : countLabel(t, fmt, pocketRows.length, "{count} payment", "{count} payments");
   const meals = !!row && Number(row.mealCost) > 0;
   const byShares = member ? (splitTotals(data.expenses, "SHARES", data.members, range, view.mealsPooled)[member.id] ?? 0) : 0;
   const totalUnits = view.activeMembers.reduce((sum, m) => sum + Number(m.shareUnits), 0);
@@ -102,16 +103,16 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
     { label: t("Contributed"), value: money(gross), sub: returned > 0 ? `${depositsLine} · ${t("{amount} returned", { amount: money(returned) })}` : depositsLine, tone: "text-emerald" },
     { label: t("Own pocket"), value: money(pocket), sub: pocketSub, tone: pocket > 0 ? "text-emerald" : "text-ink" },
     meals
-      ? { label: t("Meals"), value: money(row?.mealCost ?? 0), sub: `${mealText(Number(row?.mealUnits ?? 0), locale)} × ${mealRateText(data.settlement.mealRate, currency, locale)}`, tone: "text-ink" }
-      : { label: t("By shares"), value: money(byShares), sub: member ? t("{units} of {total} shares", { units: mealText(Number(member.shareUnits), locale), total: mealText(totalUnits, locale) }) : "—", tone: "text-ink" },
-    { label: t("Shared costs"), value: money(sharedCost), sub: view.sharedEqually && sharedNames ? `${sharedNames} ÷ ${formatCount(memberCount, locale)}` : t("As each expense is shared"), tone: "text-ink" },
+      ? { label: t("Meals"), value: money(row?.mealCost ?? 0), sub: `${mealText(Number(row?.mealUnits ?? 0), fmt)} × ${mealRateText(data.settlement.mealRate, currency, fmt)}`, tone: "text-ink" }
+      : { label: t("By shares"), value: money(byShares), sub: member ? t("{units} of {total} shares", { units: mealText(Number(member.shareUnits), fmt), total: mealText(totalUnits, fmt) }) : "—", tone: "text-ink" },
+    { label: t("Shared costs"), value: money(sharedCost), sub: view.sharedEqually && sharedNames ? `${sharedNames} ÷ ${formatCount(memberCount, fmt)}` : t("As each expense is shared"), tone: "text-ink" },
   ];
 
   function statementText(): string {
     if (!member) return "";
     const head = `${data.name} · ${monthLabel}\n${member.name}\n`;
-    const body = lines.map((l) => `${dayLabel(l.date, locale, true)}  ${l.title}  ${formatSignedCurrency(l.amount, currency, locale)}`).join("\n");
-    const foot = `\n${t("Balance")}: ${formatSignedCurrency(balance, currency, locale)} (${even ? t("Settled") : owes ? t("Has to pay") : t("Gets back")})`;
+    const body = lines.map((l) => `${dayLabel(l.date, fmt, true)}  ${l.title}  ${formatSignedCurrency(l.amount, currency, fmt)}`).join("\n");
+    const foot = `\n${t("Balance")}: ${formatSignedCurrency(balance, currency, fmt)} (${even ? t("Settled") : owes ? t("Has to pay") : t("Gets back")})`;
     return `${head}\n${body}\n${foot}`;
   }
 
@@ -168,7 +169,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
               {/* What they put in counts their own-pocket payments too, as their balance does. */}
               <span className={cn("text-caption font-normal tabular-nums", even ? "text-ink-muted" : owes ? "text-expense" : "text-income")}>{t("{paid} paid in − {cost} cost", { paid: money(row ? paidIn(row) : 0), cost: money(share) })}</span>
             </div>
-            <span className={cn("text-[26px] leading-normal font-bold tracking-[-0.02em] tabular-nums", even ? "text-ink" : owes ? "text-expense" : "text-income")}>{formatSignedCurrency(balance, currency, locale)}</span>
+            <span className={cn("text-[26px] leading-normal font-bold tracking-[-0.02em] tabular-nums", even ? "text-ink" : owes ? "text-expense" : "text-income")}>{formatSignedCurrency(balance, currency, fmt)}</span>
           </div>
 
           <ListCard label={t("{name}'s statement", { name: member?.name ?? "" })} elevated={false} className="shrink-0 rounded-field">
@@ -181,25 +182,25 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
             {lines.length === 0 && <ListEmpty title={t("Nothing recorded for this member yet.")} className="py-6 text-small" />}
             {lines.map((line, i) => (
               <ListRow key={i} columns={COLUMNS} density="dense" className="gap-x-3 text-small tabular-nums md:px-3.5 md:py-1.5">
-                <ListCell className="hidden text-body text-ink-soft md:block">{listDay(line.date, locale)}</ListCell>
+                <ListCell className="hidden text-body text-ink-soft md:block">{listDay(line.date, fmt)}</ListCell>
                 <ListCell className="flex flex-col">
                   <span className="truncate font-medium text-ink">{line.title}</span>
                   <span className="truncate text-caption font-normal text-ink-muted">
-                    <span className="md:hidden">{dayLabel(line.date, locale)} · </span>
+                    <span className="md:hidden">{dayLabel(line.date, fmt)} · </span>
                     {line.sub}
                   </span>
                 </ListCell>
                 <ListCell align="end" className="flex flex-col items-end">
-                  <span className={cn("text-body font-semibold", line.amount > 0 ? "text-income" : "text-ink")}>{formatSignedCurrency(line.amount, currency, locale)}</span>
-                  <span className={cn("text-caption md:hidden", line.balance < -0.004 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(line.balance, currency, locale)}</span>
+                  <span className={cn("text-body font-semibold", line.amount > 0 ? "text-income" : "text-ink")}>{formatSignedCurrency(line.amount, currency, fmt)}</span>
+                  <span className={cn("text-caption md:hidden", line.balance < -0.004 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(line.balance, currency, fmt)}</span>
                 </ListCell>
                 <ListCell align="end" className={cn("hidden text-body md:block", line.balance < -0.004 ? "text-expense" : "text-ink-2")}>
-                  {line.balance < -0.004 ? formatSignedCurrency(line.balance, currency, locale) : money(line.balance)}
+                  {line.balance < -0.004 ? formatSignedCurrency(line.balance, currency, fmt) : money(line.balance)}
                 </ListCell>
               </ListRow>
             ))}
           </ListCard>
-          <span className="text-caption font-normal leading-normal text-ink-muted">{meals ? t("The meal cost uses this month's rate, {rate}. It only changes if more bazar or meals are added before {month} is closed.", { rate: mealRateText(data.settlement.mealRate, currency, locale), month: monthName(range.key, locale) }) : t("Each cost is shared the way its expense says, among the members there that day. The shares change if more is recorded before the month is closed.")}</span>
+          <span className="text-caption font-normal leading-normal text-ink-muted">{meals ? t("The meal cost uses this month's rate, {rate}. It only changes if more bazar or meals are added before {month} is closed.", { rate: mealRateText(data.settlement.mealRate, currency, fmt), month: monthName(range.key, fmt) }) : t("Each cost is shared the way its expense says, among the members there that day. The shares change if more is recorded before the month is closed.")}</span>
         </div>
 
         <div className={cn("flex flex-wrap items-center gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 py-3")}>

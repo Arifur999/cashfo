@@ -2,7 +2,7 @@
 // member's meals on a day in meal units, and the month's grid with its
 // member and day totals. Pure, so the sheet, the drawer and the tests agree.
 import { toLocaleDigits } from "@/lib/i18n/digits";
-import type { Locale } from "@/lib/i18n/translate";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { GroupMeal, GroupSettings } from "./api";
 
 export interface MealUnits {
@@ -55,7 +55,7 @@ export function mealSheet(meals: GroupMeal[], units: MealUnits): MealSheet {
 
 // A meal count (or a member's share units) as the sheet writes it: "2.5",
 // "3", "½", in the reader's digits ("২.৫").
-export const mealText = (value: number, locale: Locale = "en"): string => (value === 0.5 ? "½" : toLocaleDigits(String(round2(value)), locale));
+export const mealText = (value: number, locale: FormatLocale = "en"): string => (value === 0.5 ? "½" : toLocaleDigits(String(round2(value)), locale));
 
 // One member's meals on a day, as the day's drawer edits them.
 export interface MealEntry {

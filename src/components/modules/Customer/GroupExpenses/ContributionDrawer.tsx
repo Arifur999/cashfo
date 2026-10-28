@@ -52,7 +52,7 @@ export function dayInMonth(range: MonthRange, today: string): string {
 // design's drawer: who, deposit or return, how much (with a chip that
 // fills their dues), when and a note, with the balances after saving.
 export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, cashInHand, range, today, editing, presetMemberId = null, closedGuard }: ContributionDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const active = members.filter((member) => member.status === "ACTIVE" || member.id === editing?.groupMemberId);
   const [memberId, setMemberId] = useState("");
@@ -89,9 +89,9 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
   const balance = balances[memberId] ?? 0;
   const dues = balance < 0 ? -balance : 0;
   const valid = memberId.length > 0 && value > 0 && date.length > 0;
-  const monthLabel = monthName(range.key, locale);
+  const monthLabel = monthName(range.key, fmt);
   // The group month the day counts in: with months from the 10th, 5 Oct is September's.
-  const countsIn = monthName(groupMonthOf(date || range.from, startDayOf(range)), locale);
+  const countsIn = monthName(groupMonthOf(date || range.from, startDayOf(range)), fmt);
 
   async function save(addAnother: boolean) {
     if (!valid || isPending) return;
@@ -208,7 +208,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
             />
             {kind === "DEPOSIT" && dues > 0 && member && (
               <button type="button" onClick={() => setAmount(String(dues))} className="mt-2 inline-flex h-6.5 items-center self-start rounded-full border border-mint-200 bg-mint-50 px-3 text-caption font-semibold text-brand-ink hover:bg-mint-200">
-                {t("Fill {month} dues · {amount}", { month: monthLabel, amount: formatCurrency(dues, currency, locale) })}
+                {t("Fill {month} dues · {amount}", { month: monthLabel, amount: formatCurrency(dues, currency, fmt) })}
               </button>
             )}
           </Field>
@@ -227,16 +227,16 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
             <div className="flex flex-wrap justify-between gap-x-3">
               <span className="text-ink-2">{t("{name}'s {month} balance", { name: shortName(member.name), month: monthLabel })}</span>
               <span>
-                <span className={balance < 0 ? "text-expense" : balance > 0 ? "text-income" : "text-ink-muted"}>{formatSignedCurrency(balance, currency, locale)}</span>
+                <span className={balance < 0 ? "text-expense" : balance > 0 ? "text-income" : "text-ink-muted"}>{formatSignedCurrency(balance, currency, fmt)}</span>
                 <span className="text-ink-muted"> → </span>
-                <b className={cn("font-bold", balance + delta < -0.004 ? "text-expense" : balance + delta > 0.004 ? "text-income" : "text-ink")}>{Math.abs(balance + delta) < 0.005 ? `${formatCurrency(0, currency, locale)} · ${t("settled")}` : formatSignedCurrency(balance + delta, currency, locale)}</b>
+                <b className={cn("font-bold", balance + delta < -0.004 ? "text-expense" : balance + delta > 0.004 ? "text-income" : "text-ink")}>{Math.abs(balance + delta) < 0.005 ? `${formatCurrency(0, currency, fmt)} · ${t("settled")}` : formatSignedCurrency(balance + delta, currency, fmt)}</b>
               </span>
             </div>
             <div className="flex flex-wrap justify-between gap-x-3">
               <span className="text-ink-2">{t("Cash in hand")}</span>
               <span>
-                <span className="text-ink-muted">{formatCurrency(cashInHand, currency, locale)} → </span>
-                <b className="font-bold text-ink">{formatCurrency(cashInHand + delta, currency, locale)}</b>
+                <span className="text-ink-muted">{formatCurrency(cashInHand, currency, fmt)} → </span>
+                <b className="font-bold text-ink">{formatCurrency(cashInHand + delta, currency, fmt)}</b>
               </span>
             </div>
           </div>

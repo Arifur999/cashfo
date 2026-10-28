@@ -12,6 +12,8 @@ import type { GroupContribution } from "@/lib/customer/api";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { contributionsByMember, contributionTotals, countLabel, dayLabel, rangeLabel, shortName } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
+import { toLocaleDigits } from "@/lib/i18n/digits";
+import { type FormatLocale, langOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { MemberAvatar } from "./GroupBits";
@@ -30,7 +32,7 @@ type Kind = "all" | "deposit" | "return";
 const COLUMNS = "md:grid-cols-[90px_minmax(0,1fr)_150px_minmax(0,1fr)_130px_44px]";
 
 // "01 Sep", as the list's date column writes a day.
-const listDay = (day: string, locale: "en" | "bn") => (locale === "en" ? dayLabel(day, locale).padStart(6, "0") : dayLabel(day, locale));
+const listDay = (day: string, locale: FormatLocale) => (langOf(locale) === "en" ? toLocaleDigits(dayLabel(day, "en").padStart(6, "0"), locale) : dayLabel(day, locale));
 
 // What a contribution is called, the same here as on the statement.
 const kindLabel = (row: GroupContribution) => (row.kind === "SETTLE" ? "Settle up" : row.kind === "CARRY" ? "Carried over" : Number(row.amount) < 0 ? "Return" : "Deposit");
@@ -38,7 +40,7 @@ const kindLabel = (row: GroupContribution) => (row.kind === "SETTLE" ? "Settle u
 // Money in: what each member handed to the fund this month, and what the
 // fund handed back.
 export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: GroupContributionsTabProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { currency } = data;
   const [memberId, setMemberId] = useState("");
   const [kind, setKind] = useState<Kind>("all");
@@ -48,7 +50,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
     .filter((c) => (!memberId || c.groupMemberId === memberId) && (kind === "all" || (kind === "deposit" ? Number(c.amount) >= 0 : Number(c.amount) < 0)))
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shownTotal = rows.reduce((sum, c) => sum + Number(c.amount), 0);
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
   // Own-pocket payments count as money in, but they are entered as expenses.
   const pocket = data.settlement.members.reduce((sum, row) => sum + Number(row.pocketPaid), 0);
   const mess = data.settings.kind === "MESS";
@@ -71,10 +73,10 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
       {/* The month's days: the month is picked in the header. */}
       <span className="flex h-9 items-center gap-2 rounded-full border border-input bg-surface px-3 text-small font-medium text-ink">
         <Calendar className="size-3.5 text-ink-muted" aria-hidden="true" />
-        {rangeLabel(data.range, locale)}
+        {rangeLabel(data.range, fmt)}
       </span>
       <span className="flex-1" />
-      <span className="text-small text-ink-muted">{countLabel(t, locale, rows.length, "{count} entry", "{count} entries")}</span>
+      <span className="text-small text-ink-muted">{countLabel(t, fmt, rows.length, "{count} entry", "{count} entries")}</span>
       {/* A family adds money in from the header; a mess's header adds meals. */}
       {mess && (
         <Button size="sm" onClick={onAdd} className="gap-1.5">
@@ -123,7 +125,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
         )}
       </Card>
 
-      <ListCard label={t("Contributions in {month}", { month: monthName(data.range.key, locale) })} header={toolbar}>
+      <ListCard label={t("Contributions in {month}", { month: monthName(data.range.key, fmt) })} header={toolbar}>
         <ListHead columns={COLUMNS} className="gap-x-3.5 border-t md:px-5">
           <ListHeadCell>{t("Date")}</ListHeadCell>
           <ListHeadCell>{t("Member")}</ListHeadCell>
@@ -139,10 +141,10 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
           const amount = Number(row.amount);
           const isReturn = amount < 0;
           const member = view.memberById[row.groupMemberId] ?? row.groupMember;
-          const day = dayLabel(row.date, locale);
+          const day = dayLabel(row.date, fmt);
           return (
             <ListRow key={row.id} columns={COLUMNS} density="dense" className="grid-cols-[minmax(0,1fr)_auto_44px] gap-x-3 tabular-nums md:gap-x-3.5 md:px-5 md:py-1">
-              <ListCell className="hidden text-ink-soft md:block">{listDay(row.date, locale)}</ListCell>
+              <ListCell className="hidden text-ink-soft md:block">{listDay(row.date, fmt)}</ListCell>
               <ListCell className="flex items-center gap-2 font-medium text-ink">
                 <MemberAvatar member={member} members={data.members} size={26} />
                 <span className="flex min-w-0 flex-col">
@@ -160,7 +162,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove }: G
               </ListCell>
               <ListCell className={cn("hidden truncate md:block", row.note ? "text-ink-2" : "text-input")}>{row.note || "—"}</ListCell>
               <ListCell align="end" className={cn("font-semibold", isReturn ? "text-expense" : "text-income")}>
-                {formatSignedCurrency(amount, currency, locale)}
+                {formatSignedCurrency(amount, currency, fmt)}
               </ListCell>
               <ListRowActions>
                 <DropdownMenu>

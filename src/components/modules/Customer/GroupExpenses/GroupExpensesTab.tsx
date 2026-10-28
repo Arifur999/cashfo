@@ -14,6 +14,7 @@ import { countLabel, dayLabel, rangeLabel, shortName, SPLIT_LABELS, splitText } 
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
+import { type FormatLocale, langOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CategoryTile, MemberAvatar } from "./GroupBits";
@@ -34,14 +35,14 @@ const COLUMNS = "md:grid-cols-[64px_minmax(0,1fr)_176px_104px_40px] xl:grid-cols
 const PAGE = 10;
 
 // "01 Sep", as the list's date column writes a day.
-const listDay = (day: string, locale: "en" | "bn") => (locale === "en" ? dayLabel(day, locale).padStart(6, "0") : dayLabel(day, locale));
+const listDay = (day: string, locale: FormatLocale) => (langOf(locale) === "en" ? toLocaleDigits(dayLabel(day, "en").padStart(6, "0"), locale) : dayLabel(day, locale));
 const LIST_ID = "group-expenses-list";
 
 // Money out: every cost of the month, what it was for, whether it came from
 // the group fund or someone's own pocket (credited to them), and how it is
 // shared.
 export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupExpensesTabProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { currency } = data;
   const [category, setCategory] = useState("");
   // "": anyone; "FUND": the group fund; else a member who paid from their pocket.
@@ -69,10 +70,10 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shown = rows.slice(0, limit);
   const shownTotal = rows.reduce((sum, e) => sum + Number(e.amount), 0);
-  const month = monthName(data.range.key, locale);
+  const month = monthName(data.range.key, fmt);
   // The chosen one too, so the select still names it in a month without it.
   const categoryNames = [...new Set([...data.categories.map((c) => c.name), ...data.expenses.map((e) => e.category), ...(category ? [category] : [])])];
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
   // "All 14 entries add up to ৳ 12,000"; with a filter on, "These 3 entries".
   const sum = rows.length === 1 ? "{count} entry adds up to {amount}" : filtered ? "These {count} entries add up to {amount}" : "All {count} entries add up to {amount}";
 
@@ -104,10 +105,10 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
       {/* The month's days: the month is picked in the header, as is Add expense. */}
       <span className="flex h-9 items-center gap-2 rounded-full border border-input bg-surface px-3 text-small font-medium text-ink">
         <Calendar className="size-3.5 text-ink-muted" aria-hidden="true" />
-        {rangeLabel(data.range, locale)}
+        {rangeLabel(data.range, fmt)}
       </span>
       <span className="flex-1" />
-      <span className="text-small text-ink-muted">{countLabel(t, locale, rows.length, "{count} entry", "{count} entries")}</span>
+      <span className="text-small text-ink-muted">{countLabel(t, fmt, rows.length, "{count} entry", "{count} entries")}</span>
     </div>
   );
 
@@ -148,11 +149,11 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
             <ListFooter className="flex-row flex-wrap items-center gap-3 bg-strip md:px-5">
               {(rows.length > shown.length || limit > PAGE) && (
                 <Button variant="secondary" size="sm" onClick={() => setLimit(rows.length > shown.length ? limit + PAGE : PAGE)} className="h-8.5 pointer-coarse:h-11">
-                  {rows.length > shown.length ? countLabel(t, locale, Math.min(PAGE, rows.length - shown.length), "Show {count} older entry", "Show {count} older entries") : t("Show fewer")}
+                  {rows.length > shown.length ? countLabel(t, fmt, Math.min(PAGE, rows.length - shown.length), "Show {count} older entry", "Show {count} older entries") : t("Show fewer")}
                 </Button>
               )}
               <p aria-live="polite" className="ml-auto text-ink-soft">
-                {fillNodes(t(sum), { count: formatCount(rows.length, locale), amount: <b className="font-bold text-ink tabular-nums">{money(shownTotal)}</b> })}
+                {fillNodes(t(sum), { count: formatCount(rows.length, fmt), amount: <b className="font-bold text-ink tabular-nums">{money(shownTotal)}</b> })}
               </p>
             </ListFooter>
           )
@@ -187,11 +188,11 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupE
         {shown.map((row) => {
           const payer = row.paidFrom === "MEMBER" && row.paidByMemberId ? view.memberById[row.paidByMemberId] : null;
           const shared = splitText(row, data.members);
-          const sharedText = shared.only ? t("Only {name}", { name: shared.only }) : `${t(SPLIT_LABELS[shared.kind])}${shared.detail ? ` · ${toLocaleDigits(shared.detail, locale)}` : ""}`;
-          const day = dayLabel(row.date, locale);
+          const sharedText = shared.only ? t("Only {name}", { name: shared.only }) : `${t(SPLIT_LABELS[shared.kind])}${shared.detail ? ` · ${toLocaleDigits(shared.detail, fmt)}` : ""}`;
+          const day = dayLabel(row.date, fmt);
           return (
             <ListRow key={row.id} columns={COLUMNS} className="min-h-12 grid-cols-[minmax(0,1fr)_auto_44px] gap-x-3 tabular-nums md:gap-x-3.5 md:px-5 md:py-1">
-              <ListCell className="hidden text-ink-soft md:block">{listDay(row.date, locale)}</ListCell>
+              <ListCell className="hidden text-ink-soft md:block">{listDay(row.date, fmt)}</ListCell>
               <ListCell className="flex items-center gap-2">
                 <CategoryTile name={row.category} categories={data.categories} />
                 <span className="flex min-w-0 flex-col">

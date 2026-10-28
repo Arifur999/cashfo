@@ -59,7 +59,7 @@ const paisa = (value: number | string) => Math.round(Number(value) * 100);
 // members picked, by shares, by meals, or by exact amounts -- and what it
 // does to each member's share.
 export function ExpenseDrawer({ open, onClose, businessId, currency, members, categories, cashInHand, range, today, editing, meals, mealsOn, holderName, closedGuard }: ExpenseDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const active = members.filter((member) => member.status === "ACTIVE");
   const [amount, setAmount] = useState("");
@@ -131,7 +131,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
   const noPocket = !fromFund && !paidById;
   const noSharers = split !== "MEALS" && split !== "EXACT" && sharers.length === 0;
   const valid = value > 0 && date.length > 0 && !noPocket && (split === "MEALS" || (split === "EXACT" ? exactLeft === 0 && exactTotal > 0 : sharers.length > 0));
-  const monthLabel = monthName(range.key, locale);
+  const monthLabel = monthName(range.key, fmt);
   // What the splits say: none when everyone in the group shares the plain way.
   const splits =
     split === "EXACT"
@@ -187,7 +187,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
     if (split === "SHARES") return included.includes(id) ? (value * (units[id] ?? 1)) / (unitTotal || 1) : 0;
     return mealsEqual || included.includes(id) ? each : 0;
   };
-  const money = (amount: number) => formatCurrency(amount, currency, locale);
+  const money = (amount: number) => formatCurrency(amount, currency, fmt);
   const parts = active.map((member) => ({ member, share: shareOf(member.id) })).filter((part): part is { member: GroupMember; share: number } => part.share !== null && part.share > 0.004);
   const payerShare = payer ? (shareOf(payer.id) ?? 0) : 0;
   const others = parts.filter((part) => fromFund || part.member.id !== payer?.id);
@@ -356,7 +356,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
               {/* What the shares come to: the units, and the amount when it all adds up. */}
               <div className="-mt-px flex min-h-10 items-center gap-2.5 border-t border-divider bg-strip px-3 text-small font-semibold tabular-nums">
                 <span className="flex-1">{t("Total")}</span>
-                {split === "SHARES" && <span className="text-ink-soft">{t("{count} shares", { count: mealText(unitTotal, locale) })}</span>}
+                {split === "SHARES" && <span className="text-ink-soft">{t("{count} shares", { count: mealText(unitTotal, fmt) })}</span>}
                 <span className={cn("w-22.5 text-right", split === "EXACT" && exactLeft !== 0 ? "text-warning" : "text-emerald")}>
                   {split === "EXACT" ? money(exactTotal / 100) : value > 0 && sharers.length > 0 ? money(value) : "—"}
                   {value > 0 && (split === "EXACT" ? exactLeft === 0 : sharers.length > 0) && " ✓"}
@@ -376,17 +376,17 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
           {!fromFund && payer && value > 0 && (
             <div className="flex flex-wrap justify-between gap-x-3">
               <span className="text-ink-2">{t("{name} · paid {amount}, share {share}", { name: shortName(payer.name), amount: money(value), share: money(payerShare) })}</span>
-              <b className={cn("font-bold", value - payerShare < 0 ? "text-expense" : "text-income")}>{formatSignedCurrency(value - payerShare, currency, locale)}</b>
+              <b className={cn("font-bold", value - payerShare < 0 ? "text-expense" : "text-income")}>{formatSignedCurrency(value - payerShare, currency, fmt)}</b>
             </div>
           )}
           {value > 0 && parts.length > 0 && others.length > 0 && others.length <= 3 ? (
             <div className="flex flex-wrap justify-between gap-x-3">
               <span className="text-ink-2">{others.map((part) => t("{name} · share {amount}", { name: shortName(part.member.name), amount: money(part.share) })).join(" · ")}</span>
-              <b className="font-bold text-expense">{others.map((part) => formatSignedCurrency(-part.share, currency, locale)).join(" · ")}</b>
+              <b className="font-bold text-expense">{others.map((part) => formatSignedCurrency(-part.share, currency, fmt)).join(" · ")}</b>
             </div>
           ) : split === "EQUAL" || mealsEqual ? (
             <div className="flex flex-wrap justify-between gap-x-3">
-              <span className="text-ink-2">{countLabel(t, locale, equalCount, "Shared equally · ÷ {count} member", "Shared equally · ÷ {count} members")}</span>
+              <span className="text-ink-2">{countLabel(t, fmt, equalCount, "Shared equally · ÷ {count} member", "Shared equally · ÷ {count} members")}</span>
               <b className="font-bold text-expense">{value > 0 && equalCount > 0 ? t("− {amount} each", { amount: money(each) }) : "—"}</b>
             </div>
           ) : (

@@ -34,7 +34,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 // A month's budget: the month and the amount, with the warning at 90%.
 export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets, monthKey, editing }: MonthBudgetDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [month, setMonth] = useState(monthKey);
   const [amount, setAmount] = useState("");
@@ -102,7 +102,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
               <NativeSelect id="bud-month" size="md" value={month} onChange={(event) => setMonth(event.target.value)} disabled={!!editing} frameClassName="w-full" invalid={taken} aria-describedby={taken ? "bud-month-error" : undefined}>
                 {choices.map((keyChoice) => (
                   <option key={keyChoice} value={keyChoice}>
-                    {monthName(keyChoice, locale, "long", true)}
+                    {monthName(keyChoice, fmt, "long", true)}
                   </option>
                 ))}
               </NativeSelect>

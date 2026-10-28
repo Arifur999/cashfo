@@ -61,15 +61,15 @@ interface Line {
 // checks out, the payments that settle it (through the manager or member to
 // member), and the months already closed.
 export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }: GroupSettlementTabProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { currency, settlement, range, settings } = data;
-  const month = monthName(range.key, locale);
-  const nextMonth = monthName(shiftMonth(range.key, 1), locale);
+  const month = monthName(range.key, fmt);
+  const nextMonth = monthName(shiftMonth(range.key, 1), fmt);
   const meals = settings.kind === "MESS" || settings.mealsOn;
   const holder = settings.cashHolderMemberId ? view.memberById[settings.cashHolderMemberId] : undefined;
   const [route, setRoute] = useState<Route>(holder ? "manager" : "direct");
   const [historyLimit, setHistoryLimit] = useState(HISTORY_PAGE);
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const dash = (value: number) => (Math.abs(value) < 0.005 ? <span className="text-input">—</span> : money(value));
 
   // A closed month whose entries changed since: its record and the live
@@ -136,11 +136,11 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
         <Figure label={t("Total expense")} value={money(shown.totalExpense)} />
         {meals ? (
           <>
-            <Figure label={t("Meals")} value={mealText(Number(shown.mealUnits), locale)} />
-            <Figure label={t("Meal rate")} value={mealRateText(shown.mealRate, currency, locale)} tone="text-emerald" />
+            <Figure label={t("Meals")} value={mealText(Number(shown.mealUnits), fmt)} />
+            <Figure label={t("Meal rate")} value={mealRateText(shown.mealRate, currency, fmt)} tone="text-emerald" />
           </>
         ) : (
-          <Figure label={t("Members")} value={formatCount(shown.memberCount, locale)} />
+          <Figure label={t("Members")} value={formatCount(shown.memberCount, fmt)} />
         )}
         <Figure label={t("Shared cost each")} value={equal ? money(sharedCostEach(shown)) : "—"} tone={equal && !meals ? "text-emerald" : "text-ink"} />
         <Figure label={t("Cash in hand")} value={money(shownCash)} tone={shownCash < 0 ? "text-expense" : "text-ink"} divided={false} />
@@ -178,12 +178,12 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
         header={
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3.5 md:px-5">
             <h2 className="text-title font-semibold text-ink">
-              {t("Who spent what")} · {rangeLabel(range, locale)}
+              {t("Who spent what")} · {rangeLabel(range, fmt)}
             </h2>
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-[12.5px] text-ink-muted">
-                {meals && `${t("Meal cost = meals × {rate}", { rate: mealRateText(shown.mealRate, currency, locale) })} · `}
-                {equal ? t("shared cost = {amount} ÷ {count}", { amount: money(sharedCost), count: formatCount(shown.memberCount, locale) }) : t("Each cost is shared the way its expense says.")}
+                {meals && `${t("Meal cost = meals × {rate}", { rate: mealRateText(shown.mealRate, currency, fmt) })} · `}
+                {equal ? t("shared cost = {amount} ÷ {count}", { amount: money(sharedCost), count: formatCount(shown.memberCount, fmt) }) : t("Each cost is shared the way its expense says.")}
               </span>
               {differs && (
                 <SegmentedControl<"live" | "record">
@@ -205,7 +205,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
           (lockedRecord ? (
             <ListFooter className="flex-row items-center gap-3 text-ink-2">
               <Lock className="size-4 shrink-0" aria-hidden="true" />
-              <span>{t("The record as {month} was closed on {date}.", { month, date: dayLabel(formatDate(lockedRecord.closedAt, "yyyy-MM-dd"), locale, true) })}</span>
+              <span>{t("The record as {month} was closed on {date}.", { month, date: dayLabel(formatDate(lockedRecord.closedAt, "yyyy-MM-dd"), fmt, true) })}</span>
             </ListFooter>
           ) : (
             <div className={cn("flex items-center gap-2.5 border-t px-4 py-2.75 text-small md:px-5", view.cash < 0 ? "border-expense-soft bg-expense-soft text-expense" : "border-mint-50 bg-mint-50/60 text-brand-ink")}>
@@ -213,7 +213,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
               <span>
                 <b className="font-semibold">{view.cash < 0 ? t("More was spent than came in.") : t("The account checks out.")}</b>{" "}
                 {t("Balances add up to {cash}, exactly the cash {holder} should hold: {contributed} contributed − {spent} spent from the fund.", {
-                  cash: view.cash < 0 ? formatSignedCurrency(view.cash, currency, locale) : money(view.cash),
+                  cash: view.cash < 0 ? formatSignedCurrency(view.cash, currency, fmt) : money(view.cash),
                   holder: holder ? shortName(holder.name) : t("the fund"),
                   contributed: money(totals.gross - totals.returned),
                   spent: money(Number(settlement.totalExpense) - totals.pocket),
@@ -270,7 +270,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
               {meals && (
                 <>
                   <ListCell align="end" className="hidden text-ink-soft md:block">
-                    {mealText(line.mealUnits, locale)}
+                    {mealText(line.mealUnits, fmt)}
                   </ListCell>
                   <ListCell align="end" className="hidden text-ink-soft md:block">
                     {money(line.mealCost)}
@@ -310,7 +310,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
               {meals && (
                 <>
                   <span role="cell" className="hidden text-right md:block">
-                    {mealText(totals.meals, locale)}
+                    {mealText(totals.meals, fmt)}
                   </span>
                   <span role="cell" className="hidden text-right md:block">
                     {money(totals.mealCost)}
@@ -340,7 +340,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
                 </>
               )}
               <span role="cell" className={cn("text-right", totals.balance < 0 ? "text-expense" : "text-income")}>
-                {formatSignedCurrency(locked ? totals.balance : view.cash, currency, locale)}
+                {formatSignedCurrency(locked ? totals.balance : view.cash, currency, fmt)}
               </span>
             </ListTotalRow>
           )}
@@ -436,7 +436,7 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
           {history.length === 0 && <ListEmpty title={t("No month closed yet.")} className="py-6 text-small" />}
           {history.slice(0, historyLimit).map((closed) => {
             const key = closed.periodStart.slice(0, 7);
-            const people = countLabel(t, locale, closed.memberCount, "{count} member", "{count} members");
+            const people = countLabel(t, fmt, closed.memberCount, "{count} member", "{count} members");
             return (
               <ListRow key={closed.id} className="grid-cols-[32px_minmax(0,1fr)_16px] gap-x-3 md:grid-cols-[32px_minmax(0,1fr)_16px] md:px-5 md:py-3">
                 <ListCell>
@@ -447,16 +447,16 @@ export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }
                 <ListCell className="flex flex-col gap-0.5">
                   <span className="flex justify-between gap-3 text-body font-semibold">
                     <ListRowLink href={{ pathname: `/group-expenses/${data.businessId}`, query: { tab: "settlement", month: key } }} className="truncate">
-                      {monthName(key, locale, "long", true)}
+                      {monthName(key, fmt, "long", true)}
                     </ListRowLink>
                     <span className="shrink-0 tabular-nums">{money(closed.totalExpense)}</span>
                   </span>
                   {/* No "each" figure: the record can't tell whether that month's costs were shared equally. */}
                   <span className="text-caption font-normal text-ink-soft tabular-nums">
-                    {Number(closed.mealUnits) > 0 ? `${t("{meals} meals", { meals: mealText(Number(closed.mealUnits), locale) })} · ${t("{rate} a meal", { rate: mealRateText(closed.mealRate, currency, locale) })} · ${people}` : people}
+                    {Number(closed.mealUnits) > 0 ? `${t("{meals} meals", { meals: mealText(Number(closed.mealUnits), fmt) })} · ${t("{rate} a meal", { rate: mealRateText(closed.mealRate, currency, fmt) })} · ${people}` : people}
                   </span>
                   <span className="text-caption font-normal text-ink-muted">
-                    {t("Closed {date}", { date: dayLabel(formatDate(closed.closedAt, "yyyy-MM-dd"), locale) })} · {t(closed.carriedForward ? "balances carried forward" : "settled in cash")}
+                    {t("Closed {date}", { date: dayLabel(formatDate(closed.closedAt, "yyyy-MM-dd"), fmt) })} · {t(closed.carriedForward ? "balances carried forward" : "settled in cash")}
                   </span>
                 </ListCell>
                 <ListCell>

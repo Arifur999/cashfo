@@ -16,7 +16,7 @@ import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt"
 import { createBusinessAction } from "@/lib/customer/businessActions";
 import { countLabel, shortName } from "@/lib/customer/groupDisplay";
 import { createGroupMemberAction, getGroupExpenseCategoriesAction, updateGroupExpenseCategoryAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
-import { toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { FOCUS_WITHIN, MemberAvatar } from "./GroupBits";
@@ -41,7 +41,7 @@ const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 =
 // whether you are one of them. The group is created, then each member
 // added, and the page moves into the group's first steps.
 export function NewGroupDrawer({ open, onClose }: NewGroupDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -113,7 +113,7 @@ export function NewGroupDrawer({ open, onClose }: NewGroupDrawerProps) {
       const categories = await attempt(() => getGroupExpenseCategoriesAction(businessId), offline, stale);
       const bazar = categories.data?.find((c) => /bazar|grocery/i.test(c.name));
       const splitSaved = !categories.success ? categories : bazar ? await attempt(() => updateGroupExpenseCategoryAction(businessId, bazar.id, { defaultSplit: kind === "MESS" ? "MEALS" : "SHARES" }), offline, stale) : { success: true };
-      if (failed > 0) toast.warning(countLabel(t, locale, failed, "{count} member could not be added", "{count} members could not be added"));
+      if (failed > 0) toast.warning(countLabel(t, fmt, failed, "{count} member could not be added", "{count} members could not be added"));
       // The group is there either way; a group left as a family with no meal
       // counting must not pass for the mess that was asked for.
       if (!settingsSaved.success || !splitSaved.success) toast.warning(t("Group created, but its settings didn't save. Set them in Settings."));
@@ -217,7 +217,7 @@ export function NewGroupDrawer({ open, onClose }: NewGroupDrawerProps) {
             <NativeSelect id="ng-start" size="md" value={startDay} onChange={(event) => setStartDay(Number(event.target.value))} frameClassName="w-full" className="font-normal">
               {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                 <option key={day} value={day}>
-                  {t("{day} of each month", { day: locale === "bn" ? toBanglaDigits(day) : ordinal(day) })}
+                  {t("{day} of each month", { day: toLocaleDigits(locale === "bn" ? String(day) : ordinal(day), fmt) })}
                 </option>
               ))}
             </NativeSelect>

@@ -154,7 +154,7 @@ function useMealDay(openDay: string | null, { businessId, members, meals, units,
 
 // The guests stepper: − count +.
 function GuestStepper({ name, value, disabled, onChange, className }: { name: string; value: number; disabled: boolean; onChange: (next: number) => void; className?: string }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   return (
     <span className={cn("flex items-center justify-between overflow-hidden rounded-sm border border-line", className)}>
       <button type="button" aria-label={t("One guest less for {name}", { name })} disabled={disabled || value === 0} onClick={() => onChange(value - 1)} className="flex h-full w-7 items-center justify-center bg-strip text-ink-soft disabled:text-ink-faint pointer-coarse:w-8">
@@ -162,7 +162,7 @@ function GuestStepper({ name, value, disabled, onChange, className }: { name: st
       </button>
       <span aria-live="polite" className={cn("text-body font-semibold tabular-nums", value ? "text-ink" : "text-ink-faint")}>
         <span className="sr-only">{t("Guests")}: </span>
-        {formatCount(value, locale)}
+        {formatCount(value, fmt)}
       </span>
       <button type="button" aria-label={t("One more guest for {name}", { name })} disabled={disabled || value >= 20} onClick={() => onChange(value + 1)} className="flex h-full w-7 items-center justify-center bg-strip text-ink-soft disabled:opacity-40 pointer-coarse:w-8">
         <Plus className="size-3" strokeWidth={2.5} aria-hidden="true" />
@@ -173,7 +173,7 @@ function GuestStepper({ name, value, disabled, onChange, className }: { name: st
 
 // The day line: ‹ the day (a date picker) ›.
 function DayNav({ meal, range, round = true, today }: { meal: ReturnType<typeof useMealDay>; range: MonthRange; round?: boolean; today?: string }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const picker = useRef<HTMLInputElement>(null);
   const size = round ? "size-10" : "size-11";
   return (
@@ -187,12 +187,12 @@ function DayNav({ meal, range, round = true, today }: { meal: ReturnType<typeof 
         {round ? (
           <>
             <CalendarDays className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-            <span className="truncate">{weekdayLabel(meal.day || range.from, locale)}</span>
+            <span className="truncate">{weekdayLabel(meal.day || range.from, fmt)}</span>
           </>
         ) : (
           <>
-            <span className="text-[15px] leading-normal font-semibold">{meal.day === today ? t("Today") : dayLabel(meal.day || range.from, locale)}</span>
-            <span className="text-caption font-normal text-ink-muted">{weekdayLabel(meal.day || range.from, locale)}</span>
+            <span className="text-[15px] leading-normal font-semibold">{meal.day === today ? t("Today") : dayLabel(meal.day || range.from, fmt)}</span>
+            <span className="text-caption font-normal text-ink-muted">{weekdayLabel(meal.day || range.from, fmt)}</span>
           </>
         )}
         <input
@@ -224,7 +224,7 @@ function DayNav({ meal, range, round = true, today }: { meal: ReturnType<typeof 
 // another day, or shutting the drawer, saves this one first; Cancel drops
 // the changes.
 export function MealDrawer({ day: openDay, onClose, ...options }: MealDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const meal = useMealDay(openDay, options);
   const { units, range, members } = options;
   // Shutting it by the X, Escape or a tap outside saves, as moving on does.
@@ -240,7 +240,7 @@ export function MealDrawer({ day: openDay, onClose, ...options }: MealDrawerProp
       footer={
         <>
           <span className="mr-auto text-small text-ink-muted">
-            {t("{meals} meals", { meals: mealText(meal.total, locale) })} · {countLabel(t, locale, meal.shown.length, "{count} member", "{count} members")}
+            {t("{meals} meals", { meals: mealText(meal.total, fmt) })} · {countLabel(t, fmt, meal.shown.length, "{count} member", "{count} members")}
           </span>
           {/* Cancel drops the day's changes; every other way out saves them. */}
           <Button variant="ghost" onClick={onClose} disabled={meal.isPending} className="px-3.5">
@@ -259,12 +259,12 @@ export function MealDrawer({ day: openDay, onClose, ...options }: MealDrawerProp
           {/* The month's first day has no day before it loaded. */}
           <Button variant="secondary" size="sm" disabled={meal.isPending || meal.atStart} onClick={meal.copyPrevious} className="h-8.5 gap-1.5 px-3 pointer-coarse:h-11">
             <Copy className="size-3.5 text-ink-soft" aria-hidden="true" />
-            {t("Same as {day}", { day: dayLabel(meal.sameAs, locale) })}
+            {t("Same as {day}", { day: dayLabel(meal.sameAs, fmt) })}
           </Button>
           <span className="text-[12.5px] text-ink-muted">{t("Tap a meal to switch it on or off")}</span>
         </div>
 
-        <div role="table" aria-label={t("Meals on {day}", { day: dayLabel(meal.day || range.from, locale, true) })} className="flex shrink-0 flex-col overflow-hidden rounded-md border border-line">
+        <div role="table" aria-label={t("Meals on {day}", { day: dayLabel(meal.day || range.from, fmt, true) })} className="flex shrink-0 flex-col overflow-hidden rounded-md border border-line">
           <div role="row" className={cn("grid items-center gap-x-1.5 border-b border-line bg-strip px-3 py-2 text-center text-[11px] font-semibold text-ink-muted", COLUMNS)}>
             <span role="columnheader" className="text-left">
               {t("Member")}
@@ -272,7 +272,7 @@ export function MealDrawer({ day: openDay, onClose, ...options }: MealDrawerProp
             {SLOTS.map((slot) => (
               <span key={slot.key} role="columnheader" className="flex flex-col leading-tight">
                 <span>{t(slot.short)}</span>
-                <span className="font-medium">{mealText(units[slot.key], locale)}</span>
+                <span className="font-medium">{mealText(units[slot.key], fmt)}</span>
               </span>
             ))}
             <span role="columnheader">{t("Guests")}</span>
@@ -309,7 +309,7 @@ export function MealDrawer({ day: openDay, onClose, ...options }: MealDrawerProp
                   <GuestStepper name={member.name} value={entry.guests} disabled={meal.isPending} onChange={(guests) => meal.change(member.id, { guests })} className="h-9 pointer-coarse:h-11" />
                 </span>
                 <span role="cell" className="text-right text-body font-bold tabular-nums">
-                  {mealText(meal.valueOf(member.id), locale)}
+                  {mealText(meal.valueOf(member.id), fmt)}
                 </span>
               </div>
             );
@@ -323,16 +323,16 @@ export function MealDrawer({ day: openDay, onClose, ...options }: MealDrawerProp
           )}
           <div role="row" className={cn("grid h-11.5 items-center gap-x-1.5 bg-strip px-3 text-center text-small font-semibold tabular-nums", COLUMNS)}>
             <span role="cell" className="text-left">
-              {t("{day} total", { day: dayLabel(meal.day || range.from, locale) })}
+              {t("{day} total", { day: dayLabel(meal.day || range.from, fmt) })}
             </span>
             {meal.counts.map((count, index) => (
               <span key={SLOTS[index].key} role="cell">
-                {formatCount(count, locale)}
+                {formatCount(count, fmt)}
               </span>
             ))}
-            <span role="cell">{formatCount(meal.guests, locale)}</span>
+            <span role="cell">{formatCount(meal.guests, fmt)}</span>
             <span role="cell" className="text-right text-body font-bold">
-              {mealText(meal.total, locale)}
+              {mealText(meal.total, fmt)}
             </span>
           </div>
         </div>
@@ -360,7 +360,7 @@ interface MealDayPhoneProps extends MealDayOptions {
 // card per member with their three meals and guests, and the day's meals
 // with Save at the foot of the screen.
 export function MealDayPhone({ day, today, currency, rate, ...options }: MealDayPhoneProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const meal = useMealDay(day, options);
   const { members, range } = options;
   const isToday = meal.day === today;
@@ -396,7 +396,7 @@ export function MealDayPhone({ day, today, currency, rate, ...options }: MealDay
                   </button>
                 );
               })}
-              <span className="text-right text-title font-bold text-ink tabular-nums">{mealText(meal.valueOf(member.id), locale)}</span>
+              <span className="text-right text-title font-bold text-ink tabular-nums">{mealText(meal.valueOf(member.id), fmt)}</span>
             </div>
           </Card>
         );
@@ -407,8 +407,8 @@ export function MealDayPhone({ day, today, currency, rate, ...options }: MealDay
           of the floating + in the corner. */}
       <div className="sticky bottom-0 z-10 -mx-4 mt-1 flex items-center gap-3 border-t border-line bg-surface pt-3 pr-21 pb-5 pl-4 shadow-[0_-4px_16px_rgb(18_32_29/0.06)]">
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-title font-bold text-ink tabular-nums">{isToday ? t("{meals} meals today", { meals: mealText(meal.total, locale) }) : t("{meals} meals", { meals: mealText(meal.total, locale) })}</span>
-          <span className="truncate text-caption text-ink-muted">{rate > 0 ? t("Meal rate {rate}", { rate: mealRateText(rate, currency, locale) }) : t("{month}'s meal rate shows after the first bazar", { month: monthName(range.key, locale) })}</span>
+          <span className="text-title font-bold text-ink tabular-nums">{isToday ? t("{meals} meals today", { meals: mealText(meal.total, fmt) }) : t("{meals} meals", { meals: mealText(meal.total, fmt) })}</span>
+          <span className="truncate text-caption text-ink-muted">{rate > 0 ? t("Meal rate {rate}", { rate: mealRateText(rate, currency, fmt) }) : t("{month}'s meal rate shows after the first bazar", { month: monthName(range.key, fmt) })}</span>
         </span>
         <Button size="xl" onClick={() => void meal.save(() => toast.success(t("Meals saved")))} disabled={meal.isPending || meal.changed.length === 0} className="h-12 px-5.5 text-[15px]">
           {meal.isPending && <Loader />}

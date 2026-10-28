@@ -43,7 +43,7 @@ const prefersReducedMotion = () => typeof window.matchMedia === "function" && wi
 // with the facts in front of you, what locking means, and (when the month
 // is still running, or payments are still open) what is left to do first.
 export function CloseMonthDialog({ open, onClose, businessId, currency, range, today, settlement, sharedEqually, mess, holderName }: CloseMonthDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   // Carry each balance into the next month as an opening entry.
@@ -57,33 +57,33 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, t
   }
   // Set by "Record payments first": focus goes to Settle up as it shuts.
   const settleFirst = useRef(false);
-  const monthLabel = monthName(range.key, locale, "long", true);
-  const month = monthName(range.key, locale);
+  const monthLabel = monthName(range.key, fmt, "long", true);
+  const month = monthName(range.key, fmt);
   const nextKey = shiftMonth(range.key, 1);
-  const nextMonth = monthName(nextKey, locale);
+  const nextMonth = monthName(nextKey, fmt);
   // Each member's contributions less what was returned to them.
   const contributions = settlement.members.reduce((sum, row) => sum + Number(row.contributed), 0);
   const running = today < range.to;
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
   // The month's days, short: "1 – 30 Sep", "10 Sep – 9 Oct".
-  const days = range.from.slice(0, 7) === range.to.slice(0, 7) ? `${formatCount(Number(range.from.slice(8)), locale)} – ${dayLabel(range.to, locale)}` : `${dayLabel(range.from, locale)} – ${dayLabel(range.to, locale)}`;
+  const days = range.from.slice(0, 7) === range.to.slice(0, 7) ? `${formatCount(Number(range.from.slice(8)), fmt)} – ${dayLabel(range.to, fmt)}` : `${dayLabel(range.from, fmt)} – ${dayLabel(range.to, fmt)}`;
   // Who starts next month furthest behind and furthest ahead, for the carry card.
   const sorted = [...settlement.members].sort((a, b) => Number(a.balance) - Number(b.balance));
   const behind = sorted[0] && Number(sorted[0].balance) < -0.004 ? sorted[0] : null;
   const ahead = sorted.length > 0 && Number(sorted[sorted.length - 1].balance) > 0.004 ? sorted[sorted.length - 1] : null;
   const cash = cashInHand(settlement);
   const who = [behind && t("{name} starts {month} owing {amount}", { name: shortName(behind.name), month: nextMonth, amount: money(-Number(behind.balance)) }), ahead && t("{name} starts {amount} ahead", { name: shortName(ahead.name), amount: money(ahead.balance) })].filter(Boolean).join(", ");
-  const carryText = [t("Each balance becomes an opening entry on {day}.", { day: dayLabel(shiftMonth(range.key, 1) + range.from.slice(7), locale) }), who && who + "."].filter(Boolean).join(" ");
+  const carryText = [t("Each balance becomes an opening entry on {day}.", { day: dayLabel(shiftMonth(range.key, 1) + range.from.slice(7), fmt) }), who && who + "."].filter(Boolean).join(" ");
   const holderText = holderName && cash > 0.004 ? t("The {amount} stays with {name}.", { amount: money(cash), name: holderName }) : "";
 
   const meals = Number(settlement.mealUnits) > 0;
   const facts = [
     { label: t("Period"), value: days },
     { label: t("Total expense"), value: money(settlement.totalExpense) },
-    { label: t("Members"), value: formatCount(settlement.memberCount, locale) },
+    { label: t("Members"), value: formatCount(settlement.memberCount, fmt) },
     // Split by shares, exact amounts or with someone joining mid-month, nobody pays an even part.
-    meals ? { label: t("Meals"), value: mealText(Number(settlement.mealUnits), locale) } : { label: t("Share each"), value: sharedEqually ? money(sharedCostEach(settlement)) : "—" },
-    meals ? { label: t("Meal rate"), value: mealRateText(settlement.mealRate, currency, locale) } : { label: t("Net contributions"), value: money(contributions) },
+    meals ? { label: t("Meals"), value: mealText(Number(settlement.mealUnits), fmt) } : { label: t("Share each"), value: sharedEqually ? money(sharedCostEach(settlement)) : "—" },
+    meals ? { label: t("Meal rate"), value: mealRateText(settlement.mealRate, currency, fmt) } : { label: t("Net contributions"), value: money(contributions) },
     { label: t("Cash in hand"), value: money(cash) },
   ];
 
@@ -147,7 +147,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, t
             {running && (
               <p className="flex items-start gap-2 text-small text-ink-2">
                 <CalendarClock className="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-                {t("{month} runs until {day}. Anything recorded after closing won't be in this record.", { month, day: dayLabel(range.to, locale) })}
+                {t("{month} runs until {day}. Anything recorded after closing won't be in this record.", { month, day: dayLabel(range.to, fmt) })}
               </p>
             )}
 
@@ -168,7 +168,7 @@ export function CloseMonthDialog({ open, onClose, businessId, currency, range, t
                   aside: null,
                   body:
                     pending > 0
-                      ? countLabel(t, locale, pending, "Record the {count} settle-up payment first, so everyone starts {month} at {zero}.", "Record the {count} settle-up payments first, so everyone starts {month} at {zero}.", { month: nextMonth, zero: money(0) })
+                      ? countLabel(t, fmt, pending, "Record the {count} settle-up payment first, so everyone starts {month} at {zero}.", "Record the {count} settle-up payments first, so everyone starts {month} at {zero}.", { month: nextMonth, zero: money(0) })
                       : t("Everyone is even, so {month} starts at {zero} for all.", { month: nextMonth, zero: money(0) }),
                   warn: pending > 0 ? t("None recorded yet.") : null,
                 },

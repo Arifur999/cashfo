@@ -33,7 +33,7 @@ interface MemberPickerProps {
 // month's balance stands. The list is a combobox: type to narrow it, arrow
 // keys to move, Enter to pick.
 export function MemberPicker({ members, value, onChange, currency, balances, exclude, size = "xl", id, label, describedBy, disabled = false, placeholder }: MemberPickerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const choices = members.filter((member) => member.id !== exclude);
@@ -54,7 +54,7 @@ export function MemberPicker({ members, value, onChange, currency, balances, exc
     const balance = balances?.[member.id];
     if (balance === undefined) return { text: member.phone ?? t("Active member"), className: "text-ink-muted" };
     if (Math.abs(balance) < 0.005) return { text: t("Settled"), className: "text-ink-muted" };
-    return balance > 0 ? { text: t("Gets back {amount}", { amount: formatCurrency(balance, currency, locale) }), className: "text-income" } : { text: t("Has to pay {amount}", { amount: formatCurrency(-balance, currency, locale) }), className: "text-expense" };
+    return balance > 0 ? { text: t("Gets back {amount}", { amount: formatCurrency(balance, currency, fmt) }), className: "text-income" } : { text: t("Has to pay {amount}", { amount: formatCurrency(-balance, currency, fmt) }), className: "text-expense" };
   };
 
   return (

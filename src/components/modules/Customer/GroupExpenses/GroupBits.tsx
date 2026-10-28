@@ -38,12 +38,12 @@ export function MemberAvatar({ member, members, size = 32, className }: { member
 // "+ ৳ 578  Gets back" / "− ৳ 351  Has to pay" / "৳ 0  Settled". Stacked,
 // the chip goes under the figure, so a narrow column still fits it.
 export function BalanceCell({ value, currency, stacked = false, className }: { value: number; currency: string; stacked?: boolean; className?: string }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const even = Math.abs(value) < 0.005;
   const up = value > 0;
   return (
     <span className={cn("flex justify-end", stacked ? "flex-col items-end gap-1" : "items-center gap-2", className)}>
-      <span className={cn("font-bold whitespace-nowrap tabular-nums", even ? "text-ink" : up ? "text-income" : "text-expense")}>{even ? formatCurrency(0, currency, locale) : formatSignedCurrency(value, currency, locale)}</span>
+      <span className={cn("font-bold whitespace-nowrap tabular-nums", even ? "text-ink" : up ? "text-income" : "text-expense")}>{even ? formatCurrency(0, currency, fmt) : formatSignedCurrency(value, currency, fmt)}</span>
       <Chip tone={even ? "neutral" : up ? "income" : "expense"} size="sm">
         {t(even ? "Settled" : up ? "Gets back" : "Has to pay")}
       </Chip>

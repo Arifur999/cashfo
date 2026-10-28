@@ -47,7 +47,7 @@ const TIPS = [
 // The members of a group: who is in, their phone, since when, what they
 // paid in and where the month leaves them, and a statement for each.
 export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onRemove, onStatement }: GroupMembersTabProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [filter, setFilter] = useState<Filter>("ACTIVE");
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
@@ -60,15 +60,15 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
     const row = rowOf(id);
     return row ? paidIn(row) : 0;
   };
-  const month = monthName(data.range.key, locale);
+  const month = monthName(data.range.key, fmt);
   const meals = data.settings.kind === "MESS" || data.settings.mealsOn;
   const columns = meals ? MEALS_COLUMNS : COLUMNS;
   const holder = data.settings.cashHolderMemberId;
-  const money = (value: number) => formatCurrency(value, data.currency, locale);
+  const money = (value: number) => formatCurrency(value, data.currency, fmt);
 
   const mess = data.settings.kind === "MESS";
   // Since when: the day for someone who joined lately, else the month.
-  const since = (member: GroupMember) => (member.joinedOn && member.joinedOn.slice(0, 7) >= shiftMonth(data.range.key, -2) ? dayLabel(member.joinedOn, locale, true) : monthName(memberSince(member), locale, "short", true));
+  const since = (member: GroupMember) => (member.joinedOn && member.joinedOn.slice(0, 7) >= shiftMonth(data.range.key, -2) ? dayLabel(member.joinedOn, fmt, true) : monthName(memberSince(member), fmt, "short", true));
   // One archived member who left on a day: when, and what still counts.
   const gone = archived.length === 1 && archived[0].leftOn ? archived[0] : null;
   const goneMonth = gone?.leftOn ? gone.leftOn.slice(0, 7) : "";
@@ -85,7 +85,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
           value,
           label: (
             <>
-              {t(value === "ACTIVE" ? "Active" : value === "ARCHIVED" ? "Archived" : "All")} <span className="font-normal text-ink-faint">{formatCount(counts[value], locale)}</span>
+              {t(value === "ACTIVE" ? "Active" : value === "ARCHIVED" ? "Archived" : "All")} <span className="font-normal text-ink-faint">{formatCount(counts[value], fmt)}</span>
             </>
           ),
         }))}
@@ -113,9 +113,9 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
               <span>
                 {gone ? fillNodes(t("{name} left on {day} and is archived. Their {month} entries still count in {month}'s settlement; from {next} they are left out of every split."), {
                   name: <b className="font-semibold text-ink">{shortName(gone.name)}</b>,
-                  day: dayLabel(gone.leftOn ?? "", locale, true),
-                  month: monthName(goneMonth, locale),
-                  next: monthName(shiftMonth(goneMonth, 1), locale),
+                  day: dayLabel(gone.leftOn ?? "", fmt, true),
+                  month: monthName(goneMonth, fmt),
+                  next: monthName(shiftMonth(goneMonth, 1), fmt),
                 }) : fillNodes(t(archived.length === 1 ? "{names} is archived. Their past months still count; from now on they are left out of every split." : "{names} are archived. Their past months still count; from now on they are left out of every split."), {
                   names: <b className="font-semibold text-ink">{archived.map((m) => m.name).join(", ")}</b>,
                 })}
@@ -164,14 +164,14 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                   {/* The phone and joining month, whose columns start at xl. */}
                   <span className="hidden truncate text-caption font-normal text-ink-muted md:block xl:hidden">{[member.phone, t("Member since {month}", { month: since(member) })].filter(Boolean).join(" · ")}</span>
                   {/* The month's figures, which have no columns on a phone. */}
-                  <span className="truncate text-caption font-normal text-ink-2 md:hidden">{t("{paid} paid in · {balance}", { paid: money(paidInBy(member.id)), balance: formatSignedCurrency(balance, data.currency, locale) })}</span>
+                  <span className="truncate text-caption font-normal text-ink-2 md:hidden">{t("{paid} paid in · {balance}", { paid: money(paidInBy(member.id)), balance: formatSignedCurrency(balance, data.currency, fmt) })}</span>
                 </span>
               </ListCell>
               <ListCell className="hidden text-ink-2 xl:block">{member.phone ?? "—"}</ListCell>
               <ListCell className="hidden text-ink-2 xl:block">{since(member)}</ListCell>
               {meals && (
                 <ListCell align="end" className="hidden text-ink md:block">
-                  {mealText(Number(rowOf(member.id)?.mealUnits ?? 0), locale)}
+                  {mealText(Number(rowOf(member.id)?.mealUnits ?? 0), fmt)}
                 </ListCell>
               )}
               <ListCell align="end" className="hidden text-ink md:block">

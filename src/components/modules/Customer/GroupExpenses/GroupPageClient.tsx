@@ -47,7 +47,7 @@ interface Confirm {
 // and dialog the tabs open. Figures are derived here once, from what the
 // server page loaded.
 export function GroupPageClient({ data }: { data: GroupPageData }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   // Another month re-renders the page on the server; the tab dims
@@ -91,7 +91,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     };
   }, [data]);
 
-  const monthLabel = monthName(data.range.key, locale, "long", true);
+  const monthLabel = monthName(data.range.key, fmt, "long", true);
   const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
 
   function goToMonth(key: string) {

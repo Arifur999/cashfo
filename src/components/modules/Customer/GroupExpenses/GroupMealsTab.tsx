@@ -12,6 +12,7 @@ import { daysOf, mealSheet, mealText, unitsOf } from "@/lib/customer/groupMeals"
 import { dayOf } from "@/lib/customer/habitDisplay";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
+import { weekStartOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { MemberAvatar } from "./GroupBits";
@@ -38,7 +39,7 @@ const DAY_INITIALS = {
 // day-total row. A cell opens that day. The sheet is one tab stop: the
 // arrow keys move between its days and members.
 export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const units = unitsOf(data.settings);
   const sheet = mealSheet(data.meals, units);
   const days = daysOf(data.range.from, data.range.to);
@@ -52,8 +53,8 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
     { icon: Moon, label: "Dinner", value: units.dinner },
   ];
   const settingsLink = { pathname: `/group-expenses/${data.businessId}`, query: { tab: "settings", month: data.range.key }, hash: "gs-meals" };
-  const money = (value: number) => formatCurrency(value, data.currency, locale);
-  const rateText = mealRateText(rate, data.currency, locale);
+  const money = (value: number) => formatCurrency(value, data.currency, fmt);
+  const rateText = mealRateText(rate, data.currency, fmt);
   // A phone edits a day at a time (today, inside the month on show).
   const phoneDay = data.today < data.range.from ? data.range.from : data.today > data.range.to ? data.range.to : data.today;
 
@@ -85,6 +86,9 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
   // The same marks on the light head.
   const headTint = (day: string) => (day === data.today ? "bg-mint-50" : weekend(day) ? "bg-surface-sunken" : "");
   const dayTint = (day: string) => (day === data.today ? "bg-mint-50" : weekend(day) ? "bg-surface-sunken" : "");
+  // A hairline before the first day of each week, the reader's week
+  // (Saturday unless they chose another in Settings).
+  const weekEdge = (day: string) => (day !== days[0] && dayOf(day).getUTCDay() === weekStartOf(fmt) ? "border-l border-divider" : "");
 
   return (
     <div className="flex flex-col gap-5">
@@ -104,8 +108,8 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
       <div className="hidden flex-col gap-5 md:flex">
         <Card padding="none" className="flex flex-wrap items-center gap-6 px-5 py-4">
           <div className="flex flex-col gap-0.5">
-            <span className="text-caption text-ink-muted">{t("Meals in {month}", { month: monthName(data.range.key, locale, "long") })}</span>
-            <span className="text-h2 font-bold text-ink tabular-nums">{mealText(sheet.total, locale)}</span>
+            <span className="text-caption text-ink-muted">{t("Meals in {month}", { month: monthName(data.range.key, fmt, "long") })}</span>
+            <span className="text-h2 font-bold text-ink tabular-nums">{mealText(sheet.total, fmt)}</span>
           </div>
           <span className="h-9 w-px bg-line" aria-hidden="true" />
           <div className="flex flex-col gap-0.5">
@@ -123,7 +127,7 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
             {weights.map((weight) => (
               <span key={weight.label} className="flex h-7 items-center gap-1 rounded-full bg-surface-sunken px-3 font-medium">
                 <weight.icon className="size-3.25 text-ink-muted" aria-hidden="true" />
-                {t(weight.label)} <b className="text-ink">{mealText(weight.value, locale)}</b>
+                {t(weight.label)} <b className="text-ink">{mealText(weight.value, fmt)}</b>
               </span>
             ))}
             <Link href={settingsLink} className="ml-1 font-semibold text-emerald hover:underline">
@@ -136,15 +140,15 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
           {/* Scrolls sideways; the member column stays put. Its 160px of scroll
               padding keeps a day the arrow keys move to clear of that column. */}
           <div className="scroll-pl-40 overflow-x-auto">
-            <div ref={sheetRef} role="table" aria-label={t("Meal sheet for {month}", { month: monthName(data.range.key, locale, "long", true) })} onKeyDown={move} className="w-max min-w-full">
+            <div ref={sheetRef} role="table" aria-label={t("Meal sheet for {month}", { month: monthName(data.range.key, fmt, "long", true) })} onKeyDown={move} className="w-max min-w-full">
               <div role="row" className={cn(LIST_HEAD, "grid h-11.5 items-stretch border-b border-line px-0 md:px-0")} style={grid}>
                 <span role="columnheader" className="sticky left-0 z-10 flex items-center border-r border-line bg-table-head pl-4">
                   {t("Member")}
                 </span>
                 {days.map((day, col) => {
-                  const name = t("Meals on {day}", { day: dayLabel(day, locale, true) });
+                  const name = t("Meals on {day}", { day: dayLabel(day, fmt, true) });
                   return (
-                    <span key={day} role="columnheader" className={cn("flex", headTint(day))}>
+                    <span key={day} role="columnheader" className={cn("flex", headTint(day), weekEdge(day))}>
                       <button
                         type="button"
                         data-cell={`0-${col}`}
@@ -159,7 +163,7 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
                           {DAY_INITIALS[locale][dayOf(day).getUTCDay()]}
                         </span>
                         <span aria-hidden="true" className={day === data.today ? "font-bold" : "font-medium"}>
-                          {formatCount(Number(day.slice(8)), locale)}
+                          {formatCount(Number(day.slice(8)), fmt)}
                         </span>
                       </button>
                     </span>
@@ -186,9 +190,9 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
                     {days.map((day, col) => {
                       const cell = sheet.cells[member.id]?.[day];
                       const value = cell?.value ?? 0;
-                      const name = `${t("{name}, {day}: {meals} meals", { name: member.name, day: dayLabel(day, locale), meals: mealText(value, locale) })}${cell?.guests ? ` · ${t("guest meal included")}` : ""}`;
+                      const name = `${t("{name}, {day}: {meals} meals", { name: member.name, day: dayLabel(day, fmt), meals: mealText(value, fmt) })}${cell?.guests ? ` · ${t("guest meal included")}` : ""}`;
                       return (
-                        <span key={day} role="cell" className={cn("flex", dayTint(day))}>
+                        <span key={day} role="cell" className={cn("flex", dayTint(day), weekEdge(day))}>
                           <button
                             type="button"
                             data-cell={`${row}-${col}`}
@@ -203,14 +207,14 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
                               cell?.guests ? "font-bold" : "font-medium",
                             )}
                           >
-                            {value === 0 ? "–" : mealText(value, locale)}
+                            {value === 0 ? "–" : mealText(value, fmt)}
                             {!!cell?.guests && <span className="absolute top-1.75 right-0.75 size-1.25 rounded-full bg-warning-fill" aria-hidden="true" />}
                           </button>
                         </span>
                       );
                     })}
                     <span role="cell" className="flex items-center justify-end pr-3 text-body font-bold text-ink">
-                      {mealText(total, locale)}
+                      {mealText(total, fmt)}
                     </span>
                     <span role="cell" className="flex items-center justify-end pr-4 text-small font-semibold text-ink-2">
                       {money(total * rate)}
@@ -223,12 +227,12 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
                   {t("Day total")}
                 </span>
                 {days.map((day) => (
-                  <span key={day} role="cell" className={cn("flex items-center justify-center font-semibold tracking-[-0.02em] text-ink-2", day === data.today && "bg-mint-50")}>
-                    {sheet.dayTotals[day] ? mealText(sheet.dayTotals[day], locale) : "–"}
+                  <span key={day} role="cell" className={cn("flex items-center justify-center font-semibold tracking-[-0.02em] text-ink-2", day === data.today && "bg-mint-50", weekEdge(day))}>
+                    {sheet.dayTotals[day] ? mealText(sheet.dayTotals[day], fmt) : "–"}
                   </span>
                 ))}
                 <span role="cell" className="flex items-center justify-end pr-3 text-body font-bold">
-                  {mealText(sheet.total, locale)}
+                  {mealText(sheet.total, fmt)}
                 </span>
                 <span role="cell" className="flex items-center justify-end pr-4 text-small font-bold">
                   {money(Number(data.settlement.mealExpense))}

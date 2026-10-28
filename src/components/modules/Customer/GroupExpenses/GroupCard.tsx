@@ -30,12 +30,12 @@ const BUDGET_TEXT = { ok: "text-ink-2", warning: "text-warning", over: "text-exp
 // line about where the month stands (or a last month still waiting to be
 // closed).
 export function GroupCard({ group, onDelete }: GroupCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { workspace, members, range, settlement, settings, budget, closed, openMonth } = group;
   const mess = settings.kind === "MESS";
   const kind = GROUP_KIND[settings.kind];
   const currency = workspace.currency;
-  const money = (value: number) => formatCurrency(value, currency, locale);
+  const money = (value: number) => formatCurrency(value, currency, fmt);
   const href = `/group-expenses/${workspace.id}`;
   const active = members.filter((member) => member.status === "ACTIVE");
   const spent = Number(settlement.totalExpense);
@@ -43,7 +43,7 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
   const transfers = whoPaysWhom(settlement.members);
   const owed = transfers.reduce((sum, transfer) => sum + transfer.amount, 0);
   // The group's own month: one starting on the 10th is still September on 5 Oct.
-  const month = monthName(range.key, locale);
+  const month = monthName(range.key, fmt);
   const status = budget ? budgetStatus(Number(budget.budgetAmount), spent) : null;
   const shares = active.reduce((sum, m) => sum + Number(m.shareUnits), 0);
   const nameOf = (id: string) => shortName(members.find((member) => member.id === id)?.name);
@@ -57,21 +57,21 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
       ? payers.length === 1
         ? t("{from} owes {to} {amount}", { from: nameOf(payers[0]), to: nameOf(payees[0]), amount: money(owed) })
         : t("{names} owe {to} {amount} in total", { names: namesList(t, payers.map(nameOf)), to: nameOf(payees[0]), amount: money(owed) })
-      : countLabel(t, locale, transfers.length, "{count} payment settles {month} · {amount} in total", "{count} payments settle {month} · {amount} in total", { month, amount: money(owed) });
+      : countLabel(t, fmt, transfers.length, "{count} payment settles {month} · {amount} in total", "{count} payments settle {month} · {amount} in total", { month, amount: money(owed) });
 
   const note = openMonth
-    ? { icon: <CircleAlert />, text: t("{month} has ended. Close it to lock the numbers", { month: monthName(openMonth.key, locale) }), tone: "text-ink-soft", href: { pathname: href, query: { tab: "settlement", month: openMonth.key } } }
+    ? { icon: <CircleAlert />, text: t("{month} has ended. Close it to lock the numbers", { month: monthName(openMonth.key, fmt) }), tone: "text-ink-soft", href: { pathname: href, query: { tab: "settlement", month: openMonth.key } } }
     : closed
       ? { icon: <Lock />, text: t("{month} is closed and locked.", { month }), tone: "text-ink-soft" }
       : transfers.length > 0
         ? { icon: <CircleAlert />, text: owesText, tone: "text-warning" }
         : { icon: <Check />, text: spent > 0 ? t("Everyone is even so far") : t("Nothing recorded yet this month"), tone: "text-ink-soft" };
 
-  const toSettle = { label: t("To settle"), value: transfers.length === 0 ? t("Even") : countLabel(t, locale, transfers.length, "{count} payment", "{count} payments"), tone: transfers.length > 0 ? "text-warning" : undefined };
+  const toSettle = { label: t("To settle"), value: transfers.length === 0 ? t("Even") : countLabel(t, fmt, transfers.length, "{count} payment", "{count} payments"), tone: transfers.length > 0 ? "text-warning" : undefined };
   const stats = mess
     ? [
         { label: t("Spent in {month}", { month }), value: money(spent) },
-        { label: t("Meal rate"), value: Number(settlement.mealUnits) > 0 ? mealRateText(settlement.mealRate, currency, locale) : "—" },
+        { label: t("Meal rate"), value: Number(settlement.mealUnits) > 0 ? mealRateText(settlement.mealRate, currency, fmt) : "—" },
         { label: t("Cash in hand"), value: money(cash), tone: cash < 0 ? "text-expense" : undefined },
       ]
     : [{ label: t("Spent in {month}", { month }), value: money(spent) }, { label: t("Cash in hand"), value: money(cash), tone: cash < 0 ? "text-expense" : undefined }, toSettle];
@@ -100,8 +100,8 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
               </span>
             )}
             <span className={cn("min-w-0", active.length > 0 && "pl-1.5")}>
-              {countLabel(t, locale, active.length, "{count} member", "{count} members")} ·{" "}
-              {mess ? t("{meals} meals in {month}", { meals: mealText(Number(settlement.mealUnits), locale), month }) : `${t("{count} shares", { count: mealText(shares, locale) })} · ${t(closed ? "{month} closed" : "{month} open", { month })}`}
+              {countLabel(t, fmt, active.length, "{count} member", "{count} members")} ·{" "}
+              {mess ? t("{meals} meals in {month}", { meals: mealText(Number(settlement.mealUnits), fmt), month }) : `${t("{count} shares", { count: mealText(shares, fmt) })} · ${t(closed ? "{month} closed" : "{month} open", { month })}`}
             </span>
           </div>
         </div>
@@ -135,12 +135,12 @@ export function GroupCard({ group, onDelete }: GroupCardProps) {
           <span className="text-ink-2">{status ? t("{month} budget {amount}", { month, amount: money(status.budget) }) : t("No budget set for this month")}</span>
           {status && (
             <span className={cn("font-semibold tabular-nums", BUDGET_TEXT[status.tone])}>
-              {status.left < 0 ? t("{percent}% · {amount} over", { percent: formatCount(status.percent, locale), amount: money(-status.left) }) : t("{percent}% · {amount} left", { percent: formatCount(status.percent, locale), amount: money(status.left) })}
+              {status.left < 0 ? t("{percent}% · {amount} over", { percent: formatCount(status.percent, fmt), amount: money(-status.left) }) : t("{percent}% · {amount} left", { percent: formatCount(status.percent, fmt), amount: money(status.left) })}
             </span>
           )}
         </div>
         {/* No budget, no bar: an empty "Budget used" bar would say 0% of nothing. */}
-        {status && <ProgressBar value={status.percent} tone={BUDGET_TONE_PROGRESS[status.tone]} label={t("Budget used")} valueText={t("{percent}% used", { percent: formatCount(status.percent, locale) })} />}
+        {status && <ProgressBar value={status.percent} tone={BUDGET_TONE_PROGRESS[status.tone]} label={t("Budget used")} valueText={t("{percent}% used", { percent: formatCount(status.percent, fmt) })} />}
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-2 rounded-b-card border-t border-divider bg-strip px-5 py-3 text-small">

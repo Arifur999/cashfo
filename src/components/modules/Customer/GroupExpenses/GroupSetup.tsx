@@ -42,9 +42,9 @@ const SHARE_OF_COSTS: Record<BazarRule, string> = {
 // A brand-new group: four short steps, and how a balance is worked out.
 // The dashboard takes over as soon as money is recorded.
 export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMeals, onAddExpense }: GroupSetupProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const names = view.activeMembers.map((m) => shortName(m.name));
-  const listed = names.length > 3 ? t("{names} and {count} more", { names: names.slice(0, 3).join(", "), count: formatCount(names.length - 3, locale) }) : namesList(t, names);
+  const listed = names.length > 3 ? t("{names} and {count} more", { names: names.slice(0, 3).join(", "), count: formatCount(names.length - 3, fmt) }) : namesList(t, names);
   const mess = data.settings.kind === "MESS";
   const meals = mess || data.settings.mealsOn;
   // New groups get their bazar rule when created (NewGroupDrawer); say the one it has.
@@ -100,13 +100,13 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMe
             <h2 className="text-h3 text-ink">{t("Set up {name}", { name: data.name })}</h2>
             <span className="text-small text-ink-muted">{t("Four short steps. The dashboard fills in as soon as money is recorded.")}</span>
           </div>
-          <span className="text-small font-semibold text-ink-2">{t("{done} of {total} done", { done: formatCount(doneCount, locale), total: formatCount(steps.length, locale) })}</span>
+          <span className="text-small font-semibold text-ink-2">{t("{done} of {total} done", { done: formatCount(doneCount, fmt), total: formatCount(steps.length, fmt) })}</span>
           <ProgressBar value={(doneCount / steps.length) * 100} label={t("Setup progress")} className="w-30" />
         </div>
         <ol className="flex flex-col">
           {steps.map((step, i) => (
             <li key={step.title} className="flex flex-wrap gap-4 border-b border-divider px-6 py-4.5 last:border-b-0 sm:flex-nowrap">
-              <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-full text-small font-bold", step.done ? "bg-emerald text-on-action" : "border-[1.5px] border-input bg-surface text-ink-soft")}>{step.done ? <Check className="size-3.75" strokeWidth={3} aria-hidden="true" /> : formatCount(i + 1, locale)}</span>
+              <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-full text-small font-bold", step.done ? "bg-emerald text-on-action" : "border-[1.5px] border-input bg-surface text-ink-soft")}>{step.done ? <Check className="size-3.75" strokeWidth={3} aria-hidden="true" /> : formatCount(i + 1, fmt)}</span>
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <div className="flex flex-col gap-0.75">
                   <span className={cn("text-[15px] leading-normal font-semibold", step.done ? "text-ink-muted line-through" : "text-ink")}>{step.title}</span>

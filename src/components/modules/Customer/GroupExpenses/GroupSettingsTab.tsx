@@ -22,7 +22,6 @@ import { groupMonthOf, monthRangeOf, poolsMeals, rangeLabel, shortName, SPLIT_LA
 import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupMemberAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
 import { mealText, unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
-import { toBanglaDigits } from "@/lib/i18n/banglaDates";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -66,7 +65,7 @@ function SaveStatus({ state }: { state: "saving" | "saved" | null }) {
 // Each change saves as it is made; its card says when, and its controls
 // wait for the save.
 export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveCategory, onDeleteGroup }: GroupSettingsTabProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState(data.name);
   const [nameKept, setNameKept] = useState(false);
@@ -84,9 +83,9 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
   const byShares = splitTotals(data.expenses, "SHARES", data.members, data.range, poolsMeals(settings.mealsOn, data.settlement));
   const sharesTotal = Object.values(byShares).reduce((sum, value) => sum + value, 0);
   const budget = data.budgets.find((b) => `${b.year}-${String(b.month).padStart(2, "0")}` === data.range.key);
-  const month = monthName(data.range.key, locale, "long");
-  const money = (value: number | string) => formatCurrency(value, data.currency, locale);
-  const dayWord = (day: number) => (locale === "bn" ? toBanglaDigits(day) : ordinal(day));
+  const month = monthName(data.range.key, fmt, "long");
+  const money = (value: number | string) => formatCurrency(value, data.currency, fmt);
+  const dayWord = (day: number) => toLocaleDigits(locale === "bn" ? String(day) : ordinal(day), fmt);
   const status = (section: Section) => (saving === section ? "saving" : saved === section ? "saved" : null);
   // The new category being written at the foot of the list.
   const [newName, setNewName] = useState("");
@@ -279,18 +278,18 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                   <ShareStepper value={shares} name={member.name} disabled={isPending} onChange={(next) => run("shares", () => updateGroupMemberAction(data.businessId, member.id, { shareUnits: next }), t("Failed to update member"))} />
                   {/* Their part of the month's by-shares costs, by name, as each expense split it. */}
                   <span className="flex w-17.5 flex-col items-end text-right tabular-nums">
-                    <span className="text-small text-ink-soft">{totalShares ? toLocaleDigits(`${((shares / totalShares) * 100).toFixed(1)}%`, locale) : "—"}</span>
+                    <span className="text-small text-ink-soft">{totalShares ? toLocaleDigits(`${((shares / totalShares) * 100).toFixed(1)}%`, fmt) : "—"}</span>
                     {theirs !== undefined && <span className="text-caption text-ink-muted">{money(theirs)}</span>}
                   </span>
                 </div>
               );
             })}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-strip px-5 py-3 text-small">
-              <span className="font-semibold text-ink">{t("{count} shares in total", { count: mealText(totalShares, locale) })}</span>
+              <span className="font-semibold text-ink">{t("{count} shares in total", { count: mealText(totalShares, fmt) })}</span>
               {/* "September by shares ৳ 24,000 → 9,000 · 3,000 · 12,000" */}
               {sharesTotal > 0 && (
                 <span className="text-ink-soft tabular-nums">
-                  {t("{month} by shares {amount}", { month, amount: money(sharesTotal) })} → {active.map((member) => formatGrouped(byShares[member.id] ?? 0, data.currency, locale)).join(" · ")}
+                  {t("{month} by shares {amount}", { month, amount: money(sharesTotal) })} → {active.map((member) => formatGrouped(byShares[member.id] ?? 0, data.currency, fmt)).join(" · ")}
                 </span>
               )}
             </div>
@@ -429,7 +428,7 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                     <NativeSelect size="sm" value={slot.value} onChange={(event) => save("meals", { [slot.key]: Number(event.target.value) })} className="h-8 font-semibold pointer-coarse:h-11">
                       {MEAL_STEPS.map((step) => (
                         <option key={step} value={step}>
-                          {mealText(step, locale)}
+                          {mealText(step, fmt)}
                         </option>
                       ))}
                     </NativeSelect>
@@ -467,8 +466,8 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
         description={
           startPreview
             ? t("{month} will run {range}. Entries keep their dates, so some move into the month before or after, and a closed month whose dates no longer match shows as open again.", {
-                month: monthName(startPreview.key, locale, "long"),
-                range: rangeLabel(startPreview, locale),
+                month: monthName(startPreview.key, fmt, "long"),
+                range: rangeLabel(startPreview, fmt),
               })
             : ""
         }

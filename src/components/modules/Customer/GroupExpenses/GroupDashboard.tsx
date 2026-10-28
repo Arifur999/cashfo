@@ -14,6 +14,7 @@ import { BUDGET_TONE_BAR, BUDGET_TONE_PROGRESS, BUDGET_TONE_TEXT, budgetFor, bud
 import { mealText, mealValue, unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { BalanceCell, CategoryTile, categoryBarClass, MemberAvatar } from "./GroupBits";
@@ -46,10 +47,10 @@ const dayBefore = (day: string) => new Date(Date.parse(`${day}T00:00:00.000Z`) -
 // the latest entries; a family who pays whom, where the money went and the
 // last six months against the budget.
 export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSetBudget }: GroupDashboardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { currency, range, settlement } = data;
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
-  const month = monthName(range.key, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
+  const month = monthName(range.key, fmt);
   const spent = Number(settlement.totalExpense);
   const deposits = data.contributions.filter((c) => Number(c.amount) > 0);
   const contributed = deposits.reduce((sum, c) => sum + Number(c.amount), 0);
@@ -78,18 +79,18 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
   const stats = [
     { label: t("Total expense"), value: money(spent), sub: meals && mealSpend > 0 ? t("Bazar {bazar} · other costs {other}", { bazar: money(mealSpend), other: money(spent - mealSpend) }) : top.length > 0 ? top.map((c) => `${c.name} ${money(c.amount)}`).join(" · ") : t("Nothing spent yet") },
     meals
-      ? { label: t("Meal rate"), value: mealRateText(settlement.mealRate, currency, locale), sub: Number(settlement.mealUnits) > 0 ? t("{bazar} bazar ÷ {meals} meals", { bazar: money(mealSpend), meals: mealText(Number(settlement.mealUnits), locale) }) : t("No meals marked yet") }
+      ? { label: t("Meal rate"), value: mealRateText(settlement.mealRate, currency, fmt), sub: Number(settlement.mealUnits) > 0 ? t("{bazar} bazar ÷ {meals} meals", { bazar: money(mealSpend), meals: mealText(Number(settlement.mealUnits), fmt) }) : t("No meals marked yet") }
       : view.budget
         ? {
             label: t("{month} budget", { month }),
             value: money(view.budget.budget),
-            sub: view.budget.left < 0 ? t("{percent}% used · {amount} over", { percent: formatCount(view.budget.percent, locale), amount: money(-view.budget.left) }) : t("{percent}% used · {amount} left", { percent: formatCount(view.budget.percent, locale), amount: money(view.budget.left) }),
+            sub: view.budget.left < 0 ? t("{percent}% used · {amount} over", { percent: formatCount(view.budget.percent, fmt), amount: money(-view.budget.left) }) : t("{percent}% used · {amount} left", { percent: formatCount(view.budget.percent, fmt), amount: money(view.budget.left) }),
             subTone: view.budget.tone === "ok" ? undefined : BUDGET_TONE_TEXT[view.budget.tone],
             subBold: view.budget.tone !== "ok",
           }
         : { label: t("{month} budget", { month }), value: "—", sub: t("No budget set"), action: onSetBudget },
     { label: t("Cash in hand"), value: money(view.cash), sub: holder ? t("With {name} · matches all balances", { name: shortName(holder.name) }) : t("matches all balances"), check: true, tone: view.cash < 0 ? "text-expense" : undefined },
-    { label: t("Contributions"), value: money(contributed), sub: pocket > 0 ? t("+ {amount} paid from own pockets", { amount: money(pocket) }) : returned > 0 ? t("{amount} returned", { amount: money(returned) }) : countLabel(t, locale, deposits.length, "{count} deposit", "{count} deposits") },
+    { label: t("Contributions"), value: money(contributed), sub: pocket > 0 ? t("+ {amount} paid from own pockets", { amount: money(pocket) }) : returned > 0 ? t("{amount} returned", { amount: money(returned) }) : countLabel(t, fmt, deposits.length, "{count} deposit", "{count} deposits") },
   ];
 
   const balances = (
@@ -155,7 +156,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                       )
                     : member && (
                         <Chip tone="neutral" size="sm" className="text-ink-soft">
-                          {countLabel(t, locale, Number(member.shareUnits), "{count} share", "{count} shares")}
+                          {countLabel(t, fmt, Number(member.shareUnits), "{count} share", "{count} shares")}
                         </Chip>
                       )}
                 </span>
@@ -166,7 +167,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
             </ListCell>
             {mess && (
               <ListCell align="end" className="hidden text-ink-2 md:block">
-                {mealText(Number(row.mealUnits), locale)}
+                {mealText(Number(row.mealUnits), fmt)}
               </ListCell>
             )}
             <ListCell align="end" className="hidden md:block">
@@ -193,7 +194,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
           <span role="cell">{t("Total")}</span>
           {mess && (
             <span role="cell" className="hidden text-right md:block">
-              {mealText(Number(settlement.mealUnits), locale)}
+              {mealText(Number(settlement.mealUnits), fmt)}
             </span>
           )}
           <span role="cell" className="hidden text-right md:block">
@@ -203,7 +204,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
             {money(totalCost)}
           </span>
           <span role="cell" className={cn("text-right", view.cash < 0 ? "text-expense" : "text-income")}>
-            {formatSignedCurrency(view.cash, currency, locale)}
+            {formatSignedCurrency(view.cash, currency, fmt)}
           </span>
         </ListTotalRow>
       )}
@@ -234,7 +235,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
               )}
               <span className="flex-1" />
               <span className="font-semibold text-ink tabular-nums">{money(cat.amount)}</span>
-              <span className="w-11 text-right text-ink-muted tabular-nums">{toLocaleDigits(`${cat.share}%`, locale)}</span>
+              <span className="w-11 text-right text-ink-muted tabular-nums">{toLocaleDigits(`${cat.share}%`, fmt)}</span>
             </div>
             <span className={cn("block h-1.5 overflow-hidden rounded-full bg-surface-sunken", categoryBarClass(cat.name, data.categories))}>
               <span className="block h-full rounded-full bg-current" style={{ width: `${cat.share}%` }} />
@@ -250,10 +251,10 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-small">
                 <span className="font-semibold text-ink">{t("Budget {amount}", { amount: money(view.budget.budget) })}</span>
                 <span className={cn("font-semibold tabular-nums", view.budget.tone === "ok" ? "text-ink-2" : BUDGET_TONE_TEXT[view.budget.tone])}>
-                  {view.budget.left < 0 ? t("{percent}% used · {amount} over", { percent: formatCount(view.budget.percent, locale), amount: money(-view.budget.left) }) : t("{percent}% used · {amount} left", { percent: formatCount(view.budget.percent, locale), amount: money(view.budget.left) })}
+                  {view.budget.left < 0 ? t("{percent}% used · {amount} over", { percent: formatCount(view.budget.percent, fmt), amount: money(-view.budget.left) }) : t("{percent}% used · {amount} left", { percent: formatCount(view.budget.percent, fmt), amount: money(view.budget.left) })}
                 </span>
               </div>
-              <ProgressBar value={view.budget.percent} tone={BUDGET_TONE_PROGRESS[view.budget.tone]} label={t("Budget used")} valueText={t("{percent}% used", { percent: formatCount(view.budget.percent, locale) })} />
+              <ProgressBar value={view.budget.percent} tone={BUDGET_TONE_PROGRESS[view.budget.tone]} label={t("Budget used")} valueText={t("{percent}% used", { percent: formatCount(view.budget.percent, fmt) })} />
               <span className="text-caption text-ink-muted">
                 {view.budget.tone === "over"
                   ? t("Over the budget by {amount}.", { amount: money(-view.budget.left) })
@@ -298,7 +299,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
       {/* A running group's empty month keeps its dashboard, with one line saying so. */}
       {view.empty && (
         <Banner tone="neutral" inline icon={<Info />}>
-          {t("Nothing recorded for {month} yet.", { month: monthName(range.key, locale, "long", true) })}
+          {t("Nothing recorded for {month} yet.", { month: monthName(range.key, fmt, "long", true) })}
         </Banner>
       )}
 
@@ -354,7 +355,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                         <span className="truncate text-body font-semibold text-ink" title={`${from?.name ?? ""} → ${to?.name ?? ""}`}>
                           {t("{from} pays {to}", { from: shortName(from?.name), to: shortName(to?.name) })}
                         </span>
-                        <span className="truncate text-caption font-normal text-ink-muted">{t("Clears {name}'s {amount}", { name: shortName(from?.name), amount: formatSignedCurrency(view.balances[transfer.fromId] ?? 0, currency, locale) })}</span>
+                        <span className="truncate text-caption font-normal text-ink-muted">{t("Clears {name}'s {amount}", { name: shortName(from?.name), amount: formatSignedCurrency(view.balances[transfer.fromId] ?? 0, currency, fmt) })}</span>
                       </span>
                       <span className="text-h3 font-bold text-ink tabular-nums">{money(transfer.amount)}</span>
                     </div>
@@ -377,10 +378,10 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                     : holder && view.cash > 0.004
                       ? view.transfers.length === 1
                         ? t("{name} already holds the {cash} cash in hand, so after this payment everyone is even.", { name: shortName(holder.name), cash: money(view.cash) })
-                        : t("{name} already holds the {cash} cash in hand, so after these {count} payments everyone is even.", { name: shortName(holder.name), cash: money(view.cash), count: formatCount(view.transfers.length, locale) })
+                        : t("{name} already holds the {cash} cash in hand, so after these {count} payments everyone is even.", { name: shortName(holder.name), cash: money(view.cash), count: formatCount(view.transfers.length, fmt) })
                       : view.transfers.length === 1
                         ? t("After this payment everyone is even. Or carry the balances into next month when you close.")
-                        : t("After these {count} payments everyone is even. Or carry the balances into next month when you close.", { count: formatCount(view.transfers.length, locale) })}
+                        : t("After these {count} payments everyone is even. Or carry the balances into next month when you close.", { count: formatCount(view.transfers.length, fmt) })}
                 </span>
               </div>
             </Card>
@@ -391,7 +392,7 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
 
             <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-title font-semibold text-ink">{t("Last 6 months against the budget")}</h2>
+                <h2 className="text-title font-semibold text-ink">{redigit(t("Last 6 months against the budget"), fmt)}</h2>
                 {view.budget && (
                   <span className="flex shrink-0 items-center gap-1.5 text-caption font-normal text-ink-muted">
                     <span className="h-3 w-0.5 bg-ink" aria-hidden="true" />
@@ -406,13 +407,13 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
                 const last = point.month === range.key;
                 return (
                   <div key={point.month} className="grid h-7.5 grid-cols-[40px_minmax(0,1fr)_76px_52px] items-center gap-2.5 text-small tabular-nums">
-                    <span className={cn("text-ink-soft", last ? "font-bold" : "font-medium")}>{monthName(point.month, locale, "short")}</span>
+                    <span className={cn("text-ink-soft", last ? "font-bold" : "font-medium")}>{monthName(point.month, fmt, "short")}</span>
                     <span className="relative h-3.5 rounded-xs bg-surface-sunken">
                       <span className={cn("absolute inset-y-0 left-0 rounded-xs", status ? BUDGET_TONE_BAR[status.tone] : "bg-emerald")} style={{ width: `${Math.min(100, (point.amount / scale) * 100)}%` }} />
                       {status && <span className="absolute -inset-y-1 w-0.5 bg-ink" style={{ left: "90.9%" }} aria-hidden="true" />}
                     </span>
                     <span className={cn("text-right text-ink", last ? "font-bold" : "font-medium")}>{money(point.amount)}</span>
-                    <span className={cn("text-right font-semibold", status?.tone === "over" ? "text-expense" : "text-ink-muted")}>{status ? `${formatCount(status.percent, locale)}%` : "—"}</span>
+                    <span className={cn("text-right font-semibold", status?.tone === "over" ? "text-expense" : "text-ink-muted")}>{status ? `${formatCount(status.percent, fmt)}%` : "—"}</span>
                   </div>
                 );
               })}
@@ -438,8 +439,8 @@ export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSet
 // A mess's newest entries: the expenses and the days' meal marks, newest
 // first, four of them.
 function LatestEntries({ data }: { data: GroupPageData }) {
-  const { t, locale } = useLocale();
-  const money = (value: number | string) => formatCurrency(value, data.currency, locale);
+  const { t, fmt } = useLocale();
+  const money = (value: number | string) => formatCurrency(value, data.currency, fmt);
   const units = unitsOf(data.settings);
   const active = data.members.filter((member) => member.status === "ACTIVE").length;
   const days = new Map<string, { total: number; people: number }>();
@@ -459,7 +460,7 @@ function LatestEntries({ data }: { data: GroupPageData }) {
         order: expense.createdAt,
         title: expense.category,
         amount: money(expense.amount),
-        sub: [dayLabel(expense.date, locale), expense.description || who, how].join(" · "),
+        sub: [dayLabel(expense.date, fmt), expense.description || who, how].join(" · "),
         tile: <CategoryTile name={expense.category} categories={data.categories} size={32} />,
       };
     }),
@@ -468,8 +469,8 @@ function LatestEntries({ data }: { data: GroupPageData }) {
       day,
       order: "",
       title: t("Meals marked"),
-      amount: t("{count} meals", { count: mealText(marked.total, locale) }),
-      sub: `${dayLabel(day, locale)} · ${marked.people >= active ? t("all {count} members", { count: formatCount(active, locale) }) : countLabel(t, locale, marked.people, "{count} member", "{count} members")}`,
+      amount: t("{count} meals", { count: mealText(marked.total, fmt) }),
+      sub: `${dayLabel(day, fmt)} · ${marked.people >= active ? t("all {count} members", { count: formatCount(active, fmt) }) : countLabel(t, fmt, marked.people, "{count} member", "{count} members")}`,
       tile: (
         <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-warning-soft text-warning">
           <Utensils className="size-4" />
