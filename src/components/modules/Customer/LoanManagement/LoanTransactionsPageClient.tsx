@@ -74,8 +74,11 @@ const PAGE_SIZE = 25;
 // Below xl a row is two lines (who and what, then the date; the amount and,
 // from md, its effect on the right), with the buttons beside them from md.
 // From xl the board's columns, Category and Account folded under the entry
-// so the table fits beside the sidebar at 1280.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_auto_auto] xl:grid-cols-[96px_minmax(160px,1fr)_minmax(160px,1.2fr)_128px_180px_80px]";
+// so the table fits beside the sidebar at 1280; from 1400 (the board's
+// 1440) each in a column of its own, as the board draws them.
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_auto_auto] xl:grid-cols-[96px_minmax(160px,1fr)_minmax(160px,1.2fr)_128px_180px_80px] min-[87.5rem]:grid-cols-[92px_minmax(0,1fr)_140px_96px_120px_120px_170px_72px] min-[87.5rem]:gap-x-3.5";
+// The board's own Category and Account columns, from 1400.
+const WIDE = "hidden min-[87.5rem]:block print:hidden";
 // On paper (about 720px wide): the same columns without the buttons.
 const PRINT_COLUMNS = "print:grid-cols-[72px_minmax(0,1fr)_140px_100px_140px] print:gap-x-3";
 // Back to the column's own place once the row has its columns.
@@ -86,7 +89,7 @@ const ACTION = "flex size-9 items-center justify-center rounded-md bg-surface sh
 // Loan payments: every loan given or taken and every repayment, with what
 // each one did to the balance, and a void action on each standing entry.
 export function LoanTransactionsPageClient({ businessId, transactions, complete, loanContacts, canManage, currency, range, selectedContactId, customFrom, customTo }: LoanTransactionsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   // Admin > System > Feature Flags: pdf_export off hides Print.
@@ -171,19 +174,24 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const periodLabel =
     range === "custom"
       ? customFrom || customTo
-        ? t("{from} – {to}", { from: customFrom ? formatDate(customFrom, undefined, locale) : "…", to: customTo ? formatDate(customTo, undefined, locale) : "…" })
+        ? t("{from} – {to}", { from: customFrom ? formatDate(customFrom, undefined, fmt) : "…", to: customTo ? formatDate(customTo, undefined, fmt) : "…" })
         : t("All time")
       : t(PERIODS.find((period) => period.value === range)?.label ?? "All time");
   const printLine = [contactsById.get(selectedContactId)?.name ?? t("All banks & people"), show === "all" ? null : t(SHOW_LABELS[show]), periodLabel].filter(Boolean).join(" · ");
   const { first, last } = pageRange(paged.page, PAGE_SIZE, paged.total);
   const figure = (text: string) => <b className="font-semibold text-ink">{text}</b>;
+  const kindChip = (isProfit: boolean) => (
+    <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className="font-bold">
+      {t(isProfit ? "Profit" : "Principal")}
+    </Chip>
+  );
 
   return (
     <PageFrame className="gap-5">
       <PageHeader
         eyebrow={t("Loans")}
         tone="loans"
-        title={t("Loan payments")}
+        title={t("Loan transactions")}
         description={t("Every loan you gave or took, every repayment, and every profit payment.")}
         actions={
           <>
@@ -217,16 +225,16 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           <AmountText value={-totals.out} currency={currency} size="h2" tone={totals.out ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !totals.out && "text-ink-muted")} />
         </TotalCell>
         <TotalCell label={`${t("Profit paid")} · ${t("counted as expense")}`} className="border-t xl:border-t-0 xl:border-l">
-          <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitPaid ? "text-warning" : "text-ink-muted")}>{formatCurrency(totals.profitPaid, currency, locale)}</span>
+          <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitPaid ? "text-warning" : "text-ink-muted")}>{formatCurrency(totals.profitPaid, currency, fmt)}</span>
         </TotalCell>
         <TotalCell label={`${t("Profit received")} · ${t("counted as income")}`} className="border-t md:border-l xl:border-t-0">
-          <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitReceived ? "text-income" : "text-ink-muted")}>{formatCurrency(totals.profitReceived, currency, locale)}</span>
+          <span className={cn(TOTAL_FIGURE, "text-h2 tabular-nums", totals.profitReceived ? "text-income" : "text-ink-muted")}>{formatCurrency(totals.profitReceived, currency, fmt)}</span>
         </TotalCell>
       </Card>
 
       <ListCard
         id={LIST_ID}
-        label={t("Loan payments")}
+        label={t("Loan transactions")}
         busy={isPending}
         tableClassName={cn("transition-opacity", isPending && "opacity-60")}
         header={
@@ -291,7 +299,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 pageSize={PAGE_SIZE}
                 onPageChange={setPage}
                 focusTargetId={LIST_ID}
-                summary={<p>{fillNodes(t("Showing {range} of {total}, newest first"), { range: figure(toLocaleDigits(`${formatNumber(first)}–${formatNumber(last)}`, locale)), total: figure(formatCount(paged.total, locale)) })}</p>}
+                summary={<p>{fillNodes(t("Showing {range} of {total}, newest first"), { range: figure(toLocaleDigits(`${formatNumber(first)}–${formatNumber(last)}`, fmt)), total: figure(formatCount(paged.total, fmt)) })}</p>}
               />
             </ListFooter>
           )
@@ -324,6 +332,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               <ListHeadCell>{t("Date")}</ListHeadCell>
               <ListHeadCell>{t("Bank / person")}</ListHeadCell>
               <ListHeadCell>{t("Entry")}</ListHeadCell>
+              <ListHeadCell className={WIDE}>{t("Category")}</ListHeadCell>
+              <ListHeadCell className={WIDE}>{t("Account")}</ListHeadCell>
               <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
               <ListHeadCell>{t("Effect on balance")}</ListHeadCell>
               <ListHeadCell className="print:hidden">
@@ -343,7 +353,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               return (
                 <ListRow key={transaction.id} columns={cn(COLUMNS, PRINT_COLUMNS)} muted={!!cancelled} className="group print:break-inside-avoid">
                   {/* Below xl the date sits under the name, past the avatar. */}
-                  <ListCell className={cn("col-start-1 row-start-2 text-caption text-ink-2 max-xl:pl-10.5 xl:text-small print:pl-0", AT_XL)}>{formatDate(transaction.transactionDate, undefined, locale)}</ListCell>
+                  <ListCell className={cn("col-start-1 row-start-2 text-caption text-ink-2 max-xl:pl-10.5 xl:text-small print:pl-0", AT_XL)}>{formatDate(transaction.transactionDate, undefined, fmt)}</ListCell>
                   <ListCell className={cn("col-start-1 row-start-1 flex min-w-0 items-center gap-3", AT_XL)}>
                     <PersonAvatar name={name} src={contact?.photoUrl} kind={contact?.type} size={30} />
                     <span className="flex min-w-0 flex-col">
@@ -360,18 +370,18 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                       </span>
                     </span>
                   </ListCell>
-                  <ListCell className="hidden min-w-0 flex-col gap-0.5 text-small text-ink-2 xl:flex print:flex">
+                  <ListCell className="hidden min-w-0 flex-col gap-0.5 text-small text-ink-2 xl:flex min-[87.5rem]:justify-center print:flex">
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="truncate">{title ? t(title) : "—"}</span>
                       {cancelledChip}
                     </span>
-                    <span className="flex min-w-0 items-center gap-2 text-caption text-ink-muted">
-                      <Chip tone={profit ? "warning" : "neutral"} size="sm" className="font-bold">
-                        {t(profit ? "Profit" : "Principal")}
-                      </Chip>
+                    <span className="flex min-w-0 items-center gap-2 text-caption text-ink-muted min-[87.5rem]:hidden print:flex">
+                      {kindChip(profit !== null)}
                       <span className="truncate">{wallet ?? "—"}</span>
                     </span>
                   </ListCell>
+                  <ListCell className={WIDE}>{kindChip(profit !== null)}</ListCell>
+                  <ListCell className={cn(WIDE, "truncate text-small text-ink-soft")}>{wallet ?? "—"}</ListCell>
                   <ListCell align="end" className={cn("col-start-2 row-start-1", AT_XL)}>
                     <AmountText value={signedAmount} currency={currency} size="sm" signed tone={cancelled ? "neutral" : "auto"} className={cn("font-semibold", cancelled && "text-ink-muted line-through")} />
                   </ListCell>
@@ -393,7 +403,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                     ) : meta && effect && entry ? (
                       <>
                         <span className={cn("font-semibold", effect.text)}>
-                          {t(effect.name)} {meta.effectSign} {formatCurrency(entry.amount, currency, locale)}
+                          {t(effect.name)} {meta.effectSign} {formatCurrency(entry.amount, currency, fmt)}
                         </span>
                         <span className="font-normal text-ink-muted">{t(meta.effectSub)}</span>
                       </>
@@ -444,8 +454,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 <span className="truncate text-caption font-normal text-ink-muted">{[voidingRow.title ? t(voidingRow.title) : null, voidingProfit?.category ?? null].filter(Boolean).join(" · ")}</span>
               </span>
               <span className="flex shrink-0 flex-col items-end gap-px">
-                <span className="font-bold text-ink tabular-nums">{formatCurrency(Math.abs(voidingRow.signedAmount), currency, locale)}</span>
-                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, locale)}</span>
+                <span className="font-bold text-ink tabular-nums">{formatCurrency(Math.abs(voidingRow.signedAmount), currency, fmt)}</span>
+                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, fmt)}</span>
               </span>
             </div>
           }

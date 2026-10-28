@@ -41,7 +41,7 @@ const COLUMNS = "md:grid-cols-[minmax(0,1fr)_110px_120px_40px] xl:grid-cols-[min
 // Everyone the business trades with: a filter by role and by who owes whom,
 // a search, and a row per person with what is due, 25 a page.
 export function ContactsTable({ contacts, currency, canManage, today, onAdd, onEdit }: ContactsTableProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [filter, setFilter] = useState<ContactsFilter>("ALL");
   const [query, setQuery] = useState("");
   const { page, setPage } = usePageParam();
@@ -49,7 +49,7 @@ export function ContactsTable({ contacts, currency, canManage, today, onAdd, onE
   // One fixed locale, so the server and every browser sort alike.
   const rows = filterContacts(contacts, filter, query).sort((a, b) => a.name.localeCompare(b.name, "en"));
   const list = paginate(rows, page, PAGE_SIZE);
-  const count = (n: number) => <span className="text-ink-muted">{formatCount(n, locale)}</span>;
+  const count = (n: number) => <span className="text-ink-muted">{formatCount(n, fmt)}</span>;
   const filters: { value: ContactsFilter; label: React.ReactNode }[] = [
     { value: "ALL", label: <>{t("All")} {count(stats.total)}</> },
     { value: "CUSTOMER", label: <>{t("Customers@@books")} {count(stats.customers)}</> },
@@ -80,8 +80,8 @@ export function ContactsTable({ contacts, currency, canManage, today, onAdd, onE
   function balance(contact: Contact) {
     const toYou = owedToYou(contact);
     const byYou = owedByYou(contact);
-    if (toYou > 0) return { amount: formatCurrency(toYou, currency, locale), note: t("owes you"), className: "text-income" };
-    if (byYou > 0) return { amount: formatCurrency(byYou, currency, locale), note: t("you owe"), className: "text-expense" };
+    if (toYou > 0) return { amount: formatCurrency(toYou, currency, fmt), note: t("owes you"), className: "text-income" };
+    if (byYou > 0) return { amount: formatCurrency(byYou, currency, fmt), note: t("you owe"), className: "text-expense" };
     return { amount: t("Settled"), note: t("nothing due"), className: "text-ink-muted" };
   }
 
@@ -149,7 +149,7 @@ export function ContactsTable({ contacts, currency, canManage, today, onAdd, onE
                         <span className="hidden truncate text-caption text-ink-muted md:block xl:hidden">
                           {contact.phone && <span className="font-mono">{contact.phone}</span>}
                           {contact.phone && contact.lastActivityAt && " · "}
-                          {contact.lastActivityAt && t("Last activity {date}", { date: booksDate(contact.lastActivityAt, locale, { today, weekday: true }) })}
+                          {contact.lastActivityAt && t("Last activity {date}", { date: booksDate(contact.lastActivityAt, fmt, { today, weekday: true }) })}
                         </span>
                       )}
                     </span>
@@ -160,7 +160,7 @@ export function ContactsTable({ contacts, currency, canManage, today, onAdd, onE
                     </Chip>
                   </ListCell>
                   <ListCell className="hidden truncate font-mono text-small text-ink-2 xl:block">{contact.phone || "—"}</ListCell>
-                  <ListCell className="hidden text-small text-ink-2 xl:block">{contact.lastActivityAt ? booksDate(contact.lastActivityAt, locale, { today, weekday: true }) : "—"}</ListCell>
+                  <ListCell className="hidden text-small text-ink-2 xl:block">{contact.lastActivityAt ? booksDate(contact.lastActivityAt, fmt, { today, weekday: true }) : "—"}</ListCell>
                   <ListCell align="end" className="flex shrink-0 flex-col items-end">
                     <b className={cn("tabular-nums whitespace-nowrap", due.className)}>{due.amount}</b>
                     <span className="text-caption text-ink-muted">{due.note}</span>

@@ -53,26 +53,28 @@ describe("adminNavSections", () => {
 describe("isNavItemViewOnly", () => {
   it("locks an item only for a role that can change none of its areas", () => {
     expect(lockedFor("SUPER_ADMIN")).toEqual([]);
-    expect(lockedFor("SUPPORT_ADMIN")).toEqual(["Owners", "Plans & coupons", "Payments", "Content", "Settings"]);
-    expect(lockedFor("FINANCE_ADMIN")).toEqual(["Owners", "Support", "Content", "Settings"]);
-    expect(lockedFor("CONTENT_ADMIN")).toEqual(["Users", "Owners", "Plans & coupons", "Payments", "Support", "Settings"]);
+    // As the AdminSidebar board draws each role's menu.
+    expect(lockedFor("SUPPORT_ADMIN")).toEqual(["Subscriptions", "Payments", "Referrals & Payouts", "Content", "Settings"]);
+    expect(lockedFor("FINANCE_ADMIN")).toEqual(["Support", "Content", "Notifications", "Settings"]);
+    expect(lockedFor("CONTENT_ADMIN")).toEqual(["User Management", "Manage Owners", "Subscriptions", "Payments", "Referrals & Payouts", "Support", "Settings"]);
   });
 
   it("opens Users to a support admin (suspending) and a finance admin (plans)", () => {
-    expect(isNavItemViewOnly(item("Users"), "SUPPORT_ADMIN")).toBe(false);
-    expect(isNavItemViewOnly(item("Users"), "FINANCE_ADMIN")).toBe(false);
-    expect(isNavItemViewOnly(item("Users"), "CONTENT_ADMIN")).toBe(true);
+    expect(isNavItemViewOnly(item("User Management"), "SUPPORT_ADMIN")).toBe(false);
+    expect(isNavItemViewOnly(item("User Management"), "FINANCE_ADMIN")).toBe(false);
+    expect(isNavItemViewOnly(item("User Management"), "CONTENT_ADMIN")).toBe(true);
   });
 
-  it("leaves Owners to the super admin, the only one who resets an owner's data", () => {
-    expect(isNavItemViewOnly(item("Owners"), "SUPER_ADMIN")).toBe(false);
-    expect(isNavItemViewOnly(item("Owners"), "SUPPORT_ADMIN")).toBe(true);
+  it("opens Manage Owners to the roles that act on the people it lists", () => {
+    expect(isNavItemViewOnly(item("Manage Owners"), "SUPER_ADMIN")).toBe(false);
+    expect(isNavItemViewOnly(item("Manage Owners"), "SUPPORT_ADMIN")).toBe(false);
+    expect(isNavItemViewOnly(item("Manage Owners"), "CONTENT_ADMIN")).toBe(true);
   });
 
-  it("never locks Notifications: any admin can draft a campaign there", () => {
-    for (const role of ["SUPER_ADMIN", "SUPPORT_ADMIN", "FINANCE_ADMIN", "CONTENT_ADMIN"] as const) {
-      expect(isNavItemViewOnly(item("Notifications"), role), role).toBe(false);
-    }
+  it("locks Notifications only for a role that can neither edit templates nor send campaigns", () => {
+    expect(isNavItemViewOnly(item("Notifications"), "SUPPORT_ADMIN")).toBe(false);
+    expect(isNavItemViewOnly(item("Notifications"), "CONTENT_ADMIN")).toBe(false);
+    expect(isNavItemViewOnly(item("Notifications"), "FINANCE_ADMIN")).toBe(true);
   });
 
   it("never locks a page with nothing to change", () => {
@@ -82,8 +84,8 @@ describe("isNavItemViewOnly", () => {
 });
 
 describe("navBadgesFor", () => {
-  it("gives a super admin both counts", () => {
-    expect(navBadgesFor(getNavSectionsByRole("SUPER_ADMIN"), "SUPER_ADMIN")).toEqual(["openTickets", "securityFlags"]);
+  it("gives a super admin every count", () => {
+    expect(navBadgesFor(getNavSectionsByRole("SUPER_ADMIN"), "SUPER_ADMIN")).toEqual(["payoutRequests", "openTickets", "securityFlags"]);
   });
 
   it("gives a support admin the open tickets only: Security is not in their menu", () => {
@@ -91,7 +93,7 @@ describe("navBadgesFor", () => {
   });
 
   it("gives no count on a page the role can only read", () => {
-    expect(navBadgesFor(adminNavSections, "FINANCE_ADMIN")).toEqual(["securityFlags"]);
+    expect(navBadgesFor(adminNavSections, "FINANCE_ADMIN")).toEqual(["payoutRequests", "securityFlags"]);
     expect(navBadgesFor(getNavSectionsByRole("CONTENT_ADMIN"), "CONTENT_ADMIN")).toEqual([]);
   });
 });
@@ -111,7 +113,8 @@ describe("getNavSectionsByRole", () => {
 
 describe("isNavItemActive", () => {
   it("lights an item on every tab and record under it", () => {
-    expect(litFor("/admin/coupons")).toEqual(["Plans & coupons"]);
+    expect(litFor("/admin/coupons")).toEqual(["Subscriptions"]);
+    expect(litFor("/admin/referrals")).toEqual(["Referrals & Payouts"]);
     expect(litFor("/admin/invoices/inv-1")).toEqual(["Payments"]);
     expect(litFor("/admin/feature-requests")).toEqual(["Support"]);
     expect(litFor("/admin/security/logins")).toEqual(["Security"]);
@@ -124,19 +127,19 @@ describe("isNavItemActive", () => {
 
 describe("menuPathFor", () => {
   it("keeps the list a user's page was opened from lit", () => {
-    expect(litFor("/admin/users/u-1", "owners")).toEqual(["Owners"]);
+    expect(litFor("/admin/users/u-1", "owners")).toEqual(["Manage Owners"]);
     expect(litFor("/admin/users/u-1", "workspaces")).toEqual(["Workspaces"]);
-    expect(litFor("/admin/users/u-1/", "owners")).toEqual(["Owners"]);
+    expect(litFor("/admin/users/u-1/", "owners")).toEqual(["Manage Owners"]);
   });
 
   it("lights Users for a user's page opened anywhere else", () => {
-    expect(litFor("/admin/users/u-1")).toEqual(["Users"]);
-    expect(litFor("/admin/users/u-1", "elsewhere")).toEqual(["Users"]);
-    expect(litFor("/admin/users/u-1", "constructor")).toEqual(["Users"]);
+    expect(litFor("/admin/users/u-1")).toEqual(["User Management"]);
+    expect(litFor("/admin/users/u-1", "elsewhere")).toEqual(["User Management"]);
+    expect(litFor("/admin/users/u-1", "constructor")).toEqual(["User Management"]);
   });
 
   it("ignores ?from= on any other page", () => {
-    expect(litFor("/admin/users", "owners")).toEqual(["Users"]);
+    expect(litFor("/admin/users", "owners")).toEqual(["User Management"]);
     expect(litFor("/admin/payments/p-1", "owners")).toEqual(["Payments"]);
   });
 });
@@ -188,7 +191,7 @@ describe("navItemHref", () => {
   it("opens an item on its first tab", () => {
     expect(navItemHref(item("Content"))).toBe("/admin/content/announcements");
     expect(navItemHref(item("Payments"))).toBe("/admin/payments");
-    expect(navItemHref(item("Users"))).toBe("/admin/users");
+    expect(navItemHref(item("User Management"))).toBe("/admin/users");
   });
 });
 

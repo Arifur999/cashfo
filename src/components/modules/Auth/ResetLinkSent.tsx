@@ -58,14 +58,13 @@ const ResetLinkSent = ({ email, onResend, resendError, isResending, onUseAnother
         <MailCheck />
       </IconTile>
       <AuthHeading title="Check your email" focusOnMount />
-      <div className="flex flex-col gap-3 text-body-lg text-ink-muted">
+      <div className="flex flex-col gap-3 text-body leading-[1.5] text-ink-muted">
         <p>
           {translate("If an account uses this email, a reset link is on its way:")} <span className="font-semibold break-all text-ink">{email}</span>
         </p>
         <p>{translate("The link works for 30 minutes. Check your spam folder if it doesn't arrive.")}</p>
         {/* Each new request ends the links before it (the API supersedes them). */}
         <p>{translate("Only the newest link works.")}</p>
-        <p>{translate("Admin passwords are reset by a super admin.")}</p>
       </div>
       <div className="flex flex-col gap-3">
         {/* aria-disabled, not disabled, so the focus stays on it through the
@@ -73,7 +72,7 @@ const ResetLinkSent = ({ email, onResend, resendError, isResending, onUseAnother
         <Button
           type="button"
           variant="secondary"
-          size="xl"
+          size="lg"
           className="w-full aria-disabled:cursor-default aria-disabled:opacity-50 aria-disabled:hover:bg-surface"
           onClick={() => {
             if (!waiting && !isResending) void resend();
@@ -101,7 +100,7 @@ const ResetLinkSent = ({ email, onResend, resendError, isResending, onUseAnother
           {sentAgain ? translate("Sent again. Use the link in the newest email.") : ""}
         </p>
         <FormErrorCallout error={resendError} />
-        <Button type="button" variant="ghost" size="xl" className="w-full" onClick={onUseAnotherEmail}>
+        <Button type="button" variant="ghost" size="lg" className="w-full" onClick={onUseAnotherEmail}>
           {translate("Use a different email")}
         </Button>
       </div>

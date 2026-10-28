@@ -15,7 +15,7 @@ import { getUserInfo } from "@/services/auth.services";
 import { getOwners } from "@/services/owner.services";
 
 // Titled as the menu names it.
-export const generateMetadata = adminPageTitle("Owners");
+export const generateMetadata = adminPageTitle("Manage Owners");
 
 const OWNERS_ROUTE = userListFor("owners").href;
 
@@ -32,8 +32,8 @@ const ManageOwnersPage = async ({ searchParams }: PageProps<"/admin/manage-owner
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Owners"
-        description="Every owner's account. If an owner asks for a fresh start, reset their personal workspace's money data here. Their login stays as it is."
+        title="Manage owners"
+        description="Every owner's account. If an owner asks for a fresh start, reset their workspace's money data here. Their login stays as it is."
       />
       <Callout variant="warning" role="status" className="text-body">
         <T values={{ who: <b className="font-semibold"><T>Only super admins can reset data</T></b> }}>

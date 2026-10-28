@@ -48,7 +48,7 @@ const DataTableColumnHeader = <TData, TValue>({ column, title, align = "left", c
           <Button
             variant="ghost"
             size="sm"
-            className="group/head h-auto gap-1 rounded-sm p-0 text-caption font-medium text-white/90 hover:bg-transparent hover:text-white aria-expanded:bg-transparent data-[state=open]:text-white"
+            className="group/head h-auto gap-1 rounded-sm p-0 text-caption font-medium text-ink-muted hover:bg-transparent hover:text-ink aria-expanded:bg-transparent data-[state=open]:text-ink"
           >
             {right && sortIcon}
             {label}

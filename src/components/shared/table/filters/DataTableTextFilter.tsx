@@ -38,7 +38,7 @@ const DataTableTextFilter = ({ label: labelKey, value = "", onChange, width = "m
         debounced.run(event.target.value);
       }}
       className={cn(
-        "h-8.5 rounded-md border border-line-strong bg-surface px-3 text-small text-ink outline-none placeholder:text-ink-muted focus-visible:border-emerald focus-visible:ring-2 focus-visible:ring-emerald/20 [&::-webkit-search-cancel-button]:appearance-none",
+        "h-8.5 rounded-field border border-input bg-surface px-3 text-small text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-muted focus-visible:border-focus-ring focus-visible:focus-halo [&::-webkit-search-cancel-button]:appearance-none",
         width === "sm" ? "w-32.5" : "w-42.5",
       )}
     />

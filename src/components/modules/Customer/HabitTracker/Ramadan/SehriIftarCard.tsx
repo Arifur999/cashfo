@@ -8,6 +8,7 @@ import { timeLabel } from "@/lib/customer/date";
 import { clockOf, prayerTimesFor } from "@/lib/customer/prayerTimes";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 import type { ReminderBook } from "../Reminders";
 import { RamadanReminderRows } from "./RamadanReminders";
 
@@ -26,7 +27,7 @@ interface SehriIftarCardProps {
 // The board's Sehri and Iftar card: when Sehri ends (Fajr) and Iftar
 // (Maghrib) for the person's city, from the same settings as the prayer times.
 export function SehriIftarCard({ day, todayDay, year, reminders }: SehriIftarCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { settings } = usePrayerSettings();
   const times = prayerTimesFor(settings, day);
   const tiles = [
@@ -35,24 +36,24 @@ export function SehriIftarCard({ day, todayDay, year, reminders }: SehriIftarCar
   ];
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 bg-[linear-gradient(160deg,var(--warning-soft)_0%,var(--surface)_75%)] px-5 py-4">
+    <Card padding="none" className="flex flex-col gap-3 rounded-md bg-[linear-gradient(160deg,var(--warning-50)_0%,var(--surface)_75%)] px-5 py-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-title font-semibold text-ink">{t("Sehri and Iftar")}</h2>
-        <Chip tone={todayDay !== null ? "mint" : "neutral"} size="sm">
+        <Chip tone={todayDay !== null ? "mint" : "neutral"} size="sm" className={cn("px-2 text-[11.5px]", todayDay === null && "text-ink-soft")}>
           {todayDay !== null ? t("Today") : t("Shows in Ramadan")}
         </Chip>
       </div>
-      <span className="text-small text-ink-2">
-        {todayDay !== null ? t("For {city}, day {day} of Ramadan:", { city: t(settings.city), day: formatCount(todayDay, locale) }) : t("For your city, every day of Ramadan. A preview for the first day of Ramadan {year} in {city}:", { year: toLocaleDigits(String(year ?? ""), locale), city: t(settings.city) })}
+      <span className="text-small text-ink-soft">
+        {todayDay !== null ? t("For {city}, day {day} of Ramadan:", { city: t(settings.city), day: formatCount(todayDay, fmt) }) : t("For your city, every day of Ramadan. A preview for the first day of Ramadan {year} in {city}:", { year: toLocaleDigits(String(year ?? ""), fmt), city: t(settings.city) })}
       </span>
-      <div className="grid grid-cols-2 gap-3 max-[360px]:grid-cols-1">
+      <div className="grid grid-cols-2 gap-2.5 max-[360px]:grid-cols-1">
         {tiles.map((tile) => (
-          <div key={tile.label} className="flex flex-col gap-0.75 rounded-md border border-warning-fill/40 bg-surface p-3">
-            <span className="flex items-center gap-2 text-small font-semibold text-warning">
-              <tile.icon className="size-4" aria-hidden="true" />
+          <div key={tile.label} className="flex flex-col gap-0.75 rounded-[10px] border border-warning-line bg-surface p-3">
+            <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-warning-ink">
+              <tile.icon className="size-3.5 text-warning" aria-hidden="true" />
               {t(tile.label)}
             </span>
-            <span className="text-h2 leading-[normal] font-bold text-ink tabular-nums">{timeLabel(clockOf(tile.at), t, locale)}</span>
+            <span className="text-[20px] leading-[normal] font-bold text-ink tabular-nums">{timeLabel(clockOf(tile.at), t, fmt)}</span>
           </div>
         ))}
       </div>

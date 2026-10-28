@@ -126,5 +126,6 @@ export const buildCouponsColumns = (planNames: Map<string, string>): ColumnDef<I
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={COUPON_STATUS_LABEL[row.original.status]} />,
+    meta: { width: 100 },
   },
 ];

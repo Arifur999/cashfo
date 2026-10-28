@@ -55,7 +55,7 @@ export function VoidTransactionDialog({
   reasonHint = "At least {count} characters. It's saved with the transaction.",
   onVoided,
 }: VoidTransactionDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -92,7 +92,7 @@ export function VoidTransactionDialog({
             </div>
           </div>
           {detail}
-          <Field htmlFor="void-reason" label={t("Reason")} hint={t(reasonHint, { count: formatCount(MIN_REASON, locale) })}>
+          <Field htmlFor="void-reason" label={t("Reason")} hint={t(reasonHint, { count: formatCount(MIN_REASON, fmt) })}>
             <Textarea
               id="void-reason"
               rows={3}

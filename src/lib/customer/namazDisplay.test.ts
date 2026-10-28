@@ -51,7 +51,10 @@ describe("summaries", () => {
 
   it("counts each prayer", () => {
     const fajr = prayerSummaries(tracker).find((p) => p.item === "Fajr");
-    expect(fajr).toEqual({ item: "Fajr", prayed: 3, missed: 0, due: 3, pct: 100 });
+    expect(fajr).toEqual({ item: "Fajr", prayed: 3, missed: 0, due: 3, pct: 100, jamaat: 0, onTime: 3, qaza: 0 });
+    const mixed = prayerSummaries(sheet([[1, "Asr", "JAMAAT"], [2, "Asr", "QAZA"], [3, "Asr", "MISSED"], [4, "Asr", "JAMAAT"]])).find((p) => p.item === "Asr");
+    // Today's mark waits for the day to end; an explicit miss is a miss.
+    expect(mixed).toMatchObject({ prayed: 2, missed: 1, jamaat: 1, onTime: 0, qaza: 1 });
     expect(prayerSummaries(tracker).find((p) => p.item === "Asr")?.missed).toBe(1);
   });
 
@@ -83,6 +86,11 @@ describe("hijriRange", () => {
   it("names the Hijri months a Gregorian month spans", () => {
     expect(hijriRange(2026, 9)).toMatch(/1448$/);
     expect(hijriRange(2026, 9)).toContain("–");
+  });
+
+  it("adds the days and the era for a sheet's header", () => {
+    expect(hijriRange(2026, 9, "en", 0, true)).toMatch(/^\d+ .+ – \d+ .+ 1448 AH$/);
+    expect(hijriRange(2026, 9, "bn", 0, true)).toMatch(/^[০-৯]+ .+ ১৪৪৮ হিজরি$/);
   });
 });
 

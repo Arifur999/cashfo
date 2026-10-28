@@ -78,7 +78,7 @@ export function ReminderEditor(props: ReminderEditorProps) {
 // the browser's own picker behind it. Removing is a separate button, so a
 // reminder can't be left without a time.
 function ReminderTimeField({ id, value, onChange, disabled }: { id: string; value: string; onChange: (value: string) => void; disabled?: boolean }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const picker = useRef<HTMLInputElement>(null);
   function open() {
     if (disabled) return;
@@ -90,7 +90,7 @@ function ReminderTimeField({ id, value, onChange, disabled }: { id: string; valu
   }
   return (
     <InputFrame size="md" onClick={open} className={cn("relative w-32 cursor-pointer px-3", disabled && "cursor-default opacity-60")}>
-      <span className="min-w-0 flex-1 truncate tabular-nums">{timeLabel(value, t, locale)}</span>
+      <span className="min-w-0 flex-1 truncate tabular-nums">{timeLabel(value, t, fmt)}</span>
       <input
         ref={picker}
         id={id}
@@ -107,7 +107,7 @@ function ReminderTimeField({ id, value, onChange, disabled }: { id: string; valu
 }
 
 function TimedReminderEditor({ value, onChange, label, description, defaultTime, disabled = false, showPushHint = true, className }: ReminderEditorProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const id = useId();
   const everyDay = normalizeWeekdays(value.weekdays).length === 0;
   const canAdd = value.times.length < MAX_REMINDER_TIMES && nextReminderTime(value.times, defaultTime) !== null;
@@ -147,8 +147,8 @@ function TimedReminderEditor({ value, onChange, label, description, defaultTime,
                     type="button"
                     onClick={() => removeTime(index)}
                     disabled={disabled}
-                    aria-label={t("Remove {time}", { time: timeLabel(time, t, locale) })}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:size-11"
+                    aria-label={t("Remove {time}", { time: timeLabel(time, t, fmt) })}
+                    className="flex size-9 shrink-0 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:size-11"
                   >
                     <X className="size-4" aria-hidden="true" />
                   </button>
@@ -160,7 +160,7 @@ function TimedReminderEditor({ value, onChange, label, description, defaultTime,
                 type="button"
                 onClick={addTime}
                 disabled={disabled}
-                className="flex h-11 items-center gap-1.5 rounded-md px-3 text-small font-semibold text-emerald hover:bg-mint-50 disabled:opacity-50"
+                className="flex h-11 items-center gap-1.5 rounded-sm px-3 text-small font-semibold text-emerald hover:bg-mint-50 disabled:opacity-50"
               >
                 <Plus className="size-4" aria-hidden="true" />
                 {t("Add a time")}
@@ -168,7 +168,7 @@ function TimedReminderEditor({ value, onChange, label, description, defaultTime,
             )}
           </div>
           {!canAdd && value.times.length >= MAX_REMINDER_TIMES && (
-            <span className="text-caption text-ink-muted">{t("Up to {count} times a day.", { count: formatCount(MAX_REMINDER_TIMES, locale) })}</span>
+            <span className="text-caption text-ink-muted">{t("Up to {count} times a day.", { count: formatCount(MAX_REMINDER_TIMES, fmt) })}</span>
           )}
 
           <div className="flex flex-col gap-2">
@@ -199,7 +199,7 @@ function TimedReminderEditor({ value, onChange, label, description, defaultTime,
 
 // A prayer's (or Sehri's, or Iftar's) row: switch, name, how early.
 function OffsetReminderRow({ value, onChange, label, description, disabled = false, showPushHint = false, className }: ReminderEditorProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const id = useId();
   // A value saved from elsewhere that isn't a choice here still shows.
   const choices: number[] = (MINUTES_BEFORE_CHOICES as readonly number[]).includes(value.minutesBefore) ? [...MINUTES_BEFORE_CHOICES] : [...MINUTES_BEFORE_CHOICES, value.minutesBefore].sort((a, b) => a - b);
@@ -224,7 +224,7 @@ function OffsetReminderRow({ value, onChange, label, description, disabled = fal
         >
           {choices.map((minutes) => (
             <option key={minutes} value={minutes}>
-              {minutesBeforeLabel(minutes, t, locale)}
+              {minutesBeforeLabel(minutes, t, fmt)}
             </option>
           ))}
         </NativeSelect>

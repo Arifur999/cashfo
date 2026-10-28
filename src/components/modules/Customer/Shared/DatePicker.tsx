@@ -2,6 +2,8 @@
 
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toLocaleDigits } from "@/lib/i18n/digits";
+import { weekdayOrder, weekStartOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface DatePickerProps {
@@ -56,8 +58,9 @@ function isSameDay(a: Date, b: Date): boolean {
 // month that starts late in the week) rather than always padding to 6 --
 // day 0/dayNum>daysInMonth naturally roll into the adjacent month via
 // Date's own normalization, so no separate prev/next-month day-count math.
-function buildMonthGrid(year: number, month: number): { date: Date; inMonth: boolean }[] {
-  const startWeekday = new Date(year, month, 1).getDay();
+// Weeks start on `weekStart` (0 = Sunday), the reader's first day.
+function buildMonthGrid(year: number, month: number, weekStart: number): { date: Date; inMonth: boolean }[] {
+  const startWeekday = (new Date(year, month, 1).getDay() - weekStart + 7) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const totalCells = Math.ceil((startWeekday + daysInMonth) / 7) * 7;
   return Array.from({ length: totalCells }, (_, i) => {
@@ -67,7 +70,7 @@ function buildMonthGrid(year: number, month: number): { date: Date; inMonth: boo
 }
 
 export function DatePicker({ value, onChange, placeholder = "Select a date" }: DatePickerProps) {
-  const { t } = useLocale();
+  const { t, fmt } = useLocale();
   // "" (no date picked -- e.g. an optional Reminder Date left blank) must
   // NOT fall through to parseValue()'s Number("") === 0 -- that silently
   // resolves to year 1900, showing a nonsensical default instead of a
@@ -119,7 +122,7 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
   }
 
   const today = new Date();
-  const grid = buildMonthGrid(viewYear, viewMonth);
+  const grid = buildMonthGrid(viewYear, viewMonth, weekStartOf(fmt));
 
   return (
     <div ref={containerRef} className="relative">
@@ -128,12 +131,12 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
         onClick={() => (open ? setOpen(false) : openPicker())}
         // The design's control frame (smartly InputFrame): line-strong edge,
         // emerald border and mint ring while focused.
-        className="flex w-full items-center gap-1.5 whitespace-nowrap rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-left text-sm text-ink outline-none focus:border-emerald focus:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]"
+        className="flex h-11 w-full items-center gap-1.5 whitespace-nowrap rounded-field border border-input bg-surface px-3 text-left text-body text-ink outline-none transition-[border-color,box-shadow] focus:border-focus-ring focus:focus-halo"
       >
         <Calendar className="h-4 w-4 shrink-0 text-ink-muted" />
         {selected ? (
           <span>
-            {t(MONTH_NAMES[selected.getMonth()])} {ordinal(selected.getDate())}, {selected.getFullYear()}
+            {t(MONTH_NAMES[selected.getMonth()])} {toLocaleDigits(ordinal(selected.getDate()), fmt)}, {toLocaleDigits(String(selected.getFullYear()), fmt)}
           </span>
         ) : (
           <span className="text-ink-faint">{t(placeholder)}</span>
@@ -152,7 +155,7 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="text-sm font-semibold text-ink">
-              {t(MONTH_NAMES[viewMonth])} {viewYear}
+              {t(MONTH_NAMES[viewMonth])} {toLocaleDigits(String(viewYear), fmt)}
             </span>
             <button
               type="button"
@@ -165,9 +168,9 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
           </div>
 
           <div className="grid grid-cols-7 gap-y-1 text-center text-xs font-medium text-ink-muted">
-            {WEEKDAY_LABELS.map((d) => (
+            {weekdayOrder(fmt).map((d) => (
               <span key={d} className="py-1">
-                {t(d)}
+                {t(WEEKDAY_LABELS[d])}
               </span>
             ))}
           </div>
@@ -190,7 +193,7 @@ export function DatePicker({ value, onChange, placeholder = "Select a date" }: D
                           : "text-ink-faint hover:bg-hover"
                   }`}
                 >
-                  {date.getDate()}
+                  {toLocaleDigits(String(date.getDate()), fmt)}
                 </button>
               );
             })}

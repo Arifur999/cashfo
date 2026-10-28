@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { NamazSheetPageClient } from "@/components/modules/Customer/HabitTracker/Namaz/NamazSheetPageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { getHabitTracker, getHabitTrackers } from "@/lib/customer/habits";
+import { getHabitTracker, getHabitTrackers, getQaza } from "@/lib/customer/habits";
 import { trackerFor } from "@/lib/customer/namazDisplay";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 
@@ -19,7 +19,7 @@ export default async function NamazSheetPage({ params }: PageProps<"/habit-track
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const [tracker, all] = await Promise.all([getHabitTracker(id), getHabitTrackers("Namaz")]);
+  const [tracker, all, qaza] = await Promise.all([getHabitTracker(id), getHabitTrackers("Namaz"), getQaza()]);
   if (!tracker || tracker.category !== "Namaz") notFound();
 
   const year = tracker.year as number;
@@ -27,5 +27,5 @@ export default async function NamazSheetPage({ params }: PageProps<"/habit-track
   const previous = month === 1 ? trackerFor(all, year - 1, 12) : trackerFor(all, year, month - 1);
   const next = month === 12 ? trackerFor(all, year + 1, 1) : trackerFor(all, year, month + 1);
 
-  return <NamazSheetPageClient tracker={tracker} previous={previous} next={next} />;
+  return <NamazSheetPageClient tracker={tracker} previous={previous} next={next} qaza={qaza} />;
 }

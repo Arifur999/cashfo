@@ -38,7 +38,7 @@ const RetryPaymentDialog = ({ payment, open, onOpenChange }: RetryPaymentDialogP
       title={payment ? translate("Retry {id}?", { id: shortPaymentId(payment.id) }) : ""}
       description={
         payment
-          ? translate("Nothing is charged now. The {amount} payment goes back to Waiting until {gateway} confirms it, and it can't be marked as paid from here.", {
+          ? translate("Nothing is charged now. The {amount} payment goes back to Waiting for the person to pay by {gateway}; mark it paid once the money is in.", {
               amount: formatAmount(payment.amount, payment.currency, locale),
               gateway: translate(humanizeEnum(payment.gateway)),
             })

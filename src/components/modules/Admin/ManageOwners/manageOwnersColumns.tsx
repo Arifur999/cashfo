@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { OwnWorkspaceCell } from "@/components/modules/Admin/UserManagement/PeopleCells";
 import DateCell from "@/components/shared/cell/DateCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
+import { OWNER_STATUS_LABEL } from "@/components/modules/Admin/UserManagement/usersTable.config";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
 
@@ -36,7 +37,7 @@ export const manageOwnersColumns: ColumnDef<IOwnerOverviewItem>[] = [
   {
     id: "lastLoginAt",
     accessorKey: "lastLoginAt",
-    header: "Last sign-in",
+    header: "Last login",
     cell: ({ row }) => <DateCell date={row.original.lastLoginAt} relative />,
     meta: { width: 150 },
   },
@@ -44,7 +45,7 @@ export const manageOwnersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     id: "status",
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadgeCell status={row.original.status} dot />,
+    cell: ({ row }) => <StatusBadgeCell status={row.original.status} label={OWNER_STATUS_LABEL[row.original.status]} dot />,
     meta: { width: 100 },
   },
 ];

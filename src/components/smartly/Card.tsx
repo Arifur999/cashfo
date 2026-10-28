@@ -18,15 +18,16 @@ interface CardProps extends React.ComponentProps<"div"> {
   asChild?: boolean;
 }
 
-// The white panel every list, chart and figure sits on: 16px radius, the
-// line border, 20px padding unless told otherwise.
+// The white panel every list, chart and figure sits on: 18px radius, the
+// card border (a shade lighter than a control's), the two-layer card
+// shadow, 20px padding unless told otherwise (design-v4).
 const Card = ({ padding = "md", elevated = true, interactive = false, asChild = false, className, ...props }: CardProps) => {
   const Comp = asChild ? Slot.Root : "div";
   return (
     <Comp
       data-slot="card"
       className={cn(
-        "rounded-lg border border-line bg-surface text-ink",
+        "rounded-card border border-line-card bg-surface text-ink",
         PADDING[padding],
         elevated && "shadow-card",
         interactive && "transition-colors hover:border-line-strong",

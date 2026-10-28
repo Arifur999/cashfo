@@ -72,3 +72,36 @@ export const backupIsDue = (daysSinceLastBackup: number | null): boolean => days
 
 // Every bar of a chart at zero: nothing has come in yet.
 export const allZero = (values: number[]): boolean => values.every((value) => value === 0);
+
+// A revenue bar's label as the AdminDashboard board writes it: "৳ 41.3k",
+// "৳ 1.2L", "৳ 850". Latin digits; the card puts them in the reader's.
+export function revenueBarLabel(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (abs >= 100_000) return `${sign}৳ ${(abs / 100_000).toFixed(1)}L`;
+  if (abs >= 1_000) return `${sign}৳ ${(abs / 1_000).toFixed(1)}k`;
+  return `${sign}৳ ${Math.round(abs)}`;
+}
+
+// Which bars of a daily chart get a date under them: the first, three
+// evenly between, and the last (labelled "Today").
+export function axisTicks(count: number, ticks = 5): number[] {
+  if (count <= 0) return [];
+  if (count <= ticks) return Array.from({ length: count }, (_, index) => index);
+  return Array.from({ length: ticks }, (_, index) => Math.round((index * (count - 1)) / (ticks - 1)));
+}
+
+// One line of the dashboard's "Download report": a section, what it is and
+// its value, with commas and quotes escaped for a spreadsheet.
+const csvCell = (value: string | number) => {
+  const text = String(value);
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+export interface ReportLine {
+  section: string;
+  item: string;
+  value: string | number;
+}
+
+export const reportCsv = (lines: ReportLine[]): string => ["Section,Item,Value", ...lines.map((line) => [line.section, line.item, line.value].map(csvCell).join(","))].join("\n");

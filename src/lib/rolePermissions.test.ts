@@ -13,7 +13,7 @@ describe("ROLE_PERMISSIONS", () => {
   });
 
   it("keeps Security and System away from every other role", () => {
-    for (const area of ["Admin team, audit log, sign-ins, flags", "Backups, feature flags, errors, rate limits"]) {
+    for (const area of ["Admin team, audit log, sign-ins, flags", "Backups, feature flags, error log"]) {
       expect(row(area)).toEqual({ SUPER_ADMIN: "do", SUPPORT_ADMIN: "none", FINANCE_ADMIN: "none", CONTENT_ADMIN: "none" });
     }
   });
@@ -23,5 +23,6 @@ describe("ROLE_PERMISSIONS", () => {
     expect(row("Revenue and MRR")).toEqual({ SUPER_ADMIN: "do", SUPPORT_ADMIN: "none", FINANCE_ADMIN: "do", CONTENT_ADMIN: "none" });
     expect(row("Message templates")).toEqual({ SUPER_ADMIN: "do", SUPPORT_ADMIN: "look", FINANCE_ADMIN: "look", CONTENT_ADMIN: "do" });
     expect(row("View the app as a customer").SUPPORT_ADMIN).toBe("none");
+    expect(row("Referral payouts")).toEqual({ SUPER_ADMIN: "do", SUPPORT_ADMIN: "look", FINANCE_ADMIN: "do", CONTENT_ADMIN: "look" });
   });
 });

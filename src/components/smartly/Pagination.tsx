@@ -36,15 +36,16 @@ interface PaginationProps {
   className?: string;
 }
 
-// 32px squares with the 12px radius; 44px under a finger.
-const SQUARE = "inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-small font-semibold tabular-nums transition-colors pointer-coarse:h-11 pointer-coarse:min-w-11";
+// 32px rounds (design-v4); 44px under a finger.
+const SQUARE = "inline-flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-small font-semibold tabular-nums transition-colors pointer-coarse:h-11 pointer-coarse:min-w-11";
 const ARROW = cn(SQUARE, "px-0");
-const TEXT = "inline-flex h-8 items-center justify-center rounded-md border px-3 text-small font-semibold transition-colors pointer-coarse:h-11";
+const TEXT = "inline-flex h-8 items-center justify-center rounded-full border px-3 text-small font-semibold transition-colors pointer-coarse:h-11";
 const IDLE = "border-line bg-surface text-ink-2 hover:bg-surface-sunken";
-// The page on show. Pressing it does nothing, so no hand cursor.
-const CURRENT = "cursor-default border-primary bg-primary text-primary-foreground";
-// A dead end reads faint, never half-transparent.
-const OFF = "cursor-not-allowed border-line bg-surface text-ink-faint";
+// The page on show, in the deep forest (emerald in dark). Pressing it does
+// nothing, so no hand cursor.
+const CURRENT = "cursor-default border-forest bg-forest text-white dark:border-emerald dark:bg-emerald dark:text-on-action";
+// A dead end: faded, as the boards draw it.
+const OFF = "cursor-not-allowed border-line bg-surface text-ink-2 opacity-50";
 
 // Inside a focusTargetId, focus goes to the table, which a screen reader
 // names ("Transactions, table"), not to the card around it.
@@ -126,7 +127,7 @@ const Pagination = ({
   focusTargetId,
   className,
 }: PaginationProps) => {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const model = pagerModel(page, totalPages, total, pageSize);
   const shownPage = model.current;
   // Set by a click here, so loading the page cold never steals focus.
@@ -174,8 +175,8 @@ const Pagination = ({
     summary === false ? null : summary === undefined ? (
       <p>
         {fillNodes(t("Showing {range} of {total}"), {
-          range: figure(toLocaleDigits(`${formatNumber(model.first)}–${formatNumber(model.last)}`, locale)),
-          total: figure(formatCount(total, locale)),
+          range: figure(toLocaleDigits(`${formatNumber(model.first)}–${formatNumber(model.last)}`, fmt)),
+          total: figure(formatCount(total, fmt)),
         })}
       </p>
     ) : (
@@ -194,18 +195,18 @@ const Pagination = ({
         // No focus move here: arrowing through a closed select changes it
         // on every press, and focus must stay put while that happens.
         onChange={(event) => onPageSizeChange(Number(event.target.value))}
-        className="h-8 border-line pr-8 pl-2.5 text-small text-ink-2 pointer-coarse:h-11"
+        className="h-8 rounded-full border-line pr-8 pl-3 text-small text-ink-2 pointer-coarse:h-11"
       >
         {sizes.map((size) => (
           <option key={size} value={size}>
-            {formatCount(size, locale)}
+            {formatCount(size, fmt)}
           </option>
         ))}
       </NativeSelect>
     </label>
   );
 
-  const pageOf = t("Page {page} of {total}", { page: formatCount(shownPage, locale), total: formatCount(model.totalPages, locale) });
+  const pageOf = t("Page {page} of {total}", { page: formatCount(shownPage, fmt), total: formatCount(model.totalPages, fmt) });
   const previousLabel = labels?.previous ?? t("Previous page");
   const nextLabel = labels?.next ?? t("Next page");
 
@@ -254,12 +255,12 @@ const Pagination = ({
                         page={item.page}
                         current={item.current}
                         // The page on show says where the reader is; the others where they'd go.
-                        label={item.current ? pageOf : t("Go to page {page}", { page: formatCount(item.page, locale) })}
+                        label={item.current ? pageOf : t("Go to page {page}", { page: formatCount(item.page, fmt) })}
                         className={SQUARE}
                         hrefFor={hrefFor}
                         onGo={go}
                       >
-                        {formatCount(item.page, locale)}
+                        {formatCount(item.page, fmt)}
                       </Control>
                     ),
                   )}

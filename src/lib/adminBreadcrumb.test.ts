@@ -10,22 +10,23 @@ const PAGES: [string, AdminCrumb][] = [
   ["/admin/analytics", { parent: "Overview", page: "Analytics" }],
   ["/admin/users", { parent: "People", page: "Users" }],
   ["/admin/workspaces", { parent: "People", page: "Workspaces" }],
-  ["/admin/manage-owners", { parent: "People", page: "Owners" }],
-  ["/admin/plans", { parent: "Plans & coupons", parentHref: "/admin/plans", page: "Plans" }],
-  ["/admin/coupons", { parent: "Plans & coupons", parentHref: "/admin/plans", page: "Coupons" }],
+  ["/admin/manage-owners", { parent: "People", page: "Manage Owners" }],
+  ["/admin/plans", { parent: "Subscriptions", parentHref: "/admin/plans", page: "Plans" }],
+  ["/admin/coupons", { parent: "Subscriptions", parentHref: "/admin/plans", page: "Coupons" }],
   // The Payments tab is the Payments page itself.
   ["/admin/payments", { parent: "Money", page: "Payments" }],
+  ["/admin/referrals", { parent: "Money", page: "Referrals & Payouts" }],
   ["/admin/invoices", { parent: "Payments", parentHref: "/admin/payments", page: "Invoices" }],
   ["/admin/revenue", { parent: "Payments", parentHref: "/admin/payments", page: "Revenue" }],
-  ["/admin/support", { parent: "Support", parentHref: "/admin/support", page: "Tickets" }],
-  ["/admin/feature-requests", { parent: "Support", parentHref: "/admin/support", page: "Feature requests" }],
-  ["/admin/content/announcements", { parent: "Content", parentHref: "/admin/content/announcements", page: "Announcements" }],
-  ["/admin/content/legal", { parent: "Content", parentHref: "/admin/content/announcements", page: "Legal pages" }],
-  ["/admin/content/translations", { parent: "Content", parentHref: "/admin/content/announcements", page: "Translations" }],
-  ["/admin/content/categories", { parent: "Content", parentHref: "/admin/content/announcements", page: "Categories & accounts" }],
-  ["/admin/notifications", { parent: "Notifications", parentHref: "/admin/notifications", page: "Templates" }],
-  ["/admin/notifications/campaigns", { parent: "Notifications", parentHref: "/admin/notifications", page: "Campaigns" }],
-  ["/admin/notifications/history", { parent: "Notifications", parentHref: "/admin/notifications", page: "Send history" }],
+  ["/admin/support", { parent: "Support & content", page: "Tickets" }],
+  ["/admin/feature-requests", { parent: "Support & content", page: "Feature requests" }],
+  ["/admin/content/announcements", { parent: "Support & content", page: "Announcements" }],
+  ["/admin/content/legal", { parent: "Support & content", page: "Legal pages" }],
+  ["/admin/content/translations", { parent: "Support & content", page: "Translations" }],
+  ["/admin/content/categories", { parent: "Support & content", page: "Categories & accounts" }],
+  ["/admin/notifications", { parent: "Support & content", page: "Templates" }],
+  ["/admin/notifications/campaigns", { parent: "Support & content", page: "Campaigns" }],
+  ["/admin/notifications/history", { parent: "Support & content", page: "Send history" }],
   ["/admin/security", { parent: "Security", parentHref: "/admin/security", page: "Audit log" }],
   ["/admin/security/logins", { parent: "Security", parentHref: "/admin/security", page: "Sign-ins" }],
   ["/admin/security/flags", { parent: "Security", parentHref: "/admin/security", page: "Suspicious activity" }],
@@ -60,7 +61,7 @@ describe("adminCrumb", () => {
   });
 
   it("puts a user under the list they were opened from", () => {
-    expect(adminCrumb("/admin/users/u-1", { from: "owners" })).toStrictEqual({ parent: "Owners", parentHref: "/admin/manage-owners", page: null, record: true });
+    expect(adminCrumb("/admin/users/u-1", { from: "owners" })).toStrictEqual({ parent: "Manage Owners", parentHref: "/admin/manage-owners", page: null, record: true });
     expect(adminCrumb("/admin/users/u-1", { from: "workspaces" })).toStrictEqual({ parent: "Workspaces", parentHref: "/admin/workspaces", page: null, record: true });
     expect(adminCrumb("/admin/users/u-1", { from: "nowhere" })).toStrictEqual({ parent: "Users", parentHref: "/admin/users", page: null, record: true });
     // Only a user's page has an origin.
@@ -113,7 +114,7 @@ describe("adminCrumb", () => {
 
   it("still places a page that doesn't exist under its menu entry", () => {
     expect(adminCrumb("/admin/users/u-1/extra")).toStrictEqual({ parent: "People", page: "Users" });
-    expect(adminCrumb("/admin/notifications/campaigns/c-1")).toStrictEqual({ parent: "Notifications", parentHref: "/admin/notifications", page: "Campaigns" });
+    expect(adminCrumb("/admin/notifications/campaigns/c-1")).toStrictEqual({ parent: "Support & content", page: "Campaigns" });
   });
 
   it("only knows the pages in the role's own menu", () => {

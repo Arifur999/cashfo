@@ -42,7 +42,7 @@ type NoteTone = "muted" | "danger" | "warning";
 // off, or how the money came in. Amounts keep their paisa ("৳ 59.80 off").
 export const paymentNote = (
   payment: Pick<IPayment, "status" | "failureReason" | "gateway" | "couponCode" | "discountApplied" | "duplicateOfId" | "invoice"> &
-    Partial<Pick<IPayment, "amount" | "currency" | "refund">>,
+    Partial<Pick<IPayment, "amount" | "currency" | "refund" | "referralDiscount" | "purpose">>,
   t: Translate = inEnglish,
   locale: Locale = "en",
 ): { text: string; tone: NoteTone } => {
@@ -59,8 +59,11 @@ export const paymentNote = (
   }
   if (payment.discountApplied && Number(payment.discountApplied) > 0) {
     const off = t("{amount} off", { amount: formatAmount(payment.discountApplied, payment.currency, locale) });
+    // A referred friend's first payment, when their discount beat any coupon.
+    if (!payment.couponCode && payment.referralDiscount && Number(payment.referralDiscount) > 0) return { text: `${t("Referral friend")} · ${off}`, tone: "muted" };
     return { text: payment.couponCode ? `${payment.couponCode} · ${off}` : off, tone: "muted" };
   }
+  if (payment.purpose === "RENEWAL") return { text: t("Renewal"), tone: "muted" };
   if (payment.gateway === "MANUAL") return { text: t("Entered by hand"), tone: "muted" };
   return { text: payment.invoice ? t("Invoice {number}", { number: payment.invoice.invoiceNumber }) : t("Paid in full"), tone: "muted" };
 };

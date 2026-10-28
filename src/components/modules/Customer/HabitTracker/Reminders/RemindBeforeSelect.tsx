@@ -19,7 +19,7 @@ const OFF = "off";
 // A to-do's "Remind me": Off, At the time, or 5-60 minutes before its due
 // time. Shown only while the task has a time; sent as `remindBefore`.
 export function RemindBeforeSelect({ id, value, onChange, size = "md", disabled, className }: RemindBeforeSelectProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const choices: number[] = value === null || (MINUTES_BEFORE_CHOICES as readonly number[]).includes(value) ? [...MINUTES_BEFORE_CHOICES] : [...MINUTES_BEFORE_CHOICES, value].sort((a, b) => a - b);
   return (
     <NativeSelect
@@ -34,7 +34,7 @@ export function RemindBeforeSelect({ id, value, onChange, size = "md", disabled,
       <option value={OFF}>{t("Off@@reminder")}</option>
       {choices.map((minutes) => (
         <option key={minutes} value={minutes}>
-          {minutesBeforeLabel(minutes, t, locale)}
+          {minutesBeforeLabel(minutes, t, fmt)}
         </option>
       ))}
     </NativeSelect>

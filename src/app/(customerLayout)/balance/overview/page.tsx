@@ -2,11 +2,12 @@ import { ArrowLeftRight, Wallet } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createElement } from "react";
+import { HeadHint } from "@/components/modules/Customer/Balance/HeadHint";
 import { WalletShareBar } from "@/components/modules/Customer/Balance/WalletShareBar";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
+import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { accountDisplayName, balanceText, displayLanguage } from "@/lib/customer/accountDisplay";
@@ -14,6 +15,7 @@ import { getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { formatCurrency } from "@/lib/customer/currency";
+import { getFmt } from "@/lib/customer/fmt";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { walletShares } from "@/lib/customer/walletShares";
 import { WALLET_TYPE_META, walletIcon, walletPalette, walletType } from "@/lib/customer/walletVisuals";
@@ -39,6 +41,7 @@ type Totals = Record<"opening" | "in" | "out" | "savings" | "adjustment" | "curr
 // wallets, and how each one got to its balance. Rows open the statement.
 export default async function BalanceOverviewPage() {
   const { locale, t } = await getTranslator();
+  const fmt = await getFmt();
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -70,20 +73,20 @@ export default async function BalanceOverviewPage() {
   // A dash for nothing, else the figure with its direction and colour.
   const figure = (value: number | string, kind: "in" | "out" | "savings" | "transfer") => {
     const amount = Number(value);
-    if (amount === 0) return <span className="text-ink-muted">—</span>;
+    if (amount === 0) return <span className="text-ink-faint">—</span>;
     const sign = kind === "in" || (kind === "transfer" && amount > 0) ? "+" : "−";
     const tone = kind === "in" ? "text-income" : kind === "out" ? "text-expense" : kind === "savings" ? "text-ink-2" : "text-info";
-    return <span className={tone}>{`${sign} ${formatCurrency(Math.abs(amount), currency, locale)}`}</span>;
+    return <span className={tone}>{`${sign} ${formatCurrency(Math.abs(amount), currency, fmt)}`}</span>;
   };
   // An overdrawn balance takes the true minus the figures beside it use
   // (the cell turns expense red), not a hyphen against the symbol.
-  const balance = (value: number | string) => balanceText(value, currency, locale);
+  const balance = (value: number | string) => balanceText(value, currency, fmt);
 
   return (
     <PageFrame className="gap-6">
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Wallets")}`}
-        title={t("Balance")}
+        title={t("Balance overview")}
         description={t("Where your money sits right now, and how each account got there.")}
         actions={
           // Straight into the Move money drawer; a viewer, who can't move
@@ -99,23 +102,23 @@ export default async function BalanceOverviewPage() {
 
       <Card padding="lg" className="flex flex-col gap-5">
         <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-end xl:justify-between">
-          <div className="flex min-w-0 flex-col gap-2">
+          <div className="flex min-w-0 flex-col gap-1.5">
             <span className="text-small font-medium text-ink-muted">{t("Available balance")}</span>
-            <AmountText value={overview.availableBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em] wrap-anywhere" />
+            <AmountText value={overview.availableBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em] wrap-anywhere leading-[1.1]" />
             <span className="text-small text-ink-muted">
-              {t("Total balance {amount}", { amount: formatCurrency(overview.totalBalance, currency, locale) })}
+              {t("Total balance {amount}", { amount: formatCurrency(overview.totalBalance, currency, fmt) })}
               {inArchived !== 0 && (
                 <>
                   {" · "}
-                  <span className="text-ink-2">{t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, locale) })}</span>
+                  <span className="text-ink-2">{t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, fmt) })}</span>
                 </>
               )}
             </span>
           </div>
           {/* Rows on a phone (label left, figure right); three columns from sm, as Savings summary sets them. */}
           <dl className="grid grid-cols-1 sm:grid-cols-3">
-            <HeroStat first label={t("Active wallets")} note={archivedCount > 0 ? t("{count} archived", { count: formatCount(archivedCount, locale) }) : undefined}>
-              {formatCount(activeCount, locale)}
+            <HeroStat first label={t("Accounts")} note={archivedCount > 0 ? t("{count} archived", { count: formatCount(archivedCount, fmt) }) : undefined}>
+              {formatCount(activeCount, fmt)}
             </HeroStat>
             <HeroStat label={t("Money in@@wallet")}>{figure(totals.in, "in")}</HeroStat>
             <HeroStat label={t("Money out@@wallet")} last>
@@ -132,23 +135,9 @@ export default async function BalanceOverviewPage() {
       <ListCard
         label={t("Account details")}
         title={t("Account details")}
-        description={rows.length > 0 ? t("Open a row to see its statement") : undefined}
+        actions={rows.length > 0 ? <span className="text-small text-ink-muted">{t("Click a row to open its ledger")}</span> : undefined}
         scrollable={rows.length > 0}
         tableClassName="overflow-x-auto"
-        footer={
-          rows.length > 0 && (
-            // What the two transfer columns hold, readable on a phone and to
-            // a screen reader (a hover title was neither).
-            <ListFooter>
-              <dl className="grid gap-x-3 gap-y-1 sm:grid-cols-[max-content_minmax(0,1fr)]">
-                <dt className="font-semibold text-ink-2">{t("To savings")}</dt>
-                <dd>{t("Moved from this account into a savings goal")}</dd>
-                <dt className="font-semibold text-ink-2">{t("Transfers")}</dt>
-                <dd>{t("Balance transfers between your own wallets (+ in, − out)")}</dd>
-              </dl>
-            </ListFooter>
-          )
-        }
       >
         {rows.length === 0 ? (
           <ListEmpty
@@ -176,11 +165,15 @@ export default async function BalanceOverviewPage() {
               <ListHeadCell align="end" className={MOVEMENT}>
                 {t("Money out@@wallet")}
               </ListHeadCell>
-              <ListHeadCell align="end" className={MOVEMENT}>
+              {/* What the two transfer columns hold: the board's ⓘ, which
+                  a tap opens too (a hover title alone reached no phone). */}
+              <ListHeadCell align="end" className={cn("flex items-center justify-end gap-1 overflow-visible", MOVEMENT)}>
                 {t("To savings")}
+                <HeadHint label={t("To savings")} hint={t("Moved from this account into a savings goal")} />
               </ListHeadCell>
-              <ListHeadCell align="end" className={MOVEMENT}>
+              <ListHeadCell align="end" className={cn("flex items-center justify-end gap-1 overflow-visible", MOVEMENT)}>
                 {t("Transfers")}
+                <HeadHint label={t("Transfers")} hint={t("Balance transfers between your own wallets (+ in, − out)")} />
               </ListHeadCell>
               <ListHeadCell align="end" className={CURRENT}>
                 {t("Current balance")}
@@ -190,7 +183,7 @@ export default async function BalanceOverviewPage() {
               const archived = account.status === "ARCHIVED";
               const typeLabel = t(WALLET_TYPE_META[walletType(account)].label);
               return (
-                <ListRow key={account.id} columns={COLUMNS} muted={archived} className="tabular-nums">
+                <ListRow key={account.id} columns={COLUMNS} muted={archived} className="tabular-nums md:min-h-15">
                   <ListCell className="flex items-center gap-3">
                     <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.25", walletPalette(index).tile)}>{createElement(walletIcon(account), { "aria-hidden": true })}</span>
                     <span className="flex min-w-0 flex-col gap-px">
@@ -201,7 +194,7 @@ export default async function BalanceOverviewPage() {
                     </span>
                   </ListCell>
                   <ListCell align="end" className={cn("text-ink-2", MOVEMENT)}>
-                    {formatCurrency(account.openingBalance, currency, locale)}
+                    {formatCurrency(account.openingBalance, currency, fmt)}
                   </ListCell>
                   <ListCell align="end" className={MOVEMENT}>
                     {figure(account.totalIn, "in")}
@@ -221,10 +214,10 @@ export default async function BalanceOverviewPage() {
                 </ListRow>
               );
             })}
-            <ListTotalRow columns={COLUMNS} className="tabular-nums">
+            <ListTotalRow columns={COLUMNS} className="min-h-14 tabular-nums">
               <ListCell>{t("Total")}</ListCell>
               <ListCell align="end" className={MOVEMENT}>
-                {formatCurrency(totals.opening, currency, locale)}
+                {formatCurrency(totals.opening, currency, fmt)}
               </ListCell>
               <ListCell align="end" className={MOVEMENT}>
                 {figure(totals.in, "in")}
@@ -236,9 +229,9 @@ export default async function BalanceOverviewPage() {
                 {figure(totals.savings, "savings")}
               </ListCell>
               <ListCell align="end" className={MOVEMENT}>
-                {figure(totals.adjustment, "transfer")}
+                {totals.adjustment === 0 ? <span className="text-ink-muted">{formatCurrency(0, currency, fmt)}</span> : figure(totals.adjustment, "transfer")}
               </ListCell>
-              <ListCell align="end" className={cn("text-title font-bold", CURRENT, totals.current < 0 && "text-expense")}>
+              <ListCell align="end" className={cn("text-[15px] font-bold", CURRENT, totals.current < 0 && "text-expense")}>
                 {balance(totals.current)}
               </ListCell>
             </ListTotalRow>

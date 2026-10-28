@@ -1,6 +1,25 @@
 "use client";
 
-import { AlarmClock, Banknote, Bell, ChartPie, CheckCheck, Megaphone, MessageCircle, PiggyBank, Settings } from "lucide-react";
+import {
+  AlarmClock,
+  Banknote,
+  Bell,
+  CalendarClock,
+  ChartPie,
+  CheckCheck,
+  CreditCard,
+  Gift,
+  Lightbulb,
+  Megaphone,
+  MessageCircle,
+  PiggyBank,
+  RotateCcw,
+  Settings,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldOff,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
@@ -25,6 +44,20 @@ const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
   announcement: { icon: Megaphone, tone: "info" },
   support: { icon: MessageCircle, tone: "money" },
   reminder: { icon: AlarmClock, tone: "habits" },
+  payment: { icon: CreditCard, tone: "money" },
+  paymentProblem: { icon: CreditCard, tone: "expense" },
+  refund: { icon: RotateCcw, tone: "info" },
+  plan: { icon: CalendarClock, tone: "warning" },
+  referral: { icon: Gift, tone: "money" },
+  referralLost: { icon: Gift, tone: "neutral" },
+  payout: { icon: Wallet, tone: "money" },
+  payoutRejected: { icon: Wallet, tone: "expense" },
+  securityOn: { icon: ShieldCheck, tone: "money" },
+  securityOff: { icon: ShieldOff, tone: "warning" },
+  securityAlert: { icon: ShieldAlert, tone: "expense" },
+  campaign: { icon: Megaphone, tone: "insights" },
+  idea: { icon: Lightbulb, tone: "insights" },
+  other: { icon: Bell, tone: "neutral" },
 };
 
 // While the tab is in view the feed is read again this often, so a habit
@@ -36,12 +69,13 @@ const REFRESH_AT_MOST_EVERY_MS = 15_000;
 type Filter = "all" | "unread";
 
 // The bell in the top bar and its feed: budget, loan and savings reminders,
-// habit reminders and announcements, newest first. Always there, so the
+// habit reminders, announcements, and account news (billing, referrals,
+// security, ideas, the team's messages), newest first. Always there, so the
 // reminder settings stay one tap away; an empty feed says so. A row about
 // another workspace switches to it before opening.
-export function NotificationsBell() {
+export function NotificationsBell({ className, badgeClassName }: { className?: string; badgeClassName?: string }) {
   const router = useRouter();
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { user, activeBusinessId } = useAuth();
   const [items, setItems] = useState<UserNotification[]>([]);
   const [unread, setUnread] = useState(0);
@@ -129,22 +163,23 @@ export function NotificationsBell() {
     });
   }
 
-  const label = unread > 0 ? `${t("Notifications")}, ${t("{count} new", { count: formatCount(unread, locale) })}` : t("Notifications");
+  const label = unread > 0 ? `${t("Notifications")}, ${t("{count} new", { count: formatCount(unread, fmt) })}` : t("Notifications");
 
   return (
     <Popover open={open} onOpenChange={changeOpen}>
       <PopoverTrigger
         aria-label={label}
         title={t("Notifications")}
-        className="relative flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 md:size-10 md:border md:border-line md:bg-surface md:hover:bg-surface-sunken data-open:bg-surface-sunken"
+        // The top bar gives it the shape of its other icon buttons.
+        className={cn("relative flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink", className)}
       >
-        <Bell className="size-5 md:size-4.5" aria-hidden="true" />
+        <Bell className="size-5 md:size-4.5" strokeWidth={2} aria-hidden="true" />
         {unread > 0 && (
           <span
             aria-hidden="true"
-            className="absolute top-1 right-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-expense-fill px-1 text-caption leading-4 font-bold text-white tabular-nums shadow-[0_0_0_2px_var(--surface)] md:-top-1.25 md:-right-1.25"
+            className={cn("absolute flex items-center justify-center rounded-full bg-expense-fill font-bold text-white tabular-nums", badgeClassName)}
           >
-            {formatCount(unread, locale)}
+            {formatCount(unread, fmt)}
           </span>
         )}
       </PopoverTrigger>
@@ -167,7 +202,7 @@ export function NotificationsBell() {
               className="[&>button]:h-7.5"
               options={[
                 { value: "all", label: t("All") },
-                { value: "unread", label: unread > 0 ? `${t("Unread")} ${formatCount(unread, locale)}` : t("Unread") },
+                { value: "unread", label: unread > 0 ? `${t("Unread")} ${formatCount(unread, fmt)}` : t("Unread") },
               ]}
             />
           </div>
@@ -180,8 +215,9 @@ export function NotificationsBell() {
           )}
           {shown.map((item) => {
             const business = item.businessId ? user.businesses.find((b) => b.id === item.businessId) : undefined;
-            const view = notificationView(item, t, locale, business?.currency);
-            const { icon: Icon, tone } = KIND_ICON[view.kind];
+            const view = notificationView(item, t, fmt, business?.currency);
+            // A kind this build has no tile for still gets the plain bell.
+            const { icon: Icon, tone } = KIND_ICON[view.kind] ?? KIND_ICON.other;
             const where = business && workspaces.length > 1 ? ` · ${business.isDefault ? t("Personal") : business.name}` : "";
             const body = (
               <>
@@ -192,7 +228,7 @@ export function NotificationsBell() {
                   <b className="text-body font-semibold text-ink">{view.title}</b>
                   <span className="text-small leading-4.5 text-ink-2">{view.body}</span>
                   <span className="text-caption text-ink-muted">
-                    {notificationTime(item.createdAt, t, locale)}
+                    {notificationTime(item.createdAt, t, fmt)}
                     {where}
                   </span>
                 </span>

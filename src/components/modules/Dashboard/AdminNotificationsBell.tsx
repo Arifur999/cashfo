@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Bug, CreditCard, MessageSquare, ShieldAlert, type LucideIcon } from "lucide-react";
+import { Bell, Bug, Clock, CreditCard, Gift, MessageSquare, ShieldAlert, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useEffectEvent, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,8 @@ import type { AdminFeedGroup, AdminFeedKind, IAdminFeed } from "@/types/adminFee
 
 const KIND_ICON: Record<AdminFeedKind, LucideIcon> = {
   PAYMENT_FAILED: CreditCard,
+  PAYMENT_PENDING: Clock,
+  PAYOUT_REQUESTED: Gift,
   TICKET_WAITING: MessageSquare,
   SECURITY_FLAG: ShieldAlert,
   SIGN_INS_PAUSED: ShieldAlert,
@@ -51,8 +53,11 @@ const AdminNotificationsBell = () => {
     void loadOnMount();
   }, []);
 
+  // Hold the bell's place while the feed loads, so the search and the
+  // account pill don't jump sideways when it arrives.
+  if (!feed) return <span aria-hidden="true" className="size-11 shrink-0 md:size-9.5" />;
   // A content admin has nothing to act on here.
-  if (!feed || feed.groups.length === 0) return null;
+  if (feed.groups.length === 0) return null;
 
   const unread = feed.unreadCount;
   const rows = feed.data.map((item, index) => ({ item, unread: index < unread }));
@@ -77,13 +82,13 @@ const AdminNotificationsBell = () => {
       <PopoverTrigger
         aria-label={label}
         title={t("Notifications")}
-        className="relative flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 md:size-10 md:border md:border-line md:bg-surface md:hover:bg-surface-sunken data-open:bg-surface-sunken"
+        className="relative flex size-11 shrink-0 items-center justify-center rounded-full text-ink-2 md:size-9.5 md:bg-surface md:shadow-control md:hover:bg-hover data-open:bg-surface-sunken"
       >
-        <Bell className="size-5 md:size-4.5" aria-hidden="true" />
+        <Bell className="size-5 md:size-4.5" strokeWidth={2} aria-hidden="true" />
         {unread > 0 && (
           <span
             aria-hidden="true"
-            className="absolute top-1 right-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-expense-fill px-1 text-caption leading-4 font-bold text-white tabular-nums shadow-[0_0_0_2px_var(--surface)] md:-top-1.5 md:-right-1.5"
+            className="absolute top-1 right-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-expense-fill px-1.25 text-[11px] leading-4.5 font-bold text-white tabular-nums shadow-[0_0_0_2px_var(--surface)] md:-top-1.5 md:-right-1.5 md:shadow-[0_0_0_2px_var(--page)]"
           >
             {formatCount(unread, locale)}
           </span>

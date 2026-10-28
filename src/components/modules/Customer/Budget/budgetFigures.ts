@@ -89,3 +89,36 @@ export function fastestGrowing(sources: { name: string; amount: number }[], last
     .sort((a, b) => b.percent - a.percent);
   return grown[0] ?? null;
 }
+
+// Budget planning's two tabs. Expense lives at /categories; income at
+// /categories?tab=income, so the breadcrumb and the menu stay on Budget
+// Planning, or at /income-category when it was opened from the Income
+// Category menu entry, which keeps that entry lit. Both keep the month.
+export type BudgetTab = "expense" | "income";
+export type BudgetPath = "/categories" | "/income-category";
+
+export function budgetTabHref(tab: BudgetTab, path: BudgetPath, month: number, year: number): string {
+  const query = new URLSearchParams();
+  if (tab === "income" && path === "/categories") query.set("tab", "income");
+  query.set("month", String(month));
+  query.set("year", String(year));
+  return `${tab === "income" && path === "/income-category" ? "/income-category" : "/categories"}?${query.toString()}`;
+}
+
+export interface IncomeShare {
+  id: string;
+  name: string;
+  color: string | null;
+  amount: number;
+  // Of everything earned in the month, 0-100, unrounded.
+  share: number;
+}
+
+// Each income category's part of what the month earned: its earnings over
+// the total. Categories that earned nothing are left out of the bar.
+export function incomeShares(categories: { id: string; name: string; color: string | null; spent: string }[], total: number): IncomeShare[] {
+  return categories
+    .map((category) => ({ id: category.id, name: category.name, color: category.color, amount: Number(category.spent) }))
+    .filter((category) => category.amount > 0 && total > 0)
+    .map((category) => ({ ...category, share: Math.min(100, (category.amount / total) * 100) }));
+}

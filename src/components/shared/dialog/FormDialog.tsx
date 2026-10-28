@@ -1,13 +1,17 @@
 "use client";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { X } from "lucide-react";
+import Button from "@/components/smartly/Button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
+// The design's dialogs: 480 (change password), 520 (refund, reset), and a
+// wide one for long forms.
 const SIZE_CLASSES = {
-  sm: "sm:max-w-md",
-  md: "sm:max-w-lg",
+  sm: "sm:max-w-120",
+  md: "sm:max-w-130",
   lg: "sm:max-w-2xl",
 } as const;
 
@@ -34,13 +38,22 @@ const FormDialog = ({ open, onOpenChange, title, description, trigger, size = "m
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
-        className={cn("max-h-[90vh] gap-0 overflow-hidden rounded-lg border-line bg-surface p-0 shadow-overlay", SIZE_CLASSES[size])}
+        showCloseButton={false}
+        className={cn("max-h-[90vh] gap-0 overflow-hidden rounded-[20px] border-line bg-surface p-0 shadow-overlay ring-0", SIZE_CLASSES[size])}
         onInteractOutside={closeOnOutsideClick ? undefined : (event) => event.preventDefault()}
       >
-        {/* The design's dialog head: 18px title, the explanation under it. */}
-        <DialogHeader className="gap-2 border-b border-line px-6 py-5 pr-14">
-          <DialogTitle className="text-h3 text-ink">{translate(title)}</DialogTitle>
-          {description && <DialogDescription className="text-body leading-relaxed text-ink-2">{typeof description === "string" ? translate(description) : description}</DialogDescription>}
+        {/* The design's dialog head: 18px title, the explanation under it,
+            the round close button on the right. */}
+        <DialogHeader className="flex-row items-start justify-between gap-3 border-b border-line px-6 py-4.5 text-left">
+          <div className="flex min-w-0 flex-col gap-1">
+            <DialogTitle className="text-h3 text-ink">{translate(title)}</DialogTitle>
+            {description && <DialogDescription className="text-small leading-normal text-ink-muted">{typeof description === "string" ? translate(description) : description}</DialogDescription>}
+          </div>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon-xs" aria-label={translate("Close")} className="-my-0.5 -mr-1.5 size-8.5 text-ink-muted">
+              <X className="size-4.5" aria-hidden="true" />
+            </Button>
+          </DialogClose>
         </DialogHeader>
         <ScrollArea className="max-h-[calc(90vh-5.5rem)]">
           <div className="px-6 py-5">{children}</div>

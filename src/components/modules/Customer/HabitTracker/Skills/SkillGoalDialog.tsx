@@ -29,7 +29,7 @@ const MAX_GOAL = 1000;
 // "How many skills do you want to complete this year?" Removing the goal
 // can be undone from its toast.
 export function SkillGoalDialog({ open, onClose, year, current }: SkillGoalDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [text, setText] = useState("4");
   const [isPending, startTransition] = useTransition();
@@ -52,7 +52,7 @@ export function SkillGoalDialog({ open, onClose, year, current }: SkillGoalDialo
         onClose();
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to save goal", t, locale));
+        toast.error(actionError(result.message, "Failed to save goal", t, fmt));
       }
     });
   }
@@ -61,7 +61,7 @@ export function SkillGoalDialog({ open, onClose, year, current }: SkillGoalDialo
   function restore(previous: number) {
     void setSkillGoalAction(previous).then((result) => {
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to save goal", t, locale));
+      else toast.error(actionError(result.message, "Failed to save goal", t, fmt));
     });
   }
 
@@ -72,20 +72,22 @@ export function SkillGoalDialog({ open, onClose, year, current }: SkillGoalDialo
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <AlertDialogContent className="w-110 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-110 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border border-line bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} className="flex flex-col">
-          <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
-            <AlertDialogTitle className="text-h3 text-ink">{t("{year} skills goal", { year: toLocaleDigits(String(year), locale) })}</AlertDialogTitle>
-            <CloseButton onClick={onClose} label={t("Close")} />
+          <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-4.5">
+            <div className="flex min-w-0 flex-col gap-1">
+              <AlertDialogTitle className="text-h3 text-ink">{t("{year} skills goal", { year: toLocaleDigits(String(year), fmt) })}</AlertDialogTitle>
+              <AlertDialogDescription className="text-small text-ink-muted">{t("How many skills do you want to complete this year?")}</AlertDialogDescription>
+            </div>
+            <CloseButton onClick={onClose} label={t("Close")} className="-my-0.5 -mr-1.5 size-8.5 rounded-full" />
           </div>
-          <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{t("How many skills do you want to complete this year?")}</AlertDialogDescription>
-          <div className="flex flex-col gap-4 px-6 py-4">
+          <div className="flex flex-col gap-4 px-6 py-5">
             <div role="group" aria-label={t("Suggested goals")} className="grid grid-cols-4 gap-2">
               {PRESETS.map((preset) => {
                 const on = text === String(preset);
                 return (
-                  <button key={preset} type="button" aria-pressed={on} onClick={() => setText(String(preset))} className={cn("flex h-11 items-center justify-center rounded-md border text-body font-semibold transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
-                    {formatCount(preset, locale)}
+                  <button key={preset} type="button" aria-pressed={on} onClick={() => setText(String(preset))} className={cn("flex h-11 items-center justify-center rounded-field border text-body font-semibold transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
+                    {formatCount(preset, fmt)}
                   </button>
                 );
               })}

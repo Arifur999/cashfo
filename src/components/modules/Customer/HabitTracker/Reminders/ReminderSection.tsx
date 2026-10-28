@@ -28,7 +28,7 @@ export function ReminderSection({ kind, targetKey, book, draft, onDraftChange, d
   const { t } = useLocale();
   if (!book.available) return null;
   return (
-    <div className={cn("rounded-md border border-line bg-strip p-4", className)}>
+    <div className={cn("rounded-[10px] border border-line bg-strip p-4", className)}>
       {targetKey ? (
         <SavedReminderEditor key={targetKey} kind={kind} targetKey={targetKey} book={book} description={t("Saved as you change it.")} />
       ) : (

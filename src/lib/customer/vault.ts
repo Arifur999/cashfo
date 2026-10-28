@@ -15,6 +15,15 @@ export interface VaultStatus {
   // setting up, changing or resetting the vault; missing from an older
   // backend.
   hasAccountPassword?: boolean;
+  // How long one unlock lasts: the person's choice in minutes (null = the
+  // server's own), and what an unlock really lasts, the server's cap
+  // applied.
+  lockMinutes?: number | null;
+  effectiveMinutes?: number;
+  // Unlock tries left in the current ten minutes, and the seconds until a
+  // locked-out vault takes tries again (0 when it isn't locked out).
+  triesLeft?: number;
+  retryAfterSec?: number;
 }
 
 export const getVaultStatus = cache(async (): Promise<VaultStatus | null> => {

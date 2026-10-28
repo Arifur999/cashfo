@@ -1,9 +1,10 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Building2, House, X } from "lucide-react";
 import { createElement } from "react";
+import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Chip from "@/components/smartly/Chip";
-import type { GroupExpenseCategoryOption } from "@/lib/customer/api";
+import type { GroupExpenseCategoryOption, GroupKind, GroupMember } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
@@ -12,15 +13,37 @@ import { cn } from "@/lib/utils";
 
 // The small pieces the group tabs share.
 
+// A mess and a family look and read differently, as the boards draw them:
+// the tile, the chip and the icon.
+export const GROUP_KIND = {
+  MESS: { label: "Mess", icon: Building2, tone: "warning" as const },
+  FAMILY: { label: "Family", icon: House, tone: "insights" as const },
+} satisfies Record<GroupKind, unknown>;
+
+// Each member keeps one colour everywhere in the group, by the order they
+// joined it (the boards: mint, amber, teal, rose, sky).
+const MEMBER_TONES = ["bg-mint-50 text-brand-ink", "bg-warning-soft text-warning", "bg-pillar-insights-soft text-pillar-insights", "bg-rose-soft text-rose", "bg-info-soft text-info", "bg-pillar-habits-soft text-pillar-habits"];
+
+export function memberTone(members: Pick<GroupMember, "id">[], id: string | undefined): string {
+  const index = members.findIndex((member) => member.id === id);
+  return MEMBER_TONES[(index < 0 ? 0 : index) % MEMBER_TONES.length];
+}
+
+// A member's photo or initials, in their colour.
+export function MemberAvatar({ member, members, size = 32, className }: { member: Pick<GroupMember, "id" | "name" | "photoUrl"> | undefined; members: Pick<GroupMember, "id">[]; size?: 22 | 24 | 26 | 28 | 30 | 32 | 34 | 36 | 40 | 44; className?: string }) {
+  const small = size === 24 ? "text-[9.5px]" : size === 26 ? "text-[10px]" : undefined;
+  return <PersonAvatar name={member?.name ?? "?"} src={member?.photoUrl} size={size} className={cn(memberTone(members, member?.id), small, className)} />;
+}
+
 // "+ ৳ 578  Gets back" / "− ৳ 351  Has to pay" / "৳ 0  Settled". Stacked,
 // the chip goes under the figure, so a narrow column still fits it.
 export function BalanceCell({ value, currency, stacked = false, className }: { value: number; currency: string; stacked?: boolean; className?: string }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const even = Math.abs(value) < 0.005;
   const up = value > 0;
   return (
     <span className={cn("flex justify-end", stacked ? "flex-col items-end gap-1" : "items-center gap-2", className)}>
-      <span className={cn("font-bold whitespace-nowrap tabular-nums", even ? "text-ink" : up ? "text-income" : "text-expense")}>{even ? formatCurrency(0, currency, locale) : formatSignedCurrency(value, currency, locale)}</span>
+      <span className={cn("font-bold whitespace-nowrap tabular-nums", even ? "text-ink" : up ? "text-income" : "text-expense")}>{even ? formatCurrency(0, currency, fmt) : formatSignedCurrency(value, currency, fmt)}</span>
       <Chip tone={even ? "neutral" : up ? "income" : "expense"} size="sm">
         {t(even ? "Settled" : up ? "Gets back" : "Has to pay")}
       </Chip>
@@ -33,7 +56,7 @@ export function Figure({ label, value, tone = "text-ink", divided = true }: { la
   return (
     <div className={cn("flex flex-col gap-0.5 pr-5", divided && "border-r border-line")}>
       <span className="text-caption font-normal text-ink-muted">{label}</span>
-      <span className={cn("text-h3 tabular-nums md:text-h2", tone)}>{value}</span>
+      <span className={cn("text-h3 font-bold tabular-nums md:text-[19px] md:leading-normal", tone)}>{value}</span>
     </div>
   );
 }
@@ -51,11 +74,11 @@ export function CloseX({ onClick, disabled = false, className }: { onClick: () =
 }
 
 // A category's icon on its soft tile.
-export function CategoryTile({ name, categories, size = 26 }: { name: string; categories: GroupExpenseCategoryOption[]; size?: 24 | 26 | 28 }) {
+export function CategoryTile({ name, categories, size = 26 }: { name: string; categories: GroupExpenseCategoryOption[]; size?: 24 | 26 | 28 | 32 | 36 }) {
   const option = categories.find((c) => c.name === name);
   const tone = categoryTone(option?.color);
   return (
-    <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center rounded-sm", size === 24 ? "size-6 [&_svg]:size-3.5" : size === 28 ? "size-7 [&_svg]:size-4" : "size-6.5 [&_svg]:size-3.5", tone.bg, tone.fg)}>
+    <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center rounded-sm", size === 24 ? "size-6 rounded-[7px] [&_svg]:size-3.25" : size === 28 ? "size-7 [&_svg]:size-4" : size === 32 ? "size-8 rounded-[9px] [&_svg]:size-4" : size === 36 ? "size-9 rounded-field [&_svg]:size-4.5" : "size-6.5 [&_svg]:size-3.5", tone.bg, tone.fg)}>
       {option?.icon ? createElement(budgetCategoryIcon(option.icon), {}) : <span className="size-2 rounded-full bg-current" />}
     </span>
   );

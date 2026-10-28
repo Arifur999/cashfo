@@ -35,14 +35,14 @@ interface RamadanSetupDialogProps {
 // Ramadan's, never one two years back; another Ramadan on the latest free
 // one before it (or the first after it, when every earlier one is taken).
 export function RamadanSetupDialog({ open, onClose, existing, defaultYear, range = "next" }: RamadanSetupDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [year, setYear] = useState(defaultYear);
   const [days, setDays] = useState<29 | 30>(30);
   const [isPending, startTransition] = useTransition();
   const years = setupYears(existing, defaultYear, range);
-  const digits = (value: number | string) => toLocaleDigits(String(value), locale);
+  const digits = (value: number | string) => toLocaleDigits(String(value), fmt);
 
   const [prevOpen, setPrevOpen] = useState(false);
   if (open !== prevOpen) {
@@ -67,7 +67,7 @@ export function RamadanSetupDialog({ open, onClose, existing, defaultYear, range
         onClose();
         router.push(`/habit-tracker/habits/ramadan/${result.data.id}`);
       } else {
-        toast.error(actionError(result.message, "Failed to set up Ramadan", t, locale));
+        toast.error(actionError(result.message, "Failed to set up Ramadan", t, fmt));
       }
     });
   }
@@ -82,7 +82,7 @@ export function RamadanSetupDialog({ open, onClose, existing, defaultYear, range
           </div>
           <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{t("A sheet of Roza for every day, with rows you add for Taraweeh, Quran and the rest.")}</AlertDialogDescription>
           <div className="flex flex-col gap-4 px-6 py-4">
-            <Field htmlFor="rs-year" label={<span className="text-body font-medium text-ink">{t("The year it falls in")}</span>} hint={start ? t("Begins around {date}, depending on the moon.", { date: dayText(start, locale, "dayMonthYear") }) : undefined}>
+            <Field htmlFor="rs-year" label={<span className="text-body font-medium text-ink">{t("The year it falls in")}</span>} hint={start ? t("Begins around {date}, depending on the moon.", { date: dayText(start, fmt, "dayMonthYear") }) : undefined}>
               <NativeSelect id="rs-year" size="md" value={String(year)} onChange={(event) => setYear(Number(event.target.value))} frameClassName="w-full" disabled={years.length === 0}>
                 {years.length === 0 && <option value={String(year)}>{t("Every nearby year already has a sheet")}</option>}
                 {years.map((y) => (
@@ -97,7 +97,7 @@ export function RamadanSetupDialog({ open, onClose, existing, defaultYear, range
               <div role="radiogroup" className="grid grid-cols-2 gap-2">
                 {([29, 30] as const).map((option) => (
                   <button key={option} type="button" role="radio" aria-checked={days === option} onClick={() => setDays(option)} className={cn("flex h-12 items-center justify-center rounded-md border text-body-lg font-bold transition-colors", days === option ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
-                    {daysText(option, t, locale)}
+                    {daysText(option, t, fmt)}
                   </button>
                 ))}
               </div>

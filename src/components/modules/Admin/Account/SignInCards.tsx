@@ -44,11 +44,11 @@ export const DevicesCard = () => {
 
   return (
     <Card padding="none" className="overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3">
-        <h2 className="text-title text-ink">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+        <h2 className="text-[15px] leading-[normal] font-semibold text-ink">
           <T>Where you&apos;re signed in</T>
         </h2>
-        <Button variant="secondary" size="sm" disabled={isPending || others === 0} className="pointer-coarse:h-11" onClick={() => void run(undefined)}>
+        <Button variant="secondary" size="sm" disabled={isPending || others === 0} className="h-8.5 px-3.5 pointer-coarse:h-11" onClick={() => void run(undefined)}>
           <T>Sign out other devices</T>
         </Button>
       </div>
@@ -104,7 +104,7 @@ export const RecentSignInsCard = () => {
 
   return (
     <Card padding="none" className="overflow-hidden">
-      <h2 className="px-5 pt-4 pb-3 text-title text-ink">
+      <h2 className="px-5 py-3.5 text-[15px] leading-[normal] font-semibold text-ink">
         <T>Recent sign-ins</T>
       </h2>
       {signIns === undefined ? (
@@ -122,7 +122,7 @@ export const RecentSignInsCard = () => {
           {signIns.map((attempt) => {
             const when = dateTimeLabel(attempt.createdAt, locale, { t: translate });
             return (
-              <li key={attempt.id} className="flex items-start gap-3 border-t border-divider px-5 py-2.5 text-small sm:items-center">
+              <li key={attempt.id} className="flex items-start gap-2.5 border-t border-divider px-5 py-2.25 text-small sm:items-center">
                 <span
                   aria-hidden="true"
                   className={cn("mt-px flex size-5.5 shrink-0 items-center justify-center rounded-full sm:mt-0", attempt.success ? "bg-mint-50 text-emerald" : "bg-expense-soft text-expense")}

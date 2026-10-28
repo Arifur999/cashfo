@@ -1,6 +1,4 @@
-import { Info } from "lucide-react";
 import Kpi from "@/components/shared/Kpi";
-import T from "@/components/shared/T";
 import { formatCurrency } from "@/lib/currency";
 import { formatMonthName } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
@@ -11,9 +9,9 @@ import type { Locale } from "@/lib/i18n/translate";
 
 const money = (value: number, locale: Locale) => formatCurrency(value, undefined, 0, locale);
 
-// The design's four figures: MRR, ARR, paid people, churn. They come from
-// two places today (the plans workspaces are on, and payments), so a line
-// under them says which is which until the API counts them one way.
+// The design's four figures: MRR, ARR, paid people, churn. MRR, ARR and
+// churn count the plans people are on; the change, paid people and the
+// chart come from payments (the API counts them one way in time).
 const RevenueKpis = async ({ overview }: { overview: IRevenueOverview }) => {
   const { t, locale } = await getTranslator("admin");
   const month = t(formatMonthName(overview.month));
@@ -62,10 +60,6 @@ const RevenueKpis = async ({ overview }: { overview: IRevenueOverview }) => {
           }
         />
       </div>
-      <p className="flex items-start gap-2 text-small leading-relaxed text-ink-muted">
-        <Info className="mt-0.5 size-3.75 shrink-0" aria-hidden="true" />
-        <T>MRR, ARR and churn count the workspaces on paid plans now. The change on last month, the chart, paid people and the average per person come from payments, so the two can differ.</T>
-      </p>
     </div>
   );
 };

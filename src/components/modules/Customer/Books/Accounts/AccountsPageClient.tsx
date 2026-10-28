@@ -31,10 +31,10 @@ interface AccountsPageClientProps {
 // Books › Accounts: whether the books balance, every account by group, and
 // what came in and went out this year.
 export function AccountsPageClient({ businessId, businessName, groups, income, expense, today, canManage, preferredLanguage, currency }: AccountsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [adding, setAdding] = useState(false);
   const accounts = groups.flatMap((group) => flattenAccounts(group.accounts).map(({ account }) => account));
-  const since = t("1 Jan to {date}", { date: booksDate(today, locale, { year: "always" }) });
+  const since = t("1 Jan to {date}", { date: booksDate(today, fmt, { year: "always" }) });
 
   function exportCsv() {
     downloadCsv(toCsv([t("Code"), t("Account"), t("Type"), t("Kind@@account"), t("Balance")], accountsCsvRows(groups, t, preferredLanguage)), `accounts-${today}`);

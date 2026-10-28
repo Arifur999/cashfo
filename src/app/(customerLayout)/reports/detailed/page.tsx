@@ -3,13 +3,13 @@ import { ReportsPageClient } from "@/components/modules/Customer/Insights/Report
 import { getWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { getFmt } from "@/lib/customer/fmt";
 import { rangeLabel } from "@/lib/customer/insights";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getMonthlyBreakdown } from "@/lib/customer/reports";
 import { incomeYear, incomeYearSpan, reportPeriodFrom, reportRange, reportShowFrom } from "@/lib/customer/reportTable";
 import { getAppToday } from "@/lib/date";
 import { toLocaleDigits } from "@/lib/i18n/digits";
-import { getLocale } from "@/lib/i18n/locale";
 
 export const generateMetadata = () => customerPageMetadata("/reports/detailed");
 
@@ -23,7 +23,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports/
   if (!activeBusinessId) redirect("/dashboard");
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
-  const locale = await getLocale();
+  const fmt = await getFmt();
   const today = getAppToday();
   const period = reportPeriodFrom(params.period);
   const show = reportShowFrom(params.show);
@@ -40,7 +40,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports/
 
   // The income years' options name their year as the return does,
   // "(2025–26)": short, so the select stays as narrow as its other options.
-  const yearSpan = (offset: number) => toLocaleDigits(incomeYearSpan(incomeYear(today, offset)), locale);
+  const yearSpan = (offset: number) => toLocaleDigits(incomeYearSpan(incomeYear(today, offset)), fmt);
 
   return (
     <ReportsPageClient
@@ -52,7 +52,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports/
       walletId={walletId}
       show={show}
       range={range}
-      rangeLabel={rangeLabel(range.dateFrom, range.dateTo, locale)}
+      rangeLabel={rangeLabel(range.dateFrom, range.dateTo, fmt)}
       periodSpans={{
         "this-tax-year": yearSpan(0),
         "last-tax-year": yearSpan(-1),

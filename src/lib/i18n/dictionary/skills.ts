@@ -149,4 +149,7 @@ export const skillsDictionary: Record<string, string> = {
   "A goal can be up to {count} hours": "লক্ষ্য সর্বোচ্চ {count} ঘণ্টা হতে পারে",
   "You can keep up to {count} skills": "সর্বোচ্চ {count}টি দক্ষতা রাখা যায়",
   "Skill not found": "দক্ষতাটি পাওয়া যায়নি",
+  // v4 lane C
+  "1 lesson": "১ পাঠ",
+  "30 min": "৩০ মিনিট",
 };

@@ -1,10 +1,9 @@
 "use client";
 
-import { CalendarClock, Coffee, Moon, Pencil, Plus, Sun, Trash2 } from "lucide-react";
+import { CalendarClock, Coffee, Moon, Pencil, Sun, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { createElement, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
@@ -16,23 +15,23 @@ import { Switch } from "@/components/ui/switch";
 import type { GroupExpenseCategoryOption, GroupKind, GroupSettings, GroupSplit } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { updateBusinessAction } from "@/lib/customer/businessActions";
-import { formatCurrency } from "@/lib/customer/currency";
-import { groupMonthOf, monthRangeOf, poolsMeals, rangeLabel, SPLIT_LABELS, SPLITS, splitTotals } from "@/lib/customer/groupDisplay";
-import { updateGroupExpenseCategoryAction, updateGroupMemberAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
+import { budgetCategoryIcon, budgetCategoryIconLabel, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
+import { categoryTone } from "@/lib/customer/categoryTone";
+import { formatCurrency, formatGrouped } from "@/lib/customer/currency";
+import { groupMonthOf, monthRangeOf, poolsMeals, rangeLabel, shortName, SPLIT_LABELS, SPLITS, splitTotals } from "@/lib/customer/groupDisplay";
+import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupMemberAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
 import { mealText, unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
-import { toBanglaDigits } from "@/lib/i18n/banglaDates";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { CategoryTile } from "./GroupBits";
+import { CategoryTile, MemberAvatar } from "./GroupBits";
 import type { GroupPageData } from "./groupTypes";
 import { ShareStepper } from "./ShareStepper";
 
 interface GroupSettingsTabProps {
   data: GroupPageData;
   onEditBudget: () => void;
-  onAddCategory: () => void;
   onEditCategory: (category: GroupExpenseCategoryOption) => void;
   onRemoveCategory: (category: GroupExpenseCategoryOption) => void;
   onDeleteGroup: () => void;
@@ -44,6 +43,9 @@ type SettingsInput = Partial<Omit<GroupSettings, "breakfastUnits" | "lunchUnits"
 // "1st", "2nd", "21st"... for the month start picker.
 const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
 const MEAL_STEPS = [0, 0.5, 1, 1.5, 2];
+// The new-category row's quick picks; Edit opens every icon and colour.
+const NEW_ICONS = ["graduation-cap", "zap", "shopping-cart", "house", "heart"];
+const NEW_COLORS = ["yellow", "teal", "blue", "green", "pink"];
 
 // "Saving…", then "Saved" for a moment: a live region, so a screen reader
 // hears it too. Always there, so nothing shifts.
@@ -62,8 +64,8 @@ function SaveStatus({ state }: { state: "saving" | "saved" | null }) {
 // monthly budget; how each category is shared; meal counting; and delete.
 // Each change saves as it is made; its card says when, and its controls
 // wait for the save.
-export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCategory, onRemoveCategory, onDeleteGroup }: GroupSettingsTabProps) {
-  const { t, locale } = useLocale();
+export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveCategory, onDeleteGroup }: GroupSettingsTabProps) {
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState(data.name);
   const [nameKept, setNameKept] = useState(false);
@@ -81,10 +83,40 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
   const byShares = splitTotals(data.expenses, "SHARES", data.members, data.range, poolsMeals(settings.mealsOn, data.settlement));
   const sharesTotal = Object.values(byShares).reduce((sum, value) => sum + value, 0);
   const budget = data.budgets.find((b) => `${b.year}-${String(b.month).padStart(2, "0")}` === data.range.key);
-  const month = monthName(data.range.key, locale, "long");
-  const money = (value: number | string) => formatCurrency(value, data.currency, locale);
-  const dayWord = (day: number) => (locale === "bn" ? toBanglaDigits(day) : ordinal(day));
+  const month = monthName(data.range.key, fmt, "long");
+  const money = (value: number | string) => formatCurrency(value, data.currency, fmt);
+  const dayWord = (day: number) => toLocaleDigits(locale === "bn" ? String(day) : ordinal(day), fmt);
   const status = (section: Section) => (saving === section ? "saving" : saved === section ? "saved" : null);
+  // The new category being written at the foot of the list.
+  const [newName, setNewName] = useState("");
+  const [newSplit, setNewSplit] = useState<GroupSplit>("EQUAL");
+  const [newIcon, setNewIcon] = useState<string | null>(null);
+  const [newColor, setNewColor] = useState(NEW_COLORS[0]);
+  const icon = newIcon ?? suggestIconForCategoryName(newName) ?? NEW_ICONS[0];
+  const splitChoices = SPLITS.filter((split) => split !== "EXACT" && (split !== "MEALS" || settings.mealsOn || settings.kind === "MESS"));
+  const resetNew = () => {
+    setNewName("");
+    setNewSplit("EQUAL");
+    setNewIcon(null);
+    setNewColor(NEW_COLORS[0]);
+  };
+  function addCategory() {
+    const name = newName.trim();
+    if (!name) return;
+    if (data.categories.some((category) => category.name.toLowerCase() === name.toLowerCase())) {
+      toast.error(t("A category with this name already exists."));
+      return;
+    }
+    run(
+      "categories",
+      async () => {
+        const result = await createGroupExpenseCategoryAction(data.businessId, { name, icon, color: newColor, defaultSplit: newSplit });
+        if (result.success) resetNew();
+        return result;
+      },
+      t("Failed to create category"),
+    );
+  }
 
   useEffect(
     () => () => {
@@ -236,33 +268,40 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
               const theirs = byShares[member.id];
               return (
                 <div key={member.id} className="flex min-h-14 items-center gap-3 border-t border-divider px-5 py-2">
-                  <PersonAvatar name={member.name} src={member.photoUrl} size={32} coloured />
+                  <MemberAvatar member={member} members={data.members} size={32} className="text-[11px]" />
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-body font-semibold text-ink">{member.name}</span>
+                    <span className="truncate text-body font-semibold text-ink" title={member.name}>
+                      {shortName(member.name)}
+                    </span>
                     {member.phone && <span className="truncate text-caption text-ink-muted">{member.phone}</span>}
                   </span>
                   <ShareStepper value={shares} name={member.name} disabled={isPending} onChange={(next) => run("shares", () => updateGroupMemberAction(data.businessId, member.id, { shareUnits: next }), t("Failed to update member"))} />
                   {/* Their part of the month's by-shares costs, by name, as each expense split it. */}
-                  <span className="flex w-20 flex-col items-end text-right tabular-nums">
-                    <span className="text-small text-ink-2">{totalShares ? toLocaleDigits(`${((shares / totalShares) * 100).toFixed(1)}%`, locale) : "—"}</span>
+                  <span className="flex w-17.5 flex-col items-end text-right tabular-nums">
+                    <span className="text-small text-ink-soft">{totalShares ? toLocaleDigits(`${((shares / totalShares) * 100).toFixed(1)}%`, fmt) : "—"}</span>
                     {theirs !== undefined && <span className="text-caption text-ink-muted">{money(theirs)}</span>}
                   </span>
                 </div>
               );
             })}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-strip px-5 py-3 text-small">
-              <span className="font-semibold text-ink">{t("{count} shares in total", { count: mealText(totalShares, locale) })}</span>
-              {sharesTotal > 0 && <span className="text-ink-2 tabular-nums">{t("{month} by shares {amount}", { month, amount: money(sharesTotal) })}</span>}
+              <span className="font-semibold text-ink">{t("{count} shares in total", { count: mealText(totalShares, fmt) })}</span>
+              {/* "September by shares ৳ 24,000 → 9,000 · 3,000 · 12,000" */}
+              {sharesTotal > 0 && (
+                <span className="text-ink-soft tabular-nums">
+                  {t("{month} by shares {amount}", { month, amount: money(sharesTotal) })} → {active.map((member) => formatGrouped(byShares[member.id] ?? 0, data.currency, fmt)).join(" · ")}
+                </span>
+              )}
             </div>
           </fieldset>
         </Card>
 
-        <Card padding="none" className="flex items-center gap-4 p-5">
+        <Card padding="none" className="flex items-center gap-4 px-5 py-4.5">
           <div className="flex min-w-0 flex-1 flex-col gap-0.75">
             <h2 className="text-title font-semibold text-ink">{t("Monthly budget")}</h2>
             <span className="text-small text-ink-muted">{budget ? t("{amount} for {month}. Warns at 90% used.", { amount: money(budget.budgetAmount), month }) : t("No budget for {month} yet. Warns at 90% used.", { month })}</span>
           </div>
-          <Button variant="secondary" size="sm" onClick={onEditBudget}>
+          <Button variant="secondary" size="sm" onClick={onEditBudget} className="h-9.5">
             {t("Edit budgets")}
           </Button>
         </Card>
@@ -276,13 +315,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
                 <h2 className="text-title font-semibold text-ink">{t("Categories and how each is shared")}</h2>
                 <span className="text-small text-ink-muted">{t("The default for new expenses. Any single expense can still be changed.")}</span>
               </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <SaveStatus state={status("categories")} />
-                <Button variant="secondary" size="sm" onClick={onAddCategory}>
-                  <Plus />
-                  {t("Add")}
-                </Button>
-              </div>
+              <SaveStatus state={status("categories")} />
             </div>
             {data.categories.length === 0 && <p className="border-t border-divider px-5 py-5 text-center text-small text-ink-muted">{t("No category yet. Bazar, rent, bills… add the ones this group uses.")}</p>}
             {data.categories.map((category) => (
@@ -295,7 +328,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
                   onChange={(event) => run("categories", () => updateGroupExpenseCategoryAction(data.businessId, category.id, { defaultSplit: event.target.value as GroupSplit }), t("Failed to update category"))}
                   aria-label={t("How {name} is shared", { name: category.name })}
                   frameClassName="max-w-48"
-                  className={cn("h-8 truncate text-small font-semibold pointer-coarse:h-11", category.defaultSplit === "EQUAL" ? "text-ink-2" : "border-mint-200 bg-mint-50 text-forest")}
+                  className={cn("h-8 truncate border-line text-[12.5px] font-semibold pointer-coarse:h-11", category.defaultSplit === "EQUAL" ? "text-ink-2" : "bg-mint-50 text-brand-ink")}
                 >
                   {/* By meals stays offered to a category saved that way, and says what it does while meals aren't counted. */}
                   {SPLITS.filter((split) => split !== "EXACT" && (split !== "MEALS" || settings.mealsOn || settings.kind === "MESS" || category.defaultSplit === "MEALS")).map((split) => (
@@ -304,14 +337,62 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
                     </option>
                   ))}
                 </NativeSelect>
-                <button type="button" onClick={() => onEditCategory(category)} aria-label={t("Edit {name}", { name: category.name })} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
-                  <Pencil className="size-4" aria-hidden="true" />
+                <button type="button" onClick={() => onEditCategory(category)} aria-label={t("Edit {name}", { name: category.name })} className="flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                  <Pencil className="size-3.75" aria-hidden="true" />
                 </button>
-                <button type="button" onClick={() => onRemoveCategory(category)} aria-label={t("Delete {name}", { name: category.name })} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
-                  <Trash2 className="size-4" aria-hidden="true" />
+                <button type="button" onClick={() => onRemoveCategory(category)} aria-label={t("Delete {name}", { name: category.name })} className="-ml-2 flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
+                  <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
               </div>
             ))}
+            {/* A new category, written in place. */}
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                addCategory();
+              }}
+              className="flex flex-col gap-3 border-t border-line bg-strip px-5 py-3.5"
+            >
+              <label htmlFor="gs-new-cat" className="text-small font-semibold text-ink-2">
+                {t("New category")}
+              </label>
+              <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_210px]">
+                <Input id="gs-new-cat" size="sm" value={newName} onChange={(event) => setNewName(event.target.value)} placeholder={t("Bazar")} maxLength={60} frameClassName="h-10" />
+                <NativeSelect size="sm" value={newSplit} onChange={(event) => setNewSplit(event.target.value as GroupSplit)} aria-label={t("How the new category is shared")} frameClassName="w-full" className="h-10 font-normal">
+                  {splitChoices.map((split) => (
+                    <option key={split} value={split}>
+                      {t(SPLIT_LABELS[split])}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+              <div className="flex flex-wrap items-center gap-3.5">
+                <div role="radiogroup" aria-label={t("Icon")} className="flex gap-1.5">
+                  {NEW_ICONS.map((key) => {
+                    const on = key === icon;
+                    return (
+                      <button key={key} type="button" role="radio" aria-checked={on} aria-label={t(`${budgetCategoryIconLabel(key)}@@icon`)} onClick={() => setNewIcon(key)} className={cn("flex size-8 items-center justify-center rounded-full border pointer-coarse:size-11", on ? "border-warning-fill bg-warning-soft text-warning" : "border-line bg-surface text-ink-soft hover:border-input")}>
+                        {createElement(budgetCategoryIcon(key), { className: "size-3.75", "aria-hidden": true })}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="h-6 w-px bg-line" aria-hidden="true" />
+                <div role="radiogroup" aria-label={t("Colour")} className="flex gap-1.5">
+                  {NEW_COLORS.map((color) => {
+                    const on = color === newColor;
+                    return <button key={color} type="button" role="radio" aria-checked={on} aria-label={t(color)} onClick={() => setNewColor(color)} className={cn("size-5.5 rounded-full bg-current pointer-coarse:size-8", categoryTone(color).fg, on && "shadow-[0_0_0_2px_var(--strip),0_0_0_4px_currentColor]")} />;
+                  })}
+                </div>
+                <span className="flex-1" />
+                <Button type="button" variant="ghost" size="sm" onClick={resetNew} disabled={!newName} className="h-8.5 px-2">
+                  {t("Cancel")}
+                </Button>
+                <Button type="submit" size="sm" disabled={!newName.trim()} className="h-8.5">
+                  {t("Add")}
+                </Button>
+              </div>
+            </form>
           </fieldset>
         </Card>
 
@@ -347,7 +428,7 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
                     <NativeSelect size="sm" value={slot.value} onChange={(event) => save("meals", { [slot.key]: Number(event.target.value) })} className="h-8 font-semibold pointer-coarse:h-11">
                       {MEAL_STEPS.map((step) => (
                         <option key={step} value={step}>
-                          {mealText(step, locale)}
+                          {mealText(step, fmt)}
                         </option>
                       ))}
                     </NativeSelect>
@@ -358,12 +439,12 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
           </fieldset>
         </Card>
 
-        <Card padding="none" className="flex items-center gap-4 border-expense-line p-5">
+        <Card padding="none" elevated={false} className="flex items-center gap-4 rounded-md border-expense-line px-5 py-4.5">
           <div className="flex min-w-0 flex-1 flex-col gap-0.75">
             <h2 className="text-title font-semibold text-expense">{t("Delete this group")}</h2>
-            <span className="text-small leading-relaxed text-ink-muted">{t("Removes {name} with every entry and closed month. This can't be undone.", { name: data.name })}</span>
+            <span className="text-small leading-normal text-ink-muted">{t("Removes {name} with every entry and closed month. This can't be undone.", { name: data.name })}</span>
           </div>
-          <Button variant="secondary" size="sm" onClick={onDeleteGroup} className="border-expense/40 text-expense hover:bg-expense-soft">
+          <Button variant="secondary" size="sm" onClick={onDeleteGroup} className="h-9.5 border-expense/40 text-expense hover:bg-expense-soft">
             {t("Delete group")}
           </Button>
         </Card>
@@ -385,8 +466,8 @@ export function GroupSettingsTab({ data, onEditBudget, onAddCategory, onEditCate
         description={
           startPreview
             ? t("{month} will run {range}. Entries keep their dates, so some move into the month before or after, and a closed month whose dates no longer match shows as open again.", {
-                month: monthName(startPreview.key, locale, "long"),
-                range: rangeLabel(startPreview, locale),
+                month: monthName(startPreview.key, fmt, "long"),
+                range: rangeLabel(startPreview, fmt),
               })
             : ""
         }

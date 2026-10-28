@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { getMyAccount, getMySessions, getMySignIns } from "@/services/myAccount.services";
+import { getMyAccount, getMySessions, getMySignIns, getMyTwoStep } from "@/services/myAccount.services";
 
 const { all } = queryKeys.myAccount;
 
@@ -20,4 +20,10 @@ export const mySignInsQuery = () =>
   queryOptions({
     queryKey: [...all, "sign-ins"] as const,
     queryFn: () => getMySignIns(),
+  });
+
+export const myTwoStepQuery = () =>
+  queryOptions({
+    queryKey: [...all, "two-step"] as const,
+    queryFn: () => getMyTwoStep(),
   });

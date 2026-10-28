@@ -2,11 +2,15 @@
 // sheets, the last seven days of prayers and habits side by side, and the
 // streaks worth showing. Pure, so the page and its tests agree.
 import type { Habit, HabitMonthLog, HabitMonthTracker, HabitToday } from "./api";
-import { countsOn, dayMark, isPlannedOn, lastDays, shiftDay } from "./habitDisplay";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
+import { countsOn, dayMark, isPlannedOn, lastDays, shiftDay, weekOf } from "./habitDisplay";
 import { allPrayed, cellState, isPrayed, PRAYERS, trackerFor } from "./namazDisplay";
 
-// prayed / missed / open (today, not yet) / none (no sheet, or not reached).
-export type PrayerMark = "prayed" | "missed" | "open" | "none";
+// How each prayer of a day stands on the week grid: how it was prayed (with
+// jama'at, on time, as qaza), missed, open (today, not marked yet) or none
+// (no sheet, or a day not reached). The card splits today's open ones into
+// the next prayer and the later ones by the clock.
+export type PrayerMark = "jamaat" | "onTime" | "qaza" | "missed" | "open" | "none";
 
 export function prayerMarks(trackers: HabitMonthTracker[], day: string, today: string): PrayerMark[] {
   if (day > today) return PRAYERS.map(() => "none");
@@ -16,12 +20,19 @@ export function prayerMarks(trackers: HabitMonthTracker[], day: string, today: s
   const dayNumber = Number(day.slice(8));
   return PRAYERS.map((prayer) => {
     const state = cellState(tracker, dayNumber, prayer);
-    if (isPrayed(state)) return "prayed";
     return state === "locked" ? "none" : state;
   });
 }
 
-export const prayedOn = (trackers: HabitMonthTracker[], day: string, today: string): number => prayerMarks(trackers, day, today).filter((mark) => mark === "prayed").length;
+export const prayedOn = (trackers: HabitMonthTracker[], day: string, today: string): number => prayerMarks(trackers, day, today).filter((mark) => mark !== "none" && isPrayed(mark)).length;
+
+// The days a habit was done in the week of `day` (Saturday to Friday, or
+// the reader's week given their Fmt), for a "few times a week" habit's
+// "2 of 3 this week".
+export const doneThisWeek = (habitId: string, logs: HabitMonthLog[], day: string, locale?: FormatLocale): number => {
+  const week = weekOf(day, locale);
+  return new Set(logs.filter((log) => log.habitId === habitId && log.completed && week.includes(log.date.slice(0, 10))).map((log) => log.date.slice(0, 10))).size;
+};
 
 // Whether a day had all five prayed, by the same rule as a sheet's full days
 // in a row (namazDisplay's allPrayed: a qaza counts).

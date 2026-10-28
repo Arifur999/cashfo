@@ -21,23 +21,23 @@ interface ReadingGoalCardProps {
 const SPINE_HEIGHTS = [46, 40, 48, 42, 44, 39, 45];
 // 16 spines of 14px with 4px gaps fill the card's 300px.
 const MAX_SPINES = 16;
-const RADIUS = 36;
+const RADIUS = 35;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 // This year's goal as a ring, how the reader stands against the calendar,
 // and a spine on the shelf for every book finished.
 export function ReadingGoalCard({ books, year, goalTarget, today, onEdit }: ReadingGoalCardProps) {
-  const { t, locale } = useLocale();
-  const count = (n: number) => formatCount(n, locale);
+  const { t, fmt } = useLocale();
+  const count = (n: number) => formatCount(n, fmt);
   const finished = finishedIn(shelves(books).FINISHED, year).reverse(); // oldest first, as they went on the shelf
   const pace = goalTarget ? goalPace(books, year, goalTarget, today) : null;
   const fill = pace ? Math.min(1, pace.finished / pace.target) : 0;
   const placeholders = pace ? Math.max(0, Math.min(pace.toGo, MAX_SPINES - finished.length)) : 0;
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 p-5">
+    <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4.5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-title font-semibold text-ink">{t("{year} reading goal", { year: toLocaleDigits(String(year), locale) })}</h2>
+        <h2 className="text-title font-semibold text-ink">{t("{year} reading goal", { year: toLocaleDigits(String(year), fmt) })}</h2>
         <button type="button" onClick={onEdit} className="flex min-h-8 items-center text-small font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
           {goalTarget ? t("Edit") : t("Set a goal")}
         </button>
@@ -54,24 +54,24 @@ export function ReadingGoalCard({ books, year, goalTarget, today, onEdit }: Read
         <div className="flex min-w-0 flex-col gap-0.75">
           {pace ? (
             <>
-              <span className="text-title font-semibold text-ink">{pace.toGo === 0 ? t("Goal reached!") : t(pace.toGo === 1 ? "{count} book to go" : "{count} books to go", { count: count(pace.toGo) })}</span>
+              <span className="text-[15px] font-semibold text-ink">{pace.toGo === 0 ? t("Goal reached!") : t(pace.toGo === 1 ? "{count} book to go" : "{count} books to go", { count: count(pace.toGo) })}</span>
               {pace.toGo > 0 && (
-                <span className={cn("text-small font-semibold", pace.behind > 0 ? "text-warning" : "text-income")}>
+                <span className={cn("text-[12.5px] font-semibold", pace.behind > 0 ? "text-warning" : "text-income")}>
                   {pace.behind > 0 ? t("{count} behind pace", { count: count(pace.behind) }) : pace.behind < 0 ? t("{count} ahead of pace", { count: count(-pace.behind) }) : t("On pace")}
                 </span>
               )}
-              {pace.weeksPerBook !== null && <span className="text-small text-ink-muted">{paceSentence(pace.weeksPerBook, t, locale)}</span>}
+              {pace.weeksPerBook !== null && <span className="text-[12.5px] text-ink-muted">{paceSentence(pace.weeksPerBook, t, fmt)}</span>}
             </>
           ) : (
             <>
-              <span className="text-title font-semibold text-ink">{t(finished.length === 1 ? "{count} book finished this year" : "{count} books finished this year", { count: count(finished.length) })}</span>
-              <span className="text-small text-ink-muted">{t("Set a goal for the year and watch it fill.")}</span>
+              <span className="text-[15px] font-semibold text-ink">{t(finished.length === 1 ? "{count} book finished this year" : "{count} books finished this year", { count: count(finished.length) })}</span>
+              <span className="text-[12.5px] text-ink-muted">{t("Set a goal for the year and watch it fill.")}</span>
             </>
           )}
         </div>
       </div>
 
-      <div className="mt-auto flex flex-col gap-2">
+      <div className="mt-auto flex flex-col gap-1.5">
         <span className="text-caption font-semibold text-ink-muted">{t("Finished this year")}</span>
         {finished.length === 0 && placeholders === 0 ? (
           <span className="border-b-[3px] border-line pb-3 text-small text-ink-muted">{t("Nothing finished yet.")}</span>
@@ -81,7 +81,7 @@ export function ReadingGoalCard({ books, year, goalTarget, today, onEdit }: Read
               <span key={book.id} title={book.title} className="w-3.5 shrink-0 rounded-t-[2px]" style={{ height: SPINE_HEIGHTS[index % SPINE_HEIGHTS.length], background: paletteFor(book.color).from }} />
             ))}
             {Array.from({ length: placeholders }, (_, index) => (
-              <span key={index} className="w-3.5 shrink-0 rounded-t-[2px] border-[1.5px] border-b-0 border-dashed border-line-strong" style={{ height: SPINE_HEIGHTS[(finished.length + index) % SPINE_HEIGHTS.length] }} />
+              <span key={index} className="w-3.5 shrink-0 rounded-t-[2px] border-[1.5px] border-b-0 border-dashed border-input" style={{ height: SPINE_HEIGHTS[(finished.length + index) % SPINE_HEIGHTS.length] }} />
             ))}
           </div>
         )}

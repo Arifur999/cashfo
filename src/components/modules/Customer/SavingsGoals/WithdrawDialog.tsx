@@ -51,7 +51,7 @@ const ALL_FAILED: Failed = { wallets: true, accounts: true, categories: true };
 // Cash a goal out: the whole saved amount leaves a savings wallet and is
 // spent as an expense, and the goal closes for good -- so it asks twice.
 export function WithdrawDialog({ open, onClose, businessId, goal, currency }: WithdrawDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [walletId, setWalletId] = useState("");
   const [category, setCategory] = useState("");
@@ -122,7 +122,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
   // they couldn't be read: an outage can't withdraw into no category.
   const categoryReady = categories.length > 0 ? category.length > 0 : !failed?.categories;
   const valid = !!goal && covering.some((wallet) => wallet.id === walletId) && expenseAccountId.length > 0 && categoryReady && confirmed;
-  const amount = goal ? formatCurrency(goal.currentAmount, currency, locale) : "";
+  const amount = goal ? formatCurrency(goal.currentAmount, currency, fmt) : "";
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -134,7 +134,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
         onClose();
         router.refresh();
       } else {
-        toast.error(savingsError(result.message, "Failed to withdraw", t, currency, locale));
+        toast.error(savingsError(result.message, "Failed to withdraw", t, currency, fmt));
       }
     });
   }
@@ -154,15 +154,15 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
       {/* Scrolls on a short phone or with the keyboard up, so the title and
           the Withdraw button stay reachable. */}
-      <AlertDialogContent className="max-h-[calc(100dvh-2rem)] w-130 max-w-[calc(100vw-32px)] gap-0 overflow-y-auto rounded-lg border border-line bg-surface p-6 shadow-overlay ring-0">
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <div className="flex items-start gap-4">
-            <IconTile tone="expense" size={44}>
+      <AlertDialogContent className="max-h-[calc(100dvh-2rem)] w-130 max-w-[calc(100vw-32px)] gap-0 overflow-y-auto rounded-[14px] border border-line bg-surface p-6 shadow-overlay ring-0">
+        <form onSubmit={submit} className="flex flex-col gap-4.5">
+          <div className="flex items-start gap-3.5">
+            <IconTile tone="expense" size={44} className="rounded-field">
               <TriangleAlert />
             </IconTile>
-            <div className="flex min-w-0 flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-1.5">
               <AlertDialogTitle className="text-h3 text-ink">{t("Withdraw everything from {name}?", { name: goal?.name ?? "" })}</AlertDialogTitle>
-              <AlertDialogDescription className="text-body leading-relaxed text-ink-2">
+              <AlertDialogDescription className="text-body leading-[1.55] text-ink-soft">
                 {fillNodes(t("The full {amount} leaves your savings wallet and is recorded as an expense. The goal is marked Withdrawn, and {undone}."), {
                   amount: <b className="font-semibold text-ink">{amount}</b>,
                   undone: <b className="font-semibold text-ink">{t("this can't be undone")}</b>,
@@ -182,7 +182,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
                   const short = Number(wallet.currentBalance) < goalAmount;
                   return (
                     <option key={wallet.id} value={wallet.id} disabled={short}>
-                      {`${wallet.name} · ${formatCurrency(wallet.currentBalance, currency, locale)}${short ? ` · ${t("not enough")}` : ""}`}
+                      {`${wallet.name} · ${formatCurrency(wallet.currentBalance, currency, fmt)}${short ? ` · ${t("not enough")}` : ""}`}
                     </option>
                   );
                 })}
@@ -229,12 +229,12 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency }: Wi
           )}
           {!loading && !failed?.accounts && expenseAccounts.length === 0 && <p className="text-caption text-expense">{t("No expense account exists in this workspace yet -- add one in Chart of Accounts first.")}</p>}
 
-          <label className="flex cursor-pointer items-center gap-3 rounded-md border border-expense-line bg-expense-soft px-4 py-3 text-small text-expense">
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-field border border-expense-line bg-expense-soft/50 px-3.5 py-3 text-small text-expense">
             <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="size-4.5 shrink-0 accent-expense" />
             {t("I understand {name} will be closed for good.", { name: goal?.name ?? "" })}
           </label>
 
-          <div className="flex flex-wrap justify-end gap-3">
+          <div className="flex flex-wrap justify-end gap-2.5">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
               {t("Keep saving")}
             </Button>

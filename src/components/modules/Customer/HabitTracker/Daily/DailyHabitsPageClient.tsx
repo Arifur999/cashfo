@@ -1,6 +1,6 @@
 "use client";
 
-import { ArchiveRestore, CalendarDays, Check, ChevronLeft, ChevronRight, Flame, Minus, Moon, Plus } from "lucide-react";
+import { ArchiveRestore, Check, ChevronLeft, ChevronRight, Flame, Minus, Moon, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useOptimistic, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -15,9 +15,10 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Habit } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { actionError, completionRate, countStep, countsOn, dayMark, dayText, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, shiftDay, streakText, streakWord, WEEK_START, WEEKDAY_INITIAL, weekOf } from "@/lib/customer/habitDisplay";
+import { actionError, completionRate, countStep, countsOn, dayMark, dayText, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, ruleLine, shiftDay, streakText, streakWord, WEEKDAY_INITIAL, weekdayOf, weekOf } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction, removeCheckInAction, updateHabitAction } from "@/lib/customer/habitsActions";
 import { formatCount } from "@/lib/i18n/digits";
+import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AmountPopover } from "../Tracker/AmountPopover";
@@ -28,9 +29,10 @@ import type { DailyHabitsData } from "./dailyTypes";
 import { HabitDetailPanel } from "./HabitDetailPanel";
 import { HabitDrawer } from "./HabitDrawer";
 
-// The week is seven 18px dots with 3px between them (148px); the streak's
-// widest word is "weeks"; Today holds "This week: 2 of 3" and its tick.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_148px_64px_56px_150px]";
+// The board's columns: the week's seven 18px dots spread over 160px, the
+// streak's 70px (its widest word is "weeks"), the 30 days' 56px, and
+// Today's 140px, which holds "2 of 3 this week" and its tick.
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_160px_70px_56px_140px] md:gap-x-3.5";
 const LIST_ID = "daily-habits";
 // Two stat cards side by side on a phone are ~175px each: a tighter inset.
 const STAT_PHONE = "max-md:px-4 max-md:py-3";
@@ -52,7 +54,7 @@ type DayLog = { completed: boolean; value: number | null; note: string | null };
 // off (or counted up) for the day being viewed, with one habit's month on
 // the side (in a bottom sheet below 1400px, where the side has no room).
 export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery(SIDE_PANEL);
   const { today, day, habits, todayRows, stats, logs, panelMonth, panelLogs, bestLogs } = data;
@@ -70,7 +72,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const [, startTransition] = useTransition();
   const [tapped, applyLog] = useOptimistic<Record<string, DayLog | null>, { id: string; log: DayLog | null }>({}, (current, update) => ({ ...current, [update.id]: update.log }));
   const picker = useRef<HTMLInputElement>(null);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   const serverLog = (habit: Habit): DayLog | null => {
     if (isToday) {
@@ -87,10 +89,10 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const resting = active.length - planned.length;
   const done = planned.filter((h) => logFor(h)?.completed);
   const open = planned.filter((h) => !logFor(h)?.completed);
-  const week = weekOf(day);
+  const week = weekOf(day, fmt);
   const last30 = lastDays(day, 30);
   const longest = [...active].map((h) => ({ habit: h, streak: streakOf(h) })).sort((a, b) => b.streak - a.streak)[0];
-  const planned30 = active.reduce((sum, h) => sum + plannedCount(h, last30.filter((d) => d >= habitStart(h, logs))), 0);
+  const planned30 = active.reduce((sum, h) => sum + plannedCount(h, last30.filter((d) => d >= habitStart(h, logs)), fmt), 0);
   const done30 = logs.filter((l) => l.completed && last30.includes(l.date.slice(0, 10)) && active.some((h) => h.id === l.habitId)).length;
   const perfect = perfectDays(active, logs, last30);
   const selected = active.find((h) => h.id === selectedId) ?? planned[0] ?? active[0] ?? null;
@@ -125,7 +127,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
       applyLog({ id: habit.id, log });
       const result = await action();
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to check in", t, locale));
+      else toast.error(actionError(result.message, "Failed to check in", t, fmt));
       setBusy((prev) => {
         const rest = new Set(prev);
         rest.delete(habit.id);
@@ -158,7 +160,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     startTransition(async () => {
       const result = await updateHabitAction(habit.id, { isArchived: false });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to bring the habit back", t, locale));
+      else toast.error(actionError(result.message, "Failed to bring the habit back", t, fmt));
       setBusy((prev) => {
         const rest = new Set(prev);
         rest.delete(habit.id);
@@ -179,7 +181,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     if (open.length === 2) return t("{first} and {second} are still open", { first: open[0].name, second: open[1].name });
     return t("{first}, {second} and {count} more are still open", { first: open[0].name, second: open[1].name, count: count(open.length - 2) });
   })();
-  const dayShort = dayText(day, locale, "dayMonth");
+  const dayShort = dayText(day, fmt, "dayMonth");
 
   const visible = active.slice(0, shown);
   const panel = (inSheet: boolean) =>
@@ -207,13 +209,13 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const row = (habit: Habit) => {
     const log = logFor(habit);
     const tone = categoryTone(habit.color);
-    const rule = ruleLabel(habit, t, locale);
+    const rule = ruleLabel(habit, t, fmt);
     const counted = !!habit.targetValue;
     const target = habit.targetValue ?? 1;
     const step = countStep(target);
     const rest = !countsOn(habit, logs, day);
     const streak = streakOf(habit);
-    const rate = completionRate(habit, logs, last30.filter((d) => d >= habitStart(habit, logs)));
+    const rate = completionRate(habit, logs, last30.filter((d) => d >= habitStart(habit, logs)), fmt);
     const on = !habit.isArchived && selected?.id === habit.id;
     // Marked only while its month can be seen: beside the list, or in the
     // sheet. Below 1400px the first habit is picked, not yet shown.
@@ -223,21 +225,21 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     // "A few times a week": how the week stands, beside the tick (under the
     // name on a phone). The day on show counts by its tick, a tap's included.
     const weekDone = logs.filter((l) => l.habitId === habit.id && l.completed && l.date.slice(0, 10) !== day && week.includes(l.date.slice(0, 10))).length + (log?.completed ? 1 : 0);
-    const weekly = habit.frequencyType === "WEEKLY_COUNT" && !habit.isArchived && !rest && !counted ? t("This week: {done} of {total}", { done: count(weekDone), total: count(habit.weeklyCount ?? 1) }) : null;
+    const weekly = habit.frequencyType === "WEEKLY_COUNT" && !habit.isArchived && !rest && !counted ? t("{done} of {total} this week", { done: count(weekDone), total: count(habit.weeklyCount ?? 1) }) : null;
     const name = (
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-body font-semibold text-ink">{habit.name}</span>
-        <span className="truncate text-small text-ink-muted">
-          {[rule.days, rule.amount, habit.isArchived ? t("archived") : null].filter(Boolean).join(" · ")}
+        <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">
+          {[ruleLine(habit, t, fmt), habit.isArchived ? t("archived") : null].filter(Boolean).join(" · ")}
         </span>
         {weekly && <span className="truncate text-caption text-ink-muted sm:hidden">{weekly}</span>}
       </span>
     );
     return (
       <ListRow key={habit.id} columns={COLUMNS} density="relaxed" selected={lit} muted={habit.isArchived} aria-busy={waiting || undefined}>
-        {lit && <span aria-hidden="true" className="absolute top-2.5 bottom-2.5 left-0 w-0.75 rounded-r-[3px] bg-emerald" />}
+        {lit && <span aria-hidden="true" className={cn("absolute top-2.5 bottom-2.5 left-0 w-0.75 rounded-r-[3px] bg-current", tone.fg)} />}
         <ListCell className="flex min-w-0 items-center gap-3">
-          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
+          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-field [&_svg]:size-4.5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
           {habit.isArchived ? (
             name
           ) : (
@@ -255,7 +257,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               // The day on show follows its log, a tap's included.
               const doneDay = d === day && log ? log.completed : mark === "done";
               return (
-                <span key={d} title={`${dayText(d, locale, "short")}: ${t(doneDay ? "done" : mark === "missed" ? "missed" : mark === "open" ? "still open" : mark === "future" ? "not yet" : "not planned")}`} className={cn("flex size-4.5 items-center justify-center rounded-full", doneDay ? cn("bg-current", tone.fg) : mark === "missed" ? "bg-expense-soft" : mark === "open" ? cn("border-[1.5px] border-dashed", tone.fg) : "border-[1.5px] border-line bg-surface")}>
+                <span key={d} title={`${dayText(d, fmt, "short")}: ${t(doneDay ? "done" : mark === "missed" ? "missed" : mark === "open" ? "still open" : mark === "future" ? "not yet" : "not planned")}`} className={cn("flex size-4.5 items-center justify-center rounded-full", doneDay ? cn("bg-current", tone.fg) : mark === "missed" ? "bg-expense-line" : mark === "open" ? cn("border-[1.5px] border-dashed border-current", tone.fg) : "border-[1.5px] border-line bg-surface")}>
                   {doneDay && <Check className="size-2.5 text-surface" strokeWidth={3} aria-hidden="true" />}
                 </span>
               );
@@ -264,10 +266,10 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         </ListCell>
         <ListCell className="hidden flex-col gap-px md:flex">
           <span className="flex items-center gap-1 text-body font-bold text-ink tabular-nums">
-            <Flame className="size-3.5 text-warning" aria-hidden="true" />
+            <Flame className="size-3.25 text-orange-fill" aria-hidden="true" />
             {count(streak)}
           </span>
-          <span className="text-caption font-normal text-ink-muted">{t(streakWord(habit, streak))}</span>
+          <span className="text-[11.5px] leading-[normal] font-normal text-ink-muted">{t(streakWord(habit, streak))}</span>
         </ListCell>
         <ListCell align="end" className={cn("hidden text-body font-semibold tabular-nums md:block", rate === null ? "text-ink-muted" : rate >= 80 ? "text-income" : "text-warning")}>
           {rate === null ? "—" : `${count(rate)}%`}
@@ -279,20 +281,20 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               {t("Bring back")}
             </Button>
           ) : rest ? (
-            <span title={rule.days} className="flex h-7.5 items-center gap-2 rounded-full bg-surface-sunken px-3 text-small font-semibold text-ink-2">
-              <Moon className="size-3.5" aria-hidden="true" />
+            <span title={rule.days} className="flex h-7.5 items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] leading-[normal] font-semibold text-ink-soft">
+              <Moon className="size-3.25 text-ink-muted" strokeWidth={2.25} aria-hidden="true" />
               {t("Rest day")}
             </span>
           ) : counted ? (
             <span className={cn("flex flex-col items-end gap-1", waiting && "opacity-70")}>
               <span className="flex items-center gap-1.5">
-                <button type="button" onClick={() => setCount(habit, value - step)} disabled={waiting || value === 0} aria-label={step === 1 ? t("One less: {name}", { name: habit.name }) : t("{count} less: {name}", { count: count(step), name: habit.name })} className="flex size-8 items-center justify-center rounded-md border border-line-strong bg-surface text-ink-2 hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
+                <button type="button" onClick={() => setCount(habit, value - step)} disabled={waiting || value === 0} aria-label={step === 1 ? t("One less: {name}", { name: habit.name }) : t("{count} less: {name}", { count: count(step), name: habit.name })} className="flex size-7.5 items-center justify-center rounded-sm border border-input bg-surface text-ink-soft hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
                   <Minus className="size-3.5" aria-hidden="true" />
                 </button>
-                <AmountPopover name={habit.name} value={value} target={target} unit={habit.unit} disabled={waiting} onSave={(next) => setCount(habit, next)} triggerClassName="flex h-8 min-w-12 items-center justify-center px-1 text-center text-body font-bold text-ink pointer-coarse:h-11">
+                <AmountPopover name={habit.name} value={value} target={target} unit={habit.unit} disabled={waiting} onSave={(next) => setCount(habit, next)} triggerClassName="flex h-7.5 min-w-11 items-center justify-center px-1 text-center text-body font-bold text-ink pointer-coarse:h-11">
                   {count(value)} / {count(target)}
                 </AmountPopover>
-                <button type="button" onClick={() => setCount(habit, value + step)} disabled={waiting} aria-label={step === 1 ? t("One more: {name}", { name: habit.name }) : t("{count} more: {name}", { count: count(step), name: habit.name })} className={cn("flex size-8 items-center justify-center rounded-md bg-current disabled:opacity-60 pointer-coarse:size-11", tone.fg)}>
+                <button type="button" onClick={() => setCount(habit, value + step)} disabled={waiting} aria-label={step === 1 ? t("One more: {name}", { name: habit.name }) : t("{count} more: {name}", { count: count(step), name: habit.name })} className={cn("flex size-7.5 items-center justify-center rounded-sm bg-current disabled:opacity-60 pointer-coarse:size-11", tone.fg)}>
                   <Plus className="size-3.5 text-surface" aria-hidden="true" />
                 </button>
               </span>
@@ -301,9 +303,9 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               </span>
             </span>
           ) : (
-            <span className="flex items-center gap-3">
+            <span className="flex items-center gap-2.5">
               {weekly && <span className="text-caption font-normal whitespace-nowrap text-ink-muted max-sm:hidden">{weekly}</span>}
-              <button type="button" onClick={() => toggle(habit)} disabled={waiting} aria-pressed={!!log?.completed} aria-label={log?.completed ? t("{name}, done. Tap to undo", { name: habit.name }) : t("Mark {name} as done", { name: habit.name })} className={cn("flex size-9 items-center justify-center rounded-full transition-colors pointer-coarse:size-11", log?.completed ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface text-ink-muted hover:border-emerald hover:text-emerald", waiting && "opacity-70")}>
+              <button type="button" onClick={() => toggle(habit)} disabled={waiting} aria-pressed={!!log?.completed} aria-label={log?.completed ? t("{name}, done. Tap to undo", { name: habit.name }) : t("Mark {name} as done", { name: habit.name })} className={cn("flex size-9 items-center justify-center rounded-full transition-colors pointer-coarse:size-11", log?.completed ? "bg-emerald text-on-action" : "border-[1.5px] border-input bg-surface text-ink-faint hover:border-emerald hover:text-emerald", waiting && "opacity-70")}>
                 <Check className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
               </button>
             </span>
@@ -322,26 +324,25 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         description={t("Small things you repeat. Tick them off as you go and the streaks build on their own.")}
         actions={
           <>
-            <div role="group" aria-label={t("Day")} className="relative flex h-10 items-center overflow-hidden rounded-md border border-line-strong bg-surface pointer-coarse:h-11">
-              <button type="button" onClick={() => goTo(shiftDay(day, -1))} aria-label={t("Previous day")} className="flex h-full w-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken pointer-coarse:w-11">
+            <div role="group" aria-label={t("Day")} className="relative flex h-10 items-center overflow-hidden rounded-sm border border-input bg-surface pointer-coarse:h-11">
+              <button type="button" onClick={() => goTo(shiftDay(day, -1))} aria-label={t("Previous day")} className="flex h-full w-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:w-11">
                 <ChevronLeft className="size-4" aria-hidden="true" />
               </button>
-              <button type="button" onClick={openPicker} aria-label={t("Pick a day: {day}", { day: dayText(day, locale, "full") })} className="flex h-full items-center gap-2 border-x border-line px-3 text-body font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
-                <CalendarDays className="size-4 text-ink-muted" aria-hidden="true" />
-                {isToday ? t("Today, {date}", { date: dayText(day, locale, "short") }) : dayText(day, locale, "short")}
+              <button type="button" onClick={openPicker} aria-label={t("Pick a day: {day}", { day: dayText(day, fmt, "full") })} className="flex h-full items-center px-2.5 text-body font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
+                {isToday ? t("Today, {date}", { date: dayText(day, fmt, "short") }) : dayText(day, fmt, "short")}
               </button>
               {/* The browser's own date picker; the button above opens it. */}
-              <input ref={picker} type="date" value={day} max={today} onChange={(event) => event.target.value && event.target.value <= today && goTo(event.target.value)} aria-label={t("Pick a day: {day}", { day: dayText(day, locale, "full") })} tabIndex={-1} className="sr-only" />
-              <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex h-full w-9.5 items-center justify-center text-ink-2 hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40 pointer-coarse:w-11">
+              <input ref={picker} type="date" value={day} max={today} onChange={(event) => event.target.value && event.target.value <= today && goTo(event.target.value)} aria-label={t("Pick a day: {day}", { day: dayText(day, fmt, "full") })} tabIndex={-1} className="sr-only" />
+              <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex h-full w-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken disabled:cursor-not-allowed disabled:text-input pointer-coarse:w-11">
                 <ChevronRight className="size-4" aria-hidden="true" />
               </button>
             </div>
             {!isToday && (
-              <Button variant="secondary" onClick={() => goTo(today)} className="pointer-coarse:h-11">
+              <Button variant="secondary" onClick={() => goTo(today)} className="rounded-sm pointer-coarse:h-11">
                 {t("Back to today")}
               </Button>
             )}
-            <Button onClick={() => setDrawer({ open: true, editing: null })} className="pointer-coarse:h-11">
+            <Button onClick={() => setDrawer({ open: true, editing: null })} className="rounded-sm pointer-coarse:h-11">
               <Plus strokeWidth={2.25} />
               {t("Add habit")}
             </Button>
@@ -352,8 +353,8 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
       {/* Two by two on a phone, so the habits start on the first screen. */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={isToday ? t("Done today") : t("Done on {date}", { date: dayShort })} value={t("{done} of {total}", { done: count(done.length), total: count(planned.length) })} sub={<span className="block truncate">{openLine}</span>} />
-        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Longest streak now")} value={longest && longest.streak > 0 ? streakText(longest.habit, longest.streak, t, locale) : "—"} sub={<span className="block truncate">{longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running")}</span>} />
-        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Last 30 days")} value={planned30 > 0 ? `${count(Math.min(100, Math.round((done30 / planned30) * 100)))}%` : "—"} sub={t("{done} of {total} planned check-ins", { done: count(done30), total: count(planned30) })} />
+        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Longest streak now")} value={longest && longest.streak > 0 ? streakText(longest.habit, longest.streak, t, fmt) : "—"} sub={<span className="block truncate">{longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running")}</span>} />
+        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={redigit(t("Last 30 days"), fmt)} value={planned30 > 0 ? `${count(Math.min(100, Math.round((done30 / planned30) * 100)))}%` : "—"} sub={t("{done} of {total} planned check-ins", { done: count(done30), total: count(planned30) })} />
         <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Perfect days")} value={t("{done} of {total}", { done: count(perfect), total: count(30) })} sub={t("Every planned habit done")} />
       </div>
 
@@ -363,11 +364,12 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         <div className="grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_340px]">
           <ListCard
             id={LIST_ID}
+            className="rounded-md"
             label={t("Your habits")}
             header={
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-4 md:px-6">
-                <h2 className="text-title text-ink">{t("Your habits")}</h2>
-                <span className="text-small text-ink-muted">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-3.5 md:px-5">
+                <h2 className="text-title leading-[normal] font-semibold text-ink">{t("Your habits")}</h2>
+                <span className="text-[12.5px] leading-[normal] text-ink-muted">
                   {[t(isToday ? "{count} planned today" : "{count} planned that day", { count: count(planned.length) }), resting > 0 ? t("{count} resting", { count: count(resting) }) : null].filter(Boolean).join(" · ")}
                 </span>
               </div>
@@ -376,12 +378,12 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               <ListFooter>
                 {active.length > STEP && <LoadMore shown={Math.min(shown, active.length)} total={active.length} step={STEP} onMore={() => setShown((value) => value + STEP)} onLess={shown >= active.length ? () => setShown(STEP) : undefined} focusTargetId={LIST_ID} />}
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption font-normal text-ink-2">
+                  <span className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-caption font-normal text-ink-soft">
                     <span className="flex items-center gap-1">
                       <span className="size-2.5 rounded-full bg-emerald" /> {t("Done")}
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="size-2.5 rounded-full bg-expense-soft" /> {t("Missed")}
+                      <span className="size-2.5 rounded-full bg-expense-line" /> {t("Missed")}
                     </span>
                     <span className="flex items-center gap-1">
                       <span className="size-2.5 rounded-full border-[1.5px] border-line bg-surface" /> {t("Not planned")}
@@ -391,7 +393,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
                     </span>
                   </span>
                   {archived.length > 0 && (
-                    <button type="button" aria-expanded={showArchived} onClick={() => setShowArchived(!showArchived)} className="flex min-h-9 items-center font-semibold text-ink-2 hover:text-ink pointer-coarse:min-h-11">
+                    <button type="button" aria-expanded={showArchived} onClick={() => setShowArchived(!showArchived)} className="flex min-h-9 items-center text-small font-semibold text-ink-soft hover:text-ink pointer-coarse:min-h-11">
                       {showArchived ? t("Hide archived") : t("Archived habits ({count})", { count: count(archived.length) })}
                     </button>
                   )}
@@ -402,9 +404,9 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
             <ListHead columns={COLUMNS}>
               <ListHeadCell>{t("Habit")}</ListHeadCell>
               <ListHeadCell aria-label={t("This week")} className="flex justify-between px-0.5">
-                {week.map((d, i) => (
-                  <span key={d} aria-hidden="true" className={cn("w-4.5 text-center", d === day && "rounded-sm bg-white/18 font-bold text-white")}>
-                    {t(WEEKDAY_INITIAL[(WEEK_START + i) % 7])}
+                {week.map((d) => (
+                  <span key={d} aria-hidden="true" className={cn("w-4.5 text-center", d === day && "font-bold text-emerald")}>
+                    {t(WEEKDAY_INITIAL[weekdayOf(d)])}
                   </span>
                 ))}
               </ListHeadCell>

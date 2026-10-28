@@ -20,7 +20,10 @@ export interface CustomerAnnouncement {
 export interface PublicPlatformInfo {
   platformName: string;
   supportEmail: string;
-  maintenance: { enabled: boolean; message: string };
+  // Admin > Settings "Allow new sign-ups"; missing (an older API) means open.
+  signupsOpen?: boolean;
+  // messageBn: the Bangla the admin typed, if any.
+  maintenance: { enabled: boolean; message: string; messageBn?: string | null };
 }
 
 export interface PlatformInfo extends PublicPlatformInfo {

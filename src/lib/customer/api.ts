@@ -45,14 +45,64 @@ export interface CurrentUser {
   passwordChangedAt: string | null;
   // False for a Google-only account, which has no password to change yet.
   hasPassword?: boolean;
+  // When the account was opened (the Dashboard's "Since Jan 2025"); absent
+  // from a backend that doesn't send it yet.
+  createdAt?: string;
+  // Whether the address was confirmed from the emailed link.
+  emailVerified?: boolean;
+  // Settings > App > Numbers and dates; absent from an older backend.
+  preferences?: DisplayPreferences;
+  // Settings > Security > Alerts.
+  alerts?: SecurityAlerts;
+  // Settings > App > Reminders' monthly summary email.
+  monthlySummaryEmail?: boolean;
+  // Two-step sign-in with an authenticator app is on.
+  twoFactorEnabled?: boolean;
   businesses: UserBusiness[];
   // Set when this is a super admin's read-only "View as customer" session.
   impersonatedBy?: { name: string; email: string | null } | null;
 }
 
+export type DigitStyle = "LATIN" | "BENGALI";
+export type NumberGrouping = "LAKH" | "INTERNATIONAL";
+export type DateStyle = "D_MMM_YYYY" | "DD_MM_YYYY" | "YYYY_MM_DD";
+export type WeekStart = "SATURDAY" | "SUNDAY" | "MONDAY";
+
+// How amounts and dates are written (PATCH /api/auth/preferences). A null
+// digitStyle follows the language.
+export interface DisplayPreferences {
+  digitStyle: DigitStyle | null;
+  numberGrouping: NumberGrouping;
+  dateStyle: DateStyle;
+  weekStart: WeekStart;
+}
+
+// GET|PATCH /api/auth/alerts. emailReady: the platform can send email now.
+export interface SecurityAlerts {
+  alertNewDevice: boolean;
+  alertFailedTries: boolean;
+  askCodeBeforeReset: boolean;
+  emailReady?: boolean;
+}
+
 // The bell's feed (GET /api/notifications). The text is built in the app
 // from `data` (lib/customer/notificationDisplay.ts), in either language.
-export type UserNotificationType = "BUDGET" | "LOAN_DUE" | "SAVINGS" | "ANNOUNCEMENT" | "SUPPORT_REPLY" | "REMINDER";
+// BILLING, REFERRAL, PAYOUT, SECURITY and IDEA rows say what happened in
+// `data.event`. The backend can add a type (or an event) before the app knows
+// it, so the bell treats any other value as a plain notification.
+export type UserNotificationType =
+  | "BUDGET"
+  | "LOAN_DUE"
+  | "SAVINGS"
+  | "ANNOUNCEMENT"
+  | "SUPPORT_REPLY"
+  | "REMINDER"
+  | "BILLING"
+  | "REFERRAL"
+  | "PAYOUT"
+  | "SECURITY"
+  | "CAMPAIGN"
+  | "IDEA";
 
 export interface UserNotification {
   id: string;
@@ -74,6 +124,10 @@ export interface ReminderPreferences {
   budget: boolean;
   loans: boolean;
   savings: boolean;
+  // The monthly summary email; left as it is when not sent.
+  monthlySummaryEmail?: boolean;
+  // Read only: whether the platform can send email yet.
+  emailReady?: boolean;
 }
 
 // Habit-area reminders (/api/reminders): a time to be told about a habit, a
@@ -1200,8 +1254,10 @@ export interface HabitStat {
   // (days, or weeks for a weekly-count habit); never below currentStreak.
   bestStreak?: number;
   last30DaysCompleted: number;
-  // Against 30 days; the UI recomputes it against the planned days.
-  completionRate: number;
+  // Share of the planned days in the last 30 (null when none were planned);
+  // the UI still works its own % out from the month logs.
+  completionRate: number | null;
+  last30DaysPlanned?: number;
 }
 
 // GET /api/habits/month?month=YYYY-MM: every habit (archived too) and the
@@ -1258,7 +1314,8 @@ export interface BooksOverview {
   goalTarget: number | null; // this year's "finish N books" goal
   books: Book[];
   // Days in a row with pages read (up to yesterday while today has none
-  // yet), the best run, and Saturday to Friday of this week.
+  // yet), the best run, and this week from the reader's first day (Saturday
+  // unless they chose another).
   reading: { streak: number; best: number; week: ReadingDay[] };
   // Pages read today in each book that has any, by book id.
   pagesToday: Record<string, number>;

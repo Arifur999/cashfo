@@ -2,9 +2,9 @@
 // them and whether they balance, an account's ledger figures, the customers
 // and suppliers with what is due, the age of what is owed, and a journal
 // entry's two columns. Pure, so the pages and their tests agree.
-import { banglaDayMonth, banglaShortDay, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { formatDay } from "@/lib/date";
+import { type FormatLocale, numericDates } from "@/lib/i18n/formatPrefs";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import { accountDisplayName } from "./accountDisplay";
 import type { Account, AccountGroup, AccountLedger, AccountSummary, AccountType, AgingBucketRow, AgingReport, Contact, ContactBalanceDetail, ContactStatementEntry, ContactType, DirectionBreakdown, InvoiceBreakdown, LanguagePreference, LedgerRow, OverdueRow, Transaction } from "./api";
 import { formatDate } from "./date";
@@ -236,21 +236,19 @@ export interface BooksDateOptions {
 }
 
 // A Books date in the reader's words: "Mon, 3 Jun" this year, "Mon, 3 Jun
-// 2025" before it, "সোম, ৩ জুন" in Bangla, in the platform timezone. Noon
-// UTC stands for the day, so no timezone moves it.
-export function booksDate(value: string, locale: Locale, { today, weekday = false, year = "auto" }: BooksDateOptions = {}): string {
+// 2025" before it, "সোম, ৩ জুন" in Bangla, the day in the platform
+// timezone. With the reader's Fmt, their digits, and their date style for a
+// day with its year ("Mon, 03/06/2025"); a numbered style always names the
+// year, so a list never mixes "3 Jun" with "03/06/2025".
+export function booksDate(value: string, locale: FormatLocale, { today, weekday = false, year = "auto" }: BooksDateOptions = {}): string {
   const day = formatDate(value, "yyyy-MM-dd");
-  const showYear = year === "always" || (year === "auto" && (!today || today.slice(0, 4) !== day.slice(0, 4)));
-  if (locale === "bn") {
-    const words = weekday ? banglaShortDay(day) : banglaDayMonth(day);
-    return showYear ? `${words} ${toBanglaDigits(day.slice(0, 4))}` : words;
-  }
-  return formatDate(`${day}T12:00:00.000Z`, `${weekday ? "EEE, " : ""}d MMM${showYear ? " yyyy" : ""}`);
+  const showYear = year === "always" || (year === "auto" && (!today || today.slice(0, 4) !== day.slice(0, 4) || numericDates(locale)));
+  return formatDay(day, `${weekday ? "EEE, " : ""}d MMM${showYear ? " yyyy" : ""}`, locale);
 }
 
 // "1 Sep – 2 Oct 2026": the span a period covers, in the reader's words.
-export function booksRange(from: string | undefined, to: string | undefined, locale: Locale): string | null {
-  if (from && to) return `${booksDate(from, locale, { year: from.slice(0, 4) === to.slice(0, 4) ? "never" : "always" })} – ${booksDate(to, locale, { year: "always" })}`;
+export function booksRange(from: string | undefined, to: string | undefined, locale: FormatLocale): string | null {
+  if (from && to) return `${booksDate(from, locale, { year: from.slice(0, 4) === to.slice(0, 4) && !numericDates(locale) ? "never" : "always" })} – ${booksDate(to, locale, { year: "always" })}`;
   const one = from ?? to;
   return one ? booksDate(one, locale, { year: "always" }) : null;
 }

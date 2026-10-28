@@ -3,14 +3,19 @@
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { type FillValues, fillText } from "./fill";
+import { type Fmt, type FormatPreferences, resolveFmt } from "./formatPrefs";
 import { inEnglish } from "./message";
 import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE_SECONDS } from "./localeCookie";
 import { type DictionaryScope, translate as translateTo, type Locale, type TranslationOverrides } from "./translate";
 
-export type { Locale };
+export type { Fmt, Locale };
 
 interface LocaleContextValue {
   locale: Locale;
+  // The reader's language with their Settings choices (digits, grouping,
+  // date style, week start), for the formatters: formatCurrency(x, "BDT", fmt).
+  // Without saved choices it writes exactly what `locale` does.
+  fmt: Fmt;
   toggleLocale: () => void;
   // One function, two names: the admin panel calls it translate(), the
   // customer app t(). Values fill the sentence's {placeholders} after it is
@@ -25,6 +30,7 @@ const fillIn = (text: string, values?: FillValues) => (values ? fillText(text, v
 // readable English instead of a crash.
 const fallbackContext: LocaleContextValue = {
   locale: "en",
+  fmt: resolveFmt(null, "en"),
   toggleLocale: () => {},
   translate: inEnglish,
   t: inEnglish,
@@ -41,10 +47,15 @@ interface LocaleProviderProps {
   overrides?: TranslationOverrides;
   // "admin" in the admin panel, so its own wording wins there.
   scope?: DictionaryScope;
+  // The customer's saved number and date choices (GET /api/auth/me
+  // preferences): the same ones the layout's Server Components read through
+  // getFmt(), so both print the same text. Left out (the admin panel), every
+  // formatter writes as the language does.
+  preferences?: FormatPreferences | null;
   children: React.ReactNode;
 }
 
-export function LocaleProvider({ initialLocale = "en", overrides, scope = "app", children }: LocaleProviderProps) {
+export function LocaleProvider({ initialLocale = "en", overrides, scope = "app", preferences = null, children }: LocaleProviderProps) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const router = useRouter();
 
@@ -67,7 +78,11 @@ export function LocaleProvider({ initialLocale = "en", overrides, scope = "app",
     (key: string, values?: FillValues) => fillIn(translateTo(locale, key, overrides, scope), values),
     [locale, overrides, scope],
   );
-  const value = useMemo(() => ({ locale, toggleLocale, translate, t: translate }), [locale, toggleLocale, translate]);
+  // Keyed on the choices themselves, not the object: every server render
+  // hands down a new one with the same values.
+  const { digitStyle, numberGrouping, dateStyle, weekStart } = preferences ?? {};
+  const fmt = useMemo(() => resolveFmt({ digitStyle, numberGrouping, dateStyle, weekStart }, locale), [digitStyle, numberGrouping, dateStyle, weekStart, locale]);
+  const value = useMemo(() => ({ locale, fmt, toggleLocale, translate, t: translate }), [locale, fmt, toggleLocale, translate]);
 
   return (
     <LocaleContext.Provider value={value}>

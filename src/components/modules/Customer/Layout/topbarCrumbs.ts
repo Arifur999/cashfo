@@ -4,8 +4,8 @@ import { leafHref } from "@/lib/customer/paletteMatch";
 // What the bar reads the URL's query through (useSearchParams() answers it).
 type UrlQuery = { get(name: string): string | null; toString(): string };
 
-// The top bar's breadcrumb as links: a section ("Money", "Books") is only a
-// heading, a group ("Wallets") opens its first page, and on a record page
+// The top bar's breadcrumb as links: a section ("Habits", "Books") is only a
+// heading, a group ("Balance") opens its first page, and on a record page
 // the list it came from ("Transactions") opens again as it was left (its
 // filters and page), from the address the bar saved on the way in, in this
 // workspace.
@@ -86,11 +86,14 @@ export function recordListHref(location: NavLocation, visitUrl: string | null, l
 
 // The parts before the page's own name. `listUrl` is where a record page's
 // list crumb goes (recordListHref); without a record the trail is the
-// section and group alone. `linkList: false` leaves the list as text, for
-// a record whose list crumb has nowhere to go (recordListHref's null).
+// group or section alone. A record under a page of its own leads with that
+// page, not its section ("Group Expense › Flat 4B"). `linkList: false`
+// leaves the list as text, for a record whose list crumb has nowhere to go
+// (recordListHref's null).
 export function topbarTrail(location: NavLocation, record: boolean, listUrl?: string, { linkList = true }: { linkList?: boolean } = {}): TopbarCrumb[] {
   const { crumbs, heading } = breadcrumbFor(location);
-  const trail: TopbarCrumb[] = crumbs.map((label) => (location.sub && label === location.item.label ? { label, href: leafHref(location.item) } : { label }));
+  const above = record && !location.sub ? [] : crumbs;
+  const trail: TopbarCrumb[] = above.map((label) => (location.sub && label === location.item.label ? { label, href: leafHref(location.item) } : { label }));
   if (record) trail.push(linkList ? { label: heading, href: listUrl ?? leafHref(listOf(location)) } : { label: heading });
   return trail;
 }

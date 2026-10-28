@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anek_Bangla, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Hind_Siliguri, Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import AppToaster from "@/components/smartly/AppToaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,18 +10,19 @@ import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import QueryProvider from "./providers/QueryProvider";
 import "./globals.css";
 
-// The Smartly type system: Plus Jakarta Sans for everything, Anek Bangla for
-// Bangla text (LocaleProvider adds font-bn in Bangla), JetBrains Mono for
-// references, account numbers and codes. All three are variable fonts, so
-// every weight the design uses comes from one file each.
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
+// The type system: Inter for everything, Hind Siliguri for Bangla text
+// (LocaleProvider adds font-bn in Bangla), JetBrains Mono for references,
+// account numbers and codes. Inter is variable; Hind Siliguri comes in the
+// four weights the design uses.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const anekBangla = Anek_Bangla({
-  variable: "--font-anek-bangla",
+const hindSiliguri = Hind_Siliguri({
+  variable: "--font-hind-siliguri",
   subsets: ["bengali", "latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
 // The browser bar in the page's own colour: globals.css's --page, light and dark.
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f6f4" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f5" },
     { media: "(prefers-color-scheme: dark)", color: "#08120e" },
   ],
 };
@@ -63,7 +64,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     // before React hydrates, which the server couldn't know about.
     <html
       lang={locale}
-      className={`${jakarta.variable} ${anekBangla.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${hindSiliguri.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

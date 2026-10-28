@@ -59,7 +59,7 @@ const COLUMNS = "@[44rem]:grid-cols-[96px_minmax(0,1fr)_120px_112px_120px]";
 // is owed after each. Page 1 opens on what was owed from before Books,
 // later pages on what the pages before brought forward.
 export function StatementTable({ id, rows, side, currency, today, paging, hrefFor, opening = 0, truncated = false }: StatementTableProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const columns = STATEMENT_COLUMNS[side];
   // A supplier's statement reads as what you owe, so the sign flips.
   const sign = side === "supplier" ? -1 : 1;
@@ -83,8 +83,8 @@ export function StatementTable({ id, rows, side, currency, today, paging, hrefFo
   // green with a plus, out to them in red with a minus. A cancelled row's
   // figure no longer counts, so it is set back and struck through.
   const amountClass = (row: StatementRow, tone: string) => cn("font-bold tabular-nums whitespace-nowrap", row.cancelled ? "text-ink-muted line-through" : tone);
-  const paidAmount = (row: StatementRow) => (row.kind === "received" ? <span className={amountClass(row, "text-income")}>{formatSignedCurrency(row.amount, currency, locale)}</span> : <span className={amountClass(row, "text-expense")}>{formatSignedCurrency(-row.amount, currency, locale)}</span>);
-  const creditAmount = (row: StatementRow) => <span className={amountClass(row, "text-ink")}>{formatCurrency(row.amount, currency, locale)}</span>;
+  const paidAmount = (row: StatementRow) => (row.kind === "received" ? <span className={amountClass(row, "text-income")}>{formatSignedCurrency(row.amount, currency, fmt)}</span> : <span className={amountClass(row, "text-expense")}>{formatSignedCurrency(-row.amount, currency, fmt)}</span>);
+  const creditAmount = (row: StatementRow) => <span className={amountClass(row, "text-ink")}>{formatCurrency(row.amount, currency, fmt)}</span>;
 
   const footer =
     paging && paging.total > 0 ? (
@@ -93,7 +93,7 @@ export function StatementTable({ id, rows, side, currency, today, paging, hrefFo
       </ListFooter>
     ) : truncated ? (
       <ListFooter>
-        <p>{t("Showing the newest {count} postings.", { count: formatCount(rows.length, locale) })}</p>
+        <p>{t("Showing the newest {count} postings.", { count: formatCount(rows.length, fmt) })}</p>
       </ListFooter>
     ) : null;
 
@@ -117,7 +117,7 @@ export function StatementTable({ id, rows, side, currency, today, paging, hrefFo
       {rows.map((row) => {
         const credit = row.kind === "sale" || row.kind === "purchase";
         const sub = credit ? row.note : [row.wallet, row.note].filter(Boolean).join(" · ");
-        const date = booksDate(row.date, locale, { today, weekday: true });
+        const date = booksDate(row.date, fmt, { today, weekday: true });
         return (
           <ListRow key={row.id} columns={COLUMNS} muted={row.cancelled}>
             <ListCell className="hidden text-small text-ink-2 @[44rem]:block">{date}</ListCell>

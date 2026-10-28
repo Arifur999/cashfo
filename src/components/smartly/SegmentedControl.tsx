@@ -6,48 +6,53 @@ import { cn } from "@/lib/utils";
 export interface SegmentOption<T extends string> {
   value: T;
   label: React.ReactNode;
-  // Bangla labels declare their language so the Anek face is used.
+  // Bangla labels declare their language so the Bangla face is used.
   lang?: string;
   // A coloured dot before the label (Income / Expense filters).
   dot?: string;
   icon?: React.ReactNode;
 }
 
+// The chosen segment's lift: white with the button shadow.
+const LIFT = "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(18,32,29,0.10)] dark:bg-surface-raised dark:shadow-[0_0_0_1px_var(--line-strong)]";
+
+// design-v4: every segment is a 30px pill.
 const VARIANTS = {
-  // The EN / বাংলা switch: a pill with a white thumb. Its Bangla label is
-  // set a size up and lighter, as the boards draw it.
+  // The EN / বাংলা switch and a period switch: a sunken pill track with a
+  // white thumb. A Bangla label is set a size up, as the boards draw it.
   pill: {
     group: "rounded-full bg-surface-sunken p-0.75",
-    item: "h-8.5 rounded-full px-3 text-small font-semibold [&[lang=bn]]:text-body [&[lang=bn]]:font-medium",
-    on: "bg-surface text-ink shadow-[0_1px_2px_rgba(14,26,22,0.08)] dark:bg-surface-raised dark:shadow-[0_0_0_1px_var(--line-strong)]",
-    off: "text-ink-2 hover:text-ink",
+    item: "h-7.5 rounded-full px-3 text-small font-medium [&[lang=bn]]:text-body",
+    on: LIFT,
+    off: "text-ink-soft hover:text-ink",
   },
-  // Filter tabs inside a toolbar.
+  // Filter tabs inside a toolbar (AdminUsers' status, Transactions' type):
+  // a strip track with a line round it and 9px corners.
   tabs: {
-    group: "rounded-md bg-surface-sunken p-0.75",
-    item: "h-8 rounded-sm px-3 text-small font-medium",
-    on: "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(11,61,46,0.14)] dark:bg-surface-raised",
-    off: "text-ink-2 hover:text-ink",
+    group: "rounded-[9px] border border-line bg-strip p-0.75",
+    item: "h-7.5 rounded-full px-2.75 text-small font-medium",
+    on: LIFT,
+    off: "text-ink-soft hover:text-ink",
   },
   // Filter tabs on a white toolbar: the chosen one goes mint (People & banks).
   soft: {
-    group: "rounded-md border border-line bg-surface p-1",
-    item: "h-7.5 rounded-sm px-3 text-small font-medium",
-    on: "bg-mint-50 font-semibold text-emerald",
-    off: "text-ink-2 hover:text-ink",
+    group: "rounded-full border border-line bg-surface p-0.75",
+    item: "h-7.5 rounded-full px-3 text-small font-medium",
+    on: "bg-mint-50 font-semibold text-brand-ink",
+    off: "text-ink-soft hover:text-ink",
   },
   // Period tabs on white: the chosen one goes forest.
   solid: {
-    group: "rounded-md border border-line bg-surface p-0.75",
-    item: "h-8 rounded-sm px-3 text-small font-medium",
+    group: "rounded-full border border-line bg-surface p-0.75",
+    item: "h-7.5 rounded-full px-3 text-small font-medium",
     on: "bg-forest font-semibold text-white dark:bg-emerald dark:text-on-action",
-    off: "text-ink-2 hover:bg-surface-sunken hover:text-ink",
+    off: "text-ink-soft hover:bg-surface-sunken hover:text-ink",
   },
   // On the Night drawer.
   onDark: {
     group: "rounded-full bg-white/8 p-0.75",
     // The page's green focus ring hardly shows on the night panel; mint does.
-    item: "h-8 rounded-full px-3 text-small font-semibold focus-visible:outline-mint-200 focus-visible:-outline-offset-2 [&[lang=bn]]:text-body [&[lang=bn]]:font-normal",
+    item: "h-7.5 rounded-full px-3 text-small font-semibold focus-visible:outline-mint-200 focus-visible:-outline-offset-2 [&[lang=bn]]:text-body [&[lang=bn]]:font-normal",
     on: "bg-white text-ink",
     off: "text-white hover:bg-white/10",
   },
@@ -55,9 +60,10 @@ const VARIANTS = {
 
 export type SegmentVariant = keyof typeof VARIANTS;
 
-// "touch" makes 34px segments for a phone page's tabs (Loans); "lg" stands
-// 44px tall beside a 44px field (the Statement's Period); "coarse" keeps
-// md's size for a mouse and grows to 44px under a finger.
+// "touch" makes 34px segments for a phone page's tabs (Loans); "lg" 36px
+// ones, so the control stands 44px tall beside a 44px field (the
+// Statement's Period); "coarse" keeps md's size for a mouse and grows to
+// 44px under a finger.
 export type SegmentSize = "md" | "touch" | "lg" | "coarse";
 
 const SIZES: Record<SegmentSize, string | undefined> = {

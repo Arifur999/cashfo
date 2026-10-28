@@ -1,6 +1,6 @@
 "use client";
 
-import { ListPlus, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import Button from "@/components/smartly/Button";
 import PageFrame from "@/components/smartly/PageFrame";
@@ -33,7 +33,7 @@ interface HabitsHomePageClientProps {
 // the book (and Ramadan while it is going on); the week, streaks, skills and
 // challenges wait for a wider screen.
 export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const { today } = data;
   const [habitOpen, setHabitOpen] = useState(false);
@@ -47,30 +47,28 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   return (
     <PageFrame className="md:gap-5">
       <div className="flex flex-col gap-0.5 md:hidden">
-        <h1 className="text-h2 leading-[1.3] font-semibold tracking-[-0.01em] text-ink">{t("{greeting}, {name}", { greeting: t(data.greeting), name: data.firstName })}</h1>
+        <h1 className="text-[20px] leading-[1.3] font-semibold tracking-[-0.01em] text-ink">{t("{greeting}, {name}", { greeting: t(data.greeting), name: data.firstName })}</h1>
         <p className="text-small leading-[normal] text-ink-muted">
-          {dayText(today, locale, "short")} · {hijriDate(today, locale, hijriAdjust)}
+          {dayText(today, fmt, "short")} · {hijriDate(today, fmt, hijriAdjust)}
         </p>
       </div>
       <PageHeader
         className="max-md:hidden"
-        eyebrow={t("Habits")}
-        tone="habits"
-        title={t("Today")}
+        title={t("{greeting}, {name}", { greeting: t(data.greeting), name: data.firstName })}
         description={
           <span className="flex flex-wrap items-center gap-x-2">
-            {dayText(today, locale, "full")}
-            <span aria-hidden="true" className="size-1 rounded-full bg-ink-faint" />
-            {hijriDate(today, locale, hijriAdjust)}
+            {dayText(today, fmt, "full")}
+            <span aria-hidden="true" className="size-1 rounded-full bg-input" />
+            {hijriDate(today, fmt, hijriAdjust)}
           </span>
         }
         actions={
           <>
-            <Button variant="secondary" onClick={() => taskField.current?.focus()}>
-              <ListPlus />
+            <Button variant="secondary" onClick={() => taskField.current?.focus()} className="rounded-sm">
+              <Plus strokeWidth={2.25} />
               {t("Add task")}
             </Button>
-            <Button onClick={() => setHabitOpen(true)}>
+            <Button onClick={() => setHabitOpen(true)} className="rounded-sm">
               <Plus strokeWidth={2.25} />
               {t("Add habit")}
             </Button>
@@ -83,7 +81,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
           status chips ("Not prayed", "Jama'at"), so the habits go under. */}
       <div className="grid items-stretch gap-4 md:gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_372px]">
         <PrayersCard trackers={data.namaz} today={today} />
-        <DailyHabitsCard rows={data.todayRows} resting={restingToday(data.habits, today)} today={today} onAddHabit={() => setHabitOpen(true)} />
+        <DailyHabitsCard rows={data.todayRows} logs={data.logs} resting={restingToday(data.habits, today)} today={today} />
       </div>
 
       <div className="grid items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3">

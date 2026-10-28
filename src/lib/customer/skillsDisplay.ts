@@ -2,8 +2,8 @@
 // minutes), the week of practice per skill, the streak and this year's
 // goal. Pure, so the page and its tests agree.
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import type { Skill, SkillStatus, SkillUnit, SkillWeekDay } from "./api";
 import { dayText, shiftDay, WEEKDAY_LONG, weekdayOf } from "./habitDisplay";
 
@@ -50,15 +50,16 @@ export function parseHours(text: string): number | null {
 export const hoursInput = (minutes: number): string => String(Number((minutes / 60).toFixed(2)));
 
 // The one quick-add button on a learning card, per unit. `amount` is in the
-// skill's own unit; `label` is a dictionary key.
-export const QUICK_ADD: Record<SkillUnit, { amount: number; label: string }> = {
-  LESSONS: { amount: 1, label: "+1 lesson" },
-  HOURS: { amount: 30, label: "+30 min" },
+// skill's own unit; `label` is a dictionary key, and `short` the words the
+// Skills board sets after the button's plus icon.
+export const QUICK_ADD: Record<SkillUnit, { amount: number; label: string; short: string }> = {
+  LESSONS: { amount: 1, label: "+1 lesson", short: "1 lesson" },
+  HOURS: { amount: 30, label: "+30 min", short: "30 min" },
 };
 
 // "2 lessons", "1 lesson", "1.5 hours", "1 hour", "30 min", each one
 // sentence with the number in the reader's digits.
-export function amountText(unit: SkillUnit, amount: number, t: Translate = inEnglish, locale: Locale = "en"): string {
+export function amountText(unit: SkillUnit, amount: number, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   if (unit === "LESSONS") return t(amount === 1 ? "{count} lesson" : "{count} lessons", { count: formatCount(amount, locale) });
   if (amount < 60) return t("{count} min", { count: formatCount(amount, locale) });
   const hours = hoursText(amount);
@@ -66,14 +67,14 @@ export function amountText(unit: SkillUnit, amount: number, t: Translate = inEng
 }
 
 // What a week cell says: "2", "1.5h", "30m", or nothing for an empty day.
-export function cellText(unit: SkillUnit, amount: number, t: Translate = inEnglish, locale: Locale = "en"): string {
+export function cellText(unit: SkillUnit, amount: number, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   if (amount <= 0) return "";
   if (unit === "LESSONS") return formatCount(amount, locale);
   return amount >= 60 ? t("{count}h", { count: toLocaleDigits(hoursText(amount), locale) }) : t("{count}m", { count: formatCount(amount, locale) });
 }
 
 // "18 of 40 lessons", "12 of 30 hours".
-export function progressText(skill: Pick<Skill, "unit" | "progress" | "target">, t: Translate = inEnglish, locale: Locale = "en"): string {
+export function progressText(skill: Pick<Skill, "unit" | "progress" | "target">, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   return skill.unit === "LESSONS"
     ? t("{done} of {total} lessons", { done: formatCount(skill.progress, locale), total: formatCount(skill.target, locale) })
     : t("{done} of {total} hours", { done: toLocaleDigits(hoursText(skill.progress), locale), total: toLocaleDigits(hoursText(skill.target), locale) });
@@ -104,7 +105,7 @@ export function relativeDay(date: string, today: string): "today" | "yesterday" 
 
 // "2 lessons today", "1.5 hours yesterday", "30 min on Sunday"; null when
 // nothing was logged this week.
-export function practiceLine(skill: Pick<Skill, "id" | "unit">, week: SkillWeekDay[], today: string, t: Translate = inEnglish, locale: Locale = "en"): string | null {
+export function practiceLine(skill: Pick<Skill, "id" | "unit">, week: SkillWeekDay[], today: string, t: Translate = inEnglish, locale: FormatLocale = "en"): string | null {
   const last = lastActivity(week, skill.id);
   if (!last) return null;
   const amount = amountText(skill.unit, last.amount, t, locale);
@@ -125,7 +126,7 @@ export function streakStart(streak: number, week: SkillWeekDay[], today: string)
 
 // "Logged every day since Thursday" while the run is under a week, so the
 // weekday can only be this week's; a longer run names the date.
-export function streakSince(since: string, streak: number, t: Translate = inEnglish, locale: Locale = "en"): string {
+export function streakSince(since: string, streak: number, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   const day = streak <= 6 ? t(WEEKDAY_LONG[weekdayOf(since)]) : dayText(since, locale, "dayMonth");
   return t("Logged every day since {day}", { day });
 }
@@ -142,7 +143,7 @@ export const byStatus = (skills: Skill[], status: SkillStatus): Skill[] => skill
 export const completedIn = (skills: Skill[], year: number): Skill[] => skills.filter((skill) => skill.status === "COMPLETED" && skill.completedYear === year);
 
 // "React", "React and Spoken English", "React, Python and 2 more".
-export function namesLine(names: string[], t: Translate = inEnglish, locale: Locale = "en"): string {
+export function namesLine(names: string[], t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   if (names.length <= 1) return names[0] ?? "";
   if (names.length === 2) return t("{first} and {second}", { first: names[0], second: names[1] });
   return t("{first}, {second} and {count} more", { first: names[0], second: names[1], count: formatCount(names.length - 2, locale) });

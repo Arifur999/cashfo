@@ -14,8 +14,11 @@ interface KpiProps {
   // A chip beside the note: "+212", "15.4%".
   chip?: { text: string; tone: ChipTone } | null;
   note?: React.ReactNode;
-  // "sm" is the tighter figure over a list (Coupons): a 22px value.
-  size?: "md" | "sm";
+  // "sm" is the tighter figure over a list (Coupons): a 22px value; "lg"
+  // the dashboard's 30px KPI row.
+  size?: "md" | "sm" | "lg";
+  // The page's one headline figure (the dashboard's MRR): the deep teal card.
+  hero?: boolean;
   // Opens what the figure counts (the failed payments, the open tickets):
   // the whole card is the link, and its edge darkens on hover as an
   // interactive card's does.
@@ -24,18 +27,24 @@ interface KpiProps {
 }
 
 // One figure on an admin page: label, value, and a chip with a note under it.
-const Kpi = ({ label, value, chip, note, size = "md", href, className }: KpiProps) => {
+const Kpi = ({ label, value, chip, note, size = "md", hero = false, href, className }: KpiProps) => {
   const { translate } = useLocale();
   const small = size === "sm";
-  const frame = cn("flex flex-col px-5 py-4", small ? "gap-1" : "gap-2", className);
+  const large = size === "lg";
+  const frame = cn(
+    "flex flex-col px-5",
+    small ? "gap-1 py-4" : large ? "gap-1.5 py-4.5" : "gap-2 py-4",
+    hero && "border-forest bg-forest shadow-[0_8px_24px_color-mix(in_srgb,var(--forest)_22%,transparent)]",
+    className,
+  );
   const figure = (
     <>
-      <span className="text-small text-ink-muted">{translate(label)}</span>
-      <span className={cn("text-ink tabular-nums", small ? "text-h2" : "text-h1")}>{value}</span>
+      <span className={cn("text-small", hero ? "text-mint-200" : "text-ink-muted")}>{translate(label)}</span>
+      <span className={cn("tabular-nums", hero ? "text-white" : "text-ink", small ? "text-h2" : large ? "text-[30px] leading-[normal] font-bold tracking-[-0.03em]" : "text-h1")}>{value}</span>
       {(chip || note) && (
-        <span className={cn("flex items-center gap-2 text-ink-muted", small ? "text-caption" : "text-small")}>
+        <span className={cn("flex items-center gap-1.5", hero ? "text-mint-200" : "text-ink-muted", small ? "text-caption" : large ? "text-[12.5px] leading-[normal]" : "text-small")}>
           {chip && (
-            <Chip tone={chip.tone} size="sm">
+            <Chip tone={chip.tone} size="sm" className={cn(large && "h-auto py-px text-[12.5px]", hero && "bg-mint-200/18 text-mint-50")}>
               {chip.text}
             </Chip>
           )}

@@ -65,8 +65,8 @@ interface FormFieldShellProps {
 
 // The label / description / error wiring every App*Field shares, so each
 // field component only renders its control. Drawn as the design's Field:
-// the 13px semibold label, the hint under the control, the red error with
-// its icon that says how to fix the value.
+// the 14px medium ink label 6px over the control, the hint under it, the red
+// error with its icon that says how to fix the value.
 const FormFieldShell = ({ field, label, aside, description, className, children }: FormFieldShellProps) => {
   const { translate } = useLocale();
   const error = getFieldError(field);
@@ -75,9 +75,9 @@ const FormFieldShell = ({ field, label, aside, description, className, children 
   const descriptionId = `${controlId}-description`;
 
   return (
-    <div className={cn("flex min-w-0 flex-col gap-2", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
       <div className="flex items-center justify-between gap-3">
-        <label id={fieldLabelId(controlId)} htmlFor={controlId} className="text-small font-semibold text-ink-2 select-none">
+        <label id={fieldLabelId(controlId)} htmlFor={controlId} className="text-body font-medium text-ink select-none">
           {typeof label === "string" ? translate(label) : label}
         </label>
         {aside}

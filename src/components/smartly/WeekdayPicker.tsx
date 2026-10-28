@@ -1,6 +1,7 @@
 "use client";
 
-import { WEEK_ORDER, WEEKDAY_LONG, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
+import { WEEKDAY_LONG, WEEKDAY_SHORT } from "@/lib/customer/habitDisplay";
+import { weekdayOrder } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -13,13 +14,14 @@ interface WeekdayPickerProps {
   className?: string;
 }
 
-// The seven days, Saturday first, each one a toggle.
+// The seven days from the reader's first day (Saturday unless they chose
+// another in Settings), each one a toggle.
 const WeekdayPicker = ({ value, onChange, labels = "short", className }: WeekdayPickerProps) => {
-  const { t } = useLocale();
+  const { t, fmt } = useLocale();
   const toggle = (day: number) => onChange(value.includes(day) ? value.filter((each) => each !== day) : [...value, day]);
   return (
     <span role="group" aria-label={t("Days")} className={cn("flex gap-2", className)}>
-      {WEEK_ORDER.map((day) => {
+      {weekdayOrder(fmt).map((day) => {
         const picked = value.includes(day);
         const word = t(WEEKDAY_SHORT[day]);
         return (

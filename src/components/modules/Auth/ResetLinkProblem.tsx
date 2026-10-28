@@ -29,7 +29,7 @@ const ResetLinkProblem = ({ reason }: { reason: keyof typeof COPY }) => {
         <Link2Off />
       </IconTile>
       <AuthHeading title={COPY[reason].title} subtitle={COPY[reason].subtitle} />
-      <Button size="xl" className="w-full" asChild>
+      <Button size="lg" className="w-full" asChild>
         <Link href={FORGOT_PASSWORD_ROUTE}>{translate("Request a new link")}</Link>
       </Button>
       <AuthFooterPrompt prompt="Remembered it?" linkLabel="Back to sign in" href={LOGIN_ROUTE} />

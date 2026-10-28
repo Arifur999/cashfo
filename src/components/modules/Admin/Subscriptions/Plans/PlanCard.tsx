@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Check, MoreHorizontal, Tag, Trash2, X } from "lucide-react";
+import { Archive, Check, Minus, MoreHorizontal, Tag, Trash2, X } from "lucide-react";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
@@ -44,7 +44,7 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
   const blockedBy = figuresKnown ? people : 0;
 
   return (
-    <Card padding="none" elevated={plan.isActive} className={cn("flex flex-col gap-3 p-5", !plan.isActive && "border-dashed")}>
+    <Card padding="none" elevated={plan.isActive} className={cn("flex flex-col gap-3 p-4.5", !plan.isActive && "border-dashed")}>
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-title text-ink">{plan.name}</h2>
         <Chip tone={plan.isActive ? "mint" : "neutral"} size="sm">
@@ -57,39 +57,46 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
           <span className="text-h1 text-ink">{money(plan.price, plan.currency, locale)}</span>
           {period && <span className="text-small text-ink-muted">{period}</span>}
         </span>
-        <span className="text-small text-ink-muted">{trialLine(plan, translate, locale)}</span>
+        <span className="text-[12.5px] text-ink-muted">{trialLine(plan, translate, locale)}</span>
       </div>
 
       {/* Who is on the plan now (its workspaces), not the paid people the
           chart below counts from payments. */}
-      <div className="flex flex-col gap-2 rounded-md bg-strip p-3">
+      <div className="flex flex-col gap-1.5 rounded-[14px] bg-strip px-3 py-2.5">
         <span className="flex justify-between text-small">
-          <b className="font-semibold text-ink">{figuresKnown ? countPhrase(translate, locale, people, "{count} person on it now", "{count} people on it now") : "—"}</b>
+          <b className="font-semibold text-ink">{figuresKnown ? countPhrase(translate, locale, people, "{count} person", "{count} people") : "—"}</b>
           <span className="text-ink-muted">{figuresKnown ? toLocaleDigits(formatPercent(share), locale) : "—"}</span>
         </span>
-        <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken">
+        <span className="h-1.5 overflow-hidden rounded-full bg-line">
           <span className={cn("block h-full rounded-full", planAccentClass(plan.name))} style={{ width: `${figuresKnown ? Math.round(share) : 0}%` }} />
         </span>
         <span className="text-caption text-ink-muted">{figuresKnown ? trialsLine(plan.billingCycle, analytics?.trialing ?? 0, translate, locale) : "—"}</span>
       </div>
 
-      <ul className="flex flex-col gap-2 text-small">
+      {/* The board's list: a dash before a count, a tick before what is
+          included, a pale cross (and faint words) before what isn't. */}
+      <ul className="flex flex-col gap-1.75 text-small">
         {PLAN_NUMERIC_LIMITS.map(({ key, label }) => (
-          <li key={key} className="flex items-center gap-2">
-            <span className="grow text-ink-2">
+          <li key={key} className="flex items-center gap-2 text-ink-2">
+            <Minus className="size-3.5 shrink-0 text-ink-faint" strokeWidth={2.75} aria-hidden="true" />
+            <span className="grow">
               <T>{label}</T>
             </span>
-            <b className="font-semibold text-ink-2 tabular-nums">{limitText(plan.featureLimits[key], translate, locale)}</b>
+            <b className="font-semibold tabular-nums">{limitText(plan.featureLimits[key], translate, locale)}</b>
           </li>
         ))}
         {PLAN_FEATURE_TOGGLES.map(({ key, label }) => {
           const on = plan.featureLimits[key];
           return (
-            <li key={key} className={cn("flex items-center gap-2", on ? "text-ink-2" : "text-ink-muted")}>
+            <li key={key} className={cn("flex items-center gap-2", on ? "text-ink-2" : "text-ink-faint")}>
+              {on ? (
+                <Check className="size-3.5 shrink-0 text-emerald" strokeWidth={2.75} aria-label={translate("Included")} />
+              ) : (
+                <X className="size-3.5 shrink-0 text-input" strokeWidth={2.75} aria-label={translate("Not included")} />
+              )}
               <span className="grow">
                 <T>{label}</T>
               </span>
-              {on ? <Check className="size-4 text-emerald" aria-label={translate("Included")} /> : <X className="size-4" aria-label={translate("Not included")} />}
             </li>
           );
         })}
@@ -97,7 +104,7 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
 
       {canManage && (
         <div className="mt-auto flex gap-2 border-t border-divider pt-3">
-          <Button variant="secondary" size="sm" className="flex-1" onClick={onEdit}>
+          <Button variant="secondary" size="sm" className="flex-1 text-small" onClick={onEdit}>
             <T>Edit plan</T>
           </Button>
           <DropdownMenu>

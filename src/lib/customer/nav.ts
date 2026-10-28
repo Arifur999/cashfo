@@ -1,21 +1,26 @@
 import type { FeatureKey } from "./features";
 import type { WorkspaceType } from "./api";
 
-// The customer app's menu: Home, then the open workspace's pages -- Money,
-// Books (business workspaces only) and Insights, which reviews them -- then
-// the customer's own -- Habits and Vault -- with Invite & earn and Settings
-// at the foot. The order came out of an information-architecture review of
-// the AppSidebar board (2026-10-21): Insights moved up beside the money it
-// reads, To-do moved up under Today (its badge sat below the fold), and
-// Books leads with Customers & suppliers, a shop's daily page. Labels are
+// The customer app's two menus, as the design-v4 boards draw them (2026-10):
+// Money Tracker (AppSidebar) -- Overview, Money, Plan & track, Account --
+// and Habit Tracker (HabitSidebar) -- Overview, Worship, Habits, Plan. Pages
+// under /habit-tracker are the Habit Tracker; every other page is the Money
+// Tracker. Pages the boards leave out of the menu (Books, the insights
+// overview) stay here as hidden sections: their routes keep working, and
+// they keep their tab titles, breadcrumbs and search entries. Labels are
 // the English strings t() translates. Icons are named here and drawn by the
 // sidebar, so this file stays plain data the top bar's breadcrumb and the
 // tab titles (pageTitle.ts) can use too.
 export type NavTone = "money" | "loans" | "habits" | "vault" | "insights" | "neutral";
 
+// Which of the two apps a section belongs to.
+export type NavApp = "money" | "habit";
+
 export type NavIcon =
+  | "dashboard"
   | "home"
   | "transactions"
+  | "balance"
   | "wallet"
   | "budget"
   | "income"
@@ -50,6 +55,9 @@ export interface NavLeaf {
   // Query values href needs: the habit pages share one route and differ
   // by ?category=.
   query?: Record<string, string>;
+  // The page's own name where the menu shortens it ("Referrals" heads its
+  // page as "Referral Program").
+  heading?: string;
 }
 
 export interface NavItem extends NavLeaf {
@@ -63,87 +71,149 @@ export interface NavItem extends NavLeaf {
   // which only its owner or an accountant may do: a staff member isn't
   // shown it.
   workspaceWrite?: boolean;
-  // "todayTasks": the count of open tasks today, shown as a badge.
-  badge?: "todayTasks";
-  // A small tag after the label ("Earn ৳" on Invite & earn).
+  // A count after the label: "todayTasks" the open tasks today,
+  // "habitsToday" today's habits done out of those planned ("3/5").
+  badge?: "todayTasks" | "habitsToday";
+  // A small tag after the label.
   tag?: string;
+  // false: no floating + on this page, though its section has one.
+  quickAdd?: false;
 }
 
 export interface NavSection {
   label?: string;
   tone: NavTone;
+  // "money" when left out.
+  app?: NavApp;
+  // The app's first section ("Overview"): drawn in the menu, but the top
+  // bar's breadcrumb doesn't name it (the boards show just "Dashboard").
+  quiet?: boolean;
+  // Not drawn in the menu: pages the boards leave out, which still need a
+  // name (the tab title, the breadcrumb) and a search entry.
+  hidden?: boolean;
   businessOnly?: boolean;
+  // The phone's floating + for a new transaction shows on its pages.
+  quickAdd?: boolean;
   items: NavItem[];
 }
 
+// The Habit Tracker's name, as the tab title and the search palette add it
+// to a page whose own name the Money Tracker uses too (Dashboard).
+export const HABIT_APP_LABEL = "Habit Tracker";
+export const MONEY_APP_LABEL = "Money Tracker";
+
+// Where each app opens: the top bar's switch goes there.
+export const MONEY_HOME = "/dashboard";
+export const HABIT_HOME = "/habit-tracker";
+
 export const NAV_SECTIONS: NavSection[] = [
-  { tone: "money", items: [{ label: "Home", href: "/dashboard", icon: "home" }] },
+  // ---- Money Tracker (AppSidebar) ----
+  {
+    label: "Overview",
+    tone: "money",
+    quiet: true,
+    quickAdd: true,
+    items: [
+      { label: "Dashboard", href: MONEY_HOME, icon: "dashboard" },
+      { label: "Reports", href: "/reports/detailed", icon: "reports", tone: "insights", quickAdd: false },
+    ],
+  },
   {
     label: "Money",
     tone: "money",
+    quickAdd: true,
     items: [
-      { label: "Transactions", href: "/transactions", icon: "transactions" },
       {
-        label: "Wallets",
-        href: "/balance/overview",
-        icon: "wallet",
-        match: ["/balance"],
+        label: "Income & Expense",
+        href: "/transactions",
+        icon: "transactions",
         subs: [
-          { label: "Balance", href: "/balance/overview" },
-          { label: "My wallets", href: "/balance/wallet" },
-          { label: "Transfer", href: "/balance/transfer" },
-          { label: "Statement", href: "/balance/ledger" },
+          { label: "Transactions", href: "/transactions" },
+          // The budget page lives at /categories; its old address forwards there.
+          { label: "Budget Planning", href: "/categories", match: ["/budget-planning"] },
+          // Income planning became Income sources; its old address forwards here.
+          { label: "Income Category", href: "/income-category", match: ["/income-planning"] },
         ],
       },
-      { label: "Budget", href: "/categories", icon: "budget", match: ["/budget-planning"] },
-      // Income planning became Income sources; its old address forwards here.
-      { label: "Income sources", href: "/income-category", icon: "income", match: ["/income-planning"] },
       {
-        label: "Loans",
+        label: "Balance",
+        href: "/balance/overview",
+        icon: "balance",
+        match: ["/balance"],
+        subs: [
+          { label: "Overview", href: "/balance/overview" },
+          { label: "Balance Transfer", href: "/balance/transfer" },
+          { label: "Ledger", href: "/balance/ledger" },
+          { label: "Wallet", href: "/balance/wallet" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Plan & track",
+    tone: "money",
+    quickAdd: true,
+    items: [
+      {
+        label: "Savings Goals",
+        href: "/savings-goals/dashboard",
+        icon: "savings",
+        match: ["/savings-goals"],
+        subs: [
+          { label: "Dashboard", href: "/savings-goals/dashboard" },
+          { label: "Overview", href: "/savings-goals/overview" },
+          { label: "Wallet", href: "/savings-goals/wallet" },
+          { label: "Transfer", href: "/savings-goals/transfer" },
+        ],
+      },
+      {
+        label: "Assets Management",
+        href: "/assets-management/dashboard",
+        icon: "assets",
+        match: ["/assets-management"],
+        subs: [
+          { label: "Dashboard", href: "/assets-management/dashboard" },
+          { label: "Current Asset list", href: "/assets-management/current" },
+          { label: "Purchase & Sell Asset", href: "/assets-management/purchase-sell" },
+          { label: "Asset update", href: "/assets-management/update" },
+          { label: "Category", href: "/assets-management/category" },
+        ],
+      },
+      {
+        label: "Loan Management",
         href: "/loan-management/dashboard",
         icon: "loans",
         tone: "loans",
         feature: "loan_management",
         match: ["/loan-management"],
         subs: [
-          { label: "Overview", href: "/loan-management/dashboard" },
-          { label: "Payments", href: "/loan-management/transactions" },
-          { label: "Statement", href: "/loan-management/ledger" },
-          { label: "People & banks", href: "/loan-management/bank-person-list" },
+          { label: "Dashboard", href: "/loan-management/dashboard" },
+          { label: "Transactions", href: "/loan-management/transactions" },
+          { label: "Ledger", href: "/loan-management/ledger" },
+          { label: "Contacts", href: "/loan-management/bank-person-list" },
         ],
       },
-      {
-        label: "Savings",
-        href: "/savings-goals/dashboard",
-        icon: "savings",
-        match: ["/savings-goals"],
-        subs: [
-          { label: "Goals", href: "/savings-goals/dashboard" },
-          { label: "Summary", href: "/savings-goals/overview" },
-          { label: "Savings wallets", href: "/savings-goals/wallet" },
-          { label: "Move between goals", href: "/savings-goals/transfer" },
-        ],
-      },
-      {
-        label: "Assets",
-        href: "/assets-management/dashboard",
-        icon: "assets",
-        match: ["/assets-management"],
-        subs: [
-          { label: "Overview", href: "/assets-management/dashboard" },
-          { label: "My assets", href: "/assets-management/current" },
-          { label: "Buy & sell", href: "/assets-management/purchase-sell" },
-          { label: "Update value", href: "/assets-management/update" },
-          { label: "Asset types", href: "/assets-management/category" },
-        ],
-      },
-      { label: "Group expenses", href: "/group-expenses", icon: "group" },
+      { label: "Group Expense", href: "/group-expenses", icon: "group" },
     ],
   },
+  // "@@user": plain "Account" is Bangla's হিসাব, a ledger account, not the
+  // customer's.
+  {
+    label: "Account@@user",
+    tone: "neutral",
+    items: [
+      { label: "Referrals", heading: "Referral Program", href: "/referrals", icon: "gift" },
+      { label: "Password Manager", href: "/password-manager", icon: "vault", tone: "vault" },
+    ],
+  },
+  // Not in the boards' menu: a business workspace's books, and the insights
+  // overview. Reached from their pages' own links and the search palette.
   {
     label: "Books",
     tone: "neutral",
+    hidden: true,
     businessOnly: true,
+    quickAdd: true,
     items: [
       { label: "Customers & suppliers", href: "/contacts", icon: "people" },
       { label: "Receivables & payables", href: "/dena-pawna", icon: "clock" },
@@ -154,36 +224,43 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: "Insights",
     tone: "insights",
+    hidden: true,
+    items: [{ label: "Overview", href: "/reports/overview", icon: "insights" }],
+  },
+
+  // ---- Habit Tracker (HabitSidebar) ----
+  { label: "Overview", tone: "habits", app: "habit", quiet: true, items: [{ label: "Dashboard", href: HABIT_HOME, icon: "dashboard" }] },
+  {
+    label: "Worship",
+    tone: "habits",
+    app: "habit",
     items: [
-      { label: "Overview", href: "/reports/overview", icon: "insights" },
-      { label: "Reports", href: "/reports/detailed", icon: "reports" },
+      { label: "Namaz", href: "/habit-tracker/habits", query: { category: "Namaz" }, match: ["/habit-tracker/habits/namaz"], icon: "namaz" },
+      { label: "Ramadan", href: "/habit-tracker/habits", query: { category: "Ramadan" }, match: ["/habit-tracker/habits/ramadan"], icon: "ramadan" },
     ],
   },
   {
     label: "Habits",
     tone: "habits",
+    app: "habit",
     items: [
-      { label: "Today", href: "/habit-tracker", icon: "today" },
-      { label: "To-do list", href: "/habit-tracker/todos", icon: "todo", badge: "todayTasks" },
-      { label: "Daily habits", href: "/habit-tracker/daily", icon: "daily" },
-      { label: "Namaz", href: "/habit-tracker/habits", query: { category: "Namaz" }, match: ["/habit-tracker/habits/namaz"], icon: "namaz" },
-      { label: "Ramadan", href: "/habit-tracker/habits", query: { category: "Ramadan" }, match: ["/habit-tracker/habits/ramadan"], icon: "ramadan" },
+      { label: "Daily habits", href: "/habit-tracker/daily", icon: "daily", badge: "habitsToday" },
+      // The "Others" trackers, named Challenges.
       { label: "Challenges", href: "/habit-tracker/habits", query: { category: "Others" }, match: ["/habit-tracker/habits/others"], icon: "challenges" },
-      { label: "My library", href: "/habit-tracker/habits", query: { category: "Book" }, icon: "library" },
+      { label: "My Library", href: "/habit-tracker/habits", query: { category: "Book" }, icon: "library" },
       { label: "Skills", href: "/habit-tracker/habits", query: { category: "Course" }, icon: "skills" },
     ],
   },
-  // "Vault", not "Security": Settings has a Security page of its own.
-  { label: "Vault", tone: "vault", items: [{ label: "Password vault", href: "/password-manager", icon: "vault" }] },
+  // "@@habits": a to-do plan (পরিকল্পনা), not a subscription plan.
+  { label: "Plan@@habits", tone: "habits", app: "habit", items: [{ label: "To Do List", href: "/habit-tracker/todos", icon: "todo", badge: "todayTasks" }] },
 ];
 
-// The sidebar's foot: the account's own pages. The top bar puts them under
-// "Account", and Settings' sections under "Account › Settings" (the
-// sidebar draws no subs for them; Settings has its own menu). "@@user":
-// plain "Account" is Bangla's হিসাব, a ledger account, not the customer's.
+// Settings: reached from the sidebar's foot (the gear) and the account
+// menu, not a menu row. Its sections show in the breadcrumb as
+// "Settings › Security" and in the search palette under "Account ›
+// Settings" (Settings has its own menu).
 export const NAV_FOOT_LABEL = "Account@@user";
 export const NAV_FOOT: NavItem[] = [
-  { label: "Invite & earn", href: "/referrals", icon: "gift", tag: "Earn ৳" },
   {
     label: "Settings",
     href: "/settings",
@@ -191,6 +268,7 @@ export const NAV_FOOT: NavItem[] = [
     subs: [
       { label: "Profile", href: "/settings/profile" },
       { label: "Security", href: "/settings/security" },
+      { label: "Plans", href: "/settings/plans" },
       { label: "Workspaces", href: "/settings/workspaces" },
       { label: "App preferences", href: "/settings/app" },
       { label: "Help & support", href: "/settings/help" },
@@ -198,6 +276,18 @@ export const NAV_FOOT: NavItem[] = [
     ],
   },
 ];
+
+export const SETTINGS_ROUTE = "/settings";
+
+// Where every Upgrade / Manage plan button goes: the plans page in Settings
+// (built with the customer plan API).
+export const PLANS_ROUTE = "/settings/plans";
+
+// Which app a page belongs to: everything under /habit-tracker is the
+// Habit Tracker.
+export const navAppFor = (pathname: string): NavApp => (pathname === HABIT_HOME || pathname.startsWith(`${HABIT_HOME}/`) ? "habit" : "money");
+
+export const sectionApp = (section: NavSection): NavApp => section.app ?? "money";
 
 export interface NavContext {
   workspaceType: WorkspaceType | undefined;
@@ -207,15 +297,18 @@ export interface NavContext {
   canManage?: boolean;
 }
 
-// The sections this customer sees: Books only in a business workspace,
-// Loans only while its flag is on, Journal entry only to those who may
-// post one.
+// The sections this customer has, both apps and the hidden ones: Books
+// only in a business workspace, Loans only while its flag is on, Journal
+// entry only to those who may post one.
 export function visibleNavSections(ctx: NavContext): NavSection[] {
   const shown = (item: NavItem) => (!item.feature || ctx.isFeatureOn(item.feature)) && (ctx.canManage !== false || !item.workspaceWrite);
   return NAV_SECTIONS.filter((section) => !section.businessOnly || ctx.workspaceType === "BUSINESS")
     .map((section) => ({ ...section, items: section.items.filter(shown) }))
     .filter((section) => section.items.length > 0);
 }
+
+// What one app's sidebar draws: its own sections, without the hidden ones.
+export const menuSections = (sections: NavSection[], app: NavApp): NavSection[] => sections.filter((section) => !section.hidden && sectionApp(section) === app);
 
 export interface NavLocation {
   section: NavSection | null;
@@ -250,15 +343,15 @@ const leafScore = (leaf: NavLeaf, pathname: string, query: QueryReader): number 
 };
 
 // Which menu entry the URL is on. The most specific prefix wins, so
-// /transactions/advanced is Journal entry when the menu shows it and
+// /transactions/advanced is Journal entry when the workspace has it and
 // Transactions when it doesn't (outside a business workspace, or to a
 // staff member).
 export function findNavLocation(pathname: string, query: QueryReader, sections: NavSection[], foot: NavItem[] = NAV_FOOT): NavLocation | null {
   let best: { score: number; location: NavLocation } | null = null;
   const consider = (score: number, location: NavLocation) => {
     // A sub-page wins a tie with its own group, whose link it shares
-    // (Wallets and Balance both open /balance/overview), so the top bar
-    // names the page.
+    // (Balance and its Overview both open /balance/overview), so the top
+    // bar names the page.
     const current = best as { score: number; location: NavLocation } | null;
     const beatsItsGroup = current !== null && score === current.score && location.sub !== null && current.location.sub === null && current.location.item === location.item;
     if (score >= 0 && (!current || score > current.score || beatsItsGroup)) best = { score, location };
@@ -274,38 +367,41 @@ export function findNavLocation(pathname: string, query: QueryReader, sections: 
   return best ? (best as { location: NavLocation }).location : null;
 }
 
-// Home, the Money pages and Books: where the phone boards float the + for a
-// new transaction. Habits, Vault, Insights and the account pages don't;
-// a page the menu doesn't know keeps it.
+// Where the phone floats the + for a new transaction: the Money Tracker's
+// money pages and Books. Reports, the insights, the account's pages, the
+// Habit Tracker and Settings don't; a page the menu doesn't know keeps it.
 export function movesMoney(location: NavLocation | null): boolean {
   if (!location) return true;
-  return location.section !== null && (location.section.tone === "money" || location.section.tone === "neutral");
+  return location.section?.quickAdd === true && location.item.quickAdd !== false;
 }
 
 export interface Breadcrumb {
-  // The path above the heading ("Money", "Wallets"), untranslated.
+  // The path above the heading ("Balance"), untranslated.
   crumbs: string[];
   heading: string;
   tone: NavTone;
 }
 
-// What the top bar shows for a location: the section and group as crumbs,
-// the page as the heading, the pillar's colour for the dot.
+// What the top bar shows for a location, as the boards draw it: a group's
+// page under its group ("Balance › Wallet"), a Habit Tracker page of its
+// own under its section ("Habits › Daily habits"), and the Money Tracker's
+// pages of their own and the first section's pages alone ("Group Expense",
+// "Dashboard"). The pages the menu leaves out keep their section (Books).
 export function breadcrumbFor(location: NavLocation): Breadcrumb {
-  const crumbs: string[] = [];
-  const section = location.section?.label ?? (NAV_FOOT.includes(location.item) ? NAV_FOOT_LABEL : null);
-  if (section) crumbs.push(section);
-  if (location.sub) crumbs.push(location.item.label);
+  const { section, item, sub } = location;
+  const namesSection = !!section?.label && !section.quiet && (sectionApp(section) === "habit" || !!section.hidden);
+  const crumbs = sub ? [item.label] : namesSection && section?.label ? [section.label] : [];
   return {
     crumbs,
-    heading: location.sub?.label ?? location.item.label,
-    tone: location.item.tone ?? location.section?.tone ?? "money",
+    heading: sub?.heading ?? sub?.label ?? item.heading ?? item.label,
+    tone: item.tone ?? section?.tone ?? "money",
   };
 }
 
-// Page labels the menu uses more than once ("Statement" in Wallets and
-// Loans, "Overview" in Loans, Assets and Insights). On its own such a label
-// could be any of them, so a title always names its group too.
+// Page labels the menus use more than once ("Dashboard" in both apps and
+// three groups, "Overview" in Balance, Savings and Insights). A group's
+// page always names its group in a title; a page of its own with a shared
+// label names its section (or, in the first section, its app).
 const SHARED_LABELS: ReadonlySet<string> = (() => {
   const seen = new Set<string>();
   const shared = new Set<string>();
@@ -318,21 +414,31 @@ const SHARED_LABELS: ReadonlySet<string> = (() => {
   return shared;
 })();
 
-// A tab title's parts, most specific first and untranslated: a sub-page
-// with its group (["Transfer", "Wallets"]), a page on its own
-// (["Transactions"]) unless its label is shared (["Overview", "Insights"]),
-// and a record page's own name in front (["Rahim", "Transactions"]).
+// What tells a shared label apart: its section, but for the first
+// section, which the Money Tracker's own page needs none of and the Habit
+// Tracker's names its app.
+function sectionMark(section: NavSection | null, item: NavItem): string | undefined {
+  if (!section) return NAV_FOOT.includes(item) ? NAV_FOOT_LABEL : undefined;
+  if (section.quiet) return sectionApp(section) === "habit" ? HABIT_APP_LABEL : undefined;
+  return section.label;
+}
+
+// A tab title's parts, most specific first and untranslated: a group's
+// page with its group (["Wallet", "Balance"]), a page on its own
+// (["Referrals"]) unless its label is shared (["Dashboard", "Habit
+// Tracker"]), and a record page's own name in front (["Rahim",
+// "Transactions", "Income & Expense"]).
 export function titleParts(location: NavLocation, record?: string | null): string[] {
   const { section, item, sub } = location;
-  const group = section ? section.label : NAV_FOOT.includes(item) ? NAV_FOOT_LABEL : undefined;
-  const page = sub ? [sub.label, item.label] : group && SHARED_LABELS.has(item.label) ? [item.label, group] : [item.label];
+  const mark = sectionMark(section, item);
+  const page = sub ? [sub.label, item.label] : mark && SHARED_LABELS.has(item.label) ? [item.label, mark] : [item.label];
   const name = record?.trim();
   return name ? [name, ...page] : page;
 }
 
 export const TITLE_SEPARATOR = " · ";
 
-// The tab title in the reader's language ("Transfer · Wallets"; the root
+// The tab title in the reader's language ("Wallet · Balance"; the root
 // layout adds "| Smartly"): the menu's words go through t(), a record's
 // name is shown as given, since it is already the reader's own text.
 export function titleFor(location: NavLocation, t: (key: string) => string, record?: string | null): string {

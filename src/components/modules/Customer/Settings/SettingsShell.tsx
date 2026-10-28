@@ -5,18 +5,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import { PLANS_ROUTE } from "@/lib/customer/nav";
 import { sectionFor, sectionOf } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { SettingsNav } from "./SettingsNav";
 
-// Every Settings page: the heading, the rail on the left (from 1024px) and
-// the section. The index is "Settings" (and Profile from 1024px, where it
-// shows Profile); each section is headed with its own name ("Security"). Both share the Settings eyebrow and the subtitle,
-// so the header keeps one height and the rail doesn't move between
-// sections. On a phone the index is a menu (the top bar names it, so its
-// heading is for screen readers only) and each section gets a way back to
-// it and its name.
+// Every Settings page (design-v4 SettingsProfile and its sisters): the
+// "Settings" heading, the rail on the left (from 1024px) and the section;
+// the rail lights the section, so the heading stays the same and nothing
+// moves between sections. On a phone the index is a menu (the top bar
+// names it, so its heading is for screen readers only) and each section
+// gets a way back to it and its name. Plans (UpgradePlan) is a page of its
+// own: its heading and full width, no rail.
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   const { t } = useLocale();
   const pathname = usePathname();
@@ -24,20 +25,16 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
   const section = sectionOf(sectionFor(pathname));
   const subtitle = t("Your account, your security and how the app looks.");
 
+  if (pathname === PLANS_ROUTE) return <PageFrame className="gap-5.5">{children}</PageFrame>;
+
   return (
-    <PageFrame className={cn("gap-6", isIndex && "max-md:pt-4")}>
+    <PageFrame className={cn("gap-5.5", isIndex && "max-md:pt-4")}>
       {isIndex ? (
-        <>
-          {/* Below 1024px the index is the menu, headed "Settings". From
-              1024px it shows Profile with Profile lit in the rail, so it is
-              headed like /settings/profile. One is display:none at each
-              width, so there is only ever one h1. */}
-          <PageHeader eyebrow={t("Settings")} tone="neutral" title={t("Settings")} description={subtitle} className="max-md:sr-only lg:hidden" />
-          <PageHeader eyebrow={t("Settings")} tone="neutral" title={t(section.label)} description={subtitle} className="hidden lg:flex" />
-        </>
+        // Below 1024px the index is the menu: the top bar says "Settings".
+        <PageHeader title={t("Settings")} description={subtitle} className="max-lg:sr-only" />
       ) : (
         <>
-          <PageHeader eyebrow={t("Settings")} tone="neutral" title={t(section.label)} description={subtitle} className="hidden lg:flex" />
+          <PageHeader title={t("Settings")} description={subtitle} className="hidden lg:flex" />
           <div className="flex flex-col gap-1 lg:hidden">
             <Link href="/settings" className="-ml-1 flex min-h-11 w-fit items-center gap-1 rounded-md px-1 text-body font-medium text-ink-2">
               <ChevronLeft className="size-4.5" aria-hidden="true" />

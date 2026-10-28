@@ -13,13 +13,13 @@ interface StatCardProps {
 }
 
 // One figure of a page's stat row (Daily habits, a Namaz month, Skills): the
-// label, the number in the h2 size and the line under it. One card for every
-// row, so the four of them can't drift apart.
+// label, the 24px figure and the line under it, on the Habit Tracker's 12px
+// card (design-v4). One card for every row, so the four can't drift apart.
 export function StatCard({ label, value, sub, tone = "text-ink", className, valueClassName }: StatCardProps) {
   return (
-    <Card padding="none" className={cn("flex min-w-0 flex-col gap-1 px-5 py-4", className)}>
+    <Card padding="none" className={cn("flex min-w-0 flex-col gap-1 rounded-md px-4.5 py-3.5", className)}>
       <span className="text-small font-medium text-ink-muted">{label}</span>
-      <span className={cn("text-h2 tabular-nums", tone, valueClassName)}>{value}</span>
+      <span className={cn("text-[24px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums", tone, valueClassName)}>{value}</span>
       {sub && <span className="text-caption text-ink-muted">{sub}</span>}
     </Card>
   );

@@ -20,7 +20,9 @@ import { asStatus } from "@/lib/i18n/message";
 
 // The chip the design draws for a filter: "Plan: All plans". It goes on the
 // smartly secondary button: 32px, plain weight, sunken while open.
-export const FILTER_CHIP_CLASS = "h-8 gap-2 rounded-md border-line-strong bg-surface px-3 text-small font-normal text-ink-2 hover:bg-surface-sunken data-[state=open]:bg-surface-sunken";
+// design-v4 AdminUsers: a 32px button with the field edge and 10px corners,
+// the filter's name muted and its value in semibold ink.
+export const FILTER_CHIP_CLASS = "h-8 gap-1.5 rounded-field border-input bg-surface px-2.5 text-small font-normal text-ink-muted hover:bg-surface-sunken data-[state=open]:border-focus-ring data-[state=open]:bg-surface";
 
 interface DataTableFacetedFilterProps {
   title: string;

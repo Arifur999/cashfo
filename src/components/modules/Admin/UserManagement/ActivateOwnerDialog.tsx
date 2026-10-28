@@ -30,8 +30,8 @@ const ActivateOwnerDialog = ({ owner, open, onOpenChange }: ActivateOwnerDialogP
       title={translate("Turn {name}'s account back on?", { name: owner.name })}
       description={translate("{name} will be able to sign in and use their account again.", { name: owner.name })}
       // The same word as the button that opened it, and the pending label.
-      confirmLabel="Activate"
-      pendingLabel="Activating..."
+      confirmLabel="Turn back on"
+      pendingLabel="Turning on..."
       isPending={isPending}
       onConfirm={async () => {
         if (await run(owner.userId)) {

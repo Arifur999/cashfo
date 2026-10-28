@@ -20,7 +20,7 @@ interface ProgressDialogProps {
 
 // "Which page are you on?" for a book that is not on the nightstand.
 export function ProgressDialog({ book, onClose, onSave }: ProgressDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [page, setPage] = useState("");
 
   const [prevId, setPrevId] = useState<string | null>(null);
@@ -40,14 +40,16 @@ export function ProgressDialog({ book, onClose, onSave }: ProgressDialogProps) {
 
   return (
     <AlertDialog open={book !== null} onOpenChange={(next) => !next && onClose()}>
-      <AlertDialogContent className="w-100 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-100 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border border-line bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} className="flex flex-col">
-          <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
-            <AlertDialogTitle className="text-h3 text-ink">{t("Which page are you on?")}</AlertDialogTitle>
-            <CloseButton onClick={onClose} label={t("Close")} />
+          <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-4.5">
+            <div className="flex min-w-0 flex-col gap-1">
+              <AlertDialogTitle className="text-h3 text-ink">{t("Which page are you on?")}</AlertDialogTitle>
+              <AlertDialogDescription className="text-small text-ink-muted">{book ? `${book.title} · ${t("{count} pages", { count: formatCount(book.totalPages, fmt) })}` : ""}</AlertDialogDescription>
+            </div>
+            <CloseButton onClick={onClose} label={t("Close")} className="-my-0.5 -mr-1.5 size-8.5 rounded-full" />
           </div>
-          <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{book ? `${book.title} · ${t("{count} pages", { count: formatCount(book.totalPages, locale) })}` : ""}</AlertDialogDescription>
-          <div className="px-6 py-4">
+          <div className="px-6 py-5">
             <Field htmlFor="bk-progress" label={<span className="text-body font-medium text-ink">{t("I'm now on page")}</span>} error={page !== "" && !valid ? t("That's more than the total pages.") : undefined}>
               <Input id="bk-progress" size="lg" inputMode="numeric" autoFocus value={page} onChange={(event) => setPage(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 5))} invalid={page !== "" && !valid} className="text-body-lg font-semibold" frameClassName="w-40" />
             </Field>

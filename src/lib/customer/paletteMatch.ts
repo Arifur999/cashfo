@@ -1,4 +1,4 @@
-import type { NavIcon, NavItem, NavLeaf, NavSection, NavTone } from "./nav";
+import { HABIT_APP_LABEL, type NavIcon, type NavItem, type NavLeaf, type NavSection, type NavTone } from "./nav";
 
 // How the search palette finds a page or an action from what was typed:
 // pure, so the ranking can be tested and the server never needs to know
@@ -103,8 +103,11 @@ export function palettePages(sections: NavSection[], foot: NavItem[], footLabel:
     add(item, trail, item, tone);
     for (const sub of item.subs ?? []) add(sub, [...trail, item.label], item, tone);
   };
+  // A section the breadcrumb doesn't name (each app's Overview) puts
+  // nothing above its pages, but the Habit Tracker's Dashboard says whose.
+  const trailOf = (section: NavSection): string[] => (section.quiet ? (section.app === "habit" ? [HABIT_APP_LABEL] : []) : section.label ? [section.label] : []);
   for (const section of sections) {
-    for (const item of section.items) addItem(item, section.label ? [section.label] : [], section.tone);
+    for (const item of section.items) addItem(item, trailOf(section), section.tone);
   }
   for (const item of foot) addItem(item, [footLabel], "neutral");
   // Each Settings section under the foot item whose address holds it.

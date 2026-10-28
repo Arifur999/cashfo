@@ -16,7 +16,7 @@ const BODY = {
   thumb: "h-14.5 w-10 rounded-[2px_5px_5px_2px] [&>span]:hidden",
   mini: "h-18 w-12.5 rounded-[3px_8px_8px_3px] py-2 pr-1 pl-2 [&>span:first-child]:text-[8.5px] [&>span:last-child]:hidden",
   card: "h-26.5 w-18 rounded-[3px_9px_9px_3px] py-2 pr-2 pl-3 [&>span:first-child]:text-small [&>span:last-child]:text-[11px]",
-  large: "h-41 w-28 rounded-[4px_12px_12px_4px] pt-4 pr-3 pb-3 pl-4 [&>span:first-child]:text-body-lg [&>span:last-child]:text-caption",
+  large: "h-41 w-28 rounded-[4px_10px_10px_4px] pt-3.5 pr-2.5 pb-2.5 pl-4 [&>span:first-child]:text-[15px] [&>span:last-child]:text-[10px]",
 } as const;
 
 // A book drawn in CSS: a darker spine down the left, the cover colour from

@@ -1,8 +1,9 @@
-import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatDay } from "@/lib/date";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { formatCurrency } from "./currency";
 import type { FillValues } from "@/lib/i18n/fill";
+import { type FormatLocale, numericDates } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import type { GroupContribution, GroupExpense, GroupKind, GroupMember, GroupSplit, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
 
 // The figures a group page derives from what the API already returns:
@@ -138,14 +139,15 @@ export function hasActivity(settlement: GroupSettlementResult): boolean {
 }
 
 // The group month before `range`, when it was never closed though the group
-// was already running then (a member was added before it ended): the list
+// was already running then (a member was added, or joined, before it ended): the list
 // reminds the reader to close it. A record that only overlaps it (the start
 // day moved after 1-30 Sep was closed, so last month is now 10 Sep - 9 Oct)
 // counts too: the server refuses to close a period that overlaps a record.
-export function unclosedPreviousMonth(history: GroupSettlementRecord[], members: Pick<GroupMember, "createdAt">[], range: MonthRange): MonthRange | null {
+export function unclosedPreviousMonth(history: GroupSettlementRecord[], members: (Pick<GroupMember, "createdAt"> & { joinedOn?: string | null })[], range: MonthRange): MonthRange | null {
   const previous = monthRangeOf(shiftMonth(range.key, -1), startDayOf(range));
   if (history.some((record) => record.periodStart.slice(0, 10) <= previous.to && record.periodEnd.slice(0, 10) >= previous.from)) return null;
-  return members.some((member) => member.createdAt.slice(0, 10) <= previous.to) ? previous : null;
+  // A member added late but dated back (joined on the 1st) counts from then.
+  return members.some((member) => member.createdAt.slice(0, 10) <= previous.to || (!!member.joinedOn && member.joinedOn.slice(0, 10) <= previous.to)) ? previous : null;
 }
 
 // Whether the live figures have moved away from a closed month's record:
@@ -399,29 +401,45 @@ export function shortName(name: string | undefined): string {
   return words.find((word) => !NAME_PREFIX.test(word)) ?? words[0] ?? "?";
 }
 
-const EN_MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 // A "YYYY-MM-DD" day as the group pages write it: "5 Oct" (or "5 Oct 2026"),
-// "৫ অক্টো" in Bangla. Calendar days, so no time zone moves them.
-export function dayLabel(day: string, locale: Locale, withYear = false): string {
-  const key = day.slice(0, 10);
-  const [year, month, date] = key.split("-").map(Number);
-  if (locale === "bn") return `${banglaDayMonth(key)}${withYear ? ` ${toBanglaDigits(year)}` : ""}`;
-  return `${date} ${EN_MONTHS_SHORT[month - 1] ?? ""}${withYear ? ` ${year}` : ""}`;
+// "৫ অক্টো" in Bangla. Calendar days, so no time zone moves them. With the
+// reader's Fmt, their digits, and their date style for a day with its year.
+export function dayLabel(day: string, locale: FormatLocale, withYear = false): string {
+  return formatDay(day.slice(0, 10), withYear ? "d MMM yyyy" : "d MMM", locale);
 }
 
-// A month's days: "1 Oct – 31 Oct 2026", "10 Dec 2026 – 9 Jan 2027".
-export function rangeLabel(range: Pick<MonthRange, "from" | "to">, locale: Locale): string {
-  const sameYear = range.from.slice(0, 4) === range.to.slice(0, 4);
+// A month's days: "1 Oct – 31 Oct 2026", "10 Dec 2026 – 9 Jan 2027" (both
+// with their year in a numbered date style).
+export function rangeLabel(range: Pick<MonthRange, "from" | "to">, locale: FormatLocale): string {
+  const sameYear = range.from.slice(0, 4) === range.to.slice(0, 4) && !numericDates(locale);
   return `${dayLabel(range.from, locale, !sameYear)} – ${dayLabel(range.to, locale, true)}`;
 }
 
 // "1 member" or "3 members", the count in the reader's digits. Bangla words
 // both keys alike.
-export const countLabel = (t: Translate, locale: Locale, count: number, one: string, many: string, values?: FillValues): string => t(count === 1 ? one : many, { ...values, count: formatCount(count, locale) });
+export const countLabel = (t: Translate, locale: FormatLocale, count: number, one: string, many: string, values?: FillValues): string => t(count === 1 ? one : many, { ...values, count: formatCount(count, locale) });
 
 // The budget bar and its figure, by status.
 export const BUDGET_TONE_BAR: Record<BudgetTone, string> = { ok: "bg-emerald", warning: "bg-warning-fill", over: "bg-expense-fill" };
 export const BUDGET_TONE_TEXT: Record<BudgetTone, string> = { ok: "text-ink", warning: "text-warning", over: "text-expense" };
 // The same status on the shared ProgressBar.
 export const BUDGET_TONE_PROGRESS = { ok: "money", warning: "warning", over: "expense" } as const satisfies Record<BudgetTone, string>;
+
+// The meal rate as the boards write it, always to the paisa: "৳ 62.00".
+export function mealRateText(rate: number | string, currency: string, locale: FormatLocale): string {
+  const rounded = Math.round(Number(rate) * 100) / 100;
+  const text = formatCurrency(rounded, currency, locale);
+  return Number.isInteger(rounded) ? `${text}${toLocaleDigits(".00", locale)}` : text;
+}
+
+// "Arif and Rakib", "Arif, Sumon and Rakib": a list of names in one line.
+export function namesList(t: Translate, names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return t("{names} and {last}", { names: names.slice(0, -1).join(", "), last: names[names.length - 1] });
+}
+
+// A day with its weekday, as the meal pages head it: "Wed, 30 Sep 2026",
+// "বুধ, ৩০ সেপ্টে ২০২৬".
+export function weekdayLabel(day: string, locale: FormatLocale): string {
+  return formatDay(day.slice(0, 10), "EEE, d MMM yyyy", locale);
+}

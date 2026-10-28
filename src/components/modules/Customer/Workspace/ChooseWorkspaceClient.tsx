@@ -19,11 +19,11 @@ import type { CurrentUser, UserBusiness, WorkspaceListItem } from "@/lib/custome
 import { switchWorkspaceAction } from "@/lib/customer/businessActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { workspaceName } from "@/lib/customer/workspaceSwitch";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { fillNodes } from "@/lib/i18n/fill";
 import { plural, type Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 
 interface ChooseWorkspaceClientProps {
   user: CurrentUser;
@@ -47,7 +47,7 @@ interface ChooseWorkspaceClientProps {
 // rather than a negative day count.
 // One sentence per form, so Bangla can order it its own way, with the count
 // in the reader's digits.
-function trialLabel(trialEndsAt: string, t: Translate, locale: Locale): { text: string; expired: boolean } {
+function trialLabel(trialEndsAt: string, t: Translate, locale: FormatLocale): { text: string; expired: boolean } {
   const daysLeft = Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86_400_000);
   if (daysLeft <= 0) return { text: t("Trial expired"), expired: true };
   return { text: plural(t, daysLeft, "Trial — {count} day left", "Trial — {count} days left", undefined, locale), expired: false };
@@ -63,7 +63,7 @@ const ROLE_LABEL: Record<UserBusiness["role"], string> = { OWNER: "Owner", ACCOU
 // shell.
 export function ChooseWorkspaceClient({ user, workspaces, initialId, unlockedIds, figures, next }: ChooseWorkspaceClientProps) {
   const router = useRouter();
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [isPending, startTransition] = useTransition();
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? workspaces[0]?.id ?? null);
   const [pinBusiness, setPinBusiness] = useState<UserBusiness | null>(null);
@@ -127,7 +127,7 @@ export function ChooseWorkspaceClient({ user, workspaces, initialId, unlockedIds
           {workspaces.map((business) => {
             const isBusiness = business.type === "BUSINESS";
             const on = business.id === selectedId;
-            const trial = business.trialEndsAt ? trialLabel(business.trialEndsAt, t, locale) : null;
+            const trial = business.trialEndsAt ? trialLabel(business.trialEndsAt, t, fmt) : null;
             const figure = figures[business.id];
             return (
               <button
@@ -174,9 +174,9 @@ export function ChooseWorkspaceClient({ user, workspaces, initialId, unlockedIds
                   <span className="text-small text-ink-muted">{t(isBusiness ? "Business workspace" : "Personal workspace")}</span>
                 </div>
                 <div className="flex flex-col gap-0.5 border-t border-divider pt-4">
-                  <span className="text-title font-bold tabular-nums">{figure ? formatCurrency(figure.balance, business.currency, locale) : t(ROLE_LABEL[business.role])}</span>
+                  <span className="text-title font-bold tabular-nums">{figure ? formatCurrency(figure.balance, business.currency, fmt) : t(ROLE_LABEL[business.role])}</span>
                   <span className={cn("text-caption font-normal text-ink-muted", trial?.expired && "text-expense")}>
-                    {trial ? trial.text : figure ? plural(t, figure.wallets, "{count} wallet", "{count} wallets", undefined, locale) : business.currency}
+                    {trial ? trial.text : figure ? plural(t, figure.wallets, "{count} wallet", "{count} wallets", undefined, fmt) : business.currency}
                   </span>
                 </div>
               </button>

@@ -45,7 +45,7 @@ const usableDay = (day: string) => day === "" || (isIsoDay(day) && Number(day.sl
 // field is left or Enter is pressed: one history entry per date, not one per
 // keystroke, and the field doesn't snap back while the page loads.
 export function RangePicker({ value, from, to, customFrom, customTo, busy = false, onChange }: RangePickerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const applied = `${customFrom ?? ""}|${customTo ?? ""}`;
   const [draft, setDraft] = useState({ from: customFrom ?? "", to: customTo ?? "" });
   // The dates last sent, so leaving a field after Enter doesn't load twice.
@@ -106,7 +106,7 @@ export function RangePicker({ value, from, to, customFrom, customTo, busy = fals
           <Input size="sm" type="date" {...field("to")} aria-label={t("To@@date")} min={draft.from || undefined} />
         </div>
       ) : (
-        <span className="text-small text-ink-muted">{booksRange(from, to, locale) ?? t("Since the first entry")}</span>
+        <span className="text-small text-ink-muted">{booksRange(from, to, fmt) ?? t("Since the first entry")}</span>
       )}
     </div>
   );

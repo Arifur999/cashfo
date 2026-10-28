@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountPasswordRules, cleanLocalPhone, FAQS, fileNameFrom, fullPhone, GUIDES, knownIp, LEGAL_LINKS, localPhone, ownWorkspaces, samePhone, searchFaqs, sectionFor, sectionOf, signInResult, triedThePassword } from "./settingsDisplay";
+import { accountPasswordRules, cleanLocalPhone, FAQS, fileNameFrom, fullPhone, GUIDES, knownIp, lastSignInOf, LEGAL_LINKS, localPhone, ownWorkspaces, samePhone, searchFaqs, sectionFor, sectionOf, signInResult, triedThePassword } from "./settingsDisplay";
 
 describe("settings sections", () => {
   it("finds the section a path belongs to", () => {
@@ -24,6 +24,16 @@ describe("account password rules", () => {
     expect(accountPasswordRules("onlyletters", "onlyletters", "x").find((r) => r.key === "mix")?.ok).toBe(false);
     expect(accountPasswordRules("Same12345", "Same12345", "Same12345").find((r) => r.key === "notAccount")?.ok).toBe(false);
     expect(accountPasswordRules("NewPass123", "NewPass12", "x").find((r) => r.key === "match")?.ok).toBe(false);
+  });
+
+  it("refuses a password with the person's name in it", () => {
+    expect(accountPasswordRules("Shirin2026x", "", "x", "Shirin Akter").find((r) => r.key === "noName")?.ok).toBe(false);
+    expect(accountPasswordRules("Garden2026x", "", "x", "Shirin Akter").find((r) => r.key === "noName")?.ok).toBe(true);
+  });
+
+  it("finds the last sign-in that got in", () => {
+    expect(lastSignInOf([{ success: false, createdAt: "b" }, { success: true, createdAt: "a" }])).toBe("a");
+    expect(lastSignInOf([])).toBeNull();
   });
 });
 
@@ -129,7 +139,7 @@ describe("help", () => {
 });
 
 describe("resources", () => {
-  it("names the legal pages as their own headings do", () => {
-    expect(LEGAL_LINKS.map((link) => link.title)).toEqual(["Terms of use", "Privacy policy", "Refund policy"]);
+  it("names the legal pages as the Resources board does", () => {
+    expect(LEGAL_LINKS.map((link) => link.title)).toEqual(["Terms of service", "Privacy policy", "Refund policy"]);
   });
 });

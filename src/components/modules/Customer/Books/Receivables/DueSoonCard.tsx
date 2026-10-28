@@ -7,6 +7,7 @@ import { ListCard, ListCell, ListEmpty, ListRow, ListRowActions, ListRowLink } f
 import type { DueSoonRow } from "@/lib/customer/api";
 import { booksDate } from "@/lib/customer/booksDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
+import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -26,21 +27,21 @@ interface DueSoonCardProps {
 // What falls due in the next seven days, both ways, soonest first. Each row
 // says in words which way the money goes, not by its colour alone.
 export function DueSoonCard({ items, currency, canManage, today, onPay }: DueSoonCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   // Only a supplier bill has a button. When one is listed, every row takes
   // the table's own columns (a subgrid), so a customer's amount ends on the
   // same edge as a bill's, whatever the button's width in either language;
   // without one, the amount sits flush with the card's inset.
   const hasPay = canManage && items.some((item) => item.direction === "PAYABLE");
-  const dueText = (item: DueSoonItem) => (item.daysUntilDue === 0 ? t("due today") : item.daysUntilDue === 1 ? t("due tomorrow") : t("due {date}", { date: booksDate(item.dueDate, locale, { today, weekday: true }) }));
+  const dueText = (item: DueSoonItem) => (item.daysUntilDue === 0 ? t("due today") : item.daysUntilDue === 1 ? t("due tomorrow") : t("due {date}", { date: booksDate(item.dueDate, fmt, { today, weekday: true }) }));
 
   return (
     <ListCard
-      label={t("Due in the next 7 days")}
+      label={redigit(t("Due in the next 7 days"), fmt)}
       tableClassName={cn(hasPay && "grid grid-cols-[minmax(0,1fr)_auto_auto]")}
       header={
         <div className="border-b border-line px-4 py-4 md:px-6 md:py-5">
-          <h2 className="text-h3 text-ink">{t("Due in the next 7 days")}</h2>
+          <h2 className="text-h3 text-ink">{redigit(t("Due in the next 7 days"), fmt)}</h2>
         </div>
       }
     >
@@ -68,7 +69,7 @@ export function DueSoonCard({ items, currency, canManage, today, onPay }: DueSoo
               </span>
             </ListCell>
             <ListCell align="end">
-              <b className={cn("tabular-nums whitespace-nowrap", receivable ? "text-income" : "text-expense")}>{formatCurrency(item.remainingAmount, currency, locale)}</b>
+              <b className={cn("tabular-nums whitespace-nowrap", receivable ? "text-income" : "text-expense")}>{formatCurrency(item.remainingAmount, currency, fmt)}</b>
             </ListCell>
             {hasPay && (
               <ListRowActions>

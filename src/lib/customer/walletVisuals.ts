@@ -44,14 +44,16 @@ export interface WalletPalette {
   tile: string;
 }
 
-// The four card colours the design cycles through, in its order. The
-// charcoal tile is raised in dark mode, where the sunken surface is darker
+// The four card colours the design-v4 Wallets board cycles through, in its
+// order: two greens, teal, charcoal (bg-wallet-*, globals.css; the cards are
+// dark in both themes). The teal tile takes the habit teal's tint, and the
+// charcoal one is raised in dark mode, where the sunken surface is darker
 // than the card and the tile would vanish into it.
 export const WALLET_PALETTES: WalletPalette[] = [
   { gradient: "bg-wallet-forest", bar: "bg-emerald", tile: "bg-mint-50 text-emerald" },
-  { gradient: "bg-wallet-teal", bar: "bg-pillar-insights", tile: "bg-pillar-insights-soft text-pillar-insights" },
+  { gradient: "bg-wallet-green", bar: "bg-emerald", tile: "bg-mint-50 text-emerald" },
+  { gradient: "bg-wallet-teal", bar: "bg-habit", tile: "bg-habit-soft text-habit" },
   { gradient: "bg-wallet-charcoal", bar: "bg-ink-2", tile: "bg-surface-sunken text-ink-2 dark:bg-surface-raised" },
-  { gradient: "bg-wallet-mint", bar: "bg-jade", tile: "bg-mint-50 text-emerald" },
 ];
 
 export function walletPalette(index: number): WalletPalette {

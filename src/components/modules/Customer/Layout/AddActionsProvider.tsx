@@ -9,9 +9,11 @@ import { TransactionDrawer, type EntryKind } from "@/components/modules/Customer
 import { TODAY_TASKS_PAGE, visibleAddActions, type AddAction, type AddActionIcon } from "@/lib/customer/addActions";
 import { isFeatureOn } from "@/lib/customer/features";
 
+// Money in comes down and in (↙), money out goes up and away (↗), as the
+// design-v4 Dashboard and TxnDrawer boards draw them.
 export const ADD_ACTION_ICONS: Record<AddActionIcon, React.ComponentType<LucideProps>> = {
-  "money-in": ArrowUpRight,
-  "money-out": ArrowDownLeft,
+  "money-in": ArrowDownLeft,
+  "money-out": ArrowUpRight,
   between: ArrowLeftRight,
   loan: CreditCard,
   "piggy-bank": PiggyBank,
@@ -34,7 +36,7 @@ interface AddActionsValue {
 const AddActionsContext = createContext<AddActionsValue | null>(null);
 
 // One home for everything Add does, around the top bar, the page and the
-// phone's +: the Add menu, the phone sheet and the search palette all run
+// phone's +: the N shortcut, the phone sheet and the search palette all run
 // their picks through it, so there is one New transaction drawer however
 // it was opened.
 export function AddActionsProvider({ children }: { children: React.ReactNode }) {

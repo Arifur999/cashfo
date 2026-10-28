@@ -26,7 +26,7 @@ const typed = (value: string, hours: boolean) => (hours ? latinDigits(value).rep
 // "Which lesson are you on?" or "How many hours have you done?", as a total
 // so far; the difference from the last total is what today's log records.
 export function SkillProgressDialog({ skill, onClose, onSave, onComplete }: SkillProgressDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [text, setText] = useState("");
 
   const [prevId, setPrevId] = useState<string | null>(null);
@@ -48,14 +48,16 @@ export function SkillProgressDialog({ skill, onClose, onSave, onComplete }: Skil
 
   return (
     <AlertDialog open={skill !== null} onOpenChange={(next) => !next && onClose()}>
-      <AlertDialogContent className="w-100 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-100 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border border-line bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} className="flex flex-col">
-          <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
-            <AlertDialogTitle className="text-h3 text-ink">{t(isHours ? "How many hours have you done?" : "Which lesson are you on?")}</AlertDialogTitle>
-            <CloseButton onClick={onClose} label={t("Close")} />
+          <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-4.5">
+            <div className="flex min-w-0 flex-col gap-1">
+              <AlertDialogTitle className="text-h3 text-ink">{t(isHours ? "How many hours have you done?" : "Which lesson are you on?")}</AlertDialogTitle>
+              <AlertDialogDescription className="text-small text-ink-muted">{skill ? `${skill.name} · ${amountText(skill.unit, skill.target, t, fmt)}` : ""}</AlertDialogDescription>
+            </div>
+            <CloseButton onClick={onClose} label={t("Close")} className="-my-0.5 -mr-1.5 size-8.5 rounded-full" />
           </div>
-          <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{skill ? `${skill.name} · ${amountText(skill.unit, skill.target, t, locale)}` : ""}</AlertDialogDescription>
-          <div className="px-6 py-4">
+          <div className="px-6 py-5">
             <Field htmlFor="sk-progress" label={<span className="text-body font-medium text-ink">{t(isHours ? "Hours done so far" : "Lessons done so far")}</span>} error={error}>
               <Input id="sk-progress" size="lg" inputMode={isHours ? "decimal" : "numeric"} autoFocus value={text} onChange={(event) => setText(typed(event.target.value, isHours))} invalid={error !== undefined} className="text-body-lg font-semibold" frameClassName="w-40" />
             </Field>

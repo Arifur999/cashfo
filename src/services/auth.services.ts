@@ -7,8 +7,8 @@ import { logServiceError } from "@/lib/axios/logServiceError";
 import { betterAuthCookies } from "@/lib/betterAuthCookies";
 import { toRenderSafeError } from "@/lib/axios/renderSafeError";
 import { getTokenAudience } from "@/lib/tokenAudience";
-import { getAccessToken } from "@/lib/tokenUtils";
-import type { IAdminUser, ISignInPayload, ISignInResponse, TokenAudience } from "@/types/auth.types";
+import { getAccessToken, getTrustedDeviceHeader } from "@/lib/tokenUtils";
+import type { IAdminUser, ISignInPayload, ISignInResponse, ITwoStepPending, ITwoStepSignInResponse, TokenAudience } from "@/types/auth.types";
 
 // Not a "use server" module: signIn() and refreshAccessToken() return raw
 // tokens, and every export of a "use server" file is a client-callable
@@ -28,10 +28,16 @@ const SESSION_ENDPOINTS: Record<TokenAudience, string> = {
 // It gives up after 30 seconds, like every other call to the API, so a
 // wedged API ends in "Unable to reach the server" instead of a button that
 // stays busy for good.
-export const signIn = async (payload: ISignInPayload): Promise<ISignInResponse> => {
+// With two-step sign-in on, the answer is the step still to come instead of
+// tokens; a computer trusted for 30 days (its trustedDevice_* cookies go
+// along) skips it.
+export const signIn = async (payload: ISignInPayload): Promise<ISignInResponse | ITwoStepPending> => {
   try {
     // The login throttle is per client IP, so this call above all must carry it.
-    const response = await axios.post<ISignInResponse>(`${API_BASE_URL}/api/auth/sign-in`, payload, { headers: await getClientHeaders(), timeout: 30_000 });
+    const response = await axios.post<ISignInResponse | ITwoStepPending>(`${API_BASE_URL}/api/auth/sign-in`, payload, {
+      headers: { ...(await getClientHeaders()), ...(await getTrustedDeviceHeader()) },
+      timeout: 30_000,
+    });
     return response.data;
   } catch (error) {
     logServiceError("Error signing in", error);
@@ -39,7 +45,29 @@ export const signIn = async (payload: ISignInPayload): Promise<ISignInResponse> 
   }
 };
 
-export type SessionExchangeResult = { ok: true; session: ISignInResponse } | { ok: false; reason: "suspended" | "failed" };
+// The second step, for admins and customers alike: the code from the
+// authenticator app (or a backup code) for the challenge the first step
+// handed out. Errors are the caller's to read (CODE_WRONG, CHALLENGE_EXPIRED...).
+export const answerTwoStep = async (payload: { challengeToken: string; code?: string; backupCode?: string; trustDevice?: boolean }): Promise<ITwoStepSignInResponse> => {
+  const response = await axios.post<ITwoStepSignInResponse>(`${API_BASE_URL}/api/auth/sign-in/two-step`, payload, { headers: await getClientHeaders(), timeout: 30_000 });
+  return response.data;
+};
+
+// An admin who must turn two-step on before getting in: the set-up token
+// stands in for a sign-in on the two set-up calls, and enabling signs in.
+export const startTwoStepSetupWithToken = async (setupToken: string): Promise<{ secret: string; otpauthUrl: string }> => {
+  const response = await axios.post<{ secret: string; otpauthUrl: string }>(`${API_BASE_URL}/admin/auth/two-step/setup`, { setupToken }, { headers: await getClientHeaders(), timeout: 30_000 });
+  return response.data;
+};
+
+export const enableTwoStepWithToken = async (payload: { setupToken: string; code: string; trustDevice?: boolean }): Promise<ITwoStepSignInResponse> => {
+  const response = await axios.post<ITwoStepSignInResponse>(`${API_BASE_URL}/admin/auth/two-step/enable`, payload, { headers: await getClientHeaders(), timeout: 30_000 });
+  return response.data;
+};
+
+export type SessionExchangeResult =
+  | { ok: true; session: ISignInResponse | ITwoStepPending }
+  | { ok: false; reason: "suspended" | "failed" };
 
 // The second half of Google sign-in: hands the backend the better-auth
 // session cookie its callback just set, and gets the usual token pair back,
@@ -47,17 +75,18 @@ export type SessionExchangeResult = { ok: true; session: ISignInResponse } | { o
 // Never throws -- the caller only needs to know where to send the browser.
 // referralCode: the invite code a Google sign-up started with (?ref=); the
 // API credits it only when this sign-in creates the account.
-export const exchangeSession = async (requestHeaders: Pick<Headers, "get">, referralCode?: string): Promise<SessionExchangeResult> => {
+// trustedDevices: the x-trusted-device header from the request's cookies.
+export const exchangeSession = async (requestHeaders: Pick<Headers, "get">, referralCode?: string, trustedDevices: Record<string, string> = {}): Promise<SessionExchangeResult> => {
   const cookie = betterAuthCookies(requestHeaders.get("cookie"));
   if (!cookie) {
     return { ok: false, reason: "failed" };
   }
 
   try {
-    const response = await axios.post<ISignInResponse>(
+    const response = await axios.post<ISignInResponse | ITwoStepPending>(
       `${API_BASE_URL}/api/auth/session/sign-in`,
       referralCode ? { referralCode } : {},
-      { headers: { Cookie: cookie, ...clientHeaders(requestHeaders) } },
+      { headers: { Cookie: cookie, ...clientHeaders(requestHeaders), ...trustedDevices } },
     );
     return { ok: true, session: response.data };
   } catch (error) {

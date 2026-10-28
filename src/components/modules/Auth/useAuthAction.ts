@@ -7,9 +7,13 @@ import { type AuthFormError, describeThrownActionCall } from "./authFormError";
 
 interface ActionAnswer {
   success: boolean;
-  message: string;
+  // A success may have nothing to say.
+  message?: string;
   // The message's {placeholders}, for a refusal that carries a figure.
   values?: FillValues;
+  // The API's reason, and tries left after a wrong code.
+  reason?: string;
+  attemptsLeft?: number;
 }
 
 // Runs a sign-in page's Server Action the same way on every form. The
@@ -29,7 +33,7 @@ export function useAuthAction<TVariables, TAnswer extends ActionAnswer>(action: 
     try {
       const answer = await mutateAsync(variables);
       if (!answer.success) {
-        setError({ message: answer.message || "Something went wrong", values: answer.values });
+        setError({ message: answer.message || "Something went wrong", values: answer.values, reason: answer.reason, attemptsLeft: answer.attemptsLeft });
       }
       return answer;
     } catch (thrown) {

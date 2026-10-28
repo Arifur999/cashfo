@@ -1,18 +1,14 @@
 "use client";
 
-import { MoreHorizontal, Plus } from "lucide-react";
+import { ArrowRight, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
-import AmountText from "@/components/smartly/AmountText";
-import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
-import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowButton, ListRowLink } from "@/components/smartly/list";
+import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
-import PageHeader from "@/components/smartly/PageHeader";
-import ProgressBar from "@/components/smartly/ProgressBar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { BudgetCategorySummary, BudgetOverview } from "@/lib/customer/api";
 import { deleteBudgetCategoryAction } from "@/lib/customer/budgetActions";
@@ -23,45 +19,46 @@ import { categoryTransactionsHref } from "@/lib/customer/transactionRows";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { fastestGrowing, outsideCategories } from "./budgetFigures";
+import { BudgetPlanningHeader } from "./BudgetPlanningHeader";
+import { type BudgetPath, fastestGrowing, incomeShares, outsideCategories } from "./budgetFigures";
 import { CategoryDrawer } from "./CategoryDrawer";
-import { MonthSwitcher, monthLabel } from "./MonthSwitcher";
-import { useRowMenus } from "./useRowMenus";
+import { monthLabel, monthOnlyLabel } from "./MonthSwitcher";
 
 interface IncomeSourcesPageClientProps {
   businessId: string;
+  // The address the page is on, kept when the month changes.
+  path: BudgetPath;
   overview: BudgetOverview;
-  // Earned per source the month before the one on show, and in its year
+  // How many categories each tab has.
+  counts: { expense: number; income: number };
+  // Earned per category the month before the one on show, and in its year
   // so far, by name.
   lastMonth: Record<string, number>;
   thisYear: Record<string, number>;
-  // Every income of the month, with a source or not; null on an older
-  // backend, when the sources' own sums stand in.
+  // Every income of the month, with a category or not; null on an older
+  // backend, when the categories' own sums stand in.
   monthTotal: number | null;
   currency: string;
   canManage: boolean;
-  // Opened straight into Add income source (from the New transaction drawer).
+  // Opened straight into Add income category (from the New transaction drawer).
   openAdd: boolean;
   // This month in the platform timezone, so a past month isn't called "this month".
   today: { year: number; month: number };
 }
 
-const COLUMNS = "md:grid-cols-[minmax(0,1.4fr)_140px_minmax(0,1.4fr)_110px_48px]";
-const LIST_ID = "income-sources";
-const MENU_TRIGGER = "flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11";
+const MENU_TRIGGER = "flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11";
 const MENU_ITEM = "cursor-pointer rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken";
 
-// Income sources: where the money comes from -- the month's total, the
-// biggest source and the one growing fastest, then a row per source with
-// the month, its share of the month, and its year so far.
-export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisYear, monthTotal, currency, canManage, openAdd, today }: IncomeSourcesPageClientProps) {
-  const { t, locale } = useLocale();
+// Budget planning, Income categories (design-v4 BudgetIncome): what the
+// month earned with each category's share of it, then a card per income
+// category. Income categories have no limit.
+export function IncomeSourcesPageClient({ businessId, path, overview, counts, lastMonth, thisYear, monthTotal, currency, canManage, openAdd, today }: IncomeSourcesPageClientProps) {
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
-  const rowMenu = useRowMenus();
   // Asked from a link (?addType=INCOME, the New transaction drawer's): Add
-  // income source opens, also when this page is already open, as a new
+  // income category opens, also when this page is already open, as a new
   // query keeps the page's state. Read off the address, not the server's
   // prop alone, which stays true once the ask is taken off below.
   const asked = openAdd && searchParams.get("addType") === "INCOME";
@@ -82,49 +79,42 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
     if (!next.has("addType")) return;
     next.delete("addType");
     const query = next.toString();
-    window.history.replaceState(null, "", query ? `/income-category?${query}` : "/income-category");
+    window.history.replaceState(null, "", query ? `${window.location.pathname}?${query}` : window.location.pathname);
   }, [asked]);
 
   const { month, year } = overview;
   const isCurrentMonth = year === today.year && month === today.month;
-  const monthName = monthLabel(month, year, locale);
-  const previousName = month === 1 ? monthLabel(12, year - 1, locale) : monthLabel(month - 1, year, locale);
-  const yearText = toLocaleDigits(String(year), locale);
-  const sources = overview.categories;
-  const categorized = sources.reduce((sum, s) => sum + Number(s.spent), 0);
-  // The month's real income; the sources' sums leave some out.
+  const monthName = monthLabel(month, year, fmt);
+  const previousName = month === 1 ? monthLabel(12, year - 1, fmt) : monthLabel(month - 1, year, fmt);
+  const yearText = toLocaleDigits(String(year), fmt);
+  const categories = overview.categories;
+  const categorized = categories.reduce((sum, c) => sum + Number(c.spent), 0);
+  // The month's real income; the categories' sums leave some out.
   const total = monthTotal ?? categorized;
   const outside = outsideCategories(monthTotal, categorized);
-  const earning = sources.filter((s) => Number(s.spent) > 0).length;
-  const biggest = [...sources].sort((a, b) => Number(b.spent) - Number(a.spent))[0];
-  const shareOf = (amount: number) => (total > 0 ? Math.round((amount / total) * 100) : 0);
-  // The biggest source, once it brought something in: the month's total
-  // can be above 0 while every source earned 0 (an asset sale, a referral
-  // payout, an income saved without a source).
-  const top = biggest && Number(biggest.spent) > 0 && total > 0 ? biggest : undefined;
-  const biggestShare = top ? shareOf(Number(top.spent)) : 0;
+  const shares = incomeShares(categories, total);
   const growth = fastestGrowing(
-    sources.map((s) => ({ name: s.name, amount: Number(s.spent) })),
+    categories.map((c) => ({ name: c.name, amount: Number(c.spent) })),
     lastMonth,
   );
-  const hadLastMonth = Object.values(lastMonth).some((amount) => amount > 0);
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
-  const percent = (value: number) => formatCount(value, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
+  const percent = (value: number) => formatCount(Math.round(value), fmt);
+  const shareOf = (amount: number) => (total > 0 ? (amount / total) * 100 : 0);
 
   function goToMonth(nextMonth: number, nextYear: number) {
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", String(nextMonth));
     next.set("year", String(nextYear));
     next.delete("addType");
-    startSwitch(() => router.push(`/income-category?${next.toString()}`));
+    startSwitch(() => router.push(`${path}?${next.toString()}`));
   }
 
-  async function remove(source: BudgetCategorySummary) {
-    if (!(await confirm({ title: t("Delete {name}?", { name: source.name }), message: t("Past transactions keep their category; only the source goes."), confirmLabel: "Delete source" }))) return;
+  async function remove(category: BudgetCategorySummary) {
+    if (!(await confirm({ title: t("Delete {name}?", { name: category.name }), message: t("Past transactions keep this category's name."), confirmLabel: "Delete category" }))) return;
     startDelete(async () => {
-      const result = await deleteBudgetCategoryAction(businessId, source.id);
+      const result = await deleteBudgetCategoryAction(businessId, category.id);
       if (result.success) {
-        toast.success(t("Source deleted"));
+        toast.success(t("Category deleted"));
         router.refresh();
       } else {
         toast.error(t(result.message ?? "Failed to delete category"));
@@ -132,191 +122,128 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
     });
   }
 
-  // A source's actions: all three for an owner or accountant; a viewer
-  // still gets to its month's transactions (the row is that link).
-  const menu = (source: BudgetCategorySummary) => (
+  // A category's actions, for an owner or accountant; anyone gets to its
+  // month's transactions from the card's own link.
+  const menu = (category: BudgetCategorySummary) => (
     <DropdownMenuContent align="end" className="w-52 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-      <DropdownMenuItem onSelect={() => setDrawer(source)} className={MENU_ITEM}>
+      <DropdownMenuItem onSelect={() => setDrawer(category)} className={MENU_ITEM}>
         {t("Edit")}
       </DropdownMenuItem>
       <DropdownMenuItem asChild className={MENU_ITEM}>
-        <Link href={categoryTransactionsHref("INCOME", source.name, year, month)}>{t("See transactions")}</Link>
+        <Link href={categoryTransactionsHref("INCOME", category.name, year, month)}>{t("See transactions")}</Link>
       </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => remove(source)} className="cursor-pointer rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">
+      <DropdownMenuItem onSelect={() => remove(category)} className="cursor-pointer rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">
         {t("Delete")}
       </DropdownMenuItem>
     </DropdownMenuContent>
   );
 
-  const addButton = (
-    <Button onClick={() => setDrawer("create")}>
-      <Plus strokeWidth={2.25} />
-      {t("Add income source")}
-    </Button>
-  );
+  // Each card's year so far, under its name as an expense card has its limit.
+  const yearLine = (amount: number) =>
+    isCurrentMonth ? t("This year {amount}", { amount: money(amount) }) : year < today.year ? t("{year}: {amount}", { year: yearText, amount: money(amount) }) : t("{year} so far: {amount}", { year: yearText, amount: money(amount) });
 
   return (
-    <PageFrame>
-      <PageHeader
-        eyebrow={t("Money")}
-        title={t("Income sources")}
-        description={t("Where your money comes from, and how much came from each one this month.")}
-        looseDescription
-        actions={
-          <>
-            <MonthSwitcher month={month} year={year} onChange={goToMonth} />
-            {canManage && addButton}
-          </>
-        }
-        hideActionsOnPhone
-        className="md:mb-2"
-      />
+    <PageFrame className="gap-5">
+      <BudgetPlanningHeader tab="income" path={path} month={month} year={year} counts={counts} onMonthChange={goToMonth} onAdd={canManage ? () => setDrawer("create") : undefined} />
 
-      <div aria-busy={switching || undefined} className={cn("flex flex-col gap-4 transition-opacity", switching && "opacity-60")}>
-        {/* Phone: the month across the page, as on Budget; the add button follows the list. */}
-        <div className="md:hidden">
-          <MonthSwitcher month={month} year={year} onChange={goToMonth} stretch />
-        </div>
-        <section aria-label={monthName} className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
-          <Card className="flex flex-col gap-3">
-            <span className="text-small font-medium text-ink-muted">{t("Money in · {month}", { month: monthName })}</span>
-            <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <AmountText value={total} currency={currency} size="lg" tone="income" signed />
-              <span className="text-small text-ink-muted">{t(earning === 1 ? "from {count} source" : "from {count} sources", { count: formatCount(earning, locale) })}</span>
-            </span>
-            {/* The biggest source's part of the month. */}
-            <ProgressBar value={biggestShare} tone="income" label={top ? t("{name}, {percent}% of the month", { name: top.name, percent: percent(biggestShare) }) : t("Money in")} />
-            {/* Money that came in under no source is said by the line below. */}
-            {top ? (
-              <span className="text-small text-ink-muted">{t("{name} brought {percent}% of it", { name: top.name, percent: percent(biggestShare) })}</span>
-            ) : (
-              total <= 0 && <span className="text-small text-ink-muted">{isCurrentMonth ? t("Nothing came in yet this month") : t("Nothing came in during {month}", { month: monthName })}</span>
-            )}
-            {outside > 0 && <span className="text-caption text-ink-muted">{t("{amount} came in without a source", { amount: money(outside) })}</span>}
-          </Card>
-          <Card className="flex flex-col gap-2">
-            <span className="text-small font-medium text-ink-muted">{t("Biggest source")}</span>
-            <b className="text-h2 text-ink">{top ? `${top.name} · ${percent(biggestShare)}%` : "—"}</b>
-            <span className="text-small text-ink-muted">
-              {top
-                ? isCurrentMonth
-                  ? t("{amount} this month", { amount: money(top.spent) })
-                  : t("{amount} in {month}", { amount: money(top.spent), month: monthName })
-                : total > 0
-                  ? t("Add an income under a source to see it")
-                  : t("Add an income to see it")}
-            </span>
-          </Card>
-          <Card className="flex flex-col gap-2">
-            <span className="text-small font-medium text-ink-muted">{t("Growing fastest")}</span>
-            <b className="text-h2 text-ink">{growth ? `${growth.name} · ↑ ${percent(growth.percent)}%` : "—"}</b>
-            <span className="text-small text-ink-muted">
-              {growth
-                ? isCurrentMonth
-                  ? t("{before} last month, {now} now", { before: money(growth.before), now: money(growth.now) })
-                  : t("{before} in {previous}, {now} in {month}", { before: money(growth.before), previous: previousName, now: money(growth.now), month: monthName })
-                : hadLastMonth
-                  ? t(isCurrentMonth ? "No source grew since last month" : "No source grew from the month before")
-                  : t("Needs last month to compare with")}
-            </span>
-          </Card>
-        </section>
-
-        <ListCard
-          id={LIST_ID}
-          label={t("Your sources")}
-          busy={switching}
-          header={
-            <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-4 md:px-6">
-              <h2 className="text-h3 text-ink">{t("Your sources")}</h2>
-              <Link href="/reports/overview" className="text-body font-semibold text-emerald hover:text-emerald-hover">
-                {t("See insights")}
-              </Link>
+      <div aria-busy={switching || undefined} className={cn("flex flex-col gap-5 transition-opacity", switching && "opacity-60")}>
+        <Card padding="none" className="flex flex-col gap-4 px-5 py-5 md:px-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-small font-medium text-ink-muted">{t("Earned in {month}", { month: isCurrentMonth || year === today.year ? monthOnlyLabel(month, fmt) : monthName })}</span>
+              <span className={cn("text-amount-lg tabular-nums", total > 0 ? "text-income" : "text-ink-faint")}>{total > 0 ? `+ ${money(total)}` : money(0)}</span>
             </div>
-          }
-        >
-          {sources.length === 0 ? (
-            <ListEmpty icon={<Plus />} title={t("No income source yet")} description={t("Salary, freelance, shop sales… name each one and every income lands under it.")} action={canManage && addButton} />
-          ) : (
-            <>
-              <ListHead columns={COLUMNS}>
-                <ListHeadCell>{t("Source")}</ListHeadCell>
-                <ListHeadCell align="end">{isCurrentMonth ? t("This month") : monthName}</ListHeadCell>
-                <ListHeadCell>{t("Share of the month")}</ListHeadCell>
-                <ListHeadCell align="end">{isCurrentMonth ? t("This year") : year < today.year ? yearText : t("{year} so far", { year: yearText })}</ListHeadCell>
-                <ListHeadCell>
-                  <span className="sr-only">{t("Actions")}</span>
-                </ListHeadCell>
-              </ListHead>
-              {sources.map((source) => {
-                const amount = Number(source.spent);
-                const share = shareOf(amount);
-                const visual = categoryTone(source.color);
-                const seeHref = categoryTransactionsHref("INCOME", source.name, year, month);
-                const shareText = t("{percent}% of the month", { percent: percent(share) });
-                const phoneMenu = rowMenu(source.id);
-                return (
-                  <ListRow key={source.id} columns={COLUMNS} density="spacious">
-                    <ListCell className="flex min-w-0 items-center gap-3">
-                      <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-5", visual.bg, visual.fg)}>{createElement(categoryIconFor(source), { "aria-hidden": true })}</span>
-                      <span className="flex min-w-0 flex-col">
-                        {canManage ? (
-                          <>
-                            {/* A phone has no room for the menu button: a tap on the row opens the menu (a scroll doesn't). */}
-                            <DropdownMenu {...phoneMenu.root}>
-                              <DropdownMenuTrigger asChild {...phoneMenu.trigger}>
-                                <ListRowButton aria-label={t("{name}: actions", { name: source.name })} className="truncate text-body font-semibold text-ink md:hidden">
-                                  {source.name}
-                                </ListRowButton>
-                              </DropdownMenuTrigger>
-                              {menu(source)}
-                            </DropdownMenu>
-                            <ListRowLink href={seeHref} className="hidden truncate text-body font-semibold text-ink md:block">
-                              {source.name}
-                            </ListRowLink>
-                          </>
-                        ) : (
-                          <ListRowLink href={seeHref} className="truncate text-body font-semibold text-ink">
-                            {source.name}
-                          </ListRowLink>
-                        )}
-                        <span className="text-small text-ink-muted md:hidden">{shareText}</span>
-                      </span>
-                    </ListCell>
-                    <ListCell align="end">
-                      <AmountText value={amount} currency={currency} size="sm" tone={amount > 0 ? "income" : "inherit"} signed={amount > 0} className={cn("font-bold", amount === 0 && "text-ink-muted")} />
-                    </ListCell>
-                    <ListCell className="hidden flex-col gap-2 md:flex">
-                      {/* The bar in the source's own colour, as its tile. */}
-                      <ProgressBar value={share} tone="income" label={t("{name}, {percent}% of the month", { name: source.name, percent: percent(share) })} className={cn("[&>span]:bg-current", visual.fg)} />
-                      <span className="text-caption font-normal text-ink-muted">{shareText}</span>
-                    </ListCell>
-                    <ListCell align="end" className="hidden text-body text-ink-2 tabular-nums md:block">
-                      {thisYear[source.name] ? money(thisYear[source.name]) : "—"}
-                    </ListCell>
-                    {canManage ? (
-                      <ListRowActions className="hidden md:flex">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger aria-label={t("{name}: actions", { name: source.name })} className={MENU_TRIGGER}>
-                            <MoreHorizontal className="size-4.5" aria-hidden="true" />
-                          </DropdownMenuTrigger>
-                          {menu(source)}
-                        </DropdownMenu>
-                      </ListRowActions>
-                    ) : (
-                      <ListCell className="hidden md:block" />
-                    )}
-                  </ListRow>
-                );
-              })}
-            </>
+            <span className="flex max-w-90 flex-col gap-1 text-small leading-normal text-ink-muted md:text-right">
+              <span>{t("Income categories have no limit. They show where your money comes from.")}</span>
+              {growth && (
+                <span>
+                  {isCurrentMonth
+                    ? t("{name} grew {percent}% since last month", { name: growth.name, percent: percent(growth.percent) })
+                    : t("{name} grew {percent}% from {previous}", { name: growth.name, percent: percent(growth.percent), previous: previousName })}
+                </span>
+              )}
+            </span>
+          </div>
+          <span
+            role="img"
+            aria-label={shares.length > 0 ? t("Income by category: {list}", { list: shares.map((s) => `${s.name} ${percent(s.share)}%`).join(", ") }) : t("Nothing came in yet this month")}
+            className="flex h-3 gap-0.75 overflow-hidden rounded-full bg-surface-sunken"
+          >
+            {shares.map((s) => (
+              <span key={s.id} className={cn("h-full bg-current", categoryTone(s.color).fg)} style={{ width: `${s.share}%` }} />
+            ))}
+          </span>
+          {(shares.length > 0 || outside > 0) && (
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {shares.map((s) => (
+                <span key={s.id} className="flex items-center gap-2 text-small">
+                  <span className={cn("size-2.5 rounded-[3px] bg-current", categoryTone(s.color).fg)} />
+                  <span className="text-ink-2">{s.name}</span>
+                  <span className="font-semibold text-ink tabular-nums">{money(s.amount)}</span>
+                  <span className="text-ink-muted tabular-nums">{toPercentText(percent(s.share))}</span>
+                </span>
+              ))}
+              {outside > 0 && <span className="text-small text-ink-muted">{t("{amount} came in without a category", { amount: money(outside) })}</span>}
+            </div>
           )}
-        </ListCard>
-        {canManage && sources.length > 0 && (
-          <Button variant="soft" size="xl" onClick={() => setDrawer("create")} className="md:hidden">
-            <Plus strokeWidth={2.25} className="size-4" />
-            {t("Add income source")}
-          </Button>
+        </Card>
+
+        {categories.length === 0 && !canManage ? (
+          <EmptyState icon={<Plus />} title={t("No income categories yet")} description={t("Salary, business, rent, commission…")} />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((category) => {
+              const amount = Number(category.spent);
+              const share = shareOf(amount);
+              const visual = categoryTone(category.color);
+              const yearAmount = thisYear[category.name];
+              return (
+                <Card key={category.id} padding="none" className="flex flex-col gap-3 p-4.5">
+                  <div className="flex items-center gap-3">
+                    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.75", visual.bg, visual.fg)}>{createElement(categoryIconFor(category), { "aria-hidden": true })}</span>
+                    <span className="flex min-w-0 flex-1 flex-col gap-px">
+                      <span className="truncate text-[15px] font-semibold text-ink">{category.name}</span>
+                      {yearAmount ? <span className="text-caption text-ink-muted tabular-nums">{yearLine(yearAmount)}</span> : null}
+                    </span>
+                    {canManage && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger aria-label={t("{name}: actions", { name: category.name })} className={MENU_TRIGGER}>
+                          <MoreHorizontal className="size-4.5" aria-hidden="true" />
+                        </DropdownMenuTrigger>
+                        {menu(category)}
+                      </DropdownMenu>
+                    )}
+                  </div>
+                  <span className={cn("text-[20px] font-bold tracking-[-0.01em] tabular-nums", amount > 0 ? "text-income" : "text-ink-faint")}>{amount > 0 ? `+ ${money(amount)}` : money(0)}</span>
+                  <span className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
+                    <span className={cn("block h-full rounded-full bg-current", visual.fg)} style={{ width: `${share}%` }} />
+                  </span>
+                  <div className="flex items-center justify-between gap-3 text-small">
+                    <span className="text-ink-muted">
+                      {amount > 0
+                        ? t(isCurrentMonth ? "{percent}% of this month’s income" : "{percent}% of {month}’s income", { percent: percent(share), month: monthOnlyLabel(month, fmt) })
+                        : isCurrentMonth
+                          ? t("No income here yet this month")
+                          : t("No income here in {month}", { month: monthName })}
+                    </span>
+                    <Link href={categoryTransactionsHref("INCOME", category.name, year, month)} className="flex shrink-0 items-center gap-1 font-semibold text-emerald hover:text-emerald-hover">
+                      {t("Transactions")}
+                      <ArrowRight className="size-3.25" strokeWidth={2.25} aria-hidden="true" />
+                    </Link>
+                  </div>
+                </Card>
+              );
+            })}
+            {canManage && (
+              <button type="button" onClick={() => setDrawer("create")} className="flex min-h-37 flex-col items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-input bg-surface p-5 text-center transition-colors hover:border-emerald dark:border-line-strong">
+                <span className="flex size-10 items-center justify-center rounded-[10px] bg-emerald-soft text-emerald">
+                  <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
+                </span>
+                <span className="text-body font-semibold text-ink">{t("Add income category")}</span>
+                <span className="text-caption text-ink-muted">{t("Salary, business, rent, commission…")}</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -327,9 +254,12 @@ export function IncomeSourcesPageClient({ businessId, overview, lastMonth, thisY
         type="INCOME"
         editing={drawer === "closed" || drawer === "create" ? null : drawer}
         currency={currency}
-        existingNames={sources.map((s) => s.name)}
+        existingNames={categories.map((c) => c.name)}
       />
       {confirmDialog}
     </PageFrame>
   );
 }
+
+// "45%" in the reader's digits ("৪৫%").
+const toPercentText = (digits: string) => `${digits}%`;

@@ -7,6 +7,7 @@ import type { AgingReport, OverdueRow } from "@/lib/customer/api";
 import { agingShares, agingTotal, booksDate, lateByContact } from "@/lib/customer/booksDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatCount } from "@/lib/i18n/digits";
+import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AgingBar, AgingLegend } from "../shared/Aging";
@@ -23,7 +24,7 @@ interface DirectionCardProps {
 // suppliers) on credit sales or purchases, by age, with who is more than
 // 30 days late and by how much of it.
 export function DirectionCard({ direction, aging, overdue, currency, today }: DirectionCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const receivable = direction === "RECEIVABLE";
   const shares = agingShares(aging);
   const total = agingTotal(aging);
@@ -31,7 +32,7 @@ export function DirectionCard({ direction, aging, overdue, currency, today }: Di
   // Only what is past 30 days counts on this list, not a contact's whole overdue.
   const over30 = lateByContact(overdue, 30);
   const people = aging.contacts.length;
-  const count = { count: formatCount(people, locale) };
+  const count = { count: formatCount(people, fmt) };
   const title = t(receivable ? "Customers owe you" : "You owe suppliers");
 
   return (
@@ -47,12 +48,12 @@ export function DirectionCard({ direction, aging, overdue, currency, today }: Di
             </span>
             {late.length > 0 && (
               <Chip tone="warning" size="md">
-                {t("{count} overdue", { count: formatCount(late.length, locale) })}
+                {t("{count} overdue", { count: formatCount(late.length, fmt) })}
               </Chip>
             )}
           </div>
           <span className="flex flex-col gap-0.5">
-            <span className={cn("text-display tabular-nums wrap-anywhere", receivable ? "text-income" : "text-expense")}>{formatCurrency(total, currency, locale)}</span>
+            <span className={cn("text-display tabular-nums wrap-anywhere", receivable ? "text-income" : "text-expense")}>{formatCurrency(total, currency, fmt)}</span>
             {/* What was owed from before Books is on no invoice, so the
                 aging leaves it out; the contact's own page shows it. */}
             <span className="text-caption text-ink-muted">{t(receivable ? "On credit sales" : "On credit purchases")}</span>
@@ -68,7 +69,7 @@ export function DirectionCard({ direction, aging, overdue, currency, today }: Di
         </div>
       }
     >
-      <ListGroupRow label={<h3 className="text-small font-semibold text-ink-2">{t("Over 30 days")}</h3>} />
+      <ListGroupRow label={<h3 className="text-small font-semibold text-ink-2">{redigit(t("Over 30 days"), fmt)}</h3>} />
       {over30.length === 0 && <ListEmpty title={t("Nothing is more than 30 days late.")} className="py-6" />}
       {over30.map((row) => (
         <ListRow key={row.contactId}>
@@ -78,12 +79,12 @@ export function DirectionCard({ direction, aging, overdue, currency, today }: Di
               <ListRowLink href={`/contacts/${row.contactId}`} className="truncate text-body font-semibold text-ink">
                 {row.contactName}
               </ListRowLink>
-              <span className="truncate text-small text-ink-muted">{t("Oldest: {what}, {date}", { what: row.oldestDescription ?? t(receivable ? "a sale" : "a purchase"), date: booksDate(row.oldestDueDate, locale, { today }) })}</span>
+              <span className="truncate text-small text-ink-muted">{t("Oldest: {what}, {date}", { what: row.oldestDescription ?? t(receivable ? "a sale" : "a purchase"), date: booksDate(row.oldestDueDate, fmt, { today }) })}</span>
             </span>
           </ListCell>
           <ListCell align="end" className="flex shrink-0 flex-col items-end">
-            <b className="text-ink tabular-nums whitespace-nowrap">{formatCurrency(row.amount, currency, locale)}</b>
-            <span className={cn("text-caption font-semibold whitespace-nowrap", row.daysLate > 60 ? "text-expense" : "text-warning")}>{t("{count} days late", { count: formatCount(row.daysLate, locale) })}</span>
+            <b className="text-ink tabular-nums whitespace-nowrap">{formatCurrency(row.amount, currency, fmt)}</b>
+            <span className={cn("text-caption font-semibold whitespace-nowrap", row.daysLate > 60 ? "text-expense" : "text-warning")}>{t("{count} days late", { count: formatCount(row.daysLate, fmt) })}</span>
           </ListCell>
         </ListRow>
       ))}

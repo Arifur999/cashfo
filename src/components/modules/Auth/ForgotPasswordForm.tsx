@@ -1,16 +1,16 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
+import { ArrowLeft, Info, Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { requestPasswordResetAction } from "@/app/(auth)/forgot-password/_action";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
-import Banner from "@/components/smartly/Banner";
 import { LOGIN_ROUTE } from "@/lib/authUtils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { forgotPasswordFormZodSchema, type IForgotPasswordFormValues } from "@/zod/auth.validation";
+import AuthAlert from "./AuthAlert";
 import AuthHeading from "./AuthHeading";
 import AuthLink from "./AuthLink";
 import FormErrorCallout from "./FormErrorCallout";
@@ -67,21 +67,17 @@ const ForgotPasswordForm = () => {
 
   return (
     <>
-      <AuthHeading title="Forgot your password?" subtitle="It happens. Enter the email you sign in with and we'll send you a link to choose a new one." />
-      <AppForm onSubmit={form.handleSubmit} className="space-y-4">
+      <div className="flex flex-col gap-4">
+        <AuthLink href={LOGIN_ROUTE} className="inline-flex min-h-11 items-center gap-1.5 self-start text-body font-semibold text-ink hover:text-ink lg:min-h-0">
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {translate("Back to sign in")}
+        </AuthLink>
+        <AuthHeading title="Reset your password" subtitle="Type the email you sign in with. We will send a link that works for 30 minutes." />
+      </div>
+      <AppForm onSubmit={form.handleSubmit} className="flex flex-col space-y-0 gap-4">
         <div ref={emailRef}>
           <form.Field name="email" validators={{ onChange: forgotPasswordFormZodSchema.shape.email }}>
-            {(field) => (
-              <AppField
-                field={field}
-                label={translate("Email")}
-                type="email"
-                size="xl"
-                autoComplete="email"
-                placeholder="you@example.com"
-                description={translate("We'll send a link to this address if it has a Smartly account.")}
-              />
-            )}
+            {(field) => <AppField field={field} label={translate("Email")} type="email" size="auth" prepend={<Mail />} autoComplete="email" placeholder="you@example.com" />}
           </form.Field>
         </div>
 
@@ -89,20 +85,15 @@ const ForgotPasswordForm = () => {
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Sending...")} size="2xl">
+            <AppSubmitButton isPending={isSubmitting || isPending} pendingLabel={translate("Sending...")} size="lg" className="text-[15px] max-md:h-12 max-md:text-body-lg">
               {translate("Send reset link")}
-              <ArrowRight aria-hidden="true" />
             </AppSubmitButton>
           )}
         </form.Subscribe>
       </AppForm>
-      <Banner tone="neutral" inline icon={<Clock />} className="font-normal">
-        {translate("The link works for 30 minutes and only once. Check spam if it hasn't arrived in 2 minutes.")}
-      </Banner>
-      <AuthLink href={LOGIN_ROUTE} className="flex min-h-11 items-center justify-center gap-2 text-body">
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        {translate("Back to sign in")}
-      </AuthLink>
+      <AuthAlert tone="note" role="note" icon={Info}>
+        {translate("For safety, this screen says the same thing whether or not the email has an account. The link works once; check spam if it hasn't arrived in 2 minutes.")}
+      </AuthAlert>
     </>
   );
 };

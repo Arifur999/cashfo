@@ -1,45 +1,34 @@
-import { formatDate, formatRelativeDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { getTranslator } from "@/lib/i18n/locale";
-import type { IOwnerDetail } from "@/types/owner.types";
-import { daysSince, daysUsedLabel, ownWorkspaceLabel } from "./peopleDisplay";
+import { plural } from "@/lib/i18n/message";
+import type { IOwnerStats } from "@/types/owner.types";
+import { walletKindsLabel, workspacePlanLabel } from "./peopleDisplay";
 
-// Four small figures on strip tiles, as the design draws a person's
-// overview: workspaces, plan, since when, last sign-in. Counts are in the
-// reader's digits; names (workspace, plan) are data, and only the fixed
-// words are translated.
-const OwnerSummaryStats = async ({ owner }: { owner: IOwnerDetail }) => {
+// Four small figures on strip tiles, as the AdminUserDetail board opens a
+// person's overview: workspaces against the plan, wallets by kind,
+// transactions in the last 30 days and the friends they invited. Counts
+// are in the reader's digits.
+const OwnerSummaryStats = async ({ stats }: { stats: IOwnerStats }) => {
   const { t, locale } = await getTranslator("admin");
-  // The workspace listed is their own personal one; the others are counted.
-  const own = ownWorkspaceLabel(owner, t);
-  const others = owner.workspaceCount - 1;
-  const days = daysSince(owner.createdAt);
-  const used = daysUsedLabel(days, t, locale);
+  const count = (value: number) => formatCount(value, locale);
   const tiles = [
+    { label: "Workspaces", value: count(stats.workspaces), sub: workspacePlanLabel(stats.workspaces, stats.workspaceLimit, t, locale) },
+    { label: "Wallets", value: count(stats.wallets), sub: walletKindsLabel(stats.walletKinds, t, locale) },
+    { label: "Transactions", value: count(stats.transactionsLast30d), sub: t("In the last 30 days") },
     {
-      label: "Workspaces",
-      value: formatCount(owner.workspaceCount, locale),
-      sub: own === null ? t("No workspace yet") : others > 0 ? t("{name} and {count} more", { name: own, count: formatCount(others, locale) }) : own,
-    },
-    { label: "Plan", value: owner.planName ?? t("None"), sub: t(owner.planName ? "Current plan" : "No plan on the account") },
-    { label: "Member since", value: formatDate(owner.createdAt, "d MMM yyyy", "—", locale), sub: days > 0 ? t("Using for {days}", { days: used }) : used },
-    {
-      // Set when they sign in, and a session lasts a week: it isn't when
-      // they last used the app, so it doesn't say "active".
-      label: "Last sign-in",
-      value: owner.lastLoginAt ? formatRelativeDay(owner.lastLoginAt, { t, locale }) : t("Never"),
-      sub: t(owner.lastLoginAt ? "Changes only when they sign in" : "Has not signed in yet"),
+      label: "Referral friends",
+      value: count(stats.referralFriends),
+      sub: stats.referralFriends === 0 ? t("No friends invited yet") : plural(t, stats.referralBought, "{count} bought a plan", "{count} bought a plan", undefined, locale),
     },
   ];
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
       {tiles.map((tile) => (
-        <div key={tile.label} className="flex flex-col gap-0.5 rounded-md border border-divider bg-strip px-4 py-3">
+        <div key={tile.label} className="flex flex-col gap-0.5 rounded-[14px] border border-divider bg-strip px-3.5 py-3">
           <span className="text-caption text-ink-muted">{t(tile.label)}</span>
-          <span className="truncate text-h3 text-ink tabular-nums">{tile.value}</span>
-          <span className="truncate text-caption text-ink-muted" title={tile.sub}>
-            {tile.sub}
-          </span>
+          <span className="text-[19px] leading-[normal] font-bold text-ink tabular-nums">{tile.value}</span>
+          <span className="text-[11.5px] leading-[normal] text-ink-muted">{tile.sub}</span>
         </div>
       ))}
     </div>

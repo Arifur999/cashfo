@@ -28,7 +28,8 @@ const ManageOwnersTable = ({ canResetData }: { canResetData: boolean }) => {
   const queryString = buildTableQueryString(searchParams, MANAGE_OWNERS_TABLE_BASE_CONFIG);
   const query = useQuery({ ...ownersListQuery(queryString), placeholderData: keepPreviousData });
   const statusCounts = query.data?.data.statusCounts;
-  const config = useMemo(() => buildManageOwnersTableConfig(statusCounts), [statusCounts]);
+  const openStatus = searchParams.get("status");
+  const config = useMemo(() => buildManageOwnersTableConfig(statusCounts, openStatus), [statusCounts, openStatus]);
   const { dataTableProps } = useServerDataTable<IOwnerOverviewItem>(config);
   const { activeRow, openDialog, getDialogProps } = useRowDialogs<IOwnerOverviewItem, "reset">();
 

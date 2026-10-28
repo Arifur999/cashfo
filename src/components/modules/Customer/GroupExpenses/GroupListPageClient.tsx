@@ -1,10 +1,9 @@
 "use client";
 
-import { Building2, House, Info, Plus, Trash2, Users } from "lucide-react";
+import { Building2, House, Plus, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
@@ -26,20 +25,20 @@ interface GroupListPageClientProps {
 
 const STEPS = [
   { title: "Add the members", body: "Brothers, flatmates or mess members. They don't need a login; you record for them." },
-  { title: "Record money in and out", body: "Contributions, every expense (from the fund or someone's own pocket), and the month's budget." },
+  { title: "Record money in and out", body: "Contributions, every expense (from the fund or someone's own pocket) and, for a mess, daily meals." },
   { title: "Settle and close the month", body: "See who gets money back and who has to pay, record the payments, then lock the month." },
 ];
 
 // How the two kinds of group differ, under the steps (the cards carry the chips).
 const KINDS = [
-  { title: "Family", body: "Brothers or relatives running one home. Bazar can be shared by family size (shares), and rent and bills equally.", icon: House, tone: "bg-pillar-insights-soft text-pillar-insights" },
-  { title: "Mess", body: "Students or workers sharing a flat. Daily meals are counted, bazar is shared at the meal rate, and the other costs equally.", icon: Building2, tone: "bg-warning-soft text-warning" },
+  { title: "Family", body: "brothers or relatives running one home. Bazar can be shared by family size (shares), rent and bills equally.", icon: House, tone: "rounded-[14px] bg-pillar-insights-soft text-ink-2", iconTone: "text-pillar-insights" },
+  { title: "Mess", body: "students or workers sharing a flat. Daily meals are counted, bazar is shared by meal rate, rent and bills equally.", icon: Building2, tone: "rounded-field bg-warning-50 text-warning-ink", iconTone: "text-warning" },
 ];
 
 // Money › Group expenses: every group the person is in, with its month's
 // figures, and how a group keeps the account straight.
 export function GroupListPageClient({ groups }: GroupListPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleting, setDeleting] = useState<GroupCardData | null>(null);
@@ -64,7 +63,7 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
     <PageFrame className="gap-6">
       <PageHeader
         eyebrow={t("Money")}
-        title={t("Group expenses")}
+        title={t("Group Expense")}
         description={t("Shared money for a family or a mess. Each member's share, dues and refunds are worked out for you.")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
@@ -99,7 +98,7 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
         <div className="grid gap-4 md:grid-cols-3">
           {STEPS.map((step, i) => (
             <div key={step.title} className="flex gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-mint-50 text-small font-bold text-emerald">{formatCount(i + 1, locale)}</span>
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-mint-50 text-small font-bold text-emerald">{formatCount(i + 1, fmt)}</span>
               <div className="flex flex-col gap-0.75">
                 <span className="text-body font-semibold text-ink">{t(step.title)}</span>
                 <span className="text-small leading-relaxed text-ink-muted">{t(step.body)}</span>
@@ -107,17 +106,13 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
             </div>
           ))}
         </div>
-        <Banner tone="info" inline icon={<Info />} className="leading-relaxed">
-          <b>{t("Balance")}</b> = {t("contributions and own-pocket payments − share of the month's costs. Plus means the member gets money back, minus means they have to pay. Cash in hand always equals every balance added up, so the account checks itself.")}
-        </Banner>
         <div className="grid gap-3 md:grid-cols-2">
           {KINDS.map((kind) => (
-            <div key={kind.title} role="note" className={cn("flex items-start gap-3 rounded-md px-4 py-3", kind.tone)}>
-              <kind.icon className="mt-0.5 size-4.5 shrink-0" aria-hidden="true" />
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-body font-semibold">{t(kind.title)}</span>
-                <span className="text-small leading-relaxed text-ink-2">{t(kind.body)}</span>
-              </div>
+            <div key={kind.title} role="note" className={cn("flex items-start gap-2.5 px-3.5 py-3 text-small leading-normal", kind.tone)}>
+              <kind.icon className={cn("mt-0.5 size-4 shrink-0", kind.iconTone)} aria-hidden="true" />
+              <span>
+                <b className="font-semibold">{t(kind.title)}</b> · {t(kind.body)}
+              </span>
             </div>
           ))}
         </div>

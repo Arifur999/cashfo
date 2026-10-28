@@ -115,7 +115,6 @@ export const settingsWorkspaceDictionary: Record<string, string> = {
   "Forgot the PIN?": "পিন ভুলে গেছেন?",
   "Reset it with your account password": "অ্যাকাউন্টের পাসওয়ার্ড দিয়ে রিসেট করুন",
   "Open the app": "অ্যাপ খুলুন",
-  "Terms of use": "ব্যবহারের শর্তাবলি",
   "Privacy policy": "গোপনীয়তা নীতি",
   "Refund policy": "রিফান্ড নীতি",
   "Common questions": "সাধারণ জিজ্ঞাসা",

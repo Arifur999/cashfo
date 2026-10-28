@@ -16,10 +16,11 @@ interface AppPasswordFieldProps {
   aside?: React.ReactNode;
   description?: React.ReactNode;
   size?: FieldSize;
+  invalid?: boolean;
 }
 
 // A password input with its own show/hide toggle.
-const AppPasswordField = ({ field, label, autoComplete, placeholder, prepend, aside, description, size = "md" }: AppPasswordFieldProps) => {
+const AppPasswordField = ({ field, label, autoComplete, placeholder, prepend, aside, description, size = "md", invalid }: AppPasswordFieldProps) => {
   const [visible, setVisible] = useState(false);
 
   return (
@@ -33,7 +34,8 @@ const AppPasswordField = ({ field, label, autoComplete, placeholder, prepend, as
       aside={aside}
       description={description}
       size={size}
-      append={<PasswordRevealButton visible={visible} onToggle={() => setVisible((value) => !value)} size={size === "xl" ? "lg" : size === "auth" ? "auth" : size === "signIn" ? "signIn" : "sm"} />}
+      invalid={invalid}
+      append={<PasswordRevealButton visible={visible} onToggle={() => setVisible((value) => !value)} size={size === "xl" ? "lg" : size === "auth" ? "auth" : "sm"} />}
     />
   );
 };

@@ -67,12 +67,13 @@ const PHONE_LIST_ID = "transactions-list-phone";
 // The row's buttons wait for the pointer on a screen that can hover; on a
 // touch screen they always show, so a tap never lands on an unseen Void.
 const HOVER_ACTIONS = "transition-opacity [@media(hover:hover)]:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100";
-const ROW_ACTION = "flex size-8 items-center justify-center rounded-md border border-line bg-surface pointer-coarse:size-11";
+// The board's 32px round buttons, ringed rather than bordered.
+const ROW_ACTION = "flex size-8 items-center justify-center rounded-full bg-surface shadow-[0_0_0_1px_var(--line)] pointer-coarse:size-11";
 
 // Transactions: the filters, the totals strip, and the list grouped by
 // day with each day's net, newest first.
 export function TransactionsPageClient({ businessId, transactions, accounts, categories, meta, pageSize, pageSizes, defaultPageSize, currency, today, totals, dayTotals, splitDays, canManage }: TransactionsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -141,7 +142,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
     return { net, note: null };
   };
 
-  const netText = (net: number) => <span className={cn("tabular-nums", net > 0 ? "text-income" : net < 0 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(net, currency, locale)}</span>;
+  const netText = (net: number) => <span className={cn("tabular-nums", net > 0 ? "text-income" : net < 0 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(net, currency, fmt)}</span>;
 
   const pager = (focusTargetId: string) => (
     <Pagination
@@ -159,7 +160,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   // A view-only member is told why there is nothing to add with, rather
   // than finding out from a refused save.
   const addButton = canManage ? (
-    <Button onClick={() => setAddOpen(true)}>
+    <Button variant="action" onClick={() => setAddOpen(true)} className="gap-1.5">
       <Plus strokeWidth={2.5} className="size-4" />
       {t("New transaction")}
     </Button>
@@ -174,7 +175,6 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
     <PageFrame>
       {/* On a phone the floating + adds, and the title stands alone. */}
       <PageHeader
-        eyebrow={t("Money")}
         title={t("Transactions")}
         description={t("Every income and expense you've added, newest first.")}
         hideDescriptionOnPhone
@@ -195,12 +195,12 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             <AmountText value={-totals.expense} currency={currency} size="h2" tone="expense" signed className={PHONE_FIGURE} />
           </TotalCell>
           <TotalCell label={t("Net")} divided className="max-md:hidden">
-            <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-h2" />
+            <AmountText value={totals.income - totals.expense} currency={currency} size="h2" signed className="text-h3 md:text-[20px] md:font-bold" />
           </TotalCell>
           <TotalCell label={t("Transactions")} divided className="max-md:hidden">
-            <span className="text-h3 text-ink tabular-nums md:text-h2">
-              {formatCount(totals.count, locale)}
-              {totals.voided > 0 && <span className="text-small font-medium text-ink-muted"> · {t("{count} voided", { count: formatCount(totals.voided, locale) })}</span>}
+            <span className="text-h3 text-ink tabular-nums md:text-[20px] md:font-bold">
+              {formatCount(totals.count, fmt)}
+              {totals.voided > 0 && <span className="text-small font-medium text-ink-muted"> · {t("{count} voided", { count: formatCount(totals.voided, fmt) })}</span>}
               {totals.scope === "page" && <span className="text-small font-medium text-ink-muted"> · {t("this page")}</span>}
             </span>
           </TotalCell>
@@ -208,10 +208,10 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       )}
 
       {transactions.length === 0 ? (
-        <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-3 p-10 text-center md:min-h-160.5">
+        <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-2.5 p-10 text-center md:min-h-160.5">
           <EmptyIllustration />
           <h2 className="text-h3 text-ink">{filtered ? t("Nothing matches these filters") : t("No transactions yet")}</h2>
-          <p className="max-w-105 text-body text-ink-muted">
+          <p className="max-w-105 text-body leading-[1.55] text-ink-muted">
             {filtered
               ? isReversedRange(filters)
                 ? t("From is after To, so nothing can match. Swap the dates.")
@@ -220,28 +220,29 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
                 ? t("Add your first income or expense. It takes a few seconds, and your dashboard, budget and reports fill in from here.")
                 : t("Only an owner or accountant can add transactions")}
           </p>
-          <div className="mt-3 flex flex-wrap justify-center gap-3">
+          <div className="mt-2.5 flex flex-wrap justify-center gap-2.5">
             {canManage && (
-              <Button variant="action" onClick={() => setAddOpen(true)}>
+              <Button variant="action" onClick={() => setAddOpen(true)} className="gap-1.5">
                 <Plus strokeWidth={2.5} className="size-3.75" />
                 {filtered ? t("New transaction") : t("Add first transaction")}
               </Button>
             )}
             {filtered ? (
-              <Button variant="secondary" asChild>
+              <Button variant="secondary" asChild className="rounded-sm">
                 <Link href={clearHref}>{t("Clear filters")}</Link>
               </Button>
             ) : (
-              <Button variant="secondary" asChild>
+              <Button variant="secondary" asChild className="rounded-sm">
                 <Link href="/categories">{t("Set up categories first")}</Link>
               </Button>
             )}
           </div>
-          {/* N opens the Add menu; phones have no keyboard to press it on. */}
+          {/* N opens the New transaction drawer (Layout/AddMenu); phones
+              have no keyboard to press it on. */}
           {!filtered && canManage && (
-            <p className="mt-4 hidden items-center gap-2 text-caption text-ink-muted md:flex">
-              {fillNodes(t("Tip: press {key} anywhere to open the Add menu"), {
-                key: <Kbd className="rounded-[4px] bg-strip py-px font-sans text-caption font-semibold text-ink-2">N</Kbd>,
+            <p className="mt-3.5 hidden items-center gap-1.5 text-caption text-ink-muted md:flex">
+              {fillNodes(t("Tip: press {key} anywhere to add a transaction"), {
+                key: <Kbd className="rounded-[4px] bg-strip px-1.5 py-px font-sans text-[11px] font-semibold text-ink-soft">N</Kbd>,
               })}
             </p>
           )}
@@ -260,7 +261,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             <ListHead columns={COLUMNS} sticky>
               <ListHeadCell>{t("Transaction")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Category")}</ListHeadCell>
-              <ListHeadCell className="hidden xl:block">{t("Wallet")}</ListHeadCell>
+              <ListHeadCell className="hidden xl:block">{t("Account@@wallet")}</ListHeadCell>
               <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
               <ListHeadCell>
                 <span className="sr-only">{t("Actions")}</span>
@@ -270,7 +271,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
               const band = dayBand(group.day, group.net);
               return (
                 <div key={group.day} role="rowgroup">
-                  <ListGroupRow label={dayHeading(group.day, today, t, locale)} aside={band.note ? <span className="font-medium text-ink-muted">{band.note}</span> : netText(band.net ?? 0)} />
+                  <ListGroupRow label={dayHeading(group.day, today, t, fmt)} aside={band.note ? <span className="font-medium text-ink-muted">{band.note}</span> : netText(band.net ?? 0)} />
                   {group.rows.map((row) => (
                     <DesktopRow key={row.transaction.id} row={row} currency={currency} canManage={canManage} onVoid={() => setVoiding(row)} />
                   ))}
@@ -287,7 +288,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
               return (
                 <div key={group.day}>
                   <div className="flex justify-between gap-3 px-1 pt-4 pb-2 text-small font-semibold text-ink-2">
-                    <span>{dayHeading(group.day, today, t, locale)}</span>
+                    <span>{dayHeading(group.day, today, t, fmt)}</span>
                     {band.note ? <span className="font-medium text-ink-muted">{band.note}</span> : netText(band.net ?? 0)}
                   </div>
                   <Card padding="none" elevated={false} className="overflow-hidden">
@@ -319,7 +320,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
 
 // The money in and out figures: 18px bold on a 1.2 line on phones, the
 // h2 on wider screens.
-const PHONE_FIGURE = "text-h3 max-md:leading-[1.2] max-md:font-bold md:text-h2";
+const PHONE_FIGURE = "text-h3 max-md:leading-[1.2] font-bold md:text-[20px]";
 
 // The desktop board says Income and Expense; the phone board, Money in and
 // Money out (phoneLabel).
@@ -327,7 +328,7 @@ function TotalCell({ label, phoneLabel = label, children, divided = false, class
   return (
     <div className={cn("flex flex-col gap-1 px-4 py-3 md:px-5 md:py-4", divided && "md:border-l md:border-line", className)}>
       <span className="text-small font-normal text-ink-muted md:hidden">{phoneLabel}</span>
-      <span className="text-small font-normal text-ink-muted max-md:hidden">{label}</span>
+      <span className="text-caption text-ink-muted max-md:hidden">{label}</span>
       {children}
     </div>
   );
@@ -337,7 +338,7 @@ function CategoryTile({ row, size = 36 }: { row: TransactionRow; size?: 36 | 40 
   const tone = row.transaction.transactionType === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   const icon = row.category ? categoryIconFor(row.category) : Receipt;
   return (
-    <span className={cn("flex shrink-0 items-center justify-center", size === 40 ? "size-10 rounded-md [&_svg]:size-4.5" : "size-9 rounded-full [&_svg]:size-4.25", tone.bg, tone.fg)}>
+    <span className={cn("flex shrink-0 items-center justify-center", size === 40 ? "size-10 rounded-md [&_svg]:size-4.5" : "size-9 rounded-[10px] [&_svg]:size-4.25", tone.bg, tone.fg)}>
       {createElement(icon, { "aria-hidden": true })}
     </span>
   );
@@ -351,7 +352,9 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
   const category = row.category && categoryLabel(row.category.name, t);
   const details = [category, row.wallet].filter(Boolean).join(" · ");
   return (
-    <ListRow columns={COLUMNS} muted={!!row.cancelled} className="group">
+    // A voided row fades to 60% as the board sets it back; its hover
+    // buttons stay solid.
+    <ListRow columns={COLUMNS} muted={!!row.cancelled} className={cn("group", row.cancelled && "[&>[role=cell]:not([data-slot=list-row-actions])]:opacity-60")}>
       <ListCell className="flex min-w-0 items-center gap-3">
         <CategoryTile row={row} />
         <span className="flex min-w-0 flex-col">
@@ -360,7 +363,7 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
               {title}
             </ListRowLink>
             {row.cancelled && (
-              <Chip tone="expense" size="sm" className="font-semibold">
+              <Chip tone="expense" size="sm" className="h-auto py-0.5 text-[11px] font-semibold">
                 {t(row.cancelled)}
               </Chip>
             )}
@@ -370,13 +373,13 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
       </ListCell>
       <ListCell className="hidden xl:block">
         {category && (
-          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-surface-sunken px-3 py-0.75 text-caption text-ink-2">
+          <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-table-head px-2.5 py-0.75 text-caption font-medium text-ink-2">
             <span className={cn("size-2 shrink-0 rounded-full bg-current", tone.fg)} />
             <span className="truncate">{category}</span>
           </span>
         )}
       </ListCell>
-      <ListCell className="hidden truncate text-small text-ink-2 xl:block">{row.wallet ?? "—"}</ListCell>
+      <ListCell className="hidden truncate text-small text-ink-soft xl:block">{row.wallet ?? "—"}</ListCell>
       <ListCell align="end">
         <AmountText
           value={row.signedAmount}
@@ -388,11 +391,11 @@ function DesktopRow({ row, currency, canManage, onVoid }: { row: TransactionRow;
         />
       </ListCell>
       <ListRowActions className={HOVER_ACTIONS}>
-        <Link href={href} aria-label={t("View details")} title={t("View details")} className={cn(ROW_ACTION, "text-ink-2 hover:bg-surface-sunken")}>
+        <Link href={href} aria-label={t("View details")} title={t("View details")} className={cn(ROW_ACTION, "text-ink-soft hover:bg-surface-sunken")}>
           <Eye className="size-3.75" aria-hidden="true" />
         </Link>
         {canManage && row.transaction.voidable && (
-          <button type="button" onClick={onVoid} aria-label={t("Void transaction")} title={t("Void transaction")} className={cn(ROW_ACTION, "text-expense hover:bg-expense-soft")}>
+          <button type="button" onClick={onVoid} aria-label={t("Void transaction")} title={t("Void transaction")} className={cn(ROW_ACTION, "text-expense-fill hover:bg-expense-soft")}>
             <CircleOff className="size-3.75" aria-hidden="true" />
           </button>
         )}

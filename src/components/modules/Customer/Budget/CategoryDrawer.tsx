@@ -16,7 +16,7 @@ import type { BudgetCategorySummary, BudgetCategoryType } from "@/lib/customer/a
 import { createAssetCategoryAction, updateAssetCategoryAction } from "@/lib/customer/assetActions";
 import { createBudgetCategoryAction, updateBudgetCategoryAction } from "@/lib/customer/budgetActions";
 import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction } from "@/lib/customer/groupExpensesActions";
-import { budgetCategoryIcon, BUDGET_CATEGORY_ICONS, iconLabelKey, iconMatches, INCOME_CATEGORY_ICONS, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
+import { budgetCategoryIcon, BUDGET_CATEGORY_ICONS, EXPENSE_PICKER_ICONS, iconLabelKey, iconMatches, INCOME_CATEGORY_ICONS, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
 import { CATEGORY_TONE_COLORS, categoryTone, pickerColor } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { fillNodes } from "@/lib/i18n/fill";
@@ -54,14 +54,14 @@ interface CategoryDrawerProps {
 
 const QUICK_LIMITS = [2000, 5000, 10000, 20000];
 
-// The icon window: four rows of the grid (6 across on a phone, 8 wider).
-const ICON_ROWS = 4;
+// The icon window: two rows of the grid (6 across on a phone, 8 wider).
+const ICON_ROWS = 2;
 
 // Add or edit a category in the design's drawer: a live preview of the
-// tile, the name, the monthly limit with quick chips and the budget warning
-// (an expense), the icon grid with search, and the colour dots.
+// tile, the name, the icon grid with search, the colour dots, then for an
+// expense the monthly limit with quick chips and the budget warning.
 export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", variant = "budget", editing, currency, unassigned = null, totalBudget = null, existingNames, assetCount = 0 }: CategoryDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const isAsset = variant === "asset";
@@ -142,50 +142,47 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
     });
   }
 
-  const available = isIncome ? INCOME_CATEGORY_ICONS : BUDGET_CATEGORY_ICONS;
+  const available = isIncome ? INCOME_CATEGORY_ICONS : EXPENSE_PICKER_ICONS;
   const icons = available.filter((key) => iconMatches(key, iconSearch, t));
   // The hint only when the grid has more than its window shows.
   const overflows = icons.length > (wide ? 8 : 6) * ICON_ROWS;
   const tone = categoryTone(color);
   const chosenDot = pickerColor(color);
-  const title = isAsset ? (editing ? t("Edit asset type") : t("Add asset type")) : isGroup ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income source" : "Edit expense category") : t(isIncome ? "Add income source" : "Add expense category");
+  const title = isAsset || isGroup ? (editing ? t("Edit category") : t("Add category")) : editing ? t(isIncome ? "Edit income category" : "Edit expense category") : t(isIncome ? "Add income category" : "Add expense category");
+  const label = "text-body font-medium text-ink";
 
   const limitSection = !noLimit && (
     <div className="flex flex-col gap-2">
-      <label htmlFor="cat-limit" className="text-body font-medium text-ink">
+      <label htmlFor="cat-limit" className={label}>
         {t("Monthly limit")}
       </label>
-      <div className="flex h-13 items-stretch overflow-hidden rounded-md border border-line-strong bg-surface focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]">
-        <span className="flex w-12 shrink-0 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>
+      <div className="flex h-13 items-stretch overflow-hidden rounded-sm border border-input bg-surface transition-[border-color,box-shadow] focus-within:border-focus-ring focus-within:focus-halo">
+        <span className="flex w-12 shrink-0 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-soft">{currencySymbol(currency)}</span>
         <input
           id="cat-limit"
           type="text"
           inputMode="decimal"
           {...limitField}
-          aria-describedby={over > 0 ? "cat-limit-note cat-limit-help" : "cat-limit-note"}
-          className="min-w-0 flex-1 bg-transparent px-4 text-h2 font-semibold text-ink tabular-nums outline-none placeholder:text-ink-faint"
+          aria-describedby={over > 0 ? "cat-limit-help" : undefined}
+          className="min-w-0 flex-1 bg-transparent px-3.5 text-[20px] font-semibold text-ink tabular-nums outline-none placeholder:text-ink-faint"
           placeholder="0"
         />
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {QUICK_LIMITS.map((amount) => (
           <button key={amount} type="button" onClick={() => setLimit(String(amount))} className="h-7.5 rounded-full border border-line bg-surface px-3 text-caption font-medium text-ink-2 tabular-nums hover:border-line-strong pointer-coarse:h-11 pointer-coarse:px-4">
-            {formatCurrency(amount, currency, locale).replace(/\.00$/, "")}
+            {formatCurrency(amount, currency, fmt).replace(/\.00$/, "")}
           </button>
         ))}
       </div>
-      {/* The API keeps one set of limits for every month. */}
-      <span id="cat-limit-note" className="text-caption font-normal text-ink-muted">
-        {t("The same limit applies to every month, past months too.")}
-      </span>
       {over > 0 && totalBudget !== null && (
-        <span id="cat-limit-help" className="flex gap-2 text-caption leading-relaxed text-warning">
+        <span id="cat-limit-help" className="flex gap-1.5 text-caption leading-normal text-warning">
           <TriangleAlert className="mt-0.5 size-3.25 shrink-0" strokeWidth={2.25} aria-hidden="true" />
           <span>
             {fillNodes(t("Only {free} of your {budget} budget is unassigned. This limit goes {over} over it."), {
-              free: formatCurrency((unassigned ?? 0) + currentLimit, currency, locale),
-              budget: formatCurrency(totalBudget, currency, locale),
-              over: formatCurrency(over, currency, locale),
+              free: formatCurrency((unassigned ?? 0) + currentLimit, currency, fmt),
+              budget: formatCurrency(totalBudget, currency, fmt),
+              over: formatCurrency(over, currency, fmt),
             })}
           </span>
         </span>
@@ -207,61 +204,59 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
             <SheetTitle className="text-h3 text-ink">{title}</SheetTitle>
             <p className="text-small text-ink-muted">{t(isAsset ? "Group what you own." : isGroup ? "What an expense can be filed under." : isIncome ? "Name where the money comes from." : "Give it a monthly limit so you're warned early.")}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className={cn("flex shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken", wide ? "size-9 pointer-coarse:size-11" : "size-11")}>
+          <button type="button" onClick={onClose} aria-label={t("Close")} className={cn("flex shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken", wide ? "size-9 pointer-coarse:size-11" : "size-11")}>
             <X className={wide ? "size-4.5" : "size-5"} aria-hidden="true" />
           </button>
         </SheetHeader>
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-            <div aria-label={t("Preview")} className="flex flex-col gap-3 rounded-lg border border-line bg-strip p-4">
+          <div className={cn("flex min-h-0 flex-1 flex-col gap-4.5 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
+            <div aria-label={t("Preview")} className="flex flex-col gap-2.5 rounded-[14px] border border-line bg-strip p-3.5">
               <div className="flex items-center gap-3">
-                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-md [&_svg]:size-4.75", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
+                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.75", tone.bg, tone.fg)}>{icon && createElement(budgetCategoryIcon(icon), { "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-1 flex-col gap-px">
-                  <span className="truncate text-title text-ink">{trimmed || t(isAsset ? "New asset type" : isIncome ? "New source" : "New category")}</span>
-                  <span className="text-caption font-normal text-ink-muted">{isAsset ? t("Asset type") : isGroup ? t("Expense category") : isIncome ? t("Income source") : t("Limit {amount}", { amount: formatCurrency(limitValue, currency, locale) })}</span>
+                  <span className="truncate text-[15px] font-semibold text-ink">{trimmed || t(isAsset ? "New asset type" : "New category")}</span>
+                  <span className="text-caption text-ink-muted">{isAsset ? t("Asset type") : isGroup ? t("Expense category") : isIncome ? t("Income category") : t("Limit {amount}", { amount: formatCurrency(limitValue, currency, fmt) })}</span>
                 </span>
-                {!noLimit && <span className="text-caption font-semibold text-emerald">{t("{amount} left", { amount: formatCurrency(limitValue, currency, locale) })}</span>}
+                {!noLimit && <span className="text-caption font-semibold text-emerald">{t("{amount} left", { amount: formatCurrency(limitValue, currency, fmt) })}</span>}
               </div>
               {/* An asset type has nothing to fill a bar with. */}
-              {!isAsset && <ProgressBar value={0} size="sm" label={t("Preview")} />}
+              {!isAsset && <ProgressBar value={0} size="sm" label={t("Preview")} className="bg-line" />}
             </div>
 
-            <Field htmlFor="cat-name" label={<span className="text-body font-medium text-ink">{t("Name")}</span>} error={taken ? t(isAsset ? "An asset type with that name already exists" : "A category with this name already exists") : undefined}>
-              <Input id="cat-name" size="md" value={name} invalid={taken} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isAsset ? "Vehicle" : isGroup ? "Bazar" : isIncome ? "Salary" : "Groceries")} />
+            <Field htmlFor="cat-name" label={<span className={label}>{t("Name")}</span>} error={taken ? t(isAsset ? "An asset type with that name already exists" : "A category with this name already exists") : undefined}>
+              <Input id="cat-name" size="md" value={name} invalid={taken} onChange={(event) => changeName(event.target.value)} autoFocus maxLength={60} placeholder={t(isAsset ? "Vehicle" : isGroup ? "Bazar" : isIncome ? "Salary" : "Groceries")} frameClassName="px-3.5" />
             </Field>
             {renamesAssets && (
               <p className="-mt-2 flex gap-2 text-caption leading-relaxed text-warning">
                 <TriangleAlert className="mt-0.5 size-3.25 shrink-0" strokeWidth={2.25} aria-hidden="true" />
-                {plural(t, assetCount, "{count} asset keeps the old name", "{count} assets keep the old name", undefined, locale)}
+                {plural(t, assetCount, "{count} asset keeps the old name", "{count} assets keep the old name", undefined, fmt)}
               </p>
             )}
 
-            {/* The limit is what an expense category can't save without, so it comes first. */}
-            {limitSection}
-
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Icon")}</legend>
-              <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t(isAsset ? "Search icons, e.g. car, land, gold" : "Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} />
-              <div className="grid max-h-48 grid-cols-6 gap-2 overflow-y-auto md:grid-cols-8">
+              <legend className={cn("mb-2", label)}>{t("Icon")}</legend>
+              <Input size="sm" type="search" value={iconSearch} onChange={(event) => setIconSearch(event.target.value)} leading={<Search />} placeholder={t(isAsset ? "Search icons, e.g. car, land, gold" : "Search icons, e.g. food, bus, rent")} aria-label={t("Search icons")} frameClassName="h-9 text-small" />
+              {/* Two rows show; the rest scroll. 2px of room so a chosen icon's ring isn't cut. */}
+              <div className="-m-0.5 grid max-h-23.5 grid-cols-6 gap-1.5 overflow-y-auto p-0.5 md:grid-cols-8 pointer-coarse:max-h-24.5">
                 {icons.length === 0 ? (
                   <p className="col-span-6 py-4 text-center text-small text-ink-muted md:col-span-8">{t("No matching icon")}</p>
                 ) : (
                   icons.map((key) => {
                     const on = icon === key;
-                    const label = t(iconLabelKey(key));
+                    const iconName = t(iconLabelKey(key));
                     return (
                       <button
                         key={key}
                         type="button"
-                        aria-label={label}
-                        title={label}
+                        aria-label={iconName}
+                        title={iconName}
                         aria-pressed={on}
                         onClick={() => {
                           setIcon(key);
                           setIconTouched(true);
                         }}
-                        className={cn("flex h-10.5 items-center justify-center rounded-md border transition-colors pointer-coarse:h-11 [&_svg]:size-4.5", on ? "border-[1.5px] border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong")}
+                        className={cn("flex h-10.5 items-center justify-center rounded-full border transition-colors pointer-coarse:h-11 [&_svg]:size-4.5", on ? "border-[1.5px] border-emerald bg-emerald-soft text-emerald" : "border-line bg-surface text-ink-soft hover:border-line-strong")}
                       >
                         {createElement(budgetCategoryIcon(key), { "aria-hidden": true })}
                       </button>
@@ -269,13 +264,13 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                   })
                 )}
               </div>
-              {overflows && <span className="text-caption font-normal text-ink-muted">{t("Scroll for more icons")}</span>}
+              {overflows && <span className="text-caption text-ink-muted">{t("Scroll for more icons")}</span>}
             </fieldset>
 
             <fieldset className="m-0 border-0 p-0">
-              <legend className="mb-2 text-body font-medium text-ink">{t("Colour")}</legend>
+              <legend className={cn("mb-2", label)}>{t("Colour")}</legend>
               {/* Each dot is the tile's own colour, so the dot is what you get. */}
-              <div className="flex flex-wrap gap-2 pt-1 pl-1">
+              <div className="flex flex-wrap gap-1 pt-1 pl-1">
                 {CATEGORY_TONE_COLORS.map((key) => {
                   const on = chosenDot === key;
                   return (
@@ -286,7 +281,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                       title={t(key)}
                       aria-pressed={on}
                       onClick={() => setColor(key)}
-                      className={cn("flex size-7.5 items-center justify-center rounded-full transition-shadow pointer-coarse:size-11", categoryTone(key).fg, on && "shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--ink)]")}
+                      className={cn("flex size-7.5 items-center justify-center rounded-full transition-shadow pointer-coarse:size-11", categoryTone(key).fg, on && "shadow-[0_0_0_2px_var(--surface),0_0_0_4px_currentColor]")}
                     >
                       <span aria-hidden="true" className="flex size-full items-center justify-center rounded-full bg-current">
                         {on && <Check className="size-3.5 text-surface" strokeWidth={3} />}
@@ -296,17 +291,19 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
                 })}
               </div>
             </fieldset>
+
+            {limitSection}
           </div>
 
-          <div className={cn("flex flex-col gap-2 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-6")}>
+          <div className={cn("flex flex-col gap-2 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 pt-3 pb-6")}>
             {missing && <p className="text-caption text-ink-muted">{t(missing)}</p>}
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-2.5">
               <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
                 {t("Cancel")}
               </Button>
-              <Button type="submit" variant="action" disabled={!valid || isPending} className="px-5">
+              <Button type="submit" disabled={!valid || isPending} className="px-4.5">
                 {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-                {editing ? t("Save changes") : t(isAsset ? "Add asset type" : isIncome && !isGroup ? "Add source" : "Add category")}
+                {editing ? t(isAsset || isGroup ? "Save changes" : "Save") : t("Add category")}
               </Button>
             </div>
           </div>

@@ -5,7 +5,6 @@ import { useSyncExternalStore } from "react";
 import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { NIGHT_FOCUS } from "./SidebarNav";
 
 // The server always renders assuming "light" (it has no access to
 // localStorage/prefers-color-scheme), while the client's real value is set
@@ -15,9 +14,9 @@ import { NIGHT_FOCUS } from "./SidebarNav";
 // Sun vs Moon never mismatches during hydration.
 const subscribe = () => () => {};
 
-// The square outline button in the top bar, or the round one on the Night
-// drawer.
-export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
+// The moon / sun button. Its shape comes from where it sits (the top bar's
+// pill or square, the phone drawer's foot).
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = useTheme();
   const { t } = useLocale();
   const mounted = useSyncExternalStore(
@@ -31,19 +30,10 @@ export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
   // real (client-only) theme.
   const isDark = mounted && theme === "dark";
   const label = isDark ? t("Switch to light theme") : t("Switch to dark theme");
-  const icon = mounted ? isDark ? <Sun className="size-4.5" /> : <Moon className="size-4.5" /> : <span className="block size-4.5" />;
+  const icon = mounted ? isDark ? <Sun className="size-4.5" strokeWidth={2} /> : <Moon className="size-4.5" strokeWidth={2} /> : <span className="block size-4.5" />;
 
   return (
-    <button
-      type="button"
-      onClick={toggleTheme}
-      aria-label={label}
-      title={label}
-      className={cn(
-        "flex shrink-0 items-center justify-center transition-colors",
-        onDark ? cn("size-9.5 rounded-full bg-white/8 text-white hover:bg-white/14", NIGHT_FOCUS) : "size-10 rounded-md border border-line bg-surface text-ink-2 hover:bg-surface-sunken",
-      )}
-    >
+    <button type="button" onClick={toggleTheme} aria-label={label} title={label} className={cn("flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink", className)}>
       {icon}
     </button>
   );

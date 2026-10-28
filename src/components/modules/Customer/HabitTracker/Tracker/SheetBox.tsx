@@ -4,8 +4,9 @@ import { Check, CheckCheck, Clock3, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // done is a plain tick (Ramadan, challenges); a Namaz box says how the
-// prayer was prayed: with jama'at, on time, or as qaza.
-export type BoxState = "done" | "jamaat" | "onTime" | "qaza" | "missed" | "open" | "locked";
+// prayer was prayed: with jama'at, on time, or as qaza. A missed prayer
+// carries a cross; notDone is the same red box left blank (a Ramadan day).
+export type BoxState = "done" | "jamaat" | "onTime" | "qaza" | "missed" | "notDone" | "open" | "locked";
 
 // Each state's look, shared by the boxes and the legends that explain them,
 // so the two can't drift apart. A miss is the expense red everywhere.
@@ -15,8 +16,9 @@ const LOOK: Record<BoxState, string> = {
   onTime: "bg-emerald-tint text-emerald",
   qaza: "bg-warning-soft text-warning",
   missed: "bg-expense-soft text-expense",
+  notDone: "bg-expense-soft",
   open: "border-[1.5px] border-dashed border-emerald bg-surface",
-  locked: "border border-divider bg-surface-sunken",
+  locked: "border border-divider bg-strip",
 };
 
 const HOVER: Partial<Record<BoxState, string>> = {
@@ -61,7 +63,7 @@ export function SheetBox({ state, label, disabled = false, onToggle, tabIndex, o
       tabIndex={tabIndex}
       onFocus={onFocus}
       onClick={onToggle}
-      className={cn("flex size-6.75 shrink-0 items-center justify-center rounded-sm transition-colors", LOOK[state], !disabled && HOVER[state], state === "locked" && "cursor-not-allowed")}
+      className={cn("flex size-6.75 shrink-0 items-center justify-center rounded-[6px] transition-colors", LOOK[state], !disabled && HOVER[state], state === "locked" && "cursor-not-allowed")}
     >
       <BoxIcon state={state} />
     </button>
@@ -91,7 +93,7 @@ interface DayTotalProps {
 // quiet when one short, red when more was missed.
 export function DayTotal({ count, of, open = false, title, label }: DayTotalProps) {
   return (
-    <span title={count === null ? "" : title} className={cn("flex h-5.5 w-6.75 shrink-0 items-center justify-center rounded-[5px] text-caption font-bold tabular-nums", count === null ? "text-transparent" : open ? "bg-surface-sunken text-ink-2" : count === of ? "bg-mint-50 text-brand-ink" : count >= of - 1 ? "bg-surface-sunken text-ink-2" : "bg-expense-soft text-expense")}>
+    <span title={count === null ? "" : title} className={cn("flex h-5.5 w-6.75 shrink-0 items-center justify-center rounded-[5px] text-[11.5px] font-bold tabular-nums", count === null ? "text-transparent" : open ? "bg-surface-sunken text-ink-2" : count === of ? "bg-mint-50 text-brand-ink" : count >= of - 1 ? "bg-surface-sunken text-ink-2" : "bg-expense-soft text-expense")}>
       {count === null ? "" : (label ?? count)}
     </span>
   );

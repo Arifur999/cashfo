@@ -31,6 +31,8 @@ export const adminSharedDictionary: Record<string, string> = {
   "Exported {count} of {total} rows. The list changed while exporting; export again to get the rest.":
     "{total}টির মধ্যে {count}টি সারি নামানো হয়েছে। নামানোর সময় তালিকাটি বদলে গেছে; বাকিগুলো পেতে আবার এক্সপোর্ট করুন।",
   "Couldn't export the rows. Try again.": "সারিগুলো নামানো যায়নি। আবার চেষ্টা করুন।",
+  "Your role can't export this list": "আপনার ভূমিকায় এই তালিকা নামানো যায় না",
+  "Too many exports. Wait a minute and try again.": "খুব বেশিবার নামানো হয়েছে। এক মিনিট পর আবার চেষ্টা করুন।",
   "An export is already running": "একটি এক্সপোর্ট আগে থেকেই চলছে",
   View: "দেখুন",
   "Show all": "সব দেখান",
@@ -188,4 +190,25 @@ export const adminSharedDictionary: Record<string, string> = {
   "{count} new errors in 24 hours": "২৪ ঘণ্টায় {count}টি নতুন এরর",
   "{count} high": "{count}টি গুরুতর",
   "most from {source}": "বেশিরভাগ {source} থেকে",
+
+  // The admin shell, design-v4 (AdminSidebar, AdminTopbar)
+  "Referrals & Payouts": "রেফারেল ও টাকা তোলা",
+  "Payout requests to review": "যাচাই বাকি টাকা তোলার অনুরোধ",
+  "Search users, payments, tickets…": "ব্যবহারকারী, পেমেন্ট, টিকেট খুঁজুন…",
+  "Account menu, {name}": "অ্যাকাউন্ট মেনু, {name}",
+  "Log out": "লগ আউট",
+  "Switch language to Bangla": "ভাষা বাংলায় বদলান",
+  "Switch language to English": "ভাষা ইংরেজিতে বদলান",
+  "Payment waiting: {name}": "পেমেন্ট অপেক্ষায়: {name}",
+  "Payout request: {name}": "টাকা তোলার অনুরোধ: {name}",
+  "Payout to send: {name}": "টাকা পাঠাতে হবে: {name}",
+  // Security > Roles' rows (lib/rolePermissions)
+  "Users, money, support, content, analytics, settings": "ব্যবহারকারী, টাকা, সাপোর্ট, কন্টেন্ট, অ্যানালিটিক্স, সেটিংস",
+  "Referral payouts": "রেফারেলের টাকা তোলা",
+  "Proposed, same as payments": "প্রস্তাবিত, পেমেন্টের মতোই",
+  "Support email, currency, maintenance": "সাপোর্ট ইমেইল, মুদ্রা, রক্ষণাবেক্ষণ",
+  "Backups, feature flags, error log": "ব্যাকআপ, ফিচার ফ্ল্যাগ, ত্রুটির লগ",
+  // A customer who asked to delete their account (the status chip and tab).
+  "Deleting soon": "শীঘ্রই মুছে যাবে",
+  "Deleting soon@@status": "শীঘ্রই মুছে যাবে",
 };

@@ -33,7 +33,7 @@ const LIST = "table, [role=table]";
 // count stays, so the last one is still heard; a list that never grew shows
 // nothing. Draws no border of its own; ListFooter does.
 const LoadMore = ({ shown, total, step, onMore, onLess, focusTargetId, className }: LoadMoreProps) => {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const root = useRef<HTMLDivElement>(null);
   // The total this button grew the list to. Kept against the total, so a
   // new list that fits from the start (another filter) shows nothing again.
@@ -58,7 +58,7 @@ const LoadMore = ({ shown, total, step, onMore, onLess, focusTargetId, className
 
   if (total <= 0 || (ended && grewTo !== total)) return null;
 
-  const figure = (value: number) => <b className="font-semibold text-ink">{formatCount(value, locale)}</b>;
+  const figure = (value: number) => <b className="font-semibold text-ink">{formatCount(value, fmt)}</b>;
   const more = Math.max(Math.min(step, total - shown), 0);
 
   const showMore = () => {
@@ -74,7 +74,7 @@ const LoadMore = ({ shown, total, step, onMore, onLess, focusTargetId, className
       {!ended && (
         // One button for both words, so focus stays on it when they swap.
         <Button variant="secondary" size="sm" onClick={everything ? onLess : showMore} className="ml-auto pointer-coarse:h-11">
-          {everything ? t("Show fewer") : t("Show {count} more", { count: formatCount(more, locale) })}
+          {everything ? t("Show fewer") : t("Show {count} more", { count: formatCount(more, fmt) })}
         </Button>
       )}
     </div>

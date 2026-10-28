@@ -12,9 +12,8 @@ const Textarea = ({ invalid = false, className, id, ...props }: TextareaProps) =
     aria-invalid={invalid || undefined}
     aria-describedby={invalid && id ? `${id}-error` : undefined}
     className={cn(
-      "block w-full min-w-0 rounded-md border bg-surface px-4 py-3 text-body text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-faint disabled:opacity-60 max-md:text-body-lg",
-      "focus:border-emerald focus:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]",
-      invalid ? "border-expense shadow-[0_0_0_0.5px_var(--expense)]" : "border-line-strong",
+      "block w-full min-w-0 resize-none rounded-field border bg-surface px-3 py-2.5 text-body leading-normal text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-faint disabled:opacity-60 max-md:text-body-lg",
+      invalid ? "border-expense focus:error-halo" : "border-input focus:border-focus-ring focus:focus-halo",
       className,
     )}
     {...props}

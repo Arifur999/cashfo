@@ -65,7 +65,7 @@ const EXPORT_LIMIT = 5000;
 // Books › one customer or supplier: what they owe (or you owe), every sale
 // and payment, how old the debt is, and how to reach them.
 export function ContactDetailPageClient({ businessId, contact, detail, statement, canManage, currency, today }: ContactDetailPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pdfExportOn = useFeature("pdf_export");
@@ -87,7 +87,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, statement
   const payableOpen = owed.payable.total > 0;
 
   const headline = balance > 0 ? t("{name} owes you", { name: contact.name }) : balance < 0 ? t("You owe {name}", { name: contact.name }) : t("Settled with {name}", { name: contact.name });
-  const day = (value: string) => booksDate(value, locale, { today, weekday: true });
+  const day = (value: string) => booksDate(value, fmt, { today, weekday: true });
   const lastLine = [statement.lastCredit ? t(statement.lastCredit.kind === "sale" ? "Last sale {date}" : "Last purchase {date}", { date: day(statement.lastCredit.date) }) : t("No sales or purchases yet"), statement.lastPayment ? t("Last payment {date}", { date: day(statement.lastPayment.date) }) : null].filter(Boolean).join(" · ");
 
   const details: [string, React.ReactNode][] = [
@@ -111,7 +111,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, statement
     [t("Address"), contact.address],
     [t("Notes"), contact.notes],
     // The day the record was added, which can be after trading began.
-    [t("Added on"), booksDate(contact.createdAt, locale, { year: "always" })],
+    [t("Added on"), booksDate(contact.createdAt, fmt, { year: "always" })],
   ];
 
   function exportCsv() {
@@ -136,7 +136,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, statement
         toast.error(t("Couldn't export the statement. Try again."));
         return;
       }
-      if (result.capped) toast.info(t("Only the first {count} entries were exported.", { count: formatCount(EXPORT_LIMIT, locale) }));
+      if (result.capped) toast.info(t("Only the first {count} entries were exported.", { count: formatCount(EXPORT_LIMIT, fmt) }));
       save(statementRowsFromApi(result.rows), Number(result.broughtForward), Number(result.closing));
     });
   }
@@ -161,7 +161,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, statement
         {late > 0 && (
           <p className="flex items-start gap-3 rounded-md bg-warning-soft px-4 py-3 text-small leading-relaxed text-warning">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <span>{t(direction === "RECEIVABLE" ? "{amount} is more than 30 days late. A friendly reminder usually works best before 60 days." : "{amount} you owe is more than 30 days late.", { amount: formatCurrency(late, currency, locale) })}</span>
+            <span>{t(direction === "RECEIVABLE" ? "{amount} is more than 30 days late. A friendly reminder usually works best before 60 days." : "{amount} you owe is more than 30 days late.", { amount: formatCurrency(late, currency, fmt) })}</span>
           </p>
         )}
       </div>
@@ -224,7 +224,7 @@ export function ContactDetailPageClient({ businessId, contact, detail, statement
         <PersonAvatar name={contact.name} src={contact.photoUrl} size={56} coloured />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-small text-ink-muted">{headline}</span>
-          <span className={cn("text-display tabular-nums wrap-anywhere", balance > 0 ? "text-income" : balance < 0 ? "text-expense" : "text-ink")}>{formatCurrency(Math.abs(balance), currency, locale)}</span>
+          <span className={cn("text-display tabular-nums wrap-anywhere", balance > 0 ? "text-income" : balance < 0 ? "text-expense" : "text-ink")}>{formatCurrency(Math.abs(balance), currency, fmt)}</span>
           <span className="text-small text-ink-muted">{lastLine}</span>
         </span>
         {/* Nothing new with an archived contact, but whatever they owe again

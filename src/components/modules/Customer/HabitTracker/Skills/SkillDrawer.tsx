@@ -4,13 +4,12 @@ import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Skill, SkillStatus, SkillUnit } from "@/lib/customer/api";
 import { actionError, latinDigits } from "@/lib/customer/habitDisplay";
 import { createSkillAction, updateSkillAction } from "@/lib/customer/skillActions";
@@ -18,7 +17,6 @@ import { hoursInput, MAX_LESSONS, MAX_MINUTES, MIN_MINUTES, parseHours, STATUS_L
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { draftFromReminder, type ReminderBook, ReminderSection } from "../Reminders";
-import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 import { SkillIcon } from "./SkillIcon";
 import { SKILL_ICONS, SKILL_PALETTE, suggestColor } from "./skillPalette";
 import { SkillTile } from "./SkillTile";
@@ -40,9 +38,8 @@ const STATUSES: SkillStatus[] = ["WANT_TO_LEARN", "LEARNING", "COMPLETED"];
 // Add or edit a skill: what it is, where it is learned, how it is counted
 // and how much of it there is, plus an icon and a colour.
 export function SkillDrawer({ open, onClose, editing, onRemove, reminders }: SkillDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
-  const wide = useMediaQuery("(min-width: 768px)");
   const [name, setName] = useState("");
   const [source, setSource] = useState("");
   const [unit, setUnit] = useState<SkillUnit>("LESSONS");
@@ -106,7 +103,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove, reminders }: Ski
         onClose();
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to save skill", t, locale));
+        toast.error(actionError(result.message, "Failed to save skill", t, fmt));
       }
     });
   }
@@ -119,101 +116,92 @@ export function SkillDrawer({ open, onClose, editing, onRemove, reminders }: Ski
   );
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:max-h-[92dvh]")}>
-        <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
-          <div className="flex flex-col gap-0.5">
-            <SheetTitle className="text-h3 text-ink">{editing ? t("Edit skill") : t("Add a skill")}</SheetTitle>
-            <span className="text-small leading-[normal] text-ink-muted">{t("A course counted in lessons, or any skill counted in hours.")}</span>
-          </div>
-          <CloseButton onClick={onClose} label={t("Close")} />
-        </SheetHeader>
-
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-            <Field htmlFor="sk-name" label={label(t("Name"))}>
-              <Input id="sk-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("e.g. React")} />
-            </Field>
-            <Field htmlFor="sk-source" label={label(t("Where from"), true)}>
-              <Input id="sk-source" size="md" value={source} onChange={(event) => setSource(event.target.value)} maxLength={80} placeholder={t("e.g. Udemy, YouTube, Self")} />
-            </Field>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Counted in")}</legend>
-                {editing ? <span className="flex h-11 items-center text-body text-ink-2">{t(UNIT_LABEL[editing.unit])}</span> : <SegmentedControl label={t("Counted in")} variant="soft" stretch value={unit} onChange={setUnit} options={UNITS.map((value) => ({ value, label: t(UNIT_LABEL[value]) }))} />}
-              </fieldset>
-              <Field htmlFor="sk-target" label={label(t(isHours ? "Goal (hours)" : "Total lessons"))} error={targetError}>
-                <Input id="sk-target" size="md" inputMode={isHours ? "decimal" : "numeric"} value={target} onChange={(event) => setTarget(typed(event.target.value))} placeholder={isHours ? "30" : "40"} invalid={targetError !== undefined} trailing={<span className="text-small text-ink-muted">{t(isHours ? "hours" : "lessons")}</span>} />
-              </Field>
-            </div>
-
-            {!editing && (
-              <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Status")}</legend>
-                <SegmentedControl label={t("Status")} variant="soft" stretch value={status} onChange={setStatus} options={STATUSES.map((value) => ({ value, label: t(STATUS_LABEL[value]) }))} />
-                {status === "LEARNING" && (
-                  <Field htmlFor="sk-done" label={<span className="text-small font-medium text-ink-2">{t(isHours ? "Hours done so far" : "Lessons done so far")}</span>} error={doneError} className="mt-2">
-                    <Input id="sk-done" size="md" inputMode={isHours ? "decimal" : "numeric"} value={done} onChange={(event) => setDone(typed(event.target.value))} placeholder="0" invalid={doneError !== undefined} frameClassName="w-40" />
-                  </Field>
-                )}
-              </fieldset>
-            )}
-
-            {/* Stacked on a phone; side by side from sm up, the icons wrapping to fit
-                and the colours given the width their tile and swatches need. */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <fieldset className="flex min-w-0 flex-col gap-2">
-                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Icon")}</legend>
-                <div role="radiogroup" aria-label={t("Icon")} className="grid grid-cols-[repeat(auto-fill,36px)] gap-2">
-                  {SKILL_ICONS.map((option) => {
-                    const on = option.key === icon;
-                    return (
-                      <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} title={t(option.label)} onClick={() => setIcon(option.key)} className={cn("flex size-9 items-center justify-center rounded-md border transition-colors [&_svg]:size-4.5", on ? "border-2 border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
-                        <SkillIcon icon={option.key} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-              <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Colour")}</legend>
-                <div className="flex items-start gap-3">
-                  <SkillTile icon={icon} color={color} />
-                  <div role="radiogroup" aria-label={t("Colour")} className="grid grid-cols-[repeat(4,24px)] gap-2">
-                    {SKILL_PALETTE.map((option) => {
-                      const on = option.key === color;
-                      return <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} title={t(option.label)} onClick={() => setPickedColor(option.key)} className="relative size-6 rounded-full transition-shadow after:absolute after:-inset-1" style={{ backgroundImage: `linear-gradient(135deg, ${option.from}, ${option.to})`, ...(on && { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${option.to}` }) }} />;
-                    })}
-                  </div>
-                </div>
-              </fieldset>
-            </div>
-
-            {reminders && <ReminderSection kind="SKILL" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("A nudge to sit down and practise.")} />}
-          </div>
-
-          <PanelFooter
-            drawer
-            aside={
-              editing && (
-                <Button type="button" variant="ghost" className="text-expense hover:bg-expense-soft hover:text-expense" onClick={() => onRemove(editing)} disabled={isPending}>
-                  <Trash2 />
-                  {t("Remove")}
-                </Button>
-              )
-            }
-          >
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-              {t("Cancel")}
+    <Drawer
+      open={open}
+      title={editing ? t("Edit skill") : t("Add a skill")}
+      description={t("A course counted in lessons, or any skill counted in hours.")}
+      busy={isPending}
+      onClose={onClose}
+      onSubmit={submit}
+      footer={
+        <>
+          {editing && (
+            // The icon alone on a phone, so the three buttons keep to one line.
+            <Button type="button" variant="ghost" className="mr-auto text-expense hover:bg-expense-soft hover:text-expense max-sm:px-3" onClick={() => onRemove(editing)} disabled={isPending} aria-label={t("Remove")}>
+              <Trash2 />
+              <span className="max-sm:hidden">{t("Remove")}</span>
             </Button>
-            <Button type="submit" disabled={!valid || isPending} className="px-5">
-              {isPending && <Loader />}
-              {t(editing ? "Save changes" : "Add skill")}
-            </Button>
-          </PanelFooter>
-        </form>
-      </SheetContent>
-    </Sheet>
+          )}
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+            {t("Cancel")}
+          </Button>
+          <Button type="submit" disabled={!valid || isPending} className="px-5">
+            {isPending && <Loader />}
+            {t(editing ? "Save changes" : "Add skill")}
+          </Button>
+        </>
+      }
+    >
+      <Field htmlFor="sk-name" label={label(t("Name"))}>
+        <Input id="sk-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("e.g. React")} />
+      </Field>
+      <Field htmlFor="sk-source" label={label(t("Where from"), true)}>
+        <Input id="sk-source" size="md" value={source} onChange={(event) => setSource(event.target.value)} maxLength={80} placeholder={t("e.g. Udemy, YouTube, Self")} />
+      </Field>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Counted in")}</legend>
+          {editing ? <span className="flex h-11 items-center text-body text-ink-2">{t(UNIT_LABEL[editing.unit])}</span> : <SegmentedControl label={t("Counted in")} variant="soft" stretch value={unit} onChange={setUnit} options={UNITS.map((value) => ({ value, label: t(UNIT_LABEL[value]) }))} />}
+        </fieldset>
+        <Field htmlFor="sk-target" label={label(t(isHours ? "Goal (hours)" : "Total lessons"))} error={targetError}>
+          <Input id="sk-target" size="md" inputMode={isHours ? "decimal" : "numeric"} value={target} onChange={(event) => setTarget(typed(event.target.value))} placeholder={isHours ? "30" : "40"} invalid={targetError !== undefined} trailing={<span className="text-small text-ink-muted">{t(isHours ? "hours" : "lessons")}</span>} />
+        </Field>
+      </div>
+
+      {!editing && (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Status")}</legend>
+          <SegmentedControl label={t("Status")} variant="soft" stretch value={status} onChange={setStatus} options={STATUSES.map((value) => ({ value, label: t(STATUS_LABEL[value]) }))} />
+          {status === "LEARNING" && (
+            <Field htmlFor="sk-done" label={<span className="text-small font-medium text-ink-2">{t(isHours ? "Hours done so far" : "Lessons done so far")}</span>} error={doneError} className="mt-2">
+              <Input id="sk-done" size="md" inputMode={isHours ? "decimal" : "numeric"} value={done} onChange={(event) => setDone(typed(event.target.value))} placeholder="0" invalid={doneError !== undefined} frameClassName="w-40" />
+            </Field>
+          )}
+        </fieldset>
+      )}
+
+      {/* Stacked on a phone; side by side from sm up, the icons wrapping to fit
+          and the colours given the width their tile and swatches need. */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <fieldset className="flex min-w-0 flex-col gap-2">
+          <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Icon")}</legend>
+          <div role="radiogroup" aria-label={t("Icon")} className="grid grid-cols-[repeat(auto-fill,36px)] gap-2">
+            {SKILL_ICONS.map((option) => {
+              const on = option.key === icon;
+              return (
+                <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} title={t(option.label)} onClick={() => setIcon(option.key)} className={cn("flex size-9 items-center justify-center rounded-sm border transition-colors [&_svg]:size-4.5", on ? "border-2 border-emerald bg-mint-50 text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong")}>
+                  <SkillIcon icon={option.key} />
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Colour")}</legend>
+          <div className="flex items-start gap-3">
+            <SkillTile icon={icon} color={color} />
+            <div role="radiogroup" aria-label={t("Colour")} className="grid grid-cols-[repeat(4,24px)] gap-2">
+              {SKILL_PALETTE.map((option) => {
+                const on = option.key === color;
+                return <button key={option.key} type="button" role="radio" aria-checked={on} aria-label={t(option.label)} title={t(option.label)} onClick={() => setPickedColor(option.key)} className="relative size-6 rounded-full transition-shadow after:absolute after:-inset-1" style={{ backgroundImage: `linear-gradient(135deg, ${option.from}, ${option.to})`, ...(on && { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${option.to}` }) }} />;
+              })}
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      {reminders && <ReminderSection kind="SKILL" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("A nudge to sit down and practise.")} />}
+    </Drawer>
   );
 }

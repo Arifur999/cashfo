@@ -29,6 +29,7 @@ import {
   plannedCount,
   quickAmounts,
   ruleLabel,
+  ruleLine,
   streakText,
   streakWord,
   unitKey,
@@ -91,6 +92,14 @@ describe("ruleLabel", () => {
     expect(ruleLabel(habit({ frequencyType: "WEEKLY_COUNT", weeklyCount: 3, targetValue: 30, unit: "minutes" }))).toEqual({ days: "3 times a week", amount: "30 minutes" });
     expect(ruleLabel(habit({ targetValue: 8, unit: "glasses" }))).toEqual({ days: "Every day", amount: "8 glasses" });
     expect(ruleLabel(habit({ frequencyType: "WEEKLY_COUNT", weeklyCount: 1 })).days).toBe("1 time a week");
+  });
+
+  it("puts the rule on one line under the name", () => {
+    expect(ruleLine(habit({ targetValue: 8, unit: "glasses" }))).toBe("8 glasses a day");
+    expect(ruleLine(habit({ frequencyType: "WEEKLY_COUNT", weeklyCount: 3, targetValue: 30, unit: "minutes" }))).toBe("3 times a week · 30 minutes");
+    expect(ruleLine(habit({ frequencyType: "WEEKLY_DAYS", weeklyDays: [0, 1, 2, 3, 4] }))).toBe("Sunday to Thursday");
+    expect(ruleLine(habit({}))).toBe("Every day");
+    expect(ruleLine(habit({ targetValue: 8, unit: "glasses" }), bn, "bn")).toBe("দিনে ৮ গ্লাস");
   });
 
   // Each part through its own key, so nothing English is left in Bangla.

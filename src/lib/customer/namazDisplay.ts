@@ -1,4 +1,5 @@
 import type { HabitMonthTracker, PrayerStatus } from "./api";
+import { type FormatLocale, langOf, writeDigits } from "@/lib/i18n/formatPrefs";
 import { hijriParts, WEEKDAY_LONG } from "./habitDisplay";
 
 // The maths behind Namaz: how a month sheet reads (each mark says how the
@@ -116,13 +117,20 @@ export interface PrayerSummary {
   missed: number;
   due: number;
   pct: number;
+  // How the prayed ones were prayed (they add up to prayed).
+  jamaat: number;
+  onTime: number;
+  qaza: number;
 }
 
+// Each prayer over the days fully past.
 export function prayerSummaries(tracker: HabitMonthTracker): PrayerSummary[] {
   const due = tracker.elapsedDays;
   return tracker.items.map((item) => {
-    const prayed = prayedChecks(tracker).filter((c) => c.item === item && c.day <= due).length;
-    return { item, prayed, missed: Math.max(0, due - prayed), due, pct: due > 0 ? Math.round((prayed / due) * 100) : 0 };
+    const marks = prayedChecks(tracker).filter((c) => c.item === item && c.day <= due);
+    const prayed = marks.length;
+    const of = (status: PrayerStatus) => marks.filter((c) => c.status === status).length;
+    return { item, prayed, missed: Math.max(0, due - prayed), due, pct: due > 0 ? Math.round((prayed / due) * 100) : 0, jamaat: of("JAMAAT"), onTime: of("ON_TIME"), qaza: of("QAZA") };
   });
 }
 
@@ -141,19 +149,26 @@ export function weekdayOfDay(tracker: HabitMonthTracker, day: number): number {
   return new Date(Date.UTC(tracker.year as number, (tracker.month as number) - 1, day)).getUTCDay();
 }
 
-// "Rabiʻ I – Rabiʻ II 1448": the Hijri months a Gregorian month spans.
-export function hijriRange(year: number, month: number, locale: "en" | "bn" = "en", adjust = 0): string {
+// "Rabiʻ I – Rabiʻ II 1448": the Hijri months a Gregorian month spans. With
+// days (a month sheet's header), "19 Rabiʻ I – 19 Rabiʻ II 1448 AH" ("হিজরি"
+// in Bangla; Intl's own era word reads wrong there).
+export function hijriRange(year: number, month: number, locale: FormatLocale = "en", adjust = 0, withDays = false): string {
   const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  const tag = locale === "bn" ? "bn-BD" : "en-GB";
+  const bangla = langOf(locale) === "bn";
+  const tag = bangla ? "bn-BD" : "en-GB";
+  // Latin digits, then the reader's own (formatPrefs.ts).
+  const number = { format: (value: number) => writeDigits(String(value), locale) };
   const name = (day: string) => {
     const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: "UTC", month: "long" }).formatToParts(new Date(new Date(`${day}T00:00:00.000Z`).getTime() - adjust * 86400000));
-    return parts.find((p) => p.type === "month")?.value ?? "";
+    const monthName = parts.find((p) => p.type === "month")?.value ?? "";
+    return withDays ? `${number.format(hijriParts(day, adjust).day)} ${monthName}` : monthName;
   };
   const first = name(`${year}-${pad(month)}-01`);
   const end = name(`${year}-${pad(month)}-${pad(last)}`);
   const hy = hijriParts(`${year}-${pad(month)}-${pad(last)}`, adjust).year;
-  const yearText = new Intl.NumberFormat(tag, { useGrouping: false }).format(hy);
-  return `${first === end ? first : `${first} – ${end}`} ${yearText}`;
+  const yearText = number.format(hy);
+  const range = `${first === end ? first : `${first} – ${end}`} ${yearText}`;
+  return withDays ? `${range} ${bangla ? "হিজরি" : "AH"}` : range;
 }
 
 export interface YearMonth {

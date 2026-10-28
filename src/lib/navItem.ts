@@ -1,10 +1,11 @@
-import { canAccessRoute, canManage, type ManageArea } from "./authUtils";
+import { canAccessRoute, type ManageArea } from "./authUtils";
 import type { IconName } from "./iconMapper";
+import { roleAccess } from "./rolePermissions";
 import type { AdminRole } from "@/types/auth.types";
 
 // A count beside a menu item: work waiting there, shown to roles that can
 // act on it.
-export type NavBadgeKind = "openTickets" | "securityFlags";
+export type NavBadgeKind = "openTickets" | "securityFlags" | "payoutRequests";
 
 // A tab under a page's header, as that page's TabsNav draws it: the menu's
 // third level, which the breadcrumb names ("Security › Sign-ins").
@@ -22,14 +23,21 @@ export interface NavItem {
   title: string;
   href: string;
   icon: IconName;
+  // What the breadcrumb calls the page when the menu's name is longer
+  // ("User Management" in the menu, "People › Users" above the page).
+  crumb?: string;
+  // The breadcrumb names the menu group above this item's tabs, not the item
+  // ("Support & content › Tickets", as the boards write it).
+  crumbFromGroup?: boolean;
   // The page's tabs, first one first. Their paths light this item up too,
-  // for a section spread over several routes (Plans & coupons is /plans
-  // and /coupons).
+  // for a section spread over several routes (Subscriptions is /plans and
+  // /coupons).
   tabs?: NavTab[];
   // What a role must be allowed to change to edit here: one area, or every
   // area the page holds (on Users a support admin suspends people and a
   // finance admin changes their plan). A role that can change none of them
-  // sees the page with a lock, read-only.
+  // sees the page with a lock, read-only. lib/rolePermissions decides, from
+  // the same tables as Security > Roles.
   manage?: ManageArea | ManageArea[];
   badge?: NavBadgeKind;
 }
@@ -41,33 +49,34 @@ export interface NavSection {
 
 export const ADMIN_USERS_ROUTE = "/admin/users";
 
-// The admin menu as the design's AdminSidebar groups it. Adding an admin
-// page = a route folder + one entry here (a tab of an existing page = one
-// entry in its tabs). Who can see an item is NOT declared here: it comes
-// from the route table in authUtils, so the sidebar and proxy.ts can never
-// disagree.
+// The admin menu as the design's AdminSidebar board groups and names it.
+// Adding an admin page = a route folder + one entry here (a tab of an
+// existing page = one entry in its tabs). Who can see an item is NOT
+// declared here: it comes from the route table in authUtils, so the sidebar
+// and proxy.ts can never disagree.
 export const adminNavSections: NavSection[] = [
   {
     title: "Overview",
     items: [
-      { title: "Dashboard", href: "/admin/dashboard", icon: "House" },
+      { title: "Dashboard", href: "/admin/dashboard", icon: "LayoutDashboard" },
       { title: "Analytics", href: "/admin/analytics", icon: "ChartColumn" },
     ],
   },
   {
     title: "People",
     items: [
-      { title: "Users", href: ADMIN_USERS_ROUTE, icon: "Users", manage: ["ownerStatus", "ownerPlan"] },
+      { title: "User Management", crumb: "Users", href: ADMIN_USERS_ROUTE, icon: "Users", manage: ["ownerStatus", "ownerPlan"] },
       { title: "Workspaces", href: "/admin/workspaces", icon: "Building2" },
-      // Resetting an owner's data is all this page changes.
-      { title: "Owners", href: "/admin/manage-owners", icon: "Crown", manage: "ownerData" },
+      // Resetting an owner's data happens here; its rows open the person's
+      // page, where support and finance act too.
+      { title: "Manage Owners", href: "/admin/manage-owners", icon: "Crown", manage: ["ownerData", "ownerStatus", "ownerPlan"] },
     ],
   },
   {
     title: "Money",
     items: [
       {
-        title: "Plans & coupons",
+        title: "Subscriptions",
         href: "/admin/plans",
         icon: "Layers",
         manage: "subscriptions",
@@ -87,6 +96,7 @@ export const adminNavSections: NavSection[] = [
           { title: "Revenue", href: "/admin/revenue" },
         ],
       },
+      { title: "Referrals & Payouts", href: "/admin/referrals", icon: "Gift", manage: "referralPayouts", badge: "payoutRequests" },
     ],
   },
   {
@@ -98,6 +108,7 @@ export const adminNavSections: NavSection[] = [
         icon: "LifeBuoy",
         manage: "support",
         badge: "openTickets",
+        crumbFromGroup: true,
         tabs: [
           { title: "Tickets", href: "/admin/support" },
           { title: "Feature requests", href: "/admin/feature-requests" },
@@ -108,6 +119,7 @@ export const adminNavSections: NavSection[] = [
         href: "/admin/content",
         icon: "FileText",
         manage: "content",
+        crumbFromGroup: true,
         tabs: [
           { title: "Announcements", href: "/admin/content/announcements" },
           { title: "Legal pages", href: "/admin/content/legal" },
@@ -115,13 +127,14 @@ export const adminNavSections: NavSection[] = [
           { title: "Categories & accounts", href: "/admin/content/categories" },
         ],
       },
-      // No lock: any admin can draft or schedule a campaign here (the API
-      // lets every admin create one), so no role only looks. Editing the
-      // templates and sending or cancelling stay with their roles.
+      // Locked only for a role that can neither edit the templates nor send
+      // or cancel a campaign (a finance admin), as the board draws it.
       {
         title: "Notifications",
         href: "/admin/notifications",
         icon: "Bell",
+        manage: ["notificationTemplates", "notificationCampaigns"],
+        crumbFromGroup: true,
         tabs: [
           { title: "Templates", href: "/admin/notifications", exact: true },
           { title: "Campaigns", href: "/admin/notifications/campaigns" },
@@ -182,14 +195,9 @@ export const isNavItemActive = (item: NavItem, pathname: string) =>
 // Announcements instead of bouncing off /admin/content's redirect.
 export const navItemHref = (item: NavItem) => item.tabs?.[0]?.href ?? item.href;
 
-const manageAreas = (item: NavItem): ManageArea[] => (item.manage === undefined ? [] : typeof item.manage === "string" ? [item.manage] : item.manage);
-
 // Read-only for this role: the page opens, but the role may change none of
-// what it holds.
-export const isNavItemViewOnly = (item: NavItem, role: AdminRole) => {
-  const areas = manageAreas(item);
-  return areas.length > 0 && !areas.some((area) => canManage(role, area));
-};
+// what it holds -- the same answer Security > Roles gives.
+export const isNavItemViewOnly = (item: NavItem, role: AdminRole) => roleAccess(role, { manage: item.manage }) === "look";
 
 // The counts this role's menu shows: on items it can act on.
 export const navBadgesFor = (sections: NavSection[], role: AdminRole): NavBadgeKind[] =>

@@ -24,8 +24,8 @@ const { shape } = myNameFormZodSchema;
 const ROLE_CHIP: Record<AdminRole, "mint" | "info" | "warning" | "habits"> = { SUPER_ADMIN: "mint", SUPPORT_ADMIN: "info", FINANCE_ADMIN: "warning", CONTENT_ADMIN: "habits" };
 
 // Your name (which you can change), your role and your email (which only
-// another super admin can). The save bar is always there, live once the
-// name changes, like Settings' General card.
+// another super admin can), as the AdminMyAccount board draws it. Discard
+// and Save show once the name changes.
 const ProfileCard = ({ me }: { me: IAdminUser }) => {
   const { run, isPending } = useActionMutation({
     action: updateMyNameAction,
@@ -43,12 +43,12 @@ const ProfileCard = ({ me }: { me: IAdminUser }) => {
   const roleLine = me.role === "SUPER_ADMIN" ? "Super admin · full access" : adminRoleLabel(me.role);
 
   return (
-    <Card className="flex flex-col gap-4">
+    <Card padding="none" className="flex flex-col gap-3.5 px-5 py-4.5">
       <h2 className="text-title text-ink">
         <T>Profile</T>
       </h2>
-      <div className="flex items-center gap-3">
-        <span aria-hidden="true" className={cn("flex size-13 shrink-0 items-center justify-center rounded-full text-h3 font-bold", ADMIN_ROLE_AVATAR[me.role])}>
+      <div className="flex items-center gap-3.5">
+        <span aria-hidden="true" className={cn("flex size-13 shrink-0 items-center justify-center rounded-full text-[17px] font-bold", ADMIN_ROLE_AVATAR[me.role])}>
           {getInitials(me.name) || "?"}
         </span>
         <span className="flex min-w-0 flex-col items-start gap-1">
@@ -72,16 +72,18 @@ const ProfileCard = ({ me }: { me: IAdminUser }) => {
           </span>
         </div>
         <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>
-          {([isDirty, isSubmitting]) => (
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" size="md" disabled={!isDirty || isSubmitting} onClick={() => form.reset()}>
-                <T>Discard</T>
-              </Button>
-              <AppSubmitButton isPending={isPending || isSubmitting} disabled={!isDirty} pendingLabel="Saving..." variant="action" size="md" className="w-auto">
-                <T>Save name</T>
-              </AppSubmitButton>
-            </div>
-          )}
+          {([isDirty, isSubmitting]) =>
+            isDirty && (
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" size="md" disabled={isSubmitting} onClick={() => form.reset()}>
+                  <T>Discard</T>
+                </Button>
+                <AppSubmitButton isPending={isPending || isSubmitting} pendingLabel="Saving..." variant="action" size="md" className="w-auto">
+                  <T>Save name</T>
+                </AppSubmitButton>
+              </div>
+            )
+          }
         </form.Subscribe>
       </AppForm>
     </Card>

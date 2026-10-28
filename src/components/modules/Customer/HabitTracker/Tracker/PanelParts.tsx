@@ -34,12 +34,13 @@ interface PanelFooterProps {
   className?: string;
 }
 
-// The strip at the foot of a drawer or dialog.
+// The strip at the foot of a drawer or dialog: 14px 24px, buttons 10px
+// apart, on the strip colour (design-v4 DailyHabitDrawer).
 export function PanelFooter({ aside, children, drawer = false, className }: PanelFooterProps) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-3 border-t border-line bg-strip", drawer ? "px-4 py-3 md:px-6 md:py-4" : "px-6 py-4", className)}>
+    <div className={cn("flex flex-wrap items-center gap-2.5 border-t border-line bg-strip", drawer ? "px-4 py-3 md:px-6 md:py-3.5" : "px-6 py-3.5", className)}>
       {aside && <div className="flex flex-wrap items-center gap-2 max-sm:order-last max-sm:w-full max-sm:justify-center">{aside}</div>}
-      <div className="ml-auto flex items-center gap-3">{children}</div>
+      <div className="ml-auto flex items-center gap-2.5">{children}</div>
     </div>
   );
 }

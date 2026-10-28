@@ -114,3 +114,32 @@ export function challengeSummary(tracker: HabitMonthTracker, window: ChallengeWi
 export function presetFor(totalDays: number): (typeof CHALLENGE_PRESETS)[number] | null {
   return CHALLENGE_PRESETS.find((p) => p.days === totalDays) ?? null;
 }
+
+// How a challenge looks on its card (design-v4 ChallengesHome): an icon and
+// a tint picked from its name, as a challenge has neither of its own. "No
+// Sugar" gets the crossed-out circle in rose, "Wake up at 5 am" the alarm in
+// amber, a reading one the book in orange; anything else the target in a
+// tint that stays the same for the same name.
+export type ChallengeIcon = "ban" | "alarm" | "book" | "phone" | "walk" | "water" | "prayer" | "target";
+export type ChallengeTint = "rose" | "amber" | "orange" | "indigo" | "green" | "cyan" | "violet";
+
+const LOOKS: { icon: ChallengeIcon; tint: ChallengeTint; words: RegExp }[] = [
+  { icon: "phone", tint: "indigo", words: /social|phone|screen|facebook|instagram|tiktok|youtube|scroll|ফোন|ফেসবুক|স্ক্রিন|মোবাইল/i },
+  { icon: "ban", tint: "rose", words: /\bno\b|sugar|sweet|soda|soft drink|smok|junk|quit|stop|চিনি|মিষ্টি|ধূমপান|ছাড়|বাদ/i },
+  { icon: "alarm", tint: "amber", words: /wake|alarm|\bam\b|early|sleep|bed|ঘুম|ভোর|সকাল/i },
+  { icon: "book", tint: "orange", words: /read|book|page|quran|qur'an|study|পড়|বই|কুরআন|পাতা/i },
+  { icon: "walk", tint: "green", words: /walk|run|step|gym|exercise|workout|push|yoga|হাঁট|দৌড়|ব্যায়াম/i },
+  { icon: "water", tint: "cyan", words: /water|drink|glass|পানি/i },
+  { icon: "prayer", tint: "violet", words: /pray|fajr|salah|salat|namaz|tahajjud|dhikr|zikr|নামাজ|নামায|ফজর|তাহাজ্জুদ|জিকির/i },
+];
+
+const TINTS: ChallengeTint[] = ["violet", "cyan", "rose", "amber", "orange", "indigo", "green"];
+
+export function challengeLook(name: string | null): { icon: ChallengeIcon; tint: ChallengeTint } {
+  const text = (name ?? "").trim();
+  const match = LOOKS.find((look) => look.words.test(text));
+  if (match) return { icon: match.icon, tint: match.tint };
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  return { icon: "target", tint: TINTS[hash % TINTS.length] };
+}

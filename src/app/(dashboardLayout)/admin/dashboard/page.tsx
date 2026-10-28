@@ -1,45 +1,32 @@
 import { isAxiosError } from "axios";
 import { ContentDashboard, type ContentDashboardData } from "@/components/modules/Admin/Dashboard/ContentDashboard";
-import { queueOrder } from "@/components/modules/Admin/Dashboard/dashboardFigures";
 import { FinanceDashboard, type FinanceDashboardData } from "@/components/modules/Admin/Dashboard/FinanceDashboard";
-import { SuperDashboard, type SuperDashboardData } from "@/components/modules/Admin/Dashboard/SuperDashboard";
-import { SupportDashboard, type SupportDashboardData } from "@/components/modules/Admin/Dashboard/SupportDashboard";
-import type { SystemState } from "@/components/modules/Admin/Dashboard/SystemCard";
+import { SuperDashboard } from "@/components/modules/Admin/Dashboard/SuperDashboard";
+import { SupportDashboard } from "@/components/modules/Admin/Dashboard/SupportDashboard";
+import type { ApiCheck } from "@/components/modules/Admin/Dashboard/SystemCard";
 import { hourIn } from "@/lib/adminDashboard";
-import { getAnalyticsSummary } from "@/services/analytics.services";
+import { adminPageTitle } from "@/lib/i18n/locale";
 import { getAnnouncements } from "@/services/announcement.services";
 import { getUserInfo } from "@/services/auth.services";
 import { getCategories } from "@/services/category.services";
 import { getDashboardSummary } from "@/services/dashboard.services";
-import { getFeatureRequests } from "@/services/featureRequest.services";
 import { getLegalDocuments } from "@/services/legalDocument.services";
 import { getPayments } from "@/services/payment.services";
 import { getPlanAnalytics, getPlans } from "@/services/plan.services";
 import { getChurn, getRevenueOverview, getRevenueSummary } from "@/services/revenue.services";
-import { getBackupStatusSummary, getErrorLogs, getHealth } from "@/services/system.services";
-import { getTickets, getTicketStats } from "@/services/ticket.services";
+import { getHealth } from "@/services/system.services";
 import { getTranslations } from "@/services/translation.services";
 import type { IAdminUser } from "@/types/auth.types";
-import { adminPageTitle } from "@/lib/i18n/locale";
+import { DASHBOARD_PERIODS, type DashboardPeriod } from "@/types/dashboard.types";
 
 export const generateMetadata = adminPageTitle("Dashboard");
 
-// Each role's dashboard only reads what that role may, so a call that fails
-// here is an outage or a timeout. It comes back as null, and its card says
-// it couldn't load: it never fails the whole page, and never reads as
-// "nothing here" or "all clear".
+// A call that fails here is an outage or a timeout. It comes back as null,
+// and its card says it couldn't load: it never fails the whole page, and
+// never reads as "nothing here" or "all clear".
 async function maybe<T>(call: () => Promise<{ data: T }>): Promise<T | null> {
   try {
     return (await call()).data;
-  } catch {
-    return null;
-  }
-}
-
-// The total behind a paginated list, without the rows.
-async function countOf(call: () => Promise<{ meta?: { total: number } }>): Promise<number | null> {
-  try {
-    return (await call()).meta?.total ?? null;
   } catch {
     return null;
   }
@@ -58,66 +45,15 @@ async function pageOf<T>(call: () => Promise<{ data: T[]; meta?: { total: number
 // The API's health check, timed from this server. A 503 carrying the
 // check's own answer is the API up and its database down; no answer at all
 // is the API itself down.
-async function healthOf(): Promise<Pick<SystemState, "healthy" | "latencyMs">> {
+async function apiCheck(): Promise<ApiCheck> {
+  const started = Date.now();
   try {
     const { data } = await getHealth();
-    return data.status === "ok" ? { healthy: true, latencyMs: data.latencyMs } : { healthy: false, latencyMs: null };
+    return data.status === "ok" ? { healthy: true, latencyMs: data.latencyMs ?? Date.now() - started } : { healthy: false, latencyMs: null };
   } catch (error) {
     const answered = isAxiosError(error) && error.response?.status === 503 && (error.response.data as { status?: string } | undefined)?.status === "error";
     return { healthy: answered ? false : null, latencyMs: null };
   }
-}
-
-async function superData(): Promise<SuperDashboardData> {
-  const [{ data: summary }, activity, tickets, failedPayments, revenue, overview, plans, planList, health, backup, unresolvedErrors] = await Promise.all([
-    getDashboardSummary(),
-    maybe(getAnalyticsSummary),
-    maybe(getTicketStats),
-    countOf(() => getPayments("limit=1", "failed")),
-    maybe(getRevenueSummary),
-    // The MRR's change, month end to month end.
-    maybe(getRevenueOverview),
-    maybe(getPlanAnalytics),
-    maybe(getPlans),
-    healthOf(),
-    maybe(getBackupStatusSummary),
-    // Not fixed yet, from the last 24 hours: the card links to the Errors
-    // page on that same window (?within=24h), so the count and the list agree.
-    countOf(() => getErrorLogs("resolved=false&within=24h&limit=1")),
-  ]);
-  return { summary, activity, tickets, failedPayments, revenue, overview, plans, planList, system: { ...health, backup, unresolvedErrors } };
-}
-
-const QUEUE_SHOWN = 6;
-// The API's largest page, for the fallback below.
-const QUEUE_FETCHED = 100;
-
-// The few open tickets shown, ranked by the API itself (sort=waiting). An API
-// from before that sort refuses the query with a 400; any other failure is
-// an outage, which a second, larger call would only wait on again.
-async function rankedPage() {
-  try {
-    const { data, meta } = await getTickets(`status=OPEN&sort=waiting&limit=${QUEUE_SHOWN}`);
-    return { rows: data, total: meta?.total ?? data.length };
-  } catch (error) {
-    return isAxiosError(error) && error.response?.status === 400 ? ("unsupported" as const) : null;
-  }
-}
-
-// The open tickets (the inbox's Need a reply tab), the most urgent and
-// longest waiting first. On an API without sort=waiting the dashboard reads
-// its largest page of open tickets and ranks them here, as it used to.
-async function waitingQueue(): Promise<SupportDashboardData["queue"]> {
-  const ranked = await rankedPage();
-  if (ranked === null) return null;
-  if (ranked !== "unsupported") return { tickets: ranked.rows, total: ranked.total };
-  const open = await pageOf(() => getTickets(`status=OPEN&limit=${QUEUE_FETCHED}`));
-  return open && { tickets: queueOrder(open.rows).slice(0, QUEUE_SHOWN), total: open.total };
-}
-
-async function supportData(): Promise<SupportDashboardData> {
-  const [stats, queue, requests] = await Promise.all([maybe(getTicketStats), waitingQueue(), maybe(getFeatureRequests)]);
-  return { stats, queue, requests, now: Date.now() };
 }
 
 async function financeData(): Promise<FinanceDashboardData> {
@@ -137,8 +73,27 @@ async function contentData(): Promise<ContentDashboardData> {
   return { translations, announcements, legal, categories: categories ? categories.length : null };
 }
 
-// Each role gets the dashboard cut to its work; the super admin sees it all.
-const DashboardPage = async () => {
+// The server's clock as the page read its data, so the waits the server
+// prints and the ones the browser hydrates are the same text.
+async function supportData() {
+  const summary = await maybe(() => getDashboardSummary());
+  return { support: summary?.support ?? null, now: Date.now() };
+}
+
+async function superData(period: DashboardPeriod) {
+  const [{ data: summary }, api] = await Promise.all([getDashboardSummary(period), apiCheck()]);
+  return { summary, api, now: Date.now() };
+}
+
+const periodOf = (value: string | string[] | undefined): DashboardPeriod => {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return DASHBOARD_PERIODS.find((period) => period === raw) ?? "30d";
+};
+
+// Each role gets the dashboard cut to its work: the super admin sees it all
+// (AdminDashboard), a support admin their tickets (AdminDashboardSupport);
+// the finance and content admins keep their own overviews.
+const DashboardPage = async ({ searchParams }: PageProps<"/admin/dashboard">) => {
   // getUserInfo is request-cached: the layout already fetched (and required) it.
   const admin = (await getUserInfo()) as IAdminUser;
   const hour = hourIn();
@@ -151,7 +106,7 @@ const DashboardPage = async () => {
     case "CONTENT_ADMIN":
       return <ContentDashboard adminName={admin.name} hour={hour} {...await contentData()} />;
     default:
-      return <SuperDashboard adminName={admin.name} hour={hour} {...await superData()} />;
+      return <SuperDashboard adminName={admin.name} hour={hour} {...await superData(periodOf((await searchParams).period))} />;
   }
 };
 

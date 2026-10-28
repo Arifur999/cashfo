@@ -34,7 +34,7 @@ const MAX_ITEM = 40;
 // A new challenge: a name, how many days, and the daily items to tick
 // (one is enough; none means the day itself is ticked).
 export function NewChallengeDialog({ open, onClose, presetDays, reminders }: NewChallengeDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [days, setDays] = useState<number | "custom">(30);
@@ -62,7 +62,7 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
   const daysOk = Number.isInteger(totalDays) && totalDays >= 1 && totalDays <= MAX_DAYS;
   const valid = name.trim().length > 0 && name.trim().length <= 60 && daysOk;
   // Why Start stays off for a length of its own.
-  const daysError = days === "custom" && custom !== "" && !daysOk ? t("From 1 to {max} days.", { max: formatCount(MAX_DAYS, locale) }) : undefined;
+  const daysError = days === "custom" && custom !== "" && !daysOk ? t("From 1 to {max} days.", { max: formatCount(MAX_DAYS, fmt) }) : undefined;
   // The hidden item the day itself is ticked through can't be one of yours.
   const usable = (value: string) => value !== DAY_ITEM;
 
@@ -81,12 +81,12 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
       const all = last && usable(last) && !items.some((i) => i.toLowerCase() === last.toLowerCase()) ? [...items, last] : items;
       const result = await createChallengeAction({ name: name.trim(), totalDays, items: all });
       if (!result.data) {
-        toast.error(actionError(result.message, "Failed to create challenge", t, locale));
+        toast.error(actionError(result.message, "Failed to create challenge", t, fmt));
         return;
       }
       // Made, even if an item was refused: open it, and say what went wrong.
       if (result.success) toast.success(t("Challenge created"));
-      else toast.error(actionError(result.message, "Failed to save habit", t, locale));
+      else toast.error(actionError(result.message, "Failed to save habit", t, fmt));
       // Its reminder needs the new id, so it is saved now.
       if (reminders?.available) {
         const saved = await reminders.saveDraft("CHALLENGE", result.data.id, reminder);
@@ -97,19 +97,21 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
     });
   }
 
-  const pick = (on: boolean) => cn("flex h-11 items-center justify-center rounded-md border text-body font-bold transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong");
+  const pick = (on: boolean) => cn("flex h-11 items-center justify-center rounded-field border text-body font-bold transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong");
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <AlertDialogContent className="w-120 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-120 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border border-line bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} className="flex max-h-[calc(100dvh-32px)] flex-col">
-          <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
-            <AlertDialogTitle className="text-h3 text-ink">{t("New challenge")}</AlertDialogTitle>
-            <CloseButton onClick={onClose} label={t("Close")} />
+          <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-4.5">
+            <div className="flex min-w-0 flex-col gap-1">
+              <AlertDialogTitle className="text-h3 text-ink">{t("New challenge")}</AlertDialogTitle>
+              <AlertDialogDescription className="text-small text-ink-muted">{t("Day 1 is today. Tick it off each day until you reach the end.")}</AlertDialogDescription>
+            </div>
+            <CloseButton onClick={onClose} label={t("Close")} className="-my-0.5 -mr-1.5 size-8.5 rounded-full" />
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-            <AlertDialogDescription className="px-6 pt-4 text-small text-ink-muted">{t("Day 1 is today. Tick it off each day until you reach the end.")}</AlertDialogDescription>
-            <div className="flex flex-col gap-4 px-6 py-4">
+            <div className="flex flex-col gap-4 px-6 py-5">
               <Field htmlFor="ch-name" label={<span className="text-body font-medium text-ink">{t("Challenge name")}</span>}>
                 <Input id="ch-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={60} placeholder={t("No Sugar")} />
               </Field>
@@ -118,7 +120,7 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
                 <div role="radiogroup" aria-label={t("How many days")} className="grid grid-cols-5 gap-2">
                   {CHALLENGE_PRESETS.map((p) => (
                     <button key={p.days} type="button" role="radio" aria-checked={days === p.days} onClick={() => setDays(p.days)} className={pick(days === p.days)}>
-                      {formatCount(p.days, locale)}
+                      {formatCount(p.days, fmt)}
                     </button>
                   ))}
                   <button type="button" role="radio" aria-checked={days === "custom"} aria-label={t("Your own length")} onClick={() => setDays("custom")} className={cn(pick(days === "custom"), days !== "custom" && "border-dashed border-line-strong hover:border-emerald")}>
@@ -135,7 +137,7 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
                 <span className="text-body font-medium text-ink">
                   {t("Daily items")} <span className="font-normal text-ink-muted">({t("optional")})</span>
                 </span>
-                <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-md border border-line-strong bg-surface px-3 py-1.5 focus-within:border-emerald focus-within:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]">
+                <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-field border border-input bg-surface px-3 py-1.5 focus-within:border-emerald focus-within:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]">
                   {items.map((item) => (
                     <span key={item} className="flex h-7 max-w-full items-center gap-1.5 rounded-full bg-surface-sunken pr-1.5 pl-3 text-small font-medium text-ink">
                       <span className="truncate">{item}</span>

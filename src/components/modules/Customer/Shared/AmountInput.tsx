@@ -3,6 +3,7 @@
 import Input from "@/components/smartly/form/Input";
 import { useAmountField } from "@/hooks/useAmountField";
 import { currencySymbol } from "@/lib/customer/currency";
+import { cn } from "@/lib/utils";
 
 interface AmountInputProps {
   id: string;
@@ -15,27 +16,31 @@ interface AmountInputProps {
   // The id of the line that explains the amount (what is available, what it
   // leaves), read out with the field.
   describedBy?: string;
+  // "lg": the 48px box a form's second figure gets (New savings goal's
+  // target, Move between goals), a size under the drawer's main amount.
+  size?: "xl" | "lg";
 }
 
-// A drawer's amount box: the currency sign in a sand cell on the left and
-// the figure large beside it, grouped as it is typed ("16,50,000"). 58px
-// tall: the boards draw it 56px inside its border.
-const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid = false, describedBy }: AmountInputProps) => {
+// A drawer's amount box (design-v4): 56px with 8px corners, the currency
+// sign in a 52px strip cell on the left and the figure large and bold beside
+// it, grouped as it is typed ("16,50,000").
+const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid = false, describedBy, size = "xl" }: AmountInputProps) => {
   const field = useAmountField(value, onChange, currency);
+  const lg = size === "lg";
   return (
     <Input
       id={id}
       type="text"
       inputMode="decimal"
-      size="xl"
+      size={lg ? "lg" : "xl"}
       {...field}
       placeholder="0"
       autoFocus={autoFocus}
       invalid={invalid}
       {...(describedBy && { "aria-describedby": invalid ? `${id}-error ${describedBy}` : describedBy })}
-      leading={<span className="flex h-14 w-13 items-center justify-center border-r border-line bg-strip text-h2 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-      frameClassName="h-14.5 gap-0 overflow-hidden pl-0"
-      className="pl-4 text-h2 tabular-nums"
+      leading={<span className={cn("flex items-center justify-center border-r border-line bg-strip font-semibold text-ink-soft", lg ? "h-12 w-11 text-[17px]" : "h-14 w-13 text-[20px]")}>{currencySymbol(currency)}</span>}
+      frameClassName={cn("gap-0 overflow-hidden rounded-sm pl-0", lg ? "h-12" : "h-14")}
+      className={cn("font-bold tabular-nums", lg ? "pl-3 text-h3" : "pl-3.5 text-[24px]")}
     />
   );
 };

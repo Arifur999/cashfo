@@ -5,19 +5,23 @@ import type { BUDGET_CATEGORY_COLORS, BUDGET_CATEGORY_ICONS } from "@/lib/custom
 export type HabitIconKey = (typeof BUDGET_CATEGORY_ICONS)[number];
 export type HabitColorKey = (typeof BUDGET_CATEGORY_COLORS)[number];
 
+// In the board's order: water, movement, exercise, reading, writing, sleep,
+// morning, food, health, nature, a goal and mindfulness. The board's
+// footprints, moon, apple and "quit something" have no key Habit.icon takes,
+// so a bike, a bed, the plate and the sparkles stand in.
 export const HABIT_ICONS: { key: HabitIconKey; label: string }[] = [
   { key: "droplet", label: "Water" },
-  { key: "health", label: "Health" },
-  { key: "education", label: "Study" },
-  { key: "flame", label: "Energy" },
   { key: "bike", label: "Cycling" },
+  { key: "dumbbell", label: "Exercise" },
+  { key: "book-open", label: "Reading" },
+  { key: "pencil", label: "Writing" },
   { key: "bed", label: "Sleep" },
-  { key: "sparkles", label: "Mindfulness" },
-  { key: "lightbulb", label: "Idea" },
-  { key: "watch", label: "Time" },
+  { key: "sun", label: "Morning" },
   { key: "food", label: "Food" },
-  { key: "entertainment", label: "Fun" },
-  { key: "travel", label: "Outdoors" },
+  { key: "health", label: "Health" },
+  { key: "leaf", label: "Nature" },
+  { key: "target", label: "Goal" },
+  { key: "sparkles", label: "Mindfulness" },
 ];
 
 export const HABIT_COLORS: { key: HabitColorKey; label: string }[] = [

@@ -13,13 +13,15 @@ interface ListHeadProps extends React.ComponentProps<"div"> {
   showOnPhone?: boolean;
 }
 
-// The column heads: a 40px Aurora band with a thin mint line under it.
+// The column heads: a 34px light band (the boards' 10px padding round 12px
+// words) with a line under it, and one over it when something sits above it
+// inside the table (a card's own header draws its line already).
 const ListHead = ({ columns, sticky = false, showOnPhone = false, className, ...props }: ListHeadProps) => (
   <div
     role="row"
     data-slot="list-head"
     className={cn(
-      "h-10 items-center gap-x-4 border-b border-aurora-edge",
+      "h-8.5 items-center gap-x-4 border-b border-line not-first:border-t",
       showOnPhone ? "grid" : "hidden md:grid",
       LIST_HEAD,
       columns,

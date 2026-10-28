@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CheckCheck, Clock3, Flame, RefreshCw, X } from "lucide-react";
+import { Check, CheckCheck, Clock, Clock3, Flame, MapPin, RefreshCw, Sunrise, Timer, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
@@ -11,13 +11,13 @@ import ErrorState from "@/components/smartly/ErrorState";
 import { useMinuteClock } from "@/hooks/useMinuteClock";
 import type { HabitMonthTracker, PrayerStatus } from "@/lib/customer/api";
 import { timeLabel } from "@/lib/customer/date";
-import { actionError, daysText, WEEKDAY_SHORT, weekdayOf, weekOf } from "@/lib/customer/habitDisplay";
+import { actionError, shiftDay, WEEKDAY_LONG, WEEKDAY_SHORT, weekdayOf, weekOf } from "@/lib/customer/habitDisplay";
 import { prayerMarks, prayerStreak, type PrayerMark } from "@/lib/customer/habitsHome";
 import { createHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
-import { type CellState, cellState, isPrayed as prayedState, PRAYER_INITIAL, PRAYERS, trackerFor } from "@/lib/customer/namazDisplay";
-import { clockOf, clockParts, prayerTimesFor } from "@/lib/customer/prayerTimes";
+import { type CellState, cellState, PRAYER_INITIAL, PRAYERS, trackerFor } from "@/lib/customer/namazDisplay";
+import { clockOf, clockParts, minutesUntil, nextPrayer, prayerTimesFor } from "@/lib/customer/prayerTimes";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
+import { weekStartOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PrayerStatusMenu } from "../Namaz/PrayerStatusMenu";
@@ -32,34 +32,53 @@ interface PrayersCardProps {
 // tiles keeps the brand green too (emerald turns light in dark mode).
 const BRAND_INK = "text-emerald dark:text-forest";
 
-const CELL: Record<PrayerMark, string> = {
-  prayed: "bg-emerald",
-  missed: "bg-expense-soft",
+// Today's prayers in the week grid: the next one ringed, the ones after it
+// dashed, one whose time has passed unmarked dashed in the brand colour.
+type GridMark = PrayerMark | "next" | "later";
+
+// The board's grid: with jama'at the brand colour, on time its pale tint,
+// qaza amber, missed rose.
+const CELL: Record<GridMark, string> = {
+  jamaat: "bg-emerald",
+  onTime: "bg-emerald-tint",
+  qaza: "bg-warning-fill/60",
+  missed: "bg-expense-fill/40",
+  next: "border-[1.5px] border-emerald bg-surface",
   open: "border-[1.5px] border-dashed border-emerald bg-surface",
-  // Sunken is the card's own colour at night; the line colour keeps the days to come in view.
-  none: "bg-surface-sunken/60 dark:bg-line/70",
+  later: "border border-dashed border-input bg-surface",
+  none: "border border-dashed border-input bg-surface",
 };
 
-// How a marked prayer reads on its tile: how it was prayed.
-const MARKED: Partial<Record<CellState, { word: string; icon: React.ReactNode }>> = {
-  jamaat: { word: "Jama'at", icon: <CheckCheck className="size-3" strokeWidth={3} aria-hidden="true" /> },
-  onTime: { word: "On time", icon: <Check className="size-3" strokeWidth={3} aria-hidden="true" /> },
-  qaza: { word: "Qaza", icon: <Clock3 className="size-3" strokeWidth={2.5} aria-hidden="true" /> },
-  missed: { word: "Not prayed", icon: <X className="size-3" strokeWidth={3} aria-hidden="true" /> },
+const CELL_WORD: Record<GridMark, string> = { jamaat: "with jama'at", onTime: "on time", qaza: "qaza", missed: "missed", next: "next to pray", open: "still open", later: "later today", none: "not yet" };
+
+// How a marked prayer reads on its tile: how it was prayed, in its chip.
+const MARKED: Partial<Record<CellState, { word: string; chip: string; icon: React.ReactNode }>> = {
+  jamaat: { word: "With jama'at", chip: "bg-emerald text-on-action", icon: <CheckCheck className="size-3.25" strokeWidth={2.5} aria-hidden="true" /> },
+  onTime: { word: "On time", chip: "bg-emerald-tint text-brand-ink", icon: <Check className="size-3.25" strokeWidth={2.5} aria-hidden="true" /> },
+  qaza: { word: "Qaza", chip: "bg-warning-soft text-warning", icon: <Clock3 className="size-3.25" strokeWidth={2.5} aria-hidden="true" /> },
+  missed: { word: "Missed", chip: "bg-expense-soft text-expense", icon: <X className="size-3.25" strokeWidth={2.5} aria-hidden="true" /> },
 };
+
+// "In 53 min", or "In 2 h 10 min".
+function waitText(minutes: number, t: (key: string, values?: Record<string, string | number>) => string, count: (n: number) => string): string {
+  if (minutes < 60) return t("In {minutes} min", { minutes: count(minutes) });
+  return t("In {hours} h {minutes} min", { hours: count(Math.floor(minutes / 60)), minutes: count(minutes % 60) });
+}
 
 // Today's five prayers, marked straight onto this month's Namaz sheet, with
-// the week so far and the run of full days. A tile opens the "how was it
-// prayed?" menu; on a phone the first tap marks the prayer on time and the
-// next one opens the menu, so a jama'at or qaza mark is never wiped by a tap.
-// A prayer whose time hasn't come yet reads "Later" but can still be marked
-// (joined with the one before it on a journey, or a city's times a little
-// off); on a phone its tap opens the menu, so an early mark is never a slip.
+// the next one and its countdown, the week so far and the run of full days.
+// A tile opens the "how was it prayed?" menu; on a phone the first tap
+// marks the prayer on time and the next one opens the menu, so a jama'at or
+// qaza mark is never wiped by a tap. A prayer whose time hasn't come yet can
+// still be marked (joined with the one before it on a journey, or a city's
+// times a little off); on a phone its tap opens the menu, so an early mark
+// is never a slip.
 export function PrayersCard({ trackers, today }: PrayersCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const { settings } = usePrayerSettings();
   const now = useMinuteClock();
+  const count = (n: number) => formatCount(n, fmt);
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
   const todayDay = Number(today.slice(8));
@@ -131,39 +150,47 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
       applyMark({ item, status });
       const result = await setHabitTrackerCheckAction(current.id, status ? { day: todayDay, item, checked: true, status } : { day: todayDay, item, checked: false });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
     });
   }
 
   const times = prayerTimesFor(settings, today);
-  // Until the clock is known (the first render) every prayer is open, as the
-  // server drew it.
+  const timeOf = (item: string) => timeLabel(clockOf(times[item as keyof typeof times]), t, fmt);
+  // Until the clock is known (the first render) no prayer is later and
+  // none is next, as the server drew it.
   const later = (item: string) => now !== null && times[item as keyof typeof times] > now;
-  const timeOf = (item: string) => timeLabel(clockOf(times[item as keyof typeof times]), t, locale);
-  // "4:35" with its "am" beside it, the "am" dropping under it when a Bangla
-  // word doesn't fit the tile. The tile's label reads the whole time.
-  const clock = (item: string, box: string, figure: string, meridiem: string) => {
+  const next = now ? nextPrayer(settings, today, shiftDay(today, 1), now) : null;
+  const minutesLeft = next && now ? minutesUntil(next.at, now) : null;
+  // The next prayer when it is one of today's (after Isha it is tomorrow's Fajr).
+  const nextToday = next && next.at.getTime() === times[next.prayer].getTime() ? next.prayer : null;
+  const friday = weekdayOf(today) === 5;
+
+  // "4:35 am" (or "বিকাল ৪:০৫"), wrapping its am/pm under the figure when a
+  // Bangla word doesn't fit the tile. The tile's label reads the whole time.
+  const clock = (item: string, className: string) => {
     const parts = clockParts(times[item as keyof typeof times]);
     return (
-      <span aria-hidden="true" className={cn("flex max-w-full min-w-0 flex-wrap items-baseline gap-x-1 tabular-nums", box)}>
-        <span className={cn("whitespace-nowrap", figure)}>{toLocaleDigits(parts.clock, locale)}</span>
-        <span className={cn("whitespace-nowrap", meridiem)}>{t(parts.meridiem)}</span>
+      <span aria-hidden="true" className={cn("flex max-w-full min-w-0 flex-wrap items-baseline gap-x-1 tabular-nums", className)}>
+        <span className="whitespace-nowrap">{toLocaleDigits(parts.clock, fmt)}</span>
+        <span className="whitespace-nowrap">{t(parts.meridiem)}</span>
       </span>
     );
   };
   const live = current ? trackers.map((tr) => (tr.id === current.id ? current : tr)) : trackers;
-  const week = weekOf(today);
+  const week = weekOf(today, fmt);
   const streak = prayerStreak(live, today);
   const stateOf = (item: string): CellState => (current ? cellState(current, todayDay, item) : "open");
-  const isPrayed = (item: string) => prayedState(stateOf(item));
   const marked = (item: string) => current?.checks.some((c) => c.day === todayDay && c.item === item) ?? false;
-  const prayedToday = PRAYERS.filter(isPrayed).length;
-  const nextToMark = PRAYERS.find((item) => !isPrayed(item) && !later(item));
   const word = (item: string) => {
     const state = MARKED[stateOf(item)];
-    return marked(item) && state ? t(state.word) : later(item) ? t("Later") : t("Not yet");
+    if (marked(item) && state) return t(state.word);
+    if (item === nextToday && minutesLeft !== null) return waitText(minutesLeft, t, count);
+    return later(item) ? t("Later today") : t("Not yet");
   };
   const tileLabel = (item: string) => `${t(item)}, ${timeOf(item)}, ${word(item)}`;
+  // Today's open prayers on the grid: the next one, the later ones, and one
+  // whose time has passed unmarked.
+  const gridMark = (mark: PrayerMark, item: string, day: string): GridMark => (day !== today || mark !== "open" ? mark : item === nextToday ? "next" : later(item) ? "later" : "open");
 
   // The menu around a tile while it is open; the tile alone otherwise.
   const withMenu = (where: "phone" | "desk", item: string, tile: React.ReactNode) =>
@@ -196,28 +223,35 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
       </button>
     </span>
   );
+  const where = `${t(settings.city)} · ${t(settings.asrSchool === "HANAFI" ? "Hanafi Asr" : "Shafi'i Asr")}`;
+  const sunrise = timeLabel(clockOf(times.Sunrise), t, fmt);
 
   return (
     <>
-      <section aria-labelledby="m-prayers" className="flex flex-col gap-4 rounded-lg bg-forest-depth p-4 text-white shadow-float md:hidden">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-0.5">
-            <Link href="/habit-tracker/habits?category=Namaz" id="m-prayers" className="flex min-h-6 items-center text-caption leading-[normal] font-semibold underline-offset-2 opacity-85 hover:underline">
-              {t("Today's prayers")}
-            </Link>
-            <span className="text-h3 leading-[normal] font-semibold">{fillNodes(t("{count} of 5 prayed"), { count: <span className="text-h1 font-bold tabular-nums">{formatCount(prayedToday, locale)}</span> })}</span>
+      <section aria-labelledby="m-prayers" className="flex flex-col gap-3.5 rounded-[14px] bg-habit-depth p-4 text-white shadow-float md:hidden">
+        <div className="flex items-start justify-between gap-2.5">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span id="m-prayers" className="text-caption leading-[normal] font-semibold tracking-[0.04em] uppercase opacity-85">
+              {t("Next prayer")}
+            </span>
+            {next && (
+              <span className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-[26px] leading-[normal] font-bold">{t(next.prayer)}</span>
+                <span className="text-[17px] leading-[normal] font-semibold tabular-nums">{timeLabel(clockOf(next.at), t, fmt)}</span>
+              </span>
+            )}
           </div>
-          {streak > 0 && (
-            <span className="flex h-7 items-center gap-1 rounded-full bg-white/18 px-3 text-small font-semibold whitespace-nowrap">
-              <Flame className="size-3.5" aria-hidden="true" />
-              {daysText(streak, t, locale)}
+          {minutesLeft !== null && (
+            <span className="flex h-7 shrink-0 items-center gap-1.25 rounded-full bg-white/18 px-2.5 text-[12.5px] leading-[normal] font-semibold whitespace-nowrap">
+              <Timer className="size-3.25" strokeWidth={2.25} aria-hidden="true" />
+              {waitText(minutesLeft, t, count)}
             </span>
           )}
         </div>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-5 gap-1.5">
           {PRAYERS.map((item) => {
-            const prayed = isPrayed(item);
-            const next = item === nextToMark;
+            const state = stateOf(item);
+            const isNext = item === nextToday && !marked(item);
             const waiting = later(item);
             return withMenu(
               "phone",
@@ -232,32 +266,33 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
                 aria-haspopup={marked(item) || waiting ? "dialog" : undefined}
                 aria-label={tileLabel(item)}
                 // A prayer still to come stays at full strength; only a sheet not yet loaded fades.
-                className={cn("flex w-full flex-col items-center gap-1 rounded-md py-2", !current && "opacity-60", next ? cn("bg-white", BRAND_INK) : "bg-white/12 text-white")}
+                className={cn("flex w-full min-w-0 flex-col items-center gap-1 rounded-field pt-2 pb-1.75", !current && "opacity-60", isNext ? cn("bg-white", BRAND_INK) : "bg-white/12 text-white")}
               >
-                <span className={cn("flex size-6.5 items-center justify-center rounded-sm", prayed ? cn("bg-white/85", BRAND_INK) : next ? "border-[1.5px] border-dashed border-current" : "border-[1.5px] border-dashed border-white/60")}>
-                  {/* A prayer whose time hasn't come shows a clock, so the tile reads as "later", not broken. */}
-                  {prayed ? <Check className="size-3.5" strokeWidth={3} aria-hidden="true" /> : waiting && <Clock3 className="size-3.5" strokeWidth={2.5} aria-hidden="true" />}
+                <span className={cn("flex size-6.5 items-center justify-center rounded-[7px]", state === "jamaat" ? cn("bg-white", BRAND_INK) : marked(item) ? cn("bg-white/85", state === "missed" ? "text-expense" : BRAND_INK) : isNext ? "border-[1.5px] border-dashed border-current" : "border-[1.5px] border-dashed border-white/60")}>
+                  {marked(item) && (state === "jamaat" ? <CheckCheck className="size-3.5" strokeWidth={2.75} aria-hidden="true" /> : state === "missed" ? <X className="size-3.5" strokeWidth={2.75} aria-hidden="true" /> : <Check className="size-3.5" strokeWidth={2.75} aria-hidden="true" />)}
                 </span>
-                <span className="text-caption leading-[normal] font-semibold">{t(item)}</span>
-                {clock(item, "justify-center px-0.5 text-caption leading-[normal] opacity-85", "font-medium", "")}
+                <span className="max-w-full truncate px-0.5 text-[11.5px] leading-[normal] font-semibold">{t(item)}</span>
+                <span aria-hidden="true" className="text-[10.5px] leading-[normal] tabular-nums opacity-85">
+                  {toLocaleDigits(clockParts(times[item]).clock, fmt)}
+                </span>
               </button>,
             );
           })}
         </div>
-        {failed ? retry : <span className="text-caption leading-[normal] font-normal opacity-90">{t("Tap a prayer to mark it. Tap again to say how it was prayed.")}</span>}
+        {failed ? retry : <span className="text-caption leading-[normal] font-normal opacity-90">{`${t("Tap a prayer to mark it")} · ${t(settings.city)}, ${t(settings.asrSchool === "HANAFI" ? "Hanafi Asr" : "Shafi'i Asr")}`}</span>}
       </section>
 
-      <Card padding="none" className="flex flex-col gap-4 px-5 pt-5 pb-4 max-md:hidden">
+      <Card padding="none" className="flex flex-col gap-4 rounded-md px-5 pt-4.5 pb-4 max-md:hidden">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
             <h2 className="shrink-0 text-title font-semibold text-ink">{t("Today's prayers")}</h2>
-            <span className="shrink-0 text-caption text-ink-muted">{t("{count} of 5 prayed", { count: formatCount(prayedToday, locale) })}</span>
             {/* Whose times these are: the city and the Asr reckoning. */}
-            <span className="truncate border-l border-line pl-3 text-caption text-ink-muted max-lg:hidden">
-              {t(settings.city)} · {t(settings.asrSchool === "HANAFI" ? "Hanafi Asr" : "Shafi'i Asr")}
+            <span className="flex min-w-0 items-center gap-1 text-caption text-ink-muted">
+              <MapPin className="size-3.25 shrink-0" aria-hidden="true" />
+              <span className="truncate">{where}</span>
             </span>
           </div>
-          <Link href="/habit-tracker/habits?category=Namaz" className="text-small font-semibold text-emerald hover:underline">
+          <Link href="/habit-tracker/habits?category=Namaz" className="shrink-0 text-small font-semibold text-emerald hover:underline">
             {t("Open Namaz")}
           </Link>
         </div>
@@ -265,34 +300,37 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
         {failed ? (
           <ErrorState bordered={false} title={t("Couldn't open this month's sheet")} onRetry={retryOpen} className="py-2" />
         ) : (
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-5 gap-2.5">
             {PRAYERS.map((item) => {
-              const prayed = isPrayed(item);
               const state = MARKED[stateOf(item)];
+              const isNext = item === nextToday && !marked(item);
+              const tag = isNext ? t("Next") : friday && item === "Dhuhr" ? t("Jumu'ah") : null;
+              const chip = marked(item) && state ? state.chip : isNext ? cn("bg-surface", "text-emerald") : "bg-surface-sunken text-ink-muted";
               return withMenu(
                 "desk",
                 item,
-                <button key={item} ref={tileRef("desk", item)} type="button" disabled={!current} onClick={() => setMarking({ item, where: "desk" })} aria-haspopup="dialog" aria-label={tileLabel(item)} className={cn("flex w-full flex-col gap-2 rounded-md border p-2 text-left transition-colors disabled:cursor-not-allowed sm:p-3", !current && "opacity-60", prayed ? "border-mint-200 bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
-                  <span className={cn("truncate text-small font-semibold", prayed ? "text-brand-ink" : "text-ink-2")}>{t(item)}</span>
-                  {clock(item, "-mt-1 text-ink", "text-h3 font-bold", "text-caption font-semibold text-ink-muted")}
-                  {/* Never wider than its tile: a long word ends in "…" rather than running into the next prayer. */}
-                  <span className={cn("hidden h-6.5 max-w-full min-w-0 items-center gap-1 self-start rounded-full px-2 text-caption font-semibold whitespace-nowrap sm:flex [&_svg]:shrink-0", prayed ? "bg-emerald text-on-action" : "bg-surface-sunken text-ink-muted")}>
-                    {marked(item) && state?.icon}
-                    {!marked(item) && later(item) && <Clock3 className="size-3" strokeWidth={2.5} aria-hidden="true" />}
-                    <span className="truncate">{word(item)}</span>
+                <button key={item} ref={tileRef("desk", item)} type="button" disabled={!current} onClick={() => setMarking({ item, where: "desk" })} aria-haspopup="dialog" aria-label={tileLabel(item)} className={cn("flex w-full min-w-0 flex-col gap-2 rounded-field border p-3 text-left transition-colors disabled:cursor-not-allowed", !current && "opacity-60", isNext ? "border-emerald bg-mint-50 shadow-[0_0_0_3px_color-mix(in_srgb,var(--emerald)_15%,transparent)]" : "border-line bg-surface hover:border-line-strong")}>
+                  <span className="flex min-w-0 items-center justify-between gap-1.5">
+                    <span className={cn("truncate text-small font-semibold", isNext ? "text-emerald" : "text-ink-2")}>{t(item)}</span>
+                    {tag && <span className={cn("shrink-0 rounded-full px-1.5 text-[10.5px] leading-[normal] font-semibold", isNext ? "bg-emerald text-on-action" : "bg-warning-soft text-warning")}>{tag}</span>}
                   </span>
-                  <span className={cn("flex size-6.5 items-center justify-center rounded-sm sm:hidden", prayed ? "bg-emerald text-on-action" : "border-[1.5px] border-dashed border-line-strong")}>{prayed && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}</span>
+                  {clock(item, "text-[20px] leading-[normal] font-bold tracking-[-0.01em] text-ink")}
+                  {/* Never wider than its tile: a long word ends in "…" rather than running into the next prayer. */}
+                  <span className={cn("flex h-6.5 max-w-full min-w-0 items-center gap-1.25 self-start rounded-full px-2.25 text-caption font-semibold whitespace-nowrap [&_svg]:shrink-0", chip)}>
+                    {marked(item) && state ? state.icon : isNext ? <Timer className="size-3.25" strokeWidth={2.5} aria-hidden="true" /> : <Clock className="size-3.25" strokeWidth={2.5} aria-hidden="true" />}
+                    <span className="truncate">{isNext && minutesLeft !== null && minutesLeft >= 60 ? t("{hours}h {minutes}m", { hours: count(Math.floor(minutesLeft / 60)), minutes: count(minutesLeft % 60) }) : word(item)}</span>
+                  </span>
                 </button>,
               );
             })}
           </div>
         )}
 
-        <div className="mt-auto grid items-end gap-x-8 gap-y-3 border-t border-divider pt-4 md:grid-cols-[auto_auto_minmax(0,1fr)]">
+        <div className="mt-auto grid items-end gap-x-7 gap-y-3 border-t border-divider pt-3.5 md:grid-cols-[auto_auto_minmax(0,1fr)]">
           <div className="flex flex-col gap-2">
             <span className="text-caption font-semibold text-ink-muted">{t("This week")}</span>
-            <div role="img" aria-label={t("Prayer marks from Saturday to today")} className="flex gap-0.5">
-              <div aria-hidden="true" className="mr-1.5 flex flex-col gap-0.75 text-caption leading-3.5 font-semibold text-ink-muted">
+            <div role="img" aria-label={t("Prayer marks from {day} to today", { day: t(WEEKDAY_LONG[weekStartOf(fmt)]) })} className="flex gap-1.75">
+              <div aria-hidden="true" className="flex flex-col gap-0.75 text-[10.5px] leading-3.5 font-semibold text-ink-faint">
                 {PRAYERS.map((p) => (
                   <span key={p}>{t(PRAYER_INITIAL[p])}</span>
                 ))}
@@ -304,34 +342,43 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
                 const dayName = isToday ? t("today") : t(WEEKDAY_SHORT[weekdayOf(day)]);
                 return (
                   // One width for every day, so the squares sit on an even grid whatever the weekday's name.
-                  <div key={day} className="flex w-8 shrink-0 flex-col items-center gap-0.75">
-                    {marks.map((mark, i) => (
-                      <span key={PRAYERS[i]} title={t("{prayer} on {day}: {state}", { prayer: t(PRAYERS[i]), day: dayName, state: t(mark === "none" ? "not yet" : mark === "open" ? "still open" : mark) })} className={cn("size-3.5 rounded-[4px]", CELL[mark])} />
-                    ))}
-                    <span className={cn("text-caption leading-3.5", isToday ? "font-bold text-emerald" : "font-medium text-ink-muted")}>{t(WEEKDAY_SHORT[weekdayOf(day)])}</span>
+                  <div key={day} className="flex w-5 shrink-0 flex-col items-center gap-0.75">
+                    {marks.map((dayMark, i) => {
+                      const cell = gridMark(dayMark, PRAYERS[i], day);
+                      return <span key={PRAYERS[i]} title={t("{prayer} on {day}: {state}", { prayer: t(PRAYERS[i]), day: dayName, state: t(CELL_WORD[cell]) })} className={cn("size-3.5 rounded-[4px]", CELL[cell])} />;
+                    })}
+                    <span className={cn("text-[10.5px] leading-3.5", isToday ? "font-bold text-emerald" : "font-medium text-ink-faint")}>{t(WEEKDAY_SHORT[weekdayOf(day)])}</span>
                   </div>
                 );
               })}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 pb-5 text-caption text-ink-2 md:grid-cols-1">
-            <span className="flex items-center gap-2">
+          <div className="grid grid-cols-[repeat(2,auto)] gap-x-3.5 gap-y-1.5 pb-5 text-caption text-ink-soft">
+            <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-[3px] bg-emerald" />
-              {t("Prayed")}
+              {t("With jama'at")}
             </span>
-            <span className="flex items-center gap-2">
-              <span className="size-2.5 rounded-[3px] bg-expense-soft" />
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-[3px] bg-emerald-tint" />
+              {t("On time")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-[3px] bg-warning-fill/60" />
+              {t("Qaza")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-[3px] bg-expense-fill/40" />
               {t("Missed")}
             </span>
-            <span className="flex items-center gap-2">
-              <span className="size-2.5 rounded-[3px] border-[1.5px] border-dashed border-emerald" />
-              {t("Still open")}
-            </span>
           </div>
-          <div className="flex flex-col gap-2 pb-5 text-small text-ink-2 md:items-end md:text-right">
-            <span className="flex items-center gap-2 font-semibold text-ink">
-              <Flame className={cn("size-4", streak > 0 ? "text-warning" : "text-ink-muted")} aria-hidden="true" />
-              {streak > 0 ? t(streak === 1 ? "All five prayed, {count} day in a row" : "All five prayed, {count} days in a row", { count: formatCount(streak, locale) }) : t("No full day of five yet")}
+          <div className="flex flex-col gap-2 pb-5 text-small text-ink-soft md:items-end md:text-right">
+            <span className="flex items-center gap-1.5 font-semibold text-ink">
+              <Flame className={cn("size-3.75 shrink-0", streak > 0 ? "text-orange-fill" : "text-ink-muted")} aria-hidden="true" />
+              {streak > 0 ? t(streak === 1 ? "All five prayed, {count} day in a row" : "All five prayed, {count} days in a row", { count: count(streak) }) : t("No full day of five yet")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Sunrise className="size-3.75 shrink-0 text-warning-fill" aria-hidden="true" />
+              {t("Sunrise {time}, when Fajr time ends", { time: sunrise })}
             </span>
           </div>
         </div>

@@ -124,7 +124,7 @@ export function Combobox({ value, onChange, options, placeholder, emptyMessage =
           placeholder={placeholder}
           // The design's control frame (smartly InputFrame): line-strong edge,
           // emerald border and mint ring while focused.
-          className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink outline-none focus:border-emerald focus:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)] disabled:bg-strip"
+          className="h-11 w-full rounded-field border border-input bg-surface px-3 text-body text-ink outline-none transition-[border-color,box-shadow] focus:border-focus-ring focus:focus-halo disabled:bg-strip max-md:text-body-lg"
         />
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
       </div>

@@ -27,7 +27,7 @@ interface SavingsWalletPageClientProps {
 // Savings wallets: the DPS, FDR and other accounts saved money sits in --
 // the same cards and drawer as My wallets, in the savings colours.
 export function SavingsWalletPageClient({ businessId, wallets, canManage, currency, openAdd = false }: SavingsWalletPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -61,9 +61,9 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
   }
 
   // This page lists active wallets only, so an archived one leaves it (and
-  // the Add money and Withdraw pickers) until restored from Savings summary.
+  // the Add money and Withdraw pickers) until restored from Savings overview.
   // Money still in it is worth a second look first.
-  const stillHolds = (wallet: Account) => (Number(wallet.currentBalance) !== 0 ? formatCurrency(wallet.currentBalance, currency, locale) : null);
+  const stillHolds = (wallet: Account) => (Number(wallet.currentBalance) !== 0 ? formatCurrency(wallet.currentBalance, currency, fmt) : null);
 
   async function toggleArchive(wallet: Account) {
     const isArchived = wallet.status === "ARCHIVED";
@@ -71,7 +71,7 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
     if (!isArchived && amount) {
       const ok = await confirm({
         title: t("Archive {name}?", { name: wallet.name }),
-        message: t("{name} still holds {amount}. Once archived it leaves this page, and Add money and Withdraw can't use it. You can restore it from Savings summary.", { name: wallet.name, amount }),
+        message: t("{name} still holds {amount}. Once archived it leaves this page, and Add money and Withdraw can't use it. You can restore it from Savings overview.", { name: wallet.name, amount }),
         confirmLabel: "Archive wallet",
       });
       if (!ok) return;
@@ -118,11 +118,11 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
           <WalletCard key={wallet.id} wallet={wallet} index={wallets.indexOf(wallet)} currency={currency} canManage={canManage} savings busy={busy === wallet.id} onEdit={() => setDrawer(wallet)} onToggleArchive={() => toggleArchive(wallet)} onRemove={() => remove(wallet)} />
         ))}
         {canManage ? (
-          <button type="button" onClick={() => setDrawer("create")} className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border-[1.5px] border-dashed border-line-strong bg-surface transition-colors hover:border-emerald md:h-50">
-            <span className="flex size-11 items-center justify-center rounded-full bg-mint-50 text-emerald">
+          <button type="button" onClick={() => setDrawer("create")} className="flex min-h-40 flex-col items-center justify-center gap-2.5 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald md:h-50">
+            <span className="flex size-11 items-center justify-center rounded-field bg-emerald-soft text-emerald">
               <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
             </span>
-            <span className="text-title text-ink">{t("Add savings wallet")}</span>
+            <span className="text-[15px] leading-[normal] font-semibold text-ink">{t("Add savings wallet")}</span>
             <span className="text-small text-ink-muted">{t("DPS, FDR or any account you save in")}</span>
           </button>
         ) : (

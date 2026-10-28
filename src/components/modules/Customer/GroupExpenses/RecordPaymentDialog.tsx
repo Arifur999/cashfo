@@ -13,7 +13,7 @@ import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupMember } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { dayLabel, type MonthRange, type Transfer } from "@/lib/customer/groupDisplay";
+import { dayLabel, type MonthRange, shortName, type Transfer } from "@/lib/customer/groupDisplay";
 import { settleUpAction } from "@/lib/customer/groupExpensesActions";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -41,7 +41,7 @@ interface RecordPaymentDialogProps {
 // entries dated inside the month, a deposit by the payer and a return to
 // the receiver, so the fund's cash stays the same and both balances move.
 export function RecordPaymentDialog({ open, onClose, businessId, currency, members, balances, cashInHand, range, today, preset }: RecordPaymentDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const active = members.filter((member) => member.status === "ACTIVE");
   const [fromId, setFromId] = useState("");
@@ -68,7 +68,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
   const value = Number(amount) || 0;
   const valid = !!from && !!to && from.id !== to.id && value > 0;
   const date = dayInMonth(range, today);
-  const monthLabel = monthName(range.key, locale);
+  const monthLabel = monthName(range.key, fmt);
   const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
 
   // Each entry's note, one sentence each, with the person's own note when there is one.
@@ -101,10 +101,10 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <AlertDialogContent className="w-135 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-135 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border border-line bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} className="flex max-h-[calc(100dvh-32px)] flex-col">
-          <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
-            <AlertDialogTitle className="text-h3 text-ink">{t("Record payment")}</AlertDialogTitle>
+          <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-4">
+            <AlertDialogTitle className="text-h3 text-ink">{t("Record a payment")}</AlertDialogTitle>
             <CloseX onClick={onClose} disabled={isPending} />
           </div>
           <AlertDialogDescription className="sr-only">{t("One member pays another to settle the month.")}</AlertDialogDescription>
@@ -141,7 +141,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                 <dt className="text-small leading-[normal] font-semibold text-ink-2">
                   <span className="text-body font-medium text-ink">{t("Settles")}</span>
                 </dt>
-                <dd className="flex h-12 items-center rounded-md bg-strip px-3 text-body font-medium text-ink">{monthLabel}</dd>
+                <dd className="flex h-12 items-center rounded-field border border-input bg-surface px-3 text-body text-ink">{monthName(range.key, fmt, "long", true)}</dd>
               </dl>
             </div>
 
@@ -150,46 +150,46 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
             </Field>
 
             {from && to && (
-              <div className="flex flex-col gap-3 rounded-md border border-line bg-strip p-4 text-small tabular-nums">
-                <span className="text-caption font-semibold text-ink-muted">{t("Saved as two entries dated {date}, so {month} evens out", { date: dayLabel(date, locale), month: monthLabel })}</span>
+              <div className="flex flex-col gap-2.5 rounded-[14px] border border-line bg-strip px-3.5 py-3 text-small tabular-nums">
+                <span className="text-caption font-semibold text-ink-muted">{t("Saved as two entries dated {date}, so {month} evens out", { date: dayLabel(date, fmt), month: monthLabel })}</span>
                 <div className="flex justify-between gap-3">
                   <span className="min-w-0 text-ink-2">
-                    <b className="font-semibold text-ink">{from.name}</b> · {t("Deposit")} · “{payerNote}”
+                    <b className="font-semibold text-ink">{shortName(from.name)}</b> · {t("Deposit").toLocaleLowerCase()} · “{payerNote}”
                   </span>
-                  <span className="shrink-0 font-semibold text-income">{formatSignedCurrency(value, currency, locale)}</span>
+                  <span className="shrink-0 font-semibold text-income">{formatSignedCurrency(value, currency, fmt)}</span>
                 </div>
                 <div className="flex justify-between gap-3">
                   <span className="min-w-0 text-ink-2">
-                    <b className="font-semibold text-ink">{to.name}</b> · {t("Return")} · “{receiverNote}”
+                    <b className="font-semibold text-ink">{shortName(to.name)}</b> · {t("Return").toLocaleLowerCase()} · “{receiverNote}”
                   </span>
-                  <span className="shrink-0 font-semibold text-expense">{formatSignedCurrency(-value, currency, locale)}</span>
+                  <span className="shrink-0 font-semibold text-expense">{formatSignedCurrency(-value, currency, fmt)}</span>
                 </div>
                 <span className="h-px bg-line" />
                 <div className="flex flex-wrap justify-between gap-x-3">
-                  <span className="text-ink-2">{t("{name}'s balance", { name: from.name })}</span>
+                  <span className="text-ink-2">{t("{name}'s balance", { name: shortName(from.name) })}</span>
                   <span>
-                    <span className={signedClass(balances[from.id] ?? 0)}>{formatSignedCurrency(balances[from.id] ?? 0, currency, locale)}</span>
+                    <span className={signedClass(balances[from.id] ?? 0)}>{formatSignedCurrency(balances[from.id] ?? 0, currency, fmt)}</span>
                     <span className="text-ink-muted"> → </span>
-                    <b className={cn("font-bold", signedClass(after(from.id, 1)))}>{formatSignedCurrency(after(from.id, 1), currency, locale)}</b>
+                    <b className={cn("font-bold", signedClass(after(from.id, 1)))}>{formatSignedCurrency(after(from.id, 1), currency, fmt)}</b>
                   </span>
                 </div>
                 <div className="flex flex-wrap justify-between gap-x-3">
-                  <span className="text-ink-2">{t("{name}'s balance", { name: to.name })}</span>
+                  <span className="text-ink-2">{t("{name}'s balance", { name: shortName(to.name) })}</span>
                   <span>
-                    <span className={signedClass(balances[to.id] ?? 0)}>{formatSignedCurrency(balances[to.id] ?? 0, currency, locale)}</span>
+                    <span className={signedClass(balances[to.id] ?? 0)}>{formatSignedCurrency(balances[to.id] ?? 0, currency, fmt)}</span>
                     <span className="text-ink-muted"> → </span>
-                    <b className={cn("font-bold", signedClass(after(to.id, -1)))}>{formatSignedCurrency(after(to.id, -1), currency, locale)}</b>
+                    <b className={cn("font-bold", signedClass(after(to.id, -1)))}>{formatSignedCurrency(after(to.id, -1), currency, fmt)}</b>
                   </span>
                 </div>
                 <div className="flex flex-wrap justify-between gap-x-3">
                   <span className="text-ink-2">{t("Cash in hand")}</span>
-                  <span className="text-ink-muted">{t("{amount}, unchanged", { amount: formatCurrency(cashInHand, currency, locale) })}</span>
+                  <span className="text-ink-muted">{t("{amount}, unchanged", { amount: formatCurrency(cashInHand, currency, fmt) })}</span>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
+          <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-line bg-surface px-6 py-3.5">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending} className="max-sm:flex-1">
               {t("Cancel")}
             </Button>

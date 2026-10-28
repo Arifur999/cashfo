@@ -12,62 +12,90 @@
    ========================================================================= */
 :root {
   /* Brand */
-  --forest: #0b3d2e;
-  --forest-hover: #145a43;
-  --emerald: #1f7a5a;
-  --emerald-hover: #17664a;
+  --forest: #0f3f38;
+  --forest-hover: #155c51;
+  --emerald: #1c7567;
+  --emerald-hover: #155c51;
   /* Emerald and income text (both #1f7a5a) is 4.35:1 on sunken, under AA:
      text on a sunken fill uses brand-ink (src/app/tokens.contrast.test.ts). */
-  --brand-ink: #17664a;
-  --jade: #14b57a;
-  --mint-50: #e7f5ee;
-  --mint-200: #bfebd7;
-  --mint-300: #7bd3a8;
+  --brand-ink: #155c51;
+  --jade: #2a9d8a;
+  --mint-50: #dcede9;
+  --mint-200: #bbd9d3;
+  --mint-300: #6faca1;
   --on-action: #ffffff;
 
   /* Grounds and lines (Cool mist, 20 Oct 2026). One job each, so a table
      head never matches the page behind its card. */
   /* The shell behind the cards. */
-  --page: #f3f6f4;
+  --page: #f4f5f5;
   /* Column heads, and the group, opening and total rows of a list. */
-  --table-head: #e9efec;
+  --table-head: #f8f8f8;
   /* Bands inside a card: footers, notes, stat tiles, input addons and
      read-only fields. */
-  --strip: #f7f9f8;
+  --strip: #f8f8f8;
   /* A row or list item under the pointer. */
-  --hover: #f1f5f3;
+  --hover: #f8f9f9;
   /* A shared DataTable row under the pointer: the same hover in light. */
   --row-hover: var(--hover);
   --surface: #ffffff;
   --surface-raised: #ffffff;
   /* Tracks, button and icon hovers, the menu highlight and neutral chips. */
-  --surface-sunken: #e4ebe7;
+  --surface-sunken: #f4f5f5;
   /* The edge of a card or control. */
-  --line: #dce4e0;
-  /* The separator between rows inside a card. */
-  --divider: #e6ece9;
-  --line-strong: #7c8882;
+  --line: #e1e7e6;
+  /* The separator between rows inside a card (design-v4: #f4f5f5). */
+  --divider: #f4f5f5;
+  --line-strong: #838f8c;
+  /* The edge of a card (design-v4: a shade lighter than a control's). */
+  --line-card: #e6ebea;
 
   /* Ink */
-  --ink: #0e1a16;
-  --ink-2: #33433c;
-  --ink-muted: #56655e;
-  --ink-faint: #8e9a93;
-  --focus-ring: #1f7a5a;
+  --ink: #12201d;
+  --ink-2: #33413e;
+  /* Between ink-2 and muted: inactive menu pages, the top bar's icons. */
+  --ink-soft: #4a5754;
+  --ink-muted: #5f6b68;
+  --ink-faint: #8a9693;
+  --focus-ring: #1c7567;
+
+  /* The primary's own tint and edge (design-v4 shell): the open menu row,
+     the top bar's app switch. */
+  --emerald-soft: #e8f1f0;
+  --emerald-line: #c6ddd9;
+  /* The Habit Tracker's teal (HabitSidebar, HabitDashboard), its tint and
+     edge. Inside the Habit Tracker ([data-app="habit"], below) the brand
+     tokens take these. */
+  --habit: #0f766e;
+  --habit-soft: #e7f1f1;
+  --habit-line: #c3dddb;
 
   /* Meaning */
-  --income: #1f7a5a;
-  --income-soft: #e7f5ee;
-  --expense: #b42a2a;
-  --expense-fill: #c63a32;
-  --expense-soft: #fbeae6;
+  --income: #1c7567;
+  --income-soft: #dcede9;
+  --expense: #d32222;
+  --expense-fill: #dc2626;
+  --expense-soft: #fee2e2;
   /* The border of an over-budget card or a red outline button. */
-  --expense-line: #f2c9c0;
-  --warning: #8f5600;
-  --warning-fill: #e8a317;
-  --warning-soft: #fbf0d9;
-  --info: #2558b8;
-  --info-soft: #e7eefa;
+  --expense-line: #fecaca;
+  --warning: #b45309;
+  --warning-fill: #f59e0b;
+  --warning-soft: #fef3c7;
+  /* The amber note (design-v4 hint boxes): its pale fill, its edge and its
+     deep brown words. */
+  --warning-50: #fffbeb;
+  --warning-line: #fde68a;
+  --warning-ink: #78350f;
+  --info: #2563eb;
+  --info-soft: #dbeafe;
+  /* The blue note box: its wash, edge and text (Transfer, Sell asset). */
+  /* Orange: a weak password, the Shopping colour. */
+  --orange: #c2410c;
+  --orange-fill: #f97316;
+  --orange-soft: #ffedd5;
+  --info-50: #eff6ff;
+  --info-line: #bfdbfe;
+  --info-ink: #1e40af;
   /* The payment gateways' own colours, for their tags on the Payments page. */
   --gateway-bkash: #e2136e;
   --gateway-nagad: #d9480f;
@@ -85,20 +113,26 @@
   --pillar-insights-soft: #e2f2f4;
 
   /* Charts and category colours */
-  --chart-income: #1f7a5a;
-  --chart-expense: #e8857a;
-  --chart-savings: #7bd3a8;
-  --chart-grid: #dce4e0;
+  --chart-income: #1c7567;
+  --chart-expense: #f87171;
+  --chart-savings: #bbd9d3;
+  --chart-grid: #e1e7e6;
   --chart-other: #c4cec9;
-  --cat-1: #1f7a5a;
-  --cat-2: #a04f14;
-  --cat-3: #6244c4;
-  --cat-4: #2558b8;
-  --cat-5: #0b6f80;
-  --cat-6: #b0477a;
+  --cat-1: #1c7567;
+  --cat-2: #ea580c;
+  --cat-3: #7c3aed;
+  --cat-4: #2563eb;
+  --cat-5: #0d9488;
+  --cat-6: #db2777;
+  /* The CategoryDrawer board's other four: purple, indigo, cyan, lime (its
+     yellow and red are the warning and expense inks). */
+  --cat-7: #9333ea;
+  --cat-8: #4f46e5;
+  --cat-9: #0891b2;
+  --cat-10: #4e8f5e;
   /* A prayer marked on time: the emerald washed out (the sheet boards'
      primary at 78% white). */
-  --emerald-tint: #cee2db;
+  --emerald-tint: #cfe3df;
   /* The fifth avatar tint (rose), beside mint, blue, amber and violet. */
   --rose: #b0477a;
   --rose-soft: #f9e6ef;
@@ -106,15 +140,17 @@
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
      --shadow-* namespace) */
-  --elevation-card: 0 1px 2px rgba(14, 26, 22, 0.06), 0 1px 1px rgba(14, 26, 22, 0.04);
-  --elevation-float: 0 10px 28px -8px rgba(11, 61, 46, 0.18), 0 2px 6px rgba(14, 26, 22, 0.06);
-  --elevation-overlay: 0 28px 60px -16px rgba(11, 61, 46, 0.3);
+  --elevation-card: 0 1px 2px rgba(18, 32, 29, 0.04), 0 6px 20px rgba(18, 32, 29, 0.05);
+  --elevation-float: 0 16px 40px rgba(18, 32, 29, 0.14), 0 2px 6px rgba(18, 32, 29, 0.06);
+  --elevation-overlay: 0 24px 60px rgba(18, 32, 29, 0.22);
   /* The overlay's shadow turned on its side: a right-hand drawer casts it
      left, over the page. Dark keeps this value, as the drawers always had. */
-  --elevation-drawer: -28px 0 60px -16px rgba(11, 61, 46, 0.3);
-  --elevation-button: 0 8px 18px -8px rgba(11, 61, 46, 0.55);
+  --elevation-drawer: -16px 0 40px rgba(18, 32, 29, 0.18);
+  --elevation-button: 0 1px 2px rgba(18, 32, 29, 0.1);
+  /* The top bar's pill controls on the page ground (design-v4 AppTopbar). */
+  --elevation-control: 0 1px 2px rgba(18, 32, 29, 0.05), 0 2px 8px rgba(18, 32, 29, 0.04);
   /* The wash behind dialogs and drawers. */
-  --scrim: rgba(14, 26, 22, 0.48);
+  --scrim: rgba(18, 32, 29, 0.45);
 
   /* shadcn's tokens, mapped onto the palette above so its primitives and
      the design's own components agree. */
@@ -125,7 +161,7 @@
   --card-foreground: var(--ink);
   --popover: var(--surface-raised);
   --popover-foreground: var(--ink);
-  --primary: var(--forest);
+  --primary: var(--emerald);
   --primary-foreground: var(--on-action);
   --secondary: var(--surface-sunken);
   --secondary-foreground: var(--ink);
@@ -137,7 +173,8 @@
   --accent-foreground: var(--ink);
   --destructive: var(--expense-fill);
   --border: var(--line);
-  --input: var(--line-strong);
+  /* The edge of a field, a select and a secondary button (design-v4). */
+  --input: #c9d3d1;
   --ring: var(--focus-ring);
   --chart-1: var(--chart-income);
   --chart-2: var(--chart-expense);
@@ -155,11 +192,11 @@
 }
 
 .dark {
-  --emerald: #4cc995;
-  --emerald-hover: #7bd3a8;
-  --brand-ink: #7bd3a8;
-  --jade: #2fd6a0;
-  --mint-50: #0f2a20;
+  --emerald: #4fb8a6;
+  --emerald-hover: #7fcdbf;
+  --brand-ink: #7fcdbf;
+  --jade: #3cc9b0;
+  --mint-50: #0e2a26;
   --on-action: #04140e;
 
   /* The split grounds are only split in light: here every band keeps the
@@ -179,15 +216,23 @@
   --line: #20332b;
   --divider: #0b1712;
   --line-strong: #56706a;
+  --line-card: #20332b;
 
   --ink: #eaf2ee;
   --ink-2: #c3d2ca;
+  --ink-soft: #a9bbb2;
   --ink-muted: #93a89d;
   --ink-faint: #61776b;
-  --focus-ring: #7bd3a8;
+  --focus-ring: #7fcdbf;
 
-  --income: #4cc995;
-  --income-soft: #0f2a20;
+  --emerald-soft: #0e2a26;
+  --emerald-line: #1c4536;
+  --habit: #3dbdb0;
+  --habit-soft: #0c2a28;
+  --habit-line: #18433f;
+
+  --income: #4fb8a6;
+  --income-soft: #0e2a26;
   --expense: #f08080;
   --expense-fill: #e5484d;
   --expense-soft: #3a1715;
@@ -195,8 +240,17 @@
   --warning: #f2b84b;
   --warning-fill: #f2b84b;
   --warning-soft: #33240a;
+  --warning-50: #241a08;
+  --warning-line: #5a4314;
+  --warning-ink: #f5cf86;
   --info: #86abf2;
   --info-soft: #14234a;
+  --orange: #fb923c;
+  --orange-fill: #f97316;
+  --orange-soft: #3a1d0a;
+  --info-50: #0f1a33;
+  --info-line: #1e3a6b;
+  --info-ink: #a9c4f5;
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
 
@@ -207,17 +261,21 @@
   --pillar-insights: #5cccdb;
   --pillar-insights-soft: #0b2e33;
 
-  --chart-income: #4cc995;
+  --chart-income: #4fb8a6;
   --chart-expense: #e5484d;
   --chart-savings: #2fd6a0;
   --chart-grid: #20332b;
   --chart-other: #3a4d44;
-  --cat-1: #4cc995;
+  --cat-1: #4fb8a6;
   --cat-2: #f0a46a;
   --cat-3: #b6a2ff;
   --cat-4: #86abf2;
   --cat-5: #5cccdb;
   --cat-6: #f08fbf;
+  --cat-7: #d0a2fb;
+  --cat-8: #a5b0fb;
+  --cat-9: #5fcfe6;
+  --cat-10: #8fcb9c;
   --rose: #f08fbf;
   --rose-soft: #3a1528;
   --emerald-tint: #1c4536;
@@ -228,12 +286,15 @@
   /* No --elevation-drawer: the drawers cast the light forest shadow in dark
      too, so moving them onto shadow-drawer changes no pixel. */
   --elevation-button: 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+  --elevation-control: 0 1px 2px rgba(0, 0, 0, 0.4);
   --scrim: rgba(0, 0, 0, 0.6);
 
   /* The main button turns emerald with deep-forest text in the dark theme. */
   --primary: var(--emerald);
   --primary-foreground: var(--on-action);
   --secondary: var(--surface-raised);
+  /* Between line and line-strong, as the light #c9d3d1 is. */
+  --input: #34493f;
   --accent: var(--mint-50);
   --accent-foreground: var(--brand-ink);
   --sidebar-ring: var(--jade);
@@ -254,11 +315,68 @@
   --color-neutral-950: #ffffff;
 }
 
+/* The Habit Tracker (every page under /habit-tracker): the same tokens in
+   its own teal, and in light its own slate neutrals, as the Habit Tracker
+   boards draw it. The customer layout puts data-app="habit" on the shell,
+   and on <html> too so dialogs, drawers and menus (portalled to <body>)
+   follow. Tokens defined as var(...) on :root resolve there, so the ones
+   built on a changed token are declared again here. */
+[data-app="habit"] {
+  --emerald: var(--habit);
+  --emerald-hover: #115e59;
+  --brand-ink: #115e59;
+  --mint-50: var(--habit-soft);
+  --emerald-soft: var(--habit-soft);
+  --emerald-line: var(--habit-line);
+  --focus-ring: var(--habit);
+  --pillar-money: var(--emerald);
+  --pillar-money-soft: var(--mint-50);
+  --primary: var(--emerald);
+  --ring: var(--focus-ring);
+  --accent: var(--surface-sunken);
+}
+html:not(.dark)[data-app="habit"],
+html:not(.dark) [data-app="habit"] {
+  --page: #f8fafc;
+  --table-head: #f8fafc;
+  --strip: #f8fafc;
+  --hover: #f8fafc;
+  --row-hover: #f8fafc;
+  --surface-sunken: #f1f5f9;
+  --line: #e2e8f0;
+  --line-card: #e2e8f0;
+  --divider: #f1f5f9;
+  --line-strong: #94a3b8;
+  --ink: #0f172a;
+  --ink-2: #334155;
+  --ink-soft: #475569;
+  --ink-muted: #64748b;
+  --ink-faint: #94a3b8;
+  --input: #cbd5e1;
+  --background: var(--page);
+  --foreground: var(--ink);
+  --card-foreground: var(--ink);
+  --popover-foreground: var(--ink);
+  --secondary: var(--surface-sunken);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--ink-muted);
+  --accent-foreground: var(--ink);
+  --border: var(--line);
+}
+.dark[data-app="habit"],
+.dark [data-app="habit"] {
+  --emerald-hover: #6fd6cb;
+  --brand-ink: #6fd6cb;
+  --accent: var(--mint-50);
+  --accent-foreground: var(--brand-ink);
+}
+
 @theme inline {
   /* Type */
-  --font-sans: var(--font-jakarta), var(--font-anek-bangla), system-ui, sans-serif;
-  --font-heading: var(--font-jakarta), var(--font-anek-bangla), system-ui, sans-serif;
-  --font-bn: var(--font-anek-bangla), var(--font-jakarta), system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-hind-siliguri), system-ui, sans-serif;
+  --font-heading: var(--font-inter), var(--font-hind-siliguri), system-ui, sans-serif;
+  --font-bn: var(--font-hind-siliguri), var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* Text styles: text-display-xl, text-h1, text-body, text-amount ... each
@@ -271,6 +389,12 @@
   --text-display--line-height: 42px;
   --text-display--font-weight: 800;
   --text-display--letter-spacing: -0.025em;
+  /* design-v4's page title (every page header, admin too): 24px semibold
+     on a 1.3 line. */
+  --text-page-title: 24px;
+  --text-page-title--line-height: 1.3;
+  --text-page-title--font-weight: 600;
+  --text-page-title--letter-spacing: -0.02em;
   --text-h1: 28px;
   --text-h1--line-height: 34px;
   --text-h1--font-weight: 700;
@@ -354,6 +478,11 @@
   --color-forest-hover: var(--forest-hover);
   --color-emerald: var(--emerald);
   --color-emerald-hover: var(--emerald-hover);
+  --color-emerald-soft: var(--emerald-soft);
+  --color-emerald-line: var(--emerald-line);
+  --color-habit: var(--habit);
+  --color-habit-soft: var(--habit-soft);
+  --color-habit-line: var(--habit-line);
   --color-brand-ink: var(--brand-ink);
   --color-jade: var(--jade);
   --color-mint-50: var(--mint-50);
@@ -366,8 +495,10 @@
   --color-scrim: var(--scrim);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-line-card: var(--line-card);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
+  --color-ink-soft: var(--ink-soft);
   --color-ink-muted: var(--ink-muted);
   --color-ink-faint: var(--ink-faint);
   --color-focus-ring: var(--focus-ring);
@@ -380,8 +511,17 @@
   --color-warning: var(--warning);
   --color-warning-fill: var(--warning-fill);
   --color-warning-soft: var(--warning-soft);
+  --color-warning-50: var(--warning-50);
+  --color-warning-line: var(--warning-line);
+  --color-warning-ink: var(--warning-ink);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-orange: var(--orange);
+  --color-orange-fill: var(--orange-fill);
+  --color-orange-soft: var(--orange-soft);
+  --color-info-50: var(--info-50);
+  --color-info-line: var(--info-line);
+  --color-info-ink: var(--info-ink);
   --color-gateway-bkash: var(--gateway-bkash);
   --color-gateway-nagad: var(--gateway-nagad);
   --color-pillar-money: var(--pillar-money);
@@ -408,6 +548,10 @@
   --color-cat-4: var(--cat-4);
   --color-cat-5: var(--cat-5);
   --color-cat-6: var(--cat-6);
+  --color-cat-7: var(--cat-7);
+  --color-cat-8: var(--cat-8);
+  --color-cat-9: var(--cat-9);
+  --color-cat-10: var(--cat-10);
 
   /* shadcn */
   --color-background: var(--background);
@@ -451,6 +595,11 @@
   --radius-2xl: 24px;
   --radius-3xl: 32px;
   --radius-4xl: 12px;
+  /* design-v4: fields, selects and filter buttons 10px, cards 18px, the
+     floating sidebar panel 22px. */
+  --radius-field: 10px;
+  --radius-card: 18px;
+  --radius-panel: 22px;
 
   /* Shadows: shadow-card on the page, shadow-float for menus and the hero,
      shadow-overlay for dialogs and bottom sheets, shadow-drawer for a
@@ -461,6 +610,7 @@
   --shadow-overlay: var(--elevation-overlay);
   --shadow-drawer: var(--elevation-drawer);
   --shadow-button: var(--elevation-button);
+  --shadow-control: var(--elevation-control);
   --shadow-sm: var(--elevation-card);
   --shadow-md: var(--elevation-float);
   --shadow-lg: var(--elevation-overlay);
@@ -495,22 +645,15 @@
     radial-gradient(55% 14% at 100% 100%, rgb(123 211 168 / 0.5) 0%, rgb(123 211 168 / 0) 100%),
     linear-gradient(165deg, #0b3d2e 0px, #1f7a5a 760px, #24855f 100%);
 }
-/* Every table's column heads, in the sidebar's Aurora: deep forest into
-   emerald across the row, white words on it (5:1 even at the light end), a
-   thin mint line under it. The same in both themes, like the sidebar.
-   bg-aurora-deep / bg-aurora-mid are its two ends, for a sticky head cell
-   that must be opaque at that end of the row. */
-@utility bg-aurora-head {
-  background-image: linear-gradient(90deg, #0b3d2e 0%, #1f7a5a 100%);
+/* The design-v4 focus halo around a field, a select or a picker: 3px of the
+   focus colour at 18% (the boards' primary + "2E"). Worked out on the
+   element, so it follows the dark theme and the Habit Tracker's teal. */
+@utility focus-halo {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 18%, transparent);
 }
-@utility bg-aurora-deep {
-  background-color: #0b3d2e;
-}
-@utility bg-aurora-mid {
-  background-color: #1f7a5a;
-}
-@utility border-aurora-edge {
-  border-color: rgb(123 211 168 / 0.45);
+/* The same halo in the expense red, around a field that is wrong. */
+@utility error-halo {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--expense) 16%, transparent);
 }
 @utility bg-fresh {
   background-image: linear-gradient(135deg, var(--page) 0%, var(--mint-50) 100%);
@@ -519,14 +662,25 @@
   background-image: linear-gradient(135deg, #bfebd7 0%, #7bd3a8 100%);
 }
 /* The four wallet cards, in the order the design cycles them. */
+/* The Referral Program's earnings card: the primary, 32% darker at its end. */
+@utility bg-referral-hero {
+  background-image: linear-gradient(135deg, #1c7567 0%, #135046 100%);
+}
 @utility bg-wallet-forest {
-  background-image: linear-gradient(135deg, #1f7a5a 0%, #0b3d2e 100%);
+  background-image: linear-gradient(135deg, #1c7567 0%, #0f3f38 100%);
+}
+@utility bg-wallet-green {
+  background-image: linear-gradient(135deg, #1c7567 0%, #0f4039 100%);
+}
+/* The Habit Tracker's hero on phones (next prayer): its teal deepening. */
+@utility bg-habit-depth {
+  background-image: linear-gradient(135deg, #0f766e 0%, #0a4d47 100%);
 }
 @utility bg-wallet-teal {
-  background-image: linear-gradient(135deg, #0b6f80 0%, #0a4f5c 100%);
+  background-image: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
 }
 @utility bg-wallet-charcoal {
-  background-image: linear-gradient(135deg, #33433c 0%, #0e1a16 100%);
+  background-image: linear-gradient(135deg, #33413e 0%, #12201d 100%);
 }
 @utility bg-wallet-mint {
   background-image: linear-gradient(135deg, #14b57a 0%, #1f7a5a 100%);
@@ -557,6 +711,21 @@
   ::selection {
     background: var(--mint-200);
     color: var(--forest);
+  }
+  /* design-v4's right-hand drawers: 24px corners on the side facing the
+     page, the content clipped to them. In the base layer, so a drawer's own
+     classes (a scrolling sheet's overflow-y-auto) still win; a phone's
+     full-width sheet keeps square corners. */
+  @media (min-width: 640px) {
+    [data-slot="sheet-content"][data-side="right"] {
+      border-radius: 24px 0 0 24px;
+      overflow: hidden;
+    }
+    /* The Habit Tracker boards draw their drawers square. */
+    [data-app="habit"] [data-slot="sheet-content"][data-side="right"],
+    [data-app="habit"][data-slot="sheet-content"][data-side="right"] {
+      border-radius: 0;
+    }
   }
 }
 
@@ -621,123 +790,4 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-/* The sign-in pages' ground: a soft mint-green wash with three blurred
-   lights drifting slowly over it, and the card's entrance. Light only: the
-   sign-in pages never take the dark theme. */
-.auth-backdrop {
-  background:
-    radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--mint-200) 34%, transparent) 0%, transparent 55%),
-    radial-gradient(110% 90% at 100% 100%, color-mix(in oklab, var(--mint-300) 32%, transparent) 0%, transparent 60%),
-    linear-gradient(160deg, var(--mint-50) 0%, var(--page) 45%, color-mix(in oklab, var(--mint-200) 45%, var(--page)) 100%);
-}
-
-.auth-light {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(70px);
-  opacity: 0.55;
-  pointer-events: none;
-  animation: auth-drift 26s ease-in-out infinite alternate;
-}
-
-@keyframes auth-drift {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(6vw, -4vh, 0) scale(1.12);
-  }
-  100% {
-    transform: translate3d(-4vw, 5vh, 0) scale(0.95);
-  }
-}
-
-/* The card rises in; its photo settles from a slight zoom, then breathes. */
-@keyframes auth-rise {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 18px, 0) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes auth-settle {
-  from {
-    transform: scale(1.12);
-  }
-  to {
-    transform: scale(1.02);
-  }
-}
-
-@keyframes auth-breathe {
-  from {
-    transform: scale(1.02);
-  }
-  to {
-    transform: scale(1.07) translate3d(-1%, -1%, 0);
-  }
-}
-
-@keyframes auth-line {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 14px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.auth-card {
-  animation: auth-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.auth-photo {
-  animation:
-    auth-settle 1.6s cubic-bezier(0.22, 1, 0.36, 1) both,
-    auth-breathe 18s ease-in-out 1.6s infinite alternate;
-}
-
-.auth-line {
-  animation: auth-line 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* The form column's parts arrive one after another. */
-.auth-stagger > * {
-  animation: auth-line 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.auth-stagger > :nth-child(1) {
-  animation-delay: 0.15s;
-}
-.auth-stagger > :nth-child(2) {
-  animation-delay: 0.25s;
-}
-.auth-stagger > :nth-child(3) {
-  animation-delay: 0.35s;
-}
-.auth-stagger > :nth-child(n + 4) {
-  animation-delay: 0.45s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .auth-light,
-  .auth-card,
-  .auth-photo,
-  .auth-line,
-  .auth-stagger > * {
-    animation: none;
-  }
-}
-
-/* The photo's shade: forest from the bottom, so the two lines on it read
-   white at AA over any part of the picture. */
-.auth-photo-shade {
-  background: linear-gradient(to top, color-mix(in oklab, var(--forest) 92%, transparent) 0%, color-mix(in oklab, var(--forest) 55%, transparent) 32%, transparent 62%);
 }

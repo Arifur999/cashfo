@@ -3,8 +3,8 @@ import { format, type Locale as DateFnsLocale } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { BN_AM, BN_MONTHS_LONG, BN_MONTHS_SHORT, BN_PM, BN_WEEKDAYS_LONG, BN_WEEKDAYS_SHORT, toBanglaDigits } from "@/lib/i18n/banglaDates";
 import { formatCount } from "@/lib/i18n/digits";
+import { datePattern, fmtOf, type FormatLocale, writeDigits } from "@/lib/i18n/formatPrefs";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 
 // Every date in the panel renders in the platform's own timezone, not the
 // machine's. A Server Component on a UTC host and the hydrating browser in
@@ -27,8 +27,9 @@ export interface RelativeDateOptions {
   t?: Translate;
   // The reader's language, for the rest: Bangla months, am/pm and digits
   // ("৩০ সেপ্টে", "আজ, ২:১০ অপরাহ্ণ", "৩৫ মিনিট"). Without it the dates,
-  // times and counts are written as English writes them.
-  locale?: Locale;
+  // times and counts are written as English writes them. The reader's Fmt
+  // (formatPrefs.ts) also brings their digits and date style.
+  locale?: FormatLocale;
 }
 
 // date-fns' English with the Bangla board's month and day names and its
@@ -51,8 +52,10 @@ const BANGLA_DATES: DateFnsLocale = {
 // `locale` "bn" writes the same pattern in Bangla, digits and all:
 // formatDate(at, "d MMM yyyy, h:mm aaa", "—", "bn") is
 // "১ অক্টো ২০২৬, ২:১০ অপরাহ্ণ". Input values, query params and exports
-// leave it out and keep English.
-export const formatDate = (value: DateInput, pattern = DATE_FORMAT, fallback = "—", locale: Locale = "en"): string => {
+// leave it out and keep English. Given the reader's Fmt instead, the digits
+// follow their "Digits" choice and a full date ("d MMM yyyy") their "Dates"
+// style: "02/10/2026, 2:10 pm"; month and weekday names stay in the language.
+export const formatDate = (value: DateInput, pattern = DATE_FORMAT, fallback = "—", locale: FormatLocale = "en"): string => {
   if (value === null || value === undefined || value === "") {
     return fallback;
   }
@@ -61,10 +64,27 @@ export const formatDate = (value: DateInput, pattern = DATE_FORMAT, fallback = "
     return fallback;
   }
   const zoned = new TZDate(date, APP_TIME_ZONE);
-  return locale === "bn" ? toBanglaDigits(format(zoned, pattern, { locale: BANGLA_DATES })) : format(zoned, pattern);
+  if (typeof locale === "string") return locale === "bn" ? toBanglaDigits(format(zoned, pattern, { locale: BANGLA_DATES })) : format(zoned, pattern);
+  const fmt = fmtOf(locale);
+  const text = fmt.locale === "bn" ? format(zoned, datePattern(pattern, fmt), { locale: BANGLA_DATES }) : format(zoned, datePattern(pattern, fmt));
+  return writeDigits(text, fmt);
 };
 
-export const formatDateTime = (value: DateInput, fallback = "—", locale: Locale = "en") => formatDate(value, DATE_TIME_FORMAT, fallback, locale);
+export const formatDateTime = (value: DateInput, fallback = "—", locale: FormatLocale = "en") => formatDate(value, DATE_TIME_FORMAT, fallback, locale);
+
+// A "YYYY-MM-DD" calendar day (a transaction's day, a meal's day) in a
+// pattern, built from the day's own parts so no timezone moves it, in the
+// reader's language, digits and date style: formatDay("2026-10-02",
+// "EEE, d MMM yyyy", "bn") is "শুক্র, ২ অক্টো ২০২৬". Anything that isn't a
+// day comes back as it was.
+export const formatDay = (day: string, pattern: string, locale: FormatLocale = "en"): string => {
+  const [year, month, date] = day.slice(0, 10).split("-").map(Number);
+  if (!year || !month || !date) return day;
+  const fmt = fmtOf(locale);
+  const local = new Date(year, month - 1, date);
+  const text = fmt.locale === "bn" ? format(local, datePattern(pattern, fmt), { locale: BANGLA_DATES }) : format(local, datePattern(pattern, fmt));
+  return writeDigits(text, fmt);
+};
 
 // yyyy-MM-dd in the platform timezone, for <input type="date"> values and
 // date-range query params.
@@ -78,7 +98,7 @@ export const getAppToday = () => toDateInputValue(new Date());
 // A form's day as the boards write it: "Today, 2 Oct", else "30 Sep 2026".
 // `day` and `today` are "YYYY-MM-DD"; `todayWord` is "Today" in the
 // reader's language, and `locale` writes the date in it too ("আজ, ২ অক্টো").
-export const formDayLabel = (day: string, today: string, todayWord: string, locale: Locale = "en"): string => {
+export const formDayLabel = (day: string, today: string, todayWord: string, locale: FormatLocale = "en"): string => {
   if (!day) return "";
   const instant = `${day}T00:00:00.000Z`;
   return day === today ? `${todayWord}, ${formatDate(instant, "d MMM", "—", locale)}` : formatDate(instant, "d MMM yyyy", "—", locale);

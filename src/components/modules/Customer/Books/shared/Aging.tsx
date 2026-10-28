@@ -14,9 +14,9 @@ interface AgingBarProps {
 
 // The age buckets as one stacked bar; empty when nothing is owed.
 export function AgingBar({ shares, className }: AgingBarProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   return (
-    <div className={cn("flex h-3.5 overflow-hidden rounded-full bg-surface-sunken", className)} role="img" aria-label={shares.map((share) => `${t(share.label)} ${toLocaleDigits(`${share.pct}%`, locale)}`).join(", ")}>
+    <div className={cn("flex h-3.5 overflow-hidden rounded-full bg-surface-sunken", className)} role="img" aria-label={shares.map((share) => `${t(share.label)} ${toLocaleDigits(`${share.pct}%`, fmt)}`).join(", ")}>
       {shares
         .filter((share) => share.pct > 0)
         .map((share) => (
@@ -37,7 +37,7 @@ interface AgingLegendProps {
 // go four across only where the legend itself is wide enough (a container
 // query, so a half-width card keeps two); a long figure wraps, never cut.
 export function AgingLegend({ shares, currency, variant = "rows" }: AgingLegendProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   if (variant === "tiles") {
     return (
       <div className="@container">
@@ -48,7 +48,7 @@ export function AgingLegend({ shares, currency, variant = "rows" }: AgingLegendP
                 <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-xs", TONE_BG[share.tone])} />
                 {t(share.label)}
               </span>
-              <b className="text-body font-bold text-ink tabular-nums wrap-anywhere @[40rem]:text-body-lg">{formatCurrency(share.amount, currency, locale)}</b>
+              <b className="text-body font-bold text-ink tabular-nums wrap-anywhere @[40rem]:text-body-lg">{formatCurrency(share.amount, currency, fmt)}</b>
             </div>
           ))}
         </div>
@@ -61,7 +61,7 @@ export function AgingLegend({ shares, currency, variant = "rows" }: AgingLegendP
         <div key={share.key} className="flex items-center gap-3 text-small">
           <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-[3px]", TONE_BG[share.tone])} />
           <span className="flex-1 text-ink-2">{t(share.label)}</span>
-          <b className="text-ink tabular-nums">{formatCurrency(share.amount, currency, locale)}</b>
+          <b className="text-ink tabular-nums">{formatCurrency(share.amount, currency, fmt)}</b>
         </div>
       ))}
     </div>

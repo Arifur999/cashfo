@@ -9,7 +9,7 @@ import { bnAdminScopeDictionary, bnDictionary } from "./dictionary";
 // key would leave English in the middle of a Bangla page.
 describe("bnDictionary", () => {
   it("covers every Google sign-in error the login page can show", () => {
-    for (const code of ["suspended", "account_not_linked", "access_denied", "email_not_found", "signup_disabled", "anything-else"]) {
+    for (const code of ["suspended", "account_not_linked", "access_denied", "email_not_found", "signup_disabled", "signups_closed", "password_changed", "anything-else"]) {
       const message = getSignInErrorMessage(code);
       expect(message && bnDictionary[message], `${code}: ${message}`).toBeTruthy();
     }

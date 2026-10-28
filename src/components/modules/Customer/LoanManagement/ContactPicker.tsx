@@ -31,7 +31,7 @@ interface ContactPickerProps {
 // through it and Enter picks, as a combobox does. Archived contacts come
 // last, still there for their statement.
 export function ContactPicker({ contacts, value, onChange, currency, size = "md", id, disabled = false, label }: ContactPickerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -79,7 +79,7 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
   const balanceLine = (contact: Contact) => {
     const direction = loanDirection(contact.currentBalance);
     const meta = DIRECTION_META[direction];
-    return direction === "SETTLED" ? t(meta.label) : `${t(meta.label)} ${formatCurrency(Math.abs(Number(contact.currentBalance)), currency, locale)}`;
+    return direction === "SETTLED" ? t(meta.label) : `${t(meta.label)} ${formatCurrency(Math.abs(Number(contact.currentBalance)), currency, fmt)} · ${t(meta.name)}`;
   };
   const kindOf = (contact: Contact) => (contact.status === "ARCHIVED" ? `${t(LOAN_KIND_LABELS[contact.type])} · ${t("Archived")}` : t(LOAN_KIND_LABELS[contact.type]));
 
@@ -93,8 +93,8 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
           aria-expanded={open}
           disabled={disabled || contacts.length === 0}
           className={cn(
-            "flex w-full min-w-0 items-center gap-3 rounded-md border border-line-strong bg-surface text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-emerald data-open:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]",
-            size === "xl" ? "h-13 px-4" : "h-11 px-3",
+            "flex w-full min-w-0 items-center gap-3 border border-input bg-surface text-left transition-[border-color,box-shadow] focus-visible:border-focus-ring focus-visible:focus-halo focus-visible:outline-none disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo",
+            size === "xl" ? "h-13 rounded-field px-3.5" : "h-11 rounded-field px-3",
           )}
         >
           {selected ? (
@@ -103,8 +103,10 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-body font-semibold text-ink">
                   {selected.name} <span className="font-medium text-ink-muted">· {kindOf(selected)}</span>
+                  {/* The statement names the loan too ("· house loan"). */}
+                  {size === "md" && (selected.type === "BANK" || selected.type === "NGO") && selected.notes && <span className="font-medium text-ink-muted"> · {selected.notes}</span>}
                 </span>
-                {size === "xl" && <span className="truncate text-caption font-normal text-ink-muted tabular-nums">{balanceLine(selected)}</span>}
+                {size === "xl" && <span className={cn("truncate text-caption font-normal tabular-nums", loanDirection(selected.currentBalance) === "SETTLED" ? "text-ink-muted" : DIRECTION_META[loanDirection(selected.currentBalance)].text)}>{balanceLine(selected)}</span>}
               </span>
               {size === "md" && (
                 <Chip tone={DIRECTION_META[loanDirection(selected.currentBalance)].chip} size="sm">

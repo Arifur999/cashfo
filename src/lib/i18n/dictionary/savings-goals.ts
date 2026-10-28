@@ -244,13 +244,17 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "Archive {name}?": "{name} আর্কাইভ করবেন?",
   "Remove {name}?": "{name} সরাবেন?",
   "Archive wallet": "ওয়ালেট আর্কাইভ করুন",
-  "{name} still holds {amount}. Once archived it leaves this page, and Add money and Withdraw can't use it. You can restore it from Savings summary.":
-    "{name}-এ এখনো {amount} আছে। আর্কাইভ করলে এটি এই পাতা থেকে সরে যাবে, আর টাকা যোগ বা তোলায় এটি আর ব্যবহার করা যাবে না। সঞ্চয়ের সারসংক্ষেপ থেকে এটি ফিরিয়ে আনতে পারবেন।",
+  "{name} still holds {amount}. Once archived it leaves this page, and Add money and Withdraw can't use it. You can restore it from Savings overview.":
+    "{name}-এ এখনো {amount} আছে। আর্কাইভ করলে এটি এই পাতা থেকে সরে যাবে, আর টাকা যোগ বা তোলায় এটি আর ব্যবহার করা যাবে না। সঞ্চয়ের ওভারভিউ থেকে এটি ফিরিয়ে আনতে পারবেন।",
   "{name} still holds {amount}. Removed or archived, it leaves this page, and Add money and Withdraw can't use it.":
     "{name}-এ এখনো {amount} আছে। সরালে বা আর্কাইভ হলে এটি এই পাতা থেকে সরে যাবে, আর টাকা যোগ বা তোলায় এটি আর ব্যবহার করা যাবে না।",
 
-  // Savings summary (savings-goals/overview/page.tsx, RestoreWalletButton.tsx)
+  // Savings overview (savings-goals/overview/page.tsx, RestoreWalletButton.tsx);
+  // design-v4 renamed the page from Savings summary.
   "Savings summary": "সঞ্চয়ের সারসংক্ষেপ",
+  "Savings overview": "সঞ্চয়ের ওভারভিউ",
+  // New savings goal: the reminder's day, before one is picked.
+  "Pick a day": "দিন বাছুন",
   "Goals are targets. Savings wallets are where the money actually sits.": "লক্ষ্য হলো টার্গেট। সঞ্চয়ের ওয়ালেটে টাকা আসলে থাকে।",
   "Add the DPS, FDR or other account you save in, and your saved money shows up here.": "যে ডিপিএস, এফডিআর বা অন্য হিসাবে জমান সেটি যোগ করুন, জমানো টাকা এখানে দেখা যাবে।",
   "Ask the workspace owner to add a savings wallet.": "একটি সঞ্চয়ের ওয়ালেট যোগ করতে ওয়ার্কস্পেসের মালিককে বলুন।",

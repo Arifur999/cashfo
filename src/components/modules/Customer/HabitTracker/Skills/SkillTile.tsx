@@ -16,7 +16,7 @@ export function SkillTile({ icon, color, size = 40, className }: SkillTileProps)
   return (
     <span
       aria-hidden="true"
-      className={cn("flex shrink-0 items-center justify-center rounded-md bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)", size === 40 ? "size-10 [&_svg]:size-5" : "size-7.5 [&_svg]:size-4", className)}
+      className={cn("flex shrink-0 items-center justify-center bg-(--sk-ink)/12 text-(--sk-ink) dark:bg-(--sk-light)/16 dark:text-(--sk-light)", size === 40 ? "size-10 rounded-[11px] [&_svg]:size-5" : "size-7.5 rounded-sm [&_svg]:size-3.75", className)}
       style={{ "--sk-ink": palette.to, "--sk-light": palette.from } as React.CSSProperties}
     >
       <SkillIcon icon={icon} />

@@ -3,11 +3,11 @@
 // menu and the pages agree.
 import type { LoginHistoryEntry } from "./api";
 import { toEnglishDigits } from "./money";
-import type { Rule } from "./vaultDisplay";
+import { nameParts, type Rule } from "./vaultDisplay";
 
 export const APP_VERSION = "0.1.0";
 
-export type SettingsSectionKey = "profile" | "security" | "workspaces" | "app" | "help" | "resources";
+export type SettingsSectionKey = "profile" | "security" | "plans" | "workspaces" | "app" | "help" | "resources";
 
 export interface SettingsSection {
   key: SettingsSectionKey;
@@ -16,6 +16,9 @@ export interface SettingsSection {
   label: string;
   // "@@user": plain "Account" is Bangla's হিসাব, a ledger account.
   group: "Account@@user" | "App" | "Support";
+  // Left out of the rail (design-v4 SettingsNav has no Workspaces row: the
+  // workspace switcher and the account menu lead there).
+  hidden?: boolean;
 }
 
 // Profile has its own address, as the sidebar's Settings › Profile does;
@@ -23,7 +26,8 @@ export interface SettingsSection {
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   { key: "profile", href: "/settings/profile", label: "Profile", group: "Account@@user" },
   { key: "security", href: "/settings/security", label: "Security", group: "Account@@user" },
-  { key: "workspaces", href: "/settings/workspaces", label: "Workspaces", group: "Account@@user" },
+  { key: "plans", href: "/settings/plans", label: "Plans", group: "Account@@user" },
+  { key: "workspaces", href: "/settings/workspaces", label: "Workspaces", group: "Account@@user", hidden: true },
   { key: "app", href: "/settings/app", label: "App preferences", group: "App" },
   { key: "help", href: "/settings/help", label: "Help & support", group: "Support" },
   { key: "resources", href: "/settings/resources", label: "Resources & legal", group: "Support" },
@@ -43,15 +47,23 @@ export const sectionOf = (key: SettingsSectionKey): SettingsSection => SETTINGS_
 // App preferences' Reminders card, which the phone menu's Reminders row
 // opens (/settings/app#reminders).
 export const REMINDERS_ANCHOR = "reminders";
+// The phone menu's Devices row (Security's devices card) and Numbers and
+// dates row (App preferences' card).
+export const DEVICES_ANCHOR = "devices";
+export const NUMBERS_ANCHOR = "numbers";
 
 export const MIN_ACCOUNT_PASSWORD = 8;
 export const MAX_ACCOUNT_PASSWORD = 128;
 
-// The API's rules for an account password, plus the two the page can check.
-export function accountPasswordRules(password: string, confirm: string, currentPassword: string): Rule[] {
+// The API's rules for an account password, plus the ones the page can check
+// ("Doesn't contain your name" is the vault's rule: the name's words of
+// three letters or more, ignoring case).
+export function accountPasswordRules(password: string, confirm: string, currentPassword: string, name = ""): Rule[] {
+  const lower = password.toLocaleLowerCase();
   return [
     { key: "length", label: "At least 8 characters", ok: password.length >= MIN_ACCOUNT_PASSWORD && password.length <= MAX_ACCOUNT_PASSWORD },
     { key: "mix", label: "Letters and numbers", ok: /[A-Za-z]/.test(password) && /\d/.test(password) },
+    { key: "noName", label: "Doesn't contain your name", ok: password.length > 0 && !nameParts(name).some((part) => lower.includes(part)) },
     { key: "notAccount", label: "Not your old password", ok: password.length > 0 && password !== currentPassword },
     { key: "match", label: "Both match", ok: password.length > 0 && password === confirm },
   ];
@@ -110,6 +122,9 @@ export function signInResult(entry: Pick<LoginHistoryEntry, "success" | "failure
   }
 }
 
+// "Last sign-in": the newest try that got in (the list is newest first).
+export const lastSignInOf = (history: Pick<LoginHistoryEntry, "success" | "createdAt">[]): string | null => history.find((entry) => entry.success)?.createdAt ?? null;
+
 // Someone else may have tried the password: the history then offers to
 // change it.
 export const triedThePassword = (entry: Pick<LoginHistoryEntry, "success" | "failureReason">): boolean => !entry.success && (entry.failureReason === "invalid_password" || entry.failureReason === "rate_limited");
@@ -159,12 +174,11 @@ export function searchFaqs(faqs: Faq[], query: string, t: (key: string) => strin
   return faqs.filter((faq) => `${t(faq.question)} ${t(faq.answer)} ${faq.question} ${faq.answer}`.toLowerCase().includes(q));
 }
 
-// The keys that work on every page: N opens the Add menu (not a new
-// transaction straight away), Ctrl K (⌘K on a Mac) the search palette, and
-// Esc closes whatever drawer is open.
+// The keys that work on every page: Ctrl K (⌘K on a Mac) the search
+// palette, N a new transaction, and Esc closes whatever drawer is open.
 export const SHORTCUTS: { what: string; key: string }[] = [
-  { what: "Open the Add menu", key: "N" },
-  { what: "Search and go", key: "Ctrl K" },
+  { what: "Search anything", key: "Ctrl K" },
+  { what: "New transaction", key: "N" },
   { what: "Close a drawer", key: "Esc" },
 ];
 
@@ -174,18 +188,20 @@ export interface Guide {
   body: string;
   faqId: "start" | "budget" | "group" | "vault";
   tone: "money" | "warning" | "rose";
+  // How long it takes to read ("4 min read").
+  minutes: number;
 }
 
 // Each guide opens the Help answer it is about.
 export const GUIDES: Guide[] = [
-  { title: "Getting started", body: "Add your wallets, record a transaction and read the dashboard.", faqId: "start", tone: "money" },
-  { title: "Budgets that work", body: "Set a limit for each category and see what is left.", faqId: "budget", tone: "money" },
-  { title: "Group expenses for families and messes", body: "Shares, meals, settling up and closing the month.", faqId: "group", tone: "warning" },
-  { title: "Keeping your passwords safe", body: "The vault password, Generate and the security checkup.", faqId: "vault", tone: "rose" },
+  { title: "Getting started", body: "Add your wallets, record a transaction and read the dashboard.", faqId: "start", tone: "money", minutes: 4 },
+  { title: "Budgets that work", body: "Set a limit for each category and see what is left.", faqId: "budget", tone: "money", minutes: 3 },
+  { title: "Group Expense for families and messes", body: "Shares, meals, settling up and closing the month.", faqId: "group", tone: "warning", minutes: 6 },
+  { title: "Keeping your passwords safe", body: "The vault password, Generate and the security checkup.", faqId: "vault", tone: "rose", minutes: 3 },
 ];
 
 export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" }[] = [
-  { title: "Terms of use", page: "terms" },
+  { title: "Terms of service", page: "terms" },
   { title: "Privacy policy", page: "privacy" },
   { title: "Refund policy", page: "refund-policy" },
 ];

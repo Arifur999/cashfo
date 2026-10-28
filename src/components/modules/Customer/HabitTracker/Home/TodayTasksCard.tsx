@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Repeat } from "lucide-react";
 import Link from "next/link";
 import { useState, type RefObject } from "react";
 import { toast } from "sonner";
@@ -10,11 +10,14 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Input from "@/components/smartly/form/Input";
 import type { TodoItem, TodoList } from "@/lib/customer/api";
+import { timeLabel } from "@/lib/customer/date";
 import { actionError } from "@/lib/customer/habitDisplay";
+import { movedLabel, PRIORITY_LABEL, repeatLabel } from "@/lib/customer/todoDisplay";
 import { addTodoItemAction, createTodoListAction, updateTodoItemAction } from "@/lib/customer/todosActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { PriorityDot, PRIORITY_TONE, TaskMeta } from "../Todos/TaskBits";
 
 interface TodayTasksCardProps {
   today: string;
@@ -28,11 +31,12 @@ interface TodayTasksCardProps {
 const SHOWN = 5;
 
 // Today's to-do list, the same copy the top bar shows: what is left first,
-// then what is done, and a box to add one more. Phones get the board's
-// taller rows, with the done ones folded under "N done". A task's words
-// tick it too, not only its box.
+// then what is done, and a box to add one more. Under each task: its
+// priority, time and repeat. Phones get the board's taller rows, with the
+// done ones folded under "N done". A task's words tick it too, not only
+// its box.
 export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const shell = useTodayTasks();
   const { loaded, setList } = shell;
   const list = loaded ? shell.list : initial;
@@ -57,7 +61,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
       if (!target) {
         const created = await createTodoListAction(today);
         if (!created.success || !created.data) {
-          toast.error(actionError(created.message, "Failed to add task", t, locale));
+          toast.error(actionError(created.message, "Failed to add task", t, fmt));
           return;
         }
         target = created.data;
@@ -68,7 +72,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
         setList(result.data);
         setText("");
       } else {
-        toast.error(actionError(result.message, "Failed to add task", t, locale));
+        toast.error(actionError(result.message, "Failed to add task", t, fmt));
       }
     } finally {
       setAdding(false);
@@ -81,7 +85,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
     updateTodoItemAction(list.id, item.id, { completed: !item.completed })
       .then((result) => {
         if (result.success && result.data) setList(result.data);
-        else toast.error(actionError(result.message, "Failed to update task", t, locale));
+        else toast.error(actionError(result.message, "Failed to update task", t, fmt));
       })
       .finally(() =>
         setBusy((prev) => {
@@ -106,31 +110,54 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
     </button>
   );
 
+  // The board's line under a task: the priority's dot and word, its time,
+  // how it repeats, and where it moved from.
+  const meta = (item: TodoItem) => (
+    <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-0.5 text-caption leading-[normal] text-ink-muted">
+      <span className={cn("flex items-center gap-1.25 font-semibold", PRIORITY_TONE[item.priority].ink)}>
+        <PriorityDot priority={item.priority} className="size-1.75" />
+        {t(PRIORITY_LABEL[item.priority])}
+      </span>
+      {item.dueTime && <span className="tabular-nums">{timeLabel(item.dueTime, t, fmt)}</span>}
+      {item.repeat && (
+        <span className="flex items-center gap-1">
+          <Repeat className="size-3" aria-hidden="true" />
+          {repeatLabel(item.repeat, t, fmt)}
+        </span>
+      )}
+      {item.movedFrom && <span className="font-semibold text-warning">{movedLabel(item.movedFrom, today, t, fmt)}</span>}
+    </span>
+  );
+
   const phoneRow = (item: TodoItem) => (
     <li key={item.id} className="box-content border-t border-divider">
       <label className="flex min-h-13 cursor-pointer items-center gap-3">
-        {checkbox(item, "size-5.5 rounded-sm")}
-        <span className={cn("min-w-0 flex-1 truncate text-body font-medium", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+        {checkbox(item, "size-5.5 rounded-[6px]")}
+        <span className="flex min-w-0 flex-1 flex-col gap-0.75">
+          <span className={cn("truncate text-body leading-[normal] font-medium", item.completed ? "text-ink-faint line-through" : "text-ink")}>{item.text}</span>
+          <TaskMeta item={item} day={today} look="plain" />
+        </span>
       </label>
     </li>
   );
 
   return (
-    <Card padding="none" className="flex flex-col gap-1 p-4 md:gap-2 md:px-5 md:pt-5 md:pb-4">
+    <Card padding="none" className="flex flex-col gap-1 rounded-md p-3.5 md:gap-1.5 md:px-5 md:pt-4.5 md:pb-4">
       <div className="flex items-center justify-between gap-3 px-0.5 pb-1 md:p-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-title font-semibold text-ink max-md:leading-[normal]">{t("Today's tasks")}</h2>
+          <h2 className="text-title leading-[normal] font-semibold text-ink">{t("Today's tasks")}</h2>
           {items.length > 0 && (
             <Chip tone="neutral" size="sm" className="max-md:hidden">
-              {t("{count} left", { count: formatCount(open.length, locale) })}
+              {t("{count} left", { count: formatCount(open.length, fmt) })}
             </Chip>
           )}
         </div>
         {items.length > 0 && (
-          <span className="ml-auto text-small text-ink-muted md:hidden">{t("{count} left", { count: formatCount(open.length, locale) })}</span>
+          <span className="ml-auto text-small text-ink-muted md:hidden">{t("{count} left", { count: formatCount(open.length, fmt) })}</span>
         )}
-        <Link href="/habit-tracker/todos" className="flex shrink-0 items-center text-small font-semibold text-emerald hover:underline max-md:min-h-11">
-          {t("To-do list")}
+        {/* Phones open the list from the top bar's tasks button or the menu. */}
+        <Link href="/habit-tracker/todos" className="flex shrink-0 items-center text-small font-semibold text-emerald hover:underline max-md:hidden">
+          {t("Open list")}
         </Link>
       </div>
       {items.length > 0 ? (
@@ -141,7 +168,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
             {done.length > 0 && (
               <>
                 <button type="button" aria-expanded={showDone} onClick={() => setShowDone((value) => !value)} className="flex h-11 items-center justify-between border-t border-divider px-0.5 text-small font-semibold text-ink-2">
-                  {t("{count} done", { count: formatCount(done.length, locale) })}
+                  {t("{count} done", { count: formatCount(done.length, fmt) })}
                   <ChevronDown className={cn("size-4 transition-transform", showDone && "rotate-180")} aria-hidden="true" />
                 </button>
                 {showDone && <ul className="flex flex-col gap-1">{done.map(phoneRow)}</ul>}
@@ -151,14 +178,17 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
           <ul className="flex flex-col max-md:hidden">
             {shown.map((item) => (
               <li key={item.id} className="border-b border-divider">
-                <label className="flex cursor-pointer items-start gap-3 py-2">
+                <label className="flex cursor-pointer items-start gap-2.5 py-2.25">
                   {checkbox(item, "mt-px size-4.5 rounded-[5px]")}
-                  <span className={cn("min-w-0 flex-1 truncate text-body", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.75">
+                    <span className={cn("truncate text-[13.5px] leading-[normal]", item.completed ? "text-ink-faint line-through" : "text-ink")}>{item.text}</span>
+                    {meta(item)}
+                  </span>
                 </label>
               </li>
             ))}
             {more > 0 && (
-              <li className="pt-2 text-caption text-ink-muted">{t("{count} more on the list", { count: formatCount(more, locale) })}</li>
+              <li className="pt-2 text-caption text-ink-muted">{t("{count} more on the list", { count: formatCount(more, fmt) })}</li>
             )}
           </ul>
         </>

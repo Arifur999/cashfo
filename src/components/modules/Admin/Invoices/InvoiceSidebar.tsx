@@ -1,7 +1,11 @@
 import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import { LIST_DIVIDER, LIST_HOVER } from "@/components/smartly/list/recipes";
+import { Download } from "lucide-react";
 import PrintButton from "@/components/shared/PrintButton";
+import Button from "@/components/smartly/Button";
+import { formatDate } from "@/lib/date";
+import InvoiceEmailButton from "./InvoiceEmailButton";
 import { formatAmount } from "@/lib/currency";
 import { shortPaymentId } from "@/lib/payments";
 import { cn } from "@/lib/utils";
@@ -16,26 +20,40 @@ interface InvoiceSidebarProps {
   // The list's query the page was opened with, kept when hopping to
   // another invoice so "All invoices" still leads back to it.
   back?: string;
+  // Emailing it is for those who can change payments.
+  canEmail?: boolean;
 }
 
 // Beside the sheet: what to do with it, and the latest invoices to hop to
 // (not shown when they couldn't be read). The open one is marked as the
 // current page. A plain column, not an <aside>: it sits inside the page's
 // main, and its two sections are named landmarks of their own.
-const InvoiceSidebar = async ({ invoice, recent, back }: InvoiceSidebarProps) => {
+const InvoiceSidebar = async ({ invoice, recent, back, canEmail = false }: InvoiceSidebarProps) => {
   const { t, locale } = await getTranslator("admin");
+  const firstName = splitIssuedTo(invoice.issuedTo).name.split(/\s+/)[0] || null;
   return (
     <div className="flex flex-col gap-3 print:hidden">
       <Card asChild padding="none" className="flex flex-col gap-3 px-5 py-4">
         <section aria-label={t("Invoice actions")}>
           <h2 className="text-title text-ink">{invoice.invoiceNumber}</h2>
           {invoice.payment && <span className="text-small text-ink-2">{t("Made automatically when {id} was paid.", { id: shortPaymentId(invoice.payment.id) })}</span>}
-          <PrintButton label="Print / Save as PDF" variant="action" className="w-full" />
-          {invoice.payment && (
-            <Link href={`/admin/payments/${invoice.payment.id}`} className="text-small font-semibold text-emerald hover:underline">
-              <T>Open the payment</T>
-            </Link>
-          )}
+          {/* The PDF the person gets, made by the API. */}
+          <Button asChild variant="primary" size="md" className="w-full">
+            <a href={`/admin/invoices/${invoice.id}/pdf`} download>
+              <Download className="size-4" aria-hidden="true" />
+              <T>Download PDF</T>
+            </a>
+          </Button>
+          {canEmail && <InvoiceEmailButton invoiceId={invoice.id} firstName={firstName} />}
+          {invoice.emailedAt && <span className="text-caption text-ink-muted">{t("Last emailed {date}", { date: formatDate(invoice.emailedAt, "d MMM yyyy, h:mm aaa", "—", locale) })}</span>}
+          <span className="flex items-center justify-between gap-2">
+            {invoice.payment && (
+              <Link href={`/admin/payments/${invoice.payment.id}`} className="text-small font-semibold text-emerald hover:underline">
+                <T>Open the payment</T>
+              </Link>
+            )}
+            <PrintButton label="Print" variant="link" className="text-small" />
+          </span>
         </section>
       </Card>
       {recent.length > 0 && (

@@ -18,8 +18,8 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 // The challenges going on, each as a ring of how far along it is.
 export function ChallengesCard({ trackers, today }: ChallengesCardProps) {
-  const { t, locale } = useLocale();
-  const count = (n: number) => formatCount(n, locale);
+  const { t, fmt } = useLocale();
+  const count = (n: number) => formatCount(n, fmt);
   const going = trackers
     .map((tracker) => ({ tracker, window: challengeWindow(tracker, today) }))
     .filter(({ window }) => window.status === "going")
@@ -27,11 +27,11 @@ export function ChallengesCard({ trackers, today }: ChallengesCardProps) {
     .slice(0, 2);
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+    <Card padding="none" className="flex flex-col gap-3 rounded-md px-4.5 py-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-title font-semibold text-ink">{t("Challenges")}</h2>
-        <Link href="/habit-tracker/habits?category=Others" className="text-small font-semibold text-emerald hover:underline">
-          {t("All challenges")}
+        <h2 className="text-[15px] leading-[normal] font-semibold text-ink">{t("Challenges")}</h2>
+        <Link href="/habit-tracker/habits?category=Others" aria-label={t("All challenges")} className="text-small font-semibold text-emerald hover:underline">
+          {t("All")}
         </Link>
       </div>
       {going.length === 0 ? (
@@ -45,13 +45,13 @@ export function ChallengesCard({ trackers, today }: ChallengesCardProps) {
             <div key={tracker.id} className="flex items-center gap-3">
               <span role="img" aria-label={t("{pct}% of the way", { pct: count(pct) })} className="relative size-10.5 shrink-0">
                 <svg viewBox="0 0 42 42" className="size-10.5 -rotate-90">
-                  <circle cx="21" cy="21" r={RADIUS} className="fill-none stroke-surface-sunken dark:stroke-line" strokeWidth="4" />
-                  <circle cx="21" cy="21" r={RADIUS} className="fill-none stroke-emerald" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${fill * CIRCUMFERENCE} ${CIRCUMFERENCE}`} />
+                  <circle cx="21" cy="21" r={RADIUS} className="fill-none stroke-line" strokeWidth="4.5" />
+                  <circle cx="21" cy="21" r={RADIUS} className="fill-none stroke-emerald" strokeWidth="4.5" strokeLinecap="round" strokeDasharray={`${fill * CIRCUMFERENCE} ${CIRCUMFERENCE}`} />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-caption font-bold text-ink">{count(pct)}%</span>
+                <span className="absolute inset-0 flex items-center justify-center text-[10.5px] font-bold text-ink">{count(pct)}%</span>
               </span>
               <Link href={`/habit-tracker/habits/others/${tracker.id}`} className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-body font-semibold text-ink hover:underline">{tracker.name}</span>
+                <span className="truncate text-[13.5px] leading-[normal] font-semibold text-ink hover:underline">{tracker.name}</span>
                 <span className="text-caption text-ink-muted">
                   {t("Day {day} of {total}", { day: count(window.today), total: count(tracker.totalDays) })} · {t(doneToday ? "done today" : "not yet today")}
                 </span>
@@ -60,8 +60,8 @@ export function ChallengesCard({ trackers, today }: ChallengesCardProps) {
           );
         })
       )}
-      <Link href="/habit-tracker/habits?category=Others&new=1" className="mt-auto flex items-center gap-2 border-t border-divider pt-3 text-small font-semibold text-emerald hover:underline">
-        <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
+      <Link href="/habit-tracker/habits?category=Others&new=1" className="mt-auto flex items-center gap-1.5 border-t border-divider pt-2.5 text-[12.5px] leading-[normal] font-semibold text-emerald hover:underline">
+        <Plus className="size-3.25" strokeWidth={2.5} aria-hidden="true" />
         {t("Start a challenge")}
       </Link>
     </Card>

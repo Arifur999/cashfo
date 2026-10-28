@@ -4,6 +4,8 @@ import type { Tone } from "./tones";
 
 interface PageHeaderProps {
   // The pillar line above the title ("Money", "Habits", a date on Home).
+  // design-v4 draws none over its page titles (the top bar's breadcrumb
+  // says where you are), so only the "display" size shows it.
   eyebrow?: React.ReactNode;
   tone?: Tone;
   title: React.ReactNode;
@@ -17,20 +19,23 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
   // Leave the actions to the floating button on phones (Home).
   hideActionsOnPhone?: boolean;
-  // Home uses the 36px display title; every other page the 28px h1.
+  // "h1" is design-v4's page title (24px semibold) every page uses;
+  // "display" the old 36px one, kept for a page that still asks for it.
   size?: "h1" | "display";
   className?: string;
 }
 
-// Phone boards set every page title in extra bold; wider ones in bold.
+// The design-v4 page header: the 24px semibold title, the 14px muted line
+// under it 4px down, the actions (40px pills, 10px apart) on the right,
+// lined up with the bottom of the text.
 const PageHeader = ({ eyebrow, tone = "money", title, description, looseDescription = false, hideDescriptionOnPhone = false, actions, hideActionsOnPhone = false, size = "h1", className }: PageHeaderProps) => (
   <div className={cn("flex flex-col gap-4 md:flex-row md:items-end md:justify-between", className)}>
     <div className={cn("flex min-w-0 flex-col", size === "display" ? "gap-1 md:gap-2" : "gap-1")}>
-      {eyebrow && <Eyebrow tone={tone}>{eyebrow}</Eyebrow>}
-      <h1 className={cn("font-extrabold text-ink", size === "display" ? "text-h1 md:text-display" : "text-h1 md:font-bold")}>{title}</h1>
+      {eyebrow && size === "display" && <Eyebrow tone={tone}>{eyebrow}</Eyebrow>}
+      <h1 className={cn("text-ink", size === "display" ? "text-h1 font-extrabold md:text-display" : "text-page-title")}>{title}</h1>
       {description && <p className={cn("text-ink-muted", size === "display" ? "text-body-lg" : "text-body", looseDescription && "leading-5", hideDescriptionOnPhone && "max-md:hidden")}>{description}</p>}
     </div>
-    {actions && <div className={cn("flex shrink-0 flex-wrap items-center gap-3", hideActionsOnPhone && "hidden md:flex")}>{actions}</div>}
+    {actions && <div className={cn("flex shrink-0 flex-wrap items-center gap-2.5", hideActionsOnPhone && "hidden md:flex")}>{actions}</div>}
   </div>
 );
 

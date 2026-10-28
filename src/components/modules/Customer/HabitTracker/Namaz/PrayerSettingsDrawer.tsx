@@ -37,7 +37,7 @@ const SEGMENTS = "[&>button]:h-9.5";
 // the Asr school and the Hijri adjustment, with the day's times as they
 // would read.
 export function PrayerSettingsDrawer({ open, onClose, today }: PrayerSettingsDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const { settings, setSettings } = usePrayerSettings();
@@ -67,7 +67,7 @@ export function PrayerSettingsDrawer({ open, onClose, today }: PrayerSettingsDra
         onClose();
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to save the prayer settings", t, locale));
+        toast.error(actionError(result.message, "Failed to save the prayer settings", t, fmt));
       }
     });
   }
@@ -134,18 +134,18 @@ export function PrayerSettingsDrawer({ open, onClose, today }: PrayerSettingsDra
                 stretch
                 className={SEGMENTS}
               />
-              <span className="text-caption text-ink-muted">{fillNodes(t("The moon is often seen a day later in Bangladesh. Today shows as {date}."), { date: <b className="font-bold text-ink">{hijriDate(today, locale, draft.hijriAdjust)}</b> })}</span>
+              <span className="text-caption text-ink-muted">{fillNodes(t("The moon is often seen a day later in Bangladesh. Today shows as {date}."), { date: <b className="font-bold text-ink">{hijriDate(today, fmt, draft.hijriAdjust)}</b> })}</span>
             </fieldset>
 
             <dl className="flex flex-col rounded-lg bg-strip px-4 py-1">
               {PREVIEW.map((prayer, index) => (
                 <div key={prayer} className={cn("grid grid-cols-[120px_minmax(0,1fr)] gap-4 py-3 text-body leading-5", index > 0 && "border-t border-divider")}>
                   <dt className="text-ink-muted">{t(prayer)}</dt>
-                  <dd className="min-w-0 tabular-nums">{timeLabel(clockOf(times[prayer]), t, locale)}</dd>
+                  <dd className="min-w-0 tabular-nums">{timeLabel(clockOf(times[prayer]), t, fmt)}</dd>
                 </div>
               ))}
             </dl>
-            <span className="text-caption text-ink-muted">{t("Preview for {date} with these settings.", { date: dayText(today, locale, "short") })}</span>
+            <span className="text-caption text-ink-muted">{t("Preview for {date} with these settings.", { date: dayText(today, fmt, "short") })}</span>
           </div>
 
           <PanelFooter drawer>

@@ -1,17 +1,16 @@
 "use client";
 
-import { PiggyBank, X } from "lucide-react";
+import { PiggyBank } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAmountField } from "@/hooks/useAmountField";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { createAccountAction, updateAccountAction } from "@/lib/customer/accountActions";
 import type { Account } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
@@ -40,14 +39,13 @@ const NUMBER_PLACEHOLDER: Record<Exclude<WalletType, "cash">, string> = {
   mfs: "e.g. 01711223344",
 };
 
-// Add or edit a wallet in the design's drawer: a live preview of the card,
-// the kind of wallet, its name, the account number, and -- for a new one --
-// what it holds right now (an edit shows it, since it can't change). The
-// type goes to the API as accountSubtype.
+// Add or edit a wallet in the design's 440px drawer (the shared frame): a
+// live preview of the card, the kind of wallet, its name, the account
+// number, and -- for a new one -- what it holds right now (an edit shows it,
+// since it can't change). The type goes to the API as accountSubtype.
 export function WalletDrawer({ open, onClose, businessId, editing, currency, paletteIndex, savings = false }: WalletDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
-  const wide = useMediaQuery("(min-width: 768px)");
   // Offline, Save waits for the connection instead of failing on send.
   const online = useOnline();
   const [type, setType] = useState<WalletType>("bank");
@@ -111,127 +109,118 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
   }
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent
-        side={wide ? "right" : "bottom"}
-        showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-110 shadow-drawer data-[side=right]:sm:max-w-110" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
-      >
-        <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-6" : "px-4 pt-4 pb-2")}>
-          <div className="flex flex-col gap-1">
-            <SheetTitle className="text-h3 text-ink">{savings ? (editing ? t("Edit savings wallet") : t("Add savings wallet")) : editing ? t("Edit wallet") : t("Add wallet")}</SheetTitle>
-            <SheetDescription className="text-small leading-[normal] text-ink-muted">{savings ? t("Where does your saved money sit?") : t("Where do you keep this money?")}</SheetDescription>
+    <Drawer
+      open={open}
+      width={440}
+      title={savings ? (editing ? t("Edit savings wallet") : t("Add savings wallet")) : editing ? t("Edit wallet") : t("Add wallet")}
+      description={savings ? t("Where does your saved money sit?") : t("Where do you keep this money?")}
+      busy={isPending}
+      onClose={onClose}
+      onSubmit={submit}
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+            {t("Cancel")}
+          </Button>
+          <Button type="submit" disabled={!valid || isPending || !online} className="px-4.5">
+            {isPending && <Loader size={16} onDark label={t("Loading...")} />}
+            {editing ? t("Save changes") : t("Create wallet")}
+          </Button>
+        </>
+      }
+    >
+      {/* One picture to a screen reader; the fields below say the same. */}
+      <div role="img" aria-label={t("Preview")} className={cn("relative flex h-33 shrink-0 flex-col justify-between overflow-hidden rounded-[14px] p-4.5 text-white", palette.gradient)}>
+        <span aria-hidden="true" className="absolute -top-20 -right-15 size-50 rounded-full bg-white/8" />
+        <span className="relative inline-flex items-center gap-1.5 self-start rounded-full bg-white/16 px-2.25 py-0.75 text-[11px] font-semibold [&_svg]:size-3">
+          {createElement(chip.icon, { "aria-hidden": true })}
+          {t(chip.label)}
+        </span>
+        <div className="relative flex items-end justify-between gap-3">
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate text-title">{name.trim() || t("New wallet")}</span>
+            <span className="text-caption font-normal tracking-[0.08em] text-white/75 tabular-nums">{(numbered && maskAccountNumber(accountNumber)) || t("No account number")}</span>
+          </span>
+          <span className="text-h2 tabular-nums">{formatCurrency(previewAmount, currency, fmt)}</span>
+        </div>
+      </div>
+
+      {!savings && (
+        // Real radio buttons: one kind at a time, arrow keys move between them.
+        <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
+          <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Type")}</legend>
+          <div className="grid grid-cols-3 gap-2">
+            {WALLET_TYPES.map((option) => {
+              const on = option === type;
+              return (
+                <label
+                  key={option}
+                  className={cn(
+                    "flex h-18 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-field border text-small transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring [&_svg]:size-5",
+                    on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-soft hover:border-line-strong",
+                  )}
+                >
+                  <input type="radio" name="wallet-type" value={option} checked={on} onChange={() => setType(option)} className="sr-only" />
+                  {createElement(WALLET_TYPE_META[option].icon, { "aria-hidden": true })}
+                  {t(WALLET_TYPE_META[option].label)}
+                </label>
+              );
+            })}
           </div>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken pointer-coarse:size-11">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
-        </SheetHeader>
+        </fieldset>
+      )}
 
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto", wide ? "p-6" : "px-4 py-3")}>
-            {/* One picture to a screen reader; the fields below say the same. */}
-            <div role="img" aria-label={t("Preview")} className={cn("relative flex h-33 shrink-0 flex-col justify-between overflow-hidden rounded-lg p-5 text-white", palette.gradient)}>
-              <span aria-hidden="true" className="absolute -top-20 -right-15 size-50 rounded-full bg-white/8" />
-              <span className="relative inline-flex items-center gap-2 self-start rounded-full bg-white/16 px-2 py-0.75 text-caption font-semibold [&_svg]:size-3.5">
-                {createElement(chip.icon, { "aria-hidden": true })}
-                {t(chip.label)}
-              </span>
-              <div className="relative flex items-end justify-between gap-3">
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="truncate text-title">{name.trim() || t("New wallet")}</span>
-                  <span className="text-caption font-normal tracking-[0.08em] text-white/75 tabular-nums">{(numbered && maskAccountNumber(accountNumber)) || t("No account number")}</span>
-                </span>
-                <span className="text-h2 tabular-nums">{formatCurrency(previewAmount, currency, locale)}</span>
-              </div>
-            </div>
+      <Field htmlFor="wallet-name" label={t("Wallet name")}>
+        <Input id="wallet-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={savings ? t("e.g. Islami Bank DPS") : t("e.g. Islami Bank")} />
+      </Field>
 
-            {!savings && (
-              // Real radio buttons: one kind at a time, arrow keys move between them.
-              <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Type")}</legend>
-                <div className="grid grid-cols-3 gap-2">
-                  {WALLET_TYPES.map((option) => {
-                    const on = option === type;
-                    return (
-                      <label
-                        key={option}
-                        className={cn(
-                          "flex h-18 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border text-small transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--focus-ring) [&_svg]:size-5",
-                          on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong",
-                        )}
-                      >
-                        <input type="radio" name="wallet-type" value={option} checked={on} onChange={() => setType(option)} className="sr-only" />
-                        {createElement(WALLET_TYPE_META[option].icon, { "aria-hidden": true })}
-                        {t(WALLET_TYPE_META[option].label)}
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            )}
+      {numbered && (
+        <Field
+          htmlFor="wallet-number"
+          label={
+            <>
+              {t("Account number")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+            </>
+          }
+        >
+          <Input id="wallet-number" size="md" inputMode="numeric" value={accountNumber} onChange={(event) => setAccountNumber(event.target.value)} maxLength={40} placeholder={t(numberPlaceholder)} />
+        </Field>
+      )}
 
-            <Field htmlFor="wallet-name" label={<span className="text-body font-medium text-ink">{t("Wallet name")}</span>}>
-              <Input id="wallet-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={savings ? t("e.g. Islami Bank DPS") : t("e.g. Islami Bank")} />
-            </Field>
-
-            {numbered && (
-              <Field
-                htmlFor="wallet-number"
-                label={
-                  <span className="text-body font-medium text-ink">
-                    {t("Account number")} <span className="font-normal text-ink-muted">({t("optional")})</span>
-                  </span>
-                }
-              >
-                <Input id="wallet-number" size="md" inputMode="numeric" value={accountNumber} onChange={(event) => setAccountNumber(event.target.value)} maxLength={40} placeholder={t(numberPlaceholder)} />
-              </Field>
-            )}
-
-            {editing ? (
-              // It can't be edited (the API keeps the opening as it was), so
-              // show it and say how a wrong one is put right.
-              <div className="flex min-w-0 flex-col gap-2">
-                <span className="text-body leading-[normal] font-medium text-ink">{t("Opening balance")}</span>
-                <div className="flex h-11 items-center rounded-md border border-line bg-strip px-4 text-body font-semibold text-ink tabular-nums">{formatCurrency(editing.openingBalance, currency, locale)}</div>
-                <p className="text-caption font-normal text-ink-muted">{t("It can't be changed. To fix the balance, add an income or expense for the difference.")}</p>
-              </div>
-            ) : (
-              <Field
-                htmlFor="wallet-opening"
-                label={
-                  <span className="text-body font-medium text-ink">
-                    {t("Opening balance")} <span className="font-normal text-ink-muted">({t("optional")})</span>
-                  </span>
-                }
-                hint={t("How much is in this wallet right now. Bangla digits (২৫০০০) work too.")}
-              >
-                <Input
-                  id="wallet-opening"
-                  size="xl"
-                  type="text"
-                  inputMode="decimal"
-                  {...openingBalanceField}
-                  placeholder="0"
-                  aria-describedby="wallet-opening-hint"
-                  leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                  frameClassName="gap-0 overflow-hidden pl-0"
-                  className="pl-4 text-h2 font-semibold tabular-nums"
-                />
-              </Field>
-            )}
-          </div>
-
-          <div className={cn("flex items-center justify-end gap-3 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-6")}>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-              {t("Cancel")}
-            </Button>
-            <Button type="submit" variant="action" disabled={!valid || isPending || !online} className="px-5">
-              {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {editing ? t("Save changes") : t("Create wallet")}
-            </Button>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+      {editing ? (
+        // It can't be edited (the API keeps the opening as it was), so show
+        // it and say how a wrong one is put right.
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className="text-body leading-[normal] font-medium text-ink">{t("Opening balance")}</span>
+          <div className="flex h-11 items-center rounded-field border border-line bg-strip px-3.5 text-body font-semibold text-ink tabular-nums">{formatCurrency(editing.openingBalance, currency, fmt)}</div>
+          <p className="text-caption font-normal text-ink-muted">{t("It can't be changed. To fix the balance, add an income or expense for the difference.")}</p>
+        </div>
+      ) : (
+        <Field
+          htmlFor="wallet-opening"
+          label={
+            <>
+              {t("Opening balance")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+            </>
+          }
+          hint={t("How much is in this wallet right now. Bangla digits (২৫০০০) work too.")}
+        >
+          {/* The board's 52px amount box with 8px corners (a touch smaller
+              than the Move money one). */}
+          <Input
+            id="wallet-opening"
+            size="xl"
+            type="text"
+            inputMode="decimal"
+            {...openingBalanceField}
+            placeholder="0"
+            aria-describedby="wallet-opening-hint"
+            leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-soft">{currencySymbol(currency)}</span>}
+            frameClassName="h-13 gap-0 overflow-hidden rounded-sm pl-0"
+            className="pl-3.5 text-[20px] font-semibold tabular-nums"
+          />
+        </Field>
+      )}
+    </Drawer>
   );
 }

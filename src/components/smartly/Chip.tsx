@@ -24,12 +24,13 @@ interface ChipProps extends React.ComponentProps<"span"> {
   size?: "sm" | "md";
 }
 
-// A small pill: a status, a count, a trend, a plan name.
+// A small pill: a status, a count, a trend, a plan name. design-v4 draws it
+// 12px semibold, 2px 8px round it (sm: 11px, for a tag beside a name).
 const Chip = ({ tone = "mint", size = "md", className, ...props }: ChipProps) => (
   <span
     className={cn(
-      "inline-flex shrink-0 items-center gap-1 rounded-full px-3 text-caption font-bold whitespace-nowrap tabular-nums",
-      size === "sm" ? "h-5.5 px-2" : "h-6",
+      "inline-flex shrink-0 items-center gap-1.25 rounded-full text-caption font-semibold whitespace-nowrap tabular-nums",
+      size === "sm" ? "h-4.5 px-1.75 text-[11px]" : "h-5 px-2",
       TONES[tone],
       className,
     )}

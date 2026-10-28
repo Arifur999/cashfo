@@ -43,7 +43,7 @@ const SelectControl = <TValue extends string>({
       )}
       {/* Radix only ever reports one of the option values given above. */}
       <Select value={value} onValueChange={(next) => onValueChange(next as TValue)} disabled={disabled}>
-        <SelectTrigger id={id} size={size} aria-label={label || !ariaLabel ? undefined : translate(ariaLabel)} className={cn("w-full", className)}>
+        <SelectTrigger id={id} size={size} aria-label={label || !ariaLabel ? undefined : translate(ariaLabel)} className={cn("w-full rounded-field bg-surface text-ink hover:bg-surface focus-visible:border-focus-ring focus-visible:ring-0 focus-visible:focus-halo dark:bg-surface dark:hover:bg-surface", size === "default" && "data-[size=default]:h-9.5", className)}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

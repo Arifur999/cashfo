@@ -30,6 +30,9 @@ type AppFieldProps = {
   // The language of what's typed ("bn" for a Bangla title), so a screen
   // reader says it right.
   lang?: string;
+  // Red without a message of its own: the form's message above says why
+  // (sign-in's "Invalid email or password").
+  invalid?: boolean;
 };
 
 // Single-line inputs. Selects, textareas, switches and chip groups have their
@@ -50,6 +53,7 @@ const AppField = ({
   disabled,
   readOnly,
   lang,
+  invalid = false,
 }: AppFieldProps) => {
   const { translate } = useLocale();
   return (
@@ -60,7 +64,7 @@ const AppField = ({
           name={field.name}
           type={type}
           size={size}
-          invalid={hasError}
+          invalid={hasError || invalid}
           leading={prepend}
           trailing={append}
           value={field.state.value ?? ""}

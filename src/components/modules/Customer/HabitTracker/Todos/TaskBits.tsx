@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BellRing, Check, ChevronDown, Clock, Flag, Repeat } from "lucide-react";
+import { ArrowRightToLine, BellRing, Check, ChevronDown, Clock, Flag, Repeat } from "lucide-react";
 import { useRef } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { TodoItem, TodoPriority } from "@/lib/customer/api";
@@ -27,7 +27,7 @@ export function PriorityDot({ priority, className }: { priority: TodoPriority; c
 export function PriorityChip({ priority }: { priority: TodoPriority }) {
   const { t } = useLocale();
   return (
-    <span className={cn("flex h-5 items-center gap-1 rounded-full px-2 font-semibold", PRIORITY_TONE[priority].chip)}>
+    <span className={cn("flex h-5 items-center gap-1.25 rounded-full px-2 font-semibold", PRIORITY_TONE[priority].chip)}>
       <PriorityDot priority={priority} />
       {t(PRIORITY_LABEL[priority])}
     </span>
@@ -54,8 +54,8 @@ export function PriorityMenu({ value, onChange, look = "label", className }: Pri
         aria-label={name}
         title={name}
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken",
-          look === "label" ? "h-10 gap-2 px-3 text-small font-semibold pointer-coarse:h-11" : "size-9.5 pointer-coarse:size-11",
+          "flex shrink-0 items-center justify-center rounded-sm border border-input bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken",
+          look === "label" ? "h-10 gap-1.5 px-3 text-small font-semibold pointer-coarse:h-11" : "size-9.5 pointer-coarse:size-11",
           className,
         )}
       >
@@ -91,7 +91,7 @@ interface TimeButtonProps {
 
 // "🕒 Time", or the time picked; the browser's own time picker opens.
 export function TimeButton({ value, onChange, className }: TimeButtonProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const picker = useRef<HTMLInputElement>(null);
   function open() {
     try {
@@ -102,9 +102,9 @@ export function TimeButton({ value, onChange, className }: TimeButtonProps) {
   }
   return (
     <span className={cn("relative flex shrink-0", className)}>
-      <button type="button" onClick={open} className={cn("flex h-10 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-small font-semibold hover:bg-surface-sunken pointer-coarse:h-11", value ? "text-ink tabular-nums" : "text-ink-2")}>
-        <Clock className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
-        {value ? timeLabel(value, t, locale) : t("Time")}
+      <button type="button" onClick={open} className={cn("flex h-10 items-center gap-1.5 rounded-sm border border-input bg-surface px-3 text-small font-semibold hover:bg-surface-sunken pointer-coarse:h-11", value ? "text-ink tabular-nums" : "text-ink-soft")}>
+        <Clock className="size-3.5 text-ink-muted" strokeWidth={2} aria-hidden="true" />
+        {value ? timeLabel(value, t, fmt) : t("Time")}
       </button>
       <input ref={picker} type="time" value={value ?? ""} onChange={(event) => onChange(event.target.value || null)} aria-label={t("Time")} tabIndex={-1} className="pointer-events-none absolute inset-0 opacity-0" />
     </span>
@@ -122,10 +122,10 @@ interface TaskMetaProps {
 
 // The line under a task: its priority, time, repeat and where it moved from.
 export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
-  const { t, locale } = useLocale();
-  const moved = item.movedFrom ? movedLabel(item.movedFrom, day, t, locale) : null;
+  const { t, fmt } = useLocale();
+  const moved = item.movedFrom ? movedLabel(item.movedFrom, day, t, fmt) : null;
   // "Reminder: 10 min before", for the bell beside the time.
-  const reminder = item.dueTime && item.remindBefore != null ? t("Reminder: {when}", { when: minutesBeforeLabel(item.remindBefore, t, locale) }) : null;
+  const reminder = item.dueTime && item.remindBefore != null ? t("Reminder: {when}", { when: minutesBeforeLabel(item.remindBefore, t, fmt) }) : null;
   if (look === "plain") {
     return (
       <span className="flex items-center gap-2 text-caption whitespace-nowrap text-ink-muted">
@@ -133,17 +133,17 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
           <PriorityDot priority={item.priority} />
           {t(PRIORITY_LABEL[item.priority])}
         </span>
-        {moved ? <span className="truncate font-semibold text-warning">{moved}</span> : item.dueTime && <span className="font-medium tabular-nums">{timeLabel(item.dueTime, t, locale)}</span>}
+        {moved ? <span className="truncate font-semibold text-warning">{moved}</span> : item.dueTime && <span className="font-medium tabular-nums">{timeLabel(item.dueTime, t, fmt)}</span>}
       </span>
     );
   }
   return (
-    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-muted">
+    <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-caption text-ink-muted">
       <PriorityChip priority={item.priority} />
       {item.dueTime && (
         <span className="flex items-center gap-1 tabular-nums">
           <Clock className="size-3" aria-hidden="true" />
-          {timeLabel(item.dueTime, t, locale)}
+          {timeLabel(item.dueTime, t, fmt)}
           {reminder && (
             <span title={reminder} className="ml-0.5 flex items-center">
               <BellRing className="size-3" aria-hidden="true" />
@@ -155,12 +155,12 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
       {item.repeat && (
         <span className="flex items-center gap-1">
           <Repeat className="size-3" aria-hidden="true" />
-          {repeatLabel(item.repeat, t, locale)}
+          {repeatLabel(item.repeat, t, fmt)}
         </span>
       )}
       {moved && (
         <span className="flex items-center gap-1 font-semibold text-warning">
-          <ArrowRight className="size-3" strokeWidth={2.25} aria-hidden="true" />
+          <ArrowRightToLine className="size-3" strokeWidth={2.25} aria-hidden="true" />
           {moved}
         </span>
       )}

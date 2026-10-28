@@ -68,7 +68,7 @@ const StrengthDetails = ({ password, strength, size }: { password: string; stren
 
   return (
     <span className="flex flex-col gap-2">
-      <span className={cn("grid grid-cols-4", size === "md" ? "gap-1" : "gap-2")} aria-hidden="true">
+      <span className={cn("grid grid-cols-4", size === "md" ? "gap-1" : "gap-1.5")} aria-hidden="true">
         {STEPS.map((step) => (
           <span key={step} className={cn("rounded-full bg-surface-sunken transition-colors", size === "md" ? "h-1.5" : "h-1", step <= strength && BAR_COLORS[strength])} />
         ))}
@@ -84,7 +84,7 @@ const StrengthDetails = ({ password, strength, size }: { password: string; stren
           <span className={cn("font-semibold", LABEL_COLORS[strength])}>{translate(PASSWORD_STRENGTH_LABELS[strength])}</span>
         </span>
       )}
-      <span className={cn("flex", size === "md" ? "flex-col gap-1 text-small" : "gap-4")}>
+      <span className={cn("flex", size === "md" ? "flex-col gap-1 text-small" : "flex-col gap-1 md:flex-row md:gap-4")}>
         {rules.map((rule) => (
           <span key={rule.label} className={cn("flex items-center gap-1.5", rule.met ? "text-brand-ink" : "text-ink-muted")}>
             {rule.met ? <RuleIcon className="size-3.5" strokeWidth={2.5} aria-hidden="true" /> : <Info className="size-3.5" aria-hidden="true" />}

@@ -13,7 +13,7 @@ export const ADMIN_ROLE_TONE: Record<AdminRole, string> = {
   SUPER_ADMIN: "text-emerald",
   SUPPORT_ADMIN: "text-info",
   FINANCE_ADMIN: "text-warning",
-  CONTENT_ADMIN: "text-pillar-habits",
+  CONTENT_ADMIN: "text-cat-3",
 };
 
 export const adminRoleLabel = (role: AdminRole): string => ADMIN_ROLE_LABELS[role] ?? role;

@@ -14,6 +14,7 @@ export const getNewCouponDefaults = (today: Date): ICouponFormValues => ({
   validUntil: toDateInputValue(addDays(today, 30)),
   applicablePlans: [],
   isActive: true,
+  oncePerPerson: false,
 });
 
 // API coupon -> form values.
@@ -26,4 +27,5 @@ export const toCouponFormValues = (coupon: ICoupon): ICouponFormValues => ({
   validUntil: toDateInputValue(coupon.validUntil),
   applicablePlans: coupon.applicablePlans,
   isActive: coupon.isActive,
+  oncePerPerson: coupon.oncePerPerson ?? false,
 });

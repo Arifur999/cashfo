@@ -212,6 +212,7 @@ export const balanceDictionary: Record<string, string> = {
   "Back to Chart of Accounts": "হিসাবচিত্রে ফিরে যান",
   // The Statement opened from Savings summary (?from=/savings-goals/overview).
   "Back to Savings summary": "সঞ্চয়ের সারসংক্ষেপে ফিরে যান",
+  "Back to Savings overview": "সঞ্চয়ের ওভারভিউতে ফিরে যান",
   "Money In": "জমা",
   "Money Out": "উত্তোলন",
   "All time": "সর্বসময়",
@@ -247,4 +248,21 @@ export const balanceDictionary: Record<string, string> = {
   "Failed to archive account": "হিসাব আর্কাইভ করতে ব্যর্থ",
   "Account deleted": "হিসাব মুছে ফেলা হয়েছে",
   "Failed to remove account": "হিসাব সরাতে ব্যর্থ",
+
+  // design-v4: Wallets, Balance overview, Balance transfer, Account ledger.
+  "Total balance": "মোট ব্যালেন্স",
+  "Balance overview": "ব্যালেন্সের সারসংক্ষেপ",
+  "Click a row to open its ledger": "লেজার খুলতে একটি সারিতে ক্লিক করুন",
+  "View ledger": "লেজার দেখুন",
+  "View the ledger of {name}": "{name}-এর লেজার দেখুন",
+  "Balance transfer": "ব্যালেন্স ট্রান্সফার",
+  "New transfer": "নতুন ট্রান্সফার",
+  "A transfer only moves money between your wallets. It's never counted as income or expense.": "ট্রান্সফার শুধু আপনার ওয়ালেটগুলোর মধ্যে টাকা সরায়। এটি কখনো আয় বা খরচ হিসেবে গোনা হয় না।",
+  "Across {count} transfer": "মোট {count}টি ট্রান্সফারে",
+  "Across {count} transfers": "মোট {count}টি ট্রান্সফারে",
+  "Showing {count} transfer": "{count}টি ট্রান্সফার দেখানো হচ্ছে",
+  "Showing {count} transfers": "{count}টি ট্রান্সফার দেখানো হচ্ছে",
+  "Account ledger": "হিসাবের লেজার",
+  "Pick an account first": "আগে একটি হিসাব বেছে নিন",
+  "Pick an account to see its ledger": "লেজার দেখতে একটি হিসাব বেছে নিন",
 };

@@ -38,7 +38,7 @@ const COLUMNS = "md:grid-cols-[minmax(0,1fr)_140px_140px_32px]";
 // Every account by group, the way an accountant reads them: a filter by
 // type, a search, and a row per account that opens its ledger.
 export function AccountsTable({ groups, preferredLanguage, currency, hasCodes, canManage, onAdd }: AccountsTableProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [filter, setFilter] = useState<AccountFilter>("ALL");
   const [query, setQuery] = useState("");
   const columns = hasCodes ? COLUMNS_WITH_CODES : COLUMNS;
@@ -55,7 +55,7 @@ export function AccountsTable({ groups, preferredLanguage, currency, hasCodes, c
     const kind = subtypeLabel(account.accountSubtype);
     const count = account.children.length;
     // "Cash · Cash" says nothing twice.
-    const parts = [kind && kind.toLowerCase() !== account.name.trim().toLowerCase() ? t(kind) : null, count > 0 ? t(count === 1 ? "{count} sub-account" : "{count} sub-accounts", { count: formatCount(count, locale) }) : null].filter((part): part is string => !!part);
+    const parts = [kind && kind.toLowerCase() !== account.name.trim().toLowerCase() ? t(kind) : null, count > 0 ? t(count === 1 ? "{count} sub-account" : "{count} sub-accounts", { count: formatCount(count, fmt) }) : null].filter((part): part is string => !!part);
     if (parts.length === 0 && account.isSystemAccount) parts.push(t("Default account"));
     return parts.join(" · ");
   }

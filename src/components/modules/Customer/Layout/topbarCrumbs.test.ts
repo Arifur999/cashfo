@@ -14,28 +14,39 @@ const locate = (url: string) => {
 };
 
 describe("topbarTrail", () => {
-  it("keeps a section as plain text", () => {
-    expect(topbarTrail(locate("/transactions"), false)).toEqual([{ label: "Money" }]);
+  it("keeps a Habit Tracker section as plain text, and names no Money Tracker section", () => {
+    expect(topbarTrail(locate("/group-expenses"), false)).toEqual([]);
+    expect(topbarTrail(locate("/referrals/withdraw"), true)).toEqual([{ label: "Referral Program", href: "/referrals" }]);
+    expect(topbarTrail(locate("/habit-tracker/daily"), false)).toEqual([{ label: "Habits" }]);
+  });
+
+  it("names nothing above the first section's pages", () => {
+    expect(topbarTrail(locate("/dashboard"), false)).toEqual([]);
+    expect(topbarTrail(locate("/habit-tracker"), false)).toEqual([]);
   });
 
   it("links a group to its first page", () => {
-    expect(topbarTrail(locate("/balance/ledger"), false)).toEqual([{ label: "Money" }, { label: "Wallets", href: "/balance/overview" }]);
-    expect(topbarTrail(locate("/loan-management/ledger"), false)).toEqual([{ label: "Money" }, { label: "Loans", href: "/loan-management/dashboard" }]);
+    expect(topbarTrail(locate("/balance/ledger"), false)).toEqual([{ label: "Balance", href: "/balance/overview" }]);
+    expect(topbarTrail(locate("/transactions"), false)).toEqual([{ label: "Income & Expense", href: "/transactions" }]);
+    expect(topbarTrail(locate("/loan-management/ledger"), false)).toEqual([{ label: "Loan Management", href: "/loan-management/dashboard" }]);
   });
 
-  it("links Settings from its sections, under the plain Account heading", () => {
-    const trail = topbarTrail(locate("/settings/security"), false);
-    expect(trail[trail.length - 1]).toEqual({ label: "Settings", href: "/settings" });
-    expect(trail[0].href).toBeUndefined();
+  it("links Settings from its sections", () => {
+    expect(topbarTrail(locate("/settings/security"), false)).toEqual([{ label: "Settings", href: "/settings" }]);
+    expect(topbarTrail(locate("/settings"), false)).toEqual([]);
   });
 
   it("adds the list a record page came from, at the address it was left", () => {
-    expect(topbarTrail(locate("/transactions/abc"), true, "/transactions?page=3")).toEqual([{ label: "Money" }, { label: "Transactions", href: "/transactions?page=3" }]);
-    expect(topbarTrail(locate("/contacts/c1"), true)).toEqual([{ label: "Books" }, { label: "Customers & suppliers", href: "/contacts" }]);
+    expect(topbarTrail(locate("/transactions/abc"), true, "/transactions?page=3")).toEqual([
+      { label: "Income & Expense", href: "/transactions" },
+      { label: "Transactions", href: "/transactions?page=3" },
+    ]);
+    expect(topbarTrail(locate("/contacts/c1"), true)).toEqual([{ label: "Customers & suppliers", href: "/contacts" }]);
+    expect(topbarTrail(locate("/group-expenses/b1"), true)).toEqual([{ label: "Group Expense", href: "/group-expenses" }]);
   });
 
   it("opens a habit list with its own category", () => {
-    expect(topbarTrail(locate("/habit-tracker/habits/namaz/2026-10"), true)).toEqual([{ label: "Habits" }, { label: "Namaz", href: "/habit-tracker/habits?category=Namaz" }]);
+    expect(topbarTrail(locate("/habit-tracker/habits/namaz/2026-10"), true)).toEqual([{ label: "Namaz", href: "/habit-tracker/habits?category=Namaz" }]);
   });
 
   it("leaves the list as text for a record shown on the list's own page", () => {
@@ -43,7 +54,7 @@ describe("topbarTrail", () => {
     // address to drop: the bar passes linkList: false.
     const vault = at("/password-manager");
     expect(listVisitUrl(vault.location, vault.pathname, vault.query)).toBe("/password-manager");
-    expect(topbarTrail(vault.location!, true, undefined, { linkList: false })).toEqual([{ label: "Vault" }, { label: "Password vault" }]);
+    expect(topbarTrail(vault.location!, true, undefined, { linkList: false })).toEqual([{ label: "Password Manager" }]);
   });
 });
 
@@ -64,7 +75,7 @@ describe("recordListHref", () => {
     const visitUrl = listVisitUrl(checkup.location, checkup.pathname, checkup.query);
     expect(visitUrl).toBe("/password-manager?checkup=1");
     expect(recordListHref(checkup.location!, visitUrl, "/password-manager?checkup=1")).toBe("/password-manager");
-    expect(topbarTrail(checkup.location!, true, "/password-manager")).toEqual([{ label: "Vault" }, { label: "Password vault", href: "/password-manager" }]);
+    expect(topbarTrail(checkup.location!, true, "/password-manager")).toEqual([{ label: "Password Manager", href: "/password-manager" }]);
   });
 
   it("has nowhere to go at the plain list's own address", () => {

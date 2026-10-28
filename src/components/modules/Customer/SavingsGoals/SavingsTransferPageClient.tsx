@@ -46,7 +46,7 @@ const PAGE_SIZE = 25;
 // from xl only: at tablet and small-laptop widths a fixed form column left
 // the goal names no room at all.
 export function SavingsTransferPageClient({ businessId, goals, transfers, currency, canManage }: SavingsTransferPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const listId = useId();
   const { page, setPage } = usePageParam();
@@ -85,7 +85,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
       // is opened again.
       const result = await createSavingsTransferAction(businessId, { fromGoalId: fromId, toGoalId: toId, amount: value, date: getAppToday(), notes: note.trim() || undefined });
       if (!result.success) {
-        toast.error(savingsError(result.message, "Failed to move", t, currency, locale));
+        toast.error(savingsError(result.message, "Failed to move", t, currency, fmt));
         return;
       }
       toast.success(t("Moved"));
@@ -98,11 +98,11 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
   }
 
   const header = (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-4 md:px-6 md:py-5">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-4 md:px-6 md:py-4.5">
       <h2 className="text-title text-ink">{t("History")}</h2>
       {transfers.length > 0 && (
         <span className="text-small text-ink-muted tabular-nums">
-          {t(transfers.length === 1 ? "{count} move" : "{count} moves", { count: formatCount(transfers.length, locale) })} · {formatCurrency(total, currency, locale)}
+          {t(transfers.length === 1 ? "{count} move" : "{count} moves", { count: formatCount(transfers.length, fmt) })} · {formatCurrency(total, currency, fmt)}
         </span>
       )}
     </div>
@@ -134,7 +134,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
           </ListHead>
           {shown.rows.map((transfer) => (
             <ListRow key={transfer.id} columns={COLUMNS} density="relaxed">
-              <ListCell className="text-caption text-ink-2 max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.date, undefined, locale)}</ListCell>
+              <ListCell className="text-caption text-ink-2 max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.date, undefined, fmt)}</ListCell>
               <ListCell className="flex flex-col gap-0.75 max-md:col-start-1 max-md:row-start-1">
                 {/* Read as a sentence; the arrow means nothing out loud. */}
                 <span className="sr-only">{t("From {from} to {to}", { from: transfer.fromGoalName, to: transfer.toGoalName })}</span>
@@ -146,7 +146,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                 {transfer.notes && <span className="truncate text-caption font-normal text-ink-muted">{transfer.notes}</span>}
               </ListCell>
               <ListCell align="end" className="font-semibold text-info tabular-nums max-md:col-start-2 max-md:row-start-1">
-                {formatCurrency(transfer.amount, currency, locale)}
+                {formatCurrency(transfer.amount, currency, fmt)}
               </ListCell>
             </ListRow>
           ))}
@@ -175,7 +175,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
       {/* The form comes first, so phones and tablets reach the page's one
           action before the history; from xl it sits on the right. */}
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
-        <Card asChild className="flex flex-col gap-4 xl:col-start-2 xl:row-start-1">
+        <Card asChild padding="none" className="flex flex-col gap-4 p-5 xl:col-start-2 xl:row-start-1">
           {blocked ? (
             <section aria-labelledby="st-title">
               <h2 id="st-title" className="text-title text-ink">
@@ -202,26 +202,26 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
               <h2 id="st-title" className="text-title text-ink">
                 {t("New move")}
               </h2>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 <label id="st-from-label" htmlFor="st-from" className="text-small font-medium text-ink-2">
                   {t("From goal")}
                 </label>
                 {/* Only goals with money, never the one already in To. */}
                 <GoalPicker id="st-from" labelId="st-from-label" goals={goals} options={funded.filter((goal) => goal.id !== toId)} value={fromId} onChange={setFromId} currency={currency} />
               </div>
-              <div className="-my-3.5 flex justify-center">
+              <div className="-mt-2 -mb-3.5 flex justify-center">
                 <button
                   type="button"
                   onClick={swap}
                   disabled={!fromId || !toId}
                   aria-label={t("Swap From and To")}
                   title={t("Swap")}
-                  className="relative z-10 flex size-8 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-[0_2px_6px_rgba(14,26,22,0.08)] hover:bg-surface-sunken disabled:opacity-60 pointer-coarse:size-11"
+                  className="relative z-10 flex size-8 items-center justify-center rounded-full border border-input bg-surface text-emerald hover:bg-surface-sunken disabled:opacity-60 pointer-coarse:size-11"
                 >
-                  <ArrowUpDown className="size-3.5" aria-hidden="true" />
+                  <ArrowUpDown className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
                 </button>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 <label id="st-to-label" htmlFor="st-to" className="text-small font-medium text-ink-2">
                   {t("To goal")}
                 </label>
@@ -230,19 +230,19 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
               <Field
                 htmlFor="st-amount"
                 label={<span className="text-small font-medium text-ink-2">{t("Amount")}</span>}
-                error={over && from ? t("Only {amount} is saved in {goal}", { amount: formatCurrency(fromSaved, currency, locale), goal: from.name }) : undefined}
+                error={over && from ? t("Only {amount} is saved in {goal}", { amount: formatCurrency(fromSaved, currency, fmt), goal: from.name }) : undefined}
                 hint={
                   from && to && value > 0
-                    ? t("{goal} goes to {percent}% · {from} keeps {amount}", { goal: to.name, percent: formatCount(toAfter, locale), from: from.name, amount: formatCurrency(Math.max(0, fromSaved - value), currency, locale) })
+                    ? t("{goal} goes to {percent}% · {from} keeps {amount}", { goal: to.name, percent: formatCount(toAfter, fmt), from: from.name, amount: formatCurrency(Math.max(0, fromSaved - value), currency, fmt) })
                     : from
-                      ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(fromSaved, currency, locale), wallet: from.name })
+                      ? t("Up to {amount} available in {wallet}", { amount: formatCurrency(fromSaved, currency, fmt), wallet: from.name })
                       : undefined
                 }
               >
                 {/* Read out with the hint (what is there, what the move leaves);
                     when too much is typed, the error replaces it and the input
                     points at that instead. */}
-                <AmountInput id="st-amount" value={amount} onChange={setAmount} currency={currency} invalid={over} describedBy={from && !over ? "st-amount-hint" : undefined} />
+                <AmountInput id="st-amount" value={amount} onChange={setAmount} currency={currency} size="lg" invalid={over} describedBy={from && !over ? "st-amount-hint" : undefined} />
               </Field>
               <Field
                 htmlFor="st-note"
@@ -254,9 +254,9 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
               >
                 <Input id="st-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. Hajj comes first")} className="px-0" frameClassName="px-3" />
               </Field>
-              <Button type="submit" variant="action" size="lg" disabled={!valid || isPending} className="w-full">
+              <Button type="submit" size="lg" disabled={!valid || isPending} className="h-10.5 w-full">
                 {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-                {value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Move")}
+                {value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency, fmt) }) : t("Move")}
               </Button>
             </form>
           )}

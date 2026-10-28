@@ -3,7 +3,8 @@
 import Card from "@/components/smartly/Card";
 import { formatCurrency } from "@/lib/customer/currency";
 import { monthName, type MonthRate } from "@/lib/customer/insights";
-import { type Locale, useLocale } from "@/lib/i18n/LocaleProvider";
+import { type FormatLocale, redigit } from "@/lib/i18n/formatPrefs";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { Translate } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ interface KeptChartProps {
 
 // "October: ৳ 85,000 in, ৳ 25,000 kept", or "October so far: …" while it
 // is under way, when its salary is in but not all of its spending.
-function latestLine(point: MonthRate, soFar: boolean, currency: string, locale: Locale, t: Translate): string {
+function latestLine(point: MonthRate, soFar: boolean, currency: string, locale: FormatLocale, t: Translate): string {
   const values = { month: monthName(point.month, locale), income: formatCurrency(point.income, currency, locale), kept: formatCurrency(point.kept, currency, locale), over: formatCurrency(-point.kept, currency, locale) };
   if (point.kept < 0) return soFar ? t("{month} so far: {income} in, {over} more went out", values) : t("{month}: {income} in, {over} more went out", values);
   return soFar ? t("{month} so far: {income} in, {kept} kept", values) : t("{month}: {income} in, {kept} kept", values);
@@ -30,7 +31,7 @@ function latestLine(point: MonthRate, soFar: boolean, currency: string, locale: 
 // bar. The latest month is written out, and the six are a table for screen
 // readers, since a tap shows no tooltip.
 export function KeptChart({ rates, currency, partialMonth }: KeptChartProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const max = Math.max(...rates.map((r) => Math.max(r.income, -r.kept)), 1);
   const last = rates[rates.length - 1];
   const anyOverspent = rates.some((r) => r.kept < 0);
@@ -40,9 +41,9 @@ export function KeptChart({ rates, currency, partialMonth }: KeptChartProps) {
     <Card padding="sm" className="flex flex-col gap-3">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-h3 text-ink">{t("Income and what you kept")}</h2>
-        <span className="text-small text-ink-muted">{t("Last 6 months")}</span>
+        <span className="text-small text-ink-muted">{redigit(t("Last 6 months"), fmt)}</span>
       </div>
-      {last && <p className="text-small font-semibold text-ink-2">{latestLine(last, last.month === partialMonth, currency, locale, t)}</p>}
+      {last && <p className="text-small font-semibold text-ink-2">{latestLine(last, last.month === partialMonth, currency, fmt, t)}</p>}
       <div aria-hidden="true" className="flex gap-1">
         {rates.map((point) => {
           const overspent = point.kept < 0;
@@ -54,7 +55,7 @@ export function KeptChart({ rates, currency, partialMonth }: KeptChartProps) {
                 <span className={cn("w-3 rounded-t-sm bg-emerald", soFar && "opacity-60")} style={{ height: barHeight(point.income) }} />
                 <span className={cn("w-3 rounded-t-sm", overspent ? "bg-expense-fill" : "bg-mint-300", soFar && "opacity-60")} style={{ height: overspent ? Math.max(3, barHeight(-point.kept)) : barHeight(point.kept) }} />
               </div>
-              <span className={cn("text-caption", point === last ? "font-bold text-ink" : "font-normal text-ink-muted")}>{monthName(point.month, locale, "short")}</span>
+              <span className={cn("text-caption", point === last ? "font-bold text-ink" : "font-normal text-ink-muted")}>{monthName(point.month, fmt, "short")}</span>
             </div>
           );
         })}
@@ -87,9 +88,9 @@ export function KeptChart({ rates, currency, partialMonth }: KeptChartProps) {
         <tbody>
           {rates.map((point) => (
             <tr key={point.month}>
-              <th scope="row">{point.month === partialMonth ? t("{month} so far", { month: monthName(point.month, locale, "long", true) }) : monthName(point.month, locale, "long", true)}</th>
-              <td>{formatCurrency(point.income, currency, locale)}</td>
-              <td>{formatCurrency(point.kept, currency, locale)}</td>
+              <th scope="row">{point.month === partialMonth ? t("{month} so far", { month: monthName(point.month, fmt, "long", true) }) : monthName(point.month, fmt, "long", true)}</th>
+              <td>{formatCurrency(point.income, currency, fmt)}</td>
+              <td>{formatCurrency(point.kept, currency, fmt)}</td>
             </tr>
           ))}
         </tbody>

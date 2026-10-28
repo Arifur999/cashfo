@@ -14,6 +14,8 @@ export const generateMetadata = adminPageTitle("Revenue");
 // Finance roles only: proxy.ts keeps everyone else out of this route.
 const RevenuePage = async () => {
   const { data: overview } = await getRevenueOverview();
+  // An older backend has no count: the card then says what went back.
+  const fromReferrals = overview.paidPeople.joinedFromReferral ?? null;
 
   return (
     <ExportProvider>
@@ -26,7 +28,7 @@ const RevenuePage = async () => {
           <MrrHistoryCard history={overview.mrrHistory} />
           <ByPlanCard overview={overview} />
         </div>
-        <RevenueFacts overview={overview} />
+        <RevenueFacts overview={overview} fromReferrals={fromReferrals} />
       </div>
     </ExportProvider>
   );

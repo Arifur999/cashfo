@@ -4,13 +4,15 @@ import { TriangleAlert } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { createContext, use, useContext } from "react";
 import Banner from "@/components/smartly/Banner";
-import { LOGIN_ROUTE, REGISTER_ROUTE } from "@/lib/authUtils";
+import { LOGIN_ROUTE, REGISTER_ROUTE, VERIFY_EMAIL_ROUTE } from "@/lib/authUtils";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export interface MaintenanceState {
   enabled: boolean;
-  // The admin's own words, as typed (not translated).
+  // The admin's own words, as typed (not translated), and their Bangla
+  // when they wrote one.
   message: string;
+  messageBn?: string | null;
 }
 
 // The (auth) layout's one read of maintenance mode, handed down by AuthShell.
@@ -32,23 +34,25 @@ export function useMaintenance(): MaintenanceState | null {
 const PAGE_LINES: Record<string, string> = {
   [LOGIN_ROUTE]: "You can sign in; the app opens again when we're done.",
   [REGISTER_ROUTE]: "Sign-up is paused until then.",
+  [VERIFY_EMAIL_ROUTE]: "Confirming your email is paused until then; open the link again afterwards.",
 };
 const PASSWORD_LINE = "Password reset is paused until then; ask for a new link afterwards.";
 
 // While maintenance mode is on (Admin > Settings), the sign-in pages say so,
-// and what it means for the form below. Admins are unaffected. Marked as a
-// notice, so the phone hero card makes room for it.
+// and what it means for the form below. Admins are unaffected.
 export default function MaintenanceNotice() {
   const maintenance = useMaintenance();
   const pathname = usePathname();
-  const { t } = useLocale();
-  if (!maintenance?.enabled) return null;
+  const { locale, t } = useLocale();
+  // The admin panel's own pages (an invite, a reset) aren't paused.
+  if (!maintenance?.enabled || pathname.startsWith("/admin/")) return null;
+  const message = (locale === "bn" && maintenance.messageBn) || maintenance.message;
 
   return (
     <Banner tone="warning" inline icon={<TriangleAlert />} className="font-normal" data-auth-notice="">
       <p className="font-semibold">{t("Under maintenance")}</p>
       <p className="mt-0.5">{t(PAGE_LINES[pathname] ?? PASSWORD_LINE)}</p>
-      {maintenance.message && <p className="mt-1.5 whitespace-pre-line">{maintenance.message}</p>}
+      {message && <p className="mt-1.5 whitespace-pre-line">{message}</p>}
     </Banner>
   );
 }

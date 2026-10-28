@@ -31,7 +31,7 @@ interface QazaCardProps {
 // Qaza to make up: what is still owed, by prayer, against what was missed
 // since the counting day and what was made up; "I prayed a qaza" logs one.
 export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [qaza, setQaza] = useState(serverQaza);
   const [prevServer, setPrevServer] = useState(serverQaza);
@@ -42,7 +42,7 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isRetrying, startRetry] = useTransition();
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   function log(prayer: string) {
     startTransition(async () => {
@@ -51,14 +51,14 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
         setQaza(result.data);
         toast.success(t("{prayer} qaza saved", { prayer: t(prayer) }));
       } else {
-        toast.error(actionError(result.message, "Failed to save the qaza", t, locale));
+        toast.error(actionError(result.message, "Failed to save the qaza", t, fmt));
       }
     });
   }
 
   if (!qaza) {
     return (
-      <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+      <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4">
         <h2 className="text-title font-semibold text-ink">{t("Qaza to make up")}</h2>
         <ErrorState bordered={false} title={t("Couldn't load your qaza just now")} onRetry={isRetrying ? undefined : () => startRetry(() => router.refresh())} className="p-2" />
       </Card>
@@ -68,28 +68,28 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
   const missed = Object.values(qaza.missed).reduce((sum, n) => sum + n, 0);
   const madeUp = Object.values(qaza.madeUp).reduce((sum, n) => sum + n, 0);
   const share = missed > 0 ? Math.min(100, Math.round((madeUp / missed) * 100)) : 0;
-  const since = dayText(qaza.since, locale, "dayMonth");
+  const since = dayText(qaza.since, fmt, "dayMonth");
 
   return (
-    <Card padding="none" className="flex min-w-0 flex-col gap-3 px-5 py-4">
+    <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-md px-5 py-4">
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <h2 className="text-title font-semibold text-ink">{t("Qaza to make up")}</h2>
         <span className="text-caption text-ink-muted">{t("Counting from {date}", { date: since })}</span>
       </div>
       <div className="flex items-baseline gap-2">
-        <span className={cn("text-h1 tabular-nums", qaza.totalLeft > 0 ? "text-warning" : "text-income")}>{count(qaza.totalLeft)}</span>
-        <span className="text-body text-ink-2">{t(qaza.totalLeft === 1 ? "prayer left" : "prayers left")}</span>
+        <span className={cn("text-[30px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums", qaza.totalLeft > 0 ? "text-warning" : "text-income")}>{count(qaza.totalLeft)}</span>
+        <span className="text-body text-ink-soft">{t(qaza.totalLeft === 1 ? "prayer left" : "prayers left")}</span>
       </div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5 gap-1.5">
         {PRAYERS.map((prayer) => (
-          <span key={prayer} className={cn("flex min-w-0 flex-col items-center gap-0.5 rounded-md border py-2", qaza.left[prayer] > 0 ? "border-warning/30 bg-warning-soft text-warning" : "border-line bg-strip text-ink-muted")}>
-            <span className="text-title font-bold tabular-nums">{count(qaza.left[prayer] ?? 0)}</span>
-            <span className="max-w-full truncate px-0.5 text-caption">{t(prayer)}</span>
+          <span key={prayer} className={cn("flex min-w-0 flex-col items-center gap-0.5 rounded-sm border py-1.5", qaza.left[prayer] > 0 ? "border-warning-line bg-warning-50 text-warning-ink" : "border-line bg-strip text-ink-muted")}>
+            <span className="text-[15px] leading-[normal] font-bold tabular-nums">{count(qaza.left[prayer] ?? 0)}</span>
+            <span className="max-w-full truncate px-0.5 text-[11px]">{t(prayer)}</span>
           </span>
         ))}
       </div>
-      <div className="flex flex-col gap-1">
-        <div className="flex flex-wrap justify-between gap-x-3 text-small text-ink-2">
+      <div className="flex flex-col gap-1.25">
+        <div className="flex flex-wrap justify-between gap-x-3 text-[12.5px] text-ink-soft">
           <span>{t("{count} missed since {date}", { count: count(missed), date: since })}</span>
           <span className="font-semibold text-ink">{t("{count} made up", { count: count(madeUp) })}</span>
         </div>
@@ -97,13 +97,13 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
           <span className="block h-full rounded-full bg-warning-fill" style={{ width: `${share}%` }} />
         </span>
       </div>
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-divider pt-3">
-        <button type="button" onClick={() => setHistoryOpen(true)} className="flex min-h-9 items-center text-small font-semibold text-ink-2 hover:text-ink pointer-coarse:min-h-11">
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2.5 border-t border-divider pt-3">
+        <button type="button" onClick={() => setHistoryOpen(true)} className="flex min-h-9 items-center text-small font-semibold text-ink-soft hover:text-ink pointer-coarse:min-h-11">
           {t("History")}
         </button>
         <DropdownMenu>
-          <DropdownMenuTrigger disabled={isPending} className="flex h-8.5 items-center gap-2 rounded-md border border-warning-fill bg-warning-soft px-4 text-small font-semibold text-warning disabled:opacity-60 pointer-coarse:h-11">
-            {isPending ? <Loader /> : <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />}
+          <DropdownMenuTrigger disabled={isPending} className="flex h-8.5 items-center gap-1.5 rounded-sm border border-warning-fill bg-warning-50 px-3.5 text-small font-semibold text-warning-ink hover:bg-warning-soft disabled:opacity-60 pointer-coarse:h-11">
+            {isPending ? <Loader /> : <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />}
             {t("I prayed a qaza")}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={6} className="w-48 rounded-md border border-line bg-surface p-1.5 shadow-overlay ring-0">
@@ -132,7 +132,7 @@ interface QazaHistoryDialogProps {
 // The qaza made up lately (each can be taken back, after a check) and the
 // day counting starts from.
 function QazaHistoryDialog({ open, onClose, qaza, today, onChange }: QazaHistoryDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [since, setSince] = useState(qaza.since);
   const [removing, setRemoving] = useState<QazaSummary["recent"][number] | null>(null);
   const [prevOpen, setPrevOpen] = useState(false);
@@ -141,7 +141,7 @@ function QazaHistoryDialog({ open, onClose, qaza, today, onChange }: QazaHistory
     if (open) setSince(qaza.since);
   }
   const [isPending, startTransition] = useTransition();
-  const entryName = (entry: QazaSummary["recent"][number]) => (entry.count > 1 ? t("{prayer} × {count}", { prayer: t(entry.prayer), count: formatCount(entry.count, locale) }) : t(entry.prayer));
+  const entryName = (entry: QazaSummary["recent"][number]) => (entry.count > 1 ? t("{prayer} × {count}", { prayer: t(entry.prayer), count: formatCount(entry.count, fmt) }) : t(entry.prayer));
 
   function save(work: () => Promise<{ success: boolean; data?: QazaSummary; message?: string }>, done: string, after?: () => void) {
     startTransition(async () => {
@@ -151,7 +151,7 @@ function QazaHistoryDialog({ open, onClose, qaza, today, onChange }: QazaHistory
         toast.success(done);
         after?.();
       } else {
-        toast.error(actionError(result.message, "Failed to update", t, locale));
+        toast.error(actionError(result.message, "Failed to update", t, fmt));
       }
     });
   }
@@ -181,9 +181,9 @@ function QazaHistoryDialog({ open, onClose, qaza, today, onChange }: QazaHistory
                 <div key={entry.id} className="flex items-center gap-3 border-b border-divider px-6 py-3 last:border-b-0">
                   <span className="flex min-w-0 flex-1 flex-col gap-px">
                     <span className="text-body font-semibold text-ink">{entryName(entry)}</span>
-                    <span className="text-caption text-ink-muted">{dayText(entry.date, locale, "shortYear")}</span>
+                    <span className="text-caption text-ink-muted">{dayText(entry.date, fmt, "shortYear")}</span>
                   </span>
-                  <button type="button" disabled={isPending} onClick={() => setRemoving(entry)} aria-label={t("Remove {name}, {date}", { name: entryName(entry), date: dayText(entry.date, locale, "dayMonth") })} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-expense-soft hover:text-expense disabled:opacity-50 pointer-coarse:size-11">
+                  <button type="button" disabled={isPending} onClick={() => setRemoving(entry)} aria-label={t("Remove {name}, {date}", { name: entryName(entry), date: dayText(entry.date, fmt, "dayMonth") })} className="flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-expense-soft hover:text-expense disabled:opacity-50 pointer-coarse:size-11">
                     <Trash2 className="size-4" aria-hidden="true" />
                   </button>
                 </div>
@@ -198,7 +198,7 @@ function QazaHistoryDialog({ open, onClose, qaza, today, onChange }: QazaHistory
         onConfirm={() => removing && save(() => removeQazaAction(removing.id), t("Qaza removed"), () => setRemoving(null))}
         isPending={isPending}
         title={t("Take back this qaza?")}
-        description={removing ? t("{name} on {date} goes back onto what you owe.", { name: entryName(removing), date: dayText(removing.date, locale, "dayMonthYear") }) : ""}
+        description={removing ? t("{name} on {date} goes back onto what you owe.", { name: entryName(removing), date: dayText(removing.date, fmt, "dayMonthYear") }) : ""}
         confirmLabel={t("Take it back")}
       />
     </>

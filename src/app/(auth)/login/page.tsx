@@ -1,11 +1,7 @@
-import AuthFooterPrompt from "@/components/modules/Auth/AuthFooterPrompt";
-import AuthHeading from "@/components/modules/Auth/AuthHeading";
-import GoogleSignInButton from "@/components/modules/Auth/GoogleSignInButton";
-import LoginForm from "@/components/modules/Auth/LoginForm";
-import SignInNotices from "@/components/modules/Auth/SignInNotices";
+import SignInFlow from "@/components/modules/Auth/SignInFlow";
 import { publicPageTitle } from "@/components/modules/Legal/publicPageTitle";
-import OrDivider from "@/components/shared/OrDivider";
-import { REGISTER_ROUTE, SESSION_EXPIRED_REASON } from "@/lib/authUtils";
+import { SESSION_EXPIRED_REASON } from "@/lib/authUtils";
+import { getSignInStep } from "@/lib/tokenUtils";
 import { getSignInErrorMessage } from "@/lib/signInErrors";
 
 export const generateMetadata = publicPageTitle("Sign in");
@@ -14,27 +10,20 @@ const param = (value: string | string[] | undefined) => (typeof value === "strin
 
 // One sign-in page for the whole site: admins land in the admin panel,
 // customers in the app. After a session ends it says so, and with a
-// ?redirect= target brings them back to the page they were on. The (auth)
-// layout draws the frame around it.
+// ?redirect= target brings them back to the page they were on. A Google
+// sign-in with two-step on comes back here at the code (?step=two-step).
+// The (auth) layout draws the frame around it.
 const LoginPage = async ({ searchParams }: PageProps<"/login">) => {
-  const { redirect, reason, error } = await searchParams;
-  const redirectTo = param(redirect);
-  const sessionExpired = reason === SESSION_EXPIRED_REASON;
+  const { redirect, reason, error, step } = await searchParams;
+  const waiting = step === "two-step" ? await getSignInStep() : null;
 
   return (
-    <>
-      {sessionExpired ? (
-        // Only promise the way back when there is a page to go back to.
-        <AuthHeading title="You've been signed out" subtitle={redirectTo ? "Sign in again and we will take you back to the page you were on." : "Sign in again to carry on."} />
-      ) : (
-        <AuthHeading title="Welcome back" subtitle="Sign in to Smartly to pick up where you left off." />
-      )}
-      <SignInNotices sessionExpired={sessionExpired} signInError={getSignInErrorMessage(param(error))} />
-      <LoginForm redirectTo={redirectTo} again={sessionExpired} />
-      <OrDivider />
-      <GoogleSignInButton redirectTo={redirectTo} />
-      {!sessionExpired && <AuthFooterPrompt prompt="Don't have an account?" widePrompt="New to Smartly?" linkLabel="Create an account" href={REGISTER_ROUTE} />}
-    </>
+    <SignInFlow
+      redirectTo={param(redirect)}
+      sessionExpired={reason === SESSION_EXPIRED_REASON}
+      signInError={getSignInErrorMessage(param(error))}
+      initialStep={waiting && { kind: waiting.kind, email: waiting.email, audience: waiting.audience }}
+    />
   );
 };
 

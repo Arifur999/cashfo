@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, ChevronRight, ListChecks, MoreVertical, Pencil, Plus, Repeat, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRightToLine, Check, ListChecks, MoreVertical, Pencil, Plus, Repeat, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
-import Chip from "@/components/smartly/Chip";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import Input from "@/components/smartly/form/Input";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListGroupRow, ListRow, ListRowActions } from "@/components/smartly/list";
@@ -44,11 +43,11 @@ const STEP = 50;
 // done and what is left, and what is coming up after it. An open task on a
 // past day can be brought to today; on today or later it can move on.
 export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }: TodoBoardPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const todayTasks = useTodayTasks();
   const addField = useRef<HTMLInputElement>(null);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   // The server's lists, with each action's answer laid over them until the
   // next refresh brings the server's own copy.
@@ -73,7 +72,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   const done = byPriority(doneItems(list));
   const total = dayCount(list);
   const name = relativeName(day, today);
-  const heading = name ? `${t(name)} · ${dayLabel(day, locale)}` : dayLabel(day, locale);
+  const heading = name ? `${t(name)} · ${dayLabel(day, fmt)}` : dayLabel(day, fmt);
   // An open task on a past day comes to today; on today or later it moves on.
   const past = day < today;
   // A past copy of a repeating task stays put when its rule already has a
@@ -117,7 +116,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
       if (!target) {
         const created = await createTodoListAction(day);
         if (!created.success || !created.data) {
-          toast.error(actionError(created.message, "Failed to add task", t, locale));
+          toast.error(actionError(created.message, "Failed to add task", t, fmt));
           return;
         }
         target = created.data;
@@ -129,7 +128,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
         setTime(null);
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to add task", t, locale));
+        toast.error(actionError(result.message, "Failed to add task", t, fmt));
       }
     } finally {
       setAdding(false);
@@ -141,7 +140,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
     withBusy(item.id, async () => {
       const result = await updateTodoItemAction(list.id, item.id, { completed: !item.completed });
       if (result.success && result.data) absorb(result.data);
-      else toast.error(actionError(result.message, "Failed to update task", t, locale));
+      else toast.error(actionError(result.message, "Failed to update task", t, fmt));
     });
   }
 
@@ -156,7 +155,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
         // A move or a new repeat touches other days; the refresh brings them.
         if (changes.date || changes.repeat !== undefined) router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to update task", t, locale));
+        toast.error(actionError(result.message, "Failed to update task", t, fmt));
       }
     });
   }
@@ -164,7 +163,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   // "High · 10:00 am · every Thursday" under an upcoming task, with its day
   // first when it is later in the week.
   const upcomingSub = (item: TodoItem, when?: string) =>
-    [when && dayLabel(when, locale, "short"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t, locale), item.repeat && repeatLabel(item.repeat, t, locale, true)].filter(Boolean).join(" · ");
+    [when && dayLabel(when, fmt, "short"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t, fmt), item.repeat && repeatLabel(item.repeat, t, fmt, true)].filter(Boolean).join(" · ");
 
   async function moveOn(item: TodoItem, quiet = false): Promise<boolean> {
     if (!list) return false;
@@ -174,7 +173,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
       if (!quiet) toast.success(t("Moved to tomorrow"));
       return true;
     }
-    toast.error(actionError(result.message, "Failed to move task", t, locale));
+    toast.error(actionError(result.message, "Failed to move task", t, fmt));
     return false;
   }
 
@@ -187,7 +186,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
       if (!quiet) toast.success(t("Moved to today"));
       return true;
     }
-    toast.error(actionError(result.message, "Failed to move task", t, locale));
+    toast.error(actionError(result.message, "Failed to move task", t, fmt));
     return false;
   }
 
@@ -221,7 +220,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
         setRemoving(null);
         setEditing(null);
       } else {
-        toast.error(actionError(result.message, "Failed to remove task", t, locale));
+        toast.error(actionError(result.message, "Failed to remove task", t, fmt));
       }
     });
   }
@@ -229,10 +228,10 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   const moveLabel = past ? t("Move to today") : t("Move to tomorrow");
 
   const row = (item: TodoItem) => (
-    <ListRow key={item.id} density="relaxed" muted={busy.has(item.id)}>
+    <ListRow key={item.id} muted={busy.has(item.id)} className="min-h-15 gap-x-3 py-2 md:px-5 md:py-2">
       <ListCell>
         {/* The words tick the task too, not only its box. */}
-        <label className="flex min-w-0 cursor-pointer items-start gap-3">
+        <label className="flex min-w-0 cursor-pointer items-center gap-3">
           <button
             type="button"
             role="checkbox"
@@ -240,25 +239,25 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
             aria-label={item.text}
             disabled={busy.has(item.id)}
             onClick={() => toggle(item)}
-            className={cn("relative mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors after:absolute after:-inset-3 disabled:opacity-50", item.completed ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface hover:border-emerald")}
+            className={cn("relative flex size-5 shrink-0 items-center justify-center rounded-[6px] transition-colors after:absolute after:-inset-3 disabled:opacity-50", item.completed ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface hover:border-emerald")}
           >
-            {item.completed && <Check className="size-3.5" strokeWidth={3.5} aria-hidden="true" />}
+            {item.completed && <Check className="size-3.25" strokeWidth={3.5} aria-hidden="true" />}
           </button>
           <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className={cn("truncate text-body font-medium", item.completed ? "text-ink-muted line-through" : "text-ink")}>{item.text}</span>
+            <span className={cn("truncate text-[14.5px] leading-[normal] font-medium", item.completed ? "text-ink-faint line-through" : "text-ink")}>{item.text}</span>
             <TaskMeta item={item} day={day} />
           </span>
         </label>
       </ListCell>
       <ListRowActions>
         {canMove(item) && (
-          <Button type="button" variant="outline" size="sm" onClick={() => moveOne(item)} disabled={busy.has(item.id)} title={moveLabel} aria-label={`${moveLabel}: ${item.text}`} className="h-8 border-line px-2.5 text-ink-2 sm:px-3 pointer-coarse:h-11">
-            {past ? <ArrowLeft className="size-3.5" strokeWidth={2.5} /> : <ArrowRight className="size-3.5" strokeWidth={2.5} />}
+          <button type="button" onClick={() => moveOne(item)} disabled={busy.has(item.id)} title={moveLabel} aria-label={`${moveLabel}: ${item.text}`} className="flex h-8 shrink-0 items-center gap-1.5 rounded-sm border border-line bg-surface px-2.5 text-[12.5px] font-semibold whitespace-nowrap text-ink-soft transition-colors hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:h-11">
+            {past ? <ArrowLeft className="size-3.5" strokeWidth={2.25} aria-hidden="true" /> : <ArrowRightToLine className="size-3.5" strokeWidth={2.25} aria-hidden="true" />}
             <span className="hidden sm:inline">{past ? t("Today") : t("Tomorrow")}</span>
-          </Button>
+          </button>
         )}
         <DropdownMenu>
-          <DropdownMenuTrigger aria-label={t("More for {name}", { name: item.text })} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
+          <DropdownMenuTrigger aria-label={t("More for {name}", { name: item.text })} className="flex size-8 shrink-0 items-center justify-center rounded-sm text-ink-faint hover:bg-surface-sunken hover:text-ink-muted data-open:bg-surface-sunken pointer-coarse:size-11">
             <MoreVertical className="size-4" aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
@@ -276,9 +275,10 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
     </ListRow>
   );
 
-  // The second band draws a line between its group and the rows above it.
-  // The chip counts the whole group, though a long one shows a page at a time.
-  const group = (key: string, title: string, items: TodoItem[], shown = items.length, footer?: React.ReactNode, below = false) =>
+  // Each band draws a line above it, between it and the add row or the rows
+  // of the group before. The chip counts the whole group, though a long one
+  // shows a page at a time.
+  const group = (key: string, title: string, items: TodoItem[], shown = items.length, footer?: React.ReactNode) =>
     items.length > 0 && (
       <div key={key} role="rowgroup">
         {/* The count sits beside its group's name, as a chip. */}
@@ -286,12 +286,10 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
           label={
             <span className="inline-flex items-center gap-2">
               {title}
-              <Chip tone="neutral" size="sm" className="tabular-nums">
-                {count(items.length)}
-              </Chip>
+              <span className="rounded-full bg-line px-1.75 tracking-normal text-ink-soft tabular-nums">{count(items.length)}</span>
             </span>
           }
-          className={cn(below && "border-t border-line")}
+          className="border-t border-line bg-strip text-ink-muted uppercase tracking-[0.04em] md:px-5 *:[[role=cell]]:h-8"
         />
         {items.slice(0, shown).map(row)}
         {footer}
@@ -299,14 +297,12 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
     );
 
   return (
-    <PageFrame className="gap-4">
+    <PageFrame className="gap-4.5 md:pt-7">
       <PageHeader
-        eyebrow={t("Habits")}
-        tone="habits"
-        title={t("To-do list")}
+        title={t("To Do List")}
         description={t("Plan the day. Anything left unfinished can move to tomorrow.")}
         actions={
-          <Button onClick={() => addField.current?.focus()}>
+          <Button onClick={() => addField.current?.focus()} className="rounded-sm">
             <Plus strokeWidth={2.25} />
             {t("New task")}
           </Button>
@@ -319,26 +315,27 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
         <ListCard
           id={LIST_ID}
           label={heading}
+          className="rounded-md"
           header={
-            <div className="flex flex-col gap-3 border-b border-line px-4 pt-4 pb-4 md:px-6">
+            <div className={cn("flex flex-col gap-3 px-4 pt-4 pb-3.5 md:px-5", total.total === 0 && "border-b border-line")}>
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                 <div className="flex min-w-0 flex-col gap-0.5">
-                  <h2 className="text-h3 font-semibold text-ink">{heading}</h2>
-                  <span className="text-small text-ink-muted">{t("High priority first, then by time")}</span>
+                  <h2 className="text-[17px] leading-[normal] font-semibold text-ink">{heading}</h2>
+                  <span className="text-[12.5px] leading-[normal] text-ink-muted">{t("High priority first, then by time")}</span>
                 </div>
                 {total.total > 0 && (
-                  <span className="flex items-center gap-3 text-small text-ink-2">
-                    <b className="font-semibold text-ink">{doneOfText(total.done, total.total, t, locale)}</b>
+                  <span className="flex items-center gap-2.5 text-small text-ink-soft">
+                    <b className="font-semibold text-ink">{doneOfText(total.done, total.total, t, fmt)}</b>
                     <ProgressBar value={(total.done / total.total) * 100} label={t("Tasks done")} className="w-30" />
                   </span>
                 )}
               </div>
               {/* On a phone the words get the whole row; the rest goes under them. */}
               <form onSubmit={add} className="flex flex-wrap gap-2 sm:flex-nowrap">
-                <Input ref={addField} size="md" value={text} onChange={(event) => setText(event.target.value)} maxLength={200} placeholder={name === "Today" ? t("Add a task for today…") : t("Add a task for this day…")} aria-label={t("New task")} frameClassName="h-10 basis-full sm:basis-auto sm:flex-1 pointer-coarse:h-11" />
+                <Input ref={addField} size="md" value={text} onChange={(event) => setText(event.target.value)} maxLength={200} placeholder={name === "Today" ? t("Add a task for today…") : t("Add a task for this day…")} aria-label={t("New task")} frameClassName="h-10 basis-full rounded-sm border-input sm:basis-auto sm:flex-1 pointer-coarse:h-11" />
                 <PriorityMenu value={priority} onChange={setPriority} />
                 <TimeButton value={time} onChange={setTime} />
-                <Button type="submit" variant="action" disabled={adding} className="max-sm:flex-1 pointer-coarse:h-11">
+                <Button type="submit" variant="action" disabled={adding} className="rounded-sm shadow-none max-sm:flex-1 pointer-coarse:h-11">
                   {t("Add")}
                 </Button>
               </form>
@@ -346,12 +343,18 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
           }
           footer={
             total.total > 0 && (
-              <ListFooter className="bg-strip">
+              <ListFooter className="border-line bg-strip md:px-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-small text-ink-2">{open.length === 0 ? t("Everything is done for this day.") : t(open.length === 1 ? "{count} task is still open." : "{count} tasks are still open.", { count: count(open.length) })}</span>
+                  <span className="text-small text-ink-soft">
+                    {open.length === 0
+                      ? t("Everything is done for this day.")
+                      : name === "Today"
+                        ? t(open.length === 1 ? "{count} task is still open today." : "{count} tasks are still open today.", { count: count(open.length) })
+                        : t(open.length === 1 ? "{count} task is still open." : "{count} tasks are still open.", { count: count(open.length) })}
+                  </span>
                   {movable.length > 0 && (
-                    <Button variant="secondary" size="sm" onClick={moveAll} disabled={busy.has("all")} className="pointer-coarse:h-11">
-                      {past ? <ArrowLeft className="size-4" strokeWidth={2.5} /> : <ArrowRight className="size-4" strokeWidth={2.5} />}
+                    <Button variant="secondary" size="sm" onClick={moveAll} disabled={busy.has("all")} className="gap-1.5 rounded-sm pointer-coarse:h-11">
+                      {past ? <ArrowLeft className="size-3.5 text-ink-soft" strokeWidth={2.25} /> : <ArrowRightToLine className="size-3.5 text-ink-soft" strokeWidth={2.25} />}
                       {/* "All" only when it is all: a repeating task already on today stays. */}
                       {past && movable.length < open.length ? t("Move {count} to today", { count: count(movable.length) }) : past ? t(movable.length === 1 ? "Move it to today" : movable.length === 2 ? "Move both to today" : "Move all to today") : t(movable.length === 1 ? "Move it to tomorrow" : movable.length === 2 ? "Move both to tomorrow" : "Move all to tomorrow")}
                     </Button>
@@ -362,7 +365,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
           }
         >
           {total.total === 0 ? (
-            <ListEmpty icon={<ListChecks />} tone="habits" title={name === "Today" ? t("Nothing planned for today") : t("Nothing planned for this day")} description={t("Type a task above and press Enter.")} />
+            <ListEmpty icon={<ListChecks />} tone="money" title={name === "Today" ? t("Nothing planned for today") : t("Nothing planned for this day")} description={t("Type a task above and press Enter.")} />
           ) : (
             <>
               {group("open", t("To do"), open)}
@@ -378,7 +381,6 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
                     </div>
                   </div>
                 ),
-                open.length > 0,
               )}
             </>
           )}
@@ -386,21 +388,21 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
 
         <div className="flex flex-col gap-4">
           <UpcomingCard
-            title={[tomorrowName ? t(tomorrowName) : dayLabel(shiftDay(day, 1), locale, "weekday"), dayLabel(shiftDay(day, 1), locale, "short")].join(" · ")}
+            title={[tomorrowName ? t(tomorrowName) : dayLabel(shiftDay(day, 1), fmt, "weekday"), dayLabel(shiftDay(day, 1), fmt, "short")].join(" · ")}
             rows={byPriority(openItems(next.tomorrow)).map((item) => ({ key: item.id, text: item.text, sub: upcomingSub(item), priority: item.priority, day: shiftDay(day, 1) }))}
             empty={t("Nothing planned yet.")}
           />
           <UpcomingCard title={t("Later this week")} rows={next.later.map(({ day: when, item }) => ({ key: item.id, text: item.text, sub: upcomingSub(item, when), priority: item.priority, day: when }))} empty={t("Nothing planned yet.")} />
           {repeats.length > 0 && (
-            <Card padding="none" className="flex flex-col gap-2 px-5 py-4">
-              <h2 className="flex items-center gap-2 text-title font-semibold text-ink">
-                <Repeat className="size-4 text-pillar-habits" aria-hidden="true" />
+            <Card padding="none" className="flex flex-col gap-2 rounded-md px-4.5 py-3.5">
+              <h2 className="flex items-center gap-2 text-[15px] leading-[normal] font-semibold text-ink">
+                <Repeat className="size-3.75 text-emerald" aria-hidden="true" />
                 {t("Repeating tasks")}
               </h2>
               {repeats.map((rule) => (
-                <div key={rule.id} className="flex justify-between gap-3 text-small">
+                <div key={rule.id} className="flex justify-between gap-2.5 text-small">
                   <span className="min-w-0 truncate font-medium text-ink">{rule.text}</span>
-                  <span className="whitespace-nowrap text-ink-muted">{repeatLabel(rule, t, locale)}</span>
+                  <span className="whitespace-nowrap text-ink-muted">{repeatLabel(rule, t, fmt)}</span>
                 </div>
               ))}
             </Card>
@@ -424,24 +426,24 @@ interface UpcomingRow {
 }
 
 function UpcomingCard({ title, rows, empty }: { title: string; rows: UpcomingRow[]; empty: string }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   return (
-    <Card padding="none" className="flex flex-col gap-1 px-5 py-4">
-      <div className="flex items-center justify-between gap-3 pb-1">
-        <h2 className="truncate text-title font-semibold text-ink">{title}</h2>
-        <span className="shrink-0 text-caption text-ink-muted">{t(rows.length === 1 ? "{count} task" : "{count} tasks", { count: formatCount(rows.length, locale) })}</span>
+    <Card padding="none" className="flex flex-col gap-2 rounded-md px-4.5 py-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="truncate text-[15px] leading-[normal] font-semibold text-ink">{title}</h2>
+        <span className="shrink-0 text-caption text-ink-muted">{t(rows.length === 1 ? "{count} task" : "{count} tasks", { count: formatCount(rows.length, fmt) })}</span>
       </div>
       {rows.length === 0 ? (
-        <span className="py-2 text-small text-ink-muted">{empty}</span>
+        <span className="py-1.5 text-small text-ink-muted">{empty}</span>
       ) : (
+        // Each task opens its day.
         rows.map((row) => (
-          <Link key={row.key} href={dayHref(row.day)} className="-mx-2 flex items-start gap-3 rounded-md px-2 py-2 transition-colors hover:bg-hover">
-            <span className={cn("mt-2 size-2 shrink-0 rounded-full", PRIORITY_TONE[row.priority].dot)} aria-hidden="true" />
+          <Link key={row.key} href={dayHref(row.day)} className="-mx-2 flex items-start gap-2.5 rounded-sm px-2 py-1.5 transition-colors hover:bg-hover">
+            <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", PRIORITY_TONE[row.priority].dot)} aria-hidden="true" />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="truncate text-body font-medium text-ink">{row.text}</span>
+              <span className="truncate text-[13.5px] leading-[normal] font-medium text-ink">{row.text}</span>
               {row.sub && <span className="text-caption text-ink-muted">{row.sub}</span>}
             </span>
-            <ChevronRight className="mt-1 size-4 shrink-0 text-ink-faint" aria-hidden="true" />
           </Link>
         ))
       )}

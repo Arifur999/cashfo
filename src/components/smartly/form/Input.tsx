@@ -14,8 +14,8 @@ interface InputProps extends Omit<React.ComponentProps<"input">, "size"> {
 // A text input in the design's frame. Pass `invalid` with the Field's error
 // so the border turns red together with the message.
 const Input = ({ size = "lg", invalid = false, leading, trailing, frameClassName, className, id, ...props }: InputProps) => (
-  <InputFrame size={size} invalid={invalid} className={cn(trailing && "pr-1", frameClassName)}>
-    {leading && <span className={cn("flex shrink-0 items-center text-ink-muted [&_svg]:size-4", size === "signIn" && "md:hidden")}>{leading}</span>}
+  <InputFrame size={size} invalid={invalid} className={cn(trailing && (size === "auth" ? "pr-0.5" : "pr-1"), frameClassName)}>
+    {leading && <span className={cn("flex shrink-0 items-center text-ink-muted [&_svg]:size-4", size === "auth" && "text-ink-faint [&_svg]:size-4.5")}>{leading}</span>}
     <input
       id={id}
       aria-invalid={invalid || undefined}

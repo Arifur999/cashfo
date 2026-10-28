@@ -1,9 +1,10 @@
 "use client";
 
-import { Camera, ImagePlus, Trash2, WifiOff, X } from "lucide-react";
+import { Camera, ImagePlus, Landmark, Trash2, Users, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useId, useRef, useState, useTransition } from "react";
+import { createElement, useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import Loader from "@/components/shared/Loader";
@@ -11,9 +12,7 @@ import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAmountField } from "@/hooks/useAmountField";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
 import { createContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
@@ -42,6 +41,8 @@ const BALANCE_KINDS: { value: BalanceKind; label: string; on: string }[] = [
 ];
 const BALANCE_VALUES = BALANCE_KINDS.map((option) => option.value);
 const CATEGORIES: ContactCategory[] = ["LOAN", "BUSINESS"];
+// The photo tile before one is added: a bank or NGO in its own colours.
+const KIND_TILE: Partial<Record<ContactType, string>> = { BANK: "bg-info-soft text-info", NGO: "bg-pillar-insights-soft text-pillar-insights" };
 
 // Loose on purpose: the API takes any text, this only catches a slip.
 const EMAIL = /^\S+@\S+\.\S+$/;
@@ -51,10 +52,9 @@ const EMAIL = /^\S+@\S+\.\S+$/;
 // them or trade with them, a phone or an email, the address, and -- for a
 // new one -- where the balance stands now.
 export function LoanContactDrawer({ open, onClose, businessId, editing, currency, canTrade }: LoanContactDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const online = useOnline();
-  const wide = useMediaQuery("(min-width: 768px)");
   const groupId = useId();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -115,7 +115,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
   // Moving a contact with a loan history to Books takes them, and their
   // entries, out of every Loans page.
   const hasLoanHistory = !!editing && (!!editing.lastActivityAt || Number(editing.currentBalance) !== 0 || Number(editing.openingBalance) !== 0);
-  const money = (figure: number) => formatCurrency(figure, currency, locale);
+  const money = (figure: number) => formatCurrency(figure, currency, fmt);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -168,178 +168,168 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
   const photoLabel = photoUrl ? t("Change photo or logo") : t("Upload photo or logo");
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent
-        side={wide ? "right" : "bottom"}
-        showCloseButton={false}
-        className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-117.5 shadow-drawer data-[side=right]:sm:max-w-117.5" : "rounded-t-xl data-[side=bottom]:h-[92vh]")}
-      >
-        <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-5" : "px-4 pt-4 pb-2")}>
-          <div className="flex flex-col gap-1">
-            <SheetTitle className="text-h3 text-ink">{editing ? t("Edit contact") : t("Add contact")}</SheetTitle>
-            <SheetDescription className="text-small leading-[normal] text-ink-muted">{t("A person, bank or NGO you lend to or borrow from.")}</SheetDescription>
+    <Drawer
+      open={open}
+      width={470}
+      title={editing ? t("Edit contact") : t("Add contact")}
+      description={t("A person, bank or NGO you lend to or borrow from.")}
+      busy={isPending}
+      onClose={onClose}
+      onSubmit={submit}
+      footer={
+        <div className="flex w-full flex-col gap-2">
+          {!online && (
+            <p role="status" className="flex items-center gap-2 text-caption text-warning">
+              <WifiOff className="size-3.5 shrink-0" aria-hidden="true" />
+              {t("You're offline. Saving waits until the internet is back.")}
+            </p>
+          )}
+          <div className="flex items-center justify-end gap-2.5">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" disabled={!valid || isPending || uploading || !online} className="px-4.5">
+              {isPending && <Loader size={16} onDark label={t("Loading...")} />}
+              {editing ? t("Save changes") : t("Add contact")}
+            </Button>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken">
-            <X className="size-4.5" aria-hidden="true" />
+        </div>
+      }
+    >
+      {/* The board's 16px between fields, a touch closer than other drawers. */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-end gap-3">
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            disabled={uploading}
+            aria-label={photoLabel}
+            title={photoLabel}
+            className={cn("relative flex size-13 shrink-0 items-center justify-center overflow-visible rounded-md border border-dashed border-input disabled:opacity-60", KIND_TILE[type] ?? "bg-surface-sunken text-ink-2")}
+          >
+            {photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photoUrl} alt="" className="size-full rounded-md object-cover" />
+            ) : uploading ? (
+              <Loader size={18} label={t("Loading...")} />
+            ) : (
+              // What they are, as the board draws a bank; anyone else, a photo to add.
+              createElement(type === "BANK" ? Landmark : type === "NGO" ? Users : ImagePlus, { className: "size-5.5", "aria-hidden": true })
+            )}
+            <span aria-hidden="true" className="absolute -right-1.5 -bottom-1.5 flex size-5.5 items-center justify-center rounded-full border border-line bg-surface text-ink-soft">
+              <Camera className="size-3" strokeWidth={2.25} />
+            </span>
           </button>
-        </SheetHeader>
+          <input ref={fileInput} type="file" accept="image/*" onChange={choosePhoto} className="hidden" />
+          <Field htmlFor="ct-name" label={label(t("Name"))} className="flex-1">
+            <Input id="ct-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("e.g. Arif, or Islami Bank")} />
+          </Field>
+        </div>
+        {photoUrl && (
+          <button type="button" onClick={() => setPhotoUrl("")} disabled={uploading} className="-mt-2 inline-flex w-fit items-center gap-1.5 rounded-sm text-caption font-semibold text-expense hover:underline disabled:opacity-60">
+            <Trash2 className="size-3.5" aria-hidden="true" />
+            {t("Remove photo")}
+          </button>
+        )}
 
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
-            <div className="flex items-end gap-3">
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                disabled={uploading}
-                aria-label={photoLabel}
-                title={photoLabel}
-                className="relative flex size-13 shrink-0 items-center justify-center overflow-visible rounded-lg border border-dashed border-line-strong bg-info-soft text-info disabled:opacity-60"
-              >
-                {photoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photoUrl} alt="" className="size-full rounded-lg object-cover" />
-                ) : uploading ? (
-                  <Loader size={18} label={t("Loading...")} />
-                ) : (
-                  <ImagePlus className="size-5.5" aria-hidden="true" />
-                )}
-                <span aria-hidden="true" className="absolute -right-1.5 -bottom-1.5 flex size-5.5 items-center justify-center rounded-full border border-line bg-surface text-ink-2">
-                  <Camera className="size-3" />
-                </span>
-              </button>
-              <input ref={fileInput} type="file" accept="image/*" onChange={choosePhoto} className="hidden" />
-              <Field htmlFor="ct-name" label={label(t("Name"))} className="flex-1">
-                <Input id="ct-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("e.g. Arif, or Islami Bank")} />
-              </Field>
-            </div>
-            {photoUrl && (
-              <button type="button" onClick={() => setPhotoUrl("")} disabled={uploading} className="-mt-2 inline-flex w-fit items-center gap-1.5 rounded-sm text-caption font-semibold text-expense hover:underline disabled:opacity-60">
-                <Trash2 className="size-3.5" aria-hidden="true" />
-                {t("Remove photo")}
-              </button>
-            )}
-
-            <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend id={`${groupId}-kind`} className="mb-2 text-body leading-[normal] font-medium text-ink">
-                {t("Who is this?")}
-              </legend>
-              <div role="radiogroup" aria-labelledby={`${groupId}-kind`} className="flex flex-wrap gap-2">
-                {LOAN_KINDS.map((kind) => {
-                  const on = kind === type;
-                  return (
-                    <button key={kind} {...radioProps(kind, { values: LOAN_KINDS, value: type, onChange: setType })} className={cn("h-8.5 rounded-full border px-3 text-small transition-colors pointer-coarse:h-11", on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
-                      {t(LOAN_KIND_LABELS[kind])}
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            {canTrade && (
-              <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-                <legend id={`${groupId}-category`} className="mb-2 text-body leading-[normal] font-medium text-ink">
-                  {t("What do you do with them?")}
-                </legend>
-                <div role="radiogroup" aria-labelledby={`${groupId}-category`} aria-describedby={`${groupId}-category-hint`} className="grid grid-cols-2 gap-2">
-                  {(
-                    [
-                      { value: "LOAN", title: "Loan", sub: "Lend or borrow money" },
-                      { value: "BUSINESS", title: "Trade", sub: "Sell or buy on credit" },
-                    ] as const
-                  ).map((option) => {
-                    const on = option.value === category;
-                    return (
-                      <button key={option.value} {...radioProps(option.value, { values: CATEGORIES, value: category, onChange: setCategory })} className={cn("flex flex-col items-start gap-0.5 rounded-md border p-3 text-left transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
-                        <span className={cn("text-small font-semibold", on ? "text-emerald" : "text-ink")}>{t(option.title)}</span>
-                        <span className={cn("text-caption font-normal", on ? "text-ink-2" : "text-ink-muted")}>{t(option.sub)}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <span id={`${groupId}-category-hint`} className="text-caption font-normal text-ink-muted">
-                  {t("Trade contacts are kept in Books › Customers & suppliers, not in Loans.")}
-                </span>
-              </fieldset>
-            )}
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field
-                htmlFor="ct-phone"
-                label={label(t("Phone"))}
-                hint={t("A phone or an email is needed, so they can be reached.")}
-                error={reachError ? t("Add a phone or an email, so they can be reached.") : undefined}
-              >
-                <Input id="ct-phone" size="md" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="01XXX-XXXXXX" invalid={reachError} aria-describedby={reachError ? "ct-phone-error" : "ct-phone-hint"} className="px-0" frameClassName="px-3" />
-              </Field>
-              <Field htmlFor="ct-email" label={label(t("Email"))} error={!emailOk ? t("Enter a valid email") : undefined}>
-                <Input id="ct-email" size="md" type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={120} placeholder="name@example.com" invalid={!emailOk} autoComplete="off" className="px-0" frameClassName="px-3" />
-              </Field>
-            </div>
-            <Field htmlFor="ct-address" label={label(t("Address"), true)}>
-              <Input id="ct-address" size="md" value={address} onChange={(event) => setAddress(event.target.value)} maxLength={200} placeholder={t("Motijheel branch")} className="px-0" frameClassName="px-3" />
-            </Field>
-
-            {!editing && (
-              <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-                <legend id={`${groupId}-balance`} className="mb-2 text-body leading-[normal] font-medium text-ink">
-                  {t("Balance right now")} <span className="font-normal text-ink-muted">({t("optional")})</span>
-                </legend>
-                <div role="radiogroup" aria-labelledby={`${groupId}-balance`} className="grid grid-cols-3 gap-1 rounded-md bg-surface-sunken p-1">
-                  {BALANCE_KINDS.map((option) => {
-                    const on = option.value === balanceKind;
-                    return (
-                      <button key={option.value} {...radioProps(option.value, { values: BALANCE_VALUES, value: balanceKind, onChange: setBalanceKind })} className={cn("h-9 rounded-sm text-small transition-colors pointer-coarse:h-11", on ? cn("bg-surface font-semibold shadow-card", option.on) : "font-medium text-ink-2 hover:text-ink")}>
-                        {t(option.label)}
-                      </button>
-                    );
-                  })}
-                </div>
-                {balanceKind !== "ZERO" && (
-                  <>
-                    <Input
-                      size="xl"
-                      type="text"
-                      inputMode="decimal"
-                      {...openingBalanceField}
-                      placeholder="0"
-                      aria-label={t("Opening balance")}
-                      autoFocus
-                      leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>}
-                      frameClassName="gap-0 overflow-hidden pl-0"
-                      className="pl-4 text-h2 font-bold tabular-nums"
-                    />
-                    <span className={cn("flex items-center gap-2 text-caption font-normal", direction.text)}>
-                      <Chip tone={direction.chip} size="sm">
-                        {t(direction.name)}
-                      </Chip>
-                      <span className="min-w-0">{t(balanceKind === "DENA" ? "{name} starts with {amount} you owe them." : "{name} starts with {amount} they owe you.", { name: shownName, amount: money(amount) })}</span>
-                    </span>
-                  </>
-                )}
-              </fieldset>
-            )}
+        <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
+          <legend id={`${groupId}-kind`} className="mb-2 text-body leading-[normal] font-medium text-ink">
+            {t("Who is this?")}
+          </legend>
+          <div role="radiogroup" aria-labelledby={`${groupId}-kind`} className="flex flex-wrap gap-1.5">
+            {LOAN_KINDS.map((kind) => {
+              const on = kind === type;
+              return (
+                <button key={kind} {...radioProps(kind, { values: LOAN_KINDS, value: type, onChange: setType })} className={cn("h-8.5 rounded-full border px-3 text-small transition-colors pointer-coarse:h-11", on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
+                  {t(LOAN_KIND_LABELS[kind])}
+                </button>
+              );
+            })}
           </div>
+        </fieldset>
 
-          <div className={cn("flex flex-col gap-2 border-t border-line bg-surface", wide ? "px-6 py-4" : "px-4 pt-3 pb-6")}>
-            {!online && (
-              <p role="status" className="flex items-center gap-2 text-caption text-warning">
-                <WifiOff className="size-3.5 shrink-0" aria-hidden="true" />
-                {t("You're offline. Saving waits until the internet is back.")}
-              </p>
-            )}
-            <div className="flex items-center justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" variant="action" disabled={!valid || isPending || uploading || !online} className="px-5">
-                {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-                {editing ? t("Save changes") : t("Add contact")}
-              </Button>
+        {canTrade && (
+          <fieldset className="m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0">
+            <legend id={`${groupId}-category`} className="mb-2 text-body leading-[normal] font-medium text-ink">
+              {t("What do you do with them?")}
+            </legend>
+            <div role="radiogroup" aria-labelledby={`${groupId}-category`} aria-describedby={`${groupId}-category-hint`} className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { value: "LOAN", title: "Loan", sub: "Lend or borrow money" },
+                  { value: "BUSINESS", title: "Trade", sub: "Sell or buy on credit" },
+                ] as const
+              ).map((option) => {
+                const on = option.value === category;
+                return (
+                  <button key={option.value} {...radioProps(option.value, { values: CATEGORIES, value: category, onChange: setCategory })} className={cn("flex flex-col items-start gap-0.5 rounded-field border px-3 py-2.5 text-left transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
+                    <span className={cn("text-small font-semibold", on ? "text-emerald" : "text-ink")}>{t(option.title)}</span>
+                    <span className={cn("text-caption font-normal", on ? "text-ink-soft" : "text-ink-muted")}>{t(option.sub)}</span>
+                  </button>
+                );
+              })}
             </div>
-          </div>
-        </form>
-        {confirmDialog}
-      </SheetContent>
-    </Sheet>
+            <span id={`${groupId}-category-hint`} className="text-caption font-normal text-ink-muted">
+              {t("Trade contacts are kept in Books › Customers & suppliers, not in Loans.")}
+            </span>
+          </fieldset>
+        )}
+
+        {/* The board's phone and address side by side; the email under them
+            (a phone or an email is needed, so they can be reached). */}
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <Field htmlFor="ct-phone" label={label(t("Phone"))} error={reachError ? t("Add a phone or an email, so they can be reached.") : undefined}>
+            <Input id="ct-phone" size="md" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="01XXX-XXXXXX" invalid={reachError} aria-describedby={reachError ? "ct-phone-error" : "ct-email-hint"} className="px-0" frameClassName="px-3" />
+          </Field>
+          <Field htmlFor="ct-address" label={label(t("Address"), true)}>
+            <Input id="ct-address" size="md" value={address} onChange={(event) => setAddress(event.target.value)} maxLength={200} placeholder={t("Motijheel branch")} className="px-0" frameClassName="px-3" />
+          </Field>
+        </div>
+        <Field htmlFor="ct-email" label={label(t("Email"))} hint={t("A phone or an email is needed, so they can be reached.")} error={!emailOk ? t("Enter a valid email") : undefined}>
+          <Input id="ct-email" size="md" type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={120} placeholder="name@example.com" invalid={!emailOk} autoComplete="off" className="px-0" frameClassName="px-3" />
+        </Field>
+
+        {!editing && (
+          <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
+            <legend id={`${groupId}-balance`} className="mb-2 text-body leading-[normal] font-medium text-ink">
+              {t("Balance right now")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+            </legend>
+            <div role="radiogroup" aria-labelledby={`${groupId}-balance`} className="grid grid-cols-3 gap-1 rounded-full bg-surface-sunken p-1">
+              {BALANCE_KINDS.map((option) => {
+                const on = option.value === balanceKind;
+                return (
+                  <button key={option.value} {...radioProps(option.value, { values: BALANCE_VALUES, value: balanceKind, onChange: setBalanceKind })} className={cn("h-9 rounded-full text-small transition-colors pointer-coarse:h-11", on ? cn("bg-surface font-semibold shadow-[0_1px_3px_rgba(18,32,29,0.12)]", option.on) : "font-medium text-ink-soft hover:text-ink")}>
+                    {t(option.label)}
+                  </button>
+                );
+              })}
+            </div>
+            {balanceKind !== "ZERO" && (
+              <>
+                <Input
+                  size="xl"
+                  type="text"
+                  inputMode="decimal"
+                  {...openingBalanceField}
+                  placeholder="0"
+                  aria-label={t("Opening balance")}
+                  autoFocus
+                  leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-soft">{currencySymbol(currency)}</span>}
+                  frameClassName="h-13 gap-0 overflow-hidden rounded-sm pl-0"
+                  className="pl-3.5 text-[20px] font-bold tabular-nums"
+                />
+                <span className={cn("flex items-center gap-1.5 text-caption font-normal", direction.text)}>
+                  <Chip tone={direction.chip} size="sm" className="font-bold">
+                    {t(direction.name)}
+                  </Chip>
+                  <span className="min-w-0">{t(balanceKind === "DENA" ? "{name} starts with {amount} you owe them." : "{name} starts with {amount} they owe you.", { name: shownName, amount: money(amount) })}</span>
+                </span>
+              </>
+            )}
+          </fieldset>
+        )}
+      </div>
+      {confirmDialog}
+    </Drawer>
   );
 }

@@ -1,4 +1,5 @@
 import { formatCount } from "@/lib/i18n/digits";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { localName, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 import { paginate } from "@/lib/table/paginate";
@@ -25,7 +26,7 @@ export const LOAN_KINDS: ContactType[] = ["BOTH", "RELATIVE", "BANK", "NGO", "CU
 // Who a total is with, as the dashboard's cards say it: "3 contacts", or
 // "1 bank and 1 NGO" once banks and NGOs are among them. Counts are in the
 // reader's digits.
-export function whoPhrase(kinds: (ContactType | undefined)[], t: Translate, locale: Locale = "en"): string {
+export function whoPhrase(kinds: (ContactType | undefined)[], t: Translate, locale: FormatLocale = "en"): string {
   const banks = kinds.filter((kind) => kind === "BANK").length;
   const ngos = kinds.filter((kind) => kind === "NGO").length;
   const others = kinds.length - banks - ngos;
@@ -58,8 +59,8 @@ export interface DirectionMeta {
 }
 
 export const DIRECTION_META: Record<LoanBalanceDirection, DirectionMeta> = {
-  PAWNA: { name: "Pawna", label: "They owe you", short: "owes you", chip: "income", text: "text-income", box: "bg-mint-50" },
-  DENA: { name: "Dena", label: "You owe them", short: "you owe", chip: "expense", text: "text-expense", box: "bg-expense-soft" },
+  PAWNA: { name: "Pawna", label: "They owe you", short: "owes you", chip: "income", text: "text-income", box: "bg-mint-50/50" },
+  DENA: { name: "Dena", label: "You owe them", short: "you owe", chip: "expense", text: "text-expense", box: "bg-expense-soft/50" },
   SETTLED: { name: "Settled", label: "Nothing outstanding", short: "Settled", chip: "neutral", text: "text-ink-muted", box: "bg-strip" },
 };
 

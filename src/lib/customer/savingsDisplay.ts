@@ -1,16 +1,17 @@
 import { formatCount } from "@/lib/i18n/digits";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import type { Account, SavingsEntryType, SavingsGoal, SavingsGoalStatus, SavingsGoalTrend } from "./api";
 import { formatCurrency } from "./currency";
 import type { WalletPalette } from "./walletVisuals";
 
-// The ring colours the design gives goals, cycled by position; a paused or
-// withdrawn goal goes grey.
-const GOAL_COLORS = ["var(--pillar-insights)", "var(--emerald)", "var(--pillar-loans)", "var(--pillar-habits)", "var(--info)"];
+// The ring colours the design gives goals, cycled by position (the board's
+// first two wear the primary, the third orange); a paused or withdrawn goal
+// goes grey.
+const GOAL_COLORS = ["var(--emerald)", "var(--emerald)", "var(--cat-2)", "var(--cat-3)", "var(--cat-4)"];
 
 export function goalColor(index: number, status: SavingsGoalStatus): string {
-  if (status === "PAUSED" || status === "WITHDRAWN") return "var(--ink-muted)";
+  if (status === "PAUSED" || status === "WITHDRAWN") return "var(--ink-faint)";
   return GOAL_COLORS[((index % GOAL_COLORS.length) + GOAL_COLORS.length) % GOAL_COLORS.length];
 }
 
@@ -76,7 +77,7 @@ export function timeLeft(targetDate: string, today: string): TimeLeft {
 
 // The same in words: "8 months left" (in the reader's digits), "Less than a
 // month left" or "Past its date".
-export function timeLeftText(targetDate: string, today: string, t: Translate, locale: Locale): string {
+export function timeLeftText(targetDate: string, today: string, t: Translate, locale: FormatLocale): string {
   const left = timeLeft(targetDate, today);
   if (left.kind === "past") return t("Past its date");
   if (left.kind === "under-a-month") return t("Less than a month left");
@@ -172,7 +173,7 @@ const PATTERNS: { pattern: RegExp; key: string }[] = [
   { pattern: /^"(.+)" has been withdrawn -- pick another goal/, key: "{name} has been withdrawn. Pick another goal to move the money to." },
 ];
 
-export function savingsError(message: string | undefined, fallback: string, t: Translate, currency: string, locale: Locale = "en"): string {
+export function savingsError(message: string | undefined, fallback: string, t: Translate, currency: string, locale: FormatLocale = "en"): string {
   if (!message) return t(fallback);
   for (const { pattern, key } of PATTERNS) {
     const match = message.match(pattern);

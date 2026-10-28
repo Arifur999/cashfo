@@ -33,12 +33,12 @@ interface AmountTextProps extends Omit<React.ComponentProps<"span">, "children">
 // Money, always in tabular figures so columns of it line up, in the reader's
 // digits (Bangla readers get "৳ ১২,৫০০").
 const AmountText = ({ value, currency = "BDT", size = "md", tone = "neutral", signed = false, className, ...props }: AmountTextProps) => {
-  const { locale } = useLocale();
+  const { fmt } = useLocale();
   const amount = Number(value);
   const resolvedTone = tone === "auto" ? (amount > 0 ? "income" : amount < 0 ? "expense" : "neutral") : tone;
   return (
     <span className={cn("tabular-nums", SIZES[size], TONES[resolvedTone], className)} {...props}>
-      {signed ? formatSignedCurrency(amount, currency, locale) : formatCurrency(amount, currency, locale)}
+      {signed ? formatSignedCurrency(amount, currency, fmt) : formatCurrency(amount, currency, fmt)}
     </span>
   );
 };

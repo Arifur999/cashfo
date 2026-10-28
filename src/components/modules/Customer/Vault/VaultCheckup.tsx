@@ -33,7 +33,7 @@ interface VaultCheckupProps {
 // Each group's look and words, in the board's order.
 const GROUPS: { issue: VaultIssue; title: string; why: string; tag: string; icon: typeof Copy; tile: string; count: string; bar: string; legend: string }[] = [
   { issue: "reused", title: "Same password on more than one site", why: "These logins share a password with another. If one site leaks it, the others are open too.", tag: "Reused", icon: Copy, tile: "bg-expense-soft text-expense", count: "text-expense", bar: "bg-expense-fill", legend: "{count} reused" },
-  { issue: "weak", title: "Weak password", why: "Short or easy to guess. Use Generate when you change it.", tag: "Weak", icon: TriangleAlert, tile: "bg-pillar-loans-soft text-pillar-loans", count: "text-pillar-loans", bar: "bg-pillar-loans", legend: "{count} weak" },
+  { issue: "weak", title: "Weak password", why: "Short or easy to guess. Use Generate when you change it.", tag: "Weak", icon: TriangleAlert, tile: "bg-orange-soft text-orange", count: "text-orange", bar: "bg-orange-fill", legend: "{count} weak" },
   { issue: "old", title: "Not changed for over a year", why: "Old passwords are more likely to have leaked somewhere. Bank and email logins matter most.", tag: "", icon: Clock, tile: "bg-warning-soft text-warning", count: "text-warning", bar: "bg-warning-fill", legend: "{count} older than a year" },
 ];
 
@@ -44,18 +44,18 @@ const ROW_BUTTON = "h-8.5 px-3 text-small pointer-coarse:h-11";
 // reused, weak and year-old ones, each with Change and (for an old one)
 // It's fine. It never shows a password.
 export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, onChange, onFine }: VaultCheckupProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const back = (
-    <button type="button" onClick={onBack} className="-ml-2 flex w-fit items-center gap-2 rounded-md px-2 text-body font-medium text-ink-2 hover:text-ink pointer-coarse:min-h-11">
+    <button type="button" onClick={onBack} className="-my-1 -ml-1 flex min-h-7 w-fit items-center gap-1.5 rounded-md px-1 text-[13.5px] font-medium text-ink-soft hover:text-ink pointer-coarse:min-h-11">
       <ChevronLeft className="size-4" aria-hidden="true" />
-      {t("Password vault")}
+      {t("Password Manager")}
     </button>
   );
 
   // With no answer on hand the step stays open and says why, never "fine".
   if (!checkup) {
     return (
-      <div className="flex max-w-245 flex-col gap-4">
+      <div className="-mt-1 flex max-w-245 flex-col gap-4.5">
         {back}
         {failed ? (
           <ErrorState title={t("The security checkup couldn't run.")} onRetry={onRetry} />
@@ -69,7 +69,7 @@ export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, 
   }
 
   const now = new Date();
-  const count = (value: number) => formatCount(value, locale);
+  const count = (value: number) => formatCount(value, fmt);
   const flagged = attentionIds(checkup).size;
   // The bar counts each login once, by its worst issue, so it adds up to
   // the logins there are. The legend counts a login under every issue it
@@ -84,15 +84,15 @@ export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, 
       : t("All {total} of your logins look fine", { total: count(entries.length) });
 
   return (
-    <div className="flex max-w-245 flex-col gap-4">
+    <div className="-mt-1 flex max-w-245 flex-col gap-4.5">
       {back}
 
-      <Card padding="none" className="flex items-center gap-6 p-6">
-        <span className={cn("flex size-14 shrink-0 items-center justify-center rounded-3xl [&_svg]:size-6", flagged ? "bg-warning-soft text-warning" : "bg-mint-50 text-emerald")}>{flagged ? <ShieldAlert aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />}</span>
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
+      <Card padding="none" className="flex items-center gap-6 px-6 py-5.5">
+        <span className={cn("flex size-14 shrink-0 items-center justify-center rounded-2xl [&_svg]:size-7", flagged ? "bg-warning-soft text-warning" : "bg-emerald-soft text-emerald")}>{flagged ? <ShieldAlert strokeWidth={1.75} aria-hidden="true" /> : <ShieldCheck strokeWidth={1.75} aria-hidden="true" />}</span>
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5">
           <div className="flex flex-col gap-0.75">
             {/* Under the page's own h1. */}
-            <h2 className="text-h2 text-ink">{headline}</h2>
+            <h2 className="text-h2 font-semibold tracking-[-0.01em] text-ink">{headline}</h2>
             <p className="text-body text-ink-muted">{t("Checked just now. Fixing these makes your other accounts much harder to break into.")}</p>
           </div>
           <div role="img" aria-label={t("{fine} fine, {count} need attention", { fine: count(tally.fine), count: count(flagged) })} className="flex h-2.5 gap-0.75 overflow-hidden rounded-full">
@@ -100,7 +100,7 @@ export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, 
               <span key={segment.key} className={segment.bar} style={{ flex: segment.flex }} />
             ))}
           </div>
-          <div className="flex flex-wrap gap-4 text-small text-ink-2">
+          <div className="flex flex-wrap gap-x-4.5 gap-y-1 text-[12.5px] text-ink-soft">
             <span className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-emerald" aria-hidden="true" />
               {t(tally.fine === 1 ? "{count} looks fine" : "{count} look fine", { count: count(tally.fine) })}
@@ -128,7 +128,10 @@ export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, 
                 <h3 className="text-title text-ink">
                   {t(group.title)} <span className={group.count}>· {count(items.length)}</span>
                 </h3>
-                <span className="text-small leading-normal text-ink-muted">{t(group.why)}</span>
+                <span className="text-small leading-normal text-ink-muted">
+                  {/* Two reused logins can only share with each other: the board names them. */}
+                  {group.issue === "reused" && items.length === 2 ? t("{first} and {second} share one password. If either site leaks it, both accounts are open.", { first: items[0].title, second: items[1].title }) : t(group.why)}
+                </span>
               </div>
             </div>
             {items.map((entry) => {

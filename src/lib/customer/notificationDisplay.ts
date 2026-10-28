@@ -1,14 +1,35 @@
 import { formatDate, formatMonthName, toDateInputValue } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { localName, type Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
+import { type FormatLocale, langOf } from "@/lib/i18n/formatPrefs";
+import { localName, plural, type Translate } from "@/lib/i18n/message";
 import type { UserNotification } from "./api";
 import { formatCurrency } from "./currency";
 import { timeLabel } from "./date";
 import { appPath, isClock, isReminderKind, PRAYER_LABEL, reminderHref, type NamazKey } from "./reminderDisplay";
 
-// The kinds of row, each with its own icon and tile colour.
-export type NotificationKind = "budget" | "loan" | "savings" | "announcement" | "support" | "reminder";
+// The kinds of row, each with its own icon and tile colour. "other" is any
+// row the app doesn't know yet (a type or event newer than this build).
+export type NotificationKind =
+  | "budget"
+  | "loan"
+  | "savings"
+  | "announcement"
+  | "support"
+  | "reminder"
+  | "payment"
+  | "paymentProblem"
+  | "refund"
+  | "plan"
+  | "referral"
+  | "referralLost"
+  | "payout"
+  | "payoutRejected"
+  | "securityOn"
+  | "securityOff"
+  | "securityAlert"
+  | "campaign"
+  | "idea"
+  | "other";
 
 export interface NotificationView {
   kind: NotificationKind;
@@ -34,7 +55,7 @@ function monthsAhead(from: string, to: string): number {
   return (toYear - fromYear) * 12 + (toMonth - fromMonth);
 }
 
-function loanTitle(name: string, owed: boolean, days: number, t: Translate, locale: Locale): string {
+function loanTitle(name: string, owed: boolean, days: number, t: Translate, locale: FormatLocale): string {
   if (days < 0) return t(owed ? "Payment to {name} is overdue" : "{name}'s payment to you is overdue", { name });
   if (days === 0) return t(owed ? "Payment to {name} is due today" : "{name} should pay you today", { name });
   if (days === 1) return t(owed ? "Payment to {name} is due tomorrow" : "{name} should pay you tomorrow", { name });
@@ -46,7 +67,7 @@ function loanTitle(name: string, owed: boolean, days: number, t: Translate, loca
 // time of the thing itself (the prayer, Sehri's end, Iftar, the to-do's due
 // time, the habit's time), `minutesBefore` how early it was sent, and
 // `name` the habit, challenge, book, skill or to-do as the person typed it.
-function reminderView(data: UserNotification["data"], t: Translate, locale: Locale): NotificationView {
+function reminderView(data: UserNotification["data"], t: Translate, locale: FormatLocale): NotificationView {
   const kind = text(data.kind);
   const targetKey = text(data.targetKey);
   const name = text(data.name).trim() || t("Reminder");
@@ -81,12 +102,214 @@ function reminderView(data: UserNotification["data"], t: Translate, locale: Loca
   }
 }
 
+// What the account-level rows (billing, referrals, security) need to word
+// themselves: the reader's language, their money and their dates.
+interface Words {
+  t: Translate;
+  // The reader's digits and date style (formatPrefs.ts).
+  locale: FormatLocale;
+  money: (value: string | number | null | undefined) => string;
+  // "28 Oct 2026" in the reader's language; "" for a missing date.
+  day: (iso: string | number | null | undefined) => string;
+}
+
+// The sentence that closes every "was this you?" security row.
+const NOT_YOU = "If this wasn't you, change your password now.";
+
+const PLANS_PATH = "/settings/plans";
+const REFERRALS_PATH = "/referrals";
+const WITHDRAWALS_PATH = "/referrals?tab=withdrawals";
+const SECURITY_PATH = "/settings/security";
+// Ideas are voted on from Help & support.
+const IDEAS_PATH = "/settings/help";
+
+// "{a} {b}" when both sentences are there.
+const sentences = (...parts: string[]) => parts.filter(Boolean).join(" ");
+
+// A BILLING row (BillingNotices on the backend); null for an event this
+// build doesn't know.
+function billingView(data: UserNotification["data"], { t, money, day }: Words): NotificationView | null {
+  const href = PLANS_PATH;
+  const plan = text(data.planName).trim();
+  const amount = money(data.amount);
+  const view = (kind: NotificationKind, title: string, body: string): NotificationView => ({ kind, title, body, href });
+  switch (data.event) {
+    case "PAYMENT_PAID": {
+      const until = day(data.periodEnd);
+      return view(
+        "payment",
+        t("Payment received"),
+        until ? t("{amount} for {plan}. It's active until {date}.", { amount, plan, date: until }) : t("{amount} for {plan}. It's active now.", { amount, plan }),
+      );
+    }
+    case "PAYMENT_FAILED": {
+      const reason = text(data.reason).trim();
+      return view("paymentProblem", t("Payment failed"), sentences(t("Your {amount} payment for {plan} didn't go through.", { amount, plan }), reason ? t("Reason: {reason}", { reason }) : ""));
+    }
+    case "PAYMENT_EXPIRED":
+      return view("paymentProblem", t("Payment not completed"), t("Your {amount} checkout for {plan} timed out. You can start it again from Plans.", { amount, plan }));
+    case "PAYMENT_REFUNDED": {
+      const refunded = !plan
+        ? t("{amount} was refunded.", { amount })
+        : Number(data.full) === 1
+          ? t("Your {amount} payment for {plan} was refunded.", { amount, plan })
+          : t("{amount} of your payment for {plan} was refunded.", { amount, plan });
+      return view("refund", t("Payment refunded"), sentences(refunded, Number(data.planDropped) === 1 ? t("You're on the Free plan now.") : ""));
+    }
+    case "PLAN_ENDING": {
+      const date = day(data.endsAt);
+      if (Number(data.trial) === 1) return view("plan", t("Your {plan} trial ends soon", { plan }), t("It ends on {date}. Choose a plan to keep its features.", { date }));
+      return view(
+        "plan",
+        t("{plan} ends soon", { plan }),
+        Number(data.cancelling) === 1 ? t("It ends on {date}, as you asked. You can resume it before then.", { date }) : t("It ends on {date}. Pay for the next period to keep it.", { date }),
+      );
+    }
+    case "PLAN_PAST_DUE":
+      return view("plan", t("{plan} payment is overdue", { plan }), t("Pay by {date} to keep your plan.", { date: day(data.graceEndsAt) }));
+    case "PLAN_ENDED":
+      return view("plan", Number(data.trial) === 1 ? t("Your {plan} trial has ended", { plan }) : t("{plan} has ended", { plan }), t("You're on the Free plan now."));
+    default:
+      return null;
+  }
+}
+
+// A REFERRAL row (ReferralNotices): the referrer's commissions, or an
+// invited friend's nudge to buy.
+function referralView(data: UserNotification["data"], { t, locale, money, day }: Words): NotificationView | null {
+  const name = text(data.friendName).trim() || t("Your friend");
+  const plan = text(data.planName).trim();
+  const amount = money(data.amount);
+  const view = (kind: NotificationKind, title: string, body: string, href = REFERRALS_PATH): NotificationView => ({ kind, title, body, href });
+  switch (data.event) {
+    case "COMMISSION_PENDING":
+      return view(
+        "referral",
+        plan ? t("{name} bought {plan}", { name, plan }) : t("{name} bought a plan", { name }),
+        t("You earned {amount}. You can withdraw it from {date}.", { amount, date: day(data.availableAt) }),
+      );
+    case "COMMISSION_AVAILABLE":
+      return view("referral", t("{amount} is ready to withdraw", { amount }), t("Your reward for inviting {name}.", { name }));
+    case "COMMISSION_MISSED":
+      return view(
+        "referralLost",
+        t("You missed a reward"),
+        Number(data.amount ?? 0) > 0
+          ? t("{name} bought a plan, but rewards need a paid plan of your own. You missed {amount}.", { name, amount })
+          : t("{name} bought a plan, but rewards need a paid plan of your own.", { name }),
+      );
+    case "COMMISSION_CANCELLED":
+      return view(
+        "referralLost",
+        t("A reward was cancelled"),
+        data.reason === "FRIEND_REFUNDED"
+          ? t("{name}'s payment was refunded, so the {amount} reward was cancelled.", { name, amount })
+          : t("The {amount} reward for inviting {name} was cancelled.", { name, amount }),
+      );
+    case "INVITE_REMINDER": {
+      // Sent to the invited friend, whose discount is on Plans.
+      const referrer = text(data.referrerFirstName).trim() || t("Your friend");
+      const percent = Number(data.friendDiscountPct ?? 0);
+      return view(
+        "referral",
+        t("{name} invited you to a paid plan", { name: referrer }),
+        percent > 0 ? t("Get {percent}% off your first plan.", { percent: formatCount(percent, locale) }) : t("See what each plan offers."),
+        PLANS_PATH,
+      );
+    }
+    default:
+      return null;
+  }
+}
+
+// A PAYOUT row: the member's withdrawal request moved on.
+function payoutView(data: UserNotification["data"], { t, money }: Words): NotificationView | null {
+  const amount = money(data.amount);
+  const view = (kind: NotificationKind, title: string, body: string): NotificationView => ({ kind, title, body, href: WITHDRAWALS_PATH });
+  switch (data.event) {
+    case "PAYOUT_APPROVED":
+      return view("payout", t("Withdrawal approved"), t("Your {amount} withdrawal is approved and will be sent soon.", { amount }));
+    case "PAYOUT_PAID": {
+      const trxId = text(data.trxId).trim();
+      const sent = t("{amount} was sent to you.", { amount: money(data.paidAmount ?? data.amount) });
+      return view("payout", t("Withdrawal sent"), sentences(sent, trxId ? t("Transaction ID: {trxId}", { trxId }) : ""));
+    }
+    case "PAYOUT_REJECTED": {
+      const reason = text(data.reason).trim();
+      return view("payoutRejected", t("Withdrawal rejected"), sentences(t("{amount} is back in your balance.", { amount }), reason ? t("Reason: {reason}", { reason }) : ""));
+    }
+    default:
+      return null;
+  }
+}
+
+// A SECURITY row: two-step sign-in turned on or off, a new device, or
+// failed sign-in tries.
+function securityView(data: UserNotification["data"], { t, locale }: Words): NotificationView | null {
+  const view = (kind: NotificationKind, title: string, body: string): NotificationView => ({ kind, title, body, href: SECURITY_PATH });
+  const place = text(data.country).trim() || text(data.ipAddress).trim();
+  switch (data.event) {
+    case "TWO_STEP_ON":
+      return view("securityOn", t("Two-step sign-in is on"), t("Signing in now also needs a code from your authenticator app."));
+    case "TWO_STEP_OFF":
+      return view("securityOff", t("Two-step sign-in is off"), t(NOT_YOU));
+    case "TWO_STEP_OFF_BY_SUPPORT":
+      return view("securityOff", t("Support turned off two-step sign-in"), t("Turn it back on in Security once you can."));
+    case "NEW_DEVICE": {
+      const device = text(data.deviceLabel).trim() || t("A new device");
+      return view("securityAlert", t("New sign-in to your account"), sentences(place ? t("{device} in {place}.", { device, place }) : `${device}.`, t(NOT_YOU)));
+    }
+    case "FAILED_TRIES": {
+      const count = Number(data.count ?? 0) || 0;
+      const tries = place
+        ? plural(t, count, "{count} wrong-password try from {place}.", "{count} wrong-password tries from {place}.", { place }, locale)
+        : plural(t, count, "{count} wrong-password try.", "{count} wrong-password tries.", undefined, locale);
+      return view("securityAlert", t("Failed sign-in attempts"), sentences(tries, t(NOT_YOU)));
+    }
+    default:
+      return null;
+  }
+}
+
+// An IDEA row: an idea the reader asked for or voted for was planned or
+// shipped.
+function ideaView(data: UserNotification["data"], { t }: Words): NotificationView | null {
+  if (data.event !== "IDEA_STATUS") return null;
+  const title =
+    data.status === "SHIPPED" ? t("An idea you voted for is live") : data.status === "PLANNED" ? t("An idea you voted for is planned") : t("An idea you voted for was updated");
+  return { kind: "idea", title, body: text(data.title), href: IDEAS_PATH };
+}
+
+// Any row the app doesn't know: the words it carries, if any, and the page
+// its type belongs to (or a link it carries), so it still reads and opens.
+function otherView(item: UserNotification, t: Translate): NotificationView {
+  const data = item.data ?? {};
+  const typeHome: Partial<Record<string, string>> = { BILLING: PLANS_PATH, REFERRAL: REFERRALS_PATH, PAYOUT: WITHDRAWALS_PATH, SECURITY: SECURITY_PATH, IDEA: IDEAS_PATH };
+  return {
+    kind: "other",
+    title: text(data.title).trim() || t("You have a new notification"),
+    body: text(data.body),
+    href: appPath(data.url) ?? typeHome[item.type] ?? null,
+  };
+}
+
 // A row's words, built from its data in the reader's language, counts and
 // percentages in the reader's digits. `currency` is the currency of the
-// workspace it is about.
-export function notificationView(item: UserNotification, t: Translate, locale: Locale, currency = "BDT", now: Date = new Date()): NotificationView {
-  const data = item.data;
-  const money = (value: string | number | null | undefined) => formatCurrency(Number(value ?? 0), currency, locale);
+// workspace it is about. Never throws: a row it can't word (a type or event
+// newer than this build, or data it didn't expect) reads as a plain
+// notification, so one odd row can't take the whole page down.
+export function notificationView(item: UserNotification, t: Translate, locale: FormatLocale, currency = "BDT", now: Date = new Date()): NotificationView {
+  try {
+    return knownView(item, t, locale, currency, now) ?? otherView(item, t);
+  } catch {
+    return otherView(item, t);
+  }
+}
+
+function knownView(item: UserNotification, t: Translate, locale: FormatLocale, currency: string, now: Date): NotificationView | null {
+  const data = item.data ?? {};
+  const money = (value: string | number | null | undefined) => formatCurrency(Number(value ?? 0) || 0, currency, locale);
+  const words: Words = { t, locale, money, day: (iso) => (iso ? formatDate(iso, "d MMM yyyy", "", locale) : "") };
   const percentOf = (value: string | number | null | undefined) => formatCount(Number(value ?? 0), locale);
   const thisMonth = toDateInputValue(now).slice(0, 7);
   // A month named in a sentence. One that isn't within the coming year (a
@@ -102,7 +325,7 @@ export function notificationView(item: UserNotification, t: Translate, locale: L
     case "BUDGET": {
       const left = Number(data.left ?? 0);
       // The category's Bangla name, once the reminder carries it.
-      const category = localName(locale, { name: text(data.category), nameBn: data.categoryBn === undefined ? null : text(data.categoryBn) });
+      const category = localName(langOf(locale), { name: text(data.category), nameBn: data.categoryBn === undefined ? null : text(data.categoryBn) });
       const month = monthOf(text(data.month));
       return left < 0
         ? { kind: "budget", title: t("{category} is over its limit", { category }), body: t("{amount} over the limit for {month}.", { amount: money(-left), month }), href: "/budget-planning" }
@@ -133,7 +356,7 @@ export function notificationView(item: UserNotification, t: Translate, locale: L
     case "SUPPORT_REPLY":
       return { kind: "support", title: t("Support replied to your message"), body: text(data.subject), href: `/settings/help?message=${encodeURIComponent(text(data.ticketId))}` };
     case "ANNOUNCEMENT": {
-      const bangla = locale === "bn";
+      const bangla = langOf(locale) === "bn";
       return {
         kind: "announcement",
         title: text(bangla && text(data.titleBn).trim() ? data.titleBn : data.title),
@@ -143,6 +366,21 @@ export function notificationView(item: UserNotification, t: Translate, locale: L
     }
     case "REMINDER":
       return reminderView(data, t, locale);
+    case "BILLING":
+      return billingView(data, words);
+    case "REFERRAL":
+      return referralView(data, words);
+    case "PAYOUT":
+      return payoutView(data, words);
+    case "SECURITY":
+      return securityView(data, words);
+    case "IDEA":
+      return ideaView(data, words);
+    case "CAMPAIGN":
+      // Worded by the team, already in the reader's language.
+      return { kind: "campaign", title: text(data.title).trim() || t("You have a new notification"), body: text(data.body), href: appPath(data.url) };
+    default:
+      return null;
   }
 }
 
@@ -150,7 +388,7 @@ export function notificationView(item: UserNotification, t: Translate, locale: L
 // "Thu, 1 Oct" (or "2 Jun 2025" from another year), as the board dates them.
 // The minutes are a count and the dates are the reader's, so a Bangla
 // reader gets Bangla digits and month names.
-export function notificationTime(iso: string, t: Translate, locale: Locale = "en", now: Date = new Date()): string {
+export function notificationTime(iso: string, t: Translate, locale: FormatLocale = "en", now: Date = new Date()): string {
   const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
   if (minutes < 1) return t("just now");
   if (minutes < 60) return t("{count} min ago", { count: formatCount(minutes, locale) });

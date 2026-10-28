@@ -50,7 +50,7 @@ interface Loaded {
 // wallet, and (optionally) which sale or purchase it settles. It can't be
 // more than is owed, which the API would refuse anyway.
 export function PaymentDrawer({ open, direction, contact, outstanding, owedTotal, settles, amount: startAmount, businessId, currency, onClose }: PaymentDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(getAppToday());
@@ -131,7 +131,7 @@ export function PaymentDrawer({ open, direction, contact, outstanding, owedTotal
       const input = { contactId: contact.id, amount: value, date, moneyAccountId: accountId, description: note.trim() || undefined, appliedToTransactionId: appliedTo || undefined };
       const result = receiving ? await receivePaymentAction(businessId, input) : await payPaymentAction(businessId, input);
       if (result.success) {
-        toast.success(t(receiving ? "{amount} received from {name}" : "{amount} paid to {name}", { amount: formatCurrency(value, currency, locale), name: contact.name }));
+        toast.success(t(receiving ? "{amount} received from {name}" : "{amount} paid to {name}", { amount: formatCurrency(value, currency, fmt), name: contact.name }));
         onClose();
         router.refresh();
       } else {
@@ -167,11 +167,11 @@ export function PaymentDrawer({ open, direction, contact, outstanding, owedTotal
         aside={
           loaded && limit > 0 ? (
             <button type="button" onClick={() => setAmount(limit.toFixed(2))} className="-my-1 py-1 text-right text-small font-semibold text-emerald hover:underline pointer-coarse:py-3">
-              {applied ? t(receiving ? "Use {amount}@@receiving" : "Use {amount}@@paying", { amount: formatCurrency(limit, currency, locale) }) : t(receiving ? "They owe {amount} · use it all" : "You owe {amount} · use it all", { amount: formatCurrency(due, currency, locale) })}
+              {applied ? t(receiving ? "Use {amount}@@receiving" : "Use {amount}@@paying", { amount: formatCurrency(limit, currency, fmt) }) : t(receiving ? "They owe {amount} · use it all" : "You owe {amount} · use it all", { amount: formatCurrency(due, currency, fmt) })}
             </button>
           ) : undefined
         }
-        error={over ? (applied ? t("Only {amount} is left on that one.", { amount: formatCurrency(applied.remainingAmount, currency, locale) }) : t("Only {amount} is owed.", { amount: formatCurrency(due, currency, locale) })) : undefined}
+        error={over ? (applied ? t("Only {amount} is left on that one.", { amount: formatCurrency(applied.remainingAmount, currency, fmt) }) : t("Only {amount} is owed.", { amount: formatCurrency(due, currency, fmt) })) : undefined}
       >
         <Input id="pay-amount" size="lg" inputMode="decimal" value={amount} onChange={(event) => setAmount(limitMoneyDecimals(event.target.value))} placeholder="0.00" autoFocus invalid={over} className="text-h3 tabular-nums" leading={<span className="text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>} />
       </Field>
@@ -199,7 +199,7 @@ export function PaymentDrawer({ open, direction, contact, outstanding, owedTotal
             <option value="">{t("Oldest first")}</option>
             {invoices.map((invoice) => (
               <option key={invoice.transactionId} value={invoice.transactionId}>
-                {booksDate(invoice.date, locale, { today })} · {invoice.description || t(receiving ? "Sale" : "Purchase")} · {t("{amount} left@@bill", { amount: formatCurrency(invoice.remainingAmount, currency, locale) })}
+                {booksDate(invoice.date, fmt, { today })} · {invoice.description || t(receiving ? "Sale" : "Purchase")} · {t("{amount} left@@bill", { amount: formatCurrency(invoice.remainingAmount, currency, fmt) })}
               </option>
             ))}
           </NativeSelect>

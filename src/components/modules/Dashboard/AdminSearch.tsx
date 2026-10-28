@@ -15,9 +15,11 @@ import { shortTicketId } from "@/lib/tickets";
 import type { IAdminSearchResult } from "@/types/adminFeed.types";
 
 const DEBOUNCE_MS = 250;
-const KBD = "shrink-0 text-caption font-medium";
+// The board's key: a small pill in the body font.
+const KBD = "shrink-0 rounded-full border-line px-2 py-0.5 font-sans text-[11px] leading-[normal] font-semibold text-ink-muted";
 
-// The admin top bar's search: a field that opens a palette (also on Ctrl K
+// The admin top bar's search, a white pill as the AdminTopbar board draws
+// it: a field that opens a palette (also on Ctrl K
 // or ⌘K) finding customers, payments and tickets. ↑ ↓ move, Enter opens.
 const AdminSearch = () => {
   const { t, locale } = useLocale();
@@ -96,17 +98,17 @@ const AdminSearch = () => {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={t("Search people, payments, tickets")}
-        className="flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 md:hidden"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full text-ink-2 md:hidden"
       >
         <Search className="size-5" aria-hidden="true" />
       </button>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden h-10 w-60 shrink-0 items-center xl:w-92 gap-3 rounded-md border border-line bg-strip pr-2 pl-4 text-body text-ink-muted hover:border-line-strong md:flex"
+        className="hidden h-9.5 w-60 shrink-0 items-center gap-2 rounded-full border border-line-card bg-surface pr-1.5 pl-3 text-body text-ink-muted shadow-control hover:border-line md:flex xl:w-75"
       >
-        <Search className="size-4 shrink-0" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-left">{t("Search people, payments, tickets…")}</span>
+        <Search className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-left">{t("Search users, payments, tickets…")}</span>
         <Kbd className={KBD}>Ctrl K</Kbd>
       </button>
 

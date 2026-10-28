@@ -72,7 +72,7 @@ export default async function ChooseWorkspacePage({ searchParams }: PageProps<"/
 
   return (
     <ThemeProvider allowDark={isFeatureOn(platform.flags, "dark_mode")}>
-      <LocaleProvider initialLocale={locale} overrides={overrides}>
+      <LocaleProvider initialLocale={locale} overrides={overrides} preferences={user.preferences}>
         <ChooseWorkspaceClient
           user={user}
           workspaces={workspaces}

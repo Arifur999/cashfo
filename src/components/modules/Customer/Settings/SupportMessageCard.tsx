@@ -38,7 +38,7 @@ const prefersReducedMotion = () => typeof window.matchMedia === "function" && wi
 // optional screenshot. The answer comes back here and in the bell, which
 // is always true; an email copy only goes out when the platform sends mail.
 export function SupportMessageCard({ conversations, onSent, onOpenMessages, ref }: SupportMessageCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [topic, setTopic] = useState<SupportTopic>("TECHNICAL");
   const [message, setMessage] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
@@ -99,13 +99,13 @@ export function SupportMessageCard({ conversations, onSent, onOpenMessages, ref 
   }
 
   return (
-    <Card padding="none" className="p-5">
+    <Card padding="none" className="p-4.5">
       <form onSubmit={send} aria-labelledby="help-message" className="flex flex-col gap-3">
         <div className="flex flex-col gap-0.5">
           <h2 id="help-message" className="text-title font-semibold text-ink">
             {t("Send us a message")}
           </h2>
-          <span className="text-small text-ink-muted">{t("We answer here and in the bell.")}</span>
+          <span className="text-[12.5px] text-ink-muted">{t("We answer here and in the bell.")}</span>
         </div>
         <NativeSelect aria-label={t("Topic")} value={topic} onChange={(event) => setTopic(event.target.value as SupportTopic)} className="h-10.5 font-normal pointer-coarse:h-11" frameClassName="w-full">
           {SUPPORT_TOPICS.map((option) => (
@@ -125,7 +125,7 @@ export function SupportMessageCard({ conversations, onSent, onOpenMessages, ref 
             </button>
           </span>
         ) : (
-          <button type="button" onClick={() => fileRef.current?.click()} className="flex h-9.5 items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-line-strong bg-surface text-small font-semibold text-ink-2 hover:bg-surface-sunken pointer-coarse:h-11">
+          <button type="button" onClick={() => fileRef.current?.click()} className="flex h-9.5 items-center justify-center gap-1.5 rounded-full border-[1.5px] border-dashed border-input bg-surface text-small font-semibold text-ink-soft hover:bg-surface-sunken pointer-coarse:h-11">
             <Paperclip className="size-3.5" aria-hidden="true" />
             {t("Attach a screenshot")}
           </button>
@@ -138,7 +138,7 @@ export function SupportMessageCard({ conversations, onSent, onOpenMessages, ref 
         {/* Shown when they couldn't be read too: opening them is the way to try again. */}
         {conversations !== 0 && (
           <button type="button" onClick={onOpenMessages} className="self-center rounded-sm px-1 text-small font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
-            {conversations === null ? t("Your messages") : t("Your messages ({count})", { count: formatCount(conversations, locale) })}
+            {conversations === null ? t("Your messages") : t("Your messages ({count})", { count: formatCount(conversations, fmt) })}
           </button>
         )}
       </form>

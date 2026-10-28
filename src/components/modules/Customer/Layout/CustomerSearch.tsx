@@ -1,98 +1,35 @@
 "use client";
 
-import {
-  ArrowLeftRight,
-  BookOpen,
-  BookText,
-  Box,
-  CalendarCheck,
-  ChartColumn,
-  ChartPie,
-  CircleCheckBig,
-  Clock,
-  CreditCard,
-  FileText,
-  Gift,
-  GraduationCap,
-  House,
-  KeyRound,
-  Languages,
-  ListChecks,
-  LogOut,
-  type LucideProps,
-  Moon,
-  PenLine,
-  PiggyBank,
-  Receipt,
-  Repeat2,
-  Search,
-  Settings,
-  Sun,
-  Table2,
-  Target,
-  TrendingUp,
-  Users,
-  UsersRound,
-  Wallet,
-} from "lucide-react";
+import { FileText, Languages, LogOut, type LucideProps, Moon, Receipt, Repeat2, Search, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
 import CommandPalette, { CommandMark, useCommandShortcut, type CommandGroup, type CommandItem } from "@/components/smartly/CommandPalette";
-import { MosqueIcon } from "@/components/smartly/icons";
 import IconTile from "@/components/smartly/IconTile";
 import Kbd from "@/components/smartly/Kbd";
 import type { Tone } from "@/components/smartly/tones";
 import { saveLanguageAction } from "@/lib/customer/authActions";
 import { CONTACT_TYPE_LABELS, contactInitials } from "@/lib/customer/contactDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
 import { NAV_FOOT, NAV_FOOT_LABEL, type NavIcon } from "@/lib/customer/nav";
 import { searchPaletteAction, type PaletteContact, type PaletteResults, type PaletteTransaction } from "@/lib/customer/paletteActions";
 import { palettePages, rankMatches, type PalettePage } from "@/lib/customer/paletteMatch";
 import { SETTINGS_SECTIONS } from "@/lib/customer/settingsDisplay";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { toDateInputValue } from "@/lib/date";
-import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { formatDay, toDateInputValue } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 import { withoutContext } from "@/lib/i18n/message";
 import { ADD_ACTION_ICONS, useAddActions, WithAddActions } from "./AddActionsProvider";
-import { useNavSections } from "./SidebarNav";
+import { NAV_ICONS, useNavSections } from "./SidebarNav";
 import { workspaceKind } from "./workspaceKind";
 
 type Icon = React.ComponentType<LucideProps>;
 
 // The menu's icons, as the sidebar draws them; a page with an icon this
 // list doesn't know yet gets a plain page.
-const PAGE_ICONS: Partial<Record<NavIcon, Icon>> = {
-  home: House,
-  transactions: ArrowLeftRight,
-  wallet: Wallet,
-  budget: ChartPie,
-  income: TrendingUp,
-  loans: CreditCard,
-  savings: PiggyBank,
-  assets: Box,
-  group: Users,
-  today: CircleCheckBig,
-  daily: CalendarCheck,
-  namaz: MosqueIcon,
-  ramadan: Moon,
-  library: BookOpen,
-  skills: GraduationCap,
-  todo: ListChecks,
-  vault: KeyRound,
-  insights: ChartColumn,
-  reports: Table2,
-  challenges: Target,
-  ledger: BookText,
-  people: UsersRound,
-  clock: Clock,
-  journal: PenLine,
-  gift: Gift,
-  settings: Settings,
-};
+const PAGE_ICONS: Partial<Record<NavIcon, Icon>> = NAV_ICONS;
 
 const DEBOUNCE_MS = 250;
 // People and transactions are looked up from this many letters; pages and
@@ -104,7 +41,7 @@ const RECENT_LIMIT = 5;
 // browser only.
 const RECENTS_KEY = "palette-recent-pages";
 const NOTHING: PaletteResults = { contacts: [], transactions: [] };
-const KBD = "shrink-0 text-caption font-medium";
+const KBD = "shrink-0 px-1.5 py-0.5 font-sans text-[11px] leading-[normal] font-semibold text-ink-muted";
 
 const readRecents = (): string[] => {
   try {
@@ -145,16 +82,24 @@ interface PaletteAction {
 // The top bar's search: a field on wide screens and an icon elsewhere, both
 // opening a palette (also on Ctrl K or ⌘K) that finds pages, runs actions
 // and finds people and transactions in the open workspace.
-export function CustomerSearch() {
+// iconClassName shapes the icon-only button (phones, and screens too
+// narrow for the field), boxClassName the "Search or jump to…" field.
+interface CustomerSearchProps {
+  iconClassName?: string;
+  boxClassName?: string;
+  kbdClassName?: string;
+}
+
+export function CustomerSearch(props: CustomerSearchProps) {
   return (
     <WithAddActions>
-      <SearchPalette />
+      <SearchPalette {...props} />
     </WithAddActions>
   );
 }
 
-function SearchPalette() {
-  const { t, locale, toggleLocale } = useLocale();
+function SearchPalette({ iconClassName, boxClassName, kbdClassName }: CustomerSearchProps) {
+  const { t, locale, fmt, toggleLocale } = useLocale();
   const { user, activeBusiness, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const darkModeOn = useFeature("dark_mode");
@@ -271,7 +216,7 @@ function SearchPalette() {
   const dayText = (iso: string) => {
     const day = toDateInputValue(iso);
     if (!day) return "";
-    return locale === "bn" ? `${banglaDayMonth(day)} ${toBanglaDigits(day.slice(0, 4))}` : formatDate(iso, "d MMM yyyy");
+    return formatDay(day, "d MMM yyyy", fmt);
   };
   // The Add menu's own glyphs for money in, out and between wallets.
   const transactionMark = (type: PaletteTransaction["type"]) =>
@@ -292,7 +237,7 @@ function SearchPalette() {
       key: `transaction:${transaction.id}`,
       title: transaction.title ?? (typeLabel ? t(typeLabel) : t("Transaction")),
       sub: [dayText(transaction.date), transaction.wallet, transaction.cancelled && t(transaction.cancelled)].filter(Boolean).join(" · "),
-      badge: signed ? formatSignedCurrency(transaction.amount, currency, locale) : formatCurrency(Math.abs(transaction.amount), currency, locale),
+      badge: signed ? formatSignedCurrency(transaction.amount, currency, fmt) : formatCurrency(Math.abs(transaction.amount), currency, fmt),
       mark: transactionMark(transaction.type),
       href: `/transactions/${encodeURIComponent(transaction.id)}`,
     };
@@ -328,20 +273,20 @@ function SearchPalette() {
         aria-label={label}
         aria-keyshortcuts="Control+K Meta+K"
         title={t("Search")}
-        className="flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 md:size-10 md:border md:border-line md:bg-surface md:hover:bg-surface-sunken min-[1400px]:hidden"
+        className={cn("flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink xl:hidden", iconClassName)}
       >
-        <Search className="size-5 md:size-4.5" aria-hidden="true" />
+        <Search className="size-5 md:size-4.5" strokeWidth={2} aria-hidden="true" />
       </button>
       <button
         type="button"
         onClick={() => changeOpen(true)}
         aria-label={label}
         aria-keyshortcuts="Control+K Meta+K"
-        className="hidden h-10 w-64 shrink-0 items-center gap-3 rounded-md border border-line bg-strip pr-2 pl-4 text-body text-ink-muted hover:border-line-strong min-[1400px]:flex 2xl:w-80"
+        className={cn("hidden h-9.5 w-70 shrink-0 items-center gap-2 border pr-1.5 pl-3 text-body whitespace-nowrap text-ink-muted transition-colors hover:border-line-strong xl:flex", boxClassName)}
       >
-        <Search className="size-4 shrink-0" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-left">{t("Search…")}</span>
-        <Kbd className={KBD}>Ctrl K</Kbd>
+        <Search className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-left">{t("Search or jump to…")}</span>
+        <Kbd className={cn(KBD, kbdClassName)}>Ctrl K</Kbd>
       </button>
 
       <CommandPalette

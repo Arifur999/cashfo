@@ -1,13 +1,12 @@
 "use client";
 
-import { Check, Flame, MoreVertical, Plus, Target, Trash2 } from "lucide-react";
+import { Check, Flame, MoreVertical, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
-import IconTile from "@/components/smartly/IconTile";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -25,6 +24,7 @@ import { RecordEyebrow } from "../Tracker/RecordEyebrow";
 import { useRovingGrid } from "../Tracker/useRovingGrid";
 import { withCheck } from "../trackerChecks";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
+import { ChallengeTile } from "./ChallengeTile";
 
 interface ChallengeDetailPageClientProps {
   tracker: HabitMonthTracker;
@@ -39,7 +39,7 @@ type Tick = { day: number; items: string[]; checked: boolean };
 // One challenge: where it stands, every day as a box (tap a past day to
 // fix it), and today's items to tick.
 export function ChallengeDetailPageClient({ tracker, today, reminders: savedReminders }: ChallengeDetailPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [isPending, startSlow] = useTransition();
@@ -47,7 +47,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
   const [addOpen, setAddOpen] = useState(false);
   const [busyDay, setBusyDay] = useState<number | null>(null);
   const [confirm, setConfirm] = useState<{ kind: "remove-row"; item: string } | { kind: "delete" } | null>(null);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
   const reminders = useReminderBook(savedReminders);
 
   const window = challengeWindow(sheet, today);
@@ -72,7 +72,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
     startTransition(async () => {
       applyTick(update);
       const result = await setChallengeDayAction(sheet.id, { ...update, addDayItem: sheet.items.length === 0 });
-      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, locale));
+      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, fmt));
       router.refresh();
       setBusyDay(null);
     });
@@ -92,7 +92,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
         if (action.kind === "delete") router.push("/habit-tracker/habits?category=Others");
         router.refresh();
       } else {
-        toast.error(actionError(result.message, action.kind === "delete" ? "Failed to remove challenge" : "Failed to remove the row", t, locale));
+        toast.error(actionError(result.message, action.kind === "delete" ? "Failed to remove challenge" : "Failed to remove the row", t, fmt));
       }
     });
   }
@@ -103,53 +103,52 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
       : [t("Day {day} of {total}", { day: count(window.today), total: count(sheet.totalDays) }), summary.missed === 0 ? t("every day done so far") : t(summary.missed === 1 ? "{count} day missed" : "{count} days missed", { count: count(summary.missed) })].join(" · ");
 
   return (
-    <PageFrame className="gap-6">
+    <PageFrame className="gap-5 md:pt-7">
       <TopbarExtras record={name} />
-      <PageHeader
-        eyebrow={<RecordEyebrow href="/habit-tracker/habits?category=Others" back={t("All challenges")} pillar={t("Habits")} />}
-        tone="habits"
-        title={name}
-        actions={
-          <>
-            <Button variant="secondary" onClick={() => setAddOpen(true)}>
-              <Plus />
-              {t("Add a row")}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger aria-label={t("More")} className="flex size-10 items-center justify-center rounded-md border border-line-strong bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
-                <MoreVertical className="size-4.5" aria-hidden="true" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                {ownItems.map((item) => (
-                  <DropdownMenuItem key={item} onSelect={() => setConfirm({ kind: "remove-row", item })} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken pointer-coarse:min-h-11">
+      <div className="flex flex-col gap-1">
+        <RecordEyebrow href="/habit-tracker/habits?category=Others" back={t("All challenges")} />
+        <PageHeader
+          title={name}
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setAddOpen(true)}>
+                <Plus />
+                {t("Add a row")}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger aria-label={t("More")} className="flex size-10 items-center justify-center rounded-full border border-input bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
+                  <MoreVertical className="size-4.5" aria-hidden="true" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
+                  {ownItems.map((item) => (
+                    <DropdownMenuItem key={item} onSelect={() => setConfirm({ kind: "remove-row", item })} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken pointer-coarse:min-h-11">
+                      <Trash2 className="size-4" aria-hidden="true" />
+                      {t("Remove the {name} row", { name: item })}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuItem onSelect={() => setConfirm({ kind: "delete" })} className="rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense pointer-coarse:min-h-11">
                     <Trash2 className="size-4" aria-hidden="true" />
-                    {t("Remove the {name} row", { name: item })}
+                    {t("Delete challenge")}
                   </DropdownMenuItem>
-                ))}
-                <DropdownMenuItem onSelect={() => setConfirm({ kind: "delete" })} className="rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense pointer-coarse:min-h-11">
-                  <Trash2 className="size-4" aria-hidden="true" />
-                  {t("Delete challenge")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        }
-      />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          }
+        />
+      </div>
 
-      <Card padding="none" className="flex flex-col gap-5 rounded-xl p-6 md:flex-row md:items-center">
-        <IconTile tone="habits" size={72} className="rounded-lg [&_svg]:size-7">
-          <Target />
-        </IconTile>
+      <Card padding="none" className="flex flex-col gap-4 rounded-md px-5 py-4.5 md:flex-row md:items-center">
+        <ChallengeTile name={sheet.name} size={48} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-small text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, locale, "short"), end: dayText(window.end, locale, "short") })}</span>
+          <span className="text-[12.5px] text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, fmt, "short"), end: dayText(window.end, fmt, "short") })}</span>
           <span className="text-title text-ink">{statusLine}</span>
         </div>
         <div className="flex flex-wrap gap-6 text-center">
           <span className="flex flex-col gap-1">
             <span className="text-small text-ink-muted">{t("Streak")}</span>
             <span className="flex items-center justify-center gap-1 text-h2 whitespace-nowrap text-ink tabular-nums">
-              <Flame className="size-4.5 text-warning" aria-hidden="true" />
-              {daysText(summary.streak, t, locale)}
+              <Flame className="size-4.5 text-orange-fill" strokeWidth={2.25} aria-hidden="true" />
+              {daysText(summary.streak, t, fmt)}
             </span>
           </span>
           <span className="flex flex-col gap-1">
@@ -163,17 +162,17 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
         </div>
       </Card>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Card padding="none" className="flex min-w-0 flex-col gap-4 p-5">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <Card padding="none" className="flex min-w-0 flex-col gap-4 rounded-md px-5 py-4.5">
           <div className="flex flex-col gap-0.5">
-            <h2 id="challenge-days" className="text-h3 text-ink">
-              {daysText(sheet.totalDays, t, locale)}
+            <h2 id="challenge-days" className="text-title text-ink">
+              {daysText(sheet.totalDays, t, fmt)}
             </h2>
-            <span id="challenge-days-hint" className="text-small text-ink-muted">
+            <span id="challenge-days-hint" className="text-[12.5px] text-ink-muted">
               {t("Tap a past day to fix it")}
             </span>
           </div>
-          <div role="group" aria-labelledby="challenge-days" aria-describedby="challenge-days-hint" onKeyDown={days.onKeyDown} className="grid grid-cols-[repeat(auto-fill,44px)] gap-3">
+          <div role="group" aria-labelledby="challenge-days" aria-describedby="challenge-days-hint" onKeyDown={days.onKeyDown} className="grid grid-cols-[repeat(auto-fill,44px)] gap-2.5">
             {Array.from({ length: sheet.totalDays }, (_, i) => i + 1).map((day) => {
               const mark = challengeMark(sheet, window, day);
               const past = day <= window.today && day <= sheet.totalDays;
@@ -190,14 +189,14 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
                   onClick={() => toggleDay(day)}
                   aria-label={`${t("Day {day}", { day: count(day) })}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "later")}`}
                   title={`${t("Day {day}", { day: count(day) })}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "later")}`}
-                  className={cn("flex size-11 items-center justify-center rounded-md text-body font-bold transition-colors", mark === "done" && "bg-emerald text-on-action", mark === "missed" && "bg-expense-soft text-expense", mark === "today" && "border-[3px] border-pillar-habits bg-surface text-ink", mark === "later" && "cursor-not-allowed bg-surface-sunken text-ink-muted", day === window.today && mark === "done" && "ring-[3px] ring-pillar-habits ring-inset", busyDay === day && "opacity-60")}
+                  className={cn("flex size-11 items-center justify-center rounded-field text-body font-bold transition-colors", mark === "done" && "bg-emerald text-on-action", mark === "missed" && "bg-expense-soft text-expense", mark === "today" && "border-2 border-brand-ink bg-surface text-ink", mark === "later" && "cursor-not-allowed bg-surface-sunken text-ink-muted", day === window.today && mark === "done" && "ring-2 ring-brand-ink ring-offset-2 ring-offset-surface", busyDay === day && "opacity-60")}
                 >
                   {mark === "done" ? <Check className="size-4.5" strokeWidth={3} aria-hidden="true" /> : count(day)}
                 </button>
               );
             })}
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption font-normal text-ink-muted">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-ink-muted">
             <span className="flex items-center gap-2">
               <span className="size-3 rounded-[4px] bg-emerald" /> {t("Done")}
             </span>
@@ -205,7 +204,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
               <span className="size-3 rounded-[4px] bg-expense-soft" /> {t("Missed")}
             </span>
             <span className="flex items-center gap-2">
-              <span className="size-3 rounded-[4px] border-2 border-pillar-habits bg-surface" /> {t("Today")}
+              <span className="size-3 rounded-[4px] border-2 border-brand-ink bg-surface" /> {t("Today")}
             </span>
             <span className="flex items-center gap-2">
               <span className="size-3 rounded-[4px] border border-line bg-surface-sunken" /> {t("Still to come")}
@@ -213,25 +212,25 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
           </div>
         </Card>
 
-        <div className="flex min-w-0 flex-col gap-6">
-          <Card padding="none" className="flex flex-col gap-3 p-5">
+        <div className="flex min-w-0 flex-col gap-5">
+          <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4.5">
             <div className="flex flex-col gap-0.5">
-              <h2 className="text-h3 text-ink">{window.status === "finished" ? t("Finished") : t("Today · day {day}", { day: count(window.today) })}</h2>
-              <span className="text-small text-ink-muted">{dayText(today, locale, "short")}</span>
+              <h2 className="text-title text-ink">{window.status === "finished" ? t("Finished") : t("Today · day {day}", { day: count(window.today) })}</h2>
+              <span className="text-[12.5px] text-ink-muted">{dayText(today, fmt, "short")}</span>
             </div>
             {window.status === "going" &&
               items.map((item) => {
                 const checked = sheet.checks.some((c) => c.day === window.today && c.item === item);
                 return (
-                  <label key={item} className={cn("flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-4 py-3 text-body transition-colors", CHECK_FOCUS, checked ? "border-mint-200 bg-mint-50" : "border-line hover:border-line-strong")}>
+                  <label key={item} className={cn("flex min-h-11 cursor-pointer items-center gap-2.5 rounded-[9px] border px-3 py-2.5 text-body font-medium transition-colors", CHECK_FOCUS, checked ? "border-emerald-line bg-mint-50" : "border-line hover:border-line-strong")}>
                     <input type="checkbox" checked={checked} aria-disabled={busyDay !== null || undefined} onChange={() => tick({ day: window.today, items: [item], checked: !checked })} className="sr-only" />
-                    <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-sm", checked ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface")}>{checked && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}</span>
+                    <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-[6px]", checked ? "bg-emerald text-on-action" : "border-[1.5px] border-line-strong bg-surface")}>{checked && <Check className="size-3.25" strokeWidth={3.5} aria-hidden="true" />}</span>
                     <span className="min-w-0 wrap-break-word text-ink">{dayItself && item === DAY_ITEM ? t("Done for today") : item}</span>
                   </label>
                 );
               })}
             {window.status === "going" && todayDone && (
-              <div className="flex items-start gap-3 rounded-md bg-mint-50 px-4 py-3 text-small leading-snug text-brand-ink">
+              <div className="flex items-start gap-2.5 rounded-field bg-mint-50 px-3.5 py-2.5 text-small leading-snug text-brand-ink">
                 <Check className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <span>{t(summary.streak === 1 ? "Done for today. {count} day in a row." : "Done for today. {count} days in a row.", { count: count(summary.streak) })}</span>
               </div>
@@ -245,8 +244,8 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
 
           {/* A finished challenge keeps its card only while a reminder is still on, to turn it off. */}
           {reminders.available && (window.status !== "finished" || reminders.find("CHALLENGE", sheet.id)?.enabled) && (
-            <Card padding="none" className="p-5">
-              <SavedReminderEditor key={sheet.id} kind="CHALLENGE" targetKey={sheet.id} book={reminders} label={<span className="text-h3">{t("Reminder")}</span>} description={t("A nudge to tick today's items. Skipped once they're ticked.")} />
+            <Card padding="none" className="rounded-md px-5 py-4.5">
+              <SavedReminderEditor key={sheet.id} kind="CHALLENGE" targetKey={sheet.id} book={reminders} label={<span className="text-title">{t("Reminder")}</span>} description={t("A nudge to tick today's items. Skipped once they're ticked.")} />
             </Card>
           )}
         </div>

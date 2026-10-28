@@ -3,28 +3,19 @@
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import type { IBackupStatusSummary } from "@/types/system.types";
+import type { IDashboardSystem } from "@/types/dashboard.types";
 import { dateTimeLabel } from "./dashboardDates";
-import { backupIsDue } from "./dashboardFigures";
-import { COULD_NOT_LOAD, Section, SectionLink, Unavailable } from "./pieces";
+import { Section, SectionLink } from "./pieces";
 
-export interface SystemState {
-  // true when the health check passed; false when the API answered that its
-  // database is down; null when the API didn't answer at all.
+// The API's own health check (GET /health), timed from this server: up
+// with how long it took, refused (its database is down), or no answer.
+export interface ApiCheck {
   healthy: boolean | null;
-  // How long the check took from this server, when it passed.
   latencyMs: number | null;
-  // null when it couldn't be loaded.
-  backup: IBackupStatusSummary | null;
-  // Not fixed yet and from the last 24 hours, as the Errors page opens;
-  // null when they couldn't be counted.
-  unresolvedErrors: number | null;
 }
 
-interface SystemCardProps {
-  // null when the role can't see system health at all.
-  state: SystemState | null;
-}
+// An answer slower than this reads "Slow" rather than "Fast".
+const SLOW_MS = 800;
 
 type RowTone = "ok" | "warn" | "bad" | "unknown";
 
@@ -36,63 +27,68 @@ interface Row {
   plain?: boolean;
 }
 
-const DOT: Record<RowTone, string> = { ok: "bg-income", warn: "bg-warning-fill", bad: "bg-expense-fill", unknown: "bg-ink-faint" };
+const DOT: Record<RowTone, string> = { ok: "bg-mint-300", warn: "bg-warning-fill", bad: "bg-expense-fill", unknown: "bg-ink-faint" };
 const TEXT: Record<RowTone, string> = { ok: "text-emerald", warn: "text-warning", bad: "text-expense", unknown: "text-ink-muted" };
 
-// The API, the database, the last backup and the open errors, each with a
-// coloured dot. "All working" only when every row is.
-export function SystemCard({ state }: SystemCardProps) {
+interface SystemCardProps {
+  system: IDashboardSystem;
+  api: ApiCheck;
+}
+
+// The API, the database, email, the payment gateway, the last backup and
+// the day's errors, each with a dot, as the AdminDashboard board lists them.
+// "All working" only when the server says every one is.
+export function SystemCard({ system, api }: SystemCardProps) {
   const { translate, locale } = useLocale();
-  if (state === null) {
-    return (
-      <Section title={translate("System")}>
-        <Unavailable>{translate("Only a super admin sees system health.")}</Unavailable>
-      </Section>
-    );
-  }
-  const { healthy, latencyMs, backup, unresolvedErrors } = state;
-  const lastBackupAt = backup?.lastSuccessfulBackupAt ?? null;
+  const { database, email, paymentGateway, lastBackup, errors24h } = system;
+  const count = (value: number) => formatCount(value, locale);
+  const backupSize = lastBackup?.sizeMb != null ? ` · ${count(Math.round(lastBackup.sizeMb))} MB` : "";
+
   const rows: Row[] = [
     {
       name: translate("API"),
-      state: healthy === null ? translate("Unreachable") : latencyMs === null ? translate("Working") : translate("Working · {ms} ms", { ms: formatCount(latencyMs, locale) }),
-      tone: healthy === null ? "bad" : "ok",
+      state:
+        api.healthy === null
+          ? translate("Unreachable")
+          : api.latencyMs === null
+            ? translate("Working")
+            : translate(api.latencyMs > SLOW_MS ? "Slow · {ms} ms" : "Fast · {ms} ms", { ms: count(api.latencyMs) }),
+      tone: api.healthy === null ? "bad" : api.latencyMs !== null && api.latencyMs > SLOW_MS ? "warn" : "ok",
     },
+    { name: translate("Database"), state: translate(database.ok ? "Healthy" : "Not reachable"), tone: database.ok ? "ok" : "bad" },
     {
-      name: translate("Database"),
-      state: translate(healthy === true ? "Healthy" : healthy === false ? "Not reachable" : "Couldn't check"),
-      tone: healthy === true ? "ok" : healthy === false ? "bad" : "unknown",
+      name: translate("Email (Resend)"),
+      state: translate(!email.configured ? "Not set up" : email.lastSendOk === false ? "Last send failed" : "Sending"),
+      tone: !email.configured || email.lastSendOk === false ? "warn" : "ok",
     },
-    backup === null
-      ? { name: translate("Last backup"), state: translate(COULD_NOT_LOAD), tone: "unknown" }
-      : lastBackupAt === null
-        ? { name: translate("Last backup"), state: translate("None yet"), tone: "warn" }
-        : { name: translate("Last backup"), state: dateTimeLabel(lastBackupAt, locale, { t: translate }), tone: backupIsDue(backup.daysSinceLastBackup) ? "warn" : "ok", plain: true },
+    { name: translate("Payment gateway"), state: translate(paymentGateway.configured ? "Connected" : "Not set up"), tone: paymentGateway.configured ? "ok" : "warn" },
+    lastBackup?.completedAt
+      ? { name: translate("Last backup"), state: `${dateTimeLabel(lastBackup.completedAt, locale, { t: translate })}${backupSize}`, tone: "ok", plain: true }
+      : { name: translate("Last backup"), state: translate("None yet"), tone: "warn" },
     {
       name: translate("Errors, 24 hours"),
-      state: unresolvedErrors === null ? translate(COULD_NOT_LOAD) : translate("{count} new", { count: formatCount(unresolvedErrors, locale) }),
-      tone: unresolvedErrors === null ? "unknown" : unresolvedErrors === 0 ? "ok" : "warn",
+      state: errors24h.count === 0 ? translate("None") : translate("{count} new · {high} high", { count: count(errors24h.count), high: count(errors24h.high) }),
+      tone: errors24h.count === 0 ? "ok" : "warn",
     },
   ];
-  const allWell = rows.every((row) => row.tone === "ok");
 
   return (
     <Section
       title={translate("System")}
       aside={
-        <span className={cn("flex items-center gap-2 text-small font-semibold", allWell ? "text-emerald" : "text-warning")}>
-          <span aria-hidden="true" className={cn("size-2 rounded-full", allWell ? "bg-income" : "bg-warning-fill")} />
-          {translate(allWell ? "All working" : "Needs a look")}
+        <span className={cn("flex items-center gap-1.5 text-[12.5px] leading-[normal] font-semibold", system.allWorking ? "text-emerald" : "text-warning")}>
+          <span aria-hidden="true" className={cn("size-2 rounded-full", system.allWorking ? "bg-mint-300" : "bg-warning-fill")} />
+          {translate(system.allWorking ? "All working" : "Needs a look")}
         </span>
       }
-      className="h-full"
+      className="h-full gap-2.5"
     >
-      <div className="flex flex-1 flex-col gap-1.5">
+      <div className="flex flex-1 flex-col gap-2.5">
         {rows.map((row) => (
-          <div key={row.name} className="flex items-center gap-3 py-0.75 text-body">
+          <div key={row.name} className="flex items-center gap-2.5 py-0.75 text-[13.5px] leading-[normal]">
             <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", DOT[row.tone])} />
             <span className="flex-1 text-ink">{row.name}</span>
-            <span className={cn("text-right text-small font-medium", row.plain && row.tone === "ok" ? "text-ink-2" : TEXT[row.tone])}>{row.state}</span>
+            <span className={cn("text-right text-[12.5px] font-medium", row.plain && row.tone === "ok" ? "text-ink-2" : TEXT[row.tone])}>{row.state}</span>
           </div>
         ))}
       </div>

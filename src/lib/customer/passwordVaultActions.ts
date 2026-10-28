@@ -25,20 +25,52 @@ async function vaultHeaders(vaultToken: string) {
   return { ...(await authHeaders()), "x-vault-token": vaultToken };
 }
 
-async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
+// What a vault call answers: the shared result, plus the API's own reason
+// for a refusal and the counts that go with it -- unlock tries left, a
+// code's tries left, the seconds before a locked-out vault or a resend may
+// try again -- so the forms can say exactly what happened.
+export interface VaultResult<T = void> extends ActionResult<T> {
+  reason?: string;
+  triesLeft?: number;
+  attemptsLeft?: number;
+  retryAfterSec?: number;
+}
+
+interface VaultErrorBody {
+  reason?: unknown;
+  triesLeft?: unknown;
+  attemptsLeft?: unknown;
+  retryAfterSec?: unknown;
+}
+
+const numberOr = (value: unknown): number | undefined => (typeof value === "number" && Number.isFinite(value) ? value : undefined);
+
+async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<VaultResult<T>> {
   try {
     const data = await fn();
     return { success: true, data };
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      const body = (error.response?.data ?? {}) as VaultErrorBody;
+      const triesLeft = numberOr(body.triesLeft);
+      const attemptsLeft = numberOr(body.attemptsLeft);
+      const retryAfterSec = numberOr(body.retryAfterSec);
+      const extra = {
+        ...(typeof body.reason === "string" && { reason: body.reason }),
+        ...(triesLeft !== undefined && { triesLeft }),
+        ...(attemptsLeft !== undefined && { attemptsLeft }),
+        ...(retryAfterSec !== undefined && { retryAfterSec }),
+      };
       // NestJS's ThrottlerException carries the literal string
       // "ThrottlerException: Too Many Requests" as its message -- surfacing
       // that raw to a user reads as a crash, not a rate limit, so it gets
-      // the app's one friendly (and translated) wording instead.
-      if (error.response?.status === 429) {
-        return { success: false, message: TOO_MANY_ATTEMPTS_MESSAGE };
+      // the app's one friendly (and translated) wording instead. A 429 with
+      // a reason of its own (a locked-out vault, a code asked again too
+      // soon) keeps the API's words.
+      if (error.response?.status === 429 && !extra.reason) {
+        return { success: false, message: TOO_MANY_ATTEMPTS_MESSAGE, reason: "THROTTLED" };
       }
-      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage) };
+      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage), ...extra };
     }
     return { success: false, message: fallbackMessage };
   }
@@ -59,32 +91,74 @@ export interface SetVaultPasswordInput {
   currentVaultPassword?: string;
 }
 
-// "Forgot vault password?": the saved entries are encrypted with the old
-// vault password, so a reset can only start over -- it deletes every entry.
-// `confirm` is the API's guard against doing that by accident.
-export async function resetVaultAction(input: { currentPassword: string; vaultPassword: string }): Promise<ActionResult<{ deletedEntries: number }>> {
+// "Forgot vault password?", step one: the account password (left out for
+// a Google-only account, which a recent sign-in stands in for), and the
+// API emails a six-digit code. Only the password that opens the vault
+// changes; the saved logins stay.
+export interface VaultResetChallenge {
+  challengeId: string;
+  channel: "EMAIL" | "SMS";
+  // Masked: "s***@example.com".
+  sentTo: string;
+  resendAfterSec: number;
+  expiresAt: string;
+  attemptsLeft: number;
+  sendsLeft: number;
+}
+
+export async function startVaultResetAction(input: { currentPassword?: string }): Promise<VaultResult<VaultResetChallenge>> {
   return callApi(async () => {
-    const res = await customerApi.post<{ success: boolean; deletedEntries: number }>(
-      `${API_BASE_URL}/api/vault/reset`,
-      { ...input, confirm: "DELETE_ALL_ENTRIES" },
-      { headers: await authHeaders() },
-    );
-    return { deletedEntries: res.data.deletedEntries };
+    const res = await customerApi.post<VaultResetChallenge>(`${API_BASE_URL}/api/vault/reset/start`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "We could not send the code. Please try again in a minute.");
+}
+
+export async function resendVaultResetCodeAction(challengeId: string): Promise<VaultResult<VaultResetChallenge>> {
+  return callApi(async () => {
+    const res = await customerApi.post<VaultResetChallenge>(`${API_BASE_URL}/api/vault/reset/start/${encodeURIComponent(challengeId)}/resend`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "We could not send the code. Please try again in a minute.");
+}
+
+// Step two: the identity again, the code, and the new vault password.
+export async function resetVaultAction(input: { currentPassword?: string; vaultPassword: string; challengeId: string; code: string }): Promise<VaultResult<{ entryCount: number }>> {
+  return callApi(async () => {
+    const res = await customerApi.post<{ success: boolean; entryCount: number }>(`${API_BASE_URL}/api/vault/reset`, input, { headers: await authHeaders() });
+    return { entryCount: res.data.entryCount };
   }, "Failed to reset the vault");
 }
 
-export async function setVaultPasswordAction(input: SetVaultPasswordInput): Promise<ActionResult> {
+// How long one unlock lasts, from the next unlock on: minutes (1 to 30),
+// or null for the server's own. The answer says what an unlock really
+// lasts, which the server may cap.
+export async function updateVaultSettingsAction(lockMinutes: number | null): Promise<VaultResult<{ lockMinutes: number | null; effectiveMinutes: number }>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<{ lockMinutes: number | null; effectiveMinutes: number }>(`${API_BASE_URL}/api/vault/settings`, { lockMinutes }, { headers: await authHeaders() });
+    return res.data;
+  }, "Couldn't save the lock time");
+}
+
+export async function setVaultPasswordAction(input: SetVaultPasswordInput): Promise<VaultResult> {
   return callApi(async () => {
     await customerApi.post(`${API_BASE_URL}/api/vault/password`, input, { headers: await authHeaders() });
   }, "Failed to set vault password");
 }
 
-// A wrong password comes back as the API's own "Incorrect vault password";
-// the fallback is for an answer that never came, which is no wrong password.
-export async function unlockVaultAction(vaultPassword: string): Promise<ActionResult<{ vaultToken: string; expiresIn: string }>> {
+// A wrong password comes back as the API's own "Incorrect vault password"
+// with the tries left (reason VAULT_PASSWORD_WRONG); after ten in ten
+// minutes, 429 VAULT_LOCKED_OUT with the seconds to wait. The fallback is
+// for an answer that never came, which is no wrong password.
+export interface VaultUnlock {
+  vaultToken: string;
+  // A span string ("600s"); expiresInSec is the same in seconds.
+  expiresIn: string;
+  expiresInSec?: number;
+}
+
+export async function unlockVaultAction(vaultPassword: string): Promise<VaultResult<VaultUnlock>> {
   return callApi(async () => {
-    const res = await customerApi.post(`${API_BASE_URL}/api/vault/unlock`, { vaultPassword }, { headers: await authHeaders() });
-    return res.data;
+    const res = await customerApi.post<VaultUnlock>(`${API_BASE_URL}/api/vault/unlock`, { vaultPassword }, { headers: await authHeaders() });
+    return { vaultToken: res.data.vaultToken, expiresIn: res.data.expiresIn, expiresInSec: res.data.expiresInSec };
   }, "Couldn't open the vault. Please try again.");
 }
 

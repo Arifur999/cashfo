@@ -15,7 +15,8 @@ interface FormDialogFooterProps {
   // Left-aligned secondary action (e.g. "Deactivate" in an edit dialog).
   extra?: React.ReactNode;
   // In a drawer: sit at the bottom however short the form is (the form
-  // itself must be a flex column that fills the drawer).
+  // itself must be a flex column that fills the drawer), and stay in view
+  // while a long one scrolls, as the design's drawers keep their foot.
   pinned?: boolean;
 }
 
@@ -23,9 +24,9 @@ const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disab
   const { translate } = useLocale();
   return (
     // The design's dialog foot: a strip across the bottom of the card.
-    <DialogFooter className={cn("-mx-6 -mb-5 items-center border-t border-line bg-strip px-6 py-4 sm:justify-between", pinned ? "mt-auto" : "mt-4")}>
+    <DialogFooter className={cn("-mx-6 -mb-5 items-center border-t border-line bg-strip px-6 py-3.5 sm:justify-between", pinned ? "sticky bottom-0 z-10 mt-auto" : "mt-4")}>
       <div>{extra}</div>
-      <div className="flex flex-col-reverse gap-3 sm:flex-row">
+      <div className="flex flex-col-reverse gap-2.5 sm:flex-row">
         {/* The secondary button ConfirmDialog's Cancel is: white, the
             line-strong edge, sunken on hover. */}
         <DialogClose asChild>
