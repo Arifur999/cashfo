@@ -59,6 +59,9 @@ export interface CurrentUser {
   alerts?: SecurityAlerts;
   // Settings > App > Reminders' monthly summary email.
   monthlySummaryEmail?: boolean;
+  // The platform can send email; false hides what only an email can do.
+  // Absent from an older backend (read as true).
+  emailReady?: boolean;
   // Two-step sign-in with an authenticator app is on.
   twoFactorEnabled?: boolean;
   businesses: UserBusiness[];

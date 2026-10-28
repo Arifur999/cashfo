@@ -570,4 +570,5 @@ export const settingsDictionary: Record<string, string> = {
   "Verify by SMS": "SMS দিয়ে যাচাই করুন",
   "to get codes by SMS and reset your password with it.": "তাহলে কোড SMS-এ আসবে, আর এটি দিয়ে পাসওয়ার্ড রিসেট করা যাবে।",
   "Save the number, then verify it by SMS.": "নম্বরটি সেভ করুন, তারপর SMS দিয়ে যাচাই করুন।",
+  "Email isn't set up on Smartly yet.": "Smartly-তে এখনো ইমেইল চালু হয়নি।",
 };

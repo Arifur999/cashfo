@@ -143,6 +143,10 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
                       <Link href="/settings/help" className="font-semibold text-emerald hover:underline">
                         {t("To change it, contact support.")}
                       </Link>
+                    ) : user.emailReady === false ? (
+                      <>
+                        {t("Email isn't set up on Smartly yet.")} {supportLink}
+                      </>
                     ) : verify.sentTo ? (
                       <>
                         {t("Link sent to {email}.", { email: verify.sentTo })} {supportLink}
