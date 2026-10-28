@@ -48,3 +48,13 @@ export const cancelCampaign = async (id: string) => httpClient.patch<ICampaign>(
 export const sendCampaign = async (id: string) => httpClient.post<ICampaign>(`${BASE}/campaigns/${id}/send`);
 
 export const createNotificationTemplate = async (payload: ICreateNotificationTemplatePayload) => httpClient.post<INotificationTemplate>(`${BASE}/templates`, payload);
+
+// "Send a test to me": the template filled in for the admin, emailed to them.
+export const sendNotificationTemplateTest = async (id: string, language: "EN" | "BN") =>
+  httpClient.post<{ sentTo: string }>(`${BASE}/templates/${encodeURIComponent(id)}/test`, { language });
+
+// A template made in the panel (not a built-in one, nor one a campaign still has to send).
+export const deleteNotificationTemplate = async (id: string) => httpClient.delete<{ id: string }>(`${BASE}/templates/${encodeURIComponent(id)}`);
+
+// A campaign that never sent: a draft, a scheduled one or a cancelled one.
+export const deleteCampaign = async (id: string) => httpClient.delete<{ id: string }>(`${BASE}/campaigns/${encodeURIComponent(id)}`);

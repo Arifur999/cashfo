@@ -1,7 +1,7 @@
 "use server";
 
 import { requireId, runAction, runValidatedAction } from "@/lib/runAction";
-import { cancelCampaign, createCampaign, sendCampaign } from "@/services/notification.services";
+import { cancelCampaign, createCampaign, deleteCampaign, sendCampaign } from "@/services/notification.services";
 import { campaignServerZodSchema } from "@/zod/notification.validation";
 
 export const createCampaignAction = async (values: unknown) =>
@@ -18,6 +18,9 @@ export const createAndSendCampaignAction = async (values: unknown) =>
 // "Send now" for a draft or a scheduled campaign in the list.
 export const sendCampaignAction = async (campaignId: string) =>
   requireId(campaignId, "campaign") ?? runAction("Failed to send the campaign", () => sendCampaign(campaignId));
+
+export const deleteCampaignAction = async (campaignId: string) =>
+  requireId(campaignId, "campaign") ?? runAction("Failed to delete the campaign", () => deleteCampaign(campaignId));
 
 export const cancelCampaignAction = async (campaignId: string) =>
   requireId(campaignId, "campaign") ?? runAction("Failed to cancel the campaign", () => cancelCampaign(campaignId));

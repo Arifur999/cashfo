@@ -13,6 +13,8 @@ export type AudienceUserStatus = (typeof AUDIENCE_USER_STATUSES)[number];
 
 export interface INotificationTemplate {
   id: string;
+  // One every install starts with: it can be turned off, not deleted.
+  builtIn?: boolean;
   // e.g. "payment_failed"; what the backend sends by.
   key: string;
   channel: NotificationChannel;

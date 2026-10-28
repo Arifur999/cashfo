@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Ban, CopyPlus, Send } from "lucide-react";
+import { Ban, CopyPlus, Send, Trash2 } from "lucide-react";
 import { useMemo } from "react";
-import { cancelCampaignAction, sendCampaignAction } from "@/app/(dashboardLayout)/admin/notifications/campaigns/_action";
+import { cancelCampaignAction, deleteCampaignAction, sendCampaignAction } from "@/app/(dashboardLayout)/admin/notifications/campaigns/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import FormDrawer from "@/components/shared/dialog/FormDrawer";
 import type { DataTableActions } from "@/components/shared/table/dataTable.types";
@@ -37,12 +37,20 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
   const { data: plansResponse } = useQuery(plansQuery());
   const { data: templatesResponse } = useQuery(notificationTemplatesQuery());
   const columns = useMemo(() => buildCampaignsColumns(new Map((plansResponse?.data ?? []).map((plan) => [plan.id, plan.name]))), [plansResponse]);
-  const { activeRow: campaign, openDialog, closeDialog, getDialogProps } = useRowDialogs<ICampaign, "cancel" | "reuse" | "send">();
+  const { activeRow: campaign, openDialog, closeDialog, getDialogProps } = useRowDialogs<ICampaign, "cancel" | "delete" | "reuse" | "send">();
   const dropped = campaign ? droppedUserStatus(campaign) : null;
 
   const cancel = useActionMutation({
     action: cancelCampaignAction,
     successMessage: (cancelled) => translate("{title} cancelled", { title: cancelled.title }),
+    invalidateKeys: [queryKeys.campaigns.all],
+    refreshRoute: false,
+  });
+
+  // One that never went out; a sent one stays as the record.
+  const remove = useActionMutation({
+    action: deleteCampaignAction,
+    successMessage: translate("Campaign deleted"),
     invalidateKeys: [queryKeys.campaigns.all],
     refreshRoute: false,
   });
@@ -64,6 +72,9 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
         ...(canManage ? [{ label: "Send now", icon: Send, onClick: (row: ICampaign) => openDialog("send", row), hidden: (row: ICampaign) => !isOpen(row) }] : []),
         { label: "Use as new campaign", icon: CopyPlus, onClick: (row) => openDialog("reuse", row), hidden: (row) => row.status !== "DRAFT" },
         ...(canManage ? [{ label: "Cancel campaign", icon: Ban, destructive: true, onClick: (row: ICampaign) => openDialog("cancel", row), hidden: (row: ICampaign) => !isOpen(row) }] : []),
+        ...(canManage
+          ? [{ label: "Delete", icon: Trash2, destructive: true, onClick: (row: ICampaign) => openDialog("delete", row), hidden: (row: ICampaign) => row.status === "SENT" || row.status === "SENDING" }]
+          : []),
       ],
     }),
     [canManage, openDialog],
@@ -90,6 +101,18 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
         emptyMessage="No campaigns yet."
       />
       <SendSummaryCard />
+      <ConfirmDialog
+        {...getDialogProps("delete")}
+        title={translate("Delete {title}?", { title: campaign?.title ?? "" })}
+        description="It was never sent, so nobody heard from it. It goes from the list for good."
+        variant="destructive"
+        confirmLabel="Delete campaign"
+        pendingLabel="Deleting..."
+        isPending={remove.isPending}
+        onConfirm={async () => {
+          if (campaign && (await remove.run(campaign.id))) closeDialog();
+        }}
+      />
       <ConfirmDialog
         {...getDialogProps("cancel")}
         title={translate("Cancel {title}?", { title: campaign?.title ?? "" })}

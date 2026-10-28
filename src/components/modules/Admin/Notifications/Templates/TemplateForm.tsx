@@ -2,7 +2,13 @@
 
 import { useForm, useStore } from "@tanstack/react-form";
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
-import { setNotificationTemplateActiveAction, updateNotificationTemplateAction } from "@/app/(dashboardLayout)/admin/notifications/_action";
+import {
+  deleteNotificationTemplateAction,
+  sendNotificationTemplateTestAction,
+  setNotificationTemplateActiveAction,
+  updateNotificationTemplateAction,
+} from "@/app/(dashboardLayout)/admin/notifications/_action";
+import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import Button from "@/components/smartly/Button";
@@ -22,7 +28,7 @@ import VariableChips from "./VariableChips";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { Mail } from "lucide-react";
+import { Mail, Trash2 } from "lucide-react";
 
 const { shape } = notificationTemplateFormZodSchema;
 
@@ -95,6 +101,23 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
     successMessage: (savedTemplate) => translate(savedTemplate.isActive ? "{key} is on" : "{key} is off", { key: savedTemplate.key }),
     invalidateKeys: [queryKeys.notificationTemplates.all],
     refreshRoute: false,
+  });
+
+  // "Send a test to me": the template in the language the preview shows.
+  const test = useActionMutation({
+    action: () => sendNotificationTemplateTestAction(template.id, previewLanguage === "bn" ? "BN" : "EN"),
+    successMessage: (result) => translate("Test sent to {email}", { email: result.sentTo }),
+    refreshRoute: false,
+  });
+
+  // A template made in the panel can go; a built-in one is turned off instead.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const remove = useActionMutation({
+    action: () => deleteNotificationTemplateAction(template.id),
+    successMessage: translate("Deleted {key}", { key: template.key }),
+    invalidateKeys: [queryKeys.notificationTemplates.all],
+    refreshRoute: false,
+    onSuccess: () => setConfirmDelete(false),
   });
 
   const form = useForm({
@@ -239,12 +262,18 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-line bg-strip px-4.5 py-3">
-              {/* The board's test send: there is no way to send one template
-                  to an admin yet, so it is drawn but off. */}
-              <Button variant="secondary" size="sm" className="mr-auto text-small" disabled title={translate("Not available yet")}>
+              {/* Emails the admin this template, filled in for them. */}
+              <Button variant="secondary" size="sm" className="text-small" onClick={() => test.run(undefined)} disabled={test.isPending} aria-busy={test.isPending || undefined}>
                 <Mail className="size-3.75" aria-hidden="true" />
-                {translate("Send a test to me")}
+                {translate(test.isPending ? "Sending..." : "Send a test to me")}
               </Button>
+              {!template.builtIn && (
+                <Button variant="ghost" size="sm" className="text-small text-expense hover:bg-expense-soft" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 className="size-3.75" aria-hidden="true" />
+                  {translate("Delete")}
+                </Button>
+              )}
+              <span className="mr-auto" />
               {unsaved && <span className="text-small text-warning"><T>Unsaved changes</T></span>}
               <AppSubmitButton isPending={isPending || isSubmitting} disabled={!unsaved} pendingLabel="Saving..." variant="action" size="sm" className="w-auto">
                 <T>Save template</T>
@@ -253,6 +282,17 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
           )}
         </form.Subscribe>
       )}
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={(open) => !open && !remove.isPending && setConfirmDelete(false)}
+        title={translate("Delete {key}?", { key: template.key })}
+        description={translate("It goes from the list for good. Campaigns already sent with it keep their record.")}
+        confirmLabel={translate("Delete template")}
+        pendingLabel="Deleting..."
+        variant="destructive"
+        isPending={remove.isPending}
+        onConfirm={() => remove.run(undefined)}
+      />
     </AppForm>
   );
 };
