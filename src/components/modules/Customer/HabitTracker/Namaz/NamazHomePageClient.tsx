@@ -71,7 +71,7 @@ function StateIcon({ state, className }: { state: CellState; className?: string 
 // was missed so far, the year so far, and every month's sheet. The current
 // month's sheet opens on its own.
 export function NamazHomePageClient({ trackers, qaza, today, reminders: savedReminders }: NamazHomePageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
@@ -90,7 +90,7 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
   const nextToday = upcoming && upcoming.at.getTime() === prayerTimesFor(settings, today)[upcoming.prayer].getTime() ? upcoming.prayer : null;
   const reminders = useReminderBook(savedReminders);
   const creating = useRef(false);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   // No sheet for this month yet: open one. Already there (Today or another
   // tab opened it at the same time) is as good as opened; a failure, or no
@@ -132,7 +132,7 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
       applyMark({ item, status });
       const result = await setHabitTrackerCheckAction(current.id, status ? { day: todayDay, item, checked: true, status } : { day: todayDay, item, checked: false });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
     });
   }
 
@@ -144,7 +144,7 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
   const labelled = yearNow.months.length <= LABELLED_MONTHS;
   const monthDays = current?.totalDays ?? new Date(Date.UTC(year, month, 0)).getUTCDate();
   const thisMonthName = t(MONTH_NAMES[month - 1]);
-  const yearText = toLocaleDigits(String(year), locale);
+  const yearText = toLocaleDigits(String(year), fmt);
 
   return (
     <PageFrame className="gap-5">
@@ -170,7 +170,7 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
             </Chip>
           </div>
           <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-            <span className="text-[20px] leading-[normal] font-bold text-ink">{monthName(currentKey, locale, "long", true)}</span>
+            <span className="text-[20px] leading-[normal] font-bold text-ink">{monthName(currentKey, fmt, "long", true)}</span>
             <span className="text-small text-ink-muted">{t("Day {day} of {total}", { day: count(todayDay), total: count(monthDays) })}</span>
           </div>
           <div className="grid grid-cols-5 gap-1.5">
@@ -203,7 +203,7 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
             {current && (
               <Button asChild variant="action" size="sm" className="h-8.5 gap-1.5 rounded-sm px-3.5 shadow-none">
                 <Link href={`/habit-tracker/habits/namaz/${current.id}`}>
-                  {t("Open {month}", { month: monthName(currentKey, locale) })}
+                  {t("Open {month}", { month: monthName(currentKey, fmt) })}
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
               </Button>
@@ -271,8 +271,8 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
                 <Link key={tracker.id} href={`/habit-tracker/habits/namaz/${tracker.id}`} className={cn("flex flex-col gap-2.5 rounded-md border bg-surface px-4.5 py-4 text-ink shadow-card transition-colors hover:border-line-strong", now ? "border-emerald" : "border-line")}>
                   <span className="flex items-start justify-between gap-2">
                     <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="text-[15px] leading-[normal] font-semibold">{monthName(key, locale, "long", true)}</span>
-                      <span className="text-caption font-normal text-ink-muted">{hijriRange(tracker.year as number, tracker.month as number, locale, settings.hijriAdjust)}</span>
+                      <span className="text-[15px] leading-[normal] font-semibold">{monthName(key, fmt, "long", true)}</span>
+                      <span className="text-caption font-normal text-ink-muted">{hijriRange(tracker.year as number, tracker.month as number, fmt, settings.hijriAdjust)}</span>
                     </span>
                     {now ? (
                       <Chip tone="forest" size="sm" className="bg-emerald text-on-action">

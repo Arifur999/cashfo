@@ -23,11 +23,11 @@ interface LearningCardProps {
 // One skill being learned: how far along, when it was last practised, and a
 // quick "+1 lesson" or "+30 min".
 export function LearningCard({ skill, week, today, isPending, onQuickAdd, onLog }: LearningCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const palette = paletteFor(skill.color);
   const pct = progressPct(skill);
   const quick = QUICK_ADD[skill.unit];
-  const lastLine = practiceLine(skill, week, today, t, locale) ?? t("Nothing logged this week");
+  const lastLine = practiceLine(skill, week, today, t, fmt) ?? t("Nothing logged this week");
 
   return (
     <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4.5">
@@ -44,8 +44,8 @@ export function LearningCard({ skill, week, today, isPending, onQuickAdd, onLog 
 
       <div className="flex flex-col gap-1.5">
         <div className="flex justify-between text-small">
-          <span className="font-semibold text-ink tabular-nums">{progressText(skill, t, locale)}</span>
-          <span className="text-ink-muted">{formatCount(pct, locale)}%</span>
+          <span className="font-semibold text-ink tabular-nums">{progressText(skill, t, fmt)}</span>
+          <span className="text-ink-muted">{formatCount(pct, fmt)}%</span>
         </div>
         <span role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${skill.name}: ${t("done")}`} className="block h-2 overflow-hidden rounded-full bg-surface-sunken">
           <span className="block h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: palette.to }} />

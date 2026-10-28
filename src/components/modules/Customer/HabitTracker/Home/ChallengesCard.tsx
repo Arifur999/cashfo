@@ -18,8 +18,8 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 // The challenges going on, each as a ring of how far along it is.
 export function ChallengesCard({ trackers, today }: ChallengesCardProps) {
-  const { t, locale } = useLocale();
-  const count = (n: number) => formatCount(n, locale);
+  const { t, fmt } = useLocale();
+  const count = (n: number) => formatCount(n, fmt);
   const going = trackers
     .map((tracker) => ({ tracker, window: challengeWindow(tracker, today) }))
     .filter(({ window }) => window.status === "going")

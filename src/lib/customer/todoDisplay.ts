@@ -1,10 +1,9 @@
 // The sums behind Habits › To-do list: the day strip, what a day's list
 // holds, and what is coming up after it. Pure, so the page and its tests
 // agree. A list's `date` is a plain "YYYY-MM-DD".
-import { toBanglaDigits } from "@/lib/i18n/banglaDates";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { type FormatLocale, langOf } from "@/lib/i18n/formatPrefs";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import type { TodoItem, TodoList, TodoPriority, TodoRepeatRule } from "./api";
 import { type DayStyle, dayText, shiftDay, WEEK_ORDER, WEEKDAY_LONG, WEEKDAY_SHORT } from "./habitDisplay";
 
@@ -31,7 +30,7 @@ export const dayCount = (list: TodoList | null): DayCount => ({ total: list?.ite
 
 // What a strip day says under its number: "4 done", "3 of 5", "3 tasks",
 // or nothing, each one sentence with the counts in the reader's digits.
-export function dayCountText(count: DayCount, t: Translate = inEnglish, locale: Locale = "en"): string {
+export function dayCountText(count: DayCount, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   if (count.total === 0) return "";
   const total = formatCount(count.total, locale);
   if (count.done === count.total) return t("{count} done", { count: total });
@@ -40,7 +39,7 @@ export function dayCountText(count: DayCount, t: Translate = inEnglish, locale: 
 }
 
 // "3 of 5 done": a day's tasks, as one sentence.
-export const doneOfText = (done: number, total: number, t: Translate = inEnglish, locale: Locale = "en"): string =>
+export const doneOfText = (done: number, total: number, t: Translate = inEnglish, locale: FormatLocale = "en"): string =>
   t("{done} of {total} done", { done: formatCount(done, locale), total: formatCount(total, locale) });
 
 // "Today", "Tomorrow", "Yesterday" or nothing, for a heading.
@@ -52,7 +51,7 @@ export function relativeName(day: string, today: string): "Today" | "Tomorrow" |
 }
 
 // "Friday, 2 Oct" in the reader's language, in any of dayText's styles.
-export const dayLabel = (day: string, locale: Locale = "en", style: DayStyle = "long"): string => dayText(day, locale, style);
+export const dayLabel = (day: string, locale: FormatLocale = "en", style: DayStyle = "long"): string => dayText(day, locale, style);
 
 export interface Upcoming {
   tomorrow: TodoList | null;
@@ -90,16 +89,16 @@ export const byPriority = (items: TodoItem[]): TodoItem[] =>
   [...items].sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.dueTime ?? "99:99").localeCompare(b.dueTime ?? "99:99"));
 
 // "3rd" in English; Bangla writes the plain number ("৩ তারিখে").
-export function dayOfMonthWord(day: number, locale: Locale): string {
-  if (locale === "bn") return toBanglaDigits(day);
+export function dayOfMonthWord(day: number, locale: FormatLocale): string {
+  if (langOf(locale) === "bn") return toLocaleDigits(String(day), locale);
   const tens = day % 100;
   const suffix = tens >= 11 && tens <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[day % 10] ?? "th";
-  return `${day}${suffix}`;
+  return `${toLocaleDigits(String(day), locale)}${suffix}`;
 }
 
 // "Every Friday", "Every day", "Monthly, on the 3rd" -- or, inside a line
 // of other details, "every Friday", "every month on the 3rd".
-export function repeatLabel(rule: Pick<TodoRepeatRule, "kind" | "weekdays" | "monthDay">, t: Translate, locale: Locale, inLine = false): string {
+export function repeatLabel(rule: Pick<TodoRepeatRule, "kind" | "weekdays" | "monthDay">, t: Translate, locale: FormatLocale, inLine = false): string {
   if (rule.kind === "DAILY") return t(inLine ? "every day" : "Every day");
   if (rule.kind === "MONTHLY") return t(inLine ? "every month on the {day}" : "Monthly, on the {day}", { day: dayOfMonthWord(rule.monthDay ?? 1, locale) });
   const days = WEEK_ORDER.filter((day) => rule.weekdays.includes(day));
@@ -109,6 +108,6 @@ export function repeatLabel(rule: Pick<TodoRepeatRule, "kind" | "weekdays" | "mo
 }
 
 // "Moved from yesterday", or the day it was first planned for.
-export function movedLabel(movedFrom: string, day: string, t: Translate, locale: Locale = "en"): string {
+export function movedLabel(movedFrom: string, day: string, t: Translate, locale: FormatLocale = "en"): string {
   return movedFrom === shiftDay(day, -1) ? t("Moved from yesterday") : t("Moved from {date}", { date: dayLabel(movedFrom, locale, "short") });
 }

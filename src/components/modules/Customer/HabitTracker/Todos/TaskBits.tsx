@@ -91,7 +91,7 @@ interface TimeButtonProps {
 
 // "🕒 Time", or the time picked; the browser's own time picker opens.
 export function TimeButton({ value, onChange, className }: TimeButtonProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const picker = useRef<HTMLInputElement>(null);
   function open() {
     try {
@@ -104,7 +104,7 @@ export function TimeButton({ value, onChange, className }: TimeButtonProps) {
     <span className={cn("relative flex shrink-0", className)}>
       <button type="button" onClick={open} className={cn("flex h-10 items-center gap-1.5 rounded-sm border border-input bg-surface px-3 text-small font-semibold hover:bg-surface-sunken pointer-coarse:h-11", value ? "text-ink tabular-nums" : "text-ink-soft")}>
         <Clock className="size-3.5 text-ink-muted" strokeWidth={2} aria-hidden="true" />
-        {value ? timeLabel(value, t, locale) : t("Time")}
+        {value ? timeLabel(value, t, fmt) : t("Time")}
       </button>
       <input ref={picker} type="time" value={value ?? ""} onChange={(event) => onChange(event.target.value || null)} aria-label={t("Time")} tabIndex={-1} className="pointer-events-none absolute inset-0 opacity-0" />
     </span>
@@ -122,10 +122,10 @@ interface TaskMetaProps {
 
 // The line under a task: its priority, time, repeat and where it moved from.
 export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
-  const { t, locale } = useLocale();
-  const moved = item.movedFrom ? movedLabel(item.movedFrom, day, t, locale) : null;
+  const { t, fmt } = useLocale();
+  const moved = item.movedFrom ? movedLabel(item.movedFrom, day, t, fmt) : null;
   // "Reminder: 10 min before", for the bell beside the time.
-  const reminder = item.dueTime && item.remindBefore != null ? t("Reminder: {when}", { when: minutesBeforeLabel(item.remindBefore, t, locale) }) : null;
+  const reminder = item.dueTime && item.remindBefore != null ? t("Reminder: {when}", { when: minutesBeforeLabel(item.remindBefore, t, fmt) }) : null;
   if (look === "plain") {
     return (
       <span className="flex items-center gap-2 text-caption whitespace-nowrap text-ink-muted">
@@ -133,7 +133,7 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
           <PriorityDot priority={item.priority} />
           {t(PRIORITY_LABEL[item.priority])}
         </span>
-        {moved ? <span className="truncate font-semibold text-warning">{moved}</span> : item.dueTime && <span className="font-medium tabular-nums">{timeLabel(item.dueTime, t, locale)}</span>}
+        {moved ? <span className="truncate font-semibold text-warning">{moved}</span> : item.dueTime && <span className="font-medium tabular-nums">{timeLabel(item.dueTime, t, fmt)}</span>}
       </span>
     );
   }
@@ -143,7 +143,7 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
       {item.dueTime && (
         <span className="flex items-center gap-1 tabular-nums">
           <Clock className="size-3" aria-hidden="true" />
-          {timeLabel(item.dueTime, t, locale)}
+          {timeLabel(item.dueTime, t, fmt)}
           {reminder && (
             <span title={reminder} className="ml-0.5 flex items-center">
               <BellRing className="size-3" aria-hidden="true" />
@@ -155,7 +155,7 @@ export function TaskMeta({ item, day, look = "chip" }: TaskMetaProps) {
       {item.repeat && (
         <span className="flex items-center gap-1">
           <Repeat className="size-3" aria-hidden="true" />
-          {repeatLabel(item.repeat, t, locale)}
+          {repeatLabel(item.repeat, t, fmt)}
         </span>
       )}
       {moved && (

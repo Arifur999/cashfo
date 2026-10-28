@@ -24,10 +24,10 @@ const LIBRARY = "/habit-tracker/habits?category=Book";
 // The book on the nightstand, in brief, with the reading streak and today's
 // pages; phones get the board's single row, which opens the library.
 export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const pace = book ? readingPace(book, today) : null;
   const pct = book ? progressPct(book) : 0;
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   const bar = book && (
     <span role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${book.title}: ${t("read")}`} className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
@@ -44,7 +44,7 @@ export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProp
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="truncate text-body leading-[normal] font-semibold text-ink">{book.title}</span>
               <span className="text-caption leading-[normal] font-normal text-ink-muted tabular-nums">
-                {pageOfText(book, t, locale)}
+                {pageOfText(book, t, fmt)}
                 {pagesToday > 0 ? ` · ${t("{count} pages today", { count: count(pagesToday) })}` : pace !== null && ` · ${t("{count} pages a day", { count: count(pace) })}`}
               </span>
               {bar}
@@ -73,7 +73,7 @@ export function ReadingCard({ book, streak, pagesToday, today }: ReadingCardProp
                 <span className="truncate text-body font-semibold text-ink">{book.title}</span>
                 {book.author && <span className="truncate text-small text-ink-muted">{book.author}</span>}
                 <span className="text-small text-ink-2 tabular-nums">
-                  {pageOfText(book, t, locale)} · {count(pct)}%
+                  {pageOfText(book, t, fmt)} · {count(pct)}%
                 </span>
                 <span className="mt-0.75">{bar}</span>
               </div>

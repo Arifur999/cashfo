@@ -59,21 +59,21 @@ const STEP = 50;
 // goal in the corner. A row opens a short menu of what can happen to that
 // skill.
 export function SkillsTable({ skills, week, today, year, goalTarget, completedThisYear, onEditGoal, onAction }: SkillsTableProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [shown, setShown] = useState(STEP);
   const rows = STATUS_ORDER.flatMap((status) => skills.filter((skill) => skill.status === status));
   const visible = rows.slice(0, shown);
   const goalPct = goalTarget ? Math.min(100, Math.round((completedThisYear / goalTarget) * 100)) : 0;
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   function lastPractised(skill: Skill): string {
     const last = lastActivity(week, skill.id);
     if (last) {
       const when = relativeDay(last.date, today);
-      return when === "today" ? t("Today") : when === "yesterday" ? t("Yesterday") : dayText(last.date, locale, "dayMonth");
+      return when === "today" ? t("Today") : when === "yesterday" ? t("Yesterday") : dayText(last.date, fmt, "dayMonth");
     }
-    if (skill.status === "COMPLETED" && skill.completedAt) return instantText(skill.completedAt, locale);
-    if (skill.progress > 0) return instantText(skill.updatedAt, locale);
+    if (skill.status === "COMPLETED" && skill.completedAt) return instantText(skill.completedAt, fmt);
+    if (skill.progress > 0) return instantText(skill.updatedAt, fmt);
     return t("Not started");
   }
 
@@ -84,7 +84,7 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
         <span className="block h-full rounded-full" style={{ width: `${progressPct(skill)}%`, background: palette.to }} />
       </span>
     );
-    const progress = <span className="text-[12.5px] whitespace-nowrap text-ink-soft tabular-nums">{progressText(skill, t, locale)}</span>;
+    const progress = <span className="text-[12.5px] whitespace-nowrap text-ink-soft tabular-nums">{progressText(skill, t, fmt)}</span>;
     return (
       // The row stays lit while its menu is open.
       <ListRow key={skill.id} columns={COLUMNS} className="min-h-13.5 text-[13.5px] md:px-5 has-[[data-slot=list-row-button][data-state=open]]:bg-hover">
@@ -144,7 +144,7 @@ export function SkillsTable({ skills, week, today, year, goalTarget, completedTh
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3.5 md:px-5">
           <h2 className="text-title text-ink">{t("All skills")}</h2>
           <span className="flex flex-wrap items-center gap-2 text-small text-ink-soft">
-            <span>{fillNodes(t("{year} goal: {figure}"), { year: toLocaleDigits(String(year), locale), figure: <b className="font-semibold text-ink">{goalTarget ? t("{done} of {total} completed", { done: count(completedThisYear), total: count(goalTarget) }) : t("not set")}</b> })}</span>
+            <span>{fillNodes(t("{year} goal: {figure}"), { year: toLocaleDigits(String(year), fmt), figure: <b className="font-semibold text-ink">{goalTarget ? t("{done} of {total} completed", { done: count(completedThisYear), total: count(goalTarget) }) : t("not set")}</b> })}</span>
             {goalTarget !== null && (
               <span className="h-1.5 w-22.5 overflow-hidden rounded-full bg-surface-sunken">
                 <span className="block h-full rounded-full bg-emerald" style={{ width: `${goalPct}%` }} />

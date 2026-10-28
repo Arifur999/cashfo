@@ -34,7 +34,7 @@ const MAX_ITEM = 40;
 // A new challenge: a name, how many days, and the daily items to tick
 // (one is enough; none means the day itself is ticked).
 export function NewChallengeDialog({ open, onClose, presetDays, reminders }: NewChallengeDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [days, setDays] = useState<number | "custom">(30);
@@ -62,7 +62,7 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
   const daysOk = Number.isInteger(totalDays) && totalDays >= 1 && totalDays <= MAX_DAYS;
   const valid = name.trim().length > 0 && name.trim().length <= 60 && daysOk;
   // Why Start stays off for a length of its own.
-  const daysError = days === "custom" && custom !== "" && !daysOk ? t("From 1 to {max} days.", { max: formatCount(MAX_DAYS, locale) }) : undefined;
+  const daysError = days === "custom" && custom !== "" && !daysOk ? t("From 1 to {max} days.", { max: formatCount(MAX_DAYS, fmt) }) : undefined;
   // The hidden item the day itself is ticked through can't be one of yours.
   const usable = (value: string) => value !== DAY_ITEM;
 
@@ -81,12 +81,12 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
       const all = last && usable(last) && !items.some((i) => i.toLowerCase() === last.toLowerCase()) ? [...items, last] : items;
       const result = await createChallengeAction({ name: name.trim(), totalDays, items: all });
       if (!result.data) {
-        toast.error(actionError(result.message, "Failed to create challenge", t, locale));
+        toast.error(actionError(result.message, "Failed to create challenge", t, fmt));
         return;
       }
       // Made, even if an item was refused: open it, and say what went wrong.
       if (result.success) toast.success(t("Challenge created"));
-      else toast.error(actionError(result.message, "Failed to save habit", t, locale));
+      else toast.error(actionError(result.message, "Failed to save habit", t, fmt));
       // Its reminder needs the new id, so it is saved now.
       if (reminders?.available) {
         const saved = await reminders.saveDraft("CHALLENGE", result.data.id, reminder);
@@ -120,7 +120,7 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
                 <div role="radiogroup" aria-label={t("How many days")} className="grid grid-cols-5 gap-2">
                   {CHALLENGE_PRESETS.map((p) => (
                     <button key={p.days} type="button" role="radio" aria-checked={days === p.days} onClick={() => setDays(p.days)} className={pick(days === p.days)}>
-                      {formatCount(p.days, locale)}
+                      {formatCount(p.days, fmt)}
                     </button>
                   ))}
                   <button type="button" role="radio" aria-checked={days === "custom"} aria-label={t("Your own length")} onClick={() => setDays("custom")} className={cn(pick(days === "custom"), days !== "custom" && "border-dashed border-line-strong hover:border-emerald")}>

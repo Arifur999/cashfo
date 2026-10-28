@@ -72,7 +72,7 @@ type SheetUpdate = { kind: "check"; day: number; item: string; checked: boolean 
 // names pinned; it is one Tab stop, its boxes reached with the arrow keys.
 export function RamadanSheetPageClient({ tracker, all, today, reminders: savedReminders }: RamadanSheetPageClientProps) {
   const reminders = useReminderBook(savedReminders);
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -85,8 +85,8 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
   const [isPending, startRemove] = useTransition();
   const scroller = useRef<HTMLDivElement>(null);
   const todayHead = useRef<HTMLSpanElement>(null);
-  const count = (n: number) => formatCount(n, locale);
-  const digits = (value: number | string | null) => toLocaleDigits(String(value ?? ""), locale);
+  const count = (n: number) => formatCount(n, fmt);
+  const digits = (value: number | string | null) => toLocaleDigits(String(value ?? ""), fmt);
 
   const window = ramadanWindow(sheet, today, hijriAdjust);
   const days = ramadanDays(sheet, hijriAdjust);
@@ -118,7 +118,7 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
       applyUpdate({ kind: "check", day, item, checked });
       const result = await setHabitTrackerCheckAction(sheet.id, { day, item, checked });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
     });
   }
 
@@ -127,7 +127,7 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
       applyUpdate({ kind: "paras", day, paras });
       const result = await setRamadanParasAction(sheet.id, { day, paras });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to save the paras", t, locale));
+      else toast.error(actionError(result.message, "Failed to save the paras", t, fmt));
     });
   }
 
@@ -141,7 +141,7 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
         setRemoving(null);
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to remove the row", t, locale));
+        toast.error(actionError(result.message, "Failed to remove the row", t, fmt));
       }
     });
   }
@@ -154,13 +154,13 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
         setConfirmDelete(false);
         router.push("/habit-tracker/habits?category=Ramadan");
       } else {
-        toast.error(actionError(result.message, "Failed to remove month tracker", t, locale));
+        toast.error(actionError(result.message, "Failed to remove month tracker", t, fmt));
       }
     });
   }
 
   const totals = days.map((d) => ({ day: d.day, count: d.day <= counted ? sheet.checks.filter((c) => c.day === d.day).length : null, open: d.day === window.todayDay }));
-  const dateRange = window.start && window.end ? t("{from} to {to}", { from: dayText(window.start, locale, "dayMonth"), to: dayText(window.end, locale, "dayMonthYear") }) : null;
+  const dateRange = window.start && window.end ? t("{from} to {to}", { from: dayText(window.start, fmt, "dayMonth"), to: dayText(window.end, fmt, "dayMonthYear") }) : null;
 
   return (
     <PageFrame className="gap-4.5">
@@ -177,7 +177,7 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
               </Chip>
             </span>
           }
-          description={[dateRange, daysText(sheet.totalDays, t, locale)].filter(Boolean).join(" · ")}
+          description={[dateRange, daysText(sheet.totalDays, t, fmt)].filter(Boolean).join(" · ")}
           actions={
             <>
               <Button variant="secondary" onClick={() => setAddOpen(true)} className="rounded-sm px-3.5">
@@ -220,7 +220,7 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
         <div role="status" className="flex items-center gap-3 rounded-[10px] border border-emerald-line bg-mint-50 px-4 py-3 text-body text-ink">
           <MoonStar className="size-4.5 shrink-0 text-emerald" aria-hidden="true" />
           <span>
-            <b className="font-semibold">{next.daysToGo === 0 ? t("{name} is going on now.", { name: nextName }) : t(next.daysToGo === 1 ? "{name} begins around {date}, in {count} day." : "{name} begins around {date}, in {count} days.", { name: nextName, date: dayText(next.startsOn, locale, "dayMonthYear"), count: count(next.daysToGo) })}</b>{" "}
+            <b className="font-semibold">{next.daysToGo === 0 ? t("{name} is going on now.", { name: nextName }) : t(next.daysToGo === 1 ? "{name} begins around {date}, in {count} day." : "{name} begins around {date}, in {count} days.", { name: nextName, date: dayText(next.startsOn, fmt, "dayMonthYear"), count: count(next.daysToGo) })}</b>{" "}
             {next.daysToGo > 0 && t("The exact day depends on the moon, so the date can move by one day.")}
           </span>
         </div>
@@ -267,7 +267,7 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
                   key={d.day}
                   ref={isToday ? todayHead : undefined}
                   role="columnheader"
-                  title={[t("{day} Ramadan", { day: count(d.day) }), d.date ? dayText(d.date, locale, "dayMonth") : null, d.oddNight ? t("odd night") : null].filter(Boolean).join(" · ")}
+                  title={[t("{day} Ramadan", { day: count(d.day) }), d.date ? dayText(d.date, fmt, "dayMonth") : null, d.oddNight ? t("odd night") : null].filter(Boolean).join(" · ")}
                   className={cn("flex w-6.75 shrink-0 flex-col items-center gap-px text-caption font-semibold tabular-nums", isToday ? "rounded-[6px] bg-emerald text-on-action" : d.oddNight ? "text-warning" : "text-ink-muted")}
                 >
                   <Star className={cn("size-2.75", d.oddNight ? "fill-warning-fill text-warning-fill" : "invisible")} strokeWidth={1.5} aria-hidden="true" />

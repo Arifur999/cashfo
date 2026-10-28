@@ -2,6 +2,7 @@
 // sheets, the last seven days of prayers and habits side by side, and the
 // streaks worth showing. Pure, so the page and its tests agree.
 import type { Habit, HabitMonthLog, HabitMonthTracker, HabitToday } from "./api";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { countsOn, dayMark, isPlannedOn, lastDays, shiftDay, weekOf } from "./habitDisplay";
 import { allPrayed, cellState, isPrayed, PRAYERS, trackerFor } from "./namazDisplay";
 
@@ -25,10 +26,11 @@ export function prayerMarks(trackers: HabitMonthTracker[], day: string, today: s
 
 export const prayedOn = (trackers: HabitMonthTracker[], day: string, today: string): number => prayerMarks(trackers, day, today).filter((mark) => mark !== "none" && isPrayed(mark)).length;
 
-// The days a habit was done in the week of `day` (Saturday to Friday), for a
-// "few times a week" habit's "2 of 3 this week".
-export const doneThisWeek = (habitId: string, logs: HabitMonthLog[], day: string): number => {
-  const week = weekOf(day);
+// The days a habit was done in the week of `day` (Saturday to Friday, or
+// the reader's week given their Fmt), for a "few times a week" habit's
+// "2 of 3 this week".
+export const doneThisWeek = (habitId: string, logs: HabitMonthLog[], day: string, locale?: FormatLocale): number => {
+  const week = weekOf(day, locale);
   return new Set(logs.filter((log) => log.habitId === habitId && log.completed && week.includes(log.date.slice(0, 10))).map((log) => log.date.slice(0, 10))).size;
 };
 

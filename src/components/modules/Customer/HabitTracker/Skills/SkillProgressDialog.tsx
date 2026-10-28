@@ -26,7 +26,7 @@ const typed = (value: string, hours: boolean) => (hours ? latinDigits(value).rep
 // "Which lesson are you on?" or "How many hours have you done?", as a total
 // so far; the difference from the last total is what today's log records.
 export function SkillProgressDialog({ skill, onClose, onSave, onComplete }: SkillProgressDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [text, setText] = useState("");
 
   const [prevId, setPrevId] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export function SkillProgressDialog({ skill, onClose, onSave, onComplete }: Skil
           <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-4.5">
             <div className="flex min-w-0 flex-col gap-1">
               <AlertDialogTitle className="text-h3 text-ink">{t(isHours ? "How many hours have you done?" : "Which lesson are you on?")}</AlertDialogTitle>
-              <AlertDialogDescription className="text-small text-ink-muted">{skill ? `${skill.name} · ${amountText(skill.unit, skill.target, t, locale)}` : ""}</AlertDialogDescription>
+              <AlertDialogDescription className="text-small text-ink-muted">{skill ? `${skill.name} · ${amountText(skill.unit, skill.target, t, fmt)}` : ""}</AlertDialogDescription>
             </div>
             <CloseButton onClick={onClose} label={t("Close")} className="-my-0.5 -mr-1.5 size-8.5 rounded-full" />
           </div>

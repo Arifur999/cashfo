@@ -9,6 +9,7 @@ import type { HabitMonthTracker } from "@/lib/customer/api";
 import { dayText } from "@/lib/customer/habitDisplay";
 import { parasOn, QURAN_PARAS, quranItem, quranKhatam, type RamadanDay, type RamadanWindow } from "@/lib/customer/ramadanDisplay";
 import { formatCount } from "@/lib/i18n/digits";
+import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -24,15 +25,15 @@ interface QuranKhatamCardProps {
 // square each, and the day the khatam was finished. While Ramadan is going on
 // it also logs a day's paras (today, or a day already past).
 export function QuranKhatamCard({ sheet, window, days, onParas, saving }: QuranKhatamCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [picked, setPicked] = useState<number | null>(null);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
   const { read, finishedOn } = quranKhatam(sheet);
   const shown = Math.min(read, QURAN_PARAS);
   const finishedDate = finishedOn ? days.find((d) => d.day === finishedOn)?.date : null;
   const day = window.todayDay !== null ? Math.min(picked ?? window.todayDay, window.todayDay) : null;
   const paras = day !== null ? parasOn(sheet, day) : 0;
-  const finishedLine = finishedOn ? (finishedDate ? t("Finished on {day} Ramadan ({date}).", { day: count(finishedOn), date: dayText(finishedDate, locale, "dayMonthYear") }) : t("Finished on {day} Ramadan.", { day: count(finishedOn) })) : null;
+  const finishedLine = finishedOn ? (finishedDate ? t("Finished on {day} Ramadan ({date}).", { day: count(finishedOn), date: dayText(finishedDate, fmt, "dayMonthYear") }) : t("Finished on {day} Ramadan.", { day: count(finishedOn) })) : null;
   const step = "flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:w-11";
 
   return (
@@ -51,7 +52,7 @@ export function QuranKhatamCard({ sheet, window, days, onParas, saving }: QuranK
       </div>
       <div className="flex items-baseline gap-2">
         <span className="text-[30px] leading-[normal] font-bold tracking-[-0.02em] text-ink tabular-nums">{count(shown)}</span>
-        <span className="text-body text-ink-soft">{t("of 30 paras")}</span>
+        <span className="text-body text-ink-soft">{redigit(t("of 30 paras"), fmt)}</span>
       </div>
       <div role="img" aria-label={shown === QURAN_PARAS ? t("All 30 paras read") : t("{count} of 30 paras read", { count: count(shown) })} className="grid grid-cols-10 gap-1">
         {Array.from({ length: QURAN_PARAS }, (_, i) => i + 1).map((para) => (

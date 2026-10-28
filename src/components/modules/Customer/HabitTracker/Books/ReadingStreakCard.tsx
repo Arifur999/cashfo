@@ -18,13 +18,14 @@ interface ReadingStreakCardProps {
 const BAR_MAX = 86;
 
 // The board's reading streak: days in a row, this week's pages and the daily
-// average, then a bar for each day of the week (Saturday first).
+// average, then a bar for each day of the week (from the reader's first day,
+// as the API orders it).
 export function ReadingStreakCard({ reading, today }: ReadingStreakCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { total, average } = weekPages(reading.week, today);
   const most = Math.max(0, ...reading.week.map((day) => day.pages));
-  const days = (n: number) => daysText(n, t, locale);
-  const pages = (n: number) => t("{count} pages", { count: formatCount(n, locale) });
+  const days = (n: number) => daysText(n, t, fmt);
+  const pages = (n: number) => t("{count} pages", { count: formatCount(n, fmt) });
 
   return (
     <Card padding="none" className="flex flex-col gap-3.5 rounded-md px-5 py-4.5">
@@ -53,7 +54,7 @@ export function ReadingStreakCard({ reading, today }: ReadingStreakCardProps) {
       <div role="img" aria-label={t("Pages read each day this week")} className="flex h-30 items-end justify-between gap-2.5 border-b border-line px-1">
         {reading.week.map((day) => (
           <span key={day.date} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-            <span className={cn("text-[11.5px] font-bold tabular-nums", day.pages ? "text-ink-2" : "text-ink-faint")}>{formatCount(day.pages, locale)}</span>
+            <span className={cn("text-[11.5px] font-bold tabular-nums", day.pages ? "text-ink-2" : "text-ink-faint")}>{formatCount(day.pages, fmt)}</span>
             {/* Today in the board's orange, the other days in a lighter wash of it. */}
             <span
               className={cn("w-full max-w-8.5 rounded-t-[5px]", !day.pages ? "bg-line" : day.date === today ? "bg-orange-fill" : "bg-orange-fill/45")}

@@ -48,7 +48,7 @@ const SHOWN = 3;
 // The three shelves side by side. Every row opens a short menu of what can
 // happen to that book.
 export function ShelvesCard({ shelves, onAction }: ShelvesCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [expanded, setExpanded] = useState<Partial<Record<BookStatus, boolean>>>({});
 
   return (
@@ -64,7 +64,7 @@ export function ShelvesCard({ shelves, onAction }: ShelvesCardProps) {
               <div className="flex items-center justify-between border-b border-divider pb-1.5">
                 <span className="text-[13.5px] font-semibold text-ink">{t(SHELF_LABEL[status])}</span>
                 <Chip tone="neutral" className="h-4.5 px-2 text-ink-soft">
-                  {formatCount(books.length, locale)}
+                  {formatCount(books.length, fmt)}
                 </Chip>
               </div>
               {shown.length === 0 && <span className="py-3 text-small text-ink-muted">{t(EMPTY[status])}</span>}
@@ -73,7 +73,7 @@ export function ShelvesCard({ shelves, onAction }: ShelvesCardProps) {
               ))}
               {books.length > SHOWN && (
                 <button type="button" aria-expanded={open} onClick={() => setExpanded({ ...expanded, [status]: !open })} className="flex min-h-8 items-center self-start text-[12.5px] font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
-                  {open ? t("Show fewer") : t("See all {count}", { count: formatCount(books.length, locale) })}
+                  {open ? t("Show fewer") : t("See all {count}", { count: formatCount(books.length, fmt) })}
                 </button>
               )}
             </div>
@@ -85,11 +85,11 @@ export function ShelvesCard({ shelves, onAction }: ShelvesCardProps) {
 }
 
 function ShelfRow({ book, status, onAction }: { book: Book; status: BookStatus; onAction: ShelvesCardProps["onAction"] }) {
-  const { t, locale } = useLocale();
-  const pages = t("{count} pages", { count: formatCount(book.totalPages, locale) });
-  const detail = status === "READING" ? pageOfText(book, t, locale) : status === "WANT_TO_READ" ? pages : book.author ? "" : pages;
+  const { t, fmt } = useLocale();
+  const pages = t("{count} pages", { count: formatCount(book.totalPages, fmt) });
+  const detail = status === "READING" ? pageOfText(book, t, fmt) : status === "WANT_TO_READ" ? pages : book.author ? "" : pages;
   const sub = [book.author, detail].filter(Boolean).join(" · ");
-  const end = status === "READING" ? `${formatCount(progressPct(book), locale)}%` : status === "FINISHED" && book.finishedAt ? instantText(book.finishedAt, locale) : "";
+  const end = status === "READING" ? `${formatCount(progressPct(book), fmt)}%` : status === "FINISHED" && book.finishedAt ? instantText(book.finishedAt, fmt) : "";
 
   return (
     <DropdownMenu>

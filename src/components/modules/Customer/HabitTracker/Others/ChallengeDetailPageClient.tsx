@@ -39,7 +39,7 @@ type Tick = { day: number; items: string[]; checked: boolean };
 // One challenge: where it stands, every day as a box (tap a past day to
 // fix it), and today's items to tick.
 export function ChallengeDetailPageClient({ tracker, today, reminders: savedReminders }: ChallengeDetailPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [isPending, startSlow] = useTransition();
@@ -47,7 +47,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
   const [addOpen, setAddOpen] = useState(false);
   const [busyDay, setBusyDay] = useState<number | null>(null);
   const [confirm, setConfirm] = useState<{ kind: "remove-row"; item: string } | { kind: "delete" } | null>(null);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
   const reminders = useReminderBook(savedReminders);
 
   const window = challengeWindow(sheet, today);
@@ -72,7 +72,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
     startTransition(async () => {
       applyTick(update);
       const result = await setChallengeDayAction(sheet.id, { ...update, addDayItem: sheet.items.length === 0 });
-      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, locale));
+      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, fmt));
       router.refresh();
       setBusyDay(null);
     });
@@ -92,7 +92,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
         if (action.kind === "delete") router.push("/habit-tracker/habits?category=Others");
         router.refresh();
       } else {
-        toast.error(actionError(result.message, action.kind === "delete" ? "Failed to remove challenge" : "Failed to remove the row", t, locale));
+        toast.error(actionError(result.message, action.kind === "delete" ? "Failed to remove challenge" : "Failed to remove the row", t, fmt));
       }
     });
   }
@@ -140,7 +140,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
       <Card padding="none" className="flex flex-col gap-4 rounded-md px-5 py-4.5 md:flex-row md:items-center">
         <ChallengeTile name={sheet.name} size={48} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-[12.5px] text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, locale, "short"), end: dayText(window.end, locale, "short") })}</span>
+          <span className="text-[12.5px] text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, fmt, "short"), end: dayText(window.end, fmt, "short") })}</span>
           <span className="text-title text-ink">{statusLine}</span>
         </div>
         <div className="flex flex-wrap gap-6 text-center">
@@ -148,7 +148,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
             <span className="text-small text-ink-muted">{t("Streak")}</span>
             <span className="flex items-center justify-center gap-1 text-h2 whitespace-nowrap text-ink tabular-nums">
               <Flame className="size-4.5 text-orange-fill" strokeWidth={2.25} aria-hidden="true" />
-              {daysText(summary.streak, t, locale)}
+              {daysText(summary.streak, t, fmt)}
             </span>
           </span>
           <span className="flex flex-col gap-1">
@@ -166,7 +166,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
         <Card padding="none" className="flex min-w-0 flex-col gap-4 rounded-md px-5 py-4.5">
           <div className="flex flex-col gap-0.5">
             <h2 id="challenge-days" className="text-title text-ink">
-              {daysText(sheet.totalDays, t, locale)}
+              {daysText(sheet.totalDays, t, fmt)}
             </h2>
             <span id="challenge-days-hint" className="text-[12.5px] text-ink-muted">
               {t("Tap a past day to fix it")}
@@ -216,7 +216,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
           <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4.5">
             <div className="flex flex-col gap-0.5">
               <h2 className="text-title text-ink">{window.status === "finished" ? t("Finished") : t("Today · day {day}", { day: count(window.today) })}</h2>
-              <span className="text-[12.5px] text-ink-muted">{dayText(today, locale, "short")}</span>
+              <span className="text-[12.5px] text-ink-muted">{dayText(today, fmt, "short")}</span>
             </div>
             {window.status === "going" &&
               items.map((item) => {

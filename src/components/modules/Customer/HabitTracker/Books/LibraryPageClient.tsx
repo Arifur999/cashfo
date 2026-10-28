@@ -35,7 +35,7 @@ interface LibraryPageClientProps {
 // reading streak, the notes on the book and the three shelves.
 export function LibraryPageClient({ overview, today, reminders: savedReminders }: LibraryPageClientProps) {
   const reminders = useReminderBook(savedReminders);
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const { year, goalTarget } = overview;
 
@@ -64,7 +64,7 @@ export function LibraryPageClient({ overview, today, reminders: savedReminders }
     startProgress(async () => {
       applyOptimisticProgress({ id: book.id, pagesRead });
       const result = await updateBookAction(book.id, { pagesRead });
-      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, locale));
+      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, fmt));
       else if (result.data?.status === "FINISHED" && book.status !== "FINISHED") toast.success(t("Finished! Well done."));
       router.refresh();
     });
@@ -74,7 +74,7 @@ export function LibraryPageClient({ overview, today, reminders: savedReminders }
     startTransition(async () => {
       const result = await updateBookAction(book.id, { status });
       if (result.success) toast.success(t(successMessage));
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
       router.refresh();
     });
   }
@@ -88,7 +88,7 @@ export function LibraryPageClient({ overview, today, reminders: savedReminders }
         toast.success(t("Book removed"));
         setRemoving(null);
       } else {
-        toast.error(actionError(result.message, "Failed to remove book", t, locale));
+        toast.error(actionError(result.message, "Failed to remove book", t, fmt));
       }
       router.refresh();
     });

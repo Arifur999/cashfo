@@ -11,12 +11,13 @@ import ErrorState from "@/components/smartly/ErrorState";
 import { useMinuteClock } from "@/hooks/useMinuteClock";
 import type { HabitMonthTracker, PrayerStatus } from "@/lib/customer/api";
 import { timeLabel } from "@/lib/customer/date";
-import { actionError, shiftDay, WEEKDAY_SHORT, weekdayOf, weekOf } from "@/lib/customer/habitDisplay";
+import { actionError, shiftDay, WEEKDAY_LONG, WEEKDAY_SHORT, weekdayOf, weekOf } from "@/lib/customer/habitDisplay";
 import { prayerMarks, prayerStreak, type PrayerMark } from "@/lib/customer/habitsHome";
 import { createHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { type CellState, cellState, PRAYER_INITIAL, PRAYERS, trackerFor } from "@/lib/customer/namazDisplay";
 import { clockOf, clockParts, minutesUntil, nextPrayer, prayerTimesFor } from "@/lib/customer/prayerTimes";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { weekStartOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PrayerStatusMenu } from "../Namaz/PrayerStatusMenu";
@@ -73,11 +74,11 @@ function waitText(minutes: number, t: (key: string, values?: Record<string, stri
 // times a little off); on a phone its tap opens the menu, so an early mark
 // is never a slip.
 export function PrayersCard({ trackers, today }: PrayersCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const { settings } = usePrayerSettings();
   const now = useMinuteClock();
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
   const todayDay = Number(today.slice(8));
@@ -149,12 +150,12 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
       applyMark({ item, status });
       const result = await setHabitTrackerCheckAction(current.id, status ? { day: todayDay, item, checked: true, status } : { day: todayDay, item, checked: false });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
     });
   }
 
   const times = prayerTimesFor(settings, today);
-  const timeOf = (item: string) => timeLabel(clockOf(times[item as keyof typeof times]), t, locale);
+  const timeOf = (item: string) => timeLabel(clockOf(times[item as keyof typeof times]), t, fmt);
   // Until the clock is known (the first render) no prayer is later and
   // none is next, as the server drew it.
   const later = (item: string) => now !== null && times[item as keyof typeof times] > now;
@@ -170,13 +171,13 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
     const parts = clockParts(times[item as keyof typeof times]);
     return (
       <span aria-hidden="true" className={cn("flex max-w-full min-w-0 flex-wrap items-baseline gap-x-1 tabular-nums", className)}>
-        <span className="whitespace-nowrap">{toLocaleDigits(parts.clock, locale)}</span>
+        <span className="whitespace-nowrap">{toLocaleDigits(parts.clock, fmt)}</span>
         <span className="whitespace-nowrap">{t(parts.meridiem)}</span>
       </span>
     );
   };
   const live = current ? trackers.map((tr) => (tr.id === current.id ? current : tr)) : trackers;
-  const week = weekOf(today);
+  const week = weekOf(today, fmt);
   const streak = prayerStreak(live, today);
   const stateOf = (item: string): CellState => (current ? cellState(current, todayDay, item) : "open");
   const marked = (item: string) => current?.checks.some((c) => c.day === todayDay && c.item === item) ?? false;
@@ -223,7 +224,7 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
     </span>
   );
   const where = `${t(settings.city)} · ${t(settings.asrSchool === "HANAFI" ? "Hanafi Asr" : "Shafi'i Asr")}`;
-  const sunrise = timeLabel(clockOf(times.Sunrise), t, locale);
+  const sunrise = timeLabel(clockOf(times.Sunrise), t, fmt);
 
   return (
     <>
@@ -236,7 +237,7 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
             {next && (
               <span className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-[26px] leading-[normal] font-bold">{t(next.prayer)}</span>
-                <span className="text-[17px] leading-[normal] font-semibold tabular-nums">{timeLabel(clockOf(next.at), t, locale)}</span>
+                <span className="text-[17px] leading-[normal] font-semibold tabular-nums">{timeLabel(clockOf(next.at), t, fmt)}</span>
               </span>
             )}
           </div>
@@ -272,7 +273,7 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
                 </span>
                 <span className="max-w-full truncate px-0.5 text-[11.5px] leading-[normal] font-semibold">{t(item)}</span>
                 <span aria-hidden="true" className="text-[10.5px] leading-[normal] tabular-nums opacity-85">
-                  {toLocaleDigits(clockParts(times[item]).clock, locale)}
+                  {toLocaleDigits(clockParts(times[item]).clock, fmt)}
                 </span>
               </button>,
             );
@@ -328,7 +329,7 @@ export function PrayersCard({ trackers, today }: PrayersCardProps) {
         <div className="mt-auto grid items-end gap-x-7 gap-y-3 border-t border-divider pt-3.5 md:grid-cols-[auto_auto_minmax(0,1fr)]">
           <div className="flex flex-col gap-2">
             <span className="text-caption font-semibold text-ink-muted">{t("This week")}</span>
-            <div role="img" aria-label={t("Prayer marks from Saturday to today")} className="flex gap-1.75">
+            <div role="img" aria-label={t("Prayer marks from {day} to today", { day: t(WEEKDAY_LONG[weekStartOf(fmt)]) })} className="flex gap-1.75">
               <div aria-hidden="true" className="flex flex-col gap-0.75 text-[10.5px] leading-3.5 font-semibold text-ink-faint">
                 {PRAYERS.map((p) => (
                   <span key={p}>{t(PRAYER_INITIAL[p])}</span>

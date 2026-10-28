@@ -25,7 +25,7 @@ interface StreaksCardProps {
 // Every run that is alive, longest first: habits, skills practice and the
 // five prayers.
 export function StreaksCard({ rows }: StreaksCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const max = Math.max(1, ...rows.map((row) => row.days));
 
   return (
@@ -60,7 +60,7 @@ export function StreaksCard({ rows }: StreaksCardProps) {
                 </span>
                 <span className="flex items-center justify-end gap-1 text-body font-bold text-ink tabular-nums">
                   <Flame className="size-3.25 text-orange-fill" aria-hidden="true" />
-                  {formatCount(row.days, locale)}
+                  {formatCount(row.days, fmt)}
                 </span>
               </li>
             );

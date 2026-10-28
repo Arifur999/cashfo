@@ -4,6 +4,7 @@ import Card from "@/components/smartly/Card";
 import { WEEKDAY_SHORT, weekdayOf } from "@/lib/customer/habitDisplay";
 import { fullDays, pct, type DayBars } from "@/lib/customer/habitsHome";
 import { formatCount } from "@/lib/i18n/digits";
+import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +19,8 @@ const MAX = 150;
 // Prayers and habits done each day for the last seven days, as two bars a
 // day, with the totals over the days that are over.
 export function Last7Card({ bars, today }: Last7CardProps) {
-  const { t, locale } = useLocale();
-  const count = (n: number) => formatCount(n, locale);
+  const { t, fmt } = useLocale();
+  const count = (n: number) => formatCount(n, fmt);
   const sums = fullDays(bars);
   // The share never breaks inside, so a narrow tile drops it whole onto a
   // second line rather than leaving "7%" on its own. The count may wrap, so
@@ -35,7 +36,7 @@ export function Last7Card({ bars, today }: Last7CardProps) {
   return (
     <Card padding="none" className="flex flex-col gap-3.5 rounded-md px-5 pt-4.5 pb-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-title leading-[normal] font-semibold text-ink">{t("Last 7 days")}</h2>
+        <h2 className="text-title leading-[normal] font-semibold text-ink">{redigit(t("Last 7 days"), fmt)}</h2>
         <span className="flex items-center gap-3 text-caption text-ink-soft">
           <span className="flex items-center gap-1.25">
             <span className="size-2.25 rounded-[2px] bg-emerald" />

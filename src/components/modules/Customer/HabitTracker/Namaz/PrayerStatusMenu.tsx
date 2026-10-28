@@ -45,17 +45,17 @@ const ENDS: Record<string, TimeName> = { Fajr: "Sunrise", Dhuhr: "Asr", Asr: "Ma
 // The board's "how was it prayed?" menu: with jama'at, on time, qaza or not
 // prayed (keys 1 to 4), and Clear the mark. Each tap saves at once.
 export function PrayerStatusMenu({ children, open, onOpenChange, prayer, day, state, marked, onPick, anchorClassName }: PrayerStatusMenuProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { settings } = usePrayerSettings();
   const friday = new Date(`${day}T00:00:00.000Z`).getUTCDay() === 5;
-  const title = `${t(prayer)} · ${dayText(day, locale, "long")}`;
+  const title = `${t(prayer)} · ${dayText(day, fmt, "long")}`;
   // "Time: 11:49 am to 4:05 pm", from the same settings as the hero's times.
   const hours = (() => {
     const end = ENDS[prayer];
     if (!end) return null;
     const times = prayerTimesFor(settings, day);
     const until = prayer === "Isha" ? prayerTimesFor(settings, shiftDay(day, 1)).Fajr : times[end];
-    return t("Time: {from} to {to}", { from: timeLabel(clockOf(times[prayer as TimeName]), t, locale), to: timeLabel(clockOf(until), t, locale) });
+    return t("Time: {from} to {to}", { from: timeLabel(clockOf(times[prayer as TimeName]), t, fmt), to: timeLabel(clockOf(until), t, fmt) });
   })();
 
   function onKeyDown(event: React.KeyboardEvent) {

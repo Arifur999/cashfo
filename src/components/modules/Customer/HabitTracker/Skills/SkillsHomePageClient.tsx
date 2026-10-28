@@ -40,10 +40,10 @@ const CARDS = 2;
 // this week's practice and every skill in a table.
 export function SkillsHomePageClient({ overview, today, reminders: savedReminders }: SkillsHomePageClientProps) {
   const reminders = useReminderBook(savedReminders);
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const { year, goalTarget, streak, week } = overview;
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   // Server props stay the source of truth; a progress change is layered on
   // top optimistically and gives way once the PATCH and refresh land.
@@ -87,7 +87,7 @@ export function SkillsHomePageClient({ overview, today, reminders: savedReminder
     withPending(skill.id, async () => {
       applyOptimisticProgress({ id: skill.id, progress });
       const result = await updateSkillAction(skill.id, { progress });
-      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, locale));
+      if (!result.success) toast.error(actionError(result.message, "Failed to update", t, fmt));
       else if (result.data?.status === "COMPLETED" && skill.status !== "COMPLETED") toast.success(t("Completed! Well done."));
       router.refresh();
     });
@@ -100,7 +100,7 @@ export function SkillsHomePageClient({ overview, today, reminders: savedReminder
       applyOptimisticProgress({ id: skill.id, progress: skill.target });
       const result = await updateSkillAction(skill.id, { status: "COMPLETED" });
       if (result.success) toast.success(t("Completed! Well done."));
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
       router.refresh();
     });
   }
@@ -109,7 +109,7 @@ export function SkillsHomePageClient({ overview, today, reminders: savedReminder
     startTransition(async () => {
       const result = await updateSkillAction(skill.id, { status });
       if (result.success) toast.success(t(successMessage));
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
       router.refresh();
     });
   }
@@ -123,7 +123,7 @@ export function SkillsHomePageClient({ overview, today, reminders: savedReminder
         toast.success(t("Skill removed"));
         setRemoving(null);
       } else {
-        toast.error(actionError(result.message, "Failed to remove skill", t, locale));
+        toast.error(actionError(result.message, "Failed to remove skill", t, fmt));
       }
       router.refresh();
     });
@@ -140,14 +140,14 @@ export function SkillsHomePageClient({ overview, today, reminders: savedReminder
   }
 
   const stats = [
-    { label: t("Learning now"), value: count(learning.length), sub: learning.length > 0 ? namesLine(learning.map((skill) => skill.name), t, locale) : t("Nothing on the go yet") },
-    { label: t("Practice streak"), value: daysText(streak, t, locale), sub: since ? streakSince(since, streak, t, locale) : t("Log something today to start one") },
+    { label: t("Learning now"), value: count(learning.length), sub: learning.length > 0 ? namesLine(learning.map((skill) => skill.name), t, fmt) : t("Nothing on the go yet") },
+    { label: t("Practice streak"), value: daysText(streak, t, fmt), sub: since ? streakSince(since, streak, t, fmt) : t("Log something today to start one") },
     {
       label: t("This week"),
-      value: sums.lessons > 0 || sums.minutes === 0 ? amountText("LESSONS", sums.lessons, t, locale) : amountText("HOURS", sums.minutes, t, locale),
-      sub: sums.lessons > 0 && sums.minutes > 0 ? t("and {amount} of practice", { amount: amountText("HOURS", sums.minutes, t, locale) }) : sums.lessons + sums.minutes === 0 ? t("Nothing logged yet") : t("across every skill"),
+      value: sums.lessons > 0 || sums.minutes === 0 ? amountText("LESSONS", sums.lessons, t, fmt) : amountText("HOURS", sums.minutes, t, fmt),
+      sub: sums.lessons > 0 && sums.minutes > 0 ? t("and {amount} of practice", { amount: amountText("HOURS", sums.minutes, t, fmt) }) : sums.lessons + sums.minutes === 0 ? t("Nothing logged yet") : t("across every skill"),
     },
-    { label: t("{year} goal", { year: toLocaleDigits(String(year), locale) }), value: goalTarget ? t("{done} of {total}", { done: count(completedThisYear), total: count(goalTarget) }) : count(completedThisYear), sub: goalTarget ? t("Skills completed this year") : t("Completed this year. Set a goal below.") },
+    { label: t("{year} goal", { year: toLocaleDigits(String(year), fmt) }), value: goalTarget ? t("{done} of {total}", { done: count(completedThisYear), total: count(goalTarget) }) : count(completedThisYear), sub: goalTarget ? t("Skills completed this year") : t("Completed this year. Set a goal below.") },
   ];
 
   return (

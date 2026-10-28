@@ -1314,7 +1314,8 @@ export interface BooksOverview {
   goalTarget: number | null; // this year's "finish N books" goal
   books: Book[];
   // Days in a row with pages read (up to yesterday while today has none
-  // yet), the best run, and Saturday to Friday of this week.
+  // yet), the best run, and this week from the reader's first day (Saturday
+  // unless they chose another).
   reading: { streak: number; best: number; week: ReadingDay[] };
   // Pages read today in each book that has any, by book id.
   pagesToday: Record<string, number>;

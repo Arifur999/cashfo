@@ -28,7 +28,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 // The current month opens on its own; an earlier month is added here, to
 // fill in prayers from before the app was used.
 export function EarlierMonthDialog({ open, onClose, existing, currentMonth }: EarlierMonthDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   // The last 24 months before this one that have no sheet yet.
@@ -52,11 +52,11 @@ export function EarlierMonthDialog({ open, onClose, existing, currentMonth }: Ea
     startTransition(async () => {
       const result = await createHabitTrackerAction({ category: "Namaz", month: m, year: y });
       if (result.success && result.data) {
-        toast.success(t("{month} added", { month: monthName(choice, locale, "long", true) }));
+        toast.success(t("{month} added", { month: monthName(choice, fmt, "long", true) }));
         onClose();
         router.push(`/habit-tracker/habits/namaz/${result.data.id}`);
       } else {
-        toast.error(actionError(result.message, "Failed to add the month", t, locale));
+        toast.error(actionError(result.message, "Failed to add the month", t, fmt));
       }
     });
   }
@@ -76,7 +76,7 @@ export function EarlierMonthDialog({ open, onClose, existing, currentMonth }: Ea
                 {choices.length === 0 && <option value="">{t("Every recent month already has a sheet")}</option>}
                 {choices.map((key) => (
                   <option key={key} value={key}>
-                    {monthName(key, locale, "long", true)}
+                    {monthName(key, fmt, "long", true)}
                   </option>
                 ))}
               </NativeSelect>

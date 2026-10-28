@@ -27,8 +27,8 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 // This year's goal as a ring, how the reader stands against the calendar,
 // and a spine on the shelf for every book finished.
 export function ReadingGoalCard({ books, year, goalTarget, today, onEdit }: ReadingGoalCardProps) {
-  const { t, locale } = useLocale();
-  const count = (n: number) => formatCount(n, locale);
+  const { t, fmt } = useLocale();
+  const count = (n: number) => formatCount(n, fmt);
   const finished = finishedIn(shelves(books).FINISHED, year).reverse(); // oldest first, as they went on the shelf
   const pace = goalTarget ? goalPace(books, year, goalTarget, today) : null;
   const fill = pace ? Math.min(1, pace.finished / pace.target) : 0;
@@ -37,7 +37,7 @@ export function ReadingGoalCard({ books, year, goalTarget, today, onEdit }: Read
   return (
     <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4.5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-title font-semibold text-ink">{t("{year} reading goal", { year: toLocaleDigits(String(year), locale) })}</h2>
+        <h2 className="text-title font-semibold text-ink">{t("{year} reading goal", { year: toLocaleDigits(String(year), fmt) })}</h2>
         <button type="button" onClick={onEdit} className="flex min-h-8 items-center text-small font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
           {goalTarget ? t("Edit") : t("Set a goal")}
         </button>
@@ -60,7 +60,7 @@ export function ReadingGoalCard({ books, year, goalTarget, today, onEdit }: Read
                   {pace.behind > 0 ? t("{count} behind pace", { count: count(pace.behind) }) : pace.behind < 0 ? t("{count} ahead of pace", { count: count(-pace.behind) }) : t("On pace")}
                 </span>
               )}
-              {pace.weeksPerBook !== null && <span className="text-[12.5px] text-ink-muted">{paceSentence(pace.weeksPerBook, t, locale)}</span>}
+              {pace.weeksPerBook !== null && <span className="text-[12.5px] text-ink-muted">{paceSentence(pace.weeksPerBook, t, fmt)}</span>}
             </>
           ) : (
             <>

@@ -1,6 +1,6 @@
 import { formatCount } from "@/lib/i18n/digits";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import type { OffsetReminderKind, Reminder, ReminderInput, ReminderKind, SavedReminderKind, TimedReminderKind } from "./api";
 import { timeLabel } from "./date";
 import { daysPhrase } from "./habitDisplay";
@@ -87,7 +87,7 @@ export function reminderInput(kind: SavedReminderKind, targetKey: string, draft:
 }
 
 // "At the time", "10 min before".
-export function minutesBeforeLabel(minutes: number, t: Translate, locale: Locale = "en"): string {
+export function minutesBeforeLabel(minutes: number, t: Translate, locale: FormatLocale = "en"): string {
   return minutes <= 0 ? t("At the time") : t("{count} min before", { count: formatCount(minutes, locale) });
 }
 
@@ -98,7 +98,7 @@ export function weekdaysLabel(days: number[], t: Translate): string {
 }
 
 // When it goes off, in words: "7:00 am, 9:00 pm · Every day", "10 min before".
-export function reminderSummary(reminder: Pick<Reminder, "kind" | "times" | "weekdays" | "minutesBefore">, t: Translate, locale: Locale = "en"): string {
+export function reminderSummary(reminder: Pick<Reminder, "kind" | "times" | "weekdays" | "minutesBefore">, t: Translate, locale: FormatLocale = "en"): string {
   if (isOffsetKind(reminder.kind)) return minutesBeforeLabel(reminder.minutesBefore, t, locale);
   const times = normalizeTimes(reminder.times).map((time) => timeLabel(time, t, locale));
   return [times.join(", "), weekdaysLabel(reminder.weekdays, t)].filter(Boolean).join(" · ");
@@ -166,7 +166,7 @@ const KEY_ORDER: string[] = [...NAMAZ_KEYS, ...RAMADAN_KEYS];
 
 // Settings › App's list: the reminders that are on, prayers in the day's
 // order first, then habits, challenges, books and skills by name.
-export function activeReminderRows(reminders: Reminder[], names: Record<string, string>, t: Translate, locale: Locale = "en"): ReminderListRow[] {
+export function activeReminderRows(reminders: Reminder[], names: Record<string, string>, t: Translate, locale: FormatLocale = "en"): ReminderListRow[] {
   const keyOrder = (row: ReminderListRow, targetKey: string) => [KIND_ORDER.indexOf(row.kind), KEY_ORDER.indexOf(targetKey)] as const;
   return reminders
     .filter((reminder) => reminder.enabled && KIND_ORDER.includes(reminder.kind))

@@ -66,7 +66,7 @@ export function TodayTasksPanel({ open, onOpenChange, children }: TodayTasksPane
 }
 
 function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { list, loaded, setList, reload } = useTodayTasks();
   const [text, setText] = useState("");
   const [priority, setPriority] = useState<TodoPriority>("MEDIUM");
@@ -110,7 +110,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
       if (!target) {
         const created = await createTodoListAction(today);
         if (!created.success || !created.data) {
-          toast.error(actionError(created.message, "Failed to create list", t, locale));
+          toast.error(actionError(created.message, "Failed to create list", t, fmt));
           return;
         }
         target = created.data;
@@ -121,7 +121,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         setList(result.data);
         setText("");
       } else {
-        toast.error(actionError(result.message, "Failed to add task", t, locale));
+        toast.error(actionError(result.message, "Failed to add task", t, fmt));
       }
     } finally {
       setAdding(false);
@@ -133,7 +133,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
     void withBusy(item.id, async () => {
       const result = await updateTodoItemAction(list.id, item.id, { completed: !item.completed });
       if (result.success && result.data) setList(result.data);
-      else toast.error(actionError(result.message, "Failed to update task", t, locale));
+      else toast.error(actionError(result.message, "Failed to update task", t, fmt));
     });
   }
 
@@ -148,7 +148,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         if (!quiet) toast.success(t("Moved to tomorrow"));
         return true;
       }
-      toast.error(actionError(result.message, "Failed to move task", t, locale));
+      toast.error(actionError(result.message, "Failed to move task", t, fmt));
       return false;
     });
   }
@@ -160,7 +160,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
     void withBusy("all", async () => {
       let moved = 0;
       for (const item of moving) if (await moveToTomorrow(item, true)) moved++;
-      if (moved > 0) toast.success(t(moved === 1 ? "{count} task moved to tomorrow" : "{count} tasks moved to tomorrow", { count: formatCount(moved, locale) }));
+      if (moved > 0) toast.success(t(moved === 1 ? "{count} task moved to tomorrow" : "{count} tasks moved to tomorrow", { count: formatCount(moved, fmt) }));
       await reload();
     });
   }
@@ -171,7 +171,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
       const result = await removeTodoItemAction(list.id, item.id);
       setRemoveId(null);
       if (result.success && result.data) setList(result.data);
-      else toast.error(actionError(result.message, "Failed to remove task", t, locale));
+      else toast.error(actionError(result.message, "Failed to remove task", t, fmt));
     });
   }
 
@@ -208,7 +208,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <h2 className={cn("font-semibold", sheet ? "text-h3" : "text-title leading-[normal]")}>{t("Today’s tasks")}</h2>
           <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] leading-[normal] text-ink-muted">
-            <span className="whitespace-nowrap">{[dayLabel(today, locale), items.length > 0 ? doneOfText(done, items.length, t, locale) : null].filter(Boolean).join(" · ")}</span>
+            <span className="whitespace-nowrap">{[dayLabel(today, fmt), items.length > 0 ? doneOfText(done, items.length, t, fmt) : null].filter(Boolean).join(" · ")}</span>
             {items.length > 0 && <ProgressBar value={(done / items.length) * 100} size="sm" label={t("Tasks done today")} className="w-22" />}
           </span>
         </div>
@@ -243,7 +243,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         <div className="flex flex-col border-t border-divider">
           <div className={cn(groupHead, "px-4.5 pt-2.5 pb-1")}>
             {t("To do")}
-            <span className={groupCount}>{formatCount(openItems.length, locale)}</span>
+            <span className={groupCount}>{formatCount(openItems.length, fmt)}</span>
           </div>
           {openItems.map((item) =>
             removeId === item.id ? (
@@ -272,7 +272,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
               <div className="mt-0.5 flex items-center justify-between gap-2 border-t border-strip px-4.5 pt-2.5 pb-1">
                 <span className={groupHead}>
                   {t("Done")}
-                  <span className={groupCount}>{formatCount(doneItems.length, locale)}</span>
+                  <span className={groupCount}>{formatCount(doneItems.length, fmt)}</span>
                 </span>
                 <button type="button" aria-expanded={showDone} onClick={() => setShowDone((v) => !v)} className="relative flex items-center text-[12.5px] leading-[normal] font-semibold text-ink-muted after:absolute after:-inset-x-2 after:-inset-y-3.5 hover:text-ink">
                   {showDone ? t("Hide") : t("Show")}
@@ -313,7 +313,7 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
         {openItems.length > 0 ? (
           <button type="button" onClick={moveAllToTomorrow} disabled={movingAll} className="relative flex h-8 items-center gap-1.5 rounded-sm border border-line bg-surface px-2.5 text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-colors after:absolute after:-inset-y-1.5 after:inset-x-0 hover:bg-surface-sunken hover:text-ink disabled:opacity-50">
             <ArrowRightToLine className="size-3.5 text-ink-soft" strokeWidth={2.25} aria-hidden="true" />
-            {t("Move {count} to tomorrow", { count: formatCount(openItems.length, locale) })}
+            {t("Move {count} to tomorrow", { count: formatCount(openItems.length, fmt) })}
           </button>
         ) : (
           // A keyboard's hint, so not on a touch screen.

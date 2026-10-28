@@ -51,11 +51,11 @@ function wait(minutes: number, t: (key: string, values?: Record<string, string |
 // a prayer opens the "how was it prayed?" menu, even before its time.
 // Stacked until xl, so six tiles never squeeze into a narrow column.
 export function NamazHero({ current, today, onMark, onSettings, openFailed = false, onRetry }: NamazHeroProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { settings } = usePrayerSettings();
   const now = useMinuteClock();
   const [marking, setMarking] = useState<string | null>(null);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
   const todayDay = Number(today.slice(8));
   const times = prayerTimesFor(settings, today);
   const next = now ? nextPrayer(settings, today, shiftDay(today, 1), now) : null;
@@ -67,7 +67,7 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
     const parts = clockParts(times[name]);
     return (
       <span className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-[17px] leading-[normal] font-bold tabular-nums">
-        <span>{toLocaleDigits(parts.clock, locale)}</span>
+        <span>{toLocaleDigits(parts.clock, fmt)}</span>
         <span>{t(parts.meridiem)}</span>
       </span>
     );
@@ -102,7 +102,7 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
         disabled={!current}
         onClick={() => setMarking(name)}
         aria-haspopup="dialog"
-        aria-label={`${t(name)}, ${timeLabel(clockOf(times[name]), t, locale)}, ${status.word}`}
+        aria-label={`${t(name)}, ${timeLabel(clockOf(times[name]), t, fmt)}, ${status.word}`}
         className={cn(TILE, "w-full text-left transition-colors disabled:cursor-default", isNext && !isPrayed(state) ? cn("border-white bg-white", BRAND_INK) : "border-white/18 bg-white/12 text-white enabled:hover:bg-white/20")}
       >
         <span className="truncate text-[12.5px] font-semibold opacity-90">{t(name)}</span>
@@ -141,7 +141,7 @@ export function NamazHero({ current, today, onMark, onSettings, openFailed = fal
         </span>
         <span className="flex flex-wrap items-baseline gap-x-2.5">
           <span className="text-[34px] leading-[normal] font-bold tracking-[-0.02em]">{next ? t(next.prayer) : " "}</span>
-          <span className="text-[20px] leading-[normal] font-semibold tabular-nums">{next ? timeLabel(clockOf(next.at), t, locale) : ""}</span>
+          <span className="text-[20px] leading-[normal] font-semibold tabular-nums">{next ? timeLabel(clockOf(next.at), t, fmt) : ""}</span>
         </span>
         <span className={cn("flex h-7 items-center gap-1.5 self-start rounded-full bg-white/18 px-3 text-small font-semibold", left === null && "invisible")}>
           <Timer className="size-3.5" strokeWidth={2.25} aria-hidden="true" />

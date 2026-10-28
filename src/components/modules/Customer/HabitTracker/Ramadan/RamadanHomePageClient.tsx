@@ -33,7 +33,7 @@ const STATUS_LABEL = { upcoming: "Coming up", going: "Going on", completed: "Com
 // Habits › Ramadan: when the next one begins, and a card for every Ramadan
 // tracked, each opening its sheet.
 export function RamadanHomePageClient({ trackers, today, reminders: savedReminders }: RamadanHomePageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const [setupOpen, setSetupOpen] = useState(false);
   const reminders = useReminderBook(savedReminders);
@@ -47,8 +47,8 @@ export function RamadanHomePageClient({ trackers, today, reminders: savedReminde
   // The years another Ramadan can still be set up in.
   const otherYears = setupYears(trackers, nextYear, "another");
   const cards = [...trackers].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
-  const count = (n: number) => formatCount(n, locale);
-  const year = (value: number | null) => toLocaleDigits(String(value ?? ""), locale);
+  const count = (n: number) => formatCount(n, fmt);
+  const year = (value: number | null) => toLocaleDigits(String(value ?? ""), fmt);
   const nextName = t("Ramadan {year}", { year: year(next.year) });
 
   function openSetup(which: SetupRange) {
@@ -89,7 +89,7 @@ export function RamadanHomePageClient({ trackers, today, reminders: savedReminde
             <b className="font-semibold">{t("{name} is going on now.", { name: nextName })}</b>
           ) : (
             <>
-              <b className="font-semibold">{t(next.daysToGo === 1 ? "{name} begins around {date}, in {count} day." : "{name} begins around {date}, in {count} days.", { name: nextName, date: dayText(next.startsOn, locale, "dayMonthYear"), count: count(next.daysToGo) })}</b> {t("The exact day depends on the moon, so the date can move by one day.")}
+              <b className="font-semibold">{t(next.daysToGo === 1 ? "{name} begins around {date}, in {count} day." : "{name} begins around {date}, in {count} days.", { name: nextName, date: dayText(next.startsOn, fmt, "dayMonthYear"), count: count(next.daysToGo) })}</b> {t("The exact day depends on the moon, so the date can move by one day.")}
             </>
           )}
         </span>
@@ -115,7 +115,7 @@ export function RamadanHomePageClient({ trackers, today, reminders: savedReminde
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-[15px] leading-[normal] font-semibold">{t("Ramadan {year}", { year: year(window.hijriYear ?? tracker.year) })}</span>
                     <span className="text-caption font-normal text-ink-muted">
-                      {[window.start && window.end ? t("{from} to {to}", { from: dayText(window.start, locale, "dayMonth"), to: dayText(window.end, locale, "dayMonthYear") }) : year(tracker.year), daysText(tracker.totalDays, t, locale)].join(" · ")}
+                      {[window.start && window.end ? t("{from} to {to}", { from: dayText(window.start, fmt, "dayMonth"), to: dayText(window.end, fmt, "dayMonthYear") }) : year(tracker.year), daysText(tracker.totalDays, t, fmt)].join(" · ")}
                     </span>
                   </span>
                   <Chip tone={STATUS_CHIP[window.status]} size="sm">

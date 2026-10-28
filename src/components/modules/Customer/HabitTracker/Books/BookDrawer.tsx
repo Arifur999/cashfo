@@ -35,7 +35,7 @@ const MAX_PAGES = 20000;
 // Add or edit a book: title, author, how many pages, which shelf it starts
 // on, and the cover colour.
 export function BookDrawer({ open, onClose, editing, onRemove, reminders }: BookDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -89,7 +89,7 @@ export function BookDrawer({ open, onClose, editing, onRemove, reminders }: Book
         onClose();
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to save book", t, locale));
+        toast.error(actionError(result.message, "Failed to save book", t, fmt));
       }
     });
   }

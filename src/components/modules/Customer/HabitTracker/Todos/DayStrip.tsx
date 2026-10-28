@@ -26,7 +26,7 @@ const ARROW = "flex min-h-16 w-9 shrink-0 self-stretch items-center justify-cent
 // Nine days around the one picked, each with how its list stands, plus a
 // week back, a week on, and any date at all.
 export function DayStrip({ lists, day, today }: DayStripProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const picker = useRef<HTMLInputElement>(null);
 
@@ -49,11 +49,11 @@ export function DayStrip({ lists, day, today }: DayStripProps) {
         {stripDays(day).map((key) => {
           const current = key === day;
           const isToday = key === today;
-          const count = dayCountText(dayCount(listFor(lists, key)), t, locale);
+          const count = dayCountText(dayCount(listFor(lists, key)), t, fmt);
           return (
             <Link key={key} href={dayHref(key)} aria-current={current ? "page" : undefined} className={cn("flex min-h-16 min-w-14 flex-1 snap-start flex-col items-center justify-center gap-0.5 rounded-[10px] border py-1 transition-colors max-md:flex-none max-md:basis-[calc((100%-1.5rem)/4)]", current ? "border-emerald bg-emerald text-on-action shadow-[0_4px_12px_color-mix(in_srgb,var(--emerald)_25%,transparent)]" : "border-line bg-surface text-ink hover:border-input")}>
               <span className="text-[11.5px] leading-[normal] font-semibold opacity-85">{isToday ? t("Today") : t(WEEKDAY_SHORT[weekdayOf(key)])}</span>
-              <span className="text-h3 leading-none font-bold tabular-nums">{formatCount(Number(key.slice(8)), locale)}</span>
+              <span className="text-h3 leading-none font-bold tabular-nums">{formatCount(Number(key.slice(8)), fmt)}</span>
               <span className={cn("min-h-3.5 max-w-full truncate px-0.5 text-[10.5px] leading-[normal] font-semibold", current ? "text-on-action" : "text-ink-muted")}>{count}</span>
             </Link>
           );

@@ -30,9 +30,9 @@ interface NowReadingCardProps {
 // The book on the nightstand: where the reader is, how fast it is going,
 // and a box to type the page they stopped at.
 export function NowReadingCard({ book, pagesToday, today, isPending, onUpdate, onFinish, onAdd }: NowReadingCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [page, setPage] = useState("");
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   // A fresh box whenever another book takes the nightstand or its progress
   // changes, so it always starts at the page the reader is on.
@@ -67,7 +67,7 @@ export function NowReadingCard({ book, pagesToday, today, isPending, onUpdate, o
   const days = daysToFinish(book, today);
   const pageNumber = Number(page);
   const valid = /^\d+$/.test(page) && pageNumber <= book.totalPages;
-  const subtitle = [book.author, book.startedAt ? t("started {date}", { date: instantText(book.startedAt, locale) }) : ""].filter(Boolean).join(" · ");
+  const subtitle = [book.author, book.startedAt ? t("started {date}", { date: instantText(book.startedAt, fmt) }) : ""].filter(Boolean).join(" · ");
   const finishLine = days !== null && pace !== null ? t(days === 1 ? "At about {pace} pages a day, you'll finish in around {count} day." : "At about {pace} pages a day, you'll finish in around {count} days.", { pace: count(pace), count: count(days) }) : null;
 
   function submit(event: React.FormEvent) {
@@ -103,7 +103,7 @@ export function NowReadingCard({ book, pagesToday, today, isPending, onUpdate, o
 
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between gap-3 text-small">
-            <span className="font-semibold text-ink tabular-nums">{pageOfText(book, t, locale)}</span>
+            <span className="font-semibold text-ink tabular-nums">{pageOfText(book, t, fmt)}</span>
             <span className="text-ink-muted">{count(pct)}%</span>
           </div>
           <span role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${book.title}: ${t("read")}`} className="block h-2 overflow-hidden rounded-full bg-surface-sunken">

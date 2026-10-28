@@ -1,7 +1,7 @@
-import { format } from "date-fns";
-import { toDateInputValue } from "@/lib/date";
-import { banglaDayMonth, banglaShortDay, BN_MONTHS_LONG, BN_MONTHS_SHORT, BN_WEEKDAYS_LONG, toBanglaDigits } from "@/lib/i18n/banglaDates";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatDay, toDateInputValue } from "@/lib/date";
+import { BN_MONTHS_SHORT } from "@/lib/i18n/banglaDates";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { DEFAULT_WEEK_START, type FormatLocale, langOf, type Weekday, weekStartOf, writeDigits } from "@/lib/i18n/formatPrefs";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 import type { Habit, HabitMonthLog } from "./api";
@@ -27,8 +27,10 @@ export function weekdayOf(key: string): number {
   return dayOf(key).getUTCDay();
 }
 
-// The app's week runs Saturday to Friday.
-export const WEEK_START = 6;
+// The app's week runs Saturday to Friday unless the reader chose another
+// first day (Settings, formatPrefs.ts): the strips and calendars take the
+// reader's, while "a few times a week" counts the server's Saturday weeks.
+export const WEEK_START: Weekday = DEFAULT_WEEK_START;
 export const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const WEEKDAY_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -65,34 +67,17 @@ const EN_DAY: Record<DayStyle, string> = {
   weekday: "EEEE",
 };
 
-// A "YYYY-MM-DD" day in the reader's language. Built from the day's own
-// parts, never a timezone, so the server and the browser agree.
-export function dayText(day: string, locale: Locale, style: DayStyle = "short"): string {
-  const [year, month, date] = day.split("-").map(Number);
-  if (!year || !month || !date) return day;
-  if (locale !== "bn") return format(new Date(year, month - 1, date), EN_DAY[style]);
-  const weekday = BN_WEEKDAYS_LONG[new Date(Date.UTC(year, month - 1, date)).getUTCDay()];
-  const yearText = toBanglaDigits(year);
-  switch (style) {
-    case "full":
-      return `${weekday}, ${toBanglaDigits(date)} ${BN_MONTHS_LONG[month - 1]} ${yearText}`;
-    case "long":
-      return `${weekday}, ${banglaDayMonth(day)}`;
-    case "short":
-      return banglaShortDay(day);
-    case "shortYear":
-      return `${banglaShortDay(day)} ${yearText}`;
-    case "dayMonth":
-      return banglaDayMonth(day);
-    case "dayMonthYear":
-      return `${banglaDayMonth(day)} ${yearText}`;
-    case "weekday":
-      return weekday;
-  }
+// A "YYYY-MM-DD" day in the reader's language (formatDay: the same
+// patterns with the Bangla board's names). Built from the day's own parts,
+// never a timezone, so the server and the browser agree. With the reader's
+// Fmt the digits follow their choice, and the two styles with a year
+// ("shortYear", "dayMonthYear") their date style.
+export function dayText(day: string, locale: FormatLocale, style: DayStyle = "short"): string {
+  return formatDay(day, EN_DAY[style], locale);
 }
 
 // A moment (createdAt, finishedAt) as its day on the app's calendar.
-export const instantText = (iso: string, locale: Locale, style: DayStyle = "dayMonth"): string => dayText(toDateInputValue(iso), locale, style);
+export const instantText = (iso: string, locale: FormatLocale, style: DayStyle = "dayMonth"): string => dayText(toDateInputValue(iso), locale, style);
 
 // A month's short name (1–12): "Oct", "অক্টো".
 export const monthShort = (month: number, locale: Locale): string => (locale === "bn" ? BN_MONTHS_SHORT : EN_MONTHS_SHORT)[month - 1] ?? "";
@@ -100,9 +85,10 @@ export const monthShort = (month: number, locale: Locale): string => (locale ===
 // Bangla digits typed into a number field ("৩০") read as the number.
 export const latinDigits = (text: string): string => text.replace(/[০-৯]/g, (digit) => String(digit.charCodeAt(0) - 0x09e6));
 
-// The seven days of the week `key` falls in, Saturday first.
-export function weekOf(key: string): string[] {
-  const back = (weekdayOf(key) - WEEK_START + 7) % 7;
+// The seven days of the week `key` falls in, Saturday first (or from the
+// reader's first day, given their Fmt).
+export function weekOf(key: string, locale?: FormatLocale): string[] {
+  const back = (weekdayOf(key) - (locale ? weekStartOf(locale) : WEEK_START) + 7) % 7;
   const start = shiftDay(key, -back);
   return Array.from({ length: 7 }, (_, i) => shiftDay(start, i));
 }
@@ -131,10 +117,10 @@ export function monthsBetween(from: string, to: string): string[] {
 // least (a log there can move the day a habit started) and never past
 // today's month, where nothing is logged yet. For the side panel's "Best,
 // last 60 days", the ones the 60 days up to today reach, whatever the day.
-export function dailyLogMonths(day: string, today: string): { dayMonths: string[]; bestMonths: string[] } {
+export function dailyLogMonths(day: string, today: string, locale?: FormatLocale): { dayMonths: string[]; bestMonths: string[] } {
   const todayMonth = today.slice(0, 7);
   const monthBefore = shiftDay(`${day.slice(0, 7)}-01`, -1).slice(0, 7);
-  const dayMonths = monthsBetween(earlierKey(monthBefore, shiftDay(day, -29).slice(0, 7)), earlierKey(weekOf(day)[6].slice(0, 7), todayMonth));
+  const dayMonths = monthsBetween(earlierKey(monthBefore, shiftDay(day, -29).slice(0, 7)), earlierKey(weekOf(day, locale)[6].slice(0, 7), todayMonth));
   const bestMonths = monthsBetween(shiftDay(today, -59).slice(0, 7), todayMonth);
   return { dayMonths, bestMonths };
 }
@@ -175,7 +161,7 @@ export const unitKey = (text: string, t: Translate = inEnglish): string => {
 };
 
 // "30 minutes", "১০,০০০ কদম": a counted amount with its unit.
-export const amountLabel = (value: number, unit: string | null | undefined, t: Translate = inEnglish, locale: Locale = "en"): string =>
+export const amountLabel = (value: number, unit: string | null | undefined, t: Translate = inEnglish, locale: FormatLocale = "en"): string =>
   [formatCount(value, locale), unitLabel(unit, t)].filter(Boolean).join(" ");
 
 // A run of consecutive weekdays reads as a range; anything else lists them.
@@ -192,7 +178,7 @@ export function daysPhrase(days: number[], t: Translate): string {
 
 // How often a habit is planned and how much it counts, in the reader's
 // language (English without a t).
-export function ruleLabel(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "weeklyCount" | "targetValue" | "unit">, t: Translate = inEnglish, locale: Locale = "en"): RuleLabel {
+export function ruleLabel(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "weeklyCount" | "targetValue" | "unit">, t: Translate = inEnglish, locale: FormatLocale = "en"): RuleLabel {
   const count = habit.weeklyCount ?? 1;
   const days =
     habit.frequencyType === "DAILY"
@@ -206,7 +192,7 @@ export function ruleLabel(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "w
 
 // The rule as one line under a habit's name: "8 glasses a day" for an
 // everyday amount, "3 times a week · 30 minutes", "Sunday to Thursday".
-export function ruleLine(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "weeklyCount" | "targetValue" | "unit">, t: Translate = inEnglish, locale: Locale = "en"): string {
+export function ruleLine(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "weeklyCount" | "targetValue" | "unit">, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   const rule = ruleLabel(habit, t, locale);
   if (!rule.amount) return rule.days;
   return habit.frequencyType === "DAILY" ? t("{amount} a day", { amount: rule.amount }) : `${rule.days} · ${rule.amount}`;
@@ -241,18 +227,19 @@ export function parseAmount(text: string): number | null {
 }
 
 // How many of the given days a habit is planned for; "N times a week"
-// counts N per week touched.
-export function plannedCount(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "weeklyCount">, days: string[]): number {
+// counts N per week touched (the reader's weeks, given their Fmt, as the
+// server counts them).
+export function plannedCount(habit: Pick<Habit, "frequencyType" | "weeklyDays" | "weeklyCount">, days: string[], locale?: FormatLocale): number {
   if (habit.frequencyType === "WEEKLY_COUNT") {
-    const weeks = new Set(days.map((d) => weekOf(d)[0]));
+    const weeks = new Set(days.map((d) => weekOf(d, locale)[0]));
     return weeks.size * (habit.weeklyCount ?? 1);
   }
   return days.filter((d) => isPlannedOn(habit, d)).length;
 }
 
 // Completed logs within the days, as a share of the planned count.
-export function completionRate(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "weeklyCount">, logs: HabitMonthLog[], days: string[]): number | null {
-  const planned = plannedCount(habit, days);
+export function completionRate(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "weeklyCount">, logs: HabitMonthLog[], days: string[], locale?: FormatLocale): number | null {
+  const planned = plannedCount(habit, days, locale);
   if (planned === 0) return null;
   const set = new Set(days);
   const done = logs.filter((l) => l.habitId === habit.id && l.completed && set.has(l.date.slice(0, 10))).length;
@@ -291,15 +278,15 @@ export function dayMark(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays"
 // The longest streak up to `today`, by the server's rule (streak.ts): days
 // done, skipping the days a habit isn't planned -- or, for "a few times a
 // week", the weeks in a row that met the count (this week once it does).
-export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "weeklyCount">, logs: HabitMonthLog[], today: string, lookBack = 365): number {
+export function bestStreak(habit: Pick<Habit, "id" | "frequencyType" | "weeklyDays" | "weeklyCount">, logs: HabitMonthLog[], today: string, lookBack = 365, locale?: FormatLocale): number {
   const done = new Set(logs.filter((l) => l.habitId === habit.id && l.completed).map((l) => l.date.slice(0, 10)));
   if (habit.frequencyType === "WEEKLY_COUNT") {
     const need = Math.max(1, habit.weeklyCount ?? 1);
-    const thisWeek = weekOf(today)[0];
+    const thisWeek = weekOf(today, locale)[0];
     // Oldest week first; a Map keeps the order its weeks were met in.
     const weeks = new Map<string, number>();
     for (const day of lastDays(today, lookBack)) {
-      const week = weekOf(day)[0];
+      const week = weekOf(day, locale)[0];
       weeks.set(week, (weeks.get(week) ?? 0) + (done.has(day) ? 1 : 0));
     }
     let best = 0;
@@ -330,17 +317,17 @@ export function streakWord(habit: Pick<Habit, "frequencyType">, count: number, i
 }
 
 // The same with its number, as one sentence: "5 days", "2 weeks in a row".
-export function streakText(habit: Pick<Habit, "frequencyType">, count: number, t: Translate = inEnglish, locale: Locale = "en", inARow = false): string {
+export function streakText(habit: Pick<Habit, "frequencyType">, count: number, t: Translate = inEnglish, locale: FormatLocale = "en", inARow = false): string {
   return t(`{count} ${streakWord(habit, count, inARow)}`, { count: formatCount(count, locale) });
 }
 
 // "5 days": a plain count of days, in the reader's digits.
-export const daysText = (count: number, t: Translate = inEnglish, locale: Locale = "en"): string => t(count === 1 ? "{count} day" : "{count} days", { count: formatCount(count, locale) });
+export const daysText = (count: number, t: Translate = inEnglish, locale: FormatLocale = "en"): string => t(count === 1 ? "{count} day" : "{count} days", { count: formatCount(count, locale) });
 
 // A backend refusal in the reader's language. Most are fixed sentences the
 // dictionaries word; the ones carrying a name or a number are matched here,
 // and anything unknown (a network error's English) is shown as it came.
-const REFUSALS: { pattern: RegExp; key: string; values: (match: RegExpMatchArray, locale: Locale) => Record<string, string> }[] = [
+const REFUSALS: { pattern: RegExp; key: string; values: (match: RegExpMatchArray, locale: FormatLocale) => Record<string, string> }[] = [
   { pattern: /^"(.+)" is already on this sheet$/, key: '"{name}" is already on this sheet', values: (m) => ({ name: m[1] }) },
   { pattern: /^A sheet can have at most (\d+) habits$/, key: "A sheet can have at most {count} rows", values: (m, locale) => ({ count: formatCount(Number(m[1]), locale) }) },
   { pattern: /^A list can have at most (\d+) tasks$/, key: "A list can have at most {count} tasks", values: (m, locale) => ({ count: formatCount(Number(m[1]), locale) }) },
@@ -348,7 +335,7 @@ const REFUSALS: { pattern: RegExp; key: string; values: (match: RegExpMatchArray
   { pattern: /^This book has (\d+) pages$/, key: "This book has {count} pages", values: (m, locale) => ({ count: formatCount(Number(m[1]), locale) }) },
   { pattern: /^A course can have up to (\d+) lessons$/, key: "A course can have up to {count} lessons", values: (m, locale) => ({ count: formatCount(Number(m[1]), locale) }) },
   { pattern: /^A goal can be up to (\d+) hours$/, key: "A goal can be up to {count} hours", values: (m, locale) => ({ count: formatCount(Number(m[1]), locale) }) },
-  { pattern: /^Ramadan (\d+) already exists$/, key: "Ramadan {year} already has a sheet", values: (m, locale) => ({ year: locale === "bn" ? toBanglaDigits(m[1]) : m[1] }) },
+  { pattern: /^Ramadan (\d+) already exists$/, key: "Ramadan {year} already has a sheet", values: (m, locale) => ({ year: toLocaleDigits(m[1], locale) }) },
   { pattern: /^A Namaz tracker for (\d+)\/(\d+) already exists$/, key: "That month already has a sheet", values: () => ({}) },
   // How many of a thing one person can keep.
   { pattern: /^You can keep up to (\d+) challenges$/, key: "You can keep up to {count} challenges", values: (m, locale) => ({ count: formatCount(Number(m[1]), locale) }) },
@@ -360,7 +347,7 @@ const REFUSALS: { pattern: RegExp; key: string; values: (match: RegExpMatchArray
   { pattern: /^ThrottlerException: Too Many Requests$/, key: "Too many changes at once. Wait a minute and try again.", values: () => ({}) },
 ];
 
-export function actionError(message: string | undefined, fallback: string, t: Translate = inEnglish, locale: Locale = "en"): string {
+export function actionError(message: string | undefined, fallback: string, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   const text = message?.trim() || fallback;
   for (const refusal of REFUSALS) {
     const match = text.match(refusal.pattern);
@@ -381,11 +368,12 @@ export interface CalendarCell {
   day: string | null;
 }
 
-// A month laid out Saturday-first, with blanks before the 1st and after
-// the last day so the grid is whole weeks.
-export function monthGrid(year: number, month: number): (string | null)[] {
+// A month laid out Saturday-first (or from the reader's first day, given
+// their Fmt), with blanks before the 1st and after the last day so the grid
+// is whole weeks.
+export function monthGrid(year: number, month: number, locale?: FormatLocale): (string | null)[] {
   const first = `${year}-${pad(month)}-01`;
-  const lead = (weekdayOf(first) - WEEK_START + 7) % 7;
+  const lead = (weekdayOf(first) - (locale ? weekStartOf(locale) : WEEK_START) + 7) % 7;
   const length = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const cells: (string | null)[] = Array(lead).fill(null);
   for (let d = 1; d <= length; d++) cells.push(`${year}-${pad(month)}-${pad(d)}`);
@@ -407,12 +395,14 @@ const hijriDay = (day: string, adjust: number): Date => dayOf(adjust ? shiftDay(
 
 // Today's Hijri date in the reader's language, built from the parts so
 // the era word Intl adds in Bangla never shows.
-export function hijriDate(day: string, locale: "en" | "bn", adjust = 0): string {
+export function hijriDate(day: string, locale: FormatLocale, adjust = 0): string {
   const date = hijriDay(day, adjust);
-  const tag = locale === "bn" ? "bn-BD" : "en-GB";
-  const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura`, { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }).formatToParts(date);
+  const bangla = langOf(locale) === "bn";
+  // Latin digits from Intl, then the reader's own (formatPrefs.ts).
+  const tag = bangla ? "bn-BD" : "en-GB";
+  const parts = new Intl.DateTimeFormat(`${tag}-u-ca-islamic-umalqura-nu-latn`, { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }).formatToParts(date);
   const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  return locale === "bn" ? `${pick("day")} ${pick("month")} ${pick("year")} হিজরি` : `${pick("day")} ${pick("month")} ${pick("year")} AH`;
+  return writeDigits(bangla ? `${pick("day")} ${pick("month")} ${pick("year")} হিজরি` : `${pick("day")} ${pick("month")} ${pick("year")} AH`, locale);
 }
 
 // The Hijri year and month (1–12) of a day.

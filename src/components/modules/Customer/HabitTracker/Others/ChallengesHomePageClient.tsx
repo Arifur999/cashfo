@@ -59,7 +59,7 @@ const readNotice = () => {
 // Habits › Challenges (what "Others" was): the ones going on with today's
 // items to tick, ready-made lengths to start a new one, and the finished.
 export function ChallengesHomePageClient({ trackers: serverTrackers, today, openNew = false, reminders: savedReminders }: ChallengesHomePageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [dialog, setDialog] = useState<{ open: boolean; days: number | null }>({ open: openNew, days: null });
   const reminders = useReminderBook(savedReminders);
@@ -71,7 +71,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
   const [, startTick] = useTransition();
   // A tick shows at once; the server's copy replaces it when it lands.
   const [trackers, applyTick] = useOptimistic(serverTrackers, (current, update: { id: string; day: number; item: string; checked: boolean }) => current.map((tracker) => (tracker.id === update.id ? withCheck(tracker, update.day, update.item, update.checked) : tracker)));
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   // The dialog is already open; the URL loses ?new=1 so a refresh doesn't reopen it.
   useEffect(() => {
@@ -99,7 +99,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
       applyTick({ id: tracker.id, day, item, checked });
       const result = await setChallengeDayAction(tracker.id, { day, items: [item], checked, addDayItem: tracker.items.length === 0 });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
       setBusy((prev) => {
         const rest = new Set(prev);
         rest.delete(key);
@@ -117,7 +117,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
         toast.success(t("Challenge removed"));
         setRemoving(null);
       } else {
-        toast.error(actionError(result.message, "Failed to remove challenge", t, locale));
+        toast.error(actionError(result.message, "Failed to remove challenge", t, fmt));
       }
       router.refresh();
     });
@@ -191,7 +191,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
                       <Link href={`/habit-tracker/habits/others/${tracker.id}`} className="truncate text-title font-semibold text-ink hover:text-brand-ink">
                         {name}
                       </Link>
-                      <span className="text-[12.5px] text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, locale, "dayMonth"), end: dayText(window.end, locale, "dayMonth") })}</span>
+                      <span className="text-[12.5px] text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, fmt, "dayMonth"), end: dayText(window.end, fmt, "dayMonth") })}</span>
                     </span>
                     <DropdownMenu>
                       <DropdownMenuTrigger aria-label={t("More for {name}", { name })} className="flex size-8 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
@@ -327,10 +327,10 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
                     <ChallengeTile name={tracker.name} size={32} />
                     <ListRowLink href={`/habit-tracker/habits/others/${tracker.id}`} className="flex min-w-0 flex-col gap-px">
                       <span className="truncate text-body font-semibold text-ink">{tracker.name ?? t("Challenge")}</span>
-                      <span className="text-[12.5px] text-ink-muted">{daysText(tracker.totalDays, t, locale)}</span>
+                      <span className="text-[12.5px] text-ink-muted">{daysText(tracker.totalDays, t, fmt)}</span>
                     </ListRowLink>
                   </ListCell>
-                  <ListCell className="hidden text-small text-ink-soft md:block">{t("{from} to {to}", { from: dayText(window.start, locale, "dayMonth"), to: dayText(window.end, locale, "dayMonth") })}</ListCell>
+                  <ListCell className="hidden text-small text-ink-soft md:block">{t("{from} to {to}", { from: dayText(window.start, fmt, "dayMonth"), to: dayText(window.end, fmt, "dayMonth") })}</ListCell>
                   <ListCell className="hidden items-center gap-2.5 md:flex">
                     <span className="block h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
                       <span className={cn("block h-full rounded-full", summary.pct >= 80 ? "bg-income" : "bg-warning-fill")} style={{ width: `${summary.pct}%` }} />

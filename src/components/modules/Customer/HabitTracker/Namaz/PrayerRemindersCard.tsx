@@ -19,13 +19,13 @@ interface PrayerRemindersCardProps {
 // of the five prayers, worked out from the same city and method as the
 // times on this page.
 export function PrayerRemindersCard({ book, today, onSettings }: PrayerRemindersCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { settings } = usePrayerSettings();
   const times = prayerTimesFor(settings, today);
   const rows = NAMAZ_KEYS.map((key) => ({
     key,
     label: t(PRAYER_LABEL[key]),
-    description: t("Today at {time}", { time: timeLabel(clockOf(times[PRAYER_LABEL[key] as TimeName]), t, locale) }),
+    description: t("Today at {time}", { time: timeLabel(clockOf(times[PRAYER_LABEL[key] as TimeName]), t, fmt) }),
   }));
 
   return (

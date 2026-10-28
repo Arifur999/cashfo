@@ -28,7 +28,7 @@ interface AmountPopoverProps {
 // steps is one entry, not thirty taps. The figure opens a small field (it
 // takes Bangla digits too) with a quick "+5" or "+10" and "Reached goal".
 export function AmountPopover({ name, value, target, unit, disabled = false, onSave, children, triggerClassName }: AmountPopoverProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const typed = parseAmount(text);
@@ -51,13 +51,13 @@ export function AmountPopover({ name, value, target, unit, disabled = false, onS
   return (
     <Popover open={open} onOpenChange={openChange}>
       <PopoverTrigger asChild>
-        <button type="button" disabled={disabled} aria-label={t("Change the amount for {name}: {amount}", { name, amount: t("{value} of {amount}", { value: formatCount(value, locale), amount: amountLabel(target, unit, t, locale) }) })} className={cn("rounded-md tabular-nums underline decoration-line-strong decoration-dotted underline-offset-4 transition-colors hover:bg-surface-sunken disabled:no-underline disabled:opacity-60", triggerClassName)}>
+        <button type="button" disabled={disabled} aria-label={t("Change the amount for {name}: {amount}", { name, amount: t("{value} of {amount}", { value: formatCount(value, fmt), amount: amountLabel(target, unit, t, fmt) }) })} className={cn("rounded-md tabular-nums underline decoration-line-strong decoration-dotted underline-offset-4 transition-colors hover:bg-surface-sunken disabled:no-underline disabled:opacity-60", triggerClassName)}>
           {children}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={8} aria-label={t("Amount for {name}", { name })} className="w-72 gap-0 rounded-lg border border-line bg-surface p-0 text-ink shadow-overlay ring-0">
         <form onSubmit={save} className="flex flex-col gap-3 p-4">
-          <Field htmlFor={id} label={<span className="text-body font-medium text-ink">{t("Amount for {name}", { name })}</span>} hint={t("Goal: {amount}", { amount: amountLabel(target, unit, t, locale) })} error={text.trim() !== "" && typed === null ? t("Enter a whole number up to {max}.", { max: formatCount(MAX_AMOUNT, locale) }) : undefined}>
+          <Field htmlFor={id} label={<span className="text-body font-medium text-ink">{t("Amount for {name}", { name })}</span>} hint={t("Goal: {amount}", { amount: amountLabel(target, unit, t, fmt) })} error={text.trim() !== "" && typed === null ? t("Enter a whole number up to {max}.", { max: formatCount(MAX_AMOUNT, fmt) }) : undefined}>
             <Input
               id={id}
               size="md"
@@ -73,7 +73,7 @@ export function AmountPopover({ name, value, target, unit, disabled = false, onS
           <div className="flex flex-wrap gap-2">
             {quickAmounts(target).map((amount) => (
               <button key={amount} type="button" onClick={() => setText(String(Math.min(MAX_AMOUNT, (typed ?? value) + amount)))} className={cn(chip, "border-line bg-surface text-ink-2 hover:border-line-strong")}>
-                {t("+{count}", { count: formatCount(amount, locale) })}
+                {t("+{count}", { count: formatCount(amount, fmt) })}
               </button>
             ))}
             <button type="button" onClick={() => setText(String(target))} className={cn(chip, "border-emerald bg-mint-50 text-brand-ink hover:bg-mint-200 dark:hover:bg-emerald/20")}>

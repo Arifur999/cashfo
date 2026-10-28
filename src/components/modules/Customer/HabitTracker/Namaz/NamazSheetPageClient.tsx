@@ -70,14 +70,14 @@ const SPLIT: { key: "jamaat" | "onTime" | "qaza" | "missed"; label: string; bar:
 // the month's figures, each prayer on its own, and what stands out. An
 // earlier month with nothing marked (added by mistake) can be deleted.
 export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: NamazSheetPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [isDeleting, startDelete] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [sheet, applyMark] = useOptimistic(tracker, (current, update: { day: number; item: string; status: PrayerStatus | null }) => withCheck(current, update.day, update.item, update.status !== null, update.status ?? undefined));
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
   const year = sheet.year as number;
   const month = sheet.month as number;
   const key = `${year}-${pad(month)}`;
@@ -96,7 +96,7 @@ export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: N
       applyMark({ day, item, status });
       const result = await setHabitTrackerCheckAction(sheet.id, status ? { day, item, checked: true, status } : { day, item, checked: false });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to update", t, locale));
+      else toast.error(actionError(result.message, "Failed to update", t, fmt));
     });
   }
 
@@ -108,7 +108,7 @@ export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: N
         setConfirmDelete(false);
         router.push("/habit-tracker/habits?category=Namaz");
       } else {
-        toast.error(actionError(result.message, "Failed to remove month tracker", t, locale));
+        toast.error(actionError(result.message, "Failed to remove month tracker", t, fmt));
       }
     });
   }
@@ -155,12 +155,12 @@ export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: N
 
   return (
     <PageFrame className="gap-5">
-      <TopbarExtras record={monthName(key, locale, "long", true)} />
+      <TopbarExtras record={monthName(key, fmt, "long", true)} />
       <div className="flex flex-col gap-1">
         <RecordEyebrow href="/habit-tracker/habits?category=Namaz" back={t("All months")} />
         <PageHeader
-          title={monthName(key, locale, "long", true)}
-          description={hijriRange(year, month, locale, hijriAdjust, true)}
+          title={monthName(key, fmt, "long", true)}
+          description={hijriRange(year, month, fmt, hijriAdjust, true)}
           actions={
             <>
               {current && (
@@ -264,7 +264,7 @@ export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: N
         onClose={() => !isDeleting && setConfirmDelete(false)}
         onConfirm={remove}
         isPending={isDeleting}
-        title={t("Delete {name}'s sheet?", { name: monthName(key, locale, "long", true) })}
+        title={t("Delete {name}'s sheet?", { name: monthName(key, fmt, "long", true) })}
         description={t("Nothing is marked on it, so nothing is lost. You can add the month again later.")}
         confirmLabel={t("Delete sheet")}
       />

@@ -27,14 +27,14 @@ const SHOWN = 3;
 // The board's notes on the book being read: each with its page and the day
 // it was added, and a line to add one. Removing a note asks first.
 export function BookNotesCard({ book, notes, today }: BookNotesCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [text, setText] = useState("");
   const [page, setPage] = useState("");
   const [all, setAll] = useState(false);
   const [removing, setRemoving] = useState<BookNote | null>(null);
   const [isPending, startTransition] = useTransition();
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
   const shown = all ? notes : notes.slice(-SHOWN);
   const pageNumber = page ? Number(page) : null;
   const valid = text.trim() !== "" && (pageNumber === null || (pageNumber >= 1 && pageNumber <= book.totalPages));
@@ -49,7 +49,7 @@ export function BookNotesCard({ book, notes, today }: BookNotesCardProps) {
         setPage("");
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to save the note", t, locale));
+        toast.error(actionError(result.message, "Failed to save the note", t, fmt));
       }
     });
   }
@@ -64,13 +64,13 @@ export function BookNotesCard({ book, notes, today }: BookNotesCardProps) {
         setRemoving(null);
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to remove the note", t, locale));
+        toast.error(actionError(result.message, "Failed to remove the note", t, fmt));
       }
     });
   }
 
   // The day it was added, in the app's timezone.
-  const added = (note: BookNote) => (toDateInputValue(note.createdAt) === today ? t("Added today") : t("Added {date}", { date: instantText(note.createdAt, locale) }));
+  const added = (note: BookNote) => (toDateInputValue(note.createdAt) === today ? t("Added today") : t("Added {date}", { date: instantText(note.createdAt, fmt) }));
 
   return (
     <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-md px-5 py-4.5">

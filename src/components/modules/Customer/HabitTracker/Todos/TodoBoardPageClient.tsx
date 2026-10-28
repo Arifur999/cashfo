@@ -43,11 +43,11 @@ const STEP = 50;
 // done and what is left, and what is coming up after it. An open task on a
 // past day can be brought to today; on today or later it can move on.
 export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }: TodoBoardPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const todayTasks = useTodayTasks();
   const addField = useRef<HTMLInputElement>(null);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   // The server's lists, with each action's answer laid over them until the
   // next refresh brings the server's own copy.
@@ -72,7 +72,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   const done = byPriority(doneItems(list));
   const total = dayCount(list);
   const name = relativeName(day, today);
-  const heading = name ? `${t(name)} · ${dayLabel(day, locale)}` : dayLabel(day, locale);
+  const heading = name ? `${t(name)} · ${dayLabel(day, fmt)}` : dayLabel(day, fmt);
   // An open task on a past day comes to today; on today or later it moves on.
   const past = day < today;
   // A past copy of a repeating task stays put when its rule already has a
@@ -116,7 +116,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
       if (!target) {
         const created = await createTodoListAction(day);
         if (!created.success || !created.data) {
-          toast.error(actionError(created.message, "Failed to add task", t, locale));
+          toast.error(actionError(created.message, "Failed to add task", t, fmt));
           return;
         }
         target = created.data;
@@ -128,7 +128,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
         setTime(null);
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to add task", t, locale));
+        toast.error(actionError(result.message, "Failed to add task", t, fmt));
       }
     } finally {
       setAdding(false);
@@ -140,7 +140,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
     withBusy(item.id, async () => {
       const result = await updateTodoItemAction(list.id, item.id, { completed: !item.completed });
       if (result.success && result.data) absorb(result.data);
-      else toast.error(actionError(result.message, "Failed to update task", t, locale));
+      else toast.error(actionError(result.message, "Failed to update task", t, fmt));
     });
   }
 
@@ -155,7 +155,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
         // A move or a new repeat touches other days; the refresh brings them.
         if (changes.date || changes.repeat !== undefined) router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to update task", t, locale));
+        toast.error(actionError(result.message, "Failed to update task", t, fmt));
       }
     });
   }
@@ -163,7 +163,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
   // "High · 10:00 am · every Thursday" under an upcoming task, with its day
   // first when it is later in the week.
   const upcomingSub = (item: TodoItem, when?: string) =>
-    [when && dayLabel(when, locale, "short"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t, locale), item.repeat && repeatLabel(item.repeat, t, locale, true)].filter(Boolean).join(" · ");
+    [when && dayLabel(when, fmt, "short"), t(PRIORITY_LABEL[item.priority]), item.dueTime && timeLabel(item.dueTime, t, fmt), item.repeat && repeatLabel(item.repeat, t, fmt, true)].filter(Boolean).join(" · ");
 
   async function moveOn(item: TodoItem, quiet = false): Promise<boolean> {
     if (!list) return false;
@@ -173,7 +173,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
       if (!quiet) toast.success(t("Moved to tomorrow"));
       return true;
     }
-    toast.error(actionError(result.message, "Failed to move task", t, locale));
+    toast.error(actionError(result.message, "Failed to move task", t, fmt));
     return false;
   }
 
@@ -186,7 +186,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
       if (!quiet) toast.success(t("Moved to today"));
       return true;
     }
-    toast.error(actionError(result.message, "Failed to move task", t, locale));
+    toast.error(actionError(result.message, "Failed to move task", t, fmt));
     return false;
   }
 
@@ -220,7 +220,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
         setRemoving(null);
         setEditing(null);
       } else {
-        toast.error(actionError(result.message, "Failed to remove task", t, locale));
+        toast.error(actionError(result.message, "Failed to remove task", t, fmt));
       }
     });
   }
@@ -325,7 +325,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
                 </div>
                 {total.total > 0 && (
                   <span className="flex items-center gap-2.5 text-small text-ink-soft">
-                    <b className="font-semibold text-ink">{doneOfText(total.done, total.total, t, locale)}</b>
+                    <b className="font-semibold text-ink">{doneOfText(total.done, total.total, t, fmt)}</b>
                     <ProgressBar value={(total.done / total.total) * 100} label={t("Tasks done")} className="w-30" />
                   </span>
                 )}
@@ -388,7 +388,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
 
         <div className="flex flex-col gap-4">
           <UpcomingCard
-            title={[tomorrowName ? t(tomorrowName) : dayLabel(shiftDay(day, 1), locale, "weekday"), dayLabel(shiftDay(day, 1), locale, "short")].join(" · ")}
+            title={[tomorrowName ? t(tomorrowName) : dayLabel(shiftDay(day, 1), fmt, "weekday"), dayLabel(shiftDay(day, 1), fmt, "short")].join(" · ")}
             rows={byPriority(openItems(next.tomorrow)).map((item) => ({ key: item.id, text: item.text, sub: upcomingSub(item), priority: item.priority, day: shiftDay(day, 1) }))}
             empty={t("Nothing planned yet.")}
           />
@@ -402,7 +402,7 @@ export function TodoBoardPageClient({ lists: serverLists, repeats, day, today }:
               {repeats.map((rule) => (
                 <div key={rule.id} className="flex justify-between gap-2.5 text-small">
                   <span className="min-w-0 truncate font-medium text-ink">{rule.text}</span>
-                  <span className="whitespace-nowrap text-ink-muted">{repeatLabel(rule, t, locale)}</span>
+                  <span className="whitespace-nowrap text-ink-muted">{repeatLabel(rule, t, fmt)}</span>
                 </div>
               ))}
             </Card>
@@ -426,12 +426,12 @@ interface UpcomingRow {
 }
 
 function UpcomingCard({ title, rows, empty }: { title: string; rows: UpcomingRow[]; empty: string }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   return (
     <Card padding="none" className="flex flex-col gap-2 rounded-md px-4.5 py-3.5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="truncate text-[15px] leading-[normal] font-semibold text-ink">{title}</h2>
-        <span className="shrink-0 text-caption text-ink-muted">{t(rows.length === 1 ? "{count} task" : "{count} tasks", { count: formatCount(rows.length, locale) })}</span>
+        <span className="shrink-0 text-caption text-ink-muted">{t(rows.length === 1 ? "{count} task" : "{count} tasks", { count: formatCount(rows.length, fmt) })}</span>
       </div>
       {rows.length === 0 ? (
         <span className="py-1.5 text-small text-ink-muted">{empty}</span>

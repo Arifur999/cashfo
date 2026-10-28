@@ -3,6 +3,7 @@ import { DailyHabitsPageClient } from "@/components/modules/Customer/HabitTracke
 import type { DailyHabitsData } from "@/components/modules/Customer/HabitTracker/Daily/dailyTypes";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { isIsoDay } from "@/lib/customer/dateRangePresets";
+import { getFmt } from "@/lib/customer/fmt";
 import { dailyLogMonths } from "@/lib/customer/habitDisplay";
 import { getHabitMonth, getHabits, getHabitStats, getHabitsToday } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
@@ -30,7 +31,7 @@ export default async function DailyHabitsPage({ searchParams }: PageProps<"/habi
   // The day's week and last 30 days, and the 60 days up to today for the
   // panel's best streak; each month is read once, the panel's only when it
   // is none of these.
-  const { dayMonths, bestMonths } = dailyLogMonths(day, today);
+  const { dayMonths, bestMonths } = dailyLogMonths(day, today, await getFmt());
   const months = [...new Set([...dayMonths, ...bestMonths, panelMonth])];
 
   const [habits, todayRows, stats, sheets, reminders] = await Promise.all([getHabits(true), getHabitsToday(), getHabitStats(), Promise.all(months.map((key) => getHabitMonth(key))), getReminders()]);

@@ -37,7 +37,7 @@ const STICKY = "sticky left-0 z-10 shrink-0 border-r border-divider bg-surface p
 // today, with the prayers' names pinned on the left; the whole sheet is one
 // Tab stop, its boxes reached with the arrow keys.
 export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) => item, disabled = false }: PrayerSheetProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [active, setActive] = useState<{ day: number; item: string } | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const todayHead = useRef<HTMLSpanElement>(null);
@@ -48,7 +48,7 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
   const dayKey = (day: number) => `${tracker.year}-${pad(tracker.month ?? 1)}-${pad(day)}`;
   const startDay = tracker.todayDay ?? Math.max(1, Math.min(tracker.elapsedDays, tracker.totalDays));
   const grid = useRovingGrid(tracker.items.length, tracker.totalDays, { row: 0, col: startDay - 1 });
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   // Today in view, whatever the width. Measured against the scroller itself
   // (offsetLeft would count the sidebar and the page's gutters too, and push

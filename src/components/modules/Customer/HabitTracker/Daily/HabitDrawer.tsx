@@ -17,9 +17,10 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Habit, HabitFrequency } from "@/lib/customer/api";
 import { budgetCategoryHex, budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { actionError, latinDigits, ruleLabel, unitKey, unitLabel } from "@/lib/customer/habitDisplay";
+import { actionError, latinDigits, ruleLabel, unitKey, unitLabel, WEEKDAY_LONG } from "@/lib/customer/habitDisplay";
 import { createHabitAction, deleteHabitAction, updateHabitAction } from "@/lib/customer/habitsActions";
 import { formatCount } from "@/lib/i18n/digits";
+import { weekStartOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { draftFromReminder, type ReminderBook, ReminderSection } from "../Reminders";
@@ -37,14 +38,14 @@ interface HabitDrawerProps {
 const OFTEN: { value: HabitFrequency; title: string; sub: string }[] = [
   { value: "DAILY", title: "Every day", sub: "Planned for all seven days" },
   { value: "WEEKLY_DAYS", title: "On certain days", sub: "Pick the days, like Sunday to Thursday" },
-  { value: "WEEKLY_COUNT", title: "A few times a week", sub: "Any days you like. The week starts on Saturday." },
+  { value: "WEEKLY_COUNT", title: "A few times a week", sub: "Any days you like. The week starts on {day}." },
 ];
 
 // A new or edited habit in the design's drawer: its name, icon and colour,
 // how often, and whether an amount is counted each time. Archive keeps it
 // (and its history) to bring back later; Delete asks first.
 export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const oftenId = useId();
@@ -88,7 +89,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
   const noGoal = counted && targetValue <= 0;
   const valid = name.trim().length > 0 && !noDays && !noGoal;
   const savedUnit = unitKey(unit, t);
-  const preview = ruleLabel({ frequencyType: frequency, weeklyDays: days, weeklyCount: count, targetValue: counted ? targetValue : null, unit: counted ? savedUnit : null }, t, locale);
+  const preview = ruleLabel({ frequencyType: frequency, weeklyDays: days, weeklyCount: count, targetValue: counted ? targetValue : null, unit: counted ? savedUnit : null }, t, fmt);
   const tone = categoryTone(color);
 
   function submit(event: React.FormEvent) {
@@ -116,7 +117,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
         onClose();
         router.refresh();
       } else {
-        toast.error(actionError(result.message, editing ? "Failed to update the habit" : "Failed to add the habit", t, locale));
+        toast.error(actionError(result.message, editing ? "Failed to update the habit" : "Failed to add the habit", t, fmt));
       }
     });
   }
@@ -131,7 +132,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
         onClose();
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to archive the habit", t, locale));
+        toast.error(actionError(result.message, "Failed to archive the habit", t, fmt));
       }
     });
   }
@@ -148,7 +149,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
         onClose();
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to remove habit", t, locale));
+        toast.error(actionError(result.message, "Failed to remove habit", t, fmt));
       }
     });
   }
@@ -206,7 +207,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
               {/* One tab stop; the arrow keys move the choice, as native radios do. */}
               <ChoiceCardGroup aria-labelledby={oftenId}>
                 {OFTEN.map((option) => (
-                  <ChoiceCard key={option.value} checked={frequency === option.value} onSelect={() => setFrequency(option.value)} title={t(option.title)} sub={t(option.sub)}>
+                  <ChoiceCard key={option.value} checked={frequency === option.value} onSelect={() => setFrequency(option.value)} title={t(option.title)} sub={t(option.sub, { day: t(WEEKDAY_LONG[weekStartOf(fmt)]) })}>
                     {option.value === "WEEKLY_DAYS" && (
                       <span className="flex flex-col gap-2 pl-8">
                         <WeekdayPicker value={days} onChange={setDays} />
@@ -219,7 +220,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
                           <button type="button" aria-label={t("One less")} onClick={() => setCount(Math.max(1, count - 1))} className="flex h-full w-8.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:w-11">
                             <Minus className="size-4" aria-hidden="true" />
                           </button>
-                          <span className="w-9 border-x border-line text-center text-[15px] leading-8.5 font-bold text-ink tabular-nums">{formatCount(count, locale)}</span>
+                          <span className="w-9 border-x border-line text-center text-[15px] leading-8.5 font-bold text-ink tabular-nums">{formatCount(count, fmt)}</span>
                           <button type="button" aria-label={t("One more")} onClick={() => setCount(Math.min(7, count + 1))} className="flex h-full w-8.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:w-11">
                             <Plus className="size-4" aria-hidden="true" />
                           </button>

@@ -10,10 +10,11 @@ import type { Habit, HabitMonthLog } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
-import { actionError, amountLabel, bestStreak, countsOn, countTone, dayMark, dayText, HABIT_UNITS, instantText, monthGrid, ruleLine, streakText, unitLabel, WEEK_START, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
+import { actionError, amountLabel, bestStreak, countsOn, countTone, dayMark, dayText, HABIT_UNITS, instantText, monthGrid, ruleLine, streakText, unitLabel, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
+import { weekdayOrder } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +58,7 @@ const BEST_LOOK_BACK = 60;
 // note for today. The month arrows leaf through the habit's months alone;
 // the day's list stays where it is.
 export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs: shownLogs, streak, bestStreak: allTimeBest, note, todayLog, onEdit, onMonthChange, inSheet = false }: HabitDetailPanelProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [draft, setDraft] = useState(note ?? "");
   const [savedFor, setSavedFor] = useState(`${habit.id}:${note ?? ""}`);
@@ -67,10 +68,10 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
     setDraft(note ?? "");
   }
 
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
   const tone = categoryTone(habit.color);
   const [year, monthNumber] = month.split("-").map(Number);
-  const cells = monthGrid(year, monthNumber);
+  const cells = monthGrid(year, monthNumber, fmt);
   const monthDays = cells.filter((c): c is string => c !== null && c <= today);
   const monthLogs = shownLogs.filter((l) => l.habitId === habit.id && l.date.slice(0, 7) === month);
   const doneThisMonth = monthDays.filter((d) => monthLogs.some((l) => l.completed && l.date.slice(0, 10) === d)).length;
@@ -80,24 +81,24 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
   // Over the planned days, so a missed day counts as nothing rather than not at all.
   const total = monthLogs.reduce((sum, l) => sum + (l.value ?? 0), 0);
   const average = plannedThisMonth > 0 ? Math.round((total / plannedThisMonth) * 10) / 10 : null;
-  const best = Math.max(streak, allTimeBest ?? bestStreak(habit, bestLogs, today, BEST_LOOK_BACK));
+  const best = Math.max(streak, allTimeBest ?? bestStreak(habit, bestLogs, today, BEST_LOOK_BACK, fmt));
   const rate = plannedThisMonth > 0 ? Math.round((doneThisMonth / plannedThisMonth) * 100) : null;
   const thisMonth = month === today.slice(0, 7);
-  const name = monthName(month, locale);
+  const name = monthName(month, fmt);
   // The goal's middle band (close, not yet there) only when it has room.
   const near = Math.ceil(target * 0.75);
 
   const facts = [
-    { label: t("Current streak"), value: streakText(habit, streak, t, locale) },
-    { label: allTimeBest !== undefined ? t("Best streak") : t("Best, last 60 days"), value: streakText(habit, best, t, locale) },
+    { label: t("Current streak"), value: streakText(habit, streak, t, fmt) },
+    { label: allTimeBest !== undefined ? t("Best streak") : t("Best, last 60 days"), value: streakText(habit, best, t, fmt) },
     { label: name, value: t("{done} of {total} days", { done: count(doneThisMonth), total: count(plannedThisMonth) }) },
     counted
-      ? { label: t("Daily average"), value: average === null ? "—" : amountLabel(average, habit.unit, t, locale) }
+      ? { label: t("Daily average"), value: average === null ? "—" : amountLabel(average, habit.unit, t, fmt) }
       : { label: thisMonth ? t("This month") : t("Rate in {month}", { month: name }), value: rate === null ? "—" : `${count(rate)}%` },
   ];
 
   const canGoNext = month < today.slice(0, 7);
-  const subtitle = [ruleLine(habit, t, locale), t("added {date}", { date: instantText(habit.createdAt, locale) })].join(" · ");
+  const subtitle = [ruleLine(habit, t, fmt), t("added {date}", { date: instantText(habit.createdAt, fmt) })].join(" · ");
 
   function saveNote() {
     if (day !== today || draft === (note ?? "") || isPending) return;
@@ -109,7 +110,7 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
         // coming back to the habit would show the old one.
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to save the note", t, locale));
+        toast.error(actionError(result.message, "Failed to save the note", t, fmt));
       }
     });
   }
@@ -140,23 +141,23 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
 
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
-          <button type="button" onClick={() => onMonthChange(shiftMonth(month, -1))} aria-label={monthName(shiftMonth(month, -1), locale, "long", true)} className="flex size-7.5 items-center justify-center rounded-sm text-ink-soft hover:bg-surface-sunken pointer-coarse:size-11">
+          <button type="button" onClick={() => onMonthChange(shiftMonth(month, -1))} aria-label={monthName(shiftMonth(month, -1), fmt, "long", true)} className="flex size-7.5 items-center justify-center rounded-sm text-ink-soft hover:bg-surface-sunken pointer-coarse:size-11">
             <ChevronLeft className="size-4" aria-hidden="true" />
           </button>
-          <span className="text-body font-semibold text-ink">{monthName(month, locale, "long", true)}</span>
-          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(shiftMonth(month, 1))} aria-label={monthName(shiftMonth(month, 1), locale, "long", true)} className="flex size-7.5 items-center justify-center rounded-sm text-ink-soft hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
+          <span className="text-body font-semibold text-ink">{monthName(month, fmt, "long", true)}</span>
+          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(shiftMonth(month, 1))} aria-label={monthName(shiftMonth(month, 1), fmt, "long", true)} className="flex size-7.5 items-center justify-center rounded-sm text-ink-soft hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
             <ChevronRight className="size-4" aria-hidden="true" />
           </button>
         </div>
         <div aria-hidden="true" className="grid grid-cols-7 gap-1.25 text-center text-[11.5px] leading-[normal] font-semibold text-ink-faint">
-          {Array.from({ length: 7 }, (_, i) => (WEEK_START + i) % 7).map((d) => (
+          {weekdayOrder(fmt).map((d) => (
             <span key={d} className={cn(d === 5 && "text-warning")}>
               {t(WEEKDAY_MIN[d])}
             </span>
           ))}
         </div>
         {/* One picture with a summary; each day's state is in its title. */}
-        <div role="img" aria-label={t("{month}: {done} of {total} planned days done", { month: monthName(month, locale, "long", true), done: count(doneThisMonth), total: count(plannedThisMonth) })} className="grid grid-cols-7 gap-1.25">
+        <div role="img" aria-label={t("{month}: {done} of {total} planned days done", { month: monthName(month, fmt, "long", true), done: count(doneThisMonth), total: count(plannedThisMonth) })} className="grid grid-cols-7 gap-1.25">
           {cells.map((cell, i) => {
             if (!cell) return <span key={i} className="h-9.5" />;
             const mark = dayMark(habit, shownLogs, cell, today);
@@ -170,7 +171,7 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
             return (
               <span
                 key={cell}
-                title={`${dayText(cell, locale, "dayMonth")}: ${counted && value !== null ? amountLabel(value, habit.unit, t, locale) : t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "rest" ? "not planned" : mark === "open" ? "still open" : "not yet")}`}
+                title={`${dayText(cell, fmt, "dayMonth")}: ${counted && value !== null ? amountLabel(value, habit.unit, t, fmt) : t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "rest" ? "not planned" : mark === "open" ? "still open" : "not yet")}`}
                 className={cn(
                   "flex h-9.5 flex-col items-center justify-center rounded-sm text-[11.5px] leading-[normal] font-semibold tabular-nums",
                   fill ? cn(tone.fg, fill === "full" ? "bg-current" : fill === "near" ? "bg-current/45" : tone.bg) : mark === "done" ? cn("bg-current", tone.fg) : MARK_CLASS[mark],

@@ -33,7 +33,7 @@ interface AddRowDialogProps {
 // A new row on a Ramadan sheet or a challenge: a name, or one of the
 // usual ones in a tap.
 export function AddRowDialog({ open, onClose, trackerId, existing, suggestions, description, challenge }: AddRowDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -62,7 +62,7 @@ export function AddRowDialog({ open, onClose, trackerId, existing, suggestions, 
         toast.success(t("Row added"));
         onClose();
       } else {
-        toast.error(actionError(result.message, "Failed to add the row", t, locale));
+        toast.error(actionError(result.message, "Failed to add the row", t, fmt));
       }
       // Whatever happened, the sheet as the server now has it (a refusal
       // whose rollback failed too leaves the row there).
@@ -81,9 +81,9 @@ export function AddRowDialog({ open, onClose, trackerId, existing, suggestions, 
           <AlertDialogDescription className="flex flex-col gap-2 px-6 pt-4 text-small text-ink-muted">
             <span>{description}</span>
             {tooLong ? (
-              <span className="rounded-md bg-warning-soft px-3 py-2 font-medium text-warning">{t("This challenge has more than {count} days done, too many to tick a new row on. Start a new challenge for it instead.", { count: formatCount(MAX_BACKFILL_DAYS, locale) })}</span>
+              <span className="rounded-md bg-warning-soft px-3 py-2 font-medium text-warning">{t("This challenge has more than {count} days done, too many to tick a new row on. Start a new challenge for it instead.", { count: formatCount(MAX_BACKFILL_DAYS, fmt) })}</span>
             ) : (
-              doneDays.length > 0 && <span className="text-ink-2">{t(doneDays.length === 1 ? "The day already done gets it ticked too, so it stays done." : "The {count} days already done get it ticked too, so they stay done.", { count: formatCount(doneDays.length, locale) })}</span>
+              doneDays.length > 0 && <span className="text-ink-2">{t(doneDays.length === 1 ? "The day already done gets it ticked too, so it stays done." : "The {count} days already done get it ticked too, so they stay done.", { count: formatCount(doneDays.length, fmt) })}</span>
             )}
           </AlertDialogDescription>
           <div className="flex flex-col gap-3 px-6 py-4">

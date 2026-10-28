@@ -27,7 +27,7 @@ interface SehriIftarCardProps {
 // The board's Sehri and Iftar card: when Sehri ends (Fajr) and Iftar
 // (Maghrib) for the person's city, from the same settings as the prayer times.
 export function SehriIftarCard({ day, todayDay, year, reminders }: SehriIftarCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const { settings } = usePrayerSettings();
   const times = prayerTimesFor(settings, day);
   const tiles = [
@@ -44,7 +44,7 @@ export function SehriIftarCard({ day, todayDay, year, reminders }: SehriIftarCar
         </Chip>
       </div>
       <span className="text-small text-ink-soft">
-        {todayDay !== null ? t("For {city}, day {day} of Ramadan:", { city: t(settings.city), day: formatCount(todayDay, locale) }) : t("For your city, every day of Ramadan. A preview for the first day of Ramadan {year} in {city}:", { year: toLocaleDigits(String(year ?? ""), locale), city: t(settings.city) })}
+        {todayDay !== null ? t("For {city}, day {day} of Ramadan:", { city: t(settings.city), day: formatCount(todayDay, fmt) }) : t("For your city, every day of Ramadan. A preview for the first day of Ramadan {year} in {city}:", { year: toLocaleDigits(String(year ?? ""), fmt), city: t(settings.city) })}
       </span>
       <div className="grid grid-cols-2 gap-2.5 max-[360px]:grid-cols-1">
         {tiles.map((tile) => (
@@ -53,7 +53,7 @@ export function SehriIftarCard({ day, todayDay, year, reminders }: SehriIftarCar
               <tile.icon className="size-3.5 text-warning" aria-hidden="true" />
               {t(tile.label)}
             </span>
-            <span className="text-[20px] leading-[normal] font-bold text-ink tabular-nums">{timeLabel(clockOf(tile.at), t, locale)}</span>
+            <span className="text-[20px] leading-[normal] font-bold text-ink tabular-nums">{timeLabel(clockOf(tile.at), t, fmt)}</span>
           </div>
         ))}
       </div>

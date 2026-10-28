@@ -38,7 +38,7 @@ const STATUSES: SkillStatus[] = ["WANT_TO_LEARN", "LEARNING", "COMPLETED"];
 // Add or edit a skill: what it is, where it is learned, how it is counted
 // and how much of it there is, plus an icon and a colour.
 export function SkillDrawer({ open, onClose, editing, onRemove, reminders }: SkillDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [source, setSource] = useState("");
@@ -103,7 +103,7 @@ export function SkillDrawer({ open, onClose, editing, onRemove, reminders }: Ski
         onClose();
         router.refresh();
       } else {
-        toast.error(actionError(result.message, "Failed to save skill", t, locale));
+        toast.error(actionError(result.message, "Failed to save skill", t, fmt));
       }
     });
   }

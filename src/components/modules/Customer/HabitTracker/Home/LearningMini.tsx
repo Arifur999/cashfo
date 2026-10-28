@@ -16,7 +16,7 @@ interface LearningMiniProps {
 
 // The skills being learned, in brief, and the practice streak.
 export function LearningMini({ overview, today }: LearningMiniProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const learning = overview ? byStatus(overview.skills, "LEARNING").slice(0, 2) : [];
   const streak = overview?.streak ?? 0;
 
@@ -37,19 +37,19 @@ export function LearningMini({ overview, today }: LearningMiniProps) {
             <div key={skill.id} className="flex flex-col gap-1.25">
               <div className="flex justify-between gap-2 text-small">
                 <span className="truncate font-semibold text-ink">{skill.name}</span>
-                <span className="shrink-0 text-ink-muted tabular-nums">{progressText(skill, t, locale)}</span>
+                <span className="shrink-0 text-ink-muted tabular-nums">{progressText(skill, t, fmt)}</span>
               </div>
               <span role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${skill.name}: ${t("done")}`} className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
                 <span className="block h-full rounded-full" style={{ width: `${pct}%`, background: paletteFor(skill.color).to }} />
               </span>
-              <span className="text-caption text-ink-muted">{(overview && practiceLine(skill, overview.week, today, t, locale)) ?? t("Nothing logged this week")}</span>
+              <span className="text-caption text-ink-muted">{(overview && practiceLine(skill, overview.week, today, t, fmt)) ?? t("Nothing logged this week")}</span>
             </div>
           );
         })
       )}
       <div className="mt-auto flex items-center gap-1.25 border-t border-divider pt-2.5 text-[12.5px] leading-[normal] font-semibold text-ink">
         <Flame className={streak > 0 ? "size-3.25 text-orange-fill" : "size-3.25 text-ink-muted"} aria-hidden="true" />
-        {streak > 0 ? t("{count}-day practice streak", { count: formatCount(streak, locale) }) : t("No practice streak yet")}
+        {streak > 0 ? t("{count}-day practice streak", { count: formatCount(streak, fmt) }) : t("No practice streak yet")}
       </div>
     </Card>
   );

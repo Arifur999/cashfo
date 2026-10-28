@@ -15,9 +15,10 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Habit } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { actionError, completionRate, countStep, countsOn, dayMark, dayText, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, ruleLine, shiftDay, streakText, streakWord, WEEK_START, WEEKDAY_INITIAL, weekOf } from "@/lib/customer/habitDisplay";
+import { actionError, completionRate, countStep, countsOn, dayMark, dayText, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, ruleLine, shiftDay, streakText, streakWord, WEEKDAY_INITIAL, weekdayOf, weekOf } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction, removeCheckInAction, updateHabitAction } from "@/lib/customer/habitsActions";
 import { formatCount } from "@/lib/i18n/digits";
+import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AmountPopover } from "../Tracker/AmountPopover";
@@ -53,7 +54,7 @@ type DayLog = { completed: boolean; value: number | null; note: string | null };
 // off (or counted up) for the day being viewed, with one habit's month on
 // the side (in a bottom sheet below 1400px, where the side has no room).
 export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const wide = useMediaQuery(SIDE_PANEL);
   const { today, day, habits, todayRows, stats, logs, panelMonth, panelLogs, bestLogs } = data;
@@ -71,7 +72,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const [, startTransition] = useTransition();
   const [tapped, applyLog] = useOptimistic<Record<string, DayLog | null>, { id: string; log: DayLog | null }>({}, (current, update) => ({ ...current, [update.id]: update.log }));
   const picker = useRef<HTMLInputElement>(null);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   const serverLog = (habit: Habit): DayLog | null => {
     if (isToday) {
@@ -88,10 +89,10 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const resting = active.length - planned.length;
   const done = planned.filter((h) => logFor(h)?.completed);
   const open = planned.filter((h) => !logFor(h)?.completed);
-  const week = weekOf(day);
+  const week = weekOf(day, fmt);
   const last30 = lastDays(day, 30);
   const longest = [...active].map((h) => ({ habit: h, streak: streakOf(h) })).sort((a, b) => b.streak - a.streak)[0];
-  const planned30 = active.reduce((sum, h) => sum + plannedCount(h, last30.filter((d) => d >= habitStart(h, logs))), 0);
+  const planned30 = active.reduce((sum, h) => sum + plannedCount(h, last30.filter((d) => d >= habitStart(h, logs)), fmt), 0);
   const done30 = logs.filter((l) => l.completed && last30.includes(l.date.slice(0, 10)) && active.some((h) => h.id === l.habitId)).length;
   const perfect = perfectDays(active, logs, last30);
   const selected = active.find((h) => h.id === selectedId) ?? planned[0] ?? active[0] ?? null;
@@ -126,7 +127,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
       applyLog({ id: habit.id, log });
       const result = await action();
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to check in", t, locale));
+      else toast.error(actionError(result.message, "Failed to check in", t, fmt));
       setBusy((prev) => {
         const rest = new Set(prev);
         rest.delete(habit.id);
@@ -159,7 +160,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     startTransition(async () => {
       const result = await updateHabitAction(habit.id, { isArchived: false });
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to bring the habit back", t, locale));
+      else toast.error(actionError(result.message, "Failed to bring the habit back", t, fmt));
       setBusy((prev) => {
         const rest = new Set(prev);
         rest.delete(habit.id);
@@ -180,7 +181,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     if (open.length === 2) return t("{first} and {second} are still open", { first: open[0].name, second: open[1].name });
     return t("{first}, {second} and {count} more are still open", { first: open[0].name, second: open[1].name, count: count(open.length - 2) });
   })();
-  const dayShort = dayText(day, locale, "dayMonth");
+  const dayShort = dayText(day, fmt, "dayMonth");
 
   const visible = active.slice(0, shown);
   const panel = (inSheet: boolean) =>
@@ -208,13 +209,13 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const row = (habit: Habit) => {
     const log = logFor(habit);
     const tone = categoryTone(habit.color);
-    const rule = ruleLabel(habit, t, locale);
+    const rule = ruleLabel(habit, t, fmt);
     const counted = !!habit.targetValue;
     const target = habit.targetValue ?? 1;
     const step = countStep(target);
     const rest = !countsOn(habit, logs, day);
     const streak = streakOf(habit);
-    const rate = completionRate(habit, logs, last30.filter((d) => d >= habitStart(habit, logs)));
+    const rate = completionRate(habit, logs, last30.filter((d) => d >= habitStart(habit, logs)), fmt);
     const on = !habit.isArchived && selected?.id === habit.id;
     // Marked only while its month can be seen: beside the list, or in the
     // sheet. Below 1400px the first habit is picked, not yet shown.
@@ -229,7 +230,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-body font-semibold text-ink">{habit.name}</span>
         <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">
-          {[ruleLine(habit, t, locale), habit.isArchived ? t("archived") : null].filter(Boolean).join(" · ")}
+          {[ruleLine(habit, t, fmt), habit.isArchived ? t("archived") : null].filter(Boolean).join(" · ")}
         </span>
         {weekly && <span className="truncate text-caption text-ink-muted sm:hidden">{weekly}</span>}
       </span>
@@ -256,7 +257,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               // The day on show follows its log, a tap's included.
               const doneDay = d === day && log ? log.completed : mark === "done";
               return (
-                <span key={d} title={`${dayText(d, locale, "short")}: ${t(doneDay ? "done" : mark === "missed" ? "missed" : mark === "open" ? "still open" : mark === "future" ? "not yet" : "not planned")}`} className={cn("flex size-4.5 items-center justify-center rounded-full", doneDay ? cn("bg-current", tone.fg) : mark === "missed" ? "bg-expense-line" : mark === "open" ? cn("border-[1.5px] border-dashed border-current", tone.fg) : "border-[1.5px] border-line bg-surface")}>
+                <span key={d} title={`${dayText(d, fmt, "short")}: ${t(doneDay ? "done" : mark === "missed" ? "missed" : mark === "open" ? "still open" : mark === "future" ? "not yet" : "not planned")}`} className={cn("flex size-4.5 items-center justify-center rounded-full", doneDay ? cn("bg-current", tone.fg) : mark === "missed" ? "bg-expense-line" : mark === "open" ? cn("border-[1.5px] border-dashed border-current", tone.fg) : "border-[1.5px] border-line bg-surface")}>
                   {doneDay && <Check className="size-2.5 text-surface" strokeWidth={3} aria-hidden="true" />}
                 </span>
               );
@@ -327,11 +328,11 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
               <button type="button" onClick={() => goTo(shiftDay(day, -1))} aria-label={t("Previous day")} className="flex h-full w-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:w-11">
                 <ChevronLeft className="size-4" aria-hidden="true" />
               </button>
-              <button type="button" onClick={openPicker} aria-label={t("Pick a day: {day}", { day: dayText(day, locale, "full") })} className="flex h-full items-center px-2.5 text-body font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
-                {isToday ? t("Today, {date}", { date: dayText(day, locale, "short") }) : dayText(day, locale, "short")}
+              <button type="button" onClick={openPicker} aria-label={t("Pick a day: {day}", { day: dayText(day, fmt, "full") })} className="flex h-full items-center px-2.5 text-body font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
+                {isToday ? t("Today, {date}", { date: dayText(day, fmt, "short") }) : dayText(day, fmt, "short")}
               </button>
               {/* The browser's own date picker; the button above opens it. */}
-              <input ref={picker} type="date" value={day} max={today} onChange={(event) => event.target.value && event.target.value <= today && goTo(event.target.value)} aria-label={t("Pick a day: {day}", { day: dayText(day, locale, "full") })} tabIndex={-1} className="sr-only" />
+              <input ref={picker} type="date" value={day} max={today} onChange={(event) => event.target.value && event.target.value <= today && goTo(event.target.value)} aria-label={t("Pick a day: {day}", { day: dayText(day, fmt, "full") })} tabIndex={-1} className="sr-only" />
               <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex h-full w-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken disabled:cursor-not-allowed disabled:text-input pointer-coarse:w-11">
                 <ChevronRight className="size-4" aria-hidden="true" />
               </button>
@@ -352,8 +353,8 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
       {/* Two by two on a phone, so the habits start on the first screen. */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={isToday ? t("Done today") : t("Done on {date}", { date: dayShort })} value={t("{done} of {total}", { done: count(done.length), total: count(planned.length) })} sub={<span className="block truncate">{openLine}</span>} />
-        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Longest streak now")} value={longest && longest.streak > 0 ? streakText(longest.habit, longest.streak, t, locale) : "—"} sub={<span className="block truncate">{longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running")}</span>} />
-        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Last 30 days")} value={planned30 > 0 ? `${count(Math.min(100, Math.round((done30 / planned30) * 100)))}%` : "—"} sub={t("{done} of {total} planned check-ins", { done: count(done30), total: count(planned30) })} />
+        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Longest streak now")} value={longest && longest.streak > 0 ? streakText(longest.habit, longest.streak, t, fmt) : "—"} sub={<span className="block truncate">{longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running")}</span>} />
+        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={redigit(t("Last 30 days"), fmt)} value={planned30 > 0 ? `${count(Math.min(100, Math.round((done30 / planned30) * 100)))}%` : "—"} sub={t("{done} of {total} planned check-ins", { done: count(done30), total: count(planned30) })} />
         <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Perfect days")} value={t("{done} of {total}", { done: count(perfect), total: count(30) })} sub={t("Every planned habit done")} />
       </div>
 
@@ -403,9 +404,9 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
             <ListHead columns={COLUMNS}>
               <ListHeadCell>{t("Habit")}</ListHeadCell>
               <ListHeadCell aria-label={t("This week")} className="flex justify-between px-0.5">
-                {week.map((d, i) => (
+                {week.map((d) => (
                   <span key={d} aria-hidden="true" className={cn("w-4.5 text-center", d === day && "font-bold text-emerald")}>
-                    {t(WEEKDAY_INITIAL[(WEEK_START + i) % 7])}
+                    {t(WEEKDAY_INITIAL[weekdayOf(d)])}
                   </span>
                 ))}
               </ListHeadCell>

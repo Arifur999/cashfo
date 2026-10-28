@@ -41,7 +41,7 @@ const sameDays = (a: number[], b: number[]) => a.length === b.length && a.every(
 // The board's Edit task drawer: the words, the day and time, the priority,
 // and whether the task repeats.
 export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDelete }: TaskDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   const repeatId = useId();
   const [text, setText] = useState("");
@@ -79,8 +79,8 @@ export function TaskDrawer({ item, day, today, isPending, onClose, onSave, onDel
   const options: { value: RepeatChoice; title: string; sub?: string }[] = [
     { value: "NONE", title: "Doesn't repeat" },
     { value: "DAILY", title: "Every day" },
-    { value: "WEEKLY", title: "On certain days", sub: weekdays.length ? repeatLabel({ kind: "WEEKLY", weekdays, monthDay: null }, t, locale, true) : undefined },
-    { value: "MONTHLY", title: "Every month", sub: t("on the {day}", { day: dayOfMonthWord(monthDay, locale) }) },
+    { value: "WEEKLY", title: "On certain days", sub: weekdays.length ? repeatLabel({ kind: "WEEKLY", weekdays, monthDay: null }, t, fmt, true) : undefined },
+    { value: "MONTHLY", title: "Every month", sub: t("on the {day}", { day: dayOfMonthWord(monthDay, fmt) }) },
   ];
 
   function save(event: React.FormEvent) {

@@ -36,7 +36,7 @@ const SHOWN = 5;
 // done ones folded under "N done". A task's words tick it too, not only
 // its box.
 export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const shell = useTodayTasks();
   const { loaded, setList } = shell;
   const list = loaded ? shell.list : initial;
@@ -61,7 +61,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
       if (!target) {
         const created = await createTodoListAction(today);
         if (!created.success || !created.data) {
-          toast.error(actionError(created.message, "Failed to add task", t, locale));
+          toast.error(actionError(created.message, "Failed to add task", t, fmt));
           return;
         }
         target = created.data;
@@ -72,7 +72,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
         setList(result.data);
         setText("");
       } else {
-        toast.error(actionError(result.message, "Failed to add task", t, locale));
+        toast.error(actionError(result.message, "Failed to add task", t, fmt));
       }
     } finally {
       setAdding(false);
@@ -85,7 +85,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
     updateTodoItemAction(list.id, item.id, { completed: !item.completed })
       .then((result) => {
         if (result.success && result.data) setList(result.data);
-        else toast.error(actionError(result.message, "Failed to update task", t, locale));
+        else toast.error(actionError(result.message, "Failed to update task", t, fmt));
       })
       .finally(() =>
         setBusy((prev) => {
@@ -118,14 +118,14 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
         <PriorityDot priority={item.priority} className="size-1.75" />
         {t(PRIORITY_LABEL[item.priority])}
       </span>
-      {item.dueTime && <span className="tabular-nums">{timeLabel(item.dueTime, t, locale)}</span>}
+      {item.dueTime && <span className="tabular-nums">{timeLabel(item.dueTime, t, fmt)}</span>}
       {item.repeat && (
         <span className="flex items-center gap-1">
           <Repeat className="size-3" aria-hidden="true" />
-          {repeatLabel(item.repeat, t, locale)}
+          {repeatLabel(item.repeat, t, fmt)}
         </span>
       )}
-      {item.movedFrom && <span className="font-semibold text-warning">{movedLabel(item.movedFrom, today, t, locale)}</span>}
+      {item.movedFrom && <span className="font-semibold text-warning">{movedLabel(item.movedFrom, today, t, fmt)}</span>}
     </span>
   );
 
@@ -148,12 +148,12 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
           <h2 className="text-title leading-[normal] font-semibold text-ink">{t("Today's tasks")}</h2>
           {items.length > 0 && (
             <Chip tone="neutral" size="sm" className="max-md:hidden">
-              {t("{count} left", { count: formatCount(open.length, locale) })}
+              {t("{count} left", { count: formatCount(open.length, fmt) })}
             </Chip>
           )}
         </div>
         {items.length > 0 && (
-          <span className="ml-auto text-small text-ink-muted md:hidden">{t("{count} left", { count: formatCount(open.length, locale) })}</span>
+          <span className="ml-auto text-small text-ink-muted md:hidden">{t("{count} left", { count: formatCount(open.length, fmt) })}</span>
         )}
         {/* Phones open the list from the top bar's tasks button or the menu. */}
         <Link href="/habit-tracker/todos" className="flex shrink-0 items-center text-small font-semibold text-emerald hover:underline max-md:hidden">
@@ -168,7 +168,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
             {done.length > 0 && (
               <>
                 <button type="button" aria-expanded={showDone} onClick={() => setShowDone((value) => !value)} className="flex h-11 items-center justify-between border-t border-divider px-0.5 text-small font-semibold text-ink-2">
-                  {t("{count} done", { count: formatCount(done.length, locale) })}
+                  {t("{count} done", { count: formatCount(done.length, fmt) })}
                   <ChevronDown className={cn("size-4 transition-transform", showDone && "rotate-180")} aria-hidden="true" />
                 </button>
                 {showDone && <ul className="flex flex-col gap-1">{done.map(phoneRow)}</ul>}
@@ -188,7 +188,7 @@ export function TodayTasksCard({ today, initial, inputRef }: TodayTasksCardProps
               </li>
             ))}
             {more > 0 && (
-              <li className="pt-2 text-caption text-ink-muted">{t("{count} more on the list", { count: formatCount(more, locale) })}</li>
+              <li className="pt-2 text-caption text-ink-muted">{t("{count} more on the list", { count: formatCount(more, fmt) })}</li>
             )}
           </ul>
         </>

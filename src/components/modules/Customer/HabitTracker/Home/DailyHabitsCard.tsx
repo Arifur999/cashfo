@@ -37,19 +37,19 @@ const RING = 2 * Math.PI * RING_RADIUS;
 // streak. Phones get the board's taller rows: 44px ticks, and a counted
 // habit's one-less / count / one-more.
 export function DailyHabitsCard({ rows: serverRows, logs, resting, today }: DailyHabitsCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [rows, applyLog] = useOptimistic(serverRows, (current, update: LogUpdate) => current.map((row) => (row.id === update.id ? { ...row, todayLog: { id: row.todayLog?.id ?? "optimistic", habitId: row.id, date: today, completed: update.completed, value: update.value, note: row.todayLog?.note ?? null, createdAt: row.todayLog?.createdAt ?? today } } : row)));
   const [isPending, startTransition] = useTransition();
   const done = doneToday(rows);
-  const count = (n: number) => formatCount(n, locale);
+  const count = (n: number) => formatCount(n, fmt);
 
   function run(update: LogUpdate, action: () => Promise<{ success: boolean; message?: string }>) {
     startTransition(async () => {
       applyLog(update);
       const result = await action();
       if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to check in", t, locale));
+      else toast.error(actionError(result.message, "Failed to check in", t, fmt));
     });
   }
 
@@ -107,11 +107,11 @@ export function DailyHabitsCard({ rows: serverRows, logs, resting, today }: Dail
           const step = countStep(target);
           const isDone = !!log?.completed;
           const value = log?.value ?? 0;
-          const figure = t("{value} of {amount}", { value: count(value), amount: amountLabel(target, row.unit, t, locale) });
+          const figure = t("{value} of {amount}", { value: count(value), amount: amountLabel(target, row.unit, t, fmt) });
           // A few times a week: how the week stands, today's tick included.
-          const weekly = row.frequencyType === "WEEKLY_COUNT" ? t("{done} of {total} this week", { done: count(doneThisWeek(row.id, logs.filter((l) => l.date.slice(0, 10) !== today), today) + (isDone ? 1 : 0)), total: count(row.weeklyCount ?? 1) }) : null;
+          const weekly = row.frequencyType === "WEEKLY_COUNT" ? t("{done} of {total} this week", { done: count(doneThisWeek(row.id, logs.filter((l) => l.date.slice(0, 10) !== today), today, fmt) + (isDone ? 1 : 0)), total: count(row.weeklyCount ?? 1) }) : null;
           const streak = row.streak > 0 ? t("{count}-day streak", { count: count(row.streak) }) : null;
-          const sub = weekly ?? streak ?? ruleLabel(row, t, locale).days;
+          const sub = weekly ?? streak ?? ruleLabel(row, t, fmt).days;
           const plus = step === 1 ? t("One more: {name}", { name: row.name }) : t("{count} more: {name}", { count: count(step), name: row.name });
           return (
             <li key={row.id} className="box-content flex min-h-13 items-center gap-2.5 border-t border-divider md:min-h-10.5 md:border-0">
@@ -121,7 +121,7 @@ export function DailyHabitsCard({ rows: serverRows, logs, resting, today }: Dail
                 {counted ? (
                   <>
                     {/* Phones read the goal; the stepper beside it says how far along. */}
-                    <span className="truncate text-caption leading-[normal] font-normal text-ink-muted md:hidden">{ruleLine(row, t, locale)}</span>
+                    <span className="truncate text-caption leading-[normal] font-normal text-ink-muted md:hidden">{ruleLine(row, t, fmt)}</span>
                     {/* Wider screens: the amount so far, which opens the field to type it. */}
                     <AmountPopover name={row.name} value={value} target={target} unit={row.unit} disabled={isPending} onSave={(next) => setCount(row, next)} triggerClassName="-mx-0.5 hidden self-start truncate rounded-sm px-0.5 text-caption leading-[normal] font-normal text-ink-muted md:block">
                       {figure}
@@ -166,7 +166,7 @@ export function DailyHabitsCard({ rows: serverRows, logs, resting, today }: Dail
       <div className="mt-auto flex items-center justify-between gap-2.5 border-t border-divider px-0.5 pt-2 pb-1 text-[12.5px] leading-[normal] text-ink-muted md:px-0 md:pt-2.5 md:pb-0">
         <span className="min-w-0 md:truncate">
           {restLine}
-          {resting.length === 1 && <span className="md:hidden"> ({ruleLabel(resting[0], t, locale).days})</span>}
+          {resting.length === 1 && <span className="md:hidden"> ({ruleLabel(resting[0], t, fmt).days})</span>}
         </span>
         {/* Phones reach every habit from the menu (the board keeps the line to itself). */}
         <Link href="/habit-tracker/daily" className="flex shrink-0 items-center font-semibold text-emerald hover:underline max-md:hidden">
