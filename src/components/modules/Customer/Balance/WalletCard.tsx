@@ -53,7 +53,9 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
     <div
       aria-busy={busy || undefined}
       className={cn(
-        "relative flex flex-col gap-3 overflow-hidden rounded-lg p-4 text-white transition-opacity md:min-h-50 md:justify-between md:gap-0 md:p-5 md:shadow-float",
+        // A real card's shape (ID-1, 85.6 x 54 mm) on wider screens, with room
+        // above and below its lines.
+        "relative flex flex-col gap-3 overflow-hidden rounded-lg p-4 text-white transition-opacity md:aspect-[1.586/1] md:justify-between md:gap-0 md:rounded-[18px] md:px-6 md:py-6 md:shadow-float",
         palette.gradient,
         archived && "saturate-50",
         busy && "opacity-70",
