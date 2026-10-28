@@ -74,7 +74,7 @@ const ROW_STYLE: Record<ReportRow["kind"], string> = {
 // Reports: every category, month by month, for a period and (optionally)
 // one wallet, with the file downloads the tax folder wants.
 export function ReportsPageClient({ currency, income, expense, wallets, period, walletId, show, range, rangeLabel, periodSpans }: ReportsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   // Admin > System > Feature Flags: pdf_export off hides Print / PDF.
   const pdfExportOn = useFeature("pdf_export");
@@ -85,7 +85,7 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
   const lang = displayLanguage(locale);
   const { months, rows } = reportRows(income, expense, show);
   const crossesYear = new Set(months.map((m) => m.slice(0, 4))).size > 1;
-  const monthLabels = months.map((m) => monthName(m, locale, "short", crossesYear));
+  const monthLabels = months.map((m) => monthName(m, fmt, "short", crossesYear));
   const hasRows = rows.some((row) => row.kind === "category");
   const wallet = walletId ? wallets.find((w) => w.id === walletId) : undefined;
   const walletName = wallet ? accountDisplayName(wallet, lang) : null;
@@ -274,12 +274,12 @@ export function ReportsPageClient({ currency, income, expense, wallets, period, 
 // link (keyboard, middle-click), the rest of the row follows it for the
 // pointer.
 function ReportLine({ row, name, currency, href, onOpen }: { row: ReportRow; name: string; currency: string; href?: string; onOpen?: () => void }) {
-  const { locale } = useLocale();
+  const { fmt } = useLocale();
   const lastMonth = row.amounts.length - 1;
   const dot = row.kind === "category" ? categoryTone(row.color).fg : row.type === "INCOME" ? "text-emerald" : row.type === "EXPENSE" ? "text-expense-fill" : "text-mint-300";
   // A Left over below zero is red, never the brand's green.
   const total = row.kind === "block" ? (row.type === "INCOME" ? "text-income" : "text-expense") : row.kind === "left" ? (row.total < 0 ? "text-expense" : "text-brand-ink") : "text-ink";
-  const totalText = row.kind === "block" ? `${row.type === "INCOME" ? "+" : "−"} ${formatCurrency(row.total, currency, locale)}` : formatCurrency(row.total, currency, locale);
+  const totalText = row.kind === "block" ? `${row.type === "INCOME" ? "+" : "−"} ${formatCurrency(row.total, currency, fmt)}` : formatCurrency(row.total, currency, fmt);
   const cells = (
     <>
       <ListCell className={NAME_CELL} title={name}>
@@ -294,14 +294,14 @@ function ReportLine({ row, name, currency, href, onOpen }: { row: ReportRow; nam
       </ListCell>
       {row.amounts.map((amount, i) => (
         <ListCell key={i} align="end" className={cn("whitespace-nowrap font-normal print:text-caption", PHONE_LAST, i === lastMonth && LAST_MONTH_CELL, row.kind === "left" && amount < 0 ? "text-expense" : "text-ink-2")}>
-          {amount === 0 ? "—" : formatGrouped(amount, currency, locale)}
+          {amount === 0 ? "—" : formatGrouped(amount, currency, fmt)}
         </ListCell>
       ))}
       <ListCell align="end" className={cn("whitespace-nowrap font-bold print:text-small", PHONE_SECOND, total)}>
         {totalText}
       </ListCell>
       <ListCell align="end" className={cn("whitespace-nowrap font-normal text-ink-muted print:text-caption", PHONE_SECOND, SHARE_CELL)}>
-        {row.share === null ? "—" : percentLabel(row.share, locale)}
+        {row.share === null ? "—" : percentLabel(row.share, fmt)}
       </ListCell>
     </>
   );

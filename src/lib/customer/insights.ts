@@ -1,7 +1,7 @@
 import type { CategoryBreakdown, MonthlyBreakdown } from "./api";
 import type { DateRangePreset } from "./dateRangePresets";
 import { savingsRate } from "./homeInsights";
-import { toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { type FormatLocale, langOf, writeDigits } from "@/lib/i18n/formatPrefs";
 
 // The maths behind Insights: plain sentences built from the monthly
 // breakdowns the Reports page also calls. Pure, so the page derives
@@ -319,18 +319,18 @@ const MONTH_NAMES: Record<Locale, Record<"long" | "short", string[]>> = {
   },
 };
 
-const localDigits = (value: number, locale: Locale) => (locale === "bn" ? toBanglaDigits(value) : String(value));
+const localDigits = (value: number, locale: FormatLocale) => writeDigits(String(value), locale);
 
 // "42%", "৪২%": a share or a rate in the reader's digits. Only money keeps
 // Latin digits (lib/i18n/digits.ts), so a percent reads like the Bangla
 // dates and counts beside it.
-export const percentLabel = (value: number, locale: Locale): string => `${localDigits(value, locale)}%`;
+export const percentLabel = (value: number, locale: FormatLocale): string => `${localDigits(value, locale)}%`;
 
 // "2026-10" → "October" / "Oct" in the reader's language, "October 2026"
 // with the year. Server and client print the very same text.
-export function monthName(key: string, locale: Locale, style: "long" | "short" = "long", withYear = false): string {
+export function monthName(key: string, locale: FormatLocale, style: "long" | "short" = "long", withYear = false): string {
   const [year, month] = key.split("-").map(Number);
-  const name = MONTH_NAMES[locale]?.[style][month - 1] ?? key;
+  const name = MONTH_NAMES[langOf(locale)]?.[style][month - 1] ?? key;
   return withYear ? `${name} ${localDigits(year, locale)}` : name;
 }
 
@@ -339,10 +339,10 @@ export function monthName(key: string, locale: Locale, style: "long" | "short" =
 // months. A range across a new year names both years ("November 2026 –
 // January 2027"), whatever `withYear` says. "short" writes "Oct" and drops
 // the spaces round the dash, for a column head.
-export function rangeLabel(dateFrom: string, dateTo: string, locale: Locale, style: "long" | "short" = "long", withYear = true): string {
+export function rangeLabel(dateFrom: string, dateTo: string, locale: FormatLocale, style: "long" | "short" = "long", withYear = true): string {
   const a = partsOf(dateFrom);
   const b = partsOf(dateTo);
-  const names = MONTH_NAMES[locale][style];
+  const names = MONTH_NAMES[langOf(locale)][style];
   const month = (p: typeof a) => names[p.month - 1];
   const day = (p: typeof a) => localDigits(p.date, locale);
   const year = (p: typeof a) => localDigits(p.year, locale);
@@ -373,7 +373,7 @@ export interface PeriodLabels {
   heads: [string, string];
 }
 
-export function periodLabels(range: DayRange, previous: DayRange, period: InsightPeriod, locale: Locale): PeriodLabels {
+export function periodLabels(range: DayRange, previous: DayRange, period: InsightPeriod, locale: FormatLocale): PeriodLabels {
   const sameDays = period === "this-year";
   const otherYear = previous.dateTo.slice(0, 4) !== range.dateTo.slice(0, 4);
   const before = rangeLabel(previous.dateFrom, previous.dateTo, locale, "short", sameDays);

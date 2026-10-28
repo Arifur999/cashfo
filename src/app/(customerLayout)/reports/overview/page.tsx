@@ -4,6 +4,7 @@ import type { InsightsData } from "@/components/modules/Customer/Insights/insigh
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { appYearMonth, resolveDateRange } from "@/lib/customer/dateRangePresets";
+import { getFmt } from "@/lib/customer/fmt";
 import {
   biggestDrop,
   categoryMoves,
@@ -23,7 +24,6 @@ import {
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getMonthlyBreakdown } from "@/lib/customer/reports";
 import { getAppToday } from "@/lib/date";
-import { getLocale } from "@/lib/i18n/locale";
 
 export const generateMetadata = () => customerPageMetadata("/reports/overview");
 
@@ -42,7 +42,7 @@ export default async function InsightsOverviewPage({ searchParams }: PageProps<"
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const currency = activeBusiness?.currency ?? "BDT";
-  const locale = await getLocale();
+  const fmt = await getFmt();
   const today = getAppToday();
   const period = insightPeriodFrom(params.period);
   const resolved = resolveDateRange(period);
@@ -78,7 +78,7 @@ export default async function InsightsOverviewPage({ searchParams }: PageProps<"
     currency,
     period,
     range,
-    labels: periodLabels(range, previous, period, locale),
+    labels: periodLabels(range, previous, period, fmt),
     months: monthsElapsed(range),
     totals,
     previous: previousTotals,

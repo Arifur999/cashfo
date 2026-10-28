@@ -18,15 +18,15 @@ interface LoansNoteProps {
 // The orange note under What changed: what the loans mean for the figures,
 // and the way to them while Loans is switched on.
 export function LoansNote({ worth, youOweCount, currency }: LoansNoteProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const loansOn = useFeature("loan_management");
   if (worth.youOwe <= 0 && worth.owedToYou <= 0) return null;
 
-  const youOwe = formatCurrency(worth.youOwe, currency, locale);
+  const youOwe = formatCurrency(worth.youOwe, currency, fmt);
   const owedSentence =
     youOweCount === 0
       ? t("You owe {amount}.", { amount: youOwe })
-      : plural(t, youOweCount, "You owe {amount} to {count} contact.", "You owe {amount} to {count} contacts.", { amount: youOwe }, locale);
+      : plural(t, youOweCount, "You owe {amount} to {count} contact.", "You owe {amount} to {count} contacts.", { amount: youOwe }, fmt);
 
   return (
     <div className="mx-6 mt-4 mb-6 flex items-center gap-3 rounded-md bg-pillar-loans-soft p-4 text-small text-pillar-loans">
@@ -41,7 +41,7 @@ export function LoansNote({ worth, youOweCount, currency }: LoansNoteProps) {
             </>
           ) : (
             <>
-              <b>{t("{amount} is owed to you.", { amount: formatCurrency(worth.owedToYou, currency, locale) })}</b> {t("Collecting it would move that into your wallets.")}
+              <b>{t("{amount} is owed to you.", { amount: formatCurrency(worth.owedToYou, currency, fmt) })}</b> {t("Collecting it would move that into your wallets.")}
             </>
           )}
         </span>

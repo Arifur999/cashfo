@@ -34,7 +34,7 @@ interface NetWorthCardProps {
 // figure and its sentence alone. With nothing to show it marks itself
 // empty, so a page with no figures yet can leave it out.
 export function NetWorthCard({ worth, currency }: NetWorthCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const biggest = biggestPart(worth);
   const empty = !(worth.have > 0 || worth.youOwe > 0);
   const parts: { key: keyof NetWorthParts; value: number }[] = [
@@ -67,12 +67,12 @@ export function NetWorthCard({ worth, currency }: NetWorthCardProps) {
             </span>
           ))}
         </div>
-        <div role="img" aria-label={t("What you have {have}, what you owe {owe}", { have: percentLabel(worth.haveShare, locale), owe: percentLabel(100 - worth.haveShare, locale) })} className="flex h-2.5 overflow-hidden rounded-full bg-surface-sunken">
+        <div role="img" aria-label={t("What you have {have}, what you owe {owe}", { have: percentLabel(worth.haveShare, fmt), owe: percentLabel(100 - worth.haveShare, fmt) })} className="flex h-2.5 overflow-hidden rounded-full bg-surface-sunken">
           <span className="bg-emerald" style={{ width: `${worth.haveShare}%` }} />
           <span className="bg-expense-fill" style={{ width: `${100 - worth.haveShare}%` }} />
         </div>
         <span className="text-caption font-normal text-ink-muted">
-          {t("Green: what you have and are owed, {have} · Red: what you owe, {owe}", { have: formatCurrency(worth.have, currency, locale), owe: formatCurrency(worth.youOwe, currency, locale) })}
+          {t("Green: what you have and are owed, {have} · Red: what you owe, {owe}", { have: formatCurrency(worth.have, currency, fmt), owe: formatCurrency(worth.youOwe, currency, fmt) })}
         </span>
       </div>
     </Card>
