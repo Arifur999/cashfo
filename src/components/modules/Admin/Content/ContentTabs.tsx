@@ -1,8 +1,8 @@
 import TabsNav from "@/components/shared/TabsNav";
 
 // Each content area is its own route, so a tab is linkable and only loads
-// its own data. The last tab holds the starting categories and the starting
-// wallets and accounts, so it names both.
+// its own data. The last tab holds the starting categories and, beside
+// them, the starting wallets and accounts; the board calls it Categories.
 const ContentTabs = () => {
   return (
     <TabsNav
@@ -11,7 +11,7 @@ const ContentTabs = () => {
         { label: "Announcements", href: "/admin/content/announcements" },
         { label: "Legal pages", href: "/admin/content/legal" },
         { label: "Translations", href: "/admin/content/translations" },
-        { label: "Categories & accounts", href: "/admin/content/categories" },
+        { label: "Categories", href: "/admin/content/categories" },
       ]}
     />
   );

@@ -85,7 +85,7 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
         filters={{ configs: filters }}
         footer={
           <T values={{ example: "{{name}}" }}>
-            {"Changes go live in the app within a minute. The app finds each Bangla by its English wording, so changing the English asks first. Keep placeholders like {example} the same in both languages."}
+            {"Changes go live in the app within a minute. Keep placeholders like {example} the same in both languages."}
           </T>
         }
         emptyMessage="No strings match."

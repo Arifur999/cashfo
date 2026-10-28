@@ -3,13 +3,13 @@
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { createAnnouncementAction, updateAnnouncementAction } from "@/app/(dashboardLayout)/admin/content/announcements/_action";
+import { createAnnouncementAction, setAnnouncementEnabledAction, updateAnnouncementAction } from "@/app/(dashboardLayout)/admin/content/announcements/_action";
 import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSelectField from "@/components/shared/form/AppSelectField";
 import AppTextareaField from "@/components/shared/form/AppTextareaField";
-import SegmentedControl from "@/components/smartly/SegmentedControl";
+import Button from "@/components/smartly/Button";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { dateTimeInputToIso } from "@/lib/date";
 import { firstZodError } from "@/lib/formValidators";
@@ -22,16 +22,10 @@ import { ALL_PLANS, announcementFormZodSchema, getScheduleError, type IAnnouncem
 import { buildAudienceOptions } from "./announcementOptions";
 import AnnouncementPreview from "./AnnouncementPreview";
 import AnnouncementTypeField from "./AnnouncementTypeField";
-import T from "@/components/shared/T";
 
 const { shape } = announcementFormZodSchema;
 
 type PreviewLanguage = "en" | "bn";
-
-const PREVIEW_LANGUAGES = [
-  { value: "en" as const, label: "English" },
-  { value: "bn" as const, label: "বাংলা", lang: "bn" },
-];
 
 interface AnnouncementFormProps {
   defaultValues: IAnnouncementFormValues;
@@ -58,6 +52,15 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
   const audienceOptions = useMemo(() => buildAudienceOptions(plans ?? [], translate), [plans, translate]);
   const [previewLanguage, setPreviewLanguage] = useState<PreviewLanguage>("en");
 
+  // Turning a banner off (or back on) keeps its schedule; the drawer stays.
+  const toggle = useActionMutation({
+    action: (isActive: boolean) => setAnnouncementEnabledAction(announcement?.id ?? "", isActive),
+    successMessage: (updated) => (updated.isActive ? "Announcement turned on" : "Announcement turned off"),
+    invalidateKeys: [queryKeys.announcements.all],
+    refreshRoute: false,
+    onSuccess: onDone,
+  });
+
   const { run, isPending } = useActionMutation({
     action: (values: IAnnouncementFormValues) => (announcement ? updateAnnouncementAction(announcement.id, values) : createAnnouncementAction(values)),
     successMessage: announcement ? "Announcement updated" : "Announcement saved",
@@ -83,12 +86,12 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
   };
 
   return (
-    <AppForm onSubmit={form.handleSubmit} className="flex flex-1 flex-col gap-4 space-y-0">
+    <AppForm onSubmit={form.handleSubmit} className="flex flex-1 flex-col gap-3.5 space-y-0">
       <form.Field name="type" validators={{ onChange: shape.type }}>
         {(field) => <AnnouncementTypeField field={field} />}
       </form.Field>
       {/* One height for every field in the drawer: 44px. */}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         <form.Field name="title" validators={{ onChange: shape.title }}>
           {(field) => <AppField field={field} label="Title, English" />}
         </form.Field>
@@ -102,7 +105,7 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
           {(field) => <AppTextareaField field={field} label="Message, বাংলা" rows={2} lang="bn" className="font-bn" />}
         </form.Field>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-2.5 sm:grid-cols-3">
         <form.Field name="targetPlan" validators={{ onChange: shape.targetPlan }}>
           {(field) => <AppSelectField field={field} label="Show to" options={audienceOptions} />}
         </form.Field>
@@ -126,12 +129,21 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
           const bodyBn = previewLanguage === "bn" && values.bodyBn.trim() !== "";
           const reachText = reach(values.targetPlan);
           return (
-            <div className="flex flex-col gap-2 rounded-lg border border-line bg-strip p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-caption font-semibold text-ink-muted"><T>Preview in the app</T></span>
-                <SegmentedControl label="Preview language" variant="tabs" options={PREVIEW_LANGUAGES} value={previewLanguage} onChange={setPreviewLanguage} />
-              </div>
+            <div className="flex flex-col gap-2 rounded-[14px] bg-surface-sunken p-3">
+              {/* "Preview in the app · English": the language is a switch. */}
+              <span className="text-caption font-semibold tracking-[0.05em] text-ink-muted uppercase">
+                {translate("Preview in the app")} ·{" "}
+                <button
+                  type="button"
+                  onClick={() => setPreviewLanguage((language) => (language === "en" ? "bn" : "en"))}
+                  aria-label={translate("Preview language: {language}. Switch", { language: previewLanguage === "en" ? "English" : "বাংলা" })}
+                  className="uppercase underline decoration-dotted underline-offset-3 hover:text-ink"
+                >
+                  {previewLanguage === "en" ? "English" : <span lang="bn" className="font-bn">বাংলা</span>}
+                </button>
+              </span>
               <AnnouncementPreview
+                size="sm"
                 type={values.type}
                 title={titleBn ? values.titleBn : values.title}
                 body={bodyBn ? values.bodyBn : values.body}
@@ -144,7 +156,26 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
         }}
       </form.Subscribe>
       <form.Subscribe selector={(state) => state.values.startAt}>
-        {(startAt) => <FormDialogFooter pinned isPending={isPending} submitLabel={submitLabel(announcement, startAt)} pendingLabel="Saving..." />}
+        {(startAt) => (
+          <FormDialogFooter
+            pinned
+            isPending={isPending}
+            submitLabel={submitLabel(announcement, startAt)}
+            pendingLabel="Saving..."
+            extra={
+              announcement && (
+                <Button
+                  variant="ghost"
+                  disabled={toggle.isPending || isPending}
+                  className={announcement.isActive ? "px-3 text-expense hover:text-expense" : "px-3 text-emerald"}
+                  onClick={() => void toggle.run(!announcement.isActive)}
+                >
+                  {translate(announcement.isActive ? "Turn off" : "Turn on")}
+                </Button>
+              )
+            }
+          />
+        )}
       </form.Subscribe>
     </AppForm>
   );

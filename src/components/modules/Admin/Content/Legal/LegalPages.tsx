@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import Callout from "@/components/shared/Callout";
-import Chip from "@/components/smartly/Chip";
 import ErrorState from "@/components/smartly/ErrorState";
 import { formatRelativeDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -13,7 +12,8 @@ import { legalDocumentsQuery } from "@/queries/legalDocument.queries";
 import type { LegalDocType } from "@/types/legalDocument.types";
 import { revealEditor, useUnsavedGuard } from "../editorList";
 import LegalDocumentEditor from "./LegalDocumentEditor";
-import { LEGAL_DOC_LABELS, legalEditorHeadingId } from "./legalDocumentLabels";
+import { plural } from "@/lib/i18n/message";
+import { banglaState, LEGAL_DOC_LABELS, legalEditorHeadingId, sectionCount } from "./legalDocumentLabels";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
@@ -53,11 +53,13 @@ const LegalPages = ({ canManage }: { canManage: boolean }) => {
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-      <nav aria-label={translate("Legal pages")} className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+      <nav aria-label={translate("Legal pages")} className="overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
         {documents.map((document) => {
           const on = document.type === current;
-          const hasBangla = Boolean(document.contentBn?.trim());
+          const bangla = banglaState(document.contentEn, document.contentBn);
           const unsaved = dirty.has(document.type);
+          const editing = unsaved || Boolean(document.draft);
+          const questions = document.type === "FAQ" ? sectionCount(document.contentEn) : 0;
           return (
             <button
               key={document.type}
@@ -68,7 +70,7 @@ const LegalPages = ({ canManage }: { canManage: boolean }) => {
                 setSelected(document.type);
                 requestAnimationFrame(() => revealEditor(window.document.getElementById(legalEditorHeadingId(document.type))));
               }}
-              className={cn("flex w-full flex-col gap-0.75 border-b border-divider border-l-3 px-4 py-4 text-left last:border-b-0", on ? "border-l-emerald bg-mint-50" : "border-l-transparent hover:bg-hover")}
+              className={cn("flex w-full flex-col gap-0.75 border-b border-divider px-4 py-3.5 text-left last:border-b-0", on ? "bg-emerald-soft" : "hover:bg-hover")}
             >
               <span className="flex items-center justify-between gap-2">
                 <span className="flex min-w-0 items-center gap-2">
@@ -79,15 +81,23 @@ const LegalPages = ({ canManage }: { canManage: boolean }) => {
                     </span>
                   )}
                 </span>
-                <Chip tone="neutral" size="sm">
-                  v{formatCount(document.version, locale)}
-                </Chip>
+                <span className="rounded-full bg-surface-sunken px-1.75 py-px text-[11.5px] leading-[normal] font-semibold text-ink-2 tabular-nums">v{formatCount(document.version, locale)}</span>
               </span>
-              <span className="text-small text-ink-muted">
-                <T values={{ date: lowerFirst(formatRelativeDay(document.updatedAt, { t: translate, locale })) }}>{"Updated {date}"}</T>
+              <span className="text-[12.5px] leading-[normal] text-ink-muted">
+                {[
+                  translate("Updated {date}", { date: lowerFirst(formatRelativeDay(document.updatedAt, { t: translate, locale })) }),
+                  ...(editing ? [translate("editing")] : []),
+                  ...(questions > 0 ? [plural(translate, questions, "{count} question", "{count} questions", { count: formatCount(questions, locale) })] : []),
+                ].join(" · ")}
               </span>
-              {/* Whether a Bangla text exists, not whether it matches the latest English. */}
-              <span className={cn("text-caption", hasBangla ? "text-emerald" : "text-warning")}><T>{hasBangla ? "বাংলা written" : "বাংলা not written yet"}</T></span>
+              {/* The live Bangla against the live English, by sections. */}
+              <span className={cn("text-caption", bangla.kind === "level" ? "text-emerald" : "text-warning")}>
+                {bangla.kind === "empty"
+                  ? translate("বাংলা not written yet")
+                  : bangla.kind === "behind"
+                    ? plural(translate, bangla.sections, "বাংলা one section behind", "বাংলা {count} sections behind", { count: formatCount(bangla.sections, locale) })
+                    : translate("বাংলা up to date")}
+              </span>
             </button>
           );
         })}

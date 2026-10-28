@@ -1,15 +1,12 @@
 "use client";
 
-import { ArrowDown, ArrowUp, GripVertical, MoreHorizontal } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { localName, type Translate } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
 import type { ICategory } from "@/types/category.types";
-import T from "@/components/shared/T";
 
 // "Paid from Cash" for an expense, "Goes to Bank" for income.
 const linkText = (category: ICategory, t: Translate, locale: "en" | "bn") =>
@@ -20,7 +17,7 @@ const linkText = (category: ICategory, t: Translate, locale: "en" | "bn") =>
 interface CategoryRowProps {
   category: ICategory;
   canManage: boolean;
-  // Its place in the list, for the Move up / Move down menu.
+  // Its place in the list, for the handle's arrow keys.
   isFirst: boolean;
   isLast: boolean;
   isDragged: boolean;
@@ -33,9 +30,9 @@ interface CategoryRowProps {
   onDrop: () => void;
 }
 
-// One starting category: a handle to drag it into place (or its menu's
-// Move up / Move down, for a keyboard or a finger), its names (a name
-// opens the editor), where its money goes, and the switch that says
+// One starting category as the board draws it: a handle to drag it into
+// place (focused, the arrow keys move it, for a keyboard), its names (a
+// name opens the editor), where its money goes, and the switch that says
 // whether new workspaces still get it. The switch moves at once and ignores
 // presses while it saves, but keeps keyboard focus.
 const CategoryRow = ({ category, canManage, isFirst, isLast, isDragged, onEdit, onSetActive, onMove, onDragStart, onDragEnd, onDrop }: CategoryRowProps) => {
@@ -51,17 +48,35 @@ const CategoryRow = ({ category, canManage, isFirst, isLast, isDragged, onEdit, 
       onDragEnd={onDragEnd}
       onDragOver={canManage ? (event) => event.preventDefault() : undefined}
       onDrop={canManage ? onDrop : undefined}
-      className={cn("flex min-h-14 items-center gap-3 border-t border-divider px-5 py-2 text-body", isDragged && "opacity-50")}
+      className={cn("flex min-h-14.5 items-center gap-2.5 border-t border-divider px-4.5 py-2.25 text-body", isDragged && "opacity-50")}
     >
-      {canManage && <GripVertical className="size-4 shrink-0 cursor-grab text-ink-faint" aria-hidden="true" />}
+      {canManage && (
+        <button
+          type="button"
+          aria-label={translate("Move {name}. Use the up and down arrow keys.", { name: category.name })}
+          aria-keyshortcuts="ArrowUp ArrowDown"
+          onKeyDown={(event) => {
+            if (event.key === "ArrowUp" && !isFirst) {
+              event.preventDefault();
+              onMove("up");
+            } else if (event.key === "ArrowDown" && !isLast) {
+              event.preventDefault();
+              onMove("down");
+            }
+          }}
+          className="-mx-1 flex shrink-0 cursor-grab items-center justify-center rounded-sm p-1 text-input hover:text-ink-muted pointer-coarse:size-11"
+        >
+          <GripVertical className="size-4" aria-hidden="true" />
+        </button>
+      )}
       <button
         type="button"
         onClick={canManage ? onEdit : undefined}
         disabled={!canManage}
         className={cn("flex min-w-0 grow flex-col text-left", canManage && "hover:text-emerald")}
       >
-        <span className={cn("truncate font-medium", isActive ? "text-ink" : "text-ink-muted")}>{category.name}</span>
-        <span lang="bn" className="truncate font-bn text-small text-ink-muted">
+        <span className={cn("truncate font-medium", isActive ? "text-ink" : "text-ink-faint")}>{category.name}</span>
+        <span lang="bn" className="truncate font-bn text-small leading-[normal] text-ink-muted">
           {category.nameBn}
         </span>
         {/* On a phone the account goes under the names, which keep the width. */}
@@ -82,25 +97,8 @@ const CategoryRow = ({ category, canManage, isFirst, isLast, isDragged, onEdit, 
           });
         }}
         aria-label={translate("Use {name}", { name: category.name })}
-        className={cn("data-checked:bg-emerald data-unchecked:bg-line-strong", isSaving && "cursor-progress opacity-70")}
+        className={cn("data-checked:bg-emerald data-unchecked:bg-input", isSaving && "cursor-progress opacity-70")}
       />
-      {canManage && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-xs" className="shrink-0 text-ink-muted hover:text-ink pointer-coarse:size-11" aria-label={translate("Order of {name}", { name: category.name })}>
-              <MoreHorizontal aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem disabled={isFirst} onClick={() => onMove("up")}>
-              <ArrowUp aria-hidden="true" /> <T>Move up</T>
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled={isLast} onClick={() => onMove("down")}>
-              <ArrowDown aria-hidden="true" /> <T>Move down</T>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
     </div>
   );
 };

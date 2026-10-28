@@ -26,7 +26,7 @@ const PAGES: [string, AdminCrumb][] = [
   ["/admin/content/announcements", { parent: "Support & content", page: "Announcements" }],
   ["/admin/content/legal", { parent: "Support & content", page: "Legal pages" }],
   ["/admin/content/translations", { parent: "Support & content", page: "Translations" }],
-  ["/admin/content/categories", { parent: "Support & content", page: "Categories & accounts" }],
+  ["/admin/content/categories", { parent: "Support & content", page: "Categories" }],
   ["/admin/notifications", { parent: "Support & content", page: "Templates" }],
   ["/admin/notifications/campaigns", { parent: "Support & content", page: "Campaigns" }],
   ["/admin/notifications/history", { parent: "Support & content", page: "Send history" }],

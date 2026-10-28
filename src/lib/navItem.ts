@@ -139,7 +139,7 @@ export const adminNavSections: NavSection[] = [
           { title: "Announcements", href: "/admin/content/announcements" },
           { title: "Legal pages", href: "/admin/content/legal" },
           { title: "Translations", href: "/admin/content/translations" },
-          { title: "Categories & accounts", href: "/admin/content/categories" },
+          { title: "Categories", href: "/admin/content/categories" },
         ],
       },
       // Locked only for a role that can neither edit the templates nor send

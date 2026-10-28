@@ -11,7 +11,7 @@ const ContentLayout = async ({ children }: LayoutProps<"/admin/content">) => {
   const admin = await getUserInfo();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <PageHeader {...CONTENT_PAGE} actions={<ContentHeaderAction canManage={canManage(admin?.role, "content")} />} />
       <ContentTabs />
       {children}
