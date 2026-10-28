@@ -70,7 +70,7 @@ const TicketStats = () => {
         }
       />
       <Kpi size="sm" className={FIGURE} href={ticketStatusHref("IN_PROGRESS")} label="In progress" value={count(stats.inProgressCount)} note={lateNote(stats.inProgressOver24hCount)} />
-      <Kpi size="sm" className={FIGURE} href={ticketStatusHref("WAITING_ON_USER")} label="Waiting on the user" value={count(stats.waitingOnUserCount)} note="Answered, waiting to hear back" />
+      <Kpi size="sm" className={FIGURE} href={ticketStatusHref("WAITING_ON_USER")} label="Waiting on the user" value={count(stats.waitingOnUserCount)} note="Closed after 7 quiet days" />
       <Kpi
         size="sm"
         className={FIGURE}

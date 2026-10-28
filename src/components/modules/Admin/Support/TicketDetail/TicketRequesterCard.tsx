@@ -19,7 +19,7 @@ import { requesterTicketsHref } from "../ticketLinks";
 // (isCustomer) or an older ticket's own record of the person. Optional,
 // as an older backend leaves it out.
 type TicketWithRequester = ISupportTicketDetail & {
-  requester?: { id: string; name: string; email: string; isCustomer: boolean } | null;
+  requester?: { id: string; name: string; email: string; isCustomer: boolean; joinedAt?: string | null; language?: string | null } | null;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -36,12 +36,17 @@ const TicketRequesterCard = ({ ticket }: { ticket: TicketWithRequester }) => {
   const user = ticket.platformUser;
   const customerId = ticket.requester?.isCustomer ? ticket.requester.id : null;
   const { locale, translate } = useLocale();
-  const record = useQuery({ ...ticketRequesterQuery(customerId ?? ""), enabled: customerId !== null }).data?.data;
+  // The ticket says when they joined and their language; an older API
+  // doesn't, and then their record is read for it.
+  const told = ticket.requester?.joinedAt !== undefined;
+  const record = useQuery({ ...ticketRequesterQuery(customerId ?? ""), enabled: customerId !== null && !told }).data?.data;
+  const joinedAt = told ? ticket.requester?.joinedAt : record?.createdAt;
+  const code = told ? ticket.requester?.language : record?.preferredLanguage;
   const history = ticket.requesterTickets;
   // Whole days since they signed up, from when the page opened.
   const [openedAt] = useState(() => Date.now());
-  const days = record ? Math.max(0, Math.floor((openedAt - new Date(record.createdAt).getTime()) / DAY_MS)) : null;
-  const language = record?.preferredLanguage ? (LANGUAGE_NAME[record.preferredLanguage.toLowerCase()] ?? record.preferredLanguage) : null;
+  const days = joinedAt ? Math.max(0, Math.floor((openedAt - new Date(joinedAt).getTime()) / DAY_MS)) : null;
+  const language = code ? (LANGUAGE_NAME[code.toLowerCase()] ?? code) : null;
   const facts: { label: string; value: React.ReactNode }[] = [
     { label: "Plan", value: user?.plan?.name ?? translate("No plan") },
     ...(days !== null ? [{ label: "With us", value: plural(translate, days, "{count} day", "{count} days", { count: formatCount(days, locale) }) }] : []),

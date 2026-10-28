@@ -18,7 +18,7 @@ export const adminSupportDictionary: Record<string, string> = {
   "None past the 24-hour goal": "২৪ ঘণ্টার লক্ষ্য কেউ পার হয়নি",
   "{count} past the 24-hour goal": "{count}টি ২৪ ঘণ্টার লক্ষ্য পার হয়েছে",
   "Waiting on the user": "ব্যবহারকারীর উত্তরের অপেক্ষায়",
-  "Answered, waiting to hear back": "উত্তর দেওয়া হয়েছে, ফিরতি উত্তরের অপেক্ষা",
+  "Closed after 7 quiet days": "৭ দিন সাড়া না পেলে বন্ধ হয়",
   "Solved this week": "এই সপ্তাহে সমাধান",
   "First reply in {time} on average (last 30 days)": "গড়ে {time}-এ প্রথম উত্তর (গত ৩০ দিন)",
   "Couldn't load the queue figures.": "টিকিটের হিসাব লোড করা যায়নি।",
