@@ -1,7 +1,7 @@
 import { formatDate as formatInAppTimeZone } from "@/lib/date";
 import { toLocaleDigits } from "@/lib/i18n/digits";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { inEnglish, plural, type Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 
 // Shared date-display utility -- a compact "14 Sep 2026" style for table
 // cells, distinct from DatePicker's own longer "September 14th, 2026" (too
@@ -9,19 +9,20 @@ import type { Locale } from "@/lib/i18n/translate";
 // format (lib/date.ts), never a bare toLocaleDateString(): that follows the
 // machine -- "9/14/2026" on one, "14/09/2026" on another -- so the server
 // and the browser could print different text and break hydration.
-// `locale` "bn" writes the same pattern in Bangla ("১৪ সেপ্টে ২০২৬").
-export function formatDate(value: string | Date, pattern = "d MMM yyyy", locale: Locale = "en"): string {
+// `locale` "bn" writes the same pattern in Bangla ("১৪ সেপ্টে ২০২৬"); the
+// reader's Fmt also brings their digits and date style ("14/09/2026").
+export function formatDate(value: string | Date, pattern = "d MMM yyyy", locale: FormatLocale = "en"): string {
   return formatInAppTimeZone(value, pattern, "—", locale);
 }
 
-export function formatDateTime(value: string | Date, locale: Locale = "en"): string {
+export function formatDateTime(value: string | Date, locale: FormatLocale = "en"): string {
   return formatInAppTimeZone(value, "d MMM yyyy, h:mm a", "—", locale);
 }
 
 // "5 minutes ago", "2 hours ago", "3 days ago", then the date: how long
 // ago something last happened, as the Security board says it of a device.
 // Counts and the date are in the reader's digits ("৫ মিনিট আগে").
-export function formatTimeAgo(value: string | Date, t: Translate = inEnglish, locale: Locale = "en", now: Date = new Date()): string {
+export function formatTimeAgo(value: string | Date, t: Translate = inEnglish, locale: FormatLocale = "en", now: Date = new Date()): string {
   const minutes = Math.max(0, Math.floor((now.getTime() - new Date(value).getTime()) / 60_000));
   const ago = (count: number, one: string, many: string) => plural(t, count, one, many, undefined, locale);
   if (minutes < 1) return t("just now");
@@ -81,7 +82,7 @@ export function formatDurationUntil(to: Date, from: Date = new Date()): string {
 
 // "17:30" -> "5:30 pm"; the am/pm word goes through `t`, and the clock is in
 // the reader's digits ("৫:৩০" in Bangla).
-export function timeLabel(time: string, t: Translate, locale: Locale = "en"): string {
+export function timeLabel(time: string, t: Translate, locale: FormatLocale = "en"): string {
   const [hours, minutes] = time.split(":").map(Number);
   return `${toLocaleDigits(`${hours % 12 || 12}:${String(minutes).padStart(2, "0")}`, locale)} ${t(hours < 12 ? "am" : "pm")}`;
 }

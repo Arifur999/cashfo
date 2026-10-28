@@ -70,6 +70,8 @@ export const dashboardDictionary: Record<string, string> = {
   "Cr@@axis": "কোটি",
   "L@@axis": "লাখ",
   "K@@axis": "হাজার",
+  "M@@axis": "মিলিয়ন",
+  "B@@axis": "বিলিয়ন",
   "Recent transactions": "সাম্প্রতিক লেনদেন",
   "Since {date}": "{date} থেকে",
   "No transactions yet.": "এখনো কোনো লেনদেন নেই।",

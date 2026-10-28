@@ -4,6 +4,8 @@
 // them. The long names are the dictionary's own words for "Sunday" and
 // "January" (habit-tracker.ts, shared.ts), so t("October") and a Bangla
 // date read alike.
+import type { FormatLocale } from "./formatPrefs";
+
 export const BN_WEEKDAYS_SHORT: readonly string[] = ["রবি", "সোম", "মঙ্গল", "বুধ", "বৃহস্পতি", "শুক্র", "শনি"];
 export const BN_WEEKDAYS_LONG: readonly string[] = ["রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"];
 export const BN_MONTHS_SHORT: readonly string[] = ["জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টে", "অক্টো", "নভে", "ডিসে"];
@@ -18,16 +20,20 @@ const BANGLA_ZERO = "০".charCodeAt(0);
 // "30" -> "৩০".
 export const toBanglaDigits = (value: string | number): string => String(value).replace(/\d/g, (digit) => String.fromCharCode(BANGLA_ZERO + Number(digit)));
 
-// "৩০ সেপ্টে" for a "YYYY-MM-DD" day.
-export function banglaDayMonth(day: string): string {
+// The day's number in Bangla digits, or in Latin ones for a reader whose Fmt
+// (formatPrefs.ts) chose them under a Bangla page.
+const dayNumber = (value: number, locale?: FormatLocale) => (typeof locale === "object" && locale.digits === "latin" ? String(value) : toBanglaDigits(value));
+
+// "৩০ সেপ্টে" for a "YYYY-MM-DD" day ("30 সেপ্টে" with the reader's Latin digits).
+export function banglaDayMonth(day: string, locale?: FormatLocale): string {
   const date = new Date(`${day}T00:00:00.000Z`);
-  return `${toBanglaDigits(date.getUTCDate())} ${BN_MONTHS_SHORT[date.getUTCMonth()]}`;
+  return `${dayNumber(date.getUTCDate(), locale)} ${BN_MONTHS_SHORT[date.getUTCMonth()]}`;
 }
 
 // "বৃহস্পতি, ১ অক্টো" for a "YYYY-MM-DD" day, as the Bangla board heads a day.
-export function banglaShortDay(day: string): string {
+export function banglaShortDay(day: string, locale?: FormatLocale): string {
   const date = new Date(`${day}T00:00:00.000Z`);
-  return `${BN_WEEKDAYS_SHORT[date.getUTCDay()]}, ${toBanglaDigits(date.getUTCDate())} ${BN_MONTHS_SHORT[date.getUTCMonth()]}`;
+  return `${BN_WEEKDAYS_SHORT[date.getUTCDay()]}, ${dayNumber(date.getUTCDate(), locale)} ${BN_MONTHS_SHORT[date.getUTCMonth()]}`;
 }
 
 // "অক্টো" for a "YYYY-MM" month key (or a "YYYY-MM-DD" day's month), as a
