@@ -123,17 +123,21 @@ export function AppPreferencesSection({ today, reminders: initialReminders, habi
 
   // Saved to the account at once; the page reads the account again so every
   // place that shows the setting (the phone menu) follows.
+  // Each change saves only its own setting, and its answer touches only
+  // that setting: an earlier save answering late can't undo a quicker
+  // second click, and a failure puts back just the setting that failed.
   function changePref<K extends keyof DisplayPreferences>(key: K, value: DisplayPreferences[K]) {
     if (prefs[key] === value) return;
-    const before = prefs;
-    setPrefs({ ...prefs, [key]: value });
+    const previous = prefs[key];
+    setPrefs((current) => ({ ...current, [key]: value }));
     savePreferencesAction({ [key]: value }).then((result) => {
       if (result.success && result.data) {
-        setPrefs(result.data);
+        const saved = result.data[key];
+        setPrefs((current) => (current[key] === value ? { ...current, [key]: saved } : current));
         router.refresh();
         return;
       }
-      setPrefs(before);
+      setPrefs((current) => (current[key] === value ? { ...current, [key]: previous } : current));
       toast.error(t(result.message ?? "Couldn't save your preference"));
     });
   }
