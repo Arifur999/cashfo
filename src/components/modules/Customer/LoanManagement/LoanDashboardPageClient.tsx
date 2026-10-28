@@ -66,8 +66,6 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   const totalPawna = rows.reduce((sum, row) => sum + Math.max(0, Number(row.currentBalance)), 0);
   const totalDena = rows.reduce((sum, row) => sum + Math.max(0, -Number(row.currentBalance)), 0);
   const net = totalPawna - totalDena;
-  const topProfit = dashboard.topProfit && contactsById.has(dashboard.topProfit.contactId) ? dashboard.topProfit : null;
-  const profitThisYear = Number(dashboard.profitPaidThisYear);
 
   const onSide = (direction: LoanBalanceDirection) => rows.filter((row) => row.direction === direction);
   // "3 contacts", "1 bank and 1 NGO": who a side's total is with.
@@ -105,80 +103,49 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
 
   return (
     <PageFrame className="md:gap-6">
+      {/* The board has no title from md: the topbar names the page. */}
       <PageHeader
         eyebrow={t("Loans")}
         tone="loans"
-        title={
-          <>
-            <span className="md:hidden">{t("Dena-pawna")}</span>
-            <span className="hidden md:inline">{t("Loans & Dena-Pawna")}</span>
-          </>
-        }
-        description={
-          <>
-            <span className="md:hidden">{t("Who you owe, and who owes you.")}</span>
-            <span className="hidden md:inline">{t("Who owes you, and whom you owe: people, banks and NGOs.")}</span>
-          </>
-        }
-        actions={
-          canManage && (
-            <>
-              <Button variant="secondary" onClick={() => setContactOpen(true)}>
-                <UserPlus className="text-ink-2" />
-                {t("Add bank / person")}
-              </Button>
-              <Button onClick={() => setEntry({})}>
-                <Plus strokeWidth={2.5} className="size-4" />
-                {t("New loan entry")}
-              </Button>
-            </>
-          )
-        }
-        hideActionsOnPhone
+        title={t("Dena-pawna")}
+        description={t("Who you owe, and who owes you.")}
+        className="md:hidden"
       />
+      <h1 className="hidden md:block md:sr-only">{t("Loans & Dena-Pawna")}</h1>
 
-      <section className="grid grid-cols-2 gap-2 md:gap-4 xl:grid-cols-4">
-        <Card padding="sm" className={PHONE_FIGURE_CARD}>
-          <span className={PHONE_FIGURE_LABEL}>
-            <span className="md:hidden">{t("Owed to you")}</span>
-            <span className="hidden md:inline">
-              {t("You'll receive")} · <span className="font-semibold text-income">{t("Pawna")}</span>
+      {/* From md the board's three figures, New loan entry beside them. */}
+      <section className="flex flex-col gap-4 md:flex-row md:items-center">
+        <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
+          <Card padding="sm" className={PHONE_FIGURE_CARD}>
+            <span className={PHONE_FIGURE_LABEL}>
+              <span className="md:hidden">{t("Owed to you")}</span>
+              <span className="hidden font-semibold text-income md:inline">{t("Pawna")}</span>
             </span>
-          </span>
-          {/* Signed from md, the two terms of the net position beside them; the phone board is unsigned. */}
-          <AmountText value={totalPawna} currency={currency} size="h2" tone="income" className={cn(PHONE_FIGURE, "md:hidden")} />
-          <AmountText value={totalPawna} currency={currency} size="h2" tone="income" signed className={cn(PHONE_FIGURE, "max-md:hidden")} />
-          <span className="text-caption font-normal text-ink-muted">
-            <span className="md:hidden">{sideCaption("PAWNA", "{side} · {who}")}</span>
-            <span className="hidden md:inline">{sideCaption("PAWNA", "From {who}")}</span>
-          </span>
-        </Card>
-        <Card padding="sm" className={PHONE_FIGURE_CARD}>
-          <span className={PHONE_FIGURE_LABEL}>
-            <span className="md:hidden">{t("You owe")}</span>
-            <span className="hidden md:inline">
-              {t("You owe")} · <span className="font-semibold text-expense">{t("Dena")}</span>
+            {/* Signed from md, the two terms of the net position beside them; the phone board is unsigned. */}
+            <AmountText value={totalPawna} currency={currency} size="h2" tone="income" className={cn(PHONE_FIGURE, "md:hidden")} />
+            <AmountText value={totalPawna} currency={currency} size="h2" tone="income" signed className={cn(PHONE_FIGURE, "max-md:hidden")} />
+            <span className="text-caption font-normal text-ink-muted md:hidden">{sideCaption("PAWNA", "{side} · {who}")}</span>
+          </Card>
+          <Card padding="sm" className={PHONE_FIGURE_CARD}>
+            <span className={PHONE_FIGURE_LABEL}>
+              <span className="md:hidden">{t("You owe")}</span>
+              <span className="hidden font-semibold text-expense md:inline">{t("Dena")}</span>
             </span>
-          </span>
-          <AmountText value={totalDena} currency={currency} size="h2" tone="expense" className={cn(PHONE_FIGURE, "md:hidden")} />
-          <AmountText value={-totalDena} currency={currency} size="h2" tone="expense" signed className={cn(PHONE_FIGURE, "max-md:hidden")} />
-          <span className="text-caption font-normal text-ink-muted">
-            <span className="md:hidden">{sideCaption("DENA", "{side} · {who}")}</span>
-            <span className="hidden md:inline">{sideCaption("DENA", "To {who}")}</span>
-          </span>
-        </Card>
-        <Card className="hidden min-w-0 flex-col gap-2 md:flex">
-          <span className="text-small font-medium text-ink-muted">{t("Net position")}</span>
-          <AmountText value={net} currency={currency} size="h2" signed className={DESK_FIGURE} />
-          <span className="text-caption font-normal text-ink-muted">{net > 0 ? t("You're owed more than you owe") : net < 0 ? t("You owe more than you're owed") : t("All square")}</span>
-        </Card>
-        <Card className="hidden min-w-0 flex-col gap-2 md:flex">
-          <span className="text-small font-medium text-ink-muted">{t("Profit paid this year")}</span>
-          <AmountText value={profitThisYear} currency={currency} size="h2" className={DESK_FIGURE} />
-          <span className="truncate text-caption font-normal text-ink-muted">
-            {topProfit ? `${topProfit.contactName} · ${t("{amount} a month", { amount: formatCurrency(Number(topProfit.monthly), currency, fmt) })}` : profitThisYear === 0 ? t("No profit or interest paid yet") : ""}
-          </span>
-        </Card>
+            <AmountText value={totalDena} currency={currency} size="h2" tone="expense" className={cn(PHONE_FIGURE, "md:hidden")} />
+            <AmountText value={-totalDena} currency={currency} size="h2" tone="expense" signed className={cn(PHONE_FIGURE, "max-md:hidden")} />
+            <span className="text-caption font-normal text-ink-muted md:hidden">{sideCaption("DENA", "{side} · {who}")}</span>
+          </Card>
+          <Card className="hidden min-w-0 flex-col gap-2 md:flex">
+            <span className="text-small font-medium text-ink-muted">{t("Net position")}</span>
+            <AmountText value={net} currency={currency} size="h2" signed className={DESK_FIGURE} />
+          </Card>
+        </div>
+        {canManage && (
+          <Button onClick={() => setEntry({})} className="shrink-0 max-md:hidden">
+            <Plus strokeWidth={2.5} className="size-4" />
+            {t("New loan entry")}
+          </Button>
+        )}
       </section>
 
       {contacts.length === 0 ? (
