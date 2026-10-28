@@ -1,11 +1,10 @@
 "use server";
 
-import axios from "axios";
-import { TOO_MANY_ATTEMPTS_MESSAGE } from "@/lib/actionError";
 import { getAccessToken } from "@/lib/tokenUtils";
-import { API_BASE_URL, getApiErrorMessage, type ReferralInfo } from "./api";
+import { API_BASE_URL, type ReferralInfo } from "./api";
 import type { ActionResult } from "./authActions";
 import { customerApi } from "./apiClient";
+import { callCodeApi, type CodeResult } from "./codeCall";
 import type { PayoutMethod, PayoutMethodInput, PayoutRequest, StartWithdrawalInput, WithdrawalChallenge, WithdrawalList } from "./referralTypes";
 
 async function authHeaders() {
@@ -14,59 +13,10 @@ async function authHeaders() {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-// What a referral call answers: the shared result, plus the API's own
-// reason for a refusal and the figures that go with it -- the smallest
-// withdrawal, what is available, a code's tries left, the seconds before a
-// code may be sent again -- so the page can say exactly what happened.
-export interface ReferralResult<T = void> extends ActionResult<T> {
-  reason?: string;
-  status?: number;
-  attemptsLeft?: number;
-  retryAfterSec?: number;
-  minWithdrawal?: string;
-  available?: string;
-}
+// A referral call's result: see CodeResult.
+export type ReferralResult<T = void> = CodeResult<T>;
 
-interface RefusalBody {
-  reason?: unknown;
-  attemptsLeft?: unknown;
-  retryAfterSec?: unknown;
-  minWithdrawal?: unknown;
-  available?: unknown;
-}
-
-const numberOr = (value: unknown): number | undefined => (typeof value === "number" && Number.isFinite(value) ? value : undefined);
-const stringOr = (value: unknown): string | undefined => (typeof value === "string" ? value : typeof value === "number" ? String(value) : undefined);
-
-async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ReferralResult<T>> {
-  try {
-    const data = await fn();
-    return { success: true, data };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const body = (error.response?.data ?? {}) as RefusalBody;
-      const status = error.response?.status;
-      const attemptsLeft = numberOr(body.attemptsLeft);
-      const retryAfterSec = numberOr(body.retryAfterSec);
-      const minWithdrawal = stringOr(body.minWithdrawal);
-      const available = stringOr(body.available);
-      const extra = {
-        ...(status !== undefined && { status }),
-        ...(typeof body.reason === "string" && { reason: body.reason }),
-        ...(attemptsLeft !== undefined && { attemptsLeft }),
-        ...(retryAfterSec !== undefined && { retryAfterSec }),
-        ...(minWithdrawal !== undefined && { minWithdrawal }),
-        ...(available !== undefined && { available }),
-      };
-      // The throttle's own "ThrottlerException: Too Many Requests" reads as
-      // a crash; a 429 with a reason of its own (a code asked again too
-      // soon) keeps the API's words.
-      if (status === 429 && !extra.reason) return { success: false, message: TOO_MANY_ATTEMPTS_MESSAGE, ...extra, reason: "THROTTLED" };
-      return { success: false, message: getApiErrorMessage(error.response?.data, fallbackMessage), ...extra };
-    }
-    return { success: false, message: fallbackMessage };
-  }
-}
+const callApi = callCodeApi;
 
 export async function getReferralInfoAction(): Promise<ActionResult<ReferralInfo>> {
   return callApi(async () => {
