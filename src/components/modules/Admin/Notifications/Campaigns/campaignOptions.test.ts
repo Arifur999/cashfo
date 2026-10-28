@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ICampaign, INotificationTemplate } from "@/types/notification.types";
-import { ANY_PLAN, ANY_STATUS } from "@/zod/notification.validation";
+import { ANY_PLAN, ANY_STATUS, campaignServerZodSchema, templateVariables } from "@/zod/notification.validation";
 import { buildTemplateOptions, campaignToFormValues, describeAudience, droppedUserStatus, isPastDue, USER_STATUS_OPTIONS } from "./campaignOptions";
 
 const planNames = new Map([["plan-1", "Monthly Pro"]]);
@@ -13,6 +13,7 @@ describe("describeAudience", () => {
     expect(describeAudience({ planId: "plan-1" }, planNames)).toBe("Monthly Pro plan");
     // An old campaign's status still reads, though new ones can't pick it.
     expect(describeAudience({ planId: "plan-1", status: "PENDING_DELETION" }, planNames)).toBe("Monthly Pro plan, pending deletion");
+    expect(describeAudience({ planId: "plan-1", lastActiveWithinDays: 30, language: "BN" }, planNames)).toBe("Monthly Pro plan, active in the last 30 days, Bangla");
   });
 
   it("copes with a plan that no longer exists", () => {
@@ -77,8 +78,15 @@ describe("campaignToFormValues", () => {
       channel: "SMS",
       planId: "plan-1",
       userStatus: "SUSPENDED",
+      lastActiveDays: "any",
+      language: "any",
       scheduledFor: "",
     });
+  });
+
+  it("keeps a draft's last-active and language rules", () => {
+    const values = campaignToFormValues(campaign({ targetFilter: { lastActiveWithinDays: 30, language: "BN" } }), templates);
+    expect([values.lastActiveDays, values.language]).toEqual(["30", "BN"]);
   });
 
   it("drops a status the form no longer offers, and says which", () => {
@@ -98,5 +106,19 @@ describe("campaignToFormValues", () => {
     expect(campaignToFormValues(campaign({ templateKey: "old_promo" }), templates).templateKey).toBe("");
     expect(campaignToFormValues(campaign({ templateKey: "deleted" }), templates).templateKey).toBe("");
     expect(campaignToFormValues(campaign(), templates).templateKey).toBe("promo_offer");
+  });
+});
+
+describe("campaignServerZodSchema", () => {
+  it("sends the last-active and language rules only when set", () => {
+    const base = { title: "Test", templateKey: "promo_offer", channel: "IN_APP_PUSH", planId: "plan-1", userStatus: "any", lastActiveDays: "30", language: "BN", scheduledFor: "" };
+    expect(campaignServerZodSchema.parse(base).targetFilter).toEqual({ planId: "plan-1", lastActiveWithinDays: 30, language: "BN" });
+    expect(campaignServerZodSchema.parse({ ...base, planId: "any", lastActiveDays: "any", language: "any" }).targetFilter).toEqual({});
+  });
+});
+
+describe("templateVariables", () => {
+  it("lists each placeholder once, in order", () => {
+    expect(templateVariables("Hi {{userName}}", "{{planName}} ends {{ expiryDate }}", "{{userName}}")).toEqual(["userName", "planName", "expiryDate"]);
   });
 });

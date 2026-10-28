@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 import { revealEditor, useUnsavedGuard } from "@/components/modules/Admin/Content/editorList";
 import Callout from "@/components/shared/Callout";
@@ -10,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { notificationTemplatesQuery } from "@/queries/notification.queries";
 import type { INotificationTemplateFormValues } from "@/zod/notification.validation";
 import { CHANNEL_META, templateWhen } from "../notificationOptions";
+import NewTemplateDrawer from "./NewTemplateDrawer";
 import TemplateForm from "./TemplateForm";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -30,6 +32,7 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
   const templates = query.data?.data;
   const [selected, setSelected] = useState<string | null>(null);
   const [drafts, setDrafts] = useState(NO_DRAFTS);
+  const [adding, setAdding] = useState(false);
   const current = templates?.find((template) => template.id === selected) ?? templates?.[0];
 
   const keepDraft = useCallback((templateId: string, draft: INotificationTemplateFormValues | null) => {
@@ -55,7 +58,7 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
     <div className="flex flex-col gap-4">
       {!canManage && <Callout><T>Only super and content admins can change templates.</T></Callout>}
       <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <nav aria-label={translate("Templates")} className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+        <nav aria-label={translate("Templates")} className="overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
           {templates.map((template) => {
             const on = template.id === current.id;
             const { label, tone } = CHANNEL_META[template.channel];
@@ -70,7 +73,7 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
                   setSelected(template.id);
                   requestAnimationFrame(() => revealEditor(document.getElementById(HEADING_ID)));
                 }}
-                className={cn("flex w-full flex-col gap-1 border-b border-divider border-l-3 px-4 py-3 text-left last:border-b-0", on ? "border-l-emerald bg-mint-50" : "border-l-transparent hover:bg-hover")}
+                className={cn("flex w-full flex-col gap-1 border-b border-divider px-4 py-3 text-left", on ? "bg-emerald-soft" : "hover:bg-hover")}
               >
                 <span className="flex items-center justify-between gap-2">
                   <span className="flex min-w-0 items-center gap-2">
@@ -87,20 +90,37 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
                         <T>Off</T>
                       </Chip>
                     )}
-                    <Chip tone={tone} size="sm">
+                    <Chip tone={tone} size="sm" className="font-semibold">
                       <T>{label}</T>
                     </Chip>
                   </span>
                 </span>
-                <span className="text-small text-ink-muted">
+                <span className="text-[12.5px] leading-[normal] text-ink-muted">
                   <T>{templateWhen(template.key)}</T>
                 </span>
               </button>
             );
           })}
+          {/* An admin-made template, for campaigns (the board's promo_offer). */}
+          {canManage && (
+            <button type="button" onClick={() => setAdding(true)} className="flex w-full items-center gap-1.5 px-4 py-3 text-left text-small font-semibold text-emerald hover:bg-hover">
+              <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+              {translate("New template")}
+            </button>
+          )}
         </nav>
         <TemplateForm key={current.id} template={current} canManage={canManage} draft={drafts[current.id]} onDraftChange={keepDraft} headingId={HEADING_ID} />
       </div>
+      {canManage && (
+        <NewTemplateDrawer
+          open={adding}
+          onOpenChange={setAdding}
+          onCreated={(created) => {
+            setSelected(created.id);
+            setAdding(false);
+          }}
+        />
+      )}
     </div>
   );
 };

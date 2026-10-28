@@ -27,6 +27,17 @@ export interface INotificationTemplate {
   updatedAt: string;
 }
 
+// A new template (Templates > New template).
+export interface ICreateNotificationTemplatePayload {
+  key: string;
+  channel: NotificationChannel;
+  subjectEn?: string | null;
+  subjectBn?: string | null;
+  bodyEn: string;
+  bodyBn: string;
+  variables?: string[];
+}
+
 export interface IUpdateNotificationTemplatePayload {
   bodyEn?: string;
   bodyBn?: string;
@@ -55,9 +66,24 @@ export interface INotificationLogStats {
   lastFailure: { templateKey: string; channel: NotificationChannel; errorMessage: string | null; userName: string | null } | null;
 }
 
+// The app languages a campaign can pick people by.
+export const CAMPAIGN_LANGUAGES = ["EN", "BN"] as const;
+export type CampaignLanguage = (typeof CAMPAIGN_LANGUAGES)[number];
+
 export interface ICampaignTargetFilter {
   planId?: string;
   status?: AudienceUserStatus;
+  // Signed in within this many days.
+  lastActiveWithinDays?: number;
+  // The app language they picked.
+  language?: CampaignLanguage;
+}
+
+// "About N people match": count by the filter as written, reachable the
+// active accounts a send really reaches.
+export interface ICampaignAudience {
+  count: number;
+  reachable?: number;
 }
 
 export interface ICampaign {
@@ -70,8 +96,12 @@ export interface ICampaign {
   scheduledFor: string | null;
   sentCount: number;
   failedCount: number;
-  // How many people the filter reaches right now.
+  // How many people the filter reaches right now, and (newer API) how many
+  // of them a send really reaches (active accounts).
   audienceCount: number;
+  reachableCount?: number;
+  // While sending, the last round; once sent, when it finished.
+  sentAt?: string | null;
   createdBy: string;
   createdAt: string;
 }

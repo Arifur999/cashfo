@@ -1,8 +1,8 @@
 "use server";
 
 import { requireId, runValidatedAction } from "@/lib/runAction";
-import { updateNotificationTemplate } from "@/services/notification.services";
-import { notificationTemplateActiveServerZodSchema, notificationTemplateServerZodSchema } from "@/zod/notification.validation";
+import { createNotificationTemplate, updateNotificationTemplate } from "@/services/notification.services";
+import { newTemplateServerZodSchema, notificationTemplateActiveServerZodSchema, notificationTemplateServerZodSchema } from "@/zod/notification.validation";
 
 // values: the form values plus { isEmail } (subjects only apply to email).
 export const updateNotificationTemplateAction = async (templateId: string, values: unknown) =>
@@ -17,3 +17,7 @@ export const setNotificationTemplateActiveAction = async (templateId: string, va
   runValidatedAction(notificationTemplateActiveServerZodSchema, values, "Failed to switch the template", (payload) =>
     updateNotificationTemplate(templateId, payload),
   );
+
+// A new template: its key, channel and both languages.
+export const createNotificationTemplateAction = async (values: unknown) =>
+  runValidatedAction(newTemplateServerZodSchema, values, "Failed to add the template", (payload) => createNotificationTemplate(payload));
