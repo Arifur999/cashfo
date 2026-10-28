@@ -31,7 +31,7 @@ export const firstGenerated = () => generatePassword(GENERATOR_LENGTHS.initial, 
 // Length and character sets for a generated password; every change makes a
 // new one.
 export function PasswordGenerator({ onGenerate }: PasswordGeneratorProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [length, setLength] = useState<number>(GENERATOR_LENGTHS.initial);
   const [options, setOptions] = useState<GeneratorOptions>(DEFAULT_GENERATOR);
 
@@ -50,7 +50,7 @@ export function PasswordGenerator({ onGenerate }: PasswordGeneratorProps) {
       <div className="flex items-center gap-3">
         {/* The slider's thumb carries its name; this is the length on show. */}
         <span aria-hidden="true" className="text-small font-semibold whitespace-nowrap text-ink-2 tabular-nums">
-          {t("Length {count}", { count: formatCount(length, locale) })}
+          {t("Length {count}", { count: formatCount(length, fmt) })}
         </span>
         <Slider
           min={GENERATOR_LENGTHS.min}

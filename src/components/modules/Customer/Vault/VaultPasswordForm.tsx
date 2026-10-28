@@ -207,7 +207,7 @@ const RULE_MESSAGES: Partial<Record<Rule["key"], string>> = {
 };
 
 function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, onDone, onBack }: VaultPasswordFormProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [accountPassword, setAccountPassword] = useState("");
   const [currentVaultPassword, setCurrentVaultPassword] = useState("");
   const [password, setPassword] = useState("");
@@ -258,7 +258,7 @@ function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, o
     else if (rule) setWrong({ field: "new", message });
     else if (result.reason === "CODE_WRONG") {
       const left = result.attemptsLeft;
-      setWrong({ field: "code", message: left === undefined ? message : t(left === 1 ? "That code is not right. {count} try left." : "That code is not right. {count} tries left.", { count: formatCount(left, locale) }) });
+      setWrong({ field: "code", message: left === undefined ? message : t(left === 1 ? "That code is not right. {count} try left." : "That code is not right. {count} tries left.", { count: formatCount(left, fmt) }) });
     } else if (result.reason && CODE_GONE.has(result.reason)) {
       setChallenge(null);
       setCode("");
@@ -461,7 +461,7 @@ function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, o
               <div className="-my-1 flex flex-wrap items-center justify-between gap-x-3 text-small">
                 <span className="text-ink-muted">{t("Didn't get it?")}</span>
                 <button type="button" onClick={resend} disabled={isResending || resendLeft > 0} className="flex min-h-9 items-center rounded-md font-semibold text-emerald hover:underline disabled:text-ink-muted disabled:no-underline pointer-coarse:min-h-11">
-                  {resendLeft > 0 ? t("Send again in {time}", { time: toLocaleDigits(countdownText(resendLeft), locale) }) : t("Send the code again")}
+                  {resendLeft > 0 ? t("Send again in {time}", { time: toLocaleDigits(countdownText(resendLeft), fmt) }) : t("Send the code again")}
                 </button>
               </div>
             </div>

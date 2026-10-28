@@ -45,7 +45,7 @@ const FACTS: { icon: typeof KeyRound; text: string }[] = [
 // The unlock form (design-v4 VaultLock), with a wrong try called out under
 // the box and the tries left; after ten, the wait.
 export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, lockMinutes, effectiveMinutes, onLockTime, lockedUntil: lockedAtLoad = 0 }: VaultUnlockFormProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   // When a locked-out vault takes tries again, in epoch milliseconds.
@@ -70,7 +70,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
     return () => clearInterval(id);
   }, [lockedUntil]);
 
-  const n = (value: number) => formatCount(value, locale);
+  const n = (value: number) => formatCount(value, fmt);
   const minutes = n(Math.max(1, Math.round(effectiveMinutes)));
 
   function submit(event: React.FormEvent) {
@@ -116,7 +116,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
     });
   }
 
-  const wait = toLocaleDigits(countdownText(lockedUntil - now), locale);
+  const wait = toLocaleDigits(countdownText(lockedUntil - now), fmt);
   const message = lockedOut ? t("Too many wrong tries. You can try again in {time}.", { time: wait }) : error;
 
   return (

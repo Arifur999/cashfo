@@ -44,7 +44,7 @@ const ROW_BUTTON = "h-8.5 px-3 text-small pointer-coarse:h-11";
 // reused, weak and year-old ones, each with Change and (for an old one)
 // It's fine. It never shows a password.
 export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, onChange, onFine }: VaultCheckupProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const back = (
     <button type="button" onClick={onBack} className="-my-1 -ml-1 flex min-h-7 w-fit items-center gap-1.5 rounded-md px-1 text-[13.5px] font-medium text-ink-soft hover:text-ink pointer-coarse:min-h-11">
       <ChevronLeft className="size-4" aria-hidden="true" />
@@ -69,7 +69,7 @@ export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, 
   }
 
   const now = new Date();
-  const count = (value: number) => formatCount(value, locale);
+  const count = (value: number) => formatCount(value, fmt);
   const flagged = attentionIds(checkup).size;
   // The bar counts each login once, by its worst issue, so it adds up to
   // the logins there are. The legend counts a login under every issue it

@@ -97,7 +97,7 @@ const VIEWS: { value: VaultView; label: string; icon: typeof Menu; warn?: boolea
 // login's details beside it (below it, as a sheet, on a phone); and the
 // security checkup.
 export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries, onLock, onLocked, drawer, onDrawer }: VaultHomeProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const wide = useMediaQuery("(min-width: 1024px)");
   const steps = useVaultSteps();
   const [query, setQuery] = useState("");
@@ -192,7 +192,7 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
   // A password on show belongs to the login on show; another hides it.
   if (revealed && revealed.id !== selected?.id) setRevealed(null);
 
-  const n = (value: number) => formatCount(value, locale);
+  const n = (value: number) => formatCount(value, fmt);
 
   function showLogin(id: string) {
     setSelectedId(id);

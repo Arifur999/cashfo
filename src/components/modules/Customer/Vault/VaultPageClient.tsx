@@ -58,7 +58,7 @@ const WARN_BEFORE_MS = 60_000;
 // state, so leaving the page locks the vault. So does the drawer's draft:
 // in memory, never stored, and kept through a lock for the next unlock.
 export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinutes = null, effectiveMinutes = 10, retryAfterSec = 0, userName, readOnly = false }: VaultPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>(hasVaultPassword === false ? "setup" : "unlock");
   const [session, setSession] = useState<Session | null>(null);
@@ -133,7 +133,7 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
   // (the countdown on screen ticks on its own).
   const expire = useEffectEvent(() => {
     const minutes = session ? Math.max(1, Math.round(session.spanMs / 60_000)) : 10;
-    lock(t(minutes === 1 ? "The vault locked itself after {count} minute." : "The vault locked itself after {count} minutes.", { count: formatCount(minutes, locale) }));
+    lock(t(minutes === 1 ? "The vault locked itself after {count} minute." : "The vault locked itself after {count} minutes.", { count: formatCount(minutes, fmt) }));
   });
   const warn = useEffectEvent(() => toast.warning(t(drawer?.open ? "The vault locks in 1 minute. Save what you're editing." : "The vault locks in 1 minute.")));
   useEffect(() => {

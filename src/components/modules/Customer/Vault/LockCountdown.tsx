@@ -17,7 +17,7 @@ interface LockCountdownProps {
 // "Unlocked · locks in 8:24". It ticks on its own, so the page around it
 // isn't drawn again every second (the page itself only waits for the lock).
 export function LockCountdown({ expiresAt, look }: LockCountdownProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export function LockCountdown({ expiresAt, look }: LockCountdownProps) {
     return () => clearInterval(id);
   }, []);
 
-  const time = toLocaleDigits(countdownText(expiresAt - now), locale);
+  const time = toLocaleDigits(countdownText(expiresAt - now), fmt);
   return (
     <span
       role="timer"

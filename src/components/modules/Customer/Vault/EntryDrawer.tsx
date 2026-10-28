@@ -40,7 +40,7 @@ interface EntryDrawerProps {
 // Add or edit a login: category, where it is, the username, a password you
 // type or generate (any length: a bKash PIN has 5 digits), and notes.
 export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, onLocked }: EntryDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   const [generatorOpen, setGeneratorOpen] = useState(false);
   // The password reads as text on its eye, and whenever Generate fills it,
@@ -215,7 +215,7 @@ export function EntryDrawer({ open, draft, token, onChange, onClose, onSaved, on
               </div>
             </Field>
             {/* Advice only: a short PIN is saved like any other password. */}
-            {detail && <StrengthMeter password={draft.password} detail={t(detail.key, { count: formatCount(detail.count, locale) })} fixedBars className="-mt-1.5" />}
+            {detail && <StrengthMeter password={draft.password} detail={t(detail.key, { count: formatCount(detail.count, fmt) })} fixedBars className="-mt-1.5" />}
             {generatorOpen && (
               <PasswordGenerator
                 onGenerate={(password) => {

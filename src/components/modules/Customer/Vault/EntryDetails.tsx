@@ -41,10 +41,10 @@ const ACTION = "flex size-8 shrink-0 items-center justify-center rounded-full bo
 // One login in full: website, username, the password shown or copied on
 // demand, the holder's name and notes.
 export function EntryDetails({ entry, issues, revealed, busy, onToggleReveal, onCopyPassword, onCopy, onFavorite, onEdit, onDelete, onClose, framed = true }: EntryDetailsProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const host = hostOf(entry.websiteUrl);
   const months = monthsSince(entry.passwordChangedAt, new Date());
-  const monthCount = formatCount(months, locale);
+  const monthCount = formatCount(months, fmt);
   // The checkup's findings, worst first, in the board's words.
   const warnings = issues.map((issue) =>
     issue === "reused" ? t("This password is also used for another login. If one site leaks it, both are open.") : issue === "weak" ? t("This password is weak. Change it on the website with a generated one, then update it here.") : t("Password not changed for {count} months. Change it on the website, then update it here.", { count: monthCount }),
@@ -52,7 +52,7 @@ export function EntryDetails({ entry, issues, revealed, busy, onToggleReveal, on
   const WarningIcon = issues[0] === "old" ? Clock : issues[0] === "reused" ? Copy : TriangleAlert;
   const changed = months === 0 ? t("Password changed less than a month ago") : t(months === 1 ? "Password changed {count} month ago" : "Password changed {count} months ago", { count: monthCount });
   // "Oct 2026", and in Bangla the month's own name with Bangla digits.
-  const added = formatDate(entry.createdAt, locale === "bn" ? "MMMM yyyy" : "MMM yyyy", locale);
+  const added = formatDate(entry.createdAt, locale === "bn" ? "MMMM yyyy" : "MMM yyyy", fmt);
 
   const rows: { label: string; value: React.ReactNode; actions: React.ReactNode; wraps?: boolean }[] = [];
   if (host) {
