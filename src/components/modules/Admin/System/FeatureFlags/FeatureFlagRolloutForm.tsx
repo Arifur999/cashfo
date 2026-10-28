@@ -39,6 +39,12 @@ const FeatureFlagRolloutForm = ({ flag, planOptions, onDone }: FeatureFlagRollou
 
   return (
     <AppForm onSubmit={form.handleSubmit}>
+      {/* What switching it changes in the app, or that nothing reads it yet. */}
+      {flag.usedFor ? (
+        <p className="rounded-field border border-divider bg-strip px-3 py-2.5 text-small text-ink-2">{translate("In the app: {usedFor}", { usedFor: translate(flag.usedFor) })}</p>
+      ) : (
+        <p className="rounded-field border border-warning-line bg-warning-50 px-3 py-2.5 text-small font-semibold text-warning-ink">{translate("Not used by the app yet")}</p>
+      )}
       <form.Field name="rolloutPercent" validators={{ onChange: featureFlagRolloutFormZodSchema.shape.rolloutPercent }}>
         {(field) => (
           <AppSliderField

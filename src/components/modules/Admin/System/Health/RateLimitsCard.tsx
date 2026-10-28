@@ -9,18 +9,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { rateLimitSummaryQuery } from "@/queries/system.queries";
-import NotRecordedNote from "../RateLimits/NotRecordedNote";
+import { AlertTriangle } from "lucide-react";
+import { rateLimitLogsListQuery, rateLimitSummaryQuery } from "@/queries/system.queries";
 
 const BUSIEST_SHOWN = 3;
+// The newest block, for the banner's "what was it".
+const LATEST_BLOCK_QUERY = "page=1&limit=1&limitExceeded=true";
 
-// The banner as one sentence each way, so Bangla can order its clauses.
-// The backend ranks topOffenders over all time, not today, so the name is
-// labelled as the all-time leader and never as today's caller.
-const hitsSentence = (hits: number, byWhom: boolean) => {
-  if (byWhom) return hits === 1 ? "Limit hit once today. Most often over the limit, all time: {name}" : "Limit hit {count} times today. Most often over the limit, all time: {name}";
-  return hits === 1 ? "Limit hit once today" : "Limit hit {count} times today";
-};
+// The banner: how often today, in bold, then the newest block (an
+// endpoint, who, how many requests), each a sentence of its own.
+const hitsLead = (hits: number) => (hits === 1 ? "Limit hit once today:" : "Limit hit {count} times today:");
 
 // Beside the backups: whether any caller hit a limit today, and the
 // endpoints that take the most requests, with the full list a link away.
@@ -29,16 +27,16 @@ const RateLimitsCard = () => {
   const query = useQuery(rateLimitSummaryQuery());
   const summary = query.data?.data;
   const hits = summary?.exceededToday ?? 0;
-  const [offender] = summary?.topOffenders ?? [];
   const busiest = (summary?.topEndpoints ?? []).slice(0, BUSIEST_SHOWN);
+  const latest = useQuery({ ...rateLimitLogsListQuery(LATEST_BLOCK_QUERY), enabled: hits > 0 }).data?.data[0];
 
   return (
     <Card padding="none" className="overflow-hidden">
-      <div className="flex items-baseline justify-between gap-3 px-5 pt-4 pb-2">
-        <h2 className="text-title text-ink">
+      <div className="flex items-baseline justify-between gap-3 px-4.5 pt-3.5 pb-2">
+        <h2 className="text-[15px] font-semibold text-ink">
           <T>Rate limits</T>
         </h2>
-        <Link href="/admin/system/rate-limits" className="text-small font-semibold text-emerald hover:underline">
+        <Link href="/admin/system/rate-limits" className="text-[12.5px] font-semibold text-emerald hover:underline">
           <T>See all</T>
         </Link>
       </div>
@@ -48,14 +46,24 @@ const RateLimitsCard = () => {
       ) : (
         <>
           {hits > 0 && (
-            <p className="mx-4 mb-3 rounded-md bg-expense-soft px-3 py-2 text-small leading-normal text-expense">
-              {fillNodes(translate(hitsSentence(hits, Boolean(offender))), {
-                count: <b className="font-semibold">{formatCount(hits, locale)}</b>,
-                name: <b className="font-semibold wrap-anywhere">{offender?.identifier}</b>,
-              })}
+            <p className="mx-4.5 mb-2.5 flex items-center gap-2.5 rounded-sm bg-expense-soft px-3 py-2.25 text-[12.5px] leading-[1.45] text-expense">
+              <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
+              <span className="wrap-anywhere">
+                <b className="font-semibold">{translate(hitsLead(hits), { count: formatCount(hits, locale) })}</b>
+                {latest && (
+                  <>
+                    {" "}
+                    {fillNodes(translate("{endpoint} from {who}, {tries} requests in the window"), {
+                      endpoint: latest.endpoint,
+                      who: latest.identifier,
+                      tries: formatCount(latest.requestCount, locale),
+                    })}
+                  </>
+                )}
+              </span>
             </p>
           )}
-          <p className="px-5 pb-2 text-caption font-medium text-ink-muted">
+          <p className="px-4.5 pb-1.5 text-caption font-medium text-ink-muted">
             <T>Busiest endpoints, requests so far</T>
           </p>
           {query.isPending ? (
@@ -74,7 +82,7 @@ const RateLimitsCard = () => {
           ) : (
             <ul>
               {busiest.map((entry) => (
-                <li key={entry.endpoint} className="flex items-center justify-between gap-3 border-t border-divider px-5 py-2 text-small">
+                <li key={entry.endpoint} className="flex items-center justify-between gap-2.5 border-t border-divider px-4.5 py-2 text-[12.5px]">
                   <code className="min-w-0 truncate font-mono text-ink-2" title={entry.endpoint}>
                     {entry.endpoint}
                   </code>
@@ -85,7 +93,6 @@ const RateLimitsCard = () => {
           )}
         </>
       )}
-      <NotRecordedNote variant="footer" />
     </Card>
   );
 };
