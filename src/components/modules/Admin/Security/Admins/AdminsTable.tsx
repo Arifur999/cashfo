@@ -26,6 +26,7 @@ import type { AdminRole } from "@/types/auth.types";
 import AdminAvatar from "../AdminAvatar";
 import AdminDialogs, { type AdminDialog } from "./AdminDialogs";
 import AdminRowActions, { InviteRowActions } from "./AdminRowActions";
+import InviteLinkDialog, { type InviteLink } from "./InviteLinkDialog";
 import { teamRows, twoStepCoverage, type TeamRow } from "./teamRows";
 import TwoStepBanner from "./TwoStepBanner";
 
@@ -160,10 +161,13 @@ const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
   const { activeDialog, activeRow, openDialog, closeDialog } = useRowDialogs<IAdminAccount, AdminDialog>();
   const [cancelling, setCancelling] = useState<IAdminInvite | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState<InviteLink | null>(null);
 
   const resend = useActionMutation({
     action: resendInviteAction,
-    successMessage: "Invite sent again",
+    successMessage: (sent) => (sent?.link ? "A new invite link is ready" : "Invite sent again"),
+    // Email off: the new link comes back, to pass on by hand.
+    onSuccess: (sent) => sent?.link && setInviteLink({ email: sent.email, link: sent.link }),
     invalidateKeys: [queryKeys.admins.all],
     refreshRoute: false,
   });
@@ -248,6 +252,7 @@ const AdminsTable = ({ currentAdminId }: { currentAdminId: string | null }) => {
         )}
       </ListCard>
       <AdminDialogs admin={activeRow} activeDialog={activeDialog} currentAdminId={currentAdminId} onClose={closeDialog} />
+      <InviteLinkDialog invite={inviteLink} onClose={() => setInviteLink(null)} />
       <ConfirmDialog
         open={cancelling !== null}
         onOpenChange={(open) => !open && setCancelling(null)}

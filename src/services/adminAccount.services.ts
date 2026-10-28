@@ -35,7 +35,7 @@ export const getAdminInvites = async () => httpClient.get<IAdminInvite[]>(`${BAS
 
 export const createAdminInvite = async (payload: ICreateAdminInvitePayload) => httpClient.post<ICreatedAdminInvite>(`${BASE}/invites`, payload);
 
-export const resendAdminInvite = async (id: string) => httpClient.post<unknown>(`${BASE}/invites/${id}/resend`);
+export const resendAdminInvite = async (id: string) => httpClient.post<ICreatedAdminInvite>(`${BASE}/invites/${id}/resend`);
 
 export const revokeAdminInvite = async (id: string) => httpClient.delete<unknown>(`${BASE}/invites/${id}`);
 

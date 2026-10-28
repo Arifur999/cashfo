@@ -11,6 +11,22 @@ export const getBackupStatusSummary = async () => httpClient.get<IBackupStatusSu
 
 export const getErrorLogs = async (queryString: string) => httpClient.getPaginated<IErrorLog>(`/admin/system/errors?${queryString}`);
 
+// The errors page groups what it loads: the newest `max` (the most one
+// "Mark all fixed" can take), read a page at a time from the query's page.
+export const getRecentErrorLogs = async (queryString: string, max = 500) => {
+  const params = new URLSearchParams(queryString);
+  const first = await getErrorLogs(queryString);
+  const rows = [...first.data];
+  const wanted = Math.min(first.meta?.total ?? rows.length, max);
+  for (let page = 2; rows.length < wanted; page++) {
+    params.set("page", String(page));
+    const next = await getErrorLogs(params.toString());
+    if (next.data.length === 0) break;
+    rows.push(...next.data);
+  }
+  return { ...first, data: rows.slice(0, max) };
+};
+
 export const resolveErrorLog = async (id: string) => httpClient.patch<IErrorLog>(`/admin/system/errors/${id}/resolve`);
 
 // The one write any signed-in admin may make here: the dashboard's error

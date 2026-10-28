@@ -4,9 +4,10 @@ import { WHEN_OPTIONS } from "@/lib/timeWindows";
 import { SEVERITIES, type Severity } from "@/types/securityFlag.types";
 import { ERROR_SOURCES, type ErrorSource } from "@/types/system.types";
 
-// The errors page loads one page of the API's largest size and groups it.
-// (A plain module, so the Server Component page can build the same query
-// string the client board uses.)
+// The errors page reads the API's largest page size at a time, up to the
+// newest 500 (getRecentErrorLogs), and groups them. (A plain module, so the
+// Server Component page can build the same query string the client board
+// uses.)
 export const ERRORS_LOADED = 100;
 
 export type ErrorStatus = "open" | "fixed" | "all";

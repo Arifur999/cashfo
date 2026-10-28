@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { getFeatureFlags } from "@/services/featureFlag.services";
-import { getBackups, getBackupStatusSummary, getErrorLogs, getSystemHealth, getRateLimitLogs, getRateLimitSummary } from "@/services/system.services";
+import { getBackups, getBackupStatusSummary, getErrorLogs, getRecentErrorLogs, getSystemHealth, getRateLimitLogs, getRateLimitSummary } from "@/services/system.services";
 
 // Each service's health (System), checked when the page opens and again every minute.
 export const healthQuery = () =>
@@ -39,7 +39,7 @@ export const featureFlagsQuery = () =>
 export const errorLogsListQuery = (queryString: string) =>
   queryOptions({
     queryKey: queryKeys.errorLogs.list(queryString),
-    queryFn: () => getErrorLogs(queryString),
+    queryFn: () => getRecentErrorLogs(queryString),
   });
 
 export const rateLimitLogsListQuery = (queryString: string) =>
